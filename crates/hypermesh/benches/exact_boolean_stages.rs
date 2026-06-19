@@ -2,8 +2,7 @@ use std::hint::black_box;
 use std::time::{Duration, Instant};
 
 use hypermesh::{
-    ExactArrangementBooleanAttempt, ExactBooleanOperation, ExactBooleanRequest,
-    ExactBooleanWorkspace, ExactMesh, ValidationPolicy,
+    ExactBooleanOperation, ExactBooleanRequest, ExactBooleanWorkspace, ExactMesh, ValidationPolicy,
 };
 
 struct BenchCase {
@@ -125,8 +124,7 @@ fn run_case(case: &BenchCase) {
         let attempt = workspace
             .evaluate(request)
             .unwrap()
-            .retained_arrangement_attempt()
-            .cloned();
+            .retained_arrangement_attempt();
         black_box(attempt.map(|attempt| {
             (
                 attempt.topology_assembly_is_complete(),
@@ -135,8 +133,14 @@ fn run_case(case: &BenchCase) {
         }));
     });
 
-    let attempt = retained_arrangement_attempt_for_case(case, request);
+    let mut attempt_workspace = retained_workspace_for_case(case, request);
+    attempt_workspace.evaluate(request).unwrap();
     time_stage(case, "attempt_topology_assembly_evidence", || {
+        let attempt = attempt_workspace
+            .evaluate(request)
+            .unwrap()
+            .retained_arrangement_attempt()
+            .expect("evaluation should retain an arrangement attempt");
         black_box((
             attempt.has_topology_assembly_evidence(),
             attempt.topology_assembly_is_complete(),
@@ -148,6 +152,11 @@ fn run_case(case: &BenchCase) {
     });
 
     time_stage(case, "attempt_region_ownership_evidence", || {
+        let attempt = attempt_workspace
+            .evaluate(request)
+            .unwrap()
+            .retained_arrangement_attempt()
+            .expect("evaluation should retain an arrangement attempt");
         black_box((
             attempt.has_region_ownership_evidence(),
             attempt.region_ownership_is_resolved(),
@@ -230,8 +239,14 @@ fn run_case(case: &BenchCase) {
     time_prepared_stage(
         case,
         "attempt_source_replay_validate_for_topology_evidence",
-        || retained_arrangement_attempt_for_case(case, request),
-        |attempt| {
+        || retained_workspace_with_evaluation_for_case(case, request),
+        |retained| {
+            let attempt = retained
+                .0
+                .evaluate(retained.1)
+                .unwrap()
+                .retained_arrangement_attempt()
+                .expect("evaluation should retain an arrangement attempt");
             black_box(
                 attempt
                     .validate_against_sources_for_request(&case.left, &case.right, request)
@@ -265,8 +280,14 @@ fn run_case(case: &BenchCase) {
     time_prepared_stage(
         case,
         "attempt_source_replay_validate_for_ownership_evidence",
-        || retained_arrangement_attempt_for_case(case, request),
-        |attempt| {
+        || retained_workspace_with_evaluation_for_case(case, request),
+        |retained| {
+            let attempt = retained
+                .0
+                .evaluate(retained.1)
+                .unwrap()
+                .retained_arrangement_attempt()
+                .expect("evaluation should retain an arrangement attempt");
             black_box(
                 attempt
                     .validate_against_sources_for_request(&case.left, &case.right, request)
@@ -294,8 +315,14 @@ fn run_case(case: &BenchCase) {
     time_prepared_stage(
         case,
         "attempt_validate_source_replay",
-        || retained_workspace_and_arrangement_attempt_for_case(case, request),
-        |(_retained_workspace, attempt)| {
+        || retained_workspace_with_evaluation_for_case(case, request),
+        |retained| {
+            let attempt = retained
+                .0
+                .evaluate(retained.1)
+                .unwrap()
+                .retained_arrangement_attempt()
+                .expect("evaluation should retain an arrangement attempt");
             black_box(
                 attempt
                     .validate_against_sources(&case.left, &case.right)
@@ -463,33 +490,6 @@ fn validate_retained_evaluation_for_case<'a>(
         .ok()?
         .validate_against_sources(&case.left, &case.right)
         .ok()
-}
-
-fn retained_workspace_and_arrangement_attempt_for_case<'a>(
-    case: &'a BenchCase,
-    request: ExactBooleanRequest,
-) -> (ExactBooleanWorkspace<'a>, ExactArrangementBooleanAttempt) {
-    let mut retained_workspace = retained_workspace_for_case(case, request);
-    let attempt = retained_workspace
-        .evaluate(request)
-        .unwrap()
-        .retained_arrangement_attempt()
-        .expect("evaluation should retain an arrangement attempt")
-        .clone();
-    (retained_workspace, attempt)
-}
-
-fn retained_arrangement_attempt_for_case(
-    case: &BenchCase,
-    request: ExactBooleanRequest,
-) -> ExactArrangementBooleanAttempt {
-    let mut retained_workspace = retained_workspace_for_case(case, request);
-    retained_workspace
-        .evaluate(request)
-        .unwrap()
-        .retained_arrangement_attempt()
-        .expect("evaluation should retain an arrangement attempt")
-        .clone()
 }
 
 fn time_stage<F>(case: &BenchCase, stage: &'static str, mut f: F)
