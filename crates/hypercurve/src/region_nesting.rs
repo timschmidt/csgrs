@@ -125,9 +125,13 @@ pub enum RegionLineSegmentArrangedEndpoint2 {
 pub struct RegionLineSegmentSplitIntersectionReport2 {
     first_source_segment_index: usize,
     first_source_segment_kind: SegmentKind,
+    first_source_segment_start_point: Point2,
+    first_source_segment_end_point: Point2,
     first_source_param: Real,
     second_source_segment_index: usize,
     second_source_segment_kind: SegmentKind,
+    second_source_segment_start_point: Point2,
+    second_source_segment_end_point: Point2,
     second_source_param: Real,
     point: Point2,
 }
@@ -1395,6 +1399,16 @@ impl RegionLineSegmentSplitIntersectionReport2 {
         self.first_source_segment_kind
     }
 
+    /// Returns the exact start point of the first source segment.
+    pub const fn first_source_segment_start_point(&self) -> &Point2 {
+        &self.first_source_segment_start_point
+    }
+
+    /// Returns the exact end point of the first source segment.
+    pub const fn first_source_segment_end_point(&self) -> &Point2 {
+        &self.first_source_segment_end_point
+    }
+
     /// Returns the retained local parameter on the first source segment.
     pub const fn first_source_param(&self) -> &Real {
         &self.first_source_param
@@ -1408,6 +1422,16 @@ impl RegionLineSegmentSplitIntersectionReport2 {
     /// Returns the second source segment primitive family.
     pub const fn second_source_segment_kind(&self) -> SegmentKind {
         self.second_source_segment_kind
+    }
+
+    /// Returns the exact start point of the second source segment.
+    pub const fn second_source_segment_start_point(&self) -> &Point2 {
+        &self.second_source_segment_start_point
+    }
+
+    /// Returns the exact end point of the second source segment.
+    pub const fn second_source_segment_end_point(&self) -> &Point2 {
+        &self.second_source_segment_end_point
     }
 
     /// Returns the retained local parameter on the second source segment.
@@ -1879,9 +1903,13 @@ fn arrange_line_segments_at_point_intersections(
                         .push(RegionLineSegmentSplitIntersectionReport2 {
                             first_source_segment_index: first_index,
                             first_source_segment_kind: SegmentKind::Line,
+                            first_source_segment_start_point: first.start().clone(),
+                            first_source_segment_end_point: first.end().clone(),
                             first_source_param: a_param.clone(),
                             second_source_segment_index: second_index,
                             second_source_segment_kind: SegmentKind::Line,
+                            second_source_segment_start_point: second.start().clone(),
+                            second_source_segment_end_point: second.end().clone(),
                             second_source_param: b_param.clone(),
                             point,
                         });
@@ -2082,9 +2110,13 @@ fn arrange_native_segments_at_point_intersections(
                             RegionLineSegmentSplitIntersectionReport2 {
                                 first_source_segment_index: first_index,
                                 first_source_segment_kind: first.structural_facts().kind,
+                                first_source_segment_start_point: first.start().clone(),
+                                first_source_segment_end_point: first.end().clone(),
                                 first_source_param: point.first_param.clone(),
                                 second_source_segment_index: second_index,
                                 second_source_segment_kind: second.structural_facts().kind,
+                                second_source_segment_start_point: second.start().clone(),
+                                second_source_segment_end_point: second.end().clone(),
                                 second_source_param: point.second_param.clone(),
                                 point: point.point.clone(),
                             },
