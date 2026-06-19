@@ -45,15 +45,15 @@ fn exact_boolean_result(
     result
 }
 
-macro_rules! with_exact_boolean_arrangement_attempt {
-    ($left:expr, $right:expr, $request:expr, $policy:expr, |$attempt:ident| $body:block $(,)?) => {{
+macro_rules! with_exact_boolean_evaluation_for_attempt_replay {
+    ($left:expr, $right:expr, $request:expr, $policy:expr, |$evaluation:ident| $body:block $(,)?) => {{
         assert_eq!($policy, ExactRegularizationPolicy::REGULARIZED_SOLID);
         let mut workspace = ExactBooleanWorkspace::new($left, $right);
-        let $attempt = workspace
-            .evaluate($request)
-            .unwrap()
-            .retained_arrangement_attempt()
-            .expect("evaluation should retain an arrangement attempt");
+        let $evaluation = workspace.evaluate($request).unwrap();
+        assert!(
+            $evaluation.has_retained_arrangement_attempt(),
+            "evaluation should retain an arrangement attempt"
+        );
         $body
     }};
 }
@@ -1409,28 +1409,30 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         ExactBooleanOperation::Difference,
     ] {
         if !matches!(operation, ExactBooleanOperation::Intersection) {
-            with_exact_boolean_arrangement_attempt!(
+            with_exact_boolean_evaluation_for_attempt_replay!(
                 &left,
                 &right,
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
-                |closed_attempt| {
-                    closed_attempt.validate().unwrap();
-                    closed_attempt
-                        .validate_against_sources_for_request(
-                            &left,
-                            &right,
-                            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-                        )
-                        .unwrap();
+                |closed_evaluation| {
+                    closed_evaluation.validate().unwrap();
                     assert!(
-                        closed_attempt
-                            .validate_against_sources_for_request(
+                        closed_evaluation
+                            .validate_retained_arrangement_attempt_for_request_against_sources(
+                                &left,
+                                &right,
+                                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+                            )
+                            .unwrap()
+                    );
+                    assert!(
+                        closed_evaluation
+                            .validate_retained_arrangement_attempt_for_request_against_sources(
                                 &left,
                                 &right,
                                 ExactBooleanRequest::new(
                                     operation,
-                                    ValidationPolicy::ALLOW_BOUNDARY
+                                    ValidationPolicy::ALLOW_BOUNDARY,
                                 ),
                             )
                             .is_err()
@@ -1439,23 +1441,25 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             );
         }
 
-        with_exact_boolean_arrangement_attempt!(
+        with_exact_boolean_evaluation_for_attempt_replay!(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             ExactRegularizationPolicy::REGULARIZED_SOLID,
-            |attempt| {
-                attempt.validate().unwrap();
-                attempt
-                    .validate_against_sources_for_request(
-                        &left,
-                        &right,
-                        ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                    )
-                    .unwrap();
+            |evaluation| {
+                evaluation.validate().unwrap();
                 assert!(
-                    attempt
-                        .validate_against_sources_for_request(
+                    evaluation
+                        .validate_retained_arrangement_attempt_for_request_against_sources(
+                            &left,
+                            &right,
+                            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+                        )
+                        .unwrap()
+                );
+                assert!(
+                    evaluation
+                        .validate_retained_arrangement_attempt_for_request_against_sources(
                             &left,
                             &right,
                             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
@@ -1520,23 +1524,25 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
         ExactBooleanOperation::Union,
         ExactBooleanOperation::Intersection,
     ] {
-        with_exact_boolean_arrangement_attempt!(
+        with_exact_boolean_evaluation_for_attempt_replay!(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             ExactRegularizationPolicy::REGULARIZED_SOLID,
-            |closed_attempt| {
-                closed_attempt.validate().unwrap();
-                closed_attempt
-                    .validate_against_sources_for_request(
-                        &left,
-                        &right,
-                        ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-                    )
-                    .unwrap();
+            |closed_evaluation| {
+                closed_evaluation.validate().unwrap();
                 assert!(
-                    closed_attempt
-                        .validate_against_sources_for_request(
+                    closed_evaluation
+                        .validate_retained_arrangement_attempt_for_request_against_sources(
+                            &left,
+                            &right,
+                            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+                        )
+                        .unwrap()
+                );
+                assert!(
+                    closed_evaluation
+                        .validate_retained_arrangement_attempt_for_request_against_sources(
                             &left,
                             &right,
                             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
@@ -1546,23 +1552,25 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
             },
         );
 
-        with_exact_boolean_arrangement_attempt!(
+        with_exact_boolean_evaluation_for_attempt_replay!(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             ExactRegularizationPolicy::REGULARIZED_SOLID,
-            |boundary_attempt| {
-                boundary_attempt.validate().unwrap();
-                boundary_attempt
-                    .validate_against_sources_for_request(
-                        &left,
-                        &right,
-                        ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                    )
-                    .unwrap();
+            |boundary_evaluation| {
+                boundary_evaluation.validate().unwrap();
                 assert!(
-                    boundary_attempt
-                        .validate_against_sources_for_request(
+                    boundary_evaluation
+                        .validate_retained_arrangement_attempt_for_request_against_sources(
+                            &left,
+                            &right,
+                            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+                        )
+                        .unwrap()
+                );
+                assert!(
+                    boundary_evaluation
+                        .validate_retained_arrangement_attempt_for_request_against_sources(
                             &left,
                             &right,
                             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
@@ -3423,19 +3431,23 @@ fn exact_boolean_attempt_public_path_reports_blockers_or_cells() {
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     );
-    with_exact_boolean_arrangement_attempt!(
+    with_exact_boolean_evaluation_for_attempt_replay!(
         &left,
         &right,
         request,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
-        |attempt| {
-            attempt.validate().unwrap();
-            attempt
-                .validate_against_sources_for_request(&left, &right, request)
-                .unwrap();
+        |evaluation| {
+            evaluation.validate().unwrap();
             assert!(
-                attempt
-                    .validate_against_sources_for_request(
+                evaluation
+                    .validate_retained_arrangement_attempt_for_request_against_sources(
+                        &left, &right, request
+                    )
+                    .unwrap()
+            );
+            assert!(
+                evaluation
+                    .validate_retained_arrangement_attempt_for_request_against_sources(
                         &left,
                         &right,
                         ExactBooleanRequest::with_boundary_policy(

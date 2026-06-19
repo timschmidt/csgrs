@@ -2211,7 +2211,7 @@ impl ExactBooleanEvaluation {
 
     /// Return the retained arrangement/cell-complex attempt for this request,
     /// when evaluation reached that canonical pipeline.
-    pub fn retained_arrangement_attempt(&self) -> Option<&ExactArrangementBooleanAttempt> {
+    pub(crate) fn retained_arrangement_attempt(&self) -> Option<&ExactArrangementBooleanAttempt> {
         self.certifications.arrangement_attempt.as_ref()
     }
 
@@ -2376,10 +2376,25 @@ impl ExactBooleanEvaluation {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<bool, ExactReportValidationError> {
+        self.validate_retained_arrangement_attempt_for_request_against_sources(
+            left,
+            right,
+            self.request,
+        )
+    }
+
+    /// Validate the retained arrangement attempt against an explicit request,
+    /// returning `Ok(false)` when this evaluation did not retain one.
+    pub fn validate_retained_arrangement_attempt_for_request_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        request: ExactBooleanRequest,
+    ) -> Result<bool, ExactReportValidationError> {
         let Some(attempt) = self.retained_arrangement_attempt() else {
             return Ok(false);
         };
-        attempt.validate_against_sources_for_request(left, right, self.request)?;
+        attempt.validate_against_sources_for_request(left, right, request)?;
         Ok(true)
     }
 
