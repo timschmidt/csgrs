@@ -153,6 +153,13 @@ pub enum RegionLineSegmentSplitPredicatePath2 {
     AabbFilteredNativeSegment,
 }
 
+/// Exact predicate family used while validating arranged segment endpoint topology.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RegionLineSegmentEndpointGraphPredicatePath2 {
+    /// Arranged endpoints were bucketed by exact structural point equality.
+    ExactStructuralEndpointBuckets,
+}
+
 /// Report for constructing a region from unordered exact line segments.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionLineSegmentRegionBuildReport2 {
@@ -162,6 +169,7 @@ pub struct RegionLineSegmentRegionBuildReport2 {
     arranged_segment_count: Option<usize>,
     arranged_segment_kind_counts: Option<SegmentKindCounts>,
     split_predicate_path: Option<RegionLineSegmentSplitPredicatePath2>,
+    endpoint_graph_predicate_path: Option<RegionLineSegmentEndpointGraphPredicatePath2>,
     split_candidate_pair_count: usize,
     split_skipped_aabb_pair_count: usize,
     split_tested_pair_count: usize,
@@ -423,6 +431,9 @@ impl Region2 {
                     arranged.segments.len(),
                 )),
                 split_predicate_path: arranged.report.predicate_path,
+                endpoint_graph_predicate_path: Some(
+                    RegionLineSegmentEndpointGraphPredicatePath2::ExactStructuralEndpointBuckets,
+                ),
                 split_candidate_pair_count: arranged.report.candidate_pair_count,
                 split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
                 split_tested_pair_count: arranged.report.tested_pair_count,
@@ -661,6 +672,9 @@ impl Region2 {
                     &arranged.segments,
                 )),
                 split_predicate_path: arranged.report.predicate_path,
+                endpoint_graph_predicate_path: Some(
+                    RegionLineSegmentEndpointGraphPredicatePath2::ExactStructuralEndpointBuckets,
+                ),
                 split_candidate_pair_count: arranged.report.candidate_pair_count,
                 split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
                 split_tested_pair_count: arranged.report.tested_pair_count,
@@ -1215,6 +1229,13 @@ impl RegionLineSegmentRegionBuildReport2 {
     /// Returns the exact predicate family used for split arrangement, when reached.
     pub const fn split_predicate_path(&self) -> Option<RegionLineSegmentSplitPredicatePath2> {
         self.split_predicate_path
+    }
+
+    /// Returns the exact predicate family used for endpoint-graph validation, when reached.
+    pub const fn endpoint_graph_predicate_path(
+        &self,
+    ) -> Option<RegionLineSegmentEndpointGraphPredicatePath2> {
+        self.endpoint_graph_predicate_path
     }
 
     /// Returns source line pairs considered for splitting.
@@ -2978,6 +2999,9 @@ fn blocked_line_segment_region_report(
         arranged_segment_count: split_report.output_segment_count,
         arranged_segment_kind_counts,
         split_predicate_path: split_report.predicate_path,
+        endpoint_graph_predicate_path: endpoint_graph_report
+            .as_ref()
+            .map(|_| RegionLineSegmentEndpointGraphPredicatePath2::ExactStructuralEndpointBuckets),
         split_candidate_pair_count: split_report.candidate_pair_count,
         split_skipped_aabb_pair_count: split_report.skipped_aabb_pair_count,
         split_tested_pair_count: split_report.tested_pair_count,
