@@ -459,6 +459,14 @@ fn unordered_line_segments_build_region_with_source_provenance() {
         SegmentKind::Line
     );
     assert_eq!(
+        report.arranged_source_reports()[0].source_segment_start_point(),
+        &p(0, 0)
+    );
+    assert_eq!(
+        report.arranged_source_reports()[0].source_segment_end_point(),
+        &p(4, 0)
+    );
+    assert_eq!(
         report.arranged_source_reports()[0].arranged_segment_kind(),
         SegmentKind::Line
     );
@@ -468,6 +476,14 @@ fn unordered_line_segments_build_region_with_source_provenance() {
     );
     assert_eq!(report.source_reports().len(), 4);
     assert_eq!(report.source_reports()[0].source_segment_index(), 0);
+    assert_eq!(
+        report.source_reports()[0].source_segment_start_point(),
+        &p(0, 0)
+    );
+    assert_eq!(
+        report.source_reports()[0].source_segment_end_point(),
+        &p(4, 0)
+    );
     assert_eq!(
         report.source_reports()[0].source_range(),
         &hypercurve::ParamRange::new(s(0), s(1))
@@ -485,6 +501,14 @@ fn unordered_line_segments_build_region_with_source_provenance() {
     assert!(!report.source_reports()[1].reversed());
     assert_eq!(report.source_reports()[2].source_segment_index(), 1);
     assert!(report.source_reports()[2].reversed());
+    assert_eq!(
+        report.source_reports()[2].source_segment_start_point(),
+        &p(0, 4)
+    );
+    assert_eq!(
+        report.source_reports()[2].source_segment_end_point(),
+        &p(4, 4)
+    );
     assert_eq!(report.source_reports()[3].source_segment_index(), 2);
     assert!(report.source_reports()[3].reversed());
     assert!(report.exact_endpoint_connection_count() >= 4);
@@ -808,6 +832,14 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
         SegmentKind::Line
     );
     assert_eq!(
+        report.arranged_source_reports()[0].source_segment_start_point(),
+        &p(4, 0)
+    );
+    assert_eq!(
+        report.arranged_source_reports()[0].source_segment_end_point(),
+        &p(0, 0)
+    );
+    assert_eq!(
         report.arranged_source_reports()[0].arranged_segment_kind(),
         SegmentKind::Line
     );
@@ -816,12 +848,28 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
         SegmentKind::Arc
     );
     assert_eq!(
+        report.arranged_source_reports()[1].source_segment_start_point(),
+        &p(0, 0)
+    );
+    assert_eq!(
+        report.arranged_source_reports()[1].source_segment_end_point(),
+        &p(4, 0)
+    );
+    assert_eq!(
         report.arranged_source_reports()[1].arranged_segment_kind(),
         SegmentKind::Arc
     );
     assert_eq!(report.source_reports().len(), 2);
     assert_eq!(report.source_reports()[0].source_segment_index(), 0);
     assert_eq!(report.source_reports()[1].source_segment_index(), 1);
+    assert_eq!(
+        report.source_reports()[0].source_segment_start_point(),
+        &p(4, 0)
+    );
+    assert_eq!(
+        report.source_reports()[0].source_segment_end_point(),
+        &p(0, 0)
+    );
     assert_eq!(
         report.source_reports()[0].source_segment_kind(),
         SegmentKind::Line
@@ -833,6 +881,14 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
     assert_eq!(
         report.source_reports()[1].source_segment_kind(),
         SegmentKind::Arc
+    );
+    assert_eq!(
+        report.source_reports()[1].source_segment_start_point(),
+        &p(0, 0)
+    );
+    assert_eq!(
+        report.source_reports()[1].source_segment_end_point(),
+        &p(4, 0)
     );
     assert_eq!(
         report.source_reports()[1].output_segment_kind(),
@@ -1057,12 +1113,36 @@ fn unordered_native_segments_split_line_arc_crossing_before_boundary_blocker() {
         SegmentKind::Arc
     );
     assert_eq!(
+        report.arranged_source_reports()[0].source_segment_start_point(),
+        &p(0, 0)
+    );
+    assert_eq!(
+        report.arranged_source_reports()[0].source_segment_end_point(),
+        &p(4, 0)
+    );
+    assert_eq!(
         report.arranged_source_reports()[0].arranged_segment_kind(),
         SegmentKind::Arc
     );
     assert_eq!(
         report.arranged_source_reports()[0].source_range(),
         &hypercurve::ParamRange::new(s(0), q(1, 2))
+    );
+    assert_eq!(
+        report.arranged_source_reports()[2].source_segment_index(),
+        1
+    );
+    assert_eq!(
+        report.arranged_source_reports()[2].source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        report.arranged_source_reports()[2].source_segment_start_point(),
+        &p(2, -3)
+    );
+    assert_eq!(
+        report.arranged_source_reports()[2].source_segment_end_point(),
+        &p(2, 1)
     );
     assert_eq!(report.source_reports().len(), 0);
     assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));

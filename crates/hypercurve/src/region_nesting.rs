@@ -84,6 +84,8 @@ pub struct RegionBoundaryContourBuildResult2 {
 pub struct RegionLineSegmentRingSourceReport2 {
     source_segment_index: usize,
     source_segment_kind: SegmentKind,
+    source_segment_start_point: Point2,
+    source_segment_end_point: Point2,
     source_range: ParamRange,
     output_ring_index: usize,
     output_segment_index: usize,
@@ -99,6 +101,8 @@ pub struct RegionLineSegmentRingSourceReport2 {
 pub struct RegionLineSegmentArrangedSourceReport2 {
     source_segment_index: usize,
     source_segment_kind: SegmentKind,
+    source_segment_start_point: Point2,
+    source_segment_end_point: Point2,
     source_range: ParamRange,
     arranged_segment_index: usize,
     arranged_segment_kind: SegmentKind,
@@ -1048,6 +1052,16 @@ impl RegionLineSegmentRingSourceReport2 {
         self.source_segment_kind
     }
 
+    /// Returns the exact start point of the original source segment.
+    pub const fn source_segment_start_point(&self) -> &Point2 {
+        &self.source_segment_start_point
+    }
+
+    /// Returns the exact end point of the original source segment.
+    pub const fn source_segment_end_point(&self) -> &Point2 {
+        &self.source_segment_end_point
+    }
+
     /// Returns the retained parameter range on the source segment.
     pub const fn source_range(&self) -> &ParamRange {
         &self.source_range
@@ -1098,6 +1112,16 @@ impl RegionLineSegmentArrangedSourceReport2 {
     /// Returns the primitive family of the source segment.
     pub const fn source_segment_kind(&self) -> SegmentKind {
         self.source_segment_kind
+    }
+
+    /// Returns the exact start point of the original source segment.
+    pub const fn source_segment_start_point(&self) -> &Point2 {
+        &self.source_segment_start_point
+    }
+
+    /// Returns the exact end point of the original source segment.
+    pub const fn source_segment_end_point(&self) -> &Point2 {
+        &self.source_segment_end_point
     }
 
     /// Returns the retained parameter range on the source segment.
@@ -1475,6 +1499,8 @@ struct LineSegmentSplitReportParts {
 #[derive(Clone, Debug, PartialEq)]
 struct ArrangedLineSegment {
     source_segment_index: usize,
+    source_segment_start_point: Point2,
+    source_segment_end_point: Point2,
     source_range: ParamRange,
     line: LineSeg2,
 }
@@ -1488,6 +1514,8 @@ struct ArrangedLineSegments {
 #[derive(Clone, Debug, PartialEq)]
 struct ArrangedNativeSegment {
     source_segment_index: usize,
+    source_segment_start_point: Point2,
+    source_segment_end_point: Point2,
     source_range: ParamRange,
     segment: Segment2,
 }
@@ -1502,6 +1530,8 @@ impl ArrangedLineSegment {
     fn reversed(&self) -> Self {
         Self {
             source_segment_index: self.source_segment_index,
+            source_segment_start_point: self.source_segment_start_point.clone(),
+            source_segment_end_point: self.source_segment_end_point.clone(),
             source_range: ParamRange::new(
                 self.source_range.end().clone(),
                 self.source_range.start().clone(),
@@ -1515,6 +1545,8 @@ impl ArrangedNativeSegment {
     fn reversed(&self) -> Self {
         Self {
             source_segment_index: self.source_segment_index,
+            source_segment_start_point: self.source_segment_start_point.clone(),
+            source_segment_end_point: self.source_segment_end_point.clone(),
             source_range: ParamRange::new(
                 self.source_range.end().clone(),
                 self.source_range.start().clone(),
@@ -1920,6 +1952,8 @@ fn arrange_line_segments_at_point_intersections(
                 Some(Ordering::Less) => {
                     arranged.push(ArrangedLineSegment {
                         source_segment_index,
+                        source_segment_start_point: line.start().clone(),
+                        source_segment_end_point: line.end().clone(),
                         source_range: ParamRange::new(start_param.clone(), end_param.clone()),
                         line: LineSeg2::try_new(
                             line.point_at(start_param),
@@ -2138,11 +2172,13 @@ fn arrange_native_segments_at_point_intersections(
                     match materialize_native_segment_between_markers(
                         segment, &pair[0], &pair[1], policy,
                     )? {
-                        NativeSegmentMaterialization::Materialized(segment) => {
+                        NativeSegmentMaterialization::Materialized(fragment) => {
                             arranged.push(ArrangedNativeSegment {
                                 source_segment_index,
+                                source_segment_start_point: segment.start().clone(),
+                                source_segment_end_point: segment.end().clone(),
                                 source_range: ParamRange::new(start_param, end_param),
-                                segment,
+                                segment: fragment,
                             });
                         }
                         NativeSegmentMaterialization::SkippedEmpty => {}
@@ -2708,6 +2744,8 @@ fn append_line_segment_ring_source_report(
     source_reports.push(RegionLineSegmentRingSourceReport2 {
         source_segment_index: segment.source_segment_index,
         source_segment_kind: SegmentKind::Line,
+        source_segment_start_point: segment.source_segment_start_point.clone(),
+        source_segment_end_point: segment.source_segment_end_point.clone(),
         source_range: segment.source_range.clone(),
         output_ring_index,
         output_segment_index,
@@ -2729,6 +2767,8 @@ fn append_native_segment_ring_source_report(
     source_reports.push(RegionLineSegmentRingSourceReport2 {
         source_segment_index: segment.source_segment_index,
         source_segment_kind: segment.segment.structural_facts().kind,
+        source_segment_start_point: segment.source_segment_start_point.clone(),
+        source_segment_end_point: segment.source_segment_end_point.clone(),
         source_range: segment.source_range.clone(),
         output_ring_index,
         output_segment_index,
@@ -2750,6 +2790,8 @@ fn line_arranged_source_reports(
             |(arranged_segment_index, segment)| RegionLineSegmentArrangedSourceReport2 {
                 source_segment_index: segment.source_segment_index,
                 source_segment_kind: SegmentKind::Line,
+                source_segment_start_point: segment.source_segment_start_point.clone(),
+                source_segment_end_point: segment.source_segment_end_point.clone(),
                 source_range: segment.source_range.clone(),
                 arranged_segment_index,
                 arranged_segment_kind: SegmentKind::Line,
@@ -2774,6 +2816,12 @@ fn native_arranged_source_reports(
                 source_segment_kind: source_segments[segment.source_segment_index]
                     .structural_facts()
                     .kind,
+                source_segment_start_point: source_segments[segment.source_segment_index]
+                    .start()
+                    .clone(),
+                source_segment_end_point: source_segments[segment.source_segment_index]
+                    .end()
+                    .clone(),
                 source_range: segment.source_range.clone(),
                 arranged_segment_index,
                 arranged_segment_kind: segment.segment.structural_facts().kind,
