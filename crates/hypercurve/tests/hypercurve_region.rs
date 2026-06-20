@@ -2150,6 +2150,42 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(summary_cache.output_contour_count(), Some(1));
     assert_eq!(summary_cache.output_segment_count(), Some(4));
+    let arrangement_report = result.arrangement_report();
+    assert_eq!(
+        arrangement_report.source_segment_count(),
+        result.source_segment_count()
+    );
+    assert_eq!(
+        arrangement_report.source_segment_kind_counts(),
+        result.source_segment_kind_counts()
+    );
+    assert_eq!(
+        arrangement_report.decided_source_segment_aabb_count(),
+        result.decided_source_segment_aabb_count()
+    );
+    assert_eq!(
+        arrangement_report.split_candidate_pair_count(),
+        result.split_candidate_pair_count()
+    );
+    assert_eq!(
+        arrangement_report.split_tested_pair_count(),
+        result.split_tested_pair_count()
+    );
+    assert_eq!(
+        arrangement_report.endpoint_graph_structural_bucket_count(),
+        result.endpoint_graph_structural_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.output_boundary_segment_kind_counts(),
+        result.output_boundary_segment_kind_counts()
+    );
+    assert_eq!(
+        arrangement_report.materialized_region(),
+        result.materialized_region()
+    );
+    assert_eq!(arrangement_report.stage(), result.stage());
+    assert_eq!(arrangement_report.status(), result.status());
+    assert_eq!(arrangement_report.blocker(), result.blocker());
     assert_eq!(
         result.boundary_build_stage(),
         Some(RegionBoundaryContourBuildStage2::RoleAssignment)
@@ -3507,6 +3543,31 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(summary_cache.output_contour_count(), Some(1));
     assert_eq!(summary_cache.output_segment_count(), Some(2));
+    let arrangement_report = result.arrangement_report();
+    assert_eq!(
+        arrangement_report.source_segment_kind_counts(),
+        result.source_segment_kind_counts()
+    );
+    assert_eq!(
+        arrangement_report.split_intersection_event_count(),
+        result.split_intersection_event_count()
+    );
+    assert_eq!(
+        arrangement_report.output_ring_count(),
+        result.output_ring_count()
+    );
+    assert_eq!(
+        arrangement_report.output_segment_count(),
+        result.output_segment_count()
+    );
+    assert_eq!(
+        arrangement_report.material_contour_count(),
+        result.material_contour_count()
+    );
+    assert_eq!(
+        arrangement_report.role_report_count(),
+        result.role_report_count()
+    );
     assert_eq!(
         result.boundary_build_stage(),
         Some(RegionBoundaryContourBuildStage2::RoleAssignment)

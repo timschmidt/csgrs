@@ -970,6 +970,40 @@ pub struct ExactCurveArrangementResult2 {
     region_result: RegionLineSegmentRegionBuildResult2,
 }
 
+/// Derived report for a retained exact curve arrangement attempt.
+///
+/// This is a compatibility/reporting view over retained request, workspace,
+/// evaluation, and output caches. It must not recompute topology: each field is
+/// copied from facts already certified and retained by [`ExactCurveWorkspace2`]
+/// or [`ExactCurveArrangementEvaluation2`].
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementReport2 {
+    source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
+    decided_source_segment_aabb_count: usize,
+    undecided_source_segment_aabb_count: usize,
+    split_candidate_pair_count: Option<usize>,
+    split_skipped_aabb_pair_count: Option<usize>,
+    split_tested_pair_count: Option<usize>,
+    split_intersection_event_count: Option<usize>,
+    split_overlap_relation_count: Option<usize>,
+    split_uncertain_relation_count: Option<usize>,
+    endpoint_graph_endpoint_count: Option<usize>,
+    endpoint_graph_structural_bucket_count: Option<usize>,
+    output_ring_count: Option<usize>,
+    output_boundary_segment_count: Option<usize>,
+    output_boundary_segment_kind_counts: Option<SegmentKindCounts>,
+    output_contour_count: Option<usize>,
+    output_segment_count: Option<usize>,
+    material_contour_count: Option<usize>,
+    hole_contour_count: Option<usize>,
+    role_report_count: Option<usize>,
+    materialized_region: Option<bool>,
+    stage: Option<RegionLineSegmentRegionBuildStage2>,
+    status: Option<RetainedTopologyStatus>,
+    blocker: Option<UncertaintyReason>,
+}
+
 /// Material/hole role assigned to one closed boundary contour.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum RegionBoundaryContourRole2 {
@@ -6987,6 +7021,11 @@ impl ExactCurveArrangementResult2 {
             .map(RegionBoundaryContourBuildReport2::role_reports)
     }
 
+    /// Returns a derived report assembled only from retained arrangement caches.
+    pub fn arrangement_report(&self) -> ExactCurveArrangementReport2 {
+        ExactCurveArrangementReport2::from_result(self)
+    }
+
     /// Returns final retained evaluation facts derived from workspace caches.
     pub const fn summary_cache(&self) -> &ExactCurveArrangementEvaluationSummaryCache2 {
         self.evaluation.summary_cache()
@@ -7908,6 +7947,157 @@ impl RegionLineSegmentSplitIntersectionReport2 {
     /// Returns the exact point shared by both source parameters.
     pub const fn point(&self) -> &Point2 {
         &self.point
+    }
+}
+
+impl ExactCurveArrangementReport2 {
+    fn from_result(result: &ExactCurveArrangementResult2) -> Self {
+        Self {
+            source_segment_count: result.source_segment_count(),
+            source_segment_kind_counts: result.source_segment_kind_counts(),
+            decided_source_segment_aabb_count: result.decided_source_segment_aabb_count(),
+            undecided_source_segment_aabb_count: result.undecided_source_segment_aabb_count(),
+            split_candidate_pair_count: result.split_candidate_pair_count(),
+            split_skipped_aabb_pair_count: result.split_skipped_aabb_pair_count(),
+            split_tested_pair_count: result.split_tested_pair_count(),
+            split_intersection_event_count: result.split_intersection_event_count(),
+            split_overlap_relation_count: result.split_overlap_relation_count(),
+            split_uncertain_relation_count: result.split_uncertain_relation_count(),
+            endpoint_graph_endpoint_count: result.endpoint_graph_endpoint_count(),
+            endpoint_graph_structural_bucket_count: result.endpoint_graph_structural_bucket_count(),
+            output_ring_count: result.output_ring_count(),
+            output_boundary_segment_count: result.output_boundary_segment_count(),
+            output_boundary_segment_kind_counts: result.output_boundary_segment_kind_counts(),
+            output_contour_count: result.output_contour_count(),
+            output_segment_count: result.output_segment_count(),
+            material_contour_count: result.material_contour_count(),
+            hole_contour_count: result.hole_contour_count(),
+            role_report_count: result.role_report_count(),
+            materialized_region: result.materialized_region(),
+            stage: result.stage(),
+            status: result.status(),
+            blocker: result.blocker(),
+        }
+    }
+
+    /// Returns retained source segment count.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns retained source segment primitive-family counts.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
+    /// Returns the number of source segment boxes certified during workspace preparation.
+    pub const fn decided_source_segment_aabb_count(&self) -> usize {
+        self.decided_source_segment_aabb_count
+    }
+
+    /// Returns the number of source segment boxes that stayed uncertain.
+    pub const fn undecided_source_segment_aabb_count(&self) -> usize {
+        self.undecided_source_segment_aabb_count
+    }
+
+    /// Returns source segment pairs considered by retained split evaluation.
+    pub const fn split_candidate_pair_count(&self) -> Option<usize> {
+        self.split_candidate_pair_count
+    }
+
+    /// Returns source segment pairs skipped by certified AABB disjointness.
+    pub const fn split_skipped_aabb_pair_count(&self) -> Option<usize> {
+        self.split_skipped_aabb_pair_count
+    }
+
+    /// Returns source segment pairs tested by exact split predicates.
+    pub const fn split_tested_pair_count(&self) -> Option<usize> {
+        self.split_tested_pair_count
+    }
+
+    /// Returns exact point-intersection event count found during splitting.
+    pub const fn split_intersection_event_count(&self) -> Option<usize> {
+        self.split_intersection_event_count
+    }
+
+    /// Returns source-pair relations classified as overlaps.
+    pub const fn split_overlap_relation_count(&self) -> Option<usize> {
+        self.split_overlap_relation_count
+    }
+
+    /// Returns source-pair relations that remained uncertain.
+    pub const fn split_uncertain_relation_count(&self) -> Option<usize> {
+        self.split_uncertain_relation_count
+    }
+
+    /// Returns arranged endpoint count validated by retained endpoint-graph evidence.
+    pub const fn endpoint_graph_endpoint_count(&self) -> Option<usize> {
+        self.endpoint_graph_endpoint_count
+    }
+
+    /// Returns exact structural endpoint bucket count.
+    pub const fn endpoint_graph_structural_bucket_count(&self) -> Option<usize> {
+        self.endpoint_graph_structural_bucket_count
+    }
+
+    /// Returns output ring count retained by ring assembly, when available.
+    pub const fn output_ring_count(&self) -> Option<usize> {
+        self.output_ring_count
+    }
+
+    /// Returns output boundary segment count retained by ring assembly, when available.
+    pub const fn output_boundary_segment_count(&self) -> Option<usize> {
+        self.output_boundary_segment_count
+    }
+
+    /// Returns output boundary primitive-family counts retained by ring assembly.
+    pub const fn output_boundary_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_boundary_segment_kind_counts
+    }
+
+    /// Returns final output contour count retained after boundary role assignment.
+    pub const fn output_contour_count(&self) -> Option<usize> {
+        self.output_contour_count
+    }
+
+    /// Returns final output boundary segment count retained after boundary role assignment.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
+    }
+
+    /// Returns material contour count after output role assignment.
+    pub const fn material_contour_count(&self) -> Option<usize> {
+        self.material_contour_count
+    }
+
+    /// Returns hole contour count after output role assignment.
+    pub const fn hole_contour_count(&self) -> Option<usize> {
+        self.hole_contour_count
+    }
+
+    /// Returns retained output role report count when role assignment was reached.
+    pub const fn role_report_count(&self) -> Option<usize> {
+        self.role_report_count
+    }
+
+    /// Returns whether the retained evaluation materialized a region, when evaluated.
+    pub const fn materialized_region(&self) -> Option<bool> {
+        self.materialized_region
+    }
+
+    /// Returns the final retained build stage, when evaluated.
+    pub const fn stage(&self) -> Option<RegionLineSegmentRegionBuildStage2> {
+        self.stage
+    }
+
+    /// Returns the final retained topology status, when evaluated.
+    pub const fn status(&self) -> Option<RetainedTopologyStatus> {
+        self.status
+    }
+
+    /// Returns the final retained blocker, when the evaluated arrangement blocked.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
     }
 }
 
