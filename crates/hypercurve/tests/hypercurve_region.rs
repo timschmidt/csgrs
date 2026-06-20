@@ -457,16 +457,15 @@ fn unordered_line_segments_build_region_with_source_provenance() {
         &policy(),
     )
     .unwrap();
-    let report = built.report();
 
-    assert!(report.status().is_native_exact());
+    assert!(built.status().unwrap().is_native_exact());
     assert_eq!(
-        report.stage(),
-        RegionLineSegmentRegionBuildStage2::RegionRoleAssignment
+        built.stage(),
+        Some(RegionLineSegmentRegionBuildStage2::RegionRoleAssignment)
     );
-    assert_eq!(report.source_segment_count(), 4);
+    assert_eq!(built.source_segment_count(), 4);
     assert_eq!(
-        report.source_segment_kind_counts(),
+        built.source_segment_kind_counts(),
         SegmentKindCounts { lines: 4, arcs: 0 }
     );
     assert_eq!(built.arranged_segment_count(), Some(4));
@@ -476,7 +475,7 @@ fn unordered_line_segments_build_region_with_source_provenance() {
     );
     assert_eq!(built.split_candidate_pair_count(), Some(6));
     assert_eq!(
-        report.split_predicate_path(),
+        built.split_predicate_path(),
         Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredExactLineLine)
     );
     assert_eq!(
@@ -567,7 +566,7 @@ fn unordered_line_segments_build_region_with_source_provenance() {
     assert!(source_reports[3].reversed());
     assert!(built.exact_endpoint_connection_count().unwrap() >= 4);
     assert_eq!(built.unresolved_endpoint_connection_count(), Some(0));
-    assert_eq!(report.blocker(), None);
+    assert_eq!(built.blocker(), None);
 
     assert_eq!(
         built.boundary_build_validation_intersection_event_count(),
@@ -600,15 +599,14 @@ fn unordered_line_segments_report_disconnected_boundary_blocker() {
         &policy(),
     )
     .unwrap();
-    let report = built.report();
 
     assert!(built.region().is_none());
-    assert!(report.status().is_retained_evidence());
+    assert!(built.status().unwrap().is_retained_evidence());
     assert_eq!(
-        report.stage(),
-        RegionLineSegmentRegionBuildStage2::RingAssembly
+        built.stage(),
+        Some(RegionLineSegmentRegionBuildStage2::RingAssembly)
     );
-    assert_eq!(report.source_segment_count(), 2);
+    assert_eq!(built.source_segment_count(), 2);
     assert_eq!(built.arranged_segment_count(), Some(2));
     assert_eq!(built.split_candidate_pair_count(), Some(1));
     assert_eq!(built.split_skipped_aabb_pair_count(), Some(1));
@@ -658,7 +656,7 @@ fn unordered_line_segments_report_disconnected_boundary_blocker() {
     assert_eq!(built.role_reports(), None);
     assert_eq!(built.source_report_count(), Some(0));
     assert_eq!(built.boundary_build_stage(), None);
-    assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(built.blocker(), Some(UncertaintyReason::Boundary));
 }
 
 #[test]
@@ -669,17 +667,16 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
         &policy(),
     )
     .unwrap();
-    let report = built.report();
 
     assert!(built.region().is_none());
-    assert!(report.status().is_retained_evidence());
+    assert!(built.status().unwrap().is_retained_evidence());
     assert_eq!(
-        report.stage(),
-        RegionLineSegmentRegionBuildStage2::RingAssembly
+        built.stage(),
+        Some(RegionLineSegmentRegionBuildStage2::RingAssembly)
     );
-    assert_eq!(report.source_segment_count(), 2);
+    assert_eq!(built.source_segment_count(), 2);
     assert_eq!(
-        report.source_segment_kind_counts(),
+        built.source_segment_kind_counts(),
         SegmentKindCounts { lines: 2, arcs: 0 }
     );
     assert_eq!(built.arranged_segment_count(), Some(4));
@@ -689,7 +686,7 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
     );
     assert_eq!(built.split_candidate_pair_count(), Some(1));
     assert_eq!(
-        report.split_predicate_path(),
+        built.split_predicate_path(),
         Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredExactLineLine)
     );
     assert_eq!(built.split_skipped_aabb_pair_count(), Some(0));
@@ -742,7 +739,7 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
         &hypercurve::ParamRange::new(s(0), q(1, 2))
     );
     assert_eq!(built.source_report_count(), Some(0));
-    assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(built.blocker(), Some(UncertaintyReason::Boundary));
 }
 
 #[test]
@@ -753,24 +750,23 @@ fn unordered_line_segments_report_overlap_source_pair_blocker() {
         &policy(),
     )
     .unwrap();
-    let report = built.report();
 
     assert!(built.region().is_none());
-    assert!(report.status().is_retained_evidence());
+    assert!(built.status().unwrap().is_retained_evidence());
     assert_eq!(
-        report.stage(),
-        RegionLineSegmentRegionBuildStage2::RingAssembly
+        built.stage(),
+        Some(RegionLineSegmentRegionBuildStage2::RingAssembly)
     );
-    assert_eq!(report.source_segment_count(), 2);
+    assert_eq!(built.source_segment_count(), 2);
     assert_eq!(
-        report.source_segment_kind_counts(),
+        built.source_segment_kind_counts(),
         SegmentKindCounts { lines: 2, arcs: 0 }
     );
     assert_eq!(built.arranged_segment_count(), None);
     assert_eq!(built.arranged_segment_kind_counts(), None);
     assert_eq!(built.split_candidate_pair_count(), Some(1));
     assert_eq!(
-        report.split_predicate_path(),
+        built.split_predicate_path(),
         Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredExactLineLine)
     );
     assert_eq!(built.split_skipped_aabb_pair_count(), Some(0));
@@ -810,7 +806,7 @@ fn unordered_line_segments_report_overlap_source_pair_blocker() {
     assert_eq!(built.output_boundary_segment_kind_counts(), None);
     assert_eq!(built.endpoint_graph_blocker_arranged_segment_index(), None);
     assert_eq!(built.endpoint_graph_blocker_endpoint(), None);
-    assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(built.blocker(), Some(UncertaintyReason::Boundary));
 }
 
 #[test]
@@ -824,14 +820,13 @@ fn borrowed_unordered_line_segments_build_region_with_report() {
 
     let built =
         evaluate_borrowed_unordered_line_segments(&segments, FillRule::NonZero, &policy()).unwrap();
-    let report = built.report();
 
     assert!(built.region().is_some());
     assert_eq!(segments.len(), 4);
-    assert!(report.status().is_native_exact());
-    assert_eq!(report.source_segment_count(), 4);
+    assert!(built.status().unwrap().is_native_exact());
+    assert_eq!(built.source_segment_count(), 4);
     assert_eq!(
-        report.source_segment_kind_counts(),
+        built.source_segment_kind_counts(),
         SegmentKindCounts { lines: 4, arcs: 0 }
     );
     assert_eq!(built.arranged_segment_count(), Some(4));
@@ -850,16 +845,15 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
         &policy(),
     )
     .unwrap();
-    let report = built.report();
 
-    assert!(report.status().is_native_exact());
+    assert!(built.status().unwrap().is_native_exact());
     assert_eq!(
-        report.stage(),
-        RegionLineSegmentRegionBuildStage2::RegionRoleAssignment
+        built.stage(),
+        Some(RegionLineSegmentRegionBuildStage2::RegionRoleAssignment)
     );
-    assert_eq!(report.source_segment_count(), 2);
+    assert_eq!(built.source_segment_count(), 2);
     assert_eq!(
-        report.source_segment_kind_counts(),
+        built.source_segment_kind_counts(),
         SegmentKindCounts { lines: 1, arcs: 1 }
     );
     assert_eq!(built.arranged_segment_count(), Some(2));
@@ -952,7 +946,7 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
     assert_eq!(source_reports[1].source_segment_start_point(), &p(0, 0));
     assert_eq!(source_reports[1].source_segment_end_point(), &p(4, 0));
     assert_eq!(source_reports[1].output_segment_kind(), SegmentKind::Arc);
-    assert_eq!(report.blocker(), None);
+    assert_eq!(built.blocker(), None);
 
     let region = built.region().unwrap();
     assert_eq!(
@@ -974,14 +968,13 @@ fn borrowed_unordered_native_segments_build_line_arc_region_with_report() {
 
     let built =
         evaluate_borrowed_unordered_segments(&segments, FillRule::NonZero, &policy()).unwrap();
-    let report = built.report();
 
     assert!(built.region().is_some());
     assert_eq!(segments.len(), 2);
-    assert!(report.status().is_native_exact());
-    assert_eq!(report.source_segment_count(), 2);
+    assert!(built.status().unwrap().is_native_exact());
+    assert_eq!(built.source_segment_count(), 2);
     assert_eq!(
-        report.source_segment_kind_counts(),
+        built.source_segment_kind_counts(),
         SegmentKindCounts { lines: 1, arcs: 1 }
     );
     assert_eq!(built.arranged_segment_count(), Some(2));
@@ -3869,17 +3862,15 @@ fn unordered_native_segments_report_arc_overlap_boundary_blocker() {
         &policy(),
     )
     .unwrap();
-    let report = built.report();
-
     assert!(built.region().is_none());
-    assert!(report.status().is_retained_evidence());
+    assert!(built.status().unwrap().is_retained_evidence());
     assert_eq!(
-        report.stage(),
-        RegionLineSegmentRegionBuildStage2::RingAssembly
+        built.stage(),
+        Some(RegionLineSegmentRegionBuildStage2::RingAssembly)
     );
-    assert_eq!(report.source_segment_count(), 2);
+    assert_eq!(built.source_segment_count(), 2);
     assert_eq!(
-        report.source_segment_kind_counts(),
+        built.source_segment_kind_counts(),
         SegmentKindCounts { lines: 0, arcs: 2 }
     );
     assert_eq!(built.arranged_segment_count(), None);
@@ -3923,7 +3914,7 @@ fn unordered_native_segments_report_arc_overlap_boundary_blocker() {
     assert_eq!(built.arranged_source_report_count(), None);
     assert_eq!(built.output_boundary_segment_kind_counts(), None);
     assert_eq!(built.source_report_count(), None);
-    assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(built.blocker(), Some(UncertaintyReason::Boundary));
 }
 
 #[test]
@@ -3937,17 +3928,16 @@ fn unordered_native_segments_split_line_arc_crossing_before_boundary_blocker() {
         &policy(),
     )
     .unwrap();
-    let report = built.report();
 
     assert!(built.region().is_none());
-    assert!(report.status().is_retained_evidence());
+    assert!(built.status().unwrap().is_retained_evidence());
     assert_eq!(
-        report.stage(),
-        RegionLineSegmentRegionBuildStage2::RingAssembly
+        built.stage(),
+        Some(RegionLineSegmentRegionBuildStage2::RingAssembly)
     );
-    assert_eq!(report.source_segment_count(), 2);
+    assert_eq!(built.source_segment_count(), 2);
     assert_eq!(
-        report.source_segment_kind_counts(),
+        built.source_segment_kind_counts(),
         SegmentKindCounts { lines: 1, arcs: 1 }
     );
     assert_eq!(built.arranged_segment_count(), Some(4));
@@ -4028,7 +4018,7 @@ fn unordered_native_segments_split_line_arc_crossing_before_boundary_blocker() {
     assert_eq!(arranged_sources[2].source_segment_start_point(), &p(2, -3));
     assert_eq!(arranged_sources[2].source_segment_end_point(), &p(2, 1));
     assert_eq!(built.source_report_count(), Some(0));
-    assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(built.blocker(), Some(UncertaintyReason::Boundary));
 }
 
 #[test]
@@ -4044,15 +4034,14 @@ fn unordered_native_segments_split_arc_arc_crossing_before_boundary_blocker() {
         &policy(),
     )
     .unwrap();
-    let report = built.report();
 
     assert!(built.region().is_none());
-    assert!(report.status().is_retained_evidence());
+    assert!(built.status().unwrap().is_retained_evidence());
     assert_eq!(
-        report.stage(),
-        RegionLineSegmentRegionBuildStage2::RingAssembly
+        built.stage(),
+        Some(RegionLineSegmentRegionBuildStage2::RingAssembly)
     );
-    assert_eq!(report.source_segment_count(), 2);
+    assert_eq!(built.source_segment_count(), 2);
     assert_eq!(built.arranged_segment_count(), Some(4));
     assert_eq!(built.split_candidate_pair_count(), Some(1));
     assert_eq!(built.split_skipped_aabb_pair_count(), Some(0));
@@ -4092,7 +4081,7 @@ fn unordered_native_segments_split_arc_arc_crossing_before_boundary_blocker() {
         &hypercurve::ParamRange::new(s(0), q(1, 10))
     );
     assert_eq!(built.source_report_count(), Some(0));
-    assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(built.blocker(), Some(UncertaintyReason::Boundary));
 }
 
 #[test]
@@ -4538,10 +4527,9 @@ proptest! {
             FillRule::NonZero,
             &policy(),
         ).unwrap();
-        let report = built.report();
 
-        prop_assert!(report.status().is_native_exact());
-        prop_assert_eq!(report.source_segment_count(), 4);
+        prop_assert!(built.status().unwrap().is_native_exact());
+        prop_assert_eq!(built.source_segment_count(), 4);
         prop_assert_eq!(built.arranged_segment_count(), Some(4));
         prop_assert_eq!(built.split_candidate_pair_count(), Some(6));
         prop_assert_eq!(built.split_skipped_aabb_pair_count(), Some(2));
@@ -4564,7 +4552,7 @@ proptest! {
         prop_assert_eq!(built.endpoint_graph_branch_endpoint_count(), Some(0));
         prop_assert_eq!(built.output_ring_count(), Some(1));
         prop_assert_eq!(built.output_boundary_segment_count(), Some(4));
-        prop_assert_eq!(report.blocker(), None);
+        prop_assert_eq!(built.blocker(), None);
 
         let region = built.region().expect("generated rectangle should materialize");
         prop_assert_eq!(
@@ -4603,10 +4591,9 @@ proptest! {
             FillRule::NonZero,
             &policy(),
         ).unwrap();
-        let report = built.report();
 
-        prop_assert!(report.status().is_native_exact());
-        prop_assert_eq!(report.source_segment_count(), 2);
+        prop_assert!(built.status().unwrap().is_native_exact());
+        prop_assert_eq!(built.source_segment_count(), 2);
         prop_assert_eq!(built.arranged_segment_count(), Some(2));
         prop_assert_eq!(built.split_candidate_pair_count(), Some(1));
         prop_assert_eq!(built.split_skipped_aabb_pair_count(), Some(0));
@@ -4652,7 +4639,7 @@ proptest! {
             .all(|source| source.status().is_native_exact()));
         prop_assert_eq!(built.output_ring_count(), Some(1));
         prop_assert_eq!(built.output_boundary_segment_count(), Some(2));
-        prop_assert_eq!(report.blocker(), None);
+        prop_assert_eq!(built.blocker(), None);
 
         let region = built.region().expect("generated line-arc region should materialize");
         prop_assert_eq!(
