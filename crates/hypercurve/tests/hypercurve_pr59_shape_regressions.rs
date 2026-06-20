@@ -341,20 +341,10 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     assert_eq!(boundary_report.nesting_classification_count(), 0);
     assert_eq!(boundary_report.blocker_first_contour_index(), None);
     assert_eq!(boundary_report.blocker_second_contour_index(), None);
-    assert_eq!(
-        boundary_report.output_contour_count(),
-        report
-            .result_material_contour_count()
-            .zip(report.result_hole_contour_count())
-            .map(|(material_count, hole_count)| material_count + hole_count)
-    );
-    assert_eq!(
-        report.result_boundary_segment_count(),
-        boundary_report.output_segment_count()
-    );
-    assert_eq!(boundary_report.output_segment_count(), Some(8));
-    assert_eq!(boundary_report.material_segment_count(), Some(8));
-    assert_eq!(boundary_report.hole_segment_count(), Some(0));
+    assert_eq!(report.result_contour_count(), Some(1));
+    assert_eq!(report.result_boundary_segment_count(), Some(8));
+    assert_eq!(report.result_material_segment_count(), Some(8));
+    assert_eq!(report.result_hole_segment_count(), Some(0));
     let role_reports = report.role_reports().unwrap();
     assert_eq!(role_reports.len(), 1);
     assert_eq!(

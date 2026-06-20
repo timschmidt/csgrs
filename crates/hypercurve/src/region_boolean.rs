@@ -841,9 +841,33 @@ impl RegionBooleanReport2 {
         self.result_hole_contour_count
     }
 
+    /// Returns total result contour count when role assignment was reached.
+    pub const fn result_contour_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => report.output_contour_count(),
+            None => None,
+        }
+    }
+
     /// Returns total result boundary segment count when a boolean region materialized.
     pub const fn result_boundary_segment_count(&self) -> Option<usize> {
         self.result_boundary_segment_count
+    }
+
+    /// Returns material boundary segment count when role assignment was reached.
+    pub const fn result_material_segment_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => report.material_segment_count(),
+            None => None,
+        }
+    }
+
+    /// Returns hole boundary segment count when role assignment was reached.
+    pub const fn result_hole_segment_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => report.hole_segment_count(),
+            None => None,
+        }
     }
 
     /// Returns source primitive-family counts for result boundary segments when available.
