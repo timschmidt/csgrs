@@ -13,10 +13,10 @@ use crate::{
     BooleanFragmentClassification, BooleanFragmentSelection, BooleanFragmentSelectionReport2,
     BooleanOp, BulgeVertex2, Classification, Contour2, ContourIntersection, CurveError,
     CurvePolicy, CurveResult, FillRule, IntersectionKind, Point2, Real, Region2,
-    RegionBoundaryContourBuildReport2, RegionBoundaryContourRoleReport2,
-    RegionFragmentBuildReport2, RegionFragmentSet, RegionIntersectionSet, RegionPointLocation,
-    RegionSide, RegionView2, RetainedTopologyStatus, Segment2, SegmentKindCounts,
-    UncertaintyReason,
+    RegionBoundaryContourBuildPredicatePath2, RegionBoundaryContourBuildReport2,
+    RegionBoundaryContourBuildStage2, RegionBoundaryContourRoleReport2, RegionFragmentBuildReport2,
+    RegionFragmentSet, RegionIntersectionSet, RegionPointLocation, RegionSide, RegionView2,
+    RetainedTopologyStatus, Segment2, SegmentKindCounts, UncertaintyReason,
 };
 use std::cmp::Ordering;
 
@@ -890,6 +890,40 @@ impl RegionBooleanReport2 {
         self.boundary_build_report.as_ref()
     }
 
+    /// Returns final boundary-role assignment stage, if reached.
+    pub const fn boundary_build_stage(&self) -> Option<RegionBoundaryContourBuildStage2> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.stage()),
+            None => None,
+        }
+    }
+
+    /// Returns final boundary-role assignment predicate path, if reached.
+    pub const fn boundary_build_predicate_path(
+        &self,
+    ) -> Option<RegionBoundaryContourBuildPredicatePath2> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.predicate_path()),
+            None => None,
+        }
+    }
+
+    /// Returns final boundary-role assignment retained status, if reached.
+    pub const fn boundary_build_status(&self) -> Option<RetainedTopologyStatus> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.status()),
+            None => None,
+        }
+    }
+
+    /// Returns final boundary-role assignment blocker, if present.
+    pub const fn boundary_build_blocker(&self) -> Option<UncertaintyReason> {
+        match self.boundary_build_report() {
+            Some(report) => report.blocker(),
+            None => None,
+        }
+    }
+
     /// Returns source contour count from final boundary-role assignment, if reached.
     pub const fn boundary_build_source_contour_count(&self) -> Option<usize> {
         match self.boundary_build_report() {
@@ -1038,6 +1072,40 @@ impl RegionBooleanPipelineReport2 {
     /// Returns final boundary-contour role assignment evidence, if available.
     pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
         self.boundary_build_report.as_ref()
+    }
+
+    /// Returns final boundary-role assignment stage, if reached.
+    pub const fn boundary_build_stage(&self) -> Option<RegionBoundaryContourBuildStage2> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.stage()),
+            None => None,
+        }
+    }
+
+    /// Returns final boundary-role assignment predicate path, if reached.
+    pub const fn boundary_build_predicate_path(
+        &self,
+    ) -> Option<RegionBoundaryContourBuildPredicatePath2> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.predicate_path()),
+            None => None,
+        }
+    }
+
+    /// Returns final boundary-role assignment retained status, if reached.
+    pub const fn boundary_build_status(&self) -> Option<RetainedTopologyStatus> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.status()),
+            None => None,
+        }
+    }
+
+    /// Returns final boundary-role assignment blocker, if present.
+    pub const fn boundary_build_blocker(&self) -> Option<UncertaintyReason> {
+        match self.boundary_build_report() {
+            Some(report) => report.blocker(),
+            None => None,
+        }
     }
 
     /// Returns source contour count from final boundary-role assignment, if reached.
@@ -2996,7 +3064,6 @@ mod tests {
             RegionBooleanStage2::RegionRoleAssignment
         );
         assert_eq!(result.report().blocker(), Some(UncertaintyReason::Boundary));
-        let boundary_report = result.report().boundary_build_report().unwrap();
         assert_eq!(
             result
                 .report()
@@ -3026,8 +3093,8 @@ mod tests {
             Some(1)
         );
         assert_eq!(
-            boundary_report.stage(),
-            crate::RegionBoundaryContourBuildStage2::NestingValidation
+            result.report().boundary_build_stage(),
+            Some(crate::RegionBoundaryContourBuildStage2::NestingValidation)
         );
     }
 }
