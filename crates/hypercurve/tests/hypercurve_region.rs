@@ -1074,14 +1074,10 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     let result = attempt.evaluate(&policy()).unwrap();
 
     assert_eq!(result.source_segment_count(), 4);
-    assert_eq!(
-        attempt.request().source_line_segments(),
-        Some(lines.as_slice())
-    );
-    assert_eq!(attempt.request().source_segments().len(), 4);
+    assert_eq!(result.source_line_segments(), Some(lines.as_slice()));
+    assert_eq!(result.source_segments().len(), 4);
     assert!(
-        attempt
-            .request()
+        result
             .source_segments()
             .iter()
             .all(|segment| matches!(segment, Segment2::Line(_)))
@@ -2544,8 +2540,8 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     let result = attempt.evaluate(&policy()).unwrap();
 
     assert_eq!(result.source_segment_count(), 2);
-    assert_eq!(attempt.request().fill_rule(), FillRule::NonZero);
-    assert_eq!(attempt.request().source_segments(), segments.as_slice());
+    assert_eq!(result.fill_rule(), FillRule::NonZero);
+    assert_eq!(result.source_segments(), segments.as_slice());
     assert_eq!(result.request(), attempt.request());
     assert_eq!(
         result.source_segment_kind_counts(),

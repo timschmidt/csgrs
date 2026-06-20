@@ -6181,6 +6181,21 @@ impl ExactCurveArrangementResult2 {
         self.workspace().request()
     }
 
+    /// Returns the source segments supplied to the retained arrangement request.
+    pub fn source_segments(&self) -> &[Segment2] {
+        self.request().source_segments()
+    }
+
+    /// Returns line-only source carriers when the retained request came from a line-specific API.
+    pub fn source_line_segments(&self) -> Option<&[LineSeg2]> {
+        self.request().source_line_segments()
+    }
+
+    /// Returns the fill rule retained by the arrangement request.
+    pub const fn fill_rule(&self) -> FillRule {
+        self.request().fill_rule()
+    }
+
     /// Returns retained source segment count from the arrangement request.
     pub fn source_segment_count(&self) -> usize {
         self.request().source_segment_count()
