@@ -6339,6 +6339,19 @@ impl ExactCurveArrangementResult2 {
         self.workspace().source_segment_cache()
     }
 
+    /// Returns retained source AABB buckets grouped by certification status.
+    pub const fn source_aabb_bucket_cache(&self) -> &ExactCurveArrangementSourceAabbBucketCache2 {
+        self.source_segment_cache().source_aabb_bucket_cache()
+    }
+
+    /// Returns retained source segment buckets grouped by primitive family.
+    pub const fn source_segment_kind_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementSourceSegmentKindBucketCache2 {
+        self.source_segment_cache()
+            .source_segment_kind_bucket_cache()
+    }
+
     /// Returns exact source endpoint buckets retained during workspace preparation.
     pub const fn source_endpoint_bucket_cache(
         &self,
@@ -8244,6 +8257,19 @@ impl ExactCurveArrangementReport2 {
     /// Returns retained source segment facts prepared before split scheduling.
     pub const fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
         &self.source_segment_cache
+    }
+
+    /// Returns retained source AABB buckets grouped by certification status.
+    pub const fn source_aabb_bucket_cache(&self) -> &ExactCurveArrangementSourceAabbBucketCache2 {
+        self.source_segment_cache().source_aabb_bucket_cache()
+    }
+
+    /// Returns retained source segment buckets grouped by primitive family.
+    pub const fn source_segment_kind_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementSourceSegmentKindBucketCache2 {
+        self.source_segment_cache()
+            .source_segment_kind_bucket_cache()
     }
 
     /// Returns exact source endpoint buckets retained during workspace preparation.

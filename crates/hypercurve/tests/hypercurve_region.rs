@@ -3359,6 +3359,16 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.source_segment_cache()
     );
     assert_eq!(
+        result.source_segment_cache().source_aabb_bucket_cache(),
+        result.source_aabb_bucket_cache()
+    );
+    assert_eq!(
+        result
+            .source_segment_cache()
+            .source_segment_kind_bucket_cache(),
+        result.source_segment_kind_bucket_cache()
+    );
+    assert_eq!(
         result.workspace().source_endpoint_bucket_cache(),
         result.source_endpoint_bucket_cache()
     );
@@ -4983,6 +4993,14 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(
         arrangement_report.evaluated_output(),
         result.evaluated_output()
+    );
+    assert_eq!(
+        arrangement_report.source_aabb_bucket_cache(),
+        result.source_aabb_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.source_segment_kind_bucket_cache(),
+        result.source_segment_kind_bucket_cache()
     );
     assert_eq!(
         arrangement_report.source_segment_count(),
