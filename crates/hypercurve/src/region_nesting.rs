@@ -7471,6 +7471,14 @@ impl ExactCurveArrangementEvaluation2 {
         ExactCurveArrangementReport2::from_evaluation(self)
     }
 
+    /// Consumes this evaluation and returns a report assembled from retained caches.
+    pub fn into_arrangement_report(self) -> ExactCurveArrangementReport2 {
+        ExactCurveArrangementReport2 {
+            workspace: self.workspace,
+            summary_cache: self.summary_cache,
+        }
+    }
+
     /// Consumes this evaluation and returns the retained workspace.
     pub fn into_workspace(self) -> ExactCurveWorkspace2 {
         self.workspace
@@ -7653,6 +7661,11 @@ impl ExactCurveArrangementResult2 {
         drop(region);
         drop(derived_compatibility_projection);
         evaluation
+    }
+
+    /// Consumes this result and returns a report assembled from retained evaluation caches.
+    pub fn into_arrangement_report(self) -> ExactCurveArrangementReport2 {
+        self.into_evaluation().into_arrangement_report()
     }
 
     /// Consumes this result and returns the retained workspace consumed by the evaluation.
