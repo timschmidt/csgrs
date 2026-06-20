@@ -6455,6 +6455,12 @@ impl ExactCurveArrangementResult2 {
         }
     }
 
+    /// Returns retained output role reports when role assignment was reached.
+    pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
+        self.boundary_build_report()
+            .map(RegionBoundaryContourBuildReport2::role_reports)
+    }
+
     /// Returns final retained evaluation facts derived from workspace caches.
     pub const fn summary_cache(&self) -> &ExactCurveArrangementEvaluationSummaryCache2 {
         self.evaluation.summary_cache()
