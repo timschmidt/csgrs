@@ -295,6 +295,12 @@ fn boundary_contour_region_report_assigns_material_and_hole_roles() {
         region.classify_point(&p(5, 5), &policy()),
         Classification::Decided(RegionPointLocation::Outside)
     );
+
+    let owned_report = built.clone().into_report();
+    assert_eq!(&owned_report, built.report());
+    let (owned_region, owned_parts_report) = built.clone().into_parts();
+    assert_eq!(owned_region.as_ref(), built.region());
+    assert_eq!(&owned_parts_report, built.report());
 }
 
 #[test]
@@ -3975,6 +3981,12 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         derived_region_build_result.report(),
         &derived_region_build_report
     );
+    let owned_derived_report = derived_region_build_result.clone().into_report();
+    assert_eq!(owned_derived_report, derived_region_build_report);
+    let (owned_derived_region, owned_derived_parts_report) =
+        derived_region_build_result.clone().into_parts();
+    assert_eq!(owned_derived_region.as_ref(), result.region());
+    assert_eq!(owned_derived_parts_report, derived_region_build_report);
     assert_eq!(
         result.evaluation().derived_region_build_report(),
         derived_region_build_report

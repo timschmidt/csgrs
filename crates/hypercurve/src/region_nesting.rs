@@ -1425,12 +1425,12 @@ fn evaluate_unordered_line_segments_region_result(
     let built = Region2::from_boundary_contours_with_report(contours, policy)?;
     let status = built.status();
     let blocker = built.blocker();
-    let boundary_build_report = built.report().clone();
     let output_ring_count = built.output_contour_count();
     let output_boundary_segment_count = built.output_segment_count();
     let output_boundary_segment_kind_counts = built.region().map(region_segment_kind_counts);
+    let (region, boundary_build_report) = built.into_parts();
     Ok(RegionLineSegmentRegionBuildResult2 {
-        region: built.into_region(),
+        region,
         report: RegionLineSegmentRegionBuildReport2 {
             stage: RegionLineSegmentRegionBuildStage2::RegionRoleAssignment,
             source_segment_count: segments.len(),
@@ -1688,12 +1688,12 @@ fn evaluate_unordered_segments_region_result(
     let built = Region2::from_boundary_contours_with_report(contours, policy)?;
     let status = built.status();
     let blocker = built.blocker();
-    let boundary_build_report = built.report().clone();
     let output_ring_count = built.output_contour_count();
     let output_boundary_segment_count = built.output_segment_count();
     let output_boundary_segment_kind_counts = built.region().map(region_segment_kind_counts);
+    let (region, boundary_build_report) = built.into_parts();
     Ok(RegionLineSegmentRegionBuildResult2 {
-        region: built.into_region(),
+        region,
         report: RegionLineSegmentRegionBuildReport2 {
             stage: RegionLineSegmentRegionBuildStage2::RegionRoleAssignment,
             source_segment_count: segments.len(),
@@ -8930,6 +8930,16 @@ impl RegionBoundaryContourBuildResult2 {
         self.region
     }
 
+    /// Consumes this result and returns the retained region-construction report.
+    pub fn into_report(self) -> RegionBoundaryContourBuildReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized region with its report.
+    pub fn into_parts(self) -> (Option<Region2>, RegionBoundaryContourBuildReport2) {
+        (self.region, self.report)
+    }
+
     /// Returns the retained region-construction report.
     pub const fn report(&self) -> &RegionBoundaryContourBuildReport2 {
         &self.report
@@ -10766,6 +10776,16 @@ impl RegionLineSegmentRegionBuildResult2 {
     /// Consumes this result and returns the materialized region, if any.
     pub fn into_region(self) -> Option<Region2> {
         self.region
+    }
+
+    /// Consumes this result and returns the retained line-region construction report.
+    pub fn into_report(self) -> RegionLineSegmentRegionBuildReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized region with its report.
+    pub fn into_parts(self) -> (Option<Region2>, RegionLineSegmentRegionBuildReport2) {
+        (self.region, self.report)
     }
 
     /// Returns the retained line-region construction report.
