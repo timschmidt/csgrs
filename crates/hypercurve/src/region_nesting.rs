@@ -1298,11 +1298,11 @@ impl Region2 {
     ///
     /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
     /// retained accessors directly. Use
-    /// [`ExactCurveArrangementResult2::arrangement_report`] only when a
-    /// compatibility report is required.
+    /// [`ExactCurveArrangementResult2::derived_region_build_result`] only when
+    /// the legacy-shaped compatibility result is required.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate; call arrangement_report() only for derived compatibility reports"
+        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate; call derived_region_build_result() only for legacy-shaped compatibility output"
     )]
     pub fn from_unordered_line_segments_borrowed_with_report(
         segments: &[LineSeg2],
@@ -1321,11 +1321,11 @@ impl Region2 {
     ///
     /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
     /// retained accessors directly. Use
-    /// [`ExactCurveArrangementResult2::arrangement_report`] only when a
-    /// compatibility report is required.
+    /// [`ExactCurveArrangementResult2::derived_region_build_result`] only when
+    /// the legacy-shaped compatibility result is required.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate; call arrangement_report() only for derived compatibility reports"
+        note = "use ExactCurveArrangementRequest2::from_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate; call derived_region_build_result() only for legacy-shaped compatibility output"
     )]
     pub fn from_unordered_line_segments_with_report(
         segments: Vec<LineSeg2>,
@@ -1560,11 +1560,11 @@ impl Region2 {
     ///
     /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
     /// retained accessors directly. Use
-    /// [`ExactCurveArrangementResult2::arrangement_report`] only when a
-    /// compatibility report is required.
+    /// [`ExactCurveArrangementResult2::derived_region_build_result`] only when
+    /// the legacy-shaped compatibility result is required.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_segments with ExactCurveArrangementAttempt2::evaluate; call arrangement_report() only for derived compatibility reports"
+        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_segments with ExactCurveArrangementAttempt2::evaluate; call derived_region_build_result() only for legacy-shaped compatibility output"
     )]
     pub fn from_unordered_segments_borrowed_with_report(
         segments: &[Segment2],
@@ -1589,11 +1589,11 @@ impl Region2 {
     ///
     /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
     /// retained accessors directly. Use
-    /// [`ExactCurveArrangementResult2::arrangement_report`] only when a
-    /// compatibility report is required.
+    /// [`ExactCurveArrangementResult2::derived_region_build_result`] only when
+    /// the legacy-shaped compatibility result is required.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_unordered_segments with ExactCurveArrangementAttempt2::evaluate; call arrangement_report() only for derived compatibility reports"
+        note = "use ExactCurveArrangementRequest2::from_unordered_segments with ExactCurveArrangementAttempt2::evaluate; call derived_region_build_result() only for legacy-shaped compatibility output"
     )]
     pub fn from_unordered_segments_with_report(
         segments: Vec<Segment2>,
@@ -8576,7 +8576,7 @@ impl ExactCurveArrangementResult2 {
     /// Returns the underlying legacy region build result.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementResult2 retained accessors, or arrangement_report() when a derived compatibility report is required"
+        note = "use ExactCurveArrangementResult2 retained accessors, or derived_region_build_result() when a legacy-shaped compatibility result is required"
     )]
     pub const fn region_build_result(&self) -> &RegionLineSegmentRegionBuildResult2 {
         self.derived_compatibility_region_build_result()
@@ -8605,7 +8605,7 @@ impl ExactCurveArrangementResult2 {
     /// Returns the underlying legacy region build report.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementResult2 retained accessors, or arrangement_report() when a derived compatibility report is required"
+        note = "use ExactCurveArrangementResult2 retained accessors, or derived_region_build_report() when a legacy-shaped compatibility report is required"
     )]
     pub const fn report(&self) -> &RegionLineSegmentRegionBuildReport2 {
         self.derived_compatibility_region_build_result().report()
@@ -8614,7 +8614,7 @@ impl ExactCurveArrangementResult2 {
     /// Consumes this result and returns the underlying legacy region build result.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementResult2 retained accessors, into_region(), or arrangement_report() when a derived compatibility report is required"
+        note = "use ExactCurveArrangementResult2 retained accessors, into_region(), or derived_region_build_result() when a legacy-shaped compatibility result is required"
     )]
     pub fn into_region_build_result(self) -> RegionLineSegmentRegionBuildResult2 {
         self.into_compatibility_region_build_result()
@@ -8698,10 +8698,7 @@ impl ExactCurveArrangementResult2 {
     /// This is the retained replacement for deprecated `Region2::from_unordered_*_with_report`
     /// callers that need owned output plus report data without taking the legacy compatibility
     /// result.
-    #[deprecated(
-        since = "0.3.0",
-        note = "derive reports explicitly with arrangement_report(), then use region() or into_region()"
-    )]
+    #[deprecated(since = "0.3.0", note = "use into_region_with_arrangement_report()")]
     pub fn into_region_and_arrangement_report(
         self,
     ) -> (Option<Region2>, ExactCurveArrangementReport2) {
@@ -8714,7 +8711,7 @@ impl ExactCurveArrangementResult2 {
     /// from arrangement caches rather than the legacy compatibility result.
     #[deprecated(
         since = "0.3.0",
-        note = "derive reports explicitly with arrangement_report(), then use region_classification() or into_region_classification()"
+        note = "use into_region_classification_with_arrangement_report()"
     )]
     pub fn into_region_classification_and_arrangement_report(
         self,
