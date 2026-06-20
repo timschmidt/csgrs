@@ -415,9 +415,48 @@ impl BooleanBoundaryFragmentEmissionResult2 {
         self.fragments
     }
 
+    /// Consumes this result and returns retained emission evidence.
+    pub fn into_report(self) -> BooleanBoundaryFragmentEmissionReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns emitted boundary fragments with their report.
+    pub fn into_parts(
+        self,
+    ) -> (
+        Option<BooleanBoundaryFragmentSet>,
+        BooleanBoundaryFragmentEmissionReport2,
+    ) {
+        (self.fragments, self.report)
+    }
+
     /// Returns retained emission evidence.
     pub const fn report(&self) -> &BooleanBoundaryFragmentEmissionReport2 {
         &self.report
+    }
+
+    /// Returns emitted boundary fragments as a classification while retaining this result.
+    pub fn fragments_classification(&self) -> Classification<&BooleanBoundaryFragmentSet> {
+        match self.fragments() {
+            Some(fragments) => Classification::Decided(fragments),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns emitted boundary fragments as a classification.
+    pub fn into_fragments_classification(self) -> Classification<BooleanBoundaryFragmentSet> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_fragments() {
+            Some(fragments) => Classification::Decided(fragments),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
@@ -666,16 +705,9 @@ impl RegionFragmentSet {
         op: BooleanOp,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<BooleanFragmentSelection>> {
-        let result = self.classify_for_boolean_with_report(first, second, op, policy)?;
-        let blocker = result
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        if let Some(selection) = result.into_selection() {
-            Ok(Classification::Decided(selection))
-        } else {
-            Ok(Classification::Uncertain(blocker))
-        }
+        Ok(self
+            .classify_for_boolean_with_report(first, second, op, policy)?
+            .into_selection_classification())
     }
 
     /// Classifies fragments against the opposite region and retains selection evidence.
@@ -718,15 +750,7 @@ impl RegionFragmentSet {
             policy,
             &mut classify_opposite,
         )?;
-        let blocker = result
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        if let Some(selection) = result.into_selection() {
-            Ok(Classification::Decided(selection))
-        } else {
-            Ok(Classification::Uncertain(blocker))
-        }
+        Ok(result.into_selection_classification())
     }
 
     pub(crate) fn classify_for_boolean_with_point_classifier_with_report<F>(
@@ -878,9 +902,48 @@ impl BooleanFragmentSelectionResult2 {
         self.selection
     }
 
+    /// Consumes this result and returns retained selection evidence.
+    pub fn into_report(self) -> BooleanFragmentSelectionReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns materialized selection with its report.
+    pub fn into_parts(
+        self,
+    ) -> (
+        Option<BooleanFragmentSelection>,
+        BooleanFragmentSelectionReport2,
+    ) {
+        (self.selection, self.report)
+    }
+
     /// Returns retained selection evidence.
     pub const fn report(&self) -> &BooleanFragmentSelectionReport2 {
         &self.report
+    }
+
+    /// Returns materialized fragment selection as a classification while retaining this result.
+    pub fn selection_classification(&self) -> Classification<&BooleanFragmentSelection> {
+        match self.selection() {
+            Some(selection) => Classification::Decided(selection),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns materialized fragment selection as a classification.
+    pub fn into_selection_classification(self) -> Classification<BooleanFragmentSelection> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_selection() {
+            Some(selection) => Classification::Decided(selection),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 

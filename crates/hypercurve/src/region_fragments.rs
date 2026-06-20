@@ -157,17 +157,10 @@ pub(crate) fn split_region_views_at_intersections(
     intersections: &RegionIntersectionSet,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<RegionFragmentSet>> {
-    let result =
-        split_region_views_at_intersections_with_report(first, second, intersections, policy)?;
-    let blocker = result
-        .report()
-        .blocker()
-        .unwrap_or(UncertaintyReason::Unsupported);
-    if let Some(fragments) = result.into_fragments() {
-        Ok(Classification::Decided(fragments))
-    } else {
-        Ok(Classification::Uncertain(blocker))
-    }
+    Ok(
+        split_region_views_at_intersections_with_report(first, second, intersections, policy)?
+            .into_fragments_classification(),
+    )
 }
 
 pub(crate) fn split_region_views_at_intersections_with_report(
@@ -633,9 +626,43 @@ impl RegionFragmentBuildResult2 {
         self.fragments
     }
 
+    /// Consumes this result and returns retained fragment-build evidence.
+    pub fn into_report(self) -> RegionFragmentBuildReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns materialized fragments with their report.
+    pub fn into_parts(self) -> (Option<RegionFragmentSet>, RegionFragmentBuildReport2) {
+        (self.fragments, self.report)
+    }
+
     /// Returns retained fragment-build evidence.
     pub const fn report(&self) -> &RegionFragmentBuildReport2 {
         &self.report
+    }
+
+    /// Returns materialized fragments as a classification while retaining this result.
+    pub fn fragments_classification(&self) -> Classification<&RegionFragmentSet> {
+        match self.fragments() {
+            Some(fragments) => Classification::Decided(fragments),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns materialized fragments as a classification.
+    pub fn into_fragments_classification(self) -> Classification<RegionFragmentSet> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_fragments() {
+            Some(fragments) => Classification::Decided(fragments),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 

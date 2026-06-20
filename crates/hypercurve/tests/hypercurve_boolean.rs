@@ -122,12 +122,22 @@ fn overlapping_fragments() -> (Region2, Region2, hypercurve::RegionFragmentSet) 
     let first = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
     let second = Region2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
     let intersections = first.intersect_region(&second, &policy()).unwrap();
-    let Classification::Decided(fragments) = intersections
-        .split_regions(&first.as_view(), &second.as_view(), &policy())
-        .unwrap()
-    else {
+    let fragment_result = intersections
+        .split_regions_with_report(&first.as_view(), &second.as_view(), &policy())
+        .unwrap();
+    let Classification::Decided(fragments) = fragment_result.fragments_classification() else {
         panic!("expected decided fragments");
     };
+    let fragments = fragments.clone();
+    let fragment_report = fragment_result.clone().into_report();
+    assert_eq!(&fragment_report, fragment_result.report());
+    let (owned_fragments, owned_fragment_report) = fragment_result.clone().into_parts();
+    assert_eq!(owned_fragments.as_ref(), fragment_result.fragments());
+    assert_eq!(&owned_fragment_report, fragment_result.report());
+    assert!(matches!(
+        fragment_result.into_fragments_classification(),
+        Classification::Decided(owned) if owned == fragments
+    ));
 
     (first, second, fragments)
 }
@@ -886,6 +896,19 @@ fn boolean_fragment_selection_defers_shared_boundary_fragments() {
         }
     );
     assert_eq!(reported.report().blocker(), None);
+    assert_eq!(
+        reported.selection_classification(),
+        Classification::Decided(&selection)
+    );
+    let reported_selection_report = reported.clone().into_report();
+    assert_eq!(&reported_selection_report, reported.report());
+    let (owned_selection, owned_selection_report) = reported.clone().into_parts();
+    assert_eq!(owned_selection.as_ref(), reported.selection());
+    assert_eq!(&owned_selection_report, reported.report());
+    assert_eq!(
+        reported.into_selection_classification(),
+        Classification::Decided(selection.clone())
+    );
     let emitted_result = selection
         .emit_boundary_fragments_with_report(&fragments)
         .unwrap();
@@ -913,6 +936,19 @@ fn boolean_fragment_selection_defers_shared_boundary_fragments() {
     let emitted = emitted_result
         .fragments()
         .expect("reported unresolved emission should materialize");
+    assert_eq!(
+        emitted_result.fragments_classification(),
+        Classification::Decided(emitted)
+    );
+    let emitted_report = emitted_result.clone().into_report();
+    assert_eq!(&emitted_report, emitted_result.report());
+    let (owned_emitted, owned_emitted_report) = emitted_result.clone().into_parts();
+    assert_eq!(owned_emitted.as_ref(), emitted_result.fragments());
+    assert_eq!(&owned_emitted_report, emitted_result.report());
+    assert_eq!(
+        emitted_result.clone().into_fragments_classification(),
+        Classification::Decided(emitted.clone())
+    );
     assert!(!emitted.is_ready_for_traversal());
     assert_eq!(
         emitted.unresolved_len(),
