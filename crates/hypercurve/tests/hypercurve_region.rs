@@ -2817,8 +2817,40 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(arrangement_report.split_cache(), result.split_cache());
     assert_eq!(
+        arrangement_report.split_relation_bucket_cache(),
+        result.split_relation_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.split_intersection_bucket_cache(),
+        result.split_intersection_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.split_intersection_parameter_cache(),
+        result.split_intersection_parameter_cache()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_cache(),
+        result.split_blocker_cache()
+    );
+    assert_eq!(
         arrangement_report.endpoint_graph_cache(),
         result.endpoint_graph_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_bucket_cache(),
+        result.arranged_endpoint_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_side_bucket_cache(),
+        result.arranged_endpoint_side_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_point_cache(),
+        result.arranged_endpoint_point_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_degree_bucket_cache(),
+        result.arranged_endpoint_degree_bucket_cache()
     );
     assert_eq!(
         arrangement_report.ring_assembly_cache(),
@@ -5108,6 +5140,38 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(
         arrangement_report.arranged_fragment_source_range_cache(),
         result.arranged_fragment_source_range_cache()
+    );
+    assert_eq!(
+        arrangement_report.split_relation_bucket_cache(),
+        result.split_relation_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.split_intersection_bucket_cache(),
+        result.split_intersection_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.split_intersection_parameter_cache(),
+        result.split_intersection_parameter_cache()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_cache(),
+        result.split_blocker_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_bucket_cache(),
+        result.arranged_endpoint_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_side_bucket_cache(),
+        result.arranged_endpoint_side_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_point_cache(),
+        result.arranged_endpoint_point_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_degree_bucket_cache(),
+        result.arranged_endpoint_degree_bucket_cache()
     );
     assert_eq!(
         arrangement_report.output_ring_bucket_cache(),

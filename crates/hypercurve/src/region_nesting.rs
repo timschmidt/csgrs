@@ -2505,9 +2505,87 @@ impl ExactCurveWorkspace2 {
         self.split_cache.as_ref()
     }
 
+    /// Returns retained split-stage relation buckets.
+    pub const fn split_relation_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementSplitRelationBucketCache2> {
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.relation_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns exact split-intersection point buckets.
+    pub const fn split_intersection_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementSplitIntersectionBucketCache2> {
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.intersection_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns exact source-parameter evidence for retained split intersections.
+    pub const fn split_intersection_parameter_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementSplitIntersectionParameterCache2> {
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.intersection_parameter_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns split-stage blocker source-pair evidence, when split evaluation blocked.
+    pub const fn split_blocker_cache(&self) -> Option<&ExactCurveArrangementSplitBlockerCache2> {
+        match self.split_cache() {
+            Some(split_cache) => split_cache.blocker_cache(),
+            None => None,
+        }
+    }
+
     /// Returns exact endpoint-bucket evidence retained from the evaluated arrangement.
     pub const fn endpoint_graph_cache(&self) -> Option<&ExactCurveArrangementEndpointGraphCache2> {
         self.endpoint_graph_cache.as_ref()
+    }
+
+    /// Returns exact arranged endpoint buckets retained by endpoint-graph validation.
+    pub const fn arranged_endpoint_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedEndpointBucketCache2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.endpoint_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns arranged endpoints grouped by retained endpoint side.
+    pub const fn arranged_endpoint_side_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedEndpointSideBucketCache2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.endpoint_side_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns exact endpoint records for arranged fragments.
+    pub const fn arranged_endpoint_point_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedEndpointPointCache2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.endpoint_point_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns structural arranged endpoints grouped by retained degree.
+    pub const fn arranged_endpoint_degree_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedEndpointDegreeBucketCache2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.endpoint_degree_bucket_cache()),
+            None => None,
+        }
     }
 
     /// Returns exact ring-traversal evidence retained from the evaluated arrangement.
@@ -8334,9 +8412,87 @@ impl ExactCurveArrangementReport2 {
         self.split_cache.as_ref()
     }
 
+    /// Returns retained split-stage relation buckets.
+    pub const fn split_relation_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementSplitRelationBucketCache2> {
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.relation_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns exact split-intersection point buckets.
+    pub const fn split_intersection_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementSplitIntersectionBucketCache2> {
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.intersection_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns exact source-parameter evidence for retained split intersections.
+    pub const fn split_intersection_parameter_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementSplitIntersectionParameterCache2> {
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.intersection_parameter_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns split-stage blocker source-pair evidence, when split evaluation blocked.
+    pub const fn split_blocker_cache(&self) -> Option<&ExactCurveArrangementSplitBlockerCache2> {
+        match self.split_cache() {
+            Some(split_cache) => split_cache.blocker_cache(),
+            None => None,
+        }
+    }
+
     /// Returns exact endpoint-bucket evidence retained from the evaluated arrangement.
     pub const fn endpoint_graph_cache(&self) -> Option<&ExactCurveArrangementEndpointGraphCache2> {
         self.endpoint_graph_cache.as_ref()
+    }
+
+    /// Returns exact arranged endpoint buckets retained by endpoint-graph validation.
+    pub const fn arranged_endpoint_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedEndpointBucketCache2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.endpoint_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns arranged endpoints grouped by retained endpoint side.
+    pub const fn arranged_endpoint_side_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedEndpointSideBucketCache2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.endpoint_side_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns exact endpoint records for arranged fragments.
+    pub const fn arranged_endpoint_point_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedEndpointPointCache2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.endpoint_point_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns structural arranged endpoints grouped by retained degree.
+    pub const fn arranged_endpoint_degree_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedEndpointDegreeBucketCache2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.endpoint_degree_bucket_cache()),
+            None => None,
+        }
     }
 
     /// Returns exact ring-traversal evidence retained from the evaluated arrangement.
