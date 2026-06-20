@@ -558,6 +558,132 @@ fn unordered_line_segments_build_region_with_source_provenance() {
     assert!(source_reports[2].reversed());
     assert_eq!(source_reports[2].source_segment_start_point(), &p(0, 4));
     assert_eq!(source_reports[2].source_segment_end_point(), &p(4, 4));
+
+    let ring_cache = built.ring_assembly_cache().unwrap();
+    assert_eq!(ring_cache.arranged_source_reports(), arranged_sources);
+    assert_eq!(ring_cache.source_reports(), source_reports);
+
+    let fragment_cache = ring_cache.arranged_fragment_cache();
+    assert_eq!(fragment_cache.arranged_fragment_count(), 4);
+    assert_eq!(fragment_cache.source_ref_count(), 4);
+    assert_eq!(
+        fragment_cache.source_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
+    assert_eq!(
+        fragment_cache.arranged_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
+    assert_eq!(fragment_cache.max_source_ref_count(), 1);
+    assert_eq!(fragment_cache.fragments().len(), 4);
+    assert_eq!(fragment_cache.fragments()[0].arranged_segment_index(), 0);
+    assert_eq!(
+        fragment_cache.fragments()[0].arranged_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(fragment_cache.fragments()[0].output_start_point(), &p(0, 0));
+    assert_eq!(fragment_cache.fragments()[0].output_end_point(), &p(4, 0));
+    assert_eq!(fragment_cache.fragments()[0].source_refs().len(), 1);
+    assert_eq!(
+        fragment_cache.fragments()[0].source_refs()[0].arranged_source_report_index(),
+        0
+    );
+    assert_eq!(
+        fragment_cache.fragments()[0].source_refs()[0].source_segment_index(),
+        0
+    );
+    assert_eq!(
+        fragment_cache
+            .arranged_fragment_kind_bucket_cache()
+            .line_fragment_ref_count(),
+        4
+    );
+    assert_eq!(
+        fragment_cache
+            .arranged_fragment_status_bucket_cache()
+            .native_exact_ref_count(),
+        4
+    );
+    assert_eq!(
+        fragment_cache
+            .arranged_fragment_source_range_cache()
+            .full_source_range_ref_count(),
+        4
+    );
+    assert_eq!(
+        fragment_cache
+            .arranged_fragment_source_range_cache()
+            .partial_source_range_ref_count(),
+        0
+    );
+
+    let output_ring_bucket_cache = ring_cache.output_ring_bucket_cache();
+    assert_eq!(output_ring_bucket_cache.ring_count(), 1);
+    assert_eq!(output_ring_bucket_cache.segment_ref_count(), 4);
+    assert_eq!(output_ring_bucket_cache.max_ring_segment_count(), 4);
+    assert_eq!(output_ring_bucket_cache.rings().len(), 1);
+    assert_eq!(output_ring_bucket_cache.rings()[0].output_ring_index(), 0);
+    assert_eq!(output_ring_bucket_cache.rings()[0].segments().len(), 4);
+    assert_eq!(
+        output_ring_bucket_cache.rings()[0].segments()[0].source_report_index(),
+        0
+    );
+    assert_eq!(
+        output_ring_bucket_cache.rings()[0].segments()[0].output_segment_index(),
+        0
+    );
+    assert!(!output_ring_bucket_cache.rings()[0].segments()[0].reversed());
+
+    let output_kind_bucket_cache = ring_cache.output_segment_kind_bucket_cache();
+    assert_eq!(output_kind_bucket_cache.line_segment_ref_count(), 4);
+    assert_eq!(output_kind_bucket_cache.arc_segment_ref_count(), 0);
+    assert_eq!(output_kind_bucket_cache.max_bucket_size(), 4);
+
+    let output_source_range_cache = ring_cache.output_segment_source_range_cache();
+    assert_eq!(output_source_range_cache.output_segment_ref_count(), 4);
+    assert_eq!(output_source_range_cache.full_source_range_ref_count(), 2);
+    assert_eq!(
+        output_source_range_cache.partial_source_range_ref_count(),
+        2
+    );
+    assert_eq!(
+        output_source_range_cache.ranges()[0].source_segment_index(),
+        0
+    );
+    assert_eq!(
+        output_source_range_cache.ranges()[0].source_range(),
+        &hypercurve::ParamRange::new(s(0), s(1))
+    );
+
+    let output_endpoint_cache = ring_cache.output_segment_endpoint_cache();
+    assert_eq!(output_endpoint_cache.output_segment_ref_count(), 4);
+    assert_eq!(output_endpoint_cache.output_endpoint_ref_count(), 8);
+    assert_eq!(
+        output_endpoint_cache.segments()[0].output_start_point(),
+        &p(0, 0)
+    );
+    assert_eq!(
+        output_endpoint_cache.segments()[0].output_end_point(),
+        &p(4, 0)
+    );
+
+    let output_continuity_cache = ring_cache.output_ring_continuity_cache();
+    assert_eq!(output_continuity_cache.output_ring_ref_count(), 1);
+    assert_eq!(output_continuity_cache.output_connection_ref_count(), 4);
+    assert_eq!(output_continuity_cache.max_ring_connection_count(), 4);
+    assert_eq!(
+        output_continuity_cache.connections()[0].output_end_point(),
+        output_continuity_cache.connections()[0].next_output_start_point()
+    );
+
+    let output_direction_bucket_cache = ring_cache.output_segment_direction_bucket_cache();
+    assert_eq!(output_direction_bucket_cache.output_segment_ref_count(), 4);
+    assert_eq!(output_direction_bucket_cache.forward_segment_ref_count(), 2);
+    assert_eq!(
+        output_direction_bucket_cache.reversed_segment_ref_count(),
+        2
+    );
+    assert_eq!(output_direction_bucket_cache.max_bucket_size(), 2);
     assert_eq!(source_reports[3].source_segment_index(), 2);
     assert!(source_reports[3].reversed());
     assert!(built.exact_endpoint_connection_count().unwrap() >= 4);
