@@ -270,6 +270,7 @@ Useful local checks:
 
 ```text
 RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps
+cargo run --example arrangement_report
 cargo run --manifest-path examples/hypercurve_ui/Cargo.toml
 cargo check --manifest-path examples/hypercurve_ui/Cargo.toml --target wasm32-unknown-unknown
 cargo bench --bench containment
