@@ -6274,7 +6274,15 @@ impl ExactCurveArrangementResult2 {
     }
 
     fn into_compatibility_region_build_result(self) -> RegionLineSegmentRegionBuildResult2 {
-        self.compatibility_projection
+        let Self {
+            evaluation: _,
+            region,
+            compatibility_projection,
+        } = self;
+        RegionLineSegmentRegionBuildResult2 {
+            region,
+            report: compatibility_projection.report,
+        }
     }
 
     /// Returns the retained evaluation record.

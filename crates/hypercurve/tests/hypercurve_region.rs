@@ -1301,6 +1301,22 @@ fn exact_curve_arrangement_result_returns_region_classification() {
         ),
         Classification::Uncertain(reason) => panic!("expected owned region, got {reason:?}"),
     }
+
+    let retained_result = evaluate_unordered_line_segments(
+        vec![
+            line(0, 0, 4, 0),
+            line(0, 4, 4, 4),
+            line(0, 0, 0, 4),
+            line(4, 0, 4, 4),
+        ],
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
+    #[allow(deprecated)]
+    let legacy_projection = retained_result.into_region_build_result();
+    assert!(legacy_projection.region().is_some());
+    assert!(legacy_projection.report().status().is_native_exact());
 }
 
 #[test]
@@ -1352,6 +1368,20 @@ fn exact_curve_arrangement_result_classification_preserves_blocker() {
     assert_eq!(
         classification,
         Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+
+    let result = evaluate_unordered_line_segments(
+        vec![line(0, 0, 1, 0), line(3, 0, 4, 0)],
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
+    #[allow(deprecated)]
+    let legacy_projection = result.into_region_build_result();
+    assert!(legacy_projection.region().is_none());
+    assert_eq!(
+        legacy_projection.report().blocker(),
+        Some(UncertaintyReason::Boundary)
     );
 }
 
