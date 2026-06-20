@@ -3812,9 +3812,43 @@ impl CurveStringTrimResult2 {
         self.curve_string
     }
 
+    /// Consumes this result and returns retained trim evidence.
+    pub fn into_report(self) -> CurveStringTrimReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized trim with its report.
+    pub fn into_parts(self) -> (Option<CurveString2>, CurveStringTrimReport2) {
+        (self.curve_string, self.report)
+    }
+
     /// Returns the retained trim report.
     pub const fn report(&self) -> &CurveStringTrimReport2 {
         &self.report
+    }
+
+    /// Returns the trim output as a convenience classification while retaining this result.
+    pub fn curve_string_classification(&self) -> Classification<&CurveString2> {
+        match self.curve_string() {
+            Some(curve_string) => Classification::Decided(curve_string),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the trim output as a convenience classification.
+    pub fn into_curve_string_classification(self) -> Classification<CurveString2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_curve_string() {
+            Some(curve_string) => Classification::Decided(curve_string),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
@@ -4817,9 +4851,43 @@ impl CurveStringExtendResult2 {
         self.curve_string
     }
 
+    /// Consumes this result and returns retained extension evidence.
+    pub fn into_report(self) -> CurveStringExtendReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized extension with its report.
+    pub fn into_parts(self) -> (Option<CurveString2>, CurveStringExtendReport2) {
+        (self.curve_string, self.report)
+    }
+
     /// Returns the retained extension report.
     pub const fn report(&self) -> &CurveStringExtendReport2 {
         &self.report
+    }
+
+    /// Returns the extension output as a convenience classification while retaining this result.
+    pub fn curve_string_classification(&self) -> Classification<&CurveString2> {
+        match self.curve_string() {
+            Some(curve_string) => Classification::Decided(curve_string),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the extension output as a convenience classification.
+    pub fn into_curve_string_classification(self) -> Classification<CurveString2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_curve_string() {
+            Some(curve_string) => Classification::Decided(curve_string),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 

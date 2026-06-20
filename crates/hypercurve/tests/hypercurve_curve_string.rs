@@ -2172,6 +2172,19 @@ fn curve_string_extend_line_end_to_exact_target() {
         Some(SegmentKindCounts { lines: 1, arcs: 0 })
     );
     assert!(extended.report().blocker().is_none());
+    assert!(matches!(
+        extended.curve_string_classification(),
+        Classification::Decided(curve_string) if curve_string.end() == Some(&p(5, 0))
+    ));
+    let owned_report = extended.clone().into_report();
+    assert_eq!(&owned_report, extended.report());
+    let (owned_curve, owned_parts_report) = extended.clone().into_parts();
+    assert_eq!(owned_curve.as_ref(), extended.curve_string());
+    assert_eq!(&owned_parts_report, extended.report());
+    assert!(matches!(
+        extended.clone().into_curve_string_classification(),
+        Classification::Decided(curve_string) if curve_string.end() == Some(&p(5, 0))
+    ));
     let curve = extended
         .curve_string()
         .expect("line extension should materialize");
@@ -2254,6 +2267,19 @@ fn curve_string_extend_line_reports_interior_target_boundary() {
     assert_eq!(
         extended.report().blocker(),
         Some(UncertaintyReason::Boundary)
+    );
+    assert_eq!(
+        extended.curve_string_classification(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    let owned_report = extended.clone().into_report();
+    assert_eq!(&owned_report, extended.report());
+    let (owned_curve, owned_parts_report) = extended.clone().into_parts();
+    assert_eq!(owned_curve.as_ref(), extended.curve_string());
+    assert_eq!(&owned_parts_report, extended.report());
+    assert_eq!(
+        extended.clone().into_curve_string_classification(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }
 
@@ -3096,6 +3122,21 @@ fn curve_string_trim_materializes_exact_line_subsegment_with_report() {
     );
     assert_eq!(trim.report().segment_reports()[0].range_start_point(), None);
     assert_eq!(trim.report().segment_reports()[0].range_end_point(), None);
+    assert!(matches!(
+        trim.curve_string_classification(),
+        Classification::Decided(curve_string)
+            if curve_string.start() == Some(&p(1, 0)) && curve_string.end() == Some(&p(3, 0))
+    ));
+    let owned_report = trim.clone().into_report();
+    assert_eq!(&owned_report, trim.report());
+    let (owned_curve, owned_parts_report) = trim.clone().into_parts();
+    assert_eq!(owned_curve.as_ref(), trim.curve_string());
+    assert_eq!(&owned_parts_report, trim.report());
+    assert!(matches!(
+        trim.clone().into_curve_string_classification(),
+        Classification::Decided(curve_string)
+            if curve_string.start() == Some(&p(1, 0)) && curve_string.end() == Some(&p(3, 0))
+    ));
     let trimmed = trim.curve_string().expect("line trim should materialize");
     assert_eq!(trimmed.start(), Some(&p(1, 0)));
     assert_eq!(trimmed.end(), Some(&p(3, 0)));
@@ -3242,6 +3283,19 @@ fn curve_string_trim_reports_partial_arc_as_unsupported_without_materializing() 
     );
     assert_eq!(trim.report().segment_reports()[0].range_start_point(), None);
     assert_eq!(trim.report().segment_reports()[0].range_end_point(), None);
+    assert_eq!(
+        trim.curve_string_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+    let owned_report = trim.clone().into_report();
+    assert_eq!(&owned_report, trim.report());
+    let (owned_curve, owned_parts_report) = trim.clone().into_parts();
+    assert_eq!(owned_curve.as_ref(), trim.curve_string());
+    assert_eq!(&owned_parts_report, trim.report());
+    assert_eq!(
+        trim.clone().into_curve_string_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
 }
 
 #[test]
