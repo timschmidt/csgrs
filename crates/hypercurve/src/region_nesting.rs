@@ -3109,6 +3109,30 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns retained source-segment bucket count for output segments.
+    pub const fn output_segment_source_bucket_count(&self) -> Option<usize> {
+        match self.output_segment_source_bucket_cache() {
+            Some(source_cache) => Some(source_cache.source_segment_bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment references grouped by source segment.
+    pub const fn output_segment_source_ref_count(&self) -> Option<usize> {
+        match self.output_segment_source_bucket_cache() {
+            Some(source_cache) => Some(source_cache.output_segment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained source-segment output bucket size.
+    pub const fn output_segment_source_max_bucket_size(&self) -> Option<usize> {
+        match self.output_segment_source_bucket_cache() {
+            Some(source_cache) => Some(source_cache.max_bucket_size()),
+            None => None,
+        }
+    }
+
     /// Returns retained output segment source parameter ranges.
     pub const fn output_segment_source_range_cache(
         &self,
@@ -3149,12 +3173,124 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns retained topology-status bucket count for output segments.
+    pub const fn output_segment_status_bucket_count(&self) -> Option<usize> {
+        match self.output_segment_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment references grouped by topology status.
+    pub const fn output_segment_status_ref_count(&self) -> Option<usize> {
+        match self.output_segment_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.output_segment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained native-exact output segment references.
+    pub const fn output_native_exact_segment_ref_count(&self) -> Option<usize> {
+        match self.output_segment_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.native_exact_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained certified-approximation output segment references.
+    pub const fn output_certified_approximation_segment_ref_count(&self) -> Option<usize> {
+        match self.output_segment_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.certified_approximation_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained display/export-only output segment references.
+    pub const fn output_display_or_export_segment_ref_count(&self) -> Option<usize> {
+        match self.output_segment_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.display_or_export_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained lossy-import output segment references.
+    pub const fn output_imported_lossy_segment_ref_count(&self) -> Option<usize> {
+        match self.output_segment_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.imported_lossy_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained unsupported output segment references.
+    pub const fn output_unsupported_segment_ref_count(&self) -> Option<usize> {
+        match self.output_segment_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.unsupported_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained unresolved output segment references.
+    pub const fn output_unresolved_segment_ref_count(&self) -> Option<usize> {
+        match self.output_segment_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.unresolved_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained topology-status output bucket size.
+    pub const fn output_segment_status_max_bucket_size(&self) -> Option<usize> {
+        match self.output_segment_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.max_bucket_size()),
+            None => None,
+        }
+    }
+
     /// Returns retained output segment buckets grouped by traversal direction.
     pub const fn output_segment_direction_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentDirectionBucketCache2> {
         match self.ring_assembly_cache() {
             Some(ring_cache) => Some(ring_cache.output_segment_direction_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained traversal-direction bucket count for output segments.
+    pub const fn output_segment_direction_bucket_count(&self) -> Option<usize> {
+        match self.output_segment_direction_bucket_cache() {
+            Some(direction_cache) => Some(direction_cache.bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment references grouped by traversal direction.
+    pub const fn output_segment_direction_ref_count(&self) -> Option<usize> {
+        match self.output_segment_direction_bucket_cache() {
+            Some(direction_cache) => Some(direction_cache.output_segment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained forward output segment references.
+    pub const fn output_forward_segment_ref_count(&self) -> Option<usize> {
+        match self.output_segment_direction_bucket_cache() {
+            Some(direction_cache) => Some(direction_cache.forward_segment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained reversed output segment references.
+    pub const fn output_reversed_segment_ref_count(&self) -> Option<usize> {
+        match self.output_segment_direction_bucket_cache() {
+            Some(direction_cache) => Some(direction_cache.reversed_segment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained traversal-direction output bucket size.
+    pub const fn output_segment_direction_max_bucket_size(&self) -> Option<usize> {
+        match self.output_segment_direction_bucket_cache() {
+            Some(direction_cache) => Some(direction_cache.max_bucket_size()),
             None => None,
         }
     }
@@ -7955,6 +8091,21 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().output_segment_source_bucket_cache()
     }
 
+    /// Returns retained source-segment bucket count for output segments.
+    pub const fn output_segment_source_bucket_count(&self) -> Option<usize> {
+        self.workspace().output_segment_source_bucket_count()
+    }
+
+    /// Returns retained output segment references grouped by source segment.
+    pub const fn output_segment_source_ref_count(&self) -> Option<usize> {
+        self.workspace().output_segment_source_ref_count()
+    }
+
+    /// Returns the largest retained source-segment output bucket size.
+    pub const fn output_segment_source_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().output_segment_source_max_bucket_size()
+    }
+
     /// Returns retained output segment source parameter ranges.
     pub const fn output_segment_source_range_cache(
         &self,
@@ -7983,11 +8134,83 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().output_segment_status_bucket_cache()
     }
 
+    /// Returns retained topology-status bucket count for output segments.
+    pub const fn output_segment_status_bucket_count(&self) -> Option<usize> {
+        self.workspace().output_segment_status_bucket_count()
+    }
+
+    /// Returns retained output segment references grouped by topology status.
+    pub const fn output_segment_status_ref_count(&self) -> Option<usize> {
+        self.workspace().output_segment_status_ref_count()
+    }
+
+    /// Returns retained native-exact output segment references.
+    pub const fn output_native_exact_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_native_exact_segment_ref_count()
+    }
+
+    /// Returns retained certified-approximation output segment references.
+    pub const fn output_certified_approximation_segment_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .output_certified_approximation_segment_ref_count()
+    }
+
+    /// Returns retained display/export-only output segment references.
+    pub const fn output_display_or_export_segment_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .output_display_or_export_segment_ref_count()
+    }
+
+    /// Returns retained lossy-import output segment references.
+    pub const fn output_imported_lossy_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_imported_lossy_segment_ref_count()
+    }
+
+    /// Returns retained unsupported output segment references.
+    pub const fn output_unsupported_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_unsupported_segment_ref_count()
+    }
+
+    /// Returns retained unresolved output segment references.
+    pub const fn output_unresolved_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_unresolved_segment_ref_count()
+    }
+
+    /// Returns the largest retained topology-status output bucket size.
+    pub const fn output_segment_status_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().output_segment_status_max_bucket_size()
+    }
+
     /// Returns retained output segment buckets grouped by traversal direction.
     pub const fn output_segment_direction_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentDirectionBucketCache2> {
         self.workspace().output_segment_direction_bucket_cache()
+    }
+
+    /// Returns retained traversal-direction bucket count for output segments.
+    pub const fn output_segment_direction_bucket_count(&self) -> Option<usize> {
+        self.workspace().output_segment_direction_bucket_count()
+    }
+
+    /// Returns retained output segment references grouped by traversal direction.
+    pub const fn output_segment_direction_ref_count(&self) -> Option<usize> {
+        self.workspace().output_segment_direction_ref_count()
+    }
+
+    /// Returns retained forward output segment references.
+    pub const fn output_forward_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_forward_segment_ref_count()
+    }
+
+    /// Returns retained reversed output segment references.
+    pub const fn output_reversed_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_reversed_segment_ref_count()
+    }
+
+    /// Returns the largest retained traversal-direction output bucket size.
+    pub const fn output_segment_direction_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().output_segment_direction_max_bucket_size()
     }
 
     /// Returns final output evidence retained from the evaluated arrangement.
@@ -9172,10 +9395,22 @@ impl ExactCurveArrangementResult2 {
     pub const fn output_segment_source_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentSourceBucketCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.output_segment_source_bucket_cache()),
-            None => None,
-        }
+        self.workspace().output_segment_source_bucket_cache()
+    }
+
+    /// Returns retained source-segment bucket count for output segments.
+    pub const fn output_segment_source_bucket_count(&self) -> Option<usize> {
+        self.workspace().output_segment_source_bucket_count()
+    }
+
+    /// Returns retained output segment references grouped by source segment.
+    pub const fn output_segment_source_ref_count(&self) -> Option<usize> {
+        self.workspace().output_segment_source_ref_count()
+    }
+
+    /// Returns the largest retained source-segment output bucket size.
+    pub const fn output_segment_source_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().output_segment_source_max_bucket_size()
     }
 
     /// Returns retained output segment source parameter ranges.
@@ -9212,20 +9447,86 @@ impl ExactCurveArrangementResult2 {
     pub const fn output_segment_status_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentStatusBucketCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.output_segment_status_bucket_cache()),
-            None => None,
-        }
+        self.workspace().output_segment_status_bucket_cache()
+    }
+
+    /// Returns retained topology-status bucket count for output segments.
+    pub const fn output_segment_status_bucket_count(&self) -> Option<usize> {
+        self.workspace().output_segment_status_bucket_count()
+    }
+
+    /// Returns retained output segment references grouped by topology status.
+    pub const fn output_segment_status_ref_count(&self) -> Option<usize> {
+        self.workspace().output_segment_status_ref_count()
+    }
+
+    /// Returns retained native-exact output segment references.
+    pub const fn output_native_exact_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_native_exact_segment_ref_count()
+    }
+
+    /// Returns retained certified-approximation output segment references.
+    pub const fn output_certified_approximation_segment_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .output_certified_approximation_segment_ref_count()
+    }
+
+    /// Returns retained display/export-only output segment references.
+    pub const fn output_display_or_export_segment_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .output_display_or_export_segment_ref_count()
+    }
+
+    /// Returns retained lossy-import output segment references.
+    pub const fn output_imported_lossy_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_imported_lossy_segment_ref_count()
+    }
+
+    /// Returns retained unsupported output segment references.
+    pub const fn output_unsupported_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_unsupported_segment_ref_count()
+    }
+
+    /// Returns retained unresolved output segment references.
+    pub const fn output_unresolved_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_unresolved_segment_ref_count()
+    }
+
+    /// Returns the largest retained topology-status output bucket size.
+    pub const fn output_segment_status_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().output_segment_status_max_bucket_size()
     }
 
     /// Returns retained output segment buckets grouped by traversal direction.
     pub const fn output_segment_direction_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentDirectionBucketCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.output_segment_direction_bucket_cache()),
-            None => None,
-        }
+        self.workspace().output_segment_direction_bucket_cache()
+    }
+
+    /// Returns retained traversal-direction bucket count for output segments.
+    pub const fn output_segment_direction_bucket_count(&self) -> Option<usize> {
+        self.workspace().output_segment_direction_bucket_count()
+    }
+
+    /// Returns retained output segment references grouped by traversal direction.
+    pub const fn output_segment_direction_ref_count(&self) -> Option<usize> {
+        self.workspace().output_segment_direction_ref_count()
+    }
+
+    /// Returns retained forward output segment references.
+    pub const fn output_forward_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_forward_segment_ref_count()
+    }
+
+    /// Returns retained reversed output segment references.
+    pub const fn output_reversed_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_reversed_segment_ref_count()
+    }
+
+    /// Returns the largest retained traversal-direction output bucket size.
+    pub const fn output_segment_direction_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().output_segment_direction_max_bucket_size()
     }
 
     /// Returns final output evidence retained from the evaluated arrangement.
@@ -11619,10 +11920,22 @@ impl ExactCurveArrangementReport2 {
     pub const fn output_segment_source_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentSourceBucketCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.output_segment_source_bucket_cache()),
-            None => None,
-        }
+        self.workspace().output_segment_source_bucket_cache()
+    }
+
+    /// Returns retained source-segment bucket count for output segments.
+    pub const fn output_segment_source_bucket_count(&self) -> Option<usize> {
+        self.workspace().output_segment_source_bucket_count()
+    }
+
+    /// Returns retained output segment references grouped by source segment.
+    pub const fn output_segment_source_ref_count(&self) -> Option<usize> {
+        self.workspace().output_segment_source_ref_count()
+    }
+
+    /// Returns the largest retained source-segment output bucket size.
+    pub const fn output_segment_source_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().output_segment_source_max_bucket_size()
     }
 
     /// Returns retained output segment source parameter ranges.
@@ -11659,20 +11972,86 @@ impl ExactCurveArrangementReport2 {
     pub const fn output_segment_status_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentStatusBucketCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.output_segment_status_bucket_cache()),
-            None => None,
-        }
+        self.workspace().output_segment_status_bucket_cache()
+    }
+
+    /// Returns retained topology-status bucket count for output segments.
+    pub const fn output_segment_status_bucket_count(&self) -> Option<usize> {
+        self.workspace().output_segment_status_bucket_count()
+    }
+
+    /// Returns retained output segment references grouped by topology status.
+    pub const fn output_segment_status_ref_count(&self) -> Option<usize> {
+        self.workspace().output_segment_status_ref_count()
+    }
+
+    /// Returns retained native-exact output segment references.
+    pub const fn output_native_exact_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_native_exact_segment_ref_count()
+    }
+
+    /// Returns retained certified-approximation output segment references.
+    pub const fn output_certified_approximation_segment_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .output_certified_approximation_segment_ref_count()
+    }
+
+    /// Returns retained display/export-only output segment references.
+    pub const fn output_display_or_export_segment_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .output_display_or_export_segment_ref_count()
+    }
+
+    /// Returns retained lossy-import output segment references.
+    pub const fn output_imported_lossy_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_imported_lossy_segment_ref_count()
+    }
+
+    /// Returns retained unsupported output segment references.
+    pub const fn output_unsupported_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_unsupported_segment_ref_count()
+    }
+
+    /// Returns retained unresolved output segment references.
+    pub const fn output_unresolved_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_unresolved_segment_ref_count()
+    }
+
+    /// Returns the largest retained topology-status output bucket size.
+    pub const fn output_segment_status_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().output_segment_status_max_bucket_size()
     }
 
     /// Returns retained output segment buckets grouped by traversal direction.
     pub const fn output_segment_direction_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentDirectionBucketCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.output_segment_direction_bucket_cache()),
-            None => None,
-        }
+        self.workspace().output_segment_direction_bucket_cache()
+    }
+
+    /// Returns retained traversal-direction bucket count for output segments.
+    pub const fn output_segment_direction_bucket_count(&self) -> Option<usize> {
+        self.workspace().output_segment_direction_bucket_count()
+    }
+
+    /// Returns retained output segment references grouped by traversal direction.
+    pub const fn output_segment_direction_ref_count(&self) -> Option<usize> {
+        self.workspace().output_segment_direction_ref_count()
+    }
+
+    /// Returns retained forward output segment references.
+    pub const fn output_forward_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_forward_segment_ref_count()
+    }
+
+    /// Returns retained reversed output segment references.
+    pub const fn output_reversed_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_reversed_segment_ref_count()
+    }
+
+    /// Returns the largest retained traversal-direction output bucket size.
+    pub const fn output_segment_direction_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().output_segment_direction_max_bucket_size()
     }
 
     /// Returns retained final boundary output summary when role assignment materialized.
