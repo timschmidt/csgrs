@@ -1396,7 +1396,7 @@ impl Region2 {
         );
         Ok(ExactCurveArrangementAttempt2::new(request)
             .evaluate(policy)?
-            .compatibility_result)
+            .into_compatibility_region_build_result())
     }
 
     /// Builds a region from unordered exact line segments and retains assembly evidence.
@@ -1418,7 +1418,7 @@ impl Region2 {
             ExactCurveArrangementRequest2::from_unordered_line_segments(segments, fill_rule);
         Ok(ExactCurveArrangementAttempt2::new(request)
             .evaluate(policy)?
-            .compatibility_result)
+            .into_compatibility_region_build_result())
     }
 }
 
@@ -1657,7 +1657,7 @@ impl Region2 {
             ExactCurveArrangementRequest2::from_borrowed_unordered_segments(segments, fill_rule);
         Ok(ExactCurveArrangementAttempt2::new(request)
             .evaluate(policy)?
-            .compatibility_result)
+            .into_compatibility_region_build_result())
     }
 
     /// Builds a region from unordered exact native line/arc segments.
@@ -1685,7 +1685,7 @@ impl Region2 {
         let request = ExactCurveArrangementRequest2::from_unordered_segments(segments, fill_rule);
         Ok(ExactCurveArrangementAttempt2::new(request)
             .evaluate(policy)?
-            .compatibility_result)
+            .into_compatibility_region_build_result())
     }
 }
 
@@ -6266,6 +6266,10 @@ impl ExactCurveArrangementAttempt2 {
 }
 
 impl ExactCurveArrangementResult2 {
+    fn into_compatibility_region_build_result(self) -> RegionLineSegmentRegionBuildResult2 {
+        self.compatibility_result
+    }
+
     /// Returns the retained evaluation record.
     pub const fn evaluation(&self) -> &ExactCurveArrangementEvaluation2 {
         &self.evaluation
@@ -7191,7 +7195,7 @@ impl ExactCurveArrangementResult2 {
         note = "use ExactCurveArrangementResult2 retained accessors, into_region(), or arrangement_report() when a derived compatibility report is required"
     )]
     pub fn into_region_build_result(self) -> RegionLineSegmentRegionBuildResult2 {
-        self.compatibility_result
+        self.into_compatibility_region_build_result()
     }
 
     /// Consumes this result and returns the materialized region as a classification.
