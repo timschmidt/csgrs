@@ -493,6 +493,9 @@ fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()>
     ];
     let policy = CurvePolicy::certified();
     let started = Instant::now();
+    let mut total_request_sources = 0_usize;
+    let mut total_workspace_cache_counts = 0_usize;
+    let mut total_evaluation_outputs = 0_usize;
     let mut total_segments = 0_usize;
     let mut total_endpoint_checks = 0_usize;
 
@@ -505,6 +508,35 @@ fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()>
         if !result.status().unwrap().is_native_exact() || result.region().is_none() {
             panic!("unordered line segment region build benchmark became non-native");
         }
+        total_request_sources += black_box(result.request().source_segment_count());
+        total_workspace_cache_counts +=
+            black_box(result.workspace().decided_source_segment_aabb_count());
+        total_workspace_cache_counts += black_box(
+            result
+                .workspace()
+                .source_endpoint_bucket_cache()
+                .bucket_count(),
+        );
+        total_workspace_cache_counts += black_box(
+            result
+                .workspace()
+                .split_schedule_cache()
+                .candidate_pair_count(),
+        );
+        total_workspace_cache_counts += black_box(
+            result
+                .workspace()
+                .split_schedule_cache()
+                .decided_disjoint_pair_count(),
+        );
+        total_evaluation_outputs += black_box(
+            result
+                .evaluation()
+                .output_boundary_segment_count()
+                .unwrap_or(0),
+        );
+        total_evaluation_outputs +=
+            black_box(result.evaluation().output_contour_count().unwrap_or(0));
         total_segments += black_box(result.split_output_segment_count().unwrap_or_default());
         total_segments += black_box(result.output_boundary_segment_count().unwrap_or_default());
         total_segments += black_box(result.split_skipped_aabb_pair_count().unwrap_or_default());
@@ -525,7 +557,7 @@ fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()>
 
     let elapsed = started.elapsed();
     println!(
-        "unordered_line_segment_region_build: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}, endpoint checks={total_endpoint_checks}",
+        "unordered_line_segment_region_build: {iterations} iterations in {elapsed:?} ({:?}/iter), request sources={total_request_sources}, workspace cache counts={total_workspace_cache_counts}, evaluation outputs={total_evaluation_outputs}, total segments={total_segments}, endpoint checks={total_endpoint_checks}",
         elapsed / iterations
     );
     Ok(())
@@ -538,6 +570,9 @@ fn bench_unordered_native_segment_region_build(iterations: u32) -> CurveResult<(
     ];
     let policy = CurvePolicy::certified();
     let started = Instant::now();
+    let mut total_request_sources = 0_usize;
+    let mut total_workspace_cache_counts = 0_usize;
+    let mut total_evaluation_outputs = 0_usize;
     let mut total_segments = 0_usize;
     let mut total_endpoint_checks = 0_usize;
 
@@ -550,6 +585,35 @@ fn bench_unordered_native_segment_region_build(iterations: u32) -> CurveResult<(
         if !result.status().unwrap().is_native_exact() || result.region().is_none() {
             panic!("unordered native segment region build benchmark became non-native");
         }
+        total_request_sources += black_box(result.request().source_segment_count());
+        total_workspace_cache_counts +=
+            black_box(result.workspace().decided_source_segment_aabb_count());
+        total_workspace_cache_counts += black_box(
+            result
+                .workspace()
+                .source_endpoint_bucket_cache()
+                .bucket_count(),
+        );
+        total_workspace_cache_counts += black_box(
+            result
+                .workspace()
+                .split_schedule_cache()
+                .candidate_pair_count(),
+        );
+        total_workspace_cache_counts += black_box(
+            result
+                .workspace()
+                .split_schedule_cache()
+                .predicate_candidate_pair_count(),
+        );
+        total_evaluation_outputs += black_box(
+            result
+                .evaluation()
+                .output_boundary_segment_count()
+                .unwrap_or(0),
+        );
+        total_evaluation_outputs +=
+            black_box(result.evaluation().output_contour_count().unwrap_or(0));
         total_segments += black_box(result.split_output_segment_count().unwrap_or_default());
         total_segments += black_box(result.output_boundary_segment_count().unwrap_or_default());
         total_endpoint_checks += black_box(
@@ -564,7 +628,7 @@ fn bench_unordered_native_segment_region_build(iterations: u32) -> CurveResult<(
 
     let elapsed = started.elapsed();
     println!(
-        "unordered_native_segment_region_build: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}, endpoint checks={total_endpoint_checks}",
+        "unordered_native_segment_region_build: {iterations} iterations in {elapsed:?} ({:?}/iter), request sources={total_request_sources}, workspace cache counts={total_workspace_cache_counts}, evaluation outputs={total_evaluation_outputs}, total segments={total_segments}, endpoint checks={total_endpoint_checks}",
         elapsed / iterations
     );
     Ok(())
