@@ -6103,10 +6103,10 @@ impl ExactCurveArrangementOutputRoleContainmentBucketCache2 {
 
 impl ExactCurveArrangementOutputRoleCache2 {
     fn from_boundary_build_report(report: &RegionBoundaryContourBuildReport2) -> Option<Self> {
-        let material_contour_count = report.material_contour_count()?;
-        let hole_contour_count = report.hole_contour_count()?;
-        let material_segment_count = report.material_segment_count()?;
-        let hole_segment_count = report.hole_segment_count()?;
+        if report.role_reports().is_empty() {
+            return None;
+        }
+
         let mut material_assignments = Vec::new();
         let mut hole_assignments = Vec::new();
 
@@ -6130,6 +6130,16 @@ impl ExactCurveArrangementOutputRoleCache2 {
 
         material_assignments.sort_by_key(|assignment| assignment.output_role_index);
         hole_assignments.sort_by_key(|assignment| assignment.output_role_index);
+        let material_contour_count = material_assignments.len();
+        let hole_contour_count = hole_assignments.len();
+        let material_segment_count = material_assignments
+            .iter()
+            .map(ExactCurveArrangementOutputRoleAssignment2::source_segment_count)
+            .sum();
+        let hole_segment_count = hole_assignments
+            .iter()
+            .map(ExactCurveArrangementOutputRoleAssignment2::source_segment_count)
+            .sum();
         let role_status_bucket_cache =
             ExactCurveArrangementOutputRoleStatusBucketCache2::from_role_assignments(
                 &material_assignments,
@@ -6238,24 +6248,51 @@ impl ExactCurveArrangementOutputBoundaryCache2 {
         report: &RegionLineSegmentRegionBuildReport2,
     ) -> Option<Self> {
         let boundary_build_report = report.boundary_build_report()?;
-        let material_contour_count = boundary_build_report.material_contour_count()?;
-        let hole_contour_count = boundary_build_report.hole_contour_count()?;
-        let material_segment_count = boundary_build_report.material_segment_count()?;
-        let hole_segment_count = boundary_build_report.hole_segment_count()?;
-        Some(Self {
-            output_contour_count: boundary_build_report.output_contour_count()?,
-            output_segment_count: boundary_build_report.output_segment_count()?,
-            output_segment_kind_counts: report.output_boundary_segment_kind_counts()?,
+        if boundary_build_report.role_reports().is_empty() {
+            return None;
+        }
+
+        let mut material_contour_count = 0_usize;
+        let mut hole_contour_count = 0_usize;
+        let mut material_segment_count = 0_usize;
+        let mut hole_segment_count = 0_usize;
+
+        for role_report in boundary_build_report.role_reports() {
+            match role_report.role() {
+                RegionBoundaryContourRole2::Material => {
+                    material_contour_count += 1;
+                    material_segment_count += role_report.source_segment_count();
+                }
+                RegionBoundaryContourRole2::Hole => {
+                    hole_contour_count += 1;
+                    hole_segment_count += role_report.source_segment_count();
+                }
+            }
+        }
+
+        let mut output_segment_kind_counts = SegmentKindCounts { lines: 0, arcs: 0 };
+        for source_report in report.source_reports() {
+            match source_report.output_segment_kind() {
+                SegmentKind::Line => output_segment_kind_counts.lines += 1,
+                SegmentKind::Arc => output_segment_kind_counts.arcs += 1,
+            }
+        }
+        let role_bucket_cache = ExactCurveArrangementOutputBoundaryRoleBucketCache2::new(
             material_contour_count,
             hole_contour_count,
             material_segment_count,
             hole_segment_count,
-            role_bucket_cache: ExactCurveArrangementOutputBoundaryRoleBucketCache2::new(
-                material_contour_count,
-                hole_contour_count,
-                material_segment_count,
-                hole_segment_count,
-            ),
+        );
+
+        Some(Self {
+            output_contour_count: role_bucket_cache.output_contour_count(),
+            output_segment_count: role_bucket_cache.output_segment_count(),
+            output_segment_kind_counts,
+            material_contour_count,
+            hole_contour_count,
+            material_segment_count,
+            hole_segment_count,
+            role_bucket_cache,
         })
     }
 
