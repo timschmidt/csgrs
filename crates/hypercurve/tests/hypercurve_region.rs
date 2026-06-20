@@ -1274,7 +1274,7 @@ fn exact_curve_arrangement_result_returns_region_classification() {
         &policy(),
     )
     .unwrap();
-    let arrangement_report = retained_result.arrangement_report();
+    let arrangement_report = retained_result.evaluation().arrangement_report();
     assert!(retained_result.region().is_some());
     assert_eq!(arrangement_report.materialized_region(), Some(true));
     assert!(arrangement_report.status().unwrap().is_native_exact());
@@ -1294,7 +1294,7 @@ fn exact_curve_arrangement_result_returns_region_classification() {
         &policy(),
     )
     .unwrap();
-    let arrangement_report = retained_result.arrangement_report();
+    let arrangement_report = retained_result.evaluation().arrangement_report();
     assert_eq!(arrangement_report.materialized_region(), Some(true));
     assert!(arrangement_report.status().unwrap().is_native_exact());
     assert_eq!(
@@ -1320,7 +1320,7 @@ fn exact_curve_arrangement_result_returns_region_classification() {
         &policy(),
     )
     .unwrap();
-    let arrangement_report = retained_result.arrangement_report();
+    let arrangement_report = retained_result.evaluation().arrangement_report();
     assert!(retained_result.region().is_some());
     assert!(arrangement_report.status().unwrap().is_native_exact());
     assert_eq!(
@@ -1369,7 +1369,7 @@ fn exact_curve_arrangement_result_classification_preserves_blocker() {
         &policy(),
     )
     .unwrap();
-    let arrangement_report = result.arrangement_report();
+    let arrangement_report = result.evaluation().arrangement_report();
     assert_eq!(
         arrangement_report.blocker(),
         Some(UncertaintyReason::Boundary)
@@ -1386,7 +1386,7 @@ fn exact_curve_arrangement_result_classification_preserves_blocker() {
         &policy(),
     )
     .unwrap();
-    let arrangement_report = result.arrangement_report();
+    let arrangement_report = result.evaluation().arrangement_report();
     assert!(result.region().is_none());
     assert_eq!(
         arrangement_report.blocker(),
@@ -2826,7 +2826,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         evaluation.output_segment_count(),
         result.output_segment_count()
     );
-    let arrangement_report = result.arrangement_report();
+    let arrangement_report = result.evaluation().arrangement_report();
     assert_eq!(arrangement_report.fill_rule(), result.fill_rule());
     assert_eq!(
         arrangement_report.evaluated_output(),
@@ -5273,7 +5273,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(summary_cache.output_contour_count(), Some(1));
     assert_eq!(summary_cache.output_segment_count(), Some(2));
-    let arrangement_report = result.arrangement_report();
+    let arrangement_report = result.evaluation().arrangement_report();
     assert_eq!(arrangement_report.fill_rule(), result.fill_rule());
     assert_eq!(
         arrangement_report.evaluated_output(),
@@ -5864,7 +5864,7 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         result.output_segment_count()
     );
 
-    let arrangement_report = result.arrangement_report();
+    let arrangement_report = result.evaluation().arrangement_report();
     assert_eq!(arrangement_report.fill_rule(), result.fill_rule());
     assert_eq!(
         arrangement_report.evaluated_output(),
