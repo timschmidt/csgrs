@@ -19,9 +19,9 @@ use std::f64::consts::PI;
 use hyperreal::Real;
 
 use crate::{
-    BulgeVertex2, Contour2, CurveError, CurveResult, CurveString2, FillRule, Point2,
-    RetainedImportFormat2, RetainedImportRecord2, RetainedSourceTolerance2, RetainedTopologyStatus,
-    Segment2, SegmentKind, SegmentKindCounts,
+    BulgeVertex2, Classification, Contour2, CurveError, CurveResult, CurveString2, FillRule,
+    Point2, RetainedImportFormat2, RetainedImportRecord2, RetainedSourceTolerance2,
+    RetainedTopologyStatus, Segment2, SegmentKind, SegmentKindCounts,
 };
 
 const DEFAULT_DISTANCE_TOLERANCE: f64 = 1e-6;
@@ -322,9 +322,29 @@ impl CurveStringPolylineReconstructionResult2 {
         self.curve_string
     }
 
+    /// Consumes this result and returns retained reconstruction evidence.
+    pub fn into_report(self) -> PolylineReconstructionReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the reconstructed curve string with its report.
+    pub fn into_parts(self) -> (CurveString2, PolylineReconstructionReport2) {
+        (self.curve_string, self.report)
+    }
+
     /// Returns retained reconstruction evidence.
     pub const fn report(&self) -> &PolylineReconstructionReport2 {
         &self.report
+    }
+
+    /// Returns the reconstructed curve string as a convenience classification.
+    pub const fn curve_string_classification(&self) -> Classification<&CurveString2> {
+        Classification::Decided(&self.curve_string)
+    }
+
+    /// Consumes this result and returns the reconstructed curve string as a convenience classification.
+    pub fn into_curve_string_classification(self) -> Classification<CurveString2> {
+        Classification::Decided(self.curve_string)
     }
 }
 
@@ -339,9 +359,29 @@ impl ContourPolylineReconstructionResult2 {
         self.contour
     }
 
+    /// Consumes this result and returns retained reconstruction evidence.
+    pub fn into_report(self) -> PolylineReconstructionReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the reconstructed contour with its report.
+    pub fn into_parts(self) -> (Contour2, PolylineReconstructionReport2) {
+        (self.contour, self.report)
+    }
+
     /// Returns retained reconstruction evidence.
     pub const fn report(&self) -> &PolylineReconstructionReport2 {
         &self.report
+    }
+
+    /// Returns the reconstructed contour as a convenience classification.
+    pub const fn contour_classification(&self) -> Classification<&Contour2> {
+        Classification::Decided(&self.contour)
+    }
+
+    /// Consumes this result and returns the reconstructed contour as a convenience classification.
+    pub fn into_contour_classification(self) -> Classification<Contour2> {
+        Classification::Decided(self.contour)
     }
 }
 

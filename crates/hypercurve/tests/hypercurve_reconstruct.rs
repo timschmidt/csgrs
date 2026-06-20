@@ -1,5 +1,5 @@
 use hypercurve::{
-    BulgeVertex2, Contour2, CurveError, CurveString2, FillRule, Point2,
+    BulgeVertex2, Classification, Contour2, CurveError, CurveString2, FillRule, Point2,
     PolylineReconstructionOptions, Real, RetainedImportFormat2, RetainedImportRecord2,
     RetainedImportTopology2, RetainedSourceTolerance2, Segment2, SegmentKind, SegmentKindCounts,
 };
@@ -75,6 +75,19 @@ fn open_polyline_reconstruction_report_records_lossy_boundary() {
     assert_eq!(report.options(), options);
     assert!(report.lossy_boundary());
     assert!(report.status().is_imported_lossy());
+    assert!(matches!(
+        reconstructed.curve_string_classification(),
+        Classification::Decided(curve) if curve.len() == 1
+    ));
+    let owned_report = reconstructed.clone().into_report();
+    assert_eq!(&owned_report, reconstructed.report());
+    let (owned_curve, owned_parts_report) = reconstructed.clone().into_parts();
+    assert_eq!(&owned_curve, reconstructed.curve_string());
+    assert_eq!(&owned_parts_report, reconstructed.report());
+    assert!(matches!(
+        reconstructed.into_curve_string_classification(),
+        Classification::Decided(curve) if curve.len() == 1
+    ));
 }
 
 #[test]
@@ -242,6 +255,19 @@ fn closed_polyline_reconstruction_report_records_fill_and_closure_evidence() {
     assert_eq!(report.segment_reports()[3].output_end_point(), &points[0]);
     assert!(report.lossy_boundary());
     assert!(report.status().is_imported_lossy());
+    assert!(matches!(
+        reconstructed.contour_classification(),
+        Classification::Decided(contour) if contour.len() == 4
+    ));
+    let owned_report = reconstructed.clone().into_report();
+    assert_eq!(&owned_report, reconstructed.report());
+    let (owned_contour, owned_parts_report) = reconstructed.clone().into_parts();
+    assert_eq!(&owned_contour, reconstructed.contour());
+    assert_eq!(&owned_parts_report, reconstructed.report());
+    assert!(matches!(
+        reconstructed.into_contour_classification(),
+        Classification::Decided(contour) if contour.len() == 4
+    ));
 }
 
 #[test]
