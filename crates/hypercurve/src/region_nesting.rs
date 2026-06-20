@@ -988,6 +988,7 @@ pub struct ExactCurveArrangementReport2 {
     endpoint_graph_cache: Option<ExactCurveArrangementEndpointGraphCache2>,
     ring_assembly_cache: Option<ExactCurveArrangementRingAssemblyCache2>,
     output_cache: Option<ExactCurveArrangementOutputCache2>,
+    summary_cache: ExactCurveArrangementEvaluationSummaryCache2,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
     source_segment_aabbs: Vec<Option<Aabb2>>,
@@ -8057,6 +8058,7 @@ impl ExactCurveArrangementReport2 {
             endpoint_graph_cache: result.endpoint_graph_cache().cloned(),
             ring_assembly_cache: result.ring_assembly_cache().cloned(),
             output_cache: result.output_cache().cloned(),
+            summary_cache: result.summary_cache().clone(),
             source_segment_count: result.source_segment_count(),
             source_segment_kind_counts: result.source_segment_kind_counts(),
             source_segment_aabbs: result.source_segment_aabbs().to_vec(),
@@ -8208,6 +8210,11 @@ impl ExactCurveArrangementReport2 {
     /// Returns final output evidence retained from the evaluated arrangement.
     pub const fn output_cache(&self) -> Option<&ExactCurveArrangementOutputCache2> {
         self.output_cache.as_ref()
+    }
+
+    /// Returns final retained evaluation facts derived from workspace caches.
+    pub const fn summary_cache(&self) -> &ExactCurveArrangementEvaluationSummaryCache2 {
+        &self.summary_cache
     }
 
     /// Returns retained source segment count.

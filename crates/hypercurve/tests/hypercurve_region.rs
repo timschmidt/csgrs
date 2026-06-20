@@ -2236,6 +2236,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.ring_assembly_cache()
     );
     assert_eq!(arrangement_report.output_cache(), result.output_cache());
+    assert_eq!(arrangement_report.summary_cache(), result.summary_cache());
     assert_eq!(
         arrangement_report.source_segment_count(),
         result.source_segment_count()
@@ -3875,6 +3876,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.ring_assembly_cache()
     );
     assert_eq!(arrangement_report.output_cache(), result.output_cache());
+    assert_eq!(arrangement_report.summary_cache(), result.summary_cache());
     assert_eq!(
         arrangement_report.source_segment_kind_counts(),
         result.source_segment_kind_counts()
