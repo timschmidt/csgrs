@@ -978,6 +978,7 @@ pub struct ExactCurveArrangementResult2 {
 /// or [`ExactCurveArrangementEvaluation2`].
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementReport2 {
+    fill_rule: FillRule,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
     decided_source_segment_aabb_count: usize,
@@ -1039,6 +1040,7 @@ pub struct ExactCurveArrangementReport2 {
     boundary_build_nesting_classification_count: Option<usize>,
     boundary_build_blocker_first_contour_index: Option<usize>,
     boundary_build_blocker_second_contour_index: Option<usize>,
+    evaluated_output: bool,
     materialized_region: Option<bool>,
     stage: Option<RegionLineSegmentRegionBuildStage2>,
     status: Option<RetainedTopologyStatus>,
@@ -7994,6 +7996,7 @@ impl RegionLineSegmentSplitIntersectionReport2 {
 impl ExactCurveArrangementReport2 {
     fn from_result(result: &ExactCurveArrangementResult2) -> Self {
         Self {
+            fill_rule: result.fill_rule(),
             source_segment_count: result.source_segment_count(),
             source_segment_kind_counts: result.source_segment_kind_counts(),
             decided_source_segment_aabb_count: result.decided_source_segment_aabb_count(),
@@ -8076,11 +8079,17 @@ impl ExactCurveArrangementReport2 {
                 .boundary_build_blocker_first_contour_index(),
             boundary_build_blocker_second_contour_index: result
                 .boundary_build_blocker_second_contour_index(),
+            evaluated_output: result.evaluated_output(),
             materialized_region: result.materialized_region(),
             stage: result.stage(),
             status: result.status(),
             blocker: result.blocker(),
         }
+    }
+
+    /// Returns the fill rule retained by the arrangement request.
+    pub const fn fill_rule(&self) -> FillRule {
+        self.fill_rule
     }
 
     /// Returns retained source segment count.
@@ -8394,6 +8403,11 @@ impl ExactCurveArrangementReport2 {
     /// Returns second blocking contour index from final role assignment, if present.
     pub const fn boundary_build_blocker_second_contour_index(&self) -> Option<usize> {
         self.boundary_build_blocker_second_contour_index
+    }
+
+    /// Returns whether final output evaluation facts were retained.
+    pub const fn evaluated_output(&self) -> bool {
+        self.evaluated_output
     }
 
     /// Returns whether the retained evaluation materialized a region, when evaluated.

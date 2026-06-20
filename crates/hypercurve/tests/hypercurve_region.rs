@@ -2151,6 +2151,11 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(summary_cache.output_contour_count(), Some(1));
     assert_eq!(summary_cache.output_segment_count(), Some(4));
     let arrangement_report = result.arrangement_report();
+    assert_eq!(arrangement_report.fill_rule(), result.fill_rule());
+    assert_eq!(
+        arrangement_report.evaluated_output(),
+        result.evaluated_output()
+    );
     assert_eq!(
         arrangement_report.source_segment_count(),
         result.source_segment_count()
@@ -3720,6 +3725,11 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(summary_cache.output_contour_count(), Some(1));
     assert_eq!(summary_cache.output_segment_count(), Some(2));
     let arrangement_report = result.arrangement_report();
+    assert_eq!(arrangement_report.fill_rule(), result.fill_rule());
+    assert_eq!(
+        arrangement_report.evaluated_output(),
+        result.evaluated_output()
+    );
     assert_eq!(
         arrangement_report.source_segment_kind_counts(),
         result.source_segment_kind_counts()
@@ -4226,6 +4236,11 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(summary_cache.output_segment_count(), None);
 
     let arrangement_report = result.arrangement_report();
+    assert_eq!(arrangement_report.fill_rule(), result.fill_rule());
+    assert_eq!(
+        arrangement_report.evaluated_output(),
+        result.evaluated_output()
+    );
     assert_eq!(
         arrangement_report.source_segment_count(),
         result.source_segment_count()
