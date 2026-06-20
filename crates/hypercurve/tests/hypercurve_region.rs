@@ -4019,6 +4019,38 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         assert_eq!(result.report(), &derived_region_build_report);
     }
     let arrangement_report = result.arrangement_report();
+    assert_eq!(arrangement_report.summary_cache(), result.summary_cache());
+    assert_eq!(
+        arrangement_report.evaluated_output(),
+        result.evaluated_output()
+    );
+    assert_eq!(
+        arrangement_report.materialized_region(),
+        result.materialized_region()
+    );
+    assert_eq!(arrangement_report.stage(), result.stage());
+    assert_eq!(arrangement_report.status(), result.status());
+    assert_eq!(arrangement_report.blocker(), result.blocker());
+    assert_eq!(
+        arrangement_report.output_ring_count(),
+        result.output_ring_count()
+    );
+    assert_eq!(
+        arrangement_report.output_boundary_segment_count(),
+        result.output_boundary_segment_count()
+    );
+    assert_eq!(
+        arrangement_report.output_boundary_segment_kind_counts(),
+        result.output_boundary_segment_kind_counts()
+    );
+    assert_eq!(
+        arrangement_report.output_contour_count(),
+        result.output_contour_count()
+    );
+    assert_eq!(
+        arrangement_report.output_segment_count(),
+        result.output_segment_count()
+    );
     assert_eq!(
         arrangement_report.region_build_report(),
         derived_region_build_report
@@ -4039,6 +4071,10 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(&owned_classification_report, &arrangement_report);
     let report_evaluation = arrangement_report.clone().into_evaluation();
     assert_eq!(&report_evaluation, result.evaluation());
+    let (report_parts_workspace, report_parts_summary_cache) =
+        arrangement_report.clone().into_parts();
+    assert_eq!(&report_parts_workspace, result.workspace());
+    assert_eq!(&report_parts_summary_cache, result.summary_cache());
     let owned_result_report = result.clone().into_arrangement_report();
     assert_eq!(&owned_result_report, &arrangement_report);
     let report_workspace = arrangement_report.into_workspace();
