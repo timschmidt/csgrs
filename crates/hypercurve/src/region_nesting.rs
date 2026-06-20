@@ -985,6 +985,7 @@ pub struct ExactCurveArrangementReport2 {
     source_endpoint_bucket_cache: ExactCurveArrangementSourceEndpointBucketCache2,
     split_schedule_cache: ExactCurveArrangementSplitScheduleCache2,
     split_cache: Option<ExactCurveArrangementSplitCache2>,
+    endpoint_graph_cache: Option<ExactCurveArrangementEndpointGraphCache2>,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
     source_segment_aabbs: Vec<Option<Aabb2>>,
@@ -8051,6 +8052,7 @@ impl ExactCurveArrangementReport2 {
             source_endpoint_bucket_cache: result.source_endpoint_bucket_cache().clone(),
             split_schedule_cache: result.split_schedule_cache().clone(),
             split_cache: result.split_cache().cloned(),
+            endpoint_graph_cache: result.endpoint_graph_cache().cloned(),
             source_segment_count: result.source_segment_count(),
             source_segment_kind_counts: result.source_segment_kind_counts(),
             source_segment_aabbs: result.source_segment_aabbs().to_vec(),
@@ -8187,6 +8189,11 @@ impl ExactCurveArrangementReport2 {
     /// Returns exact split evidence retained from the evaluated arrangement.
     pub const fn split_cache(&self) -> Option<&ExactCurveArrangementSplitCache2> {
         self.split_cache.as_ref()
+    }
+
+    /// Returns exact endpoint-bucket evidence retained from the evaluated arrangement.
+    pub const fn endpoint_graph_cache(&self) -> Option<&ExactCurveArrangementEndpointGraphCache2> {
+        self.endpoint_graph_cache.as_ref()
     }
 
     /// Returns retained source segment count.
