@@ -6796,9 +6796,42 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().source_segment_kind_counts()
     }
 
+    /// Returns retained source segment boxes in request order.
+    pub fn source_segment_aabbs(&self) -> &[Option<Aabb2>] {
+        self.workspace().source_segment_aabbs()
+    }
+
+    /// Returns a retained aggregate source box when every source box was decided.
+    pub const fn source_aabb(&self) -> Option<&Aabb2> {
+        self.workspace().source_aabb()
+    }
+
+    /// Returns the number of source segment boxes certified during workspace preparation.
+    pub fn decided_source_segment_aabb_count(&self) -> usize {
+        self.workspace().decided_source_segment_aabb_count()
+    }
+
+    /// Returns the number of source segment boxes that stayed uncertain.
+    pub fn undecided_source_segment_aabb_count(&self) -> usize {
+        self.workspace().undecided_source_segment_aabb_count()
+    }
+
     /// Returns retained source segment facts prepared before split scheduling.
     pub const fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
         self.workspace().source_segment_cache()
+    }
+
+    /// Returns retained source AABB buckets grouped by certification status.
+    pub const fn source_aabb_bucket_cache(&self) -> &ExactCurveArrangementSourceAabbBucketCache2 {
+        self.source_segment_cache().source_aabb_bucket_cache()
+    }
+
+    /// Returns retained source segment buckets grouped by primitive family.
+    pub const fn source_segment_kind_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementSourceSegmentKindBucketCache2 {
+        self.source_segment_cache()
+            .source_segment_kind_bucket_cache()
     }
 
     /// Returns exact source endpoint buckets retained during workspace preparation.
