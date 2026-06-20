@@ -681,7 +681,7 @@ fn unordered_line_segments_report_disconnected_boundary_blocker() {
     assert_eq!(report.role_report_count(), None);
     assert_eq!(report.role_reports(), None);
     assert_eq!(report.source_reports().len(), 0);
-    assert_eq!(report.boundary_build_report(), None);
+    assert_eq!(report.boundary_build_stage(), None);
     assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
 }
 
@@ -3939,7 +3939,7 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     );
     assert!(result.status().unwrap().is_retained_evidence());
     assert_eq!(result.blocker(), Some(UncertaintyReason::Boundary));
-    assert_eq!(result.boundary_build_report(), None);
+    assert_eq!(result.boundary_build_stage(), None);
     assert_eq!(result.boundary_output_cache(), None);
     assert_eq!(result.role_cache(), None);
     let summary_cache = result.summary_cache();

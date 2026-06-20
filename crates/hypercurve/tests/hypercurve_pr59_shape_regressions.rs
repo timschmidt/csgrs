@@ -13,7 +13,7 @@ use hypercurve::{
     RegionBooleanBoundaryContourSourcePath2, RegionBooleanBoundaryPredicatePath2,
     RegionBooleanQueryPath2, RegionBooleanStage2, RegionFragmentBuildPredicatePath2,
     RegionFragmentBuildStage2, RegionPointLocation, RegionPreparedCacheFreshness2,
-    SegmentKindCounts,
+    RetainedTopologyStatus, SegmentKindCounts,
 };
 
 type HPoint = Point2;
@@ -439,7 +439,10 @@ fn boolean_region_report_names_identical_operand_shortcut() {
         Some(RegionBooleanBoundaryContourSourcePath2::IdenticalOperandShortcut)
     );
     assert_eq!(report.pipeline_report(), None);
-    assert!(report.boundary_build_report().is_some());
+    assert_eq!(
+        report.boundary_build_status(),
+        Some(RetainedTopologyStatus::NativeExact)
+    );
     assert_eq!(report.result_material_contour_count(), Some(1));
     assert_eq!(report.blocker(), None);
 }
