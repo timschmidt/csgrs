@@ -9713,6 +9713,45 @@ impl ExactCurveArrangementReport2 {
     }
 
     fn into_region_line_segment_region_build_report(self) -> RegionLineSegmentRegionBuildReport2 {
+        let ring_cache = self.ring_assembly_cache.as_ref();
+        let attempted_endpoint_connection_count = ring_cache
+            .map(ExactCurveArrangementRingAssemblyCache2::attempted_endpoint_connection_count)
+            .or(self.attempted_endpoint_connection_count)
+            .unwrap_or(0);
+        let exact_endpoint_connection_count = ring_cache
+            .map(ExactCurveArrangementRingAssemblyCache2::exact_endpoint_connection_count)
+            .or(self.exact_endpoint_connection_count)
+            .unwrap_or(0);
+        let disconnected_endpoint_connection_count = ring_cache
+            .map(ExactCurveArrangementRingAssemblyCache2::disconnected_endpoint_connection_count)
+            .or(self.disconnected_endpoint_connection_count)
+            .unwrap_or(0);
+        let unresolved_endpoint_connection_count = ring_cache
+            .map(ExactCurveArrangementRingAssemblyCache2::unresolved_endpoint_connection_count)
+            .or(self.unresolved_endpoint_connection_count)
+            .unwrap_or(0);
+        let reversed_source_segment_count = ring_cache
+            .map(ExactCurveArrangementRingAssemblyCache2::reversed_source_segment_count)
+            .or(self.reversed_source_segment_count)
+            .unwrap_or(0);
+        let output_ring_count = ring_cache
+            .and_then(ExactCurveArrangementRingAssemblyCache2::output_ring_count)
+            .or(self.output_ring_count);
+        let output_boundary_segment_count = ring_cache
+            .and_then(ExactCurveArrangementRingAssemblyCache2::output_boundary_segment_count)
+            .or(self.output_boundary_segment_count);
+        let output_boundary_segment_kind_counts = ring_cache
+            .and_then(ExactCurveArrangementRingAssemblyCache2::output_boundary_segment_kind_counts)
+            .or(self.output_boundary_segment_kind_counts);
+        let arranged_source_reports = ring_cache
+            .map(|cache| cache.arranged_source_reports().to_vec())
+            .or_else(|| self.arranged_source_reports.clone())
+            .unwrap_or_default();
+        let source_reports = ring_cache
+            .map(|cache| cache.source_reports().to_vec())
+            .or_else(|| self.source_reports.clone())
+            .unwrap_or_default();
+
         RegionLineSegmentRegionBuildReport2 {
             stage: self
                 .stage
@@ -9773,22 +9812,16 @@ impl ExactCurveArrangementReport2 {
                 .endpoint_graph_blocker_arranged_segment_index,
             endpoint_graph_blocker_endpoint: self.endpoint_graph_blocker_endpoint,
             endpoint_graph_blocker_point: self.endpoint_graph_blocker_point,
-            attempted_endpoint_connection_count: self
-                .attempted_endpoint_connection_count
-                .unwrap_or(0),
-            exact_endpoint_connection_count: self.exact_endpoint_connection_count.unwrap_or(0),
-            disconnected_endpoint_connection_count: self
-                .disconnected_endpoint_connection_count
-                .unwrap_or(0),
-            unresolved_endpoint_connection_count: self
-                .unresolved_endpoint_connection_count
-                .unwrap_or(0),
-            reversed_source_segment_count: self.reversed_source_segment_count.unwrap_or(0),
-            output_ring_count: self.output_ring_count,
-            output_boundary_segment_count: self.output_boundary_segment_count,
-            output_boundary_segment_kind_counts: self.output_boundary_segment_kind_counts,
-            arranged_source_reports: self.arranged_source_reports.unwrap_or_default(),
-            source_reports: self.source_reports.unwrap_or_default(),
+            attempted_endpoint_connection_count,
+            exact_endpoint_connection_count,
+            disconnected_endpoint_connection_count,
+            unresolved_endpoint_connection_count,
+            reversed_source_segment_count,
+            output_ring_count,
+            output_boundary_segment_count,
+            output_boundary_segment_kind_counts,
+            arranged_source_reports,
+            source_reports,
             boundary_build_report: self.boundary_build_report,
             status: self
                 .status
