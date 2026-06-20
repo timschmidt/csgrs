@@ -5155,6 +5155,58 @@ fn unordered_native_segments_report_arc_overlap_boundary_blocker() {
     assert_eq!(built.arranged_source_report_count(), None);
     assert_eq!(built.output_boundary_segment_kind_counts(), None);
     assert_eq!(built.source_report_count(), None);
+
+    let split_cache = built.split_cache().unwrap();
+    assert_eq!(
+        split_cache.predicate_path(),
+        Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredNativeSegment)
+    );
+    assert_eq!(split_cache.candidate_pair_count(), 1);
+    assert_eq!(split_cache.skipped_aabb_pair_count(), 0);
+    assert_eq!(split_cache.tested_pair_count(), 1);
+    assert_eq!(split_cache.intersection_event_count(), 0);
+    assert!(split_cache.intersection_points().is_empty());
+    assert!(split_cache.intersection_reports().is_empty());
+    assert_eq!(split_cache.output_segment_count(), None);
+    assert_eq!(split_cache.relation_bucket_cache().relation_count(), 1);
+    assert_eq!(
+        split_cache.relation_bucket_cache().overlap_relation_count(),
+        1
+    );
+    assert_eq!(
+        split_cache
+            .intersection_bucket_cache()
+            .intersection_event_count(),
+        0
+    );
+    assert_eq!(
+        split_cache
+            .intersection_parameter_cache()
+            .source_parameter_ref_count(),
+        0
+    );
+    let split_blocker_cache = split_cache.blocker_cache().unwrap();
+    assert_eq!(split_blocker_cache.first_source_segment_index(), 0);
+    assert_eq!(
+        split_blocker_cache.first_source_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(split_blocker_cache.first_source_start_point(), &p(0, 0));
+    assert_eq!(split_blocker_cache.first_source_end_point(), &p(4, 0));
+    assert_eq!(split_blocker_cache.second_source_segment_index(), 1);
+    assert_eq!(
+        split_blocker_cache.second_source_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(split_blocker_cache.second_source_start_point(), &p(0, 0));
+    assert_eq!(split_blocker_cache.second_source_end_point(), &p(4, 0));
+    assert_eq!(
+        split_blocker_cache.blocker(),
+        Some(UncertaintyReason::Boundary)
+    );
+    assert!(built.endpoint_graph_cache().is_none());
+    assert!(built.ring_assembly_cache().is_none());
+    assert!(built.output_cache().is_some());
     assert_eq!(built.blocker(), Some(UncertaintyReason::Boundary));
 }
 
