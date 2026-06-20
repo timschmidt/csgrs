@@ -147,6 +147,38 @@ fn svg_line_path_import_materializes_with_retained_report() {
 }
 
 #[test]
+fn svg_relative_line_path_import_materializes_exact_native_lines() {
+    let imported = import_svg_path_data_with_report("m 1 1 l 2 0 h 1 v 2 z", 23, 2, None);
+
+    let curve = imported
+        .curve_string()
+        .expect("relative line path should materialize");
+    assert_eq!(curve.len(), 4);
+    assert_eq!(
+        curve
+            .to_svg_path_data_with_report()
+            .unwrap()
+            .path_data()
+            .unwrap(),
+        "M 1 1 L 3 1 L 4 1 L 4 3 L 1 1"
+    );
+    assert_eq!(imported.report().source_index(), 23);
+    assert_eq!(imported.report().source_version(), 2);
+    assert_eq!(imported.report().command_count(), 5);
+    assert_eq!(
+        imported.report().status(),
+        RetainedTopologyStatus::ImportedLossy
+    );
+    let record = imported.report().retained_import().unwrap();
+    assert_eq!(
+        record.source_topology(),
+        RetainedImportTopology2::ClosedRing
+    );
+    assert_eq!(record.input_point_count(), 4);
+    assert_eq!(record.emitted_segment_count(), 4);
+}
+
+#[test]
 fn svg_circular_semicircle_arc_import_materializes_with_retained_report() {
     let imported = import_svg_path_data_with_report("M 0 0 A 1 1 0 0 0 2 0", 8, 1, None);
 
@@ -178,6 +210,34 @@ fn svg_circular_semicircle_arc_import_materializes_with_retained_report() {
     );
     assert_eq!(record.input_point_count(), 2);
     assert_eq!(record.emitted_segment_count(), 1);
+}
+
+#[test]
+fn svg_relative_semicircle_arc_import_materializes_exact_native_arc() {
+    let imported = import_svg_path_data_with_report("m 0 0 a 1 1 0 0 0 2 0", 24, 1, None);
+
+    let curve = imported
+        .curve_string()
+        .expect("relative semicircle arc path should materialize");
+    assert_eq!(curve.len(), 1);
+    assert_eq!(
+        curve
+            .to_svg_path_data_with_report()
+            .unwrap()
+            .path_data()
+            .unwrap(),
+        "M 0 0 A 1 1 0 0 0 2 0"
+    );
+    assert_eq!(imported.report().source_index(), 24);
+    assert_eq!(
+        imported.report().status(),
+        RetainedTopologyStatus::ImportedLossy
+    );
+    let record = imported.report().retained_import().unwrap();
+    assert_eq!(
+        record.source_topology(),
+        RetainedImportTopology2::OpenCurveString
+    );
 }
 
 #[test]

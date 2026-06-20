@@ -1223,12 +1223,12 @@ impl<'a> SvgLinePathParser<'a> {
             }
             let command = self.command.ok_or(())?;
             match command {
-                'M' => self.parse_move()?,
-                'L' => self.parse_line()?,
-                'H' => self.parse_horizontal()?,
-                'V' => self.parse_vertical()?,
-                'A' => self.parse_arc()?,
-                'Z' => {
+                'M' | 'm' => self.parse_move(command == 'm')?,
+                'L' | 'l' => self.parse_line(command == 'l')?,
+                'H' | 'h' => self.parse_horizontal(command == 'h')?,
+                'V' | 'v' => self.parse_vertical(command == 'v')?,
+                'A' | 'a' => self.parse_arc(command == 'a')?,
+                'Z' | 'z' => {
                     self.closed = true;
                     self.command = None;
                     if self.index < self.tokens.len() {
@@ -1249,19 +1249,19 @@ impl<'a> SvgLinePathParser<'a> {
         })
     }
 
-    fn parse_move(&mut self) -> Result<(), ()> {
+    fn parse_move(&mut self, relative: bool) -> Result<(), ()> {
         if !self.points.is_empty() || self.closed {
             return Err(());
         }
-        let point = self.parse_point()?;
+        let point = self.parse_point(relative && self.current.is_some())?;
         self.current = Some(point.clone());
         self.points.push(point);
-        self.command = Some('L');
+        self.command = Some(if relative { 'l' } else { 'L' });
         Ok(())
     }
 
-    fn parse_line(&mut self) -> Result<(), ()> {
-        let point = self.parse_point()?;
+    fn parse_line(&mut self, relative: bool) -> Result<(), ()> {
+        let point = self.parse_point(relative)?;
         self.push_line_to(point.clone())?;
         Ok(())
     }
@@ -1277,27 +1277,35 @@ impl<'a> SvgLinePathParser<'a> {
         Ok(())
     }
 
-    fn parse_horizontal(&mut self) -> Result<(), ()> {
+    fn parse_horizontal(&mut self, relative: bool) -> Result<(), ()> {
         let x = self.parse_number()?;
         let current = self.current.as_ref().ok_or(())?;
-        let point = Point2::new(x, current.y().clone());
+        let point = if relative {
+            Point2::new(current.x() + &x, current.y().clone())
+        } else {
+            Point2::new(x, current.y().clone())
+        };
         self.push_line_to(point)
     }
 
-    fn parse_vertical(&mut self) -> Result<(), ()> {
+    fn parse_vertical(&mut self, relative: bool) -> Result<(), ()> {
         let y = self.parse_number()?;
         let current = self.current.as_ref().ok_or(())?;
-        let point = Point2::new(current.x().clone(), y);
+        let point = if relative {
+            Point2::new(current.x().clone(), current.y() + &y)
+        } else {
+            Point2::new(current.x().clone(), y)
+        };
         self.push_line_to(point)
     }
 
-    fn parse_arc(&mut self) -> Result<(), ()> {
+    fn parse_arc(&mut self, relative: bool) -> Result<(), ()> {
         let rx = self.parse_number()?;
         let ry = self.parse_number()?;
         let rotation = self.parse_number()?;
         let large_arc = self.parse_flag()?;
         let sweep = self.parse_flag()?;
-        let end = self.parse_point()?;
+        let end = self.parse_point(relative)?;
         let start = self.current.as_ref().ok_or(())?.clone();
         let arc = svg_semicircle_arc(start, end.clone(), rx, ry, rotation, large_arc, sweep)?;
         self.segments.push(Segment2::Arc(arc));
@@ -1306,10 +1314,15 @@ impl<'a> SvgLinePathParser<'a> {
         Ok(())
     }
 
-    fn parse_point(&mut self) -> Result<Point2, ()> {
+    fn parse_point(&mut self, relative: bool) -> Result<Point2, ()> {
         let x = self.parse_number()?;
         let y = self.parse_number()?;
-        Ok(Point2::new(x, y))
+        if relative {
+            let current = self.current.as_ref().ok_or(())?;
+            Ok(Point2::new(current.x() + &x, current.y() + &y))
+        } else {
+            Ok(Point2::new(x, y))
+        }
     }
 
     fn parse_number(&mut self) -> Result<Real, ()> {
@@ -1353,7 +1366,10 @@ fn tokenize_svg_path(path_data: &str) -> Result<Vec<SvgPathToken<'_>>, ()> {
             continue;
         }
         if ch.is_ascii_alphabetic() {
-            if !matches!(ch, 'M' | 'L' | 'H' | 'V' | 'A' | 'Z') {
+            if !matches!(
+                ch,
+                'M' | 'm' | 'L' | 'l' | 'H' | 'h' | 'V' | 'v' | 'A' | 'a' | 'Z' | 'z'
+            ) {
                 return Err(());
             }
             tokens.push(SvgPathToken::Command(ch));
