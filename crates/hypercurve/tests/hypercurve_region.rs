@@ -3554,6 +3554,19 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.workspace().ring_assembly_cache(),
         result.ring_assembly_cache()
     );
+    assert_eq!(
+        result.workspace().arranged_source_reports(),
+        result.arranged_source_reports()
+    );
+    assert_eq!(
+        result.workspace().arranged_source_report_count(),
+        result.arranged_source_report_count()
+    );
+    assert_eq!(result.workspace().source_reports(), result.source_reports());
+    assert_eq!(
+        result.workspace().source_report_count(),
+        result.source_report_count()
+    );
     assert_eq!(result.workspace().output_cache(), result.output_cache());
     assert_eq!(
         result.workspace().materialized_region(),

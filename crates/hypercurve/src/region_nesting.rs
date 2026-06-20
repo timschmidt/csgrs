@@ -2598,6 +2598,28 @@ impl ExactCurveWorkspace2 {
         self.ring_assembly_cache.as_ref()
     }
 
+    /// Returns per-arranged-fragment source provenance retained after exact splitting.
+    pub fn arranged_source_reports(&self) -> Option<&[RegionLineSegmentArrangedSourceReport2]> {
+        self.ring_assembly_cache()
+            .map(ExactCurveArrangementRingAssemblyCache2::arranged_source_reports)
+    }
+
+    /// Returns the retained arranged-source provenance record count.
+    pub fn arranged_source_report_count(&self) -> Option<usize> {
+        self.arranged_source_reports().map(<[_]>::len)
+    }
+
+    /// Returns per-output segment source provenance retained by ring traversal.
+    pub fn source_reports(&self) -> Option<&[RegionLineSegmentRingSourceReport2]> {
+        self.ring_assembly_cache()
+            .map(ExactCurveArrangementRingAssemblyCache2::source_reports)
+    }
+
+    /// Returns the retained output-source provenance record count.
+    pub fn source_report_count(&self) -> Option<usize> {
+        self.source_reports().map(<[_]>::len)
+    }
+
     /// Returns per-arranged-fragment source provenance buckets.
     pub const fn arranged_fragment_cache(
         &self,
