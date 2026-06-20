@@ -1332,12 +1332,7 @@ impl Region2 {
         let request =
             ExactCurveArrangementRequest2::from_unordered_line_segments(segments, fill_rule);
         let result = ExactCurveArrangementAttempt2::new(request).evaluate(policy)?;
-        let blocker = result.blocker().unwrap_or(UncertaintyReason::Unsupported);
-        if let Some(region) = result.into_region() {
-            Ok(Classification::Decided(region))
-        } else {
-            Ok(Classification::Uncertain(blocker))
-        }
+        Ok(result.into_region_classification())
     }
 
     /// Builds a region from borrowed unordered exact line segments.
@@ -1360,12 +1355,7 @@ impl Region2 {
             segments, fill_rule,
         );
         let result = ExactCurveArrangementAttempt2::new(request).evaluate(policy)?;
-        let blocker = result.blocker().unwrap_or(UncertaintyReason::Unsupported);
-        if let Some(region) = result.into_region() {
-            Ok(Classification::Decided(region))
-        } else {
-            Ok(Classification::Uncertain(blocker))
-        }
+        Ok(result.into_region_classification())
     }
 
     /// Builds a region from borrowed unordered exact line segments and retains evidence.
@@ -1607,12 +1597,7 @@ impl Region2 {
     ) -> CurveResult<Classification<Self>> {
         let request = ExactCurveArrangementRequest2::from_unordered_segments(segments, fill_rule);
         let result = ExactCurveArrangementAttempt2::new(request).evaluate(policy)?;
-        let blocker = result.blocker().unwrap_or(UncertaintyReason::Unsupported);
-        if let Some(region) = result.into_region() {
-            Ok(Classification::Decided(region))
-        } else {
-            Ok(Classification::Uncertain(blocker))
-        }
+        Ok(result.into_region_classification())
     }
 
     /// Builds a region from borrowed unordered exact native line/arc segments.
@@ -1632,12 +1617,7 @@ impl Region2 {
         let request =
             ExactCurveArrangementRequest2::from_borrowed_unordered_segments(segments, fill_rule);
         let result = ExactCurveArrangementAttempt2::new(request).evaluate(policy)?;
-        let blocker = result.blocker().unwrap_or(UncertaintyReason::Unsupported);
-        if let Some(region) = result.into_region() {
-            Ok(Classification::Decided(region))
-        } else {
-            Ok(Classification::Uncertain(blocker))
-        }
+        Ok(result.into_region_classification())
     }
 
     /// Builds a region from borrowed unordered native line/arc segments and retains evidence.
