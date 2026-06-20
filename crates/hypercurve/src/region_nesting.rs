@@ -8654,6 +8654,36 @@ impl ExactCurveArrangementReport2 {
         self.output_segment_kind_counts
     }
 
+    /// Returns per-output-ring source provenance buckets.
+    pub const fn output_ring_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRingBucketCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_ring_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment buckets grouped by primitive family.
+    pub const fn output_segment_kind_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputSegmentKindBucketCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_segment_kind_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment buckets grouped by source segment.
+    pub const fn output_segment_source_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputSegmentSourceBucketCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_segment_source_bucket_cache()),
+            None => None,
+        }
+    }
+
     /// Returns retained output segment source parameter ranges.
     pub const fn output_segment_source_range_cache(
         &self,
@@ -8684,6 +8714,26 @@ impl ExactCurveArrangementReport2 {
         }
     }
 
+    /// Returns retained output segment buckets grouped by topology status.
+    pub const fn output_segment_status_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputSegmentStatusBucketCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_segment_status_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment buckets grouped by traversal direction.
+    pub const fn output_segment_direction_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputSegmentDirectionBucketCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_segment_direction_bucket_cache()),
+            None => None,
+        }
+    }
+
     /// Returns final boundary output counts grouped by material/hole role.
     pub const fn boundary_output_role_bucket_cache(
         &self,
@@ -8691,6 +8741,45 @@ impl ExactCurveArrangementReport2 {
         match self.output_cache() {
             Some(output_cache) => match output_cache.boundary_output_cache() {
                 Some(boundary_cache) => Some(boundary_cache.role_bucket_cache()),
+                None => None,
+            },
+            None => None,
+        }
+    }
+
+    /// Returns output role assignment buckets grouped by topology status.
+    pub const fn role_status_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRoleStatusBucketCache2> {
+        match self.output_cache() {
+            Some(output_cache) => match output_cache.role_cache() {
+                Some(role_cache) => Some(role_cache.role_status_bucket_cache()),
+                None => None,
+            },
+            None => None,
+        }
+    }
+
+    /// Returns output role assignment buckets grouped by source contour identity.
+    pub const fn role_source_contour_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRoleSourceContourBucketCache2> {
+        match self.output_cache() {
+            Some(output_cache) => match output_cache.role_cache() {
+                Some(role_cache) => Some(role_cache.role_source_contour_bucket_cache()),
+                None => None,
+            },
+            None => None,
+        }
+    }
+
+    /// Returns output role assignment buckets grouped by exact nesting depth.
+    pub const fn role_nesting_depth_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRoleNestingDepthBucketCache2> {
+        match self.output_cache() {
+            Some(output_cache) => match output_cache.role_cache() {
+                Some(role_cache) => Some(role_cache.role_nesting_depth_bucket_cache()),
                 None => None,
             },
             None => None,
