@@ -977,8 +977,9 @@ pub struct ExactCurveArrangementResult2 {
 ///
 /// This is a compatibility/reporting view over retained request, workspace,
 /// evaluation, and output caches. It must not recompute topology: each field is
-/// copied from facts already certified and retained by [`ExactCurveWorkspace2`]
-/// or [`ExactCurveArrangementEvaluation2`].
+/// either retained evidence or a derived compatibility projection from facts
+/// already certified and retained by [`ExactCurveWorkspace2`] or
+/// [`ExactCurveArrangementEvaluation2`].
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementReport2 {
     fill_rule: FillRule,
@@ -992,12 +993,7 @@ pub struct ExactCurveArrangementReport2 {
     ring_assembly_cache: Option<ExactCurveArrangementRingAssemblyCache2>,
     output_cache: Option<ExactCurveArrangementOutputCache2>,
     summary_cache: ExactCurveArrangementEvaluationSummaryCache2,
-    source_segment_count: usize,
-    source_segment_kind_counts: SegmentKindCounts,
     source_segment_aabbs: Vec<Option<Aabb2>>,
-    source_aabb: Option<Aabb2>,
-    decided_source_segment_aabb_count: usize,
-    undecided_source_segment_aabb_count: usize,
     split_candidate_pair_count: Option<usize>,
     split_skipped_aabb_pair_count: Option<usize>,
     split_tested_pair_count: Option<usize>,
@@ -9608,12 +9604,7 @@ impl ExactCurveArrangementReport2 {
             ring_assembly_cache: evaluation.ring_assembly_cache().cloned(),
             output_cache: evaluation.output_cache().cloned(),
             summary_cache: evaluation.summary_cache().clone(),
-            source_segment_count: evaluation.source_segment_count(),
-            source_segment_kind_counts: evaluation.source_segment_kind_counts(),
             source_segment_aabbs: evaluation.source_segment_aabbs().to_vec(),
-            source_aabb: evaluation.source_aabb().cloned(),
-            decided_source_segment_aabb_count: evaluation.decided_source_segment_aabb_count(),
-            undecided_source_segment_aabb_count: evaluation.undecided_source_segment_aabb_count(),
             split_candidate_pair_count: evaluation.split_candidate_pair_count(),
             split_skipped_aabb_pair_count: evaluation.split_skipped_aabb_pair_count(),
             split_tested_pair_count: evaluation.split_tested_pair_count(),
