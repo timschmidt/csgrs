@@ -1791,16 +1791,10 @@ impl Region2 {
         contours: Vec<Contour2>,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
-        let built = Self::from_boundary_contours_with_report(contours, policy)?;
-        let blocker = built
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        if let Some(region) = built.into_region() {
-            Ok(Classification::Decided(region))
-        } else {
-            Ok(Classification::Uncertain(blocker))
-        }
+        Ok(
+            Self::from_boundary_contours_with_report(contours, policy)?
+                .into_region_classification(),
+        )
     }
 
     /// Builds a region by nesting borrowed closed boundary contours.
@@ -1812,16 +1806,10 @@ impl Region2 {
         contours: &[Contour2],
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
-        let built = Self::from_boundary_contours_borrowed_with_report(contours, policy)?;
-        let blocker = built
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        if let Some(region) = built.into_region() {
-            Ok(Classification::Decided(region))
-        } else {
-            Ok(Classification::Uncertain(blocker))
-        }
+        Ok(
+            Self::from_boundary_contours_borrowed_with_report(contours, policy)?
+                .into_region_classification(),
+        )
     }
 
     /// Builds a region by nesting closed boundary contours and retaining role evidence.
@@ -8943,6 +8931,25 @@ impl RegionBoundaryContourBuildResult2 {
     /// Returns the retained region-construction report.
     pub const fn report(&self) -> &RegionBoundaryContourBuildReport2 {
         &self.report
+    }
+
+    /// Returns the materialized region as a classification while retaining this result.
+    pub fn region_classification(&self) -> Classification<&Region2> {
+        match self.region() {
+            Some(region) => Classification::Decided(region),
+            None => {
+                Classification::Uncertain(self.blocker().unwrap_or(UncertaintyReason::Unsupported))
+            }
+        }
+    }
+
+    /// Consumes this result and returns the materialized region as a classification.
+    pub fn into_region_classification(self) -> Classification<Region2> {
+        let blocker = self.blocker().unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_region() {
+            Some(region) => Classification::Decided(region),
+            None => Classification::Uncertain(blocker),
+        }
     }
 
     /// Returns the furthest exact region-construction stage reached.

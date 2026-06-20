@@ -288,6 +288,10 @@ fn boundary_contour_region_report_assigns_material_and_hole_roles() {
     assert_eq!(region.material_contours().len(), 1);
     assert_eq!(region.hole_contours().len(), 1);
     assert_eq!(
+        built.region_classification(),
+        Classification::Decided(region)
+    );
+    assert_eq!(
         region.classify_point(&p(1, 1), &policy()),
         Classification::Decided(RegionPointLocation::Inside)
     );
@@ -301,6 +305,10 @@ fn boundary_contour_region_report_assigns_material_and_hole_roles() {
     let (owned_region, owned_parts_report) = built.clone().into_parts();
     assert_eq!(owned_region.as_ref(), built.region());
     assert_eq!(&owned_parts_report, built.report());
+    assert_eq!(
+        built.clone().into_region_classification(),
+        Classification::Decided(region.clone())
+    );
 }
 
 #[test]
