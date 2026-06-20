@@ -967,7 +967,7 @@ pub struct ExactCurveArrangementAttempt2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementResult2 {
     evaluation: ExactCurveArrangementEvaluation2,
-    compatibility_result: RegionLineSegmentRegionBuildResult2,
+    compatibility_projection: RegionLineSegmentRegionBuildResult2,
 }
 
 /// Derived report for a retained exact curve arrangement attempt.
@@ -6239,7 +6239,7 @@ impl ExactCurveArrangementAttempt2 {
 
     /// Evaluates the request through the retained exact arrangement pipeline.
     pub fn evaluate(&self, policy: &CurvePolicy) -> CurveResult<ExactCurveArrangementResult2> {
-        let compatibility_result =
+        let compatibility_projection =
             if let Some(source_line_segments) = self.request.source_line_segments.as_ref() {
                 evaluate_unordered_line_segments_region_result(
                     source_line_segments.clone(),
@@ -6255,23 +6255,23 @@ impl ExactCurveArrangementAttempt2 {
             };
         let workspace = ExactCurveWorkspace2::from_request(self.request.clone(), policy)?
             .with_compatibility_report_facts(
-                compatibility_result.report(),
-                compatibility_result.region().is_some(),
+                compatibility_projection.report(),
+                compatibility_projection.region().is_some(),
             );
         Ok(ExactCurveArrangementResult2 {
             evaluation: ExactCurveArrangementEvaluation2::new(workspace),
-            compatibility_result,
+            compatibility_projection,
         })
     }
 }
 
 impl ExactCurveArrangementResult2 {
     const fn compatibility_region_build_result(&self) -> &RegionLineSegmentRegionBuildResult2 {
-        &self.compatibility_result
+        &self.compatibility_projection
     }
 
     fn into_compatibility_region_build_result(self) -> RegionLineSegmentRegionBuildResult2 {
-        self.compatibility_result
+        self.compatibility_projection
     }
 
     /// Returns the retained evaluation record.
