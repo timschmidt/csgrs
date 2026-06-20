@@ -346,6 +346,7 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     assert_eq!(report.result_material_segment_count(), Some(8));
     assert_eq!(report.result_hole_segment_count(), Some(0));
     let role_reports = report.role_reports().unwrap();
+    assert_eq!(report.role_report_count(), Some(role_reports.len()));
     assert_eq!(role_reports.len(), 1);
     assert_eq!(
         role_reports[0].role(),
@@ -602,6 +603,10 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
         built.report().result_hole_segment_count()
     );
     assert_eq!(built_pipeline.role_reports(), built.report().role_reports());
+    assert_eq!(
+        built_pipeline.role_report_count(),
+        built.report().role_report_count()
+    );
     assert_eq!(
         built.report().result_boundary_segment_count(),
         plain.report().result_boundary_segment_count()

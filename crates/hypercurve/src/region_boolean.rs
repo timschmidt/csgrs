@@ -896,6 +896,11 @@ impl RegionBooleanReport2 {
             .map(RegionBoundaryContourBuildReport2::role_reports)
     }
 
+    /// Returns final boundary-contour role report count, if role assignment was reached.
+    pub fn role_report_count(&self) -> Option<usize> {
+        self.role_reports().map(<[_]>::len)
+    }
+
     /// Returns prepared-cache inventory and freshness evidence, when used.
     pub const fn prepared_cache_report(&self) -> Option<&RegionBooleanPreparedCacheReport2> {
         self.prepared_cache_report.as_ref()
@@ -1007,6 +1012,11 @@ impl RegionBooleanPipelineReport2 {
     pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
         self.boundary_build_report()
             .map(RegionBoundaryContourBuildReport2::role_reports)
+    }
+
+    /// Returns final boundary-contour role report count, if role assignment was reached.
+    pub fn role_report_count(&self) -> Option<usize> {
+        self.role_reports().map(<[_]>::len)
     }
 }
 
