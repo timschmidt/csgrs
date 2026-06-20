@@ -3376,6 +3376,19 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.workspace().split_schedule_cache(),
         result.split_schedule_cache()
     );
+    let arranged_fragment_cache = result.arranged_fragment_cache().unwrap();
+    assert_eq!(
+        result.arranged_fragment_kind_bucket_cache().unwrap(),
+        arranged_fragment_cache.arranged_fragment_kind_bucket_cache()
+    );
+    assert_eq!(
+        result.arranged_fragment_status_bucket_cache().unwrap(),
+        arranged_fragment_cache.arranged_fragment_status_bucket_cache()
+    );
+    assert_eq!(
+        result.arranged_fragment_source_range_cache().unwrap(),
+        arranged_fragment_cache.arranged_fragment_source_range_cache()
+    );
     assert_eq!(
         result.source_segment_kind_counts(),
         SegmentKindCounts { lines: 1, arcs: 1 }
@@ -5001,6 +5014,18 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(
         arrangement_report.source_segment_kind_bucket_cache(),
         result.source_segment_kind_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_kind_bucket_cache(),
+        result.arranged_fragment_kind_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_status_bucket_cache(),
+        result.arranged_fragment_status_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_source_range_cache(),
+        result.arranged_fragment_source_range_cache()
     );
     assert_eq!(
         arrangement_report.source_segment_count(),

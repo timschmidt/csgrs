@@ -6789,6 +6789,36 @@ impl ExactCurveArrangementResult2 {
         }
     }
 
+    /// Returns arranged fragments grouped by primitive family.
+    pub const fn arranged_fragment_kind_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedFragmentKindBucketCache2> {
+        match self.arranged_fragment_cache() {
+            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_kind_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns arranged fragment source records grouped by retained topology status.
+    pub const fn arranged_fragment_status_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedFragmentStatusBucketCache2> {
+        match self.arranged_fragment_cache() {
+            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_status_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns arranged fragment source parameter ranges.
+    pub const fn arranged_fragment_source_range_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedFragmentSourceRangeCache2> {
+        match self.arranged_fragment_cache() {
+            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_source_range_cache()),
+            None => None,
+        }
+    }
+
     /// Returns per-output-ring source provenance buckets.
     pub const fn output_ring_bucket_cache(
         &self,
@@ -8530,6 +8560,48 @@ impl ExactCurveArrangementReport2 {
     /// Returns arranged fragment primitive-family counts retained after exact splitting.
     pub const fn arranged_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
         self.arranged_segment_kind_counts
+    }
+
+    /// Returns arranged fragments grouped by primitive family.
+    pub const fn arranged_fragment_kind_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedFragmentKindBucketCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(
+                ring_cache
+                    .arranged_fragment_cache()
+                    .arranged_fragment_kind_bucket_cache(),
+            ),
+            None => None,
+        }
+    }
+
+    /// Returns arranged fragment source records grouped by retained topology status.
+    pub const fn arranged_fragment_status_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedFragmentStatusBucketCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(
+                ring_cache
+                    .arranged_fragment_cache()
+                    .arranged_fragment_status_bucket_cache(),
+            ),
+            None => None,
+        }
+    }
+
+    /// Returns arranged fragment source parameter ranges.
+    pub const fn arranged_fragment_source_range_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedFragmentSourceRangeCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(
+                ring_cache
+                    .arranged_fragment_cache()
+                    .arranged_fragment_source_range_cache(),
+            ),
+            None => None,
+        }
     }
 
     /// Returns the retained arranged-source provenance record count.
