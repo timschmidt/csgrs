@@ -593,8 +593,10 @@ fn unordered_line_segments_build_region_with_source_provenance() {
     assert_eq!(report.unresolved_endpoint_connection_count(), 0);
     assert_eq!(report.blocker(), None);
 
-    let boundary_report = report.boundary_build_report().unwrap();
-    assert_eq!(boundary_report.validation_intersection_event_count(), 0);
+    assert_eq!(
+        report.boundary_build_validation_intersection_event_count(),
+        Some(0)
+    );
     assert_eq!(report.output_contour_count(), Some(1));
     assert_eq!(report.output_segment_count(), Some(4));
     assert_eq!(report.material_contour_count(), Some(1));
@@ -2276,6 +2278,15 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(
         result.boundary_build_report(),
         result.output_cache().unwrap().boundary_build_report()
+    );
+    assert_eq!(
+        result.boundary_build_stage(),
+        Some(RegionBoundaryContourBuildStage2::RoleAssignment)
+    );
+    assert_eq!(result.boundary_build_blocker(), None);
+    assert_eq!(
+        result.boundary_build_validation_intersection_event_count(),
+        Some(0)
     );
     assert_eq!(result.material_contour_count(), Some(1));
     assert_eq!(result.hole_contour_count(), Some(0));
