@@ -6766,6 +6766,53 @@ impl ExactCurveArrangementEvaluation2 {
         &self.workspace
     }
 
+    /// Returns the retained arrangement request consumed by this evaluation.
+    pub const fn request(&self) -> &ExactCurveArrangementRequest2 {
+        self.workspace().request()
+    }
+
+    /// Returns the source segments supplied to the retained arrangement request.
+    pub fn source_segments(&self) -> &[Segment2] {
+        self.request().source_segments()
+    }
+
+    /// Returns line-only source carriers when the retained request came from a line-specific API.
+    pub fn source_line_segments(&self) -> Option<&[LineSeg2]> {
+        self.request().source_line_segments()
+    }
+
+    /// Returns the fill rule retained by the arrangement request.
+    pub const fn fill_rule(&self) -> FillRule {
+        self.request().fill_rule()
+    }
+
+    /// Returns retained source segment count from the arrangement request.
+    pub fn source_segment_count(&self) -> usize {
+        self.request().source_segment_count()
+    }
+
+    /// Returns retained source segment primitive-family counts.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.workspace().source_segment_kind_counts()
+    }
+
+    /// Returns retained source segment facts prepared before split scheduling.
+    pub const fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
+        self.workspace().source_segment_cache()
+    }
+
+    /// Returns exact source endpoint buckets retained during workspace preparation.
+    pub const fn source_endpoint_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
+        self.workspace().source_endpoint_bucket_cache()
+    }
+
+    /// Returns the retained source-pair schedule prepared before split predicates run.
+    pub const fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
+        self.workspace().split_schedule_cache()
+    }
+
     /// Consumes this evaluation and returns the retained workspace.
     pub fn into_workspace(self) -> ExactCurveWorkspace2 {
         self.workspace

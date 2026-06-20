@@ -3514,6 +3514,36 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(result.request(), attempt.request());
     assert_eq!(result.evaluation().workspace(), result.workspace());
     assert_eq!(result.evaluation().workspace().request(), result.request());
+    assert_eq!(result.evaluation().request(), result.request());
+    assert_eq!(
+        result.evaluation().source_segments(),
+        result.source_segments()
+    );
+    assert_eq!(
+        result.evaluation().source_line_segments(),
+        result.source_line_segments()
+    );
+    assert_eq!(result.evaluation().fill_rule(), result.fill_rule());
+    assert_eq!(
+        result.evaluation().source_segment_count(),
+        result.source_segment_count()
+    );
+    assert_eq!(
+        result.evaluation().source_segment_kind_counts(),
+        result.source_segment_kind_counts()
+    );
+    assert_eq!(
+        result.evaluation().source_segment_cache(),
+        result.source_segment_cache()
+    );
+    assert_eq!(
+        result.evaluation().source_endpoint_bucket_cache(),
+        result.source_endpoint_bucket_cache()
+    );
+    assert_eq!(
+        result.evaluation().split_schedule_cache(),
+        result.split_schedule_cache()
+    );
     assert_eq!(result.evaluation().summary_cache(), result.summary_cache());
     let owned_attempt_request = attempt.clone().into_request();
     assert_eq!(&owned_attempt_request, result.request());
