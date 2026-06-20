@@ -982,9 +982,7 @@ pub struct ExactCurveArrangementResult2 {
 /// [`ExactCurveArrangementEvaluation2`].
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementReport2 {
-    fill_rule: FillRule,
-    source_segments: Vec<Segment2>,
-    source_line_segments: Option<Vec<LineSeg2>>,
+    request: ExactCurveArrangementRequest2,
     source_segment_cache: ExactCurveArrangementSourceSegmentCache2,
     source_endpoint_bucket_cache: ExactCurveArrangementSourceEndpointBucketCache2,
     split_schedule_cache: ExactCurveArrangementSplitScheduleCache2,
@@ -9522,9 +9520,7 @@ impl RegionLineSegmentSplitIntersectionReport2 {
 impl ExactCurveArrangementReport2 {
     fn from_evaluation(evaluation: &ExactCurveArrangementEvaluation2) -> Self {
         Self {
-            fill_rule: evaluation.fill_rule(),
-            source_segments: evaluation.source_segments().to_vec(),
-            source_line_segments: evaluation.source_line_segments().map(<[_]>::to_vec),
+            request: evaluation.request().clone(),
             source_segment_cache: evaluation.source_segment_cache().clone(),
             source_endpoint_bucket_cache: evaluation.source_endpoint_bucket_cache().clone(),
             split_schedule_cache: evaluation.split_schedule_cache().clone(),
@@ -9700,19 +9696,24 @@ impl ExactCurveArrangementReport2 {
         }
     }
 
+    /// Returns the retained arrangement request projected by this report.
+    pub const fn request(&self) -> &ExactCurveArrangementRequest2 {
+        &self.request
+    }
+
     /// Returns the fill rule retained by the arrangement request.
     pub const fn fill_rule(&self) -> FillRule {
-        self.fill_rule
+        self.request().fill_rule()
     }
 
     /// Returns exact source segments retained from the arrangement request.
     pub fn source_segments(&self) -> &[Segment2] {
-        &self.source_segments
+        self.request().source_segments()
     }
 
     /// Returns line-only source carriers when the retained request came from a line-specific API.
     pub fn source_line_segments(&self) -> Option<&[LineSeg2]> {
-        self.source_line_segments.as_deref()
+        self.request().source_line_segments()
     }
 
     /// Returns retained source segment facts prepared before split scheduling.
