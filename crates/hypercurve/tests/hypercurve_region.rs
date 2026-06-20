@@ -3567,6 +3567,46 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.workspace().source_report_count(),
         result.source_report_count()
     );
+    assert_eq!(
+        result.workspace().attempted_endpoint_connection_count(),
+        result.attempted_endpoint_connection_count()
+    );
+    assert_eq!(
+        result.workspace().exact_endpoint_connection_count(),
+        result.exact_endpoint_connection_count()
+    );
+    assert_eq!(
+        result.workspace().disconnected_endpoint_connection_count(),
+        result.disconnected_endpoint_connection_count()
+    );
+    assert_eq!(
+        result.workspace().unresolved_endpoint_connection_count(),
+        result.unresolved_endpoint_connection_count()
+    );
+    assert_eq!(
+        result.workspace().reversed_source_segment_count(),
+        result.reversed_source_segment_count()
+    );
+    assert_eq!(
+        result.workspace().arranged_segment_count(),
+        result.arranged_segment_count()
+    );
+    assert_eq!(
+        result.workspace().arranged_segment_kind_counts(),
+        result.arranged_segment_kind_counts()
+    );
+    assert_eq!(
+        result.workspace().output_ring_count(),
+        result.output_ring_count()
+    );
+    assert_eq!(
+        result.workspace().output_boundary_segment_count(),
+        result.output_boundary_segment_count()
+    );
+    assert_eq!(
+        result.workspace().output_boundary_segment_kind_counts(),
+        result.output_boundary_segment_kind_counts()
+    );
     assert_eq!(result.workspace().output_cache(), result.output_cache());
     assert_eq!(
         result.workspace().materialized_region(),

@@ -2620,6 +2620,46 @@ impl ExactCurveWorkspace2 {
         self.source_reports().map(<[_]>::len)
     }
 
+    /// Returns endpoint pair comparisons attempted during retained ring traversal.
+    pub const fn attempted_endpoint_connection_count(&self) -> Option<usize> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.attempted_endpoint_connection_count()),
+            None => None,
+        }
+    }
+
+    /// Returns endpoint pair comparisons certified as equal during ring traversal.
+    pub const fn exact_endpoint_connection_count(&self) -> Option<usize> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.exact_endpoint_connection_count()),
+            None => None,
+        }
+    }
+
+    /// Returns endpoint pair comparisons certified as disconnected during ring traversal.
+    pub const fn disconnected_endpoint_connection_count(&self) -> Option<usize> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.disconnected_endpoint_connection_count()),
+            None => None,
+        }
+    }
+
+    /// Returns endpoint pair comparisons unresolved during ring traversal.
+    pub const fn unresolved_endpoint_connection_count(&self) -> Option<usize> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.unresolved_endpoint_connection_count()),
+            None => None,
+        }
+    }
+
+    /// Returns source segments reversed while materializing retained ring traversal.
+    pub const fn reversed_source_segment_count(&self) -> Option<usize> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.reversed_source_segment_count()),
+            None => None,
+        }
+    }
+
     /// Returns per-arranged-fragment source provenance buckets.
     pub const fn arranged_fragment_cache(
         &self,
@@ -2630,12 +2670,52 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns arranged fragment count retained after exact splitting, when available.
+    pub const fn arranged_segment_count(&self) -> Option<usize> {
+        match self.arranged_fragment_cache() {
+            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_count()),
+            None => None,
+        }
+    }
+
+    /// Returns arranged fragment primitive-family counts retained after exact splitting.
+    pub const fn arranged_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        match self.arranged_fragment_cache() {
+            Some(arranged_cache) => Some(arranged_cache.arranged_segment_kind_counts()),
+            None => None,
+        }
+    }
+
     /// Returns per-output-ring source provenance buckets.
     pub const fn output_ring_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRingBucketCache2> {
         match self.ring_assembly_cache() {
             Some(ring_cache) => Some(ring_cache.output_ring_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns output ring count when ring traversal completed.
+    pub const fn output_ring_count(&self) -> Option<usize> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => ring_cache.output_ring_count(),
+            None => None,
+        }
+    }
+
+    /// Returns output boundary segment count when ring traversal completed.
+    pub const fn output_boundary_segment_count(&self) -> Option<usize> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => ring_cache.output_boundary_segment_count(),
+            None => None,
+        }
+    }
+
+    /// Returns output boundary primitive-family counts when ring traversal completed.
+    pub const fn output_boundary_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => ring_cache.output_boundary_segment_kind_counts(),
             None => None,
         }
     }
