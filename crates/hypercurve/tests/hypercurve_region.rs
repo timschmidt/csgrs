@@ -3533,7 +3533,21 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.workspace().split_schedule_cache(),
         result.split_schedule_cache()
     );
+    assert_eq!(result.workspace().split_cache(), result.split_cache());
+    assert_eq!(
+        result.workspace().endpoint_graph_cache(),
+        result.endpoint_graph_cache()
+    );
+    assert_eq!(
+        result.workspace().ring_assembly_cache(),
+        result.ring_assembly_cache()
+    );
+    assert_eq!(result.workspace().output_cache(), result.output_cache());
     let arranged_fragment_cache = result.arranged_fragment_cache().unwrap();
+    assert_eq!(
+        result.workspace().arranged_fragment_cache().unwrap(),
+        arranged_fragment_cache
+    );
     assert_eq!(
         result.arranged_fragment_kind_bucket_cache().unwrap(),
         arranged_fragment_cache.arranged_fragment_kind_bucket_cache()
@@ -3545,6 +3559,63 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         result.arranged_fragment_source_range_cache().unwrap(),
         arranged_fragment_cache.arranged_fragment_source_range_cache()
+    );
+    assert_eq!(
+        result.workspace().output_ring_bucket_cache(),
+        result.output_ring_bucket_cache()
+    );
+    assert_eq!(
+        result.workspace().output_segment_kind_bucket_cache(),
+        result.output_segment_kind_bucket_cache()
+    );
+    assert_eq!(
+        result.workspace().output_segment_source_bucket_cache(),
+        result.output_segment_source_bucket_cache()
+    );
+    assert_eq!(
+        result.workspace().output_segment_source_range_cache(),
+        result.output_segment_source_range_cache()
+    );
+    assert_eq!(
+        result.workspace().output_segment_endpoint_cache(),
+        result.output_segment_endpoint_cache()
+    );
+    assert_eq!(
+        result.workspace().output_ring_continuity_cache(),
+        result.output_ring_continuity_cache()
+    );
+    assert_eq!(
+        result.workspace().output_segment_status_bucket_cache(),
+        result.output_segment_status_bucket_cache()
+    );
+    assert_eq!(
+        result.workspace().output_segment_direction_bucket_cache(),
+        result.output_segment_direction_bucket_cache()
+    );
+    assert_eq!(
+        result.workspace().boundary_output_cache(),
+        result.boundary_output_cache()
+    );
+    assert_eq!(
+        result.workspace().boundary_output_role_bucket_cache(),
+        result.boundary_output_role_bucket_cache()
+    );
+    assert_eq!(result.workspace().role_cache(), result.role_cache());
+    assert_eq!(
+        result.workspace().role_status_bucket_cache(),
+        result.role_status_bucket_cache()
+    );
+    assert_eq!(
+        result.workspace().role_source_contour_bucket_cache(),
+        result.role_source_contour_bucket_cache()
+    );
+    assert_eq!(
+        result.workspace().role_nesting_depth_bucket_cache(),
+        result.role_nesting_depth_bucket_cache()
+    );
+    assert_eq!(
+        result.workspace().role_containment_bucket_cache(),
+        result.role_containment_bucket_cache()
     );
     assert_eq!(
         result.source_segment_kind_counts(),

@@ -2598,9 +2598,167 @@ impl ExactCurveWorkspace2 {
         self.ring_assembly_cache.as_ref()
     }
 
+    /// Returns per-arranged-fragment source provenance buckets.
+    pub const fn arranged_fragment_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedFragmentCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.arranged_fragment_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns per-output-ring source provenance buckets.
+    pub const fn output_ring_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRingBucketCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_ring_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment buckets grouped by primitive family.
+    pub const fn output_segment_kind_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputSegmentKindBucketCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_segment_kind_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment buckets grouped by source segment.
+    pub const fn output_segment_source_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputSegmentSourceBucketCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_segment_source_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment source parameter ranges.
+    pub const fn output_segment_source_range_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputSegmentSourceRangeCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_segment_source_range_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment exact endpoint records.
+    pub const fn output_segment_endpoint_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputSegmentEndpointCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_segment_endpoint_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained exact continuity records between adjacent output segments.
+    pub const fn output_ring_continuity_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRingContinuityCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_ring_continuity_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment buckets grouped by topology status.
+    pub const fn output_segment_status_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputSegmentStatusBucketCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_segment_status_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment buckets grouped by traversal direction.
+    pub const fn output_segment_direction_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputSegmentDirectionBucketCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_segment_direction_bucket_cache()),
+            None => None,
+        }
+    }
+
     /// Returns final output evidence retained from the evaluated arrangement.
     pub const fn output_cache(&self) -> Option<&ExactCurveArrangementOutputCache2> {
         self.output_cache.as_ref()
+    }
+
+    /// Returns final boundary output summary when role assignment materialized output.
+    pub const fn boundary_output_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputBoundaryCache2> {
+        match self.output_cache() {
+            Some(output_cache) => output_cache.boundary_output_cache(),
+            None => None,
+        }
+    }
+
+    /// Returns final boundary output counts grouped by material/hole role.
+    pub const fn boundary_output_role_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputBoundaryRoleBucketCache2> {
+        match self.boundary_output_cache() {
+            Some(boundary_cache) => Some(boundary_cache.role_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns output role assignment buckets retained after boundary role assignment.
+    pub const fn role_cache(&self) -> Option<&ExactCurveArrangementOutputRoleCache2> {
+        match self.output_cache() {
+            Some(output_cache) => output_cache.role_cache(),
+            None => None,
+        }
+    }
+
+    /// Returns output role assignment buckets grouped by topology status.
+    pub const fn role_status_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRoleStatusBucketCache2> {
+        match self.role_cache() {
+            Some(role_cache) => Some(role_cache.role_status_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns output role assignment buckets grouped by source contour identity.
+    pub const fn role_source_contour_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRoleSourceContourBucketCache2> {
+        match self.role_cache() {
+            Some(role_cache) => Some(role_cache.role_source_contour_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns output role assignment buckets grouped by exact nesting depth.
+    pub const fn role_nesting_depth_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRoleNestingDepthBucketCache2> {
+        match self.role_cache() {
+            Some(role_cache) => Some(role_cache.role_nesting_depth_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns output role containment evidence grouped by containing source contour.
+    pub const fn role_containment_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRoleContainmentBucketCache2> {
+        match self.role_cache() {
+            Some(role_cache) => Some(role_cache.role_containment_bucket_cache()),
+            None => None,
+        }
     }
 }
 
