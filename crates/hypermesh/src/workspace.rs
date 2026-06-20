@@ -1039,27 +1039,30 @@ mod tests {
             ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
 
-        let materialized = workspace.materialize_ref(request).cloned().unwrap();
+        workspace.materialize_ref(request).unwrap();
         let expected_result = ExactBooleanWorkspace::new(&left, &right)
             .materialize_ref(request)
             .cloned()
             .unwrap();
-        assert_eq!(materialized, expected_result);
+        assert_eq!(workspace.materializations[0].1, expected_result);
         assert_eq!(workspace.materializations.len(), 1);
-        assert_eq!(workspace.materialize_ref(request).unwrap(), &materialized);
+        assert_eq!(
+            workspace.materialize_ref(request).unwrap(),
+            &expected_result
+        );
         assert_eq!(workspace.materializations.len(), 1);
 
-        let mut relabelled = materialized.clone();
-        relabelled.replace_kind(ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Difference,
-            shortcut: ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
-        });
-        workspace.materializations[0].1 = relabelled;
+        let original_kind = workspace.materializations[0].1.replace_kind(
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Difference,
+                shortcut: ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
+            },
+        );
         assert!(
             workspace.materialize_ref(request).is_err(),
             "cached boundary-touching materialization must match the request operation"
         );
-        workspace.materializations[0].1 = materialized.clone();
+        workspace.materializations[0].1.replace_kind(original_kind);
 
         let graph_had_unknowns = workspace.materializations[0].1.graph_had_unknowns();
         workspace.materializations[0]
@@ -1087,7 +1090,7 @@ mod tests {
         );
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
 
-        let materialized = workspace.materialize_ref(request).cloned().unwrap();
+        workspace.materialize_ref(request).unwrap();
         let expected_result = ExactBooleanWorkspace::new(&left, &right)
             .materialize_ref(request)
             .cloned()
@@ -1098,9 +1101,12 @@ mod tests {
             .preflight()
             .clone()
             .coplanar_volumetric_evidence;
-        assert_eq!(materialized, expected_result);
+        assert_eq!(workspace.materializations[0].1, expected_result);
         assert_eq!(workspace.materializations.len(), 1);
-        assert_eq!(workspace.materialize_ref(request).unwrap(), &materialized);
+        assert_eq!(
+            workspace.materialize_ref(request).unwrap(),
+            &expected_result
+        );
         assert_eq!(workspace.materializations.len(), 1);
         assert_eq!(
             workspace
