@@ -2215,6 +2215,18 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.source_line_segments()
     );
     assert_eq!(
+        arrangement_report.source_segment_cache(),
+        result.source_segment_cache()
+    );
+    assert_eq!(
+        arrangement_report.source_endpoint_bucket_cache(),
+        result.source_endpoint_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.split_schedule_cache(),
+        result.split_schedule_cache()
+    );
+    assert_eq!(
         arrangement_report.source_segment_count(),
         result.source_segment_count()
     );
@@ -3830,6 +3842,18 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         arrangement_report.source_line_segments(),
         result.source_line_segments()
+    );
+    assert_eq!(
+        arrangement_report.source_segment_cache(),
+        result.source_segment_cache()
+    );
+    assert_eq!(
+        arrangement_report.source_endpoint_bucket_cache(),
+        result.source_endpoint_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.split_schedule_cache(),
+        result.split_schedule_cache()
     );
     assert_eq!(
         arrangement_report.source_segment_kind_counts(),

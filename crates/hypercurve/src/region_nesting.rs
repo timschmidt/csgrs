@@ -981,6 +981,9 @@ pub struct ExactCurveArrangementReport2 {
     fill_rule: FillRule,
     source_segments: Vec<Segment2>,
     source_line_segments: Option<Vec<LineSeg2>>,
+    source_segment_cache: ExactCurveArrangementSourceSegmentCache2,
+    source_endpoint_bucket_cache: ExactCurveArrangementSourceEndpointBucketCache2,
+    split_schedule_cache: ExactCurveArrangementSplitScheduleCache2,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
     source_segment_aabbs: Vec<Option<Aabb2>>,
@@ -8043,6 +8046,9 @@ impl ExactCurveArrangementReport2 {
             fill_rule: result.fill_rule(),
             source_segments: result.source_segments().to_vec(),
             source_line_segments: result.source_line_segments().map(<[_]>::to_vec),
+            source_segment_cache: result.source_segment_cache().clone(),
+            source_endpoint_bucket_cache: result.source_endpoint_bucket_cache().clone(),
+            split_schedule_cache: result.split_schedule_cache().clone(),
             source_segment_count: result.source_segment_count(),
             source_segment_kind_counts: result.source_segment_kind_counts(),
             source_segment_aabbs: result.source_segment_aabbs().to_vec(),
@@ -8157,6 +8163,23 @@ impl ExactCurveArrangementReport2 {
     /// Returns line-only source carriers when the retained request came from a line-specific API.
     pub fn source_line_segments(&self) -> Option<&[LineSeg2]> {
         self.source_line_segments.as_deref()
+    }
+
+    /// Returns retained source segment facts prepared before split scheduling.
+    pub const fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
+        &self.source_segment_cache
+    }
+
+    /// Returns exact source endpoint buckets retained during workspace preparation.
+    pub const fn source_endpoint_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
+        &self.source_endpoint_bucket_cache
+    }
+
+    /// Returns the retained source-pair schedule prepared before split predicates run.
+    pub const fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
+        &self.split_schedule_cache
     }
 
     /// Returns retained source segment count.
