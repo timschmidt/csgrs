@@ -1131,19 +1131,9 @@ impl CurveString2 {
         other: &Self,
         policy: &CurvePolicy,
     ) -> CurveResult<crate::Classification<Option<LinkedCurveString2>>> {
-        let result = self.link_connected_endpoints_with_report(other, policy)?;
-        if result.linked.is_some() {
-            return Ok(crate::Classification::Decided(
-                result.into_linked_curve_string(),
-            ));
-        }
-        let report = result.report();
-        if report.exact_endpoint_pair_count() == 0 && report.unresolved_endpoint_pair_count() == 0 {
-            return Ok(crate::Classification::Decided(None));
-        }
-        Ok(crate::Classification::Uncertain(
-            report.blocker().unwrap_or(UncertaintyReason::Unsupported),
-        ))
+        Ok(self
+            .link_connected_endpoints_with_report(other, policy)?
+            .into_linked_curve_string_classification())
     }
 
     /// Links two open curve strings by certified endpoints and retains a report.
@@ -7182,9 +7172,55 @@ impl CurveStringLinkAttemptResult2 {
         self.linked
     }
 
+    /// Consumes this result and returns retained evidence for the pairwise link attempt.
+    pub fn into_report(self) -> CurveStringLinkAttemptReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized link with its report.
+    pub fn into_parts(self) -> (Option<LinkedCurveString2>, CurveStringLinkAttemptReport2) {
+        (self.linked, self.report)
+    }
+
     /// Returns retained evidence for the pairwise link attempt.
     pub const fn report(&self) -> &CurveStringLinkAttemptReport2 {
         &self.report
+    }
+
+    /// Returns the link attempt as a convenience classification while retaining this result.
+    pub fn linked_curve_string_classification(
+        &self,
+    ) -> Classification<Option<&LinkedCurveString2>> {
+        if let Some(linked) = self.linked_curve_string() {
+            return Classification::Decided(Some(linked));
+        }
+        if self.report().exact_endpoint_pair_count() == 0
+            && self.report().unresolved_endpoint_pair_count() == 0
+        {
+            return Classification::Decided(None);
+        }
+        Classification::Uncertain(
+            self.report()
+                .blocker()
+                .unwrap_or(UncertaintyReason::Unsupported),
+        )
+    }
+
+    /// Consumes this result and returns the link attempt as a convenience classification.
+    pub fn into_linked_curve_string_classification(
+        self,
+    ) -> Classification<Option<LinkedCurveString2>> {
+        let disconnected = self.report().exact_endpoint_pair_count() == 0
+            && self.report().unresolved_endpoint_pair_count() == 0;
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_linked_curve_string() {
+            Some(linked) => Classification::Decided(Some(linked)),
+            None if disconnected => Classification::Decided(None),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 

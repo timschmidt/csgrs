@@ -932,6 +932,19 @@ fn curve_string_link_materializes_unique_end_start_connection() {
         CurveStringLinkKind2::FirstEndToSecondStart
     );
     assert!(reported.linked_curve_string().is_some());
+    assert!(matches!(
+        reported.linked_curve_string_classification(),
+        Classification::Decided(Some(linked)) if linked.report().kind() == CurveStringLinkKind2::FirstEndToSecondStart
+    ));
+    let owned_report = reported.clone().into_report();
+    assert_eq!(&owned_report, reported.report());
+    let (owned_linked, owned_parts_report) = reported.clone().into_parts();
+    assert_eq!(owned_linked.as_ref(), reported.linked_curve_string());
+    assert_eq!(&owned_parts_report, reported.report());
+    assert!(matches!(
+        reported.clone().into_linked_curve_string_classification(),
+        Classification::Decided(Some(linked)) if linked.report().kind() == CurveStringLinkKind2::FirstEndToSecondStart
+    ));
     assert_eq!(
         reported.report().stage(),
         CurveStringLinkStage2::SegmentMaterialization
@@ -1189,6 +1202,19 @@ fn curve_string_link_returns_none_for_certified_disconnected_inputs() {
         .link_connected_endpoints_with_report(&second, &policy())
         .unwrap();
     assert!(reported.linked_curve_string().is_none());
+    assert_eq!(
+        reported.linked_curve_string_classification(),
+        Classification::Decided(None)
+    );
+    let owned_report = reported.clone().into_report();
+    assert_eq!(&owned_report, reported.report());
+    let (owned_linked, owned_parts_report) = reported.clone().into_parts();
+    assert_eq!(owned_linked.as_ref(), reported.linked_curve_string());
+    assert_eq!(&owned_parts_report, reported.report());
+    assert_eq!(
+        reported.clone().into_linked_curve_string_classification(),
+        Classification::Decided(None)
+    );
     assert_eq!(
         reported.report().stage(),
         CurveStringLinkStage2::EndpointSelection
