@@ -2775,6 +2775,18 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     let output_segment_source_range_cache = result.output_segment_source_range_cache().unwrap();
     assert_eq!(
+        result.output_segment_source_range_ref_count(),
+        Some(output_segment_source_range_cache.output_segment_ref_count())
+    );
+    assert_eq!(
+        result.output_full_source_range_ref_count(),
+        Some(output_segment_source_range_cache.full_source_range_ref_count())
+    );
+    assert_eq!(
+        result.output_partial_source_range_ref_count(),
+        Some(output_segment_source_range_cache.partial_source_range_ref_count())
+    );
+    assert_eq!(
         output_segment_source_range_cache.output_segment_ref_count(),
         result.source_report_count().unwrap()
     );
@@ -2811,6 +2823,14 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert!(source_range_ref.covers_full_source_range());
     let output_segment_endpoint_cache = result.output_segment_endpoint_cache().unwrap();
     assert_eq!(
+        result.output_segment_endpoint_record_count(),
+        Some(output_segment_endpoint_cache.output_segment_ref_count())
+    );
+    assert_eq!(
+        result.output_endpoint_ref_count(),
+        Some(output_segment_endpoint_cache.output_endpoint_ref_count())
+    );
+    assert_eq!(
         output_segment_endpoint_cache.output_segment_ref_count(),
         result.source_report_count().unwrap()
     );
@@ -2841,6 +2861,18 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.source_reports().unwrap()[0].output_end_point()
     );
     let output_ring_continuity_cache = result.output_ring_continuity_cache().unwrap();
+    assert_eq!(
+        result.output_ring_continuity_ring_ref_count(),
+        Some(output_ring_continuity_cache.output_ring_ref_count())
+    );
+    assert_eq!(
+        result.output_ring_continuity_connection_ref_count(),
+        Some(output_ring_continuity_cache.output_connection_ref_count())
+    );
+    assert_eq!(
+        result.output_ring_continuity_max_connection_count(),
+        Some(output_ring_continuity_cache.max_ring_connection_count())
+    );
     assert_eq!(
         output_ring_continuity_cache.output_ring_ref_count(),
         result.output_ring_bucket_cache().unwrap().ring_count()
@@ -3355,12 +3387,44 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.output_segment_source_range_cache()
     );
     assert_eq!(
+        arrangement_report.output_segment_source_range_ref_count(),
+        result.output_segment_source_range_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.output_full_source_range_ref_count(),
+        result.output_full_source_range_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.output_partial_source_range_ref_count(),
+        result.output_partial_source_range_ref_count()
+    );
+    assert_eq!(
         arrangement_report.output_segment_endpoint_cache(),
         result.output_segment_endpoint_cache()
     );
     assert_eq!(
+        arrangement_report.output_segment_endpoint_record_count(),
+        result.output_segment_endpoint_record_count()
+    );
+    assert_eq!(
+        arrangement_report.output_endpoint_ref_count(),
+        result.output_endpoint_ref_count()
+    );
+    assert_eq!(
         arrangement_report.output_ring_continuity_cache(),
         result.output_ring_continuity_cache()
+    );
+    assert_eq!(
+        arrangement_report.output_ring_continuity_ring_ref_count(),
+        result.output_ring_continuity_ring_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.output_ring_continuity_connection_ref_count(),
+        result.output_ring_continuity_connection_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.output_ring_continuity_max_connection_count(),
+        result.output_ring_continuity_max_connection_count()
     );
     assert_eq!(
         arrangement_report.output_segment_status_bucket_cache(),
@@ -4628,12 +4692,48 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.output_segment_source_range_cache()
     );
     assert_eq!(
+        result.evaluation().output_segment_source_range_ref_count(),
+        result.output_segment_source_range_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().output_full_source_range_ref_count(),
+        result.output_full_source_range_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().output_partial_source_range_ref_count(),
+        result.output_partial_source_range_ref_count()
+    );
+    assert_eq!(
         result.evaluation().output_segment_endpoint_cache(),
         result.output_segment_endpoint_cache()
     );
     assert_eq!(
+        result.evaluation().output_segment_endpoint_record_count(),
+        result.output_segment_endpoint_record_count()
+    );
+    assert_eq!(
+        result.evaluation().output_endpoint_ref_count(),
+        result.output_endpoint_ref_count()
+    );
+    assert_eq!(
         result.evaluation().output_ring_continuity_cache(),
         result.output_ring_continuity_cache()
+    );
+    assert_eq!(
+        result.evaluation().output_ring_continuity_ring_ref_count(),
+        result.output_ring_continuity_ring_ref_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .output_ring_continuity_connection_ref_count(),
+        result.output_ring_continuity_connection_ref_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .output_ring_continuity_max_connection_count(),
+        result.output_ring_continuity_max_connection_count()
     );
     assert_eq!(
         result.evaluation().output_segment_status_bucket_cache(),
@@ -5204,12 +5304,48 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.output_segment_source_range_cache()
     );
     assert_eq!(
+        result.workspace().output_segment_source_range_ref_count(),
+        result.output_segment_source_range_ref_count()
+    );
+    assert_eq!(
+        result.workspace().output_full_source_range_ref_count(),
+        result.output_full_source_range_ref_count()
+    );
+    assert_eq!(
+        result.workspace().output_partial_source_range_ref_count(),
+        result.output_partial_source_range_ref_count()
+    );
+    assert_eq!(
         result.workspace().output_segment_endpoint_cache(),
         result.output_segment_endpoint_cache()
     );
     assert_eq!(
+        result.workspace().output_segment_endpoint_record_count(),
+        result.output_segment_endpoint_record_count()
+    );
+    assert_eq!(
+        result.workspace().output_endpoint_ref_count(),
+        result.output_endpoint_ref_count()
+    );
+    assert_eq!(
         result.workspace().output_ring_continuity_cache(),
         result.output_ring_continuity_cache()
+    );
+    assert_eq!(
+        result.workspace().output_ring_continuity_ring_ref_count(),
+        result.output_ring_continuity_ring_ref_count()
+    );
+    assert_eq!(
+        result
+            .workspace()
+            .output_ring_continuity_connection_ref_count(),
+        result.output_ring_continuity_connection_ref_count()
+    );
+    assert_eq!(
+        result
+            .workspace()
+            .output_ring_continuity_max_connection_count(),
+        result.output_ring_continuity_max_connection_count()
     );
     assert_eq!(
         result.workspace().output_segment_status_bucket_cache(),
@@ -6218,6 +6354,18 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     let output_segment_source_range_cache = result.output_segment_source_range_cache().unwrap();
     assert_eq!(
+        result.output_segment_source_range_ref_count(),
+        Some(output_segment_source_range_cache.output_segment_ref_count())
+    );
+    assert_eq!(
+        result.output_full_source_range_ref_count(),
+        Some(output_segment_source_range_cache.full_source_range_ref_count())
+    );
+    assert_eq!(
+        result.output_partial_source_range_ref_count(),
+        Some(output_segment_source_range_cache.partial_source_range_ref_count())
+    );
+    assert_eq!(
         output_segment_source_range_cache.output_segment_ref_count(),
         result.source_report_count().unwrap()
     );
@@ -6254,6 +6402,14 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert!(source_range_ref.covers_full_source_range());
     let output_segment_endpoint_cache = result.output_segment_endpoint_cache().unwrap();
     assert_eq!(
+        result.output_segment_endpoint_record_count(),
+        Some(output_segment_endpoint_cache.output_segment_ref_count())
+    );
+    assert_eq!(
+        result.output_endpoint_ref_count(),
+        Some(output_segment_endpoint_cache.output_endpoint_ref_count())
+    );
+    assert_eq!(
         output_segment_endpoint_cache.output_segment_ref_count(),
         result.source_report_count().unwrap()
     );
@@ -6284,6 +6440,18 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.source_reports().unwrap()[0].output_end_point()
     );
     let output_ring_continuity_cache = result.output_ring_continuity_cache().unwrap();
+    assert_eq!(
+        result.output_ring_continuity_ring_ref_count(),
+        Some(output_ring_continuity_cache.output_ring_ref_count())
+    );
+    assert_eq!(
+        result.output_ring_continuity_connection_ref_count(),
+        Some(output_ring_continuity_cache.output_connection_ref_count())
+    );
+    assert_eq!(
+        result.output_ring_continuity_max_connection_count(),
+        Some(output_ring_continuity_cache.max_ring_connection_count())
+    );
     assert_eq!(
         output_ring_continuity_cache.output_ring_ref_count(),
         result.output_ring_bucket_cache().unwrap().ring_count()
@@ -7408,12 +7576,44 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         result.output_segment_source_range_cache()
     );
     assert_eq!(
+        arrangement_report.output_segment_source_range_ref_count(),
+        result.output_segment_source_range_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.output_full_source_range_ref_count(),
+        result.output_full_source_range_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.output_partial_source_range_ref_count(),
+        result.output_partial_source_range_ref_count()
+    );
+    assert_eq!(
         arrangement_report.output_segment_endpoint_cache(),
         result.output_segment_endpoint_cache()
     );
     assert_eq!(
+        arrangement_report.output_segment_endpoint_record_count(),
+        result.output_segment_endpoint_record_count()
+    );
+    assert_eq!(
+        arrangement_report.output_endpoint_ref_count(),
+        result.output_endpoint_ref_count()
+    );
+    assert_eq!(
         arrangement_report.output_ring_continuity_cache(),
         result.output_ring_continuity_cache()
+    );
+    assert_eq!(
+        arrangement_report.output_ring_continuity_ring_ref_count(),
+        result.output_ring_continuity_ring_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.output_ring_continuity_connection_ref_count(),
+        result.output_ring_continuity_connection_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.output_ring_continuity_max_connection_count(),
+        result.output_ring_continuity_max_connection_count()
     );
     assert_eq!(
         arrangement_report.output_segment_status_bucket_cache(),

@@ -3143,6 +3143,30 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns retained output segment source-range references.
+    pub const fn output_segment_source_range_ref_count(&self) -> Option<usize> {
+        match self.output_segment_source_range_cache() {
+            Some(range_cache) => Some(range_cache.output_segment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segments covering a complete source range.
+    pub const fn output_full_source_range_ref_count(&self) -> Option<usize> {
+        match self.output_segment_source_range_cache() {
+            Some(range_cache) => Some(range_cache.full_source_range_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segments covering a proper source subrange.
+    pub const fn output_partial_source_range_ref_count(&self) -> Option<usize> {
+        match self.output_segment_source_range_cache() {
+            Some(range_cache) => Some(range_cache.partial_source_range_ref_count()),
+            None => None,
+        }
+    }
+
     /// Returns retained output segment exact endpoint records.
     pub const fn output_segment_endpoint_cache(
         &self,
@@ -3153,12 +3177,52 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns retained output segment endpoint records.
+    pub const fn output_segment_endpoint_record_count(&self) -> Option<usize> {
+        match self.output_segment_endpoint_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.output_segment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained exact output endpoint references.
+    pub const fn output_endpoint_ref_count(&self) -> Option<usize> {
+        match self.output_segment_endpoint_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.output_endpoint_ref_count()),
+            None => None,
+        }
+    }
+
     /// Returns retained exact continuity records between adjacent output segments.
     pub const fn output_ring_continuity_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRingContinuityCache2> {
         match self.ring_assembly_cache() {
             Some(ring_cache) => Some(ring_cache.output_ring_continuity_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns output rings with retained continuity evidence.
+    pub const fn output_ring_continuity_ring_ref_count(&self) -> Option<usize> {
+        match self.output_ring_continuity_cache() {
+            Some(continuity_cache) => Some(continuity_cache.output_ring_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment-to-next-segment continuity references.
+    pub const fn output_ring_continuity_connection_ref_count(&self) -> Option<usize> {
+        match self.output_ring_continuity_cache() {
+            Some(continuity_cache) => Some(continuity_cache.output_connection_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained continuity connection count for one output ring.
+    pub const fn output_ring_continuity_max_connection_count(&self) -> Option<usize> {
+        match self.output_ring_continuity_cache() {
+            Some(continuity_cache) => Some(continuity_cache.max_ring_connection_count()),
             None => None,
         }
     }
@@ -8113,6 +8177,21 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().output_segment_source_range_cache()
     }
 
+    /// Returns retained output segment source-range references.
+    pub const fn output_segment_source_range_ref_count(&self) -> Option<usize> {
+        self.workspace().output_segment_source_range_ref_count()
+    }
+
+    /// Returns retained output segments covering a complete source range.
+    pub const fn output_full_source_range_ref_count(&self) -> Option<usize> {
+        self.workspace().output_full_source_range_ref_count()
+    }
+
+    /// Returns retained output segments covering a proper source subrange.
+    pub const fn output_partial_source_range_ref_count(&self) -> Option<usize> {
+        self.workspace().output_partial_source_range_ref_count()
+    }
+
     /// Returns retained output segment exact endpoint records.
     pub const fn output_segment_endpoint_cache(
         &self,
@@ -8120,11 +8199,38 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().output_segment_endpoint_cache()
     }
 
+    /// Returns retained output segment endpoint records.
+    pub const fn output_segment_endpoint_record_count(&self) -> Option<usize> {
+        self.workspace().output_segment_endpoint_record_count()
+    }
+
+    /// Returns retained exact output endpoint references.
+    pub const fn output_endpoint_ref_count(&self) -> Option<usize> {
+        self.workspace().output_endpoint_ref_count()
+    }
+
     /// Returns retained exact continuity records between adjacent output segments.
     pub const fn output_ring_continuity_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRingContinuityCache2> {
         self.workspace().output_ring_continuity_cache()
+    }
+
+    /// Returns output rings with retained continuity evidence.
+    pub const fn output_ring_continuity_ring_ref_count(&self) -> Option<usize> {
+        self.workspace().output_ring_continuity_ring_ref_count()
+    }
+
+    /// Returns retained output segment-to-next-segment continuity references.
+    pub const fn output_ring_continuity_connection_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .output_ring_continuity_connection_ref_count()
+    }
+
+    /// Returns the largest retained continuity connection count for one output ring.
+    pub const fn output_ring_continuity_max_connection_count(&self) -> Option<usize> {
+        self.workspace()
+            .output_ring_continuity_max_connection_count()
     }
 
     /// Returns retained output segment buckets grouped by topology status.
@@ -9417,30 +9523,63 @@ impl ExactCurveArrangementResult2 {
     pub const fn output_segment_source_range_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentSourceRangeCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.output_segment_source_range_cache()),
-            None => None,
-        }
+        self.workspace().output_segment_source_range_cache()
+    }
+
+    /// Returns retained output segment source-range references.
+    pub const fn output_segment_source_range_ref_count(&self) -> Option<usize> {
+        self.workspace().output_segment_source_range_ref_count()
+    }
+
+    /// Returns retained output segments covering a complete source range.
+    pub const fn output_full_source_range_ref_count(&self) -> Option<usize> {
+        self.workspace().output_full_source_range_ref_count()
+    }
+
+    /// Returns retained output segments covering a proper source subrange.
+    pub const fn output_partial_source_range_ref_count(&self) -> Option<usize> {
+        self.workspace().output_partial_source_range_ref_count()
     }
 
     /// Returns retained output segment exact endpoint records.
     pub const fn output_segment_endpoint_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentEndpointCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.output_segment_endpoint_cache()),
-            None => None,
-        }
+        self.workspace().output_segment_endpoint_cache()
+    }
+
+    /// Returns retained output segment endpoint records.
+    pub const fn output_segment_endpoint_record_count(&self) -> Option<usize> {
+        self.workspace().output_segment_endpoint_record_count()
+    }
+
+    /// Returns retained exact output endpoint references.
+    pub const fn output_endpoint_ref_count(&self) -> Option<usize> {
+        self.workspace().output_endpoint_ref_count()
     }
 
     /// Returns retained exact continuity records between adjacent output segments.
     pub const fn output_ring_continuity_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRingContinuityCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.output_ring_continuity_cache()),
-            None => None,
-        }
+        self.workspace().output_ring_continuity_cache()
+    }
+
+    /// Returns output rings with retained continuity evidence.
+    pub const fn output_ring_continuity_ring_ref_count(&self) -> Option<usize> {
+        self.workspace().output_ring_continuity_ring_ref_count()
+    }
+
+    /// Returns retained output segment-to-next-segment continuity references.
+    pub const fn output_ring_continuity_connection_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .output_ring_continuity_connection_ref_count()
+    }
+
+    /// Returns the largest retained continuity connection count for one output ring.
+    pub const fn output_ring_continuity_max_connection_count(&self) -> Option<usize> {
+        self.workspace()
+            .output_ring_continuity_max_connection_count()
     }
 
     /// Returns retained output segment buckets grouped by topology status.
@@ -11942,30 +12081,63 @@ impl ExactCurveArrangementReport2 {
     pub const fn output_segment_source_range_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentSourceRangeCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.output_segment_source_range_cache()),
-            None => None,
-        }
+        self.workspace().output_segment_source_range_cache()
+    }
+
+    /// Returns retained output segment source-range references.
+    pub const fn output_segment_source_range_ref_count(&self) -> Option<usize> {
+        self.workspace().output_segment_source_range_ref_count()
+    }
+
+    /// Returns retained output segments covering a complete source range.
+    pub const fn output_full_source_range_ref_count(&self) -> Option<usize> {
+        self.workspace().output_full_source_range_ref_count()
+    }
+
+    /// Returns retained output segments covering a proper source subrange.
+    pub const fn output_partial_source_range_ref_count(&self) -> Option<usize> {
+        self.workspace().output_partial_source_range_ref_count()
     }
 
     /// Returns retained output segment exact endpoint records.
     pub const fn output_segment_endpoint_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentEndpointCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.output_segment_endpoint_cache()),
-            None => None,
-        }
+        self.workspace().output_segment_endpoint_cache()
+    }
+
+    /// Returns retained output segment endpoint records.
+    pub const fn output_segment_endpoint_record_count(&self) -> Option<usize> {
+        self.workspace().output_segment_endpoint_record_count()
+    }
+
+    /// Returns retained exact output endpoint references.
+    pub const fn output_endpoint_ref_count(&self) -> Option<usize> {
+        self.workspace().output_endpoint_ref_count()
     }
 
     /// Returns retained exact continuity records between adjacent output segments.
     pub const fn output_ring_continuity_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRingContinuityCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.output_ring_continuity_cache()),
-            None => None,
-        }
+        self.workspace().output_ring_continuity_cache()
+    }
+
+    /// Returns output rings with retained continuity evidence.
+    pub const fn output_ring_continuity_ring_ref_count(&self) -> Option<usize> {
+        self.workspace().output_ring_continuity_ring_ref_count()
+    }
+
+    /// Returns retained output segment-to-next-segment continuity references.
+    pub const fn output_ring_continuity_connection_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .output_ring_continuity_connection_ref_count()
+    }
+
+    /// Returns the largest retained continuity connection count for one output ring.
+    pub const fn output_ring_continuity_max_connection_count(&self) -> Option<usize> {
+        self.workspace()
+            .output_ring_continuity_max_connection_count()
     }
 
     /// Returns retained output segment buckets grouped by topology status.
