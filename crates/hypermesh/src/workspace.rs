@@ -952,24 +952,25 @@ mod tests {
             .unwrap();
         workspace.preflight(request).unwrap();
 
-        let evaluated_result = {
+        {
             let evaluation = workspace.evaluate(request).unwrap();
             evaluation.validate().unwrap();
-            evaluation
-                .materialized_result()
-                .cloned()
-                .expect("certified test request should retain a result")
-        };
+            assert!(
+                evaluation.materialized_result().is_some(),
+                "certified test request should retain a result"
+            );
+        }
         assert!(workspace.materializations.is_empty());
 
-        let materialized = workspace.materialize_ref(request).cloned().unwrap();
-        assert_eq!(materialized, evaluated_result);
+        workspace.materialize_ref(request).unwrap();
         assert_eq!(workspace.materializations.len(), 1);
-        assert_eq!(workspace.materializations[0].1, evaluated_result);
-        assert_eq!(
-            workspace.materialize_ref(request).unwrap(),
-            &evaluated_result
-        );
+        {
+            let cached_result = &workspace.materializations[0].1;
+            assert_eq!(
+                workspace.evaluations[0].1.materialized_result(),
+                Some(cached_result)
+            );
+        }
         assert_eq!(workspace.materializations.len(), 1);
         let borrowed = workspace.materialize_ref(request).unwrap() as *const ExactBooleanResult;
         let cached = &workspace.materializations[0].1 as *const ExactBooleanResult;
