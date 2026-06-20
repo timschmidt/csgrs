@@ -994,21 +994,6 @@ pub struct ExactCurveArrangementReport2 {
     output_cache: Option<ExactCurveArrangementOutputCache2>,
     summary_cache: ExactCurveArrangementEvaluationSummaryCache2,
     source_segment_aabbs: Vec<Option<Aabb2>>,
-    ring_assembly_predicate_path: Option<RegionLineSegmentRingAssemblyPredicatePath2>,
-    attempted_endpoint_connection_count: Option<usize>,
-    exact_endpoint_connection_count: Option<usize>,
-    disconnected_endpoint_connection_count: Option<usize>,
-    unresolved_endpoint_connection_count: Option<usize>,
-    reversed_source_segment_count: Option<usize>,
-    arranged_segment_count: Option<usize>,
-    arranged_segment_kind_counts: Option<SegmentKindCounts>,
-    arranged_source_report_count: Option<usize>,
-    arranged_source_reports: Option<Vec<RegionLineSegmentArrangedSourceReport2>>,
-    source_report_count: Option<usize>,
-    source_reports: Option<Vec<RegionLineSegmentRingSourceReport2>>,
-    output_ring_count: Option<usize>,
-    output_boundary_segment_count: Option<usize>,
-    output_boundary_segment_kind_counts: Option<SegmentKindCounts>,
     output_contour_count: Option<usize>,
     output_segment_count: Option<usize>,
     output_segment_kind_counts: Option<SegmentKindCounts>,
@@ -9576,22 +9561,6 @@ impl ExactCurveArrangementReport2 {
             output_cache: evaluation.output_cache().cloned(),
             summary_cache: evaluation.summary_cache().clone(),
             source_segment_aabbs: evaluation.source_segment_aabbs().to_vec(),
-            ring_assembly_predicate_path: evaluation.ring_assembly_predicate_path(),
-            attempted_endpoint_connection_count: evaluation.attempted_endpoint_connection_count(),
-            exact_endpoint_connection_count: evaluation.exact_endpoint_connection_count(),
-            disconnected_endpoint_connection_count: evaluation
-                .disconnected_endpoint_connection_count(),
-            unresolved_endpoint_connection_count: evaluation.unresolved_endpoint_connection_count(),
-            reversed_source_segment_count: evaluation.reversed_source_segment_count(),
-            arranged_segment_count: evaluation.arranged_segment_count(),
-            arranged_segment_kind_counts: evaluation.arranged_segment_kind_counts(),
-            arranged_source_report_count: evaluation.arranged_source_report_count(),
-            arranged_source_reports: evaluation.arranged_source_reports().map(<[_]>::to_vec),
-            source_report_count: evaluation.source_report_count(),
-            source_reports: evaluation.source_reports().map(<[_]>::to_vec),
-            output_ring_count: evaluation.output_ring_count(),
-            output_boundary_segment_count: evaluation.output_boundary_segment_count(),
-            output_boundary_segment_kind_counts: evaluation.output_boundary_segment_kind_counts(),
             output_contour_count: evaluation.output_contour_count(),
             output_segment_count: evaluation.output_segment_count(),
             output_segment_kind_counts: evaluation.output_segment_kind_counts(),
@@ -9690,49 +9659,39 @@ impl ExactCurveArrangementReport2 {
         let ring_cache = self.ring_assembly_cache.as_ref();
         let attempted_endpoint_connection_count = ring_cache
             .map(ExactCurveArrangementRingAssemblyCache2::attempted_endpoint_connection_count)
-            .or(self.attempted_endpoint_connection_count)
             .unwrap_or(0);
         let exact_endpoint_connection_count = ring_cache
             .map(ExactCurveArrangementRingAssemblyCache2::exact_endpoint_connection_count)
-            .or(self.exact_endpoint_connection_count)
             .unwrap_or(0);
         let disconnected_endpoint_connection_count = ring_cache
             .map(ExactCurveArrangementRingAssemblyCache2::disconnected_endpoint_connection_count)
-            .or(self.disconnected_endpoint_connection_count)
             .unwrap_or(0);
         let unresolved_endpoint_connection_count = ring_cache
             .map(ExactCurveArrangementRingAssemblyCache2::unresolved_endpoint_connection_count)
-            .or(self.unresolved_endpoint_connection_count)
             .unwrap_or(0);
         let reversed_source_segment_count = ring_cache
             .map(ExactCurveArrangementRingAssemblyCache2::reversed_source_segment_count)
-            .or(self.reversed_source_segment_count)
             .unwrap_or(0);
-        let output_ring_count = ring_cache
-            .and_then(ExactCurveArrangementRingAssemblyCache2::output_ring_count)
-            .or(self.output_ring_count);
+        let output_ring_count =
+            ring_cache.and_then(ExactCurveArrangementRingAssemblyCache2::output_ring_count);
         let output_boundary_segment_count = ring_cache
-            .and_then(ExactCurveArrangementRingAssemblyCache2::output_boundary_segment_count)
-            .or(self.output_boundary_segment_count);
+            .and_then(ExactCurveArrangementRingAssemblyCache2::output_boundary_segment_count);
         let output_boundary_segment_kind_counts = ring_cache
-            .and_then(ExactCurveArrangementRingAssemblyCache2::output_boundary_segment_kind_counts)
-            .or(self.output_boundary_segment_kind_counts);
+            .and_then(ExactCurveArrangementRingAssemblyCache2::output_boundary_segment_kind_counts);
         let arranged_fragment_cache =
             ring_cache.map(ExactCurveArrangementRingAssemblyCache2::arranged_fragment_cache);
         let arranged_segment_count = arranged_fragment_cache
-            .map(ExactCurveArrangementArrangedFragmentCache2::arranged_fragment_count)
-            .or(self.arranged_segment_count);
+            .map(ExactCurveArrangementArrangedFragmentCache2::arranged_fragment_count);
         let arranged_segment_kind_counts = arranged_fragment_cache
-            .map(ExactCurveArrangementArrangedFragmentCache2::arranged_segment_kind_counts)
-            .or(self.arranged_segment_kind_counts);
+            .map(ExactCurveArrangementArrangedFragmentCache2::arranged_segment_kind_counts);
         let arranged_source_reports = ring_cache
             .map(|cache| cache.arranged_source_reports().to_vec())
-            .or_else(|| self.arranged_source_reports.clone())
             .unwrap_or_default();
         let source_reports = ring_cache
             .map(|cache| cache.source_reports().to_vec())
-            .or_else(|| self.source_reports.clone())
             .unwrap_or_default();
+        let ring_assembly_predicate_path =
+            ring_cache.map(ExactCurveArrangementRingAssemblyCache2::predicate_path);
         let output_cache = self.output_cache.as_ref();
         let stage = output_cache
             .map(ExactCurveArrangementOutputCache2::stage)
@@ -9758,7 +9717,7 @@ impl ExactCurveArrangementReport2 {
             arranged_segment_kind_counts,
             split_predicate_path,
             endpoint_graph_predicate_path,
-            ring_assembly_predicate_path: self.ring_assembly_predicate_path,
+            ring_assembly_predicate_path,
             split_candidate_pair_count,
             split_skipped_aabb_pair_count,
             split_tested_pair_count,
