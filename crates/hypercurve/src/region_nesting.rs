@@ -8905,15 +8905,30 @@ impl ExactCurveArrangementReport2 {
         }
     }
 
+    /// Returns retained final boundary output summary when role assignment materialized.
+    pub const fn boundary_output_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputBoundaryCache2> {
+        match self.output_cache() {
+            Some(output_cache) => output_cache.boundary_output_cache(),
+            None => None,
+        }
+    }
+
     /// Returns final boundary output counts grouped by material/hole role.
     pub const fn boundary_output_role_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputBoundaryRoleBucketCache2> {
+        match self.boundary_output_cache() {
+            Some(boundary_cache) => Some(boundary_cache.role_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained material/hole role buckets when role assignment was reached.
+    pub const fn role_cache(&self) -> Option<&ExactCurveArrangementOutputRoleCache2> {
         match self.output_cache() {
-            Some(output_cache) => match output_cache.boundary_output_cache() {
-                Some(boundary_cache) => Some(boundary_cache.role_bucket_cache()),
-                None => None,
-            },
+            Some(output_cache) => output_cache.role_cache(),
             None => None,
         }
     }
@@ -8922,11 +8937,8 @@ impl ExactCurveArrangementReport2 {
     pub const fn role_status_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleStatusBucketCache2> {
-        match self.output_cache() {
-            Some(output_cache) => match output_cache.role_cache() {
-                Some(role_cache) => Some(role_cache.role_status_bucket_cache()),
-                None => None,
-            },
+        match self.role_cache() {
+            Some(role_cache) => Some(role_cache.role_status_bucket_cache()),
             None => None,
         }
     }
@@ -8935,11 +8947,8 @@ impl ExactCurveArrangementReport2 {
     pub const fn role_source_contour_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleSourceContourBucketCache2> {
-        match self.output_cache() {
-            Some(output_cache) => match output_cache.role_cache() {
-                Some(role_cache) => Some(role_cache.role_source_contour_bucket_cache()),
-                None => None,
-            },
+        match self.role_cache() {
+            Some(role_cache) => Some(role_cache.role_source_contour_bucket_cache()),
             None => None,
         }
     }
@@ -8948,11 +8957,8 @@ impl ExactCurveArrangementReport2 {
     pub const fn role_nesting_depth_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleNestingDepthBucketCache2> {
-        match self.output_cache() {
-            Some(output_cache) => match output_cache.role_cache() {
-                Some(role_cache) => Some(role_cache.role_nesting_depth_bucket_cache()),
-                None => None,
-            },
+        match self.role_cache() {
+            Some(role_cache) => Some(role_cache.role_nesting_depth_bucket_cache()),
             None => None,
         }
     }
@@ -8961,13 +8967,16 @@ impl ExactCurveArrangementReport2 {
     pub const fn role_containment_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleContainmentBucketCache2> {
-        match self.output_cache() {
-            Some(output_cache) => match output_cache.role_cache() {
-                Some(role_cache) => Some(role_cache.role_containment_bucket_cache()),
-                None => None,
-            },
+        match self.role_cache() {
+            Some(role_cache) => Some(role_cache.role_containment_bucket_cache()),
             None => None,
         }
+    }
+
+    /// Returns material and hole role buckets in stable order.
+    pub fn role_buckets(&self) -> Option<&[ExactCurveArrangementOutputRoleBucket2]> {
+        self.role_cache()
+            .map(ExactCurveArrangementOutputRoleCache2::buckets)
     }
 
     /// Returns material contour count after output role assignment.

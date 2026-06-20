@@ -2890,9 +2890,15 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.output_segment_direction_bucket_cache()
     );
     assert_eq!(
+        arrangement_report.boundary_output_cache(),
+        result.boundary_output_cache()
+    );
+    assert_eq!(
         arrangement_report.boundary_output_role_bucket_cache(),
         result.boundary_output_role_bucket_cache()
     );
+    assert_eq!(arrangement_report.role_cache(), result.role_cache());
+    assert_eq!(arrangement_report.role_buckets(), result.role_buckets());
     assert_eq!(
         arrangement_report.role_status_bucket_cache(),
         result.role_status_bucket_cache()
@@ -5206,9 +5212,15 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         result.output_segment_direction_bucket_cache()
     );
     assert_eq!(
+        arrangement_report.boundary_output_cache(),
+        result.boundary_output_cache()
+    );
+    assert_eq!(
         arrangement_report.boundary_output_role_bucket_cache(),
         result.boundary_output_role_bucket_cache()
     );
+    assert_eq!(arrangement_report.role_cache(), result.role_cache());
+    assert_eq!(arrangement_report.role_buckets(), result.role_buckets());
     assert_eq!(
         arrangement_report.role_status_bucket_cache(),
         result.role_status_bucket_cache()
