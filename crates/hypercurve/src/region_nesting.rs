@@ -8699,8 +8699,8 @@ impl ExactCurveArrangementResult2 {
     pub fn into_region_with_arrangement_report(
         self,
     ) -> (Option<Region2>, ExactCurveArrangementReport2) {
-        let report = self.arrangement_report();
-        let region = self.into_region();
+        let (evaluation, region) = self.into_evaluation_and_region();
+        let report = evaluation.into_arrangement_report();
         (region, report)
     }
 
@@ -8712,8 +8712,8 @@ impl ExactCurveArrangementResult2 {
     pub fn into_region_classification_with_arrangement_report(
         self,
     ) -> (Classification<Region2>, ExactCurveArrangementReport2) {
-        let report = self.arrangement_report();
-        let classification = self.into_region_classification();
+        let (evaluation, classification) = self.into_evaluation_and_region_classification();
+        let report = evaluation.into_arrangement_report();
         (classification, report)
     }
 
