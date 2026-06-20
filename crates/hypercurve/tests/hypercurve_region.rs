@@ -595,8 +595,12 @@ fn unordered_line_segments_build_region_with_source_provenance() {
 
     let boundary_report = report.boundary_build_report().unwrap();
     assert_eq!(boundary_report.validation_intersection_event_count(), 0);
-    assert_eq!(boundary_report.material_contour_count(), Some(1));
-    assert_eq!(boundary_report.hole_contour_count(), Some(0));
+    assert_eq!(report.output_contour_count(), Some(1));
+    assert_eq!(report.output_segment_count(), Some(4));
+    assert_eq!(report.material_contour_count(), Some(1));
+    assert_eq!(report.hole_contour_count(), Some(0));
+    assert_eq!(report.material_segment_count(), Some(4));
+    assert_eq!(report.hole_segment_count(), Some(0));
     let role_reports = report.role_reports().unwrap();
     assert_eq!(report.role_report_count(), Some(role_reports.len()));
     assert_eq!(role_reports.len(), 1);
@@ -666,6 +670,14 @@ fn unordered_line_segments_report_disconnected_boundary_blocker() {
     assert_eq!(report.arranged_source_reports().len(), 2);
     assert_eq!(report.output_ring_count(), None);
     assert_eq!(report.output_boundary_segment_count(), None);
+    assert_eq!(report.output_contour_count(), None);
+    assert_eq!(report.output_segment_count(), None);
+    assert_eq!(report.material_contour_count(), None);
+    assert_eq!(report.hole_contour_count(), None);
+    assert_eq!(report.material_segment_count(), None);
+    assert_eq!(report.hole_segment_count(), None);
+    assert_eq!(report.role_report_count(), None);
+    assert_eq!(report.role_reports(), None);
     assert_eq!(report.source_reports().len(), 0);
     assert_eq!(report.boundary_build_report(), None);
     assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
