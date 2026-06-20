@@ -7476,6 +7476,11 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace
     }
 
+    /// Consumes this evaluation and returns the retained arrangement request.
+    pub fn into_request(self) -> ExactCurveArrangementRequest2 {
+        self.workspace.into_request()
+    }
+
     /// Returns final retained evaluation facts derived from workspace caches.
     pub const fn summary_cache(&self) -> &ExactCurveArrangementEvaluationSummaryCache2 {
         &self.summary_cache
@@ -9891,6 +9896,11 @@ impl ExactCurveArrangementReport2 {
     /// Consumes this report and returns the retained workspace it projects.
     pub fn into_workspace(self) -> ExactCurveWorkspace2 {
         self.workspace
+    }
+
+    /// Consumes this report and returns the retained arrangement request it projects.
+    pub fn into_request(self) -> ExactCurveArrangementRequest2 {
+        self.workspace.into_request()
     }
 
     /// Consumes this report and returns the retained evaluation it projects.

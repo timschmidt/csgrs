@@ -3975,6 +3975,8 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     let (owned_report_region, owned_report) = result.clone().into_region_with_arrangement_report();
     assert_eq!(owned_report_region.as_ref(), result.region());
     assert_eq!(&owned_report, &arrangement_report);
+    let owned_report_request = owned_report.clone().into_request();
+    assert_eq!(&owned_report_request, result.request());
     let (owned_report_classification, owned_classification_report) = result
         .clone()
         .into_region_classification_with_arrangement_report();
@@ -3991,6 +3993,8 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(&owned_attempt_request, result.request());
     let owned_evaluation = result.clone().into_evaluation();
     assert_eq!(&owned_evaluation, result.evaluation());
+    let owned_evaluation_request = owned_evaluation.clone().into_request();
+    assert_eq!(&owned_evaluation_request, result.request());
     let owned_workspace = owned_evaluation.clone().into_workspace();
     assert_eq!(&owned_workspace, result.workspace());
     let owned_workspace_request = owned_workspace.into_request();
