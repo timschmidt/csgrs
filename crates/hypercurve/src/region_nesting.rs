@@ -6378,54 +6378,69 @@ impl ExactCurveArrangementRingAssemblyCache2 {
     fn from_legacy_region_build_report(
         report: &RegionLineSegmentRegionBuildReport2,
     ) -> Option<Self> {
+        let predicate_path = report.ring_assembly_predicate_path()?;
+        let arranged_source_reports = report.arranged_source_reports().to_vec();
+        let source_reports = report.source_reports().to_vec();
+        let arranged_fragment_cache =
+            ExactCurveArrangementArrangedFragmentCache2::from_arranged_source_reports(
+                &arranged_source_reports,
+            );
+        let output_ring_bucket_cache =
+            ExactCurveArrangementOutputRingBucketCache2::from_source_reports(&source_reports);
+        let output_segment_kind_bucket_cache =
+            ExactCurveArrangementOutputSegmentKindBucketCache2::from_source_reports(
+                &source_reports,
+            );
+        let output_segment_source_bucket_cache =
+            ExactCurveArrangementOutputSegmentSourceBucketCache2::from_source_reports(
+                &source_reports,
+            );
+        let output_segment_source_range_cache =
+            ExactCurveArrangementOutputSegmentSourceRangeCache2::from_source_reports(
+                &source_reports,
+            );
+        let output_segment_endpoint_cache =
+            ExactCurveArrangementOutputSegmentEndpointCache2::from_source_reports(&source_reports);
+        let output_ring_continuity_cache =
+            ExactCurveArrangementOutputRingContinuityCache2::from_source_reports(&source_reports);
+        let output_segment_status_bucket_cache =
+            ExactCurveArrangementOutputSegmentStatusBucketCache2::from_source_reports(
+                &source_reports,
+            );
+        let output_segment_direction_bucket_cache =
+            ExactCurveArrangementOutputSegmentDirectionBucketCache2::from_source_reports(
+                &source_reports,
+            );
+        let has_output_segments = !source_reports.is_empty();
+        let output_boundary_segment_kind_counts =
+            has_output_segments.then_some(SegmentKindCounts {
+                lines: output_segment_kind_bucket_cache.line_segment_ref_count(),
+                arcs: output_segment_kind_bucket_cache.arc_segment_ref_count(),
+            });
+
         Some(Self {
-            predicate_path: report.ring_assembly_predicate_path()?,
+            predicate_path,
             attempted_endpoint_connection_count: report.attempted_endpoint_connection_count(),
             exact_endpoint_connection_count: report.exact_endpoint_connection_count(),
             disconnected_endpoint_connection_count: report.disconnected_endpoint_connection_count(),
             unresolved_endpoint_connection_count: report.unresolved_endpoint_connection_count(),
-            reversed_source_segment_count: report.reversed_source_segment_count(),
-            output_ring_count: report.output_ring_count(),
-            output_boundary_segment_count: report.output_boundary_segment_count(),
-            output_boundary_segment_kind_counts: report.output_boundary_segment_kind_counts(),
-            arranged_source_reports: report.arranged_source_reports().to_vec(),
-            source_reports: report.source_reports().to_vec(),
-            arranged_fragment_cache:
-                ExactCurveArrangementArrangedFragmentCache2::from_arranged_source_reports(
-                    report.arranged_source_reports(),
-                ),
-            output_ring_bucket_cache:
-                ExactCurveArrangementOutputRingBucketCache2::from_source_reports(
-                    report.source_reports(),
-                ),
-            output_segment_kind_bucket_cache:
-                ExactCurveArrangementOutputSegmentKindBucketCache2::from_source_reports(
-                    report.source_reports(),
-                ),
-            output_segment_source_bucket_cache:
-                ExactCurveArrangementOutputSegmentSourceBucketCache2::from_source_reports(
-                    report.source_reports(),
-                ),
-            output_segment_source_range_cache:
-                ExactCurveArrangementOutputSegmentSourceRangeCache2::from_source_reports(
-                    report.source_reports(),
-                ),
-            output_segment_endpoint_cache:
-                ExactCurveArrangementOutputSegmentEndpointCache2::from_source_reports(
-                    report.source_reports(),
-                ),
-            output_ring_continuity_cache:
-                ExactCurveArrangementOutputRingContinuityCache2::from_source_reports(
-                    report.source_reports(),
-                ),
-            output_segment_status_bucket_cache:
-                ExactCurveArrangementOutputSegmentStatusBucketCache2::from_source_reports(
-                    report.source_reports(),
-                ),
-            output_segment_direction_bucket_cache:
-                ExactCurveArrangementOutputSegmentDirectionBucketCache2::from_source_reports(
-                    report.source_reports(),
-                ),
+            reversed_source_segment_count: output_segment_direction_bucket_cache
+                .reversed_segment_ref_count(),
+            output_ring_count: has_output_segments.then_some(output_ring_bucket_cache.ring_count()),
+            output_boundary_segment_count: has_output_segments
+                .then_some(output_segment_endpoint_cache.output_segment_ref_count()),
+            output_boundary_segment_kind_counts,
+            arranged_source_reports,
+            source_reports,
+            arranged_fragment_cache,
+            output_ring_bucket_cache,
+            output_segment_kind_bucket_cache,
+            output_segment_source_bucket_cache,
+            output_segment_source_range_cache,
+            output_segment_endpoint_cache,
+            output_ring_continuity_cache,
+            output_segment_status_bucket_cache,
+            output_segment_direction_bucket_cache,
         })
     }
 
