@@ -2277,9 +2277,8 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.boundary_build_report(),
         result.output_cache().unwrap().boundary_build_report()
     );
-    let boundary_report = result.boundary_build_report().unwrap();
-    assert_eq!(boundary_report.material_contour_count(), Some(1));
-    assert_eq!(boundary_report.hole_contour_count(), Some(0));
+    assert_eq!(result.material_contour_count(), Some(1));
+    assert_eq!(result.hole_contour_count(), Some(0));
     let boundary_output_cache = result.boundary_output_cache().unwrap();
     assert_eq!(result.output_contour_count(), Some(1));
     assert_eq!(result.output_segment_count(), Some(4));
@@ -2492,16 +2491,13 @@ fn exact_curve_arrangement_attempt_retains_output_role_containment() {
     let result = ExactCurveArrangementAttempt2::new(request)
         .evaluate(&policy())
         .unwrap();
-    let boundary_report = result.boundary_build_report().unwrap();
     let role_cache = result.role_cache().unwrap();
 
     assert!(result.status().unwrap().is_native_exact());
     assert_eq!(result.output_ring_count(), Some(2));
-    assert_eq!(boundary_report.material_contour_count(), Some(1));
-    assert_eq!(boundary_report.hole_contour_count(), Some(1));
-    assert_eq!(result.role_report_count(), Some(2));
     assert_eq!(result.material_contour_count(), Some(1));
     assert_eq!(result.hole_contour_count(), Some(1));
+    assert_eq!(result.role_report_count(), Some(2));
 
     let boundary_output_cache = result.boundary_output_cache().unwrap();
     let boundary_role_bucket_cache = boundary_output_cache.role_bucket_cache();
