@@ -9756,6 +9756,38 @@ impl ExactCurveArrangementReport2 {
         let split_output_segment_count = split_cache
             .and_then(ExactCurveArrangementSplitCache2::output_segment_count)
             .or(self.split_output_segment_count);
+        let endpoint_graph_cache = self.endpoint_graph_cache.as_ref();
+        let endpoint_graph_predicate_path = endpoint_graph_cache
+            .map(ExactCurveArrangementEndpointGraphCache2::predicate_path)
+            .or(self.endpoint_graph_predicate_path);
+        let endpoint_graph_endpoint_count = endpoint_graph_cache
+            .map(ExactCurveArrangementEndpointGraphCache2::endpoint_count)
+            .or(self.endpoint_graph_endpoint_count);
+        let endpoint_graph_structural_bucket_count = endpoint_graph_cache
+            .map(ExactCurveArrangementEndpointGraphCache2::structural_bucket_count)
+            .or(self.endpoint_graph_structural_bucket_count);
+        let endpoint_graph_structural_singleton_bucket_count = endpoint_graph_cache
+            .map(ExactCurveArrangementEndpointGraphCache2::structural_singleton_bucket_count)
+            .or(self.endpoint_graph_structural_singleton_bucket_count);
+        let endpoint_graph_max_structural_bucket_size = endpoint_graph_cache
+            .map(ExactCurveArrangementEndpointGraphCache2::max_structural_bucket_size)
+            .or(self.endpoint_graph_max_structural_bucket_size);
+        let endpoint_graph_dangling_endpoint_count = endpoint_graph_cache
+            .map(ExactCurveArrangementEndpointGraphCache2::dangling_endpoint_count)
+            .or(self.endpoint_graph_dangling_endpoint_count);
+        let endpoint_graph_branch_endpoint_count = endpoint_graph_cache
+            .map(ExactCurveArrangementEndpointGraphCache2::branch_endpoint_count)
+            .or(self.endpoint_graph_branch_endpoint_count);
+        let endpoint_graph_blocker_arranged_segment_index = endpoint_graph_cache
+            .and_then(ExactCurveArrangementEndpointGraphCache2::blocker_arranged_segment_index)
+            .or(self.endpoint_graph_blocker_arranged_segment_index);
+        let endpoint_graph_blocker_endpoint = endpoint_graph_cache
+            .and_then(ExactCurveArrangementEndpointGraphCache2::blocker_endpoint)
+            .or(self.endpoint_graph_blocker_endpoint);
+        let endpoint_graph_blocker_point = endpoint_graph_cache
+            .and_then(ExactCurveArrangementEndpointGraphCache2::blocker_point)
+            .cloned()
+            .or_else(|| self.endpoint_graph_blocker_point.clone());
         let ring_cache = self.ring_assembly_cache.as_ref();
         let attempted_endpoint_connection_count = ring_cache
             .map(ExactCurveArrangementRingAssemblyCache2::attempted_endpoint_connection_count)
@@ -9812,7 +9844,7 @@ impl ExactCurveArrangementReport2 {
             arranged_segment_count,
             arranged_segment_kind_counts,
             split_predicate_path,
-            endpoint_graph_predicate_path: self.endpoint_graph_predicate_path,
+            endpoint_graph_predicate_path,
             ring_assembly_predicate_path: self.ring_assembly_predicate_path,
             split_candidate_pair_count,
             split_skipped_aabb_pair_count,
@@ -9833,18 +9865,15 @@ impl ExactCurveArrangementReport2 {
             split_blocker_second_source_segment_kind: self.split_blocker_second_source_segment_kind,
             split_blocker_second_source_start_point: self.split_blocker_second_source_start_point,
             split_blocker_second_source_end_point: self.split_blocker_second_source_end_point,
-            endpoint_graph_endpoint_count: self.endpoint_graph_endpoint_count,
-            endpoint_graph_structural_bucket_count: self.endpoint_graph_structural_bucket_count,
-            endpoint_graph_structural_singleton_bucket_count: self
-                .endpoint_graph_structural_singleton_bucket_count,
-            endpoint_graph_max_structural_bucket_size: self
-                .endpoint_graph_max_structural_bucket_size,
-            endpoint_graph_dangling_endpoint_count: self.endpoint_graph_dangling_endpoint_count,
-            endpoint_graph_branch_endpoint_count: self.endpoint_graph_branch_endpoint_count,
-            endpoint_graph_blocker_arranged_segment_index: self
-                .endpoint_graph_blocker_arranged_segment_index,
-            endpoint_graph_blocker_endpoint: self.endpoint_graph_blocker_endpoint,
-            endpoint_graph_blocker_point: self.endpoint_graph_blocker_point,
+            endpoint_graph_endpoint_count,
+            endpoint_graph_structural_bucket_count,
+            endpoint_graph_structural_singleton_bucket_count,
+            endpoint_graph_max_structural_bucket_size,
+            endpoint_graph_dangling_endpoint_count,
+            endpoint_graph_branch_endpoint_count,
+            endpoint_graph_blocker_arranged_segment_index,
+            endpoint_graph_blocker_endpoint,
+            endpoint_graph_blocker_point,
             attempted_endpoint_connection_count,
             exact_endpoint_connection_count,
             disconnected_endpoint_connection_count,
