@@ -8691,6 +8691,11 @@ impl ExactCurveArrangementResult2 {
         (evaluation, region)
     }
 
+    /// Consumes this result and returns its retained evaluation with the materialized region.
+    pub fn into_parts(self) -> (ExactCurveArrangementEvaluation2, Option<Region2>) {
+        self.into_evaluation_and_region()
+    }
+
     /// Consumes this result and returns the retained evaluation with the region classification.
     ///
     /// This is the ownership-preserving retained-result form of
