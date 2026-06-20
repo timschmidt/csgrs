@@ -991,8 +991,15 @@ pub struct ExactCurveArrangementReport2 {
     split_uncertain_relation_count: Option<usize>,
     endpoint_graph_endpoint_count: Option<usize>,
     endpoint_graph_structural_bucket_count: Option<usize>,
+    endpoint_graph_structural_singleton_bucket_count: Option<usize>,
+    endpoint_graph_max_structural_bucket_size: Option<usize>,
     endpoint_graph_dangling_endpoint_count: Option<usize>,
     endpoint_graph_branch_endpoint_count: Option<usize>,
+    attempted_endpoint_connection_count: Option<usize>,
+    exact_endpoint_connection_count: Option<usize>,
+    disconnected_endpoint_connection_count: Option<usize>,
+    unresolved_endpoint_connection_count: Option<usize>,
+    reversed_source_segment_count: Option<usize>,
     arranged_segment_count: Option<usize>,
     arranged_segment_kind_counts: Option<SegmentKindCounts>,
     output_ring_count: Option<usize>,
@@ -7971,9 +7978,17 @@ impl ExactCurveArrangementReport2 {
             split_uncertain_relation_count: result.split_uncertain_relation_count(),
             endpoint_graph_endpoint_count: result.endpoint_graph_endpoint_count(),
             endpoint_graph_structural_bucket_count: result.endpoint_graph_structural_bucket_count(),
-            endpoint_graph_dangling_endpoint_count: result
-                .endpoint_graph_dangling_endpoint_count(),
+            endpoint_graph_structural_singleton_bucket_count: result
+                .endpoint_graph_structural_singleton_bucket_count(),
+            endpoint_graph_max_structural_bucket_size: result
+                .endpoint_graph_max_structural_bucket_size(),
+            endpoint_graph_dangling_endpoint_count: result.endpoint_graph_dangling_endpoint_count(),
             endpoint_graph_branch_endpoint_count: result.endpoint_graph_branch_endpoint_count(),
+            attempted_endpoint_connection_count: result.attempted_endpoint_connection_count(),
+            exact_endpoint_connection_count: result.exact_endpoint_connection_count(),
+            disconnected_endpoint_connection_count: result.disconnected_endpoint_connection_count(),
+            unresolved_endpoint_connection_count: result.unresolved_endpoint_connection_count(),
+            reversed_source_segment_count: result.reversed_source_segment_count(),
             arranged_segment_count: result.arranged_segment_count(),
             arranged_segment_kind_counts: result.arranged_segment_kind_counts(),
             output_ring_count: result.output_ring_count(),
@@ -8056,6 +8071,16 @@ impl ExactCurveArrangementReport2 {
         self.endpoint_graph_structural_bucket_count
     }
 
+    /// Returns exact structural endpoint singleton bucket count.
+    pub const fn endpoint_graph_structural_singleton_bucket_count(&self) -> Option<usize> {
+        self.endpoint_graph_structural_singleton_bucket_count
+    }
+
+    /// Returns the largest exact structural endpoint bucket size.
+    pub const fn endpoint_graph_max_structural_bucket_size(&self) -> Option<usize> {
+        self.endpoint_graph_max_structural_bucket_size
+    }
+
     /// Returns dangling endpoint count found during endpoint-graph validation.
     pub const fn endpoint_graph_dangling_endpoint_count(&self) -> Option<usize> {
         self.endpoint_graph_dangling_endpoint_count
@@ -8064,6 +8089,31 @@ impl ExactCurveArrangementReport2 {
     /// Returns branch endpoint count found during endpoint-graph validation.
     pub const fn endpoint_graph_branch_endpoint_count(&self) -> Option<usize> {
         self.endpoint_graph_branch_endpoint_count
+    }
+
+    /// Returns endpoint pair comparisons attempted during retained ring traversal.
+    pub const fn attempted_endpoint_connection_count(&self) -> Option<usize> {
+        self.attempted_endpoint_connection_count
+    }
+
+    /// Returns endpoint pair comparisons certified as equal during ring traversal.
+    pub const fn exact_endpoint_connection_count(&self) -> Option<usize> {
+        self.exact_endpoint_connection_count
+    }
+
+    /// Returns endpoint pair comparisons certified as disconnected during ring traversal.
+    pub const fn disconnected_endpoint_connection_count(&self) -> Option<usize> {
+        self.disconnected_endpoint_connection_count
+    }
+
+    /// Returns endpoint pair comparisons unresolved during ring traversal.
+    pub const fn unresolved_endpoint_connection_count(&self) -> Option<usize> {
+        self.unresolved_endpoint_connection_count
+    }
+
+    /// Returns source segments reversed while materializing retained ring traversal.
+    pub const fn reversed_source_segment_count(&self) -> Option<usize> {
+        self.reversed_source_segment_count
     }
 
     /// Returns arranged fragment count retained after exact splitting.

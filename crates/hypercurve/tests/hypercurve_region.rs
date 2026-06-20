@@ -2180,12 +2180,40 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.endpoint_graph_structural_bucket_count()
     );
     assert_eq!(
+        arrangement_report.endpoint_graph_structural_singleton_bucket_count(),
+        result.endpoint_graph_structural_singleton_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.endpoint_graph_max_structural_bucket_size(),
+        result.endpoint_graph_max_structural_bucket_size()
+    );
+    assert_eq!(
         arrangement_report.endpoint_graph_dangling_endpoint_count(),
         result.endpoint_graph_dangling_endpoint_count()
     );
     assert_eq!(
         arrangement_report.endpoint_graph_branch_endpoint_count(),
         result.endpoint_graph_branch_endpoint_count()
+    );
+    assert_eq!(
+        arrangement_report.attempted_endpoint_connection_count(),
+        result.attempted_endpoint_connection_count()
+    );
+    assert_eq!(
+        arrangement_report.exact_endpoint_connection_count(),
+        result.exact_endpoint_connection_count()
+    );
+    assert_eq!(
+        arrangement_report.disconnected_endpoint_connection_count(),
+        result.disconnected_endpoint_connection_count()
+    );
+    assert_eq!(
+        arrangement_report.unresolved_endpoint_connection_count(),
+        result.unresolved_endpoint_connection_count()
+    );
+    assert_eq!(
+        arrangement_report.reversed_source_segment_count(),
+        result.reversed_source_segment_count()
     );
     assert_eq!(
         arrangement_report.arranged_segment_count(),
@@ -3581,12 +3609,40 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.output_ring_count()
     );
     assert_eq!(
+        arrangement_report.endpoint_graph_structural_singleton_bucket_count(),
+        result.endpoint_graph_structural_singleton_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.endpoint_graph_max_structural_bucket_size(),
+        result.endpoint_graph_max_structural_bucket_size()
+    );
+    assert_eq!(
         arrangement_report.endpoint_graph_dangling_endpoint_count(),
         result.endpoint_graph_dangling_endpoint_count()
     );
     assert_eq!(
         arrangement_report.endpoint_graph_branch_endpoint_count(),
         result.endpoint_graph_branch_endpoint_count()
+    );
+    assert_eq!(
+        arrangement_report.attempted_endpoint_connection_count(),
+        result.attempted_endpoint_connection_count()
+    );
+    assert_eq!(
+        arrangement_report.exact_endpoint_connection_count(),
+        result.exact_endpoint_connection_count()
+    );
+    assert_eq!(
+        arrangement_report.disconnected_endpoint_connection_count(),
+        result.disconnected_endpoint_connection_count()
+    );
+    assert_eq!(
+        arrangement_report.unresolved_endpoint_connection_count(),
+        result.unresolved_endpoint_connection_count()
+    );
+    assert_eq!(
+        arrangement_report.reversed_source_segment_count(),
+        result.reversed_source_segment_count()
     );
     assert_eq!(
         arrangement_report.arranged_segment_count(),
@@ -3972,6 +4028,14 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         None
     );
     assert_eq!(
+        arrangement_report.endpoint_graph_structural_singleton_bucket_count(),
+        None
+    );
+    assert_eq!(
+        arrangement_report.endpoint_graph_max_structural_bucket_size(),
+        None
+    );
+    assert_eq!(
         arrangement_report.endpoint_graph_dangling_endpoint_count(),
         None
     );
@@ -3979,6 +4043,20 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         arrangement_report.endpoint_graph_branch_endpoint_count(),
         None
     );
+    assert_eq!(
+        arrangement_report.attempted_endpoint_connection_count(),
+        None
+    );
+    assert_eq!(arrangement_report.exact_endpoint_connection_count(), None);
+    assert_eq!(
+        arrangement_report.disconnected_endpoint_connection_count(),
+        None
+    );
+    assert_eq!(
+        arrangement_report.unresolved_endpoint_connection_count(),
+        None
+    );
+    assert_eq!(arrangement_report.reversed_source_segment_count(), None);
     assert_eq!(arrangement_report.arranged_segment_count(), None);
     assert_eq!(arrangement_report.arranged_segment_kind_counts(), None);
     assert_eq!(arrangement_report.output_ring_count(), None);
