@@ -469,9 +469,9 @@ fn unordered_line_segments_build_region_with_source_provenance() {
         report.source_segment_kind_counts(),
         SegmentKindCounts { lines: 4, arcs: 0 }
     );
-    assert_eq!(report.arranged_segment_count(), Some(4));
+    assert_eq!(built.arranged_segment_count(), Some(4));
     assert_eq!(
-        report.arranged_segment_kind_counts(),
+        built.arranged_segment_kind_counts(),
         Some(SegmentKindCounts { lines: 4, arcs: 0 })
     );
     assert_eq!(report.split_candidate_pair_count(), 6);
@@ -633,7 +633,7 @@ fn unordered_line_segments_report_disconnected_boundary_blocker() {
         RegionLineSegmentRegionBuildStage2::RingAssembly
     );
     assert_eq!(report.source_segment_count(), 2);
-    assert_eq!(report.arranged_segment_count(), Some(2));
+    assert_eq!(built.arranged_segment_count(), Some(2));
     assert_eq!(report.split_candidate_pair_count(), 1);
     assert_eq!(report.split_skipped_aabb_pair_count(), 1);
     assert_eq!(report.split_tested_pair_count(), 0);
@@ -706,9 +706,9 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
         report.source_segment_kind_counts(),
         SegmentKindCounts { lines: 2, arcs: 0 }
     );
-    assert_eq!(report.arranged_segment_count(), Some(4));
+    assert_eq!(built.arranged_segment_count(), Some(4));
     assert_eq!(
-        report.arranged_segment_kind_counts(),
+        built.arranged_segment_kind_counts(),
         Some(SegmentKindCounts { lines: 4, arcs: 0 })
     );
     assert_eq!(report.split_candidate_pair_count(), 1);
@@ -790,8 +790,8 @@ fn unordered_line_segments_report_overlap_source_pair_blocker() {
         report.source_segment_kind_counts(),
         SegmentKindCounts { lines: 2, arcs: 0 }
     );
-    assert_eq!(report.arranged_segment_count(), None);
-    assert_eq!(report.arranged_segment_kind_counts(), None);
+    assert_eq!(built.arranged_segment_count(), None);
+    assert_eq!(built.arranged_segment_kind_counts(), None);
     assert_eq!(report.split_candidate_pair_count(), 1);
     assert_eq!(
         report.split_predicate_path(),
@@ -861,7 +861,7 @@ fn borrowed_unordered_line_segments_build_region_with_report() {
         report.source_segment_kind_counts(),
         SegmentKindCounts { lines: 4, arcs: 0 }
     );
-    assert_eq!(report.arranged_segment_count(), Some(4));
+    assert_eq!(built.arranged_segment_count(), Some(4));
     assert_eq!(report.arranged_source_reports().len(), 4);
     assert_eq!(report.source_reports().len(), 4);
 }
@@ -889,9 +889,9 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
         report.source_segment_kind_counts(),
         SegmentKindCounts { lines: 1, arcs: 1 }
     );
-    assert_eq!(report.arranged_segment_count(), Some(2));
+    assert_eq!(built.arranged_segment_count(), Some(2));
     assert_eq!(
-        report.arranged_segment_kind_counts(),
+        built.arranged_segment_kind_counts(),
         Some(SegmentKindCounts { lines: 1, arcs: 1 })
     );
     assert_eq!(report.split_candidate_pair_count(), 1);
@@ -1053,7 +1053,7 @@ fn borrowed_unordered_native_segments_build_line_arc_region_with_report() {
         report.source_segment_kind_counts(),
         SegmentKindCounts { lines: 1, arcs: 1 }
     );
-    assert_eq!(report.arranged_segment_count(), Some(2));
+    assert_eq!(built.arranged_segment_count(), Some(2));
     assert_eq!(report.arranged_source_reports().len(), 2);
     assert_eq!(report.source_reports().len(), 2);
 }
@@ -3951,8 +3951,8 @@ fn unordered_native_segments_report_arc_overlap_boundary_blocker() {
         report.source_segment_kind_counts(),
         SegmentKindCounts { lines: 0, arcs: 2 }
     );
-    assert_eq!(report.arranged_segment_count(), None);
-    assert_eq!(report.arranged_segment_kind_counts(), None);
+    assert_eq!(built.arranged_segment_count(), None);
+    assert_eq!(built.arranged_segment_kind_counts(), None);
     assert_eq!(report.split_candidate_pair_count(), 1);
     assert_eq!(report.split_skipped_aabb_pair_count(), 0);
     assert_eq!(report.split_tested_pair_count(), 1);
@@ -4022,9 +4022,9 @@ fn unordered_native_segments_split_line_arc_crossing_before_boundary_blocker() {
         report.source_segment_kind_counts(),
         SegmentKindCounts { lines: 1, arcs: 1 }
     );
-    assert_eq!(report.arranged_segment_count(), Some(4));
+    assert_eq!(built.arranged_segment_count(), Some(4));
     assert_eq!(
-        report.arranged_segment_kind_counts(),
+        built.arranged_segment_kind_counts(),
         Some(SegmentKindCounts { lines: 2, arcs: 2 })
     );
     assert_eq!(report.split_candidate_pair_count(), 1);
@@ -4157,7 +4157,7 @@ fn unordered_native_segments_split_arc_arc_crossing_before_boundary_blocker() {
         RegionLineSegmentRegionBuildStage2::RingAssembly
     );
     assert_eq!(report.source_segment_count(), 2);
-    assert_eq!(report.arranged_segment_count(), Some(4));
+    assert_eq!(built.arranged_segment_count(), Some(4));
     assert_eq!(report.split_candidate_pair_count(), 1);
     assert_eq!(report.split_skipped_aabb_pair_count(), 0);
     assert_eq!(report.split_tested_pair_count(), 1);
@@ -4650,7 +4650,7 @@ proptest! {
 
         prop_assert!(report.status().is_native_exact());
         prop_assert_eq!(report.source_segment_count(), 4);
-        prop_assert_eq!(report.arranged_segment_count(), Some(4));
+        prop_assert_eq!(built.arranged_segment_count(), Some(4));
         prop_assert_eq!(report.split_candidate_pair_count(), 6);
         prop_assert_eq!(report.split_skipped_aabb_pair_count(), 2);
         prop_assert_eq!(report.split_tested_pair_count(), 4);
@@ -4714,7 +4714,7 @@ proptest! {
 
         prop_assert!(report.status().is_native_exact());
         prop_assert_eq!(report.source_segment_count(), 2);
-        prop_assert_eq!(report.arranged_segment_count(), Some(2));
+        prop_assert_eq!(built.arranged_segment_count(), Some(2));
         prop_assert_eq!(report.split_candidate_pair_count(), 1);
         prop_assert_eq!(report.split_skipped_aabb_pair_count(), 0);
         prop_assert_eq!(report.split_tested_pair_count(), 1);

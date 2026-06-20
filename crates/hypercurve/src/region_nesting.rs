@@ -6588,6 +6588,22 @@ impl ExactCurveArrangementResult2 {
         }
     }
 
+    /// Returns arranged fragment count retained after exact splitting, when available.
+    pub const fn arranged_segment_count(&self) -> Option<usize> {
+        match self.arranged_fragment_cache() {
+            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_count()),
+            None => None,
+        }
+    }
+
+    /// Returns arranged fragment primitive-family counts retained after exact splitting.
+    pub const fn arranged_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        match self.arranged_fragment_cache() {
+            Some(arranged_cache) => Some(arranged_cache.arranged_segment_kind_counts()),
+            None => None,
+        }
+    }
+
     /// Returns per-output-ring source provenance buckets.
     pub const fn output_ring_bucket_cache(
         &self,
