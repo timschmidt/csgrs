@@ -1341,7 +1341,7 @@ impl Region2 {
 }
 
 fn evaluate_unordered_line_segments_region_result(
-    segments: Vec<LineSeg2>,
+    segments: &[LineSeg2],
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
@@ -1349,7 +1349,7 @@ fn evaluate_unordered_line_segments_region_result(
         return Err(CurveError::EmptyCurveString);
     }
 
-    let arranged = match arrange_line_segments_at_point_intersections(&segments, policy)? {
+    let arranged = match arrange_line_segments_at_point_intersections(segments, policy)? {
         Ok(arranged) => arranged,
         Err((split_report, blocker)) => {
             return Ok(RegionLineSegmentRegionBuildResult2 {
@@ -1608,7 +1608,7 @@ impl Region2 {
 }
 
 fn evaluate_unordered_segments_region_result(
-    segments: Vec<Segment2>,
+    segments: &[Segment2],
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
@@ -1616,14 +1616,14 @@ fn evaluate_unordered_segments_region_result(
         return Err(CurveError::EmptyCurveString);
     }
 
-    let arranged = match arrange_native_segments_at_point_intersections(&segments, policy)? {
+    let arranged = match arrange_native_segments_at_point_intersections(segments, policy)? {
         Ok(arranged) => arranged,
         Err((split_report, blocker)) => {
             return Ok(RegionLineSegmentRegionBuildResult2 {
                 region: None,
                 report: blocked_line_segment_region_report(
                     segments.len(),
-                    segment_kind_counts(&segments),
+                    segment_kind_counts(segments),
                     Some(split_report),
                     None,
                     Vec::new(),
@@ -1644,10 +1644,10 @@ fn evaluate_unordered_segments_region_result(
                     region: None,
                     report: blocked_line_segment_region_report(
                         segments.len(),
-                        segment_kind_counts(&segments),
+                        segment_kind_counts(segments),
                         Some(arranged.report),
                         Some(endpoint_graph),
-                        native_arranged_source_reports(&segments, &arranged.segments),
+                        native_arranged_source_reports(segments, &arranged.segments),
                         LineSegmentRingAssemblyReportParts {
                             counts,
                             ..LineSegmentRingAssemblyReportParts::default()
@@ -1667,10 +1667,10 @@ fn evaluate_unordered_segments_region_result(
                 region: None,
                 report: blocked_line_segment_region_report(
                     segments.len(),
-                    segment_kind_counts(&segments),
+                    segment_kind_counts(segments),
                     Some(arranged.report),
                     Some(endpoint_graph),
-                    native_arranged_source_reports(&segments, &arranged.segments),
+                    native_arranged_source_reports(segments, &arranged.segments),
                     report,
                     RegionLineSegmentRegionBuildStage2::RingAssembly,
                     retained_status_for_line_segment_region_blocker(blocker),
@@ -1697,7 +1697,7 @@ fn evaluate_unordered_segments_region_result(
         report: RegionLineSegmentRegionBuildReport2 {
             stage: RegionLineSegmentRegionBuildStage2::RegionRoleAssignment,
             source_segment_count: segments.len(),
-            source_segment_kind_counts: segment_kind_counts(&segments),
+            source_segment_kind_counts: segment_kind_counts(segments),
             arranged_segment_count: Some(arranged.segments.len()),
             arranged_segment_kind_counts: Some(native_arranged_segment_kind_counts(
                 &arranged.segments,
@@ -7602,13 +7602,13 @@ impl ExactCurveArrangementAttempt2 {
         let compatibility_projection =
             if let Some(source_line_segments) = request.source_line_segments.as_ref() {
                 evaluate_unordered_line_segments_region_result(
-                    source_line_segments.clone(),
+                    source_line_segments,
                     request.fill_rule,
                     policy,
                 )?
             } else {
                 evaluate_unordered_segments_region_result(
-                    request.source_segments.clone(),
+                    &request.source_segments,
                     request.fill_rule,
                     policy,
                 )?
