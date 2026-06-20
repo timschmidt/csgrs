@@ -2002,6 +2002,25 @@ impl ExactCurveArrangementRequest2 {
         self.source_line_segments.as_deref()
     }
 
+    /// Consumes this request and returns its retained exact source segments.
+    pub fn into_source_segments(self) -> Vec<Segment2> {
+        self.source_segments
+    }
+
+    /// Consumes this request and returns line-only source carriers, when present.
+    pub fn into_source_line_segments(self) -> Option<Vec<LineSeg2>> {
+        self.source_line_segments
+    }
+
+    /// Consumes this request and returns its retained source carriers and fill rule.
+    pub fn into_parts(self) -> (Vec<Segment2>, Option<Vec<LineSeg2>>, FillRule) {
+        (
+            self.source_segments,
+            self.source_line_segments,
+            self.fill_rule,
+        )
+    }
+
     /// Returns the fill rule used when closed loops become contours.
     pub const fn fill_rule(&self) -> FillRule {
         self.fill_rule

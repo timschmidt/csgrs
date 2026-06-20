@@ -1644,6 +1644,18 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
 
     assert_eq!(result.source_segment_count(), 4);
     assert_eq!(result.source_line_segments(), Some(lines.as_slice()));
+    let (owned_source_segments, owned_source_line_segments, owned_fill_rule) =
+        result.request().clone().into_parts();
+    assert_eq!(owned_source_segments.as_slice(), result.source_segments());
+    assert_eq!(
+        owned_source_line_segments.as_deref(),
+        Some(lines.as_slice())
+    );
+    assert_eq!(owned_fill_rule, result.fill_rule());
+    assert_eq!(
+        result.request().clone().into_source_line_segments(),
+        Some(lines.clone())
+    );
     assert_eq!(result.source_segments().len(), 4);
     assert!(
         result
@@ -4017,6 +4029,15 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(&owned_workspace, result.workspace());
     let owned_workspace_request = owned_workspace.into_request();
     assert_eq!(&owned_workspace_request, result.request());
+    let (owned_source_segments, owned_source_line_segments, owned_fill_rule) =
+        owned_result_request.clone().into_parts();
+    assert_eq!(owned_source_segments.as_slice(), result.source_segments());
+    assert_eq!(owned_source_line_segments, None);
+    assert_eq!(owned_fill_rule, result.fill_rule());
+    assert_eq!(
+        owned_result_request.into_source_segments().as_slice(),
+        result.source_segments()
+    );
     assert_eq!(
         result.workspace().source_segment_cache(),
         result.source_segment_cache()
