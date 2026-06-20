@@ -2833,6 +2833,56 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns arranged fragments grouped by primitive family.
+    pub const fn arranged_fragment_kind_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedFragmentKindBucketCache2> {
+        match self.arranged_fragment_cache() {
+            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_kind_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained arranged fragment primitive-family bucket count.
+    pub const fn arranged_fragment_kind_bucket_count(&self) -> Option<usize> {
+        match self.arranged_fragment_kind_bucket_cache() {
+            Some(kind_cache) => Some(kind_cache.bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained arranged fragment references grouped by primitive family.
+    pub const fn arranged_fragment_kind_ref_count(&self) -> Option<usize> {
+        match self.arranged_fragment_kind_bucket_cache() {
+            Some(kind_cache) => Some(kind_cache.arranged_fragment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained line arranged fragment references.
+    pub const fn arranged_line_fragment_ref_count(&self) -> Option<usize> {
+        match self.arranged_fragment_kind_bucket_cache() {
+            Some(kind_cache) => Some(kind_cache.line_fragment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained arc arranged fragment references.
+    pub const fn arranged_arc_fragment_ref_count(&self) -> Option<usize> {
+        match self.arranged_fragment_kind_bucket_cache() {
+            Some(kind_cache) => Some(kind_cache.arc_fragment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained arranged fragment primitive-family bucket size.
+    pub const fn arranged_fragment_kind_max_bucket_size(&self) -> Option<usize> {
+        match self.arranged_fragment_kind_bucket_cache() {
+            Some(kind_cache) => Some(kind_cache.max_bucket_size()),
+            None => None,
+        }
+    }
+
     /// Returns per-output-ring source provenance buckets.
     pub const fn output_ring_bucket_cache(
         &self,
@@ -7560,10 +7610,32 @@ impl ExactCurveArrangementEvaluation2 {
     pub const fn arranged_fragment_kind_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentKindBucketCache2> {
-        match self.arranged_fragment_cache() {
-            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_kind_bucket_cache()),
-            None => None,
-        }
+        self.workspace().arranged_fragment_kind_bucket_cache()
+    }
+
+    /// Returns retained arranged fragment primitive-family bucket count.
+    pub const fn arranged_fragment_kind_bucket_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_kind_bucket_count()
+    }
+
+    /// Returns retained arranged fragment references grouped by primitive family.
+    pub const fn arranged_fragment_kind_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_kind_ref_count()
+    }
+
+    /// Returns retained line arranged fragment references.
+    pub const fn arranged_line_fragment_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_line_fragment_ref_count()
+    }
+
+    /// Returns retained arc arranged fragment references.
+    pub const fn arranged_arc_fragment_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_arc_fragment_ref_count()
+    }
+
+    /// Returns the largest retained arranged fragment primitive-family bucket size.
+    pub const fn arranged_fragment_kind_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_kind_max_bucket_size()
     }
 
     /// Returns arranged fragment source records grouped by retained topology status.
@@ -8664,10 +8736,32 @@ impl ExactCurveArrangementResult2 {
     pub const fn arranged_fragment_kind_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentKindBucketCache2> {
-        match self.arranged_fragment_cache() {
-            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_kind_bucket_cache()),
-            None => None,
-        }
+        self.workspace().arranged_fragment_kind_bucket_cache()
+    }
+
+    /// Returns retained arranged fragment primitive-family bucket count.
+    pub const fn arranged_fragment_kind_bucket_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_kind_bucket_count()
+    }
+
+    /// Returns retained arranged fragment references grouped by primitive family.
+    pub const fn arranged_fragment_kind_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_kind_ref_count()
+    }
+
+    /// Returns retained line arranged fragment references.
+    pub const fn arranged_line_fragment_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_line_fragment_ref_count()
+    }
+
+    /// Returns retained arc arranged fragment references.
+    pub const fn arranged_arc_fragment_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_arc_fragment_ref_count()
+    }
+
+    /// Returns the largest retained arranged fragment primitive-family bucket size.
+    pub const fn arranged_fragment_kind_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_kind_max_bucket_size()
     }
 
     /// Returns arranged fragment source records grouped by retained topology status.
@@ -10925,10 +11019,32 @@ impl ExactCurveArrangementReport2 {
     pub const fn arranged_fragment_kind_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentKindBucketCache2> {
-        match self.arranged_fragment_cache() {
-            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_kind_bucket_cache()),
-            None => None,
-        }
+        self.workspace().arranged_fragment_kind_bucket_cache()
+    }
+
+    /// Returns retained arranged fragment primitive-family bucket count.
+    pub const fn arranged_fragment_kind_bucket_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_kind_bucket_count()
+    }
+
+    /// Returns retained arranged fragment references grouped by primitive family.
+    pub const fn arranged_fragment_kind_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_kind_ref_count()
+    }
+
+    /// Returns retained line arranged fragment references.
+    pub const fn arranged_line_fragment_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_line_fragment_ref_count()
+    }
+
+    /// Returns retained arc arranged fragment references.
+    pub const fn arranged_arc_fragment_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_arc_fragment_ref_count()
+    }
+
+    /// Returns the largest retained arranged fragment primitive-family bucket size.
+    pub const fn arranged_fragment_kind_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_kind_max_bucket_size()
     }
 
     /// Returns arranged fragment source records grouped by retained topology status.
