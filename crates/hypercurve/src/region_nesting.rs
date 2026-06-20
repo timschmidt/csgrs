@@ -9837,6 +9837,19 @@ impl ExactCurveArrangementReport2 {
         &self.summary_cache
     }
 
+    /// Consumes this report and returns the retained workspace it projects.
+    pub fn into_workspace(self) -> ExactCurveWorkspace2 {
+        self.workspace
+    }
+
+    /// Consumes this report and returns the retained evaluation it projects.
+    pub fn into_evaluation(self) -> ExactCurveArrangementEvaluation2 {
+        ExactCurveArrangementEvaluation2 {
+            workspace: self.workspace,
+            summary_cache: self.summary_cache,
+        }
+    }
+
     /// Returns retained source segment count.
     pub const fn source_segment_count(&self) -> usize {
         self.source_segment_cache().source_segment_count()
