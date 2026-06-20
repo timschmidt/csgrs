@@ -890,6 +890,70 @@ impl RegionBooleanReport2 {
         self.boundary_build_report.as_ref()
     }
 
+    /// Returns source contour count from final boundary-role assignment, if reached.
+    pub const fn boundary_build_source_contour_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.source_contour_count()),
+            None => None,
+        }
+    }
+
+    /// Returns source boundary segment count from final boundary-role assignment, if reached.
+    pub const fn boundary_build_source_segment_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.source_segment_count()),
+            None => None,
+        }
+    }
+
+    /// Returns contour-pair validation schedule size from final role assignment, if reached.
+    pub const fn boundary_build_validation_candidate_pair_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.validation_candidate_pair_count()),
+            None => None,
+        }
+    }
+
+    /// Returns contour-pair validation test count from final role assignment, if reached.
+    pub const fn boundary_build_validation_tested_pair_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.validation_tested_pair_count()),
+            None => None,
+        }
+    }
+
+    /// Returns exact validation intersection event count from final role assignment, if reached.
+    pub const fn boundary_build_validation_intersection_event_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.validation_intersection_event_count()),
+            None => None,
+        }
+    }
+
+    /// Returns containment classification count from final role assignment, if reached.
+    pub const fn boundary_build_nesting_classification_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.nesting_classification_count()),
+            None => None,
+        }
+    }
+
+    /// Returns first blocking contour index from final role assignment, if present.
+    pub const fn boundary_build_blocker_first_contour_index(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => report.blocker_first_contour_index(),
+            None => None,
+        }
+    }
+
+    /// Returns second blocking contour index from final role assignment, if present.
+    pub const fn boundary_build_blocker_second_contour_index(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => report.blocker_second_contour_index(),
+            None => None,
+        }
+    }
+
     /// Returns final boundary-contour role reports, if role assignment was reached.
     pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
         self.boundary_build_report()
@@ -974,6 +1038,70 @@ impl RegionBooleanPipelineReport2 {
     /// Returns final boundary-contour role assignment evidence, if available.
     pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
         self.boundary_build_report.as_ref()
+    }
+
+    /// Returns source contour count from final boundary-role assignment, if reached.
+    pub const fn boundary_build_source_contour_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.source_contour_count()),
+            None => None,
+        }
+    }
+
+    /// Returns source boundary segment count from final boundary-role assignment, if reached.
+    pub const fn boundary_build_source_segment_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.source_segment_count()),
+            None => None,
+        }
+    }
+
+    /// Returns contour-pair validation schedule size from final role assignment, if reached.
+    pub const fn boundary_build_validation_candidate_pair_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.validation_candidate_pair_count()),
+            None => None,
+        }
+    }
+
+    /// Returns contour-pair validation test count from final role assignment, if reached.
+    pub const fn boundary_build_validation_tested_pair_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.validation_tested_pair_count()),
+            None => None,
+        }
+    }
+
+    /// Returns exact validation intersection event count from final role assignment, if reached.
+    pub const fn boundary_build_validation_intersection_event_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.validation_intersection_event_count()),
+            None => None,
+        }
+    }
+
+    /// Returns containment classification count from final role assignment, if reached.
+    pub const fn boundary_build_nesting_classification_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.nesting_classification_count()),
+            None => None,
+        }
+    }
+
+    /// Returns first blocking contour index from final role assignment, if present.
+    pub const fn boundary_build_blocker_first_contour_index(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => report.blocker_first_contour_index(),
+            None => None,
+        }
+    }
+
+    /// Returns second blocking contour index from final role assignment, if present.
+    pub const fn boundary_build_blocker_second_contour_index(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => report.blocker_second_contour_index(),
+            None => None,
+        }
     }
 
     /// Returns final output contour count when role assignment was reached.
@@ -2869,11 +2997,34 @@ mod tests {
         );
         assert_eq!(result.report().blocker(), Some(UncertaintyReason::Boundary));
         let boundary_report = result.report().boundary_build_report().unwrap();
-        assert_eq!(boundary_report.validation_candidate_pair_count(), 1);
-        assert_eq!(boundary_report.validation_tested_pair_count(), 1);
-        assert_eq!(boundary_report.nesting_classification_count(), 0);
-        assert_eq!(boundary_report.blocker_first_contour_index(), Some(0));
-        assert_eq!(boundary_report.blocker_second_contour_index(), Some(1));
+        assert_eq!(
+            result
+                .report()
+                .boundary_build_validation_candidate_pair_count(),
+            Some(1)
+        );
+        assert_eq!(
+            result
+                .report()
+                .boundary_build_validation_tested_pair_count(),
+            Some(1)
+        );
+        assert_eq!(
+            result
+                .report()
+                .boundary_build_nesting_classification_count(),
+            Some(0)
+        );
+        assert_eq!(
+            result.report().boundary_build_blocker_first_contour_index(),
+            Some(0)
+        );
+        assert_eq!(
+            result
+                .report()
+                .boundary_build_blocker_second_contour_index(),
+            Some(1)
+        );
         assert_eq!(
             boundary_report.stage(),
             crate::RegionBoundaryContourBuildStage2::NestingValidation

@@ -334,13 +334,50 @@ fn boolean_region_report_retains_boundary_role_assignment() {
         pipeline_report.boundary_build_report(),
         Some(boundary_report)
     );
-    assert_eq!(boundary_report.source_contour_count(), 1);
-    assert_eq!(boundary_report.source_segment_count(), 8);
-    assert_eq!(boundary_report.validation_candidate_pair_count(), 0);
-    assert_eq!(boundary_report.validation_tested_pair_count(), 0);
-    assert_eq!(boundary_report.nesting_classification_count(), 0);
-    assert_eq!(boundary_report.blocker_first_contour_index(), None);
-    assert_eq!(boundary_report.blocker_second_contour_index(), None);
+    assert_eq!(
+        pipeline_report.boundary_build_source_contour_count(),
+        report.boundary_build_source_contour_count()
+    );
+    assert_eq!(
+        pipeline_report.boundary_build_source_segment_count(),
+        report.boundary_build_source_segment_count()
+    );
+    assert_eq!(
+        pipeline_report.boundary_build_validation_candidate_pair_count(),
+        report.boundary_build_validation_candidate_pair_count()
+    );
+    assert_eq!(
+        pipeline_report.boundary_build_validation_tested_pair_count(),
+        report.boundary_build_validation_tested_pair_count()
+    );
+    assert_eq!(
+        pipeline_report.boundary_build_validation_intersection_event_count(),
+        report.boundary_build_validation_intersection_event_count()
+    );
+    assert_eq!(
+        pipeline_report.boundary_build_nesting_classification_count(),
+        report.boundary_build_nesting_classification_count()
+    );
+    assert_eq!(report.boundary_build_source_contour_count(), Some(1));
+    assert_eq!(report.boundary_build_source_segment_count(), Some(8));
+    assert_eq!(
+        report.boundary_build_validation_candidate_pair_count(),
+        Some(0)
+    );
+    assert_eq!(
+        report.boundary_build_validation_tested_pair_count(),
+        Some(0)
+    );
+    assert_eq!(
+        report.boundary_build_validation_intersection_event_count(),
+        Some(0)
+    );
+    assert_eq!(
+        report.boundary_build_nesting_classification_count(),
+        Some(0)
+    );
+    assert_eq!(report.boundary_build_blocker_first_contour_index(), None);
+    assert_eq!(report.boundary_build_blocker_second_contour_index(), None);
     assert_eq!(report.result_contour_count(), Some(1));
     assert_eq!(report.result_boundary_segment_count(), Some(8));
     assert_eq!(report.result_material_segment_count(), Some(8));
