@@ -2565,6 +2565,18 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     let arranged_fragment_source_range_cache =
         arranged_fragment_cache.arranged_fragment_source_range_cache();
     assert_eq!(
+        result.arranged_fragment_source_range_ref_count(),
+        Some(arranged_fragment_source_range_cache.source_ref_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_full_source_range_ref_count(),
+        Some(arranged_fragment_source_range_cache.full_source_range_ref_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_partial_source_range_ref_count(),
+        Some(arranged_fragment_source_range_cache.partial_source_range_ref_count())
+    );
+    assert_eq!(
         arranged_fragment_source_range_cache.source_ref_count(),
         arranged_fragment_cache.source_ref_count()
     );
@@ -4350,6 +4362,24 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.arranged_fragment_source_range_cache()
     );
     assert_eq!(
+        result
+            .evaluation()
+            .arranged_fragment_source_range_ref_count(),
+        result.arranged_fragment_source_range_ref_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .arranged_fragment_full_source_range_ref_count(),
+        result.arranged_fragment_full_source_range_ref_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .arranged_fragment_partial_source_range_ref_count(),
+        result.arranged_fragment_partial_source_range_ref_count()
+    );
+    assert_eq!(
         result.evaluation().output_ring_bucket_cache(),
         result.output_ring_bucket_cache()
     );
@@ -4802,6 +4832,24 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         result.arranged_fragment_source_range_cache().unwrap(),
         arranged_fragment_cache.arranged_fragment_source_range_cache()
+    );
+    assert_eq!(
+        result
+            .workspace()
+            .arranged_fragment_source_range_ref_count(),
+        result.arranged_fragment_source_range_ref_count()
+    );
+    assert_eq!(
+        result
+            .workspace()
+            .arranged_fragment_full_source_range_ref_count(),
+        result.arranged_fragment_full_source_range_ref_count()
+    );
+    assert_eq!(
+        result
+            .workspace()
+            .arranged_fragment_partial_source_range_ref_count(),
+        result.arranged_fragment_partial_source_range_ref_count()
     );
     assert_eq!(
         result.workspace().output_ring_bucket_cache(),
@@ -5579,6 +5627,18 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     let arranged_fragment_source_range_cache =
         arranged_fragment_cache.arranged_fragment_source_range_cache();
+    assert_eq!(
+        result.arranged_fragment_source_range_ref_count(),
+        Some(arranged_fragment_source_range_cache.source_ref_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_full_source_range_ref_count(),
+        Some(arranged_fragment_source_range_cache.full_source_range_ref_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_partial_source_range_ref_count(),
+        Some(arranged_fragment_source_range_cache.partial_source_range_ref_count())
+    );
     assert_eq!(
         arranged_fragment_source_range_cache.source_ref_count(),
         arranged_fragment_cache.source_ref_count()
@@ -6708,6 +6768,18 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(
         arrangement_report.arranged_fragment_source_range_cache(),
         result.arranged_fragment_source_range_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_source_range_ref_count(),
+        result.arranged_fragment_source_range_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_full_source_range_ref_count(),
+        result.arranged_fragment_full_source_range_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_partial_source_range_ref_count(),
+        result.arranged_fragment_partial_source_range_ref_count()
     );
     assert_eq!(
         arrangement_report.arranged_fragment_cache(),

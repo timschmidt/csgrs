@@ -2965,6 +2965,40 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns arranged fragment source parameter ranges.
+    pub const fn arranged_fragment_source_range_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedFragmentSourceRangeCache2> {
+        match self.arranged_fragment_cache() {
+            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_source_range_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained arranged fragment source range references.
+    pub const fn arranged_fragment_source_range_ref_count(&self) -> Option<usize> {
+        match self.arranged_fragment_source_range_cache() {
+            Some(range_cache) => Some(range_cache.source_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained arranged fragment source ranges covering complete source segments.
+    pub const fn arranged_fragment_full_source_range_ref_count(&self) -> Option<usize> {
+        match self.arranged_fragment_source_range_cache() {
+            Some(range_cache) => Some(range_cache.full_source_range_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained arranged fragment source ranges covering proper source subranges.
+    pub const fn arranged_fragment_partial_source_range_ref_count(&self) -> Option<usize> {
+        match self.arranged_fragment_source_range_cache() {
+            Some(range_cache) => Some(range_cache.partial_source_range_ref_count()),
+            None => None,
+        }
+    }
+
     /// Returns per-output-ring source provenance buckets.
     pub const fn output_ring_bucket_cache(
         &self,
@@ -7785,6 +7819,30 @@ impl ExactCurveArrangementEvaluation2 {
         }
     }
 
+    /// Returns retained arranged fragment source range references.
+    pub const fn arranged_fragment_source_range_ref_count(&self) -> Option<usize> {
+        match self.arranged_fragment_source_range_cache() {
+            Some(range_cache) => Some(range_cache.source_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained arranged fragment source ranges covering complete source segments.
+    pub const fn arranged_fragment_full_source_range_ref_count(&self) -> Option<usize> {
+        match self.arranged_fragment_source_range_cache() {
+            Some(range_cache) => Some(range_cache.full_source_range_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained arranged fragment source ranges covering proper source subranges.
+    pub const fn arranged_fragment_partial_source_range_ref_count(&self) -> Option<usize> {
+        match self.arranged_fragment_source_range_cache() {
+            Some(range_cache) => Some(range_cache.partial_source_range_ref_count()),
+            None => None,
+        }
+    }
+
     /// Returns per-output-ring source provenance buckets.
     pub const fn output_ring_bucket_cache(
         &self,
@@ -8950,10 +9008,24 @@ impl ExactCurveArrangementResult2 {
     pub const fn arranged_fragment_source_range_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentSourceRangeCache2> {
-        match self.arranged_fragment_cache() {
-            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_source_range_cache()),
-            None => None,
-        }
+        self.workspace().arranged_fragment_source_range_cache()
+    }
+
+    /// Returns retained arranged fragment source range references.
+    pub const fn arranged_fragment_source_range_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_source_range_ref_count()
+    }
+
+    /// Returns retained arranged fragment source ranges covering complete source segments.
+    pub const fn arranged_fragment_full_source_range_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_fragment_full_source_range_ref_count()
+    }
+
+    /// Returns retained arranged fragment source ranges covering proper source subranges.
+    pub const fn arranged_fragment_partial_source_range_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_fragment_partial_source_range_ref_count()
     }
 
     /// Returns per-output-ring source provenance buckets.
@@ -11278,10 +11350,24 @@ impl ExactCurveArrangementReport2 {
     pub const fn arranged_fragment_source_range_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentSourceRangeCache2> {
-        match self.arranged_fragment_cache() {
-            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_source_range_cache()),
-            None => None,
-        }
+        self.workspace().arranged_fragment_source_range_cache()
+    }
+
+    /// Returns retained arranged fragment source range references.
+    pub const fn arranged_fragment_source_range_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_source_range_ref_count()
+    }
+
+    /// Returns retained arranged fragment source ranges covering complete source segments.
+    pub const fn arranged_fragment_full_source_range_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_fragment_full_source_range_ref_count()
+    }
+
+    /// Returns retained arranged fragment source ranges covering proper source subranges.
+    pub const fn arranged_fragment_partial_source_range_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_fragment_partial_source_range_ref_count()
     }
 
     /// Returns the retained arranged-source provenance record count.
