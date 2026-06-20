@@ -3880,6 +3880,69 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(summary_cache.output_boundary_segment_kind_counts(), None);
     assert_eq!(summary_cache.output_contour_count(), None);
     assert_eq!(summary_cache.output_segment_count(), None);
+
+    let arrangement_report = result.arrangement_report();
+    assert_eq!(
+        arrangement_report.source_segment_count(),
+        result.source_segment_count()
+    );
+    assert_eq!(
+        arrangement_report.source_segment_kind_counts(),
+        result.source_segment_kind_counts()
+    );
+    assert_eq!(
+        arrangement_report.decided_source_segment_aabb_count(),
+        result.decided_source_segment_aabb_count()
+    );
+    assert_eq!(
+        arrangement_report.undecided_source_segment_aabb_count(),
+        result.undecided_source_segment_aabb_count()
+    );
+    assert_eq!(
+        arrangement_report.split_candidate_pair_count(),
+        result.split_candidate_pair_count()
+    );
+    assert_eq!(
+        arrangement_report.split_skipped_aabb_pair_count(),
+        result.split_skipped_aabb_pair_count()
+    );
+    assert_eq!(
+        arrangement_report.split_tested_pair_count(),
+        result.split_tested_pair_count()
+    );
+    assert_eq!(
+        arrangement_report.split_intersection_event_count(),
+        result.split_intersection_event_count()
+    );
+    assert_eq!(
+        arrangement_report.split_overlap_relation_count(),
+        result.split_overlap_relation_count()
+    );
+    assert_eq!(
+        arrangement_report.split_uncertain_relation_count(),
+        result.split_uncertain_relation_count()
+    );
+    assert_eq!(arrangement_report.output_ring_count(), None);
+    assert_eq!(arrangement_report.output_boundary_segment_count(), None);
+    assert_eq!(
+        arrangement_report.output_boundary_segment_kind_counts(),
+        None
+    );
+    assert_eq!(arrangement_report.output_contour_count(), None);
+    assert_eq!(arrangement_report.output_segment_count(), None);
+    assert_eq!(arrangement_report.materialized_region(), Some(false));
+    assert_eq!(
+        arrangement_report.stage(),
+        Some(RegionLineSegmentRegionBuildStage2::RingAssembly)
+    );
+    assert_eq!(
+        arrangement_report.status(),
+        Some(RetainedTopologyStatus::Unsupported)
+    );
+    assert_eq!(
+        arrangement_report.blocker(),
+        Some(UncertaintyReason::Boundary)
+    );
 }
 
 #[test]
