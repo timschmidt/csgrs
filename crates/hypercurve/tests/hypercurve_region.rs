@@ -778,6 +778,100 @@ fn unordered_line_segments_report_disconnected_boundary_blocker() {
     assert_eq!(built.role_reports(), None);
     assert_eq!(built.source_report_count(), Some(0));
     assert_eq!(built.boundary_build_stage(), None);
+
+    let endpoint_graph_cache = built.endpoint_graph_cache().unwrap();
+    assert_eq!(endpoint_graph_cache.endpoint_count(), 4);
+    assert_eq!(endpoint_graph_cache.structural_bucket_count(), 4);
+    assert_eq!(endpoint_graph_cache.structural_singleton_bucket_count(), 4);
+    assert_eq!(endpoint_graph_cache.max_structural_bucket_size(), 1);
+    assert_eq!(endpoint_graph_cache.dangling_endpoint_count(), 4);
+    assert_eq!(endpoint_graph_cache.branch_endpoint_count(), 0);
+    assert_eq!(
+        endpoint_graph_cache.blocker_arranged_segment_index(),
+        Some(0)
+    );
+    assert_eq!(
+        endpoint_graph_cache.blocker_endpoint(),
+        Some(RegionLineSegmentArrangedEndpoint2::Start)
+    );
+    assert_eq!(endpoint_graph_cache.blocker_point(), Some(&p(0, 0)));
+    assert_eq!(
+        endpoint_graph_cache.endpoint_bucket_cache().bucket_count(),
+        4
+    );
+    assert_eq!(
+        endpoint_graph_cache
+            .endpoint_side_bucket_cache()
+            .start_endpoint_ref_count(),
+        2
+    );
+    assert_eq!(
+        endpoint_graph_cache
+            .endpoint_side_bucket_cache()
+            .end_endpoint_ref_count(),
+        2
+    );
+    assert_eq!(
+        endpoint_graph_cache
+            .endpoint_degree_bucket_cache()
+            .dangling_structural_bucket_count(),
+        4
+    );
+    assert_eq!(
+        endpoint_graph_cache
+            .endpoint_degree_bucket_cache()
+            .chain_structural_bucket_count(),
+        0
+    );
+    assert_eq!(
+        endpoint_graph_cache
+            .endpoint_degree_bucket_cache()
+            .branch_structural_bucket_count(),
+        0
+    );
+
+    let ring_cache = built.ring_assembly_cache().unwrap();
+    assert_eq!(
+        ring_cache.predicate_path(),
+        RegionLineSegmentRingAssemblyPredicatePath2::ExactEndpointBucketTraversal
+    );
+    assert_eq!(ring_cache.output_ring_count(), None);
+    assert_eq!(ring_cache.output_boundary_segment_count(), None);
+    assert!(ring_cache.source_reports().is_empty());
+    assert_eq!(ring_cache.output_ring_bucket_cache().ring_count(), 0);
+    assert_eq!(
+        ring_cache
+            .output_segment_kind_bucket_cache()
+            .output_segment_ref_count(),
+        0
+    );
+    assert_eq!(
+        ring_cache
+            .output_segment_source_bucket_cache()
+            .source_segment_bucket_count(),
+        0
+    );
+    assert_eq!(
+        ring_cache
+            .output_ring_continuity_cache()
+            .output_connection_ref_count(),
+        0
+    );
+    assert_eq!(ring_cache.arranged_source_reports().len(), 2);
+    assert_eq!(
+        ring_cache
+            .arranged_fragment_cache()
+            .arranged_fragment_count(),
+        2
+    );
+    assert_eq!(ring_cache.arranged_fragment_cache().source_ref_count(), 2);
+    assert_eq!(
+        ring_cache
+            .arranged_fragment_cache()
+            .arranged_fragment_status_bucket_cache()
+            .native_exact_ref_count(),
+        2
+    );
     assert_eq!(built.blocker(), Some(UncertaintyReason::Boundary));
 }
 
