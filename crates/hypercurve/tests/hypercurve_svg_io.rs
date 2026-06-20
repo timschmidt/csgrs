@@ -2,9 +2,9 @@
 
 use hypercurve::{
     BulgeVertex2, CircularArc2, Contour2, ContourClosureStage2, CurveString2, FillRule, LineSeg2,
-    Point2, Real, Region2, RetainedImportFormat2, RetainedImportTopology2, RetainedTopologyStatus,
-    Segment2, SegmentKind, SvgPathExportTarget2, UncertaintyReason,
-    import_svg_contour_path_data_with_report, import_svg_path_data_with_report,
+    Point2, Real, Region2, RegionBoundaryContourBuildStage2, RetainedImportFormat2,
+    RetainedImportTopology2, RetainedTopologyStatus, Segment2, SegmentKind, SvgPathExportTarget2,
+    UncertaintyReason, import_svg_contour_path_data_with_report, import_svg_path_data_with_report,
     import_svg_region_path_data_with_report, retained_svg_import_record,
 };
 
@@ -324,7 +324,24 @@ fn svg_region_import_materializes_nested_closed_line_subpaths() {
     assert_eq!(imported.report().materialized_contour_count(), 2);
     assert_eq!(imported.report().path_reports().len(), 2);
     assert_eq!(imported.report().closure_reports().len(), 2);
-    assert!(imported.report().boundary_build_report().is_some());
+    assert_eq!(
+        imported.report().boundary_build_stage(),
+        Some(RegionBoundaryContourBuildStage2::RoleAssignment)
+    );
+    assert_eq!(
+        imported.report().boundary_build_status(),
+        Some(RetainedTopologyStatus::NativeExact)
+    );
+    assert_eq!(
+        imported.report().boundary_build_source_contour_count(),
+        Some(2)
+    );
+    assert_eq!(
+        imported
+            .report()
+            .boundary_build_validation_intersection_event_count(),
+        Some(0)
+    );
 }
 
 #[test]
