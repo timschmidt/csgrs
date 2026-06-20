@@ -899,7 +899,11 @@ pub fn import_svg_contour_path_data_with_report(
     }
 }
 
-/// Imports absolute closed SVG native subpaths as one region with retained reports.
+/// Imports closed SVG native subpaths as one region with retained reports.
+///
+/// Subpaths may use absolute moves, or a first relative move from the SVG
+/// origin. Later relative moves require whole-path current-point replay and
+/// remain explicit unsupported topology.
 pub fn import_svg_region_path_data_with_report(
     path_data: &str,
     fill_rule: FillRule,
@@ -908,7 +912,7 @@ pub fn import_svg_region_path_data_with_report(
     source_tolerance: Option<RetainedSourceTolerance2>,
     policy: &CurvePolicy,
 ) -> SvgRegionImportResult2 {
-    let subpaths = match split_svg_absolute_subpaths(path_data) {
+    let subpaths = match split_svg_native_subpaths(path_data) {
         Ok(subpaths) if !subpaths.is_empty() => subpaths,
         Ok(_) | Err(()) => {
             return blocked_svg_region_import(
@@ -1430,13 +1434,17 @@ fn blocked_svg_contour_import(
     }
 }
 
-fn split_svg_absolute_subpaths(path_data: &str) -> Result<Vec<&str>, ()> {
+fn split_svg_native_subpaths(path_data: &str) -> Result<Vec<&str>, ()> {
     let mut starts = Vec::new();
     for (index, ch) in path_data.char_indices() {
         if ch == 'M' {
             starts.push(index);
         } else if ch == 'm' {
-            return Err(());
+            if starts.is_empty() {
+                starts.push(index);
+            } else {
+                return Err(());
+            }
         }
     }
     if starts.is_empty() {

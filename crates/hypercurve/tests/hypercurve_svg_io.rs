@@ -405,6 +405,61 @@ fn svg_region_import_materializes_nested_closed_line_subpaths() {
 }
 
 #[test]
+fn svg_region_import_accepts_first_relative_move_subpath() {
+    let imported = import_svg_region_path_data_with_report(
+        "m 0 0 l 4 0 l 0 4 l -4 0 z M 1 1 l 1 0 l 0 1 l -1 0 z",
+        FillRule::NonZero,
+        24,
+        9,
+        None,
+        &hypercurve::CurvePolicy::certified(),
+    );
+
+    let region = imported
+        .region()
+        .expect("first relative move region should materialize");
+    assert_eq!(region.material_contours().len(), 1);
+    assert_eq!(region.hole_contours().len(), 1);
+    assert_eq!(
+        imported.report().status(),
+        RetainedTopologyStatus::ImportedLossy
+    );
+    assert_eq!(imported.report().blocker(), None);
+    assert_eq!(imported.report().subpath_count(), 2);
+    assert_eq!(imported.report().path_reports().len(), 2);
+    assert_eq!(imported.report().closure_reports().len(), 2);
+    assert_eq!(imported.report().materialized_contour_count(), 2);
+    assert_eq!(
+        imported.report().boundary_build_status(),
+        Some(RetainedTopologyStatus::NativeExact)
+    );
+}
+
+#[test]
+fn svg_region_import_rejects_later_relative_move_subpath() {
+    let imported = import_svg_region_path_data_with_report(
+        "M 0 0 L 4 0 L 4 4 L 0 4 Z m 1 1 l 1 0 l 0 1 l -1 0 z",
+        FillRule::NonZero,
+        25,
+        1,
+        None,
+        &hypercurve::CurvePolicy::certified(),
+    );
+
+    assert!(imported.region().is_none());
+    assert_eq!(imported.report().subpath_count(), 0);
+    assert_eq!(imported.report().path_reports().len(), 0);
+    assert_eq!(
+        imported.report().status(),
+        RetainedTopologyStatus::Unsupported
+    );
+    assert_eq!(
+        imported.report().blocker(),
+        Some(UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
 fn svg_region_import_rejects_open_subpath_with_report() {
     let imported = import_svg_region_path_data_with_report(
         "M 0 0 L 4 0 L 4 4 Z M 10 10 L 11 10",
