@@ -6595,6 +6595,16 @@ impl ExactCurveArrangementResult2 {
         }
     }
 
+    /// Returns final boundary output counts grouped by material/hole role.
+    pub const fn boundary_output_role_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputBoundaryRoleBucketCache2> {
+        match self.boundary_output_cache() {
+            Some(boundary_cache) => Some(boundary_cache.role_bucket_cache()),
+            None => None,
+        }
+    }
+
     /// Returns retained material/hole role buckets when role assignment was reached.
     pub const fn role_cache(&self) -> Option<&ExactCurveArrangementOutputRoleCache2> {
         match self.output_cache() {
