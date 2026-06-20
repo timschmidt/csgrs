@@ -1214,6 +1214,54 @@ fn exact_curve_arrangement_result_returns_region_classification() {
         ),
         Classification::Uncertain(reason) => panic!("expected owned region, got {reason:?}"),
     }
+
+    let retained_result = evaluate_unordered_line_segments(
+        vec![
+            line(0, 0, 4, 0),
+            line(0, 4, 4, 4),
+            line(0, 0, 0, 4),
+            line(4, 0, 4, 4),
+        ],
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
+    let (evaluation, owned_region) = retained_result.into_evaluation_and_region();
+    assert!(
+        evaluation
+            .summary_cache()
+            .status()
+            .unwrap()
+            .is_native_exact()
+    );
+    assert!(owned_region.is_some());
+
+    let retained_result = evaluate_unordered_line_segments(
+        vec![
+            line(0, 0, 4, 0),
+            line(0, 4, 4, 4),
+            line(0, 0, 0, 4),
+            line(4, 0, 4, 4),
+        ],
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
+    let (evaluation, classification) = retained_result.into_evaluation_and_region_classification();
+    assert!(
+        evaluation
+            .summary_cache()
+            .status()
+            .unwrap()
+            .is_native_exact()
+    );
+    match classification {
+        Classification::Decided(region) => assert_eq!(
+            region.classify_point(&p(2, 2), &policy()),
+            Classification::Decided(RegionPointLocation::Inside)
+        ),
+        Classification::Uncertain(reason) => panic!("expected owned region, got {reason:?}"),
+    }
 }
 
 #[test]
@@ -1231,6 +1279,22 @@ fn exact_curve_arrangement_result_classification_preserves_blocker() {
     );
     assert_eq!(
         result.into_region_classification(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+
+    let result = evaluate_unordered_line_segments(
+        vec![line(0, 0, 1, 0), line(3, 0, 4, 0)],
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
+    let (evaluation, classification) = result.into_evaluation_and_region_classification();
+    assert_eq!(
+        evaluation.summary_cache().blocker(),
+        Some(UncertaintyReason::Boundary)
+    );
+    assert_eq!(
+        classification,
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }

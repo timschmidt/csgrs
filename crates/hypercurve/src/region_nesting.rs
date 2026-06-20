@@ -7214,6 +7214,37 @@ impl ExactCurveArrangementResult2 {
         }
     }
 
+    /// Consumes this result and returns the retained evaluation with the materialized region.
+    pub fn into_evaluation_and_region(self) -> (ExactCurveArrangementEvaluation2, Option<Region2>) {
+        let Self {
+            evaluation,
+            compatibility_projection,
+        } = self;
+        (evaluation, compatibility_projection.into_region())
+    }
+
+    /// Consumes this result and returns the retained evaluation with the region classification.
+    ///
+    /// This is the ownership-preserving retained-result form of
+    /// [`ExactCurveArrangementResult2::into_region_classification`].
+    pub fn into_evaluation_and_region_classification(
+        self,
+    ) -> (ExactCurveArrangementEvaluation2, Classification<Region2>) {
+        let Self {
+            evaluation,
+            compatibility_projection,
+        } = self;
+        let blocker = evaluation
+            .summary_cache()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        let classification = match compatibility_projection.into_region() {
+            Some(region) => Classification::Decided(region),
+            None => Classification::Uncertain(blocker),
+        };
+        (evaluation, classification)
+    }
+
     /// Consumes this result and returns the materialized region, if any.
     pub fn into_region(self) -> Option<Region2> {
         self.into_compatibility_region_build_result().into_region()
