@@ -1,11 +1,12 @@
 #![cfg(feature = "svg")]
 
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Contour2, ContourClosureStage2, CurveString2, FillRule, LineSeg2,
-    Point2, Real, Region2, RegionBoundaryContourBuildStage2, RetainedImportFormat2,
-    RetainedImportTopology2, RetainedTopologyStatus, Segment2, SegmentKind, SvgPathExportTarget2,
-    UncertaintyReason, import_svg_contour_path_data_with_report, import_svg_path_data_with_report,
-    import_svg_region_path_data_with_report, retained_svg_import_record,
+    BulgeVertex2, CircularArc2, Classification, Contour2, ContourClosureStage2, CurveString2,
+    FillRule, LineSeg2, Point2, Real, Region2, RegionBoundaryContourBuildStage2,
+    RetainedImportFormat2, RetainedImportTopology2, RetainedTopologyStatus, Segment2, SegmentKind,
+    SvgPathExportTarget2, UncertaintyReason, import_svg_contour_path_data_with_report,
+    import_svg_path_data_with_report, import_svg_region_path_data_with_report,
+    retained_svg_import_record,
 };
 
 fn s(value: i32) -> Real {
@@ -71,6 +72,19 @@ fn curve_string_svg_export_reports_display_boundary() {
         RetainedTopologyStatus::DisplayOrExport
     );
     assert_eq!(exported.report().blocker(), None);
+    assert!(matches!(
+        exported.path_data_classification(),
+        Classification::Decided(path_data) if path_data == "M 0 0 L 2 0 L 2 1"
+    ));
+    let owned_report = exported.clone().into_report();
+    assert_eq!(&owned_report, exported.report());
+    let (owned_path_data, owned_parts_report) = exported.clone().into_parts();
+    assert_eq!(owned_path_data.as_ref(), exported.path_data());
+    assert_eq!(&owned_parts_report, exported.report());
+    assert!(matches!(
+        exported.into_path_data_classification(),
+        Classification::Decided(path_data) if path_data == "M 0 0 L 2 0 L 2 1"
+    ));
 }
 
 #[test]
@@ -144,6 +158,19 @@ fn svg_line_path_import_materializes_with_retained_report() {
     assert_eq!(record.format(), RetainedImportFormat2::Svg);
     assert_eq!(record.source_version(), 3);
     assert!(record.topology_status().is_imported_lossy());
+    assert!(matches!(
+        imported.curve_string_classification(),
+        Classification::Decided(curve) if curve.len() == 4
+    ));
+    let owned_report = imported.clone().into_report();
+    assert_eq!(&owned_report, imported.report());
+    let (owned_curve, owned_parts_report) = imported.clone().into_parts();
+    assert_eq!(owned_curve.as_ref(), imported.curve_string());
+    assert_eq!(&owned_parts_report, imported.report());
+    assert!(matches!(
+        imported.into_curve_string_classification(),
+        Classification::Decided(curve) if curve.len() == 4
+    ));
 }
 
 #[test]
@@ -255,6 +282,19 @@ fn svg_cubic_path_import_remains_explicitly_unsupported() {
         imported.report().blocker(),
         Some(UncertaintyReason::Unsupported)
     );
+    assert_eq!(
+        imported.curve_string_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+    let owned_report = imported.clone().into_report();
+    assert_eq!(&owned_report, imported.report());
+    let (owned_curve, owned_parts_report) = imported.clone().into_parts();
+    assert_eq!(owned_curve, None);
+    assert_eq!(&owned_parts_report, imported.report());
+    assert_eq!(
+        imported.into_curve_string_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
 }
 
 #[test]
@@ -305,6 +345,19 @@ fn svg_closed_line_path_import_materializes_contour_with_closure_evidence() {
         imported.report().closure_report().unwrap().stage(),
         ContourClosureStage2::ContourMaterialization
     );
+    assert!(matches!(
+        imported.contour_classification(),
+        Classification::Decided(contour) if contour.len() == 4
+    ));
+    let owned_report = imported.clone().into_report();
+    assert_eq!(&owned_report, imported.report());
+    let (owned_contour, owned_parts_report) = imported.clone().into_parts();
+    assert_eq!(owned_contour.as_ref(), imported.contour());
+    assert_eq!(&owned_parts_report, imported.report());
+    assert!(matches!(
+        imported.into_contour_classification(),
+        Classification::Decided(contour) if contour.len() == 4
+    ));
 }
 
 #[test]
@@ -354,6 +407,19 @@ fn svg_open_line_path_contour_import_is_explicitly_unsupported() {
         Some(UncertaintyReason::Unsupported)
     );
     assert!(imported.report().closure_report().is_none());
+    assert_eq!(
+        imported.contour_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+    let owned_report = imported.clone().into_report();
+    assert_eq!(&owned_report, imported.report());
+    let (owned_contour, owned_parts_report) = imported.clone().into_parts();
+    assert_eq!(owned_contour, None);
+    assert_eq!(&owned_parts_report, imported.report());
+    assert_eq!(
+        imported.into_contour_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
 }
 
 #[test]
@@ -402,6 +468,21 @@ fn svg_region_import_materializes_nested_closed_line_subpaths() {
             .boundary_build_validation_intersection_event_count(),
         Some(0)
     );
+    assert!(matches!(
+        imported.region_classification(),
+        Classification::Decided(region)
+            if region.material_contours().len() == 1 && region.hole_contours().len() == 1
+    ));
+    let owned_report = imported.clone().into_report();
+    assert_eq!(&owned_report, imported.report());
+    let (owned_region, owned_parts_report) = imported.clone().into_parts();
+    assert_eq!(owned_region.as_ref(), imported.region());
+    assert_eq!(&owned_parts_report, imported.report());
+    assert!(matches!(
+        imported.into_region_classification(),
+        Classification::Decided(region)
+            if region.material_contours().len() == 1 && region.hole_contours().len() == 1
+    ));
 }
 
 #[test]
@@ -456,6 +537,19 @@ fn svg_region_import_rejects_later_relative_move_subpath() {
     assert_eq!(
         imported.report().blocker(),
         Some(UncertaintyReason::Unsupported)
+    );
+    assert_eq!(
+        imported.region_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+    let owned_report = imported.clone().into_report();
+    assert_eq!(&owned_report, imported.report());
+    let (owned_region, owned_parts_report) = imported.clone().into_parts();
+    assert_eq!(owned_region, None);
+    assert_eq!(&owned_parts_report, imported.report());
+    assert_eq!(
+        imported.into_region_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }
 

@@ -8,11 +8,12 @@
 //! report evidence for unsupported path commands instead of guessing topology.
 
 use crate::{
-    CircularArc2, Contour2, ContourClosureReport2, CurvePolicy, CurveResult, CurveString2,
-    FillRule, LineSeg2, Point2, Rational, Real, Region2, RegionBoundaryContourBuildPredicatePath2,
-    RegionBoundaryContourBuildReport2, RegionBoundaryContourBuildStage2, RetainedImportFormat2,
-    RetainedImportRecord2, RetainedSourceTolerance2, RetainedTopologyStatus, Segment2, SegmentKind,
-    SegmentKindCounts, UncertaintyReason,
+    CircularArc2, Classification, Contour2, ContourClosureReport2, CurvePolicy, CurveResult,
+    CurveString2, FillRule, LineSeg2, Point2, Rational, Real, Region2,
+    RegionBoundaryContourBuildPredicatePath2, RegionBoundaryContourBuildReport2,
+    RegionBoundaryContourBuildStage2, RetainedImportFormat2, RetainedImportRecord2,
+    RetainedSourceTolerance2, RetainedTopologyStatus, Segment2, SegmentKind, SegmentKindCounts,
+    UncertaintyReason,
 };
 use hyperreal::RealSign;
 use std::fmt::Write;
@@ -185,9 +186,43 @@ impl SvgPathImportResult2 {
         self.curve_string
     }
 
+    /// Consumes this result and returns retained import evidence.
+    pub fn into_report(self) -> SvgPathImportReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the imported curve string with its report.
+    pub fn into_parts(self) -> (Option<CurveString2>, SvgPathImportReport2) {
+        (self.curve_string, self.report)
+    }
+
     /// Returns retained import evidence.
     pub const fn report(&self) -> &SvgPathImportReport2 {
         &self.report
+    }
+
+    /// Returns the imported curve string as a convenience classification.
+    pub fn curve_string_classification(&self) -> Classification<&CurveString2> {
+        match self.curve_string() {
+            Some(curve_string) => Classification::Decided(curve_string),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the imported curve string as a convenience classification.
+    pub fn into_curve_string_classification(self) -> Classification<CurveString2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_curve_string() {
+            Some(curve_string) => Classification::Decided(curve_string),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
@@ -202,9 +237,43 @@ impl SvgPathExportResult2 {
         self.path_data
     }
 
+    /// Consumes this result and returns retained export evidence.
+    pub fn into_report(self) -> SvgPathExportReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns emitted SVG path data with its report.
+    pub fn into_parts(self) -> (Option<String>, SvgPathExportReport2) {
+        (self.path_data, self.report)
+    }
+
     /// Returns retained export evidence.
     pub const fn report(&self) -> &SvgPathExportReport2 {
         &self.report
+    }
+
+    /// Returns emitted path data as a convenience classification.
+    pub fn path_data_classification(&self) -> Classification<&String> {
+        match self.path_data() {
+            Some(path_data) => Classification::Decided(path_data),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns emitted path data as a convenience classification.
+    pub fn into_path_data_classification(self) -> Classification<String> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_path_data() {
+            Some(path_data) => Classification::Decided(path_data),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
@@ -355,9 +424,43 @@ impl SvgContourImportResult2 {
         self.contour
     }
 
+    /// Consumes this result and returns retained SVG contour import evidence.
+    pub fn into_report(self) -> SvgContourImportReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the imported closed contour with its report.
+    pub fn into_parts(self) -> (Option<Contour2>, SvgContourImportReport2) {
+        (self.contour, self.report)
+    }
+
     /// Returns retained SVG contour import evidence.
     pub const fn report(&self) -> &SvgContourImportReport2 {
         &self.report
+    }
+
+    /// Returns the imported closed contour as a convenience classification.
+    pub fn contour_classification(&self) -> Classification<&Contour2> {
+        match self.contour() {
+            Some(contour) => Classification::Decided(contour),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the imported closed contour as a convenience classification.
+    pub fn into_contour_classification(self) -> Classification<Contour2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_contour() {
+            Some(contour) => Classification::Decided(contour),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
@@ -434,9 +537,43 @@ impl SvgRegionImportResult2 {
         self.region
     }
 
+    /// Consumes this result and returns retained SVG region import evidence.
+    pub fn into_report(self) -> SvgRegionImportReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the imported region with its report.
+    pub fn into_parts(self) -> (Option<Region2>, SvgRegionImportReport2) {
+        (self.region, self.report)
+    }
+
     /// Returns retained SVG region import evidence.
     pub const fn report(&self) -> &SvgRegionImportReport2 {
         &self.report
+    }
+
+    /// Returns the imported region as a convenience classification.
+    pub fn region_classification(&self) -> Classification<&Region2> {
+        match self.region() {
+            Some(region) => Classification::Decided(region),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the imported region as a convenience classification.
+    pub fn into_region_classification(self) -> Classification<Region2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_region() {
+            Some(region) => Classification::Decided(region),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
