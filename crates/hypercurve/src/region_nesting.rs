@@ -986,6 +986,7 @@ pub struct ExactCurveArrangementReport2 {
     split_skipped_aabb_pair_count: Option<usize>,
     split_tested_pair_count: Option<usize>,
     split_intersection_event_count: Option<usize>,
+    split_point_relation_count: Option<usize>,
     split_overlap_relation_count: Option<usize>,
     split_uncertain_relation_count: Option<usize>,
     endpoint_graph_endpoint_count: Option<usize>,
@@ -7961,6 +7962,7 @@ impl ExactCurveArrangementReport2 {
             split_skipped_aabb_pair_count: result.split_skipped_aabb_pair_count(),
             split_tested_pair_count: result.split_tested_pair_count(),
             split_intersection_event_count: result.split_intersection_event_count(),
+            split_point_relation_count: result.split_point_relation_count(),
             split_overlap_relation_count: result.split_overlap_relation_count(),
             split_uncertain_relation_count: result.split_uncertain_relation_count(),
             endpoint_graph_endpoint_count: result.endpoint_graph_endpoint_count(),
@@ -8018,6 +8020,11 @@ impl ExactCurveArrangementReport2 {
     /// Returns exact point-intersection event count found during splitting.
     pub const fn split_intersection_event_count(&self) -> Option<usize> {
         self.split_intersection_event_count
+    }
+
+    /// Returns source-pair relations classified as point intersections.
+    pub const fn split_point_relation_count(&self) -> Option<usize> {
+        self.split_point_relation_count
     }
 
     /// Returns source-pair relations classified as overlaps.

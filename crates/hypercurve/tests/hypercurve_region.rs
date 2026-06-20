@@ -2172,6 +2172,10 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.split_tested_pair_count()
     );
     assert_eq!(
+        arrangement_report.split_point_relation_count(),
+        result.split_point_relation_count()
+    );
+    assert_eq!(
         arrangement_report.endpoint_graph_structural_bucket_count(),
         result.endpoint_graph_structural_bucket_count()
     );
@@ -3553,6 +3557,10 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.split_intersection_event_count()
     );
     assert_eq!(
+        arrangement_report.split_point_relation_count(),
+        result.split_point_relation_count()
+    );
+    assert_eq!(
         arrangement_report.output_ring_count(),
         result.output_ring_count()
     );
@@ -3913,6 +3921,10 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(
         arrangement_report.split_intersection_event_count(),
         result.split_intersection_event_count()
+    );
+    assert_eq!(
+        arrangement_report.split_point_relation_count(),
+        result.split_point_relation_count()
     );
     assert_eq!(
         arrangement_report.split_overlap_relation_count(),
