@@ -3203,6 +3203,15 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(arrangement_report.stage(), result.stage());
     assert_eq!(arrangement_report.status(), result.status());
     assert_eq!(arrangement_report.blocker(), result.blocker());
+    #[allow(deprecated)]
+    {
+        let legacy_result = result.clone().into_region_build_result();
+        assert_eq!(
+            legacy_result.report(),
+            result.region_build_result().report()
+        );
+        assert_eq!(legacy_result.region(), result.region());
+    }
     assert_eq!(
         result.boundary_build_stage(),
         Some(RegionBoundaryContourBuildStage2::RoleAssignment)
