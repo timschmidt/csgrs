@@ -7130,7 +7130,7 @@ impl ExactCurveArrangementResult2 {
     /// Returns the underlying legacy region build result.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementResult2 retained accessors, or report() when a derived compatibility report is required"
+        note = "use ExactCurveArrangementResult2 retained accessors, or arrangement_report() when a derived compatibility report is required"
     )]
     pub const fn region_build_result(&self) -> &RegionLineSegmentRegionBuildResult2 {
         &self.region_result
@@ -7141,7 +7141,11 @@ impl ExactCurveArrangementResult2 {
         self.region_result.region()
     }
 
-    /// Returns the derived retained arrangement report.
+    /// Returns the underlying legacy region build report.
+    #[deprecated(
+        since = "0.3.0",
+        note = "use ExactCurveArrangementResult2 retained accessors, or arrangement_report() when a derived compatibility report is required"
+    )]
     pub const fn report(&self) -> &RegionLineSegmentRegionBuildReport2 {
         self.region_result.report()
     }
@@ -7149,7 +7153,7 @@ impl ExactCurveArrangementResult2 {
     /// Consumes this result and returns the underlying legacy region build result.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementResult2 retained accessors, into_region(), or report() when a derived compatibility report is required"
+        note = "use ExactCurveArrangementResult2 retained accessors, into_region(), or arrangement_report() when a derived compatibility report is required"
     )]
     pub fn into_region_build_result(self) -> RegionLineSegmentRegionBuildResult2 {
         self.region_result
