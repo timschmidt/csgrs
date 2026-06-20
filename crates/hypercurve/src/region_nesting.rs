@@ -968,7 +968,9 @@ pub struct ExactCurveArrangementAttempt2 {
 pub struct ExactCurveArrangementResult2 {
     evaluation: ExactCurveArrangementEvaluation2,
     region: Option<Region2>,
-    compatibility_projection: RegionLineSegmentRegionBuildResult2,
+    // Deprecated compatibility APIs borrow this legacy shape; the report is
+    // derived from `evaluation`.
+    derived_compatibility_projection: RegionLineSegmentRegionBuildResult2,
 }
 
 /// Derived report for a retained exact curve arrangement attempt.
@@ -7579,7 +7581,7 @@ impl ExactCurveArrangementAttempt2 {
             );
         let region = compatibility_projection.region().cloned();
         let evaluation = ExactCurveArrangementEvaluation2::new(workspace);
-        let compatibility_projection = RegionLineSegmentRegionBuildResult2 {
+        let derived_compatibility_projection = RegionLineSegmentRegionBuildResult2 {
             region: region.clone(),
             report: evaluation
                 .arrangement_report()
@@ -7588,26 +7590,28 @@ impl ExactCurveArrangementAttempt2 {
         Ok(ExactCurveArrangementResult2 {
             evaluation,
             region,
-            compatibility_projection,
+            derived_compatibility_projection,
         })
     }
 }
 
 impl ExactCurveArrangementResult2 {
-    const fn compatibility_region_build_result(&self) -> &RegionLineSegmentRegionBuildResult2 {
-        &self.compatibility_projection
+    const fn derived_compatibility_region_build_result(
+        &self,
+    ) -> &RegionLineSegmentRegionBuildResult2 {
+        &self.derived_compatibility_projection
     }
 
     fn into_compatibility_region_build_result(self) -> RegionLineSegmentRegionBuildResult2 {
         let Self {
             evaluation,
             region,
-            compatibility_projection,
+            derived_compatibility_projection,
         } = self;
         let report = evaluation
             .arrangement_report()
             .into_region_line_segment_region_build_report();
-        drop(compatibility_projection);
+        drop(derived_compatibility_projection);
         RegionLineSegmentRegionBuildResult2 { region, report }
     }
 
@@ -7621,10 +7625,10 @@ impl ExactCurveArrangementResult2 {
         let Self {
             evaluation,
             region,
-            compatibility_projection,
+            derived_compatibility_projection,
         } = self;
         drop(region);
-        drop(compatibility_projection);
+        drop(derived_compatibility_projection);
         evaluation
     }
 
@@ -8553,7 +8557,7 @@ impl ExactCurveArrangementResult2 {
         note = "use ExactCurveArrangementResult2 retained accessors, or arrangement_report() when a derived compatibility report is required"
     )]
     pub const fn region_build_result(&self) -> &RegionLineSegmentRegionBuildResult2 {
-        self.compatibility_region_build_result()
+        self.derived_compatibility_region_build_result()
     }
 
     /// Returns the materialized region, if the arrangement succeeded.
@@ -8582,7 +8586,7 @@ impl ExactCurveArrangementResult2 {
         note = "use ExactCurveArrangementResult2 retained accessors, or arrangement_report() when a derived compatibility report is required"
     )]
     pub const fn report(&self) -> &RegionLineSegmentRegionBuildReport2 {
-        self.compatibility_region_build_result().report()
+        self.derived_compatibility_region_build_result().report()
     }
 
     /// Consumes this result and returns the underlying legacy region build result.
@@ -8611,9 +8615,9 @@ impl ExactCurveArrangementResult2 {
         let Self {
             evaluation,
             region,
-            compatibility_projection,
+            derived_compatibility_projection,
         } = self;
-        drop(compatibility_projection);
+        drop(derived_compatibility_projection);
         (evaluation, region)
     }
 
@@ -8627,9 +8631,9 @@ impl ExactCurveArrangementResult2 {
         let Self {
             evaluation,
             region,
-            compatibility_projection,
+            derived_compatibility_projection,
         } = self;
-        drop(compatibility_projection);
+        drop(derived_compatibility_projection);
         let blocker = evaluation
             .summary_cache()
             .blocker()
