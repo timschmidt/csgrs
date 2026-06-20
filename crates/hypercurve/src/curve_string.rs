@@ -4380,9 +4380,43 @@ impl CurveStringCurveTrimResult2 {
         self.curve_string
     }
 
+    /// Consumes this result and returns retained curve-intersection trim evidence.
+    pub fn into_report(self) -> CurveStringCurveTrimReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized trim with its report.
+    pub fn into_parts(self) -> (Option<CurveString2>, CurveStringCurveTrimReport2) {
+        (self.curve_string, self.report)
+    }
+
     /// Returns the retained curve-intersection trim report.
     pub const fn report(&self) -> &CurveStringCurveTrimReport2 {
         &self.report
+    }
+
+    /// Returns the curve-intersection trim output as a convenience classification.
+    pub fn curve_string_classification(&self) -> Classification<&CurveString2> {
+        match self.curve_string() {
+            Some(curve_string) => Classification::Decided(curve_string),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the curve-intersection trim output as a classification.
+    pub fn into_curve_string_classification(self) -> Classification<CurveString2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_curve_string() {
+            Some(curve_string) => Classification::Decided(curve_string),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
@@ -4800,9 +4834,36 @@ impl CurveStringRegionTrimResult2 {
         self.curve_strings
     }
 
+    /// Consumes this result and returns retained trim-by-region evidence.
+    pub fn into_report(self) -> CurveStringRegionTrimReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns materialized inside chains with their report.
+    pub fn into_parts(self) -> (Vec<CurveString2>, CurveStringRegionTrimReport2) {
+        (self.curve_strings, self.report)
+    }
+
     /// Returns the retained trim-by-region report.
     pub const fn report(&self) -> &CurveStringRegionTrimReport2 {
         &self.report
+    }
+
+    /// Returns inside chains as a convenience classification while retaining this result.
+    pub fn curve_strings_classification(&self) -> Classification<&[CurveString2]> {
+        match self.report().blocker() {
+            Some(blocker) => Classification::Uncertain(blocker),
+            None => Classification::Decided(self.curve_strings()),
+        }
+    }
+
+    /// Consumes this result and returns inside chains as a convenience classification.
+    pub fn into_curve_strings_classification(self) -> Classification<Vec<CurveString2>> {
+        let blocker = self.report().blocker();
+        match blocker {
+            Some(blocker) => Classification::Uncertain(blocker),
+            None => Classification::Decided(self.into_curve_strings()),
+        }
     }
 }
 

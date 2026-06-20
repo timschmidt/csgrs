@@ -3678,6 +3678,21 @@ fn curve_string_trim_between_curve_intersections_materializes_line_window() {
     assert_eq!(trim_report.start().param(), &q(1, 5));
     assert_eq!(trim_report.end().param(), &q(4, 5));
     assert_eq!(trim_report.output_segment_count(), Some(1));
+    assert!(matches!(
+        trim.curve_string_classification(),
+        Classification::Decided(curve_string)
+            if curve_string.start() == Some(&p(2, 0)) && curve_string.end() == Some(&p(8, 0))
+    ));
+    let owned_report = trim.clone().into_report();
+    assert_eq!(&owned_report, trim.report());
+    let (owned_curve, owned_parts_report) = trim.clone().into_parts();
+    assert_eq!(owned_curve.as_ref(), trim.curve_string());
+    assert_eq!(&owned_parts_report, trim.report());
+    assert!(matches!(
+        trim.clone().into_curve_string_classification(),
+        Classification::Decided(curve_string)
+            if curve_string.start() == Some(&p(2, 0)) && curve_string.end() == Some(&p(8, 0))
+    ));
     let trimmed = trim
         .curve_string()
         .expect("curve-intersection trim should materialize");
@@ -3853,6 +3868,19 @@ fn curve_string_trim_between_curve_intersections_reports_ambiguous_cutter_hits()
         1
     );
     assert!(trim.report().trim_report().is_none());
+    assert_eq!(
+        trim.curve_string_classification(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    let owned_report = trim.clone().into_report();
+    assert_eq!(&owned_report, trim.report());
+    let (owned_curve, owned_parts_report) = trim.clone().into_parts();
+    assert_eq!(owned_curve.as_ref(), trim.curve_string());
+    assert_eq!(&owned_parts_report, trim.report());
+    assert_eq!(
+        trim.clone().into_curve_string_classification(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
 }
 
 #[test]
@@ -4030,6 +4058,21 @@ fn curve_string_trim_inside_region_materializes_inside_window() {
 
     assert_eq!(trimmed.curve_strings().len(), 1);
     assert_eq!(trimmed.curve_strings()[0].len(), 1);
+    assert!(matches!(
+        trimmed.curve_strings_classification(),
+        Classification::Decided(curve_strings)
+            if curve_strings.len() == 1 && curve_strings[0].len() == 1
+    ));
+    let owned_report = trimmed.clone().into_report();
+    assert_eq!(&owned_report, trimmed.report());
+    let (owned_curves, owned_parts_report) = trimmed.clone().into_parts();
+    assert_eq!(owned_curves.as_slice(), trimmed.curve_strings());
+    assert_eq!(&owned_parts_report, trimmed.report());
+    assert!(matches!(
+        trimmed.clone().into_curve_strings_classification(),
+        Classification::Decided(curve_strings)
+            if curve_strings.len() == 1 && curve_strings[0].len() == 1
+    ));
     assert_line(&trimmed.curve_strings()[0].segments()[0], p(0, 1), p(4, 1));
 }
 
@@ -4319,6 +4362,19 @@ fn curve_string_trim_inside_region_reports_boundary_overlap_blocker() {
     assert_eq!(trimmed.report().boundary_uncertain_relation_count(), 0);
     assert_eq!(trimmed.report().output_curve_string_count(), None);
     assert_eq!(trimmed.report().output_segment_count(), None);
+    assert_eq!(
+        trimmed.curve_strings_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+    let owned_report = trimmed.clone().into_report();
+    assert_eq!(&owned_report, trimmed.report());
+    let (owned_curves, owned_parts_report) = trimmed.clone().into_parts();
+    assert_eq!(owned_curves.as_slice(), trimmed.curve_strings());
+    assert_eq!(&owned_parts_report, trimmed.report());
+    assert_eq!(
+        trimmed.clone().into_curve_strings_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
 }
 
 #[test]
