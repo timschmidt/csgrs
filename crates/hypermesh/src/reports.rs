@@ -6794,15 +6794,13 @@ mod tests {
     fn boolean_result_freshness_classifies_local_source_and_operation_drift() {
         let left = report_test_tetra([0, 0, 0]);
         let right = report_test_tetra([3, 0, 0]);
-        let result = materialize_for_test(
-            &left,
-            &right,
-            ExactBooleanRequest::with_boundary_policy(
-                ExactBooleanOperation::Union,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
-            ),
+        let request = ExactBooleanRequest::with_boundary_policy(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
         );
+        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+        let result = workspace.materialize_ref(request).unwrap();
 
         assert_eq!(
             result.freshness_against_sources(&left, &right),
