@@ -994,16 +994,6 @@ pub struct ExactCurveArrangementReport2 {
     output_cache: Option<ExactCurveArrangementOutputCache2>,
     summary_cache: ExactCurveArrangementEvaluationSummaryCache2,
     source_segment_aabbs: Vec<Option<Aabb2>>,
-    endpoint_graph_predicate_path: Option<RegionLineSegmentEndpointGraphPredicatePath2>,
-    endpoint_graph_endpoint_count: Option<usize>,
-    endpoint_graph_structural_bucket_count: Option<usize>,
-    endpoint_graph_structural_singleton_bucket_count: Option<usize>,
-    endpoint_graph_max_structural_bucket_size: Option<usize>,
-    endpoint_graph_dangling_endpoint_count: Option<usize>,
-    endpoint_graph_branch_endpoint_count: Option<usize>,
-    endpoint_graph_blocker_arranged_segment_index: Option<usize>,
-    endpoint_graph_blocker_endpoint: Option<RegionLineSegmentArrangedEndpoint2>,
-    endpoint_graph_blocker_point: Option<Point2>,
     ring_assembly_predicate_path: Option<RegionLineSegmentRingAssemblyPredicatePath2>,
     attempted_endpoint_connection_count: Option<usize>,
     exact_endpoint_connection_count: Option<usize>,
@@ -9586,21 +9576,6 @@ impl ExactCurveArrangementReport2 {
             output_cache: evaluation.output_cache().cloned(),
             summary_cache: evaluation.summary_cache().clone(),
             source_segment_aabbs: evaluation.source_segment_aabbs().to_vec(),
-            endpoint_graph_predicate_path: evaluation.endpoint_graph_predicate_path(),
-            endpoint_graph_endpoint_count: evaluation.endpoint_graph_endpoint_count(),
-            endpoint_graph_structural_bucket_count: evaluation
-                .endpoint_graph_structural_bucket_count(),
-            endpoint_graph_structural_singleton_bucket_count: evaluation
-                .endpoint_graph_structural_singleton_bucket_count(),
-            endpoint_graph_max_structural_bucket_size: evaluation
-                .endpoint_graph_max_structural_bucket_size(),
-            endpoint_graph_dangling_endpoint_count: evaluation
-                .endpoint_graph_dangling_endpoint_count(),
-            endpoint_graph_branch_endpoint_count: evaluation.endpoint_graph_branch_endpoint_count(),
-            endpoint_graph_blocker_arranged_segment_index: evaluation
-                .endpoint_graph_blocker_arranged_segment_index(),
-            endpoint_graph_blocker_endpoint: evaluation.endpoint_graph_blocker_endpoint(),
-            endpoint_graph_blocker_point: evaluation.endpoint_graph_blocker_point().cloned(),
             ring_assembly_predicate_path: evaluation.ring_assembly_predicate_path(),
             attempted_endpoint_connection_count: evaluation.attempted_endpoint_connection_count(),
             exact_endpoint_connection_count: evaluation.exact_endpoint_connection_count(),
@@ -9691,37 +9666,27 @@ impl ExactCurveArrangementReport2 {
             .map(ExactCurveArrangementSplitBlockerCache2::second_source_end_point)
             .cloned();
         let endpoint_graph_cache = self.endpoint_graph_cache.as_ref();
-        let endpoint_graph_predicate_path = endpoint_graph_cache
-            .map(ExactCurveArrangementEndpointGraphCache2::predicate_path)
-            .or(self.endpoint_graph_predicate_path);
-        let endpoint_graph_endpoint_count = endpoint_graph_cache
-            .map(ExactCurveArrangementEndpointGraphCache2::endpoint_count)
-            .or(self.endpoint_graph_endpoint_count);
+        let endpoint_graph_predicate_path =
+            endpoint_graph_cache.map(ExactCurveArrangementEndpointGraphCache2::predicate_path);
+        let endpoint_graph_endpoint_count =
+            endpoint_graph_cache.map(ExactCurveArrangementEndpointGraphCache2::endpoint_count);
         let endpoint_graph_structural_bucket_count = endpoint_graph_cache
-            .map(ExactCurveArrangementEndpointGraphCache2::structural_bucket_count)
-            .or(self.endpoint_graph_structural_bucket_count);
+            .map(ExactCurveArrangementEndpointGraphCache2::structural_bucket_count);
         let endpoint_graph_structural_singleton_bucket_count = endpoint_graph_cache
-            .map(ExactCurveArrangementEndpointGraphCache2::structural_singleton_bucket_count)
-            .or(self.endpoint_graph_structural_singleton_bucket_count);
+            .map(ExactCurveArrangementEndpointGraphCache2::structural_singleton_bucket_count);
         let endpoint_graph_max_structural_bucket_size = endpoint_graph_cache
-            .map(ExactCurveArrangementEndpointGraphCache2::max_structural_bucket_size)
-            .or(self.endpoint_graph_max_structural_bucket_size);
+            .map(ExactCurveArrangementEndpointGraphCache2::max_structural_bucket_size);
         let endpoint_graph_dangling_endpoint_count = endpoint_graph_cache
-            .map(ExactCurveArrangementEndpointGraphCache2::dangling_endpoint_count)
-            .or(self.endpoint_graph_dangling_endpoint_count);
+            .map(ExactCurveArrangementEndpointGraphCache2::dangling_endpoint_count);
         let endpoint_graph_branch_endpoint_count = endpoint_graph_cache
-            .map(ExactCurveArrangementEndpointGraphCache2::branch_endpoint_count)
-            .or(self.endpoint_graph_branch_endpoint_count);
+            .map(ExactCurveArrangementEndpointGraphCache2::branch_endpoint_count);
         let endpoint_graph_blocker_arranged_segment_index = endpoint_graph_cache
-            .and_then(ExactCurveArrangementEndpointGraphCache2::blocker_arranged_segment_index)
-            .or(self.endpoint_graph_blocker_arranged_segment_index);
+            .and_then(ExactCurveArrangementEndpointGraphCache2::blocker_arranged_segment_index);
         let endpoint_graph_blocker_endpoint = endpoint_graph_cache
-            .and_then(ExactCurveArrangementEndpointGraphCache2::blocker_endpoint)
-            .or(self.endpoint_graph_blocker_endpoint);
+            .and_then(ExactCurveArrangementEndpointGraphCache2::blocker_endpoint);
         let endpoint_graph_blocker_point = endpoint_graph_cache
             .and_then(ExactCurveArrangementEndpointGraphCache2::blocker_point)
-            .cloned()
-            .or_else(|| self.endpoint_graph_blocker_point.clone());
+            .cloned();
         let ring_cache = self.ring_assembly_cache.as_ref();
         let attempted_endpoint_connection_count = ring_cache
             .map(ExactCurveArrangementRingAssemblyCache2::attempted_endpoint_connection_count)
