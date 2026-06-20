@@ -994,25 +994,6 @@ pub struct ExactCurveArrangementReport2 {
     output_cache: Option<ExactCurveArrangementOutputCache2>,
     summary_cache: ExactCurveArrangementEvaluationSummaryCache2,
     source_segment_aabbs: Vec<Option<Aabb2>>,
-    split_candidate_pair_count: Option<usize>,
-    split_skipped_aabb_pair_count: Option<usize>,
-    split_tested_pair_count: Option<usize>,
-    split_intersection_event_count: Option<usize>,
-    split_point_relation_count: Option<usize>,
-    split_overlap_relation_count: Option<usize>,
-    split_uncertain_relation_count: Option<usize>,
-    split_intersection_points: Option<Vec<Point2>>,
-    split_intersection_reports: Option<Vec<RegionLineSegmentSplitIntersectionReport2>>,
-    split_predicate_path: Option<RegionLineSegmentSplitPredicatePath2>,
-    split_output_segment_count: Option<usize>,
-    split_blocker_first_source_segment_index: Option<usize>,
-    split_blocker_first_source_segment_kind: Option<SegmentKind>,
-    split_blocker_first_source_start_point: Option<Point2>,
-    split_blocker_first_source_end_point: Option<Point2>,
-    split_blocker_second_source_segment_index: Option<usize>,
-    split_blocker_second_source_segment_kind: Option<SegmentKind>,
-    split_blocker_second_source_start_point: Option<Point2>,
-    split_blocker_second_source_end_point: Option<Point2>,
     endpoint_graph_predicate_path: Option<RegionLineSegmentEndpointGraphPredicatePath2>,
     endpoint_graph_endpoint_count: Option<usize>,
     endpoint_graph_structural_bucket_count: Option<usize>,
@@ -9605,37 +9586,6 @@ impl ExactCurveArrangementReport2 {
             output_cache: evaluation.output_cache().cloned(),
             summary_cache: evaluation.summary_cache().clone(),
             source_segment_aabbs: evaluation.source_segment_aabbs().to_vec(),
-            split_candidate_pair_count: evaluation.split_candidate_pair_count(),
-            split_skipped_aabb_pair_count: evaluation.split_skipped_aabb_pair_count(),
-            split_tested_pair_count: evaluation.split_tested_pair_count(),
-            split_intersection_event_count: evaluation.split_intersection_event_count(),
-            split_point_relation_count: evaluation.split_point_relation_count(),
-            split_overlap_relation_count: evaluation.split_overlap_relation_count(),
-            split_uncertain_relation_count: evaluation.split_uncertain_relation_count(),
-            split_intersection_points: evaluation.split_intersection_points().map(<[_]>::to_vec),
-            split_intersection_reports: evaluation.split_intersection_reports().map(<[_]>::to_vec),
-            split_predicate_path: evaluation.split_predicate_path(),
-            split_output_segment_count: evaluation.split_output_segment_count(),
-            split_blocker_first_source_segment_index: evaluation
-                .split_blocker_first_source_segment_index(),
-            split_blocker_first_source_segment_kind: evaluation
-                .split_blocker_first_source_segment_kind(),
-            split_blocker_first_source_start_point: evaluation
-                .split_blocker_first_source_start_point()
-                .cloned(),
-            split_blocker_first_source_end_point: evaluation
-                .split_blocker_first_source_end_point()
-                .cloned(),
-            split_blocker_second_source_segment_index: evaluation
-                .split_blocker_second_source_segment_index(),
-            split_blocker_second_source_segment_kind: evaluation
-                .split_blocker_second_source_segment_kind(),
-            split_blocker_second_source_start_point: evaluation
-                .split_blocker_second_source_start_point()
-                .cloned(),
-            split_blocker_second_source_end_point: evaluation
-                .split_blocker_second_source_end_point()
-                .cloned(),
             endpoint_graph_predicate_path: evaluation.endpoint_graph_predicate_path(),
             endpoint_graph_endpoint_count: evaluation.endpoint_graph_endpoint_count(),
             endpoint_graph_structural_bucket_count: evaluation
@@ -9704,49 +9654,42 @@ impl ExactCurveArrangementReport2 {
     }
 
     fn into_region_line_segment_region_build_report(self) -> RegionLineSegmentRegionBuildReport2 {
-        let split_cache = self.split_cache.as_ref();
-        let split_predicate_path = split_cache
-            .map(ExactCurveArrangementSplitCache2::predicate_path)
-            .unwrap_or(self.split_predicate_path);
-        let split_candidate_pair_count = split_cache
-            .map(ExactCurveArrangementSplitCache2::candidate_pair_count)
-            .or(self.split_candidate_pair_count)
-            .expect("evaluated exact arrangement report missing split candidate pair count");
-        let split_skipped_aabb_pair_count = split_cache
-            .map(ExactCurveArrangementSplitCache2::skipped_aabb_pair_count)
-            .or(self.split_skipped_aabb_pair_count)
-            .expect("evaluated exact arrangement report missing split skipped AABB pair count");
-        let split_tested_pair_count = split_cache
-            .map(ExactCurveArrangementSplitCache2::tested_pair_count)
-            .or(self.split_tested_pair_count)
-            .expect("evaluated exact arrangement report missing split tested pair count");
-        let split_intersection_event_count = split_cache
-            .map(ExactCurveArrangementSplitCache2::intersection_event_count)
-            .or(self.split_intersection_event_count)
-            .expect("evaluated exact arrangement report missing split intersection event count");
-        let split_point_relation_count = split_cache
-            .map(ExactCurveArrangementSplitCache2::point_relation_count)
-            .or(self.split_point_relation_count)
-            .expect("evaluated exact arrangement report missing split point relation count");
-        let split_overlap_relation_count = split_cache
-            .map(ExactCurveArrangementSplitCache2::overlap_relation_count)
-            .or(self.split_overlap_relation_count)
-            .expect("evaluated exact arrangement report missing split overlap relation count");
-        let split_uncertain_relation_count = split_cache
-            .map(ExactCurveArrangementSplitCache2::uncertain_relation_count)
-            .or(self.split_uncertain_relation_count)
-            .expect("evaluated exact arrangement report missing split uncertain relation count");
-        let split_intersection_points = split_cache
-            .map(|cache| cache.intersection_points().to_vec())
-            .or_else(|| self.split_intersection_points.clone())
-            .expect("evaluated exact arrangement report missing split intersection points");
-        let split_intersection_reports = split_cache
-            .map(|cache| cache.intersection_reports().to_vec())
-            .or_else(|| self.split_intersection_reports.clone())
-            .expect("evaluated exact arrangement report missing split intersection reports");
-        let split_output_segment_count = split_cache
-            .and_then(ExactCurveArrangementSplitCache2::output_segment_count)
-            .or(self.split_output_segment_count);
+        let split_cache = self
+            .split_cache
+            .as_ref()
+            .expect("evaluated exact arrangement report missing retained split cache");
+        let split_predicate_path = split_cache.predicate_path();
+        let split_candidate_pair_count = split_cache.candidate_pair_count();
+        let split_skipped_aabb_pair_count = split_cache.skipped_aabb_pair_count();
+        let split_tested_pair_count = split_cache.tested_pair_count();
+        let split_intersection_event_count = split_cache.intersection_event_count();
+        let split_point_relation_count = split_cache.point_relation_count();
+        let split_overlap_relation_count = split_cache.overlap_relation_count();
+        let split_uncertain_relation_count = split_cache.uncertain_relation_count();
+        let split_intersection_points = split_cache.intersection_points().to_vec();
+        let split_intersection_reports = split_cache.intersection_reports().to_vec();
+        let split_output_segment_count = split_cache.output_segment_count();
+        let split_blocker_cache = split_cache.blocker_cache();
+        let split_blocker_first_source_segment_index = split_blocker_cache
+            .map(ExactCurveArrangementSplitBlockerCache2::first_source_segment_index);
+        let split_blocker_first_source_segment_kind = split_blocker_cache
+            .map(ExactCurveArrangementSplitBlockerCache2::first_source_segment_kind);
+        let split_blocker_first_source_start_point = split_blocker_cache
+            .map(ExactCurveArrangementSplitBlockerCache2::first_source_start_point)
+            .cloned();
+        let split_blocker_first_source_end_point = split_blocker_cache
+            .map(ExactCurveArrangementSplitBlockerCache2::first_source_end_point)
+            .cloned();
+        let split_blocker_second_source_segment_index = split_blocker_cache
+            .map(ExactCurveArrangementSplitBlockerCache2::second_source_segment_index);
+        let split_blocker_second_source_segment_kind = split_blocker_cache
+            .map(ExactCurveArrangementSplitBlockerCache2::second_source_segment_kind);
+        let split_blocker_second_source_start_point = split_blocker_cache
+            .map(ExactCurveArrangementSplitBlockerCache2::second_source_start_point)
+            .cloned();
+        let split_blocker_second_source_end_point = split_blocker_cache
+            .map(ExactCurveArrangementSplitBlockerCache2::second_source_end_point)
+            .cloned();
         let endpoint_graph_cache = self.endpoint_graph_cache.as_ref();
         let endpoint_graph_predicate_path = endpoint_graph_cache
             .map(ExactCurveArrangementEndpointGraphCache2::predicate_path)
@@ -9861,15 +9804,14 @@ impl ExactCurveArrangementReport2 {
             split_intersection_points,
             split_intersection_reports,
             split_output_segment_count,
-            split_blocker_first_source_segment_index: self.split_blocker_first_source_segment_index,
-            split_blocker_first_source_segment_kind: self.split_blocker_first_source_segment_kind,
-            split_blocker_first_source_start_point: self.split_blocker_first_source_start_point,
-            split_blocker_first_source_end_point: self.split_blocker_first_source_end_point,
-            split_blocker_second_source_segment_index: self
-                .split_blocker_second_source_segment_index,
-            split_blocker_second_source_segment_kind: self.split_blocker_second_source_segment_kind,
-            split_blocker_second_source_start_point: self.split_blocker_second_source_start_point,
-            split_blocker_second_source_end_point: self.split_blocker_second_source_end_point,
+            split_blocker_first_source_segment_index,
+            split_blocker_first_source_segment_kind,
+            split_blocker_first_source_start_point,
+            split_blocker_first_source_end_point,
+            split_blocker_second_source_segment_index,
+            split_blocker_second_source_segment_kind,
+            split_blocker_second_source_start_point,
+            split_blocker_second_source_end_point,
             endpoint_graph_endpoint_count,
             endpoint_graph_structural_bucket_count,
             endpoint_graph_structural_singleton_bucket_count,
