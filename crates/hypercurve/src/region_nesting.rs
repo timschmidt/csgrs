@@ -6266,6 +6266,10 @@ impl ExactCurveArrangementAttempt2 {
 }
 
 impl ExactCurveArrangementResult2 {
+    const fn compatibility_region_build_result(&self) -> &RegionLineSegmentRegionBuildResult2 {
+        &self.compatibility_result
+    }
+
     fn into_compatibility_region_build_result(self) -> RegionLineSegmentRegionBuildResult2 {
         self.compatibility_result
     }
@@ -7157,12 +7161,12 @@ impl ExactCurveArrangementResult2 {
         note = "use ExactCurveArrangementResult2 retained accessors, or arrangement_report() when a derived compatibility report is required"
     )]
     pub const fn region_build_result(&self) -> &RegionLineSegmentRegionBuildResult2 {
-        &self.compatibility_result
+        self.compatibility_region_build_result()
     }
 
     /// Returns the materialized region, if the arrangement succeeded.
     pub const fn region(&self) -> Option<&Region2> {
-        self.compatibility_result.region()
+        self.compatibility_region_build_result().region()
     }
 
     /// Returns the materialized region as the canonical convenience classification.
@@ -7186,7 +7190,7 @@ impl ExactCurveArrangementResult2 {
         note = "use ExactCurveArrangementResult2 retained accessors, or arrangement_report() when a derived compatibility report is required"
     )]
     pub const fn report(&self) -> &RegionLineSegmentRegionBuildReport2 {
-        self.compatibility_result.report()
+        self.compatibility_region_build_result().report()
     }
 
     /// Consumes this result and returns the underlying legacy region build result.
