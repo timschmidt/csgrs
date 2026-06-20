@@ -255,6 +255,15 @@ let report = result.arrangement_report();
 assert_eq!(report.summary_cache(), result.summary_cache());
 ```
 
+For convenience callers that want a region classification plus canonical retained
+evidence without managing the request object directly, use
+`Region2::from_unordered_line_segments_with_arrangement_report`,
+`Region2::from_unordered_line_segments_borrowed_with_arrangement_report`,
+`Region2::from_unordered_segments_with_arrangement_report`, or
+`Region2::from_unordered_segments_borrowed_with_arrangement_report`. These
+return `ExactCurveArrangementReport2`; the older `*_with_report` constructors
+remain only for legacy-shaped compatibility reports.
+
 ## Development
 
 Useful local checks:
