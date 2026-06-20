@@ -7479,6 +7479,11 @@ impl ExactCurveArrangementEvaluation2 {
         }
     }
 
+    /// Returns a legacy-shaped region build report projected from retained caches.
+    pub fn derived_region_build_report(&self) -> RegionLineSegmentRegionBuildReport2 {
+        retained_arrangement_region_build_report(&self.workspace, &self.summary_cache)
+    }
+
     /// Consumes this evaluation and returns the retained workspace.
     pub fn into_workspace(self) -> ExactCurveWorkspace2 {
         self.workspace
@@ -7586,7 +7591,7 @@ impl ExactCurveArrangementAttempt2 {
         let evaluation = ExactCurveArrangementEvaluation2::new(workspace);
         let derived_compatibility_projection = RegionLineSegmentRegionBuildResult2 {
             region: region.clone(),
-            report: evaluation.arrangement_report().into_region_build_report(),
+            report: evaluation.derived_region_build_report(),
         };
         Ok(ExactCurveArrangementResult2 {
             evaluation,
@@ -7643,7 +7648,7 @@ impl ExactCurveArrangementResult2 {
     fn derive_region_build_report_from_evaluation(
         evaluation: &ExactCurveArrangementEvaluation2,
     ) -> RegionLineSegmentRegionBuildReport2 {
-        evaluation.arrangement_report().into_region_build_report()
+        evaluation.derived_region_build_report()
     }
 
     /// Returns the retained evaluation record.
@@ -9584,6 +9589,173 @@ impl RegionLineSegmentSplitIntersectionReport2 {
     }
 }
 
+fn retained_arrangement_region_build_report(
+    workspace: &ExactCurveWorkspace2,
+    summary_cache: &ExactCurveArrangementEvaluationSummaryCache2,
+) -> RegionLineSegmentRegionBuildReport2 {
+    let split_cache = workspace
+        .split_cache()
+        .expect("evaluated exact arrangement report missing retained split cache");
+    let split_predicate_path = split_cache.predicate_path();
+    let split_candidate_pair_count = split_cache.candidate_pair_count();
+    let split_skipped_aabb_pair_count = split_cache.skipped_aabb_pair_count();
+    let split_tested_pair_count = split_cache.tested_pair_count();
+    let split_intersection_event_count = split_cache.intersection_event_count();
+    let split_point_relation_count = split_cache.point_relation_count();
+    let split_overlap_relation_count = split_cache.overlap_relation_count();
+    let split_uncertain_relation_count = split_cache.uncertain_relation_count();
+    let split_intersection_points = split_cache.intersection_points().to_vec();
+    let split_intersection_reports = split_cache.intersection_reports().to_vec();
+    let split_output_segment_count = split_cache.output_segment_count();
+    let split_blocker_cache = split_cache.blocker_cache();
+    let split_blocker_first_source_segment_index = split_blocker_cache
+        .map(ExactCurveArrangementSplitBlockerCache2::first_source_segment_index);
+    let split_blocker_first_source_segment_kind =
+        split_blocker_cache.map(ExactCurveArrangementSplitBlockerCache2::first_source_segment_kind);
+    let split_blocker_first_source_start_point = split_blocker_cache
+        .map(ExactCurveArrangementSplitBlockerCache2::first_source_start_point)
+        .cloned();
+    let split_blocker_first_source_end_point = split_blocker_cache
+        .map(ExactCurveArrangementSplitBlockerCache2::first_source_end_point)
+        .cloned();
+    let split_blocker_second_source_segment_index = split_blocker_cache
+        .map(ExactCurveArrangementSplitBlockerCache2::second_source_segment_index);
+    let split_blocker_second_source_segment_kind = split_blocker_cache
+        .map(ExactCurveArrangementSplitBlockerCache2::second_source_segment_kind);
+    let split_blocker_second_source_start_point = split_blocker_cache
+        .map(ExactCurveArrangementSplitBlockerCache2::second_source_start_point)
+        .cloned();
+    let split_blocker_second_source_end_point = split_blocker_cache
+        .map(ExactCurveArrangementSplitBlockerCache2::second_source_end_point)
+        .cloned();
+    let endpoint_graph_cache = workspace.endpoint_graph_cache();
+    let endpoint_graph_predicate_path =
+        endpoint_graph_cache.map(ExactCurveArrangementEndpointGraphCache2::predicate_path);
+    let endpoint_graph_endpoint_count =
+        endpoint_graph_cache.map(ExactCurveArrangementEndpointGraphCache2::endpoint_count);
+    let endpoint_graph_structural_bucket_count =
+        endpoint_graph_cache.map(ExactCurveArrangementEndpointGraphCache2::structural_bucket_count);
+    let endpoint_graph_structural_singleton_bucket_count = endpoint_graph_cache
+        .map(ExactCurveArrangementEndpointGraphCache2::structural_singleton_bucket_count);
+    let endpoint_graph_max_structural_bucket_size = endpoint_graph_cache
+        .map(ExactCurveArrangementEndpointGraphCache2::max_structural_bucket_size);
+    let endpoint_graph_dangling_endpoint_count =
+        endpoint_graph_cache.map(ExactCurveArrangementEndpointGraphCache2::dangling_endpoint_count);
+    let endpoint_graph_branch_endpoint_count =
+        endpoint_graph_cache.map(ExactCurveArrangementEndpointGraphCache2::branch_endpoint_count);
+    let endpoint_graph_blocker_arranged_segment_index = endpoint_graph_cache
+        .and_then(ExactCurveArrangementEndpointGraphCache2::blocker_arranged_segment_index);
+    let endpoint_graph_blocker_endpoint =
+        endpoint_graph_cache.and_then(ExactCurveArrangementEndpointGraphCache2::blocker_endpoint);
+    let endpoint_graph_blocker_point = endpoint_graph_cache
+        .and_then(ExactCurveArrangementEndpointGraphCache2::blocker_point)
+        .cloned();
+    let ring_cache = workspace.ring_assembly_cache();
+    let attempted_endpoint_connection_count = ring_cache
+        .map(ExactCurveArrangementRingAssemblyCache2::attempted_endpoint_connection_count)
+        .unwrap_or(0);
+    let exact_endpoint_connection_count = ring_cache
+        .map(ExactCurveArrangementRingAssemblyCache2::exact_endpoint_connection_count)
+        .unwrap_or(0);
+    let disconnected_endpoint_connection_count = ring_cache
+        .map(ExactCurveArrangementRingAssemblyCache2::disconnected_endpoint_connection_count)
+        .unwrap_or(0);
+    let unresolved_endpoint_connection_count = ring_cache
+        .map(ExactCurveArrangementRingAssemblyCache2::unresolved_endpoint_connection_count)
+        .unwrap_or(0);
+    let reversed_source_segment_count = ring_cache
+        .map(ExactCurveArrangementRingAssemblyCache2::reversed_source_segment_count)
+        .unwrap_or(0);
+    let output_ring_count =
+        ring_cache.and_then(ExactCurveArrangementRingAssemblyCache2::output_ring_count);
+    let output_boundary_segment_count =
+        ring_cache.and_then(ExactCurveArrangementRingAssemblyCache2::output_boundary_segment_count);
+    let output_boundary_segment_kind_counts = ring_cache
+        .and_then(ExactCurveArrangementRingAssemblyCache2::output_boundary_segment_kind_counts);
+    let arranged_fragment_cache =
+        ring_cache.map(ExactCurveArrangementRingAssemblyCache2::arranged_fragment_cache);
+    let arranged_segment_count = arranged_fragment_cache
+        .map(ExactCurveArrangementArrangedFragmentCache2::arranged_fragment_count);
+    let arranged_segment_kind_counts = arranged_fragment_cache
+        .map(ExactCurveArrangementArrangedFragmentCache2::arranged_segment_kind_counts);
+    let arranged_source_reports = ring_cache
+        .map(|cache| cache.arranged_source_reports().to_vec())
+        .unwrap_or_default();
+    let source_reports = ring_cache
+        .map(|cache| cache.source_reports().to_vec())
+        .unwrap_or_default();
+    let ring_assembly_predicate_path =
+        ring_cache.map(ExactCurveArrangementRingAssemblyCache2::predicate_path);
+    let output_cache = workspace.output_cache();
+    let stage = output_cache
+        .map(ExactCurveArrangementOutputCache2::stage)
+        .or_else(|| summary_cache.stage())
+        .expect("evaluated exact arrangement report missing final stage");
+    let status = output_cache
+        .map(ExactCurveArrangementOutputCache2::status)
+        .or_else(|| summary_cache.status())
+        .expect("evaluated exact arrangement report missing final status");
+    let blocker = output_cache
+        .and_then(ExactCurveArrangementOutputCache2::blocker)
+        .or_else(|| summary_cache.blocker());
+    let boundary_build_report = output_cache
+        .and_then(ExactCurveArrangementOutputCache2::boundary_build_report)
+        .cloned();
+
+    RegionLineSegmentRegionBuildReport2 {
+        stage,
+        source_segment_count: workspace.source_segment_cache().source_segment_count(),
+        source_segment_kind_counts: workspace
+            .source_segment_cache()
+            .source_segment_kind_counts(),
+        arranged_segment_count,
+        arranged_segment_kind_counts,
+        split_predicate_path,
+        endpoint_graph_predicate_path,
+        ring_assembly_predicate_path,
+        split_candidate_pair_count,
+        split_skipped_aabb_pair_count,
+        split_tested_pair_count,
+        split_intersection_event_count,
+        split_point_relation_count,
+        split_overlap_relation_count,
+        split_uncertain_relation_count,
+        split_intersection_points,
+        split_intersection_reports,
+        split_output_segment_count,
+        split_blocker_first_source_segment_index,
+        split_blocker_first_source_segment_kind,
+        split_blocker_first_source_start_point,
+        split_blocker_first_source_end_point,
+        split_blocker_second_source_segment_index,
+        split_blocker_second_source_segment_kind,
+        split_blocker_second_source_start_point,
+        split_blocker_second_source_end_point,
+        endpoint_graph_endpoint_count,
+        endpoint_graph_structural_bucket_count,
+        endpoint_graph_structural_singleton_bucket_count,
+        endpoint_graph_max_structural_bucket_size,
+        endpoint_graph_dangling_endpoint_count,
+        endpoint_graph_branch_endpoint_count,
+        endpoint_graph_blocker_arranged_segment_index,
+        endpoint_graph_blocker_endpoint,
+        endpoint_graph_blocker_point,
+        attempted_endpoint_connection_count,
+        exact_endpoint_connection_count,
+        disconnected_endpoint_connection_count,
+        unresolved_endpoint_connection_count,
+        reversed_source_segment_count,
+        output_ring_count,
+        output_boundary_segment_count,
+        output_boundary_segment_kind_counts,
+        arranged_source_reports,
+        source_reports,
+        boundary_build_report,
+        status,
+        blocker,
+    }
+}
+
 impl ExactCurveArrangementReport2 {
     fn from_evaluation(evaluation: &ExactCurveArrangementEvaluation2) -> Self {
         Self {
@@ -9592,170 +9764,20 @@ impl ExactCurveArrangementReport2 {
         }
     }
 
+    /// Returns a legacy-shaped region build report projected from retained caches.
+    ///
+    /// The returned report is projected from retained request, workspace, split,
+    /// ring, and output caches. It does not rerun topology.
+    pub fn region_build_report(&self) -> RegionLineSegmentRegionBuildReport2 {
+        retained_arrangement_region_build_report(&self.workspace, &self.summary_cache)
+    }
+
     /// Consumes this retained arrangement report and returns a legacy-shaped region build report.
     ///
     /// The returned report is projected from retained request, workspace, split,
     /// ring, and output caches. It does not rerun topology.
     pub fn into_region_build_report(self) -> RegionLineSegmentRegionBuildReport2 {
-        let split_cache = self
-            .split_cache()
-            .expect("evaluated exact arrangement report missing retained split cache");
-        let split_predicate_path = split_cache.predicate_path();
-        let split_candidate_pair_count = split_cache.candidate_pair_count();
-        let split_skipped_aabb_pair_count = split_cache.skipped_aabb_pair_count();
-        let split_tested_pair_count = split_cache.tested_pair_count();
-        let split_intersection_event_count = split_cache.intersection_event_count();
-        let split_point_relation_count = split_cache.point_relation_count();
-        let split_overlap_relation_count = split_cache.overlap_relation_count();
-        let split_uncertain_relation_count = split_cache.uncertain_relation_count();
-        let split_intersection_points = split_cache.intersection_points().to_vec();
-        let split_intersection_reports = split_cache.intersection_reports().to_vec();
-        let split_output_segment_count = split_cache.output_segment_count();
-        let split_blocker_cache = split_cache.blocker_cache();
-        let split_blocker_first_source_segment_index = split_blocker_cache
-            .map(ExactCurveArrangementSplitBlockerCache2::first_source_segment_index);
-        let split_blocker_first_source_segment_kind = split_blocker_cache
-            .map(ExactCurveArrangementSplitBlockerCache2::first_source_segment_kind);
-        let split_blocker_first_source_start_point = split_blocker_cache
-            .map(ExactCurveArrangementSplitBlockerCache2::first_source_start_point)
-            .cloned();
-        let split_blocker_first_source_end_point = split_blocker_cache
-            .map(ExactCurveArrangementSplitBlockerCache2::first_source_end_point)
-            .cloned();
-        let split_blocker_second_source_segment_index = split_blocker_cache
-            .map(ExactCurveArrangementSplitBlockerCache2::second_source_segment_index);
-        let split_blocker_second_source_segment_kind = split_blocker_cache
-            .map(ExactCurveArrangementSplitBlockerCache2::second_source_segment_kind);
-        let split_blocker_second_source_start_point = split_blocker_cache
-            .map(ExactCurveArrangementSplitBlockerCache2::second_source_start_point)
-            .cloned();
-        let split_blocker_second_source_end_point = split_blocker_cache
-            .map(ExactCurveArrangementSplitBlockerCache2::second_source_end_point)
-            .cloned();
-        let endpoint_graph_cache = self.endpoint_graph_cache();
-        let endpoint_graph_predicate_path =
-            endpoint_graph_cache.map(ExactCurveArrangementEndpointGraphCache2::predicate_path);
-        let endpoint_graph_endpoint_count =
-            endpoint_graph_cache.map(ExactCurveArrangementEndpointGraphCache2::endpoint_count);
-        let endpoint_graph_structural_bucket_count = endpoint_graph_cache
-            .map(ExactCurveArrangementEndpointGraphCache2::structural_bucket_count);
-        let endpoint_graph_structural_singleton_bucket_count = endpoint_graph_cache
-            .map(ExactCurveArrangementEndpointGraphCache2::structural_singleton_bucket_count);
-        let endpoint_graph_max_structural_bucket_size = endpoint_graph_cache
-            .map(ExactCurveArrangementEndpointGraphCache2::max_structural_bucket_size);
-        let endpoint_graph_dangling_endpoint_count = endpoint_graph_cache
-            .map(ExactCurveArrangementEndpointGraphCache2::dangling_endpoint_count);
-        let endpoint_graph_branch_endpoint_count = endpoint_graph_cache
-            .map(ExactCurveArrangementEndpointGraphCache2::branch_endpoint_count);
-        let endpoint_graph_blocker_arranged_segment_index = endpoint_graph_cache
-            .and_then(ExactCurveArrangementEndpointGraphCache2::blocker_arranged_segment_index);
-        let endpoint_graph_blocker_endpoint = endpoint_graph_cache
-            .and_then(ExactCurveArrangementEndpointGraphCache2::blocker_endpoint);
-        let endpoint_graph_blocker_point = endpoint_graph_cache
-            .and_then(ExactCurveArrangementEndpointGraphCache2::blocker_point)
-            .cloned();
-        let ring_cache = self.ring_assembly_cache();
-        let attempted_endpoint_connection_count = ring_cache
-            .map(ExactCurveArrangementRingAssemblyCache2::attempted_endpoint_connection_count)
-            .unwrap_or(0);
-        let exact_endpoint_connection_count = ring_cache
-            .map(ExactCurveArrangementRingAssemblyCache2::exact_endpoint_connection_count)
-            .unwrap_or(0);
-        let disconnected_endpoint_connection_count = ring_cache
-            .map(ExactCurveArrangementRingAssemblyCache2::disconnected_endpoint_connection_count)
-            .unwrap_or(0);
-        let unresolved_endpoint_connection_count = ring_cache
-            .map(ExactCurveArrangementRingAssemblyCache2::unresolved_endpoint_connection_count)
-            .unwrap_or(0);
-        let reversed_source_segment_count = ring_cache
-            .map(ExactCurveArrangementRingAssemblyCache2::reversed_source_segment_count)
-            .unwrap_or(0);
-        let output_ring_count =
-            ring_cache.and_then(ExactCurveArrangementRingAssemblyCache2::output_ring_count);
-        let output_boundary_segment_count = ring_cache
-            .and_then(ExactCurveArrangementRingAssemblyCache2::output_boundary_segment_count);
-        let output_boundary_segment_kind_counts = ring_cache
-            .and_then(ExactCurveArrangementRingAssemblyCache2::output_boundary_segment_kind_counts);
-        let arranged_fragment_cache =
-            ring_cache.map(ExactCurveArrangementRingAssemblyCache2::arranged_fragment_cache);
-        let arranged_segment_count = arranged_fragment_cache
-            .map(ExactCurveArrangementArrangedFragmentCache2::arranged_fragment_count);
-        let arranged_segment_kind_counts = arranged_fragment_cache
-            .map(ExactCurveArrangementArrangedFragmentCache2::arranged_segment_kind_counts);
-        let arranged_source_reports = ring_cache
-            .map(|cache| cache.arranged_source_reports().to_vec())
-            .unwrap_or_default();
-        let source_reports = ring_cache
-            .map(|cache| cache.source_reports().to_vec())
-            .unwrap_or_default();
-        let ring_assembly_predicate_path =
-            ring_cache.map(ExactCurveArrangementRingAssemblyCache2::predicate_path);
-        let output_cache = self.output_cache();
-        let stage = output_cache
-            .map(ExactCurveArrangementOutputCache2::stage)
-            .or_else(|| self.summary_cache.stage())
-            .expect("evaluated exact arrangement report missing final stage");
-        let status = output_cache
-            .map(ExactCurveArrangementOutputCache2::status)
-            .or_else(|| self.summary_cache.status())
-            .expect("evaluated exact arrangement report missing final status");
-        let blocker = output_cache
-            .and_then(ExactCurveArrangementOutputCache2::blocker)
-            .or_else(|| self.summary_cache.blocker());
-        let boundary_build_report = output_cache
-            .and_then(ExactCurveArrangementOutputCache2::boundary_build_report)
-            .cloned();
-
-        RegionLineSegmentRegionBuildReport2 {
-            stage,
-            source_segment_count: self.source_segment_cache().source_segment_count(),
-            source_segment_kind_counts: self.source_segment_cache().source_segment_kind_counts(),
-            arranged_segment_count,
-            arranged_segment_kind_counts,
-            split_predicate_path,
-            endpoint_graph_predicate_path,
-            ring_assembly_predicate_path,
-            split_candidate_pair_count,
-            split_skipped_aabb_pair_count,
-            split_tested_pair_count,
-            split_intersection_event_count,
-            split_point_relation_count,
-            split_overlap_relation_count,
-            split_uncertain_relation_count,
-            split_intersection_points,
-            split_intersection_reports,
-            split_output_segment_count,
-            split_blocker_first_source_segment_index,
-            split_blocker_first_source_segment_kind,
-            split_blocker_first_source_start_point,
-            split_blocker_first_source_end_point,
-            split_blocker_second_source_segment_index,
-            split_blocker_second_source_segment_kind,
-            split_blocker_second_source_start_point,
-            split_blocker_second_source_end_point,
-            endpoint_graph_endpoint_count,
-            endpoint_graph_structural_bucket_count,
-            endpoint_graph_structural_singleton_bucket_count,
-            endpoint_graph_max_structural_bucket_size,
-            endpoint_graph_dangling_endpoint_count,
-            endpoint_graph_branch_endpoint_count,
-            endpoint_graph_blocker_arranged_segment_index,
-            endpoint_graph_blocker_endpoint,
-            endpoint_graph_blocker_point,
-            attempted_endpoint_connection_count,
-            exact_endpoint_connection_count,
-            disconnected_endpoint_connection_count,
-            unresolved_endpoint_connection_count,
-            reversed_source_segment_count,
-            output_ring_count,
-            output_boundary_segment_count,
-            output_boundary_segment_kind_counts,
-            arranged_source_reports,
-            source_reports,
-            boundary_build_report,
-            status,
-            blocker,
-        }
+        retained_arrangement_region_build_report(&self.workspace, &self.summary_cache)
     }
 
     /// Returns the retained workspace projected by this report.

@@ -3962,6 +3962,10 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         &derived_region_build_report
     );
     assert_eq!(
+        result.evaluation().derived_region_build_report(),
+        derived_region_build_report
+    );
+    assert_eq!(
         result.arrangement_report().into_region_build_report(),
         derived_region_build_report
     );
@@ -3971,6 +3975,10 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         assert_eq!(result.report(), &derived_region_build_report);
     }
     let arrangement_report = result.arrangement_report();
+    assert_eq!(
+        arrangement_report.region_build_report(),
+        derived_region_build_report
+    );
     assert_eq!(arrangement_report.workspace(), result.workspace());
     let (owned_report_region, owned_report) = result.clone().into_region_with_arrangement_report();
     assert_eq!(owned_report_region.as_ref(), result.region());
