@@ -2666,6 +2666,22 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns retained arranged fragment endpoint records.
+    pub const fn arranged_endpoint_point_fragment_ref_count(&self) -> Option<usize> {
+        match self.arranged_endpoint_point_cache() {
+            Some(point_cache) => Some(point_cache.arranged_fragment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained arranged endpoint point references.
+    pub const fn arranged_endpoint_point_ref_count(&self) -> Option<usize> {
+        match self.arranged_endpoint_point_cache() {
+            Some(point_cache) => Some(point_cache.endpoint_ref_count()),
+            None => None,
+        }
+    }
+
     /// Returns structural arranged endpoints grouped by retained degree.
     pub const fn arranged_endpoint_degree_bucket_cache(
         &self,
@@ -7369,6 +7385,17 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().arranged_endpoint_point_cache()
     }
 
+    /// Returns retained arranged fragment endpoint records.
+    pub const fn arranged_endpoint_point_fragment_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_endpoint_point_fragment_ref_count()
+    }
+
+    /// Returns retained arranged endpoint point references.
+    pub const fn arranged_endpoint_point_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_point_ref_count()
+    }
+
     /// Returns structural arranged endpoints grouped by retained degree.
     pub const fn arranged_endpoint_degree_bucket_cache(
         &self,
@@ -8431,6 +8458,17 @@ impl ExactCurveArrangementResult2 {
             Some(endpoint_cache) => Some(endpoint_cache.endpoint_point_cache()),
             None => None,
         }
+    }
+
+    /// Returns retained arranged fragment endpoint records.
+    pub const fn arranged_endpoint_point_fragment_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_endpoint_point_fragment_ref_count()
+    }
+
+    /// Returns retained arranged endpoint point references.
+    pub const fn arranged_endpoint_point_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_point_ref_count()
     }
 
     /// Returns structural arranged endpoints grouped by retained degree.
@@ -10441,6 +10479,17 @@ impl ExactCurveArrangementReport2 {
             Some(endpoint_cache) => Some(endpoint_cache.endpoint_point_cache()),
             None => None,
         }
+    }
+
+    /// Returns retained arranged fragment endpoint records.
+    pub const fn arranged_endpoint_point_fragment_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_endpoint_point_fragment_ref_count()
+    }
+
+    /// Returns retained arranged endpoint point references.
+    pub const fn arranged_endpoint_point_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_point_ref_count()
     }
 
     /// Returns structural arranged endpoints grouped by retained degree.

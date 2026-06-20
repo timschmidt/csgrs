@@ -2229,6 +2229,14 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     let arranged_endpoint_point_cache = result.arranged_endpoint_point_cache().unwrap();
     assert_eq!(
+        result.arranged_endpoint_point_fragment_ref_count(),
+        Some(arranged_endpoint_point_cache.arranged_fragment_ref_count())
+    );
+    assert_eq!(
+        result.arranged_endpoint_point_ref_count(),
+        Some(arranged_endpoint_point_cache.endpoint_ref_count())
+    );
+    assert_eq!(
         arranged_endpoint_point_cache.arranged_fragment_ref_count(),
         result.arranged_source_reports().unwrap().len()
     );
@@ -3080,6 +3088,14 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(
         arrangement_report.arranged_endpoint_point_cache(),
         result.arranged_endpoint_point_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_point_fragment_ref_count(),
+        result.arranged_endpoint_point_fragment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_point_ref_count(),
+        result.arranged_endpoint_point_ref_count()
     );
     assert_eq!(
         arrangement_report.arranged_endpoint_degree_bucket_cache(),
@@ -4007,6 +4023,21 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         result.evaluation().arranged_endpoint_point_cache(),
         result.arranged_endpoint_point_cache()
+    );
+    assert_eq!(result.arranged_endpoint_point_fragment_ref_count(), Some(2));
+    assert_eq!(
+        result.arranged_endpoint_point_ref_count(),
+        result.endpoint_graph_endpoint_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .arranged_endpoint_point_fragment_ref_count(),
+        result.arranged_endpoint_point_fragment_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().arranged_endpoint_point_ref_count(),
+        result.arranged_endpoint_point_ref_count()
     );
     assert_eq!(
         result.evaluation().arranged_endpoint_degree_bucket_cache(),
@@ -5071,6 +5102,14 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         RegionLineSegmentArrangedEndpoint2::End
     );
     let arranged_endpoint_point_cache = result.arranged_endpoint_point_cache().unwrap();
+    assert_eq!(
+        result.arranged_endpoint_point_fragment_ref_count(),
+        Some(arranged_endpoint_point_cache.arranged_fragment_ref_count())
+    );
+    assert_eq!(
+        result.arranged_endpoint_point_ref_count(),
+        Some(arranged_endpoint_point_cache.endpoint_ref_count())
+    );
     assert_eq!(
         arranged_endpoint_point_cache.arranged_fragment_ref_count(),
         result.arranged_source_reports().unwrap().len()
@@ -6427,6 +6466,14 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(
         arrangement_report.arranged_endpoint_point_cache(),
         result.arranged_endpoint_point_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_point_fragment_ref_count(),
+        result.arranged_endpoint_point_fragment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_point_ref_count(),
+        result.arranged_endpoint_point_ref_count()
     );
     assert_eq!(
         arrangement_report.arranged_endpoint_degree_bucket_cache(),
