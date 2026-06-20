@@ -2789,6 +2789,33 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(summary_cache.output_contour_count(), Some(1));
     assert_eq!(summary_cache.output_segment_count(), Some(4));
+    let evaluation = result.evaluation();
+    assert_eq!(evaluation.summary_cache(), summary_cache);
+    assert_eq!(evaluation.evaluated_output(), result.evaluated_output());
+    assert_eq!(
+        evaluation.materialized_region(),
+        result.materialized_region()
+    );
+    assert_eq!(evaluation.stage(), result.stage());
+    assert_eq!(evaluation.status(), result.status());
+    assert_eq!(evaluation.blocker(), result.blocker());
+    assert_eq!(evaluation.output_ring_count(), result.output_ring_count());
+    assert_eq!(
+        evaluation.output_boundary_segment_count(),
+        result.output_boundary_segment_count()
+    );
+    assert_eq!(
+        evaluation.output_boundary_segment_kind_counts(),
+        result.output_boundary_segment_kind_counts()
+    );
+    assert_eq!(
+        evaluation.output_contour_count(),
+        result.output_contour_count()
+    );
+    assert_eq!(
+        evaluation.output_segment_count(),
+        result.output_segment_count()
+    );
     let arrangement_report = result.arrangement_report();
     assert_eq!(arrangement_report.fill_rule(), result.fill_rule());
     assert_eq!(
@@ -5124,6 +5151,33 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(summary_cache.output_boundary_segment_kind_counts(), None);
     assert_eq!(summary_cache.output_contour_count(), None);
     assert_eq!(summary_cache.output_segment_count(), None);
+    let evaluation = result.evaluation();
+    assert_eq!(evaluation.summary_cache(), summary_cache);
+    assert_eq!(evaluation.evaluated_output(), result.evaluated_output());
+    assert_eq!(
+        evaluation.materialized_region(),
+        result.materialized_region()
+    );
+    assert_eq!(evaluation.stage(), result.stage());
+    assert_eq!(evaluation.status(), result.status());
+    assert_eq!(evaluation.blocker(), result.blocker());
+    assert_eq!(evaluation.output_ring_count(), result.output_ring_count());
+    assert_eq!(
+        evaluation.output_boundary_segment_count(),
+        result.output_boundary_segment_count()
+    );
+    assert_eq!(
+        evaluation.output_boundary_segment_kind_counts(),
+        result.output_boundary_segment_kind_counts()
+    );
+    assert_eq!(
+        evaluation.output_contour_count(),
+        result.output_contour_count()
+    );
+    assert_eq!(
+        evaluation.output_segment_count(),
+        result.output_segment_count()
+    );
 
     let arrangement_report = result.arrangement_report();
     assert_eq!(arrangement_report.fill_rule(), result.fill_rule());

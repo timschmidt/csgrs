@@ -6303,6 +6303,56 @@ impl ExactCurveArrangementEvaluation2 {
     pub const fn summary_cache(&self) -> &ExactCurveArrangementEvaluationSummaryCache2 {
         &self.summary_cache
     }
+
+    /// Returns whether final output evaluation facts were retained.
+    pub const fn evaluated_output(&self) -> bool {
+        self.summary_cache().evaluated_output()
+    }
+
+    /// Returns whether the evaluation materialized a region, when evaluated.
+    pub const fn materialized_region(&self) -> Option<bool> {
+        self.summary_cache().materialized_region()
+    }
+
+    /// Returns the final retained build stage, when evaluated.
+    pub const fn stage(&self) -> Option<RegionLineSegmentRegionBuildStage2> {
+        self.summary_cache().stage()
+    }
+
+    /// Returns the final retained topology status, when evaluated.
+    pub const fn status(&self) -> Option<RetainedTopologyStatus> {
+        self.summary_cache().status()
+    }
+
+    /// Returns the final blocker, when the evaluated arrangement blocked.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.summary_cache().blocker()
+    }
+
+    /// Returns output ring count retained by ring assembly, when available.
+    pub const fn output_ring_count(&self) -> Option<usize> {
+        self.summary_cache().output_ring_count()
+    }
+
+    /// Returns output boundary segment count retained by ring assembly, when available.
+    pub const fn output_boundary_segment_count(&self) -> Option<usize> {
+        self.summary_cache().output_boundary_segment_count()
+    }
+
+    /// Returns output boundary primitive-family counts retained by ring assembly, when available.
+    pub const fn output_boundary_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.summary_cache().output_boundary_segment_kind_counts()
+    }
+
+    /// Returns final output contour count retained after boundary role assignment.
+    pub const fn output_contour_count(&self) -> Option<usize> {
+        self.summary_cache().output_contour_count()
+    }
+
+    /// Returns final output boundary segment count retained after boundary role assignment.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.summary_cache().output_segment_count()
+    }
 }
 
 impl ExactCurveArrangementAttempt2 {
