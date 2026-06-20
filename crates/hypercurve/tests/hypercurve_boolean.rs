@@ -695,6 +695,19 @@ fn boolean_boundary_chain_assembly_keeps_disjoint_loops_separate() {
         extracted.loops().is_some(),
         "reported disjoint loop extraction should materialize"
     );
+    assert!(matches!(
+        extracted.loops_classification(),
+        Classification::Decided(loops) if loops.len() == 2
+    ));
+    let extracted_report = extracted.clone().into_report();
+    assert_eq!(&extracted_report, extracted.report());
+    let (owned_loops, owned_extracted_report) = extracted.clone().into_parts();
+    assert_eq!(owned_loops.as_ref(), extracted.loops());
+    assert_eq!(&owned_extracted_report, extracted.report());
+    assert!(matches!(
+        extracted.clone().into_loops_classification(),
+        Classification::Decided(loops) if loops.len() == 2
+    ));
     let loops = extracted.into_loops().unwrap();
     let transferred = loops.into_contours_with_report(FillRule::NonZero);
     assert!(transferred.report().status().is_native_exact());
@@ -717,6 +730,19 @@ fn boolean_boundary_chain_assembly_keeps_disjoint_loops_separate() {
     );
     assert_eq!(transferred.report().output_segments().len(), 8);
     assert_eq!(transferred.report().blocker(), None);
+    assert!(matches!(
+        transferred.contours_classification(),
+        Classification::Decided(contours) if contours.len() == 2
+    ));
+    let transferred_report = transferred.clone().into_report();
+    assert_eq!(&transferred_report, transferred.report());
+    let (owned_contours, owned_transferred_report) = transferred.clone().into_parts();
+    assert_eq!(owned_contours.as_deref(), transferred.contours());
+    assert_eq!(&owned_transferred_report, transferred.report());
+    assert!(matches!(
+        transferred.clone().into_contours_classification(),
+        Classification::Decided(contours) if contours.len() == 2
+    ));
     let contours = transferred.into_contours().unwrap();
     assert_eq!(contours.len(), 2);
     assert!(contours.iter().all(|contour| contour.len() == 4));
@@ -1203,6 +1229,19 @@ fn boundary_chain_assembly_rejects_branch_points() {
         Some(UncertaintyReason::Unsupported)
     );
     assert_eq!(
+        assembled.chains_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+    let assembled_report = assembled.clone().into_report();
+    assert_eq!(&assembled_report, assembled.report());
+    let (owned_chains, owned_assembled_report) = assembled.clone().into_parts();
+    assert_eq!(owned_chains.as_ref(), assembled.chains());
+    assert_eq!(&owned_assembled_report, assembled.report());
+    assert_eq!(
+        assembled.into_chains_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+    assert_eq!(
         fragments.assemble_chains(&policy()),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
@@ -1242,6 +1281,10 @@ fn boundary_loop_extraction_rejects_open_chains() {
     let chains = assembled
         .chains()
         .expect("reported open chain assembly should materialize");
+    assert!(matches!(
+        assembled.chains_classification(),
+        Classification::Decided(chains) if chains.len() == 1
+    ));
     assert_eq!(chains.len(), 1);
     assert_eq!(chains.closed_count(), 0);
     let extracted = chains.closed_loops_with_report();
@@ -1265,6 +1308,14 @@ fn boundary_loop_extraction_rejects_open_chains() {
     assert_eq!(
         extracted.report().blocker(),
         Some(UncertaintyReason::Unsupported)
+    );
+    assert_eq!(
+        extracted.loops_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+    assert_eq!(
+        extracted.into_loops_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
     );
     assert_eq!(
         chains.closed_loops(),

@@ -249,16 +249,8 @@ impl BooleanBoundaryFragmentSet {
     /// (B. R. Vatti, "A generic solution to polygon clipping," Communications
     /// of the ACM 35(7), 56-63, 1992).
     pub fn assemble_chains(&self, policy: &CurvePolicy) -> Classification<BooleanBoundaryChainSet> {
-        let result = self.assemble_chains_with_report(policy);
-        let blocker = result
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        if let Some(chains) = result.into_chains() {
-            Classification::Decided(chains)
-        } else {
-            Classification::Uncertain(blocker)
-        }
+        self.assemble_chains_with_report(policy)
+            .into_chains_classification()
     }
 
     /// Assembles directed boundary fragments and retains traversal evidence.
@@ -464,9 +456,48 @@ impl BooleanBoundaryChainAssemblyResult2 {
         self.chains
     }
 
+    /// Consumes this result and returns retained chain-assembly evidence.
+    pub fn into_report(self) -> BooleanBoundaryChainAssemblyReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns materialized chains with their report.
+    pub fn into_parts(
+        self,
+    ) -> (
+        Option<BooleanBoundaryChainSet>,
+        BooleanBoundaryChainAssemblyReport2,
+    ) {
+        (self.chains, self.report)
+    }
+
     /// Returns retained chain-assembly evidence.
     pub const fn report(&self) -> &BooleanBoundaryChainAssemblyReport2 {
         &self.report
+    }
+
+    /// Returns materialized chains as a classification while retaining this result.
+    pub fn chains_classification(&self) -> Classification<&BooleanBoundaryChainSet> {
+        match self.chains() {
+            Some(chains) => Classification::Decided(chains),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns materialized chains as a classification.
+    pub fn into_chains_classification(self) -> Classification<BooleanBoundaryChainSet> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_chains() {
+            Some(chains) => Classification::Decided(chains),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
@@ -563,16 +594,7 @@ impl BooleanBoundaryChainSet {
     /// separate avoids assigning hole/material roles before the graph is fully
     /// resolved.
     pub fn closed_loops(&self) -> Classification<BooleanBoundaryLoopSet> {
-        let result = self.closed_loops_with_report();
-        let blocker = result
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        if let Some(loops) = result.into_loops() {
-            Classification::Decided(loops)
-        } else {
-            Classification::Uncertain(blocker)
-        }
+        self.closed_loops_with_report().into_loops_classification()
     }
 
     /// Extracts closed chains as boolean boundary loops and retains evidence.
@@ -612,16 +634,8 @@ impl BooleanBoundaryChainSet {
 
     /// Consumes the chain set and extracts closed chains as boundary loops.
     pub fn into_closed_loops(self) -> Classification<BooleanBoundaryLoopSet> {
-        let result = self.into_closed_loops_with_report();
-        let blocker = result
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        if let Some(loops) = result.into_loops() {
-            Classification::Decided(loops)
-        } else {
-            Classification::Uncertain(blocker)
-        }
+        self.into_closed_loops_with_report()
+            .into_loops_classification()
     }
 
     /// Consumes the chain set and extracts closed chains with retained evidence.
@@ -757,9 +771,48 @@ impl BooleanBoundaryLoopExtractionResult2 {
         self.loops
     }
 
+    /// Consumes this result and returns retained loop-extraction evidence.
+    pub fn into_report(self) -> BooleanBoundaryLoopExtractionReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns materialized loops with their report.
+    pub fn into_parts(
+        self,
+    ) -> (
+        Option<BooleanBoundaryLoopSet>,
+        BooleanBoundaryLoopExtractionReport2,
+    ) {
+        (self.loops, self.report)
+    }
+
     /// Returns retained loop-extraction evidence.
     pub const fn report(&self) -> &BooleanBoundaryLoopExtractionReport2 {
         &self.report
+    }
+
+    /// Returns materialized loops as a classification while retaining this result.
+    pub fn loops_classification(&self) -> Classification<&BooleanBoundaryLoopSet> {
+        match self.loops() {
+            Some(loops) => Classification::Decided(loops),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns materialized loops as a classification.
+    pub fn into_loops_classification(self) -> Classification<BooleanBoundaryLoopSet> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_loops() {
+            Some(loops) => Classification::Decided(loops),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
@@ -1223,9 +1276,43 @@ impl BooleanBoundaryContourTransferResult2 {
         self.contours
     }
 
+    /// Consumes this result and returns retained contour-transfer evidence.
+    pub fn into_report(self) -> BooleanBoundaryContourTransferReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns materialized contours with their report.
+    pub fn into_parts(self) -> (Option<Vec<Contour2>>, BooleanBoundaryContourTransferReport2) {
+        (self.contours, self.report)
+    }
+
     /// Returns retained contour-transfer evidence.
     pub const fn report(&self) -> &BooleanBoundaryContourTransferReport2 {
         &self.report
+    }
+
+    /// Returns materialized contours as a classification while retaining this result.
+    pub fn contours_classification(&self) -> Classification<&[Contour2]> {
+        match self.contours() {
+            Some(contours) => Classification::Decided(contours),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns materialized contours as a classification.
+    pub fn into_contours_classification(self) -> Classification<Vec<Contour2>> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_contours() {
+            Some(contours) => Classification::Decided(contours),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
