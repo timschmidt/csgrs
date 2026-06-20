@@ -3565,6 +3565,67 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.evaluation().split_schedule_cache(),
         result.split_schedule_cache()
     );
+    assert_eq!(result.evaluation().split_cache(), result.split_cache());
+    assert_eq!(
+        result.evaluation().split_predicate_path(),
+        result.split_predicate_path()
+    );
+    assert_eq!(
+        result.evaluation().split_candidate_pair_count(),
+        result.split_candidate_pair_count()
+    );
+    assert_eq!(
+        result.evaluation().split_skipped_aabb_pair_count(),
+        result.split_skipped_aabb_pair_count()
+    );
+    assert_eq!(
+        result.evaluation().split_tested_pair_count(),
+        result.split_tested_pair_count()
+    );
+    assert_eq!(
+        result.evaluation().split_intersection_event_count(),
+        result.split_intersection_event_count()
+    );
+    assert_eq!(
+        result.evaluation().split_point_relation_count(),
+        result.split_point_relation_count()
+    );
+    assert_eq!(
+        result.evaluation().split_overlap_relation_count(),
+        result.split_overlap_relation_count()
+    );
+    assert_eq!(
+        result.evaluation().split_uncertain_relation_count(),
+        result.split_uncertain_relation_count()
+    );
+    assert_eq!(
+        result.evaluation().split_intersection_points(),
+        result.split_intersection_points()
+    );
+    assert_eq!(
+        result.evaluation().split_intersection_reports(),
+        result.split_intersection_reports()
+    );
+    assert_eq!(
+        result.evaluation().split_relation_bucket_cache(),
+        result.split_relation_bucket_cache()
+    );
+    assert_eq!(
+        result.evaluation().split_intersection_bucket_cache(),
+        result.split_intersection_bucket_cache()
+    );
+    assert_eq!(
+        result.evaluation().split_intersection_parameter_cache(),
+        result.split_intersection_parameter_cache()
+    );
+    assert_eq!(
+        result.evaluation().split_blocker_cache(),
+        result.split_blocker_cache()
+    );
+    assert_eq!(
+        result.evaluation().split_output_segment_count(),
+        result.split_output_segment_count()
+    );
     assert_eq!(result.evaluation().summary_cache(), result.summary_cache());
     let owned_attempt_request = attempt.clone().into_request();
     assert_eq!(&owned_attempt_request, result.request());
