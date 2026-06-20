@@ -2856,6 +2856,10 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         arrangement_report.ring_assembly_cache(),
         result.ring_assembly_cache()
     );
+    assert_eq!(
+        arrangement_report.arranged_fragment_cache(),
+        result.arranged_fragment_cache()
+    );
     assert_eq!(arrangement_report.output_cache(), result.output_cache());
     assert_eq!(
         arrangement_report.output_ring_bucket_cache(),
@@ -5146,6 +5150,10 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(
         arrangement_report.arranged_fragment_source_range_cache(),
         result.arranged_fragment_source_range_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_cache(),
+        result.arranged_fragment_cache()
     );
     assert_eq!(
         arrangement_report.split_relation_bucket_cache(),

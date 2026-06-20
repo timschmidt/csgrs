@@ -8733,16 +8733,22 @@ impl ExactCurveArrangementReport2 {
         self.arranged_segment_kind_counts
     }
 
+    /// Returns per-arranged-fragment source provenance buckets.
+    pub const fn arranged_fragment_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedFragmentCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.arranged_fragment_cache()),
+            None => None,
+        }
+    }
+
     /// Returns arranged fragments grouped by primitive family.
     pub const fn arranged_fragment_kind_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentKindBucketCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(
-                ring_cache
-                    .arranged_fragment_cache()
-                    .arranged_fragment_kind_bucket_cache(),
-            ),
+        match self.arranged_fragment_cache() {
+            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_kind_bucket_cache()),
             None => None,
         }
     }
@@ -8751,12 +8757,8 @@ impl ExactCurveArrangementReport2 {
     pub const fn arranged_fragment_status_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentStatusBucketCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(
-                ring_cache
-                    .arranged_fragment_cache()
-                    .arranged_fragment_status_bucket_cache(),
-            ),
+        match self.arranged_fragment_cache() {
+            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_status_bucket_cache()),
             None => None,
         }
     }
@@ -8765,12 +8767,8 @@ impl ExactCurveArrangementReport2 {
     pub const fn arranged_fragment_source_range_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentSourceRangeCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(
-                ring_cache
-                    .arranged_fragment_cache()
-                    .arranged_fragment_source_range_cache(),
-            ),
+        match self.arranged_fragment_cache() {
+            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_source_range_cache()),
             None => None,
         }
     }
