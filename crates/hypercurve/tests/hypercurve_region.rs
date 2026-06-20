@@ -955,6 +955,89 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
         &hypercurve::ParamRange::new(s(0), q(1, 2))
     );
     assert_eq!(built.source_report_count(), Some(0));
+
+    let split_cache = built.split_cache().unwrap();
+    assert_eq!(split_cache.intersection_points(), &[p(2, 2)]);
+    assert_eq!(split_cache.intersection_reports(), split_reports);
+    assert_eq!(split_cache.output_segment_count(), Some(4));
+    assert!(split_cache.blocker_cache().is_none());
+    assert_eq!(
+        split_cache.relation_bucket_cache().point_relation_count(),
+        1
+    );
+    assert_eq!(
+        split_cache
+            .intersection_bucket_cache()
+            .intersection_event_count(),
+        1
+    );
+    assert_eq!(
+        split_cache
+            .intersection_parameter_cache()
+            .source_parameter_ref_count(),
+        2
+    );
+
+    let endpoint_graph_cache = built.endpoint_graph_cache().unwrap();
+    assert_eq!(endpoint_graph_cache.endpoint_count(), 8);
+    assert_eq!(endpoint_graph_cache.structural_bucket_count(), 5);
+    assert_eq!(endpoint_graph_cache.structural_singleton_bucket_count(), 4);
+    assert_eq!(endpoint_graph_cache.max_structural_bucket_size(), 4);
+    assert_eq!(endpoint_graph_cache.dangling_endpoint_count(), 4);
+    assert_eq!(endpoint_graph_cache.branch_endpoint_count(), 4);
+    assert_eq!(
+        endpoint_graph_cache.blocker_arranged_segment_index(),
+        Some(0)
+    );
+    assert_eq!(
+        endpoint_graph_cache.blocker_endpoint(),
+        Some(RegionLineSegmentArrangedEndpoint2::Start)
+    );
+    assert_eq!(endpoint_graph_cache.blocker_point(), Some(&p(0, 0)));
+    assert_eq!(
+        endpoint_graph_cache
+            .endpoint_degree_bucket_cache()
+            .dangling_structural_bucket_count(),
+        4
+    );
+    assert_eq!(
+        endpoint_graph_cache
+            .endpoint_degree_bucket_cache()
+            .chain_structural_bucket_count(),
+        0
+    );
+    assert_eq!(
+        endpoint_graph_cache
+            .endpoint_degree_bucket_cache()
+            .branch_structural_bucket_count(),
+        1
+    );
+
+    let ring_cache = built.ring_assembly_cache().unwrap();
+    assert_eq!(ring_cache.arranged_source_reports(), arranged_sources);
+    assert!(ring_cache.source_reports().is_empty());
+    assert_eq!(ring_cache.output_ring_count(), None);
+    assert_eq!(ring_cache.output_ring_bucket_cache().ring_count(), 0);
+    assert_eq!(
+        ring_cache
+            .arranged_fragment_cache()
+            .arranged_fragment_count(),
+        4
+    );
+    assert_eq!(
+        ring_cache
+            .arranged_fragment_cache()
+            .arranged_fragment_kind_bucket_cache()
+            .line_fragment_ref_count(),
+        4
+    );
+    assert_eq!(
+        ring_cache
+            .arranged_fragment_cache()
+            .arranged_fragment_source_range_cache()
+            .partial_source_range_ref_count(),
+        4
+    );
     assert_eq!(built.blocker(), Some(UncertaintyReason::Boundary));
 }
 
