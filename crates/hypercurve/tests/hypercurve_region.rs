@@ -1313,10 +1313,9 @@ fn exact_curve_arrangement_result_returns_region_classification() {
         &policy(),
     )
     .unwrap();
-    #[allow(deprecated)]
-    let legacy_projection = retained_result.into_region_build_result();
-    assert!(legacy_projection.region().is_some());
-    assert!(legacy_projection.report().status().is_native_exact());
+    let (region, arrangement_report) = retained_result.into_region_and_arrangement_report();
+    assert!(region.is_some());
+    assert!(arrangement_report.status().unwrap().is_native_exact());
 }
 
 #[test]
@@ -1376,11 +1375,10 @@ fn exact_curve_arrangement_result_classification_preserves_blocker() {
         &policy(),
     )
     .unwrap();
-    #[allow(deprecated)]
-    let legacy_projection = result.into_region_build_result();
-    assert!(legacy_projection.region().is_none());
+    let (region, arrangement_report) = result.into_region_and_arrangement_report();
+    assert!(region.is_none());
     assert_eq!(
-        legacy_projection.report().blocker(),
+        arrangement_report.blocker(),
         Some(UncertaintyReason::Boundary)
     );
 }
