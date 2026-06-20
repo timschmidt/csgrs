@@ -1021,7 +1021,9 @@ pub struct ExactCurveArrangementReport2 {
     arranged_segment_count: Option<usize>,
     arranged_segment_kind_counts: Option<SegmentKindCounts>,
     arranged_source_report_count: Option<usize>,
+    arranged_source_reports: Option<Vec<RegionLineSegmentArrangedSourceReport2>>,
     source_report_count: Option<usize>,
+    source_reports: Option<Vec<RegionLineSegmentRingSourceReport2>>,
     output_ring_count: Option<usize>,
     output_boundary_segment_count: Option<usize>,
     output_boundary_segment_kind_counts: Option<SegmentKindCounts>,
@@ -8090,7 +8092,9 @@ impl ExactCurveArrangementReport2 {
             arranged_segment_count: result.arranged_segment_count(),
             arranged_segment_kind_counts: result.arranged_segment_kind_counts(),
             arranged_source_report_count: result.arranged_source_report_count(),
+            arranged_source_reports: result.arranged_source_reports().map(<[_]>::to_vec),
             source_report_count: result.source_report_count(),
+            source_reports: result.source_reports().map(<[_]>::to_vec),
             output_ring_count: result.output_ring_count(),
             output_boundary_segment_count: result.output_boundary_segment_count(),
             output_boundary_segment_kind_counts: result.output_boundary_segment_kind_counts(),
@@ -8351,9 +8355,19 @@ impl ExactCurveArrangementReport2 {
         self.arranged_source_report_count
     }
 
+    /// Returns retained arranged-source provenance records, when ring assembly was reached.
+    pub fn arranged_source_reports(&self) -> Option<&[RegionLineSegmentArrangedSourceReport2]> {
+        self.arranged_source_reports.as_deref()
+    }
+
     /// Returns the retained output-source provenance record count.
     pub const fn source_report_count(&self) -> Option<usize> {
         self.source_report_count
+    }
+
+    /// Returns retained output-source provenance records, when ring assembly was reached.
+    pub fn source_reports(&self) -> Option<&[RegionLineSegmentRingSourceReport2]> {
+        self.source_reports.as_deref()
     }
 
     /// Returns output ring count retained by ring assembly, when available.
