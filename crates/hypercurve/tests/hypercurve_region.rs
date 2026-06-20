@@ -3955,10 +3955,10 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.evaluation().arrangement_report(),
         result.arrangement_report()
     );
+    let derived_region_build_result = result.derived_region_build_result();
     #[allow(deprecated)]
     {
-        let derived_legacy_result = result.clone().into_region_build_result();
-        assert_eq!(result.region_build_result(), &derived_legacy_result);
+        assert_eq!(result.region_build_result(), &derived_region_build_result);
     }
     let arrangement_report = result.arrangement_report();
     assert_eq!(arrangement_report.workspace(), result.workspace());

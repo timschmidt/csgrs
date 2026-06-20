@@ -7592,17 +7592,35 @@ impl ExactCurveArrangementResult2 {
         &self.derived_compatibility_projection
     }
 
+    /// Returns an owned legacy-shaped region build result derived from retained evidence.
+    ///
+    /// This does not borrow the deprecated compatibility cache stored for
+    /// reference-returning legacy APIs; the report is projected from the retained
+    /// evaluation each time.
+    pub fn derived_region_build_result(&self) -> RegionLineSegmentRegionBuildResult2 {
+        Self::derive_region_build_result_from_evaluation(&self.evaluation, self.region.clone())
+    }
+
     fn into_compatibility_region_build_result(self) -> RegionLineSegmentRegionBuildResult2 {
         let Self {
             evaluation,
             region,
             derived_compatibility_projection,
         } = self;
-        let report = evaluation
-            .arrangement_report()
-            .into_region_line_segment_region_build_report();
         drop(derived_compatibility_projection);
-        RegionLineSegmentRegionBuildResult2 { region, report }
+        Self::derive_region_build_result_from_evaluation(&evaluation, region)
+    }
+
+    fn derive_region_build_result_from_evaluation(
+        evaluation: &ExactCurveArrangementEvaluation2,
+        region: Option<Region2>,
+    ) -> RegionLineSegmentRegionBuildResult2 {
+        RegionLineSegmentRegionBuildResult2 {
+            region,
+            report: evaluation
+                .arrangement_report()
+                .into_region_line_segment_region_build_report(),
+        }
     }
 
     /// Returns the retained evaluation record.
