@@ -871,20 +871,6 @@ pub(crate) enum ExactBooleanShortcutKind {
 }
 
 impl ExactBooleanResult {
-    fn is_shortcut_for(
-        &self,
-        operation: ExactBooleanOperation,
-        shortcut: ExactBooleanShortcutKind,
-    ) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: result_operation,
-                shortcut: result_shortcut,
-            } if result_operation == operation && result_shortcut == shortcut
-        )
-    }
-
     /// Return whether this result is a certified shortcut for `operation`.
     pub fn is_certified_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
         matches!(
@@ -902,7 +888,13 @@ impl ExactBooleanResult {
         operation: ExactBooleanOperation,
         shortcut: ExactBooleanShortcutKind,
     ) -> bool {
-        self.is_shortcut_for(operation, shortcut)
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut: result_shortcut,
+            } if result_operation == operation && result_shortcut == shortcut
+        )
     }
 
     /// Return whether this result is the arrangement/cell-complex shortcut.
@@ -910,7 +902,13 @@ impl ExactBooleanResult {
         &self,
         operation: ExactBooleanOperation,
     ) -> bool {
-        self.is_shortcut_for(operation, ExactBooleanShortcutKind::ArrangementCellComplex)
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+            } if result_operation == operation
+        )
     }
 
     /// Return whether this result is a caller boundary-policy projection.
@@ -1048,8 +1046,10 @@ impl ExactBooleanResult {
         };
         matches!(
             self.kind,
-            ExactBooleanResultKind::CertifiedShortcut { operation, .. }
-                if self.is_shortcut_for(operation, expected_shortcut)
+            ExactBooleanResultKind::CertifiedShortcut {
+                shortcut,
+                ..
+            } if shortcut == expected_shortcut
         )
     }
 
