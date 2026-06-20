@@ -987,6 +987,7 @@ pub struct ExactCurveArrangementReport2 {
     split_cache: Option<ExactCurveArrangementSplitCache2>,
     endpoint_graph_cache: Option<ExactCurveArrangementEndpointGraphCache2>,
     ring_assembly_cache: Option<ExactCurveArrangementRingAssemblyCache2>,
+    output_cache: Option<ExactCurveArrangementOutputCache2>,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
     source_segment_aabbs: Vec<Option<Aabb2>>,
@@ -8055,6 +8056,7 @@ impl ExactCurveArrangementReport2 {
             split_cache: result.split_cache().cloned(),
             endpoint_graph_cache: result.endpoint_graph_cache().cloned(),
             ring_assembly_cache: result.ring_assembly_cache().cloned(),
+            output_cache: result.output_cache().cloned(),
             source_segment_count: result.source_segment_count(),
             source_segment_kind_counts: result.source_segment_kind_counts(),
             source_segment_aabbs: result.source_segment_aabbs().to_vec(),
@@ -8201,6 +8203,11 @@ impl ExactCurveArrangementReport2 {
     /// Returns exact ring-traversal evidence retained from the evaluated arrangement.
     pub const fn ring_assembly_cache(&self) -> Option<&ExactCurveArrangementRingAssemblyCache2> {
         self.ring_assembly_cache.as_ref()
+    }
+
+    /// Returns final output evidence retained from the evaluated arrangement.
+    pub const fn output_cache(&self) -> Option<&ExactCurveArrangementOutputCache2> {
+        self.output_cache.as_ref()
     }
 
     /// Returns retained source segment count.
