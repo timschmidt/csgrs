@@ -2503,6 +2503,26 @@ impl ExactCurveWorkspace2 {
         &self.source_endpoint_bucket_cache
     }
 
+    /// Returns source endpoints retained in exact structural endpoint buckets.
+    pub const fn source_endpoint_count(&self) -> usize {
+        self.source_endpoint_bucket_cache().endpoint_count()
+    }
+
+    /// Returns exact structural source endpoint bucket count.
+    pub const fn source_endpoint_bucket_count(&self) -> usize {
+        self.source_endpoint_bucket_cache().bucket_count()
+    }
+
+    /// Returns source endpoint buckets containing one endpoint.
+    pub const fn source_endpoint_singleton_bucket_count(&self) -> usize {
+        self.source_endpoint_bucket_cache().singleton_bucket_count()
+    }
+
+    /// Returns the largest exact structural source endpoint bucket size.
+    pub const fn source_endpoint_max_bucket_size(&self) -> usize {
+        self.source_endpoint_bucket_cache().max_bucket_size()
+    }
+
     /// Returns the retained source-pair schedule prepared before split predicates run.
     pub const fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
         &self.split_schedule_cache
@@ -6940,6 +6960,26 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().source_endpoint_bucket_cache()
     }
 
+    /// Returns source endpoints retained in exact structural endpoint buckets.
+    pub const fn source_endpoint_count(&self) -> usize {
+        self.workspace().source_endpoint_count()
+    }
+
+    /// Returns exact structural source endpoint bucket count.
+    pub const fn source_endpoint_bucket_count(&self) -> usize {
+        self.workspace().source_endpoint_bucket_count()
+    }
+
+    /// Returns source endpoint buckets containing one endpoint.
+    pub const fn source_endpoint_singleton_bucket_count(&self) -> usize {
+        self.workspace().source_endpoint_singleton_bucket_count()
+    }
+
+    /// Returns the largest exact structural source endpoint bucket size.
+    pub const fn source_endpoint_max_bucket_size(&self) -> usize {
+        self.workspace().source_endpoint_max_bucket_size()
+    }
+
     /// Returns the retained source-pair schedule prepared before split predicates run.
     pub const fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
         self.workspace().split_schedule_cache()
@@ -7902,6 +7942,26 @@ impl ExactCurveArrangementResult2 {
         &self,
     ) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
         self.workspace().source_endpoint_bucket_cache()
+    }
+
+    /// Returns source endpoints retained in exact structural endpoint buckets.
+    pub const fn source_endpoint_count(&self) -> usize {
+        self.workspace().source_endpoint_count()
+    }
+
+    /// Returns exact structural source endpoint bucket count.
+    pub const fn source_endpoint_bucket_count(&self) -> usize {
+        self.workspace().source_endpoint_bucket_count()
+    }
+
+    /// Returns source endpoint buckets containing one endpoint.
+    pub const fn source_endpoint_singleton_bucket_count(&self) -> usize {
+        self.workspace().source_endpoint_singleton_bucket_count()
+    }
+
+    /// Returns the largest exact structural source endpoint bucket size.
+    pub const fn source_endpoint_max_bucket_size(&self) -> usize {
+        self.workspace().source_endpoint_max_bucket_size()
     }
 
     /// Returns the retained source-pair schedule prepared before split predicates run.
@@ -10025,6 +10085,26 @@ impl ExactCurveArrangementReport2 {
         &self,
     ) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
         self.workspace().source_endpoint_bucket_cache()
+    }
+
+    /// Returns source endpoints retained in exact structural endpoint buckets.
+    pub const fn source_endpoint_count(&self) -> usize {
+        self.workspace().source_endpoint_count()
+    }
+
+    /// Returns exact structural source endpoint bucket count.
+    pub const fn source_endpoint_bucket_count(&self) -> usize {
+        self.workspace().source_endpoint_bucket_count()
+    }
+
+    /// Returns source endpoint buckets containing one endpoint.
+    pub const fn source_endpoint_singleton_bucket_count(&self) -> usize {
+        self.workspace().source_endpoint_singleton_bucket_count()
+    }
+
+    /// Returns the largest exact structural source endpoint bucket size.
+    pub const fn source_endpoint_max_bucket_size(&self) -> usize {
+        self.workspace().source_endpoint_max_bucket_size()
     }
 
     /// Returns the retained source-pair schedule prepared before split predicates run.

@@ -2949,6 +2949,22 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.source_endpoint_bucket_cache()
     );
     assert_eq!(
+        arrangement_report.source_endpoint_count(),
+        result.source_endpoint_count()
+    );
+    assert_eq!(
+        arrangement_report.source_endpoint_bucket_count(),
+        result.source_endpoint_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.source_endpoint_singleton_bucket_count(),
+        result.source_endpoint_singleton_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.source_endpoint_max_bucket_size(),
+        result.source_endpoint_max_bucket_size()
+    );
+    assert_eq!(
         arrangement_report.split_schedule_cache(),
         result.split_schedule_cache()
     );
@@ -3678,6 +3694,30 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         result.evaluation().source_endpoint_bucket_cache(),
         result.source_endpoint_bucket_cache()
+    );
+    assert_eq!(result.source_endpoint_count(), 4);
+    assert_eq!(result.source_endpoint_bucket_count(), 2);
+    assert_eq!(result.source_endpoint_singleton_bucket_count(), 0);
+    assert_eq!(result.source_endpoint_max_bucket_size(), 2);
+    assert_eq!(
+        result.evaluation().source_endpoint_count(),
+        result.source_endpoint_count()
+    );
+    assert_eq!(
+        result.evaluation().source_endpoint_bucket_count(),
+        result.source_endpoint_bucket_count()
+    );
+    assert_eq!(
+        result.evaluation().source_endpoint_singleton_bucket_count(),
+        result.source_endpoint_singleton_bucket_count()
+    );
+    assert_eq!(
+        result.evaluation().source_endpoint_max_bucket_size(),
+        result.source_endpoint_max_bucket_size()
+    );
+    assert_eq!(
+        result.workspace().source_endpoint_bucket_count(),
+        result.source_endpoint_bucket_count()
     );
     assert_eq!(
         result.evaluation().split_schedule_cache(),
@@ -5564,6 +5604,22 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.source_endpoint_bucket_cache()
     );
     assert_eq!(
+        arrangement_report.source_endpoint_count(),
+        result.source_endpoint_count()
+    );
+    assert_eq!(
+        arrangement_report.source_endpoint_bucket_count(),
+        result.source_endpoint_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.source_endpoint_singleton_bucket_count(),
+        result.source_endpoint_singleton_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.source_endpoint_max_bucket_size(),
+        result.source_endpoint_max_bucket_size()
+    );
+    assert_eq!(
         arrangement_report.split_schedule_cache(),
         result.split_schedule_cache()
     );
@@ -6296,6 +6352,22 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(
         arrangement_report.source_endpoint_bucket_cache(),
         result.source_endpoint_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.source_endpoint_count(),
+        result.source_endpoint_count()
+    );
+    assert_eq!(
+        arrangement_report.source_endpoint_bucket_count(),
+        result.source_endpoint_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.source_endpoint_singleton_bucket_count(),
+        result.source_endpoint_singleton_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.source_endpoint_max_bucket_size(),
+        result.source_endpoint_max_bucket_size()
     );
     assert_eq!(
         arrangement_report.split_schedule_cache(),
