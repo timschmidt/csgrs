@@ -6400,6 +6400,46 @@ impl ExactCurveArrangementResult2 {
         }
     }
 
+    /// Returns exact arranged endpoint buckets retained by endpoint-graph validation.
+    pub const fn arranged_endpoint_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedEndpointBucketCache2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.endpoint_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns arranged endpoints grouped by retained endpoint side.
+    pub const fn arranged_endpoint_side_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedEndpointSideBucketCache2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.endpoint_side_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns exact endpoint records for arranged fragments.
+    pub const fn arranged_endpoint_point_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedEndpointPointCache2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.endpoint_point_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns structural arranged endpoints grouped by retained degree.
+    pub const fn arranged_endpoint_degree_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedEndpointDegreeBucketCache2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.endpoint_degree_bucket_cache()),
+            None => None,
+        }
+    }
+
     /// Returns dangling endpoint count found during endpoint-graph validation.
     pub const fn endpoint_graph_dangling_endpoint_count(&self) -> Option<usize> {
         match self.endpoint_graph_cache() {

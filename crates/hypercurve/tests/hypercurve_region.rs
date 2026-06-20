@@ -1461,43 +1461,35 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         first_split_parameter.point(),
         result.split_intersection_reports().unwrap()[0].point()
     );
-    let endpoint_cache = result.endpoint_graph_cache().unwrap();
     assert_eq!(
         result.endpoint_graph_predicate_path(),
-        Some(endpoint_cache.predicate_path())
+        Some(RegionLineSegmentEndpointGraphPredicatePath2::ExactStructuralEndpointBuckets)
     );
-    assert_eq!(
-        result.endpoint_graph_endpoint_count(),
-        Some(endpoint_cache.endpoint_count())
-    );
-    assert_eq!(
-        result.endpoint_graph_structural_bucket_count(),
-        Some(endpoint_cache.structural_bucket_count())
-    );
+    assert_eq!(result.endpoint_graph_endpoint_count(), Some(8));
+    assert_eq!(result.endpoint_graph_structural_bucket_count(), Some(4));
     assert_eq!(
         result.endpoint_graph_structural_singleton_bucket_count(),
-        Some(endpoint_cache.structural_singleton_bucket_count())
+        Some(0)
     );
-    assert_eq!(
-        result.endpoint_graph_max_structural_bucket_size(),
-        Some(endpoint_cache.max_structural_bucket_size())
-    );
-    let arranged_endpoint_bucket_cache = endpoint_cache.endpoint_bucket_cache();
+    assert_eq!(result.endpoint_graph_max_structural_bucket_size(), Some(2));
+    let arranged_endpoint_bucket_cache = result.arranged_endpoint_bucket_cache().unwrap();
     assert_eq!(
         arranged_endpoint_bucket_cache.endpoint_count(),
-        endpoint_cache.endpoint_count()
+        result.endpoint_graph_endpoint_count().unwrap()
     );
     assert_eq!(
         arranged_endpoint_bucket_cache.bucket_count(),
-        endpoint_cache.structural_bucket_count()
+        result.endpoint_graph_structural_bucket_count().unwrap()
     );
     assert_eq!(
         arranged_endpoint_bucket_cache.singleton_bucket_count(),
-        endpoint_cache.structural_singleton_bucket_count()
+        result
+            .endpoint_graph_structural_singleton_bucket_count()
+            .unwrap()
     );
     assert_eq!(
         arranged_endpoint_bucket_cache.max_bucket_size(),
-        endpoint_cache.max_structural_bucket_size()
+        result.endpoint_graph_max_structural_bucket_size().unwrap()
     );
     assert_eq!(arranged_endpoint_bucket_cache.buckets().len(), 4);
     let first_arranged_endpoint_bucket = &arranged_endpoint_bucket_cache.buckets()[0];
@@ -1519,11 +1511,11 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         first_arranged_endpoint_bucket.endpoints()[1].endpoint(),
         RegionLineSegmentArrangedEndpoint2::End
     );
-    let arranged_endpoint_side_bucket_cache = endpoint_cache.endpoint_side_bucket_cache();
+    let arranged_endpoint_side_bucket_cache = result.arranged_endpoint_side_bucket_cache().unwrap();
     assert_eq!(arranged_endpoint_side_bucket_cache.bucket_count(), 2);
     assert_eq!(
         arranged_endpoint_side_bucket_cache.endpoint_ref_count(),
-        endpoint_cache.endpoint_count()
+        result.endpoint_graph_endpoint_count().unwrap()
     );
     assert_eq!(
         arranged_endpoint_side_bucket_cache.start_endpoint_ref_count(),
@@ -1566,14 +1558,14 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         arranged_endpoint_side_bucket_cache.buckets()[1].endpoints()[0].endpoint(),
         RegionLineSegmentArrangedEndpoint2::End
     );
-    let arranged_endpoint_point_cache = endpoint_cache.endpoint_point_cache();
+    let arranged_endpoint_point_cache = result.arranged_endpoint_point_cache().unwrap();
     assert_eq!(
         arranged_endpoint_point_cache.arranged_fragment_ref_count(),
         result.arranged_source_reports().unwrap().len()
     );
     assert_eq!(
         arranged_endpoint_point_cache.endpoint_ref_count(),
-        endpoint_cache.endpoint_count()
+        result.endpoint_graph_endpoint_count().unwrap()
     );
     assert_eq!(
         arranged_endpoint_point_cache.endpoints().len(),
@@ -1592,11 +1584,12 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         arranged_endpoint_point_ref.output_end_point(),
         result.arranged_source_reports().unwrap()[0].output_end_point()
     );
-    let arranged_endpoint_degree_bucket_cache = endpoint_cache.endpoint_degree_bucket_cache();
+    let arranged_endpoint_degree_bucket_cache =
+        result.arranged_endpoint_degree_bucket_cache().unwrap();
     assert_eq!(arranged_endpoint_degree_bucket_cache.bucket_count(), 3);
     assert_eq!(
         arranged_endpoint_degree_bucket_cache.structural_bucket_ref_count(),
-        endpoint_cache.structural_bucket_count()
+        result.endpoint_graph_structural_bucket_count().unwrap()
     );
     assert_eq!(
         arranged_endpoint_degree_bucket_cache.dangling_structural_bucket_count(),
@@ -1604,7 +1597,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(
         arranged_endpoint_degree_bucket_cache.chain_structural_bucket_count(),
-        endpoint_cache.structural_bucket_count()
+        result.endpoint_graph_structural_bucket_count().unwrap()
     );
     assert_eq!(
         arranged_endpoint_degree_bucket_cache.branch_structural_bucket_count(),
@@ -1628,7 +1621,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         arranged_endpoint_degree_bucket_cache.buckets()[1]
             .endpoint_buckets()
             .len(),
-        endpoint_cache.structural_bucket_count()
+        result.endpoint_graph_structural_bucket_count().unwrap()
     );
     let first_degree_ref =
         &arranged_endpoint_degree_bucket_cache.buckets()[1].endpoint_buckets()[0];
@@ -2889,39 +2882,35 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         first_split_parameter.point(),
         result.split_intersection_reports().unwrap()[0].point()
     );
-    let endpoint_cache = result.endpoint_graph_cache().unwrap();
     assert_eq!(
         result.endpoint_graph_predicate_path(),
-        Some(endpoint_cache.predicate_path())
+        Some(RegionLineSegmentEndpointGraphPredicatePath2::ExactStructuralEndpointBuckets)
     );
+    assert_eq!(result.endpoint_graph_endpoint_count(), Some(4));
+    assert_eq!(result.endpoint_graph_structural_bucket_count(), Some(2));
     assert_eq!(
-        result.endpoint_graph_endpoint_count(),
-        Some(endpoint_cache.endpoint_count())
+        result.endpoint_graph_structural_singleton_bucket_count(),
+        Some(0)
     );
-    assert_eq!(
-        result.endpoint_graph_structural_bucket_count(),
-        Some(endpoint_cache.structural_bucket_count())
-    );
-    assert_eq!(
-        result.endpoint_graph_max_structural_bucket_size(),
-        Some(endpoint_cache.max_structural_bucket_size())
-    );
-    let arranged_endpoint_bucket_cache = endpoint_cache.endpoint_bucket_cache();
+    assert_eq!(result.endpoint_graph_max_structural_bucket_size(), Some(2));
+    let arranged_endpoint_bucket_cache = result.arranged_endpoint_bucket_cache().unwrap();
     assert_eq!(
         arranged_endpoint_bucket_cache.endpoint_count(),
-        endpoint_cache.endpoint_count()
+        result.endpoint_graph_endpoint_count().unwrap()
     );
     assert_eq!(
         arranged_endpoint_bucket_cache.bucket_count(),
-        endpoint_cache.structural_bucket_count()
+        result.endpoint_graph_structural_bucket_count().unwrap()
     );
     assert_eq!(
         arranged_endpoint_bucket_cache.singleton_bucket_count(),
-        endpoint_cache.structural_singleton_bucket_count()
+        result
+            .endpoint_graph_structural_singleton_bucket_count()
+            .unwrap()
     );
     assert_eq!(
         arranged_endpoint_bucket_cache.max_bucket_size(),
-        endpoint_cache.max_structural_bucket_size()
+        result.endpoint_graph_max_structural_bucket_size().unwrap()
     );
     assert_eq!(arranged_endpoint_bucket_cache.buckets().len(), 2);
     let first_arranged_endpoint_bucket = &arranged_endpoint_bucket_cache.buckets()[0];
@@ -2943,11 +2932,11 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         first_arranged_endpoint_bucket.endpoints()[1].endpoint(),
         RegionLineSegmentArrangedEndpoint2::End
     );
-    let arranged_endpoint_side_bucket_cache = endpoint_cache.endpoint_side_bucket_cache();
+    let arranged_endpoint_side_bucket_cache = result.arranged_endpoint_side_bucket_cache().unwrap();
     assert_eq!(arranged_endpoint_side_bucket_cache.bucket_count(), 2);
     assert_eq!(
         arranged_endpoint_side_bucket_cache.endpoint_ref_count(),
-        endpoint_cache.endpoint_count()
+        result.endpoint_graph_endpoint_count().unwrap()
     );
     assert_eq!(
         arranged_endpoint_side_bucket_cache.start_endpoint_ref_count(),
@@ -2978,14 +2967,14 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         arranged_endpoint_side_bucket_cache.buckets()[1].endpoints()[0].endpoint(),
         RegionLineSegmentArrangedEndpoint2::End
     );
-    let arranged_endpoint_point_cache = endpoint_cache.endpoint_point_cache();
+    let arranged_endpoint_point_cache = result.arranged_endpoint_point_cache().unwrap();
     assert_eq!(
         arranged_endpoint_point_cache.arranged_fragment_ref_count(),
         result.arranged_source_reports().unwrap().len()
     );
     assert_eq!(
         arranged_endpoint_point_cache.endpoint_ref_count(),
-        endpoint_cache.endpoint_count()
+        result.endpoint_graph_endpoint_count().unwrap()
     );
     assert_eq!(
         arranged_endpoint_point_cache.endpoints().len(),
@@ -3004,11 +2993,12 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         arranged_endpoint_point_ref.output_end_point(),
         result.arranged_source_reports().unwrap()[0].output_end_point()
     );
-    let arranged_endpoint_degree_bucket_cache = endpoint_cache.endpoint_degree_bucket_cache();
+    let arranged_endpoint_degree_bucket_cache =
+        result.arranged_endpoint_degree_bucket_cache().unwrap();
     assert_eq!(arranged_endpoint_degree_bucket_cache.bucket_count(), 3);
     assert_eq!(
         arranged_endpoint_degree_bucket_cache.structural_bucket_ref_count(),
-        endpoint_cache.structural_bucket_count()
+        result.endpoint_graph_structural_bucket_count().unwrap()
     );
     assert_eq!(
         arranged_endpoint_degree_bucket_cache.dangling_structural_bucket_count(),
@@ -3016,7 +3006,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(
         arranged_endpoint_degree_bucket_cache.chain_structural_bucket_count(),
-        endpoint_cache.structural_bucket_count()
+        result.endpoint_graph_structural_bucket_count().unwrap()
     );
     assert_eq!(
         arranged_endpoint_degree_bucket_cache.branch_structural_bucket_count(),
@@ -3058,14 +3048,8 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
             .endpoint_buckets()
             .is_empty()
     );
-    assert_eq!(
-        result.endpoint_graph_dangling_endpoint_count(),
-        Some(endpoint_cache.dangling_endpoint_count())
-    );
-    assert_eq!(
-        result.endpoint_graph_branch_endpoint_count(),
-        Some(endpoint_cache.branch_endpoint_count())
-    );
+    assert_eq!(result.endpoint_graph_dangling_endpoint_count(), Some(0));
+    assert_eq!(result.endpoint_graph_branch_endpoint_count(), Some(0));
     assert_eq!(result.endpoint_graph_blocker_point(), None);
     assert_eq!(
         result.ring_assembly_predicate_path(),
