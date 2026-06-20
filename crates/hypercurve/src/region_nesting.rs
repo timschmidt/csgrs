@@ -7161,6 +7161,21 @@ impl ExactCurveArrangementResult2 {
         self.region_result.region()
     }
 
+    /// Returns the materialized region as the canonical convenience classification.
+    ///
+    /// This is the retained-result replacement for deprecated
+    /// `Region2::from_unordered_*` convenience constructors: callers keep the
+    /// arrangement evidence and derived report available while still branching
+    /// on a decided region or explicit blocker.
+    pub fn region_classification(&self) -> Classification<&Region2> {
+        match self.region() {
+            Some(region) => Classification::Decided(region),
+            None => {
+                Classification::Uncertain(self.blocker().unwrap_or(UncertaintyReason::Unsupported))
+            }
+        }
+    }
+
     /// Returns the underlying legacy region build report.
     #[deprecated(
         since = "0.3.0",
@@ -7177,6 +7192,18 @@ impl ExactCurveArrangementResult2 {
     )]
     pub fn into_region_build_result(self) -> RegionLineSegmentRegionBuildResult2 {
         self.region_result
+    }
+
+    /// Consumes this result and returns the materialized region as a classification.
+    ///
+    /// This preserves the explicit blocker used by the retained evaluation when
+    /// no region was materialized.
+    pub fn into_region_classification(self) -> Classification<Region2> {
+        let blocker = self.blocker().unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_region() {
+            Some(region) => Classification::Decided(region),
+            None => Classification::Uncertain(blocker),
+        }
     }
 
     /// Consumes this result and returns the materialized region, if any.

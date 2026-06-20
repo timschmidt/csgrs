@@ -831,6 +831,56 @@ fn borrowed_unordered_line_segments_build_region_with_report() {
 }
 
 #[test]
+fn exact_curve_arrangement_result_returns_region_classification() {
+    let result = evaluate_unordered_line_segments(
+        vec![
+            line(0, 0, 4, 0),
+            line(0, 4, 4, 4),
+            line(0, 0, 0, 4),
+            line(4, 0, 4, 4),
+        ],
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
+
+    match result.region_classification() {
+        Classification::Decided(region) => assert_eq!(
+            region.classify_point(&p(2, 2), &policy()),
+            Classification::Decided(RegionPointLocation::Inside)
+        ),
+        Classification::Uncertain(reason) => panic!("expected decided region, got {reason:?}"),
+    }
+
+    match result.into_region_classification() {
+        Classification::Decided(region) => assert_eq!(
+            region.classify_point(&p(2, 2), &policy()),
+            Classification::Decided(RegionPointLocation::Inside)
+        ),
+        Classification::Uncertain(reason) => panic!("expected owned region, got {reason:?}"),
+    }
+}
+
+#[test]
+fn exact_curve_arrangement_result_classification_preserves_blocker() {
+    let result = evaluate_unordered_line_segments(
+        vec![line(0, 0, 1, 0), line(3, 0, 4, 0)],
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
+
+    assert_eq!(
+        result.region_classification(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    assert_eq!(
+        result.into_region_classification(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
 fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
     let built = evaluate_unordered_segments(
         vec![
