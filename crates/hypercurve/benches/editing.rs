@@ -504,7 +504,7 @@ fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()>
             &lines,
             FillRule::NonZero,
         );
-        let result = ExactCurveArrangementAttempt2::new(request).evaluate(&policy)?;
+        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(&policy)?;
         if !result.status().unwrap().is_native_exact() || result.region().is_none() {
             panic!("unordered line segment region build benchmark became non-native");
         }
@@ -581,7 +581,7 @@ fn bench_unordered_native_segment_region_build(iterations: u32) -> CurveResult<(
             &segments,
             FillRule::NonZero,
         );
-        let result = ExactCurveArrangementAttempt2::new(request).evaluate(&policy)?;
+        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(&policy)?;
         if !result.status().unwrap().is_native_exact() || result.region().is_none() {
             panic!("unordered native segment region build benchmark became non-native");
         }

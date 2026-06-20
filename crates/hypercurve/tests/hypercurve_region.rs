@@ -74,7 +74,7 @@ fn evaluate_unordered_line_segments(
     ExactCurveArrangementAttempt2::new(ExactCurveArrangementRequest2::from_unordered_line_segments(
         segments, fill_rule,
     ))
-    .evaluate(policy)
+    .evaluate_owned(policy)
 }
 
 fn evaluate_borrowed_unordered_line_segments(
@@ -85,7 +85,7 @@ fn evaluate_borrowed_unordered_line_segments(
     ExactCurveArrangementAttempt2::new(
         ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments(segments, fill_rule),
     )
-    .evaluate(policy)
+    .evaluate_owned(policy)
 }
 
 fn evaluate_unordered_segments(
@@ -96,7 +96,7 @@ fn evaluate_unordered_segments(
     ExactCurveArrangementAttempt2::new(ExactCurveArrangementRequest2::from_unordered_segments(
         segments, fill_rule,
     ))
-    .evaluate(policy)
+    .evaluate_owned(policy)
 }
 
 fn evaluate_borrowed_unordered_segments(
@@ -107,7 +107,7 @@ fn evaluate_borrowed_unordered_segments(
     ExactCurveArrangementAttempt2::new(
         ExactCurveArrangementRequest2::from_borrowed_unordered_segments(segments, fill_rule),
     )
-    .evaluate(policy)
+    .evaluate_owned(policy)
 }
 
 #[test]
@@ -3426,7 +3426,7 @@ fn exact_curve_arrangement_attempt_retains_output_role_containment() {
         FillRule::NonZero,
     );
     let result = ExactCurveArrangementAttempt2::new(request)
-        .evaluate(&policy())
+        .evaluate_owned(&policy())
         .unwrap();
 
     assert!(result.status().unwrap().is_native_exact());
@@ -5787,7 +5787,7 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     let result = ExactCurveArrangementAttempt2::new(
         ExactCurveArrangementRequest2::from_unordered_segments(segments.clone(), FillRule::NonZero),
     )
-    .evaluate(&policy())
+    .evaluate_owned(&policy())
     .unwrap();
 
     assert!(result.region().is_none());
@@ -6292,7 +6292,7 @@ fn unordered_native_segments_attempt_returns_decided_region() {
             ],
             FillRule::NonZero,
         ))
-        .evaluate(&policy())
+        .evaluate_owned(&policy())
         .unwrap();
 
     let Some(region) = result.region() else {
