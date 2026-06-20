@@ -1333,32 +1333,16 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
             ExactCurveArrangementSplitCandidateAabbStatus2::DecidedDisjoint,
         )
     );
-    let split_cache = result.split_cache().unwrap();
-    assert_eq!(result.split_predicate_path(), split_cache.predicate_path());
     assert_eq!(
-        result.split_candidate_pair_count().unwrap(),
-        split_cache.candidate_pair_count()
+        result.split_predicate_path(),
+        Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredExactLineLine)
     );
-    assert_eq!(
-        result.split_skipped_aabb_pair_count().unwrap(),
-        split_cache.skipped_aabb_pair_count()
-    );
-    assert_eq!(
-        result.split_tested_pair_count().unwrap(),
-        split_cache.tested_pair_count()
-    );
-    assert_eq!(
-        result.split_intersection_event_count().unwrap(),
-        split_cache.intersection_event_count()
-    );
-    assert_eq!(
-        result.split_intersection_points().unwrap(),
-        split_cache.intersection_points()
-    );
-    assert_eq!(
-        result.split_intersection_reports().unwrap(),
-        split_cache.intersection_reports()
-    );
+    assert_eq!(result.split_candidate_pair_count(), Some(6));
+    assert_eq!(result.split_skipped_aabb_pair_count(), Some(2));
+    assert_eq!(result.split_tested_pair_count(), Some(4));
+    assert_eq!(result.split_intersection_event_count(), Some(4));
+    assert_eq!(result.split_intersection_points().unwrap().len(), 4);
+    assert_eq!(result.split_intersection_reports().unwrap().len(), 4);
     assert_eq!(result.split_output_segment_count(), Some(4));
     assert_eq!(result.split_blocker_cache(), None);
     let split_relation_bucket_cache = result.split_relation_bucket_cache().unwrap();
@@ -2254,22 +2238,13 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(summary_cache.output_contour_count(), Some(1));
     assert_eq!(summary_cache.output_segment_count(), Some(4));
-    let output_cache = result.output_cache().unwrap();
-    assert_eq!(
-        result.boundary_build_stage(),
-        output_cache.boundary_build_stage()
-    );
-    assert_eq!(
-        result.boundary_build_status(),
-        output_cache.boundary_build_status()
-    );
-    assert_eq!(
-        result.boundary_build_validation_intersection_event_count(),
-        output_cache.boundary_build_validation_intersection_event_count()
-    );
     assert_eq!(
         result.boundary_build_stage(),
         Some(RegionBoundaryContourBuildStage2::RoleAssignment)
+    );
+    assert_eq!(
+        result.boundary_build_status(),
+        Some(RetainedTopologyStatus::NativeExact)
     );
     assert_eq!(result.boundary_build_blocker(), None);
     assert_eq!(
@@ -2765,20 +2740,16 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
             ExactCurveArrangementSplitCandidateAabbStatus2::NotDecidedDisjoint,
         )
     );
-    let split_cache = result.split_cache().unwrap();
-    assert_eq!(result.split_predicate_path(), split_cache.predicate_path());
     assert_eq!(
-        result.split_intersection_event_count().unwrap(),
-        split_cache.intersection_event_count()
+        result.split_predicate_path(),
+        Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredNativeSegment)
     );
-    assert_eq!(
-        result.split_intersection_reports().unwrap(),
-        split_cache.intersection_reports()
-    );
-    assert_eq!(
-        result.split_output_segment_count(),
-        split_cache.output_segment_count()
-    );
+    assert_eq!(result.split_candidate_pair_count(), Some(1));
+    assert_eq!(result.split_skipped_aabb_pair_count(), Some(0));
+    assert_eq!(result.split_tested_pair_count(), Some(1));
+    assert_eq!(result.split_intersection_event_count(), Some(2));
+    assert_eq!(result.split_intersection_reports().unwrap().len(), 2);
+    assert_eq!(result.split_output_segment_count(), Some(2));
     assert_eq!(result.split_blocker_cache(), None);
     let split_relation_bucket_cache = result.split_relation_bucket_cache().unwrap();
     assert_eq!(split_relation_bucket_cache.bucket_count(), 3);
@@ -3624,18 +3595,18 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(summary_cache.output_contour_count(), Some(1));
     assert_eq!(summary_cache.output_segment_count(), Some(2));
-    let output_cache = result.output_cache().unwrap();
     assert_eq!(
         result.boundary_build_stage(),
-        output_cache.boundary_build_stage()
+        Some(RegionBoundaryContourBuildStage2::RoleAssignment)
     );
     assert_eq!(
         result.boundary_build_status(),
-        output_cache.boundary_build_status()
+        Some(RetainedTopologyStatus::NativeExact)
     );
+    assert_eq!(result.boundary_build_blocker(), None);
     assert_eq!(
         result.boundary_build_validation_intersection_event_count(),
-        output_cache.boundary_build_validation_intersection_event_count()
+        Some(0)
     );
     assert_eq!(result.output_contour_count(), Some(1));
     assert_eq!(result.output_segment_count(), Some(2));
@@ -3882,11 +3853,12 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     );
     assert_eq!(result.split_overlap_relation_count(), Some(1));
     assert_eq!(result.split_output_segment_count(), None);
-    let split_cache = result.split_cache().unwrap();
     assert_eq!(
-        result.split_intersection_points().unwrap(),
-        split_cache.intersection_points()
+        result.split_predicate_path(),
+        Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredNativeSegment)
     );
+    assert_eq!(result.split_intersection_event_count(), Some(0));
+    assert!(result.split_intersection_points().unwrap().is_empty());
     let split_blocker_cache = result.split_blocker_cache().unwrap();
     assert_eq!(split_blocker_cache.first_source_segment_index(), 0);
     assert_eq!(
