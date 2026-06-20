@@ -1294,6 +1294,42 @@ impl Region2 {
         Ok(result.into_region_classification())
     }
 
+    /// Builds a region from borrowed unordered exact line segments and returns canonical retained evidence.
+    ///
+    /// This is the arrangement-report replacement for deprecated
+    /// [`Region2::from_unordered_line_segments_borrowed_with_report`]. It keeps
+    /// the result as a decided/uncertain classification and returns an
+    /// [`ExactCurveArrangementReport2`] derived from retained arrangement caches,
+    /// not a legacy-shaped build report.
+    pub fn from_unordered_line_segments_borrowed_with_arrangement_report(
+        segments: &[LineSeg2],
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<(Classification<Self>, ExactCurveArrangementReport2)> {
+        let request = ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments(
+            segments, fill_rule,
+        );
+        Ok(ExactCurveArrangementAttempt2::new(request)
+            .evaluate_owned(policy)?
+            .into_region_classification_with_arrangement_report())
+    }
+
+    /// Builds a region from unordered exact line segments and returns canonical retained evidence.
+    ///
+    /// This is the owned-input counterpart to
+    /// [`Region2::from_unordered_line_segments_borrowed_with_arrangement_report`].
+    pub fn from_unordered_line_segments_with_arrangement_report(
+        segments: Vec<LineSeg2>,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<(Classification<Self>, ExactCurveArrangementReport2)> {
+        let request =
+            ExactCurveArrangementRequest2::from_unordered_line_segments(segments, fill_rule);
+        Ok(ExactCurveArrangementAttempt2::new(request)
+            .evaluate_owned(policy)?
+            .into_region_classification_with_arrangement_report())
+    }
+
     /// Builds a region from borrowed unordered exact line segments and retains evidence.
     ///
     /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
@@ -1554,6 +1590,39 @@ impl Region2 {
             ExactCurveArrangementRequest2::from_borrowed_unordered_segments(segments, fill_rule);
         let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(policy)?;
         Ok(result.into_region_classification())
+    }
+
+    /// Builds a region from borrowed unordered native line/arc segments and returns canonical retained evidence.
+    ///
+    /// This is the arrangement-report replacement for deprecated
+    /// [`Region2::from_unordered_segments_borrowed_with_report`]. It keeps the
+    /// result as a decided/uncertain classification and returns an
+    /// [`ExactCurveArrangementReport2`] derived from retained arrangement caches.
+    pub fn from_unordered_segments_borrowed_with_arrangement_report(
+        segments: &[Segment2],
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<(Classification<Self>, ExactCurveArrangementReport2)> {
+        let request =
+            ExactCurveArrangementRequest2::from_borrowed_unordered_segments(segments, fill_rule);
+        Ok(ExactCurveArrangementAttempt2::new(request)
+            .evaluate_owned(policy)?
+            .into_region_classification_with_arrangement_report())
+    }
+
+    /// Builds a region from unordered native line/arc segments and returns canonical retained evidence.
+    ///
+    /// This is the owned-input counterpart to
+    /// [`Region2::from_unordered_segments_borrowed_with_arrangement_report`].
+    pub fn from_unordered_segments_with_arrangement_report(
+        segments: Vec<Segment2>,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<(Classification<Self>, ExactCurveArrangementReport2)> {
+        let request = ExactCurveArrangementRequest2::from_unordered_segments(segments, fill_rule);
+        Ok(ExactCurveArrangementAttempt2::new(request)
+            .evaluate_owned(policy)?
+            .into_region_classification_with_arrangement_report())
     }
 
     /// Builds a region from borrowed unordered native line/arc segments and retains evidence.
