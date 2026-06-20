@@ -806,7 +806,7 @@ fn unordered_line_segments_report_overlap_source_pair_blocker() {
 }
 
 #[test]
-fn borrowed_unordered_line_segments_build_region_with_report() {
+fn borrowed_unordered_line_segments_evaluate_retained_arrangement() {
     let segments = vec![
         line(0, 0, 4, 0),
         line(0, 4, 4, 4),
@@ -1006,7 +1006,7 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
 }
 
 #[test]
-fn borrowed_unordered_native_segments_build_line_arc_region_with_report() {
+fn borrowed_unordered_native_segments_evaluate_retained_arrangement() {
     let segments = vec![
         Segment2::Line(line(4, 0, 0, 0)),
         Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),

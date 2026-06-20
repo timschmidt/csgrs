@@ -967,7 +967,7 @@ pub struct ExactCurveArrangementAttempt2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementResult2 {
     evaluation: ExactCurveArrangementEvaluation2,
-    region_result: RegionLineSegmentRegionBuildResult2,
+    compatibility_result: RegionLineSegmentRegionBuildResult2,
 }
 
 /// Derived report for a retained exact curve arrangement attempt.
@@ -1396,7 +1396,7 @@ impl Region2 {
         );
         Ok(ExactCurveArrangementAttempt2::new(request)
             .evaluate(policy)?
-            .region_result)
+            .compatibility_result)
     }
 
     /// Builds a region from unordered exact line segments and retains assembly evidence.
@@ -1418,7 +1418,7 @@ impl Region2 {
             ExactCurveArrangementRequest2::from_unordered_line_segments(segments, fill_rule);
         Ok(ExactCurveArrangementAttempt2::new(request)
             .evaluate(policy)?
-            .region_result)
+            .compatibility_result)
     }
 }
 
@@ -1657,7 +1657,7 @@ impl Region2 {
             ExactCurveArrangementRequest2::from_borrowed_unordered_segments(segments, fill_rule);
         Ok(ExactCurveArrangementAttempt2::new(request)
             .evaluate(policy)?
-            .region_result)
+            .compatibility_result)
     }
 
     /// Builds a region from unordered exact native line/arc segments.
@@ -1685,7 +1685,7 @@ impl Region2 {
         let request = ExactCurveArrangementRequest2::from_unordered_segments(segments, fill_rule);
         Ok(ExactCurveArrangementAttempt2::new(request)
             .evaluate(policy)?
-            .region_result)
+            .compatibility_result)
     }
 }
 
@@ -6237,7 +6237,7 @@ impl ExactCurveArrangementAttempt2 {
 
     /// Evaluates the request through the retained exact arrangement pipeline.
     pub fn evaluate(&self, policy: &CurvePolicy) -> CurveResult<ExactCurveArrangementResult2> {
-        let region_result =
+        let compatibility_result =
             if let Some(source_line_segments) = self.request.source_line_segments.as_ref() {
                 evaluate_unordered_line_segments_region_result(
                     source_line_segments.clone(),
@@ -6253,12 +6253,12 @@ impl ExactCurveArrangementAttempt2 {
             };
         let workspace = ExactCurveWorkspace2::from_request(self.request.clone(), policy)?
             .with_arrangement_report_facts(
-                region_result.report(),
-                region_result.region().is_some(),
+                compatibility_result.report(),
+                compatibility_result.region().is_some(),
             );
         Ok(ExactCurveArrangementResult2 {
             evaluation: ExactCurveArrangementEvaluation2::new(workspace),
-            region_result,
+            compatibility_result,
         })
     }
 }
@@ -7151,12 +7151,12 @@ impl ExactCurveArrangementResult2 {
         note = "use ExactCurveArrangementResult2 retained accessors, or arrangement_report() when a derived compatibility report is required"
     )]
     pub const fn region_build_result(&self) -> &RegionLineSegmentRegionBuildResult2 {
-        &self.region_result
+        &self.compatibility_result
     }
 
     /// Returns the materialized region, if the arrangement succeeded.
     pub const fn region(&self) -> Option<&Region2> {
-        self.region_result.region()
+        self.compatibility_result.region()
     }
 
     /// Returns the materialized region as the canonical convenience classification.
@@ -7180,7 +7180,7 @@ impl ExactCurveArrangementResult2 {
         note = "use ExactCurveArrangementResult2 retained accessors, or arrangement_report() when a derived compatibility report is required"
     )]
     pub const fn report(&self) -> &RegionLineSegmentRegionBuildReport2 {
-        self.region_result.report()
+        self.compatibility_result.report()
     }
 
     /// Consumes this result and returns the underlying legacy region build result.
@@ -7189,7 +7189,7 @@ impl ExactCurveArrangementResult2 {
         note = "use ExactCurveArrangementResult2 retained accessors, into_region(), or arrangement_report() when a derived compatibility report is required"
     )]
     pub fn into_region_build_result(self) -> RegionLineSegmentRegionBuildResult2 {
-        self.region_result
+        self.compatibility_result
     }
 
     /// Consumes this result and returns the materialized region as a classification.
@@ -7206,7 +7206,7 @@ impl ExactCurveArrangementResult2 {
 
     /// Consumes this result and returns the materialized region, if any.
     pub fn into_region(self) -> Option<Region2> {
-        self.region_result.into_region()
+        self.compatibility_result.into_region()
     }
 }
 
