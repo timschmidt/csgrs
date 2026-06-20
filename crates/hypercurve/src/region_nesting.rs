@@ -10478,17 +10478,26 @@ impl ExactCurveArrangementReport2 {
 
     /// Returns final output contour count retained after boundary role assignment.
     pub const fn output_contour_count(&self) -> Option<usize> {
-        self.output_contour_count
+        match self.boundary_output_cache() {
+            Some(boundary_cache) => Some(boundary_cache.output_contour_count()),
+            None => None,
+        }
     }
 
     /// Returns final output boundary segment count retained after boundary role assignment.
     pub const fn output_segment_count(&self) -> Option<usize> {
-        self.output_segment_count
+        match self.boundary_output_cache() {
+            Some(boundary_cache) => Some(boundary_cache.output_segment_count()),
+            None => None,
+        }
     }
 
     /// Returns final output primitive-family counts after role assignment.
     pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.output_segment_kind_counts
+        match self.boundary_output_cache() {
+            Some(boundary_cache) => Some(boundary_cache.output_segment_kind_counts()),
+            None => None,
+        }
     }
 
     /// Returns per-output-ring source provenance buckets.
@@ -10647,124 +10656,179 @@ impl ExactCurveArrangementReport2 {
 
     /// Returns material contour count after output role assignment.
     pub const fn material_contour_count(&self) -> Option<usize> {
-        self.material_contour_count
+        match self.boundary_output_cache() {
+            Some(boundary_cache) => Some(boundary_cache.material_contour_count()),
+            None => None,
+        }
     }
 
     /// Returns hole contour count after output role assignment.
     pub const fn hole_contour_count(&self) -> Option<usize> {
-        self.hole_contour_count
+        match self.boundary_output_cache() {
+            Some(boundary_cache) => Some(boundary_cache.hole_contour_count()),
+            None => None,
+        }
     }
 
     /// Returns material boundary segment count after output role assignment.
     pub const fn material_segment_count(&self) -> Option<usize> {
-        self.material_segment_count
+        match self.boundary_output_cache() {
+            Some(boundary_cache) => Some(boundary_cache.material_segment_count()),
+            None => None,
+        }
     }
 
     /// Returns hole boundary segment count after output role assignment.
     pub const fn hole_segment_count(&self) -> Option<usize> {
-        self.hole_segment_count
+        match self.boundary_output_cache() {
+            Some(boundary_cache) => Some(boundary_cache.hole_segment_count()),
+            None => None,
+        }
     }
 
     /// Returns retained output role report count when role assignment was reached.
     pub const fn role_report_count(&self) -> Option<usize> {
-        self.role_report_count
+        match self.role_cache() {
+            Some(role_cache) => Some(role_cache.role_report_count()),
+            None => None,
+        }
     }
 
     /// Returns retained output role reports when role assignment was reached.
     pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
-        self.role_reports.as_deref()
+        self.boundary_build_report()
+            .map(RegionBoundaryContourBuildReport2::role_reports)
     }
 
     /// Returns delegated boundary-contour role assignment evidence, when output reached it.
     pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
-        self.boundary_build_report.as_ref()
+        match self.output_cache() {
+            Some(output_cache) => output_cache.boundary_build_report(),
+            None => None,
+        }
     }
 
     /// Returns final boundary-role assignment stage, if reached.
     pub const fn boundary_build_stage(&self) -> Option<RegionBoundaryContourBuildStage2> {
-        self.boundary_build_stage
+        match self.boundary_build_report() {
+            Some(report) => Some(report.stage()),
+            None => None,
+        }
     }
 
     /// Returns final boundary-role assignment predicate path, if reached.
     pub const fn boundary_build_predicate_path(
         &self,
     ) -> Option<RegionBoundaryContourBuildPredicatePath2> {
-        self.boundary_build_predicate_path
+        match self.boundary_build_report() {
+            Some(report) => Some(report.predicate_path()),
+            None => None,
+        }
     }
 
     /// Returns final boundary-role assignment retained status, if reached.
     pub const fn boundary_build_status(&self) -> Option<RetainedTopologyStatus> {
-        self.boundary_build_status
+        match self.boundary_build_report() {
+            Some(report) => Some(report.status()),
+            None => None,
+        }
     }
 
     /// Returns final boundary-role assignment blocker, if present.
     pub const fn boundary_build_blocker(&self) -> Option<UncertaintyReason> {
-        self.boundary_build_blocker
+        match self.boundary_build_report() {
+            Some(report) => report.blocker(),
+            None => None,
+        }
     }
 
     /// Returns source contour count from final boundary-role assignment, if reached.
     pub const fn boundary_build_source_contour_count(&self) -> Option<usize> {
-        self.boundary_build_source_contour_count
+        match self.boundary_build_report() {
+            Some(report) => Some(report.source_contour_count()),
+            None => None,
+        }
     }
 
     /// Returns source boundary segment count from final boundary-role assignment, if reached.
     pub const fn boundary_build_source_segment_count(&self) -> Option<usize> {
-        self.boundary_build_source_segment_count
+        match self.boundary_build_report() {
+            Some(report) => Some(report.source_segment_count()),
+            None => None,
+        }
     }
 
     /// Returns contour-pair validation schedule size from final role assignment, if reached.
     pub const fn boundary_build_validation_candidate_pair_count(&self) -> Option<usize> {
-        self.boundary_build_validation_candidate_pair_count
+        match self.boundary_build_report() {
+            Some(report) => Some(report.validation_candidate_pair_count()),
+            None => None,
+        }
     }
 
     /// Returns contour-pair validation test count from final role assignment, if reached.
     pub const fn boundary_build_validation_tested_pair_count(&self) -> Option<usize> {
-        self.boundary_build_validation_tested_pair_count
+        match self.boundary_build_report() {
+            Some(report) => Some(report.validation_tested_pair_count()),
+            None => None,
+        }
     }
 
     /// Returns exact validation intersection event count from final role assignment, if reached.
     pub const fn boundary_build_validation_intersection_event_count(&self) -> Option<usize> {
-        self.boundary_build_validation_intersection_event_count
+        match self.boundary_build_report() {
+            Some(report) => Some(report.validation_intersection_event_count()),
+            None => None,
+        }
     }
 
     /// Returns containment classification count from final role assignment, if reached.
     pub const fn boundary_build_nesting_classification_count(&self) -> Option<usize> {
-        self.boundary_build_nesting_classification_count
+        match self.boundary_build_report() {
+            Some(report) => Some(report.nesting_classification_count()),
+            None => None,
+        }
     }
 
     /// Returns first blocking contour index from final role assignment, if present.
     pub const fn boundary_build_blocker_first_contour_index(&self) -> Option<usize> {
-        self.boundary_build_blocker_first_contour_index
+        match self.boundary_build_report() {
+            Some(report) => report.blocker_first_contour_index(),
+            None => None,
+        }
     }
 
     /// Returns second blocking contour index from final role assignment, if present.
     pub const fn boundary_build_blocker_second_contour_index(&self) -> Option<usize> {
-        self.boundary_build_blocker_second_contour_index
+        match self.boundary_build_report() {
+            Some(report) => report.blocker_second_contour_index(),
+            None => None,
+        }
     }
 
     /// Returns whether final output evaluation facts were retained.
     pub const fn evaluated_output(&self) -> bool {
-        self.evaluated_output
+        self.summary_cache().evaluated_output()
     }
 
     /// Returns whether the retained evaluation materialized a region, when evaluated.
     pub const fn materialized_region(&self) -> Option<bool> {
-        self.materialized_region
+        self.summary_cache().materialized_region()
     }
 
     /// Returns the final retained build stage, when evaluated.
     pub const fn stage(&self) -> Option<RegionLineSegmentRegionBuildStage2> {
-        self.stage
+        self.summary_cache().stage()
     }
 
     /// Returns the final retained topology status, when evaluated.
     pub const fn status(&self) -> Option<RetainedTopologyStatus> {
-        self.status
+        self.summary_cache().status()
     }
 
     /// Returns the final retained blocker, when the evaluated arrangement blocked.
     pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.blocker
+        self.summary_cache().blocker()
     }
 }
 
