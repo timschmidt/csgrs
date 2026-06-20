@@ -2615,6 +2615,10 @@ fn curve_string_chamfer_arc_neighbor_reports_unsupported() {
     assert!(chamfer.curve_string().is_none());
     assert!(chamfer.report().status().is_retained_evidence());
     assert_eq!(
+        chamfer.report().input_path(),
+        CurveStringChamferInputPath2::Parameters
+    );
+    assert_eq!(
         chamfer.report().predicate_path(),
         CurveStringChamferPredicatePath2::UnsupportedSegmentFamily
     );
@@ -2631,6 +2635,53 @@ fn curve_string_chamfer_arc_neighbor_reports_unsupported() {
     assert_eq!(chamfer.report().chamfer_segment_start_point(), None);
     assert_eq!(chamfer.report().chamfer_segment_end_point(), None);
     assert_eq!(chamfer.report().output_segment_count(), None);
+}
+
+#[test]
+fn curve_string_chamfer_next_arc_neighbor_reports_parameter_path_unsupported() {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 2, 0),
+        Segment2::Arc(CircularArc2::from_bulge(p(2, 0), p(4, 0), s(1)).unwrap()),
+    ])
+    .unwrap();
+
+    let chamfer = curve
+        .chamfer_line_line_vertex_by_parameters_with_report(1, q(1, 2), q(1, 2), &policy())
+        .unwrap();
+
+    assert!(chamfer.curve_string().is_none());
+    assert!(chamfer.report().status().is_retained_evidence());
+    assert_eq!(
+        chamfer.report().input_path(),
+        CurveStringChamferInputPath2::Parameters
+    );
+    assert_eq!(
+        chamfer.report().stage(),
+        CurveStringChamferStage2::InputValidation
+    );
+    assert_eq!(
+        chamfer.report().predicate_path(),
+        CurveStringChamferPredicatePath2::UnsupportedSegmentFamily
+    );
+    assert_eq!(
+        chamfer.report().blocker(),
+        Some(UncertaintyReason::Unsupported)
+    );
+    assert_eq!(
+        chamfer.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 1 }
+    );
+    assert_eq!(chamfer.report().previous_segment_start_point(), &p(0, 0));
+    assert_eq!(chamfer.report().previous_segment_end_point(), &p(2, 0));
+    assert_eq!(chamfer.report().next_segment_start_point(), &p(2, 0));
+    assert_eq!(chamfer.report().next_segment_end_point(), &p(4, 0));
+    assert_eq!(chamfer.report().previous_cut_point(), None);
+    assert_eq!(chamfer.report().next_cut_point(), None);
+    assert_eq!(chamfer.report().chamfer_segment_index(), None);
+    assert_eq!(chamfer.report().chamfer_segment_start_point(), None);
+    assert_eq!(chamfer.report().chamfer_segment_end_point(), None);
+    assert_eq!(chamfer.report().output_segment_count(), None);
+    assert_eq!(chamfer.report().output_segment_kind_counts(), None);
 }
 
 #[test]

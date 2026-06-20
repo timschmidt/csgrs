@@ -2252,7 +2252,7 @@ impl CurveString2 {
         ) {
             (Segment2::Line(previous), Segment2::Line(next)) => (previous, next),
             _ => {
-                let mut result = blocked_chamfer_result(
+                return Ok(blocked_chamfer_result(
                     self,
                     previous_segment_index,
                     next_segment_index,
@@ -2262,9 +2262,7 @@ impl CurveString2 {
                     CurveStringChamferPredicatePath2::UnsupportedSegmentFamily,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Unsupported),
-                );
-                result.report_mut().input_path = CurveStringChamferInputPath2::Points;
-                return Ok(result);
+                ));
             }
         };
 
