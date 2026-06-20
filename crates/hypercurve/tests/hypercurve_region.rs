@@ -3507,6 +3507,8 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     let attempt = ExactCurveArrangementAttempt2::new(request);
     let result = attempt.evaluate(&policy()).unwrap();
+    let owned_result = attempt.clone().evaluate_owned(&policy()).unwrap();
+    assert_eq!(owned_result, result);
 
     assert_eq!(result.source_segment_count(), 2);
     assert_eq!(result.fill_rule(), FillRule::NonZero);

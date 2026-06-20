@@ -1267,7 +1267,7 @@ impl Region2 {
     ) -> CurveResult<Classification<Self>> {
         let request =
             ExactCurveArrangementRequest2::from_unordered_line_segments(segments, fill_rule);
-        let result = ExactCurveArrangementAttempt2::new(request).evaluate(policy)?;
+        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(policy)?;
         Ok(result.into_region_classification())
     }
 
@@ -1290,7 +1290,7 @@ impl Region2 {
         let request = ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments(
             segments, fill_rule,
         );
-        let result = ExactCurveArrangementAttempt2::new(request).evaluate(policy)?;
+        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(policy)?;
         Ok(result.into_region_classification())
     }
 
@@ -1313,7 +1313,7 @@ impl Region2 {
             segments, fill_rule,
         );
         Ok(ExactCurveArrangementAttempt2::new(request)
-            .evaluate(policy)?
+            .evaluate_owned(policy)?
             .into_compatibility_region_build_result())
     }
 
@@ -1335,7 +1335,7 @@ impl Region2 {
         let request =
             ExactCurveArrangementRequest2::from_unordered_line_segments(segments, fill_rule);
         Ok(ExactCurveArrangementAttempt2::new(request)
-            .evaluate(policy)?
+            .evaluate_owned(policy)?
             .into_compatibility_region_build_result())
     }
 }
@@ -1532,7 +1532,7 @@ impl Region2 {
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
         let request = ExactCurveArrangementRequest2::from_unordered_segments(segments, fill_rule);
-        let result = ExactCurveArrangementAttempt2::new(request).evaluate(policy)?;
+        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(policy)?;
         Ok(result.into_region_classification())
     }
 
@@ -1552,7 +1552,7 @@ impl Region2 {
     ) -> CurveResult<Classification<Self>> {
         let request =
             ExactCurveArrangementRequest2::from_borrowed_unordered_segments(segments, fill_rule);
-        let result = ExactCurveArrangementAttempt2::new(request).evaluate(policy)?;
+        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(policy)?;
         Ok(result.into_region_classification())
     }
 
@@ -1574,7 +1574,7 @@ impl Region2 {
         let request =
             ExactCurveArrangementRequest2::from_borrowed_unordered_segments(segments, fill_rule);
         Ok(ExactCurveArrangementAttempt2::new(request)
-            .evaluate(policy)?
+            .evaluate_owned(policy)?
             .into_compatibility_region_build_result())
     }
 
@@ -1602,7 +1602,7 @@ impl Region2 {
     ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
         let request = ExactCurveArrangementRequest2::from_unordered_segments(segments, fill_rule);
         Ok(ExactCurveArrangementAttempt2::new(request)
-            .evaluate(policy)?
+            .evaluate_owned(policy)?
             .into_compatibility_region_build_result())
     }
 }
@@ -7568,21 +7568,33 @@ impl ExactCurveArrangementAttempt2 {
 
     /// Evaluates the request through the retained exact arrangement pipeline.
     pub fn evaluate(&self, policy: &CurvePolicy) -> CurveResult<ExactCurveArrangementResult2> {
+        Self::evaluate_request(self.request.clone(), policy)
+    }
+
+    /// Consumes this attempt and evaluates its request through the retained exact arrangement pipeline.
+    pub fn evaluate_owned(self, policy: &CurvePolicy) -> CurveResult<ExactCurveArrangementResult2> {
+        Self::evaluate_request(self.request, policy)
+    }
+
+    fn evaluate_request(
+        request: ExactCurveArrangementRequest2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<ExactCurveArrangementResult2> {
         let compatibility_projection =
-            if let Some(source_line_segments) = self.request.source_line_segments.as_ref() {
+            if let Some(source_line_segments) = request.source_line_segments.as_ref() {
                 evaluate_unordered_line_segments_region_result(
                     source_line_segments.clone(),
-                    self.request.fill_rule,
+                    request.fill_rule,
                     policy,
                 )?
             } else {
                 evaluate_unordered_segments_region_result(
-                    self.request.source_segments.clone(),
-                    self.request.fill_rule,
+                    request.source_segments.clone(),
+                    request.fill_rule,
                     policy,
                 )?
             };
-        let workspace = ExactCurveWorkspace2::from_request(self.request.clone(), policy)?
+        let workspace = ExactCurveWorkspace2::from_request(request, policy)?
             .with_legacy_region_build_evidence(
                 compatibility_projection.report(),
                 compatibility_projection.region().is_some(),
