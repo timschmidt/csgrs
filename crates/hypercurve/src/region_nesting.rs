@@ -1018,11 +1018,14 @@ pub struct ExactCurveArrangementReport2 {
     reversed_source_segment_count: Option<usize>,
     arranged_segment_count: Option<usize>,
     arranged_segment_kind_counts: Option<SegmentKindCounts>,
+    arranged_source_report_count: Option<usize>,
+    source_report_count: Option<usize>,
     output_ring_count: Option<usize>,
     output_boundary_segment_count: Option<usize>,
     output_boundary_segment_kind_counts: Option<SegmentKindCounts>,
     output_contour_count: Option<usize>,
     output_segment_count: Option<usize>,
+    output_segment_kind_counts: Option<SegmentKindCounts>,
     material_contour_count: Option<usize>,
     hole_contour_count: Option<usize>,
     material_segment_count: Option<usize>,
@@ -8051,11 +8054,14 @@ impl ExactCurveArrangementReport2 {
             reversed_source_segment_count: result.reversed_source_segment_count(),
             arranged_segment_count: result.arranged_segment_count(),
             arranged_segment_kind_counts: result.arranged_segment_kind_counts(),
+            arranged_source_report_count: result.arranged_source_report_count(),
+            source_report_count: result.source_report_count(),
             output_ring_count: result.output_ring_count(),
             output_boundary_segment_count: result.output_boundary_segment_count(),
             output_boundary_segment_kind_counts: result.output_boundary_segment_kind_counts(),
             output_contour_count: result.output_contour_count(),
             output_segment_count: result.output_segment_count(),
+            output_segment_kind_counts: result.output_segment_kind_counts(),
             material_contour_count: result.material_contour_count(),
             hole_contour_count: result.hole_contour_count(),
             material_segment_count: result.material_segment_count(),
@@ -8293,6 +8299,16 @@ impl ExactCurveArrangementReport2 {
         self.arranged_segment_kind_counts
     }
 
+    /// Returns the retained arranged-source provenance record count.
+    pub const fn arranged_source_report_count(&self) -> Option<usize> {
+        self.arranged_source_report_count
+    }
+
+    /// Returns the retained output-source provenance record count.
+    pub const fn source_report_count(&self) -> Option<usize> {
+        self.source_report_count
+    }
+
     /// Returns output ring count retained by ring assembly, when available.
     pub const fn output_ring_count(&self) -> Option<usize> {
         self.output_ring_count
@@ -8316,6 +8332,11 @@ impl ExactCurveArrangementReport2 {
     /// Returns final output boundary segment count retained after boundary role assignment.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+
+    /// Returns final output primitive-family counts after role assignment.
+    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_segment_kind_counts
     }
 
     /// Returns material contour count after output role assignment.
