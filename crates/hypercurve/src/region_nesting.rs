@@ -6651,6 +6651,52 @@ impl ExactCurveArrangementResult2 {
         }
     }
 
+    /// Returns output role assignment buckets grouped by topology status.
+    pub const fn role_status_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRoleStatusBucketCache2> {
+        match self.role_cache() {
+            Some(role_cache) => Some(role_cache.role_status_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns output role assignment buckets grouped by source contour identity.
+    pub const fn role_source_contour_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRoleSourceContourBucketCache2> {
+        match self.role_cache() {
+            Some(role_cache) => Some(role_cache.role_source_contour_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns output role assignment buckets grouped by exact nesting depth.
+    pub const fn role_nesting_depth_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRoleNestingDepthBucketCache2> {
+        match self.role_cache() {
+            Some(role_cache) => Some(role_cache.role_nesting_depth_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns output role containment evidence grouped by containing source contour.
+    pub const fn role_containment_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRoleContainmentBucketCache2> {
+        match self.role_cache() {
+            Some(role_cache) => Some(role_cache.role_containment_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns material and hole role buckets in stable order.
+    pub fn role_buckets(&self) -> Option<&[ExactCurveArrangementOutputRoleBucket2]> {
+        self.role_cache()
+            .map(ExactCurveArrangementOutputRoleCache2::buckets)
+    }
+
     /// Returns retained output role reports when role assignment was reached.
     pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
         self.boundary_build_report()

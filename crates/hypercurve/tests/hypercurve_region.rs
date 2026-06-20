@@ -2340,22 +2340,21 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         boundary_role_bucket_cache.buckets()[1].output_segment_count(),
         0
     );
-    let role_cache = result.role_cache().unwrap();
     let role_reports = result.role_reports().unwrap();
     assert_eq!(result.role_report_count().unwrap(), role_reports.len());
     assert_eq!(result.material_contour_count(), Some(1));
     assert_eq!(result.hole_contour_count(), Some(0));
     assert_eq!(result.material_segment_count(), Some(4));
     assert_eq!(result.hole_segment_count(), Some(0));
-    let role_status_bucket_cache = role_cache.role_status_bucket_cache();
+    let role_status_bucket_cache = result.role_status_bucket_cache().unwrap();
     assert_eq!(role_status_bucket_cache.bucket_count(), 6);
     assert_eq!(
         role_status_bucket_cache.assignment_ref_count(),
-        role_cache.role_report_count()
+        result.role_report_count().unwrap()
     );
     assert_eq!(
         role_status_bucket_cache.native_exact_ref_count(),
-        role_cache.role_report_count()
+        result.role_report_count().unwrap()
     );
     assert_eq!(
         role_status_bucket_cache.certified_approximation_ref_count(),
@@ -2373,7 +2372,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(
         role_status_bucket_cache.buckets()[0].assignments().len(),
-        role_cache.role_report_count()
+        result.role_report_count().unwrap()
     );
     assert_eq!(
         role_status_bucket_cache.buckets()[0].assignments()[0].role(),
@@ -2388,7 +2387,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         0
     );
     assert_eq!(
-        role_cache.buckets()[0].assignments()
+        result.role_buckets().unwrap()[0].assignments()
             [role_status_bucket_cache.buckets()[0].assignments()[0].assignment_index()]
         .status(),
         RetainedTopologyStatus::NativeExact
@@ -2402,14 +2401,14 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
             .assignments()
             .is_empty()
     );
-    let role_source_contour_bucket_cache = role_cache.role_source_contour_bucket_cache();
+    let role_source_contour_bucket_cache = result.role_source_contour_bucket_cache().unwrap();
     assert_eq!(
         role_source_contour_bucket_cache.source_contour_bucket_count(),
         role_reports.len()
     );
     assert_eq!(
         role_source_contour_bucket_cache.assignment_ref_count(),
-        role_cache.role_report_count()
+        result.role_report_count().unwrap()
     );
     assert_eq!(role_source_contour_bucket_cache.max_bucket_size(), 1);
     assert_eq!(role_source_contour_bucket_cache.buckets().len(), 1);
@@ -2431,14 +2430,14 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(source_contour_assignment.assignment_index(), 0);
     assert_eq!(source_contour_assignment.role_report_index(), 0);
     assert_eq!(source_contour_assignment.output_role_index(), 0);
-    let role_nesting_depth_bucket_cache = role_cache.role_nesting_depth_bucket_cache();
+    let role_nesting_depth_bucket_cache = result.role_nesting_depth_bucket_cache().unwrap();
     assert_eq!(
         role_nesting_depth_bucket_cache.nesting_depth_bucket_count(),
         1
     );
     assert_eq!(
         role_nesting_depth_bucket_cache.assignment_ref_count(),
-        role_cache.role_report_count()
+        result.role_report_count().unwrap()
     );
     assert_eq!(role_nesting_depth_bucket_cache.max_bucket_size(), 1);
     assert_eq!(role_nesting_depth_bucket_cache.buckets().len(), 1);
@@ -2461,18 +2460,18 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(nesting_depth_assignment.role_report_index(), 0);
     assert_eq!(nesting_depth_assignment.source_contour_index(), 0);
     assert_eq!(nesting_depth_assignment.output_role_index(), 0);
-    assert_eq!(role_cache.buckets().len(), 2);
+    assert_eq!(result.role_buckets().unwrap().len(), 2);
     assert_eq!(
-        role_cache.buckets()[0].role(),
+        result.role_buckets().unwrap()[0].role(),
         RegionBoundaryContourRole2::Material
     );
-    assert_eq!(role_cache.buckets()[0].assignments().len(), 1);
+    assert_eq!(result.role_buckets().unwrap()[0].assignments().len(), 1);
     assert_eq!(
-        role_cache.buckets()[1].role(),
+        result.role_buckets().unwrap()[1].role(),
         RegionBoundaryContourRole2::Hole
     );
-    assert!(role_cache.buckets()[1].assignments().is_empty());
-    let role_assignment = &role_cache.buckets()[0].assignments()[0];
+    assert!(result.role_buckets().unwrap()[1].assignments().is_empty());
+    let role_assignment = &result.role_buckets().unwrap()[0].assignments()[0];
     assert_eq!(role_assignment.role_report_index(), 0);
     assert_eq!(role_assignment.source_contour_index(), 0);
     assert_eq!(role_assignment.source_segment_count(), 4);
@@ -2511,7 +2510,6 @@ fn exact_curve_arrangement_attempt_retains_output_role_containment() {
     let result = ExactCurveArrangementAttempt2::new(request)
         .evaluate(&policy())
         .unwrap();
-    let role_cache = result.role_cache().unwrap();
 
     assert!(result.status().unwrap().is_native_exact());
     assert_eq!(result.output_ring_count(), Some(2));
@@ -2550,7 +2548,7 @@ fn exact_curve_arrangement_attempt_retains_output_role_containment() {
         4
     );
 
-    let containment_cache = role_cache.role_containment_bucket_cache();
+    let containment_cache = result.role_containment_bucket_cache().unwrap();
     assert_eq!(containment_cache.containing_contour_bucket_count(), 1);
     assert_eq!(containment_cache.containment_ref_count(), 1);
     assert_eq!(containment_cache.uncontained_assignment_ref_count(), 1);
@@ -2568,12 +2566,12 @@ fn exact_curve_arrangement_attempt_retains_output_role_containment() {
     assert_eq!(containment.containing_contour_ref_index(), 0);
     assert_eq!(containment.output_role_index(), 0);
     assert_eq!(
-        role_cache.buckets()[1].assignments()[containment.assignment_index()]
+        result.role_buckets().unwrap()[1].assignments()[containment.assignment_index()]
             .containing_contour_indices(),
         &[0]
     );
 
-    let nesting_depth_cache = role_cache.role_nesting_depth_bucket_cache();
+    let nesting_depth_cache = result.role_nesting_depth_bucket_cache().unwrap();
     assert_eq!(nesting_depth_cache.nesting_depth_bucket_count(), 2);
     assert_eq!(nesting_depth_cache.assignment_ref_count(), 2);
     assert_eq!(nesting_depth_cache.buckets()[0].nesting_depth(), 0);
@@ -3712,22 +3710,21 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         boundary_role_bucket_cache.buckets()[1].output_segment_count(),
         0
     );
-    let role_cache = result.role_cache().unwrap();
     let role_reports = result.role_reports().unwrap();
     assert_eq!(result.role_report_count().unwrap(), role_reports.len());
     assert_eq!(result.material_contour_count(), Some(1));
     assert_eq!(result.hole_contour_count(), Some(0));
     assert_eq!(result.material_segment_count(), Some(2));
     assert_eq!(result.hole_segment_count(), Some(0));
-    let role_status_bucket_cache = role_cache.role_status_bucket_cache();
+    let role_status_bucket_cache = result.role_status_bucket_cache().unwrap();
     assert_eq!(role_status_bucket_cache.bucket_count(), 6);
     assert_eq!(
         role_status_bucket_cache.assignment_ref_count(),
-        role_cache.role_report_count()
+        result.role_report_count().unwrap()
     );
     assert_eq!(
         role_status_bucket_cache.native_exact_ref_count(),
-        role_cache.role_report_count()
+        result.role_report_count().unwrap()
     );
     assert_eq!(
         role_status_bucket_cache.certified_approximation_ref_count(),
@@ -3744,7 +3741,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(
         role_status_bucket_cache.buckets()[0].assignments().len(),
-        role_cache.role_report_count()
+        result.role_report_count().unwrap()
     );
     assert_eq!(
         role_status_bucket_cache.buckets()[0].assignments()[0].role(),
@@ -3759,7 +3756,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         0
     );
     assert_eq!(
-        role_cache.buckets()[0].assignments()
+        result.role_buckets().unwrap()[0].assignments()
             [role_status_bucket_cache.buckets()[0].assignments()[0].assignment_index()]
         .status(),
         RetainedTopologyStatus::NativeExact
@@ -3773,14 +3770,14 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
             .assignments()
             .is_empty()
     );
-    let role_source_contour_bucket_cache = role_cache.role_source_contour_bucket_cache();
+    let role_source_contour_bucket_cache = result.role_source_contour_bucket_cache().unwrap();
     assert_eq!(
         role_source_contour_bucket_cache.source_contour_bucket_count(),
         role_reports.len()
     );
     assert_eq!(
         role_source_contour_bucket_cache.assignment_ref_count(),
-        role_cache.role_report_count()
+        result.role_report_count().unwrap()
     );
     assert_eq!(role_source_contour_bucket_cache.max_bucket_size(), 1);
     assert_eq!(role_source_contour_bucket_cache.buckets().len(), 1);
@@ -3802,14 +3799,14 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(source_contour_assignment.assignment_index(), 0);
     assert_eq!(source_contour_assignment.role_report_index(), 0);
     assert_eq!(source_contour_assignment.output_role_index(), 0);
-    let role_nesting_depth_bucket_cache = role_cache.role_nesting_depth_bucket_cache();
+    let role_nesting_depth_bucket_cache = result.role_nesting_depth_bucket_cache().unwrap();
     assert_eq!(
         role_nesting_depth_bucket_cache.nesting_depth_bucket_count(),
         1
     );
     assert_eq!(
         role_nesting_depth_bucket_cache.assignment_ref_count(),
-        role_cache.role_report_count()
+        result.role_report_count().unwrap()
     );
     assert_eq!(role_nesting_depth_bucket_cache.max_bucket_size(), 1);
     assert_eq!(role_nesting_depth_bucket_cache.buckets().len(), 1);
@@ -3832,18 +3829,18 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(nesting_depth_assignment.role_report_index(), 0);
     assert_eq!(nesting_depth_assignment.source_contour_index(), 0);
     assert_eq!(nesting_depth_assignment.output_role_index(), 0);
-    assert_eq!(role_cache.buckets().len(), 2);
+    assert_eq!(result.role_buckets().unwrap().len(), 2);
     assert_eq!(
-        role_cache.buckets()[0].role(),
+        result.role_buckets().unwrap()[0].role(),
         RegionBoundaryContourRole2::Material
     );
-    assert_eq!(role_cache.buckets()[0].assignments().len(), 1);
+    assert_eq!(result.role_buckets().unwrap()[0].assignments().len(), 1);
     assert_eq!(
-        role_cache.buckets()[1].role(),
+        result.role_buckets().unwrap()[1].role(),
         RegionBoundaryContourRole2::Hole
     );
-    assert!(role_cache.buckets()[1].assignments().is_empty());
-    let role_assignment = &role_cache.buckets()[0].assignments()[0];
+    assert!(result.role_buckets().unwrap()[1].assignments().is_empty());
+    let role_assignment = &result.role_buckets().unwrap()[0].assignments()[0];
     assert_eq!(role_assignment.role_report_index(), 0);
     assert_eq!(role_assignment.source_contour_index(), 0);
     assert_eq!(role_assignment.source_segment_count(), 2);
