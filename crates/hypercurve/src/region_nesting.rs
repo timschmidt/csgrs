@@ -7216,7 +7216,7 @@ impl ExactCurveArrangementResult2 {
 
     /// Consumes this result and returns the materialized region, if any.
     pub fn into_region(self) -> Option<Region2> {
-        self.compatibility_result.into_region()
+        self.into_compatibility_region_build_result().into_region()
     }
 }
 
