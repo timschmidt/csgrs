@@ -217,7 +217,8 @@ assert!(matches!(location, hypercurve::Classification::Decided(_)));
 ```
 
 For unordered exact line/arc input, evaluate the retained arrangement attempt and
-read output, blockers, and reports from the result:
+read output and blockers from the result. Derive a report only when a
+compatibility/reporting view is needed:
 
 ```rust,ignore
 use hypercurve::{
@@ -237,10 +238,9 @@ let lines = vec![
 let request =
     ExactCurveArrangementRequest2::from_unordered_line_segments(lines, FillRule::NonZero);
 let result = ExactCurveArrangementAttempt2::new(request).evaluate(&CurvePolicy::certified())?;
-let (classification, report) = result.into_region_classification_and_arrangement_report();
 
-assert!(report.status().unwrap().is_native_exact());
-let region = match classification {
+assert!(result.status().unwrap().is_native_exact());
+let region = match result.region_classification() {
     Classification::Decided(region) => region,
     Classification::Uncertain(reason) => panic!("arrangement blocked: {reason:?}"),
 };
@@ -248,6 +248,9 @@ assert!(matches!(
     region.classify_point(&p(2, 2), &CurvePolicy::certified())?,
     Classification::Decided(_)
 ));
+
+let report = result.arrangement_report();
+assert_eq!(report.summary_cache(), result.summary_cache());
 ```
 
 ## Development
