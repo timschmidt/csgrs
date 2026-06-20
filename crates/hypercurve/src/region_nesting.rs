@@ -2331,22 +2331,21 @@ impl ExactCurveWorkspace2 {
         })
     }
 
-    fn with_arrangement_result_facts(
+    fn with_arrangement_report_facts(
         mut self,
-        region_result: &RegionLineSegmentRegionBuildResult2,
+        report: &RegionLineSegmentRegionBuildReport2,
+        materialized_region: bool,
     ) -> Self {
         self.split_cache = Some(ExactCurveArrangementSplitCache2::from_arrangement_report(
-            region_result.report(),
+            report,
         ));
         self.endpoint_graph_cache =
-            ExactCurveArrangementEndpointGraphCache2::from_arrangement_report(
-                region_result.report(),
-            );
-        self.ring_assembly_cache = ExactCurveArrangementRingAssemblyCache2::from_arrangement_report(
-            region_result.report(),
-        );
-        self.output_cache = Some(ExactCurveArrangementOutputCache2::from_arrangement_result(
-            region_result,
+            ExactCurveArrangementEndpointGraphCache2::from_arrangement_report(report);
+        self.ring_assembly_cache =
+            ExactCurveArrangementRingAssemblyCache2::from_arrangement_report(report);
+        self.output_cache = Some(ExactCurveArrangementOutputCache2::from_arrangement_report(
+            report,
+            materialized_region,
         ));
         self
     }
@@ -5875,8 +5874,10 @@ impl ExactCurveArrangementRingAssemblyCache2 {
 }
 
 impl ExactCurveArrangementOutputCache2 {
-    fn from_arrangement_result(region_result: &RegionLineSegmentRegionBuildResult2) -> Self {
-        let report = region_result.report();
+    fn from_arrangement_report(
+        report: &RegionLineSegmentRegionBuildReport2,
+        materialized_region: bool,
+    ) -> Self {
         let boundary_build_report = report.boundary_build_report().cloned();
         let boundary_output_cache =
             ExactCurveArrangementOutputBoundaryCache2::from_arrangement_report(report);
@@ -5884,7 +5885,7 @@ impl ExactCurveArrangementOutputCache2 {
             .as_ref()
             .and_then(ExactCurveArrangementOutputRoleCache2::from_boundary_build_report);
         Self {
-            materialized_region: region_result.region().is_some(),
+            materialized_region,
             boundary_build_report,
             boundary_output_cache,
             role_cache,
@@ -6153,7 +6154,10 @@ impl ExactCurveArrangementAttempt2 {
                 )?
             };
         let workspace = ExactCurveWorkspace2::from_request(self.request.clone(), policy)?
-            .with_arrangement_result_facts(&region_result);
+            .with_arrangement_report_facts(
+                region_result.report(),
+                region_result.region().is_some(),
+            );
         Ok(ExactCurveArrangementResult2 {
             evaluation: ExactCurveArrangementEvaluation2::new(workspace),
             region_result,
