@@ -6364,6 +6364,70 @@ impl ExactCurveArrangementResult2 {
         }
     }
 
+    /// Returns the first source segment in a split-stage blocker, when known.
+    pub const fn split_blocker_first_source_segment_index(&self) -> Option<usize> {
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.first_source_segment_index()),
+            None => None,
+        }
+    }
+
+    /// Returns the primitive family of the first source segment in a split-stage blocker.
+    pub const fn split_blocker_first_source_segment_kind(&self) -> Option<SegmentKind> {
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.first_source_segment_kind()),
+            None => None,
+        }
+    }
+
+    /// Returns the exact start point of the first source segment in a split-stage blocker.
+    pub const fn split_blocker_first_source_start_point(&self) -> Option<&Point2> {
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.first_source_start_point()),
+            None => None,
+        }
+    }
+
+    /// Returns the exact end point of the first source segment in a split-stage blocker.
+    pub const fn split_blocker_first_source_end_point(&self) -> Option<&Point2> {
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.first_source_end_point()),
+            None => None,
+        }
+    }
+
+    /// Returns the second source segment in a split-stage blocker, when known.
+    pub const fn split_blocker_second_source_segment_index(&self) -> Option<usize> {
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.second_source_segment_index()),
+            None => None,
+        }
+    }
+
+    /// Returns the primitive family of the second source segment in a split-stage blocker.
+    pub const fn split_blocker_second_source_segment_kind(&self) -> Option<SegmentKind> {
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.second_source_segment_kind()),
+            None => None,
+        }
+    }
+
+    /// Returns the exact start point of the second source segment in a split-stage blocker.
+    pub const fn split_blocker_second_source_start_point(&self) -> Option<&Point2> {
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.second_source_start_point()),
+            None => None,
+        }
+    }
+
+    /// Returns the exact end point of the second source segment in a split-stage blocker.
+    pub const fn split_blocker_second_source_end_point(&self) -> Option<&Point2> {
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.second_source_end_point()),
+            None => None,
+        }
+    }
+
     /// Returns arranged output segment count when retained splitting completed.
     pub const fn split_output_segment_count(&self) -> Option<usize> {
         match self.split_cache() {
