@@ -1369,9 +1369,14 @@ impl Region2 {
     }
 
     /// Builds a region from borrowed unordered exact line segments and retains evidence.
+    ///
+    /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
+    /// retained accessors directly. Use
+    /// [`ExactCurveArrangementResult2::arrangement_report`] only when a
+    /// compatibility report is required.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate"
+        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate; call arrangement_report() only for derived compatibility reports"
     )]
     pub fn from_unordered_line_segments_borrowed_with_report(
         segments: &[LineSeg2],
@@ -1387,9 +1392,14 @@ impl Region2 {
     }
 
     /// Builds a region from unordered exact line segments and retains assembly evidence.
+    ///
+    /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
+    /// retained accessors directly. Use
+    /// [`ExactCurveArrangementResult2::arrangement_report`] only when a
+    /// compatibility report is required.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate"
+        note = "use ExactCurveArrangementRequest2::from_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate; call arrangement_report() only for derived compatibility reports"
     )]
     pub fn from_unordered_line_segments_with_report(
         segments: Vec<LineSeg2>,
@@ -1631,9 +1641,14 @@ impl Region2 {
     }
 
     /// Builds a region from borrowed unordered native line/arc segments and retains evidence.
+    ///
+    /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
+    /// retained accessors directly. Use
+    /// [`ExactCurveArrangementResult2::arrangement_report`] only when a
+    /// compatibility report is required.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_segments with ExactCurveArrangementAttempt2::evaluate"
+        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_segments with ExactCurveArrangementAttempt2::evaluate; call arrangement_report() only for derived compatibility reports"
     )]
     pub fn from_unordered_segments_borrowed_with_report(
         segments: &[Segment2],
@@ -1655,9 +1670,14 @@ impl Region2 {
     /// line/arc fragments from exact split points, and then assembles closed
     /// rings by exact endpoint equality. Overlaps, ambiguous ordering, and
     /// branching/dangling endpoint graphs remain explicit blockers.
+    ///
+    /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
+    /// retained accessors directly. Use
+    /// [`ExactCurveArrangementResult2::arrangement_report`] only when a
+    /// compatibility report is required.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_unordered_segments with ExactCurveArrangementAttempt2::evaluate"
+        note = "use ExactCurveArrangementRequest2::from_unordered_segments with ExactCurveArrangementAttempt2::evaluate; call arrangement_report() only for derived compatibility reports"
     )]
     pub fn from_unordered_segments_with_report(
         segments: Vec<Segment2>,
