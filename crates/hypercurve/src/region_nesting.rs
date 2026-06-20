@@ -7486,6 +7486,16 @@ impl ExactCurveArrangementEvaluation2 {
         }
     }
 
+    /// Consumes this evaluation and returns its retained workspace and summary cache.
+    pub fn into_parts(
+        self,
+    ) -> (
+        ExactCurveWorkspace2,
+        ExactCurveArrangementEvaluationSummaryCache2,
+    ) {
+        (self.workspace, self.summary_cache)
+    }
+
     /// Returns a legacy-shaped region build report projected from retained caches.
     pub fn derived_region_build_report(&self) -> RegionLineSegmentRegionBuildReport2 {
         retained_arrangement_region_build_report(&self.workspace, &self.summary_cache)

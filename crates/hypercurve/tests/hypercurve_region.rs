@@ -4083,6 +4083,10 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(&owned_attempt_request, result.request());
     let owned_evaluation = result.clone().into_evaluation();
     assert_eq!(&owned_evaluation, result.evaluation());
+    let (owned_evaluation_workspace, owned_evaluation_summary_cache) =
+        owned_evaluation.clone().into_parts();
+    assert_eq!(&owned_evaluation_workspace, result.workspace());
+    assert_eq!(&owned_evaluation_summary_cache, result.summary_cache());
     let owned_evaluation_report = owned_evaluation.clone().into_arrangement_report();
     assert_eq!(owned_evaluation_report, result.arrangement_report());
     let owned_evaluation_request = owned_evaluation.clone().into_request();
