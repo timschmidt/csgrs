@@ -451,10 +451,24 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     assert_eq!(role_reports[0].nesting_depth(), 0);
 
     let result = built.region().unwrap();
+    assert_eq!(
+        built.region_classification(),
+        Classification::Decided(result)
+    );
     assert!(inside(result, 1.0, 1.0));
     assert!(inside(result, 3.0, 1.0));
     assert!(inside(result, 5.0, 1.0));
     assert!(!inside(result, 7.0, 1.0));
+
+    let owned_report = built.clone().into_report();
+    assert_eq!(&owned_report, built.report());
+    let (owned_region, owned_parts_report) = built.clone().into_parts();
+    assert_eq!(owned_region.as_ref(), built.region());
+    assert_eq!(&owned_parts_report, built.report());
+    assert_eq!(
+        built.clone().into_region_classification(),
+        Classification::Decided(result.clone())
+    );
 }
 
 #[test]
@@ -719,6 +733,14 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
     );
     assert!(inside(built.region().unwrap(), 3.5, 1.0));
     assert!(!inside(built.region().unwrap(), 1.5, 1.5));
+    assert_eq!(
+        built.region_classification(),
+        Classification::Decided(built.region().unwrap())
+    );
+    assert_eq!(
+        built.clone().into_region_classification(),
+        Classification::Decided(built.region().unwrap().clone())
+    );
 }
 
 #[test]

@@ -256,15 +256,10 @@ pub(crate) fn boolean_region_between_prepared(
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Region2>> {
-    let result = boolean_region_between_prepared_with_report(first, second, op, fill_rule, policy)?;
-    let blocker = result
-        .report()
-        .blocker()
-        .unwrap_or(crate::UncertaintyReason::Unsupported);
-    match result.into_region() {
-        Some(region) => Ok(Classification::Decided(region)),
-        None => Ok(Classification::Uncertain(blocker)),
-    }
+    Ok(
+        boolean_region_between_prepared_with_report(first, second, op, fill_rule, policy)?
+            .into_region_classification(),
+    )
 }
 
 pub(crate) fn boolean_region_between_prepared_with_report(

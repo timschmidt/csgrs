@@ -1332,9 +1332,43 @@ impl RegionBooleanResult2 {
         self.region
     }
 
+    /// Consumes this result and returns retained boolean materialization evidence.
+    pub fn into_report(self) -> RegionBooleanReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized boolean region with its report.
+    pub fn into_parts(self) -> (Option<Region2>, RegionBooleanReport2) {
+        (self.region, self.report)
+    }
+
     /// Returns retained boolean materialization evidence.
     pub const fn report(&self) -> &RegionBooleanReport2 {
         &self.report
+    }
+
+    /// Returns the materialized boolean region as a classification while retaining this result.
+    pub fn region_classification(&self) -> Classification<&Region2> {
+        match self.region() {
+            Some(region) => Classification::Decided(region),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the materialized boolean region as a classification.
+    pub fn into_region_classification(self) -> Classification<Region2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_region() {
+            Some(region) => Classification::Decided(region),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
@@ -1551,15 +1585,10 @@ pub(crate) fn boolean_region_between(
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Region2>> {
-    let result = boolean_region_between_with_report(first, second, op, fill_rule, policy)?;
-    let blocker = result
-        .report()
-        .blocker()
-        .unwrap_or(UncertaintyReason::Unsupported);
-    match result.into_region() {
-        Some(region) => Ok(Classification::Decided(region)),
-        None => Ok(Classification::Uncertain(blocker)),
-    }
+    Ok(
+        boolean_region_between_with_report(first, second, op, fill_rule, policy)?
+            .into_region_classification(),
+    )
 }
 
 pub(crate) fn boolean_region_between_with_report(
