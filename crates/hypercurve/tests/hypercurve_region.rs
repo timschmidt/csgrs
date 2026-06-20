@@ -2188,6 +2188,14 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.endpoint_graph_branch_endpoint_count()
     );
     assert_eq!(
+        arrangement_report.arranged_segment_count(),
+        result.arranged_segment_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_segment_kind_counts(),
+        result.arranged_segment_kind_counts()
+    );
+    assert_eq!(
         arrangement_report.output_boundary_segment_kind_counts(),
         result.output_boundary_segment_kind_counts()
     );
@@ -3581,6 +3589,14 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.endpoint_graph_branch_endpoint_count()
     );
     assert_eq!(
+        arrangement_report.arranged_segment_count(),
+        result.arranged_segment_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_segment_kind_counts(),
+        result.arranged_segment_kind_counts()
+    );
+    assert_eq!(
         arrangement_report.output_segment_count(),
         result.output_segment_count()
     );
@@ -3963,6 +3979,8 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         arrangement_report.endpoint_graph_branch_endpoint_count(),
         None
     );
+    assert_eq!(arrangement_report.arranged_segment_count(), None);
+    assert_eq!(arrangement_report.arranged_segment_kind_counts(), None);
     assert_eq!(arrangement_report.output_ring_count(), None);
     assert_eq!(arrangement_report.output_boundary_segment_count(), None);
     assert_eq!(

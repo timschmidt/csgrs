@@ -993,6 +993,8 @@ pub struct ExactCurveArrangementReport2 {
     endpoint_graph_structural_bucket_count: Option<usize>,
     endpoint_graph_dangling_endpoint_count: Option<usize>,
     endpoint_graph_branch_endpoint_count: Option<usize>,
+    arranged_segment_count: Option<usize>,
+    arranged_segment_kind_counts: Option<SegmentKindCounts>,
     output_ring_count: Option<usize>,
     output_boundary_segment_count: Option<usize>,
     output_boundary_segment_kind_counts: Option<SegmentKindCounts>,
@@ -7972,6 +7974,8 @@ impl ExactCurveArrangementReport2 {
             endpoint_graph_dangling_endpoint_count: result
                 .endpoint_graph_dangling_endpoint_count(),
             endpoint_graph_branch_endpoint_count: result.endpoint_graph_branch_endpoint_count(),
+            arranged_segment_count: result.arranged_segment_count(),
+            arranged_segment_kind_counts: result.arranged_segment_kind_counts(),
             output_ring_count: result.output_ring_count(),
             output_boundary_segment_count: result.output_boundary_segment_count(),
             output_boundary_segment_kind_counts: result.output_boundary_segment_kind_counts(),
@@ -8060,6 +8064,16 @@ impl ExactCurveArrangementReport2 {
     /// Returns branch endpoint count found during endpoint-graph validation.
     pub const fn endpoint_graph_branch_endpoint_count(&self) -> Option<usize> {
         self.endpoint_graph_branch_endpoint_count
+    }
+
+    /// Returns arranged fragment count retained after exact splitting.
+    pub const fn arranged_segment_count(&self) -> Option<usize> {
+        self.arranged_segment_count
+    }
+
+    /// Returns arranged fragment primitive-family counts retained after exact splitting.
+    pub const fn arranged_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.arranged_segment_kind_counts
     }
 
     /// Returns output ring count retained by ring assembly, when available.
