@@ -125,6 +125,19 @@ fn contour_closure_report_materializes_closed_curve_string() {
     assert_eq!(closed.report().endpoint_distance_squared(), &s(0));
     assert_eq!(closed.report().fill_rule(), FillRule::EvenOdd);
     assert_eq!(closed.report().blocker(), None);
+    assert!(matches!(
+        closed.contour_classification(),
+        Classification::Decided(contour) if contour.len() == 4
+    ));
+    let owned_report = closed.clone().into_report();
+    assert_eq!(&owned_report, closed.report());
+    let (owned_contour, owned_parts_report) = closed.clone().into_parts();
+    assert_eq!(owned_contour.as_ref(), closed.contour());
+    assert_eq!(&owned_parts_report, closed.report());
+    assert!(matches!(
+        closed.clone().into_contour_classification(),
+        Classification::Decided(contour) if contour.len() == 4
+    ));
     let contour = closed.contour().unwrap();
     assert_eq!(contour.len(), 4);
     assert_eq!(contour.fill_rule(), FillRule::EvenOdd);
@@ -161,6 +174,19 @@ fn contour_closure_report_blocks_certified_open_curve_string() {
     assert_eq!(closed.report().endpoint_distance_squared(), &s(4));
     assert_eq!(closed.report().fill_rule(), FillRule::NonZero);
     assert_eq!(closed.report().blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(
+        closed.contour_classification(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    let owned_report = closed.clone().into_report();
+    assert_eq!(&owned_report, closed.report());
+    let (owned_contour, owned_parts_report) = closed.clone().into_parts();
+    assert_eq!(owned_contour, None);
+    assert_eq!(&owned_parts_report, closed.report());
+    assert_eq!(
+        closed.into_contour_classification(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
 }
 
 #[test]
@@ -248,6 +274,19 @@ fn contour_merge_adjacent_collinear_lines_reports_source_runs() {
     assert_eq!(contour.len(), 4);
     assert_eq!(contour.fill_rule(), FillRule::NonZero);
     assert_line(&contour.segments()[0], p(0, 0), p(4, 0));
+    assert!(matches!(
+        merged.contour_classification(),
+        Classification::Decided(contour) if contour.len() == 4
+    ));
+    let owned_report = merged.clone().into_report();
+    assert_eq!(&owned_report, merged.report());
+    let (owned_contour, owned_parts_report) = merged.clone().into_parts();
+    assert_eq!(owned_contour.as_ref(), merged.contour());
+    assert_eq!(&owned_parts_report, merged.report());
+    assert!(matches!(
+        merged.clone().into_contour_classification(),
+        Classification::Decided(contour) if contour.len() == 4
+    ));
 }
 
 #[test]
@@ -434,6 +473,19 @@ fn contour_chamfer_line_line_vertex_materializes_closed_contour() {
             .chamfer_segment_index(),
         Some(1)
     );
+    assert!(matches!(
+        chamfer.contour_classification(),
+        Classification::Decided(contour) if contour.len() == 5
+    ));
+    let owned_report = chamfer.clone().into_report();
+    assert_eq!(&owned_report, chamfer.report());
+    let (owned_contour, owned_parts_report) = chamfer.clone().into_parts();
+    assert_eq!(owned_contour.as_ref(), chamfer.contour());
+    assert_eq!(&owned_parts_report, chamfer.report());
+    assert!(matches!(
+        chamfer.clone().into_contour_classification(),
+        Classification::Decided(contour) if contour.len() == 5
+    ));
     let contour = chamfer
         .contour()
         .expect("line-line contour chamfer should materialize");
@@ -794,6 +846,19 @@ fn contour_fillet_line_line_vertex_materializes_closed_contour() {
         Some(1)
     );
     assert_eq!(fillet.report().output_segment_count(), Some(5));
+    assert!(matches!(
+        fillet.contour_classification(),
+        Classification::Decided(contour) if contour.len() == 5
+    ));
+    let owned_report = fillet.clone().into_report();
+    assert_eq!(&owned_report, fillet.report());
+    let (owned_contour, owned_parts_report) = fillet.clone().into_parts();
+    assert_eq!(owned_contour.as_ref(), fillet.contour());
+    assert_eq!(&owned_parts_report, fillet.report());
+    assert!(matches!(
+        fillet.clone().into_contour_classification(),
+        Classification::Decided(contour) if contour.len() == 5
+    ));
 
     let contour = fillet
         .contour()

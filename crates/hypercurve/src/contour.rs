@@ -1044,9 +1044,43 @@ impl ContourClosureResult2 {
         self.contour
     }
 
+    /// Consumes this result and returns retained closure evidence.
+    pub fn into_report(self) -> ContourClosureReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized contour with its report.
+    pub fn into_parts(self) -> (Option<Contour2>, ContourClosureReport2) {
+        (self.contour, self.report)
+    }
+
     /// Returns retained closure evidence.
     pub const fn report(&self) -> &ContourClosureReport2 {
         &self.report
+    }
+
+    /// Returns the closed contour as a convenience classification.
+    pub fn contour_classification(&self) -> Classification<&Contour2> {
+        match self.contour() {
+            Some(contour) => Classification::Decided(contour),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the closed contour as a convenience classification.
+    pub fn into_contour_classification(self) -> Classification<Contour2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_contour() {
+            Some(contour) => Classification::Decided(contour),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
@@ -1163,9 +1197,43 @@ impl ContourChamferResult2 {
         self.contour
     }
 
+    /// Consumes this result and returns retained contour chamfer evidence.
+    pub fn into_report(self) -> ContourChamferReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized chamfered contour with its report.
+    pub fn into_parts(self) -> (Option<Contour2>, ContourChamferReport2) {
+        (self.contour, self.report)
+    }
+
     /// Returns the retained contour chamfer report.
     pub const fn report(&self) -> &ContourChamferReport2 {
         &self.report
+    }
+
+    /// Returns the chamfered contour as a convenience classification.
+    pub fn contour_classification(&self) -> Classification<&Contour2> {
+        match self.contour() {
+            Some(contour) => Classification::Decided(contour),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the chamfered contour as a convenience classification.
+    pub fn into_contour_classification(self) -> Classification<Contour2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_contour() {
+            Some(contour) => Classification::Decided(contour),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
@@ -1292,9 +1360,43 @@ impl ContourFilletResult2 {
         self.contour
     }
 
+    /// Consumes this result and returns retained contour fillet evidence.
+    pub fn into_report(self) -> ContourFilletReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized filleted contour with its report.
+    pub fn into_parts(self) -> (Option<Contour2>, ContourFilletReport2) {
+        (self.contour, self.report)
+    }
+
     /// Returns the retained contour fillet report.
     pub const fn report(&self) -> &ContourFilletReport2 {
         &self.report
+    }
+
+    /// Returns the filleted contour as a convenience classification.
+    pub fn contour_classification(&self) -> Classification<&Contour2> {
+        match self.contour() {
+            Some(contour) => Classification::Decided(contour),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the filleted contour as a convenience classification.
+    pub fn into_contour_classification(self) -> Classification<Contour2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_contour() {
+            Some(contour) => Classification::Decided(contour),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
@@ -1433,9 +1535,43 @@ impl ContourLineMergeResult2 {
         self.contour
     }
 
+    /// Consumes this result and returns retained contour line-merge evidence.
+    pub fn into_report(self) -> ContourLineMergeReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized merged contour with its report.
+    pub fn into_parts(self) -> (Option<Contour2>, ContourLineMergeReport2) {
+        (self.contour, self.report)
+    }
+
     /// Returns the retained contour line-merge report.
     pub const fn report(&self) -> &ContourLineMergeReport2 {
         &self.report
+    }
+
+    /// Returns the merged contour as a convenience classification.
+    pub fn contour_classification(&self) -> Classification<&Contour2> {
+        match self.contour() {
+            Some(contour) => Classification::Decided(contour),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the merged contour as a convenience classification.
+    pub fn into_contour_classification(self) -> Classification<Contour2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_contour() {
+            Some(contour) => Classification::Decided(contour),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
