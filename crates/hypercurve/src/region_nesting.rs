@@ -6955,10 +6955,191 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().split_blocker_cache()
     }
 
+    /// Returns the first source segment in a split-stage blocker, when known.
+    pub const fn split_blocker_first_source_segment_index(&self) -> Option<usize> {
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.first_source_segment_index()),
+            None => None,
+        }
+    }
+
+    /// Returns the primitive family of the first source segment in a split-stage blocker.
+    pub const fn split_blocker_first_source_segment_kind(&self) -> Option<SegmentKind> {
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.first_source_segment_kind()),
+            None => None,
+        }
+    }
+
+    /// Returns the exact start point of the first source segment in a split-stage blocker.
+    pub const fn split_blocker_first_source_start_point(&self) -> Option<&Point2> {
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.first_source_start_point()),
+            None => None,
+        }
+    }
+
+    /// Returns the exact end point of the first source segment in a split-stage blocker.
+    pub const fn split_blocker_first_source_end_point(&self) -> Option<&Point2> {
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.first_source_end_point()),
+            None => None,
+        }
+    }
+
+    /// Returns the second source segment in a split-stage blocker, when known.
+    pub const fn split_blocker_second_source_segment_index(&self) -> Option<usize> {
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.second_source_segment_index()),
+            None => None,
+        }
+    }
+
+    /// Returns the primitive family of the second source segment in a split-stage blocker.
+    pub const fn split_blocker_second_source_segment_kind(&self) -> Option<SegmentKind> {
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.second_source_segment_kind()),
+            None => None,
+        }
+    }
+
+    /// Returns the exact start point of the second source segment in a split-stage blocker.
+    pub const fn split_blocker_second_source_start_point(&self) -> Option<&Point2> {
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.second_source_start_point()),
+            None => None,
+        }
+    }
+
+    /// Returns the exact end point of the second source segment in a split-stage blocker.
+    pub const fn split_blocker_second_source_end_point(&self) -> Option<&Point2> {
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.second_source_end_point()),
+            None => None,
+        }
+    }
+
     /// Returns arranged output segment count when retained splitting completed.
     pub const fn split_output_segment_count(&self) -> Option<usize> {
         match self.split_cache() {
             Some(split_cache) => split_cache.output_segment_count(),
+            None => None,
+        }
+    }
+
+    /// Returns exact endpoint-bucket evidence retained from the evaluated arrangement.
+    pub const fn endpoint_graph_cache(&self) -> Option<&ExactCurveArrangementEndpointGraphCache2> {
+        self.workspace().endpoint_graph_cache()
+    }
+
+    /// Returns the exact predicate family used by retained endpoint-graph validation.
+    pub const fn endpoint_graph_predicate_path(
+        &self,
+    ) -> Option<RegionLineSegmentEndpointGraphPredicatePath2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.predicate_path()),
+            None => None,
+        }
+    }
+
+    /// Returns arranged endpoint count validated by retained endpoint-graph evidence.
+    pub const fn endpoint_graph_endpoint_count(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.endpoint_count()),
+            None => None,
+        }
+    }
+
+    /// Returns exact structural endpoint bucket count.
+    pub const fn endpoint_graph_structural_bucket_count(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.structural_bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns structural endpoint singleton bucket count.
+    pub const fn endpoint_graph_structural_singleton_bucket_count(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.structural_singleton_bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained structural endpoint bucket size.
+    pub const fn endpoint_graph_max_structural_bucket_size(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.max_structural_bucket_size()),
+            None => None,
+        }
+    }
+
+    /// Returns exact arranged endpoint buckets retained by endpoint-graph validation.
+    pub const fn arranged_endpoint_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedEndpointBucketCache2> {
+        self.workspace().arranged_endpoint_bucket_cache()
+    }
+
+    /// Returns arranged endpoints grouped by retained endpoint side.
+    pub const fn arranged_endpoint_side_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedEndpointSideBucketCache2> {
+        self.workspace().arranged_endpoint_side_bucket_cache()
+    }
+
+    /// Returns exact endpoint records for arranged fragments.
+    pub const fn arranged_endpoint_point_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedEndpointPointCache2> {
+        self.workspace().arranged_endpoint_point_cache()
+    }
+
+    /// Returns structural arranged endpoints grouped by retained degree.
+    pub const fn arranged_endpoint_degree_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedEndpointDegreeBucketCache2> {
+        self.workspace().arranged_endpoint_degree_bucket_cache()
+    }
+
+    /// Returns dangling endpoint count found during endpoint-graph validation.
+    pub const fn endpoint_graph_dangling_endpoint_count(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.dangling_endpoint_count()),
+            None => None,
+        }
+    }
+
+    /// Returns branch endpoint count found during endpoint-graph validation.
+    pub const fn endpoint_graph_branch_endpoint_count(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.branch_endpoint_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the blocker arranged segment index from endpoint validation, when blocked.
+    pub const fn endpoint_graph_blocker_arranged_segment_index(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => endpoint_cache.blocker_arranged_segment_index(),
+            None => None,
+        }
+    }
+
+    /// Returns the blocker endpoint from endpoint validation, when blocked.
+    pub const fn endpoint_graph_blocker_endpoint(
+        &self,
+    ) -> Option<RegionLineSegmentArrangedEndpoint2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => endpoint_cache.blocker_endpoint(),
+            None => None,
+        }
+    }
+
+    /// Returns the exact blocker point from endpoint validation, when blocked.
+    pub const fn endpoint_graph_blocker_point(&self) -> Option<&Point2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => endpoint_cache.blocker_point(),
             None => None,
         }
     }
