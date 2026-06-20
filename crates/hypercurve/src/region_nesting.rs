@@ -2693,6 +2693,144 @@ impl ExactCurveWorkspace2 {
         self.output_cache.as_ref()
     }
 
+    /// Returns whether retained output materialized a region, when output was evaluated.
+    pub const fn materialized_region(&self) -> Option<bool> {
+        match self.output_cache() {
+            Some(output_cache) => Some(output_cache.materialized_region()),
+            None => None,
+        }
+    }
+
+    /// Returns the final retained build stage, when output was evaluated.
+    pub const fn stage(&self) -> Option<RegionLineSegmentRegionBuildStage2> {
+        match self.output_cache() {
+            Some(output_cache) => Some(output_cache.stage()),
+            None => None,
+        }
+    }
+
+    /// Returns final retained topology status, when output was evaluated.
+    pub const fn status(&self) -> Option<RetainedTopologyStatus> {
+        match self.output_cache() {
+            Some(output_cache) => Some(output_cache.status()),
+            None => None,
+        }
+    }
+
+    /// Returns the final retained blocker, when output was evaluated and blocked.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        match self.output_cache() {
+            Some(output_cache) => output_cache.blocker(),
+            None => None,
+        }
+    }
+
+    /// Returns delegated boundary-contour role assignment evidence, when output reached it.
+    pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
+        match self.output_cache() {
+            Some(output_cache) => output_cache.boundary_build_report(),
+            None => None,
+        }
+    }
+
+    /// Returns final boundary-role assignment stage, if reached.
+    pub const fn boundary_build_stage(&self) -> Option<RegionBoundaryContourBuildStage2> {
+        match self.output_cache() {
+            Some(output_cache) => output_cache.boundary_build_stage(),
+            None => None,
+        }
+    }
+
+    /// Returns final boundary-role assignment predicate path, if reached.
+    pub const fn boundary_build_predicate_path(
+        &self,
+    ) -> Option<RegionBoundaryContourBuildPredicatePath2> {
+        match self.output_cache() {
+            Some(output_cache) => output_cache.boundary_build_predicate_path(),
+            None => None,
+        }
+    }
+
+    /// Returns final boundary-role assignment retained status, if reached.
+    pub const fn boundary_build_status(&self) -> Option<RetainedTopologyStatus> {
+        match self.output_cache() {
+            Some(output_cache) => output_cache.boundary_build_status(),
+            None => None,
+        }
+    }
+
+    /// Returns final boundary-role assignment blocker, if present.
+    pub const fn boundary_build_blocker(&self) -> Option<UncertaintyReason> {
+        match self.output_cache() {
+            Some(output_cache) => output_cache.boundary_build_blocker(),
+            None => None,
+        }
+    }
+
+    /// Returns source contour count from delegated boundary-role assignment, if reached.
+    pub const fn boundary_build_source_contour_count(&self) -> Option<usize> {
+        match self.output_cache() {
+            Some(output_cache) => output_cache.boundary_build_source_contour_count(),
+            None => None,
+        }
+    }
+
+    /// Returns source boundary segment count from delegated boundary-role assignment, if reached.
+    pub const fn boundary_build_source_segment_count(&self) -> Option<usize> {
+        match self.output_cache() {
+            Some(output_cache) => output_cache.boundary_build_source_segment_count(),
+            None => None,
+        }
+    }
+
+    /// Returns contour-pair validation schedule size from delegated role assignment, if reached.
+    pub const fn boundary_build_validation_candidate_pair_count(&self) -> Option<usize> {
+        match self.output_cache() {
+            Some(output_cache) => output_cache.boundary_build_validation_candidate_pair_count(),
+            None => None,
+        }
+    }
+
+    /// Returns contour-pair validation test count from delegated role assignment, if reached.
+    pub const fn boundary_build_validation_tested_pair_count(&self) -> Option<usize> {
+        match self.output_cache() {
+            Some(output_cache) => output_cache.boundary_build_validation_tested_pair_count(),
+            None => None,
+        }
+    }
+
+    /// Returns exact validation intersection event count from delegated role assignment.
+    pub const fn boundary_build_validation_intersection_event_count(&self) -> Option<usize> {
+        match self.output_cache() {
+            Some(output_cache) => output_cache.boundary_build_validation_intersection_event_count(),
+            None => None,
+        }
+    }
+
+    /// Returns containment classification count from delegated role assignment, if reached.
+    pub const fn boundary_build_nesting_classification_count(&self) -> Option<usize> {
+        match self.output_cache() {
+            Some(output_cache) => output_cache.boundary_build_nesting_classification_count(),
+            None => None,
+        }
+    }
+
+    /// Returns first blocking contour index from delegated role assignment, if present.
+    pub const fn boundary_build_blocker_first_contour_index(&self) -> Option<usize> {
+        match self.output_cache() {
+            Some(output_cache) => output_cache.boundary_build_blocker_first_contour_index(),
+            None => None,
+        }
+    }
+
+    /// Returns second blocking contour index from delegated role assignment, if present.
+    pub const fn boundary_build_blocker_second_contour_index(&self) -> Option<usize> {
+        match self.output_cache() {
+            Some(output_cache) => output_cache.boundary_build_blocker_second_contour_index(),
+            None => None,
+        }
+    }
+
     /// Returns final boundary output summary when role assignment materialized output.
     pub const fn boundary_output_cache(
         &self,
