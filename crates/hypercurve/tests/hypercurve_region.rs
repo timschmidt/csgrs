@@ -2952,6 +2952,22 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         arrangement_report.split_schedule_cache(),
         result.split_schedule_cache()
     );
+    assert_eq!(
+        arrangement_report.split_schedule_candidate_pair_count(),
+        result.split_schedule_candidate_pair_count()
+    );
+    assert_eq!(
+        arrangement_report.split_schedule_decided_disjoint_pair_count(),
+        result.split_schedule_decided_disjoint_pair_count()
+    );
+    assert_eq!(
+        arrangement_report.split_schedule_predicate_candidate_pair_count(),
+        result.split_schedule_predicate_candidate_pair_count()
+    );
+    assert_eq!(
+        arrangement_report.split_schedule_undecided_aabb_pair_count(),
+        result.split_schedule_undecided_aabb_pair_count()
+    );
     assert_eq!(arrangement_report.split_cache(), result.split_cache());
     assert_eq!(
         arrangement_report.split_relation_bucket_cache(),
@@ -3666,6 +3682,36 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         result.evaluation().split_schedule_cache(),
         result.split_schedule_cache()
+    );
+    assert_eq!(result.split_schedule_candidate_pair_count(), 1);
+    assert_eq!(result.split_schedule_decided_disjoint_pair_count(), 0);
+    assert_eq!(result.split_schedule_predicate_candidate_pair_count(), 1);
+    assert_eq!(result.split_schedule_undecided_aabb_pair_count(), 0);
+    assert_eq!(
+        result.evaluation().split_schedule_candidate_pair_count(),
+        result.split_schedule_candidate_pair_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .split_schedule_decided_disjoint_pair_count(),
+        result.split_schedule_decided_disjoint_pair_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .split_schedule_predicate_candidate_pair_count(),
+        result.split_schedule_predicate_candidate_pair_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .split_schedule_undecided_aabb_pair_count(),
+        result.split_schedule_undecided_aabb_pair_count()
+    );
+    assert_eq!(
+        result.workspace().split_schedule_candidate_pair_count(),
+        result.split_schedule_candidate_pair_count()
     );
     assert_eq!(result.evaluation().split_cache(), result.split_cache());
     assert_eq!(
@@ -5521,6 +5567,22 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         arrangement_report.split_schedule_cache(),
         result.split_schedule_cache()
     );
+    assert_eq!(
+        arrangement_report.split_schedule_candidate_pair_count(),
+        result.split_schedule_candidate_pair_count()
+    );
+    assert_eq!(
+        arrangement_report.split_schedule_decided_disjoint_pair_count(),
+        result.split_schedule_decided_disjoint_pair_count()
+    );
+    assert_eq!(
+        arrangement_report.split_schedule_predicate_candidate_pair_count(),
+        result.split_schedule_predicate_candidate_pair_count()
+    );
+    assert_eq!(
+        arrangement_report.split_schedule_undecided_aabb_pair_count(),
+        result.split_schedule_undecided_aabb_pair_count()
+    );
     assert_eq!(arrangement_report.split_cache(), result.split_cache());
     assert_eq!(
         arrangement_report.endpoint_graph_cache(),
@@ -6238,6 +6300,22 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(
         arrangement_report.split_schedule_cache(),
         result.split_schedule_cache()
+    );
+    assert_eq!(
+        arrangement_report.split_schedule_candidate_pair_count(),
+        result.split_schedule_candidate_pair_count()
+    );
+    assert_eq!(
+        arrangement_report.split_schedule_decided_disjoint_pair_count(),
+        result.split_schedule_decided_disjoint_pair_count()
+    );
+    assert_eq!(
+        arrangement_report.split_schedule_predicate_candidate_pair_count(),
+        result.split_schedule_predicate_candidate_pair_count()
+    );
+    assert_eq!(
+        arrangement_report.split_schedule_undecided_aabb_pair_count(),
+        result.split_schedule_undecided_aabb_pair_count()
     );
     assert_eq!(arrangement_report.split_cache(), result.split_cache());
     assert_eq!(

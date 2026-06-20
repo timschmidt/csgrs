@@ -2508,6 +2508,26 @@ impl ExactCurveWorkspace2 {
         &self.split_schedule_cache
     }
 
+    /// Returns source segment pairs scheduled before retained split predicates run.
+    pub const fn split_schedule_candidate_pair_count(&self) -> usize {
+        self.split_schedule_cache().candidate_pair_count()
+    }
+
+    /// Returns scheduled source segment pairs pruned by retained AABB evidence.
+    pub const fn split_schedule_decided_disjoint_pair_count(&self) -> usize {
+        self.split_schedule_cache().decided_disjoint_pair_count()
+    }
+
+    /// Returns scheduled source segment pairs that require split predicate evaluation.
+    pub const fn split_schedule_predicate_candidate_pair_count(&self) -> usize {
+        self.split_schedule_cache().predicate_candidate_pair_count()
+    }
+
+    /// Returns scheduled source segment pairs whose AABB pruning status stayed undecided.
+    pub const fn split_schedule_undecided_aabb_pair_count(&self) -> usize {
+        self.split_schedule_cache().undecided_aabb_pair_count()
+    }
+
     /// Returns exact split evidence retained from the evaluated arrangement.
     pub const fn split_cache(&self) -> Option<&ExactCurveArrangementSplitCache2> {
         self.split_cache.as_ref()
@@ -6925,6 +6945,28 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().split_schedule_cache()
     }
 
+    /// Returns source segment pairs scheduled before retained split predicates run.
+    pub const fn split_schedule_candidate_pair_count(&self) -> usize {
+        self.workspace().split_schedule_candidate_pair_count()
+    }
+
+    /// Returns scheduled source segment pairs pruned by retained AABB evidence.
+    pub const fn split_schedule_decided_disjoint_pair_count(&self) -> usize {
+        self.workspace()
+            .split_schedule_decided_disjoint_pair_count()
+    }
+
+    /// Returns scheduled source segment pairs that require split predicate evaluation.
+    pub const fn split_schedule_predicate_candidate_pair_count(&self) -> usize {
+        self.workspace()
+            .split_schedule_predicate_candidate_pair_count()
+    }
+
+    /// Returns scheduled source segment pairs whose AABB pruning status stayed undecided.
+    pub const fn split_schedule_undecided_aabb_pair_count(&self) -> usize {
+        self.workspace().split_schedule_undecided_aabb_pair_count()
+    }
+
     /// Returns exact split evidence retained from the evaluated arrangement.
     pub const fn split_cache(&self) -> Option<&ExactCurveArrangementSplitCache2> {
         self.workspace().split_cache()
@@ -7865,6 +7907,28 @@ impl ExactCurveArrangementResult2 {
     /// Returns the retained source-pair schedule prepared before split predicates run.
     pub const fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
         self.workspace().split_schedule_cache()
+    }
+
+    /// Returns source segment pairs scheduled before retained split predicates run.
+    pub const fn split_schedule_candidate_pair_count(&self) -> usize {
+        self.workspace().split_schedule_candidate_pair_count()
+    }
+
+    /// Returns scheduled source segment pairs pruned by retained AABB evidence.
+    pub const fn split_schedule_decided_disjoint_pair_count(&self) -> usize {
+        self.workspace()
+            .split_schedule_decided_disjoint_pair_count()
+    }
+
+    /// Returns scheduled source segment pairs that require split predicate evaluation.
+    pub const fn split_schedule_predicate_candidate_pair_count(&self) -> usize {
+        self.workspace()
+            .split_schedule_predicate_candidate_pair_count()
+    }
+
+    /// Returns scheduled source segment pairs whose AABB pruning status stayed undecided.
+    pub const fn split_schedule_undecided_aabb_pair_count(&self) -> usize {
+        self.workspace().split_schedule_undecided_aabb_pair_count()
     }
 
     /// Returns exact split evidence retained from the evaluated arrangement.
@@ -9966,6 +10030,28 @@ impl ExactCurveArrangementReport2 {
     /// Returns the retained source-pair schedule prepared before split predicates run.
     pub const fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
         self.workspace().split_schedule_cache()
+    }
+
+    /// Returns source segment pairs scheduled before retained split predicates run.
+    pub const fn split_schedule_candidate_pair_count(&self) -> usize {
+        self.workspace().split_schedule_candidate_pair_count()
+    }
+
+    /// Returns scheduled source segment pairs pruned by retained AABB evidence.
+    pub const fn split_schedule_decided_disjoint_pair_count(&self) -> usize {
+        self.workspace()
+            .split_schedule_decided_disjoint_pair_count()
+    }
+
+    /// Returns scheduled source segment pairs that require split predicate evaluation.
+    pub const fn split_schedule_predicate_candidate_pair_count(&self) -> usize {
+        self.workspace()
+            .split_schedule_predicate_candidate_pair_count()
+    }
+
+    /// Returns scheduled source segment pairs whose AABB pruning status stayed undecided.
+    pub const fn split_schedule_undecided_aabb_pair_count(&self) -> usize {
+        self.workspace().split_schedule_undecided_aabb_pair_count()
     }
 
     /// Returns exact split evidence retained from the evaluated arrangement.
