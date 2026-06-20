@@ -1136,7 +1136,13 @@ pub enum RegionLineSegmentRingAssemblyPredicatePath2 {
     ExactEndpointBucketTraversal,
 }
 
-/// Report for constructing a region from unordered exact line segments.
+/// Compatibility report for unordered exact segment region construction.
+///
+/// New callers should evaluate an [`ExactCurveArrangementAttempt2`] and use
+/// [`ExactCurveArrangementReport2`] or retained result accessors directly. This
+/// legacy-shaped report is kept for existing `*_with_report` callers and is
+/// projected from retained arrangement caches; it must not be treated as a
+/// separate topology pipeline.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionLineSegmentRegionBuildReport2 {
     stage: RegionLineSegmentRegionBuildStage2,
@@ -1200,7 +1206,12 @@ pub enum RegionLineSegmentRegionBuildStage2 {
     RegionRoleAssignment,
 }
 
-/// Result of report-bearing region construction from unordered exact line segments.
+/// Compatibility result for unordered exact segment region construction.
+///
+/// New callers should prefer [`ExactCurveArrangementResult2`] plus
+/// [`ExactCurveArrangementReport2`]. This legacy-shaped result remains only as
+/// the return type for deprecated `Region2::from_unordered_*_with_report`
+/// constructors and for explicit derived compatibility projections.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionLineSegmentRegionBuildResult2 {
     region: Option<Region2>,
