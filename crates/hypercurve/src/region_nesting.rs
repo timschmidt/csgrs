@@ -9743,6 +9743,14 @@ impl ExactCurveArrangementReport2 {
         let output_boundary_segment_kind_counts = ring_cache
             .and_then(ExactCurveArrangementRingAssemblyCache2::output_boundary_segment_kind_counts)
             .or(self.output_boundary_segment_kind_counts);
+        let arranged_fragment_cache =
+            ring_cache.map(ExactCurveArrangementRingAssemblyCache2::arranged_fragment_cache);
+        let arranged_segment_count = arranged_fragment_cache
+            .map(ExactCurveArrangementArrangedFragmentCache2::arranged_fragment_count)
+            .or(self.arranged_segment_count);
+        let arranged_segment_kind_counts = arranged_fragment_cache
+            .map(ExactCurveArrangementArrangedFragmentCache2::arranged_segment_kind_counts)
+            .or(self.arranged_segment_kind_counts);
         let arranged_source_reports = ring_cache
             .map(|cache| cache.arranged_source_reports().to_vec())
             .or_else(|| self.arranged_source_reports.clone())
@@ -9758,8 +9766,8 @@ impl ExactCurveArrangementReport2 {
                 .expect("evaluated exact arrangement report missing final stage"),
             source_segment_count: self.source_segment_count,
             source_segment_kind_counts: self.source_segment_kind_counts,
-            arranged_segment_count: self.arranged_segment_count,
-            arranged_segment_kind_counts: self.arranged_segment_kind_counts,
+            arranged_segment_count,
+            arranged_segment_kind_counts,
             split_predicate_path: self.split_predicate_path,
             endpoint_graph_predicate_path: self.endpoint_graph_predicate_path,
             ring_assembly_predicate_path: self.ring_assembly_predicate_path,
