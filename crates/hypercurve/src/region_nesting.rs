@@ -2432,20 +2432,19 @@ impl ExactCurveWorkspace2 {
         })
     }
 
-    fn with_compatibility_report_facts(
+    fn with_legacy_region_build_evidence(
         mut self,
         report: &RegionLineSegmentRegionBuildReport2,
         materialized_region: bool,
     ) -> Self {
-        self.split_cache = Some(ExactCurveArrangementSplitCache2::from_compatibility_report(
-            report,
-        ));
+        self.split_cache =
+            Some(ExactCurveArrangementSplitCache2::from_legacy_region_build_report(report));
         self.endpoint_graph_cache =
-            ExactCurveArrangementEndpointGraphCache2::from_compatibility_report(report);
+            ExactCurveArrangementEndpointGraphCache2::from_legacy_region_build_report(report);
         self.ring_assembly_cache =
-            ExactCurveArrangementRingAssemblyCache2::from_compatibility_report(report);
+            ExactCurveArrangementRingAssemblyCache2::from_legacy_region_build_report(report);
         self.output_cache = Some(
-            ExactCurveArrangementOutputCache2::from_compatibility_report(
+            ExactCurveArrangementOutputCache2::from_legacy_region_build_report(
                 report,
                 materialized_region,
             ),
@@ -3261,7 +3260,7 @@ impl ExactCurveArrangementSplitScheduleCache2 {
 }
 
 impl ExactCurveArrangementSplitCache2 {
-    fn from_compatibility_report(report: &RegionLineSegmentRegionBuildReport2) -> Self {
+    fn from_legacy_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Self {
         let intersection_bucket_cache =
             split_intersection_bucket_cache(report.split_intersection_reports());
         let intersection_parameter_cache =
@@ -3274,7 +3273,7 @@ impl ExactCurveArrangementSplitCache2 {
             report.split_uncertain_relation_count(),
         );
         let blocker_cache =
-            ExactCurveArrangementSplitBlockerCache2::from_compatibility_report(report);
+            ExactCurveArrangementSplitBlockerCache2::from_legacy_region_build_report(report);
         Self {
             predicate_path: report.split_predicate_path(),
             candidate_pair_count: report.split_candidate_pair_count(),
@@ -3375,7 +3374,9 @@ impl ExactCurveArrangementSplitCache2 {
 }
 
 impl ExactCurveArrangementSplitBlockerCache2 {
-    fn from_compatibility_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
+    fn from_legacy_region_build_report(
+        report: &RegionLineSegmentRegionBuildReport2,
+    ) -> Option<Self> {
         Some(Self {
             first_source_segment_index: report.split_blocker_first_source_segment_index()?,
             first_source_segment_kind: report.split_blocker_first_source_segment_kind()?,
@@ -3642,7 +3643,9 @@ impl ExactCurveArrangementSplitIntersectionParameterCache2 {
 }
 
 impl ExactCurveArrangementEndpointGraphCache2 {
-    fn from_compatibility_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
+    fn from_legacy_region_build_report(
+        report: &RegionLineSegmentRegionBuildReport2,
+    ) -> Option<Self> {
         let endpoint_bucket_cache =
             arranged_endpoint_bucket_cache(report.arranged_source_reports());
         let endpoint_side_bucket_cache =
@@ -6215,7 +6218,9 @@ impl ExactCurveArrangementOutputRoleCache2 {
 }
 
 impl ExactCurveArrangementOutputBoundaryCache2 {
-    fn from_compatibility_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
+    fn from_legacy_region_build_report(
+        report: &RegionLineSegmentRegionBuildReport2,
+    ) -> Option<Self> {
         let boundary_build_report = report.boundary_build_report()?;
         let material_contour_count = boundary_build_report.material_contour_count()?;
         let hole_contour_count = boundary_build_report.hole_contour_count()?;
@@ -6354,7 +6359,9 @@ impl ExactCurveArrangementOutputBoundaryRoleBucket2 {
 }
 
 impl ExactCurveArrangementRingAssemblyCache2 {
-    fn from_compatibility_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
+    fn from_legacy_region_build_report(
+        report: &RegionLineSegmentRegionBuildReport2,
+    ) -> Option<Self> {
         Some(Self {
             predicate_path: report.ring_assembly_predicate_path()?,
             attempted_endpoint_connection_count: report.attempted_endpoint_connection_count(),
@@ -6522,13 +6529,13 @@ impl ExactCurveArrangementRingAssemblyCache2 {
 }
 
 impl ExactCurveArrangementOutputCache2 {
-    fn from_compatibility_report(
+    fn from_legacy_region_build_report(
         report: &RegionLineSegmentRegionBuildReport2,
         materialized_region: bool,
     ) -> Self {
         let boundary_build_report = report.boundary_build_report().cloned();
         let boundary_output_cache =
-            ExactCurveArrangementOutputBoundaryCache2::from_compatibility_report(report);
+            ExactCurveArrangementOutputBoundaryCache2::from_legacy_region_build_report(report);
         let role_cache = boundary_build_report
             .as_ref()
             .and_then(ExactCurveArrangementOutputRoleCache2::from_boundary_build_report);
@@ -7575,7 +7582,7 @@ impl ExactCurveArrangementAttempt2 {
                 )?
             };
         let workspace = ExactCurveWorkspace2::from_request(self.request.clone(), policy)?
-            .with_compatibility_report_facts(
+            .with_legacy_region_build_evidence(
                 compatibility_projection.report(),
                 compatibility_projection.region().is_some(),
             );
