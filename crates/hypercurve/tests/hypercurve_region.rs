@@ -235,35 +235,34 @@ fn boundary_contour_region_report_assigns_material_and_hole_roles() {
         &policy(),
     )
     .unwrap();
-    let report = built.report();
 
-    assert!(report.status().is_native_exact());
+    assert!(built.status().is_native_exact());
     assert_eq!(
-        report.stage(),
+        built.stage(),
         RegionBoundaryContourBuildStage2::RoleAssignment
     );
     assert_eq!(
-        report.predicate_path(),
+        built.predicate_path(),
         RegionBoundaryContourBuildPredicatePath2::ExactContourIntersectionAndPointContainment
     );
-    assert_eq!(report.source_contour_count(), 2);
-    assert_eq!(report.source_segment_count(), 8);
-    assert_eq!(report.validation_candidate_pair_count(), 1);
-    assert_eq!(report.validation_tested_pair_count(), 1);
-    assert_eq!(report.validation_intersection_event_count(), 0);
-    assert_eq!(report.nesting_classification_count(), 2);
-    assert_eq!(report.blocker_first_contour_index(), None);
-    assert_eq!(report.blocker_second_contour_index(), None);
-    assert_eq!(report.output_contour_count(), Some(2));
-    assert_eq!(report.output_segment_count(), Some(8));
-    assert_eq!(report.material_contour_count(), Some(1));
-    assert_eq!(report.hole_contour_count(), Some(1));
-    assert_eq!(report.material_segment_count(), Some(4));
-    assert_eq!(report.hole_segment_count(), Some(4));
-    assert_eq!(report.blocker(), None);
-    assert_eq!(report.role_reports().len(), 2);
+    assert_eq!(built.source_contour_count(), 2);
+    assert_eq!(built.source_segment_count(), 8);
+    assert_eq!(built.validation_candidate_pair_count(), 1);
+    assert_eq!(built.validation_tested_pair_count(), 1);
+    assert_eq!(built.validation_intersection_event_count(), 0);
+    assert_eq!(built.nesting_classification_count(), 2);
+    assert_eq!(built.blocker_first_contour_index(), None);
+    assert_eq!(built.blocker_second_contour_index(), None);
+    assert_eq!(built.output_contour_count(), Some(2));
+    assert_eq!(built.output_segment_count(), Some(8));
+    assert_eq!(built.material_contour_count(), Some(1));
+    assert_eq!(built.hole_contour_count(), Some(1));
+    assert_eq!(built.material_segment_count(), Some(4));
+    assert_eq!(built.hole_segment_count(), Some(4));
+    assert_eq!(built.blocker(), None);
+    assert_eq!(built.role_reports().len(), 2);
 
-    let outer = &report.role_reports()[0];
+    let outer = &built.role_reports()[0];
     assert_eq!(outer.source_contour_index(), 0);
     assert_eq!(outer.source_segment_count(), 4);
     assert_eq!(outer.source_fill_rule(), FillRule::NonZero);
@@ -274,7 +273,7 @@ fn boundary_contour_region_report_assigns_material_and_hole_roles() {
     assert_eq!(outer.output_role_index(), 0);
     assert!(outer.status().is_native_exact());
 
-    let hole = &report.role_reports()[1];
+    let hole = &built.role_reports()[1];
     assert_eq!(hole.source_contour_index(), 1);
     assert_eq!(hole.source_segment_count(), 4);
     assert_eq!(hole.source_fill_rule(), FillRule::NonZero);
@@ -302,31 +301,30 @@ fn boundary_contour_region_report_assigns_material_and_hole_roles() {
 fn borrowed_boundary_contours_build_region_with_report() {
     let contours = vec![rectangle(0, 0, 10, 10), rectangle(3, 3, 7, 7)];
     let built = Region2::from_boundary_contours_borrowed_with_report(&contours, &policy()).unwrap();
-    let report = built.report();
 
-    assert!(report.status().is_native_exact());
+    assert!(built.status().is_native_exact());
     assert_eq!(
-        report.stage(),
+        built.stage(),
         RegionBoundaryContourBuildStage2::RoleAssignment
     );
     assert_eq!(
-        report.predicate_path(),
+        built.predicate_path(),
         RegionBoundaryContourBuildPredicatePath2::ExactContourIntersectionAndPointContainment
     );
-    assert_eq!(report.source_contour_count(), 2);
-    assert_eq!(report.source_segment_count(), 8);
-    assert_eq!(report.output_contour_count(), Some(2));
-    assert_eq!(report.output_segment_count(), Some(8));
-    assert_eq!(report.material_contour_count(), Some(1));
-    assert_eq!(report.hole_contour_count(), Some(1));
-    assert_eq!(report.blocker(), None);
-    assert_eq!(report.role_reports().len(), 2);
+    assert_eq!(built.source_contour_count(), 2);
+    assert_eq!(built.source_segment_count(), 8);
+    assert_eq!(built.output_contour_count(), Some(2));
+    assert_eq!(built.output_segment_count(), Some(8));
+    assert_eq!(built.material_contour_count(), Some(1));
+    assert_eq!(built.hole_contour_count(), Some(1));
+    assert_eq!(built.blocker(), None);
+    assert_eq!(built.role_reports().len(), 2);
     assert_eq!(
-        report.role_reports()[0].role(),
+        built.role_reports()[0].role(),
         RegionBoundaryContourRole2::Material
     );
     assert_eq!(
-        report.role_reports()[1].role(),
+        built.role_reports()[1].role(),
         RegionBoundaryContourRole2::Hole
     );
 
@@ -384,34 +382,33 @@ fn boundary_contour_region_report_blocks_crossing_roles() {
         &policy(),
     )
     .unwrap();
-    let report = built.report();
 
     assert!(built.region().is_none());
-    assert!(report.status().is_retained_evidence());
+    assert!(built.status().is_retained_evidence());
     assert_eq!(
-        report.stage(),
+        built.stage(),
         RegionBoundaryContourBuildStage2::NestingValidation
     );
     assert_eq!(
-        report.predicate_path(),
+        built.predicate_path(),
         RegionBoundaryContourBuildPredicatePath2::ExactContourIntersectionAndPointContainment
     );
-    assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
-    assert_eq!(report.source_contour_count(), 2);
-    assert_eq!(report.source_segment_count(), 8);
-    assert_eq!(report.validation_candidate_pair_count(), 1);
-    assert_eq!(report.validation_tested_pair_count(), 1);
-    assert_eq!(report.validation_intersection_event_count(), 2);
-    assert_eq!(report.nesting_classification_count(), 0);
-    assert_eq!(report.blocker_first_contour_index(), Some(0));
-    assert_eq!(report.blocker_second_contour_index(), Some(1));
-    assert_eq!(report.output_contour_count(), None);
-    assert_eq!(report.output_segment_count(), None);
-    assert_eq!(report.material_contour_count(), None);
-    assert_eq!(report.hole_contour_count(), None);
-    assert_eq!(report.material_segment_count(), None);
-    assert_eq!(report.hole_segment_count(), None);
-    assert!(report.role_reports().is_empty());
+    assert_eq!(built.blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(built.source_contour_count(), 2);
+    assert_eq!(built.source_segment_count(), 8);
+    assert_eq!(built.validation_candidate_pair_count(), 1);
+    assert_eq!(built.validation_tested_pair_count(), 1);
+    assert_eq!(built.validation_intersection_event_count(), 2);
+    assert_eq!(built.nesting_classification_count(), 0);
+    assert_eq!(built.blocker_first_contour_index(), Some(0));
+    assert_eq!(built.blocker_second_contour_index(), Some(1));
+    assert_eq!(built.output_contour_count(), None);
+    assert_eq!(built.output_segment_count(), None);
+    assert_eq!(built.material_contour_count(), None);
+    assert_eq!(built.hole_contour_count(), None);
+    assert_eq!(built.material_segment_count(), None);
+    assert_eq!(built.hole_segment_count(), None);
+    assert!(built.role_reports().is_empty());
 }
 
 #[test]
@@ -421,27 +418,26 @@ fn boundary_contour_region_report_blocks_touching_roles_with_source_pair() {
         &policy(),
     )
     .unwrap();
-    let report = built.report();
 
     assert!(built.region().is_none());
-    assert!(report.status().is_retained_evidence());
+    assert!(built.status().is_retained_evidence());
     assert_eq!(
-        report.stage(),
+        built.stage(),
         RegionBoundaryContourBuildStage2::NestingValidation
     );
     assert_eq!(
-        report.predicate_path(),
+        built.predicate_path(),
         RegionBoundaryContourBuildPredicatePath2::ExactContourIntersectionAndPointContainment
     );
-    assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
-    assert_eq!(report.validation_candidate_pair_count(), 1);
-    assert_eq!(report.validation_tested_pair_count(), 1);
-    assert_eq!(report.validation_intersection_event_count(), 7);
-    assert_eq!(report.nesting_classification_count(), 0);
-    assert_eq!(report.blocker_first_contour_index(), Some(0));
-    assert_eq!(report.blocker_second_contour_index(), Some(1));
-    assert_eq!(report.output_contour_count(), None);
-    assert!(report.role_reports().is_empty());
+    assert_eq!(built.blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(built.validation_candidate_pair_count(), 1);
+    assert_eq!(built.validation_tested_pair_count(), 1);
+    assert_eq!(built.validation_intersection_event_count(), 7);
+    assert_eq!(built.nesting_classification_count(), 0);
+    assert_eq!(built.blocker_first_contour_index(), Some(0));
+    assert_eq!(built.blocker_second_contour_index(), Some(1));
+    assert_eq!(built.output_contour_count(), None);
+    assert!(built.role_reports().is_empty());
 }
 
 #[test]
@@ -1805,11 +1801,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         output_segment_kind_bucket_cache.buckets()[0]
             .segment_refs()
             .len(),
-        result
-            .report()
-            .output_boundary_segment_kind_counts()
-            .unwrap()
-            .lines
+        result.output_boundary_segment_kind_counts().unwrap().lines
     );
     assert_eq!(
         output_segment_kind_bucket_cache.buckets()[0].segment_refs()[0].source_report_index(),

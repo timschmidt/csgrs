@@ -1407,11 +1407,11 @@ fn evaluate_unordered_line_segments_region_result(
     }
 
     let built = Region2::from_boundary_contours_with_report(contours, policy)?;
-    let status = built.report().status();
-    let blocker = built.report().blocker();
+    let status = built.status();
+    let blocker = built.blocker();
     let boundary_build_report = built.report().clone();
-    let output_ring_count = boundary_build_report.output_contour_count();
-    let output_boundary_segment_count = boundary_build_report.output_segment_count();
+    let output_ring_count = built.output_contour_count();
+    let output_boundary_segment_count = built.output_segment_count();
     let output_boundary_segment_kind_counts = built.region().map(region_segment_kind_counts);
     Ok(RegionLineSegmentRegionBuildResult2 {
         region: built.into_region(),
@@ -1670,11 +1670,11 @@ fn evaluate_unordered_segments_region_result(
     }
 
     let built = Region2::from_boundary_contours_with_report(contours, policy)?;
-    let status = built.report().status();
-    let blocker = built.report().blocker();
+    let status = built.status();
+    let blocker = built.blocker();
     let boundary_build_report = built.report().clone();
-    let output_ring_count = boundary_build_report.output_contour_count();
-    let output_boundary_segment_count = boundary_build_report.output_segment_count();
+    let output_ring_count = built.output_contour_count();
+    let output_boundary_segment_count = built.output_segment_count();
     let output_boundary_segment_kind_counts = built.region().map(region_segment_kind_counts);
     Ok(RegionLineSegmentRegionBuildResult2 {
         region: built.into_region(),
@@ -7234,6 +7234,101 @@ impl RegionBoundaryContourBuildResult2 {
     /// Returns the retained region-construction report.
     pub const fn report(&self) -> &RegionBoundaryContourBuildReport2 {
         &self.report
+    }
+
+    /// Returns the furthest exact region-construction stage reached.
+    pub const fn stage(&self) -> RegionBoundaryContourBuildStage2 {
+        self.report.stage()
+    }
+
+    /// Returns the exact predicate path used for boundary validation and nesting.
+    pub const fn predicate_path(&self) -> RegionBoundaryContourBuildPredicatePath2 {
+        self.report.predicate_path()
+    }
+
+    /// Returns the number of source boundary contours considered.
+    pub const fn source_contour_count(&self) -> usize {
+        self.report.source_contour_count()
+    }
+
+    /// Returns the total number of source contour segments considered.
+    pub const fn source_segment_count(&self) -> usize {
+        self.report.source_segment_count()
+    }
+
+    /// Returns the number of contour pairs scheduled for intersection validation.
+    pub const fn validation_candidate_pair_count(&self) -> usize {
+        self.report.validation_candidate_pair_count()
+    }
+
+    /// Returns the number of contour pairs tested before success or a blocker.
+    pub const fn validation_tested_pair_count(&self) -> usize {
+        self.report.validation_tested_pair_count()
+    }
+
+    /// Returns exact contour-intersection events found during nesting validation.
+    pub const fn validation_intersection_event_count(&self) -> usize {
+        self.report.validation_intersection_event_count()
+    }
+
+    /// Returns point-containment classifications used to assign nesting roles.
+    pub const fn nesting_classification_count(&self) -> usize {
+        self.report.nesting_classification_count()
+    }
+
+    /// Returns the first source contour index involved in a blocking relation.
+    pub const fn blocker_first_contour_index(&self) -> Option<usize> {
+        self.report.blocker_first_contour_index()
+    }
+
+    /// Returns the second source contour index involved in a blocking relation.
+    pub const fn blocker_second_contour_index(&self) -> Option<usize> {
+        self.report.blocker_second_contour_index()
+    }
+
+    /// Returns total output contour count when role assignment materialized.
+    pub const fn output_contour_count(&self) -> Option<usize> {
+        self.report.output_contour_count()
+    }
+
+    /// Returns total output boundary segment count when role assignment materialized.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.report.output_segment_count()
+    }
+
+    /// Returns material contour count when role assignment materialized.
+    pub const fn material_contour_count(&self) -> Option<usize> {
+        self.report.material_contour_count()
+    }
+
+    /// Returns hole contour count when role assignment materialized.
+    pub const fn hole_contour_count(&self) -> Option<usize> {
+        self.report.hole_contour_count()
+    }
+
+    /// Returns material boundary segment count when role assignment materialized.
+    pub const fn material_segment_count(&self) -> Option<usize> {
+        self.report.material_segment_count()
+    }
+
+    /// Returns hole boundary segment count when role assignment materialized.
+    pub const fn hole_segment_count(&self) -> Option<usize> {
+        self.report.hole_segment_count()
+    }
+
+    /// Returns per-contour exact role reports.
+    pub fn role_reports(&self) -> &[RegionBoundaryContourRoleReport2] {
+        self.report.role_reports()
+    }
+
+    /// Returns region construction status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.report.status()
+    }
+
+    /// Returns the exact blocker for non-materialized construction attempts.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.report.blocker()
     }
 }
 
