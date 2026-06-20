@@ -2176,6 +2176,50 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.split_point_relation_count()
     );
     assert_eq!(
+        arrangement_report.split_predicate_path(),
+        result.split_predicate_path()
+    );
+    assert_eq!(
+        arrangement_report.split_output_segment_count(),
+        result.split_output_segment_count()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_first_source_segment_index(),
+        result.split_blocker_first_source_segment_index()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_first_source_segment_kind(),
+        result.split_blocker_first_source_segment_kind()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_first_source_start_point(),
+        result.split_blocker_first_source_start_point()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_first_source_end_point(),
+        result.split_blocker_first_source_end_point()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_second_source_segment_index(),
+        result.split_blocker_second_source_segment_index()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_second_source_segment_kind(),
+        result.split_blocker_second_source_segment_kind()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_second_source_start_point(),
+        result.split_blocker_second_source_start_point()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_second_source_end_point(),
+        result.split_blocker_second_source_end_point()
+    );
+    assert_eq!(
+        arrangement_report.endpoint_graph_predicate_path(),
+        result.endpoint_graph_predicate_path()
+    );
+    assert_eq!(
         arrangement_report.endpoint_graph_structural_bucket_count(),
         result.endpoint_graph_structural_bucket_count()
     );
@@ -2194,6 +2238,22 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(
         arrangement_report.endpoint_graph_branch_endpoint_count(),
         result.endpoint_graph_branch_endpoint_count()
+    );
+    assert_eq!(
+        arrangement_report.endpoint_graph_blocker_arranged_segment_index(),
+        result.endpoint_graph_blocker_arranged_segment_index()
+    );
+    assert_eq!(
+        arrangement_report.endpoint_graph_blocker_endpoint(),
+        result.endpoint_graph_blocker_endpoint()
+    );
+    assert_eq!(
+        arrangement_report.endpoint_graph_blocker_point(),
+        result.endpoint_graph_blocker_point()
+    );
+    assert_eq!(
+        arrangement_report.ring_assembly_predicate_path(),
+        result.ring_assembly_predicate_path()
     );
     assert_eq!(
         arrangement_report.attempted_endpoint_connection_count(),
@@ -3673,8 +3733,52 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.split_point_relation_count()
     );
     assert_eq!(
+        arrangement_report.split_predicate_path(),
+        result.split_predicate_path()
+    );
+    assert_eq!(
+        arrangement_report.split_output_segment_count(),
+        result.split_output_segment_count()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_first_source_segment_index(),
+        result.split_blocker_first_source_segment_index()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_first_source_segment_kind(),
+        result.split_blocker_first_source_segment_kind()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_first_source_start_point(),
+        result.split_blocker_first_source_start_point()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_first_source_end_point(),
+        result.split_blocker_first_source_end_point()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_second_source_segment_index(),
+        result.split_blocker_second_source_segment_index()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_second_source_segment_kind(),
+        result.split_blocker_second_source_segment_kind()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_second_source_start_point(),
+        result.split_blocker_second_source_start_point()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_second_source_end_point(),
+        result.split_blocker_second_source_end_point()
+    );
+    assert_eq!(
         arrangement_report.output_ring_count(),
         result.output_ring_count()
+    );
+    assert_eq!(
+        arrangement_report.endpoint_graph_predicate_path(),
+        result.endpoint_graph_predicate_path()
     );
     assert_eq!(
         arrangement_report.endpoint_graph_structural_singleton_bucket_count(),
@@ -3691,6 +3795,22 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         arrangement_report.endpoint_graph_branch_endpoint_count(),
         result.endpoint_graph_branch_endpoint_count()
+    );
+    assert_eq!(
+        arrangement_report.endpoint_graph_blocker_arranged_segment_index(),
+        result.endpoint_graph_blocker_arranged_segment_index()
+    );
+    assert_eq!(
+        arrangement_report.endpoint_graph_blocker_endpoint(),
+        result.endpoint_graph_blocker_endpoint()
+    );
+    assert_eq!(
+        arrangement_report.endpoint_graph_blocker_point(),
+        result.endpoint_graph_blocker_point()
+    );
+    assert_eq!(
+        arrangement_report.ring_assembly_predicate_path(),
+        result.ring_assembly_predicate_path()
     );
     assert_eq!(
         arrangement_report.attempted_endpoint_connection_count(),
@@ -4150,6 +4270,47 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         arrangement_report.split_uncertain_relation_count(),
         result.split_uncertain_relation_count()
     );
+    assert_eq!(
+        arrangement_report.split_predicate_path(),
+        result.split_predicate_path()
+    );
+    assert_eq!(
+        arrangement_report.split_output_segment_count(),
+        result.split_output_segment_count()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_first_source_segment_index(),
+        result.split_blocker_first_source_segment_index()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_first_source_segment_kind(),
+        result.split_blocker_first_source_segment_kind()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_first_source_start_point(),
+        result.split_blocker_first_source_start_point()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_first_source_end_point(),
+        result.split_blocker_first_source_end_point()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_second_source_segment_index(),
+        result.split_blocker_second_source_segment_index()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_second_source_segment_kind(),
+        result.split_blocker_second_source_segment_kind()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_second_source_start_point(),
+        result.split_blocker_second_source_start_point()
+    );
+    assert_eq!(
+        arrangement_report.split_blocker_second_source_end_point(),
+        result.split_blocker_second_source_end_point()
+    );
+    assert_eq!(arrangement_report.endpoint_graph_predicate_path(), None);
     assert_eq!(arrangement_report.endpoint_graph_endpoint_count(), None);
     assert_eq!(
         arrangement_report.endpoint_graph_structural_bucket_count(),
@@ -4171,6 +4332,13 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         arrangement_report.endpoint_graph_branch_endpoint_count(),
         None
     );
+    assert_eq!(
+        arrangement_report.endpoint_graph_blocker_arranged_segment_index(),
+        None
+    );
+    assert_eq!(arrangement_report.endpoint_graph_blocker_endpoint(), None);
+    assert_eq!(arrangement_report.endpoint_graph_blocker_point(), None);
+    assert_eq!(arrangement_report.ring_assembly_predicate_path(), None);
     assert_eq!(
         arrangement_report.attempted_endpoint_connection_count(),
         None

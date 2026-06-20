@@ -989,12 +989,27 @@ pub struct ExactCurveArrangementReport2 {
     split_point_relation_count: Option<usize>,
     split_overlap_relation_count: Option<usize>,
     split_uncertain_relation_count: Option<usize>,
+    split_predicate_path: Option<RegionLineSegmentSplitPredicatePath2>,
+    split_output_segment_count: Option<usize>,
+    split_blocker_first_source_segment_index: Option<usize>,
+    split_blocker_first_source_segment_kind: Option<SegmentKind>,
+    split_blocker_first_source_start_point: Option<Point2>,
+    split_blocker_first_source_end_point: Option<Point2>,
+    split_blocker_second_source_segment_index: Option<usize>,
+    split_blocker_second_source_segment_kind: Option<SegmentKind>,
+    split_blocker_second_source_start_point: Option<Point2>,
+    split_blocker_second_source_end_point: Option<Point2>,
+    endpoint_graph_predicate_path: Option<RegionLineSegmentEndpointGraphPredicatePath2>,
     endpoint_graph_endpoint_count: Option<usize>,
     endpoint_graph_structural_bucket_count: Option<usize>,
     endpoint_graph_structural_singleton_bucket_count: Option<usize>,
     endpoint_graph_max_structural_bucket_size: Option<usize>,
     endpoint_graph_dangling_endpoint_count: Option<usize>,
     endpoint_graph_branch_endpoint_count: Option<usize>,
+    endpoint_graph_blocker_arranged_segment_index: Option<usize>,
+    endpoint_graph_blocker_endpoint: Option<RegionLineSegmentArrangedEndpoint2>,
+    endpoint_graph_blocker_point: Option<Point2>,
+    ring_assembly_predicate_path: Option<RegionLineSegmentRingAssemblyPredicatePath2>,
     attempted_endpoint_connection_count: Option<usize>,
     exact_endpoint_connection_count: Option<usize>,
     disconnected_endpoint_connection_count: Option<usize>,
@@ -7990,6 +8005,29 @@ impl ExactCurveArrangementReport2 {
             split_point_relation_count: result.split_point_relation_count(),
             split_overlap_relation_count: result.split_overlap_relation_count(),
             split_uncertain_relation_count: result.split_uncertain_relation_count(),
+            split_predicate_path: result.split_predicate_path(),
+            split_output_segment_count: result.split_output_segment_count(),
+            split_blocker_first_source_segment_index: result
+                .split_blocker_first_source_segment_index(),
+            split_blocker_first_source_segment_kind: result
+                .split_blocker_first_source_segment_kind(),
+            split_blocker_first_source_start_point: result
+                .split_blocker_first_source_start_point()
+                .cloned(),
+            split_blocker_first_source_end_point: result
+                .split_blocker_first_source_end_point()
+                .cloned(),
+            split_blocker_second_source_segment_index: result
+                .split_blocker_second_source_segment_index(),
+            split_blocker_second_source_segment_kind: result
+                .split_blocker_second_source_segment_kind(),
+            split_blocker_second_source_start_point: result
+                .split_blocker_second_source_start_point()
+                .cloned(),
+            split_blocker_second_source_end_point: result
+                .split_blocker_second_source_end_point()
+                .cloned(),
+            endpoint_graph_predicate_path: result.endpoint_graph_predicate_path(),
             endpoint_graph_endpoint_count: result.endpoint_graph_endpoint_count(),
             endpoint_graph_structural_bucket_count: result.endpoint_graph_structural_bucket_count(),
             endpoint_graph_structural_singleton_bucket_count: result
@@ -7998,6 +8036,11 @@ impl ExactCurveArrangementReport2 {
                 .endpoint_graph_max_structural_bucket_size(),
             endpoint_graph_dangling_endpoint_count: result.endpoint_graph_dangling_endpoint_count(),
             endpoint_graph_branch_endpoint_count: result.endpoint_graph_branch_endpoint_count(),
+            endpoint_graph_blocker_arranged_segment_index: result
+                .endpoint_graph_blocker_arranged_segment_index(),
+            endpoint_graph_blocker_endpoint: result.endpoint_graph_blocker_endpoint(),
+            endpoint_graph_blocker_point: result.endpoint_graph_blocker_point().cloned(),
+            ring_assembly_predicate_path: result.ring_assembly_predicate_path(),
             attempted_endpoint_connection_count: result.attempted_endpoint_connection_count(),
             exact_endpoint_connection_count: result.exact_endpoint_connection_count(),
             disconnected_endpoint_connection_count: result.disconnected_endpoint_connection_count(),
@@ -8095,6 +8138,63 @@ impl ExactCurveArrangementReport2 {
         self.split_uncertain_relation_count
     }
 
+    /// Returns the exact predicate family used for split arrangement, when reached.
+    pub const fn split_predicate_path(&self) -> Option<RegionLineSegmentSplitPredicatePath2> {
+        self.split_predicate_path
+    }
+
+    /// Returns arranged output segment count when retained splitting completed.
+    pub const fn split_output_segment_count(&self) -> Option<usize> {
+        self.split_output_segment_count
+    }
+
+    /// Returns the first source segment in a split-stage blocker, when known.
+    pub const fn split_blocker_first_source_segment_index(&self) -> Option<usize> {
+        self.split_blocker_first_source_segment_index
+    }
+
+    /// Returns the primitive family of the first source segment in a split-stage blocker.
+    pub const fn split_blocker_first_source_segment_kind(&self) -> Option<SegmentKind> {
+        self.split_blocker_first_source_segment_kind
+    }
+
+    /// Returns the exact start point of the first source segment in a split-stage blocker.
+    pub const fn split_blocker_first_source_start_point(&self) -> Option<&Point2> {
+        self.split_blocker_first_source_start_point.as_ref()
+    }
+
+    /// Returns the exact end point of the first source segment in a split-stage blocker.
+    pub const fn split_blocker_first_source_end_point(&self) -> Option<&Point2> {
+        self.split_blocker_first_source_end_point.as_ref()
+    }
+
+    /// Returns the second source segment in a split-stage blocker, when known.
+    pub const fn split_blocker_second_source_segment_index(&self) -> Option<usize> {
+        self.split_blocker_second_source_segment_index
+    }
+
+    /// Returns the primitive family of the second source segment in a split-stage blocker.
+    pub const fn split_blocker_second_source_segment_kind(&self) -> Option<SegmentKind> {
+        self.split_blocker_second_source_segment_kind
+    }
+
+    /// Returns the exact start point of the second source segment in a split-stage blocker.
+    pub const fn split_blocker_second_source_start_point(&self) -> Option<&Point2> {
+        self.split_blocker_second_source_start_point.as_ref()
+    }
+
+    /// Returns the exact end point of the second source segment in a split-stage blocker.
+    pub const fn split_blocker_second_source_end_point(&self) -> Option<&Point2> {
+        self.split_blocker_second_source_end_point.as_ref()
+    }
+
+    /// Returns the exact predicate family used for endpoint-graph validation, when reached.
+    pub const fn endpoint_graph_predicate_path(
+        &self,
+    ) -> Option<RegionLineSegmentEndpointGraphPredicatePath2> {
+        self.endpoint_graph_predicate_path
+    }
+
     /// Returns arranged endpoint count validated by retained endpoint-graph evidence.
     pub const fn endpoint_graph_endpoint_count(&self) -> Option<usize> {
         self.endpoint_graph_endpoint_count
@@ -8123,6 +8223,30 @@ impl ExactCurveArrangementReport2 {
     /// Returns branch endpoint count found during endpoint-graph validation.
     pub const fn endpoint_graph_branch_endpoint_count(&self) -> Option<usize> {
         self.endpoint_graph_branch_endpoint_count
+    }
+
+    /// Returns the arranged segment index of the first endpoint-graph blocker.
+    pub const fn endpoint_graph_blocker_arranged_segment_index(&self) -> Option<usize> {
+        self.endpoint_graph_blocker_arranged_segment_index
+    }
+
+    /// Returns the arranged endpoint of the first endpoint-graph blocker.
+    pub const fn endpoint_graph_blocker_endpoint(
+        &self,
+    ) -> Option<RegionLineSegmentArrangedEndpoint2> {
+        self.endpoint_graph_blocker_endpoint
+    }
+
+    /// Returns the exact arranged endpoint point of the first endpoint-graph blocker.
+    pub const fn endpoint_graph_blocker_point(&self) -> Option<&Point2> {
+        self.endpoint_graph_blocker_point.as_ref()
+    }
+
+    /// Returns the exact predicate family used for ring traversal, when reached.
+    pub const fn ring_assembly_predicate_path(
+        &self,
+    ) -> Option<RegionLineSegmentRingAssemblyPredicatePath2> {
+        self.ring_assembly_predicate_path
     }
 
     /// Returns endpoint pair comparisons attempted during retained ring traversal.
