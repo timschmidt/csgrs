@@ -2616,6 +2616,46 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns retained arranged endpoint side bucket count.
+    pub const fn arranged_endpoint_side_bucket_count(&self) -> Option<usize> {
+        match self.arranged_endpoint_side_bucket_cache() {
+            Some(side_cache) => Some(side_cache.bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained arranged endpoint references grouped by side.
+    pub const fn arranged_endpoint_side_ref_count(&self) -> Option<usize> {
+        match self.arranged_endpoint_side_bucket_cache() {
+            Some(side_cache) => Some(side_cache.endpoint_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained arranged start endpoint references.
+    pub const fn arranged_endpoint_start_ref_count(&self) -> Option<usize> {
+        match self.arranged_endpoint_side_bucket_cache() {
+            Some(side_cache) => Some(side_cache.start_endpoint_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained arranged end endpoint references.
+    pub const fn arranged_endpoint_end_ref_count(&self) -> Option<usize> {
+        match self.arranged_endpoint_side_bucket_cache() {
+            Some(side_cache) => Some(side_cache.end_endpoint_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained arranged endpoint side bucket size.
+    pub const fn arranged_endpoint_side_max_bucket_size(&self) -> Option<usize> {
+        match self.arranged_endpoint_side_bucket_cache() {
+            Some(side_cache) => Some(side_cache.max_bucket_size()),
+            None => None,
+        }
+    }
+
     /// Returns exact endpoint records for arranged fragments.
     pub const fn arranged_endpoint_point_cache(
         &self,
@@ -7297,6 +7337,31 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().arranged_endpoint_side_bucket_cache()
     }
 
+    /// Returns retained arranged endpoint side bucket count.
+    pub const fn arranged_endpoint_side_bucket_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_side_bucket_count()
+    }
+
+    /// Returns retained arranged endpoint references grouped by side.
+    pub const fn arranged_endpoint_side_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_side_ref_count()
+    }
+
+    /// Returns retained arranged start endpoint references.
+    pub const fn arranged_endpoint_start_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_start_ref_count()
+    }
+
+    /// Returns retained arranged end endpoint references.
+    pub const fn arranged_endpoint_end_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_end_ref_count()
+    }
+
+    /// Returns the largest retained arranged endpoint side bucket size.
+    pub const fn arranged_endpoint_side_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_side_max_bucket_size()
+    }
+
     /// Returns exact endpoint records for arranged fragments.
     pub const fn arranged_endpoint_point_cache(
         &self,
@@ -8331,6 +8396,31 @@ impl ExactCurveArrangementResult2 {
             Some(endpoint_cache) => Some(endpoint_cache.endpoint_side_bucket_cache()),
             None => None,
         }
+    }
+
+    /// Returns retained arranged endpoint side bucket count.
+    pub const fn arranged_endpoint_side_bucket_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_side_bucket_count()
+    }
+
+    /// Returns retained arranged endpoint references grouped by side.
+    pub const fn arranged_endpoint_side_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_side_ref_count()
+    }
+
+    /// Returns retained arranged start endpoint references.
+    pub const fn arranged_endpoint_start_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_start_ref_count()
+    }
+
+    /// Returns retained arranged end endpoint references.
+    pub const fn arranged_endpoint_end_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_end_ref_count()
+    }
+
+    /// Returns the largest retained arranged endpoint side bucket size.
+    pub const fn arranged_endpoint_side_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_side_max_bucket_size()
     }
 
     /// Returns exact endpoint records for arranged fragments.
@@ -10316,6 +10406,31 @@ impl ExactCurveArrangementReport2 {
             Some(endpoint_cache) => Some(endpoint_cache.endpoint_side_bucket_cache()),
             None => None,
         }
+    }
+
+    /// Returns retained arranged endpoint side bucket count.
+    pub const fn arranged_endpoint_side_bucket_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_side_bucket_count()
+    }
+
+    /// Returns retained arranged endpoint references grouped by side.
+    pub const fn arranged_endpoint_side_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_side_ref_count()
+    }
+
+    /// Returns retained arranged start endpoint references.
+    pub const fn arranged_endpoint_start_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_start_ref_count()
+    }
+
+    /// Returns retained arranged end endpoint references.
+    pub const fn arranged_endpoint_end_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_end_ref_count()
+    }
+
+    /// Returns the largest retained arranged endpoint side bucket size.
+    pub const fn arranged_endpoint_side_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_side_max_bucket_size()
     }
 
     /// Returns exact endpoint records for arranged fragments.
