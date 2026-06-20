@@ -982,16 +982,8 @@ pub struct ExactCurveArrangementResult2 {
 /// [`ExactCurveArrangementEvaluation2`].
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementReport2 {
-    request: ExactCurveArrangementRequest2,
-    source_segment_cache: ExactCurveArrangementSourceSegmentCache2,
-    source_endpoint_bucket_cache: ExactCurveArrangementSourceEndpointBucketCache2,
-    split_schedule_cache: ExactCurveArrangementSplitScheduleCache2,
-    split_cache: Option<ExactCurveArrangementSplitCache2>,
-    endpoint_graph_cache: Option<ExactCurveArrangementEndpointGraphCache2>,
-    ring_assembly_cache: Option<ExactCurveArrangementRingAssemblyCache2>,
-    output_cache: Option<ExactCurveArrangementOutputCache2>,
+    workspace: ExactCurveWorkspace2,
     summary_cache: ExactCurveArrangementEvaluationSummaryCache2,
-    source_segment_aabbs: Vec<Option<Aabb2>>,
 }
 
 /// Material/hole role assigned to one closed boundary contour.
@@ -9520,23 +9512,14 @@ impl RegionLineSegmentSplitIntersectionReport2 {
 impl ExactCurveArrangementReport2 {
     fn from_evaluation(evaluation: &ExactCurveArrangementEvaluation2) -> Self {
         Self {
-            request: evaluation.request().clone(),
-            source_segment_cache: evaluation.source_segment_cache().clone(),
-            source_endpoint_bucket_cache: evaluation.source_endpoint_bucket_cache().clone(),
-            split_schedule_cache: evaluation.split_schedule_cache().clone(),
-            split_cache: evaluation.split_cache().cloned(),
-            endpoint_graph_cache: evaluation.endpoint_graph_cache().cloned(),
-            ring_assembly_cache: evaluation.ring_assembly_cache().cloned(),
-            output_cache: evaluation.output_cache().cloned(),
+            workspace: evaluation.workspace().clone(),
             summary_cache: evaluation.summary_cache().clone(),
-            source_segment_aabbs: evaluation.source_segment_aabbs().to_vec(),
         }
     }
 
     fn into_region_line_segment_region_build_report(self) -> RegionLineSegmentRegionBuildReport2 {
         let split_cache = self
-            .split_cache
-            .as_ref()
+            .split_cache()
             .expect("evaluated exact arrangement report missing retained split cache");
         let split_predicate_path = split_cache.predicate_path();
         let split_candidate_pair_count = split_cache.candidate_pair_count();
@@ -9570,7 +9553,7 @@ impl ExactCurveArrangementReport2 {
         let split_blocker_second_source_end_point = split_blocker_cache
             .map(ExactCurveArrangementSplitBlockerCache2::second_source_end_point)
             .cloned();
-        let endpoint_graph_cache = self.endpoint_graph_cache.as_ref();
+        let endpoint_graph_cache = self.endpoint_graph_cache();
         let endpoint_graph_predicate_path =
             endpoint_graph_cache.map(ExactCurveArrangementEndpointGraphCache2::predicate_path);
         let endpoint_graph_endpoint_count =
@@ -9592,7 +9575,7 @@ impl ExactCurveArrangementReport2 {
         let endpoint_graph_blocker_point = endpoint_graph_cache
             .and_then(ExactCurveArrangementEndpointGraphCache2::blocker_point)
             .cloned();
-        let ring_cache = self.ring_assembly_cache.as_ref();
+        let ring_cache = self.ring_assembly_cache();
         let attempted_endpoint_connection_count = ring_cache
             .map(ExactCurveArrangementRingAssemblyCache2::attempted_endpoint_connection_count)
             .unwrap_or(0);
@@ -9628,7 +9611,7 @@ impl ExactCurveArrangementReport2 {
             .unwrap_or_default();
         let ring_assembly_predicate_path =
             ring_cache.map(ExactCurveArrangementRingAssemblyCache2::predicate_path);
-        let output_cache = self.output_cache.as_ref();
+        let output_cache = self.output_cache();
         let stage = output_cache
             .map(ExactCurveArrangementOutputCache2::stage)
             .or_else(|| self.summary_cache.stage())
@@ -9646,8 +9629,8 @@ impl ExactCurveArrangementReport2 {
 
         RegionLineSegmentRegionBuildReport2 {
             stage,
-            source_segment_count: self.source_segment_cache.source_segment_count(),
-            source_segment_kind_counts: self.source_segment_cache.source_segment_kind_counts(),
+            source_segment_count: self.source_segment_cache().source_segment_count(),
+            source_segment_kind_counts: self.source_segment_cache().source_segment_kind_counts(),
             arranged_segment_count,
             arranged_segment_kind_counts,
             split_predicate_path,
@@ -9696,9 +9679,14 @@ impl ExactCurveArrangementReport2 {
         }
     }
 
+    /// Returns the retained workspace projected by this report.
+    pub const fn workspace(&self) -> &ExactCurveWorkspace2 {
+        &self.workspace
+    }
+
     /// Returns the retained arrangement request projected by this report.
     pub const fn request(&self) -> &ExactCurveArrangementRequest2 {
-        &self.request
+        self.workspace().request()
     }
 
     /// Returns the fill rule retained by the arrangement request.
@@ -9718,7 +9706,7 @@ impl ExactCurveArrangementReport2 {
 
     /// Returns retained source segment facts prepared before split scheduling.
     pub const fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
-        &self.source_segment_cache
+        self.workspace().source_segment_cache()
     }
 
     /// Returns retained source AABB buckets grouped by certification status.
@@ -9738,17 +9726,17 @@ impl ExactCurveArrangementReport2 {
     pub const fn source_endpoint_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
-        &self.source_endpoint_bucket_cache
+        self.workspace().source_endpoint_bucket_cache()
     }
 
     /// Returns the retained source-pair schedule prepared before split predicates run.
     pub const fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
-        &self.split_schedule_cache
+        self.workspace().split_schedule_cache()
     }
 
     /// Returns exact split evidence retained from the evaluated arrangement.
     pub const fn split_cache(&self) -> Option<&ExactCurveArrangementSplitCache2> {
-        self.split_cache.as_ref()
+        self.workspace().split_cache()
     }
 
     /// Returns retained split-stage relation buckets.
@@ -9791,7 +9779,7 @@ impl ExactCurveArrangementReport2 {
 
     /// Returns exact endpoint-bucket evidence retained from the evaluated arrangement.
     pub const fn endpoint_graph_cache(&self) -> Option<&ExactCurveArrangementEndpointGraphCache2> {
-        self.endpoint_graph_cache.as_ref()
+        self.workspace().endpoint_graph_cache()
     }
 
     /// Returns exact arranged endpoint buckets retained by endpoint-graph validation.
@@ -9836,12 +9824,12 @@ impl ExactCurveArrangementReport2 {
 
     /// Returns exact ring-traversal evidence retained from the evaluated arrangement.
     pub const fn ring_assembly_cache(&self) -> Option<&ExactCurveArrangementRingAssemblyCache2> {
-        self.ring_assembly_cache.as_ref()
+        self.workspace().ring_assembly_cache()
     }
 
     /// Returns final output evidence retained from the evaluated arrangement.
     pub const fn output_cache(&self) -> Option<&ExactCurveArrangementOutputCache2> {
-        self.output_cache.as_ref()
+        self.workspace().output_cache()
     }
 
     /// Returns final retained evaluation facts derived from workspace caches.
@@ -9861,7 +9849,7 @@ impl ExactCurveArrangementReport2 {
 
     /// Returns retained source segment boxes in request order.
     pub fn source_segment_aabbs(&self) -> &[Option<Aabb2>] {
-        &self.source_segment_aabbs
+        self.workspace().source_segment_aabbs()
     }
 
     /// Returns a retained aggregate source box when every source box was decided.
