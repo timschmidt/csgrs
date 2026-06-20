@@ -1,8 +1,8 @@
 use hypercurve::{
-    BezierEndpoint, BezierInterpolationReplayPath2, BezierInterpolationSolvePath2, CubicBezier2,
-    CubicBezierHermiteInterpolationStage2, CurvePolicy, EndpointTangent2, Point2, QuadraticBezier2,
-    QuadraticBezierMidpointInterpolationStage2, QuadraticBezierPointInterpolationStage2, Real,
-    UncertaintyReason,
+    BezierEndpoint, BezierInterpolationReplayPath2, BezierInterpolationSolvePath2, Classification,
+    CubicBezier2, CubicBezierHermiteInterpolationStage2, CurvePolicy, EndpointTangent2, Point2,
+    QuadraticBezier2, QuadraticBezierMidpointInterpolationStage2,
+    QuadraticBezierPointInterpolationStage2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -69,6 +69,19 @@ fn cubic_hermite_interpolation_solves_controls_and_replays_endpoint_tangents() {
     assert_eq!(report.replayed_start_tangent(), Some(&start_tangent));
     assert_eq!(report.replayed_end_tangent(), Some(&end_tangent));
     assert_eq!(report.blocker(), None);
+    assert!(matches!(
+        result.curve_classification(),
+        Classification::Decided(curve) if curve.control1() == &p(1, 2)
+    ));
+    let owned_report = result.clone().into_report();
+    assert_eq!(&owned_report, result.report());
+    let (owned_curve, owned_parts_report) = result.clone().into_parts();
+    assert_eq!(owned_curve.as_ref(), result.curve());
+    assert_eq!(&owned_parts_report, result.report());
+    assert!(matches!(
+        result.clone().into_curve_classification(),
+        Classification::Decided(curve) if curve.control1() == &p(1, 2)
+    ));
 
     let curve = result
         .curve()
@@ -176,6 +189,19 @@ fn quadratic_point_interpolation_report_materializes_decided_curve() {
 
     assert!(report.status().is_native_exact());
     assert_eq!(report.blocker(), None);
+    assert!(matches!(
+        result.curve_classification(),
+        Classification::Decided(curve) if curve.control() == &p(2, 4)
+    ));
+    let owned_report = result.clone().into_report();
+    assert_eq!(&owned_report, result.report());
+    let (owned_curve, owned_parts_report) = result.clone().into_parts();
+    assert_eq!(owned_curve.as_ref(), result.curve());
+    assert_eq!(&owned_parts_report, result.report());
+    assert!(matches!(
+        result.clone().into_curve_classification(),
+        Classification::Decided(curve) if curve.control() == &p(2, 4)
+    ));
     let curve = result
         .curve()
         .expect("interior exact interpolation should materialize");
@@ -207,6 +233,19 @@ fn quadratic_point_interpolation_reports_endpoint_parameter_blocker() {
     assert_eq!(report.replay_path(), None);
     assert_eq!(report.replayed_point(), None);
     assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(
+        result.curve_classification(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    let owned_report = result.clone().into_report();
+    assert_eq!(&owned_report, result.report());
+    let (owned_curve, owned_parts_report) = result.clone().into_parts();
+    assert_eq!(owned_curve, None);
+    assert_eq!(&owned_parts_report, result.report());
+    assert_eq!(
+        result.into_curve_classification(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
 }
 
 #[test]
@@ -280,6 +319,19 @@ fn quadratic_midpoint_interpolation_solves_control_and_replays_constraint() {
     );
     assert_eq!(report.replayed_midpoint(), Some(&p(2, 3)));
     assert_eq!(report.blocker(), None);
+    assert!(matches!(
+        result.curve_classification(),
+        Classification::Decided(curve) if curve.control() == &p(2, 6)
+    ));
+    let owned_report = result.clone().into_report();
+    assert_eq!(&owned_report, result.report());
+    let (owned_curve, owned_parts_report) = result.clone().into_parts();
+    assert_eq!(owned_curve.as_ref(), result.curve());
+    assert_eq!(&owned_parts_report, result.report());
+    assert!(matches!(
+        result.clone().into_curve_classification(),
+        Classification::Decided(curve) if curve.control() == &p(2, 6)
+    ));
 
     let curve = result
         .curve()

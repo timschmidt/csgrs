@@ -255,9 +255,48 @@ impl QuadraticBezierMidpointInterpolationResult2 {
         self.curve
     }
 
+    /// Consumes this result and returns retained interpolation evidence.
+    pub fn into_report(self) -> QuadraticBezierMidpointInterpolationReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized span with its report.
+    pub fn into_parts(
+        self,
+    ) -> (
+        Option<QuadraticBezier2>,
+        QuadraticBezierMidpointInterpolationReport2,
+    ) {
+        (self.curve, self.report)
+    }
+
     /// Returns retained interpolation evidence.
     pub const fn report(&self) -> &QuadraticBezierMidpointInterpolationReport2 {
         &self.report
+    }
+
+    /// Returns the interpolated span as a convenience classification.
+    pub fn curve_classification(&self) -> Classification<&QuadraticBezier2> {
+        match self.curve() {
+            Some(curve) => Classification::Decided(curve),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the interpolated span as a convenience classification.
+    pub fn into_curve_classification(self) -> Classification<QuadraticBezier2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_curve() {
+            Some(curve) => Classification::Decided(curve),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
@@ -329,9 +368,48 @@ impl QuadraticBezierPointInterpolationResult2 {
         self.curve
     }
 
+    /// Consumes this result and returns retained interpolation evidence.
+    pub fn into_report(self) -> QuadraticBezierPointInterpolationReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized span with its report.
+    pub fn into_parts(
+        self,
+    ) -> (
+        Option<QuadraticBezier2>,
+        QuadraticBezierPointInterpolationReport2,
+    ) {
+        (self.curve, self.report)
+    }
+
     /// Returns retained interpolation evidence.
     pub const fn report(&self) -> &QuadraticBezierPointInterpolationReport2 {
         &self.report
+    }
+
+    /// Returns the interpolated span as a convenience classification.
+    pub fn curve_classification(&self) -> Classification<&QuadraticBezier2> {
+        match self.curve() {
+            Some(curve) => Classification::Decided(curve),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the interpolated span as a convenience classification.
+    pub fn into_curve_classification(self) -> Classification<QuadraticBezier2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_curve() {
+            Some(curve) => Classification::Decided(curve),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
@@ -413,9 +491,43 @@ impl CubicBezierHermiteInterpolationResult2 {
         self.curve
     }
 
+    /// Consumes this result and returns retained interpolation evidence.
+    pub fn into_report(self) -> CubicBezierHermiteInterpolationReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized span with its report.
+    pub fn into_parts(self) -> (Option<CubicBezier2>, CubicBezierHermiteInterpolationReport2) {
+        (self.curve, self.report)
+    }
+
     /// Returns retained interpolation evidence.
     pub const fn report(&self) -> &CubicBezierHermiteInterpolationReport2 {
         &self.report
+    }
+
+    /// Returns the interpolated span as a convenience classification.
+    pub fn curve_classification(&self) -> Classification<&CubicBezier2> {
+        match self.curve() {
+            Some(curve) => Classification::Decided(curve),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the interpolated span as a convenience classification.
+    pub fn into_curve_classification(self) -> Classification<CubicBezier2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_curve() {
+            Some(curve) => Classification::Decided(curve),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
