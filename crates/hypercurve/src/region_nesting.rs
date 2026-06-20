@@ -2456,6 +2456,11 @@ impl ExactCurveWorkspace2 {
         &self.request
     }
 
+    /// Consumes this workspace and returns the retained request.
+    pub fn into_request(self) -> ExactCurveArrangementRequest2 {
+        self.request
+    }
+
     /// Returns retained source segment primitive-family counts.
     pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
         self.source_segment_kind_counts
@@ -6299,6 +6304,11 @@ impl ExactCurveArrangementEvaluation2 {
         &self.workspace
     }
 
+    /// Consumes this evaluation and returns the retained workspace.
+    pub fn into_workspace(self) -> ExactCurveWorkspace2 {
+        self.workspace
+    }
+
     /// Returns final retained evaluation facts derived from workspace caches.
     pub const fn summary_cache(&self) -> &ExactCurveArrangementEvaluationSummaryCache2 {
         &self.summary_cache
@@ -6366,6 +6376,11 @@ impl ExactCurveArrangementAttempt2 {
         &self.request
     }
 
+    /// Consumes this attempt and returns the retained request.
+    pub fn into_request(self) -> ExactCurveArrangementRequest2 {
+        self.request
+    }
+
     /// Evaluates the request through the retained exact arrangement pipeline.
     pub fn evaluate(&self, policy: &CurvePolicy) -> CurveResult<ExactCurveArrangementResult2> {
         let compatibility_projection =
@@ -6416,6 +6431,18 @@ impl ExactCurveArrangementResult2 {
     /// Returns the retained evaluation record.
     pub const fn evaluation(&self) -> &ExactCurveArrangementEvaluation2 {
         &self.evaluation
+    }
+
+    /// Consumes this result and returns the retained evaluation record.
+    pub fn into_evaluation(self) -> ExactCurveArrangementEvaluation2 {
+        let Self {
+            evaluation,
+            region,
+            compatibility_projection,
+        } = self;
+        drop(region);
+        drop(compatibility_projection);
+        evaluation
     }
 
     /// Returns the retained workspace consumed by the evaluation.
