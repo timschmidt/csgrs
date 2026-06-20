@@ -7823,6 +7823,10 @@ impl ExactCurveArrangementResult2 {
     /// This is the retained replacement for deprecated `Region2::from_unordered_*_with_report`
     /// callers that need owned output plus report data without taking the legacy compatibility
     /// result.
+    #[deprecated(
+        since = "0.3.0",
+        note = "derive reports explicitly with arrangement_report(), then use region() or into_region()"
+    )]
     pub fn into_region_and_arrangement_report(
         self,
     ) -> (Option<Region2>, ExactCurveArrangementReport2) {
@@ -7835,6 +7839,10 @@ impl ExactCurveArrangementResult2 {
     ///
     /// This preserves the retained blocker in the classification while keeping the report derived
     /// from arrangement caches rather than the legacy compatibility result.
+    #[deprecated(
+        since = "0.3.0",
+        note = "derive reports explicitly with arrangement_report(), then use region_classification() or into_region_classification()"
+    )]
     pub fn into_region_classification_and_arrangement_report(
         self,
     ) -> (Classification<Region2>, ExactCurveArrangementReport2) {

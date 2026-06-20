@@ -1274,10 +1274,14 @@ fn exact_curve_arrangement_result_returns_region_classification() {
         &policy(),
     )
     .unwrap();
-    let (owned_region, arrangement_report) = retained_result.into_region_and_arrangement_report();
-    assert!(owned_region.is_some());
+    let arrangement_report = retained_result.arrangement_report();
+    assert!(retained_result.region().is_some());
     assert_eq!(arrangement_report.materialized_region(), Some(true));
     assert!(arrangement_report.status().unwrap().is_native_exact());
+    assert_eq!(
+        arrangement_report.summary_cache(),
+        retained_result.summary_cache()
+    );
 
     let retained_result = evaluate_unordered_line_segments(
         vec![
@@ -1290,11 +1294,14 @@ fn exact_curve_arrangement_result_returns_region_classification() {
         &policy(),
     )
     .unwrap();
-    let (classification, arrangement_report) =
-        retained_result.into_region_classification_and_arrangement_report();
+    let arrangement_report = retained_result.arrangement_report();
     assert_eq!(arrangement_report.materialized_region(), Some(true));
     assert!(arrangement_report.status().unwrap().is_native_exact());
-    match classification {
+    assert_eq!(
+        arrangement_report.summary_cache(),
+        retained_result.summary_cache()
+    );
+    match retained_result.region_classification() {
         Classification::Decided(region) => assert_eq!(
             region.classify_point(&p(2, 2), &policy()),
             Classification::Decided(RegionPointLocation::Inside)
@@ -1313,9 +1320,13 @@ fn exact_curve_arrangement_result_returns_region_classification() {
         &policy(),
     )
     .unwrap();
-    let (region, arrangement_report) = retained_result.into_region_and_arrangement_report();
-    assert!(region.is_some());
+    let arrangement_report = retained_result.arrangement_report();
+    assert!(retained_result.region().is_some());
     assert!(arrangement_report.status().unwrap().is_native_exact());
+    assert_eq!(
+        arrangement_report.summary_cache(),
+        retained_result.summary_cache()
+    );
 }
 
 #[test]
@@ -1358,14 +1369,14 @@ fn exact_curve_arrangement_result_classification_preserves_blocker() {
         &policy(),
     )
     .unwrap();
-    let (classification, arrangement_report) =
-        result.into_region_classification_and_arrangement_report();
+    let arrangement_report = result.arrangement_report();
     assert_eq!(
         arrangement_report.blocker(),
         Some(UncertaintyReason::Boundary)
     );
+    assert_eq!(arrangement_report.summary_cache(), result.summary_cache());
     assert_eq!(
-        classification,
+        result.region_classification(),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 
@@ -1375,12 +1386,13 @@ fn exact_curve_arrangement_result_classification_preserves_blocker() {
         &policy(),
     )
     .unwrap();
-    let (region, arrangement_report) = result.into_region_and_arrangement_report();
-    assert!(region.is_none());
+    let arrangement_report = result.arrangement_report();
+    assert!(result.region().is_none());
     assert_eq!(
         arrangement_report.blocker(),
         Some(UncertaintyReason::Boundary)
     );
+    assert_eq!(arrangement_report.summary_cache(), result.summary_cache());
 }
 
 #[test]
