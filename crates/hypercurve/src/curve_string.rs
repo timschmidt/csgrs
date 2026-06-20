@@ -4000,9 +4000,43 @@ impl CurveStringChamferResult2 {
         self.curve_string
     }
 
+    /// Consumes this result and returns retained chamfer evidence.
+    pub fn into_report(self) -> CurveStringChamferReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized chamfer with its report.
+    pub fn into_parts(self) -> (Option<CurveString2>, CurveStringChamferReport2) {
+        (self.curve_string, self.report)
+    }
+
     /// Returns the retained chamfer report.
     pub const fn report(&self) -> &CurveStringChamferReport2 {
         &self.report
+    }
+
+    /// Returns the chamfer output as a convenience classification while retaining this result.
+    pub fn curve_string_classification(&self) -> Classification<&CurveString2> {
+        match self.curve_string() {
+            Some(curve_string) => Classification::Decided(curve_string),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the chamfer output as a convenience classification.
+    pub fn into_curve_string_classification(self) -> Classification<CurveString2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_curve_string() {
+            Some(curve_string) => Classification::Decided(curve_string),
+            None => Classification::Uncertain(blocker),
+        }
     }
 
     pub(crate) const fn report_mut(&mut self) -> &mut CurveStringChamferReport2 {
@@ -4168,9 +4202,43 @@ impl CurveStringFilletResult2 {
         self.curve_string
     }
 
+    /// Consumes this result and returns retained fillet evidence.
+    pub fn into_report(self) -> CurveStringFilletReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized fillet with its report.
+    pub fn into_parts(self) -> (Option<CurveString2>, CurveStringFilletReport2) {
+        (self.curve_string, self.report)
+    }
+
     /// Returns the retained fillet report.
     pub const fn report(&self) -> &CurveStringFilletReport2 {
         &self.report
+    }
+
+    /// Returns the fillet output as a convenience classification while retaining this result.
+    pub fn curve_string_classification(&self) -> Classification<&CurveString2> {
+        match self.curve_string() {
+            Some(curve_string) => Classification::Decided(curve_string),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the fillet output as a convenience classification.
+    pub fn into_curve_string_classification(self) -> Classification<CurveString2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_curve_string() {
+            Some(curve_string) => Classification::Decided(curve_string),
+            None => Classification::Uncertain(blocker),
+        }
     }
 
     pub(crate) const fn report_mut(&mut self) -> &mut CurveStringFilletReport2 {

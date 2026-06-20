@@ -2565,6 +2565,19 @@ fn curve_string_chamfer_line_line_vertex_materializes_exact_segments() {
         chamfer.report().segment_reports()[1].output_segment_end_point(),
         Some(&p(4, 4))
     );
+    assert!(matches!(
+        chamfer.curve_string_classification(),
+        Classification::Decided(curve_string) if curve_string.len() == 3
+    ));
+    let owned_report = chamfer.clone().into_report();
+    assert_eq!(&owned_report, chamfer.report());
+    let (owned_curve, owned_parts_report) = chamfer.clone().into_parts();
+    assert_eq!(owned_curve.as_ref(), chamfer.curve_string());
+    assert_eq!(&owned_parts_report, chamfer.report());
+    assert!(matches!(
+        chamfer.clone().into_curve_string_classification(),
+        Classification::Decided(curve_string) if curve_string.len() == 3
+    ));
 
     let curve = chamfer
         .curve_string()
@@ -2773,6 +2786,19 @@ fn curve_string_chamfer_next_arc_neighbor_reports_parameter_path_unsupported() {
     assert_eq!(chamfer.report().chamfer_segment_end_point(), None);
     assert_eq!(chamfer.report().output_segment_count(), None);
     assert_eq!(chamfer.report().output_segment_kind_counts(), None);
+    assert_eq!(
+        chamfer.curve_string_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+    let owned_report = chamfer.clone().into_report();
+    assert_eq!(&owned_report, chamfer.report());
+    let (owned_curve, owned_parts_report) = chamfer.clone().into_parts();
+    assert_eq!(owned_curve.as_ref(), chamfer.curve_string());
+    assert_eq!(&owned_parts_report, chamfer.report());
+    assert_eq!(
+        chamfer.clone().into_curve_string_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
 }
 
 #[test]
@@ -2892,6 +2918,19 @@ fn curve_string_fillet_line_line_vertex_materializes_exact_arc() {
         fillet.report().segment_reports()[1].range_end_point(),
         Some(&p(4, 4))
     );
+    assert!(matches!(
+        fillet.curve_string_classification(),
+        Classification::Decided(curve_string) if curve_string.len() == 3
+    ));
+    let owned_report = fillet.clone().into_report();
+    assert_eq!(&owned_report, fillet.report());
+    let (owned_curve, owned_parts_report) = fillet.clone().into_parts();
+    assert_eq!(owned_curve.as_ref(), fillet.curve_string());
+    assert_eq!(&owned_parts_report, fillet.report());
+    assert!(matches!(
+        fillet.clone().into_curve_string_classification(),
+        Classification::Decided(curve_string) if curve_string.len() == 3
+    ));
 
     let curve = fillet
         .curve_string()
@@ -3000,6 +3039,19 @@ fn curve_string_fillet_reports_radius_mismatch_boundary() {
     );
     assert_eq!(fillet.report().output_segment_kind_counts(), None);
     assert_eq!(fillet.report().blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(
+        fillet.curve_string_classification(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    let owned_report = fillet.clone().into_report();
+    assert_eq!(&owned_report, fillet.report());
+    let (owned_curve, owned_parts_report) = fillet.clone().into_parts();
+    assert_eq!(owned_curve.as_ref(), fillet.curve_string());
+    assert_eq!(&owned_parts_report, fillet.report());
+    assert_eq!(
+        fillet.clone().into_curve_string_classification(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
 }
 
 #[test]
