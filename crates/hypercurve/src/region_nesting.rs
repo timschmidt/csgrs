@@ -990,6 +990,8 @@ pub struct ExactCurveArrangementReport2 {
     split_point_relation_count: Option<usize>,
     split_overlap_relation_count: Option<usize>,
     split_uncertain_relation_count: Option<usize>,
+    split_intersection_points: Option<Vec<Point2>>,
+    split_intersection_reports: Option<Vec<RegionLineSegmentSplitIntersectionReport2>>,
     split_predicate_path: Option<RegionLineSegmentSplitPredicatePath2>,
     split_output_segment_count: Option<usize>,
     split_blocker_first_source_segment_index: Option<usize>,
@@ -8042,6 +8044,8 @@ impl ExactCurveArrangementReport2 {
             split_point_relation_count: result.split_point_relation_count(),
             split_overlap_relation_count: result.split_overlap_relation_count(),
             split_uncertain_relation_count: result.split_uncertain_relation_count(),
+            split_intersection_points: result.split_intersection_points().map(<[_]>::to_vec),
+            split_intersection_reports: result.split_intersection_reports().map(<[_]>::to_vec),
             split_predicate_path: result.split_predicate_path(),
             split_output_segment_count: result.split_output_segment_count(),
             split_blocker_first_source_segment_index: result
@@ -8182,6 +8186,18 @@ impl ExactCurveArrangementReport2 {
     /// Returns source-pair relations that remained uncertain.
     pub const fn split_uncertain_relation_count(&self) -> Option<usize> {
         self.split_uncertain_relation_count
+    }
+
+    /// Returns exact intersection points retained by split evaluation, when reached.
+    pub fn split_intersection_points(&self) -> Option<&[Point2]> {
+        self.split_intersection_points.as_deref()
+    }
+
+    /// Returns exact per-event source and parameter evidence retained by split evaluation.
+    pub fn split_intersection_reports(
+        &self,
+    ) -> Option<&[RegionLineSegmentSplitIntersectionReport2]> {
+        self.split_intersection_reports.as_deref()
     }
 
     /// Returns the exact predicate family used for split arrangement, when reached.

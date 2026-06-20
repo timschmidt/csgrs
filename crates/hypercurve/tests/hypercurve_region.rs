@@ -2231,6 +2231,14 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.split_point_relation_count()
     );
     assert_eq!(
+        arrangement_report.split_intersection_points(),
+        result.split_intersection_points()
+    );
+    assert_eq!(
+        arrangement_report.split_intersection_reports(),
+        result.split_intersection_reports()
+    );
+    assert_eq!(
         arrangement_report.split_predicate_path(),
         result.split_predicate_path()
     );
@@ -4358,6 +4366,14 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(
         arrangement_report.split_uncertain_relation_count(),
         result.split_uncertain_relation_count()
+    );
+    assert_eq!(
+        arrangement_report.split_intersection_points(),
+        result.split_intersection_points()
+    );
+    assert_eq!(
+        arrangement_report.split_intersection_reports(),
+        result.split_intersection_reports()
     );
     assert_eq!(
         arrangement_report.split_predicate_path(),
