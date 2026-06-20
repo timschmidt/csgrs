@@ -355,17 +355,14 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     assert_eq!(boundary_report.output_segment_count(), Some(8));
     assert_eq!(boundary_report.material_segment_count(), Some(8));
     assert_eq!(boundary_report.hole_segment_count(), Some(0));
-    assert_eq!(boundary_report.role_reports().len(), 1);
+    let role_reports = report.role_reports().unwrap();
+    assert_eq!(role_reports.len(), 1);
     assert_eq!(
-        boundary_report.role_reports()[0].role(),
+        role_reports[0].role(),
         hypercurve::RegionBoundaryContourRole2::Material
     );
-    assert!(
-        boundary_report.role_reports()[0]
-            .containing_contour_indices()
-            .is_empty()
-    );
-    assert_eq!(boundary_report.role_reports()[0].nesting_depth(), 0);
+    assert!(role_reports[0].containing_contour_indices().is_empty());
+    assert_eq!(role_reports[0].nesting_depth(), 0);
 
     let result = built.region().unwrap();
     assert!(inside(result, 1.0, 1.0));

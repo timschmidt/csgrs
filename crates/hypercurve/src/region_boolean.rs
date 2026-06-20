@@ -13,9 +13,10 @@ use crate::{
     BooleanFragmentClassification, BooleanFragmentSelection, BooleanFragmentSelectionReport2,
     BooleanOp, BulgeVertex2, Classification, Contour2, ContourIntersection, CurveError,
     CurvePolicy, CurveResult, FillRule, IntersectionKind, Point2, Real, Region2,
-    RegionBoundaryContourBuildReport2, RegionFragmentBuildReport2, RegionFragmentSet,
-    RegionIntersectionSet, RegionPointLocation, RegionSide, RegionView2, RetainedTopologyStatus,
-    Segment2, SegmentKindCounts, UncertaintyReason,
+    RegionBoundaryContourBuildReport2, RegionBoundaryContourRoleReport2,
+    RegionFragmentBuildReport2, RegionFragmentSet, RegionIntersectionSet, RegionPointLocation,
+    RegionSide, RegionView2, RetainedTopologyStatus, Segment2, SegmentKindCounts,
+    UncertaintyReason,
 };
 use std::cmp::Ordering;
 
@@ -865,6 +866,12 @@ impl RegionBooleanReport2 {
         self.boundary_build_report.as_ref()
     }
 
+    /// Returns final boundary-contour role reports, if role assignment was reached.
+    pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
+        self.boundary_build_report()
+            .map(RegionBoundaryContourBuildReport2::role_reports)
+    }
+
     /// Returns prepared-cache inventory and freshness evidence, when used.
     pub const fn prepared_cache_report(&self) -> Option<&RegionBooleanPreparedCacheReport2> {
         self.prepared_cache_report.as_ref()
@@ -938,6 +945,12 @@ impl RegionBooleanPipelineReport2 {
     /// Returns final boundary-contour role assignment evidence, if available.
     pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
         self.boundary_build_report.as_ref()
+    }
+
+    /// Returns final boundary-contour role reports, if role assignment was reached.
+    pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
+        self.boundary_build_report()
+            .map(RegionBoundaryContourBuildReport2::role_reports)
     }
 }
 
