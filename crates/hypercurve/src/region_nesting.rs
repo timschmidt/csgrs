@@ -994,33 +994,6 @@ pub struct ExactCurveArrangementReport2 {
     output_cache: Option<ExactCurveArrangementOutputCache2>,
     summary_cache: ExactCurveArrangementEvaluationSummaryCache2,
     source_segment_aabbs: Vec<Option<Aabb2>>,
-    output_contour_count: Option<usize>,
-    output_segment_count: Option<usize>,
-    output_segment_kind_counts: Option<SegmentKindCounts>,
-    material_contour_count: Option<usize>,
-    hole_contour_count: Option<usize>,
-    material_segment_count: Option<usize>,
-    hole_segment_count: Option<usize>,
-    role_report_count: Option<usize>,
-    role_reports: Option<Vec<RegionBoundaryContourRoleReport2>>,
-    boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
-    boundary_build_stage: Option<RegionBoundaryContourBuildStage2>,
-    boundary_build_predicate_path: Option<RegionBoundaryContourBuildPredicatePath2>,
-    boundary_build_status: Option<RetainedTopologyStatus>,
-    boundary_build_blocker: Option<UncertaintyReason>,
-    boundary_build_source_contour_count: Option<usize>,
-    boundary_build_source_segment_count: Option<usize>,
-    boundary_build_validation_candidate_pair_count: Option<usize>,
-    boundary_build_validation_tested_pair_count: Option<usize>,
-    boundary_build_validation_intersection_event_count: Option<usize>,
-    boundary_build_nesting_classification_count: Option<usize>,
-    boundary_build_blocker_first_contour_index: Option<usize>,
-    boundary_build_blocker_second_contour_index: Option<usize>,
-    evaluated_output: bool,
-    materialized_region: Option<bool>,
-    stage: Option<RegionLineSegmentRegionBuildStage2>,
-    status: Option<RetainedTopologyStatus>,
-    blocker: Option<UncertaintyReason>,
 }
 
 /// Material/hole role assigned to one closed boundary contour.
@@ -9561,39 +9534,6 @@ impl ExactCurveArrangementReport2 {
             output_cache: evaluation.output_cache().cloned(),
             summary_cache: evaluation.summary_cache().clone(),
             source_segment_aabbs: evaluation.source_segment_aabbs().to_vec(),
-            output_contour_count: evaluation.output_contour_count(),
-            output_segment_count: evaluation.output_segment_count(),
-            output_segment_kind_counts: evaluation.output_segment_kind_counts(),
-            material_contour_count: evaluation.material_contour_count(),
-            hole_contour_count: evaluation.hole_contour_count(),
-            material_segment_count: evaluation.material_segment_count(),
-            hole_segment_count: evaluation.hole_segment_count(),
-            role_report_count: evaluation.role_report_count(),
-            role_reports: evaluation.role_reports().map(<[_]>::to_vec),
-            boundary_build_report: evaluation.boundary_build_report().cloned(),
-            boundary_build_stage: evaluation.boundary_build_stage(),
-            boundary_build_predicate_path: evaluation.boundary_build_predicate_path(),
-            boundary_build_status: evaluation.boundary_build_status(),
-            boundary_build_blocker: evaluation.boundary_build_blocker(),
-            boundary_build_source_contour_count: evaluation.boundary_build_source_contour_count(),
-            boundary_build_source_segment_count: evaluation.boundary_build_source_segment_count(),
-            boundary_build_validation_candidate_pair_count: evaluation
-                .boundary_build_validation_candidate_pair_count(),
-            boundary_build_validation_tested_pair_count: evaluation
-                .boundary_build_validation_tested_pair_count(),
-            boundary_build_validation_intersection_event_count: evaluation
-                .boundary_build_validation_intersection_event_count(),
-            boundary_build_nesting_classification_count: evaluation
-                .boundary_build_nesting_classification_count(),
-            boundary_build_blocker_first_contour_index: evaluation
-                .boundary_build_blocker_first_contour_index(),
-            boundary_build_blocker_second_contour_index: evaluation
-                .boundary_build_blocker_second_contour_index(),
-            evaluated_output: evaluation.evaluated_output(),
-            materialized_region: evaluation.materialized_region(),
-            stage: evaluation.stage(),
-            status: evaluation.status(),
-            blocker: evaluation.blocker(),
         }
     }
 
@@ -9695,19 +9635,18 @@ impl ExactCurveArrangementReport2 {
         let output_cache = self.output_cache.as_ref();
         let stage = output_cache
             .map(ExactCurveArrangementOutputCache2::stage)
-            .or(self.stage)
+            .or_else(|| self.summary_cache.stage())
             .expect("evaluated exact arrangement report missing final stage");
         let status = output_cache
             .map(ExactCurveArrangementOutputCache2::status)
-            .or(self.status)
+            .or_else(|| self.summary_cache.status())
             .expect("evaluated exact arrangement report missing final status");
         let blocker = output_cache
             .and_then(ExactCurveArrangementOutputCache2::blocker)
-            .or(self.blocker);
+            .or_else(|| self.summary_cache.blocker());
         let boundary_build_report = output_cache
             .and_then(ExactCurveArrangementOutputCache2::boundary_build_report)
-            .cloned()
-            .or_else(|| self.boundary_build_report.clone());
+            .cloned();
 
         RegionLineSegmentRegionBuildReport2 {
             stage,
