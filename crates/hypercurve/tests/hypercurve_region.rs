@@ -1659,36 +1659,26 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(result.endpoint_graph_blocker_arranged_segment_index(), None);
     assert_eq!(result.endpoint_graph_blocker_endpoint(), None);
     assert_eq!(result.endpoint_graph_blocker_point(), None);
-    let ring_cache = result.ring_assembly_cache().unwrap();
     assert_eq!(
         result.ring_assembly_predicate_path(),
-        Some(ring_cache.predicate_path())
+        Some(RegionLineSegmentRingAssemblyPredicatePath2::ExactEndpointBucketTraversal)
     );
     assert_eq!(
         result.attempted_endpoint_connection_count(),
-        Some(ring_cache.attempted_endpoint_connection_count())
+        Some(
+            result.exact_endpoint_connection_count().unwrap()
+                + result.disconnected_endpoint_connection_count().unwrap()
+                + result.unresolved_endpoint_connection_count().unwrap()
+        )
     );
-    assert_eq!(
-        result.exact_endpoint_connection_count(),
-        Some(ring_cache.exact_endpoint_connection_count())
-    );
-    assert_eq!(
-        result.disconnected_endpoint_connection_count(),
-        Some(ring_cache.disconnected_endpoint_connection_count())
-    );
-    assert_eq!(
-        result.unresolved_endpoint_connection_count(),
-        Some(ring_cache.unresolved_endpoint_connection_count())
-    );
-    assert_eq!(
-        result.reversed_source_segment_count(),
-        Some(ring_cache.reversed_source_segment_count())
-    );
+    assert!(result.exact_endpoint_connection_count().unwrap() >= 4);
+    assert_eq!(result.unresolved_endpoint_connection_count(), Some(0));
+    assert_eq!(result.reversed_source_segment_count(), Some(0));
     assert_eq!(result.output_ring_count(), Some(1));
     assert_eq!(result.output_boundary_segment_count(), Some(4));
     assert_eq!(
-        ring_cache.arranged_source_reports(),
-        result.arranged_source_reports().unwrap()
+        result.arranged_source_report_count(),
+        Some(result.arranged_source_reports().unwrap().len())
     );
     let arranged_fragment_cache = result.arranged_fragment_cache().unwrap();
     assert_eq!(arranged_fragment_cache.arranged_fragment_count(), 4);
@@ -1885,8 +1875,8 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.arranged_source_reports().unwrap()[0].status()
     );
     assert_eq!(
-        ring_cache.source_reports(),
-        result.source_reports().unwrap()
+        result.source_report_count(),
+        Some(result.source_reports().unwrap().len())
     );
     let output_ring_bucket_cache = result.output_ring_bucket_cache().unwrap();
     assert_eq!(output_ring_bucket_cache.ring_count(), 1);
@@ -1960,7 +1950,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(
         output_segment_source_bucket_cache.output_segment_ref_count(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(output_segment_source_bucket_cache.max_bucket_size(), 1);
     assert_eq!(output_segment_source_bucket_cache.buckets().len(), 4);
@@ -1990,11 +1980,11 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     let output_segment_source_range_cache = result.output_segment_source_range_cache().unwrap();
     assert_eq!(
         output_segment_source_range_cache.output_segment_ref_count(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(
         output_segment_source_range_cache.full_source_range_ref_count(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(
         output_segment_source_range_cache.partial_source_range_ref_count(),
@@ -2002,7 +1992,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(
         output_segment_source_range_cache.ranges().len(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     let source_range_ref = &output_segment_source_range_cache.ranges()[0];
     assert_eq!(source_range_ref.source_report_index(), 0);
@@ -2026,15 +2016,15 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     let output_segment_endpoint_cache = result.output_segment_endpoint_cache().unwrap();
     assert_eq!(
         output_segment_endpoint_cache.output_segment_ref_count(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(
         output_segment_endpoint_cache.output_endpoint_ref_count(),
-        ring_cache.source_reports().len() * 2
+        result.source_report_count().unwrap() * 2
     );
     assert_eq!(
         output_segment_endpoint_cache.segments().len(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     let endpoint_ref = &output_segment_endpoint_cache.segments()[0];
     assert_eq!(endpoint_ref.source_report_index(), 0);
@@ -2061,15 +2051,15 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(
         output_ring_continuity_cache.output_connection_ref_count(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(
         output_ring_continuity_cache.max_ring_connection_count(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(
         output_ring_continuity_cache.connections().len(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     let continuity_ref = &output_ring_continuity_cache.connections()[0];
     assert_eq!(continuity_ref.source_report_index(), 0);
@@ -2108,11 +2098,11 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(output_segment_status_bucket_cache.bucket_count(), 6);
     assert_eq!(
         output_segment_status_bucket_cache.output_segment_ref_count(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(
         output_segment_status_bucket_cache.native_exact_ref_count(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(
         output_segment_status_bucket_cache.certified_approximation_ref_count(),
@@ -2141,7 +2131,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         output_segment_status_bucket_cache.buckets()[0]
             .segment_refs()
             .len(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(
         output_segment_status_bucket_cache.buckets()[0].segment_refs()[0].source_report_index(),
@@ -2173,15 +2163,15 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     let output_segment_direction_bucket_cache =
         result.output_segment_direction_bucket_cache().unwrap();
-    let reversed_source_segment_count = ring_cache.reversed_source_segment_count();
-    let forward_source_segment_count = ring_cache
-        .source_reports()
-        .len()
+    let reversed_source_segment_count = result.reversed_source_segment_count().unwrap();
+    let forward_source_segment_count = result
+        .source_report_count()
+        .unwrap()
         .saturating_sub(reversed_source_segment_count);
     assert_eq!(output_segment_direction_bucket_cache.bucket_count(), 2);
     assert_eq!(
         output_segment_direction_bucket_cache.output_segment_ref_count(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(
         output_segment_direction_bucket_cache.forward_segment_ref_count(),
@@ -2245,14 +2235,11 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert!(result.status().unwrap().is_native_exact());
     assert_eq!(result.blocker(), None);
-    assert_eq!(result.output_ring_count(), ring_cache.output_ring_count());
-    assert_eq!(
-        result.output_boundary_segment_count(),
-        ring_cache.output_boundary_segment_count()
-    );
+    assert_eq!(result.output_ring_count(), Some(1));
+    assert_eq!(result.output_boundary_segment_count(), Some(4));
     assert_eq!(
         result.output_boundary_segment_kind_counts(),
-        ring_cache.output_boundary_segment_kind_counts()
+        Some(SegmentKindCounts { lines: 4, arcs: 0 })
     );
     assert_eq!(result.output_contour_count(), Some(1));
     assert_eq!(result.output_segment_count(), Some(4));
@@ -3085,23 +3072,28 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         Some(endpoint_cache.branch_endpoint_count())
     );
     assert_eq!(result.endpoint_graph_blocker_point(), None);
-    let ring_cache = result.ring_assembly_cache().unwrap();
     assert_eq!(
         result.ring_assembly_predicate_path(),
-        Some(ring_cache.predicate_path())
+        Some(RegionLineSegmentRingAssemblyPredicatePath2::ExactEndpointBucketTraversal)
     );
     assert_eq!(
         result.attempted_endpoint_connection_count(),
-        Some(ring_cache.attempted_endpoint_connection_count())
+        Some(
+            result.exact_endpoint_connection_count().unwrap()
+                + result.disconnected_endpoint_connection_count().unwrap()
+                + result.unresolved_endpoint_connection_count().unwrap()
+        )
     );
-    assert_eq!(result.output_ring_count(), ring_cache.output_ring_count());
+    assert!(result.exact_endpoint_connection_count().unwrap() >= 2);
+    assert_eq!(result.unresolved_endpoint_connection_count(), Some(0));
+    assert_eq!(result.output_ring_count(), Some(1));
     assert_eq!(
         result.output_boundary_segment_kind_counts(),
-        ring_cache.output_boundary_segment_kind_counts()
+        Some(SegmentKindCounts { lines: 1, arcs: 1 })
     );
     assert_eq!(
-        ring_cache.arranged_source_reports(),
-        result.arranged_source_reports().unwrap()
+        result.arranged_source_report_count(),
+        Some(result.arranged_source_reports().unwrap().len())
     );
     let arranged_fragment_cache = result.arranged_fragment_cache().unwrap();
     assert_eq!(arranged_fragment_cache.arranged_fragment_count(), 2);
@@ -3287,8 +3279,8 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.arranged_source_reports().unwrap()[0].source_range()
     );
     assert_eq!(
-        ring_cache.source_reports(),
-        result.source_reports().unwrap()
+        result.source_report_count(),
+        Some(result.source_reports().unwrap().len())
     );
     let output_ring_bucket_cache = result.output_ring_bucket_cache().unwrap();
     assert_eq!(output_ring_bucket_cache.ring_count(), 1);
@@ -3340,7 +3332,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(
         output_segment_source_bucket_cache.output_segment_ref_count(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(output_segment_source_bucket_cache.max_bucket_size(), 1);
     assert_eq!(output_segment_source_bucket_cache.buckets().len(), 2);
@@ -3370,11 +3362,11 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     let output_segment_source_range_cache = result.output_segment_source_range_cache().unwrap();
     assert_eq!(
         output_segment_source_range_cache.output_segment_ref_count(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(
         output_segment_source_range_cache.full_source_range_ref_count(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(
         output_segment_source_range_cache.partial_source_range_ref_count(),
@@ -3382,7 +3374,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(
         output_segment_source_range_cache.ranges().len(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     let source_range_ref = &output_segment_source_range_cache.ranges()[0];
     assert_eq!(source_range_ref.source_report_index(), 0);
@@ -3406,15 +3398,15 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     let output_segment_endpoint_cache = result.output_segment_endpoint_cache().unwrap();
     assert_eq!(
         output_segment_endpoint_cache.output_segment_ref_count(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(
         output_segment_endpoint_cache.output_endpoint_ref_count(),
-        ring_cache.source_reports().len() * 2
+        result.source_report_count().unwrap() * 2
     );
     assert_eq!(
         output_segment_endpoint_cache.segments().len(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     let endpoint_ref = &output_segment_endpoint_cache.segments()[0];
     assert_eq!(endpoint_ref.source_report_index(), 0);
@@ -3441,15 +3433,15 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(
         output_ring_continuity_cache.output_connection_ref_count(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(
         output_ring_continuity_cache.max_ring_connection_count(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(
         output_ring_continuity_cache.connections().len(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     let continuity_ref = &output_ring_continuity_cache.connections()[0];
     assert_eq!(continuity_ref.source_report_index(), 0);
@@ -3488,11 +3480,11 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(output_segment_status_bucket_cache.bucket_count(), 6);
     assert_eq!(
         output_segment_status_bucket_cache.output_segment_ref_count(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(
         output_segment_status_bucket_cache.native_exact_ref_count(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(
         output_segment_status_bucket_cache.certified_approximation_ref_count(),
@@ -3521,7 +3513,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         output_segment_status_bucket_cache.buckets()[0]
             .segment_refs()
             .len(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(
         output_segment_status_bucket_cache.buckets()[0].segment_refs()[0].source_report_index(),
@@ -3553,15 +3545,15 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     let output_segment_direction_bucket_cache =
         result.output_segment_direction_bucket_cache().unwrap();
-    let reversed_source_segment_count = ring_cache.reversed_source_segment_count();
-    let forward_source_segment_count = ring_cache
-        .source_reports()
-        .len()
+    let reversed_source_segment_count = result.reversed_source_segment_count().unwrap();
+    let forward_source_segment_count = result
+        .source_report_count()
+        .unwrap()
         .saturating_sub(reversed_source_segment_count);
     assert_eq!(output_segment_direction_bucket_cache.bucket_count(), 2);
     assert_eq!(
         output_segment_direction_bucket_cache.output_segment_ref_count(),
-        ring_cache.source_reports().len()
+        result.source_report_count().unwrap()
     );
     assert_eq!(
         output_segment_direction_bucket_cache.forward_segment_ref_count(),
@@ -3625,14 +3617,11 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert!(result.status().unwrap().is_native_exact());
     assert_eq!(result.blocker(), None);
-    assert_eq!(result.output_ring_count(), ring_cache.output_ring_count());
-    assert_eq!(
-        result.output_boundary_segment_count(),
-        ring_cache.output_boundary_segment_count()
-    );
+    assert_eq!(result.output_ring_count(), Some(1));
+    assert_eq!(result.output_boundary_segment_count(), Some(2));
     assert_eq!(
         result.output_boundary_segment_kind_counts(),
-        ring_cache.output_boundary_segment_kind_counts()
+        Some(SegmentKindCounts { lines: 1, arcs: 1 })
     );
     assert_eq!(result.output_contour_count(), Some(1));
     assert_eq!(result.output_segment_count(), Some(2));
