@@ -2235,6 +2235,30 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     let arranged_endpoint_degree_bucket_cache =
         result.arranged_endpoint_degree_bucket_cache().unwrap();
+    assert_eq!(
+        result.arranged_endpoint_degree_bucket_count(),
+        Some(arranged_endpoint_degree_bucket_cache.bucket_count())
+    );
+    assert_eq!(
+        result.arranged_endpoint_degree_structural_bucket_ref_count(),
+        Some(arranged_endpoint_degree_bucket_cache.structural_bucket_ref_count())
+    );
+    assert_eq!(
+        result.arranged_endpoint_dangling_structural_bucket_count(),
+        Some(arranged_endpoint_degree_bucket_cache.dangling_structural_bucket_count())
+    );
+    assert_eq!(
+        result.arranged_endpoint_chain_structural_bucket_count(),
+        Some(arranged_endpoint_degree_bucket_cache.chain_structural_bucket_count())
+    );
+    assert_eq!(
+        result.arranged_endpoint_branch_structural_bucket_count(),
+        Some(arranged_endpoint_degree_bucket_cache.branch_structural_bucket_count())
+    );
+    assert_eq!(
+        result.arranged_endpoint_degree_max_bucket_size(),
+        Some(arranged_endpoint_degree_bucket_cache.max_bucket_size())
+    );
     assert_eq!(arranged_endpoint_degree_bucket_cache.bucket_count(), 3);
     assert_eq!(
         arranged_endpoint_degree_bucket_cache.structural_bucket_ref_count(),
@@ -3020,6 +3044,30 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(
         arrangement_report.arranged_endpoint_degree_bucket_cache(),
         result.arranged_endpoint_degree_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_degree_bucket_count(),
+        result.arranged_endpoint_degree_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_degree_structural_bucket_ref_count(),
+        result.arranged_endpoint_degree_structural_bucket_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_dangling_structural_bucket_count(),
+        result.arranged_endpoint_dangling_structural_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_chain_structural_bucket_count(),
+        result.arranged_endpoint_chain_structural_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_branch_structural_bucket_count(),
+        result.arranged_endpoint_branch_structural_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_degree_max_bucket_size(),
+        result.arranged_endpoint_degree_max_bucket_size()
     );
     assert_eq!(
         arrangement_report.ring_assembly_cache(),
@@ -3899,6 +3947,40 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         result.evaluation().arranged_endpoint_degree_bucket_cache(),
         result.arranged_endpoint_degree_bucket_cache()
+    );
+    assert_eq!(result.arranged_endpoint_degree_bucket_count(), Some(3));
+    assert_eq!(
+        result.arranged_endpoint_degree_structural_bucket_ref_count(),
+        result.endpoint_graph_structural_bucket_count()
+    );
+    assert_eq!(
+        result.arranged_endpoint_dangling_structural_bucket_count(),
+        Some(0)
+    );
+    assert_eq!(
+        result.arranged_endpoint_chain_structural_bucket_count(),
+        result.endpoint_graph_structural_bucket_count()
+    );
+    assert_eq!(
+        result.arranged_endpoint_branch_structural_bucket_count(),
+        Some(0)
+    );
+    assert_eq!(result.arranged_endpoint_degree_max_bucket_size(), Some(2));
+    assert_eq!(
+        result.evaluation().arranged_endpoint_degree_bucket_count(),
+        result.arranged_endpoint_degree_bucket_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .arranged_endpoint_degree_structural_bucket_ref_count(),
+        result.arranged_endpoint_degree_structural_bucket_ref_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .arranged_endpoint_chain_structural_bucket_count(),
+        result.arranged_endpoint_chain_structural_bucket_count()
     );
     assert_eq!(
         result.evaluation().endpoint_graph_dangling_endpoint_count(),
@@ -6265,6 +6347,30 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(
         arrangement_report.arranged_endpoint_degree_bucket_cache(),
         result.arranged_endpoint_degree_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_degree_bucket_count(),
+        result.arranged_endpoint_degree_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_degree_structural_bucket_ref_count(),
+        result.arranged_endpoint_degree_structural_bucket_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_dangling_structural_bucket_count(),
+        result.arranged_endpoint_dangling_structural_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_chain_structural_bucket_count(),
+        result.arranged_endpoint_chain_structural_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_branch_structural_bucket_count(),
+        result.arranged_endpoint_branch_structural_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_degree_max_bucket_size(),
+        result.arranged_endpoint_degree_max_bucket_size()
     );
     assert_eq!(
         arrangement_report.output_ring_bucket_cache(),

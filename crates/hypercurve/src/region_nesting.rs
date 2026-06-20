@@ -2636,6 +2636,54 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns retained arranged endpoint degree bucket count.
+    pub const fn arranged_endpoint_degree_bucket_count(&self) -> Option<usize> {
+        match self.arranged_endpoint_degree_bucket_cache() {
+            Some(degree_cache) => Some(degree_cache.bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns structural endpoint buckets classified by retained degree.
+    pub const fn arranged_endpoint_degree_structural_bucket_ref_count(&self) -> Option<usize> {
+        match self.arranged_endpoint_degree_bucket_cache() {
+            Some(degree_cache) => Some(degree_cache.structural_bucket_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns structural endpoint buckets classified as dangling.
+    pub const fn arranged_endpoint_dangling_structural_bucket_count(&self) -> Option<usize> {
+        match self.arranged_endpoint_degree_bucket_cache() {
+            Some(degree_cache) => Some(degree_cache.dangling_structural_bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns structural endpoint buckets classified as chain continuations.
+    pub const fn arranged_endpoint_chain_structural_bucket_count(&self) -> Option<usize> {
+        match self.arranged_endpoint_degree_bucket_cache() {
+            Some(degree_cache) => Some(degree_cache.chain_structural_bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns structural endpoint buckets classified as branches.
+    pub const fn arranged_endpoint_branch_structural_bucket_count(&self) -> Option<usize> {
+        match self.arranged_endpoint_degree_bucket_cache() {
+            Some(degree_cache) => Some(degree_cache.branch_structural_bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained arranged endpoint degree bucket size.
+    pub const fn arranged_endpoint_degree_max_bucket_size(&self) -> Option<usize> {
+        match self.arranged_endpoint_degree_bucket_cache() {
+            Some(degree_cache) => Some(degree_cache.max_bucket_size()),
+            None => None,
+        }
+    }
+
     /// Returns exact ring-traversal evidence retained from the evaluated arrangement.
     pub const fn ring_assembly_cache(&self) -> Option<&ExactCurveArrangementRingAssemblyCache2> {
         self.ring_assembly_cache.as_ref()
@@ -7263,6 +7311,40 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().arranged_endpoint_degree_bucket_cache()
     }
 
+    /// Returns retained arranged endpoint degree bucket count.
+    pub const fn arranged_endpoint_degree_bucket_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_degree_bucket_count()
+    }
+
+    /// Returns structural endpoint buckets classified by retained degree.
+    pub const fn arranged_endpoint_degree_structural_bucket_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_endpoint_degree_structural_bucket_ref_count()
+    }
+
+    /// Returns structural endpoint buckets classified as dangling.
+    pub const fn arranged_endpoint_dangling_structural_bucket_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_endpoint_dangling_structural_bucket_count()
+    }
+
+    /// Returns structural endpoint buckets classified as chain continuations.
+    pub const fn arranged_endpoint_chain_structural_bucket_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_endpoint_chain_structural_bucket_count()
+    }
+
+    /// Returns structural endpoint buckets classified as branches.
+    pub const fn arranged_endpoint_branch_structural_bucket_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_endpoint_branch_structural_bucket_count()
+    }
+
+    /// Returns the largest retained arranged endpoint degree bucket size.
+    pub const fn arranged_endpoint_degree_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_degree_max_bucket_size()
+    }
+
     /// Returns dangling endpoint count found during endpoint-graph validation.
     pub const fn endpoint_graph_dangling_endpoint_count(&self) -> Option<usize> {
         match self.endpoint_graph_cache() {
@@ -8269,6 +8351,40 @@ impl ExactCurveArrangementResult2 {
             Some(endpoint_cache) => Some(endpoint_cache.endpoint_degree_bucket_cache()),
             None => None,
         }
+    }
+
+    /// Returns retained arranged endpoint degree bucket count.
+    pub const fn arranged_endpoint_degree_bucket_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_degree_bucket_count()
+    }
+
+    /// Returns structural endpoint buckets classified by retained degree.
+    pub const fn arranged_endpoint_degree_structural_bucket_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_endpoint_degree_structural_bucket_ref_count()
+    }
+
+    /// Returns structural endpoint buckets classified as dangling.
+    pub const fn arranged_endpoint_dangling_structural_bucket_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_endpoint_dangling_structural_bucket_count()
+    }
+
+    /// Returns structural endpoint buckets classified as chain continuations.
+    pub const fn arranged_endpoint_chain_structural_bucket_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_endpoint_chain_structural_bucket_count()
+    }
+
+    /// Returns structural endpoint buckets classified as branches.
+    pub const fn arranged_endpoint_branch_structural_bucket_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_endpoint_branch_structural_bucket_count()
+    }
+
+    /// Returns the largest retained arranged endpoint degree bucket size.
+    pub const fn arranged_endpoint_degree_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_degree_max_bucket_size()
     }
 
     /// Returns dangling endpoint count found during endpoint-graph validation.
@@ -10220,6 +10336,40 @@ impl ExactCurveArrangementReport2 {
             Some(endpoint_cache) => Some(endpoint_cache.endpoint_degree_bucket_cache()),
             None => None,
         }
+    }
+
+    /// Returns retained arranged endpoint degree bucket count.
+    pub const fn arranged_endpoint_degree_bucket_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_degree_bucket_count()
+    }
+
+    /// Returns structural endpoint buckets classified by retained degree.
+    pub const fn arranged_endpoint_degree_structural_bucket_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_endpoint_degree_structural_bucket_ref_count()
+    }
+
+    /// Returns structural endpoint buckets classified as dangling.
+    pub const fn arranged_endpoint_dangling_structural_bucket_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_endpoint_dangling_structural_bucket_count()
+    }
+
+    /// Returns structural endpoint buckets classified as chain continuations.
+    pub const fn arranged_endpoint_chain_structural_bucket_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_endpoint_chain_structural_bucket_count()
+    }
+
+    /// Returns structural endpoint buckets classified as branches.
+    pub const fn arranged_endpoint_branch_structural_bucket_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_endpoint_branch_structural_bucket_count()
+    }
+
+    /// Returns the largest retained arranged endpoint degree bucket size.
+    pub const fn arranged_endpoint_degree_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_degree_max_bucket_size()
     }
 
     /// Returns exact ring-traversal evidence retained from the evaluated arrangement.
