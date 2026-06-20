@@ -967,6 +967,7 @@ pub struct ExactCurveArrangementAttempt2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementResult2 {
     evaluation: ExactCurveArrangementEvaluation2,
+    region: Option<Region2>,
     compatibility_projection: RegionLineSegmentRegionBuildResult2,
 }
 
@@ -6258,8 +6259,10 @@ impl ExactCurveArrangementAttempt2 {
                 compatibility_projection.report(),
                 compatibility_projection.region().is_some(),
             );
+        let region = compatibility_projection.region().cloned();
         Ok(ExactCurveArrangementResult2 {
             evaluation: ExactCurveArrangementEvaluation2::new(workspace),
+            region,
             compatibility_projection,
         })
     }
@@ -7209,7 +7212,7 @@ impl ExactCurveArrangementResult2 {
 
     /// Returns the materialized region, if the arrangement succeeded.
     pub const fn region(&self) -> Option<&Region2> {
-        self.compatibility_region_build_result().region()
+        self.region.as_ref()
     }
 
     /// Returns the materialized region as the canonical convenience classification.
@@ -7261,9 +7264,11 @@ impl ExactCurveArrangementResult2 {
     pub fn into_evaluation_and_region(self) -> (ExactCurveArrangementEvaluation2, Option<Region2>) {
         let Self {
             evaluation,
+            region,
             compatibility_projection,
         } = self;
-        (evaluation, compatibility_projection.into_region())
+        drop(compatibility_projection);
+        (evaluation, region)
     }
 
     /// Consumes this result and returns the retained evaluation with the region classification.
@@ -7275,13 +7280,15 @@ impl ExactCurveArrangementResult2 {
     ) -> (ExactCurveArrangementEvaluation2, Classification<Region2>) {
         let Self {
             evaluation,
+            region,
             compatibility_projection,
         } = self;
+        drop(compatibility_projection);
         let blocker = evaluation
             .summary_cache()
             .blocker()
             .unwrap_or(UncertaintyReason::Unsupported);
-        let classification = match compatibility_projection.into_region() {
+        let classification = match region {
             Some(region) => Classification::Decided(region),
             None => Classification::Uncertain(blocker),
         };
@@ -7315,7 +7322,7 @@ impl ExactCurveArrangementResult2 {
 
     /// Consumes this result and returns the materialized region, if any.
     pub fn into_region(self) -> Option<Region2> {
-        self.into_compatibility_region_build_result().into_region()
+        self.region
     }
 }
 
