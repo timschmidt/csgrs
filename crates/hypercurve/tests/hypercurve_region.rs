@@ -3231,6 +3231,21 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(result.fill_rule(), FillRule::NonZero);
     assert_eq!(result.source_segments(), segments.as_slice());
     assert_eq!(result.request(), attempt.request());
+    assert_eq!(result.evaluation().workspace(), result.workspace());
+    assert_eq!(result.evaluation().workspace().request(), result.request());
+    assert_eq!(result.evaluation().summary_cache(), result.summary_cache());
+    assert_eq!(
+        result.workspace().source_segment_cache(),
+        result.source_segment_cache()
+    );
+    assert_eq!(
+        result.workspace().source_endpoint_bucket_cache(),
+        result.source_endpoint_bucket_cache()
+    );
+    assert_eq!(
+        result.workspace().split_schedule_cache(),
+        result.split_schedule_cache()
+    );
     assert_eq!(
         result.source_segment_kind_counts(),
         SegmentKindCounts { lines: 1, arcs: 1 }
