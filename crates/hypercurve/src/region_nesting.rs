@@ -3660,19 +3660,30 @@ impl ExactCurveArrangementEndpointGraphCache2 {
             ExactCurveArrangementArrangedEndpointDegreeBucketCache2::from_endpoint_bucket_cache(
                 &endpoint_bucket_cache,
             );
+        let dangling_endpoint_count = endpoint_bucket_cache
+            .buckets()
+            .iter()
+            .filter(|bucket| bucket.endpoints().len() == 1)
+            .map(|bucket| bucket.endpoints().len())
+            .sum();
+        let branch_endpoint_count = endpoint_bucket_cache
+            .buckets()
+            .iter()
+            .filter(|bucket| bucket.endpoints().len() > 2)
+            .map(|bucket| bucket.endpoints().len())
+            .sum();
         Some(Self {
             predicate_path: report.endpoint_graph_predicate_path()?,
-            endpoint_count: report.endpoint_graph_endpoint_count()?,
-            structural_bucket_count: report.endpoint_graph_structural_bucket_count()?,
-            structural_singleton_bucket_count: report
-                .endpoint_graph_structural_singleton_bucket_count()?,
-            max_structural_bucket_size: report.endpoint_graph_max_structural_bucket_size()?,
+            endpoint_count: endpoint_bucket_cache.endpoint_count(),
+            structural_bucket_count: endpoint_bucket_cache.bucket_count(),
+            structural_singleton_bucket_count: endpoint_bucket_cache.singleton_bucket_count(),
+            max_structural_bucket_size: endpoint_bucket_cache.max_bucket_size(),
             endpoint_bucket_cache,
             endpoint_side_bucket_cache,
             endpoint_point_cache,
             endpoint_degree_bucket_cache,
-            dangling_endpoint_count: report.endpoint_graph_dangling_endpoint_count()?,
-            branch_endpoint_count: report.endpoint_graph_branch_endpoint_count()?,
+            dangling_endpoint_count,
+            branch_endpoint_count,
             blocker_arranged_segment_index: report.endpoint_graph_blocker_arranged_segment_index(),
             blocker_endpoint: report.endpoint_graph_blocker_endpoint(),
             blocker_point: report.endpoint_graph_blocker_point().cloned(),
