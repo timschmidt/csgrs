@@ -3059,6 +3059,46 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns retained output segment primitive-family bucket count.
+    pub const fn output_segment_kind_bucket_count(&self) -> Option<usize> {
+        match self.output_segment_kind_bucket_cache() {
+            Some(kind_cache) => Some(kind_cache.bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment references grouped by primitive family.
+    pub const fn output_segment_kind_ref_count(&self) -> Option<usize> {
+        match self.output_segment_kind_bucket_cache() {
+            Some(kind_cache) => Some(kind_cache.output_segment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained line output segment references.
+    pub const fn output_line_segment_ref_count(&self) -> Option<usize> {
+        match self.output_segment_kind_bucket_cache() {
+            Some(kind_cache) => Some(kind_cache.line_segment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained arc output segment references.
+    pub const fn output_arc_segment_ref_count(&self) -> Option<usize> {
+        match self.output_segment_kind_bucket_cache() {
+            Some(kind_cache) => Some(kind_cache.arc_segment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained output segment primitive-family bucket size.
+    pub const fn output_segment_kind_max_bucket_size(&self) -> Option<usize> {
+        match self.output_segment_kind_bucket_cache() {
+            Some(kind_cache) => Some(kind_cache.max_bucket_size()),
+            None => None,
+        }
+    }
+
     /// Returns retained output segment buckets grouped by source segment.
     pub const fn output_segment_source_bucket_cache(
         &self,
@@ -7883,6 +7923,31 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().output_segment_kind_bucket_cache()
     }
 
+    /// Returns retained output segment primitive-family bucket count.
+    pub const fn output_segment_kind_bucket_count(&self) -> Option<usize> {
+        self.workspace().output_segment_kind_bucket_count()
+    }
+
+    /// Returns retained output segment references grouped by primitive family.
+    pub const fn output_segment_kind_ref_count(&self) -> Option<usize> {
+        self.workspace().output_segment_kind_ref_count()
+    }
+
+    /// Returns retained line output segment references.
+    pub const fn output_line_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_line_segment_ref_count()
+    }
+
+    /// Returns retained arc output segment references.
+    pub const fn output_arc_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_arc_segment_ref_count()
+    }
+
+    /// Returns the largest retained output segment primitive-family bucket size.
+    pub const fn output_segment_kind_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().output_segment_kind_max_bucket_size()
+    }
+
     /// Returns retained output segment buckets grouped by source segment.
     pub const fn output_segment_source_bucket_cache(
         &self,
@@ -9075,10 +9140,32 @@ impl ExactCurveArrangementResult2 {
     pub const fn output_segment_kind_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentKindBucketCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.output_segment_kind_bucket_cache()),
-            None => None,
-        }
+        self.workspace().output_segment_kind_bucket_cache()
+    }
+
+    /// Returns retained output segment primitive-family bucket count.
+    pub const fn output_segment_kind_bucket_count(&self) -> Option<usize> {
+        self.workspace().output_segment_kind_bucket_count()
+    }
+
+    /// Returns retained output segment references grouped by primitive family.
+    pub const fn output_segment_kind_ref_count(&self) -> Option<usize> {
+        self.workspace().output_segment_kind_ref_count()
+    }
+
+    /// Returns retained line output segment references.
+    pub const fn output_line_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_line_segment_ref_count()
+    }
+
+    /// Returns retained arc output segment references.
+    pub const fn output_arc_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_arc_segment_ref_count()
+    }
+
+    /// Returns the largest retained output segment primitive-family bucket size.
+    pub const fn output_segment_kind_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().output_segment_kind_max_bucket_size()
     }
 
     /// Returns retained output segment buckets grouped by source segment.
@@ -11500,10 +11587,32 @@ impl ExactCurveArrangementReport2 {
     pub const fn output_segment_kind_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentKindBucketCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.output_segment_kind_bucket_cache()),
-            None => None,
-        }
+        self.workspace().output_segment_kind_bucket_cache()
+    }
+
+    /// Returns retained output segment primitive-family bucket count.
+    pub const fn output_segment_kind_bucket_count(&self) -> Option<usize> {
+        self.workspace().output_segment_kind_bucket_count()
+    }
+
+    /// Returns retained output segment references grouped by primitive family.
+    pub const fn output_segment_kind_ref_count(&self) -> Option<usize> {
+        self.workspace().output_segment_kind_ref_count()
+    }
+
+    /// Returns retained line output segment references.
+    pub const fn output_line_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_line_segment_ref_count()
+    }
+
+    /// Returns retained arc output segment references.
+    pub const fn output_arc_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_arc_segment_ref_count()
+    }
+
+    /// Returns the largest retained output segment primitive-family bucket size.
+    pub const fn output_segment_kind_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().output_segment_kind_max_bucket_size()
     }
 
     /// Returns retained output segment buckets grouped by source segment.
