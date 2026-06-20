@@ -2795,6 +2795,26 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.ring_assembly_cache()
     );
     assert_eq!(arrangement_report.output_cache(), result.output_cache());
+    assert_eq!(
+        arrangement_report.output_segment_source_range_cache(),
+        result.output_segment_source_range_cache()
+    );
+    assert_eq!(
+        arrangement_report.output_segment_endpoint_cache(),
+        result.output_segment_endpoint_cache()
+    );
+    assert_eq!(
+        arrangement_report.output_ring_continuity_cache(),
+        result.output_ring_continuity_cache()
+    );
+    assert_eq!(
+        arrangement_report.boundary_output_role_bucket_cache(),
+        result.boundary_output_role_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.role_containment_bucket_cache(),
+        result.role_containment_bucket_cache()
+    );
     assert_eq!(arrangement_report.summary_cache(), result.summary_cache());
     assert_eq!(
         arrangement_report.source_segment_count(),
@@ -5026,6 +5046,26 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(
         arrangement_report.arranged_fragment_source_range_cache(),
         result.arranged_fragment_source_range_cache()
+    );
+    assert_eq!(
+        arrangement_report.output_segment_source_range_cache(),
+        result.output_segment_source_range_cache()
+    );
+    assert_eq!(
+        arrangement_report.output_segment_endpoint_cache(),
+        result.output_segment_endpoint_cache()
+    );
+    assert_eq!(
+        arrangement_report.output_ring_continuity_cache(),
+        result.output_ring_continuity_cache()
+    );
+    assert_eq!(
+        arrangement_report.boundary_output_role_bucket_cache(),
+        result.boundary_output_role_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.role_containment_bucket_cache(),
+        result.role_containment_bucket_cache()
     );
     assert_eq!(
         arrangement_report.source_segment_count(),

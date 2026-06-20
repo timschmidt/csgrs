@@ -8654,6 +8654,62 @@ impl ExactCurveArrangementReport2 {
         self.output_segment_kind_counts
     }
 
+    /// Returns retained output segment source parameter ranges.
+    pub const fn output_segment_source_range_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputSegmentSourceRangeCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_segment_source_range_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment exact endpoint records.
+    pub const fn output_segment_endpoint_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputSegmentEndpointCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_segment_endpoint_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained exact continuity records between adjacent output segments.
+    pub const fn output_ring_continuity_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRingContinuityCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_ring_continuity_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns final boundary output counts grouped by material/hole role.
+    pub const fn boundary_output_role_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputBoundaryRoleBucketCache2> {
+        match self.output_cache() {
+            Some(output_cache) => match output_cache.boundary_output_cache() {
+                Some(boundary_cache) => Some(boundary_cache.role_bucket_cache()),
+                None => None,
+            },
+            None => None,
+        }
+    }
+
+    /// Returns output role containment evidence grouped by containing source contour.
+    pub const fn role_containment_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRoleContainmentBucketCache2> {
+        match self.output_cache() {
+            Some(output_cache) => match output_cache.role_cache() {
+                Some(role_cache) => Some(role_cache.role_containment_bucket_cache()),
+                None => None,
+            },
+            None => None,
+        }
+    }
+
     /// Returns material contour count after output role assignment.
     pub const fn material_contour_count(&self) -> Option<usize> {
         self.material_contour_count
