@@ -9853,8 +9853,8 @@ impl ExactCurveArrangementReport2 {
 
         RegionLineSegmentRegionBuildReport2 {
             stage,
-            source_segment_count: self.source_segment_count,
-            source_segment_kind_counts: self.source_segment_kind_counts,
+            source_segment_count: self.source_segment_cache.source_segment_count(),
+            source_segment_kind_counts: self.source_segment_cache.source_segment_kind_counts(),
             arranged_segment_count,
             arranged_segment_kind_counts,
             split_predicate_path,
@@ -10054,12 +10054,12 @@ impl ExactCurveArrangementReport2 {
 
     /// Returns retained source segment count.
     pub const fn source_segment_count(&self) -> usize {
-        self.source_segment_count
+        self.source_segment_cache().source_segment_count()
     }
 
     /// Returns retained source segment primitive-family counts.
     pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.source_segment_kind_counts
+        self.source_segment_cache().source_segment_kind_counts()
     }
 
     /// Returns retained source segment boxes in request order.
@@ -10069,17 +10069,19 @@ impl ExactCurveArrangementReport2 {
 
     /// Returns a retained aggregate source box when every source box was decided.
     pub const fn source_aabb(&self) -> Option<&Aabb2> {
-        self.source_aabb.as_ref()
+        self.source_segment_cache().source_aabb()
     }
 
     /// Returns the number of source segment boxes certified during workspace preparation.
     pub const fn decided_source_segment_aabb_count(&self) -> usize {
-        self.decided_source_segment_aabb_count
+        self.source_segment_cache()
+            .decided_source_segment_aabb_count()
     }
 
     /// Returns the number of source segment boxes that stayed uncertain.
     pub const fn undecided_source_segment_aabb_count(&self) -> usize {
-        self.undecided_source_segment_aabb_count
+        self.source_segment_cache()
+            .undecided_source_segment_aabb_count()
     }
 
     /// Returns source segment pairs considered by retained split evaluation.
