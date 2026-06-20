@@ -1006,9 +1006,9 @@ mod tests {
                 operation: ExactBooleanOperation::Difference,
             },
         );
-        let relabelled = workspace.materializations[0].1.clone();
         assert!(
-            relabelled
+            workspace.materializations[0]
+                .1
                 .validate_request_against_sources_with_retained_attempt(
                     &left, &right, request, None
                 )
