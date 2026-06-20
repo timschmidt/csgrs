@@ -7578,8 +7578,15 @@ impl ExactCurveArrangementAttempt2 {
                 compatibility_projection.region().is_some(),
             );
         let region = compatibility_projection.region().cloned();
+        let evaluation = ExactCurveArrangementEvaluation2::new(workspace);
+        let compatibility_projection = RegionLineSegmentRegionBuildResult2 {
+            region: region.clone(),
+            report: evaluation
+                .arrangement_report()
+                .into_region_line_segment_region_build_report(),
+        };
         Ok(ExactCurveArrangementResult2 {
-            evaluation: ExactCurveArrangementEvaluation2::new(workspace),
+            evaluation,
             region,
             compatibility_projection,
         })
@@ -9641,9 +9648,9 @@ impl ExactCurveArrangementReport2 {
             split_candidate_pair_count: self
                 .split_candidate_pair_count
                 .expect("evaluated exact arrangement report missing split candidate pair count"),
-            split_skipped_aabb_pair_count: self.split_skipped_aabb_pair_count.expect(
-                "evaluated exact arrangement report missing split skipped AABB pair count",
-            ),
+            split_skipped_aabb_pair_count: self
+                .split_skipped_aabb_pair_count
+                .expect("evaluated exact arrangement report missing split skipped AABB pair count"),
             split_tested_pair_count: self
                 .split_tested_pair_count
                 .expect("evaluated exact arrangement report missing split tested pair count"),
@@ -9687,34 +9694,22 @@ impl ExactCurveArrangementReport2 {
                 .endpoint_graph_blocker_arranged_segment_index,
             endpoint_graph_blocker_endpoint: self.endpoint_graph_blocker_endpoint,
             endpoint_graph_blocker_point: self.endpoint_graph_blocker_point,
-            attempted_endpoint_connection_count: self.attempted_endpoint_connection_count.expect(
-                "evaluated exact arrangement report missing attempted endpoint connection count",
-            ),
-            exact_endpoint_connection_count: self.exact_endpoint_connection_count.expect(
-                "evaluated exact arrangement report missing exact endpoint connection count",
-            ),
+            attempted_endpoint_connection_count: self
+                .attempted_endpoint_connection_count
+                .unwrap_or(0),
+            exact_endpoint_connection_count: self.exact_endpoint_connection_count.unwrap_or(0),
             disconnected_endpoint_connection_count: self
                 .disconnected_endpoint_connection_count
-                .expect(
-                    "evaluated exact arrangement report missing disconnected endpoint connection count",
-                ),
+                .unwrap_or(0),
             unresolved_endpoint_connection_count: self
                 .unresolved_endpoint_connection_count
-                .expect(
-                    "evaluated exact arrangement report missing unresolved endpoint connection count",
-                ),
-            reversed_source_segment_count: self
-                .reversed_source_segment_count
-                .expect("evaluated exact arrangement report missing reversed source segment count"),
+                .unwrap_or(0),
+            reversed_source_segment_count: self.reversed_source_segment_count.unwrap_or(0),
             output_ring_count: self.output_ring_count,
             output_boundary_segment_count: self.output_boundary_segment_count,
             output_boundary_segment_kind_counts: self.output_boundary_segment_kind_counts,
-            arranged_source_reports: self
-                .arranged_source_reports
-                .expect("evaluated exact arrangement report missing arranged source reports"),
-            source_reports: self
-                .source_reports
-                .expect("evaluated exact arrangement report missing source reports"),
+            arranged_source_reports: self.arranged_source_reports.unwrap_or_default(),
+            source_reports: self.source_reports.unwrap_or_default(),
             boundary_build_report: self.boundary_build_report,
             status: self
                 .status
