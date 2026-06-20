@@ -1120,9 +1120,10 @@ impl CurveString2 {
     /// Links two open curve strings when exactly one endpoint pair is certified.
     ///
     /// The four endpoint pairings are tested exactly. A result is materialized
-    /// only when one and only one pairing is [`NativeExact`]; multiple exact
-    /// pairings are ambiguous open-chain topology, and any unresolved pairing
-    /// prevents choosing a unique link. Certified disconnected inputs return
+    /// only when one and only one pairing is
+    /// [`RetainedTopologyStatus::NativeExact`]; multiple exact pairings are
+    /// ambiguous open-chain topology, and any unresolved pairing prevents
+    /// choosing a unique link. Certified disconnected inputs return
     /// `Decided(None)` so higher-level tools can decide whether to create an
     /// explicit connector segment rather than silently snapping.
     pub fn link_connected_endpoints(

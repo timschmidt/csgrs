@@ -3943,18 +3943,19 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
 }
 
 #[test]
-fn unordered_native_segments_convenience_returns_decided_region() {
-    let built = Region2::from_unordered_segments(
-        vec![
-            Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
-            Segment2::Line(line(4, 0, 0, 0)),
-        ],
-        FillRule::NonZero,
-        &policy(),
-    )
-    .unwrap();
+fn unordered_native_segments_attempt_returns_decided_region() {
+    let result =
+        ExactCurveArrangementAttempt2::new(ExactCurveArrangementRequest2::from_unordered_segments(
+            vec![
+                Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
+                Segment2::Line(line(4, 0, 0, 0)),
+            ],
+            FillRule::NonZero,
+        ))
+        .evaluate(&policy())
+        .unwrap();
 
-    let Classification::Decided(region) = built else {
+    let Some(region) = result.region() else {
         panic!("line-arc native region should materialize");
     };
     assert_eq!(

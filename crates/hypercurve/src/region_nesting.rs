@@ -1240,6 +1240,10 @@ impl Region2 {
     /// [`Region2::from_boundary_contours_with_report`]. It does not snap
     /// endpoints or resolve overlaps; disconnected, ambiguous, unresolved, or
     /// branching endpoint graphs are returned as explicit blockers.
+    #[deprecated(
+        since = "0.3.0",
+        note = "use ExactCurveArrangementRequest2::from_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate"
+    )]
     pub fn from_unordered_line_segments(
         segments: Vec<LineSeg2>,
         fill_rule: FillRule,
@@ -1263,6 +1267,10 @@ impl Region2 {
     /// are cloned into the existing arrangement-first implementation so source
     /// ordering, split parameters, endpoint graph evidence, and blockers remain
     /// identical to the owned path.
+    #[deprecated(
+        since = "0.3.0",
+        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate"
+    )]
     pub fn from_unordered_line_segments_borrowed(
         segments: &[LineSeg2],
         fill_rule: FillRule,
@@ -1498,6 +1506,10 @@ impl Region2 {
     /// [`Region2::from_unordered_segments_with_report`]. It returns decided
     /// regions only when the report-bearing path materializes native exact
     /// topology; otherwise it preserves the reported blocker as uncertainty.
+    #[deprecated(
+        since = "0.3.0",
+        note = "use ExactCurveArrangementRequest2::from_unordered_segments with ExactCurveArrangementAttempt2::evaluate"
+    )]
     pub fn from_unordered_segments(
         segments: Vec<Segment2>,
         fill_rule: FillRule,
@@ -1518,6 +1530,10 @@ impl Region2 {
     /// This is the borrowed counterpart to [`Region2::from_unordered_segments`].
     /// It delegates to the same exact arrangement, splitting, endpoint graph,
     /// ring traversal, and boundary role-assignment pipeline as the owned API.
+    #[deprecated(
+        since = "0.3.0",
+        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_segments with ExactCurveArrangementAttempt2::evaluate"
+    )]
     pub fn from_unordered_segments_borrowed(
         segments: &[Segment2],
         fill_rule: FillRule,
