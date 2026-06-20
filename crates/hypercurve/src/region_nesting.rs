@@ -10086,99 +10086,152 @@ impl ExactCurveArrangementReport2 {
 
     /// Returns source segment pairs considered by retained split evaluation.
     pub const fn split_candidate_pair_count(&self) -> Option<usize> {
-        self.split_candidate_pair_count
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.candidate_pair_count()),
+            None => None,
+        }
     }
 
     /// Returns source segment pairs skipped by certified AABB disjointness.
     pub const fn split_skipped_aabb_pair_count(&self) -> Option<usize> {
-        self.split_skipped_aabb_pair_count
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.skipped_aabb_pair_count()),
+            None => None,
+        }
     }
 
     /// Returns source segment pairs tested by exact split predicates.
     pub const fn split_tested_pair_count(&self) -> Option<usize> {
-        self.split_tested_pair_count
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.tested_pair_count()),
+            None => None,
+        }
     }
 
     /// Returns exact point-intersection event count found during splitting.
     pub const fn split_intersection_event_count(&self) -> Option<usize> {
-        self.split_intersection_event_count
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.intersection_event_count()),
+            None => None,
+        }
     }
 
     /// Returns source-pair relations classified as point intersections.
     pub const fn split_point_relation_count(&self) -> Option<usize> {
-        self.split_point_relation_count
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.point_relation_count()),
+            None => None,
+        }
     }
 
     /// Returns source-pair relations classified as overlaps.
     pub const fn split_overlap_relation_count(&self) -> Option<usize> {
-        self.split_overlap_relation_count
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.overlap_relation_count()),
+            None => None,
+        }
     }
 
     /// Returns source-pair relations that remained uncertain.
     pub const fn split_uncertain_relation_count(&self) -> Option<usize> {
-        self.split_uncertain_relation_count
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.uncertain_relation_count()),
+            None => None,
+        }
     }
 
     /// Returns exact intersection points retained by split evaluation, when reached.
     pub fn split_intersection_points(&self) -> Option<&[Point2]> {
-        self.split_intersection_points.as_deref()
+        self.split_cache()
+            .map(ExactCurveArrangementSplitCache2::intersection_points)
     }
 
     /// Returns exact per-event source and parameter evidence retained by split evaluation.
     pub fn split_intersection_reports(
         &self,
     ) -> Option<&[RegionLineSegmentSplitIntersectionReport2]> {
-        self.split_intersection_reports.as_deref()
+        self.split_cache()
+            .map(ExactCurveArrangementSplitCache2::intersection_reports)
     }
 
     /// Returns the exact predicate family used for split arrangement, when reached.
     pub const fn split_predicate_path(&self) -> Option<RegionLineSegmentSplitPredicatePath2> {
-        self.split_predicate_path
+        match self.split_cache() {
+            Some(split_cache) => split_cache.predicate_path(),
+            None => None,
+        }
     }
 
     /// Returns arranged output segment count when retained splitting completed.
     pub const fn split_output_segment_count(&self) -> Option<usize> {
-        self.split_output_segment_count
+        match self.split_cache() {
+            Some(split_cache) => split_cache.output_segment_count(),
+            None => None,
+        }
     }
 
     /// Returns the first source segment in a split-stage blocker, when known.
     pub const fn split_blocker_first_source_segment_index(&self) -> Option<usize> {
-        self.split_blocker_first_source_segment_index
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.first_source_segment_index()),
+            None => None,
+        }
     }
 
     /// Returns the primitive family of the first source segment in a split-stage blocker.
     pub const fn split_blocker_first_source_segment_kind(&self) -> Option<SegmentKind> {
-        self.split_blocker_first_source_segment_kind
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.first_source_segment_kind()),
+            None => None,
+        }
     }
 
     /// Returns the exact start point of the first source segment in a split-stage blocker.
     pub const fn split_blocker_first_source_start_point(&self) -> Option<&Point2> {
-        self.split_blocker_first_source_start_point.as_ref()
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.first_source_start_point()),
+            None => None,
+        }
     }
 
     /// Returns the exact end point of the first source segment in a split-stage blocker.
     pub const fn split_blocker_first_source_end_point(&self) -> Option<&Point2> {
-        self.split_blocker_first_source_end_point.as_ref()
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.first_source_end_point()),
+            None => None,
+        }
     }
 
     /// Returns the second source segment in a split-stage blocker, when known.
     pub const fn split_blocker_second_source_segment_index(&self) -> Option<usize> {
-        self.split_blocker_second_source_segment_index
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.second_source_segment_index()),
+            None => None,
+        }
     }
 
     /// Returns the primitive family of the second source segment in a split-stage blocker.
     pub const fn split_blocker_second_source_segment_kind(&self) -> Option<SegmentKind> {
-        self.split_blocker_second_source_segment_kind
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.second_source_segment_kind()),
+            None => None,
+        }
     }
 
     /// Returns the exact start point of the second source segment in a split-stage blocker.
     pub const fn split_blocker_second_source_start_point(&self) -> Option<&Point2> {
-        self.split_blocker_second_source_start_point.as_ref()
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.second_source_start_point()),
+            None => None,
+        }
     }
 
     /// Returns the exact end point of the second source segment in a split-stage blocker.
     pub const fn split_blocker_second_source_end_point(&self) -> Option<&Point2> {
-        self.split_blocker_second_source_end_point.as_ref()
+        match self.split_blocker_cache() {
+            Some(blocker_cache) => Some(blocker_cache.second_source_end_point()),
+            None => None,
+        }
     }
 
     /// Returns the exact predicate family used for endpoint-graph validation, when reached.
