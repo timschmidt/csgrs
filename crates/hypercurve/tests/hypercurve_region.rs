@@ -2402,6 +2402,10 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(arrangement_report.role_reports(), result.role_reports());
     assert_eq!(
+        arrangement_report.boundary_build_report(),
+        result.boundary_build_report()
+    );
+    assert_eq!(
         arrangement_report.boundary_build_stage(),
         result.boundary_build_stage()
     );
@@ -3989,6 +3993,10 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.role_report_count()
     );
     assert_eq!(arrangement_report.role_reports(), result.role_reports());
+    assert_eq!(
+        arrangement_report.boundary_build_report(),
+        result.boundary_build_report()
+    );
     assert_eq!(
         arrangement_report.boundary_build_stage(),
         result.boundary_build_stage()
