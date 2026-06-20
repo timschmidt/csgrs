@@ -505,6 +505,19 @@ fn curve_string_merge_adjacent_collinear_lines_preserves_corners() {
     assert_eq!(merged.report().spans().len(), 2);
     assert_eq!(merged.report().spans()[0].source_segment_indices(), &[0]);
     assert_eq!(merged.report().spans()[1].source_segment_indices(), &[1]);
+    assert!(matches!(
+        merged.curve_string_classification(),
+        Classification::Decided(curve_string) if curve_string.len() == 2
+    ));
+    let owned_report = merged.clone().into_report();
+    assert_eq!(&owned_report, merged.report());
+    let (owned_curve, owned_parts_report) = merged.clone().into_parts();
+    assert_eq!(owned_curve.as_ref(), merged.curve_string());
+    assert_eq!(&owned_parts_report, merged.report());
+    assert!(matches!(
+        merged.clone().into_curve_string_classification(),
+        Classification::Decided(curve_string) if curve_string.len() == 2
+    ));
     let curve = merged
         .curve_string()
         .expect("certified corner preservation should materialize");
@@ -711,6 +724,19 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_removed_pairs() {
         deduped.report().retained_segments()[1].output_end_point(),
         &p(3, 0)
     );
+    assert!(matches!(
+        deduped.curve_string_classification(),
+        Classification::Decided(curve_string) if curve_string.len() == 2
+    ));
+    let owned_report = deduped.clone().into_report();
+    assert_eq!(&owned_report, deduped.report());
+    let (owned_curve, owned_parts_report) = deduped.clone().into_parts();
+    assert_eq!(owned_curve.as_ref(), deduped.curve_string());
+    assert_eq!(&owned_parts_report, deduped.report());
+    assert!(matches!(
+        deduped.clone().into_curve_string_classification(),
+        Classification::Decided(curve_string) if curve_string.len() == 2
+    ));
     let curve = deduped
         .curve_string()
         .expect("partial exact duplicate removal should materialize");
@@ -892,6 +918,19 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_empty_output_blocker
     assert_eq!(
         deduped.report().blocker(),
         Some(UncertaintyReason::Boundary)
+    );
+    assert_eq!(
+        deduped.curve_string_classification(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    let owned_report = deduped.clone().into_report();
+    assert_eq!(&owned_report, deduped.report());
+    let (owned_curve, owned_parts_report) = deduped.clone().into_parts();
+    assert_eq!(owned_curve.as_ref(), deduped.curve_string());
+    assert_eq!(&owned_parts_report, deduped.report());
+    assert_eq!(
+        deduped.clone().into_curve_string_classification(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }
 
