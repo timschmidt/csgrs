@@ -3995,6 +3995,10 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(&owned_evaluation, result.evaluation());
     let owned_evaluation_request = owned_evaluation.clone().into_request();
     assert_eq!(&owned_evaluation_request, result.request());
+    let owned_result_request = result.clone().into_request();
+    assert_eq!(&owned_result_request, result.request());
+    let owned_result_workspace = result.clone().into_workspace();
+    assert_eq!(&owned_result_workspace, result.workspace());
     let owned_workspace = owned_evaluation.clone().into_workspace();
     assert_eq!(&owned_workspace, result.workspace());
     let owned_workspace_request = owned_workspace.into_request();

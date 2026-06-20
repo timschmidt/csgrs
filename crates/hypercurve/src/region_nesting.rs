@@ -7655,6 +7655,16 @@ impl ExactCurveArrangementResult2 {
         evaluation
     }
 
+    /// Consumes this result and returns the retained workspace consumed by the evaluation.
+    pub fn into_workspace(self) -> ExactCurveWorkspace2 {
+        self.into_evaluation().into_workspace()
+    }
+
+    /// Consumes this result and returns the retained arrangement request.
+    pub fn into_request(self) -> ExactCurveArrangementRequest2 {
+        self.into_evaluation().into_request()
+    }
+
     /// Returns the retained workspace consumed by the evaluation.
     pub const fn workspace(&self) -> &ExactCurveWorkspace2 {
         self.evaluation.workspace()
