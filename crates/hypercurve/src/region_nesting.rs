@@ -10238,54 +10238,84 @@ impl ExactCurveArrangementReport2 {
     pub const fn endpoint_graph_predicate_path(
         &self,
     ) -> Option<RegionLineSegmentEndpointGraphPredicatePath2> {
-        self.endpoint_graph_predicate_path
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.predicate_path()),
+            None => None,
+        }
     }
 
     /// Returns arranged endpoint count validated by retained endpoint-graph evidence.
     pub const fn endpoint_graph_endpoint_count(&self) -> Option<usize> {
-        self.endpoint_graph_endpoint_count
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.endpoint_count()),
+            None => None,
+        }
     }
 
     /// Returns exact structural endpoint bucket count.
     pub const fn endpoint_graph_structural_bucket_count(&self) -> Option<usize> {
-        self.endpoint_graph_structural_bucket_count
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.structural_bucket_count()),
+            None => None,
+        }
     }
 
     /// Returns exact structural endpoint singleton bucket count.
     pub const fn endpoint_graph_structural_singleton_bucket_count(&self) -> Option<usize> {
-        self.endpoint_graph_structural_singleton_bucket_count
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.structural_singleton_bucket_count()),
+            None => None,
+        }
     }
 
     /// Returns the largest exact structural endpoint bucket size.
     pub const fn endpoint_graph_max_structural_bucket_size(&self) -> Option<usize> {
-        self.endpoint_graph_max_structural_bucket_size
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.max_structural_bucket_size()),
+            None => None,
+        }
     }
 
     /// Returns dangling endpoint count found during endpoint-graph validation.
     pub const fn endpoint_graph_dangling_endpoint_count(&self) -> Option<usize> {
-        self.endpoint_graph_dangling_endpoint_count
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.dangling_endpoint_count()),
+            None => None,
+        }
     }
 
     /// Returns branch endpoint count found during endpoint-graph validation.
     pub const fn endpoint_graph_branch_endpoint_count(&self) -> Option<usize> {
-        self.endpoint_graph_branch_endpoint_count
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.branch_endpoint_count()),
+            None => None,
+        }
     }
 
     /// Returns the arranged segment index of the first endpoint-graph blocker.
     pub const fn endpoint_graph_blocker_arranged_segment_index(&self) -> Option<usize> {
-        self.endpoint_graph_blocker_arranged_segment_index
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => endpoint_cache.blocker_arranged_segment_index(),
+            None => None,
+        }
     }
 
     /// Returns the arranged endpoint of the first endpoint-graph blocker.
     pub const fn endpoint_graph_blocker_endpoint(
         &self,
     ) -> Option<RegionLineSegmentArrangedEndpoint2> {
-        self.endpoint_graph_blocker_endpoint
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => endpoint_cache.blocker_endpoint(),
+            None => None,
+        }
     }
 
     /// Returns the exact arranged endpoint point of the first endpoint-graph blocker.
     pub const fn endpoint_graph_blocker_point(&self) -> Option<&Point2> {
-        self.endpoint_graph_blocker_point.as_ref()
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => endpoint_cache.blocker_point(),
+            None => None,
+        }
     }
 
     /// Returns the exact predicate family used for ring traversal, when reached.
