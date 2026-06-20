@@ -2207,6 +2207,14 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.evaluated_output()
     );
     assert_eq!(
+        arrangement_report.source_segments(),
+        result.source_segments()
+    );
+    assert_eq!(
+        arrangement_report.source_line_segments(),
+        result.source_line_segments()
+    );
+    assert_eq!(
         arrangement_report.source_segment_count(),
         result.source_segment_count()
     );
@@ -3810,6 +3818,14 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         arrangement_report.evaluated_output(),
         result.evaluated_output()
+    );
+    assert_eq!(
+        arrangement_report.source_segments(),
+        result.source_segments()
+    );
+    assert_eq!(
+        arrangement_report.source_line_segments(),
+        result.source_line_segments()
     );
     assert_eq!(
         arrangement_report.source_segment_kind_counts(),

@@ -979,6 +979,8 @@ pub struct ExactCurveArrangementResult2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementReport2 {
     fill_rule: FillRule,
+    source_segments: Vec<Segment2>,
+    source_line_segments: Option<Vec<LineSeg2>>,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
     source_segment_aabbs: Vec<Option<Aabb2>>,
@@ -8038,6 +8040,8 @@ impl ExactCurveArrangementReport2 {
     fn from_result(result: &ExactCurveArrangementResult2) -> Self {
         Self {
             fill_rule: result.fill_rule(),
+            source_segments: result.source_segments().to_vec(),
+            source_line_segments: result.source_line_segments().map(<[_]>::to_vec),
             source_segment_count: result.source_segment_count(),
             source_segment_kind_counts: result.source_segment_kind_counts(),
             source_segment_aabbs: result.source_segment_aabbs().to_vec(),
@@ -8141,6 +8145,16 @@ impl ExactCurveArrangementReport2 {
     /// Returns the fill rule retained by the arrangement request.
     pub const fn fill_rule(&self) -> FillRule {
         self.fill_rule
+    }
+
+    /// Returns exact source segments retained from the arrangement request.
+    pub fn source_segments(&self) -> &[Segment2] {
+        &self.source_segments
+    }
+
+    /// Returns line-only source carriers when the retained request came from a line-specific API.
+    pub fn source_line_segments(&self) -> Option<&[LineSeg2]> {
+        self.source_line_segments.as_deref()
     }
 
     /// Returns retained source segment count.
