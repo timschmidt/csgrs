@@ -9713,6 +9713,49 @@ impl ExactCurveArrangementReport2 {
     }
 
     fn into_region_line_segment_region_build_report(self) -> RegionLineSegmentRegionBuildReport2 {
+        let split_cache = self.split_cache.as_ref();
+        let split_predicate_path = split_cache
+            .map(ExactCurveArrangementSplitCache2::predicate_path)
+            .unwrap_or(self.split_predicate_path);
+        let split_candidate_pair_count = split_cache
+            .map(ExactCurveArrangementSplitCache2::candidate_pair_count)
+            .or(self.split_candidate_pair_count)
+            .expect("evaluated exact arrangement report missing split candidate pair count");
+        let split_skipped_aabb_pair_count = split_cache
+            .map(ExactCurveArrangementSplitCache2::skipped_aabb_pair_count)
+            .or(self.split_skipped_aabb_pair_count)
+            .expect("evaluated exact arrangement report missing split skipped AABB pair count");
+        let split_tested_pair_count = split_cache
+            .map(ExactCurveArrangementSplitCache2::tested_pair_count)
+            .or(self.split_tested_pair_count)
+            .expect("evaluated exact arrangement report missing split tested pair count");
+        let split_intersection_event_count = split_cache
+            .map(ExactCurveArrangementSplitCache2::intersection_event_count)
+            .or(self.split_intersection_event_count)
+            .expect("evaluated exact arrangement report missing split intersection event count");
+        let split_point_relation_count = split_cache
+            .map(ExactCurveArrangementSplitCache2::point_relation_count)
+            .or(self.split_point_relation_count)
+            .expect("evaluated exact arrangement report missing split point relation count");
+        let split_overlap_relation_count = split_cache
+            .map(ExactCurveArrangementSplitCache2::overlap_relation_count)
+            .or(self.split_overlap_relation_count)
+            .expect("evaluated exact arrangement report missing split overlap relation count");
+        let split_uncertain_relation_count = split_cache
+            .map(ExactCurveArrangementSplitCache2::uncertain_relation_count)
+            .or(self.split_uncertain_relation_count)
+            .expect("evaluated exact arrangement report missing split uncertain relation count");
+        let split_intersection_points = split_cache
+            .map(|cache| cache.intersection_points().to_vec())
+            .or_else(|| self.split_intersection_points.clone())
+            .expect("evaluated exact arrangement report missing split intersection points");
+        let split_intersection_reports = split_cache
+            .map(|cache| cache.intersection_reports().to_vec())
+            .or_else(|| self.split_intersection_reports.clone())
+            .expect("evaluated exact arrangement report missing split intersection reports");
+        let split_output_segment_count = split_cache
+            .and_then(ExactCurveArrangementSplitCache2::output_segment_count)
+            .or(self.split_output_segment_count);
         let ring_cache = self.ring_assembly_cache.as_ref();
         let attempted_endpoint_connection_count = ring_cache
             .map(ExactCurveArrangementRingAssemblyCache2::attempted_endpoint_connection_count)
@@ -9768,37 +9811,19 @@ impl ExactCurveArrangementReport2 {
             source_segment_kind_counts: self.source_segment_kind_counts,
             arranged_segment_count,
             arranged_segment_kind_counts,
-            split_predicate_path: self.split_predicate_path,
+            split_predicate_path,
             endpoint_graph_predicate_path: self.endpoint_graph_predicate_path,
             ring_assembly_predicate_path: self.ring_assembly_predicate_path,
-            split_candidate_pair_count: self
-                .split_candidate_pair_count
-                .expect("evaluated exact arrangement report missing split candidate pair count"),
-            split_skipped_aabb_pair_count: self
-                .split_skipped_aabb_pair_count
-                .expect("evaluated exact arrangement report missing split skipped AABB pair count"),
-            split_tested_pair_count: self
-                .split_tested_pair_count
-                .expect("evaluated exact arrangement report missing split tested pair count"),
-            split_intersection_event_count: self.split_intersection_event_count.expect(
-                "evaluated exact arrangement report missing split intersection event count",
-            ),
-            split_point_relation_count: self
-                .split_point_relation_count
-                .expect("evaluated exact arrangement report missing split point relation count"),
-            split_overlap_relation_count: self
-                .split_overlap_relation_count
-                .expect("evaluated exact arrangement report missing split overlap relation count"),
-            split_uncertain_relation_count: self.split_uncertain_relation_count.expect(
-                "evaluated exact arrangement report missing split uncertain relation count",
-            ),
-            split_intersection_points: self
-                .split_intersection_points
-                .expect("evaluated exact arrangement report missing split intersection points"),
-            split_intersection_reports: self
-                .split_intersection_reports
-                .expect("evaluated exact arrangement report missing split intersection reports"),
-            split_output_segment_count: self.split_output_segment_count,
+            split_candidate_pair_count,
+            split_skipped_aabb_pair_count,
+            split_tested_pair_count,
+            split_intersection_event_count,
+            split_point_relation_count,
+            split_overlap_relation_count,
+            split_uncertain_relation_count,
+            split_intersection_points,
+            split_intersection_reports,
+            split_output_segment_count,
             split_blocker_first_source_segment_index: self.split_blocker_first_source_segment_index,
             split_blocker_first_source_segment_kind: self.split_blocker_first_source_segment_kind,
             split_blocker_first_source_start_point: self.split_blocker_first_source_start_point,
