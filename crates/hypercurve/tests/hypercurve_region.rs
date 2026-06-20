@@ -1073,7 +1073,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     let attempt = ExactCurveArrangementAttempt2::new(request);
     let result = attempt.evaluate(&policy()).unwrap();
 
-    assert_eq!(attempt.request().source_segment_count(), 4);
+    assert_eq!(result.source_segment_count(), 4);
     assert_eq!(
         attempt.request().source_line_segments(),
         Some(lines.as_slice())
@@ -1087,21 +1087,20 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
             .all(|segment| matches!(segment, Segment2::Line(_)))
     );
     assert_eq!(
-        result.workspace().source_segment_kind_counts(),
+        result.source_segment_kind_counts(),
         SegmentKindCounts { lines: 4, arcs: 0 }
     );
-    assert_eq!(result.workspace().source_segment_aabbs().len(), 4);
-    assert_eq!(result.workspace().decided_source_segment_aabb_count(), 4);
-    assert_eq!(result.workspace().undecided_source_segment_aabb_count(), 0);
+    assert_eq!(result.source_segment_aabbs().len(), 4);
+    assert_eq!(result.decided_source_segment_aabb_count(), 4);
+    assert_eq!(result.undecided_source_segment_aabb_count(), 0);
     assert_eq!(
-        result.workspace().source_segment_aabbs()[0]
+        result.source_segment_aabbs()[0]
             .as_ref()
             .map(|bbox| (bbox.min().clone(), bbox.max().clone())),
         Some((p(0, 0), p(4, 0)))
     );
     assert_eq!(
         result
-            .workspace()
             .source_aabb()
             .map(|bbox| (bbox.min().clone(), bbox.max().clone())),
         Some((p(0, 0), p(4, 4)))
@@ -1109,26 +1108,25 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     let source_segment_cache = result.source_segment_cache();
     assert_eq!(
         source_segment_cache.source_segment_count(),
-        attempt.request().source_segment_count()
+        result.source_segment_count()
     );
     assert_eq!(
         source_segment_cache.source_segment_kind_counts(),
-        result.workspace().source_segment_kind_counts()
+        result.source_segment_kind_counts()
     );
     assert_eq!(
         source_segment_cache.decided_source_segment_aabb_count(),
-        result.workspace().decided_source_segment_aabb_count()
+        result.decided_source_segment_aabb_count()
     );
     assert_eq!(
         source_segment_cache.undecided_source_segment_aabb_count(),
-        result.workspace().undecided_source_segment_aabb_count()
+        result.undecided_source_segment_aabb_count()
     );
     assert_eq!(
         source_segment_cache
             .source_aabb()
             .map(|bbox| (bbox.min().clone(), bbox.max().clone())),
         result
-            .workspace()
             .source_aabb()
             .map(|bbox| (bbox.min().clone(), bbox.max().clone()))
     );
@@ -1174,11 +1172,11 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(
         source_segment_kind_bucket_cache.line_segment_ref_count(),
-        result.workspace().source_segment_kind_counts().lines
+        result.source_segment_kind_counts().lines
     );
     assert_eq!(
         source_segment_kind_bucket_cache.arc_segment_ref_count(),
-        result.workspace().source_segment_kind_counts().arcs
+        result.source_segment_kind_counts().arcs
     );
     assert_eq!(source_segment_kind_bucket_cache.max_bucket_size(), 4);
     assert_eq!(source_segment_kind_bucket_cache.buckets().len(), 2);
@@ -1190,7 +1188,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         source_segment_kind_bucket_cache.buckets()[0]
             .source_refs()
             .len(),
-        result.workspace().source_segment_kind_counts().lines
+        result.source_segment_kind_counts().lines
     );
     assert_eq!(
         source_segment_kind_bucket_cache.buckets()[0].source_refs()[0].source_segment_index(),
@@ -2577,32 +2575,29 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     let attempt = ExactCurveArrangementAttempt2::new(request);
     let result = attempt.evaluate(&policy()).unwrap();
 
-    assert_eq!(attempt.request().source_segment_count(), 2);
+    assert_eq!(result.source_segment_count(), 2);
     assert_eq!(attempt.request().fill_rule(), FillRule::NonZero);
     assert_eq!(attempt.request().source_segments(), segments.as_slice());
-    assert_eq!(result.workspace().request(), attempt.request());
+    assert_eq!(result.request(), attempt.request());
     assert_eq!(
-        result.workspace().source_segment_kind_counts(),
+        result.source_segment_kind_counts(),
         SegmentKindCounts { lines: 1, arcs: 1 }
     );
-    assert_eq!(result.workspace().source_segment_aabbs().len(), 2);
-    assert_eq!(result.workspace().decided_source_segment_aabb_count(), 2);
-    assert_eq!(result.workspace().undecided_source_segment_aabb_count(), 0);
+    assert_eq!(result.source_segment_aabbs().len(), 2);
+    assert_eq!(result.decided_source_segment_aabb_count(), 2);
+    assert_eq!(result.undecided_source_segment_aabb_count(), 0);
     assert_eq!(
-        result
-            .workspace()
-            .source_aabb()
-            .map(|bbox| bbox.min().clone()),
+        result.source_aabb().map(|bbox| bbox.min().clone()),
         Some(p(0, -2))
     );
     let source_segment_cache = result.source_segment_cache();
     assert_eq!(
         source_segment_cache.source_segment_count(),
-        attempt.request().source_segment_count()
+        result.source_segment_count()
     );
     assert_eq!(
         source_segment_cache.source_segment_kind_counts(),
-        result.workspace().source_segment_kind_counts()
+        result.source_segment_kind_counts()
     );
     assert_eq!(source_segment_cache.decided_source_segment_aabb_count(), 2);
     assert_eq!(
@@ -2637,11 +2632,11 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(
         source_segment_kind_bucket_cache.line_segment_ref_count(),
-        result.workspace().source_segment_kind_counts().lines
+        result.source_segment_kind_counts().lines
     );
     assert_eq!(
         source_segment_kind_bucket_cache.arc_segment_ref_count(),
-        result.workspace().source_segment_kind_counts().arcs
+        result.source_segment_kind_counts().arcs
     );
     assert_eq!(source_segment_kind_bucket_cache.max_bucket_size(), 1);
     assert_eq!(

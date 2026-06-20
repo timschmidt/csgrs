@@ -6172,6 +6172,41 @@ impl ExactCurveArrangementResult2 {
         self.evaluation.workspace()
     }
 
+    /// Returns the retained arrangement request.
+    pub const fn request(&self) -> &ExactCurveArrangementRequest2 {
+        self.workspace().request()
+    }
+
+    /// Returns retained source segment count from the arrangement request.
+    pub fn source_segment_count(&self) -> usize {
+        self.request().source_segment_count()
+    }
+
+    /// Returns retained source segment primitive-family counts.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.workspace().source_segment_kind_counts()
+    }
+
+    /// Returns retained source segment boxes in request order.
+    pub fn source_segment_aabbs(&self) -> &[Option<Aabb2>] {
+        self.workspace().source_segment_aabbs()
+    }
+
+    /// Returns a retained aggregate source box when every source box was decided.
+    pub const fn source_aabb(&self) -> Option<&Aabb2> {
+        self.workspace().source_aabb()
+    }
+
+    /// Returns the number of source segment boxes certified during workspace preparation.
+    pub fn decided_source_segment_aabb_count(&self) -> usize {
+        self.workspace().decided_source_segment_aabb_count()
+    }
+
+    /// Returns the number of source segment boxes that stayed uncertain.
+    pub fn undecided_source_segment_aabb_count(&self) -> usize {
+        self.workspace().undecided_source_segment_aabb_count()
+    }
+
     /// Returns retained source segment facts prepared before split scheduling.
     pub const fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
         self.workspace().source_segment_cache()
