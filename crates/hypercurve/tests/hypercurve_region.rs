@@ -5458,6 +5458,32 @@ fn unordered_native_segments_split_arc_arc_crossing_before_boundary_blocker() {
     assert_eq!(built.split_tested_pair_count(), Some(1));
     assert_eq!(built.split_intersection_event_count(), Some(1));
     assert_eq!(built.split_intersection_points().unwrap(), &[p(4, 3)]);
+    let split_reports = built.split_intersection_reports().unwrap();
+    assert_eq!(split_reports.len(), 1);
+    assert_eq!(split_reports[0].first_source_segment_index(), 0);
+    assert_eq!(
+        split_reports[0].first_source_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(
+        split_reports[0].first_source_segment_start_point(),
+        &p(5, 0)
+    );
+    assert_eq!(split_reports[0].first_source_segment_end_point(), &p(-5, 0));
+    assert_eq!(split_reports[0].second_source_segment_index(), 1);
+    assert_eq!(
+        split_reports[0].second_source_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(
+        split_reports[0].second_source_segment_start_point(),
+        &p(3, 0)
+    );
+    assert_eq!(
+        split_reports[0].second_source_segment_end_point(),
+        &p(13, 0)
+    );
+    assert_eq!(split_reports[0].point(), &p(4, 3));
     assert_eq!(built.split_output_segment_count(), Some(4));
     assert_eq!(built.endpoint_graph_endpoint_count(), Some(8));
     assert_eq!(built.endpoint_graph_structural_bucket_count(), Some(5));
@@ -5491,6 +5517,119 @@ fn unordered_native_segments_split_arc_arc_crossing_before_boundary_blocker() {
         &hypercurve::ParamRange::new(s(0), q(1, 10))
     );
     assert_eq!(built.source_report_count(), Some(0));
+
+    let split_cache = built.split_cache().unwrap();
+    assert_eq!(
+        split_cache.predicate_path(),
+        Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredNativeSegment)
+    );
+    assert_eq!(split_cache.candidate_pair_count(), 1);
+    assert_eq!(split_cache.skipped_aabb_pair_count(), 0);
+    assert_eq!(split_cache.tested_pair_count(), 1);
+    assert_eq!(split_cache.intersection_event_count(), 1);
+    assert_eq!(split_cache.point_relation_count(), 1);
+    assert_eq!(split_cache.overlap_relation_count(), 0);
+    assert_eq!(split_cache.uncertain_relation_count(), 0);
+    assert_eq!(split_cache.intersection_points(), &[p(4, 3)]);
+    assert_eq!(split_cache.intersection_reports(), split_reports);
+    assert_eq!(split_cache.output_segment_count(), Some(4));
+    assert!(split_cache.blocker_cache().is_none());
+    assert_eq!(
+        split_cache.relation_bucket_cache().point_relation_count(),
+        1
+    );
+    assert_eq!(
+        split_cache
+            .intersection_bucket_cache()
+            .intersection_event_count(),
+        1
+    );
+    assert_eq!(
+        split_cache
+            .intersection_parameter_cache()
+            .source_parameter_ref_count(),
+        2
+    );
+
+    let endpoint_graph_cache = built.endpoint_graph_cache().unwrap();
+    assert_eq!(
+        endpoint_graph_cache.predicate_path(),
+        RegionLineSegmentEndpointGraphPredicatePath2::ExactStructuralEndpointBuckets
+    );
+    assert_eq!(endpoint_graph_cache.endpoint_count(), 8);
+    assert_eq!(endpoint_graph_cache.structural_bucket_count(), 5);
+    assert_eq!(endpoint_graph_cache.structural_singleton_bucket_count(), 4);
+    assert_eq!(endpoint_graph_cache.max_structural_bucket_size(), 4);
+    assert_eq!(endpoint_graph_cache.dangling_endpoint_count(), 4);
+    assert_eq!(endpoint_graph_cache.branch_endpoint_count(), 4);
+    assert_eq!(
+        endpoint_graph_cache.blocker_arranged_segment_index(),
+        Some(0)
+    );
+    assert_eq!(
+        endpoint_graph_cache.blocker_endpoint(),
+        Some(RegionLineSegmentArrangedEndpoint2::Start)
+    );
+    assert_eq!(endpoint_graph_cache.blocker_point(), Some(&p(5, 0)));
+    assert_eq!(
+        endpoint_graph_cache.endpoint_bucket_cache().bucket_count(),
+        5
+    );
+    assert_eq!(
+        endpoint_graph_cache
+            .endpoint_side_bucket_cache()
+            .start_endpoint_ref_count(),
+        4
+    );
+    assert_eq!(
+        endpoint_graph_cache
+            .endpoint_side_bucket_cache()
+            .end_endpoint_ref_count(),
+        4
+    );
+    assert_eq!(
+        endpoint_graph_cache
+            .endpoint_degree_bucket_cache()
+            .dangling_structural_bucket_count(),
+        4
+    );
+    assert_eq!(
+        endpoint_graph_cache
+            .endpoint_degree_bucket_cache()
+            .chain_structural_bucket_count(),
+        0
+    );
+    assert_eq!(
+        endpoint_graph_cache
+            .endpoint_degree_bucket_cache()
+            .branch_structural_bucket_count(),
+        1
+    );
+
+    let ring_cache = built.ring_assembly_cache().unwrap();
+    assert_eq!(
+        ring_cache.predicate_path(),
+        RegionLineSegmentRingAssemblyPredicatePath2::ExactEndpointBucketTraversal
+    );
+    assert_eq!(ring_cache.output_ring_count(), None);
+    assert_eq!(ring_cache.output_boundary_segment_count(), None);
+    assert_eq!(ring_cache.arranged_source_reports(), arranged_sources);
+    assert!(ring_cache.source_reports().is_empty());
+    assert_eq!(
+        ring_cache
+            .arranged_fragment_cache()
+            .arranged_fragment_count(),
+        4
+    );
+    assert_eq!(ring_cache.arranged_fragment_cache().source_ref_count(), 4);
+    assert_eq!(
+        ring_cache
+            .arranged_fragment_cache()
+            .arranged_fragment_status_bucket_cache()
+            .native_exact_ref_count(),
+        4
+    );
+    assert!(built.output_cache().is_some());
     assert_eq!(built.blocker(), Some(UncertaintyReason::Boundary));
 }
 
