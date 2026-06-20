@@ -1035,6 +1035,7 @@ pub struct ExactCurveArrangementReport2 {
     material_segment_count: Option<usize>,
     hole_segment_count: Option<usize>,
     role_report_count: Option<usize>,
+    role_reports: Option<Vec<RegionBoundaryContourRoleReport2>>,
     boundary_build_stage: Option<RegionBoundaryContourBuildStage2>,
     boundary_build_predicate_path: Option<RegionBoundaryContourBuildPredicatePath2>,
     boundary_build_status: Option<RetainedTopologyStatus>,
@@ -8106,6 +8107,7 @@ impl ExactCurveArrangementReport2 {
             material_segment_count: result.material_segment_count(),
             hole_segment_count: result.hole_segment_count(),
             role_report_count: result.role_report_count(),
+            role_reports: result.role_reports().map(<[_]>::to_vec),
             boundary_build_stage: result.boundary_build_stage(),
             boundary_build_predicate_path: result.boundary_build_predicate_path(),
             boundary_build_status: result.boundary_build_status(),
@@ -8423,6 +8425,11 @@ impl ExactCurveArrangementReport2 {
     /// Returns retained output role report count when role assignment was reached.
     pub const fn role_report_count(&self) -> Option<usize> {
         self.role_report_count
+    }
+
+    /// Returns retained output role reports when role assignment was reached.
+    pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
+        self.role_reports.as_deref()
     }
 
     /// Returns final boundary-role assignment stage, if reached.

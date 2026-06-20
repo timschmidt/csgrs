@@ -2387,6 +2387,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         arrangement_report.role_report_count(),
         result.role_report_count()
     );
+    assert_eq!(arrangement_report.role_reports(), result.role_reports());
     assert_eq!(
         arrangement_report.boundary_build_stage(),
         result.boundary_build_stage()
@@ -3966,6 +3967,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         arrangement_report.role_report_count(),
         result.role_report_count()
     );
+    assert_eq!(arrangement_report.role_reports(), result.role_reports());
     assert_eq!(
         arrangement_report.boundary_build_stage(),
         result.boundary_build_stage()
@@ -4497,6 +4499,7 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(arrangement_report.material_segment_count(), None);
     assert_eq!(arrangement_report.hole_segment_count(), None);
     assert_eq!(arrangement_report.role_report_count(), None);
+    assert_eq!(arrangement_report.role_reports(), None);
     assert_eq!(arrangement_report.boundary_build_stage(), None);
     assert_eq!(arrangement_report.boundary_build_predicate_path(), None);
     assert_eq!(arrangement_report.boundary_build_status(), None);
