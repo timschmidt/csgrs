@@ -3962,6 +3962,17 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     }
     let arrangement_report = result.arrangement_report();
     assert_eq!(arrangement_report.workspace(), result.workspace());
+    let (owned_report_region, owned_report) = result.clone().into_region_with_arrangement_report();
+    assert_eq!(owned_report_region.as_ref(), result.region());
+    assert_eq!(&owned_report, &arrangement_report);
+    let (owned_report_classification, owned_classification_report) = result
+        .clone()
+        .into_region_classification_with_arrangement_report();
+    assert_eq!(
+        owned_report_classification,
+        result.clone().into_region_classification()
+    );
+    assert_eq!(&owned_classification_report, &arrangement_report);
     let report_evaluation = arrangement_report.clone().into_evaluation();
     assert_eq!(&report_evaluation, result.evaluation());
     let report_workspace = arrangement_report.into_workspace();
