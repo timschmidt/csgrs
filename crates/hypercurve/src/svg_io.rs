@@ -979,10 +979,10 @@ pub fn import_svg_region_path_data_with_report(
             Some(UncertaintyReason::Unsupported),
         );
     };
-    let boundary_build_report = built.report().clone();
-    let status = boundary_build_report.status();
-    let blocker = boundary_build_report.blocker();
-    let Some(region) = built.into_region() else {
+    let status = built.status();
+    let blocker = built.blocker();
+    let (region, boundary_build_report) = built.into_parts();
+    let Some(region) = region else {
         return blocked_svg_region_import(
             path_reports,
             closure_reports,

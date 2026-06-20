@@ -1941,15 +1941,15 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_a
 ) -> CurveResult<RegionBooleanResult2> {
     let boundary_contour_count = contours.len();
     let built = Region2::from_boundary_contours_with_report(contours, policy)?;
-    let status = built.report().status();
-    let blocker = built.report().blocker();
-    let result_material_contour_count = built.report().material_contour_count();
-    let result_hole_contour_count = built.report().hole_contour_count();
-    let result_boundary_segment_count = built.report().output_segment_count();
+    let status = built.status();
+    let blocker = built.blocker();
+    let result_material_contour_count = built.material_contour_count();
+    let result_hole_contour_count = built.hole_contour_count();
+    let result_boundary_segment_count = built.output_segment_count();
     let result_boundary_segment_kind_counts = built
         .region()
         .map(|region| region_view_boundary_segment_kind_counts(&region.as_view()));
-    let boundary_build_report = built.report().clone();
+    let (region, boundary_build_report) = built.into_parts();
     let result_boundary_source_segment_kind_counts = pipeline_report.as_ref().and_then(|report| {
         report
             .contour_transfer_report()
@@ -1960,7 +1960,7 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_a
         report
     });
     Ok(RegionBooleanResult2 {
-        region: built.into_region(),
+        region,
         report: RegionBooleanReport2 {
             op,
             fill_rule,
