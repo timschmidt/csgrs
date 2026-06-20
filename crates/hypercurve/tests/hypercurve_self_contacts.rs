@@ -72,6 +72,15 @@ fn curve_string_self_contact_detector_ignores_adjacent_corner() {
         None
     );
     assert_eq!(reported.report().blocker(), None);
+    assert_eq!(
+        reported.clone().into_has_self_contacts(),
+        reported.has_self_contacts()
+    );
+    let owned_report = reported.clone().into_report();
+    assert_eq!(&owned_report, reported.report());
+    let (owned_classification, owned_parts_report) = reported.clone().into_parts();
+    assert_eq!(owned_classification, reported.has_self_contacts());
+    assert_eq!(&owned_parts_report, reported.report());
 }
 
 #[test]
@@ -117,6 +126,15 @@ fn curve_string_self_contact_detector_finds_nonadjacent_crossing() {
         reported.report().first_contact_second_segment_end_point(),
         Some(&p(4, 0))
     );
+    assert_eq!(
+        reported.clone().into_has_self_contacts(),
+        reported.has_self_contacts()
+    );
+    let owned_report = reported.clone().into_report();
+    assert_eq!(&owned_report, reported.report());
+    let (owned_classification, owned_parts_report) = reported.clone().into_parts();
+    assert_eq!(owned_classification, reported.has_self_contacts());
+    assert_eq!(&owned_parts_report, reported.report());
 }
 
 #[test]
@@ -188,6 +206,15 @@ fn prepared_curve_string_self_contact_detector_matches_plain_detector() {
         prepared_reported.report().tested_pair_count(),
         plain_reported.report().tested_pair_count()
     );
+    let prepared_owned_report = prepared_reported.clone().into_report();
+    assert_eq!(&prepared_owned_report, prepared_reported.report());
+    let (prepared_owned_classification, prepared_owned_parts_report) =
+        prepared_reported.clone().into_parts();
+    assert_eq!(
+        prepared_owned_classification,
+        prepared_reported.has_self_contacts()
+    );
+    assert_eq!(&prepared_owned_parts_report, prepared_reported.report());
 }
 
 #[test]
@@ -322,6 +349,15 @@ fn prepared_contour_self_contact_detector_matches_plain_detector() {
             .first_contact_second_segment_index(),
         plain_reported.report().first_contact_second_segment_index()
     );
+    let prepared_owned_report = prepared_reported.clone().into_report();
+    assert_eq!(&prepared_owned_report, prepared_reported.report());
+    let (prepared_owned_classification, prepared_owned_parts_report) =
+        prepared_reported.clone().into_parts();
+    assert_eq!(
+        prepared_owned_classification,
+        prepared_reported.has_self_contacts()
+    );
+    assert_eq!(&prepared_owned_parts_report, prepared_reported.report());
 }
 
 #[test]

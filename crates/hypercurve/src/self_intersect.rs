@@ -340,6 +340,21 @@ impl SelfContactResult2 {
         self.has_self_contacts
     }
 
+    /// Consumes this result and returns the self-contact classification.
+    pub fn into_has_self_contacts(self) -> Classification<bool> {
+        self.has_self_contacts
+    }
+
+    /// Consumes this result and returns retained scan evidence.
+    pub fn into_report(self) -> SelfContactReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the self-contact classification with its report.
+    pub fn into_parts(self) -> (Classification<bool>, SelfContactReport2) {
+        (self.has_self_contacts, self.report)
+    }
+
     /// Returns retained scan evidence for self-contact classification.
     pub const fn report(&self) -> &SelfContactReport2 {
         &self.report
