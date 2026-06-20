@@ -110,6 +110,39 @@ fn assert_boolean_samples(
 }
 
 #[test]
+fn boolean_region_convenience_matches_reported_xor_shortcut_roles() {
+    let first = region(&[(0.0, 0.0, 4.0, 4.0), (6.0, 0.0, 10.0, 4.0)], &[]);
+    let second = region(&[(3.0, 1.0, 7.0, 3.0)], &[]);
+
+    let reported = first
+        .boolean_region_with_report(&second, BooleanOp::Xor, FillRule::NonZero, &policy())
+        .unwrap();
+    let convenience = first
+        .boolean_region(&second, BooleanOp::Xor, FillRule::NonZero, &policy())
+        .unwrap();
+    let Classification::Decided(convenience) = convenience else {
+        panic!("non-reporting XOR should reuse the report-bearing materialization path");
+    };
+    let reported_region = reported
+        .region()
+        .expect("reported XOR shortcut should materialize a region");
+
+    assert_eq!(
+        reported.report().boundary_contour_source_path(),
+        Some(RegionBooleanBoundaryContourSourcePath2::XorDifferenceUnionShortcut)
+    );
+    assert_eq!(reported.report().result_material_contour_count(), Some(3));
+    assert_eq!(
+        convenience.material_contours().len(),
+        reported_region.material_contours().len()
+    );
+    assert_eq!(
+        convenience.hole_contours().len(),
+        reported_region.hole_contours().len()
+    );
+}
+
+#[test]
 fn boolean_region_report_retains_boundary_role_assignment() {
     let first = region(&[(0.0, 0.0, 4.0, 4.0)], &[]);
     let second = region(&[(2.0, -1.0, 6.0, 3.0)], &[]);

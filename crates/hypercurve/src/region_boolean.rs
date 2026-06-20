@@ -1551,67 +1551,14 @@ pub(crate) fn boolean_region_between(
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Region2>> {
-    if same_region_view(first, second) {
-        return Ok(Classification::Decided(match op {
-            BooleanOp::Union | BooleanOp::Intersection => clone_region(first),
-            BooleanOp::Difference | BooleanOp::Xor => Region2::empty(),
-        }));
-    }
-    if first.is_empty() || second.is_empty() {
-        return Ok(Classification::Decided(empty_operand_region(
-            first, second, op,
-        )));
-    }
-    match coextensive_axis_rect_region_boolean(first, second, op, policy)? {
-        Classification::Decided(Some(region)) => return Ok(Classification::Decided(region)),
-        Classification::Decided(None) => {}
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    }
-    match boundary_contact_resolution(first, second, policy)? {
-        Classification::Decided(Some(BoundaryContactResolution::BoundaryOnly(kind))) => {
-            return boundary_contact_region(first, second, op, fill_rule, policy, kind);
-        }
-        Classification::Decided(Some(BoundaryContactResolution::Containment {
-            relation,
-            contact,
-        })) => {
-            if let Some(region) = containment_region(first, second, op, relation) {
-                return Ok(Classification::Decided(region));
-            }
-            if relation == BoundaryContainmentRelation::FirstContainsSecond
-                && contact == BoundaryContactKind::Overlap
-                && op == BooleanOp::Difference
-            {
-                return match containment_difference_boundary_contours(
-                    first, second, fill_rule, policy,
-                )? {
-                    Classification::Decided(contours) => {
-                        Region2::from_boundary_contours(contours, policy)
-                    }
-                    Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-                };
-            }
-        }
-        Classification::Decided(None) => {
-            if op == BooleanOp::Union && region_boundary_has_overlap(first, second, policy)? {
-                return match boundary_overlap_union_contours(first, second, op, fill_rule, policy)?
-                {
-                    Classification::Decided(contours) => {
-                        Region2::from_boundary_contours(contours, policy)
-                    }
-                    Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-                };
-            }
-        }
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    }
-    if op == BooleanOp::Xor {
-        return xor_region_by_difference_union(first, second, fill_rule, policy);
-    }
-
-    match boolean_boundary_contours_between(first, second, op, fill_rule, policy)? {
-        Classification::Decided(contours) => Region2::from_boundary_contours(contours, policy),
-        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    let result = boolean_region_between_with_report(first, second, op, fill_rule, policy)?;
+    let blocker = result
+        .report()
+        .blocker()
+        .unwrap_or(UncertaintyReason::Unsupported);
+    match result.into_region() {
+        Some(region) => Ok(Classification::Decided(region)),
+        None => Ok(Classification::Uncertain(blocker)),
     }
 }
 
@@ -1623,6 +1570,33 @@ pub(crate) fn boolean_region_between_with_report(
     policy: &CurvePolicy,
 ) -> CurveResult<RegionBooleanResult2> {
     let boundary_events = first.intersect_region(second, policy)?;
+    if op == BooleanOp::Xor {
+        return match xor_region_by_difference_union(first, second, fill_rule, policy)? {
+            Classification::Decided(region) => {
+                Ok(region_boolean_result_from_role_assigned_shortcut_region(
+                    first,
+                    second,
+                    op,
+                    fill_rule,
+                    RegionBooleanQueryPath2::Direct,
+                    &boundary_events,
+                    region,
+                    RegionBooleanBoundaryContourSourcePath2::XorDifferenceUnionShortcut,
+                    None,
+                ))
+            }
+            Classification::Uncertain(reason) => Ok(blocked_region_boolean_result(
+                first,
+                second,
+                op,
+                fill_rule,
+                RegionBooleanQueryPath2::Direct,
+                &boundary_events,
+                retained_status_for_boolean_blocker(reason),
+                reason,
+            )),
+        };
+    }
     let (contours, boundary_contour_source_path, pipeline_report) =
         match boolean_boundary_contours_between_with_pipeline_report(
             first,
@@ -1883,6 +1857,72 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_pipeline_report(
         pipeline_report,
         policy,
     )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn region_boolean_result_from_role_assigned_shortcut_region(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    op: BooleanOp,
+    fill_rule: FillRule,
+    query_path: RegionBooleanQueryPath2,
+    boundary_events: &RegionIntersectionSet,
+    region: Region2,
+    boundary_contour_source_path: RegionBooleanBoundaryContourSourcePath2,
+    prepared_cache_report: Option<RegionBooleanPreparedCacheReport2>,
+) -> RegionBooleanResult2 {
+    let result_view = region.as_view();
+    let result_material_contour_count = result_view.material_contours().len();
+    let result_hole_contour_count = result_view.hole_contours().len();
+    let result_boundary_segment_count = region_view_boundary_segment_count(&result_view);
+    let result_boundary_segment_kind_counts =
+        region_view_boundary_segment_kind_counts(&result_view);
+    RegionBooleanResult2 {
+        region: Some(region),
+        report: RegionBooleanReport2 {
+            op,
+            fill_rule,
+            query_path,
+            stage: RegionBooleanStage2::RegionRoleAssignment,
+            first_material_contour_count: first.material_contours().len(),
+            first_hole_contour_count: first.hole_contours().len(),
+            first_boundary_segment_count: region_view_boundary_segment_count(first),
+            first_boundary_segment_kind_counts: region_view_boundary_segment_kind_counts(first),
+            second_material_contour_count: second.material_contours().len(),
+            second_hole_contour_count: second.hole_contours().len(),
+            second_boundary_segment_count: region_view_boundary_segment_count(second),
+            second_boundary_segment_kind_counts: region_view_boundary_segment_kind_counts(second),
+            boundary_first_contour_count: boundary_events.first_contour_count(),
+            boundary_second_contour_count: boundary_events.second_contour_count(),
+            boundary_predicate_path: Some(
+                RegionBooleanBoundaryPredicatePath2::AabbFilteredContourIntersection,
+            ),
+            boundary_contour_source_path: Some(boundary_contour_source_path),
+            boundary_candidate_pair_count: boundary_events.candidate_pair_count(),
+            boundary_skipped_aabb_pair_count: boundary_events.skipped_aabb_pair_count(),
+            boundary_tested_pair_count: boundary_events.tested_pair_count(),
+            boundary_intersecting_pair_count: boundary_events.intersecting_pair_count(),
+            boundary_intersection_event_count: boundary_events.event_count(),
+            boundary_point_event_count: boundary_events.point_event_count(),
+            boundary_overlap_event_count: boundary_events.overlap_event_count(),
+            boundary_uncertain_event_count: boundary_events.uncertain_event_count(),
+            boundary_first_event_segment_kind_counts: boundary_events
+                .first_event_segment_kind_counts(),
+            boundary_second_event_segment_kind_counts: boundary_events
+                .second_event_segment_kind_counts(),
+            boundary_contour_count: Some(result_material_contour_count + result_hole_contour_count),
+            result_material_contour_count: Some(result_material_contour_count),
+            result_hole_contour_count: Some(result_hole_contour_count),
+            result_boundary_segment_count: Some(result_boundary_segment_count),
+            result_boundary_source_segment_kind_counts: None,
+            result_boundary_segment_kind_counts: Some(result_boundary_segment_kind_counts),
+            pipeline_report: None,
+            boundary_build_report: None,
+            prepared_cache_report,
+            status: RetainedTopologyStatus::NativeExact,
+            blocker: None,
+        },
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -2457,38 +2497,6 @@ fn containment_boundary_contours(
     }
 }
 
-fn containment_region(
-    first: &RegionView2<'_>,
-    second: &RegionView2<'_>,
-    op: BooleanOp,
-    relation: BoundaryContainmentRelation,
-) -> Option<Region2> {
-    match (relation, op) {
-        (BoundaryContainmentRelation::FirstContainsSecond, BooleanOp::Union) => {
-            Some(clone_region(first))
-        }
-        (BoundaryContainmentRelation::FirstContainsSecond, BooleanOp::Intersection) => {
-            Some(clone_region(second))
-        }
-        (BoundaryContainmentRelation::SecondContainsFirst, BooleanOp::Union) => {
-            Some(clone_region(second))
-        }
-        (BoundaryContainmentRelation::SecondContainsFirst, BooleanOp::Intersection) => {
-            Some(clone_region(first))
-        }
-        (BoundaryContainmentRelation::SecondContainsFirst, BooleanOp::Difference) => {
-            Some(Region2::empty())
-        }
-        (BoundaryContainmentRelation::Equivalent, BooleanOp::Union | BooleanOp::Intersection) => {
-            Some(clone_region(first))
-        }
-        (BoundaryContainmentRelation::Equivalent, BooleanOp::Difference | BooleanOp::Xor) => {
-            Some(Region2::empty())
-        }
-        _ => None,
-    }
-}
-
 fn containment_difference_boundary_contours(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
@@ -2669,34 +2677,6 @@ fn segment_images_match_undirected(left: &Segment2, right: &Segment2) -> bool {
     left == right || left == &right.reversed()
 }
 
-fn boundary_contact_region(
-    first: &RegionView2<'_>,
-    second: &RegionView2<'_>,
-    op: BooleanOp,
-    fill_rule: FillRule,
-    policy: &CurvePolicy,
-    kind: BoundaryContactKind,
-) -> CurveResult<Classification<Region2>> {
-    Ok(Classification::Decided(match op {
-        BooleanOp::Union | BooleanOp::Xor => match kind {
-            BoundaryContactKind::PointOnly => {
-                merge_disjoint_region_bins(clone_region(first), clone_region(second))
-            }
-            BoundaryContactKind::Overlap => {
-                return match boundary_overlap_union_contours(first, second, op, fill_rule, policy)?
-                {
-                    Classification::Decided(contours) => {
-                        Region2::from_boundary_contours(contours, policy)
-                    }
-                    Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-                };
-            }
-        },
-        BooleanOp::Intersection => Region2::empty(),
-        BooleanOp::Difference => clone_region(first),
-    }))
-}
-
 fn xor_region_by_difference_union(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
@@ -2790,29 +2770,6 @@ pub(crate) fn clone_boundary_contours(region: &RegionView2<'_>) -> Vec<Contour2>
         .collect()
 }
 
-pub(crate) fn clone_region(region: &RegionView2<'_>) -> Region2 {
-    // Region-level identity fast paths preserve explicit contour roles without
-    // re-entering the nesting pass. Vatti describes boolean output in terms of
-    // fill-state transitions (B. R. Vatti, "A generic solution to polygon
-    // clipping," Communications of the ACM 35(7), 56-63, 1992); exact identity
-    // and empty-set identities reduce those transitions to cloning or dropping
-    // an operand. Keeping this at the `Region2` layer matters for valid input
-    // regions whose explicit material bins touch and therefore cannot be
-    // reconstructed by a boundary-only containment pass.
-    Region2::new(
-        region
-            .material_contours()
-            .iter()
-            .map(|contour| (*contour).clone())
-            .collect(),
-        region
-            .hole_contours()
-            .iter()
-            .map(|contour| (*contour).clone())
-            .collect(),
-    )
-}
-
 pub(crate) fn empty_operand_boundary_contours(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
@@ -2830,18 +2787,6 @@ pub(crate) fn empty_operand_boundary_contours(
             clone_boundary_contours(first)
         }
         _ => Vec::new(),
-    }
-}
-
-pub(crate) fn empty_operand_region(
-    first: &RegionView2<'_>,
-    second: &RegionView2<'_>,
-    op: BooleanOp,
-) -> Region2 {
-    match (first.is_empty(), second.is_empty(), op) {
-        (true, _, BooleanOp::Union | BooleanOp::Xor) => clone_region(second),
-        (_, true, BooleanOp::Union | BooleanOp::Xor | BooleanOp::Difference) => clone_region(first),
-        _ => Region2::empty(),
     }
 }
 

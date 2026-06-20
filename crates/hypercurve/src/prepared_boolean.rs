@@ -256,66 +256,14 @@ pub(crate) fn boolean_region_between_prepared(
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Region2>> {
-    let first_view = first.as_region_view();
-    let second_view = second.as_region_view();
-    if crate::region_boolean::same_region_view(&first_view, &second_view) {
-        return Ok(Classification::Decided(match op {
-            BooleanOp::Union | BooleanOp::Intersection => {
-                crate::region_boolean::clone_region(&first_view)
-            }
-            BooleanOp::Difference | BooleanOp::Xor => Region2::empty(),
-        }));
-    }
-    if first_view.is_empty() || second_view.is_empty() {
-        return Ok(Classification::Decided(
-            crate::region_boolean::empty_operand_region(&first_view, &second_view, op),
-        ));
-    }
-    match crate::region_boolean::coextensive_axis_rect_region_boolean(
-        &first_view,
-        &second_view,
-        op,
-        policy,
-    )? {
-        Classification::Decided(Some(region)) => return Ok(Classification::Decided(region)),
-        Classification::Decided(None) => {}
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    }
-    match boundary_contact_resolution_prepared(first, second, policy)? {
-        Classification::Decided(Some(PreparedBoundaryContactResolution::BoundaryOnly(kind))) => {
-            return boundary_contact_region_prepared(first, second, op, fill_rule, policy, kind);
-        }
-        Classification::Decided(Some(PreparedBoundaryContactResolution::Containment {
-            relation,
-            contact,
-        })) => {
-            if let Some(region) = containment_region_prepared(first, second, op, relation) {
-                return Ok(Classification::Decided(region));
-            }
-            if relation == crate::region_boolean::BoundaryContainmentRelation::FirstContainsSecond
-                && contact == PreparedBoundaryContactKind::Overlap
-                && op == BooleanOp::Difference
-            {
-                return match containment_difference_boundary_contours_prepared(
-                    first, second, fill_rule, policy,
-                )? {
-                    Classification::Decided(contours) => {
-                        Region2::from_boundary_contours(contours, policy)
-                    }
-                    Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-                };
-            }
-        }
-        Classification::Decided(None) => {}
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    }
-    if op == BooleanOp::Xor {
-        return xor_region_by_prepared_difference_union(first, second, fill_rule, policy);
-    }
-
-    match boolean_boundary_contours_between_prepared(first, second, op, fill_rule, policy)? {
-        Classification::Decided(contours) => Region2::from_boundary_contours(contours, policy),
-        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    let result = boolean_region_between_prepared_with_report(first, second, op, fill_rule, policy)?;
+    let blocker = result
+        .report()
+        .blocker()
+        .unwrap_or(crate::UncertaintyReason::Unsupported);
+    match result.into_region() {
+        Some(region) => Ok(Classification::Decided(region)),
+        None => Ok(Classification::Uncertain(blocker)),
     }
 }
 
@@ -329,6 +277,36 @@ pub(crate) fn boolean_region_between_prepared_with_report(
     let first_view = first.as_region_view();
     let second_view = second.as_region_view();
     let boundary_events = first.intersect_prepared_region(second, policy)?;
+    if op == BooleanOp::Xor {
+        return match xor_region_by_prepared_difference_union(first, second, fill_rule, policy)? {
+            Classification::Decided(region) => Ok(
+                crate::region_boolean::region_boolean_result_from_role_assigned_shortcut_region(
+                    &first_view,
+                    &second_view,
+                    op,
+                    fill_rule,
+                    crate::RegionBooleanQueryPath2::Prepared,
+                    &boundary_events,
+                    region,
+                    crate::RegionBooleanBoundaryContourSourcePath2::XorDifferenceUnionShortcut,
+                    Some(region_boolean_prepared_cache_report(first, second)),
+                ),
+            ),
+            Classification::Uncertain(reason) => Ok(
+                crate::region_boolean::blocked_region_boolean_result_with_prepared_cache(
+                    &first_view,
+                    &second_view,
+                    op,
+                    fill_rule,
+                    crate::RegionBooleanQueryPath2::Prepared,
+                    &boundary_events,
+                    crate::region_boolean::retained_status_for_boolean_blocker(reason),
+                    reason,
+                    Some(region_boolean_prepared_cache_report(first, second)),
+                ),
+            ),
+        };
+    }
     let (contours, boundary_contour_source_path, pipeline_report) =
         match boolean_boundary_contours_between_prepared_with_pipeline_report(
             first,
@@ -890,47 +868,6 @@ fn containment_boundary_contours_prepared(
     }
 }
 
-fn containment_region_prepared(
-    first: &PreparedRegionView2<'_>,
-    second: &PreparedRegionView2<'_>,
-    op: BooleanOp,
-    relation: crate::region_boolean::BoundaryContainmentRelation,
-) -> Option<Region2> {
-    let first_view = first.as_region_view();
-    let second_view = second.as_region_view();
-    match (relation, op) {
-        (
-            crate::region_boolean::BoundaryContainmentRelation::FirstContainsSecond,
-            BooleanOp::Union,
-        ) => Some(crate::region_boolean::clone_region(&first_view)),
-        (
-            crate::region_boolean::BoundaryContainmentRelation::FirstContainsSecond,
-            BooleanOp::Intersection,
-        ) => Some(crate::region_boolean::clone_region(&second_view)),
-        (
-            crate::region_boolean::BoundaryContainmentRelation::SecondContainsFirst,
-            BooleanOp::Union,
-        ) => Some(crate::region_boolean::clone_region(&second_view)),
-        (
-            crate::region_boolean::BoundaryContainmentRelation::SecondContainsFirst,
-            BooleanOp::Intersection,
-        ) => Some(crate::region_boolean::clone_region(&first_view)),
-        (
-            crate::region_boolean::BoundaryContainmentRelation::SecondContainsFirst,
-            BooleanOp::Difference,
-        ) => Some(Region2::empty()),
-        (
-            crate::region_boolean::BoundaryContainmentRelation::Equivalent,
-            BooleanOp::Union | BooleanOp::Intersection,
-        ) => Some(crate::region_boolean::clone_region(&first_view)),
-        (
-            crate::region_boolean::BoundaryContainmentRelation::Equivalent,
-            BooleanOp::Difference | BooleanOp::Xor,
-        ) => Some(Region2::empty()),
-        _ => None,
-    }
-}
-
 fn containment_difference_boundary_contours_prepared(
     first: &PreparedRegionView2<'_>,
     second: &PreparedRegionView2<'_>,
@@ -1011,40 +948,6 @@ fn boundary_overlap_union_contours_prepared(
     crate::region_boolean::boundary_contours_dropping_unresolved(
         &fragments, &selection, fill_rule, policy,
     )
-}
-
-fn boundary_contact_region_prepared(
-    first: &PreparedRegionView2<'_>,
-    second: &PreparedRegionView2<'_>,
-    op: BooleanOp,
-    fill_rule: FillRule,
-    policy: &CurvePolicy,
-    kind: PreparedBoundaryContactKind,
-) -> CurveResult<Classification<Region2>> {
-    let first_view = first.as_region_view();
-    let second_view = second.as_region_view();
-    Ok(Classification::Decided(match op {
-        BooleanOp::Union | BooleanOp::Xor => match kind {
-            PreparedBoundaryContactKind::PointOnly => {
-                crate::region_boolean::merge_disjoint_region_bins(
-                    crate::region_boolean::clone_region(&first_view),
-                    crate::region_boolean::clone_region(&second_view),
-                )
-            }
-            PreparedBoundaryContactKind::Overlap => {
-                return match boundary_overlap_union_contours_prepared(
-                    first, second, op, fill_rule, policy,
-                )? {
-                    Classification::Decided(contours) => {
-                        Region2::from_boundary_contours(contours, policy)
-                    }
-                    Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-                };
-            }
-        },
-        BooleanOp::Intersection => Region2::empty(),
-        BooleanOp::Difference => crate::region_boolean::clone_region(&first_view),
-    }))
 }
 
 pub(crate) fn classify_fragments_with_prepared_regions(
