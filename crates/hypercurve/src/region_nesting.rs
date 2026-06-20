@@ -2851,10 +2851,74 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns final output contour count retained after boundary role assignment.
+    pub const fn output_contour_count(&self) -> Option<usize> {
+        match self.boundary_output_cache() {
+            Some(boundary_cache) => Some(boundary_cache.output_contour_count()),
+            None => None,
+        }
+    }
+
+    /// Returns final output boundary segment count retained after boundary role assignment.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        match self.boundary_output_cache() {
+            Some(boundary_cache) => Some(boundary_cache.output_segment_count()),
+            None => None,
+        }
+    }
+
+    /// Returns final output boundary primitive-family counts after role assignment.
+    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        match self.boundary_output_cache() {
+            Some(boundary_cache) => Some(boundary_cache.output_segment_kind_counts()),
+            None => None,
+        }
+    }
+
+    /// Returns material contour count retained by role assignment.
+    pub const fn material_contour_count(&self) -> Option<usize> {
+        match self.boundary_output_cache() {
+            Some(boundary_cache) => Some(boundary_cache.material_contour_count()),
+            None => None,
+        }
+    }
+
+    /// Returns hole contour count retained by role assignment.
+    pub const fn hole_contour_count(&self) -> Option<usize> {
+        match self.boundary_output_cache() {
+            Some(boundary_cache) => Some(boundary_cache.hole_contour_count()),
+            None => None,
+        }
+    }
+
+    /// Returns material boundary segment count retained by role assignment.
+    pub const fn material_segment_count(&self) -> Option<usize> {
+        match self.boundary_output_cache() {
+            Some(boundary_cache) => Some(boundary_cache.material_segment_count()),
+            None => None,
+        }
+    }
+
+    /// Returns hole boundary segment count retained by role assignment.
+    pub const fn hole_segment_count(&self) -> Option<usize> {
+        match self.boundary_output_cache() {
+            Some(boundary_cache) => Some(boundary_cache.hole_segment_count()),
+            None => None,
+        }
+    }
+
     /// Returns output role assignment buckets retained after boundary role assignment.
     pub const fn role_cache(&self) -> Option<&ExactCurveArrangementOutputRoleCache2> {
         match self.output_cache() {
             Some(output_cache) => output_cache.role_cache(),
+            None => None,
+        }
+    }
+
+    /// Returns retained output role report count when role assignment was reached.
+    pub const fn role_report_count(&self) -> Option<usize> {
+        match self.role_cache() {
+            Some(role_cache) => Some(role_cache.role_report_count()),
             None => None,
         }
     }

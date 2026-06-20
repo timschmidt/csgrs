@@ -3671,6 +3671,38 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.workspace().boundary_output_role_bucket_cache(),
         result.boundary_output_role_bucket_cache()
     );
+    assert_eq!(
+        result.workspace().output_contour_count(),
+        result.output_contour_count()
+    );
+    assert_eq!(
+        result.workspace().output_segment_count(),
+        result.output_segment_count()
+    );
+    assert_eq!(
+        result.workspace().output_segment_kind_counts(),
+        result.output_segment_kind_counts()
+    );
+    assert_eq!(
+        result.workspace().material_contour_count(),
+        result.material_contour_count()
+    );
+    assert_eq!(
+        result.workspace().hole_contour_count(),
+        result.hole_contour_count()
+    );
+    assert_eq!(
+        result.workspace().material_segment_count(),
+        result.material_segment_count()
+    );
+    assert_eq!(
+        result.workspace().hole_segment_count(),
+        result.hole_segment_count()
+    );
+    assert_eq!(
+        result.workspace().role_report_count(),
+        result.role_report_count()
+    );
     assert_eq!(result.workspace().role_cache(), result.role_cache());
     assert_eq!(
         result.workspace().role_status_bucket_cache(),
