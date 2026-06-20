@@ -9834,11 +9834,25 @@ impl ExactCurveArrangementReport2 {
             .map(|cache| cache.source_reports().to_vec())
             .or_else(|| self.source_reports.clone())
             .unwrap_or_default();
+        let output_cache = self.output_cache.as_ref();
+        let stage = output_cache
+            .map(ExactCurveArrangementOutputCache2::stage)
+            .or(self.stage)
+            .expect("evaluated exact arrangement report missing final stage");
+        let status = output_cache
+            .map(ExactCurveArrangementOutputCache2::status)
+            .or(self.status)
+            .expect("evaluated exact arrangement report missing final status");
+        let blocker = output_cache
+            .and_then(ExactCurveArrangementOutputCache2::blocker)
+            .or(self.blocker);
+        let boundary_build_report = output_cache
+            .and_then(ExactCurveArrangementOutputCache2::boundary_build_report)
+            .cloned()
+            .or_else(|| self.boundary_build_report.clone());
 
         RegionLineSegmentRegionBuildReport2 {
-            stage: self
-                .stage
-                .expect("evaluated exact arrangement report missing final stage"),
+            stage,
             source_segment_count: self.source_segment_count,
             source_segment_kind_counts: self.source_segment_kind_counts,
             arranged_segment_count,
@@ -9884,11 +9898,9 @@ impl ExactCurveArrangementReport2 {
             output_boundary_segment_kind_counts,
             arranged_source_reports,
             source_reports,
-            boundary_build_report: self.boundary_build_report,
-            status: self
-                .status
-                .expect("evaluated exact arrangement report missing final status"),
-            blocker: self.blocker,
+            boundary_build_report,
+            status,
+            blocker,
         }
     }
 
