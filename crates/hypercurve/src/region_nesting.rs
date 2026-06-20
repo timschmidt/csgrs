@@ -1009,7 +1009,21 @@ pub struct ExactCurveArrangementReport2 {
     output_segment_count: Option<usize>,
     material_contour_count: Option<usize>,
     hole_contour_count: Option<usize>,
+    material_segment_count: Option<usize>,
+    hole_segment_count: Option<usize>,
     role_report_count: Option<usize>,
+    boundary_build_stage: Option<RegionBoundaryContourBuildStage2>,
+    boundary_build_predicate_path: Option<RegionBoundaryContourBuildPredicatePath2>,
+    boundary_build_status: Option<RetainedTopologyStatus>,
+    boundary_build_blocker: Option<UncertaintyReason>,
+    boundary_build_source_contour_count: Option<usize>,
+    boundary_build_source_segment_count: Option<usize>,
+    boundary_build_validation_candidate_pair_count: Option<usize>,
+    boundary_build_validation_tested_pair_count: Option<usize>,
+    boundary_build_validation_intersection_event_count: Option<usize>,
+    boundary_build_nesting_classification_count: Option<usize>,
+    boundary_build_blocker_first_contour_index: Option<usize>,
+    boundary_build_blocker_second_contour_index: Option<usize>,
     materialized_region: Option<bool>,
     stage: Option<RegionLineSegmentRegionBuildStage2>,
     status: Option<RetainedTopologyStatus>,
@@ -7998,7 +8012,27 @@ impl ExactCurveArrangementReport2 {
             output_segment_count: result.output_segment_count(),
             material_contour_count: result.material_contour_count(),
             hole_contour_count: result.hole_contour_count(),
+            material_segment_count: result.material_segment_count(),
+            hole_segment_count: result.hole_segment_count(),
             role_report_count: result.role_report_count(),
+            boundary_build_stage: result.boundary_build_stage(),
+            boundary_build_predicate_path: result.boundary_build_predicate_path(),
+            boundary_build_status: result.boundary_build_status(),
+            boundary_build_blocker: result.boundary_build_blocker(),
+            boundary_build_source_contour_count: result.boundary_build_source_contour_count(),
+            boundary_build_source_segment_count: result.boundary_build_source_segment_count(),
+            boundary_build_validation_candidate_pair_count: result
+                .boundary_build_validation_candidate_pair_count(),
+            boundary_build_validation_tested_pair_count: result
+                .boundary_build_validation_tested_pair_count(),
+            boundary_build_validation_intersection_event_count: result
+                .boundary_build_validation_intersection_event_count(),
+            boundary_build_nesting_classification_count: result
+                .boundary_build_nesting_classification_count(),
+            boundary_build_blocker_first_contour_index: result
+                .boundary_build_blocker_first_contour_index(),
+            boundary_build_blocker_second_contour_index: result
+                .boundary_build_blocker_second_contour_index(),
             materialized_region: result.materialized_region(),
             stage: result.stage(),
             status: result.status(),
@@ -8161,9 +8195,81 @@ impl ExactCurveArrangementReport2 {
         self.hole_contour_count
     }
 
+    /// Returns material boundary segment count after output role assignment.
+    pub const fn material_segment_count(&self) -> Option<usize> {
+        self.material_segment_count
+    }
+
+    /// Returns hole boundary segment count after output role assignment.
+    pub const fn hole_segment_count(&self) -> Option<usize> {
+        self.hole_segment_count
+    }
+
     /// Returns retained output role report count when role assignment was reached.
     pub const fn role_report_count(&self) -> Option<usize> {
         self.role_report_count
+    }
+
+    /// Returns final boundary-role assignment stage, if reached.
+    pub const fn boundary_build_stage(&self) -> Option<RegionBoundaryContourBuildStage2> {
+        self.boundary_build_stage
+    }
+
+    /// Returns final boundary-role assignment predicate path, if reached.
+    pub const fn boundary_build_predicate_path(
+        &self,
+    ) -> Option<RegionBoundaryContourBuildPredicatePath2> {
+        self.boundary_build_predicate_path
+    }
+
+    /// Returns final boundary-role assignment retained status, if reached.
+    pub const fn boundary_build_status(&self) -> Option<RetainedTopologyStatus> {
+        self.boundary_build_status
+    }
+
+    /// Returns final boundary-role assignment blocker, if present.
+    pub const fn boundary_build_blocker(&self) -> Option<UncertaintyReason> {
+        self.boundary_build_blocker
+    }
+
+    /// Returns source contour count from final boundary-role assignment, if reached.
+    pub const fn boundary_build_source_contour_count(&self) -> Option<usize> {
+        self.boundary_build_source_contour_count
+    }
+
+    /// Returns source boundary segment count from final boundary-role assignment, if reached.
+    pub const fn boundary_build_source_segment_count(&self) -> Option<usize> {
+        self.boundary_build_source_segment_count
+    }
+
+    /// Returns contour-pair validation schedule size from final role assignment, if reached.
+    pub const fn boundary_build_validation_candidate_pair_count(&self) -> Option<usize> {
+        self.boundary_build_validation_candidate_pair_count
+    }
+
+    /// Returns contour-pair validation test count from final role assignment, if reached.
+    pub const fn boundary_build_validation_tested_pair_count(&self) -> Option<usize> {
+        self.boundary_build_validation_tested_pair_count
+    }
+
+    /// Returns exact validation intersection event count from final role assignment, if reached.
+    pub const fn boundary_build_validation_intersection_event_count(&self) -> Option<usize> {
+        self.boundary_build_validation_intersection_event_count
+    }
+
+    /// Returns containment classification count from final role assignment, if reached.
+    pub const fn boundary_build_nesting_classification_count(&self) -> Option<usize> {
+        self.boundary_build_nesting_classification_count
+    }
+
+    /// Returns first blocking contour index from final role assignment, if present.
+    pub const fn boundary_build_blocker_first_contour_index(&self) -> Option<usize> {
+        self.boundary_build_blocker_first_contour_index
+    }
+
+    /// Returns second blocking contour index from final role assignment, if present.
+    pub const fn boundary_build_blocker_second_contour_index(&self) -> Option<usize> {
+        self.boundary_build_blocker_second_contour_index
     }
 
     /// Returns whether the retained evaluation materialized a region, when evaluated.

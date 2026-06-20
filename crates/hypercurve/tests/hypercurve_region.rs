@@ -2228,6 +2228,74 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.output_boundary_segment_kind_counts()
     );
     assert_eq!(
+        arrangement_report.material_contour_count(),
+        result.material_contour_count()
+    );
+    assert_eq!(
+        arrangement_report.hole_contour_count(),
+        result.hole_contour_count()
+    );
+    assert_eq!(
+        arrangement_report.material_segment_count(),
+        result.material_segment_count()
+    );
+    assert_eq!(
+        arrangement_report.hole_segment_count(),
+        result.hole_segment_count()
+    );
+    assert_eq!(
+        arrangement_report.role_report_count(),
+        result.role_report_count()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_stage(),
+        result.boundary_build_stage()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_predicate_path(),
+        result.boundary_build_predicate_path()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_status(),
+        result.boundary_build_status()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_blocker(),
+        result.boundary_build_blocker()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_source_contour_count(),
+        result.boundary_build_source_contour_count()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_source_segment_count(),
+        result.boundary_build_source_segment_count()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_validation_candidate_pair_count(),
+        result.boundary_build_validation_candidate_pair_count()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_validation_tested_pair_count(),
+        result.boundary_build_validation_tested_pair_count()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_validation_intersection_event_count(),
+        result.boundary_build_validation_intersection_event_count()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_nesting_classification_count(),
+        result.boundary_build_nesting_classification_count()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_blocker_first_contour_index(),
+        result.boundary_build_blocker_first_contour_index()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_blocker_second_contour_index(),
+        result.boundary_build_blocker_second_contour_index()
+    );
+    assert_eq!(
         arrangement_report.materialized_region(),
         result.materialized_region()
     );
@@ -3661,8 +3729,68 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.material_contour_count()
     );
     assert_eq!(
+        arrangement_report.hole_contour_count(),
+        result.hole_contour_count()
+    );
+    assert_eq!(
+        arrangement_report.material_segment_count(),
+        result.material_segment_count()
+    );
+    assert_eq!(
+        arrangement_report.hole_segment_count(),
+        result.hole_segment_count()
+    );
+    assert_eq!(
         arrangement_report.role_report_count(),
         result.role_report_count()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_stage(),
+        result.boundary_build_stage()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_predicate_path(),
+        result.boundary_build_predicate_path()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_status(),
+        result.boundary_build_status()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_blocker(),
+        result.boundary_build_blocker()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_source_contour_count(),
+        result.boundary_build_source_contour_count()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_source_segment_count(),
+        result.boundary_build_source_segment_count()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_validation_candidate_pair_count(),
+        result.boundary_build_validation_candidate_pair_count()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_validation_tested_pair_count(),
+        result.boundary_build_validation_tested_pair_count()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_validation_intersection_event_count(),
+        result.boundary_build_validation_intersection_event_count()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_nesting_classification_count(),
+        result.boundary_build_nesting_classification_count()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_blocker_first_contour_index(),
+        result.boundary_build_blocker_first_contour_index()
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_blocker_second_contour_index(),
+        result.boundary_build_blocker_second_contour_index()
     );
     assert_eq!(
         result.boundary_build_stage(),
@@ -4067,6 +4195,47 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     );
     assert_eq!(arrangement_report.output_contour_count(), None);
     assert_eq!(arrangement_report.output_segment_count(), None);
+    assert_eq!(arrangement_report.material_contour_count(), None);
+    assert_eq!(arrangement_report.hole_contour_count(), None);
+    assert_eq!(arrangement_report.material_segment_count(), None);
+    assert_eq!(arrangement_report.hole_segment_count(), None);
+    assert_eq!(arrangement_report.role_report_count(), None);
+    assert_eq!(arrangement_report.boundary_build_stage(), None);
+    assert_eq!(arrangement_report.boundary_build_predicate_path(), None);
+    assert_eq!(arrangement_report.boundary_build_status(), None);
+    assert_eq!(arrangement_report.boundary_build_blocker(), None);
+    assert_eq!(
+        arrangement_report.boundary_build_source_contour_count(),
+        None
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_source_segment_count(),
+        None
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_validation_candidate_pair_count(),
+        None
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_validation_tested_pair_count(),
+        None
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_validation_intersection_event_count(),
+        None
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_nesting_classification_count(),
+        None
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_blocker_first_contour_index(),
+        None
+    );
+    assert_eq!(
+        arrangement_report.boundary_build_blocker_second_contour_index(),
+        None
+    );
     assert_eq!(arrangement_report.materialized_region(), Some(false));
     assert_eq!(
         arrangement_report.stage(),
