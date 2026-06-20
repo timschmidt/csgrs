@@ -427,7 +427,9 @@ impl ExactArrangementBooleanAttempt {
         &self,
         operation: ExactBooleanOperation,
     ) -> bool {
-        self.validated_regularized_operation(operation)
+        self.operation == operation
+            && self.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+            && self.validate().is_ok()
             && self.materialized_arrangement_cell_complex_output()
     }
 
@@ -444,14 +446,10 @@ impl ExactArrangementBooleanAttempt {
         &self,
         operation: ExactBooleanOperation,
     ) -> bool {
-        self.validated_regularized_operation(operation)
-            && self.materialized_arrangement_cell_complex_shortcut()
-    }
-
-    fn validated_regularized_operation(&self, operation: ExactBooleanOperation) -> bool {
         self.operation == operation
             && self.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
             && self.validate().is_ok()
+            && self.materialized_arrangement_cell_complex_shortcut()
     }
 
     /// Validate this retained arrangement/cell-complex attempt as a coherent
