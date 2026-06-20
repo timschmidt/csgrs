@@ -2616,34 +2616,34 @@ impl ExactCurveArrangementSplitScheduleCache2 {
 impl ExactCurveArrangementSplitCache2 {
     fn from_arrangement_report(report: &RegionLineSegmentRegionBuildReport2) -> Self {
         let intersection_bucket_cache =
-            split_intersection_bucket_cache(&report.split_intersection_reports);
+            split_intersection_bucket_cache(report.split_intersection_reports());
         let intersection_parameter_cache =
             ExactCurveArrangementSplitIntersectionParameterCache2::from_intersection_reports(
-                &report.split_intersection_reports,
+                report.split_intersection_reports(),
             );
         let relation_bucket_cache = ExactCurveArrangementSplitRelationBucketCache2::from_counts(
-            report.split_point_relation_count,
-            report.split_overlap_relation_count,
-            report.split_uncertain_relation_count,
+            report.split_point_relation_count(),
+            report.split_overlap_relation_count(),
+            report.split_uncertain_relation_count(),
         );
         let blocker_cache =
             ExactCurveArrangementSplitBlockerCache2::from_arrangement_report(report);
         Self {
-            predicate_path: report.split_predicate_path,
-            candidate_pair_count: report.split_candidate_pair_count,
-            skipped_aabb_pair_count: report.split_skipped_aabb_pair_count,
-            tested_pair_count: report.split_tested_pair_count,
-            intersection_event_count: report.split_intersection_event_count,
-            point_relation_count: report.split_point_relation_count,
-            overlap_relation_count: report.split_overlap_relation_count,
-            uncertain_relation_count: report.split_uncertain_relation_count,
-            intersection_points: report.split_intersection_points.clone(),
-            intersection_reports: report.split_intersection_reports.clone(),
+            predicate_path: report.split_predicate_path(),
+            candidate_pair_count: report.split_candidate_pair_count(),
+            skipped_aabb_pair_count: report.split_skipped_aabb_pair_count(),
+            tested_pair_count: report.split_tested_pair_count(),
+            intersection_event_count: report.split_intersection_event_count(),
+            point_relation_count: report.split_point_relation_count(),
+            overlap_relation_count: report.split_overlap_relation_count(),
+            uncertain_relation_count: report.split_uncertain_relation_count(),
+            intersection_points: report.split_intersection_points().to_vec(),
+            intersection_reports: report.split_intersection_reports().to_vec(),
             relation_bucket_cache,
             intersection_bucket_cache,
             intersection_parameter_cache,
             blocker_cache,
-            output_segment_count: report.split_output_segment_count,
+            output_segment_count: report.split_output_segment_count(),
         }
     }
 
@@ -2730,15 +2730,15 @@ impl ExactCurveArrangementSplitCache2 {
 impl ExactCurveArrangementSplitBlockerCache2 {
     fn from_arrangement_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
         Some(Self {
-            first_source_segment_index: report.split_blocker_first_source_segment_index?,
-            first_source_segment_kind: report.split_blocker_first_source_segment_kind?,
-            first_source_start_point: report.split_blocker_first_source_start_point.clone()?,
-            first_source_end_point: report.split_blocker_first_source_end_point.clone()?,
-            second_source_segment_index: report.split_blocker_second_source_segment_index?,
-            second_source_segment_kind: report.split_blocker_second_source_segment_kind?,
-            second_source_start_point: report.split_blocker_second_source_start_point.clone()?,
-            second_source_end_point: report.split_blocker_second_source_end_point.clone()?,
-            blocker: report.blocker,
+            first_source_segment_index: report.split_blocker_first_source_segment_index()?,
+            first_source_segment_kind: report.split_blocker_first_source_segment_kind()?,
+            first_source_start_point: report.split_blocker_first_source_start_point()?.clone(),
+            first_source_end_point: report.split_blocker_first_source_end_point()?.clone(),
+            second_source_segment_index: report.split_blocker_second_source_segment_index()?,
+            second_source_segment_kind: report.split_blocker_second_source_segment_kind()?,
+            second_source_start_point: report.split_blocker_second_source_start_point()?.clone(),
+            second_source_end_point: report.split_blocker_second_source_end_point()?.clone(),
+            blocker: report.blocker(),
         })
     }
 
@@ -2996,35 +2996,36 @@ impl ExactCurveArrangementSplitIntersectionParameterCache2 {
 
 impl ExactCurveArrangementEndpointGraphCache2 {
     fn from_arrangement_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
-        let endpoint_bucket_cache = arranged_endpoint_bucket_cache(&report.arranged_source_reports);
+        let endpoint_bucket_cache =
+            arranged_endpoint_bucket_cache(report.arranged_source_reports());
         let endpoint_side_bucket_cache =
             ExactCurveArrangementArrangedEndpointSideBucketCache2::from_arranged_source_reports(
-                &report.arranged_source_reports,
+                report.arranged_source_reports(),
             );
         let endpoint_point_cache =
             ExactCurveArrangementArrangedEndpointPointCache2::from_arranged_source_reports(
-                &report.arranged_source_reports,
+                report.arranged_source_reports(),
             );
         let endpoint_degree_bucket_cache =
             ExactCurveArrangementArrangedEndpointDegreeBucketCache2::from_endpoint_bucket_cache(
                 &endpoint_bucket_cache,
             );
         Some(Self {
-            predicate_path: report.endpoint_graph_predicate_path?,
-            endpoint_count: report.endpoint_graph_endpoint_count?,
-            structural_bucket_count: report.endpoint_graph_structural_bucket_count?,
+            predicate_path: report.endpoint_graph_predicate_path()?,
+            endpoint_count: report.endpoint_graph_endpoint_count()?,
+            structural_bucket_count: report.endpoint_graph_structural_bucket_count()?,
             structural_singleton_bucket_count: report
-                .endpoint_graph_structural_singleton_bucket_count?,
-            max_structural_bucket_size: report.endpoint_graph_max_structural_bucket_size?,
+                .endpoint_graph_structural_singleton_bucket_count()?,
+            max_structural_bucket_size: report.endpoint_graph_max_structural_bucket_size()?,
             endpoint_bucket_cache,
             endpoint_side_bucket_cache,
             endpoint_point_cache,
             endpoint_degree_bucket_cache,
-            dangling_endpoint_count: report.endpoint_graph_dangling_endpoint_count?,
-            branch_endpoint_count: report.endpoint_graph_branch_endpoint_count?,
-            blocker_arranged_segment_index: report.endpoint_graph_blocker_arranged_segment_index,
-            blocker_endpoint: report.endpoint_graph_blocker_endpoint,
-            blocker_point: report.endpoint_graph_blocker_point.clone(),
+            dangling_endpoint_count: report.endpoint_graph_dangling_endpoint_count()?,
+            branch_endpoint_count: report.endpoint_graph_branch_endpoint_count()?,
+            blocker_arranged_segment_index: report.endpoint_graph_blocker_arranged_segment_index(),
+            blocker_endpoint: report.endpoint_graph_blocker_endpoint(),
+            blocker_point: report.endpoint_graph_blocker_point().cloned(),
         })
     }
 
@@ -5568,7 +5569,7 @@ impl ExactCurveArrangementOutputRoleCache2 {
 
 impl ExactCurveArrangementOutputBoundaryCache2 {
     fn from_arrangement_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
-        let boundary_build_report = report.boundary_build_report.as_ref()?;
+        let boundary_build_report = report.boundary_build_report()?;
         let material_contour_count = boundary_build_report.material_contour_count()?;
         let hole_contour_count = boundary_build_report.hole_contour_count()?;
         let material_segment_count = boundary_build_report.material_segment_count()?;
@@ -5576,7 +5577,7 @@ impl ExactCurveArrangementOutputBoundaryCache2 {
         Some(Self {
             output_contour_count: boundary_build_report.output_contour_count()?,
             output_segment_count: boundary_build_report.output_segment_count()?,
-            output_segment_kind_counts: report.output_boundary_segment_kind_counts?,
+            output_segment_kind_counts: report.output_boundary_segment_kind_counts()?,
             material_contour_count,
             hole_contour_count,
             material_segment_count,
@@ -5708,52 +5709,52 @@ impl ExactCurveArrangementOutputBoundaryRoleBucket2 {
 impl ExactCurveArrangementRingAssemblyCache2 {
     fn from_arrangement_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
         Some(Self {
-            predicate_path: report.ring_assembly_predicate_path?,
-            attempted_endpoint_connection_count: report.attempted_endpoint_connection_count,
-            exact_endpoint_connection_count: report.exact_endpoint_connection_count,
-            disconnected_endpoint_connection_count: report.disconnected_endpoint_connection_count,
-            unresolved_endpoint_connection_count: report.unresolved_endpoint_connection_count,
-            reversed_source_segment_count: report.reversed_source_segment_count,
-            output_ring_count: report.output_ring_count,
-            output_boundary_segment_count: report.output_boundary_segment_count,
-            output_boundary_segment_kind_counts: report.output_boundary_segment_kind_counts,
-            arranged_source_reports: report.arranged_source_reports.clone(),
-            source_reports: report.source_reports.clone(),
+            predicate_path: report.ring_assembly_predicate_path()?,
+            attempted_endpoint_connection_count: report.attempted_endpoint_connection_count(),
+            exact_endpoint_connection_count: report.exact_endpoint_connection_count(),
+            disconnected_endpoint_connection_count: report.disconnected_endpoint_connection_count(),
+            unresolved_endpoint_connection_count: report.unresolved_endpoint_connection_count(),
+            reversed_source_segment_count: report.reversed_source_segment_count(),
+            output_ring_count: report.output_ring_count(),
+            output_boundary_segment_count: report.output_boundary_segment_count(),
+            output_boundary_segment_kind_counts: report.output_boundary_segment_kind_counts(),
+            arranged_source_reports: report.arranged_source_reports().to_vec(),
+            source_reports: report.source_reports().to_vec(),
             arranged_fragment_cache:
                 ExactCurveArrangementArrangedFragmentCache2::from_arranged_source_reports(
-                    &report.arranged_source_reports,
+                    report.arranged_source_reports(),
                 ),
             output_ring_bucket_cache:
                 ExactCurveArrangementOutputRingBucketCache2::from_source_reports(
-                    &report.source_reports,
+                    report.source_reports(),
                 ),
             output_segment_kind_bucket_cache:
                 ExactCurveArrangementOutputSegmentKindBucketCache2::from_source_reports(
-                    &report.source_reports,
+                    report.source_reports(),
                 ),
             output_segment_source_bucket_cache:
                 ExactCurveArrangementOutputSegmentSourceBucketCache2::from_source_reports(
-                    &report.source_reports,
+                    report.source_reports(),
                 ),
             output_segment_source_range_cache:
                 ExactCurveArrangementOutputSegmentSourceRangeCache2::from_source_reports(
-                    &report.source_reports,
+                    report.source_reports(),
                 ),
             output_segment_endpoint_cache:
                 ExactCurveArrangementOutputSegmentEndpointCache2::from_source_reports(
-                    &report.source_reports,
+                    report.source_reports(),
                 ),
             output_ring_continuity_cache:
                 ExactCurveArrangementOutputRingContinuityCache2::from_source_reports(
-                    &report.source_reports,
+                    report.source_reports(),
                 ),
             output_segment_status_bucket_cache:
                 ExactCurveArrangementOutputSegmentStatusBucketCache2::from_source_reports(
-                    &report.source_reports,
+                    report.source_reports(),
                 ),
             output_segment_direction_bucket_cache:
                 ExactCurveArrangementOutputSegmentDirectionBucketCache2::from_source_reports(
-                    &report.source_reports,
+                    report.source_reports(),
                 ),
         })
     }
@@ -5875,11 +5876,10 @@ impl ExactCurveArrangementRingAssemblyCache2 {
 
 impl ExactCurveArrangementOutputCache2 {
     fn from_arrangement_result(region_result: &RegionLineSegmentRegionBuildResult2) -> Self {
-        let boundary_build_report = region_result.report().boundary_build_report.clone();
+        let report = region_result.report();
+        let boundary_build_report = report.boundary_build_report().cloned();
         let boundary_output_cache =
-            ExactCurveArrangementOutputBoundaryCache2::from_arrangement_report(
-                region_result.report(),
-            );
+            ExactCurveArrangementOutputBoundaryCache2::from_arrangement_report(report);
         let role_cache = boundary_build_report
             .as_ref()
             .and_then(ExactCurveArrangementOutputRoleCache2::from_boundary_build_report);
@@ -5888,9 +5888,9 @@ impl ExactCurveArrangementOutputCache2 {
             boundary_build_report,
             boundary_output_cache,
             role_cache,
-            stage: region_result.report().stage,
-            status: region_result.report().status,
-            blocker: region_result.report().blocker,
+            stage: report.stage(),
+            status: report.status(),
+            blocker: report.blocker(),
         }
     }
 
