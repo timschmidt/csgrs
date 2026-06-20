@@ -10799,6 +10799,30 @@ impl RegionLineSegmentRegionBuildResult2 {
     pub const fn report(&self) -> &RegionLineSegmentRegionBuildReport2 {
         &self.report
     }
+
+    /// Returns the materialized region as a convenience classification.
+    pub fn region_classification(&self) -> Classification<&Region2> {
+        match self.region() {
+            Some(region) => Classification::Decided(region),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the materialized region as a convenience classification.
+    pub fn into_region_classification(self) -> Classification<Region2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_region() {
+            Some(region) => Classification::Decided(region),
+            None => Classification::Uncertain(blocker),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
