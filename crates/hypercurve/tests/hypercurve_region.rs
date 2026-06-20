@@ -3956,9 +3956,15 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.arrangement_report()
     );
     let derived_region_build_result = result.derived_region_build_result();
+    let derived_region_build_report = result.derived_region_build_report();
+    assert_eq!(
+        derived_region_build_result.report(),
+        &derived_region_build_report
+    );
     #[allow(deprecated)]
     {
         assert_eq!(result.region_build_result(), &derived_region_build_result);
+        assert_eq!(result.report(), &derived_region_build_report);
     }
     let arrangement_report = result.arrangement_report();
     assert_eq!(arrangement_report.workspace(), result.workspace());

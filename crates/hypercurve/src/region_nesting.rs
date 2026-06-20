@@ -7601,6 +7601,14 @@ impl ExactCurveArrangementResult2 {
         Self::derive_region_build_result_from_evaluation(&self.evaluation, self.region.clone())
     }
 
+    /// Returns an owned legacy-shaped region build report derived from retained evidence.
+    ///
+    /// This is the report-only counterpart to
+    /// [`ExactCurveArrangementResult2::derived_region_build_result`].
+    pub fn derived_region_build_report(&self) -> RegionLineSegmentRegionBuildReport2 {
+        Self::derive_region_build_report_from_evaluation(&self.evaluation)
+    }
+
     fn into_compatibility_region_build_result(self) -> RegionLineSegmentRegionBuildResult2 {
         let Self {
             evaluation,
@@ -7617,10 +7625,16 @@ impl ExactCurveArrangementResult2 {
     ) -> RegionLineSegmentRegionBuildResult2 {
         RegionLineSegmentRegionBuildResult2 {
             region,
-            report: evaluation
-                .arrangement_report()
-                .into_region_line_segment_region_build_report(),
+            report: Self::derive_region_build_report_from_evaluation(evaluation),
         }
+    }
+
+    fn derive_region_build_report_from_evaluation(
+        evaluation: &ExactCurveArrangementEvaluation2,
+    ) -> RegionLineSegmentRegionBuildReport2 {
+        evaluation
+            .arrangement_report()
+            .into_region_line_segment_region_build_report()
     }
 
     /// Returns the retained evaluation record.
