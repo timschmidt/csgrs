@@ -300,6 +300,19 @@ fn curve_string_checked_offset_report_materializes_simple_open_path() {
         Some(SegmentKindCounts { lines: 2, arcs: 0 })
     );
     assert_eq!(offset.report().blocker(), None);
+    assert!(matches!(
+        offset.curve_string_classification(),
+        Classification::Decided(curve_string) if curve_string.len() == 2
+    ));
+    let owned_report = offset.clone().into_report();
+    assert_eq!(&owned_report, offset.report());
+    let (owned_curve_string, owned_parts_report) = offset.clone().into_parts();
+    assert_eq!(owned_curve_string.as_ref(), offset.curve_string());
+    assert_eq!(&owned_parts_report, offset.report());
+    assert!(matches!(
+        offset.clone().into_curve_string_classification(),
+        Classification::Decided(curve_string) if curve_string.len() == 2
+    ));
     assert_eq!(offset.curve_string().unwrap().len(), 2);
 }
 
@@ -367,6 +380,19 @@ fn curve_string_checked_offset_report_blocks_self_contacting_result() {
     assert_eq!(
         offset.report().blocker(),
         Some(UncertaintyReason::Unsupported)
+    );
+    assert_eq!(
+        offset.curve_string_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+    let owned_report = offset.clone().into_report();
+    assert_eq!(&owned_report, offset.report());
+    let (owned_curve_string, owned_parts_report) = offset.clone().into_parts();
+    assert_eq!(owned_curve_string, None);
+    assert_eq!(&owned_parts_report, offset.report());
+    assert_eq!(
+        offset.into_curve_string_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }
 
@@ -516,6 +542,19 @@ fn curve_string_round_cap_outline_report_materializes_single_line() {
         None
     );
     assert_eq!(outline.report().blocker(), None);
+    assert!(matches!(
+        outline.outline_classification(),
+        Classification::Decided(outline) if outline.len() == 4
+    ));
+    let owned_report = outline.clone().into_report();
+    assert_eq!(&owned_report, outline.report());
+    let (owned_outline, owned_parts_report) = outline.clone().into_parts();
+    assert_eq!(owned_outline.as_ref(), outline.outline());
+    assert_eq!(&owned_parts_report, outline.report());
+    assert!(matches!(
+        outline.clone().into_outline_classification(),
+        Classification::Decided(outline) if outline.len() == 4
+    ));
     assert_eq!(outline.outline().unwrap().len(), 4);
 }
 
@@ -591,6 +630,19 @@ fn curve_string_round_cap_outline_report_blocks_nonpositive_distance() {
     assert_eq!(
         outline.report().blocker(),
         Some(UncertaintyReason::Unsupported)
+    );
+    assert_eq!(
+        outline.outline_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+    let owned_report = outline.clone().into_report();
+    assert_eq!(&owned_report, outline.report());
+    let (owned_outline, owned_parts_report) = outline.clone().into_parts();
+    assert_eq!(owned_outline, None);
+    assert_eq!(&owned_parts_report, outline.report());
+    assert_eq!(
+        outline.into_outline_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }
 
@@ -1014,6 +1066,19 @@ fn contour_checked_offset_report_materializes_simple_rectangle() {
     );
     assert_eq!(offset.report().fill_rule(), FillRule::NonZero);
     assert_eq!(offset.report().blocker(), None);
+    assert!(matches!(
+        offset.contour_classification(),
+        Classification::Decided(contour) if contour.len() == 4
+    ));
+    let owned_report = offset.clone().into_report();
+    assert_eq!(&owned_report, offset.report());
+    let (owned_contour, owned_parts_report) = offset.clone().into_parts();
+    assert_eq!(owned_contour.as_ref(), offset.contour());
+    assert_eq!(&owned_parts_report, offset.report());
+    assert!(matches!(
+        offset.clone().into_contour_classification(),
+        Classification::Decided(contour) if contour.len() == 4
+    ));
     assert_eq!(offset.contour().unwrap().len(), 4);
 }
 
@@ -1084,5 +1149,18 @@ fn contour_checked_offset_report_blocks_self_contacting_result() {
     assert_eq!(
         offset.report().blocker(),
         Some(UncertaintyReason::Unsupported)
+    );
+    assert_eq!(
+        offset.contour_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+    let owned_report = offset.clone().into_report();
+    assert_eq!(&owned_report, offset.report());
+    let (owned_contour, owned_parts_report) = offset.clone().into_parts();
+    assert_eq!(owned_contour, None);
+    assert_eq!(&owned_parts_report, offset.report());
+    assert_eq!(
+        offset.into_contour_classification(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }

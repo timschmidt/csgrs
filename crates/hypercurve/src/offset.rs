@@ -744,9 +744,43 @@ impl ContourOffsetResult2 {
         self.contour
     }
 
+    /// Consumes this result and returns retained checked-offset evidence.
+    pub fn into_report(self) -> ContourOffsetReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized checked offset with its report.
+    pub fn into_parts(self) -> (Option<Contour2>, ContourOffsetReport2) {
+        (self.contour, self.report)
+    }
+
     /// Returns retained checked-offset evidence.
     pub const fn report(&self) -> &ContourOffsetReport2 {
         &self.report
+    }
+
+    /// Returns the checked contour offset as a convenience classification.
+    pub fn contour_classification(&self) -> Classification<&Contour2> {
+        match self.contour() {
+            Some(contour) => Classification::Decided(contour),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the checked contour offset as a convenience classification.
+    pub fn into_contour_classification(self) -> Classification<Contour2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_contour() {
+            Some(contour) => Classification::Decided(contour),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
@@ -864,9 +898,43 @@ impl CurveStringOutlineOffsetResult2 {
         self.outline
     }
 
+    /// Consumes this result and returns retained checked-outline evidence.
+    pub fn into_report(self) -> CurveStringOutlineOffsetReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized checked outline with its report.
+    pub fn into_parts(self) -> (Option<Contour2>, CurveStringOutlineOffsetReport2) {
+        (self.outline, self.report)
+    }
+
     /// Returns retained checked-outline evidence.
     pub const fn report(&self) -> &CurveStringOutlineOffsetReport2 {
         &self.report
+    }
+
+    /// Returns the checked outline as a convenience classification.
+    pub fn outline_classification(&self) -> Classification<&Contour2> {
+        match self.outline() {
+            Some(outline) => Classification::Decided(outline),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the checked outline as a convenience classification.
+    pub fn into_outline_classification(self) -> Classification<Contour2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_outline() {
+            Some(outline) => Classification::Decided(outline),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
@@ -946,9 +1014,43 @@ impl CurveStringOffsetResult2 {
         self.curve_string
     }
 
+    /// Consumes this result and returns retained checked-offset evidence.
+    pub fn into_report(self) -> CurveStringOffsetReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns the materialized checked offset with its report.
+    pub fn into_parts(self) -> (Option<CurveString2>, CurveStringOffsetReport2) {
+        (self.curve_string, self.report)
+    }
+
     /// Returns retained checked-offset evidence.
     pub const fn report(&self) -> &CurveStringOffsetReport2 {
         &self.report
+    }
+
+    /// Returns the checked curve-string offset as a convenience classification.
+    pub fn curve_string_classification(&self) -> Classification<&CurveString2> {
+        match self.curve_string() {
+            Some(curve_string) => Classification::Decided(curve_string),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes this result and returns the checked curve-string offset as a convenience classification.
+    pub fn into_curve_string_classification(self) -> Classification<CurveString2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_curve_string() {
+            Some(curve_string) => Classification::Decided(curve_string),
+            None => Classification::Uncertain(blocker),
+        }
     }
 }
 
