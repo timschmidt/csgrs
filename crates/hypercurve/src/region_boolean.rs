@@ -971,6 +971,38 @@ impl RegionBooleanPipelineReport2 {
         self.boundary_build_report.as_ref()
     }
 
+    /// Returns final output contour count when role assignment was reached.
+    pub const fn output_contour_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => report.output_contour_count(),
+            None => None,
+        }
+    }
+
+    /// Returns final output boundary segment count when role assignment was reached.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => report.output_segment_count(),
+            None => None,
+        }
+    }
+
+    /// Returns material boundary segment count when role assignment was reached.
+    pub const fn material_segment_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => report.material_segment_count(),
+            None => None,
+        }
+    }
+
+    /// Returns hole boundary segment count when role assignment was reached.
+    pub const fn hole_segment_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => report.hole_segment_count(),
+            None => None,
+        }
+    }
+
     /// Returns final boundary-contour role reports, if role assignment was reached.
     pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
         self.boundary_build_report()

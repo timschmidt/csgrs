@@ -586,9 +586,22 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
         plain_pipeline.contour_transfer_report()
     );
     assert_eq!(
-        built_pipeline.boundary_build_report(),
-        built.report().boundary_build_report()
+        built_pipeline.output_contour_count(),
+        built.report().result_contour_count()
     );
+    assert_eq!(
+        built_pipeline.output_segment_count(),
+        built.report().result_boundary_segment_count()
+    );
+    assert_eq!(
+        built_pipeline.material_segment_count(),
+        built.report().result_material_segment_count()
+    );
+    assert_eq!(
+        built_pipeline.hole_segment_count(),
+        built.report().result_hole_segment_count()
+    );
+    assert_eq!(built_pipeline.role_reports(), built.report().role_reports());
     assert_eq!(
         built.report().result_boundary_segment_count(),
         plain.report().result_boundary_segment_count()
