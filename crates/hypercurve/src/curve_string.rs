@@ -7659,9 +7659,36 @@ impl CurveStringIntersectionResult2 {
         self.intersections
     }
 
+    /// Consumes this result and returns retained scan evidence for this query.
+    pub fn into_report(self) -> CurveStringIntersectionReport2 {
+        self.report
+    }
+
+    /// Consumes this result and returns collected intersections with their report.
+    pub fn into_parts(self) -> (Vec<CurveStringIntersection>, CurveStringIntersectionReport2) {
+        (self.intersections, self.report)
+    }
+
     /// Returns retained scan evidence for this intersection query.
     pub const fn report(&self) -> &CurveStringIntersectionReport2 {
         &self.report
+    }
+
+    /// Returns collected intersections as a convenience classification.
+    pub fn intersections_classification(&self) -> Classification<&[CurveStringIntersection]> {
+        match self.report().blocker() {
+            Some(blocker) => Classification::Uncertain(blocker),
+            None => Classification::Decided(self.intersections()),
+        }
+    }
+
+    /// Consumes this result and returns collected intersections as a convenience classification.
+    pub fn into_intersections_classification(self) -> Classification<Vec<CurveStringIntersection>> {
+        let blocker = self.report().blocker();
+        match blocker {
+            Some(blocker) => Classification::Uncertain(blocker),
+            None => Classification::Decided(self.into_intersections()),
+        }
     }
 }
 

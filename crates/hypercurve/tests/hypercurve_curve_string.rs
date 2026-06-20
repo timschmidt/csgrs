@@ -163,6 +163,22 @@ fn curve_string_intersection_report_counts_aabb_skips() {
     assert_eq!(report.prepared_cache_report(), None);
     assert_eq!(report.blocker(), None);
     assert_eq!(intersections.intersections().len(), 1);
+    assert!(matches!(
+        intersections.intersections_classification(),
+        Classification::Decided(events) if events.len() == 1
+    ));
+    let owned_report = intersections.clone().into_report();
+    assert_eq!(&owned_report, intersections.report());
+    let (owned_intersections, owned_parts_report) = intersections.clone().into_parts();
+    assert_eq!(
+        owned_intersections.as_slice(),
+        intersections.intersections()
+    );
+    assert_eq!(&owned_parts_report, intersections.report());
+    assert!(matches!(
+        intersections.clone().into_intersections_classification(),
+        Classification::Decided(events) if events.len() == 1
+    ));
     assert_eq!(intersections.intersections()[0].a_segment_index(), 0);
     assert_eq!(intersections.intersections()[0].b_segment_index(), 0);
     assert_eq!(
@@ -221,6 +237,22 @@ fn curve_string_intersection_report_names_aabb_only_predicate_path() {
     assert_eq!(report.overlap_relation_count(), 0);
     assert_eq!(report.uncertain_relation_count(), 0);
     assert!(intersections.intersections().is_empty());
+    assert_eq!(
+        intersections.intersections_classification(),
+        Classification::Decided([].as_slice())
+    );
+    let owned_report = intersections.clone().into_report();
+    assert_eq!(&owned_report, intersections.report());
+    let (owned_intersections, owned_parts_report) = intersections.clone().into_parts();
+    assert_eq!(
+        owned_intersections.as_slice(),
+        intersections.intersections()
+    );
+    assert_eq!(&owned_parts_report, intersections.report());
+    assert_eq!(
+        intersections.clone().into_intersections_classification(),
+        Classification::Decided(Vec::new())
+    );
 }
 
 #[test]
