@@ -999,7 +999,7 @@ mod tests {
         );
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
 
-        let materialized = workspace.materialize_ref(request).cloned().unwrap();
+        let materialized = workspace.materialize_ref(request).unwrap();
         assert!(materialized.is_boundary_policy_shortcut_for(ExactBooleanOperation::Union));
         workspace.materializations[0].1.replace_kind(
             ExactBooleanResultKind::BoundaryPolicyShortcut {
@@ -1140,7 +1140,7 @@ mod tests {
             ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
 
-        let materialized = workspace.materialize_ref(request).cloned().unwrap();
+        let materialized = workspace.materialize_ref(request).unwrap();
         let expected_report = crate::boolean::adjacent_union_completion_certification(
             &left,
             &right,
@@ -1151,7 +1151,9 @@ mod tests {
         .0;
         materialized.validate().unwrap();
         assert!(materialized.matches_request(request));
-        assert_eq!(workspace.materialize_ref(request).unwrap(), &materialized);
+        let borrowed = workspace.materialize_ref(request).unwrap() as *const ExactBooleanResult;
+        let cached = &workspace.materializations[0].1 as *const ExactBooleanResult;
+        assert_eq!(borrowed, cached);
         let evaluation = workspace.evaluate(request).unwrap();
         evaluation.validate().unwrap();
         assert_eq!(
