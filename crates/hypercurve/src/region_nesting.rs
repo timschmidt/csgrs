@@ -7573,9 +7573,7 @@ impl ExactCurveArrangementAttempt2 {
         let evaluation = ExactCurveArrangementEvaluation2::new(workspace);
         let derived_compatibility_projection = RegionLineSegmentRegionBuildResult2 {
             region: region.clone(),
-            report: evaluation
-                .arrangement_report()
-                .into_region_line_segment_region_build_report(),
+            report: evaluation.arrangement_report().into_region_build_report(),
         };
         Ok(ExactCurveArrangementResult2 {
             evaluation,
@@ -7632,9 +7630,7 @@ impl ExactCurveArrangementResult2 {
     fn derive_region_build_report_from_evaluation(
         evaluation: &ExactCurveArrangementEvaluation2,
     ) -> RegionLineSegmentRegionBuildReport2 {
-        evaluation
-            .arrangement_report()
-            .into_region_line_segment_region_build_report()
+        evaluation.arrangement_report().into_region_build_report()
     }
 
     /// Returns the retained evaluation record.
@@ -9568,7 +9564,11 @@ impl ExactCurveArrangementReport2 {
         }
     }
 
-    fn into_region_line_segment_region_build_report(self) -> RegionLineSegmentRegionBuildReport2 {
+    /// Consumes this retained arrangement report and returns a legacy-shaped region build report.
+    ///
+    /// The returned report is projected from retained request, workspace, split,
+    /// ring, and output caches. It does not rerun topology.
+    pub fn into_region_build_report(self) -> RegionLineSegmentRegionBuildReport2 {
         let split_cache = self
             .split_cache()
             .expect("evaluated exact arrangement report missing retained split cache");

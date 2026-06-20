@@ -218,8 +218,9 @@ assert!(matches!(location, hypercurve::Classification::Decided(_)));
 
 For unordered exact line/arc input, evaluate the retained arrangement attempt and
 read output and blockers from the result. Derive a canonical arrangement report
-only when a reporting view is needed; use `derived_region_build_report()` or
-`derived_region_build_result()` only for legacy-shaped compatibility output:
+only when a reporting view is needed; use `arrangement_report().into_region_build_report()`,
+`derived_region_build_report()`, or `derived_region_build_result()` only for
+legacy-shaped compatibility output:
 
 ```rust,ignore
 use hypercurve::{
