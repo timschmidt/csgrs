@@ -981,6 +981,8 @@ pub struct ExactCurveArrangementReport2 {
     fill_rule: FillRule,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
+    source_segment_aabbs: Vec<Option<Aabb2>>,
+    source_aabb: Option<Aabb2>,
     decided_source_segment_aabb_count: usize,
     undecided_source_segment_aabb_count: usize,
     split_candidate_pair_count: Option<usize>,
@@ -8038,6 +8040,8 @@ impl ExactCurveArrangementReport2 {
             fill_rule: result.fill_rule(),
             source_segment_count: result.source_segment_count(),
             source_segment_kind_counts: result.source_segment_kind_counts(),
+            source_segment_aabbs: result.source_segment_aabbs().to_vec(),
+            source_aabb: result.source_aabb().cloned(),
             decided_source_segment_aabb_count: result.decided_source_segment_aabb_count(),
             undecided_source_segment_aabb_count: result.undecided_source_segment_aabb_count(),
             split_candidate_pair_count: result.split_candidate_pair_count(),
@@ -8147,6 +8151,16 @@ impl ExactCurveArrangementReport2 {
     /// Returns retained source segment primitive-family counts.
     pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
         self.source_segment_kind_counts
+    }
+
+    /// Returns retained source segment boxes in request order.
+    pub fn source_segment_aabbs(&self) -> &[Option<Aabb2>] {
+        &self.source_segment_aabbs
+    }
+
+    /// Returns a retained aggregate source box when every source box was decided.
+    pub const fn source_aabb(&self) -> Option<&Aabb2> {
+        self.source_aabb.as_ref()
     }
 
     /// Returns the number of source segment boxes certified during workspace preparation.

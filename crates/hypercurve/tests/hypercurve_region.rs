@@ -2215,6 +2215,11 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.source_segment_kind_counts()
     );
     assert_eq!(
+        arrangement_report.source_segment_aabbs(),
+        result.source_segment_aabbs()
+    );
+    assert_eq!(arrangement_report.source_aabb(), result.source_aabb());
+    assert_eq!(
         arrangement_report.decided_source_segment_aabb_count(),
         result.decided_source_segment_aabb_count()
     );
@@ -4343,6 +4348,11 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         arrangement_report.source_segment_kind_counts(),
         result.source_segment_kind_counts()
     );
+    assert_eq!(
+        arrangement_report.source_segment_aabbs(),
+        result.source_segment_aabbs()
+    );
+    assert_eq!(arrangement_report.source_aabb(), result.source_aabb());
     assert_eq!(
         arrangement_report.decided_source_segment_aabb_count(),
         result.decided_source_segment_aabb_count()
