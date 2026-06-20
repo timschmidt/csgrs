@@ -7474,6 +7474,11 @@ impl ExactCurveArrangementEvaluation2 {
             .map(RegionBoundaryContourBuildReport2::role_reports)
     }
 
+    /// Returns a derived report assembled only from retained evaluation caches.
+    pub fn arrangement_report(&self) -> ExactCurveArrangementReport2 {
+        ExactCurveArrangementReport2::from_evaluation(self)
+    }
+
     /// Consumes this evaluation and returns the retained workspace.
     pub fn into_workspace(self) -> ExactCurveWorkspace2 {
         self.workspace
@@ -8476,7 +8481,7 @@ impl ExactCurveArrangementResult2 {
 
     /// Returns a derived report assembled only from retained arrangement caches.
     pub fn arrangement_report(&self) -> ExactCurveArrangementReport2 {
-        ExactCurveArrangementReport2::from_result(self)
+        self.evaluation().arrangement_report()
     }
 
     /// Returns final retained evaluation facts derived from workspace caches.
@@ -9503,117 +9508,120 @@ impl RegionLineSegmentSplitIntersectionReport2 {
 }
 
 impl ExactCurveArrangementReport2 {
-    fn from_result(result: &ExactCurveArrangementResult2) -> Self {
+    fn from_evaluation(evaluation: &ExactCurveArrangementEvaluation2) -> Self {
         Self {
-            fill_rule: result.fill_rule(),
-            source_segments: result.source_segments().to_vec(),
-            source_line_segments: result.source_line_segments().map(<[_]>::to_vec),
-            source_segment_cache: result.source_segment_cache().clone(),
-            source_endpoint_bucket_cache: result.source_endpoint_bucket_cache().clone(),
-            split_schedule_cache: result.split_schedule_cache().clone(),
-            split_cache: result.split_cache().cloned(),
-            endpoint_graph_cache: result.endpoint_graph_cache().cloned(),
-            ring_assembly_cache: result.ring_assembly_cache().cloned(),
-            output_cache: result.output_cache().cloned(),
-            summary_cache: result.summary_cache().clone(),
-            source_segment_count: result.source_segment_count(),
-            source_segment_kind_counts: result.source_segment_kind_counts(),
-            source_segment_aabbs: result.source_segment_aabbs().to_vec(),
-            source_aabb: result.source_aabb().cloned(),
-            decided_source_segment_aabb_count: result.decided_source_segment_aabb_count(),
-            undecided_source_segment_aabb_count: result.undecided_source_segment_aabb_count(),
-            split_candidate_pair_count: result.split_candidate_pair_count(),
-            split_skipped_aabb_pair_count: result.split_skipped_aabb_pair_count(),
-            split_tested_pair_count: result.split_tested_pair_count(),
-            split_intersection_event_count: result.split_intersection_event_count(),
-            split_point_relation_count: result.split_point_relation_count(),
-            split_overlap_relation_count: result.split_overlap_relation_count(),
-            split_uncertain_relation_count: result.split_uncertain_relation_count(),
-            split_intersection_points: result.split_intersection_points().map(<[_]>::to_vec),
-            split_intersection_reports: result.split_intersection_reports().map(<[_]>::to_vec),
-            split_predicate_path: result.split_predicate_path(),
-            split_output_segment_count: result.split_output_segment_count(),
-            split_blocker_first_source_segment_index: result
+            fill_rule: evaluation.fill_rule(),
+            source_segments: evaluation.source_segments().to_vec(),
+            source_line_segments: evaluation.source_line_segments().map(<[_]>::to_vec),
+            source_segment_cache: evaluation.source_segment_cache().clone(),
+            source_endpoint_bucket_cache: evaluation.source_endpoint_bucket_cache().clone(),
+            split_schedule_cache: evaluation.split_schedule_cache().clone(),
+            split_cache: evaluation.split_cache().cloned(),
+            endpoint_graph_cache: evaluation.endpoint_graph_cache().cloned(),
+            ring_assembly_cache: evaluation.ring_assembly_cache().cloned(),
+            output_cache: evaluation.output_cache().cloned(),
+            summary_cache: evaluation.summary_cache().clone(),
+            source_segment_count: evaluation.source_segment_count(),
+            source_segment_kind_counts: evaluation.source_segment_kind_counts(),
+            source_segment_aabbs: evaluation.source_segment_aabbs().to_vec(),
+            source_aabb: evaluation.source_aabb().cloned(),
+            decided_source_segment_aabb_count: evaluation.decided_source_segment_aabb_count(),
+            undecided_source_segment_aabb_count: evaluation.undecided_source_segment_aabb_count(),
+            split_candidate_pair_count: evaluation.split_candidate_pair_count(),
+            split_skipped_aabb_pair_count: evaluation.split_skipped_aabb_pair_count(),
+            split_tested_pair_count: evaluation.split_tested_pair_count(),
+            split_intersection_event_count: evaluation.split_intersection_event_count(),
+            split_point_relation_count: evaluation.split_point_relation_count(),
+            split_overlap_relation_count: evaluation.split_overlap_relation_count(),
+            split_uncertain_relation_count: evaluation.split_uncertain_relation_count(),
+            split_intersection_points: evaluation.split_intersection_points().map(<[_]>::to_vec),
+            split_intersection_reports: evaluation.split_intersection_reports().map(<[_]>::to_vec),
+            split_predicate_path: evaluation.split_predicate_path(),
+            split_output_segment_count: evaluation.split_output_segment_count(),
+            split_blocker_first_source_segment_index: evaluation
                 .split_blocker_first_source_segment_index(),
-            split_blocker_first_source_segment_kind: result
+            split_blocker_first_source_segment_kind: evaluation
                 .split_blocker_first_source_segment_kind(),
-            split_blocker_first_source_start_point: result
+            split_blocker_first_source_start_point: evaluation
                 .split_blocker_first_source_start_point()
                 .cloned(),
-            split_blocker_first_source_end_point: result
+            split_blocker_first_source_end_point: evaluation
                 .split_blocker_first_source_end_point()
                 .cloned(),
-            split_blocker_second_source_segment_index: result
+            split_blocker_second_source_segment_index: evaluation
                 .split_blocker_second_source_segment_index(),
-            split_blocker_second_source_segment_kind: result
+            split_blocker_second_source_segment_kind: evaluation
                 .split_blocker_second_source_segment_kind(),
-            split_blocker_second_source_start_point: result
+            split_blocker_second_source_start_point: evaluation
                 .split_blocker_second_source_start_point()
                 .cloned(),
-            split_blocker_second_source_end_point: result
+            split_blocker_second_source_end_point: evaluation
                 .split_blocker_second_source_end_point()
                 .cloned(),
-            endpoint_graph_predicate_path: result.endpoint_graph_predicate_path(),
-            endpoint_graph_endpoint_count: result.endpoint_graph_endpoint_count(),
-            endpoint_graph_structural_bucket_count: result.endpoint_graph_structural_bucket_count(),
-            endpoint_graph_structural_singleton_bucket_count: result
+            endpoint_graph_predicate_path: evaluation.endpoint_graph_predicate_path(),
+            endpoint_graph_endpoint_count: evaluation.endpoint_graph_endpoint_count(),
+            endpoint_graph_structural_bucket_count: evaluation
+                .endpoint_graph_structural_bucket_count(),
+            endpoint_graph_structural_singleton_bucket_count: evaluation
                 .endpoint_graph_structural_singleton_bucket_count(),
-            endpoint_graph_max_structural_bucket_size: result
+            endpoint_graph_max_structural_bucket_size: evaluation
                 .endpoint_graph_max_structural_bucket_size(),
-            endpoint_graph_dangling_endpoint_count: result.endpoint_graph_dangling_endpoint_count(),
-            endpoint_graph_branch_endpoint_count: result.endpoint_graph_branch_endpoint_count(),
-            endpoint_graph_blocker_arranged_segment_index: result
+            endpoint_graph_dangling_endpoint_count: evaluation
+                .endpoint_graph_dangling_endpoint_count(),
+            endpoint_graph_branch_endpoint_count: evaluation.endpoint_graph_branch_endpoint_count(),
+            endpoint_graph_blocker_arranged_segment_index: evaluation
                 .endpoint_graph_blocker_arranged_segment_index(),
-            endpoint_graph_blocker_endpoint: result.endpoint_graph_blocker_endpoint(),
-            endpoint_graph_blocker_point: result.endpoint_graph_blocker_point().cloned(),
-            ring_assembly_predicate_path: result.ring_assembly_predicate_path(),
-            attempted_endpoint_connection_count: result.attempted_endpoint_connection_count(),
-            exact_endpoint_connection_count: result.exact_endpoint_connection_count(),
-            disconnected_endpoint_connection_count: result.disconnected_endpoint_connection_count(),
-            unresolved_endpoint_connection_count: result.unresolved_endpoint_connection_count(),
-            reversed_source_segment_count: result.reversed_source_segment_count(),
-            arranged_segment_count: result.arranged_segment_count(),
-            arranged_segment_kind_counts: result.arranged_segment_kind_counts(),
-            arranged_source_report_count: result.arranged_source_report_count(),
-            arranged_source_reports: result.arranged_source_reports().map(<[_]>::to_vec),
-            source_report_count: result.source_report_count(),
-            source_reports: result.source_reports().map(<[_]>::to_vec),
-            output_ring_count: result.output_ring_count(),
-            output_boundary_segment_count: result.output_boundary_segment_count(),
-            output_boundary_segment_kind_counts: result.output_boundary_segment_kind_counts(),
-            output_contour_count: result.output_contour_count(),
-            output_segment_count: result.output_segment_count(),
-            output_segment_kind_counts: result.output_segment_kind_counts(),
-            material_contour_count: result.material_contour_count(),
-            hole_contour_count: result.hole_contour_count(),
-            material_segment_count: result.material_segment_count(),
-            hole_segment_count: result.hole_segment_count(),
-            role_report_count: result.role_report_count(),
-            role_reports: result.role_reports().map(<[_]>::to_vec),
-            boundary_build_report: result.boundary_build_report().cloned(),
-            boundary_build_stage: result.boundary_build_stage(),
-            boundary_build_predicate_path: result.boundary_build_predicate_path(),
-            boundary_build_status: result.boundary_build_status(),
-            boundary_build_blocker: result.boundary_build_blocker(),
-            boundary_build_source_contour_count: result.boundary_build_source_contour_count(),
-            boundary_build_source_segment_count: result.boundary_build_source_segment_count(),
-            boundary_build_validation_candidate_pair_count: result
+            endpoint_graph_blocker_endpoint: evaluation.endpoint_graph_blocker_endpoint(),
+            endpoint_graph_blocker_point: evaluation.endpoint_graph_blocker_point().cloned(),
+            ring_assembly_predicate_path: evaluation.ring_assembly_predicate_path(),
+            attempted_endpoint_connection_count: evaluation.attempted_endpoint_connection_count(),
+            exact_endpoint_connection_count: evaluation.exact_endpoint_connection_count(),
+            disconnected_endpoint_connection_count: evaluation
+                .disconnected_endpoint_connection_count(),
+            unresolved_endpoint_connection_count: evaluation.unresolved_endpoint_connection_count(),
+            reversed_source_segment_count: evaluation.reversed_source_segment_count(),
+            arranged_segment_count: evaluation.arranged_segment_count(),
+            arranged_segment_kind_counts: evaluation.arranged_segment_kind_counts(),
+            arranged_source_report_count: evaluation.arranged_source_report_count(),
+            arranged_source_reports: evaluation.arranged_source_reports().map(<[_]>::to_vec),
+            source_report_count: evaluation.source_report_count(),
+            source_reports: evaluation.source_reports().map(<[_]>::to_vec),
+            output_ring_count: evaluation.output_ring_count(),
+            output_boundary_segment_count: evaluation.output_boundary_segment_count(),
+            output_boundary_segment_kind_counts: evaluation.output_boundary_segment_kind_counts(),
+            output_contour_count: evaluation.output_contour_count(),
+            output_segment_count: evaluation.output_segment_count(),
+            output_segment_kind_counts: evaluation.output_segment_kind_counts(),
+            material_contour_count: evaluation.material_contour_count(),
+            hole_contour_count: evaluation.hole_contour_count(),
+            material_segment_count: evaluation.material_segment_count(),
+            hole_segment_count: evaluation.hole_segment_count(),
+            role_report_count: evaluation.role_report_count(),
+            role_reports: evaluation.role_reports().map(<[_]>::to_vec),
+            boundary_build_report: evaluation.boundary_build_report().cloned(),
+            boundary_build_stage: evaluation.boundary_build_stage(),
+            boundary_build_predicate_path: evaluation.boundary_build_predicate_path(),
+            boundary_build_status: evaluation.boundary_build_status(),
+            boundary_build_blocker: evaluation.boundary_build_blocker(),
+            boundary_build_source_contour_count: evaluation.boundary_build_source_contour_count(),
+            boundary_build_source_segment_count: evaluation.boundary_build_source_segment_count(),
+            boundary_build_validation_candidate_pair_count: evaluation
                 .boundary_build_validation_candidate_pair_count(),
-            boundary_build_validation_tested_pair_count: result
+            boundary_build_validation_tested_pair_count: evaluation
                 .boundary_build_validation_tested_pair_count(),
-            boundary_build_validation_intersection_event_count: result
+            boundary_build_validation_intersection_event_count: evaluation
                 .boundary_build_validation_intersection_event_count(),
-            boundary_build_nesting_classification_count: result
+            boundary_build_nesting_classification_count: evaluation
                 .boundary_build_nesting_classification_count(),
-            boundary_build_blocker_first_contour_index: result
+            boundary_build_blocker_first_contour_index: evaluation
                 .boundary_build_blocker_first_contour_index(),
-            boundary_build_blocker_second_contour_index: result
+            boundary_build_blocker_second_contour_index: evaluation
                 .boundary_build_blocker_second_contour_index(),
-            evaluated_output: result.evaluated_output(),
-            materialized_region: result.materialized_region(),
-            stage: result.stage(),
-            status: result.status(),
-            blocker: result.blocker(),
+            evaluated_output: evaluation.evaluated_output(),
+            materialized_region: evaluation.materialized_region(),
+            stage: evaluation.stage(),
+            status: evaluation.status(),
+            blocker: evaluation.blocker(),
         }
     }
 

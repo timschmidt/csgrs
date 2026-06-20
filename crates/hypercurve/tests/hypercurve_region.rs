@@ -3951,6 +3951,10 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(result.evaluation().role_buckets(), result.role_buckets());
     assert_eq!(result.evaluation().role_reports(), result.role_reports());
     assert_eq!(result.evaluation().summary_cache(), result.summary_cache());
+    assert_eq!(
+        result.evaluation().arrangement_report(),
+        result.arrangement_report()
+    );
     let owned_attempt_request = attempt.clone().into_request();
     assert_eq!(&owned_attempt_request, result.request());
     let owned_evaluation = result.clone().into_evaluation();
