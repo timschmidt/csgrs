@@ -7062,6 +7062,20 @@ impl RegionLineSegmentRegionBuildReport2 {
         self.boundary_build_report.as_ref()
     }
 
+    /// Returns retained output role report count when role assignment was reached.
+    pub fn role_report_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.role_reports().len()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output role reports when role assignment was reached.
+    pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
+        self.boundary_build_report()
+            .map(RegionBoundaryContourBuildReport2::role_reports)
+    }
+
     /// Returns line-region construction status.
     pub const fn status(&self) -> RetainedTopologyStatus {
         self.status

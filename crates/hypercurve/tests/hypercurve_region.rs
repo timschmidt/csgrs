@@ -597,6 +597,11 @@ fn unordered_line_segments_build_region_with_source_provenance() {
     assert_eq!(boundary_report.validation_intersection_event_count(), 0);
     assert_eq!(boundary_report.material_contour_count(), Some(1));
     assert_eq!(boundary_report.hole_contour_count(), Some(0));
+    let role_reports = report.role_reports().unwrap();
+    assert_eq!(report.role_report_count(), Some(role_reports.len()));
+    assert_eq!(role_reports.len(), 1);
+    assert_eq!(role_reports[0].role(), RegionBoundaryContourRole2::Material);
+    assert_eq!(role_reports[0].nesting_depth(), 0);
 
     let region = built.region().unwrap();
     assert_eq!(
