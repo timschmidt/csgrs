@@ -3274,17 +3274,22 @@ impl ExactCurveArrangementSplitCache2 {
         );
         let blocker_cache =
             ExactCurveArrangementSplitBlockerCache2::from_legacy_region_build_report(report);
+        let intersection_reports = report.split_intersection_reports().to_vec();
+        let intersection_points = intersection_reports
+            .iter()
+            .map(|report| report.point().clone())
+            .collect::<Vec<_>>();
         Self {
             predicate_path: report.split_predicate_path(),
             candidate_pair_count: report.split_candidate_pair_count(),
             skipped_aabb_pair_count: report.split_skipped_aabb_pair_count(),
             tested_pair_count: report.split_tested_pair_count(),
-            intersection_event_count: report.split_intersection_event_count(),
+            intersection_event_count: intersection_reports.len(),
             point_relation_count: report.split_point_relation_count(),
             overlap_relation_count: report.split_overlap_relation_count(),
             uncertain_relation_count: report.split_uncertain_relation_count(),
-            intersection_points: report.split_intersection_points().to_vec(),
-            intersection_reports: report.split_intersection_reports().to_vec(),
+            intersection_points,
+            intersection_reports,
             relation_bucket_cache,
             intersection_bucket_cache,
             intersection_parameter_cache,
