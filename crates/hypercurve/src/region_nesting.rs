@@ -6474,6 +6474,96 @@ impl ExactCurveArrangementResult2 {
             .map(ExactCurveArrangementRingAssemblyCache2::source_reports)
     }
 
+    /// Returns per-arranged-fragment source provenance buckets.
+    pub const fn arranged_fragment_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedFragmentCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.arranged_fragment_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns per-output-ring source provenance buckets.
+    pub const fn output_ring_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRingBucketCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_ring_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment buckets grouped by primitive family.
+    pub const fn output_segment_kind_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputSegmentKindBucketCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_segment_kind_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment buckets grouped by source segment.
+    pub const fn output_segment_source_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputSegmentSourceBucketCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_segment_source_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment source parameter ranges.
+    pub const fn output_segment_source_range_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputSegmentSourceRangeCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_segment_source_range_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment exact endpoint records.
+    pub const fn output_segment_endpoint_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputSegmentEndpointCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_segment_endpoint_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained exact continuity records between adjacent output segments.
+    pub const fn output_ring_continuity_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRingContinuityCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_ring_continuity_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment buckets grouped by topology status.
+    pub const fn output_segment_status_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputSegmentStatusBucketCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_segment_status_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output segment buckets grouped by traversal direction.
+    pub const fn output_segment_direction_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputSegmentDirectionBucketCache2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.output_segment_direction_bucket_cache()),
+            None => None,
+        }
+    }
+
     /// Returns final output evidence retained from the evaluated arrangement.
     pub const fn output_cache(&self) -> Option<&ExactCurveArrangementOutputCache2> {
         self.workspace().output_cache()
