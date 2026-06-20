@@ -3009,6 +3009,22 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns retained output ring segment references.
+    pub const fn output_ring_segment_ref_count(&self) -> Option<usize> {
+        match self.output_ring_bucket_cache() {
+            Some(ring_cache) => Some(ring_cache.segment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained output ring segment count.
+    pub const fn output_ring_max_segment_count(&self) -> Option<usize> {
+        match self.output_ring_bucket_cache() {
+            Some(ring_cache) => Some(ring_cache.max_ring_segment_count()),
+            None => None,
+        }
+    }
+
     /// Returns output ring count when ring traversal completed.
     pub const fn output_ring_count(&self) -> Option<usize> {
         match self.ring_assembly_cache() {
@@ -7850,6 +7866,16 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().output_ring_bucket_cache()
     }
 
+    /// Returns retained output ring segment references.
+    pub const fn output_ring_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_ring_segment_ref_count()
+    }
+
+    /// Returns the largest retained output ring segment count.
+    pub const fn output_ring_max_segment_count(&self) -> Option<usize> {
+        self.workspace().output_ring_max_segment_count()
+    }
+
     /// Returns retained output segment buckets grouped by primitive family.
     pub const fn output_segment_kind_bucket_cache(
         &self,
@@ -9032,10 +9058,17 @@ impl ExactCurveArrangementResult2 {
     pub const fn output_ring_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRingBucketCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.output_ring_bucket_cache()),
-            None => None,
-        }
+        self.workspace().output_ring_bucket_cache()
+    }
+
+    /// Returns retained output ring segment references.
+    pub const fn output_ring_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_ring_segment_ref_count()
+    }
+
+    /// Returns the largest retained output ring segment count.
+    pub const fn output_ring_max_segment_count(&self) -> Option<usize> {
+        self.workspace().output_ring_max_segment_count()
     }
 
     /// Returns retained output segment buckets grouped by primitive family.
@@ -11450,10 +11483,17 @@ impl ExactCurveArrangementReport2 {
     pub const fn output_ring_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRingBucketCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.output_ring_bucket_cache()),
-            None => None,
-        }
+        self.workspace().output_ring_bucket_cache()
+    }
+
+    /// Returns retained output ring segment references.
+    pub const fn output_ring_segment_ref_count(&self) -> Option<usize> {
+        self.workspace().output_ring_segment_ref_count()
+    }
+
+    /// Returns the largest retained output ring segment count.
+    pub const fn output_ring_max_segment_count(&self) -> Option<usize> {
+        self.workspace().output_ring_max_segment_count()
     }
 
     /// Returns retained output segment buckets grouped by primitive family.

@@ -2639,6 +2639,14 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         Some(result.source_reports().unwrap().len())
     );
     let output_ring_bucket_cache = result.output_ring_bucket_cache().unwrap();
+    assert_eq!(
+        result.output_ring_segment_ref_count(),
+        Some(output_ring_bucket_cache.segment_ref_count())
+    );
+    assert_eq!(
+        result.output_ring_max_segment_count(),
+        Some(output_ring_bucket_cache.max_ring_segment_count())
+    );
     assert_eq!(output_ring_bucket_cache.ring_count(), 1);
     assert_eq!(output_ring_bucket_cache.segment_ref_count(), 4);
     assert_eq!(output_ring_bucket_cache.max_ring_segment_count(), 4);
@@ -3205,6 +3213,14 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(
         arrangement_report.output_ring_bucket_cache(),
         result.output_ring_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.output_ring_segment_ref_count(),
+        result.output_ring_segment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.output_ring_max_segment_count(),
+        result.output_ring_max_segment_count()
     );
     assert_eq!(
         arrangement_report.output_segment_kind_bucket_cache(),
@@ -4384,6 +4400,14 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.output_ring_bucket_cache()
     );
     assert_eq!(
+        result.evaluation().output_ring_segment_ref_count(),
+        result.output_ring_segment_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().output_ring_max_segment_count(),
+        result.output_ring_max_segment_count()
+    );
+    assert_eq!(
         result.evaluation().output_segment_kind_bucket_cache(),
         result.output_segment_kind_bucket_cache()
     );
@@ -4854,6 +4878,14 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         result.workspace().output_ring_bucket_cache(),
         result.output_ring_bucket_cache()
+    );
+    assert_eq!(
+        result.workspace().output_ring_segment_ref_count(),
+        result.output_ring_segment_ref_count()
+    );
+    assert_eq!(
+        result.workspace().output_ring_max_segment_count(),
+        result.output_ring_max_segment_count()
     );
     assert_eq!(
         result.workspace().output_segment_kind_bucket_cache(),
@@ -5702,6 +5734,14 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         Some(result.source_reports().unwrap().len())
     );
     let output_ring_bucket_cache = result.output_ring_bucket_cache().unwrap();
+    assert_eq!(
+        result.output_ring_segment_ref_count(),
+        Some(output_ring_bucket_cache.segment_ref_count())
+    );
+    assert_eq!(
+        result.output_ring_max_segment_count(),
+        Some(output_ring_bucket_cache.max_ring_segment_count())
+    );
     assert_eq!(output_ring_bucket_cache.ring_count(), 1);
     assert_eq!(output_ring_bucket_cache.segment_ref_count(), 2);
     assert_eq!(output_ring_bucket_cache.max_ring_segment_count(), 2);
@@ -6872,6 +6912,14 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(
         arrangement_report.output_ring_bucket_cache(),
         result.output_ring_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.output_ring_segment_ref_count(),
+        result.output_ring_segment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.output_ring_max_segment_count(),
+        result.output_ring_max_segment_count()
     );
     assert_eq!(
         arrangement_report.output_segment_kind_bucket_cache(),
