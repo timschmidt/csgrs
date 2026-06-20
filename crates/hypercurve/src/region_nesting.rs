@@ -7307,6 +7307,173 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().output_segment_direction_bucket_cache()
     }
 
+    /// Returns final output evidence retained from the evaluated arrangement.
+    pub const fn output_cache(&self) -> Option<&ExactCurveArrangementOutputCache2> {
+        self.workspace().output_cache()
+    }
+
+    /// Returns delegated boundary-contour role assignment evidence, when output reached it.
+    pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
+        self.workspace().boundary_build_report()
+    }
+
+    /// Returns final boundary-role assignment stage, if reached.
+    pub const fn boundary_build_stage(&self) -> Option<RegionBoundaryContourBuildStage2> {
+        self.workspace().boundary_build_stage()
+    }
+
+    /// Returns final boundary-role assignment predicate path, if reached.
+    pub const fn boundary_build_predicate_path(
+        &self,
+    ) -> Option<RegionBoundaryContourBuildPredicatePath2> {
+        self.workspace().boundary_build_predicate_path()
+    }
+
+    /// Returns final boundary-role assignment retained status, if reached.
+    pub const fn boundary_build_status(&self) -> Option<RetainedTopologyStatus> {
+        self.workspace().boundary_build_status()
+    }
+
+    /// Returns final boundary-role assignment blocker, if present.
+    pub const fn boundary_build_blocker(&self) -> Option<UncertaintyReason> {
+        self.workspace().boundary_build_blocker()
+    }
+
+    /// Returns source contour count from final boundary-role assignment, if reached.
+    pub const fn boundary_build_source_contour_count(&self) -> Option<usize> {
+        self.workspace().boundary_build_source_contour_count()
+    }
+
+    /// Returns source boundary segment count from final boundary-role assignment, if reached.
+    pub const fn boundary_build_source_segment_count(&self) -> Option<usize> {
+        self.workspace().boundary_build_source_segment_count()
+    }
+
+    /// Returns contour-pair validation schedule size from final role assignment, if reached.
+    pub const fn boundary_build_validation_candidate_pair_count(&self) -> Option<usize> {
+        self.workspace()
+            .boundary_build_validation_candidate_pair_count()
+    }
+
+    /// Returns contour-pair validation test count from final role assignment, if reached.
+    pub const fn boundary_build_validation_tested_pair_count(&self) -> Option<usize> {
+        self.workspace()
+            .boundary_build_validation_tested_pair_count()
+    }
+
+    /// Returns exact validation intersection event count from final role assignment, if reached.
+    pub const fn boundary_build_validation_intersection_event_count(&self) -> Option<usize> {
+        self.workspace()
+            .boundary_build_validation_intersection_event_count()
+    }
+
+    /// Returns containment classification count from final role assignment, if reached.
+    pub const fn boundary_build_nesting_classification_count(&self) -> Option<usize> {
+        self.workspace()
+            .boundary_build_nesting_classification_count()
+    }
+
+    /// Returns first blocking contour index from final role assignment, if present.
+    pub const fn boundary_build_blocker_first_contour_index(&self) -> Option<usize> {
+        self.workspace()
+            .boundary_build_blocker_first_contour_index()
+    }
+
+    /// Returns second blocking contour index from final role assignment, if present.
+    pub const fn boundary_build_blocker_second_contour_index(&self) -> Option<usize> {
+        self.workspace()
+            .boundary_build_blocker_second_contour_index()
+    }
+
+    /// Returns retained final boundary output summary when role assignment materialized.
+    pub const fn boundary_output_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputBoundaryCache2> {
+        self.workspace().boundary_output_cache()
+    }
+
+    /// Returns final boundary output counts grouped by material/hole role.
+    pub const fn boundary_output_role_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputBoundaryRoleBucketCache2> {
+        self.workspace().boundary_output_role_bucket_cache()
+    }
+
+    /// Returns retained material/hole role buckets when role assignment was reached.
+    pub const fn role_cache(&self) -> Option<&ExactCurveArrangementOutputRoleCache2> {
+        self.workspace().role_cache()
+    }
+
+    /// Returns output boundary primitive-family counts after role assignment.
+    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.workspace().output_segment_kind_counts()
+    }
+
+    /// Returns material contour count after output role assignment.
+    pub const fn material_contour_count(&self) -> Option<usize> {
+        self.workspace().material_contour_count()
+    }
+
+    /// Returns hole contour count after output role assignment.
+    pub const fn hole_contour_count(&self) -> Option<usize> {
+        self.workspace().hole_contour_count()
+    }
+
+    /// Returns material boundary segment count after output role assignment.
+    pub const fn material_segment_count(&self) -> Option<usize> {
+        self.workspace().material_segment_count()
+    }
+
+    /// Returns hole boundary segment count after output role assignment.
+    pub const fn hole_segment_count(&self) -> Option<usize> {
+        self.workspace().hole_segment_count()
+    }
+
+    /// Returns retained output role report count when role assignment was reached.
+    pub const fn role_report_count(&self) -> Option<usize> {
+        self.workspace().role_report_count()
+    }
+
+    /// Returns output role assignment buckets grouped by topology status.
+    pub const fn role_status_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRoleStatusBucketCache2> {
+        self.workspace().role_status_bucket_cache()
+    }
+
+    /// Returns output role assignment buckets grouped by source contour identity.
+    pub const fn role_source_contour_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRoleSourceContourBucketCache2> {
+        self.workspace().role_source_contour_bucket_cache()
+    }
+
+    /// Returns output role assignment buckets grouped by exact nesting depth.
+    pub const fn role_nesting_depth_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRoleNestingDepthBucketCache2> {
+        self.workspace().role_nesting_depth_bucket_cache()
+    }
+
+    /// Returns output role containment evidence grouped by containing source contour.
+    pub const fn role_containment_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputRoleContainmentBucketCache2> {
+        self.workspace().role_containment_bucket_cache()
+    }
+
+    /// Returns material and hole role buckets in stable order.
+    pub fn role_buckets(&self) -> Option<&[ExactCurveArrangementOutputRoleBucket2]> {
+        self.role_cache()
+            .map(ExactCurveArrangementOutputRoleCache2::buckets)
+    }
+
+    /// Returns retained output role reports when role assignment was reached.
+    pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
+        self.boundary_build_report()
+            .map(RegionBoundaryContourBuildReport2::role_reports)
+    }
+
     /// Consumes this evaluation and returns the retained workspace.
     pub fn into_workspace(self) -> ExactCurveWorkspace2 {
         self.workspace
