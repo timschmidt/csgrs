@@ -2180,6 +2180,14 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.endpoint_graph_structural_bucket_count()
     );
     assert_eq!(
+        arrangement_report.endpoint_graph_dangling_endpoint_count(),
+        result.endpoint_graph_dangling_endpoint_count()
+    );
+    assert_eq!(
+        arrangement_report.endpoint_graph_branch_endpoint_count(),
+        result.endpoint_graph_branch_endpoint_count()
+    );
+    assert_eq!(
         arrangement_report.output_boundary_segment_kind_counts(),
         result.output_boundary_segment_kind_counts()
     );
@@ -3565,6 +3573,14 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.output_ring_count()
     );
     assert_eq!(
+        arrangement_report.endpoint_graph_dangling_endpoint_count(),
+        result.endpoint_graph_dangling_endpoint_count()
+    );
+    assert_eq!(
+        arrangement_report.endpoint_graph_branch_endpoint_count(),
+        result.endpoint_graph_branch_endpoint_count()
+    );
+    assert_eq!(
         arrangement_report.output_segment_count(),
         result.output_segment_count()
     );
@@ -3933,6 +3949,19 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(
         arrangement_report.split_uncertain_relation_count(),
         result.split_uncertain_relation_count()
+    );
+    assert_eq!(arrangement_report.endpoint_graph_endpoint_count(), None);
+    assert_eq!(
+        arrangement_report.endpoint_graph_structural_bucket_count(),
+        None
+    );
+    assert_eq!(
+        arrangement_report.endpoint_graph_dangling_endpoint_count(),
+        None
+    );
+    assert_eq!(
+        arrangement_report.endpoint_graph_branch_endpoint_count(),
+        None
     );
     assert_eq!(arrangement_report.output_ring_count(), None);
     assert_eq!(arrangement_report.output_boundary_segment_count(), None);
