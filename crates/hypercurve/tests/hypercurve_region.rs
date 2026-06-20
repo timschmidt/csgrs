@@ -2453,6 +2453,42 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     let arranged_fragment_status_bucket_cache =
         arranged_fragment_cache.arranged_fragment_status_bucket_cache();
+    assert_eq!(
+        result.arranged_fragment_status_bucket_count(),
+        Some(arranged_fragment_status_bucket_cache.bucket_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_status_source_ref_count(),
+        Some(arranged_fragment_status_bucket_cache.source_ref_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_native_exact_ref_count(),
+        Some(arranged_fragment_status_bucket_cache.native_exact_ref_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_certified_approximation_ref_count(),
+        Some(arranged_fragment_status_bucket_cache.certified_approximation_ref_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_display_or_export_ref_count(),
+        Some(arranged_fragment_status_bucket_cache.display_or_export_ref_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_imported_lossy_ref_count(),
+        Some(arranged_fragment_status_bucket_cache.imported_lossy_ref_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_unsupported_ref_count(),
+        Some(arranged_fragment_status_bucket_cache.unsupported_ref_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_unresolved_ref_count(),
+        Some(arranged_fragment_status_bucket_cache.unresolved_ref_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_status_max_bucket_size(),
+        Some(arranged_fragment_status_bucket_cache.max_bucket_size())
+    );
     assert_eq!(arranged_fragment_status_bucket_cache.bucket_count(), 6);
     assert_eq!(
         arranged_fragment_status_bucket_cache.source_ref_count(),
@@ -3379,6 +3415,42 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.arranged_fragment_kind_max_bucket_size()
     );
     assert_eq!(
+        arrangement_report.arranged_fragment_status_bucket_count(),
+        result.arranged_fragment_status_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_status_source_ref_count(),
+        result.arranged_fragment_status_source_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_native_exact_ref_count(),
+        result.arranged_fragment_native_exact_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_certified_approximation_ref_count(),
+        result.arranged_fragment_certified_approximation_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_display_or_export_ref_count(),
+        result.arranged_fragment_display_or_export_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_imported_lossy_ref_count(),
+        result.arranged_fragment_imported_lossy_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_unsupported_ref_count(),
+        result.arranged_fragment_unsupported_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_unresolved_ref_count(),
+        result.arranged_fragment_unresolved_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_status_max_bucket_size(),
+        result.arranged_fragment_status_max_bucket_size()
+    );
+    assert_eq!(
         arrangement_report.arranged_source_report_count(),
         result.arranged_source_report_count()
     );
@@ -4222,6 +4294,56 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         result.evaluation().arranged_fragment_status_bucket_cache(),
         result.arranged_fragment_status_bucket_cache()
+    );
+    assert_eq!(
+        result.evaluation().arranged_fragment_status_bucket_count(),
+        result.arranged_fragment_status_bucket_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .arranged_fragment_status_source_ref_count(),
+        result.arranged_fragment_status_source_ref_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .arranged_fragment_native_exact_ref_count(),
+        result.arranged_fragment_native_exact_ref_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .arranged_fragment_certified_approximation_ref_count(),
+        result.arranged_fragment_certified_approximation_ref_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .arranged_fragment_display_or_export_ref_count(),
+        result.arranged_fragment_display_or_export_ref_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .arranged_fragment_imported_lossy_ref_count(),
+        result.arranged_fragment_imported_lossy_ref_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .arranged_fragment_unsupported_ref_count(),
+        result.arranged_fragment_unsupported_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().arranged_fragment_unresolved_ref_count(),
+        result.arranged_fragment_unresolved_ref_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .arranged_fragment_status_max_bucket_size(),
+        result.arranged_fragment_status_max_bucket_size()
     );
     assert_eq!(
         result.evaluation().arranged_fragment_source_range_cache(),
@@ -5347,6 +5469,42 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     let arranged_fragment_status_bucket_cache =
         arranged_fragment_cache.arranged_fragment_status_bucket_cache();
+    assert_eq!(
+        result.arranged_fragment_status_bucket_count(),
+        Some(arranged_fragment_status_bucket_cache.bucket_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_status_source_ref_count(),
+        Some(arranged_fragment_status_bucket_cache.source_ref_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_native_exact_ref_count(),
+        Some(arranged_fragment_status_bucket_cache.native_exact_ref_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_certified_approximation_ref_count(),
+        Some(arranged_fragment_status_bucket_cache.certified_approximation_ref_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_display_or_export_ref_count(),
+        Some(arranged_fragment_status_bucket_cache.display_or_export_ref_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_imported_lossy_ref_count(),
+        Some(arranged_fragment_status_bucket_cache.imported_lossy_ref_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_unsupported_ref_count(),
+        Some(arranged_fragment_status_bucket_cache.unsupported_ref_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_unresolved_ref_count(),
+        Some(arranged_fragment_status_bucket_cache.unresolved_ref_count())
+    );
+    assert_eq!(
+        result.arranged_fragment_status_max_bucket_size(),
+        Some(arranged_fragment_status_bucket_cache.max_bucket_size())
+    );
     assert_eq!(arranged_fragment_status_bucket_cache.bucket_count(), 6);
     assert_eq!(
         arranged_fragment_status_bucket_cache.source_ref_count(),
@@ -6510,6 +6668,42 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(
         arrangement_report.arranged_fragment_status_bucket_cache(),
         result.arranged_fragment_status_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_status_bucket_count(),
+        result.arranged_fragment_status_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_status_source_ref_count(),
+        result.arranged_fragment_status_source_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_native_exact_ref_count(),
+        result.arranged_fragment_native_exact_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_certified_approximation_ref_count(),
+        result.arranged_fragment_certified_approximation_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_display_or_export_ref_count(),
+        result.arranged_fragment_display_or_export_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_imported_lossy_ref_count(),
+        result.arranged_fragment_imported_lossy_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_unsupported_ref_count(),
+        result.arranged_fragment_unsupported_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_unresolved_ref_count(),
+        result.arranged_fragment_unresolved_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_fragment_status_max_bucket_size(),
+        result.arranged_fragment_status_max_bucket_size()
     );
     assert_eq!(
         arrangement_report.arranged_fragment_source_range_cache(),

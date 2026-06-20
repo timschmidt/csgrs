@@ -2883,6 +2883,88 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns arranged fragment source records grouped by retained topology status.
+    pub const fn arranged_fragment_status_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementArrangedFragmentStatusBucketCache2> {
+        match self.arranged_fragment_cache() {
+            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_status_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained arranged fragment topology-status bucket count.
+    pub const fn arranged_fragment_status_bucket_count(&self) -> Option<usize> {
+        match self.arranged_fragment_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained arranged fragment source references grouped by topology status.
+    pub const fn arranged_fragment_status_source_ref_count(&self) -> Option<usize> {
+        match self.arranged_fragment_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.source_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained native-exact arranged fragment source references.
+    pub const fn arranged_fragment_native_exact_ref_count(&self) -> Option<usize> {
+        match self.arranged_fragment_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.native_exact_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained certified-approximation arranged fragment source references.
+    pub const fn arranged_fragment_certified_approximation_ref_count(&self) -> Option<usize> {
+        match self.arranged_fragment_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.certified_approximation_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained display/export-only arranged fragment source references.
+    pub const fn arranged_fragment_display_or_export_ref_count(&self) -> Option<usize> {
+        match self.arranged_fragment_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.display_or_export_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained lossy-import arranged fragment source references.
+    pub const fn arranged_fragment_imported_lossy_ref_count(&self) -> Option<usize> {
+        match self.arranged_fragment_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.imported_lossy_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained unsupported arranged fragment source references.
+    pub const fn arranged_fragment_unsupported_ref_count(&self) -> Option<usize> {
+        match self.arranged_fragment_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.unsupported_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained unresolved arranged fragment source references.
+    pub const fn arranged_fragment_unresolved_ref_count(&self) -> Option<usize> {
+        match self.arranged_fragment_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.unresolved_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained arranged fragment topology-status bucket size.
+    pub const fn arranged_fragment_status_max_bucket_size(&self) -> Option<usize> {
+        match self.arranged_fragment_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.max_bucket_size()),
+            None => None,
+        }
+    }
+
     /// Returns per-output-ring source provenance buckets.
     pub const fn output_ring_bucket_cache(
         &self,
@@ -7642,10 +7724,55 @@ impl ExactCurveArrangementEvaluation2 {
     pub const fn arranged_fragment_status_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentStatusBucketCache2> {
-        match self.arranged_fragment_cache() {
-            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_status_bucket_cache()),
-            None => None,
-        }
+        self.workspace().arranged_fragment_status_bucket_cache()
+    }
+
+    /// Returns retained arranged fragment topology-status bucket count.
+    pub const fn arranged_fragment_status_bucket_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_status_bucket_count()
+    }
+
+    /// Returns retained arranged fragment source references grouped by topology status.
+    pub const fn arranged_fragment_status_source_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_status_source_ref_count()
+    }
+
+    /// Returns retained native-exact arranged fragment source references.
+    pub const fn arranged_fragment_native_exact_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_native_exact_ref_count()
+    }
+
+    /// Returns retained certified-approximation arranged fragment source references.
+    pub const fn arranged_fragment_certified_approximation_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_fragment_certified_approximation_ref_count()
+    }
+
+    /// Returns retained display/export-only arranged fragment source references.
+    pub const fn arranged_fragment_display_or_export_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_fragment_display_or_export_ref_count()
+    }
+
+    /// Returns retained lossy-import arranged fragment source references.
+    pub const fn arranged_fragment_imported_lossy_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_fragment_imported_lossy_ref_count()
+    }
+
+    /// Returns retained unsupported arranged fragment source references.
+    pub const fn arranged_fragment_unsupported_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_unsupported_ref_count()
+    }
+
+    /// Returns retained unresolved arranged fragment source references.
+    pub const fn arranged_fragment_unresolved_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_unresolved_ref_count()
+    }
+
+    /// Returns the largest retained arranged fragment topology-status bucket size.
+    pub const fn arranged_fragment_status_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_status_max_bucket_size()
     }
 
     /// Returns arranged fragment source parameter ranges.
@@ -8768,10 +8895,55 @@ impl ExactCurveArrangementResult2 {
     pub const fn arranged_fragment_status_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentStatusBucketCache2> {
-        match self.arranged_fragment_cache() {
-            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_status_bucket_cache()),
-            None => None,
-        }
+        self.workspace().arranged_fragment_status_bucket_cache()
+    }
+
+    /// Returns retained arranged fragment topology-status bucket count.
+    pub const fn arranged_fragment_status_bucket_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_status_bucket_count()
+    }
+
+    /// Returns retained arranged fragment source references grouped by topology status.
+    pub const fn arranged_fragment_status_source_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_status_source_ref_count()
+    }
+
+    /// Returns retained native-exact arranged fragment source references.
+    pub const fn arranged_fragment_native_exact_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_native_exact_ref_count()
+    }
+
+    /// Returns retained certified-approximation arranged fragment source references.
+    pub const fn arranged_fragment_certified_approximation_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_fragment_certified_approximation_ref_count()
+    }
+
+    /// Returns retained display/export-only arranged fragment source references.
+    pub const fn arranged_fragment_display_or_export_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_fragment_display_or_export_ref_count()
+    }
+
+    /// Returns retained lossy-import arranged fragment source references.
+    pub const fn arranged_fragment_imported_lossy_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_fragment_imported_lossy_ref_count()
+    }
+
+    /// Returns retained unsupported arranged fragment source references.
+    pub const fn arranged_fragment_unsupported_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_unsupported_ref_count()
+    }
+
+    /// Returns retained unresolved arranged fragment source references.
+    pub const fn arranged_fragment_unresolved_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_unresolved_ref_count()
+    }
+
+    /// Returns the largest retained arranged fragment topology-status bucket size.
+    pub const fn arranged_fragment_status_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_status_max_bucket_size()
     }
 
     /// Returns arranged fragment source parameter ranges.
@@ -11051,10 +11223,55 @@ impl ExactCurveArrangementReport2 {
     pub const fn arranged_fragment_status_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentStatusBucketCache2> {
-        match self.arranged_fragment_cache() {
-            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_status_bucket_cache()),
-            None => None,
-        }
+        self.workspace().arranged_fragment_status_bucket_cache()
+    }
+
+    /// Returns retained arranged fragment topology-status bucket count.
+    pub const fn arranged_fragment_status_bucket_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_status_bucket_count()
+    }
+
+    /// Returns retained arranged fragment source references grouped by topology status.
+    pub const fn arranged_fragment_status_source_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_status_source_ref_count()
+    }
+
+    /// Returns retained native-exact arranged fragment source references.
+    pub const fn arranged_fragment_native_exact_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_native_exact_ref_count()
+    }
+
+    /// Returns retained certified-approximation arranged fragment source references.
+    pub const fn arranged_fragment_certified_approximation_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_fragment_certified_approximation_ref_count()
+    }
+
+    /// Returns retained display/export-only arranged fragment source references.
+    pub const fn arranged_fragment_display_or_export_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_fragment_display_or_export_ref_count()
+    }
+
+    /// Returns retained lossy-import arranged fragment source references.
+    pub const fn arranged_fragment_imported_lossy_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .arranged_fragment_imported_lossy_ref_count()
+    }
+
+    /// Returns retained unsupported arranged fragment source references.
+    pub const fn arranged_fragment_unsupported_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_unsupported_ref_count()
+    }
+
+    /// Returns retained unresolved arranged fragment source references.
+    pub const fn arranged_fragment_unresolved_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_unresolved_ref_count()
+    }
+
+    /// Returns the largest retained arranged fragment topology-status bucket size.
+    pub const fn arranged_fragment_status_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().arranged_fragment_status_max_bucket_size()
     }
 
     /// Returns arranged fragment source parameter ranges.
