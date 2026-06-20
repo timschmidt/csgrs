@@ -4871,6 +4871,29 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         result.undecided_source_segment_aabb_count()
     );
     assert_eq!(
+        arrangement_report.source_segment_cache(),
+        result.source_segment_cache()
+    );
+    assert_eq!(
+        arrangement_report.source_endpoint_bucket_cache(),
+        result.source_endpoint_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.split_schedule_cache(),
+        result.split_schedule_cache()
+    );
+    assert_eq!(arrangement_report.split_cache(), result.split_cache());
+    assert_eq!(
+        arrangement_report.endpoint_graph_cache(),
+        result.endpoint_graph_cache()
+    );
+    assert_eq!(
+        arrangement_report.ring_assembly_cache(),
+        result.ring_assembly_cache()
+    );
+    assert_eq!(arrangement_report.output_cache(), result.output_cache());
+    assert_eq!(arrangement_report.summary_cache(), result.summary_cache());
+    assert_eq!(
         arrangement_report.split_candidate_pair_count(),
         result.split_candidate_pair_count()
     );
