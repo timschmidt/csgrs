@@ -2275,9 +2275,18 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(summary_cache.output_contour_count(), Some(1));
     assert_eq!(summary_cache.output_segment_count(), Some(4));
+    let output_cache = result.output_cache().unwrap();
     assert_eq!(
-        result.boundary_build_report(),
-        result.output_cache().unwrap().boundary_build_report()
+        result.boundary_build_stage(),
+        output_cache.boundary_build_stage()
+    );
+    assert_eq!(
+        result.boundary_build_status(),
+        output_cache.boundary_build_status()
+    );
+    assert_eq!(
+        result.boundary_build_validation_intersection_event_count(),
+        output_cache.boundary_build_validation_intersection_event_count()
     );
     assert_eq!(
         result.boundary_build_stage(),
@@ -3649,9 +3658,18 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(summary_cache.output_contour_count(), Some(1));
     assert_eq!(summary_cache.output_segment_count(), Some(2));
+    let output_cache = result.output_cache().unwrap();
     assert_eq!(
-        result.boundary_build_report(),
-        result.output_cache().unwrap().boundary_build_report()
+        result.boundary_build_stage(),
+        output_cache.boundary_build_stage()
+    );
+    assert_eq!(
+        result.boundary_build_status(),
+        output_cache.boundary_build_status()
+    );
+    assert_eq!(
+        result.boundary_build_validation_intersection_event_count(),
+        output_cache.boundary_build_validation_intersection_event_count()
     );
     let boundary_output_cache = result.boundary_output_cache().unwrap();
     assert_eq!(result.output_contour_count(), Some(1));

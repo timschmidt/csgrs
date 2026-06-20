@@ -5904,6 +5904,104 @@ impl ExactCurveArrangementOutputCache2 {
         self.boundary_build_report.as_ref()
     }
 
+    /// Returns delegated boundary-role assignment stage, if reached.
+    pub const fn boundary_build_stage(&self) -> Option<RegionBoundaryContourBuildStage2> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.stage()),
+            None => None,
+        }
+    }
+
+    /// Returns delegated boundary-role assignment predicate path, if reached.
+    pub const fn boundary_build_predicate_path(
+        &self,
+    ) -> Option<RegionBoundaryContourBuildPredicatePath2> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.predicate_path()),
+            None => None,
+        }
+    }
+
+    /// Returns delegated boundary-role assignment retained status, if reached.
+    pub const fn boundary_build_status(&self) -> Option<RetainedTopologyStatus> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.status()),
+            None => None,
+        }
+    }
+
+    /// Returns delegated boundary-role assignment blocker, if present.
+    pub const fn boundary_build_blocker(&self) -> Option<UncertaintyReason> {
+        match self.boundary_build_report() {
+            Some(report) => report.blocker(),
+            None => None,
+        }
+    }
+
+    /// Returns source contour count from delegated boundary-role assignment, if reached.
+    pub const fn boundary_build_source_contour_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.source_contour_count()),
+            None => None,
+        }
+    }
+
+    /// Returns source boundary segment count from delegated boundary-role assignment, if reached.
+    pub const fn boundary_build_source_segment_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.source_segment_count()),
+            None => None,
+        }
+    }
+
+    /// Returns contour-pair validation schedule size from delegated role assignment, if reached.
+    pub const fn boundary_build_validation_candidate_pair_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.validation_candidate_pair_count()),
+            None => None,
+        }
+    }
+
+    /// Returns contour-pair validation test count from delegated role assignment, if reached.
+    pub const fn boundary_build_validation_tested_pair_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.validation_tested_pair_count()),
+            None => None,
+        }
+    }
+
+    /// Returns exact validation intersection event count from delegated role assignment, if reached.
+    pub const fn boundary_build_validation_intersection_event_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.validation_intersection_event_count()),
+            None => None,
+        }
+    }
+
+    /// Returns containment classification count from delegated role assignment, if reached.
+    pub const fn boundary_build_nesting_classification_count(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => Some(report.nesting_classification_count()),
+            None => None,
+        }
+    }
+
+    /// Returns first blocking contour index from delegated role assignment, if present.
+    pub const fn boundary_build_blocker_first_contour_index(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => report.blocker_first_contour_index(),
+            None => None,
+        }
+    }
+
+    /// Returns second blocking contour index from delegated role assignment, if present.
+    pub const fn boundary_build_blocker_second_contour_index(&self) -> Option<usize> {
+        match self.boundary_build_report() {
+            Some(report) => report.blocker_second_contour_index(),
+            None => None,
+        }
+    }
+
     /// Returns retained final boundary output summary when available.
     pub const fn boundary_output_cache(
         &self,
