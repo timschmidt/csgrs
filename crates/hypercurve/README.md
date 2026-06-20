@@ -76,6 +76,11 @@ cases remain explicit uncertainty instead of being hidden behind display polylin
   rational curve work.
 - `Aabb2`, prepared line/arc/curve-string/contour/region views, and segment/region fact
   types preserve repeated-query structure.
+- `ExactCurveArrangementRequest2`, `ExactCurveWorkspace2`,
+  `ExactCurveArrangementEvaluation2`, `ExactCurveArrangementResult2`, and
+  `ExactCurveArrangementReport2` are the canonical retained unordered
+  line/arc arrangement surface; compatibility region-build reports are derived
+  from retained caches when needed.
 - Boolean, event, fragment, split, and boundary-loop types describe staged region
   boolean assembly.
 - `CurvePolicy`, `Classification<T>`, and uncertainty enums make exact, unresolved, and
@@ -137,7 +142,9 @@ Implemented today:
 - staged Bezier/conic offset candidates that construct exact line-image offsets and
   leave free-form offsets unresolved until certified trimming/fitting exists;
 - primitive line/arc offsets, checked offsets, cap styles, region event/fragment
-  extraction, boolean-boundary assembly, and conservative unresolved states.
+  extraction, boolean-boundary assembly, retained exact unordered line/arc
+  arrangement construction with source/split/endpoint/ring/role/output caches,
+  and conservative unresolved states.
 
 Known limits: shared-boundary overlap beyond certified fast paths, full Bezier/rational
 root isolation, NURBS, and offset self-intersection trimming remain future work.
@@ -207,6 +214,40 @@ let region = Region2::from_material_contours(vec![contour]);
 
 let location = region.classify_point(&p(1, 1), &CurvePolicy::certified())?;
 assert!(matches!(location, hypercurve::Classification::Decided(_)));
+```
+
+For unordered exact line/arc input, evaluate the retained arrangement attempt and
+read output, blockers, and reports from the result:
+
+```rust,ignore
+use hypercurve::{
+    Classification, CurvePolicy, ExactCurveArrangementAttempt2,
+    ExactCurveArrangementRequest2, FillRule, LineSeg2, Point2,
+};
+use hyperreal::Real;
+
+let p = |x, y| Point2::new(Real::from(x), Real::from(y));
+let lines = vec![
+    LineSeg2::try_new(p(0, 0), p(4, 0))?,
+    LineSeg2::try_new(p(4, 0), p(4, 4))?,
+    LineSeg2::try_new(p(4, 4), p(0, 4))?,
+    LineSeg2::try_new(p(0, 4), p(0, 0))?,
+];
+
+let request =
+    ExactCurveArrangementRequest2::from_unordered_line_segments(lines, FillRule::NonZero);
+let result = ExactCurveArrangementAttempt2::new(request).evaluate(&CurvePolicy::certified())?;
+let (classification, report) = result.into_region_classification_and_arrangement_report();
+
+assert!(report.status().unwrap().is_native_exact());
+let region = match classification {
+    Classification::Decided(region) => region,
+    Classification::Uncertain(reason) => panic!("arrangement blocked: {reason:?}"),
+};
+assert!(matches!(
+    region.classify_point(&p(2, 2), &CurvePolicy::certified())?,
+    Classification::Decided(_)
+));
 ```
 
 ## Development
