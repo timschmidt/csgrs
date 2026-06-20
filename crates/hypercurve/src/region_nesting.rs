@@ -7245,6 +7245,31 @@ impl ExactCurveArrangementResult2 {
         (evaluation, classification)
     }
 
+    /// Consumes this result and returns the materialized region with a derived arrangement report.
+    ///
+    /// This is the retained replacement for deprecated `Region2::from_unordered_*_with_report`
+    /// callers that need owned output plus report data without taking the legacy compatibility
+    /// result.
+    pub fn into_region_and_arrangement_report(
+        self,
+    ) -> (Option<Region2>, ExactCurveArrangementReport2) {
+        let report = self.arrangement_report();
+        let region = self.into_region();
+        (region, report)
+    }
+
+    /// Consumes this result and returns the region classification with a derived arrangement report.
+    ///
+    /// This preserves the retained blocker in the classification while keeping the report derived
+    /// from arrangement caches rather than the legacy compatibility result.
+    pub fn into_region_classification_and_arrangement_report(
+        self,
+    ) -> (Classification<Region2>, ExactCurveArrangementReport2) {
+        let report = self.arrangement_report();
+        let classification = self.into_region_classification();
+        (classification, report)
+    }
+
     /// Consumes this result and returns the materialized region, if any.
     pub fn into_region(self) -> Option<Region2> {
         self.into_compatibility_region_build_result().into_region()
