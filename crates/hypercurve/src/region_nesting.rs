@@ -9194,12 +9194,12 @@ impl ExactCurveArrangementEvaluation2 {
 
     /// Returns final output contour count retained after boundary role assignment.
     pub const fn output_contour_count(&self) -> Option<usize> {
-        self.summary_cache().output_contour_count()
+        self.workspace().output_contour_count()
     }
 
     /// Returns final output boundary segment count retained after boundary role assignment.
     pub const fn output_segment_count(&self) -> Option<usize> {
-        self.summary_cache().output_segment_count()
+        self.workspace().output_segment_count()
     }
 }
 
@@ -10832,12 +10832,12 @@ impl ExactCurveArrangementResult2 {
 
     /// Returns final output contour count retained after boundary role assignment.
     pub const fn output_contour_count(&self) -> Option<usize> {
-        self.summary_cache().output_contour_count()
+        self.workspace().output_contour_count()
     }
 
     /// Returns final output boundary segment count retained after boundary role assignment.
     pub const fn output_segment_count(&self) -> Option<usize> {
-        self.summary_cache().output_segment_count()
+        self.workspace().output_segment_count()
     }
 
     /// Returns the underlying legacy region build result.
