@@ -10431,10 +10431,7 @@ impl ExactCurveArrangementResult2 {
 
     /// Returns delegated boundary-contour role assignment evidence, when output reached it.
     pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
-        match self.output_cache() {
-            Some(output_cache) => output_cache.boundary_build_report(),
-            None => None,
-        }
+        self.workspace().boundary_build_report()
     }
 
     /// Returns final boundary-role assignment stage, if reached.
@@ -10539,20 +10536,14 @@ impl ExactCurveArrangementResult2 {
     pub const fn boundary_output_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputBoundaryCache2> {
-        match self.output_cache() {
-            Some(output_cache) => output_cache.boundary_output_cache(),
-            None => None,
-        }
+        self.workspace().boundary_output_cache()
     }
 
     /// Returns final boundary output counts grouped by material/hole role.
     pub const fn boundary_output_role_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputBoundaryRoleBucketCache2> {
-        match self.boundary_output_cache() {
-            Some(boundary_cache) => Some(boundary_cache.role_bucket_cache()),
-            None => None,
-        }
+        self.workspace().boundary_output_role_bucket_cache()
     }
 
     /// Returns retained final boundary role bucket count.
