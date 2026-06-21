@@ -2818,6 +2818,48 @@ impl ExactCurveWorkspace2 {
         self.endpoint_graph_cache.as_ref()
     }
 
+    /// Returns the exact predicate family used by retained endpoint-graph validation.
+    pub const fn endpoint_graph_predicate_path(
+        &self,
+    ) -> Option<RegionLineSegmentEndpointGraphPredicatePath2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.predicate_path()),
+            None => None,
+        }
+    }
+
+    /// Returns arranged endpoint count validated by retained endpoint-graph evidence.
+    pub const fn endpoint_graph_endpoint_count(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.endpoint_count()),
+            None => None,
+        }
+    }
+
+    /// Returns exact structural endpoint bucket count.
+    pub const fn endpoint_graph_structural_bucket_count(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.structural_bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns structural endpoint singleton bucket count.
+    pub const fn endpoint_graph_structural_singleton_bucket_count(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.structural_singleton_bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained structural endpoint bucket size.
+    pub const fn endpoint_graph_max_structural_bucket_size(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.max_structural_bucket_size()),
+            None => None,
+        }
+    }
+
     /// Returns exact arranged endpoint buckets retained by endpoint-graph validation.
     pub const fn arranged_endpoint_bucket_cache(
         &self,
@@ -8274,42 +8316,28 @@ impl ExactCurveArrangementEvaluation2 {
     pub const fn endpoint_graph_predicate_path(
         &self,
     ) -> Option<RegionLineSegmentEndpointGraphPredicatePath2> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.predicate_path()),
-            None => None,
-        }
+        self.workspace().endpoint_graph_predicate_path()
     }
 
     /// Returns arranged endpoint count validated by retained endpoint-graph evidence.
     pub const fn endpoint_graph_endpoint_count(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.endpoint_count()),
-            None => None,
-        }
+        self.workspace().endpoint_graph_endpoint_count()
     }
 
     /// Returns exact structural endpoint bucket count.
     pub const fn endpoint_graph_structural_bucket_count(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.structural_bucket_count()),
-            None => None,
-        }
+        self.workspace().endpoint_graph_structural_bucket_count()
     }
 
     /// Returns structural endpoint singleton bucket count.
     pub const fn endpoint_graph_structural_singleton_bucket_count(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.structural_singleton_bucket_count()),
-            None => None,
-        }
+        self.workspace()
+            .endpoint_graph_structural_singleton_bucket_count()
     }
 
     /// Returns the largest retained structural endpoint bucket size.
     pub const fn endpoint_graph_max_structural_bucket_size(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.max_structural_bucket_size()),
-            None => None,
-        }
+        self.workspace().endpoint_graph_max_structural_bucket_size()
     }
 
     /// Returns exact arranged endpoint buckets retained by endpoint-graph validation.
@@ -9817,42 +9845,28 @@ impl ExactCurveArrangementResult2 {
     pub const fn endpoint_graph_predicate_path(
         &self,
     ) -> Option<RegionLineSegmentEndpointGraphPredicatePath2> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.predicate_path()),
-            None => None,
-        }
+        self.workspace().endpoint_graph_predicate_path()
     }
 
     /// Returns arranged endpoint count validated by retained endpoint-graph evidence.
     pub const fn endpoint_graph_endpoint_count(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.endpoint_count()),
-            None => None,
-        }
+        self.workspace().endpoint_graph_endpoint_count()
     }
 
     /// Returns exact structural endpoint bucket count.
     pub const fn endpoint_graph_structural_bucket_count(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.structural_bucket_count()),
-            None => None,
-        }
+        self.workspace().endpoint_graph_structural_bucket_count()
     }
 
     /// Returns structural endpoint singleton bucket count.
     pub const fn endpoint_graph_structural_singleton_bucket_count(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.structural_singleton_bucket_count()),
-            None => None,
-        }
+        self.workspace()
+            .endpoint_graph_structural_singleton_bucket_count()
     }
 
     /// Returns the largest retained structural endpoint bucket size.
     pub const fn endpoint_graph_max_structural_bucket_size(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.max_structural_bucket_size()),
-            None => None,
-        }
+        self.workspace().endpoint_graph_max_structural_bucket_size()
     }
 
     /// Returns exact arranged endpoint buckets retained by endpoint-graph validation.
@@ -12634,42 +12648,28 @@ impl ExactCurveArrangementReport2 {
     pub const fn endpoint_graph_predicate_path(
         &self,
     ) -> Option<RegionLineSegmentEndpointGraphPredicatePath2> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.predicate_path()),
-            None => None,
-        }
+        self.workspace().endpoint_graph_predicate_path()
     }
 
     /// Returns arranged endpoint count validated by retained endpoint-graph evidence.
     pub const fn endpoint_graph_endpoint_count(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.endpoint_count()),
-            None => None,
-        }
+        self.workspace().endpoint_graph_endpoint_count()
     }
 
     /// Returns exact structural endpoint bucket count.
     pub const fn endpoint_graph_structural_bucket_count(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.structural_bucket_count()),
-            None => None,
-        }
+        self.workspace().endpoint_graph_structural_bucket_count()
     }
 
     /// Returns exact structural endpoint singleton bucket count.
     pub const fn endpoint_graph_structural_singleton_bucket_count(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.structural_singleton_bucket_count()),
-            None => None,
-        }
+        self.workspace()
+            .endpoint_graph_structural_singleton_bucket_count()
     }
 
     /// Returns the largest exact structural endpoint bucket size.
     pub const fn endpoint_graph_max_structural_bucket_size(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.max_structural_bucket_size()),
-            None => None,
-        }
+        self.workspace().endpoint_graph_max_structural_bucket_size()
     }
 
     /// Returns dangling endpoint count found during endpoint-graph validation.
