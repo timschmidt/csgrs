@@ -9174,17 +9174,17 @@ impl ExactCurveArrangementEvaluation2 {
 
     /// Returns output ring count retained by ring assembly, when available.
     pub const fn output_ring_count(&self) -> Option<usize> {
-        self.summary_cache().output_ring_count()
+        self.workspace().output_ring_count()
     }
 
     /// Returns output boundary segment count retained by ring assembly, when available.
     pub const fn output_boundary_segment_count(&self) -> Option<usize> {
-        self.summary_cache().output_boundary_segment_count()
+        self.workspace().output_boundary_segment_count()
     }
 
     /// Returns output boundary primitive-family counts retained by ring assembly, when available.
     pub const fn output_boundary_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.summary_cache().output_boundary_segment_kind_counts()
+        self.workspace().output_boundary_segment_kind_counts()
     }
 
     /// Returns final output contour count retained after boundary role assignment.
@@ -10812,17 +10812,17 @@ impl ExactCurveArrangementResult2 {
 
     /// Returns output ring count retained by ring assembly, when available.
     pub const fn output_ring_count(&self) -> Option<usize> {
-        self.summary_cache().output_ring_count()
+        self.workspace().output_ring_count()
     }
 
     /// Returns output boundary segment count retained by ring assembly, when available.
     pub const fn output_boundary_segment_count(&self) -> Option<usize> {
-        self.summary_cache().output_boundary_segment_count()
+        self.workspace().output_boundary_segment_count()
     }
 
     /// Returns output boundary primitive-family counts retained by ring assembly, when available.
     pub const fn output_boundary_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.summary_cache().output_boundary_segment_kind_counts()
+        self.workspace().output_boundary_segment_kind_counts()
     }
 
     /// Returns final output contour count retained after boundary role assignment.

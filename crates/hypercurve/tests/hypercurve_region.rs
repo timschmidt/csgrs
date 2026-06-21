@@ -3202,6 +3202,18 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(summary_cache.output_contour_count(), Some(1));
     assert_eq!(summary_cache.output_segment_count(), Some(4));
+    assert_eq!(
+        result.workspace().output_ring_count(),
+        result.output_ring_count()
+    );
+    assert_eq!(
+        result.workspace().output_boundary_segment_count(),
+        result.output_boundary_segment_count()
+    );
+    assert_eq!(
+        result.workspace().output_boundary_segment_kind_counts(),
+        result.output_boundary_segment_kind_counts()
+    );
     let evaluation = result.evaluation();
     assert_eq!(evaluation.summary_cache(), summary_cache);
     assert_eq!(evaluation.evaluated_output(), result.evaluated_output());
