@@ -2012,11 +2012,20 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(result.split_blocker_cache(), None);
     let split_relation_bucket_cache = result.split_relation_bucket_cache().unwrap();
     assert_eq!(split_relation_bucket_cache.bucket_count(), 3);
+    assert_eq!(result.split_relation_bucket_count(), Some(3));
     assert_eq!(
         split_relation_bucket_cache.relation_count(),
         result.split_point_relation_count().unwrap()
             + result.split_overlap_relation_count().unwrap()
             + result.split_uncertain_relation_count().unwrap()
+    );
+    assert_eq!(
+        result.split_relation_ref_count(),
+        Some(split_relation_bucket_cache.relation_count())
+    );
+    assert_eq!(
+        result.split_relation_max_bucket_size(),
+        Some(split_relation_bucket_cache.max_bucket_size())
     );
     assert_eq!(
         split_relation_bucket_cache.point_relation_count(),
@@ -2063,6 +2072,9 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(split_intersection_bucket_cache.bucket_count(), 4);
     assert_eq!(split_intersection_bucket_cache.singleton_bucket_count(), 4);
     assert_eq!(split_intersection_bucket_cache.max_bucket_size(), 1);
+    assert_eq!(result.split_intersection_bucket_count(), Some(4));
+    assert_eq!(result.split_intersection_singleton_bucket_count(), Some(4));
+    assert_eq!(result.split_intersection_max_bucket_size(), Some(1));
     assert_eq!(split_intersection_bucket_cache.buckets().len(), 4);
     let first_split_intersection_bucket = &split_intersection_bucket_cache.buckets()[0];
     assert_eq!(first_split_intersection_bucket.point(), &p(4, 0));
@@ -2083,6 +2095,10 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(
         split_intersection_parameter_cache.source_parameter_ref_count(),
         result.split_intersection_reports().unwrap().len() * 2
+    );
+    assert_eq!(
+        result.split_intersection_source_parameter_ref_count(),
+        Some(split_intersection_parameter_cache.source_parameter_ref_count())
     );
     assert_eq!(
         split_intersection_parameter_cache.parameters().len(),
@@ -3260,6 +3276,34 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(
         arrangement_report.split_intersection_parameter_cache(),
         result.split_intersection_parameter_cache()
+    );
+    assert_eq!(
+        arrangement_report.split_relation_bucket_count(),
+        result.split_relation_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.split_relation_ref_count(),
+        result.split_relation_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.split_relation_max_bucket_size(),
+        result.split_relation_max_bucket_size()
+    );
+    assert_eq!(
+        arrangement_report.split_intersection_bucket_count(),
+        result.split_intersection_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.split_intersection_singleton_bucket_count(),
+        result.split_intersection_singleton_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.split_intersection_max_bucket_size(),
+        result.split_intersection_max_bucket_size()
+    );
+    assert_eq!(
+        arrangement_report.split_intersection_source_parameter_ref_count(),
+        result.split_intersection_source_parameter_ref_count()
     );
     assert_eq!(
         arrangement_report.split_blocker_cache(),
@@ -4508,6 +4552,38 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         result.evaluation().split_uncertain_relation_count(),
         result.split_uncertain_relation_count()
+    );
+    assert_eq!(
+        result.evaluation().split_relation_bucket_count(),
+        result.split_relation_bucket_count()
+    );
+    assert_eq!(
+        result.evaluation().split_relation_ref_count(),
+        result.split_relation_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().split_relation_max_bucket_size(),
+        result.split_relation_max_bucket_size()
+    );
+    assert_eq!(
+        result.evaluation().split_intersection_bucket_count(),
+        result.split_intersection_bucket_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .split_intersection_singleton_bucket_count(),
+        result.split_intersection_singleton_bucket_count()
+    );
+    assert_eq!(
+        result.evaluation().split_intersection_max_bucket_size(),
+        result.split_intersection_max_bucket_size()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .split_intersection_source_parameter_ref_count(),
+        result.split_intersection_source_parameter_ref_count()
     );
     assert_eq!(
         result.evaluation().split_intersection_points(),
@@ -6121,11 +6197,20 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(result.split_blocker_cache(), None);
     let split_relation_bucket_cache = result.split_relation_bucket_cache().unwrap();
     assert_eq!(split_relation_bucket_cache.bucket_count(), 3);
+    assert_eq!(result.split_relation_bucket_count(), Some(3));
     assert_eq!(
         split_relation_bucket_cache.relation_count(),
         result.split_point_relation_count().unwrap()
             + result.split_overlap_relation_count().unwrap()
             + result.split_uncertain_relation_count().unwrap()
+    );
+    assert_eq!(
+        result.split_relation_ref_count(),
+        Some(split_relation_bucket_cache.relation_count())
+    );
+    assert_eq!(
+        result.split_relation_max_bucket_size(),
+        Some(split_relation_bucket_cache.max_bucket_size())
     );
     assert_eq!(
         split_relation_bucket_cache.point_relation_count(),
@@ -6175,6 +6260,12 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(split_intersection_bucket_cache.singleton_bucket_count(), 2);
     assert_eq!(split_intersection_bucket_cache.max_bucket_size(), 1);
+    assert_eq!(
+        result.split_intersection_bucket_count(),
+        Some(split_intersection_bucket_cache.bucket_count())
+    );
+    assert_eq!(result.split_intersection_singleton_bucket_count(), Some(2));
+    assert_eq!(result.split_intersection_max_bucket_size(), Some(1));
     assert_eq!(split_intersection_bucket_cache.buckets().len(), 2);
     let first_split_intersection_bucket = &split_intersection_bucket_cache.buckets()[0];
     assert_eq!(first_split_intersection_bucket.intersections().len(), 1);
@@ -6194,6 +6285,10 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         split_intersection_parameter_cache.source_parameter_ref_count(),
         result.split_intersection_reports().unwrap().len() * 2
+    );
+    assert_eq!(
+        result.split_intersection_source_parameter_ref_count(),
+        Some(split_intersection_parameter_cache.source_parameter_ref_count())
     );
     assert_eq!(
         split_intersection_parameter_cache.parameters().len(),
@@ -7242,6 +7337,34 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.split_schedule_max_bucket_size()
     );
     assert_eq!(arrangement_report.split_cache(), result.split_cache());
+    assert_eq!(
+        arrangement_report.split_relation_bucket_count(),
+        result.split_relation_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.split_relation_ref_count(),
+        result.split_relation_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.split_relation_max_bucket_size(),
+        result.split_relation_max_bucket_size()
+    );
+    assert_eq!(
+        arrangement_report.split_intersection_bucket_count(),
+        result.split_intersection_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.split_intersection_singleton_bucket_count(),
+        result.split_intersection_singleton_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.split_intersection_max_bucket_size(),
+        result.split_intersection_max_bucket_size()
+    );
+    assert_eq!(
+        arrangement_report.split_intersection_source_parameter_ref_count(),
+        result.split_intersection_source_parameter_ref_count()
+    );
     assert_eq!(
         arrangement_report.endpoint_graph_cache(),
         result.endpoint_graph_cache()

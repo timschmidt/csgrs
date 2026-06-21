@@ -2585,6 +2585,30 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns retained split-stage relation bucket count.
+    pub const fn split_relation_bucket_count(&self) -> Option<usize> {
+        match self.split_relation_bucket_cache() {
+            Some(relation_cache) => Some(relation_cache.bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained split-stage classified relation references.
+    pub const fn split_relation_ref_count(&self) -> Option<usize> {
+        match self.split_relation_bucket_cache() {
+            Some(relation_cache) => Some(relation_cache.relation_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained split-stage relation bucket size.
+    pub const fn split_relation_max_bucket_size(&self) -> Option<usize> {
+        match self.split_relation_bucket_cache() {
+            Some(relation_cache) => Some(relation_cache.max_bucket_size()),
+            None => None,
+        }
+    }
+
     /// Returns exact split-intersection point buckets.
     pub const fn split_intersection_bucket_cache(
         &self,
@@ -2595,12 +2619,44 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns retained exact split-intersection point bucket count.
+    pub const fn split_intersection_bucket_count(&self) -> Option<usize> {
+        match self.split_intersection_bucket_cache() {
+            Some(intersection_cache) => Some(intersection_cache.bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained split-intersection buckets containing one event.
+    pub const fn split_intersection_singleton_bucket_count(&self) -> Option<usize> {
+        match self.split_intersection_bucket_cache() {
+            Some(intersection_cache) => Some(intersection_cache.singleton_bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained split-intersection point bucket size.
+    pub const fn split_intersection_max_bucket_size(&self) -> Option<usize> {
+        match self.split_intersection_bucket_cache() {
+            Some(intersection_cache) => Some(intersection_cache.max_bucket_size()),
+            None => None,
+        }
+    }
+
     /// Returns exact source-parameter evidence for retained split intersections.
     pub const fn split_intersection_parameter_cache(
         &self,
     ) -> Option<&ExactCurveArrangementSplitIntersectionParameterCache2> {
         match self.split_cache() {
             Some(split_cache) => Some(split_cache.intersection_parameter_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained source-parameter references for split intersections.
+    pub const fn split_intersection_source_parameter_ref_count(&self) -> Option<usize> {
+        match self.split_intersection_parameter_cache() {
+            Some(parameter_cache) => Some(parameter_cache.source_parameter_ref_count()),
             None => None,
         }
     }
@@ -7865,6 +7921,42 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().split_intersection_parameter_cache()
     }
 
+    /// Returns retained split-stage relation bucket count.
+    pub const fn split_relation_bucket_count(&self) -> Option<usize> {
+        self.workspace().split_relation_bucket_count()
+    }
+
+    /// Returns retained split-stage classified relation references.
+    pub const fn split_relation_ref_count(&self) -> Option<usize> {
+        self.workspace().split_relation_ref_count()
+    }
+
+    /// Returns the largest retained split-stage relation bucket size.
+    pub const fn split_relation_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().split_relation_max_bucket_size()
+    }
+
+    /// Returns retained exact split-intersection point bucket count.
+    pub const fn split_intersection_bucket_count(&self) -> Option<usize> {
+        self.workspace().split_intersection_bucket_count()
+    }
+
+    /// Returns retained split-intersection buckets containing one event.
+    pub const fn split_intersection_singleton_bucket_count(&self) -> Option<usize> {
+        self.workspace().split_intersection_singleton_bucket_count()
+    }
+
+    /// Returns the largest retained split-intersection point bucket size.
+    pub const fn split_intersection_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().split_intersection_max_bucket_size()
+    }
+
+    /// Returns retained source-parameter references for split intersections.
+    pub const fn split_intersection_source_parameter_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .split_intersection_source_parameter_ref_count()
+    }
+
     /// Returns split-stage blocker source-pair evidence, when split evaluation blocked.
     pub const fn split_blocker_cache(&self) -> Option<&ExactCurveArrangementSplitBlockerCache2> {
         self.workspace().split_blocker_cache()
@@ -9320,6 +9412,42 @@ impl ExactCurveArrangementResult2 {
             Some(split_cache) => Some(split_cache.intersection_parameter_cache()),
             None => None,
         }
+    }
+
+    /// Returns retained split-stage relation bucket count.
+    pub const fn split_relation_bucket_count(&self) -> Option<usize> {
+        self.workspace().split_relation_bucket_count()
+    }
+
+    /// Returns retained split-stage classified relation references.
+    pub const fn split_relation_ref_count(&self) -> Option<usize> {
+        self.workspace().split_relation_ref_count()
+    }
+
+    /// Returns the largest retained split-stage relation bucket size.
+    pub const fn split_relation_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().split_relation_max_bucket_size()
+    }
+
+    /// Returns retained exact split-intersection point bucket count.
+    pub const fn split_intersection_bucket_count(&self) -> Option<usize> {
+        self.workspace().split_intersection_bucket_count()
+    }
+
+    /// Returns retained split-intersection buckets containing one event.
+    pub const fn split_intersection_singleton_bucket_count(&self) -> Option<usize> {
+        self.workspace().split_intersection_singleton_bucket_count()
+    }
+
+    /// Returns the largest retained split-intersection point bucket size.
+    pub const fn split_intersection_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().split_intersection_max_bucket_size()
+    }
+
+    /// Returns retained source-parameter references for split intersections.
+    pub const fn split_intersection_source_parameter_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .split_intersection_source_parameter_ref_count()
     }
 
     /// Returns split-stage blocker source-pair evidence, when split evaluation blocked.
@@ -11815,6 +11943,42 @@ impl ExactCurveArrangementReport2 {
             Some(split_cache) => Some(split_cache.intersection_parameter_cache()),
             None => None,
         }
+    }
+
+    /// Returns retained split-stage relation bucket count.
+    pub const fn split_relation_bucket_count(&self) -> Option<usize> {
+        self.workspace().split_relation_bucket_count()
+    }
+
+    /// Returns retained split-stage classified relation references.
+    pub const fn split_relation_ref_count(&self) -> Option<usize> {
+        self.workspace().split_relation_ref_count()
+    }
+
+    /// Returns the largest retained split-stage relation bucket size.
+    pub const fn split_relation_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().split_relation_max_bucket_size()
+    }
+
+    /// Returns retained exact split-intersection point bucket count.
+    pub const fn split_intersection_bucket_count(&self) -> Option<usize> {
+        self.workspace().split_intersection_bucket_count()
+    }
+
+    /// Returns retained split-intersection buckets containing one event.
+    pub const fn split_intersection_singleton_bucket_count(&self) -> Option<usize> {
+        self.workspace().split_intersection_singleton_bucket_count()
+    }
+
+    /// Returns the largest retained split-intersection point bucket size.
+    pub const fn split_intersection_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().split_intersection_max_bucket_size()
+    }
+
+    /// Returns retained source-parameter references for split intersections.
+    pub const fn split_intersection_source_parameter_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .split_intersection_source_parameter_ref_count()
     }
 
     /// Returns split-stage blocker source-pair evidence, when split evaluation blocked.
