@@ -1312,6 +1312,10 @@ impl Region2 {
     /// the result as a decided/uncertain classification and returns an
     /// [`ExactCurveArrangementReport2`] derived from retained arrangement caches,
     /// not a legacy-shaped build report.
+    #[deprecated(
+        since = "0.3.0",
+        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate, then ExactCurveArrangementResult2::arrangement_report"
+    )]
     pub fn from_unordered_line_segments_borrowed_with_arrangement_report(
         segments: &[LineSeg2],
         fill_rule: FillRule,
@@ -1329,6 +1333,10 @@ impl Region2 {
     ///
     /// This is the owned-input counterpart to
     /// [`Region2::from_unordered_line_segments_borrowed_with_arrangement_report`].
+    #[deprecated(
+        since = "0.3.0",
+        note = "use ExactCurveArrangementRequest2::from_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate, then ExactCurveArrangementResult2::arrangement_report"
+    )]
     pub fn from_unordered_line_segments_with_arrangement_report(
         segments: Vec<LineSeg2>,
         fill_rule: FillRule,
@@ -1609,6 +1617,10 @@ impl Region2 {
     /// [`Region2::from_unordered_segments_borrowed_with_report`]. It keeps the
     /// result as a decided/uncertain classification and returns an
     /// [`ExactCurveArrangementReport2`] derived from retained arrangement caches.
+    #[deprecated(
+        since = "0.3.0",
+        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_segments with ExactCurveArrangementAttempt2::evaluate, then ExactCurveArrangementResult2::arrangement_report"
+    )]
     pub fn from_unordered_segments_borrowed_with_arrangement_report(
         segments: &[Segment2],
         fill_rule: FillRule,
@@ -1625,6 +1637,10 @@ impl Region2 {
     ///
     /// This is the owned-input counterpart to
     /// [`Region2::from_unordered_segments_borrowed_with_arrangement_report`].
+    #[deprecated(
+        since = "0.3.0",
+        note = "use ExactCurveArrangementRequest2::from_unordered_segments with ExactCurveArrangementAttempt2::evaluate, then ExactCurveArrangementResult2::arrangement_report"
+    )]
     pub fn from_unordered_segments_with_arrangement_report(
         segments: Vec<Segment2>,
         fill_rule: FillRule,

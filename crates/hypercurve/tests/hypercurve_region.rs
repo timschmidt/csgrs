@@ -1344,20 +1344,17 @@ fn exact_curve_arrangement_result_returns_region_classification() {
 }
 
 #[test]
-fn unordered_segments_convenience_returns_arrangement_report() {
+fn unordered_segments_attempt_returns_arrangement_report() {
     let lines = vec![
         line(0, 0, 4, 0),
         line(0, 4, 4, 4),
         line(0, 0, 0, 4),
         line(4, 0, 4, 4),
     ];
-    let (classification, report) =
-        Region2::from_unordered_line_segments_borrowed_with_arrangement_report(
-            &lines,
-            FillRule::NonZero,
-            &policy(),
-        )
-        .unwrap();
+    let result =
+        evaluate_borrowed_unordered_line_segments(&lines, FillRule::NonZero, &policy()).unwrap();
+    let classification = result.region_classification();
+    let report = result.arrangement_report();
     assert!(report.status().unwrap().is_native_exact());
     assert_eq!(report.source_segment_count(), 4);
     assert!(report.source_line_segments().is_some());
@@ -1369,24 +1366,20 @@ fn unordered_segments_convenience_returns_arrangement_report() {
         Classification::Uncertain(reason) => panic!("expected decided line region, got {reason:?}"),
     }
 
-    let (classification, report) = Region2::from_unordered_line_segments_with_arrangement_report(
-        lines.clone(),
-        FillRule::NonZero,
-        &policy(),
-    )
-    .unwrap();
+    let result =
+        evaluate_unordered_line_segments(lines.clone(), FillRule::NonZero, &policy()).unwrap();
+    let classification = result.region_classification();
+    let report = result.arrangement_report();
     assert!(report.status().unwrap().is_native_exact());
     assert_eq!(report.source_segment_count(), 4);
     assert!(matches!(classification, Classification::Decided(_)));
 
     let disconnected = vec![line(0, 0, 1, 0), line(3, 0, 4, 0)];
-    let (classification, report) =
-        Region2::from_unordered_line_segments_borrowed_with_arrangement_report(
-            &disconnected,
-            FillRule::NonZero,
-            &policy(),
-        )
-        .unwrap();
+    let result =
+        evaluate_borrowed_unordered_line_segments(&disconnected, FillRule::NonZero, &policy())
+            .unwrap();
+    let classification = result.region_classification();
+    let report = result.arrangement_report();
     assert_eq!(
         classification,
         Classification::Uncertain(UncertaintyReason::Boundary)
@@ -1395,24 +1388,20 @@ fn unordered_segments_convenience_returns_arrangement_report() {
     assert_eq!(report.materialized_region(), Some(false));
 
     let native_segments = lines.into_iter().map(Segment2::Line).collect::<Vec<_>>();
-    let (classification, report) =
-        Region2::from_unordered_segments_borrowed_with_arrangement_report(
-            &native_segments,
-            FillRule::NonZero,
-            &policy(),
-        )
-        .unwrap();
+    let result =
+        evaluate_borrowed_unordered_segments(&native_segments, FillRule::NonZero, &policy())
+            .unwrap();
+    let classification = result.region_classification();
+    let report = result.arrangement_report();
     assert!(report.status().unwrap().is_native_exact());
     assert_eq!(report.source_segment_count(), 4);
     assert!(report.source_line_segments().is_none());
     assert!(matches!(classification, Classification::Decided(_)));
 
-    let (classification, report) = Region2::from_unordered_segments_with_arrangement_report(
-        native_segments,
-        FillRule::NonZero,
-        &policy(),
-    )
-    .unwrap();
+    let result =
+        evaluate_unordered_segments(native_segments, FillRule::NonZero, &policy()).unwrap();
+    let classification = result.region_classification();
+    let report = result.arrangement_report();
     assert!(report.status().unwrap().is_native_exact());
     assert!(matches!(classification, Classification::Decided(_)));
 }
