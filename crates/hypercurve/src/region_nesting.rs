@@ -9907,10 +9907,7 @@ impl ExactCurveArrangementResult2 {
     pub const fn arranged_endpoint_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointBucketCache2> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.endpoint_bucket_cache()),
-            None => None,
-        }
+        self.workspace().arranged_endpoint_bucket_cache()
     }
 
     /// Returns retained arranged endpoint references in structural buckets.
@@ -9937,10 +9934,7 @@ impl ExactCurveArrangementResult2 {
     pub const fn arranged_endpoint_side_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointSideBucketCache2> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.endpoint_side_bucket_cache()),
-            None => None,
-        }
+        self.workspace().arranged_endpoint_side_bucket_cache()
     }
 
     /// Returns retained arranged endpoint side bucket count.
@@ -9972,10 +9966,7 @@ impl ExactCurveArrangementResult2 {
     pub const fn arranged_endpoint_point_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointPointCache2> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.endpoint_point_cache()),
-            None => None,
-        }
+        self.workspace().arranged_endpoint_point_cache()
     }
 
     /// Returns retained arranged fragment endpoint records.
@@ -9993,10 +9984,7 @@ impl ExactCurveArrangementResult2 {
     pub const fn arranged_endpoint_degree_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointDegreeBucketCache2> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.endpoint_degree_bucket_cache()),
-            None => None,
-        }
+        self.workspace().arranged_endpoint_degree_bucket_cache()
     }
 
     /// Returns retained arranged endpoint degree bucket count.
@@ -12327,10 +12315,7 @@ impl ExactCurveArrangementReport2 {
     pub const fn arranged_endpoint_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointBucketCache2> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.endpoint_bucket_cache()),
-            None => None,
-        }
+        self.workspace().arranged_endpoint_bucket_cache()
     }
 
     /// Returns retained arranged endpoint references in structural buckets.
@@ -12357,10 +12342,7 @@ impl ExactCurveArrangementReport2 {
     pub const fn arranged_endpoint_side_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointSideBucketCache2> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.endpoint_side_bucket_cache()),
-            None => None,
-        }
+        self.workspace().arranged_endpoint_side_bucket_cache()
     }
 
     /// Returns retained arranged endpoint side bucket count.
@@ -12392,10 +12374,7 @@ impl ExactCurveArrangementReport2 {
     pub const fn arranged_endpoint_point_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointPointCache2> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.endpoint_point_cache()),
-            None => None,
-        }
+        self.workspace().arranged_endpoint_point_cache()
     }
 
     /// Returns retained arranged fragment endpoint records.
@@ -12413,10 +12392,7 @@ impl ExactCurveArrangementReport2 {
     pub const fn arranged_endpoint_degree_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointDegreeBucketCache2> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.endpoint_degree_bucket_cache()),
-            None => None,
-        }
+        self.workspace().arranged_endpoint_degree_bucket_cache()
     }
 
     /// Returns retained arranged endpoint degree bucket count.
