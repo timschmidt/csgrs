@@ -3815,6 +3815,18 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns material and hole role buckets in stable order.
+    pub fn role_buckets(&self) -> Option<&[ExactCurveArrangementOutputRoleBucket2]> {
+        self.role_cache()
+            .map(ExactCurveArrangementOutputRoleCache2::buckets)
+    }
+
+    /// Returns retained output role reports when role assignment was reached.
+    pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
+        self.boundary_build_report()
+            .map(RegionBoundaryContourBuildReport2::role_reports)
+    }
+
     /// Returns output role assignment buckets grouped by topology status.
     pub const fn role_status_bucket_cache(
         &self,
@@ -9099,14 +9111,12 @@ impl ExactCurveArrangementEvaluation2 {
 
     /// Returns material and hole role buckets in stable order.
     pub fn role_buckets(&self) -> Option<&[ExactCurveArrangementOutputRoleBucket2]> {
-        self.role_cache()
-            .map(ExactCurveArrangementOutputRoleCache2::buckets)
+        self.workspace().role_buckets()
     }
 
     /// Returns retained output role reports when role assignment was reached.
     pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
-        self.boundary_build_report()
-            .map(RegionBoundaryContourBuildReport2::role_reports)
+        self.workspace().role_reports()
     }
 
     /// Returns a derived report assembled only from retained evaluation caches.
@@ -10728,14 +10738,12 @@ impl ExactCurveArrangementResult2 {
 
     /// Returns material and hole role buckets in stable order.
     pub fn role_buckets(&self) -> Option<&[ExactCurveArrangementOutputRoleBucket2]> {
-        self.role_cache()
-            .map(ExactCurveArrangementOutputRoleCache2::buckets)
+        self.workspace().role_buckets()
     }
 
     /// Returns retained output role reports when role assignment was reached.
     pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
-        self.boundary_build_report()
-            .map(RegionBoundaryContourBuildReport2::role_reports)
+        self.workspace().role_reports()
     }
 
     /// Returns a derived report assembled only from retained arrangement caches.
@@ -13338,8 +13346,7 @@ impl ExactCurveArrangementReport2 {
 
     /// Returns material and hole role buckets in stable order.
     pub fn role_buckets(&self) -> Option<&[ExactCurveArrangementOutputRoleBucket2]> {
-        self.role_cache()
-            .map(ExactCurveArrangementOutputRoleCache2::buckets)
+        self.workspace().role_buckets()
     }
 
     /// Returns material contour count after output role assignment.
@@ -13369,8 +13376,7 @@ impl ExactCurveArrangementReport2 {
 
     /// Returns retained output role reports when role assignment was reached.
     pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
-        self.boundary_build_report()
-            .map(RegionBoundaryContourBuildReport2::role_reports)
+        self.workspace().role_reports()
     }
 
     /// Returns delegated boundary-contour role assignment evidence, when output reached it.
