@@ -3604,12 +3604,108 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns retained output role topology-status bucket count.
+    pub const fn role_status_bucket_count(&self) -> Option<usize> {
+        match self.role_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output role assignment references grouped by topology status.
+    pub const fn role_status_assignment_ref_count(&self) -> Option<usize> {
+        match self.role_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.assignment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained native-exact output role assignment references.
+    pub const fn role_native_exact_assignment_ref_count(&self) -> Option<usize> {
+        match self.role_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.native_exact_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained certified-approximation output role assignment references.
+    pub const fn role_certified_approximation_assignment_ref_count(&self) -> Option<usize> {
+        match self.role_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.certified_approximation_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained display/export-only output role assignment references.
+    pub const fn role_display_or_export_assignment_ref_count(&self) -> Option<usize> {
+        match self.role_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.display_or_export_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained lossy-import output role assignment references.
+    pub const fn role_imported_lossy_assignment_ref_count(&self) -> Option<usize> {
+        match self.role_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.imported_lossy_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained unsupported output role assignment references.
+    pub const fn role_unsupported_assignment_ref_count(&self) -> Option<usize> {
+        match self.role_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.unsupported_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained unresolved output role assignment references.
+    pub const fn role_unresolved_assignment_ref_count(&self) -> Option<usize> {
+        match self.role_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.unresolved_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained output role topology-status bucket size.
+    pub const fn role_status_max_bucket_size(&self) -> Option<usize> {
+        match self.role_status_bucket_cache() {
+            Some(status_cache) => Some(status_cache.max_bucket_size()),
+            None => None,
+        }
+    }
+
     /// Returns output role assignment buckets grouped by source contour identity.
     pub const fn role_source_contour_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleSourceContourBucketCache2> {
         match self.role_cache() {
             Some(role_cache) => Some(role_cache.role_source_contour_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output role source-contour bucket count.
+    pub const fn role_source_contour_bucket_count(&self) -> Option<usize> {
+        match self.role_source_contour_bucket_cache() {
+            Some(source_cache) => Some(source_cache.source_contour_bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output role assignment references grouped by source contour.
+    pub const fn role_source_contour_assignment_ref_count(&self) -> Option<usize> {
+        match self.role_source_contour_bucket_cache() {
+            Some(source_cache) => Some(source_cache.assignment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained source-contour output role bucket size.
+    pub const fn role_source_contour_max_bucket_size(&self) -> Option<usize> {
+        match self.role_source_contour_bucket_cache() {
+            Some(source_cache) => Some(source_cache.max_bucket_size()),
             None => None,
         }
     }
@@ -3624,12 +3720,68 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns retained output role nesting-depth bucket count.
+    pub const fn role_nesting_depth_bucket_count(&self) -> Option<usize> {
+        match self.role_nesting_depth_bucket_cache() {
+            Some(depth_cache) => Some(depth_cache.nesting_depth_bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output role assignment references grouped by nesting depth.
+    pub const fn role_nesting_depth_assignment_ref_count(&self) -> Option<usize> {
+        match self.role_nesting_depth_bucket_cache() {
+            Some(depth_cache) => Some(depth_cache.assignment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained nesting-depth output role bucket size.
+    pub const fn role_nesting_depth_max_bucket_size(&self) -> Option<usize> {
+        match self.role_nesting_depth_bucket_cache() {
+            Some(depth_cache) => Some(depth_cache.max_bucket_size()),
+            None => None,
+        }
+    }
+
     /// Returns output role containment evidence grouped by containing source contour.
     pub const fn role_containment_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleContainmentBucketCache2> {
         match self.role_cache() {
             Some(role_cache) => Some(role_cache.role_containment_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output role containing-contour bucket count.
+    pub const fn role_containment_bucket_count(&self) -> Option<usize> {
+        match self.role_containment_bucket_cache() {
+            Some(containment_cache) => Some(containment_cache.containing_contour_bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output role containment references.
+    pub const fn role_containment_ref_count(&self) -> Option<usize> {
+        match self.role_containment_bucket_cache() {
+            Some(containment_cache) => Some(containment_cache.containment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained output role assignments with no containing contour.
+    pub const fn role_uncontained_assignment_ref_count(&self) -> Option<usize> {
+        match self.role_containment_bucket_cache() {
+            Some(containment_cache) => Some(containment_cache.uncontained_assignment_ref_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained containing-contour bucket size.
+    pub const fn role_containment_max_bucket_size(&self) -> Option<usize> {
+        match self.role_containment_bucket_cache() {
+            Some(containment_cache) => Some(containment_cache.max_bucket_size()),
             None => None,
         }
     }
@@ -8453,11 +8605,73 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().role_status_bucket_cache()
     }
 
+    /// Returns retained output role topology-status bucket count.
+    pub const fn role_status_bucket_count(&self) -> Option<usize> {
+        self.workspace().role_status_bucket_count()
+    }
+
+    /// Returns retained output role assignment references grouped by topology status.
+    pub const fn role_status_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_status_assignment_ref_count()
+    }
+
+    /// Returns retained native-exact output role assignment references.
+    pub const fn role_native_exact_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_native_exact_assignment_ref_count()
+    }
+
+    /// Returns retained certified-approximation output role assignment references.
+    pub const fn role_certified_approximation_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .role_certified_approximation_assignment_ref_count()
+    }
+
+    /// Returns retained display/export-only output role assignment references.
+    pub const fn role_display_or_export_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .role_display_or_export_assignment_ref_count()
+    }
+
+    /// Returns retained lossy-import output role assignment references.
+    pub const fn role_imported_lossy_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_imported_lossy_assignment_ref_count()
+    }
+
+    /// Returns retained unsupported output role assignment references.
+    pub const fn role_unsupported_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_unsupported_assignment_ref_count()
+    }
+
+    /// Returns retained unresolved output role assignment references.
+    pub const fn role_unresolved_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_unresolved_assignment_ref_count()
+    }
+
+    /// Returns the largest retained output role topology-status bucket size.
+    pub const fn role_status_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().role_status_max_bucket_size()
+    }
+
     /// Returns output role assignment buckets grouped by source contour identity.
     pub const fn role_source_contour_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleSourceContourBucketCache2> {
         self.workspace().role_source_contour_bucket_cache()
+    }
+
+    /// Returns retained output role source-contour bucket count.
+    pub const fn role_source_contour_bucket_count(&self) -> Option<usize> {
+        self.workspace().role_source_contour_bucket_count()
+    }
+
+    /// Returns retained output role assignment references grouped by source contour.
+    pub const fn role_source_contour_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_source_contour_assignment_ref_count()
+    }
+
+    /// Returns the largest retained source-contour output role bucket size.
+    pub const fn role_source_contour_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().role_source_contour_max_bucket_size()
     }
 
     /// Returns output role assignment buckets grouped by exact nesting depth.
@@ -8467,11 +8681,46 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().role_nesting_depth_bucket_cache()
     }
 
+    /// Returns retained output role nesting-depth bucket count.
+    pub const fn role_nesting_depth_bucket_count(&self) -> Option<usize> {
+        self.workspace().role_nesting_depth_bucket_count()
+    }
+
+    /// Returns retained output role assignment references grouped by nesting depth.
+    pub const fn role_nesting_depth_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_nesting_depth_assignment_ref_count()
+    }
+
+    /// Returns the largest retained nesting-depth output role bucket size.
+    pub const fn role_nesting_depth_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().role_nesting_depth_max_bucket_size()
+    }
+
     /// Returns output role containment evidence grouped by containing source contour.
     pub const fn role_containment_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleContainmentBucketCache2> {
         self.workspace().role_containment_bucket_cache()
+    }
+
+    /// Returns retained output role containing-contour bucket count.
+    pub const fn role_containment_bucket_count(&self) -> Option<usize> {
+        self.workspace().role_containment_bucket_count()
+    }
+
+    /// Returns retained output role containment references.
+    pub const fn role_containment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_containment_ref_count()
+    }
+
+    /// Returns retained output role assignments with no containing contour.
+    pub const fn role_uncontained_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_uncontained_assignment_ref_count()
+    }
+
+    /// Returns the largest retained containing-contour bucket size.
+    pub const fn role_containment_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().role_containment_max_bucket_size()
     }
 
     /// Returns material and hole role buckets in stable order.
@@ -9865,6 +10114,53 @@ impl ExactCurveArrangementResult2 {
         }
     }
 
+    /// Returns retained output role topology-status bucket count.
+    pub const fn role_status_bucket_count(&self) -> Option<usize> {
+        self.workspace().role_status_bucket_count()
+    }
+
+    /// Returns retained output role assignment references grouped by topology status.
+    pub const fn role_status_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_status_assignment_ref_count()
+    }
+
+    /// Returns retained native-exact output role assignment references.
+    pub const fn role_native_exact_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_native_exact_assignment_ref_count()
+    }
+
+    /// Returns retained certified-approximation output role assignment references.
+    pub const fn role_certified_approximation_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .role_certified_approximation_assignment_ref_count()
+    }
+
+    /// Returns retained display/export-only output role assignment references.
+    pub const fn role_display_or_export_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .role_display_or_export_assignment_ref_count()
+    }
+
+    /// Returns retained lossy-import output role assignment references.
+    pub const fn role_imported_lossy_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_imported_lossy_assignment_ref_count()
+    }
+
+    /// Returns retained unsupported output role assignment references.
+    pub const fn role_unsupported_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_unsupported_assignment_ref_count()
+    }
+
+    /// Returns retained unresolved output role assignment references.
+    pub const fn role_unresolved_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_unresolved_assignment_ref_count()
+    }
+
+    /// Returns the largest retained output role topology-status bucket size.
+    pub const fn role_status_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().role_status_max_bucket_size()
+    }
+
     /// Returns output role assignment buckets grouped by source contour identity.
     pub const fn role_source_contour_bucket_cache(
         &self,
@@ -9873,6 +10169,21 @@ impl ExactCurveArrangementResult2 {
             Some(role_cache) => Some(role_cache.role_source_contour_bucket_cache()),
             None => None,
         }
+    }
+
+    /// Returns retained output role source-contour bucket count.
+    pub const fn role_source_contour_bucket_count(&self) -> Option<usize> {
+        self.workspace().role_source_contour_bucket_count()
+    }
+
+    /// Returns retained output role assignment references grouped by source contour.
+    pub const fn role_source_contour_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_source_contour_assignment_ref_count()
+    }
+
+    /// Returns the largest retained source-contour output role bucket size.
+    pub const fn role_source_contour_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().role_source_contour_max_bucket_size()
     }
 
     /// Returns output role assignment buckets grouped by exact nesting depth.
@@ -9885,6 +10196,21 @@ impl ExactCurveArrangementResult2 {
         }
     }
 
+    /// Returns retained output role nesting-depth bucket count.
+    pub const fn role_nesting_depth_bucket_count(&self) -> Option<usize> {
+        self.workspace().role_nesting_depth_bucket_count()
+    }
+
+    /// Returns retained output role assignment references grouped by nesting depth.
+    pub const fn role_nesting_depth_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_nesting_depth_assignment_ref_count()
+    }
+
+    /// Returns the largest retained nesting-depth output role bucket size.
+    pub const fn role_nesting_depth_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().role_nesting_depth_max_bucket_size()
+    }
+
     /// Returns output role containment evidence grouped by containing source contour.
     pub const fn role_containment_bucket_cache(
         &self,
@@ -9893,6 +10219,26 @@ impl ExactCurveArrangementResult2 {
             Some(role_cache) => Some(role_cache.role_containment_bucket_cache()),
             None => None,
         }
+    }
+
+    /// Returns retained output role containing-contour bucket count.
+    pub const fn role_containment_bucket_count(&self) -> Option<usize> {
+        self.workspace().role_containment_bucket_count()
+    }
+
+    /// Returns retained output role containment references.
+    pub const fn role_containment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_containment_ref_count()
+    }
+
+    /// Returns retained output role assignments with no containing contour.
+    pub const fn role_uncontained_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_uncontained_assignment_ref_count()
+    }
+
+    /// Returns the largest retained containing-contour bucket size.
+    pub const fn role_containment_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().role_containment_max_bucket_size()
     }
 
     /// Returns material and hole role buckets in stable order.
@@ -12264,6 +12610,53 @@ impl ExactCurveArrangementReport2 {
         }
     }
 
+    /// Returns retained output role topology-status bucket count.
+    pub const fn role_status_bucket_count(&self) -> Option<usize> {
+        self.workspace().role_status_bucket_count()
+    }
+
+    /// Returns retained output role assignment references grouped by topology status.
+    pub const fn role_status_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_status_assignment_ref_count()
+    }
+
+    /// Returns retained native-exact output role assignment references.
+    pub const fn role_native_exact_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_native_exact_assignment_ref_count()
+    }
+
+    /// Returns retained certified-approximation output role assignment references.
+    pub const fn role_certified_approximation_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .role_certified_approximation_assignment_ref_count()
+    }
+
+    /// Returns retained display/export-only output role assignment references.
+    pub const fn role_display_or_export_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace()
+            .role_display_or_export_assignment_ref_count()
+    }
+
+    /// Returns retained lossy-import output role assignment references.
+    pub const fn role_imported_lossy_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_imported_lossy_assignment_ref_count()
+    }
+
+    /// Returns retained unsupported output role assignment references.
+    pub const fn role_unsupported_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_unsupported_assignment_ref_count()
+    }
+
+    /// Returns retained unresolved output role assignment references.
+    pub const fn role_unresolved_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_unresolved_assignment_ref_count()
+    }
+
+    /// Returns the largest retained output role topology-status bucket size.
+    pub const fn role_status_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().role_status_max_bucket_size()
+    }
+
     /// Returns output role assignment buckets grouped by source contour identity.
     pub const fn role_source_contour_bucket_cache(
         &self,
@@ -12272,6 +12665,21 @@ impl ExactCurveArrangementReport2 {
             Some(role_cache) => Some(role_cache.role_source_contour_bucket_cache()),
             None => None,
         }
+    }
+
+    /// Returns retained output role source-contour bucket count.
+    pub const fn role_source_contour_bucket_count(&self) -> Option<usize> {
+        self.workspace().role_source_contour_bucket_count()
+    }
+
+    /// Returns retained output role assignment references grouped by source contour.
+    pub const fn role_source_contour_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_source_contour_assignment_ref_count()
+    }
+
+    /// Returns the largest retained source-contour output role bucket size.
+    pub const fn role_source_contour_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().role_source_contour_max_bucket_size()
     }
 
     /// Returns output role assignment buckets grouped by exact nesting depth.
@@ -12284,6 +12692,21 @@ impl ExactCurveArrangementReport2 {
         }
     }
 
+    /// Returns retained output role nesting-depth bucket count.
+    pub const fn role_nesting_depth_bucket_count(&self) -> Option<usize> {
+        self.workspace().role_nesting_depth_bucket_count()
+    }
+
+    /// Returns retained output role assignment references grouped by nesting depth.
+    pub const fn role_nesting_depth_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_nesting_depth_assignment_ref_count()
+    }
+
+    /// Returns the largest retained nesting-depth output role bucket size.
+    pub const fn role_nesting_depth_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().role_nesting_depth_max_bucket_size()
+    }
+
     /// Returns output role containment evidence grouped by containing source contour.
     pub const fn role_containment_bucket_cache(
         &self,
@@ -12292,6 +12715,26 @@ impl ExactCurveArrangementReport2 {
             Some(role_cache) => Some(role_cache.role_containment_bucket_cache()),
             None => None,
         }
+    }
+
+    /// Returns retained output role containing-contour bucket count.
+    pub const fn role_containment_bucket_count(&self) -> Option<usize> {
+        self.workspace().role_containment_bucket_count()
+    }
+
+    /// Returns retained output role containment references.
+    pub const fn role_containment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_containment_ref_count()
+    }
+
+    /// Returns retained output role assignments with no containing contour.
+    pub const fn role_uncontained_assignment_ref_count(&self) -> Option<usize> {
+        self.workspace().role_uncontained_assignment_ref_count()
+    }
+
+    /// Returns the largest retained containing-contour bucket size.
+    pub const fn role_containment_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().role_containment_max_bucket_size()
     }
 
     /// Returns material and hole role buckets in stable order.

@@ -3505,16 +3505,92 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.role_status_bucket_cache()
     );
     assert_eq!(
+        arrangement_report.role_status_bucket_count(),
+        result.role_status_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.role_status_assignment_ref_count(),
+        result.role_status_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_native_exact_assignment_ref_count(),
+        result.role_native_exact_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_certified_approximation_assignment_ref_count(),
+        result.role_certified_approximation_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_display_or_export_assignment_ref_count(),
+        result.role_display_or_export_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_imported_lossy_assignment_ref_count(),
+        result.role_imported_lossy_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_unsupported_assignment_ref_count(),
+        result.role_unsupported_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_unresolved_assignment_ref_count(),
+        result.role_unresolved_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_status_max_bucket_size(),
+        result.role_status_max_bucket_size()
+    );
+    assert_eq!(
         arrangement_report.role_source_contour_bucket_cache(),
         result.role_source_contour_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.role_source_contour_bucket_count(),
+        result.role_source_contour_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.role_source_contour_assignment_ref_count(),
+        result.role_source_contour_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_source_contour_max_bucket_size(),
+        result.role_source_contour_max_bucket_size()
     );
     assert_eq!(
         arrangement_report.role_nesting_depth_bucket_cache(),
         result.role_nesting_depth_bucket_cache()
     );
     assert_eq!(
+        arrangement_report.role_nesting_depth_bucket_count(),
+        result.role_nesting_depth_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.role_nesting_depth_assignment_ref_count(),
+        result.role_nesting_depth_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_nesting_depth_max_bucket_size(),
+        result.role_nesting_depth_max_bucket_size()
+    );
+    assert_eq!(
         arrangement_report.role_containment_bucket_cache(),
         result.role_containment_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.role_containment_bucket_count(),
+        result.role_containment_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.role_containment_ref_count(),
+        result.role_containment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_uncontained_assignment_ref_count(),
+        result.role_uncontained_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_containment_max_bucket_size(),
+        result.role_containment_max_bucket_size()
     );
     assert_eq!(arrangement_report.summary_cache(), result.summary_cache());
     assert_eq!(
@@ -3881,6 +3957,42 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(result.material_segment_count(), Some(4));
     assert_eq!(result.hole_segment_count(), Some(0));
     let role_status_bucket_cache = result.role_status_bucket_cache().unwrap();
+    assert_eq!(
+        result.role_status_bucket_count(),
+        Some(role_status_bucket_cache.bucket_count())
+    );
+    assert_eq!(
+        result.role_status_assignment_ref_count(),
+        Some(role_status_bucket_cache.assignment_ref_count())
+    );
+    assert_eq!(
+        result.role_native_exact_assignment_ref_count(),
+        Some(role_status_bucket_cache.native_exact_ref_count())
+    );
+    assert_eq!(
+        result.role_certified_approximation_assignment_ref_count(),
+        Some(role_status_bucket_cache.certified_approximation_ref_count())
+    );
+    assert_eq!(
+        result.role_display_or_export_assignment_ref_count(),
+        Some(role_status_bucket_cache.display_or_export_ref_count())
+    );
+    assert_eq!(
+        result.role_imported_lossy_assignment_ref_count(),
+        Some(role_status_bucket_cache.imported_lossy_ref_count())
+    );
+    assert_eq!(
+        result.role_unsupported_assignment_ref_count(),
+        Some(role_status_bucket_cache.unsupported_ref_count())
+    );
+    assert_eq!(
+        result.role_unresolved_assignment_ref_count(),
+        Some(role_status_bucket_cache.unresolved_ref_count())
+    );
+    assert_eq!(
+        result.role_status_max_bucket_size(),
+        Some(role_status_bucket_cache.max_bucket_size())
+    );
     assert_eq!(role_status_bucket_cache.bucket_count(), 6);
     assert_eq!(
         role_status_bucket_cache.assignment_ref_count(),
@@ -3937,6 +4049,18 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     let role_source_contour_bucket_cache = result.role_source_contour_bucket_cache().unwrap();
     assert_eq!(
+        result.role_source_contour_bucket_count(),
+        Some(role_source_contour_bucket_cache.source_contour_bucket_count())
+    );
+    assert_eq!(
+        result.role_source_contour_assignment_ref_count(),
+        Some(role_source_contour_bucket_cache.assignment_ref_count())
+    );
+    assert_eq!(
+        result.role_source_contour_max_bucket_size(),
+        Some(role_source_contour_bucket_cache.max_bucket_size())
+    );
+    assert_eq!(
         role_source_contour_bucket_cache.source_contour_bucket_count(),
         role_reports.len()
     );
@@ -3965,6 +4089,18 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(source_contour_assignment.role_report_index(), 0);
     assert_eq!(source_contour_assignment.output_role_index(), 0);
     let role_nesting_depth_bucket_cache = result.role_nesting_depth_bucket_cache().unwrap();
+    assert_eq!(
+        result.role_nesting_depth_bucket_count(),
+        Some(role_nesting_depth_bucket_cache.nesting_depth_bucket_count())
+    );
+    assert_eq!(
+        result.role_nesting_depth_assignment_ref_count(),
+        Some(role_nesting_depth_bucket_cache.assignment_ref_count())
+    );
+    assert_eq!(
+        result.role_nesting_depth_max_bucket_size(),
+        Some(role_nesting_depth_bucket_cache.max_bucket_size())
+    );
     assert_eq!(
         role_nesting_depth_bucket_cache.nesting_depth_bucket_count(),
         1
@@ -4082,6 +4218,22 @@ fn exact_curve_arrangement_attempt_retains_output_role_containment() {
     );
 
     let containment_cache = result.role_containment_bucket_cache().unwrap();
+    assert_eq!(
+        result.role_containment_bucket_count(),
+        Some(containment_cache.containing_contour_bucket_count())
+    );
+    assert_eq!(
+        result.role_containment_ref_count(),
+        Some(containment_cache.containment_ref_count())
+    );
+    assert_eq!(
+        result.role_uncontained_assignment_ref_count(),
+        Some(containment_cache.uncontained_assignment_ref_count())
+    );
+    assert_eq!(
+        result.role_containment_max_bucket_size(),
+        Some(containment_cache.max_bucket_size())
+    );
     assert_eq!(containment_cache.containing_contour_bucket_count(), 1);
     assert_eq!(containment_cache.containment_ref_count(), 1);
     assert_eq!(containment_cache.uncontained_assignment_ref_count(), 1);
@@ -4910,16 +5062,102 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.role_status_bucket_cache()
     );
     assert_eq!(
+        result.evaluation().role_status_bucket_count(),
+        result.role_status_bucket_count()
+    );
+    assert_eq!(
+        result.evaluation().role_status_assignment_ref_count(),
+        result.role_status_assignment_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().role_native_exact_assignment_ref_count(),
+        result.role_native_exact_assignment_ref_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .role_certified_approximation_assignment_ref_count(),
+        result.role_certified_approximation_assignment_ref_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .role_display_or_export_assignment_ref_count(),
+        result.role_display_or_export_assignment_ref_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .role_imported_lossy_assignment_ref_count(),
+        result.role_imported_lossy_assignment_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().role_unsupported_assignment_ref_count(),
+        result.role_unsupported_assignment_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().role_unresolved_assignment_ref_count(),
+        result.role_unresolved_assignment_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().role_status_max_bucket_size(),
+        result.role_status_max_bucket_size()
+    );
+    assert_eq!(
         result.evaluation().role_source_contour_bucket_cache(),
         result.role_source_contour_bucket_cache()
+    );
+    assert_eq!(
+        result.evaluation().role_source_contour_bucket_count(),
+        result.role_source_contour_bucket_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .role_source_contour_assignment_ref_count(),
+        result.role_source_contour_assignment_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().role_source_contour_max_bucket_size(),
+        result.role_source_contour_max_bucket_size()
     );
     assert_eq!(
         result.evaluation().role_nesting_depth_bucket_cache(),
         result.role_nesting_depth_bucket_cache()
     );
     assert_eq!(
+        result.evaluation().role_nesting_depth_bucket_count(),
+        result.role_nesting_depth_bucket_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .role_nesting_depth_assignment_ref_count(),
+        result.role_nesting_depth_assignment_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().role_nesting_depth_max_bucket_size(),
+        result.role_nesting_depth_max_bucket_size()
+    );
+    assert_eq!(
         result.evaluation().role_containment_bucket_cache(),
         result.role_containment_bucket_cache()
+    );
+    assert_eq!(
+        result.evaluation().role_containment_bucket_count(),
+        result.role_containment_bucket_count()
+    );
+    assert_eq!(
+        result.evaluation().role_containment_ref_count(),
+        result.role_containment_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().role_uncontained_assignment_ref_count(),
+        result.role_uncontained_assignment_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().role_containment_max_bucket_size(),
+        result.role_containment_max_bucket_size()
     );
     assert_eq!(result.evaluation().role_buckets(), result.role_buckets());
     assert_eq!(result.evaluation().role_reports(), result.role_reports());
@@ -5463,16 +5701,100 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.role_status_bucket_cache()
     );
     assert_eq!(
+        result.workspace().role_status_bucket_count(),
+        result.role_status_bucket_count()
+    );
+    assert_eq!(
+        result.workspace().role_status_assignment_ref_count(),
+        result.role_status_assignment_ref_count()
+    );
+    assert_eq!(
+        result.workspace().role_native_exact_assignment_ref_count(),
+        result.role_native_exact_assignment_ref_count()
+    );
+    assert_eq!(
+        result
+            .workspace()
+            .role_certified_approximation_assignment_ref_count(),
+        result.role_certified_approximation_assignment_ref_count()
+    );
+    assert_eq!(
+        result
+            .workspace()
+            .role_display_or_export_assignment_ref_count(),
+        result.role_display_or_export_assignment_ref_count()
+    );
+    assert_eq!(
+        result
+            .workspace()
+            .role_imported_lossy_assignment_ref_count(),
+        result.role_imported_lossy_assignment_ref_count()
+    );
+    assert_eq!(
+        result.workspace().role_unsupported_assignment_ref_count(),
+        result.role_unsupported_assignment_ref_count()
+    );
+    assert_eq!(
+        result.workspace().role_unresolved_assignment_ref_count(),
+        result.role_unresolved_assignment_ref_count()
+    );
+    assert_eq!(
+        result.workspace().role_status_max_bucket_size(),
+        result.role_status_max_bucket_size()
+    );
+    assert_eq!(
         result.workspace().role_source_contour_bucket_cache(),
         result.role_source_contour_bucket_cache()
+    );
+    assert_eq!(
+        result.workspace().role_source_contour_bucket_count(),
+        result.role_source_contour_bucket_count()
+    );
+    assert_eq!(
+        result
+            .workspace()
+            .role_source_contour_assignment_ref_count(),
+        result.role_source_contour_assignment_ref_count()
+    );
+    assert_eq!(
+        result.workspace().role_source_contour_max_bucket_size(),
+        result.role_source_contour_max_bucket_size()
     );
     assert_eq!(
         result.workspace().role_nesting_depth_bucket_cache(),
         result.role_nesting_depth_bucket_cache()
     );
     assert_eq!(
+        result.workspace().role_nesting_depth_bucket_count(),
+        result.role_nesting_depth_bucket_count()
+    );
+    assert_eq!(
+        result.workspace().role_nesting_depth_assignment_ref_count(),
+        result.role_nesting_depth_assignment_ref_count()
+    );
+    assert_eq!(
+        result.workspace().role_nesting_depth_max_bucket_size(),
+        result.role_nesting_depth_max_bucket_size()
+    );
+    assert_eq!(
         result.workspace().role_containment_bucket_cache(),
         result.role_containment_bucket_cache()
+    );
+    assert_eq!(
+        result.workspace().role_containment_bucket_count(),
+        result.role_containment_bucket_count()
+    );
+    assert_eq!(
+        result.workspace().role_containment_ref_count(),
+        result.role_containment_ref_count()
+    );
+    assert_eq!(
+        result.workspace().role_uncontained_assignment_ref_count(),
+        result.role_uncontained_assignment_ref_count()
+    );
+    assert_eq!(
+        result.workspace().role_containment_max_bucket_size(),
+        result.role_containment_max_bucket_size()
     );
     assert_eq!(
         result.source_segment_kind_counts(),
@@ -7069,6 +7391,42 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(result.material_segment_count(), Some(2));
     assert_eq!(result.hole_segment_count(), Some(0));
     let role_status_bucket_cache = result.role_status_bucket_cache().unwrap();
+    assert_eq!(
+        result.role_status_bucket_count(),
+        Some(role_status_bucket_cache.bucket_count())
+    );
+    assert_eq!(
+        result.role_status_assignment_ref_count(),
+        Some(role_status_bucket_cache.assignment_ref_count())
+    );
+    assert_eq!(
+        result.role_native_exact_assignment_ref_count(),
+        Some(role_status_bucket_cache.native_exact_ref_count())
+    );
+    assert_eq!(
+        result.role_certified_approximation_assignment_ref_count(),
+        Some(role_status_bucket_cache.certified_approximation_ref_count())
+    );
+    assert_eq!(
+        result.role_display_or_export_assignment_ref_count(),
+        Some(role_status_bucket_cache.display_or_export_ref_count())
+    );
+    assert_eq!(
+        result.role_imported_lossy_assignment_ref_count(),
+        Some(role_status_bucket_cache.imported_lossy_ref_count())
+    );
+    assert_eq!(
+        result.role_unsupported_assignment_ref_count(),
+        Some(role_status_bucket_cache.unsupported_ref_count())
+    );
+    assert_eq!(
+        result.role_unresolved_assignment_ref_count(),
+        Some(role_status_bucket_cache.unresolved_ref_count())
+    );
+    assert_eq!(
+        result.role_status_max_bucket_size(),
+        Some(role_status_bucket_cache.max_bucket_size())
+    );
     assert_eq!(role_status_bucket_cache.bucket_count(), 6);
     assert_eq!(
         role_status_bucket_cache.assignment_ref_count(),
@@ -7638,16 +7996,92 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         result.role_status_bucket_cache()
     );
     assert_eq!(
+        arrangement_report.role_status_bucket_count(),
+        result.role_status_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.role_status_assignment_ref_count(),
+        result.role_status_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_native_exact_assignment_ref_count(),
+        result.role_native_exact_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_certified_approximation_assignment_ref_count(),
+        result.role_certified_approximation_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_display_or_export_assignment_ref_count(),
+        result.role_display_or_export_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_imported_lossy_assignment_ref_count(),
+        result.role_imported_lossy_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_unsupported_assignment_ref_count(),
+        result.role_unsupported_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_unresolved_assignment_ref_count(),
+        result.role_unresolved_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_status_max_bucket_size(),
+        result.role_status_max_bucket_size()
+    );
+    assert_eq!(
         arrangement_report.role_source_contour_bucket_cache(),
         result.role_source_contour_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.role_source_contour_bucket_count(),
+        result.role_source_contour_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.role_source_contour_assignment_ref_count(),
+        result.role_source_contour_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_source_contour_max_bucket_size(),
+        result.role_source_contour_max_bucket_size()
     );
     assert_eq!(
         arrangement_report.role_nesting_depth_bucket_cache(),
         result.role_nesting_depth_bucket_cache()
     );
     assert_eq!(
+        arrangement_report.role_nesting_depth_bucket_count(),
+        result.role_nesting_depth_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.role_nesting_depth_assignment_ref_count(),
+        result.role_nesting_depth_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_nesting_depth_max_bucket_size(),
+        result.role_nesting_depth_max_bucket_size()
+    );
+    assert_eq!(
         arrangement_report.role_containment_bucket_cache(),
         result.role_containment_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.role_containment_bucket_count(),
+        result.role_containment_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.role_containment_ref_count(),
+        result.role_containment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_uncontained_assignment_ref_count(),
+        result.role_uncontained_assignment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.role_containment_max_bucket_size(),
+        result.role_containment_max_bucket_size()
     );
     assert_eq!(
         arrangement_report.source_segment_count(),
