@@ -2528,6 +2528,13 @@ impl ExactCurveWorkspace2 {
         &self.split_schedule_cache
     }
 
+    /// Returns retained split schedule buckets grouped by AABB pruning status.
+    pub const fn split_schedule_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementSplitScheduleBucketCache2 {
+        self.split_schedule_cache().bucket_cache()
+    }
+
     /// Returns source segment pairs scheduled before retained split predicates run.
     pub const fn split_schedule_candidate_pair_count(&self) -> usize {
         self.split_schedule_cache().candidate_pair_count()
@@ -2546,6 +2553,21 @@ impl ExactCurveWorkspace2 {
     /// Returns scheduled source segment pairs whose AABB pruning status stayed undecided.
     pub const fn split_schedule_undecided_aabb_pair_count(&self) -> usize {
         self.split_schedule_cache().undecided_aabb_pair_count()
+    }
+
+    /// Returns retained split schedule AABB-status bucket count.
+    pub const fn split_schedule_bucket_count(&self) -> usize {
+        self.split_schedule_bucket_cache().bucket_count()
+    }
+
+    /// Returns retained split schedule source-pair references grouped by AABB status.
+    pub const fn split_schedule_candidate_ref_count(&self) -> usize {
+        self.split_schedule_bucket_cache().candidate_ref_count()
+    }
+
+    /// Returns the largest retained split schedule AABB-status bucket size.
+    pub const fn split_schedule_max_bucket_size(&self) -> usize {
+        self.split_schedule_bucket_cache().max_bucket_size()
     }
 
     /// Returns exact split evidence retained from the evaluated arrangement.
@@ -7695,6 +7717,13 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().split_schedule_cache()
     }
 
+    /// Returns retained split schedule buckets grouped by AABB pruning status.
+    pub const fn split_schedule_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementSplitScheduleBucketCache2 {
+        self.workspace().split_schedule_bucket_cache()
+    }
+
     /// Returns source segment pairs scheduled before retained split predicates run.
     pub const fn split_schedule_candidate_pair_count(&self) -> usize {
         self.workspace().split_schedule_candidate_pair_count()
@@ -7715,6 +7744,21 @@ impl ExactCurveArrangementEvaluation2 {
     /// Returns scheduled source segment pairs whose AABB pruning status stayed undecided.
     pub const fn split_schedule_undecided_aabb_pair_count(&self) -> usize {
         self.workspace().split_schedule_undecided_aabb_pair_count()
+    }
+
+    /// Returns retained split schedule AABB-status bucket count.
+    pub const fn split_schedule_bucket_count(&self) -> usize {
+        self.workspace().split_schedule_bucket_count()
+    }
+
+    /// Returns retained split schedule source-pair references grouped by AABB status.
+    pub const fn split_schedule_candidate_ref_count(&self) -> usize {
+        self.workspace().split_schedule_candidate_ref_count()
+    }
+
+    /// Returns the largest retained split schedule AABB-status bucket size.
+    pub const fn split_schedule_max_bucket_size(&self) -> usize {
+        self.workspace().split_schedule_max_bucket_size()
     }
 
     /// Returns exact split evidence retained from the evaluated arrangement.
@@ -9121,6 +9165,13 @@ impl ExactCurveArrangementResult2 {
         self.workspace().split_schedule_cache()
     }
 
+    /// Returns retained split schedule buckets grouped by AABB pruning status.
+    pub const fn split_schedule_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementSplitScheduleBucketCache2 {
+        self.workspace().split_schedule_bucket_cache()
+    }
+
     /// Returns source segment pairs scheduled before retained split predicates run.
     pub const fn split_schedule_candidate_pair_count(&self) -> usize {
         self.workspace().split_schedule_candidate_pair_count()
@@ -9141,6 +9192,21 @@ impl ExactCurveArrangementResult2 {
     /// Returns scheduled source segment pairs whose AABB pruning status stayed undecided.
     pub const fn split_schedule_undecided_aabb_pair_count(&self) -> usize {
         self.workspace().split_schedule_undecided_aabb_pair_count()
+    }
+
+    /// Returns retained split schedule AABB-status bucket count.
+    pub const fn split_schedule_bucket_count(&self) -> usize {
+        self.workspace().split_schedule_bucket_count()
+    }
+
+    /// Returns retained split schedule source-pair references grouped by AABB status.
+    pub const fn split_schedule_candidate_ref_count(&self) -> usize {
+        self.workspace().split_schedule_candidate_ref_count()
+    }
+
+    /// Returns the largest retained split schedule AABB-status bucket size.
+    pub const fn split_schedule_max_bucket_size(&self) -> usize {
+        self.workspace().split_schedule_max_bucket_size()
     }
 
     /// Returns exact split evidence retained from the evaluated arrangement.
@@ -11672,6 +11738,13 @@ impl ExactCurveArrangementReport2 {
         self.workspace().split_schedule_cache()
     }
 
+    /// Returns retained split schedule buckets grouped by AABB pruning status.
+    pub const fn split_schedule_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementSplitScheduleBucketCache2 {
+        self.workspace().split_schedule_bucket_cache()
+    }
+
     /// Returns source segment pairs scheduled before retained split predicates run.
     pub const fn split_schedule_candidate_pair_count(&self) -> usize {
         self.workspace().split_schedule_candidate_pair_count()
@@ -11692,6 +11765,21 @@ impl ExactCurveArrangementReport2 {
     /// Returns scheduled source segment pairs whose AABB pruning status stayed undecided.
     pub const fn split_schedule_undecided_aabb_pair_count(&self) -> usize {
         self.workspace().split_schedule_undecided_aabb_pair_count()
+    }
+
+    /// Returns retained split schedule AABB-status bucket count.
+    pub const fn split_schedule_bucket_count(&self) -> usize {
+        self.workspace().split_schedule_bucket_count()
+    }
+
+    /// Returns retained split schedule source-pair references grouped by AABB status.
+    pub const fn split_schedule_candidate_ref_count(&self) -> usize {
+        self.workspace().split_schedule_candidate_ref_count()
+    }
+
+    /// Returns the largest retained split schedule AABB-status bucket size.
+    pub const fn split_schedule_max_bucket_size(&self) -> usize {
+        self.workspace().split_schedule_max_bucket_size()
     }
 
     /// Returns exact split evidence retained from the evaluated arrangement.
