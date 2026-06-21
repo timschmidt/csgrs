@@ -2709,6 +2709,20 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns exact intersection points retained by split evaluation.
+    pub fn split_intersection_points(&self) -> Option<&[Point2]> {
+        self.split_cache()
+            .map(ExactCurveArrangementSplitCache2::intersection_points)
+    }
+
+    /// Returns exact per-event source and parameter evidence retained by split evaluation.
+    pub fn split_intersection_reports(
+        &self,
+    ) -> Option<&[RegionLineSegmentSplitIntersectionReport2]> {
+        self.split_cache()
+            .map(ExactCurveArrangementSplitCache2::intersection_reports)
+    }
+
     /// Returns exact source-parameter evidence for retained split intersections.
     pub const fn split_intersection_parameter_cache(
         &self,
@@ -8061,16 +8075,14 @@ impl ExactCurveArrangementEvaluation2 {
 
     /// Returns exact intersection points retained by split evaluation.
     pub fn split_intersection_points(&self) -> Option<&[Point2]> {
-        self.split_cache()
-            .map(ExactCurveArrangementSplitCache2::intersection_points)
+        self.workspace().split_intersection_points()
     }
 
     /// Returns exact per-event source and parameter evidence retained by split evaluation.
     pub fn split_intersection_reports(
         &self,
     ) -> Option<&[RegionLineSegmentSplitIntersectionReport2]> {
-        self.split_cache()
-            .map(ExactCurveArrangementSplitCache2::intersection_reports)
+        self.workspace().split_intersection_reports()
     }
 
     /// Returns retained split-stage relation buckets.
@@ -9618,16 +9630,14 @@ impl ExactCurveArrangementResult2 {
 
     /// Returns exact intersection points retained by split evaluation.
     pub fn split_intersection_points(&self) -> Option<&[Point2]> {
-        self.split_cache()
-            .map(ExactCurveArrangementSplitCache2::intersection_points)
+        self.workspace().split_intersection_points()
     }
 
     /// Returns exact per-event source and parameter evidence retained by split evaluation.
     pub fn split_intersection_reports(
         &self,
     ) -> Option<&[RegionLineSegmentSplitIntersectionReport2]> {
-        self.split_cache()
-            .map(ExactCurveArrangementSplitCache2::intersection_reports)
+        self.workspace().split_intersection_reports()
     }
 
     /// Returns retained split-stage relation buckets.
@@ -12534,16 +12544,14 @@ impl ExactCurveArrangementReport2 {
 
     /// Returns exact intersection points retained by split evaluation, when reached.
     pub fn split_intersection_points(&self) -> Option<&[Point2]> {
-        self.split_cache()
-            .map(ExactCurveArrangementSplitCache2::intersection_points)
+        self.workspace().split_intersection_points()
     }
 
     /// Returns exact per-event source and parameter evidence retained by split evaluation.
     pub fn split_intersection_reports(
         &self,
     ) -> Option<&[RegionLineSegmentSplitIntersectionReport2]> {
-        self.split_cache()
-            .map(ExactCurveArrangementSplitCache2::intersection_reports)
+        self.workspace().split_intersection_reports()
     }
 
     /// Returns the exact predicate family used for split arrangement, when reached.
