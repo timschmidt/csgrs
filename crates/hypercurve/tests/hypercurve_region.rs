@@ -1797,10 +1797,15 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     let source_aabb_bucket_cache = source_segment_cache.source_aabb_bucket_cache();
     assert_eq!(source_aabb_bucket_cache.bucket_count(), 2);
+    assert_eq!(result.source_aabb_bucket_count(), 2);
     assert_eq!(source_aabb_bucket_cache.source_ref_count(), 4);
+    assert_eq!(result.source_aabb_ref_count(), 4);
     assert_eq!(source_aabb_bucket_cache.decided_source_ref_count(), 4);
+    assert_eq!(result.source_aabb_decided_ref_count(), 4);
     assert_eq!(source_aabb_bucket_cache.undecided_source_ref_count(), 0);
+    assert_eq!(result.source_aabb_undecided_ref_count(), 0);
     assert_eq!(source_aabb_bucket_cache.max_bucket_size(), 4);
+    assert_eq!(result.source_aabb_max_bucket_size(), 4);
     assert_eq!(source_aabb_bucket_cache.buckets().len(), 2);
     assert_eq!(
         source_aabb_bucket_cache.buckets()[0].aabb_status(),
@@ -1831,8 +1836,13 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     let source_segment_kind_bucket_cache = source_segment_cache.source_segment_kind_bucket_cache();
     assert_eq!(source_segment_kind_bucket_cache.bucket_count(), 2);
+    assert_eq!(result.source_segment_kind_bucket_count(), 2);
     assert_eq!(
         source_segment_kind_bucket_cache.source_segment_ref_count(),
+        source_segment_cache.source_segment_count()
+    );
+    assert_eq!(
+        result.source_segment_kind_ref_count(),
         source_segment_cache.source_segment_count()
     );
     assert_eq!(
@@ -1840,10 +1850,19 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.source_segment_kind_counts().lines
     );
     assert_eq!(
+        result.source_line_segment_ref_count(),
+        result.source_segment_kind_counts().lines
+    );
+    assert_eq!(
         source_segment_kind_bucket_cache.arc_segment_ref_count(),
         result.source_segment_kind_counts().arcs
     );
+    assert_eq!(
+        result.source_arc_segment_ref_count(),
+        result.source_segment_kind_counts().arcs
+    );
     assert_eq!(source_segment_kind_bucket_cache.max_bucket_size(), 4);
+    assert_eq!(result.source_segment_kind_max_bucket_size(), 4);
     assert_eq!(source_segment_kind_bucket_cache.buckets().len(), 2);
     assert_eq!(
         source_segment_kind_bucket_cache.buckets()[0].source_segment_kind(),
@@ -3687,6 +3706,46 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.decided_source_segment_aabb_count()
     );
     assert_eq!(
+        arrangement_report.source_aabb_bucket_count(),
+        result.source_aabb_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.source_aabb_ref_count(),
+        result.source_aabb_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.source_aabb_decided_ref_count(),
+        result.source_aabb_decided_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.source_aabb_undecided_ref_count(),
+        result.source_aabb_undecided_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.source_aabb_max_bucket_size(),
+        result.source_aabb_max_bucket_size()
+    );
+    assert_eq!(
+        arrangement_report.source_segment_kind_bucket_count(),
+        result.source_segment_kind_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.source_segment_kind_ref_count(),
+        result.source_segment_kind_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.source_line_segment_ref_count(),
+        result.source_line_segment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.source_arc_segment_ref_count(),
+        result.source_arc_segment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.source_segment_kind_max_bucket_size(),
+        result.source_segment_kind_max_bucket_size()
+    );
+    assert_eq!(
         arrangement_report.split_candidate_pair_count(),
         result.split_candidate_pair_count()
     );
@@ -4432,8 +4491,48 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.source_aabb_bucket_cache()
     );
     assert_eq!(
+        result.evaluation().source_aabb_bucket_count(),
+        result.source_aabb_bucket_count()
+    );
+    assert_eq!(
+        result.evaluation().source_aabb_ref_count(),
+        result.source_aabb_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().source_aabb_decided_ref_count(),
+        result.source_aabb_decided_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().source_aabb_undecided_ref_count(),
+        result.source_aabb_undecided_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().source_aabb_max_bucket_size(),
+        result.source_aabb_max_bucket_size()
+    );
+    assert_eq!(
         result.evaluation().source_segment_kind_bucket_cache(),
         result.source_segment_kind_bucket_cache()
+    );
+    assert_eq!(
+        result.evaluation().source_segment_kind_bucket_count(),
+        result.source_segment_kind_bucket_count()
+    );
+    assert_eq!(
+        result.evaluation().source_segment_kind_ref_count(),
+        result.source_segment_kind_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().source_line_segment_ref_count(),
+        result.source_line_segment_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().source_arc_segment_ref_count(),
+        result.source_arc_segment_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().source_segment_kind_max_bucket_size(),
+        result.source_segment_kind_max_bucket_size()
     );
     assert_eq!(
         result.evaluation().source_endpoint_bucket_cache(),
@@ -5482,10 +5581,50 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.source_aabb_bucket_cache()
     );
     assert_eq!(
+        result.workspace().source_aabb_bucket_count(),
+        result.source_aabb_bucket_count()
+    );
+    assert_eq!(
+        result.workspace().source_aabb_ref_count(),
+        result.source_aabb_ref_count()
+    );
+    assert_eq!(
+        result.workspace().source_aabb_decided_ref_count(),
+        result.source_aabb_decided_ref_count()
+    );
+    assert_eq!(
+        result.workspace().source_aabb_undecided_ref_count(),
+        result.source_aabb_undecided_ref_count()
+    );
+    assert_eq!(
+        result.workspace().source_aabb_max_bucket_size(),
+        result.source_aabb_max_bucket_size()
+    );
+    assert_eq!(
         result
             .source_segment_cache()
             .source_segment_kind_bucket_cache(),
         result.source_segment_kind_bucket_cache()
+    );
+    assert_eq!(
+        result.workspace().source_segment_kind_bucket_count(),
+        result.source_segment_kind_bucket_count()
+    );
+    assert_eq!(
+        result.workspace().source_segment_kind_ref_count(),
+        result.source_segment_kind_ref_count()
+    );
+    assert_eq!(
+        result.workspace().source_line_segment_ref_count(),
+        result.source_line_segment_ref_count()
+    );
+    assert_eq!(
+        result.workspace().source_arc_segment_ref_count(),
+        result.source_arc_segment_ref_count()
+    );
+    assert_eq!(
+        result.workspace().source_segment_kind_max_bucket_size(),
+        result.source_segment_kind_max_bucket_size()
     );
     assert_eq!(
         result.workspace().source_endpoint_bucket_cache(),
@@ -6018,10 +6157,15 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     let source_aabb_bucket_cache = source_segment_cache.source_aabb_bucket_cache();
     assert_eq!(source_aabb_bucket_cache.bucket_count(), 2);
+    assert_eq!(result.source_aabb_bucket_count(), 2);
     assert_eq!(source_aabb_bucket_cache.source_ref_count(), 2);
+    assert_eq!(result.source_aabb_ref_count(), 2);
     assert_eq!(source_aabb_bucket_cache.decided_source_ref_count(), 2);
+    assert_eq!(result.source_aabb_decided_ref_count(), 2);
     assert_eq!(source_aabb_bucket_cache.undecided_source_ref_count(), 0);
+    assert_eq!(result.source_aabb_undecided_ref_count(), 0);
     assert_eq!(source_aabb_bucket_cache.max_bucket_size(), 2);
+    assert_eq!(result.source_aabb_max_bucket_size(), 2);
     assert_eq!(
         source_aabb_bucket_cache.buckets()[0].aabb_status(),
         ExactCurveArrangementSourceAabbStatus2::Decided
@@ -6038,8 +6182,13 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     let source_segment_kind_bucket_cache = source_segment_cache.source_segment_kind_bucket_cache();
     assert_eq!(source_segment_kind_bucket_cache.bucket_count(), 2);
+    assert_eq!(result.source_segment_kind_bucket_count(), 2);
     assert_eq!(
         source_segment_kind_bucket_cache.source_segment_ref_count(),
+        source_segment_cache.source_segment_count()
+    );
+    assert_eq!(
+        result.source_segment_kind_ref_count(),
         source_segment_cache.source_segment_count()
     );
     assert_eq!(
@@ -6047,10 +6196,19 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.source_segment_kind_counts().lines
     );
     assert_eq!(
+        result.source_line_segment_ref_count(),
+        result.source_segment_kind_counts().lines
+    );
+    assert_eq!(
         source_segment_kind_bucket_cache.arc_segment_ref_count(),
         result.source_segment_kind_counts().arcs
     );
+    assert_eq!(
+        result.source_arc_segment_ref_count(),
+        result.source_segment_kind_counts().arcs
+    );
     assert_eq!(source_segment_kind_bucket_cache.max_bucket_size(), 1);
+    assert_eq!(result.source_segment_kind_max_bucket_size(), 1);
     assert_eq!(
         source_segment_kind_bucket_cache.buckets()[0].source_segment_kind(),
         SegmentKind::Line
@@ -8393,6 +8551,46 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(
         arrangement_report.undecided_source_segment_aabb_count(),
         result.undecided_source_segment_aabb_count()
+    );
+    assert_eq!(
+        arrangement_report.source_aabb_bucket_count(),
+        result.source_aabb_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.source_aabb_ref_count(),
+        result.source_aabb_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.source_aabb_decided_ref_count(),
+        result.source_aabb_decided_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.source_aabb_undecided_ref_count(),
+        result.source_aabb_undecided_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.source_aabb_max_bucket_size(),
+        result.source_aabb_max_bucket_size()
+    );
+    assert_eq!(
+        arrangement_report.source_segment_kind_bucket_count(),
+        result.source_segment_kind_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.source_segment_kind_ref_count(),
+        result.source_segment_kind_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.source_line_segment_ref_count(),
+        result.source_line_segment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.source_arc_segment_ref_count(),
+        result.source_arc_segment_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.source_segment_kind_max_bucket_size(),
+        result.source_segment_kind_max_bucket_size()
     );
     assert_eq!(
         arrangement_report.source_segment_cache(),

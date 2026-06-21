@@ -2496,6 +2496,72 @@ impl ExactCurveWorkspace2 {
         &self.source_segment_cache
     }
 
+    /// Returns retained source AABB buckets grouped by certification status.
+    pub const fn source_aabb_bucket_cache(&self) -> &ExactCurveArrangementSourceAabbBucketCache2 {
+        self.source_segment_cache().source_aabb_bucket_cache()
+    }
+
+    /// Returns retained source AABB-status bucket count.
+    pub const fn source_aabb_bucket_count(&self) -> usize {
+        self.source_aabb_bucket_cache().bucket_count()
+    }
+
+    /// Returns retained source AABB references.
+    pub const fn source_aabb_ref_count(&self) -> usize {
+        self.source_aabb_bucket_cache().source_ref_count()
+    }
+
+    /// Returns retained source AABB references certified as decided.
+    pub const fn source_aabb_decided_ref_count(&self) -> usize {
+        self.source_aabb_bucket_cache().decided_source_ref_count()
+    }
+
+    /// Returns retained source AABB references that stayed undecided.
+    pub const fn source_aabb_undecided_ref_count(&self) -> usize {
+        self.source_aabb_bucket_cache().undecided_source_ref_count()
+    }
+
+    /// Returns the largest retained source AABB-status bucket size.
+    pub const fn source_aabb_max_bucket_size(&self) -> usize {
+        self.source_aabb_bucket_cache().max_bucket_size()
+    }
+
+    /// Returns retained source segment buckets grouped by primitive family.
+    pub const fn source_segment_kind_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementSourceSegmentKindBucketCache2 {
+        self.source_segment_cache()
+            .source_segment_kind_bucket_cache()
+    }
+
+    /// Returns retained source segment primitive-family bucket count.
+    pub const fn source_segment_kind_bucket_count(&self) -> usize {
+        self.source_segment_kind_bucket_cache().bucket_count()
+    }
+
+    /// Returns retained source segment references grouped by primitive family.
+    pub const fn source_segment_kind_ref_count(&self) -> usize {
+        self.source_segment_kind_bucket_cache()
+            .source_segment_ref_count()
+    }
+
+    /// Returns retained line source segment references.
+    pub const fn source_line_segment_ref_count(&self) -> usize {
+        self.source_segment_kind_bucket_cache()
+            .line_segment_ref_count()
+    }
+
+    /// Returns retained arc source segment references.
+    pub const fn source_arc_segment_ref_count(&self) -> usize {
+        self.source_segment_kind_bucket_cache()
+            .arc_segment_ref_count()
+    }
+
+    /// Returns the largest retained source segment primitive-family bucket size.
+    pub const fn source_segment_kind_max_bucket_size(&self) -> usize {
+        self.source_segment_kind_bucket_cache().max_bucket_size()
+    }
+
     /// Returns exact source endpoint buckets retained during workspace preparation.
     pub const fn source_endpoint_bucket_cache(
         &self,
@@ -7741,6 +7807,56 @@ impl ExactCurveArrangementEvaluation2 {
             .source_segment_kind_bucket_cache()
     }
 
+    /// Returns retained source AABB-status bucket count.
+    pub const fn source_aabb_bucket_count(&self) -> usize {
+        self.workspace().source_aabb_bucket_count()
+    }
+
+    /// Returns retained source AABB references.
+    pub const fn source_aabb_ref_count(&self) -> usize {
+        self.workspace().source_aabb_ref_count()
+    }
+
+    /// Returns retained source AABB references certified as decided.
+    pub const fn source_aabb_decided_ref_count(&self) -> usize {
+        self.workspace().source_aabb_decided_ref_count()
+    }
+
+    /// Returns retained source AABB references that stayed undecided.
+    pub const fn source_aabb_undecided_ref_count(&self) -> usize {
+        self.workspace().source_aabb_undecided_ref_count()
+    }
+
+    /// Returns the largest retained source AABB-status bucket size.
+    pub const fn source_aabb_max_bucket_size(&self) -> usize {
+        self.workspace().source_aabb_max_bucket_size()
+    }
+
+    /// Returns retained source segment primitive-family bucket count.
+    pub const fn source_segment_kind_bucket_count(&self) -> usize {
+        self.workspace().source_segment_kind_bucket_count()
+    }
+
+    /// Returns retained source segment references grouped by primitive family.
+    pub const fn source_segment_kind_ref_count(&self) -> usize {
+        self.workspace().source_segment_kind_ref_count()
+    }
+
+    /// Returns retained line source segment references.
+    pub const fn source_line_segment_ref_count(&self) -> usize {
+        self.workspace().source_line_segment_ref_count()
+    }
+
+    /// Returns retained arc source segment references.
+    pub const fn source_arc_segment_ref_count(&self) -> usize {
+        self.workspace().source_arc_segment_ref_count()
+    }
+
+    /// Returns the largest retained source segment primitive-family bucket size.
+    pub const fn source_segment_kind_max_bucket_size(&self) -> usize {
+        self.workspace().source_segment_kind_max_bucket_size()
+    }
+
     /// Returns exact source endpoint buckets retained during workspace preparation.
     pub const fn source_endpoint_bucket_cache(
         &self,
@@ -9223,6 +9339,56 @@ impl ExactCurveArrangementResult2 {
     ) -> &ExactCurveArrangementSourceSegmentKindBucketCache2 {
         self.source_segment_cache()
             .source_segment_kind_bucket_cache()
+    }
+
+    /// Returns retained source AABB-status bucket count.
+    pub const fn source_aabb_bucket_count(&self) -> usize {
+        self.workspace().source_aabb_bucket_count()
+    }
+
+    /// Returns retained source AABB references.
+    pub const fn source_aabb_ref_count(&self) -> usize {
+        self.workspace().source_aabb_ref_count()
+    }
+
+    /// Returns retained source AABB references certified as decided.
+    pub const fn source_aabb_decided_ref_count(&self) -> usize {
+        self.workspace().source_aabb_decided_ref_count()
+    }
+
+    /// Returns retained source AABB references that stayed undecided.
+    pub const fn source_aabb_undecided_ref_count(&self) -> usize {
+        self.workspace().source_aabb_undecided_ref_count()
+    }
+
+    /// Returns the largest retained source AABB-status bucket size.
+    pub const fn source_aabb_max_bucket_size(&self) -> usize {
+        self.workspace().source_aabb_max_bucket_size()
+    }
+
+    /// Returns retained source segment primitive-family bucket count.
+    pub const fn source_segment_kind_bucket_count(&self) -> usize {
+        self.workspace().source_segment_kind_bucket_count()
+    }
+
+    /// Returns retained source segment references grouped by primitive family.
+    pub const fn source_segment_kind_ref_count(&self) -> usize {
+        self.workspace().source_segment_kind_ref_count()
+    }
+
+    /// Returns retained line source segment references.
+    pub const fn source_line_segment_ref_count(&self) -> usize {
+        self.workspace().source_line_segment_ref_count()
+    }
+
+    /// Returns retained arc source segment references.
+    pub const fn source_arc_segment_ref_count(&self) -> usize {
+        self.workspace().source_arc_segment_ref_count()
+    }
+
+    /// Returns the largest retained source segment primitive-family bucket size.
+    pub const fn source_segment_kind_max_bucket_size(&self) -> usize {
+        self.workspace().source_segment_kind_max_bucket_size()
     }
 
     /// Returns exact source endpoint buckets retained during workspace preparation.
@@ -11832,6 +11998,56 @@ impl ExactCurveArrangementReport2 {
     ) -> &ExactCurveArrangementSourceSegmentKindBucketCache2 {
         self.source_segment_cache()
             .source_segment_kind_bucket_cache()
+    }
+
+    /// Returns retained source AABB-status bucket count.
+    pub const fn source_aabb_bucket_count(&self) -> usize {
+        self.workspace().source_aabb_bucket_count()
+    }
+
+    /// Returns retained source AABB references.
+    pub const fn source_aabb_ref_count(&self) -> usize {
+        self.workspace().source_aabb_ref_count()
+    }
+
+    /// Returns retained source AABB references certified as decided.
+    pub const fn source_aabb_decided_ref_count(&self) -> usize {
+        self.workspace().source_aabb_decided_ref_count()
+    }
+
+    /// Returns retained source AABB references that stayed undecided.
+    pub const fn source_aabb_undecided_ref_count(&self) -> usize {
+        self.workspace().source_aabb_undecided_ref_count()
+    }
+
+    /// Returns the largest retained source AABB-status bucket size.
+    pub const fn source_aabb_max_bucket_size(&self) -> usize {
+        self.workspace().source_aabb_max_bucket_size()
+    }
+
+    /// Returns retained source segment primitive-family bucket count.
+    pub const fn source_segment_kind_bucket_count(&self) -> usize {
+        self.workspace().source_segment_kind_bucket_count()
+    }
+
+    /// Returns retained source segment references grouped by primitive family.
+    pub const fn source_segment_kind_ref_count(&self) -> usize {
+        self.workspace().source_segment_kind_ref_count()
+    }
+
+    /// Returns retained line source segment references.
+    pub const fn source_line_segment_ref_count(&self) -> usize {
+        self.workspace().source_line_segment_ref_count()
+    }
+
+    /// Returns retained arc source segment references.
+    pub const fn source_arc_segment_ref_count(&self) -> usize {
+        self.workspace().source_arc_segment_ref_count()
+    }
+
+    /// Returns the largest retained source segment primitive-family bucket size.
+    pub const fn source_segment_kind_max_bucket_size(&self) -> usize {
+        self.workspace().source_segment_kind_max_bucket_size()
     }
 
     /// Returns exact source endpoint buckets retained during workspace preparation.
