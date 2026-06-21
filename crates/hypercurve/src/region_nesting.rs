@@ -3155,6 +3155,16 @@ impl ExactCurveWorkspace2 {
         self.ring_assembly_cache.as_ref()
     }
 
+    /// Returns the exact predicate family used by retained ring traversal.
+    pub const fn ring_assembly_predicate_path(
+        &self,
+    ) -> Option<RegionLineSegmentRingAssemblyPredicatePath2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.predicate_path()),
+            None => None,
+        }
+    }
+
     /// Returns per-arranged-fragment source provenance retained after exact splitting.
     pub fn arranged_source_reports(&self) -> Option<&[RegionLineSegmentArrangedSourceReport2]> {
         self.ring_assembly_cache()
@@ -8582,10 +8592,7 @@ impl ExactCurveArrangementEvaluation2 {
     pub const fn ring_assembly_predicate_path(
         &self,
     ) -> Option<RegionLineSegmentRingAssemblyPredicatePath2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.predicate_path()),
-            None => None,
-        }
+        self.workspace().ring_assembly_predicate_path()
     }
 
     /// Returns endpoint pair comparisons attempted during retained ring traversal.
@@ -10058,50 +10065,32 @@ impl ExactCurveArrangementResult2 {
     pub const fn ring_assembly_predicate_path(
         &self,
     ) -> Option<RegionLineSegmentRingAssemblyPredicatePath2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.predicate_path()),
-            None => None,
-        }
+        self.workspace().ring_assembly_predicate_path()
     }
 
     /// Returns endpoint pair comparisons attempted during retained ring traversal.
     pub const fn attempted_endpoint_connection_count(&self) -> Option<usize> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.attempted_endpoint_connection_count()),
-            None => None,
-        }
+        self.workspace().attempted_endpoint_connection_count()
     }
 
     /// Returns endpoint pair comparisons certified as equal during ring traversal.
     pub const fn exact_endpoint_connection_count(&self) -> Option<usize> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.exact_endpoint_connection_count()),
-            None => None,
-        }
+        self.workspace().exact_endpoint_connection_count()
     }
 
     /// Returns endpoint pair comparisons certified as disconnected during ring traversal.
     pub const fn disconnected_endpoint_connection_count(&self) -> Option<usize> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.disconnected_endpoint_connection_count()),
-            None => None,
-        }
+        self.workspace().disconnected_endpoint_connection_count()
     }
 
     /// Returns endpoint pair comparisons unresolved during ring traversal.
     pub const fn unresolved_endpoint_connection_count(&self) -> Option<usize> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.unresolved_endpoint_connection_count()),
-            None => None,
-        }
+        self.workspace().unresolved_endpoint_connection_count()
     }
 
     /// Returns source segments reversed while materializing retained ring traversal.
     pub const fn reversed_source_segment_count(&self) -> Option<usize> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.reversed_source_segment_count()),
-            None => None,
-        }
+        self.workspace().reversed_source_segment_count()
     }
 
     /// Returns per-arranged-fragment source provenance retained after exact splitting.
@@ -10128,26 +10117,17 @@ impl ExactCurveArrangementResult2 {
     pub const fn arranged_fragment_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.arranged_fragment_cache()),
-            None => None,
-        }
+        self.workspace().arranged_fragment_cache()
     }
 
     /// Returns arranged fragment count retained after exact splitting, when available.
     pub const fn arranged_segment_count(&self) -> Option<usize> {
-        match self.arranged_fragment_cache() {
-            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_count()),
-            None => None,
-        }
+        self.workspace().arranged_segment_count()
     }
 
     /// Returns arranged fragment primitive-family counts retained after exact splitting.
     pub const fn arranged_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        match self.arranged_fragment_cache() {
-            Some(arranged_cache) => Some(arranged_cache.arranged_segment_kind_counts()),
-            None => None,
-        }
+        self.workspace().arranged_segment_kind_counts()
     }
 
     /// Returns arranged fragments grouped by primitive family.
@@ -12661,76 +12641,49 @@ impl ExactCurveArrangementReport2 {
     pub const fn ring_assembly_predicate_path(
         &self,
     ) -> Option<RegionLineSegmentRingAssemblyPredicatePath2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.predicate_path()),
-            None => None,
-        }
+        self.workspace().ring_assembly_predicate_path()
     }
 
     /// Returns endpoint pair comparisons attempted during retained ring traversal.
     pub const fn attempted_endpoint_connection_count(&self) -> Option<usize> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.attempted_endpoint_connection_count()),
-            None => None,
-        }
+        self.workspace().attempted_endpoint_connection_count()
     }
 
     /// Returns endpoint pair comparisons certified as equal during ring traversal.
     pub const fn exact_endpoint_connection_count(&self) -> Option<usize> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.exact_endpoint_connection_count()),
-            None => None,
-        }
+        self.workspace().exact_endpoint_connection_count()
     }
 
     /// Returns endpoint pair comparisons certified as disconnected during ring traversal.
     pub const fn disconnected_endpoint_connection_count(&self) -> Option<usize> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.disconnected_endpoint_connection_count()),
-            None => None,
-        }
+        self.workspace().disconnected_endpoint_connection_count()
     }
 
     /// Returns endpoint pair comparisons unresolved during ring traversal.
     pub const fn unresolved_endpoint_connection_count(&self) -> Option<usize> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.unresolved_endpoint_connection_count()),
-            None => None,
-        }
+        self.workspace().unresolved_endpoint_connection_count()
     }
 
     /// Returns source segments reversed while materializing retained ring traversal.
     pub const fn reversed_source_segment_count(&self) -> Option<usize> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.reversed_source_segment_count()),
-            None => None,
-        }
+        self.workspace().reversed_source_segment_count()
     }
 
     /// Returns arranged fragment count retained after exact splitting.
     pub const fn arranged_segment_count(&self) -> Option<usize> {
-        match self.arranged_fragment_cache() {
-            Some(arranged_cache) => Some(arranged_cache.arranged_fragment_count()),
-            None => None,
-        }
+        self.workspace().arranged_segment_count()
     }
 
     /// Returns arranged fragment primitive-family counts retained after exact splitting.
     pub const fn arranged_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        match self.arranged_fragment_cache() {
-            Some(arranged_cache) => Some(arranged_cache.arranged_segment_kind_counts()),
-            None => None,
-        }
+        self.workspace().arranged_segment_kind_counts()
     }
 
     /// Returns per-arranged-fragment source provenance buckets.
     pub const fn arranged_fragment_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentCache2> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.arranged_fragment_cache()),
-            None => None,
-        }
+        self.workspace().arranged_fragment_cache()
     }
 
     /// Returns arranged fragments grouped by primitive family.
