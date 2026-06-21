@@ -1257,16 +1257,12 @@ enum BoundaryContourNestingOutcome {
 }
 
 impl Region2 {
-    /// Builds a region from unordered exact line segments that form closed rings.
+    /// Deprecated compatibility wrapper for building a region from unordered exact line segments.
     ///
-    /// This is a narrow first utility for "make region from lines" workflows:
-    /// it accepts already-authored finite line segments, splits certified point
-    /// intersections, chooses connections only from exact endpoint equality,
-    /// reorients source segments as needed, materializes checked contours, and
-    /// then delegates material/hole role assignment to
-    /// [`Region2::from_boundary_contours_with_report`]. It does not snap
-    /// endpoints or resolve overlaps; disconnected, ambiguous, unresolved, or
-    /// branching endpoint graphs are returned as explicit blockers.
+    /// New callers should build an [`ExactCurveArrangementRequest2`], evaluate
+    /// an [`ExactCurveArrangementAttempt2`], and read the retained
+    /// [`ExactCurveArrangementResult2`] directly. This wrapper remains only for
+    /// compatibility and delegates to that retained pipeline.
     #[deprecated(
         since = "0.3.0",
         note = "use ExactCurveArrangementRequest2::from_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate"
@@ -1282,13 +1278,12 @@ impl Region2 {
         Ok(result.into_region_classification())
     }
 
-    /// Builds a region from borrowed unordered exact line segments.
+    /// Deprecated compatibility wrapper for borrowed unordered exact line segments.
     ///
-    /// This is the borrowed counterpart to
-    /// [`Region2::from_unordered_line_segments`]. The exact segment carriers
-    /// are cloned into the existing arrangement-first implementation so source
-    /// ordering, split parameters, endpoint graph evidence, and blockers remain
-    /// identical to the owned path.
+    /// New callers should build a borrowed [`ExactCurveArrangementRequest2`],
+    /// evaluate an [`ExactCurveArrangementAttempt2`], and read the retained
+    /// [`ExactCurveArrangementResult2`] directly. This wrapper remains only for
+    /// compatibility and delegates to that retained pipeline.
     #[deprecated(
         since = "0.3.0",
         note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate"
@@ -1305,13 +1300,11 @@ impl Region2 {
         Ok(result.into_region_classification())
     }
 
-    /// Builds a region from borrowed unordered exact line segments and returns canonical retained evidence.
+    /// Deprecated compatibility wrapper for borrowed unordered line segments with a retained report.
     ///
-    /// This is the arrangement-report replacement for deprecated
-    /// [`Region2::from_unordered_line_segments_borrowed_with_report`]. It keeps
-    /// the result as a decided/uncertain classification and returns an
-    /// [`ExactCurveArrangementReport2`] derived from retained arrangement caches,
-    /// not a legacy-shaped build report.
+    /// New callers should evaluate an [`ExactCurveArrangementAttempt2`] and
+    /// call [`ExactCurveArrangementResult2::arrangement_report`] when a report
+    /// view is needed.
     #[deprecated(
         since = "0.3.0",
         note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate, then ExactCurveArrangementResult2::arrangement_report"
@@ -1329,10 +1322,11 @@ impl Region2 {
             .into_region_classification_with_arrangement_report())
     }
 
-    /// Builds a region from unordered exact line segments and returns canonical retained evidence.
+    /// Deprecated compatibility wrapper for owned unordered line segments with a retained report.
     ///
-    /// This is the owned-input counterpart to
-    /// [`Region2::from_unordered_line_segments_borrowed_with_arrangement_report`].
+    /// New callers should evaluate an [`ExactCurveArrangementAttempt2`] and
+    /// call [`ExactCurveArrangementResult2::arrangement_report`] when a report
+    /// view is needed.
     #[deprecated(
         since = "0.3.0",
         note = "use ExactCurveArrangementRequest2::from_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate, then ExactCurveArrangementResult2::arrangement_report"
@@ -1349,7 +1343,7 @@ impl Region2 {
             .into_region_classification_with_arrangement_report())
     }
 
-    /// Builds a region from borrowed unordered exact line segments and retains evidence.
+    /// Deprecated compatibility wrapper for borrowed unordered line segments with a legacy report.
     ///
     /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
     /// retained accessors directly. Use
@@ -1372,7 +1366,7 @@ impl Region2 {
             .derived_region_build_result())
     }
 
-    /// Builds a region from unordered exact line segments and retains assembly evidence.
+    /// Deprecated compatibility wrapper for owned unordered line segments with a legacy report.
     ///
     /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
     /// retained accessors directly. Use
@@ -1571,12 +1565,12 @@ fn evaluate_unordered_line_segments_region_result(
 }
 
 impl Region2 {
-    /// Builds a region from unordered exact native line/arc segments that form closed rings.
+    /// Deprecated compatibility wrapper for unordered native line/arc segments.
     ///
-    /// This is the convenience wrapper for
-    /// [`Region2::from_unordered_segments_with_report`]. It returns decided
-    /// regions only when the report-bearing path materializes native exact
-    /// topology; otherwise it preserves the reported blocker as uncertainty.
+    /// New callers should build an [`ExactCurveArrangementRequest2`], evaluate
+    /// an [`ExactCurveArrangementAttempt2`], and read the retained
+    /// [`ExactCurveArrangementResult2`] directly. This wrapper remains only for
+    /// compatibility and delegates to that retained pipeline.
     #[deprecated(
         since = "0.3.0",
         note = "use ExactCurveArrangementRequest2::from_unordered_segments with ExactCurveArrangementAttempt2::evaluate"
@@ -1591,11 +1585,12 @@ impl Region2 {
         Ok(result.into_region_classification())
     }
 
-    /// Builds a region from borrowed unordered exact native line/arc segments.
+    /// Deprecated compatibility wrapper for borrowed unordered native line/arc segments.
     ///
-    /// This is the borrowed counterpart to [`Region2::from_unordered_segments`].
-    /// It delegates to the same exact arrangement, splitting, endpoint graph,
-    /// ring traversal, and boundary role-assignment pipeline as the owned API.
+    /// New callers should build a borrowed [`ExactCurveArrangementRequest2`],
+    /// evaluate an [`ExactCurveArrangementAttempt2`], and read the retained
+    /// [`ExactCurveArrangementResult2`] directly. This wrapper remains only for
+    /// compatibility and delegates to that retained pipeline.
     #[deprecated(
         since = "0.3.0",
         note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_segments with ExactCurveArrangementAttempt2::evaluate"
@@ -1611,12 +1606,11 @@ impl Region2 {
         Ok(result.into_region_classification())
     }
 
-    /// Builds a region from borrowed unordered native line/arc segments and returns canonical retained evidence.
+    /// Deprecated compatibility wrapper for borrowed unordered native segments with a retained report.
     ///
-    /// This is the arrangement-report replacement for deprecated
-    /// [`Region2::from_unordered_segments_borrowed_with_report`]. It keeps the
-    /// result as a decided/uncertain classification and returns an
-    /// [`ExactCurveArrangementReport2`] derived from retained arrangement caches.
+    /// New callers should evaluate an [`ExactCurveArrangementAttempt2`] and
+    /// call [`ExactCurveArrangementResult2::arrangement_report`] when a report
+    /// view is needed.
     #[deprecated(
         since = "0.3.0",
         note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_segments with ExactCurveArrangementAttempt2::evaluate, then ExactCurveArrangementResult2::arrangement_report"
@@ -1633,10 +1627,11 @@ impl Region2 {
             .into_region_classification_with_arrangement_report())
     }
 
-    /// Builds a region from unordered native line/arc segments and returns canonical retained evidence.
+    /// Deprecated compatibility wrapper for owned unordered native segments with a retained report.
     ///
-    /// This is the owned-input counterpart to
-    /// [`Region2::from_unordered_segments_borrowed_with_arrangement_report`].
+    /// New callers should evaluate an [`ExactCurveArrangementAttempt2`] and
+    /// call [`ExactCurveArrangementResult2::arrangement_report`] when a report
+    /// view is needed.
     #[deprecated(
         since = "0.3.0",
         note = "use ExactCurveArrangementRequest2::from_unordered_segments with ExactCurveArrangementAttempt2::evaluate, then ExactCurveArrangementResult2::arrangement_report"
@@ -1652,7 +1647,7 @@ impl Region2 {
             .into_region_classification_with_arrangement_report())
     }
 
-    /// Builds a region from borrowed unordered native line/arc segments and retains evidence.
+    /// Deprecated compatibility wrapper for borrowed unordered native segments with a legacy report.
     ///
     /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
     /// retained accessors directly. Use
@@ -1674,14 +1669,7 @@ impl Region2 {
             .derived_region_build_result())
     }
 
-    /// Builds a region from unordered exact native line/arc segments.
-    ///
-    /// This is the native-segment counterpart to
-    /// [`Region2::from_unordered_line_segments_with_report`]. It retains exact
-    /// point-intersection split parameters for lines and arcs, materializes
-    /// line/arc fragments from exact split points, and then assembles closed
-    /// rings by exact endpoint equality. Overlaps, ambiguous ordering, and
-    /// branching/dangling endpoint graphs remain explicit blockers.
+    /// Deprecated compatibility wrapper for owned unordered native segments with a legacy report.
     ///
     /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
     /// retained accessors directly. Use
