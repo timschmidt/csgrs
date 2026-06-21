@@ -9767,30 +9767,21 @@ impl ExactCurveArrangementResult2 {
     pub const fn split_relation_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementSplitRelationBucketCache2> {
-        match self.split_cache() {
-            Some(split_cache) => Some(split_cache.relation_bucket_cache()),
-            None => None,
-        }
+        self.workspace().split_relation_bucket_cache()
     }
 
     /// Returns exact split-intersection point buckets.
     pub const fn split_intersection_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementSplitIntersectionBucketCache2> {
-        match self.split_cache() {
-            Some(split_cache) => Some(split_cache.intersection_bucket_cache()),
-            None => None,
-        }
+        self.workspace().split_intersection_bucket_cache()
     }
 
     /// Returns exact source-parameter evidence for retained split intersections.
     pub const fn split_intersection_parameter_cache(
         &self,
     ) -> Option<&ExactCurveArrangementSplitIntersectionParameterCache2> {
-        match self.split_cache() {
-            Some(split_cache) => Some(split_cache.intersection_parameter_cache()),
-            None => None,
-        }
+        self.workspace().split_intersection_parameter_cache()
     }
 
     /// Returns retained split-stage relation bucket count.
@@ -12269,30 +12260,21 @@ impl ExactCurveArrangementReport2 {
     pub const fn split_relation_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementSplitRelationBucketCache2> {
-        match self.split_cache() {
-            Some(split_cache) => Some(split_cache.relation_bucket_cache()),
-            None => None,
-        }
+        self.workspace().split_relation_bucket_cache()
     }
 
     /// Returns exact split-intersection point buckets.
     pub const fn split_intersection_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementSplitIntersectionBucketCache2> {
-        match self.split_cache() {
-            Some(split_cache) => Some(split_cache.intersection_bucket_cache()),
-            None => None,
-        }
+        self.workspace().split_intersection_bucket_cache()
     }
 
     /// Returns exact source-parameter evidence for retained split intersections.
     pub const fn split_intersection_parameter_cache(
         &self,
     ) -> Option<&ExactCurveArrangementSplitIntersectionParameterCache2> {
-        match self.split_cache() {
-            Some(split_cache) => Some(split_cache.intersection_parameter_cache()),
-            None => None,
-        }
+        self.workspace().split_intersection_parameter_cache()
     }
 
     /// Returns retained split-stage relation bucket count.
