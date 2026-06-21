@@ -2805,6 +2805,14 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns arranged output segment count when retained splitting completed.
+    pub const fn split_output_segment_count(&self) -> Option<usize> {
+        match self.split_cache() {
+            Some(split_cache) => split_cache.output_segment_count(),
+            None => None,
+        }
+    }
+
     /// Returns split-stage blocker source-pair evidence, when split evaluation blocked.
     pub const fn split_blocker_cache(&self) -> Option<&ExactCurveArrangementSplitBlockerCache2> {
         match self.split_cache() {
@@ -8383,10 +8391,7 @@ impl ExactCurveArrangementEvaluation2 {
 
     /// Returns arranged output segment count when retained splitting completed.
     pub const fn split_output_segment_count(&self) -> Option<usize> {
-        match self.split_cache() {
-            Some(split_cache) => split_cache.output_segment_count(),
-            None => None,
-        }
+        self.workspace().split_output_segment_count()
     }
 
     /// Returns exact endpoint-bucket evidence retained from the evaluated arrangement.
@@ -9871,10 +9876,7 @@ impl ExactCurveArrangementResult2 {
 
     /// Returns arranged output segment count when retained splitting completed.
     pub const fn split_output_segment_count(&self) -> Option<usize> {
-        match self.split_cache() {
-            Some(split_cache) => split_cache.output_segment_count(),
-            None => None,
-        }
+        self.workspace().split_output_segment_count()
     }
 
     /// Returns exact endpoint-bucket evidence retained from the evaluated arrangement.
@@ -12598,10 +12600,7 @@ impl ExactCurveArrangementReport2 {
 
     /// Returns arranged output segment count when retained splitting completed.
     pub const fn split_output_segment_count(&self) -> Option<usize> {
-        match self.split_cache() {
-            Some(split_cache) => split_cache.output_segment_count(),
-            None => None,
-        }
+        self.workspace().split_output_segment_count()
     }
 
     /// Returns the first source segment in a split-stage blocker, when known.
