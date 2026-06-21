@@ -1346,12 +1346,11 @@ impl Region2 {
     /// Deprecated compatibility wrapper for borrowed unordered line segments with a legacy report.
     ///
     /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
-    /// retained accessors directly. Use
-    /// [`ExactCurveArrangementResult2::derived_region_build_result`] only when
-    /// the legacy-shaped compatibility result is required.
+    /// retained accessors directly. Legacy-shaped result output is
+    /// compatibility-only.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate; call derived_region_build_result() only for legacy-shaped compatibility output"
+        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate; legacy-shaped result output is compatibility-only"
     )]
     pub fn from_unordered_line_segments_borrowed_with_report(
         segments: &[LineSeg2],
@@ -1361,20 +1360,20 @@ impl Region2 {
         let request = ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments(
             segments, fill_rule,
         );
-        Ok(ExactCurveArrangementAttempt2::new(request)
-            .evaluate_owned(policy)?
-            .derived_region_build_result())
+        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(policy)?;
+        #[allow(deprecated)]
+        let compatibility_result = result.derived_region_build_result();
+        Ok(compatibility_result)
     }
 
     /// Deprecated compatibility wrapper for owned unordered line segments with a legacy report.
     ///
     /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
-    /// retained accessors directly. Use
-    /// [`ExactCurveArrangementResult2::derived_region_build_result`] only when
-    /// the legacy-shaped compatibility result is required.
+    /// retained accessors directly. Legacy-shaped result output is
+    /// compatibility-only.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate; call derived_region_build_result() only for legacy-shaped compatibility output"
+        note = "use ExactCurveArrangementRequest2::from_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate; legacy-shaped result output is compatibility-only"
     )]
     pub fn from_unordered_line_segments_with_report(
         segments: Vec<LineSeg2>,
@@ -1383,9 +1382,10 @@ impl Region2 {
     ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
         let request =
             ExactCurveArrangementRequest2::from_unordered_line_segments(segments, fill_rule);
-        Ok(ExactCurveArrangementAttempt2::new(request)
-            .evaluate_owned(policy)?
-            .derived_region_build_result())
+        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(policy)?;
+        #[allow(deprecated)]
+        let compatibility_result = result.derived_region_build_result();
+        Ok(compatibility_result)
     }
 }
 
@@ -1650,12 +1650,11 @@ impl Region2 {
     /// Deprecated compatibility wrapper for borrowed unordered native segments with a legacy report.
     ///
     /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
-    /// retained accessors directly. Use
-    /// [`ExactCurveArrangementResult2::derived_region_build_result`] only when
-    /// the legacy-shaped compatibility result is required.
+    /// retained accessors directly. Legacy-shaped result output is
+    /// compatibility-only.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_segments with ExactCurveArrangementAttempt2::evaluate; call derived_region_build_result() only for legacy-shaped compatibility output"
+        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_segments with ExactCurveArrangementAttempt2::evaluate; legacy-shaped result output is compatibility-only"
     )]
     pub fn from_unordered_segments_borrowed_with_report(
         segments: &[Segment2],
@@ -1664,20 +1663,20 @@ impl Region2 {
     ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
         let request =
             ExactCurveArrangementRequest2::from_borrowed_unordered_segments(segments, fill_rule);
-        Ok(ExactCurveArrangementAttempt2::new(request)
-            .evaluate_owned(policy)?
-            .derived_region_build_result())
+        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(policy)?;
+        #[allow(deprecated)]
+        let compatibility_result = result.derived_region_build_result();
+        Ok(compatibility_result)
     }
 
     /// Deprecated compatibility wrapper for owned unordered native segments with a legacy report.
     ///
     /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
-    /// retained accessors directly. Use
-    /// [`ExactCurveArrangementResult2::derived_region_build_result`] only when
-    /// the legacy-shaped compatibility result is required.
+    /// retained accessors directly. Legacy-shaped result output is
+    /// compatibility-only.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_unordered_segments with ExactCurveArrangementAttempt2::evaluate; call derived_region_build_result() only for legacy-shaped compatibility output"
+        note = "use ExactCurveArrangementRequest2::from_unordered_segments with ExactCurveArrangementAttempt2::evaluate; legacy-shaped result output is compatibility-only"
     )]
     pub fn from_unordered_segments_with_report(
         segments: Vec<Segment2>,
@@ -1685,9 +1684,10 @@ impl Region2 {
         policy: &CurvePolicy,
     ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
         let request = ExactCurveArrangementRequest2::from_unordered_segments(segments, fill_rule);
-        Ok(ExactCurveArrangementAttempt2::new(request)
-            .evaluate_owned(policy)?
-            .derived_region_build_result())
+        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(policy)?;
+        #[allow(deprecated)]
+        let compatibility_result = result.derived_region_build_result();
+        Ok(compatibility_result)
     }
 }
 
@@ -9448,14 +9448,18 @@ impl ExactCurveArrangementResult2 {
     /// This does not borrow the deprecated compatibility cache stored for
     /// reference-returning legacy APIs; the report is projected from the retained
     /// evaluation each time.
+    #[deprecated(
+        since = "0.3.0",
+        note = "use ExactCurveArrangementResult2 retained accessors, into_region(), or derived_region_build_report(); legacy-shaped result output is compatibility-only"
+    )]
     pub fn derived_region_build_result(&self) -> RegionLineSegmentRegionBuildResult2 {
         Self::derive_region_build_result_from_evaluation(&self.evaluation, self.region.clone())
     }
 
     /// Returns an owned legacy-shaped region build report derived from retained evidence.
     ///
-    /// This is the report-only counterpart to
-    /// [`ExactCurveArrangementResult2::derived_region_build_result`].
+    /// This projects legacy-shaped report data without constructing a
+    /// legacy-shaped result object.
     pub fn derived_region_build_report(&self) -> RegionLineSegmentRegionBuildReport2 {
         Self::derive_region_build_report_from_evaluation(&self.evaluation)
     }
@@ -10805,7 +10809,7 @@ impl ExactCurveArrangementResult2 {
     /// Returns the underlying legacy region build result.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementResult2 retained accessors, or derived_region_build_result() when a legacy-shaped compatibility result is required"
+        note = "use ExactCurveArrangementResult2 retained accessors, into_region(), or derived_region_build_report(); legacy-shaped result output is compatibility-only"
     )]
     pub const fn region_build_result(&self) -> &RegionLineSegmentRegionBuildResult2 {
         self.derived_compatibility_region_build_result()
@@ -10843,9 +10847,10 @@ impl ExactCurveArrangementResult2 {
     /// Consumes this result and returns the underlying legacy region build result.
     #[deprecated(
         since = "0.3.0",
-        note = "use ExactCurveArrangementResult2 retained accessors, into_region(), or derived_region_build_result() when a legacy-shaped compatibility result is required"
+        note = "use ExactCurveArrangementResult2 retained accessors, into_region(), or derived_region_build_report(); legacy-shaped result output is compatibility-only"
     )]
     pub fn into_region_build_result(self) -> RegionLineSegmentRegionBuildResult2 {
+        #[allow(deprecated)]
         self.derived_region_build_result()
     }
 
