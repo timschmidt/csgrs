@@ -13229,20 +13229,14 @@ impl ExactCurveArrangementReport2 {
 
     /// Returns retained material/hole role buckets when role assignment was reached.
     pub const fn role_cache(&self) -> Option<&ExactCurveArrangementOutputRoleCache2> {
-        match self.output_cache() {
-            Some(output_cache) => output_cache.role_cache(),
-            None => None,
-        }
+        self.workspace().role_cache()
     }
 
     /// Returns output role assignment buckets grouped by topology status.
     pub const fn role_status_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleStatusBucketCache2> {
-        match self.role_cache() {
-            Some(role_cache) => Some(role_cache.role_status_bucket_cache()),
-            None => None,
-        }
+        self.workspace().role_status_bucket_cache()
     }
 
     /// Returns retained output role topology-status bucket count.
@@ -13296,10 +13290,7 @@ impl ExactCurveArrangementReport2 {
     pub const fn role_source_contour_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleSourceContourBucketCache2> {
-        match self.role_cache() {
-            Some(role_cache) => Some(role_cache.role_source_contour_bucket_cache()),
-            None => None,
-        }
+        self.workspace().role_source_contour_bucket_cache()
     }
 
     /// Returns retained output role source-contour bucket count.
@@ -13321,10 +13312,7 @@ impl ExactCurveArrangementReport2 {
     pub const fn role_nesting_depth_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleNestingDepthBucketCache2> {
-        match self.role_cache() {
-            Some(role_cache) => Some(role_cache.role_nesting_depth_bucket_cache()),
-            None => None,
-        }
+        self.workspace().role_nesting_depth_bucket_cache()
     }
 
     /// Returns retained output role nesting-depth bucket count.
@@ -13346,10 +13334,7 @@ impl ExactCurveArrangementReport2 {
     pub const fn role_containment_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleContainmentBucketCache2> {
-        match self.role_cache() {
-            Some(role_cache) => Some(role_cache.role_containment_bucket_cache()),
-            None => None,
-        }
+        self.workspace().role_containment_bucket_cache()
     }
 
     /// Returns retained output role containing-contour bucket count.
