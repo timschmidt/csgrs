@@ -2860,6 +2860,48 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns dangling endpoint count found during endpoint-graph validation.
+    pub const fn endpoint_graph_dangling_endpoint_count(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.dangling_endpoint_count()),
+            None => None,
+        }
+    }
+
+    /// Returns branch endpoint count found during endpoint-graph validation.
+    pub const fn endpoint_graph_branch_endpoint_count(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.branch_endpoint_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the blocker arranged segment index from endpoint validation, when blocked.
+    pub const fn endpoint_graph_blocker_arranged_segment_index(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => endpoint_cache.blocker_arranged_segment_index(),
+            None => None,
+        }
+    }
+
+    /// Returns the blocker endpoint from endpoint validation, when blocked.
+    pub const fn endpoint_graph_blocker_endpoint(
+        &self,
+    ) -> Option<RegionLineSegmentArrangedEndpoint2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => endpoint_cache.blocker_endpoint(),
+            None => None,
+        }
+    }
+
+    /// Returns the exact blocker point from endpoint validation, when blocked.
+    pub const fn endpoint_graph_blocker_point(&self) -> Option<&Point2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => endpoint_cache.blocker_point(),
+            None => None,
+        }
+    }
+
     /// Returns exact arranged endpoint buckets retained by endpoint-graph validation.
     pub const fn arranged_endpoint_bucket_cache(
         &self,
@@ -8460,44 +8502,30 @@ impl ExactCurveArrangementEvaluation2 {
 
     /// Returns dangling endpoint count found during endpoint-graph validation.
     pub const fn endpoint_graph_dangling_endpoint_count(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.dangling_endpoint_count()),
-            None => None,
-        }
+        self.workspace().endpoint_graph_dangling_endpoint_count()
     }
 
     /// Returns branch endpoint count found during endpoint-graph validation.
     pub const fn endpoint_graph_branch_endpoint_count(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.branch_endpoint_count()),
-            None => None,
-        }
+        self.workspace().endpoint_graph_branch_endpoint_count()
     }
 
     /// Returns the blocker arranged segment index from endpoint validation, when blocked.
     pub const fn endpoint_graph_blocker_arranged_segment_index(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => endpoint_cache.blocker_arranged_segment_index(),
-            None => None,
-        }
+        self.workspace()
+            .endpoint_graph_blocker_arranged_segment_index()
     }
 
     /// Returns the blocker endpoint from endpoint validation, when blocked.
     pub const fn endpoint_graph_blocker_endpoint(
         &self,
     ) -> Option<RegionLineSegmentArrangedEndpoint2> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => endpoint_cache.blocker_endpoint(),
-            None => None,
-        }
+        self.workspace().endpoint_graph_blocker_endpoint()
     }
 
     /// Returns the exact blocker point from endpoint validation, when blocked.
     pub const fn endpoint_graph_blocker_point(&self) -> Option<&Point2> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => endpoint_cache.blocker_point(),
-            None => None,
-        }
+        self.workspace().endpoint_graph_blocker_point()
     }
 
     /// Returns exact ring-traversal evidence retained from the evaluated arrangement.
@@ -10001,44 +10029,30 @@ impl ExactCurveArrangementResult2 {
 
     /// Returns dangling endpoint count found during endpoint-graph validation.
     pub const fn endpoint_graph_dangling_endpoint_count(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.dangling_endpoint_count()),
-            None => None,
-        }
+        self.workspace().endpoint_graph_dangling_endpoint_count()
     }
 
     /// Returns branch endpoint count found during endpoint-graph validation.
     pub const fn endpoint_graph_branch_endpoint_count(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.branch_endpoint_count()),
-            None => None,
-        }
+        self.workspace().endpoint_graph_branch_endpoint_count()
     }
 
     /// Returns the blocker arranged segment index from endpoint validation, when blocked.
     pub const fn endpoint_graph_blocker_arranged_segment_index(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => endpoint_cache.blocker_arranged_segment_index(),
-            None => None,
-        }
+        self.workspace()
+            .endpoint_graph_blocker_arranged_segment_index()
     }
 
     /// Returns the blocker endpoint from endpoint validation, when blocked.
     pub const fn endpoint_graph_blocker_endpoint(
         &self,
     ) -> Option<RegionLineSegmentArrangedEndpoint2> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => endpoint_cache.blocker_endpoint(),
-            None => None,
-        }
+        self.workspace().endpoint_graph_blocker_endpoint()
     }
 
     /// Returns the exact blocker point from endpoint validation, when blocked.
     pub const fn endpoint_graph_blocker_point(&self) -> Option<&Point2> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => endpoint_cache.blocker_point(),
-            None => None,
-        }
+        self.workspace().endpoint_graph_blocker_point()
     }
 
     /// Returns exact ring-traversal evidence retained from the evaluated arrangement.
@@ -12674,44 +12688,30 @@ impl ExactCurveArrangementReport2 {
 
     /// Returns dangling endpoint count found during endpoint-graph validation.
     pub const fn endpoint_graph_dangling_endpoint_count(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.dangling_endpoint_count()),
-            None => None,
-        }
+        self.workspace().endpoint_graph_dangling_endpoint_count()
     }
 
     /// Returns branch endpoint count found during endpoint-graph validation.
     pub const fn endpoint_graph_branch_endpoint_count(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => Some(endpoint_cache.branch_endpoint_count()),
-            None => None,
-        }
+        self.workspace().endpoint_graph_branch_endpoint_count()
     }
 
     /// Returns the arranged segment index of the first endpoint-graph blocker.
     pub const fn endpoint_graph_blocker_arranged_segment_index(&self) -> Option<usize> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => endpoint_cache.blocker_arranged_segment_index(),
-            None => None,
-        }
+        self.workspace()
+            .endpoint_graph_blocker_arranged_segment_index()
     }
 
     /// Returns the arranged endpoint of the first endpoint-graph blocker.
     pub const fn endpoint_graph_blocker_endpoint(
         &self,
     ) -> Option<RegionLineSegmentArrangedEndpoint2> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => endpoint_cache.blocker_endpoint(),
-            None => None,
-        }
+        self.workspace().endpoint_graph_blocker_endpoint()
     }
 
     /// Returns the exact arranged endpoint point of the first endpoint-graph blocker.
     pub const fn endpoint_graph_blocker_point(&self) -> Option<&Point2> {
-        match self.endpoint_graph_cache() {
-            Some(endpoint_cache) => endpoint_cache.blocker_point(),
-            None => None,
-        }
+        self.workspace().endpoint_graph_blocker_point()
     }
 
     /// Returns the exact predicate family used for ring traversal, when reached.
