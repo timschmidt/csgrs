@@ -2162,8 +2162,16 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.endpoint_graph_endpoint_count().unwrap()
     );
     assert_eq!(
+        result.arranged_endpoint_ref_count(),
+        result.endpoint_graph_endpoint_count()
+    );
+    assert_eq!(
         arranged_endpoint_bucket_cache.bucket_count(),
         result.endpoint_graph_structural_bucket_count().unwrap()
+    );
+    assert_eq!(
+        result.arranged_endpoint_bucket_count(),
+        result.endpoint_graph_structural_bucket_count()
     );
     assert_eq!(
         arranged_endpoint_bucket_cache.singleton_bucket_count(),
@@ -2172,8 +2180,16 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
             .unwrap()
     );
     assert_eq!(
+        result.arranged_endpoint_singleton_bucket_count(),
+        result.endpoint_graph_structural_singleton_bucket_count()
+    );
+    assert_eq!(
         arranged_endpoint_bucket_cache.max_bucket_size(),
         result.endpoint_graph_max_structural_bucket_size().unwrap()
+    );
+    assert_eq!(
+        result.arranged_endpoint_max_bucket_size(),
+        result.endpoint_graph_max_structural_bucket_size()
     );
     assert_eq!(arranged_endpoint_bucket_cache.buckets().len(), 4);
     let first_arranged_endpoint_bucket = &arranged_endpoint_bucket_cache.buckets()[0];
@@ -3335,6 +3351,22 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(
         arrangement_report.arranged_endpoint_bucket_cache(),
         result.arranged_endpoint_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_ref_count(),
+        result.arranged_endpoint_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_bucket_count(),
+        result.arranged_endpoint_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_singleton_bucket_count(),
+        result.arranged_endpoint_singleton_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_max_bucket_size(),
+        result.arranged_endpoint_max_bucket_size()
     );
     assert_eq!(
         arrangement_report.arranged_endpoint_side_bucket_cache(),
@@ -4785,6 +4817,24 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         result.evaluation().arranged_endpoint_bucket_cache(),
         result.arranged_endpoint_bucket_cache()
+    );
+    assert_eq!(
+        result.evaluation().arranged_endpoint_ref_count(),
+        result.arranged_endpoint_ref_count()
+    );
+    assert_eq!(
+        result.evaluation().arranged_endpoint_bucket_count(),
+        result.arranged_endpoint_bucket_count()
+    );
+    assert_eq!(
+        result
+            .evaluation()
+            .arranged_endpoint_singleton_bucket_count(),
+        result.arranged_endpoint_singleton_bucket_count()
+    );
+    assert_eq!(
+        result.evaluation().arranged_endpoint_max_bucket_size(),
+        result.arranged_endpoint_max_bucket_size()
     );
     assert_eq!(
         result.evaluation().arranged_endpoint_side_bucket_cache(),
@@ -6491,8 +6541,16 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.endpoint_graph_endpoint_count().unwrap()
     );
     assert_eq!(
+        result.arranged_endpoint_ref_count(),
+        result.endpoint_graph_endpoint_count()
+    );
+    assert_eq!(
         arranged_endpoint_bucket_cache.bucket_count(),
         result.endpoint_graph_structural_bucket_count().unwrap()
+    );
+    assert_eq!(
+        result.arranged_endpoint_bucket_count(),
+        result.endpoint_graph_structural_bucket_count()
     );
     assert_eq!(
         arranged_endpoint_bucket_cache.singleton_bucket_count(),
@@ -6501,8 +6559,16 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
             .unwrap()
     );
     assert_eq!(
+        result.arranged_endpoint_singleton_bucket_count(),
+        result.endpoint_graph_structural_singleton_bucket_count()
+    );
+    assert_eq!(
         arranged_endpoint_bucket_cache.max_bucket_size(),
         result.endpoint_graph_max_structural_bucket_size().unwrap()
+    );
+    assert_eq!(
+        result.arranged_endpoint_max_bucket_size(),
+        result.endpoint_graph_max_structural_bucket_size()
     );
     assert_eq!(arranged_endpoint_bucket_cache.buckets().len(), 2);
     let first_arranged_endpoint_bucket = &arranged_endpoint_bucket_cache.buckets()[0];
@@ -8256,6 +8322,22 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(
         arrangement_report.arranged_endpoint_bucket_cache(),
         result.arranged_endpoint_bucket_cache()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_ref_count(),
+        result.arranged_endpoint_ref_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_bucket_count(),
+        result.arranged_endpoint_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_singleton_bucket_count(),
+        result.arranged_endpoint_singleton_bucket_count()
+    );
+    assert_eq!(
+        arrangement_report.arranged_endpoint_max_bucket_size(),
+        result.arranged_endpoint_max_bucket_size()
     );
     assert_eq!(
         arrangement_report.arranged_endpoint_side_bucket_cache(),

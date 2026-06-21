@@ -2750,6 +2750,38 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns retained arranged endpoint references in structural buckets.
+    pub const fn arranged_endpoint_ref_count(&self) -> Option<usize> {
+        match self.arranged_endpoint_bucket_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.endpoint_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained exact structural arranged endpoint bucket count.
+    pub const fn arranged_endpoint_bucket_count(&self) -> Option<usize> {
+        match self.arranged_endpoint_bucket_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained arranged endpoint buckets containing one endpoint.
+    pub const fn arranged_endpoint_singleton_bucket_count(&self) -> Option<usize> {
+        match self.arranged_endpoint_bucket_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.singleton_bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained arranged endpoint structural bucket size.
+    pub const fn arranged_endpoint_max_bucket_size(&self) -> Option<usize> {
+        match self.arranged_endpoint_bucket_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.max_bucket_size()),
+            None => None,
+        }
+    }
+
     /// Returns arranged endpoints grouped by retained endpoint side.
     pub const fn arranged_endpoint_side_bucket_cache(
         &self,
@@ -8204,6 +8236,26 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().arranged_endpoint_bucket_cache()
     }
 
+    /// Returns retained arranged endpoint references in structural buckets.
+    pub const fn arranged_endpoint_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_ref_count()
+    }
+
+    /// Returns retained exact structural arranged endpoint bucket count.
+    pub const fn arranged_endpoint_bucket_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_bucket_count()
+    }
+
+    /// Returns retained arranged endpoint buckets containing one endpoint.
+    pub const fn arranged_endpoint_singleton_bucket_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_singleton_bucket_count()
+    }
+
+    /// Returns the largest retained arranged endpoint structural bucket size.
+    pub const fn arranged_endpoint_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_max_bucket_size()
+    }
+
     /// Returns arranged endpoints grouped by retained endpoint side.
     pub const fn arranged_endpoint_side_bucket_cache(
         &self,
@@ -9751,6 +9803,26 @@ impl ExactCurveArrangementResult2 {
             Some(endpoint_cache) => Some(endpoint_cache.endpoint_bucket_cache()),
             None => None,
         }
+    }
+
+    /// Returns retained arranged endpoint references in structural buckets.
+    pub const fn arranged_endpoint_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_ref_count()
+    }
+
+    /// Returns retained exact structural arranged endpoint bucket count.
+    pub const fn arranged_endpoint_bucket_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_bucket_count()
+    }
+
+    /// Returns retained arranged endpoint buckets containing one endpoint.
+    pub const fn arranged_endpoint_singleton_bucket_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_singleton_bucket_count()
+    }
+
+    /// Returns the largest retained arranged endpoint structural bucket size.
+    pub const fn arranged_endpoint_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_max_bucket_size()
     }
 
     /// Returns arranged endpoints grouped by retained endpoint side.
@@ -12218,6 +12290,26 @@ impl ExactCurveArrangementReport2 {
             Some(endpoint_cache) => Some(endpoint_cache.endpoint_bucket_cache()),
             None => None,
         }
+    }
+
+    /// Returns retained arranged endpoint references in structural buckets.
+    pub const fn arranged_endpoint_ref_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_ref_count()
+    }
+
+    /// Returns retained exact structural arranged endpoint bucket count.
+    pub const fn arranged_endpoint_bucket_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_bucket_count()
+    }
+
+    /// Returns retained arranged endpoint buckets containing one endpoint.
+    pub const fn arranged_endpoint_singleton_bucket_count(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_singleton_bucket_count()
+    }
+
+    /// Returns the largest retained arranged endpoint structural bucket size.
+    pub const fn arranged_endpoint_max_bucket_size(&self) -> Option<usize> {
+        self.workspace().arranged_endpoint_max_bucket_size()
     }
 
     /// Returns arranged endpoints grouped by retained endpoint side.
