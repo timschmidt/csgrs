@@ -3548,6 +3548,11 @@ impl ExactCurveWorkspace2 {
         self.output_cache.as_ref()
     }
 
+    /// Returns whether final output evaluation facts were retained.
+    pub const fn evaluated_output(&self) -> bool {
+        self.output_cache().is_some()
+    }
+
     /// Returns whether retained output materialized a region, when output was evaluated.
     pub const fn materialized_region(&self) -> Option<bool> {
         match self.output_cache() {
@@ -9149,27 +9154,27 @@ impl ExactCurveArrangementEvaluation2 {
 
     /// Returns whether final output evaluation facts were retained.
     pub const fn evaluated_output(&self) -> bool {
-        self.summary_cache().evaluated_output()
+        self.workspace().evaluated_output()
     }
 
     /// Returns whether the evaluation materialized a region, when evaluated.
     pub const fn materialized_region(&self) -> Option<bool> {
-        self.summary_cache().materialized_region()
+        self.workspace().materialized_region()
     }
 
     /// Returns the final retained build stage, when evaluated.
     pub const fn stage(&self) -> Option<RegionLineSegmentRegionBuildStage2> {
-        self.summary_cache().stage()
+        self.workspace().stage()
     }
 
     /// Returns the final retained topology status, when evaluated.
     pub const fn status(&self) -> Option<RetainedTopologyStatus> {
-        self.summary_cache().status()
+        self.workspace().status()
     }
 
     /// Returns the final blocker, when the evaluated arrangement blocked.
     pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.summary_cache().blocker()
+        self.workspace().blocker()
     }
 
     /// Returns output ring count retained by ring assembly, when available.
@@ -10787,27 +10792,27 @@ impl ExactCurveArrangementResult2 {
 
     /// Returns whether final output evaluation facts were retained.
     pub const fn evaluated_output(&self) -> bool {
-        self.summary_cache().evaluated_output()
+        self.workspace().evaluated_output()
     }
 
     /// Returns whether the retained evaluation materialized a region, when evaluated.
     pub const fn materialized_region(&self) -> Option<bool> {
-        self.summary_cache().materialized_region()
+        self.workspace().materialized_region()
     }
 
     /// Returns the final retained build stage, when evaluated.
     pub const fn stage(&self) -> Option<RegionLineSegmentRegionBuildStage2> {
-        self.summary_cache().stage()
+        self.workspace().stage()
     }
 
     /// Returns the final retained topology status, when evaluated.
     pub const fn status(&self) -> Option<RetainedTopologyStatus> {
-        self.summary_cache().status()
+        self.workspace().status()
     }
 
     /// Returns the final retained blocker, when the evaluated arrangement blocked.
     pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.summary_cache().blocker()
+        self.workspace().blocker()
     }
 
     /// Returns output ring count retained by ring assembly, when available.
@@ -13572,27 +13577,27 @@ impl ExactCurveArrangementReport2 {
 
     /// Returns whether final output evaluation facts were retained.
     pub const fn evaluated_output(&self) -> bool {
-        self.summary_cache().evaluated_output()
+        self.workspace().evaluated_output()
     }
 
     /// Returns whether the retained evaluation materialized a region, when evaluated.
     pub const fn materialized_region(&self) -> Option<bool> {
-        self.summary_cache().materialized_region()
+        self.workspace().materialized_region()
     }
 
     /// Returns the final retained build stage, when evaluated.
     pub const fn stage(&self) -> Option<RegionLineSegmentRegionBuildStage2> {
-        self.summary_cache().stage()
+        self.workspace().stage()
     }
 
     /// Returns the final retained topology status, when evaluated.
     pub const fn status(&self) -> Option<RetainedTopologyStatus> {
-        self.summary_cache().status()
+        self.workspace().status()
     }
 
     /// Returns the final retained blocker, when the evaluated arrangement blocked.
     pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.summary_cache().blocker()
+        self.workspace().blocker()
     }
 }
 
