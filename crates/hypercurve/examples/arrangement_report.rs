@@ -1,5 +1,6 @@
 use hypercurve::{
-    Classification, CurvePolicy, FillRule, LineSeg2, Point2, Region2, RegionPointLocation,
+    Classification, CurvePolicy, ExactCurveArrangementAttempt2, ExactCurveArrangementRequest2,
+    FillRule, LineSeg2, Point2, RegionPointLocation,
 };
 use hyperreal::Real;
 
@@ -20,16 +21,16 @@ fn main() -> hypercurve::CurveResult<()> {
         line(0, 4, 0, 0)?,
     ];
 
-    let (region, report) = match Region2::from_unordered_line_segments_with_arrangement_report(
-        boundary,
-        FillRule::NonZero,
-        &policy,
-    )? {
-        (Classification::Decided(region), report) => (region, report),
-        (Classification::Uncertain(reason), _) => {
+    let request =
+        ExactCurveArrangementRequest2::from_unordered_line_segments(boundary, FillRule::NonZero);
+    let result = ExactCurveArrangementAttempt2::new(request).evaluate(&policy)?;
+    let region = match result.region_classification() {
+        Classification::Decided(region) => region,
+        Classification::Uncertain(reason) => {
             panic!("arrangement blocked with retained uncertainty: {reason:?}");
         }
     };
+    let report = result.arrangement_report();
 
     assert!(report.status().unwrap().is_native_exact());
     assert_eq!(report.source_segment_count(), 4);
