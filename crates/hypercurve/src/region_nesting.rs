@@ -3185,6 +3185,14 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns retained output ring provenance bucket count.
+    pub const fn output_ring_bucket_count(&self) -> Option<usize> {
+        match self.output_ring_bucket_cache() {
+            Some(ring_cache) => Some(ring_cache.ring_count()),
+            None => None,
+        }
+    }
+
     /// Returns retained output ring segment references.
     pub const fn output_ring_segment_ref_count(&self) -> Option<usize> {
         match self.output_ring_bucket_cache() {
@@ -8594,6 +8602,11 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().output_ring_bucket_cache()
     }
 
+    /// Returns retained output ring provenance bucket count.
+    pub const fn output_ring_bucket_count(&self) -> Option<usize> {
+        self.workspace().output_ring_bucket_count()
+    }
+
     /// Returns retained output ring segment references.
     pub const fn output_ring_segment_ref_count(&self) -> Option<usize> {
         self.workspace().output_ring_segment_ref_count()
@@ -10186,6 +10199,11 @@ impl ExactCurveArrangementResult2 {
         &self,
     ) -> Option<&ExactCurveArrangementOutputRingBucketCache2> {
         self.workspace().output_ring_bucket_cache()
+    }
+
+    /// Returns retained output ring provenance bucket count.
+    pub const fn output_ring_bucket_count(&self) -> Option<usize> {
+        self.workspace().output_ring_bucket_count()
     }
 
     /// Returns retained output ring segment references.
@@ -12989,6 +13007,11 @@ impl ExactCurveArrangementReport2 {
         &self,
     ) -> Option<&ExactCurveArrangementOutputRingBucketCache2> {
         self.workspace().output_ring_bucket_cache()
+    }
+
+    /// Returns retained output ring provenance bucket count.
+    pub const fn output_ring_bucket_count(&self) -> Option<usize> {
+        self.workspace().output_ring_bucket_count()
     }
 
     /// Returns retained output ring segment references.
