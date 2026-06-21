@@ -2942,8 +2942,11 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns the retained arranged-source provenance record count.
-    pub fn arranged_source_report_count(&self) -> Option<usize> {
-        self.arranged_source_reports().map(<[_]>::len)
+    pub const fn arranged_source_report_count(&self) -> Option<usize> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.arranged_source_reports.len()),
+            None => None,
+        }
     }
 
     /// Returns per-output segment source provenance retained by ring traversal.
@@ -2953,8 +2956,11 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns the retained output-source provenance record count.
-    pub fn source_report_count(&self) -> Option<usize> {
-        self.source_reports().map(<[_]>::len)
+    pub const fn source_report_count(&self) -> Option<usize> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.source_reports.len()),
+            None => None,
+        }
     }
 
     /// Returns endpoint pair comparisons attempted during retained ring traversal.
@@ -10062,24 +10068,22 @@ impl ExactCurveArrangementResult2 {
 
     /// Returns per-arranged-fragment source provenance retained after exact splitting.
     pub fn arranged_source_reports(&self) -> Option<&[RegionLineSegmentArrangedSourceReport2]> {
-        self.ring_assembly_cache()
-            .map(ExactCurveArrangementRingAssemblyCache2::arranged_source_reports)
+        self.workspace().arranged_source_reports()
     }
 
     /// Returns the retained arranged-source provenance record count.
     pub fn arranged_source_report_count(&self) -> Option<usize> {
-        self.arranged_source_reports().map(<[_]>::len)
+        self.workspace().arranged_source_report_count()
     }
 
     /// Returns per-output segment source provenance retained by ring traversal.
     pub fn source_reports(&self) -> Option<&[RegionLineSegmentRingSourceReport2]> {
-        self.ring_assembly_cache()
-            .map(ExactCurveArrangementRingAssemblyCache2::source_reports)
+        self.workspace().source_reports()
     }
 
     /// Returns the retained output-source provenance record count.
     pub fn source_report_count(&self) -> Option<usize> {
-        self.source_reports().map(<[_]>::len)
+        self.workspace().source_report_count()
     }
 
     /// Returns per-arranged-fragment source provenance buckets.
@@ -12907,30 +12911,22 @@ impl ExactCurveArrangementReport2 {
 
     /// Returns the retained arranged-source provenance record count.
     pub const fn arranged_source_report_count(&self) -> Option<usize> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.arranged_source_reports.len()),
-            None => None,
-        }
+        self.workspace().arranged_source_report_count()
     }
 
     /// Returns retained arranged-source provenance records, when ring assembly was reached.
     pub fn arranged_source_reports(&self) -> Option<&[RegionLineSegmentArrangedSourceReport2]> {
-        self.ring_assembly_cache()
-            .map(ExactCurveArrangementRingAssemblyCache2::arranged_source_reports)
+        self.workspace().arranged_source_reports()
     }
 
     /// Returns the retained output-source provenance record count.
     pub const fn source_report_count(&self) -> Option<usize> {
-        match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.source_reports.len()),
-            None => None,
-        }
+        self.workspace().source_report_count()
     }
 
     /// Returns retained output-source provenance records, when ring assembly was reached.
     pub fn source_reports(&self) -> Option<&[RegionLineSegmentRingSourceReport2]> {
-        self.ring_assembly_cache()
-            .map(ExactCurveArrangementRingAssemblyCache2::source_reports)
+        self.workspace().source_reports()
     }
 
     /// Returns output ring count retained by ring assembly, when available.
