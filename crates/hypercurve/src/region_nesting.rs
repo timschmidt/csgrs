@@ -3522,6 +3522,38 @@ impl ExactCurveWorkspace2 {
         }
     }
 
+    /// Returns retained final boundary role bucket count.
+    pub const fn boundary_output_role_bucket_count(&self) -> Option<usize> {
+        match self.boundary_output_role_bucket_cache() {
+            Some(role_cache) => Some(role_cache.bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained final boundary output contour references grouped by role.
+    pub const fn boundary_output_role_contour_count(&self) -> Option<usize> {
+        match self.boundary_output_role_bucket_cache() {
+            Some(role_cache) => Some(role_cache.output_contour_count()),
+            None => None,
+        }
+    }
+
+    /// Returns retained final boundary output segment references grouped by role.
+    pub const fn boundary_output_role_segment_count(&self) -> Option<usize> {
+        match self.boundary_output_role_bucket_cache() {
+            Some(role_cache) => Some(role_cache.output_segment_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained output segment count for one boundary role.
+    pub const fn boundary_output_role_max_segment_count(&self) -> Option<usize> {
+        match self.boundary_output_role_bucket_cache() {
+            Some(role_cache) => Some(role_cache.max_segment_count()),
+            None => None,
+        }
+    }
+
     /// Returns final output contour count retained after boundary role assignment.
     pub const fn output_contour_count(&self) -> Option<usize> {
         match self.boundary_output_cache() {
@@ -8563,6 +8595,26 @@ impl ExactCurveArrangementEvaluation2 {
         self.workspace().boundary_output_role_bucket_cache()
     }
 
+    /// Returns retained final boundary role bucket count.
+    pub const fn boundary_output_role_bucket_count(&self) -> Option<usize> {
+        self.workspace().boundary_output_role_bucket_count()
+    }
+
+    /// Returns retained final boundary output contour references grouped by role.
+    pub const fn boundary_output_role_contour_count(&self) -> Option<usize> {
+        self.workspace().boundary_output_role_contour_count()
+    }
+
+    /// Returns retained final boundary output segment references grouped by role.
+    pub const fn boundary_output_role_segment_count(&self) -> Option<usize> {
+        self.workspace().boundary_output_role_segment_count()
+    }
+
+    /// Returns the largest retained output segment count for one boundary role.
+    pub const fn boundary_output_role_max_segment_count(&self) -> Option<usize> {
+        self.workspace().boundary_output_role_max_segment_count()
+    }
+
     /// Returns retained material/hole role buckets when role assignment was reached.
     pub const fn role_cache(&self) -> Option<&ExactCurveArrangementOutputRoleCache2> {
         self.workspace().role_cache()
@@ -10046,6 +10098,26 @@ impl ExactCurveArrangementResult2 {
             Some(boundary_cache) => Some(boundary_cache.role_bucket_cache()),
             None => None,
         }
+    }
+
+    /// Returns retained final boundary role bucket count.
+    pub const fn boundary_output_role_bucket_count(&self) -> Option<usize> {
+        self.workspace().boundary_output_role_bucket_count()
+    }
+
+    /// Returns retained final boundary output contour references grouped by role.
+    pub const fn boundary_output_role_contour_count(&self) -> Option<usize> {
+        self.workspace().boundary_output_role_contour_count()
+    }
+
+    /// Returns retained final boundary output segment references grouped by role.
+    pub const fn boundary_output_role_segment_count(&self) -> Option<usize> {
+        self.workspace().boundary_output_role_segment_count()
+    }
+
+    /// Returns the largest retained output segment count for one boundary role.
+    pub const fn boundary_output_role_max_segment_count(&self) -> Option<usize> {
+        self.workspace().boundary_output_role_max_segment_count()
     }
 
     /// Returns retained material/hole role buckets when role assignment was reached.
@@ -12590,6 +12662,26 @@ impl ExactCurveArrangementReport2 {
             Some(boundary_cache) => Some(boundary_cache.role_bucket_cache()),
             None => None,
         }
+    }
+
+    /// Returns retained final boundary role bucket count.
+    pub const fn boundary_output_role_bucket_count(&self) -> Option<usize> {
+        self.workspace().boundary_output_role_bucket_count()
+    }
+
+    /// Returns retained final boundary output contour references grouped by role.
+    pub const fn boundary_output_role_contour_count(&self) -> Option<usize> {
+        self.workspace().boundary_output_role_contour_count()
+    }
+
+    /// Returns retained final boundary output segment references grouped by role.
+    pub const fn boundary_output_role_segment_count(&self) -> Option<usize> {
+        self.workspace().boundary_output_role_segment_count()
+    }
+
+    /// Returns the largest retained output segment count for one boundary role.
+    pub const fn boundary_output_role_max_segment_count(&self) -> Option<usize> {
+        self.workspace().boundary_output_role_max_segment_count()
     }
 
     /// Returns retained material/hole role buckets when role assignment was reached.
