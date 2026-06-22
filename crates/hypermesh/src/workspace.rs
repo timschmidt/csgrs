@@ -82,16 +82,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         Ok(())
     }
 
-    pub(crate) fn into_evaluation(
-        mut self,
-        request: ExactBooleanRequest,
-    ) -> Result<ExactBooleanEvaluation, MeshError> {
-        self.evaluate(request)?;
-        let index = cached_by_request_index(&self.evaluations, request)
-            .expect("evaluation cache was just populated");
-        Ok(self.evaluations.swap_remove(index).1)
-    }
-
     fn regularized_solid_arrangement(&self) -> Option<&ExactArrangement> {
         cached_by_policy_index(
             &self.arrangements,

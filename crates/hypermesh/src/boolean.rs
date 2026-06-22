@@ -782,8 +782,10 @@ pub(crate) fn workspace_evaluation_for_replay(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<ExactBooleanEvaluation, ExactReportValidationError> {
-    ExactBooleanWorkspace::new(left, right)
-        .into_evaluation(request)
+    let mut workspace = ExactBooleanWorkspace::new(left, right);
+    workspace
+        .evaluate(request)
+        .cloned()
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
 }
 
