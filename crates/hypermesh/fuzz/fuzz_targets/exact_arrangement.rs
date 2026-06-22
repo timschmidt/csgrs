@@ -1,8 +1,7 @@
 #![no_main]
 
-use hypermesh::{
-    ExactBooleanOperation, ExactBooleanRequest, ExactBooleanWorkspace, ExactMesh, ValidationPolicy,
-};
+use hypermesh::legacy::{ExactBooleanOperation, ExactBooleanRequest, ExactBooleanWorkspace};
+use hypermesh::{ExactMesh, ValidationPolicy};
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {

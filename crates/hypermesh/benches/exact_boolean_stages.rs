@@ -1,9 +1,8 @@
 use std::hint::black_box;
 use std::time::{Duration, Instant};
 
-use hypermesh::{
-    ExactBooleanOperation, ExactBooleanRequest, ExactBooleanWorkspace, ExactMesh, ValidationPolicy,
-};
+use hypermesh::legacy::{ExactBooleanOperation, ExactBooleanRequest, ExactBooleanWorkspace};
+use hypermesh::{ExactMesh, ValidationPolicy};
 
 struct BenchCase {
     name: &'static str,

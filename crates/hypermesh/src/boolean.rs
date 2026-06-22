@@ -2375,7 +2375,7 @@ pub struct ExactBooleanEvaluation {
     ///
     /// Borrow through [`Self::materialized_result`] or from the retained
     /// workspace cache with
-    /// [`ExactBooleanWorkspace::materialize_ref`](crate::ExactBooleanWorkspace::materialize_ref).
+    /// [`ExactBooleanWorkspace::materialize_ref`](crate::workspace::ExactBooleanWorkspace::materialize_ref).
     result: Option<ExactBooleanResult>,
 }
 
@@ -12033,7 +12033,7 @@ mod tests {
         right: &ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> ExactArrangementBooleanAttempt {
-        let mut workspace = crate::ExactBooleanWorkspace::new(left, right);
+        let mut workspace = crate::workspace::ExactBooleanWorkspace::new(left, right);
         workspace
             .arrangement_attempt(request, policy)
             .unwrap()

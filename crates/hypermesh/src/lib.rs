@@ -60,16 +60,24 @@ mod winding;
 mod witness;
 mod workspace;
 
-pub use artifact::MeshArtifactManifest;
-pub use boolean::{
-    ExactBooleanEvaluation, ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult,
-    ExactBoundaryBooleanPolicy,
-};
 pub use error::MeshError;
 pub use mesh::{ExactMesh, ExactMeshValidationError, Triangle};
-pub use package::ExactMeshConsumerDomain;
-pub use region::ExactRegionSelection;
-pub use regularization::ExactRegularizationPolicy;
 pub use validation::ValidationPolicy;
 pub use view::{EdgeRef, ExactMeshRef, FaceRef, MeshView, TriangleRef};
-pub use workspace::ExactBooleanWorkspace;
+
+/// Compatibility surface for orchestration/report APIs that are moving to csgrs.
+///
+/// New hypermesh callers should prefer [`ExactMesh`] and borrowed views. This
+/// module keeps existing tests, fuzzers, benchmarks, and downstream migration
+/// work building while the workspace-level policy API is extracted.
+pub mod legacy {
+    pub use crate::artifact::MeshArtifactManifest;
+    pub use crate::boolean::{
+        ExactBooleanEvaluation, ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult,
+        ExactBoundaryBooleanPolicy,
+    };
+    pub use crate::package::ExactMeshConsumerDomain;
+    pub use crate::region::ExactRegionSelection;
+    pub use crate::regularization::ExactRegularizationPolicy;
+    pub use crate::workspace::ExactBooleanWorkspace;
+}

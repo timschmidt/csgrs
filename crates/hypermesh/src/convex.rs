@@ -1485,7 +1485,7 @@ mod tests {
         left: &ExactMesh,
         right: &ExactMesh,
         request: ExactBooleanRequest,
-        f: impl FnOnce(&crate::ExactBooleanEvaluation) -> R,
+        f: impl FnOnce(&crate::boolean::ExactBooleanEvaluation) -> R,
     ) -> R {
         let mut workspace = ExactBooleanWorkspace::new(left, right);
         f(workspace.evaluate(request).unwrap())

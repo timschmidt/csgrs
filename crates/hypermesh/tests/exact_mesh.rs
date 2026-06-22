@@ -1,9 +1,10 @@
 use hyperlimit::{Point3, SourceProvenance};
-use hypermesh::{
-    ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
-    ExactBoundaryBooleanPolicy, ExactMesh, ExactMeshConsumerDomain, ExactRegionSelection,
-    ExactRegularizationPolicy, MeshArtifactManifest, ValidationPolicy,
+use hypermesh::legacy::{
+    ExactBooleanEvaluation, ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult,
+    ExactBooleanWorkspace, ExactBoundaryBooleanPolicy, ExactMeshConsumerDomain,
+    ExactRegionSelection, ExactRegularizationPolicy, MeshArtifactManifest,
 };
+use hypermesh::{ExactMesh, ValidationPolicy};
 use hyperreal::Real;
 
 fn p(x: i64, y: i64, z: i64) -> Point3 {
@@ -14,7 +15,7 @@ fn with_exact_boolean_evaluation<R>(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
-    f: impl FnOnce(&hypermesh::ExactBooleanEvaluation) -> R,
+    f: impl FnOnce(&ExactBooleanEvaluation) -> R,
 ) -> R {
     let mut workspace = ExactBooleanWorkspace::new(left, right);
     let evaluation = workspace.evaluate(request).unwrap();
@@ -22,7 +23,7 @@ fn with_exact_boolean_evaluation<R>(
     f(evaluation)
 }
 
-fn assert_evaluation_retains_attempt_gate_reports(evaluation: &hypermesh::ExactBooleanEvaluation) {
+fn assert_evaluation_retains_attempt_gate_reports(evaluation: &ExactBooleanEvaluation) {
     assert!(
         evaluation.has_retained_arrangement_attempt(),
         "evaluation should retain an arrangement attempt"

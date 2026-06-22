@@ -7,9 +7,8 @@ use bevy::pbr::wireframe::{Wireframe, WireframeColor, WireframePlugin};
 use bevy::prelude::*;
 use bevy::render::mesh::PrimitiveTopology;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
-use hypermesh::{
-    ExactBooleanOperation, ExactBooleanRequest, ExactBooleanWorkspace, ExactMesh, ValidationPolicy,
-};
+use hypermesh::legacy::{ExactBooleanOperation, ExactBooleanRequest, ExactBooleanWorkspace};
+use hypermesh::{ExactMesh, ValidationPolicy};
 
 #[derive(Component)]
 struct ToggleableMesh;
