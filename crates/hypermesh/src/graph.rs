@@ -1017,7 +1017,7 @@ impl ExactIntersectionGraph {
         for graph in &overlap_graphs {
             graph.validate().map_err(|_| ExactMeshError {
                 blockers: vec![ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::UnsupportedExactOperation,
+                    ExactMeshBlockerKind::ExactConstructionFailure,
                     "retained coplanar overlap graph failed evidence validation",
                 )],
             })?;
@@ -1069,7 +1069,7 @@ impl ExactIntersectionGraph {
         };
         report.validate().map_err(|_| ExactMeshError {
             blockers: vec![ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::ExactConstructionFailure,
                 "coplanar arrangement evidence failed validation",
             )],
         })?;
