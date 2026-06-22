@@ -1,4 +1,4 @@
-//! Typed blockers for exact mesh import and validation.
+//! Typed blockers for exact mesh import, validation, and kernel execution.
 
 use std::fmt;
 
@@ -27,6 +27,9 @@ pub enum ExactMeshBlockerKind {
     NonManifoldVertexLink,
     /// Duplicate triangle vertex set.
     DuplicateTriangle,
+    /// Retained exact facts or acceleration structures did not replay against
+    /// the supplied source mesh objects.
+    StaleFactReplay,
     /// Requested exact operation is not yet certified by the exact stack.
     UnsupportedExactOperation,
 }

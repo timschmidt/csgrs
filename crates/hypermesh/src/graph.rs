@@ -987,7 +987,7 @@ impl ExactIntersectionGraph {
         // counters are internally coherent.
         self.validate_against_meshes(left, right).map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::StaleFactReplay,
                 format!("retained coplanar arrangement graph failed source replay: {error:?}"),
             ))
         })?;
@@ -1034,7 +1034,7 @@ impl ExactIntersectionGraph {
                 .validate_against_meshes(left, right)
                 .map_err(|error| {
                     ExactMeshError::one(ExactMeshBlocker::new(
-                        ExactMeshBlockerKind::UnsupportedExactOperation,
+                        ExactMeshBlockerKind::StaleFactReplay,
                         format!(
                             "retained coplanar split construction failed source replay: {error:?}"
                         ),
@@ -1191,7 +1191,7 @@ fn prepare_intersection_graph_view(
 ) -> Result<PreparedMeshView<'_>, ExactMeshError> {
     mesh.view().prepare_broad_phase().map_err(|error| {
         ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::StaleFactReplay,
             format!("exact mesh retained broad-phase facts failed source replay: {error:?}"),
         ))
     })
@@ -1237,7 +1237,7 @@ pub(crate) fn build_validated_intersection_graph_from_prepared_views(
         .validate_against_meshes(left.view().mesh(), right.view().mesh())
         .map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::StaleFactReplay,
                 format!("exact intersection graph failed source replay: {error:?}"),
             ))
         })?;

@@ -1044,7 +1044,7 @@ fn exact_boolean_replay_preflight(
 
 fn exact_boolean_replay_report_error(error: ExactReportValidationError) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::UnsupportedExactOperation,
+        ExactMeshBlockerKind::StaleFactReplay,
         format!("exact boolean retained report failed replay validation: {error:?}"),
     ))
 }
@@ -3229,7 +3229,7 @@ fn materialize_retained_arrangement_cell_complex_attempt(
         .validate_against_sources_for_request(left, right, request)
         .map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::StaleFactReplay,
                 format!("retained arrangement attempt failed replay: {error:?}"),
             ))
         })?;
@@ -10257,7 +10257,7 @@ fn validate_graph_source_replay(
         .validate_against_sources(left, right)
         .map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::StaleFactReplay,
                 format!("retained exact intersection graph failed source replay: {error:?}"),
             ))
         })
@@ -11289,7 +11289,7 @@ fn volumetric_winding_region_plan_from_graph(
         classify_triangulated_regions_against_opposite_meshes(&triangulations, left, right)
             .map_err(|error| {
                 ExactMeshError::one(ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::UnsupportedExactOperation,
+                    ExactMeshBlockerKind::StaleFactReplay,
                     format!(
                         "exact volumetric winding region report/source replay failed: {error:?}"
                     ),
@@ -11410,7 +11410,7 @@ fn convex_boundary_containment_is_supported(
 
 fn winding_error(error: WindingReportError) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::UnsupportedExactOperation,
+        ExactMeshBlockerKind::StaleFactReplay,
         format!("exact winding report/source replay failed: {error:?}"),
     ))
 }
