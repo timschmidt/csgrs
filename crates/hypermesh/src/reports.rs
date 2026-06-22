@@ -22,8 +22,6 @@ use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 #[cfg(test)]
 use super::boolean::materialize_boolean_exact_request;
 #[cfg(test)]
-use super::boolean::refinement_report_from_graph;
-#[cfg(test)]
 use super::boolean::winding_readiness_report_for_request_from_graph;
 use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanOperation, ExactBooleanRequest,
@@ -224,135 +222,6 @@ pub(crate) enum ExactReportValidationError {
     /// A retained report no longer matches facts recomputed from the supplied
     /// source meshes.
     SourceReplayMismatch,
-}
-
-/// Shared freshness status for copied exact boolean reports.
-///
-/// warrants replayable exact state at predicate/construction/topology
-/// boundaries, but not redundant metadata vocabularies for each wrapper. The
-/// shared status preserves the useful distinction between local report drift
-/// and source-replay drift while keeping [`ExactReportValidationError`] as the
-/// detailed diagnostic surface.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-#[cfg(test)]
-pub(crate) enum ExactReportFreshness {
-    /// The report validates locally and replays exactly from the source meshes.
-    Current,
-    /// The unknown-graph flag no longer matches the reported status.
-    StaleGraphUnknownStatus,
-    /// Blocker kind, relation counts, or required relation evidence drifted.
-    StaleBlockerEvidence,
-    /// Status, operation, or precondition evidence no longer agree.
-    StaleStatusEvidence,
-    /// Retained region, triangulation, or assembly provenance is missing,
-    /// duplicated, invalid, or stale.
-    StaleRegionFacts,
-    /// Required coplanar-readiness evidence is absent.
-    MissingArrangementReadiness,
-    /// Coplanar-readiness evidence is present for a status that cannot use it.
-    UnexpectedArrangementReadiness,
-    /// The retained coplanar-readiness summary failed its own validation.
-    InvalidArrangementReadiness,
-    /// Readiness counts no longer agree with retained blocker counts.
-    StaleArrangementReadiness,
-    /// Required coplanar-volumetric evidence is absent.
-    MissingCoplanarVolumetricEvidence,
-    /// Coplanar-volumetric evidence is present for a status that cannot use it.
-    UnexpectedCoplanarVolumetricEvidence,
-    /// The retained coplanar-volumetric evidence failed its own validation.
-    InvalidCoplanarVolumetricEvidence,
-    /// Volumetric-cell evidence counts no longer agree with retained blocker
-    /// counts or report status.
-    StaleCoplanarVolumetricEvidence,
-    /// The report is locally valid but no longer replays from the sources.
-    SourceReplayMismatch,
-}
-
-#[cfg(test)]
-impl From<ExactReportValidationError> for ExactReportFreshness {
-    fn from(error: ExactReportValidationError) -> Self {
-        match error {
-            ExactReportValidationError::GraphUnknownStatusMismatch => Self::StaleGraphUnknownStatus,
-            ExactReportValidationError::CertifiedReportHasBlocker
-            | ExactReportValidationError::MissingBlocker
-            | ExactReportValidationError::WrongBlockerKind
-            | ExactReportValidationError::InvalidBlockerCounts
-            | ExactReportValidationError::MissingRelationCount => Self::StaleBlockerEvidence,
-            ExactReportValidationError::StatusEvidenceMismatch
-            | ExactReportValidationError::InvalidPermutation
-            | ExactReportValidationError::MismatchedTriangleSets => Self::StaleStatusEvidence,
-            ExactReportValidationError::UnexpectedRegionFacts
-            | ExactReportValidationError::MissingRegionFacts
-            | ExactReportValidationError::UnclassifiedRegionTriangulation
-            | ExactReportValidationError::OrphanedRegionClassification
-            | ExactReportValidationError::UntriangulatedAssemblyRegion
-            | ExactReportValidationError::AssemblyVertexOutsideTriangulation
-            | ExactReportValidationError::UnreferencedAssemblyVertex
-            | ExactReportValidationError::InvalidRegionClassification(_)
-            | ExactReportValidationError::RegionClassificationNotProofProducing
-            | ExactReportValidationError::RegionCountMismatch
-            | ExactReportValidationError::DuplicateRegionClassification
-            | ExactReportValidationError::DuplicateRegionTriangulation
-            | ExactReportValidationError::InvalidTriangulation
-            | ExactReportValidationError::InvalidAssembly
-            | ExactReportValidationError::DuplicateAssemblyTriangle
-            | ExactReportValidationError::InvalidVolumetricClassification(_)
-            | ExactReportValidationError::MissingVolumetricClassifications
-            | ExactReportValidationError::UnexpectedVolumetricClassifications
-            | ExactReportValidationError::OrphanedVolumetricClassification
-            | ExactReportValidationError::UnclassifiedVolumetricTriangulation
-            | ExactReportValidationError::VolumetricClassificationOrderMismatch
-            | ExactReportValidationError::VolumetricClassificationNotDecided
-            | ExactReportValidationError::InvalidOutputMesh
-            | ExactReportValidationError::InvalidOutputMeshProvenance
-            | ExactReportValidationError::ShortcutResultHasAssemblyArtifacts
-            | ExactReportValidationError::OutputMeshAssemblyMismatch => Self::StaleRegionFacts,
-            ExactReportValidationError::ShortcutResultHasUnknownGraph
-            | ExactReportValidationError::SelectedRegionResultHasUnknownGraph
-            | ExactReportValidationError::UnexpectedGraphEvents => Self::StaleGraphUnknownStatus,
-            ExactReportValidationError::OutputSourceReplayMismatch => Self::SourceReplayMismatch,
-            ExactReportValidationError::SelectedRegionAssemblyViolatesSelection
-            | ExactReportValidationError::SelectedRegionAssemblyMissingSelectedRegion
-            | ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation => {
-                Self::StaleStatusEvidence
-            }
-            ExactReportValidationError::MissingArrangementReadiness => {
-                Self::MissingArrangementReadiness
-            }
-            ExactReportValidationError::UnexpectedArrangementReadiness => {
-                Self::UnexpectedArrangementReadiness
-            }
-            ExactReportValidationError::InvalidArrangementReadiness => {
-                Self::InvalidArrangementReadiness
-            }
-            ExactReportValidationError::ArrangementReadinessMismatch => {
-                Self::StaleArrangementReadiness
-            }
-            ExactReportValidationError::MissingCoplanarVolumetricEvidence => {
-                Self::MissingCoplanarVolumetricEvidence
-            }
-            ExactReportValidationError::UnexpectedCoplanarVolumetricEvidence => {
-                Self::UnexpectedCoplanarVolumetricEvidence
-            }
-            ExactReportValidationError::InvalidCoplanarVolumetricEvidence => {
-                Self::InvalidCoplanarVolumetricEvidence
-            }
-            ExactReportValidationError::CoplanarVolumetricEvidenceMismatch => {
-                Self::StaleCoplanarVolumetricEvidence
-            }
-            ExactReportValidationError::SourceReplayMismatch => Self::SourceReplayMismatch,
-        }
-    }
-}
-
-#[cfg(test)]
-pub(crate) fn exact_report_freshness(
-    validation: Result<(), ExactReportValidationError>,
-) -> ExactReportFreshness {
-    match validation {
-        Ok(()) => ExactReportFreshness::Current,
-        Err(error) => error.into(),
-    }
 }
 
 fn validated_report_intersection_graph(
@@ -1723,43 +1592,6 @@ impl ExactBooleanResult {
             return Err(ExactReportValidationError::SourceReplayMismatch);
         }
         Ok(())
-    }
-
-    /// Classify whether this retained result is fresh for the source meshes.
-    ///
-    /// Local report integrity is checked before source replay so copied
-    /// materialized outputs can distinguish stale retained artifacts from
-    /// source-geometry drift.
-    #[cfg(test)]
-    pub(crate) fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources(left, right))
-    }
-
-    /// Classify whether this retained result is fresh for an explicit request.
-    ///
-    /// This is stricter than [`Self::freshness_against_sources`]: it checks the
-    /// retained operation, validation policy, boundary policy, and any retained
-    /// arrangement attempt evidence against the requested boolean, not only
-    /// whether the result can be replayed from the operands by some compatible
-    /// source path.
-    #[cfg(test)]
-    pub(crate) fn freshness_against_sources_for_request(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-        retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_request_against_sources_with_retained_attempt(
-            left,
-            right,
-            request,
-            retained_arrangement_attempt,
-        ))
     }
 
     pub(crate) fn validate_arrangement_cell_complex_gate_reports_against_sources(
@@ -3856,19 +3688,6 @@ impl ExactVolumetricBoundaryClosureReport {
         }
     }
 
-    /// Classify whether this retained boundary-closure report is fresh.
-    ///
-    /// Local status/count coherence is checked before source replay, so callers
-    /// can distinguish stale closure evidence from source-geometry drift.
-    #[cfg(test)]
-    pub(crate) fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources(left, right))
-    }
-
     /// Validate status and retained closure counts.
     pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
         if self.has_impossible_boundary_count_bounds() {
@@ -4127,17 +3946,6 @@ impl ExactBooleanPreflight {
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
         }
-    }
-
-    /// Classify whether this retained preflight is fresh under `request`.
-    #[cfg(test)]
-    pub(crate) fn freshness_against_sources_for_request(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources_for_request(left, right, request))
     }
 
     /// Validate support, blocker, and retained artifact consistency.
@@ -4749,39 +4557,6 @@ impl ExactRefinementReport {
         self.retained_events
     }
 
-    /// Validate this refinement report against source meshes and request.
-    ///
-    /// The local audit checks status/blocker/count coherence. This replay
-    /// recomputes the retained graph report from `left` and `right` for the
-    /// same operation and requires equality, keeping refinement evidence tied
-    /// to the source objects whose exact predicates produced it as required by
-    #[cfg(test)]
-    pub(crate) fn validate_against_sources_for_request(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-    ) -> Result<(), ExactReportValidationError> {
-        self.validate()?;
-        if let Ok(evaluation) = exact_boolean_evaluation_for_replay(left, right, request)
-            && self == evaluation.certifications().refinement()
-        {
-            return Ok(());
-        }
-        Err(ExactReportValidationError::SourceReplayMismatch)
-    }
-
-    /// Classify whether this retained refinement report is fresh under `request`.
-    #[cfg(test)]
-    pub(crate) fn freshness_against_sources_for_request(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources_for_request(left, right, request))
-    }
-
     /// Validate status, retained counts, and refinement blocker consistency.
     pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)
@@ -4940,38 +4715,6 @@ impl ExactSameSurfaceReport {
         }
         Ok(())
     }
-
-    /// Validate this report against the source meshes that produced it.
-    ///
-    /// [`Self::validate`] checks that the retained permutation, remapped
-    /// triangle sets, and predicate-use trail are locally coherent. This
-    /// stronger check recomputes the same-surface certificate from `left` and
-    /// a shortcut certificate is retained numerical and combinatorial state
-    /// attached to particular source objects, not a portable label that can be
-    /// pasted onto another mesh pair.
-    #[cfg(test)]
-    pub(crate) fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), ExactReportValidationError> {
-        self.validate()?;
-        if self == &same_surface_report_from_sources(left, right) {
-            Ok(())
-        } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        }
-    }
-
-    /// Classify whether this retained same-surface report is fresh.
-    #[cfg(test)]
-    pub(crate) fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources(left, right))
-    }
 }
 
 fn validate_full_permutation(
@@ -5047,16 +4790,6 @@ impl ExactOpenSurfaceDisjointReport {
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
         }
-    }
-
-    /// Classify whether this retained open-surface disjoint report is fresh.
-    #[cfg(test)]
-    pub(crate) fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources(left, right))
     }
 
     /// Validate status, graph counts, and blocker consistency.
@@ -5555,16 +5288,6 @@ impl ExactBoundaryTouchingReport {
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
         }
-    }
-
-    /// Classify whether this retained boundary-touching report is fresh.
-    #[cfg(test)]
-    pub(crate) fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources(left, right))
     }
 }
 
@@ -6618,91 +6341,6 @@ mod tests {
     use crate::region::{ExactOutputVertex, FaceRegionPlaneRelation};
 
     #[test]
-    fn freshness_classifies_retained_region_provenance_drift() {
-        let stale_region_errors = [
-            ExactReportValidationError::DuplicateRegionTriangulation,
-            ExactReportValidationError::InvalidTriangulation,
-            ExactReportValidationError::UntriangulatedAssemblyRegion,
-            ExactReportValidationError::AssemblyVertexOutsideTriangulation,
-            ExactReportValidationError::UnreferencedAssemblyVertex,
-            ExactReportValidationError::InvalidAssembly,
-            ExactReportValidationError::DuplicateAssemblyTriangle,
-            ExactReportValidationError::OutputMeshAssemblyMismatch,
-            ExactReportValidationError::InvalidRegionClassification(
-                FaceRegionPlaneValidationError::EmptyNodeSides,
-            ),
-            ExactReportValidationError::InvalidVolumetricClassification(
-                ExactVolumetricRegionError::EmptyTriangulation,
-            ),
-            ExactReportValidationError::MissingVolumetricClassifications,
-            ExactReportValidationError::UnexpectedVolumetricClassifications,
-            ExactReportValidationError::OrphanedVolumetricClassification,
-            ExactReportValidationError::UnclassifiedVolumetricTriangulation,
-            ExactReportValidationError::VolumetricClassificationNotDecided,
-            ExactReportValidationError::InvalidOutputMesh,
-            ExactReportValidationError::InvalidOutputMeshProvenance,
-            ExactReportValidationError::ShortcutResultHasAssemblyArtifacts,
-        ];
-        for error in stale_region_errors {
-            assert_eq!(
-                ExactReportFreshness::from(error),
-                ExactReportFreshness::StaleRegionFacts
-            );
-        }
-
-        assert_eq!(
-            ExactReportFreshness::from(ExactReportValidationError::OutputSourceReplayMismatch),
-            ExactReportFreshness::SourceReplayMismatch
-        );
-        for error in [
-            ExactReportValidationError::ShortcutResultHasUnknownGraph,
-            ExactReportValidationError::SelectedRegionResultHasUnknownGraph,
-            ExactReportValidationError::UnexpectedGraphEvents,
-        ] {
-            assert_eq!(
-                ExactReportFreshness::from(error),
-                ExactReportFreshness::StaleGraphUnknownStatus
-            );
-        }
-        for error in [
-            ExactReportValidationError::CertifiedReportHasBlocker,
-            ExactReportValidationError::MissingBlocker,
-        ] {
-            assert_eq!(
-                ExactReportFreshness::from(error),
-                ExactReportFreshness::StaleBlockerEvidence
-            );
-        }
-        for error in [
-            ExactReportValidationError::InvalidPermutation,
-            ExactReportValidationError::MismatchedTriangleSets,
-        ] {
-            assert_eq!(
-                ExactReportFreshness::from(error),
-                ExactReportFreshness::StaleStatusEvidence
-            );
-        }
-        assert_eq!(
-            ExactReportFreshness::from(
-                ExactReportValidationError::SelectedRegionAssemblyViolatesSelection
-            ),
-            ExactReportFreshness::StaleStatusEvidence
-        );
-        assert_eq!(
-            ExactReportFreshness::from(
-                ExactReportValidationError::SelectedRegionAssemblyMissingSelectedRegion
-            ),
-            ExactReportFreshness::StaleStatusEvidence
-        );
-        assert_eq!(
-            ExactReportFreshness::from(
-                ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation
-            ),
-            ExactReportFreshness::StaleStatusEvidence
-        );
-    }
-
-    #[test]
     fn selected_region_preflight_accepts_empty_region_plan_with_boundary_face_pairs() {
         let mut preflight = ExactBooleanPreflight {
             operation: ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
@@ -6726,15 +6364,6 @@ mod tests {
         );
     }
 
-    fn report_test_tetra(offset: [i64; 3]) -> ExactMesh {
-        let [ox, oy, oz] = offset;
-        ExactMesh::from_i64_triangles(
-            &[ox, oy, oz, ox + 1, oy, oz, ox, oy + 1, oz, ox, oy, oz + 1],
-            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
-        )
-        .unwrap()
-    }
-
     fn report_test_triangle(points: &[[i64; 3]; 3]) -> ExactMesh {
         ExactMesh::from_i64_triangles_with_policy(
             &[
@@ -6752,195 +6381,6 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap()
-    }
-
-    #[test]
-    fn preflight_and_closure_freshness_classify_local_and_source_drift() {
-        let left = report_test_tetra([0, 0, 0]);
-        let right = report_test_tetra([3, 0, 0]);
-
-        let preflight = exact_boolean_evaluation_for_replay(
-            &left,
-            &right,
-            ExactBooleanRequest::new(
-                ExactBooleanOperation::Union,
-                ValidationPolicy::ALLOW_BOUNDARY,
-            ),
-        )
-        .map(|evaluation| evaluation.preflight().clone())
-        .unwrap();
-        let allow_boundary_union = ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        );
-        assert_eq!(
-            preflight.freshness_against_sources_for_request(&left, &right, allow_boundary_union),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(
-            preflight.freshness_against_sources_for_request(
-                &left,
-                &right,
-                ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-            ),
-            ExactReportFreshness::Current
-        );
-
-        let mut stale_preflight = preflight.clone();
-        stale_preflight.retained_events = 1;
-        assert_eq!(
-            stale_preflight.freshness_against_sources_for_request(
-                &left,
-                &right,
-                allow_boundary_union
-            ),
-            ExactReportFreshness::StaleStatusEvidence
-        );
-
-        let overlapping_right = report_test_tetra([0, 0, 0]);
-        assert_eq!(
-            preflight.freshness_against_sources_for_request(
-                &left,
-                &overlapping_right,
-                allow_boundary_union
-            ),
-            ExactReportFreshness::SourceReplayMismatch
-        );
-
-        let graph = validated_report_intersection_graph(&left, &right).unwrap();
-        let closure = volumetric_boundary_closure_report_from_graph(
-            &graph,
-            &left,
-            &right,
-            ExactBooleanOperation::Union,
-        )
-        .unwrap();
-        assert_eq!(
-            closure.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-
-        let mut stale_closure = closure.clone();
-        stale_closure.boundary_edges = 1;
-        assert_eq!(
-            stale_closure.freshness_against_sources(&left, &right),
-            ExactReportFreshness::StaleStatusEvidence
-        );
-    }
-
-    #[test]
-    fn shortcut_and_blocker_reports_classify_freshness() {
-        let left = report_test_tetra([0, 0, 0]);
-        let right = report_test_tetra([3, 0, 0]);
-
-        let graph = validated_report_intersection_graph(&left, &right).unwrap();
-        let refinement = refinement_report_from_graph(&graph, ExactBooleanOperation::Union);
-        let union_request = ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        );
-        assert_eq!(
-            refinement.freshness_against_sources_for_request(&left, &right, union_request),
-            ExactReportFreshness::Current
-        );
-
-        let mut stale_refinement = refinement.clone();
-        stale_refinement.graph_had_unknowns = true;
-        assert_eq!(
-            stale_refinement.freshness_against_sources_for_request(&left, &right, union_request),
-            ExactReportFreshness::StaleBlockerEvidence
-        );
-
-        let same_surface = same_surface_report_from_sources(&left, &left);
-        assert_eq!(
-            same_surface.freshness_against_sources(&left, &left),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(
-            same_surface.freshness_against_sources(&left, &right),
-            ExactReportFreshness::SourceReplayMismatch
-        );
-
-        let open_left = report_test_triangle(&[[0, 0, 0], [2, 0, 0], [0, 2, 0]]);
-        let open_right = report_test_triangle(&[[5, 0, 0], [7, 0, 0], [5, 2, 0]]);
-        let graph = validated_report_intersection_graph(&open_left, &open_right).unwrap();
-        let open_disjoint =
-            open_surface_disjoint_report_from_graph(&graph, &open_left, &open_right);
-        assert_eq!(
-            open_disjoint.freshness_against_sources(&open_left, &open_right),
-            ExactReportFreshness::Current
-        );
-
-        let touching_right = report_test_triangle(&[[2, 0, 0], [0, 2, 0], [2, 2, 2]]);
-        let graph = validated_report_intersection_graph(&open_left, &touching_right).unwrap();
-        let boundary =
-            boundary_touching_report_from_graph(&graph, &open_left, &touching_right).unwrap();
-        assert_eq!(
-            boundary.freshness_against_sources(&open_left, &touching_right),
-            ExactReportFreshness::Current
-        );
-
-        let mut stale_boundary = boundary.clone();
-        stale_boundary.retained_events = 0;
-        assert_eq!(
-            stale_boundary.freshness_against_sources(&open_left, &touching_right),
-            ExactReportFreshness::StaleStatusEvidence
-        );
-    }
-
-    #[test]
-    fn boolean_result_freshness_classifies_local_source_and_operation_drift() {
-        let left = report_test_tetra([0, 0, 0]);
-        let right = report_test_tetra([3, 0, 0]);
-        let request = ExactBooleanRequest::with_boundary_policy(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::Reject,
-        );
-        let result = materialize_boolean_exact_request(&left, &right, request).unwrap();
-
-        assert_eq!(
-            result.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(
-            result.freshness_against_sources_for_request(
-                &left,
-                &right,
-                ExactBooleanRequest::with_boundary_policy(
-                    ExactBooleanOperation::Union,
-                    ValidationPolicy::CLOSED,
-                    ExactBoundaryBooleanPolicy::Reject,
-                ),
-                None,
-            ),
-            ExactReportFreshness::Current
-        );
-
-        let mut stale_result = result.clone();
-        stale_result.graph_had_unknowns = true;
-        assert_eq!(
-            stale_result.freshness_against_sources(&left, &right),
-            ExactReportFreshness::StaleGraphUnknownStatus
-        );
-
-        assert_eq!(
-            result.freshness_against_sources(&left, &left),
-            ExactReportFreshness::SourceReplayMismatch
-        );
-        assert_eq!(
-            result.freshness_against_sources_for_request(
-                &left,
-                &right,
-                ExactBooleanRequest::with_boundary_policy(
-                    ExactBooleanOperation::Intersection,
-                    ValidationPolicy::CLOSED,
-                    ExactBoundaryBooleanPolicy::Reject,
-                ),
-                None,
-            ),
-            ExactReportFreshness::SourceReplayMismatch
-        );
     }
 
     #[test]
@@ -6966,16 +6406,10 @@ mod tests {
             result.validate(),
             Err(ExactReportValidationError::DuplicateAssemblyTriangle)
         );
-        assert_eq!(
-            result.freshness_against_sources(&left, &right),
-            ExactReportFreshness::StaleRegionFacts
-        );
     }
 
     #[test]
     fn selected_region_result_rejects_missing_assembly_cell_with_retained_source_label() {
-        let left = report_test_triangle(&[[0, 0, 0], [2, 0, 0], [0, 2, 0]]);
-        let right = report_test_triangle(&[[0, 0, 1], [2, 0, 1], [0, 2, 1]]);
         let p0 = point(0, 0, 0);
         let p1 = point(2, 0, 0);
         let p2 = point(2, 2, 0);
@@ -7053,10 +6487,6 @@ mod tests {
         assert_eq!(
             result.validate(),
             Err(ExactReportValidationError::SelectedRegionAssemblyMissingSelectedRegion)
-        );
-        assert_eq!(
-            result.freshness_against_sources(&left, &right),
-            ExactReportFreshness::StaleStatusEvidence
         );
     }
 
@@ -7186,13 +6616,6 @@ mod tests {
         assert_eq!(
             result.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
-        );
-        assert_eq!(
-            result.freshness_against_sources(
-                &report_test_tetra([0, 0, 0]),
-                &report_test_tetra([3, 0, 0])
-            ),
-            ExactReportFreshness::StaleStatusEvidence
         );
     }
 

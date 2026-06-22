@@ -1230,12 +1230,6 @@ pub(crate) struct ExactBooleanCertificationSet {
 }
 
 impl ExactBooleanCertificationSet {
-    /// Return the exact graph refinement certification report.
-    #[cfg(test)]
-    pub(crate) fn refinement(&self) -> &ExactRefinementReport {
-        &self.refinement
-    }
-
     /// Return the planar-arrangement readiness certification report.
     #[cfg(test)]
     pub(crate) fn planar_arrangement(&self) -> &ExactPlanarArrangementReport {
