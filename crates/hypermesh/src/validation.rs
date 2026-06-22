@@ -57,7 +57,7 @@ impl ValidationPolicy {
     };
 
     /// Return whether this policy is at least as strict as `requested`.
-    pub const fn satisfies(self, requested: Self) -> bool {
+    pub(crate) const fn satisfies(self, requested: Self) -> bool {
         matches!(
             (self.boundary, requested.boundary),
             (BoundaryPolicy::Closed, BoundaryPolicy::Closed)

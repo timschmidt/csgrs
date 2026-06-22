@@ -493,7 +493,7 @@ impl ExactMesh {
     /// constructed with [`ValidationPolicy::ALLOW_BOUNDARY`] must not later be
     /// mistaken for closed-solid evidence merely because its retained facts are
     /// locally coherent.
-    pub const fn validation_policy(&self) -> ValidationPolicy {
+    pub(crate) const fn validation_policy(&self) -> ValidationPolicy {
         self.validation_policy
     }
 

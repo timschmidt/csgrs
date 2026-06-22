@@ -3,7 +3,6 @@
 use super::bounds::PreparedMeshBounds;
 use super::error::ExactMeshError;
 use super::mesh::{ExactAffineTransform3, Triangle};
-use super::validation::ValidationPolicy;
 use super::{ExactMesh, ExactMeshValidationError};
 use hyperlimit::Point3;
 use hyperreal::Real;
@@ -122,11 +121,6 @@ impl<'a> ExactMeshRef<'a> {
     /// Whether retained facts record exact rational coordinates for every vertex.
     pub const fn has_exact_rational_coordinates(self) -> bool {
         self.mesh.facts().mesh.fixed_coordinates_exact_rational
-    }
-
-    /// Return the validation policy attached to this mesh.
-    pub const fn validation_policy(self) -> ValidationPolicy {
-        self.mesh.validation_policy()
     }
 
     /// Replay retained bounds, topology facts, and provenance against the source mesh.
