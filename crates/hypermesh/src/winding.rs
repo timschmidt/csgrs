@@ -17,7 +17,7 @@ use super::mesh::ExactMesh;
 
 /// Deterministic exact ray direction used by an exact ray-parity query.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum WindingRayAxis {
+pub(crate) enum WindingRayAxis {
     /// Positive X ray, projected to the YZ plane.
     X,
     /// Positive Y ray, projected to the XZ plane.
@@ -120,7 +120,7 @@ fn gcd_i16(a: i16, b: i16) -> i16 {
 
 /// Exact point/closed-mesh winding relation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ClosedMeshWindingRelation {
+pub(crate) enum ClosedMeshWindingRelation {
     /// The target mesh is not a closed two-manifold under exact validation
     /// facts.
     NotClosed,
@@ -284,7 +284,7 @@ impl PointMeshWindingReport {
 
 /// Exact relation between every subject vertex and a closed target mesh.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ClosedMeshWindingMeshRelation {
+pub(crate) enum ClosedMeshWindingMeshRelation {
     /// The target mesh is not closed.
     NotClosed,
     /// Every subject vertex is strictly inside the target mesh.
