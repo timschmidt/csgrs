@@ -47,7 +47,7 @@ pub enum ConvexSolidClassification {
 /// justified by retained exact facts. A report that contradicts those retained
 /// facts must be treated as invalid before a shortcut consumes it.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ConvexSolidReportError {
+pub(crate) enum ConvexSolidReportError {
     /// `NotClosed` orientation and convexity states were not paired.
     NotClosedStateMismatch,
     /// Unknown orientation was paired with a decided convexity state.

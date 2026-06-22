@@ -137,27 +137,27 @@ pub enum ClosedMeshWindingRelation {
 
 /// Exact point/closed-mesh winding report.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PointMeshWindingReport {
+pub(crate) struct PointMeshWindingReport {
     /// Final certified or unresolved relation.
-    pub relation: ClosedMeshWindingRelation,
+    pub(crate) relation: ClosedMeshWindingRelation,
     /// Ray direction that produced the retained parity decision or boundary hit.
-    pub axis: Option<WindingRayAxis>,
+    pub(crate) axis: Option<WindingRayAxis>,
     /// Number of rays attempted.
-    pub tested_axes: usize,
+    pub(crate) tested_axes: usize,
     /// Number of source triangles scanned by each attempted ray.
-    pub triangle_count: usize,
+    pub(crate) triangle_count: usize,
     /// Certified positive ray/triangle crossings on the selected axis.
-    pub crossings: usize,
+    pub(crate) crossings: usize,
     /// Triangles whose exact projected relation put the query point on the
     /// triangle boundary.
-    pub boundary_hits: usize,
+    pub(crate) boundary_hits: usize,
     /// Triangles where the ray hit a projected edge/vertex and that axis had
     /// to be rejected.
-    pub degenerate_hits: usize,
+    pub(crate) degenerate_hits: usize,
     /// Triangles parallel to the selected ray axis.
-    pub parallel_faces: usize,
+    pub(crate) parallel_faces: usize,
     /// Triangles whose comparison state was undecidable for the selected ray.
-    pub unknown_hits: usize,
+    pub(crate) unknown_hits: usize,
 }
 
 impl PointMeshWindingReport {
@@ -168,7 +168,7 @@ impl PointMeshWindingReport {
     /// unknown reports must retain evidence that all attempted ray directions were
     /// blocked by degeneracy or undecidable comparisons. The split mirrors
     /// unresolved states are separate public values, not nearby booleans.
-    pub fn validate(&self) -> Result<(), WindingReportError> {
+    pub(crate) fn validate(&self) -> Result<(), WindingReportError> {
         let candidate_count = winding_ray_candidate_count();
         if self.tested_axes > candidate_count {
             return Err(WindingReportError::InvalidAxisCount);
@@ -299,20 +299,20 @@ pub enum ClosedMeshWindingMeshRelation {
 
 /// Report for classifying a subject mesh's vertices against a closed target.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ClosedMeshWindingMeshReport {
+pub(crate) struct ClosedMeshWindingMeshReport {
     /// Summary relation derived from retained per-vertex reports.
-    pub relation: ClosedMeshWindingMeshRelation,
+    pub(crate) relation: ClosedMeshWindingMeshRelation,
     /// Whether the target mesh was a closed two-manifold.
-    pub target_closed: bool,
+    pub(crate) target_closed: bool,
     /// Number of subject vertices checked.
-    pub subject_vertex_count: usize,
+    pub(crate) subject_vertex_count: usize,
     /// Per-subject-vertex winding reports.
-    pub vertices: Vec<PointMeshWindingReport>,
+    pub(crate) vertices: Vec<PointMeshWindingReport>,
 }
 
 impl ClosedMeshWindingMeshReport {
     /// Validate that the summary relation follows from retained vertex reports.
-    pub fn validate(&self) -> Result<(), WindingReportError> {
+    pub(crate) fn validate(&self) -> Result<(), WindingReportError> {
         if !self.target_closed {
             return if self.relation == ClosedMeshWindingMeshRelation::NotClosed
                 && self.vertices.is_empty()
@@ -386,7 +386,7 @@ impl ClosedMeshWindingMeshReport {
     }
 
     /// Validate this retained report against its subject and target meshes.
-    pub fn validate_against_sources(
+    pub(crate) fn validate_against_sources(
         &self,
         subject: &ExactMesh,
         target: &ExactMesh,
@@ -402,7 +402,7 @@ impl ClosedMeshWindingMeshReport {
 
 /// Validation or source-replay failure for winding reports.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum WindingReportError {
+pub(crate) enum WindingReportError {
     /// A report retained an impossible number of attempted ray directions.
     InvalidAxisCount,
     /// A decided relation did not retain the axis that decided it.

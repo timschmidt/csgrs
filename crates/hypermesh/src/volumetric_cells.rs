@@ -86,7 +86,7 @@ pub enum CoplanarVolumetricCellEvidenceError {
 
 /// Replayable summary of retained volumetric coplanar-cell evidence.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct CoplanarVolumetricCellEvidenceReport {
+pub(crate) struct CoplanarVolumetricCellEvidenceReport {
     /// Whether the left operand is a closed two-manifold.
     pub left_closed_manifold: bool,
     /// Whether the right operand is a closed two-manifold.

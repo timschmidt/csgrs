@@ -242,7 +242,7 @@ pub struct CoplanarOverlapSplitGraph {
 /// area overlaps require planar cells before named boolean output can be
 /// materialized.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CoplanarArrangementReadinessStatus {
+pub(crate) enum CoplanarArrangementReadinessStatus {
     /// No retained coplanar overlap graph exists.
     NoCoplanarOverlap,
     /// Retained coplanar graphs contain boundary-only touching evidence.
@@ -259,27 +259,27 @@ pub enum CoplanarArrangementReadinessStatus {
 /// their validated counts before exact planar-cell extraction. That lets
 /// blockers retain actionable provenance instead of a plain unsupported flag.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct CoplanarArrangementReadinessReport {
+pub(crate) struct CoplanarArrangementReadinessReport {
     /// Coarse state of the retained coplanar arrangement evidence.
-    pub status: CoplanarArrangementReadinessStatus,
+    pub(crate) status: CoplanarArrangementReadinessStatus,
     /// Number of retained coplanar overlap graphs.
-    pub graph_count: usize,
+    pub(crate) graph_count: usize,
     /// Number of graphs whose coarse relation is positive-area overlap.
-    pub overlapping_graphs: usize,
+    pub(crate) overlapping_graphs: usize,
     /// Number of graphs whose coarse relation is boundary-only touching.
-    pub touching_graphs: usize,
+    pub(crate) touching_graphs: usize,
     /// Number of retained non-disjoint edge contacts.
-    pub edge_overlap_count: usize,
+    pub(crate) edge_overlap_count: usize,
     /// Number of retained vertex-in-triangle or vertex-on-triangle facts.
-    pub vertex_overlap_count: usize,
+    pub(crate) vertex_overlap_count: usize,
     /// Number of exact point split constructions retained for proper or
     /// endpoint edge contacts.
-    pub point_split_count: usize,
+    pub(crate) point_split_count: usize,
     /// Number of positive-length collinear interval contacts retained for
     /// planar-cell extraction.
-    pub interval_overlap_count: usize,
+    pub(crate) interval_overlap_count: usize,
     /// Number of exact interval endpoint facts retained for collinear contacts.
-    pub interval_endpoint_count: usize,
+    pub(crate) interval_endpoint_count: usize,
 }
 
 /// Structural inconsistency in a retained coplanar overlap graph.
@@ -352,7 +352,7 @@ pub enum CoplanarOverlapSplitValidationError {
 
 /// Structural inconsistency in a coplanar arrangement readiness report.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CoplanarArrangementReadinessValidationError {
+pub(crate) enum CoplanarArrangementReadinessValidationError {
     /// `NoCoplanarOverlap` retained nonzero graph or event counts.
     NoOverlapWithEvidence,
     /// Boundary-only status retained positive-area overlap graphs.
@@ -967,12 +967,12 @@ impl ExactIntersectionGraph {
     /// a named operation is blocked on boundary policy or true planar-cell
     /// evidence is preserved and checked, while the missing cell extraction
     /// algorithm remains an explicit status rather than a tolerance fallback.
-    pub fn coplanar_arrangement_readiness_report(
+    pub(crate) fn coplanar_arrangement_readiness_report(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<CoplanarArrangementReadinessReport, MeshError> {
-        // Planar-readiness is a public compact view of retained graph state.
+        // Planar-readiness is a compact view of retained graph state.
         // Before collapsing counts, replay the graph's face/edge/vertex handles
         // against the source meshes and later replay split parameters against
         // state; stale handles must not survive simply because the summary
