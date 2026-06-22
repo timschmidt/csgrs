@@ -68,7 +68,7 @@ impl AffineOrthogonalSolidArrangement {
     /// replay is handled by the retained boolean result evidence.
     pub fn validate(&self) -> Result<(), ExactMeshError> {
         self.mesh.validate_retained_state().map_err(|error| {
-            affine_solid_error(format!(
+            affine_solid_replay_error(format!(
                 "affine orthogonal solid output mesh is stale: {error:?}"
             ))
         })?;
@@ -103,12 +103,14 @@ impl AffineOrthogonalSolidArrangement {
             self.mesh.validation_policy(),
         )?
         .ok_or_else(|| {
-            affine_solid_error("source replay did not reproduce affine orthogonal solid output")
+            affine_solid_replay_error(
+                "source replay did not reproduce affine orthogonal solid output",
+            )
         })?;
         if self == &replay {
             Ok(())
         } else {
-            Err(affine_solid_error(
+            Err(affine_solid_replay_error(
                 "retained affine orthogonal solid output does not match source replay",
             ))
         }
@@ -464,6 +466,13 @@ impl AffineOrthogonalSolidOperation {
 fn affine_solid_error(message: impl Into<String>) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
         ExactMeshBlockerKind::UnsupportedExactOperation,
+        message,
+    ))
+}
+
+fn affine_solid_replay_error(message: impl Into<String>) -> ExactMeshError {
+    ExactMeshError::one(ExactMeshBlocker::new(
+        ExactMeshBlockerKind::StaleFactReplay,
         message,
     ))
 }

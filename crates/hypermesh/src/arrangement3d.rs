@@ -1254,7 +1254,7 @@ impl ExactArrangement3d {
             .validate_against_meshes(left, right)
             .map_err(|error| {
                 ExactMeshError::one(ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::UnsupportedExactOperation,
+                    ExactMeshBlockerKind::StaleFactReplay,
                     format!("retained exact intersection graph failed mesh handoff: {error:?}"),
                 ))
             })?;
