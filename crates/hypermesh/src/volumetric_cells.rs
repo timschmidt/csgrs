@@ -21,7 +21,7 @@ use hyperlimit::{
     TriangleLocation, classify_point_triangle, compare_reals, project_point3,
 };
 
-use super::error::{ExactMeshBlockerKind, ExactMeshBlocker, ExactMeshError, Severity};
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::graph::{ExactIntersectionGraph, IntersectionEvent, MeshSide, build_intersection_graph};
 use super::intersection::MeshFacePairRelation;
 use super::mesh::ExactMesh;
@@ -713,7 +713,6 @@ fn projected_area2_signed(points: &[Point3; 3], projection: CoplanarProjection) 
 
 fn volumetric_cell_mesh_error(error: CoplanarVolumetricCellEvidenceError) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
-        Severity::Error,
         ExactMeshBlockerKind::UnsupportedExactOperation,
         format!("coplanar volumetric-cell evidence failed validation: {error:?}"),
     ))
@@ -723,7 +722,6 @@ fn volumetric_cell_graph_mesh_error(
     error: super::graph::IntersectionGraphValidationError,
 ) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
-        Severity::Error,
         ExactMeshBlockerKind::UnsupportedExactOperation,
         format!("retained volumetric-cell graph failed source-mesh validation: {error:?}"),
     ))

@@ -14,7 +14,7 @@
 use hyperlimit::{Point3, compare_reals};
 
 use super::affine_box::{AffineBoxBasis, mesh_from_uvw, mesh_to_uvw};
-use super::error::{ExactMeshBlockerKind, ExactMeshBlocker, ExactMeshError, Severity};
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::mesh::ExactMesh;
 use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, OrthogonalCellPlan,
@@ -467,7 +467,6 @@ impl AffineOrthogonalSolidOperation {
 
 fn affine_solid_error(message: impl Into<String>) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
-        Severity::Error,
         ExactMeshBlockerKind::UnsupportedExactOperation,
         message,
     ))

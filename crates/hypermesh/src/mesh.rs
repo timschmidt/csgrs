@@ -9,7 +9,7 @@ use super::boolean::{
     ExactBooleanOperation, ExactBooleanRequest, materialize_boolean_exact_request,
 };
 use super::bounds::{BoundsValidationError, MeshBounds};
-use super::error::{ExactMeshBlockerKind, ExactMeshBlocker, ExactMeshError, Severity};
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::facts::{MeshFactsValidationError, MeshValidationFacts};
 use super::scalar::LossyF64Import;
 use super::validation::{ValidationPolicy, ValidationReport, validate_triangles_with_policy};
@@ -80,7 +80,6 @@ impl ExactAffineTransform3 {
         ] = matrix;
         if !homogeneous_affine_row_is_exact(&affine_row)? {
             return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                Severity::Error,
                 ExactMeshBlockerKind::UnsupportedExactOperation,
                 "homogeneous mesh transform must be affine with final row [0, 0, 0, 1]",
             )));
@@ -115,7 +114,6 @@ impl ExactAffineTransform3 {
             .value()
             .ok_or_else(|| {
                 ExactMeshError::one(ExactMeshBlocker::new(
-                    Severity::Error,
                     ExactMeshBlockerKind::UnsupportedExactOperation,
                     "exact transform determinant sign could not be certified",
                 ))
@@ -134,7 +132,10 @@ pub struct ExactMesh {
     provenance: ConstructionProvenance,
 }
 
-fn point_from_f64_lossy(values: [f64; 3], first_coordinate: usize) -> Result<Point3, ExactMeshError> {
+fn point_from_f64_lossy(
+    values: [f64; 3],
+    first_coordinate: usize,
+) -> Result<Point3, ExactMeshError> {
     let x = LossyF64Import::new(values[0], first_coordinate).map_err(ExactMeshError::one)?;
     let y = LossyF64Import::new(values[1], first_coordinate + 1).map_err(ExactMeshError::one)?;
     let z = LossyF64Import::new(values[2], first_coordinate + 2).map_err(ExactMeshError::one)?;
@@ -440,7 +441,10 @@ impl ExactMesh {
     }
 
     /// Materialize this mesh after an exact affine transform.
-    pub fn transform(&self, transform: &ExactAffineTransform3) -> Result<ExactMesh, ExactMeshError> {
+    pub fn transform(
+        &self,
+        transform: &ExactAffineTransform3,
+    ) -> Result<ExactMesh, ExactMeshError> {
         let vertices = self
             .vertices
             .iter()
@@ -535,9 +539,7 @@ fn validate_indices(vertex_count: usize, triangles: &[Triangle]) -> Vec<ExactMes
         for vertex in [a, b, c] {
             if vertex >= vertex_count {
                 diagnostics.push(
-                    ExactMeshBlocker::new(
-                        Severity::Error,
-                        ExactMeshBlockerKind::IndexOutOfBounds,
+                    ExactMeshBlocker::new(ExactMeshBlockerKind::IndexOutOfBounds,
                         format!(
                             "face {face} references vertex {vertex}, but only {vertex_count} vertices exist"
                         ),
@@ -550,7 +552,6 @@ fn validate_indices(vertex_count: usize, triangles: &[Triangle]) -> Vec<ExactMes
         if a == b || b == c || c == a {
             diagnostics.push(
                 ExactMeshBlocker::new(
-                    Severity::Error,
                     ExactMeshBlockerKind::DegenerateTriangle,
                     format!("face {face} repeats a vertex"),
                 )
@@ -564,14 +565,12 @@ fn validate_indices(vertex_count: usize, triangles: &[Triangle]) -> Vec<ExactMes
 fn validate_flat_mesh_buffers(position_len: usize, index_len: usize) -> Result<(), ExactMeshError> {
     if !position_len.is_multiple_of(3) {
         return Err(ExactMeshError::one(ExactMeshBlocker::new(
-            Severity::Error,
             ExactMeshBlockerKind::VertexBufferArity,
             "position buffer length must be a multiple of 3",
         )));
     }
     if !index_len.is_multiple_of(3) {
         return Err(ExactMeshError::one(ExactMeshBlocker::new(
-            Severity::Error,
             ExactMeshBlockerKind::IndexBufferArity,
             "index buffer length must be a multiple of 3",
         )));
@@ -622,7 +621,6 @@ fn real_equals(left: &Real, right: &Real) -> Result<bool, ExactMeshError> {
         .map(|ordering| ordering == Ordering::Equal)
         .ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                Severity::Error,
                 ExactMeshBlockerKind::UnsupportedExactOperation,
                 "exact transform coefficient comparison could not be certified",
             ))

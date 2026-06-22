@@ -4,7 +4,7 @@
 //! value is stored as an exact dyadic [`hyperreal::Real`], preserving the
 //! exact predicate scheduling.
 
-use super::error::{ExactMeshBlockerKind, ExactMeshBlocker, Severity};
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
 use hyperreal::Real;
 
 /// A checked primitive-float import into [`hyperreal::Real`].
@@ -26,7 +26,6 @@ impl LossyF64Import {
     pub fn new(value: f64, coordinate_index: usize) -> Result<Self, ExactMeshBlocker> {
         if !value.is_finite() {
             return Err(ExactMeshBlocker::new(
-                Severity::Error,
                 ExactMeshBlockerKind::NonFiniteCoordinate,
                 format!("coordinate {coordinate_index} is not finite"),
             )
@@ -35,7 +34,6 @@ impl LossyF64Import {
 
         let real = Real::try_from(value).map_err(|problem| {
             ExactMeshBlocker::new(
-                Severity::Error,
                 ExactMeshBlockerKind::CoordinateImportFailed,
                 format!("coordinate {coordinate_index} could not be imported: {problem}"),
             )

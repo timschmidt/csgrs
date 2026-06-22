@@ -1,19 +1,8 @@
-//! Diagnostics for exact mesh import and validation.
+//! Typed blockers for exact mesh import and validation.
 
 use std::fmt;
 
-/// Diagnostic severity.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Severity {
-    /// Informational note.
-    Info,
-    /// Suspicious but accepted input.
-    Warning,
-    /// Rejected input or invalid topology.
-    Error,
-}
-
-/// Stable category for a mesh diagnostic.
+/// Stable category for a mesh blocker.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactMeshBlockerKind {
     /// Coordinate buffer length is not divisible by three.
@@ -42,11 +31,9 @@ pub enum ExactMeshBlockerKind {
     UnsupportedExactOperation,
 }
 
-/// One validation or import diagnostic.
+/// One fatal validation or import blocker.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactMeshBlocker {
-    /// Severity.
-    pub severity: Severity,
     /// Stable category.
     pub kind: ExactMeshBlockerKind,
     /// Human-readable detail.
@@ -62,10 +49,9 @@ pub struct ExactMeshBlocker {
 }
 
 impl ExactMeshBlocker {
-    /// Build a diagnostic with no object location.
-    pub fn new(severity: Severity, kind: ExactMeshBlockerKind, message: impl Into<String>) -> Self {
+    /// Build a blocker with no object location.
+    pub fn new(kind: ExactMeshBlockerKind, message: impl Into<String>) -> Self {
         Self {
-            severity,
             kind,
             message: message.into(),
             vertex: None,
@@ -100,33 +86,33 @@ impl ExactMeshBlocker {
     }
 }
 
-/// Error returned when mesh construction has one or more fatal diagnostics.
+/// Error returned when mesh construction has one or more fatal blockers.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactMeshError {
-    /// Diagnostics collected before construction stopped.
-    pub diagnostics: Vec<ExactMeshBlocker>,
+    /// Blockers collected before construction stopped.
+    pub blockers: Vec<ExactMeshBlocker>,
 }
 
 impl ExactMeshError {
-    /// Build an error from diagnostics.
-    pub fn new(diagnostics: Vec<ExactMeshBlocker>) -> Self {
-        Self { diagnostics }
+    /// Build an error from blockers.
+    pub fn new(blockers: Vec<ExactMeshBlocker>) -> Self {
+        Self { blockers }
     }
 
-    /// Build an error containing one diagnostic.
-    pub fn one(diagnostic: ExactMeshBlocker) -> Self {
+    /// Build an error containing one blocker.
+    pub fn one(blocker: ExactMeshBlocker) -> Self {
         Self {
-            diagnostics: vec![diagnostic],
+            blockers: vec![blocker],
         }
     }
 }
 
 impl fmt::Display for ExactMeshError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.diagnostics.as_slice() {
+        match self.blockers.as_slice() {
             [] => write!(f, "mesh validation failed"),
-            [diagnostic] => write!(f, "{}", diagnostic.message),
-            diagnostics => write!(f, "{} mesh diagnostics", diagnostics.len()),
+            [blocker] => write!(f, "{}", blocker.message),
+            blockers => write!(f, "{} mesh blockers", blockers.len()),
         }
     }
 }

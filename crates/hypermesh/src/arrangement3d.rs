@@ -16,7 +16,7 @@ use super::cell_complex::{
     ExactCellComplex, ExactLabeledCellComplex, ExactLabeledCellComplexFreshness,
     ExactRegionOwnershipReport, region_ownership_status,
 };
-use super::error::{ExactMeshBlockerKind, ExactMeshBlocker, ExactMeshError, Severity};
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::exact_key::{
     ExactPoint3Key, ExactUndirectedPoint3EdgeKey, exact_point3_key,
     exact_undirected_point3_edge_key,
@@ -1328,7 +1328,6 @@ impl ExactArrangement3d {
             .validate_against_meshes(left, right)
             .map_err(|error| {
                 ExactMeshError::one(ExactMeshBlocker::new(
-                    Severity::Error,
                     ExactMeshBlockerKind::UnsupportedExactOperation,
                     format!("retained exact intersection graph failed mesh handoff: {error:?}"),
                 ))

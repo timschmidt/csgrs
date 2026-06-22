@@ -26,7 +26,7 @@ use super::arrangement2d::{
     ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
     build_exact_arrangement2d_overlay_with_boundary_policy,
 };
-use super::error::{ExactMeshBlockerKind, ExactMeshBlocker, ExactMeshError, Severity};
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::mesh::{ExactMesh, Triangle};
 use super::solid::{
     ClosedMeshOrientation, ConvexSolidFacts, ConvexSolidReportError, certify_convex_solid,
@@ -89,14 +89,12 @@ impl ConvexSolidUnion {
         self.right_facts.validate().map_err(report_error)?;
         if !self.left_facts.is_certified_convex() || !self.right_facts.is_certified_convex() {
             return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                Severity::Error,
                 ExactMeshBlockerKind::UnsupportedExactOperation,
                 "convex union retained non-certified solid facts",
             )));
         }
         self.mesh.validate_retained_state().map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                Severity::Error,
                 ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("convex union output failed retained-state replay: {error:?}"),
             ))
@@ -111,14 +109,12 @@ impl ConvexSolidDifference {
         self.right_facts.validate().map_err(report_error)?;
         if !self.left_facts.is_certified_convex() || !self.right_facts.is_certified_convex() {
             return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                Severity::Error,
                 ExactMeshBlockerKind::UnsupportedExactOperation,
                 "convex difference retained non-certified solid facts",
             )));
         }
         self.mesh.validate_retained_state().map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                Severity::Error,
                 ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("convex difference output failed retained-state replay: {error:?}"),
             ))
@@ -133,14 +129,12 @@ impl ConvexSolidIntersection {
         self.right_facts.validate().map_err(report_error)?;
         if !self.left_facts.is_certified_convex() || !self.right_facts.is_certified_convex() {
             return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                Severity::Error,
                 ExactMeshBlockerKind::UnsupportedExactOperation,
                 "convex intersection retained non-certified solid facts",
             )));
         }
         self.mesh.validate_retained_state().map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                Severity::Error,
                 ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("convex intersection output failed retained-state replay: {error:?}"),
             ))
@@ -1469,7 +1463,6 @@ fn mul(left: &Real, right: &Real) -> Real {
 
 fn report_error(error: ConvexSolidReportError) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
-        Severity::Error,
         ExactMeshBlockerKind::UnsupportedExactOperation,
         format!("invalid convex-solid facts retained by intersection: {error:?}"),
     ))

@@ -8,7 +8,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::Point3;
 
-use super::error::{ExactMeshBlockerKind, ExactMeshBlocker, Severity};
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
 use super::facts::{
     EdgeFacts, FaceFacts, FacePlaneFacts, MeshFacts, MeshValidationFacts, OrientedFaceFacts,
     TriangleFacts, VertexFacts, VertexLinkKind,
@@ -74,11 +74,9 @@ impl Default for ValidationPolicy {
 }
 
 impl ValidationReport {
-    /// Return whether the report contains no error diagnostics.
+    /// Return whether the report contains no fatal blockers.
     pub(crate) fn is_valid(&self) -> bool {
-        self.diagnostics
-            .iter()
-            .all(|diagnostic| diagnostic.severity != Severity::Error)
+        self.diagnostics.is_empty()
     }
 }
 
@@ -112,7 +110,6 @@ pub(crate) fn validate_triangles_with_policy(
         if !seen_triangles.insert(sorted_tri) && duplicate_triangles.insert(sorted_tri) {
             diagnostics.push(
                 ExactMeshBlocker::new(
-                    Severity::Error,
                     ExactMeshBlockerKind::DuplicateTriangle,
                     format!("face {face} duplicates triangle vertex set {sorted_tri:?}"),
                 )
@@ -140,7 +137,6 @@ pub(crate) fn validate_triangles_with_policy(
             degenerate_triangles += 1;
             diagnostics.push(
                 ExactMeshBlocker::new(
-                    Severity::Error,
                     ExactMeshBlockerKind::DegenerateTriangle,
                     format!("face {face} is not a certified non-degenerate triangle"),
                 )
@@ -179,7 +175,6 @@ pub(crate) fn validate_triangles_with_policy(
             if policy.boundary == BoundaryPolicy::Closed {
                 diagnostics.push(
                     ExactMeshBlocker::new(
-                        Severity::Error,
                         ExactMeshBlockerKind::BoundaryEdge,
                         format!("edge {vertices:?} has only one incident face"),
                     )
@@ -190,7 +185,6 @@ pub(crate) fn validate_triangles_with_policy(
             non_manifold_edges += 1;
             diagnostics.push(
                 ExactMeshBlocker::new(
-                    Severity::Error,
                     ExactMeshBlockerKind::NonManifoldEdge,
                     format!("edge {vertices:?} has {incident_faces} incident faces"),
                 )
@@ -202,7 +196,6 @@ pub(crate) fn validate_triangles_with_policy(
             duplicate_directed_edges += 1;
             diagnostics.push(
                 ExactMeshBlocker::new(
-                    Severity::Error,
                     ExactMeshBlockerKind::DuplicateDirectedEdge,
                     format!("edge {vertices:?} has duplicate directed uses {directed_uses:?}"),
                 )
@@ -224,7 +217,6 @@ pub(crate) fn validate_triangles_with_policy(
                 non_manifold_vertices += 1;
                 diagnostics.push(
                     ExactMeshBlocker::new(
-                        Severity::Error,
                         ExactMeshBlockerKind::NonManifoldVertexLink,
                         format!("vertex {index} has a nonmanifold link"),
                     )

@@ -20,7 +20,7 @@ use hyperlimit::{
     project_point3, projected_line_parameter3, projected_segment_parameter3,
 };
 
-use super::error::{ExactMeshBlockerKind, ExactMeshBlocker, ExactMeshError, Severity};
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::exact_key::{ExactPoint3Key, exact_point3_key};
 use super::intersection::{
     MeshFacePairClassification, MeshFacePairRelation,
@@ -992,7 +992,6 @@ impl ExactIntersectionGraph {
         // counters are internally coherent.
         self.validate_against_meshes(left, right).map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                Severity::Error,
                 ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("retained coplanar arrangement graph failed source replay: {error:?}"),
             ))
@@ -1022,8 +1021,7 @@ impl ExactIntersectionGraph {
 
         for graph in &overlap_graphs {
             graph.validate().map_err(|_| ExactMeshError {
-                diagnostics: vec![ExactMeshBlocker::new(
-                    Severity::Error,
+                blockers: vec![ExactMeshBlocker::new(
                     ExactMeshBlockerKind::UnsupportedExactOperation,
                     "retained coplanar overlap graph failed readiness validation",
                 )],
@@ -1041,7 +1039,6 @@ impl ExactIntersectionGraph {
                 .validate_against_meshes(left, right)
                 .map_err(|error| {
                     ExactMeshError::one(ExactMeshBlocker::new(
-                        Severity::Error,
                         ExactMeshBlockerKind::UnsupportedExactOperation,
                         format!(
                             "retained coplanar split construction failed source replay: {error:?}"
@@ -1076,8 +1073,7 @@ impl ExactIntersectionGraph {
             interval_endpoint_count,
         };
         report.validate().map_err(|_| ExactMeshError {
-            diagnostics: vec![ExactMeshBlocker::new(
-                Severity::Error,
+            blockers: vec![ExactMeshBlocker::new(
                 ExactMeshBlockerKind::UnsupportedExactOperation,
                 "coplanar arrangement readiness report failed validation",
             )],
@@ -1190,7 +1186,6 @@ pub(crate) fn build_intersection_graph(
         .prepare_pair_broad_phase(right.view())
         .map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                Severity::Error,
                 ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("exact mesh retained broad-phase facts failed source replay: {error:?}"),
             ))
@@ -1222,7 +1217,6 @@ pub(crate) fn build_validated_intersection_graph(
         .prepare_pair_broad_phase(right.view())
         .map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                Severity::Error,
                 ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("exact mesh retained broad-phase facts failed source replay: {error:?}"),
             ))
@@ -1241,7 +1235,6 @@ pub(crate) fn build_validated_intersection_graph_from_prepared_pair(
         .validate_against_meshes(left, right)
         .map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                Severity::Error,
                 ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("exact intersection graph failed source replay: {error:?}"),
             ))
@@ -1603,7 +1596,6 @@ fn split_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> ExactMe
             .into_iter()
             .map(|diagnostic| {
                 let mut mesh = ExactMeshBlocker::new(
-                    Severity::Error,
                     ExactMeshBlockerKind::UnsupportedExactOperation,
                     diagnostic.message,
                 );
@@ -2884,7 +2876,6 @@ fn first_face_geometry_error(
         if face.face >= mesh.triangles().len() {
             return Some(
                 ExactMeshBlocker::new(
-                    Severity::Error,
                     ExactMeshBlockerKind::IndexOutOfBounds,
                     "face split geometry references a missing face",
                 )
@@ -2895,7 +2886,6 @@ fn first_face_geometry_error(
             if !chains.contains_key(&(side_key(face.side), edge.edge[0], edge.edge[1])) {
                 return Some(
                     ExactMeshBlocker::new(
-                        Severity::Error,
                         ExactMeshBlockerKind::IndexOutOfBounds,
                         "face split geometry references a missing split edge chain",
                     )
@@ -2907,7 +2897,6 @@ fn first_face_geometry_error(
                 if graph_vertex >= topology.graph_vertices.len() {
                     return Some(
                         ExactMeshBlocker::new(
-                            Severity::Error,
                             ExactMeshBlockerKind::IndexOutOfBounds,
                             "face split geometry references a missing graph vertex",
                         )
@@ -2938,7 +2927,6 @@ fn face_boundary_node(
             let point = mesh.vertices().get(*vertex).ok_or_else(|| {
                 ExactMeshError::one(
                     ExactMeshBlocker::new(
-                        Severity::Error,
                         ExactMeshBlockerKind::IndexOutOfBounds,
                         "split boundary references a missing original vertex",
                     )
@@ -2954,7 +2942,6 @@ fn face_boundary_node(
             let vertex = topology.graph_vertices.get(*graph_vertex).ok_or_else(|| {
                 ExactMeshError::one(
                     ExactMeshBlocker::new(
-                        Severity::Error,
                         ExactMeshBlockerKind::IndexOutOfBounds,
                         "split boundary references a missing graph vertex",
                     )
@@ -2968,7 +2955,6 @@ fn face_boundary_node(
         }
         SplitEdgeNode::OriginalVertex { vertex, .. } => Err(ExactMeshError::one(
             ExactMeshBlocker::new(
-                Severity::Error,
                 ExactMeshBlockerKind::IndexOutOfBounds,
                 "split boundary original vertex is on the wrong mesh side",
             )
@@ -3631,10 +3617,11 @@ fn validate_split_point_against_edges(
     }
 }
 
-fn coplanar_split_validation_mesh_error(error: CoplanarOverlapSplitValidationError) -> ExactMeshError {
+fn coplanar_split_validation_mesh_error(
+    error: CoplanarOverlapSplitValidationError,
+) -> ExactMeshError {
     ExactMeshError {
-        diagnostics: vec![ExactMeshBlocker::new(
-            Severity::Error,
+        blockers: vec![ExactMeshBlocker::new(
             ExactMeshBlockerKind::UnsupportedExactOperation,
             format!(
                 "retained coplanar split construction failed source-edge validation: {error:?}"
@@ -3690,7 +3677,6 @@ fn edge_points(mesh: &ExactMesh, edge: [usize; 2]) -> Result<[Point3; 2], ExactM
     let start = mesh.vertices().get(edge[0]).ok_or_else(|| {
         ExactMeshError::one(
             ExactMeshBlocker::new(
-                Severity::Error,
                 ExactMeshBlockerKind::IndexOutOfBounds,
                 "coplanar overlap edge references a missing start vertex",
             )
@@ -3700,7 +3686,6 @@ fn edge_points(mesh: &ExactMesh, edge: [usize; 2]) -> Result<[Point3; 2], ExactM
     let end = mesh.vertices().get(edge[1]).ok_or_else(|| {
         ExactMeshError::one(
             ExactMeshBlocker::new(
-                Severity::Error,
                 ExactMeshBlockerKind::IndexOutOfBounds,
                 "coplanar overlap edge references a missing end vertex",
             )

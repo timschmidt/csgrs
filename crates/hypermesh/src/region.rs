@@ -18,7 +18,7 @@ use hyperlimit::{
 };
 use hyperlimit::{Point2 as PredicatePoint2, Sign, compare_reals, orient2d_report, project_point3};
 
-use super::error::{ExactMeshBlockerKind, ExactMeshBlocker, ExactMeshError, Severity};
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::graph::SplitPlanDiagnosticKind;
 use super::graph::SplitPlanValidationReport;
 use super::graph::{ExactFaceRegionPlan, FaceSplitBoundaryNode, MeshSide};
@@ -265,7 +265,7 @@ fn region_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> ExactM
                     }
                     _ => ExactMeshBlockerKind::UnsupportedExactOperation,
                 };
-                let mut mesh = ExactMeshBlocker::new(Severity::Error, kind, diagnostic.message);
+                let mut mesh = ExactMeshBlocker::new(kind, diagnostic.message);
                 if let Some(face) = diagnostic.face {
                     mesh = mesh.with_face(face);
                 }
@@ -384,7 +384,6 @@ fn replay_region_plan(
         .validate_against_meshes(left, right)
         .map_err(|error| {
             super::error::ExactMeshError::one(super::error::ExactMeshBlocker::new(
-                super::error::Severity::Error,
                 super::error::ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("exact region source replay failed: {error:?}"),
             ))
@@ -639,7 +638,6 @@ impl ExactBooleanAssemblyPlan {
         self.validate_source_face_incidence(left, right)
             .map_err(|error| {
                 super::error::ExactMeshError::one(super::error::ExactMeshBlocker::new(
-                    super::error::Severity::Error,
                     super::error::ExactMeshBlockerKind::DegenerateTriangle,
                     format!("exact boolean assembly source incidence failed: {error}"),
                 ))
@@ -1398,7 +1396,6 @@ fn validate_output_triangle_source_orientation(
 
 fn assembly_validation_error(error: hypertri::Error) -> super::error::ExactMeshError {
     super::error::ExactMeshError::one(super::error::ExactMeshBlocker::new(
-        super::error::Severity::Error,
         super::error::ExactMeshBlockerKind::IndexOutOfBounds,
         format!("exact boolean assembly validation failed: {error}"),
     ))

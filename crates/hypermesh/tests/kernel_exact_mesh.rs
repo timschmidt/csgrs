@@ -285,7 +285,7 @@ fn exact_mesh_transform_by_rejects_non_affine_homogeneous_rows() {
         .unwrap_err();
 
     assert_eq!(
-        error.diagnostics[0].kind,
+        error.blockers[0].kind,
         hypermesh::ExactMeshBlockerKind::UnsupportedExactOperation
     );
 }
@@ -298,7 +298,7 @@ fn exact_mesh_error_names_cover_kernel_diagnostics() {
         SourceProvenance::exact("invalid test mesh"),
     )
     .unwrap_err();
-    let blocker: ExactMeshBlocker = error.diagnostics[0].clone();
+    let blocker: ExactMeshBlocker = error.blockers[0].clone();
 
     assert_eq!(blocker.face, Some(0));
     assert_eq!(blocker.vertex, Some(3));
