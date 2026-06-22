@@ -462,7 +462,6 @@ impl<'a> PreparedMeshBounds<'a> {
         };
         let mut active_right = Vec::<usize>::new();
         let mut right_active = vec![false; other.bounds.faces.len()];
-        let mut right_expired = vec![false; other.bounds.faces.len()];
         let mut next_right = 0usize;
         let mut next_expiring_right = 0usize;
         let mut inactive_rights = 0usize;
@@ -479,7 +478,6 @@ impl<'a> PreparedMeshBounds<'a> {
                 if ordering != Ordering::Less {
                     break;
                 }
-                right_expired[right] = true;
                 if right_active[right] {
                     right_active[right] = false;
                     inactive_rights += 1;
@@ -502,7 +500,13 @@ impl<'a> PreparedMeshBounds<'a> {
                 if ordering == Ordering::Greater {
                     break;
                 }
-                if !right_expired[right] {
+                let Some(ordering) = compare(
+                    axis_max(&other.bounds.faces[right], axis),
+                    axis_min(left_box, axis),
+                ) else {
+                    return Ok(false);
+                };
+                if ordering != Ordering::Less {
                     active_right.push(right);
                     right_active[right] = true;
                 }
