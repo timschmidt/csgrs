@@ -7039,7 +7039,7 @@ mod tests {
             retained_events: 1,
             region_count: 0,
             region_classifications: Vec::new(),
-            blocker: Some(report.blocker.clone()),
+            blocker: Some(report.blocker),
             coplanar_arrangement_evidence: report.coplanar_arrangement_evidence.clone(),
             coplanar_volumetric_evidence: None,
         };
@@ -7648,7 +7648,7 @@ mod tests {
             retained_events: 4,
             region_count: 0,
             region_classifications: Vec::new(),
-            blocker: Some(blocker.clone()),
+            blocker: Some(blocker),
             coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: Some(evidence.clone()),
         };

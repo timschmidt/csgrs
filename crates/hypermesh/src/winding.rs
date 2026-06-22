@@ -271,10 +271,7 @@ impl PointMeshWindingReport {
             .degenerate_hits
             .checked_add(self.unknown_hits)
             .ok_or(WindingReportError::StatusEvidenceMismatch)?;
-        let max_dependent_hits = self
-            .tested_axes
-            .checked_mul(self.triangle_count)
-            .unwrap_or(usize::MAX);
+        let max_dependent_hits = self.tested_axes.saturating_mul(self.triangle_count);
         if dependent_hits > max_dependent_hits {
             return Err(WindingReportError::StatusEvidenceMismatch);
         }

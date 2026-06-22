@@ -743,9 +743,7 @@ impl ExactArrangementBooleanAttempt {
                 .ok_or(ExactReportValidationError::SourceReplayMismatch)?,
         };
         replay.validate_for_request_policy(request, self.policy)?;
-        if self == &replay {
-            Ok(())
-        } else if arrangement_attempt_materialized_outputs_match(self, &replay) {
+        if self == &replay || arrangement_attempt_materialized_outputs_match(self, &replay) {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
@@ -774,11 +772,10 @@ fn arrangement_attempt_materialized_outputs_match(
     {
         return true;
     }
-    let fallback_match = retained.materialized_without_shortcut()
+    retained.materialized_without_shortcut()
         && retained.retained_gate_reports().is_some()
         && replay.materialized_arrangement_cell_complex_shortcut()
-        && replay.retained_gate_reports().is_none();
-    fallback_match
+        && replay.retained_gate_reports().is_none()
 }
 
 pub(crate) fn exact_boolean_evaluation_for_replay(
@@ -2648,9 +2645,7 @@ impl ExactBooleanEvaluation {
         if self.preflight.operation != self.request.operation {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
-        if let Err(error) = self.preflight.validate() {
-            return Err(error);
-        }
+        self.preflight.validate()?;
         self.certifications.validate_for_request(self.request)?;
         if !self.certifications.matches_preflight(&self.preflight) {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);

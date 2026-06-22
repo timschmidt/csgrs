@@ -267,12 +267,8 @@ fn find_affine_orthogonal_solid_basis<T>(
             return None;
         }
         seen.push(basis.clone());
-        let Some(left_uvw) = mesh_to_uvw(left, &basis, ValidationPolicy::CLOSED) else {
-            return None;
-        };
-        let Some(right_uvw) = mesh_to_uvw(right, &basis, ValidationPolicy::CLOSED) else {
-            return None;
-        };
+        let left_uvw = mesh_to_uvw(left, &basis, ValidationPolicy::CLOSED)?;
+        let right_uvw = mesh_to_uvw(right, &basis, ValidationPolicy::CLOSED)?;
         accept(left_uvw, right_uvw).map(|accepted| (basis, accepted))
     };
 

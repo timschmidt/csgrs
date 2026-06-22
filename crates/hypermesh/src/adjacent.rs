@@ -812,7 +812,7 @@ fn triangle_edge_split_parameter(
         if !point_lies_strictly_on_segment3(start, end, point)? {
             continue;
         }
-        let parameter = projected_segment_parameter3(&point, start, end, projection)?;
+        let parameter = projected_segment_parameter3(point, start, end, projection)?;
         return Some(Some((edge, parameter)));
     }
     Some(None)
@@ -860,8 +860,8 @@ fn append_refined_triangle(
         }
     }
     let mut refined = vec![Triangle(mapped_triangle)];
-    for edge in 0..3 {
-        for split in &splits[edge] {
+    for edge_splits in &splits {
+        for split in edge_splits {
             split_output_triangle_edge(&point_by_vertex, &mut refined, split.mapped_vertex)?;
         }
     }
