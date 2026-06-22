@@ -16,7 +16,7 @@ use hyperreal::Real;
 
 /// Certified orientation of a closed triangular surface.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ClosedMeshOrientation {
+pub(crate) enum ClosedMeshOrientation {
     /// The mesh is not a closed two-manifold under exact validation facts.
     NotClosed,
     /// The signed volume was certified positive.
@@ -29,7 +29,7 @@ pub enum ClosedMeshOrientation {
 
 /// Certified convexity state for a closed triangular surface.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ConvexSolidClassification {
+pub(crate) enum ConvexSolidClassification {
     /// The mesh is not a closed two-manifold under exact validation facts.
     NotClosed,
     /// Every vertex is on or inside every oriented face halfspace.
@@ -75,18 +75,18 @@ pub(crate) enum ConvexSolidReportError {
 
 /// Exact facts retained while certifying a closed convex solid.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ConvexSolidFacts {
+pub(crate) struct ConvexSolidFacts {
     /// Certified closed-surface orientation.
-    pub orientation: ClosedMeshOrientation,
+    pub(crate) orientation: ClosedMeshOrientation,
     /// Certified convexity state.
-    pub convexity: ConvexSolidClassification,
+    pub(crate) convexity: ConvexSolidClassification,
     /// Predicate certificates used by face/vertex halfspace tests.
-    pub predicates: Vec<PredicateUse>,
+    pub(crate) predicates: Vec<PredicateUse>,
 }
 
 impl ConvexSolidFacts {
     /// Return whether the mesh is certified as an oriented convex closed solid.
-    pub const fn is_certified_convex(&self) -> bool {
+    pub(crate) const fn is_certified_convex(&self) -> bool {
         matches!(
             (self.orientation, self.convexity),
             (
@@ -97,7 +97,7 @@ impl ConvexSolidFacts {
     }
 
     /// Return whether every retained predicate route was proof-producing.
-    pub fn all_proof_producing(&self) -> bool {
+    pub(crate) fn all_proof_producing(&self) -> bool {
         self.predicates
             .iter()
             .copied()
@@ -109,7 +109,7 @@ impl ConvexSolidFacts {
     /// This does not recompute convexity. It checks that the state tuple and
     /// predicate retention are consistent with the certified-construction
     /// contract used by the exact boolean shortcuts.
-    pub fn validate(&self) -> Result<(), ConvexSolidReportError> {
+    pub(crate) fn validate(&self) -> Result<(), ConvexSolidReportError> {
         match (self.orientation, self.convexity) {
             (ClosedMeshOrientation::NotClosed, ConvexSolidClassification::NotClosed) => Ok(()),
             (ClosedMeshOrientation::NotClosed, _) | (_, ConvexSolidClassification::NotClosed) => {
@@ -133,11 +133,11 @@ impl ConvexSolidFacts {
 
 /// Certified point/solid classification with retained predicate provenance.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ConvexSolidPointClassification {
+pub(crate) struct ConvexSolidPointClassification {
     /// Exact point/solid relation.
-    pub relation: ConvexSolidPointRelation,
+    pub(crate) relation: ConvexSolidPointRelation,
     /// Predicate certificates used by the halfspace tests for this point.
-    pub predicates: Vec<PredicateUse>,
+    pub(crate) predicates: Vec<PredicateUse>,
 }
 
 impl ConvexSolidPointClassification {
@@ -147,7 +147,7 @@ impl ConvexSolidPointClassification {
     /// predicate is meaningful, so they must not carry predicate evidence.
     /// Decided and unknown certified relations may retain a prefix of exact
     /// face predicates because outside/unknown exits short-circuit.
-    pub fn validate(&self) -> Result<(), ConvexSolidReportError> {
+    pub(crate) fn validate(&self) -> Result<(), ConvexSolidReportError> {
         if matches!(self.relation, ConvexSolidPointRelation::NotCertifiedConvex)
             && !self.predicates.is_empty()
         {
@@ -159,7 +159,7 @@ impl ConvexSolidPointClassification {
 
 /// Exact relation between a point and a certified convex solid.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ConvexSolidPointRelation {
+pub(crate) enum ConvexSolidPointRelation {
     /// The containing mesh was not certified as a convex closed solid.
     NotCertifiedConvex,
     /// The point is strictly inside all oriented halfspaces.
@@ -174,7 +174,7 @@ pub enum ConvexSolidPointRelation {
 
 /// Exact relation between one mesh's vertices and a certified convex solid.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ConvexSolidMeshRelation {
+pub(crate) enum ConvexSolidMeshRelation {
     /// The containing mesh was not certified as a convex closed solid.
     NotCertifiedConvex,
     /// Every subject vertex is strictly inside the solid.
@@ -190,15 +190,15 @@ pub enum ConvexSolidMeshRelation {
 
 /// Certified mesh/solid vertex classification with retained predicate provenance.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ConvexSolidMeshClassification {
+pub(crate) struct ConvexSolidMeshClassification {
     /// Exact relation between the subject vertices and the convex solid.
-    pub relation: ConvexSolidMeshRelation,
+    pub(crate) relation: ConvexSolidMeshRelation,
     /// Convexity facts certified for the containing solid.
-    pub solid_facts: ConvexSolidFacts,
+    pub(crate) solid_facts: ConvexSolidFacts,
     /// Number of subject vertices covered by this summary.
-    pub subject_vertex_count: usize,
+    pub(crate) subject_vertex_count: usize,
     /// Per-subject-vertex classifications.
-    pub vertices: Vec<ConvexSolidPointClassification>,
+    pub(crate) vertices: Vec<ConvexSolidPointClassification>,
 }
 
 impl ConvexSolidMeshClassification {
@@ -208,7 +208,7 @@ impl ConvexSolidMeshClassification {
     /// reports. This is the local audit check for convex-containment boolean
     /// shortcuts; it keeps the topological decision coupled to the exact
     /// certified decisions and explicit uncertainty.
-    pub fn validate(&self) -> Result<(), ConvexSolidReportError> {
+    pub(crate) fn validate(&self) -> Result<(), ConvexSolidReportError> {
         self.solid_facts
             .validate()
             .map_err(|_| ConvexSolidReportError::NestedReport)?;
@@ -299,7 +299,7 @@ impl ConvexSolidMeshClassification {
     /// the whole report from `subject` and `solid`, catching stale report
     /// objects that remain internally coherent but no longer belong to the
     /// source meshes.
-    pub fn validate_against_sources(
+    pub(crate) fn validate_against_sources(
         &self,
         subject: &ExactMesh,
         solid: &ExactMesh,
