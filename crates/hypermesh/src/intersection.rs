@@ -143,17 +143,18 @@ pub(crate) fn classify_mesh_face_pair(
     })
 }
 
-/// Classify every face pair that survives exact broad/narrow rejection.
+/// Visit every face pair that survives exact broad/narrow rejection.
 ///
-/// The returned list excludes pairs proven impossible by exact AABB
-/// disjointness, certified triangle plane separation, or exact coplanar
+/// The visitor receives only pairs that were not proven impossible by exact
+/// AABB disjointness, certified triangle plane separation, or exact coplanar
 /// disjointness. Coplanar touching/overlapping, non-coplanar candidate, and
 /// unknown pairs remain because they are exactly the cases that need
 /// overlap-graph construction or a policy decision.
-pub(crate) fn classify_mesh_face_pairs(
+pub(crate) fn visit_mesh_face_pair_classifications(
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<Vec<MeshFacePairClassification>, MeshError> {
+    mut visit: impl FnMut(MeshFacePairClassification) -> Result<(), MeshError>,
+) -> Result<(), MeshError> {
     let left_broad_phase = left
         .view()
         .prepare_broad_phase()
@@ -162,14 +163,13 @@ pub(crate) fn classify_mesh_face_pairs(
         .view()
         .prepare_broad_phase()
         .map_err(mesh_retained_state_error)?;
-    let mut retained = Vec::new();
     for [left_face, right_face] in left_broad_phase.candidate_face_pairs(&right_broad_phase) {
         let classification = classify_mesh_face_pair(left, left_face, right, right_face)?;
         if classification.needs_graph_construction() {
-            retained.push(classification);
+            visit(classification)?;
         }
     }
-    Ok(retained)
+    Ok(())
 }
 
 fn mesh_retained_state_error(error: ExactMeshValidationError) -> MeshError {
