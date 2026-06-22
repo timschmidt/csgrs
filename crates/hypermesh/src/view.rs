@@ -1,11 +1,13 @@
 //! Borrowed exact views of retained mesh data.
 
 use super::bounds::MeshBounds;
+use super::error::MeshError;
 use super::facts::{EdgeFacts, FaceFacts, FacePlaneFacts, MeshValidationFacts};
-use super::mesh::Triangle;
+use super::mesh::{ExactAffineTransform3, Triangle};
 use super::validation::ValidationPolicy;
 use super::{ExactMesh, ExactMeshValidationError};
 use hyperlimit::Point3;
+use hyperreal::Real;
 
 /// Borrowed exact view of an [`ExactMesh`].
 #[derive(Clone, Copy, Debug)]
@@ -124,6 +126,41 @@ impl<'a> ExactMeshRef<'a> {
             mesh: self.mesh,
             index,
         })
+    }
+
+    /// Materialize this view after an exact affine transform.
+    pub fn transform(self, transform: &ExactAffineTransform3) -> Result<ExactMesh, MeshError> {
+        self.mesh.transform(transform)
+    }
+
+    /// Materialize this view after a row-major exact homogeneous affine transform.
+    pub fn transform_by(self, matrix: [[Real; 4]; 4]) -> Result<ExactMesh, MeshError> {
+        self.mesh.transform_by(matrix)
+    }
+
+    /// Materialize this view with every triangle orientation reversed.
+    pub fn inverse(self) -> Result<ExactMesh, MeshError> {
+        self.mesh.inverse()
+    }
+
+    /// Materialize the exact closed union of this view and `right`.
+    pub fn union(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, MeshError> {
+        self.mesh.union(right.mesh)
+    }
+
+    /// Materialize the exact closed intersection of this view and `right`.
+    pub fn intersection(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, MeshError> {
+        self.mesh.intersection(right.mesh)
+    }
+
+    /// Materialize the exact closed difference of this view minus `right`.
+    pub fn difference(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, MeshError> {
+        self.mesh.difference(right.mesh)
+    }
+
+    /// Materialize the exact closed symmetric difference of this view and `right`.
+    pub fn xor(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, MeshError> {
+        self.mesh.xor(right.mesh)
     }
 }
 

@@ -56,6 +56,33 @@ fn exact_mesh_named_boolean_methods_materialize_meshes() {
 }
 
 #[test]
+fn exact_mesh_borrowed_view_materializes_named_operations() {
+    let empty = ExactMesh::new(
+        Vec::new(),
+        Vec::new(),
+        SourceProvenance::exact("empty test mesh"),
+    )
+    .unwrap();
+    let solid = tetra([0, 0, 0]);
+
+    let union = empty.view().union(solid.view()).unwrap();
+    union.validate_retained_state().unwrap();
+    assert_eq!(union.triangles().len(), solid.triangles().len());
+
+    let intersection = empty.view().intersection(solid.view()).unwrap();
+    intersection.validate_retained_state().unwrap();
+    assert!(intersection.triangles().is_empty());
+
+    let difference = solid.view().difference(empty.view()).unwrap();
+    difference.validate_retained_state().unwrap();
+    assert_eq!(difference.triangles().len(), solid.triangles().len());
+
+    let xor = empty.view().xor(solid.view()).unwrap();
+    xor.validate_retained_state().unwrap();
+    assert_eq!(xor.triangles().len(), solid.triangles().len());
+}
+
+#[test]
 fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let mesh = tetra([0, 0, 0]);
     let view = mesh.view();
@@ -156,6 +183,32 @@ fn exact_mesh_transform_and_inverse_replay_retained_state() {
     inverted.validate_retained_state().unwrap();
     assert_eq!(inverted.vertices(), mesh.vertices());
     assert_eq!(inverted.triangles()[0], Triangle([0, 1, 2]));
+}
+
+#[test]
+fn exact_mesh_borrowed_view_transform_and_inverse_replay_retained_state() {
+    let mesh = tetra([0, 0, 0]);
+    let transform = ExactAffineTransform3::translation(p(2, 3, 5));
+
+    let translated = mesh.view().transform(&transform).unwrap();
+    translated.validate_retained_state().unwrap();
+    assert_eq!(translated.vertices()[0], p(2, 3, 5));
+
+    let shifted = mesh
+        .view()
+        .transform_by([
+            [Real::from(1), Real::from(0), Real::from(0), Real::from(4)],
+            [Real::from(0), Real::from(1), Real::from(0), Real::from(0)],
+            [Real::from(0), Real::from(0), Real::from(1), Real::from(0)],
+            [Real::from(0), Real::from(0), Real::from(0), Real::from(1)],
+        ])
+        .unwrap();
+    shifted.validate_retained_state().unwrap();
+    assert_eq!(shifted.vertices()[0], p(4, 0, 0));
+
+    let inverse = mesh.view().inverse().unwrap();
+    inverse.validate_retained_state().unwrap();
+    assert_eq!(inverse.triangles()[0].0, [0, 1, 2]);
 }
 
 #[test]
