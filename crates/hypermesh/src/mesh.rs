@@ -22,6 +22,7 @@ use super::package::{
 use super::proposal::{ExactMeshProposalReport, ExactMeshProposalReportError};
 use super::scalar::LossyF64Import;
 use super::validation::{ValidationPolicy, ValidationReport, validate_triangles_with_policy};
+use super::view::ExactMeshRef;
 use hyperlimit::{
     ConstructionProvenance, ConstructionProvenanceValidationError, Point3, PredicateUse,
     SourceProvenance,
@@ -319,6 +320,11 @@ impl ExactMesh {
     /// Return construction provenance.
     pub const fn provenance(&self) -> &ConstructionProvenance {
         &self.provenance
+    }
+
+    /// Borrow this exact mesh through the lightweight query view API.
+    pub const fn view(&self) -> ExactMeshRef<'_> {
+        ExactMeshRef::new(self)
     }
 
     /// Validate all retained state stored on this exact mesh.

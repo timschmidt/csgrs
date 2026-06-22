@@ -71,4 +71,5 @@ pub use package::ExactMeshConsumerDomain;
 pub use region::ExactRegionSelection;
 pub use regularization::ExactRegularizationPolicy;
 pub use validation::ValidationPolicy;
+pub use view::{EdgeRef, ExactMeshRef, FaceRef, MeshView, TriangleRef};
 pub use workspace::ExactBooleanWorkspace;
