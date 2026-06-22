@@ -155,12 +155,14 @@ pub struct MeshBounds {
 
 /// Exact broad-phase face ordering prepared for repeated pair queries.
 ///
-/// This borrows retained source bounds and caches only axis sort orders. It is
-/// an acceleration fact, not topology evidence: disjoint AABBs may reject work,
-/// while retained pairs still require exact narrow-phase predicates.
+/// This borrows retained source bounds and caches axis interval views and sort
+/// orders. It is an acceleration fact, not topology evidence: disjoint AABBs
+/// may reject work, while retained pairs still require exact narrow-phase
+/// predicates.
 #[derive(Clone, Debug)]
 pub struct PreparedMeshBounds<'a> {
     bounds: &'a MeshBounds,
+    axis_intervals: [Vec<FaceAxisInterval<'a>>; 3],
     min_axis_orders: [Option<Vec<usize>>; 3],
     max_axis_orders: [Option<Vec<usize>>; 3],
 }
@@ -194,6 +196,12 @@ struct SweepPlan {
     direction: SweepDirection,
     interval_pairs: usize,
     cost: usize,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct FaceAxisInterval<'a> {
+    min: &'a Real,
+    max: &'a Real,
 }
 
 /// Prepared broad-phase plan for one retained bounds pair.
@@ -236,24 +244,32 @@ impl MeshBounds {
         self.prepare().candidate_face_pairs(&other.prepare())
     }
 
-    /// Prepare exact min-axis face orders for repeated broad-phase queries.
+    /// Prepare exact axis intervals and face orders for repeated broad-phase queries.
     ///
     /// An axis order is retained only when all exact comparisons needed for
     /// sorting were decided. Querying two prepared bounds falls back to the
     /// exact quadratic scheduler when no common sweep axis is usable.
     pub fn prepare(&self) -> PreparedMeshBounds<'_> {
+        let axis_intervals = [
+            face_axis_intervals(&self.faces, Axis::X),
+            face_axis_intervals(&self.faces, Axis::Y),
+            face_axis_intervals(&self.faces, Axis::Z),
+        ];
+        let min_axis_orders = [
+            sorted_face_indices_by_axis_bound(&axis_intervals[Axis::X.index()], AxisBound::Min),
+            sorted_face_indices_by_axis_bound(&axis_intervals[Axis::Y.index()], AxisBound::Min),
+            sorted_face_indices_by_axis_bound(&axis_intervals[Axis::Z.index()], AxisBound::Min),
+        ];
+        let max_axis_orders = [
+            sorted_face_indices_by_axis_bound(&axis_intervals[Axis::X.index()], AxisBound::Max),
+            sorted_face_indices_by_axis_bound(&axis_intervals[Axis::Y.index()], AxisBound::Max),
+            sorted_face_indices_by_axis_bound(&axis_intervals[Axis::Z.index()], AxisBound::Max),
+        ];
         PreparedMeshBounds {
             bounds: self,
-            min_axis_orders: [
-                sorted_face_indices_by_axis_bound(&self.faces, Axis::X, AxisBound::Min),
-                sorted_face_indices_by_axis_bound(&self.faces, Axis::Y, AxisBound::Min),
-                sorted_face_indices_by_axis_bound(&self.faces, Axis::Z, AxisBound::Min),
-            ],
-            max_axis_orders: [
-                sorted_face_indices_by_axis_bound(&self.faces, Axis::X, AxisBound::Max),
-                sorted_face_indices_by_axis_bound(&self.faces, Axis::Y, AxisBound::Max),
-                sorted_face_indices_by_axis_bound(&self.faces, Axis::Z, AxisBound::Max),
-            ],
+            axis_intervals,
+            min_axis_orders,
+            max_axis_orders,
         }
     }
 }
@@ -422,20 +438,18 @@ impl<'a> PreparedMeshBounds<'a> {
         let right_max_order = other.max_axis_order(axis)?;
         let mut pair_count = 0usize;
 
-        for left_box in &self.bounds.faces {
+        for left_interval in self.axis_intervals(axis) {
             let starts_before_left_ends = count_axis_bound_le(
                 right_min_order,
-                &other.bounds.faces,
-                axis,
+                other.axis_intervals(axis),
                 AxisBound::Min,
-                axis_max(left_box, axis),
+                left_interval.max,
             )?;
             let ends_before_left_starts = count_axis_bound_lt(
                 right_max_order,
-                &other.bounds.faces,
-                axis,
+                other.axis_intervals(axis),
                 AxisBound::Max,
-                axis_min(left_box, axis),
+                left_interval.min,
             )?;
             let overlapping_intervals =
                 starts_before_left_ends.checked_sub(ends_before_left_starts)?;
@@ -467,12 +481,11 @@ impl<'a> PreparedMeshBounds<'a> {
         let mut inactive_rights = 0usize;
 
         for &left in left_order {
-            let left_box = &self.bounds.faces[left];
+            let left_interval = self.axis_interval(axis, left);
             while let Some(&right) = right_max_order.get(next_expiring_right) {
-                let Some(ordering) = compare(
-                    axis_max(&other.bounds.faces[right], axis),
-                    axis_min(left_box, axis),
-                ) else {
+                let Some(ordering) =
+                    compare(other.axis_interval(axis, right).max, left_interval.min)
+                else {
                     return Ok(false);
                 };
                 if ordering != Ordering::Less {
@@ -491,19 +504,14 @@ impl<'a> PreparedMeshBounds<'a> {
             }
 
             while let Some(&right) = right_order.get(next_right) {
-                let Some(ordering) = compare(
-                    axis_min(&other.bounds.faces[right], axis),
-                    axis_max(left_box, axis),
-                ) else {
+                let right_interval = other.axis_interval(axis, right);
+                let Some(ordering) = compare(right_interval.min, left_interval.max) else {
                     return Ok(false);
                 };
                 if ordering == Ordering::Greater {
                     break;
                 }
-                let Some(ordering) = compare(
-                    axis_max(&other.bounds.faces[right], axis),
-                    axis_min(left_box, axis),
-                ) else {
+                let Some(ordering) = compare(right_interval.max, left_interval.min) else {
                     return Ok(false);
                 };
                 if ordering != Ordering::Less {
@@ -514,9 +522,8 @@ impl<'a> PreparedMeshBounds<'a> {
             }
 
             for &right in &active_right {
-                let right_box = &other.bounds.faces[right];
-                let Some(ordering) = compare(axis_min(right_box, axis), axis_max(left_box, axis))
-                else {
+                let right_interval = other.axis_interval(axis, right);
+                let Some(ordering) = compare(right_interval.min, left_interval.max) else {
                     return Ok(false);
                 };
                 if ordering == Ordering::Greater {
@@ -548,6 +555,14 @@ impl<'a> PreparedMeshBounds<'a> {
 
     fn max_axis_order(&self, axis: Axis) -> Option<&[usize]> {
         self.max_axis_orders[axis.index()].as_deref()
+    }
+
+    fn axis_intervals(&self, axis: Axis) -> &[FaceAxisInterval<'a>] {
+        &self.axis_intervals[axis.index()]
+    }
+
+    fn axis_interval(&self, axis: Axis, face: usize) -> FaceAxisInterval<'a> {
+        self.axis_intervals(axis)[face]
     }
 }
 
@@ -626,17 +641,26 @@ enum AxisBound {
     Max,
 }
 
+fn face_axis_intervals(faces: &[ExactAabb3], axis: Axis) -> Vec<FaceAxisInterval<'_>> {
+    faces
+        .iter()
+        .map(|bounds| FaceAxisInterval {
+            min: axis_min(bounds, axis),
+            max: axis_max(bounds, axis),
+        })
+        .collect()
+}
+
 fn sorted_face_indices_by_axis_bound(
-    faces: &[ExactAabb3],
-    axis: Axis,
+    intervals: &[FaceAxisInterval<'_>],
     bound: AxisBound,
 ) -> Option<Vec<usize>> {
     let mut decided = true;
-    let mut indices = (0..faces.len()).collect::<Vec<_>>();
+    let mut indices = (0..intervals.len()).collect::<Vec<_>>();
     indices.sort_by(|&left, &right| {
         match compare(
-            axis_bound(&faces[left], axis, bound),
-            axis_bound(&faces[right], axis, bound),
+            axis_bound(intervals[left], bound),
+            axis_bound(intervals[right], bound),
         ) {
             Some(ordering) => ordering,
             None => {
@@ -650,8 +674,7 @@ fn sorted_face_indices_by_axis_bound(
 
 fn count_axis_bound_le(
     order: &[usize],
-    faces: &[ExactAabb3],
-    axis: Axis,
+    intervals: &[FaceAxisInterval<'_>],
     bound: AxisBound,
     query: &Real,
 ) -> Option<usize> {
@@ -659,7 +682,7 @@ fn count_axis_bound_le(
     let mut end = order.len();
     while start < end {
         let mid = start + (end - start) / 2;
-        let value = axis_bound(&faces[order[mid]], axis, bound);
+        let value = axis_bound(intervals[order[mid]], bound);
         if compare(value, query)? == Ordering::Greater {
             end = mid;
         } else {
@@ -671,8 +694,7 @@ fn count_axis_bound_le(
 
 fn count_axis_bound_lt(
     order: &[usize],
-    faces: &[ExactAabb3],
-    axis: Axis,
+    intervals: &[FaceAxisInterval<'_>],
     bound: AxisBound,
     query: &Real,
 ) -> Option<usize> {
@@ -680,7 +702,7 @@ fn count_axis_bound_lt(
     let mut end = order.len();
     while start < end {
         let mid = start + (end - start) / 2;
-        let value = axis_bound(&faces[order[mid]], axis, bound);
+        let value = axis_bound(intervals[order[mid]], bound);
         if compare(value, query)? == Ordering::Less {
             start = mid + 1;
         } else {
@@ -707,10 +729,10 @@ fn choose_better_sweep_plan(
     }
 }
 
-fn axis_bound(bounds: &ExactAabb3, axis: Axis, bound: AxisBound) -> &Real {
+fn axis_bound(interval: FaceAxisInterval<'_>, bound: AxisBound) -> &Real {
     match bound {
-        AxisBound::Min => axis_min(bounds, axis),
-        AxisBound::Max => axis_max(bounds, axis),
+        AxisBound::Min => interval.min,
+        AxisBound::Max => interval.max,
     }
 }
 
