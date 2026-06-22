@@ -2,16 +2,15 @@
 //!
 //! This module joins the retained exact AABB broad phase with the certified
 //! triangle/triangle coarse classifier.  It is still a scheduler and event
-//! collector, not the final boolean graph builder: `BoundsDisjoint` and
-//! `PlaneSeparated` may reject work, while coplanar and candidate outcomes must
-//! continue into exact overlap-graph construction. Retained exact face-plane
-//! coefficients are used as a cached plane-separation filter before the full
-//! triangle classifier is rebuilt, and candidate split events reuse those
-//! mutations wait for certified predicates and exact constructions.
+//! collector, not the final boolean graph builder: broad-phase disjointness
+//! and retained plane separation may reject work, while coplanar and candidate
+//! outcomes must continue into exact overlap-graph construction. Retained exact
+//! face-plane coefficients are used as a cached plane-separation filter before
+//! the full triangle classifier is rebuilt, and candidate split events reuse
+//! those mutations wait for certified predicates and exact constructions.
 
-use hyperlimit::{PredicateOutcome, SegmentPlaneIntersection, TrianglePlaneRelation};
+use hyperlimit::{SegmentPlaneIntersection, TrianglePlaneRelation};
 
-use super::bounds::AabbIntersectionKind;
 use super::construction::intersect_segment_with_retained_face_plane;
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::mesh::{ExactMesh, ExactMeshValidationError};
@@ -25,8 +24,6 @@ use super::topology::triangle_edges;
 /// Coarse exact relation for one pair of mesh faces.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MeshFacePairRelation {
-    /// Exact AABBs prove the faces cannot intersect.
-    BoundsDisjoint,
     /// Exact triangle plane-side predicates prove the faces are separated.
     PlaneSeparated,
     /// The triangles are coplanar and touch at a vertex or edge.
@@ -47,8 +44,6 @@ pub struct MeshFacePairClassification {
     pub left_face: usize,
     /// Face index in the right mesh.
     pub right_face: usize,
-    /// Exact AABB relation, or unknown when bounds could not be certified.
-    pub bounds: PredicateOutcome<AabbIntersectionKind>,
     /// Triangle classifier result when bounds did not reject the pair.
     pub triangle: Option<TriangleTriangleClassification>,
     /// Coarse scheduling relation.
@@ -74,24 +69,6 @@ fn classify_mesh_face_pair_unchecked(
     right: &ExactMesh,
     right_face: usize,
 ) -> MeshFacePairClassification {
-    let bounds =
-        left.bounds().faces[left_face].classify_intersection(&right.bounds().faces[right_face]);
-    if matches!(
-        bounds,
-        PredicateOutcome::Decided {
-            value: AabbIntersectionKind::Disjoint,
-            ..
-        }
-    ) {
-        return MeshFacePairClassification {
-            left_face,
-            right_face,
-            bounds,
-            triangle: None,
-            relation: MeshFacePairRelation::BoundsDisjoint,
-        };
-    }
-
     let right_against_left = classify_mesh_triangle_against_retained_face_plane_unchecked(
         left, left_face, right, right_face,
     );
@@ -99,7 +76,6 @@ fn classify_mesh_face_pair_unchecked(
         return MeshFacePairClassification {
             left_face,
             right_face,
-            bounds,
             triangle: None,
             relation: MeshFacePairRelation::PlaneSeparated,
         };
@@ -112,7 +88,6 @@ fn classify_mesh_face_pair_unchecked(
         return MeshFacePairClassification {
             left_face,
             right_face,
-            bounds,
             triangle: None,
             relation: MeshFacePairRelation::PlaneSeparated,
         };
@@ -131,7 +106,6 @@ fn classify_mesh_face_pair_unchecked(
     MeshFacePairClassification {
         left_face,
         right_face,
-        bounds,
         triangle: Some(triangle),
         relation,
     }

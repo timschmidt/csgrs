@@ -4584,7 +4584,7 @@ impl ExactBooleanBlocker {
                     blocker.coplanar_touching_pairs += 1;
                 }
                 MeshFacePairRelation::Unknown => blocker.unknown_pairs += 1,
-                MeshFacePairRelation::BoundsDisjoint | MeshFacePairRelation::PlaneSeparated => {}
+                MeshFacePairRelation::PlaneSeparated => {}
             }
             if pair.relation != MeshFacePairRelation::Unknown && pair_has_unknown_event {
                 blocker.unknown_pairs += 1;

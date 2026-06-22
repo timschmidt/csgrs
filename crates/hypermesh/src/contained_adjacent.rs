@@ -418,7 +418,7 @@ fn contained_adjacency_contact_pair(
             .events
             .iter()
             .all(|event| boundary_candidate_event(left, right, event)),
-        MeshFacePairRelation::BoundsDisjoint | MeshFacePairRelation::PlaneSeparated => true,
+        MeshFacePairRelation::PlaneSeparated => true,
         MeshFacePairRelation::CoplanarOverlapping | MeshFacePairRelation::Unknown => false,
     }
 }

@@ -753,7 +753,7 @@ impl FacePairEvents {
                     return Err(IntersectionGraphValidationError::NonCoplanarPairHasProjection);
                 }
             }
-            MeshFacePairRelation::BoundsDisjoint | MeshFacePairRelation::PlaneSeparated => {}
+            MeshFacePairRelation::PlaneSeparated => {}
         }
 
         if self.relation == MeshFacePairRelation::Unknown

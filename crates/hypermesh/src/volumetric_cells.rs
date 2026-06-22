@@ -211,7 +211,7 @@ impl CoplanarVolumetricCellEvidenceReport {
                     }
                 }
                 MeshFacePairRelation::Unknown => report.unknown_pairs += 1,
-                MeshFacePairRelation::BoundsDisjoint | MeshFacePairRelation::PlaneSeparated => {}
+                MeshFacePairRelation::PlaneSeparated => {}
             }
 
             for event in &pair.events {

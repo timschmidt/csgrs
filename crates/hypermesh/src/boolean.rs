@@ -4836,9 +4836,7 @@ fn graph_has_only_boundary_contact_pairs(
                     IntersectionEvent::Unknown => false,
                 }
             }),
-            MeshFacePairRelation::BoundsDisjoint
-            | MeshFacePairRelation::PlaneSeparated
-            | MeshFacePairRelation::Unknown => false,
+            MeshFacePairRelation::PlaneSeparated | MeshFacePairRelation::Unknown => false,
         })
 }
 

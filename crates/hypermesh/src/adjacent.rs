@@ -355,9 +355,7 @@ fn adjacency_contact_pair(
                 && !coplanar_pair_has_positive_area_evidence(pair)
         }
         MeshFacePairRelation::Candidate => pair.events.iter().all(boundary_candidate_event),
-        MeshFacePairRelation::BoundsDisjoint
-        | MeshFacePairRelation::PlaneSeparated
-        | MeshFacePairRelation::Unknown => false,
+        MeshFacePairRelation::PlaneSeparated | MeshFacePairRelation::Unknown => false,
     }
 }
 
