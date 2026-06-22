@@ -39,7 +39,7 @@ use hyperreal::Real;
 
 /// Certified intersection of two closed convex solids.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ConvexSolidIntersection {
+pub(crate) struct ConvexSolidIntersection {
     /// Convexity and orientation facts for the left operand.
     pub left_facts: ConvexSolidFacts,
     /// Convexity and orientation facts for the right operand.
@@ -57,7 +57,7 @@ pub struct ConvexSolidIntersection {
 /// before closed validation so retained whole-face fragments are split at
 /// neighboring intersection vertices instead of forming T-junctions.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ConvexSolidUnion {
+pub(crate) struct ConvexSolidUnion {
     /// Convexity and orientation facts for the left operand.
     pub left_facts: ConvexSolidFacts,
     /// Convexity and orientation facts for the right operand.
@@ -73,7 +73,7 @@ pub struct ConvexSolidUnion {
 /// orientation, while right boundary portions inside the left solid are
 /// retained with reversed orientation as cut/cavity faces.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ConvexSolidDifference {
+pub(crate) struct ConvexSolidDifference {
     /// Convexity and orientation facts for the left operand.
     pub left_facts: ConvexSolidFacts,
     /// Convexity and orientation facts for the right operand.

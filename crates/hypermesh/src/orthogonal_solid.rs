@@ -24,7 +24,7 @@ use hyperreal::Real;
 
 /// Named set operation over two certified orthogonal cell complexes.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum AxisAlignedOrthogonalSolidOperation {
+pub(crate) enum AxisAlignedOrthogonalSolidOperation {
     /// Retain any cell occupied by either operand.
     Union,
     /// Retain cells occupied by both operands.

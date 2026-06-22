@@ -42,7 +42,7 @@ use std::collections::BTreeMap;
 
 /// Exact materialization of a closed-solid union across contained boundary caps.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ContainedFaceAdjacentUnion {
+pub(crate) struct ContainedFaceAdjacentUnion {
     /// Source side whose face is replaced by a holed face remnant.
     pub containing_side: MeshSide,
     /// First face index on [`Self::containing_side`] that participates in the
@@ -73,7 +73,7 @@ pub(crate) struct ContainedFaceAdjacentCertificate {
 
 /// Validation failure for a retained contained-face adjacency materialization.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ContainedFaceAdjacentUnionError {
+pub(crate) enum ContainedFaceAdjacentUnionError {
     /// The retained source-face certificate shape is internally incoherent.
     InvalidCertificate,
     /// The retained output mesh no longer validates as an exact mesh.

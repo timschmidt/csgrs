@@ -45,7 +45,7 @@ use hyperreal::Real;
 /// source indices makes the deleted topology replayable against the original
 /// meshes.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct FullFaceAdjacentFacePair {
+pub(crate) struct FullFaceAdjacentFacePair {
     /// Face index in the left source mesh.
     pub left_face: usize,
     /// Face index in the right source mesh.
@@ -60,7 +60,7 @@ pub struct FullFaceAdjacentFacePair {
 /// rather than output faces because all patch faces are deleted from the
 /// regularized union.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct FullFaceAdjacentPatch {
+pub(crate) struct FullFaceAdjacentPatch {
     /// Face indices in the left source mesh that cover the shared patch.
     pub left_faces: Vec<usize>,
     /// Face indices in the right source mesh that cover the shared patch.
@@ -69,7 +69,7 @@ pub struct FullFaceAdjacentPatch {
 
 /// Exact materialization of a closed-solid union across shared full faces.
 #[derive(Clone, Debug, PartialEq)]
-pub struct FullFaceAdjacentUnion {
+pub(crate) struct FullFaceAdjacentUnion {
     /// Source face pairs that were proven exactly coincident and removed.
     pub shared_faces: Vec<FullFaceAdjacentFacePair>,
     /// Source face patches that were proven exactly coincident and removed.
@@ -86,7 +86,7 @@ pub(crate) struct FullFaceAdjacentCertificate {
 
 /// Validation failure for a retained full-face adjacency materialization.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum FullFaceAdjacentUnionError {
+pub(crate) enum FullFaceAdjacentUnionError {
     /// No shared whole-face certificate was retained.
     MissingSharedFace,
     /// A retained source face was paired more than once.

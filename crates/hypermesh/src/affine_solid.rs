@@ -27,7 +27,7 @@ use hyperreal::Real;
 
 /// Named operation retained by an affine orthogonal-solid materialization.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum AffineOrthogonalSolidOperation {
+pub(crate) enum AffineOrthogonalSolidOperation {
     /// Regularized solid union.
     Union,
     /// Positive-volume solid intersection.
@@ -44,7 +44,7 @@ pub enum AffineOrthogonalSolidOperation {
 /// axis-aligned orthogonal cell complexes, and exact replay of the lifted
 /// output back through the same basis.
 #[derive(Clone, Debug, PartialEq)]
-pub struct AffineOrthogonalSolidArrangement {
+pub(crate) struct AffineOrthogonalSolidArrangement {
     /// Shared affine frame used to normalize source and output cell complexes.
     pub basis: AffineBoxBasis,
     /// Boolean operation that produced the retained mesh.
