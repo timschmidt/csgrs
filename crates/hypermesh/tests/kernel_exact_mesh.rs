@@ -117,10 +117,11 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
     let disjoint = tetra([5, 0, 0]);
 
     left.view().validate_retained_bounds().unwrap();
-    let candidates = left
+    let mut candidates = left
         .view()
         .candidate_face_pairs(overlapping.view())
         .unwrap();
+    candidates.sort_unstable();
     let mut visited_candidates = Vec::new();
     left.view()
         .visit_candidate_face_pairs(overlapping.view(), |pair| visited_candidates.push(pair))
@@ -145,11 +146,12 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
         prepared_left.candidate_face_pair_capacity_hint(&prepared_overlapping) >= candidates.len()
     );
     assert!(prepared_pair.candidate_face_pair_capacity_hint() >= candidates.len());
-    assert_eq!(
-        prepared_left.candidate_face_pairs(&prepared_overlapping),
-        candidates
-    );
-    assert_eq!(prepared_pair.candidate_face_pairs(), candidates);
+    let mut prepared_candidates = prepared_left.candidate_face_pairs(&prepared_overlapping);
+    prepared_candidates.sort_unstable();
+    assert_eq!(prepared_candidates, candidates);
+    let mut prepared_pair_candidates = prepared_pair.candidate_face_pairs();
+    prepared_pair_candidates.sort_unstable();
+    assert_eq!(prepared_pair_candidates, candidates);
     let mut prepared_visited = Vec::new();
     prepared_pair.visit_candidate_face_pairs(|pair| prepared_visited.push(pair));
     prepared_visited.sort_unstable();

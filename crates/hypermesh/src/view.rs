@@ -153,6 +153,7 @@ impl<'a> ExactMeshRef<'a> {
     /// The retained bounds on both source meshes are replayed before the AABB
     /// scheduler is allowed to discard face pairs. Returned pairs are only
     /// broad-phase candidates; narrow exact predicates still decide topology.
+    /// Pair order is an implementation detail of the selected broad-phase plan.
     pub fn candidate_face_pairs(
         self,
         right: ExactMeshRef<'_>,
@@ -245,6 +246,8 @@ impl<'a> PreparedMeshView<'a> {
     }
 
     /// Return exact broad-phase candidate face pairs for this view and `right`.
+    ///
+    /// Pair order is an implementation detail of the selected broad-phase plan.
     pub fn candidate_face_pairs(&self, right: &PreparedMeshView<'_>) -> Vec<[usize; 2]> {
         let plan = self.bounds.candidate_face_pair_plan(&right.bounds);
         let mut pairs = Vec::with_capacity(plan.capacity_hint());
@@ -257,7 +260,6 @@ impl<'a> PreparedMeshView<'a> {
             },
         );
         debug_assert!(result.is_ok());
-        pairs.sort_unstable();
         pairs
     }
 
@@ -312,6 +314,8 @@ impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
     }
 
     /// Return exact broad-phase candidate face pairs for this prepared pair.
+    ///
+    /// Pair order is an implementation detail of the selected broad-phase plan.
     pub fn candidate_face_pairs(&self) -> Vec<[usize; 2]> {
         let mut pairs = Vec::with_capacity(self.bounds_plan.capacity_hint());
         let result = self.try_visit_candidate_face_pairs(|pair| {
@@ -319,7 +323,6 @@ impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
             Ok::<(), ()>(())
         });
         debug_assert!(result.is_ok());
-        pairs.sort_unstable();
         pairs
     }
 

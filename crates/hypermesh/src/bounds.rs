@@ -303,7 +303,6 @@ impl<'a> PreparedMeshBounds<'a> {
             Ok::<(), ()>(())
         });
         debug_assert!(result.is_ok());
-        pairs.sort_unstable();
         pairs
     }
 
@@ -808,6 +807,11 @@ mod tests {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
+    fn sorted_pairs(mut pairs: Vec<[usize; 2]>) -> Vec<[usize; 2]> {
+        pairs.sort_unstable();
+        pairs
+    }
+
     #[test]
     fn candidate_face_pairs_prune_certified_disjoint_bounds() {
         let left_points = vec![
@@ -900,8 +904,8 @@ mod tests {
         let prepared_right = right.prepare();
 
         assert_eq!(
-            prepared_left.candidate_face_pairs(&prepared_right),
-            prepared_left.candidate_face_pairs_quadratic(&prepared_right)
+            sorted_pairs(prepared_left.candidate_face_pairs(&prepared_right)),
+            sorted_pairs(prepared_left.candidate_face_pairs_quadratic(&prepared_right))
         );
         assert!(
             prepared_left.candidate_face_pair_capacity_hint(&prepared_right)
@@ -944,8 +948,8 @@ mod tests {
         let prepared_right = right.prepare();
 
         assert_eq!(
-            prepared_left.candidate_face_pairs(&prepared_right),
-            prepared_left.candidate_face_pairs_quadratic(&prepared_right)
+            sorted_pairs(prepared_left.candidate_face_pairs(&prepared_right)),
+            sorted_pairs(prepared_left.candidate_face_pairs_quadratic(&prepared_right))
         );
     }
 
@@ -981,8 +985,8 @@ mod tests {
             SweepDirection::RightDriven
         );
         assert_eq!(
-            prepared_left.candidate_face_pairs(&prepared_right),
-            prepared_left.candidate_face_pairs_quadratic(&prepared_right)
+            sorted_pairs(prepared_left.candidate_face_pairs(&prepared_right)),
+            sorted_pairs(prepared_left.candidate_face_pairs_quadratic(&prepared_right))
         );
         assert!(
             prepared_left.candidate_face_pair_capacity_hint(&prepared_right)
