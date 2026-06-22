@@ -83,8 +83,8 @@ use hyperlimit::PredicateUse;
 ///
 /// Report validation checks the evidence object itself, not the original
 /// geometry. It lets tests, fuzzing, and downstream policy code assert that
-/// status, blocker kind, graph counts, and retained artifacts agree before
-/// metadata consistency part of the certified boundary.
+/// status, blocker kind, graph counts, and retained artifacts agree before a
+/// report is trusted as certified evidence.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) enum ExactReportValidationError {
     /// A certified shortcut report unexpectedly carried a blocker.
@@ -630,8 +630,7 @@ impl ExactBooleanResult {
 /// Result kind is explicit so validation does not infer semantic intent from
 /// empty vectors. That distinction matters for exact computing: selected-region
 /// assembly, certified shortcuts, and boundary-policy projections are different
-/// application contracts even when they all produce an empty mesh. The design
-/// topology.
+/// result shapes even when they all produce an empty mesh.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ExactBooleanResultKind {
     /// The result came from split-region classification and selected assembly.
@@ -4616,8 +4615,7 @@ pub(crate) enum ExactSameSurfaceStatus {
 ///
 /// This is the report form of the same-surface boolean shortcut. It retains
 /// the exact vertex permutation, remapped triangle sets, and scalar equality
-/// predicate certificates used to prove coordinate equality. The design
-/// predicate trail rather than collapsing directly to `bool`.
+/// predicate certificates used to prove coordinate equality.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ExactSameSurfaceReport {
     /// Coarse same-surface certification status.
@@ -4653,8 +4651,7 @@ impl ExactSameSurfaceReport {
     /// Rejection statuses are still evidence states: count mismatches must not
     /// retain coordinate predicates, vertex-matching failures may keep only the
     /// partial left-to-right matches and predicate trail, and triangle-set
-    /// mismatches must retain a valid full vertex permutation. This keeps a
-    /// allowing callers to attach arbitrary topology artifacts to a rejection.
+    /// mismatches must retain a valid full vertex permutation.
     pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
         match self.status {
             ExactSameSurfaceStatus::VertexCountMismatch
