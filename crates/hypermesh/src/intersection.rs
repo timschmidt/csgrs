@@ -97,10 +97,12 @@ fn classify_mesh_face_pair_unchecked(
     let mut triangle =
         classify_mesh_triangles_without_candidate_events(left, left_face, right, right_face);
     if triangle.relation == TriangleTriangleRelation::Candidate {
-        triangle.right_edge_events =
-            retained_triangle_edge_events(left, left_face, right, right_face);
-        triangle.left_edge_events =
-            retained_triangle_edge_events(right, right_face, left, left_face);
+        triangle.right_edge_events = Some(retained_triangle_edge_events(
+            left, left_face, right, right_face,
+        ));
+        triangle.left_edge_events = Some(retained_triangle_edge_events(
+            right, right_face, left, left_face,
+        ));
     }
     let relation = mesh_relation_from_triangle(triangle.relation);
 
@@ -168,17 +170,15 @@ fn retained_triangle_edge_events(
     plane_face: usize,
     segment_mesh: &ExactMesh,
     segment_face: usize,
-) -> Vec<SegmentPlaneIntersection> {
+) -> [SegmentPlaneIntersection; 3] {
     let plane = &plane_mesh.facts().faces[plane_face].plane;
-    let mut events = Vec::with_capacity(3);
-    for edge in triangle_edges(segment_mesh.triangles()[segment_face].0) {
-        events.push(intersect_segment_with_retained_face_plane(
+    triangle_edges(segment_mesh.triangles()[segment_face].0).map(|edge| {
+        intersect_segment_with_retained_face_plane(
             plane,
             &segment_mesh.vertices()[edge[0]],
             &segment_mesh.vertices()[edge[1]],
-        ));
-    }
-    events
+        )
+    })
 }
 
 fn mesh_relation_from_triangle(relation: TriangleTriangleRelation) -> MeshFacePairRelation {

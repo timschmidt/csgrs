@@ -65,9 +65,9 @@ pub struct TriangleTriangleClassification {
     /// Classification of the left triangle against the right triangle's plane.
     pub left_against_right_plane: TrianglePlaneClassification,
     /// Right-triangle edge events against the left plane.
-    pub right_edge_events: Vec<SegmentPlaneIntersection>,
+    pub right_edge_events: Option<[SegmentPlaneIntersection; 3]>,
     /// Left-triangle edge events against the right plane.
-    pub left_edge_events: Vec<SegmentPlaneIntersection>,
+    pub left_edge_events: Option<[SegmentPlaneIntersection; 3]>,
     /// Exact projected overlap result for coplanar pairs.
     pub coplanar: Option<CoplanarTriangleClassification>,
 }
@@ -147,8 +147,8 @@ fn classify_triangle_triangle_points_retained(
         relation,
         right_against_left_plane,
         left_against_right_plane,
-        right_edge_events: Vec::new(),
-        left_edge_events: Vec::new(),
+        right_edge_events: None,
+        left_edge_events: None,
         coplanar,
     }
 }
