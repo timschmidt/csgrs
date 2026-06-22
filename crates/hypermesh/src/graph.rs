@@ -421,7 +421,7 @@ impl CoplanarOverlapGraph {
         right: &ExactMesh,
     ) -> Result<(), CoplanarOverlapGraphValidationError> {
         self.validate()?;
-        let replay = build_intersection_graph(left, right)
+        let replay = build_unvalidated_intersection_graph(left, right)
             .map(|graph| graph.coplanar_overlap_graphs())
             .map_err(|_| CoplanarOverlapGraphValidationError::SourceReplayMismatch)?;
         if replay.iter().any(|graph| graph == self) {
@@ -534,7 +534,7 @@ impl CoplanarArrangementEvidence {
         right: &ExactMesh,
     ) -> Result<(), CoplanarArrangementEvidenceError> {
         self.validate()?;
-        let replay = build_intersection_graph(left, right)
+        let replay = build_unvalidated_intersection_graph(left, right)
             .and_then(|graph| graph.coplanar_arrangement_evidence(left, right))
             .map_err(|_| CoplanarArrangementEvidenceError::SourceReplayMismatch)?;
         if self == &replay {
@@ -571,7 +571,7 @@ impl CoplanarOverlapSplitPlan {
         for graph in &self.graphs {
             graph.validate_against_sources(left, right)?;
         }
-        let replay = build_intersection_graph(left, right)
+        let replay = build_unvalidated_intersection_graph(left, right)
             .and_then(|graph| graph.coplanar_overlap_split_plan(left, right))
             .map_err(|_| CoplanarOverlapSplitValidationError::SourceReplayMismatch)?;
         if self == &replay {
@@ -631,7 +631,7 @@ impl CoplanarOverlapSplitGraph {
                 .map_err(|_| CoplanarOverlapSplitValidationError::SourceReplayMismatch)?;
             validate_coplanar_edge_split_against_edges(split, &left_edge, &right_edge)?;
         }
-        let replay = build_intersection_graph(left, right)
+        let replay = build_unvalidated_intersection_graph(left, right)
             .and_then(|graph| graph.coplanar_overlap_split_plan(left, right))
             .map_err(|_| CoplanarOverlapSplitValidationError::SourceReplayMismatch)?;
         if replay.graphs.iter().any(|graph| graph == self) {
@@ -919,7 +919,7 @@ impl ExactIntersectionGraph {
         right: &ExactMesh,
     ) -> Result<(), IntersectionGraphValidationError> {
         self.validate_against_meshes(left, right)?;
-        let replay = build_intersection_graph(left, right)
+        let replay = build_unvalidated_intersection_graph(left, right)
             .map_err(|_| IntersectionGraphValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
@@ -1171,14 +1171,19 @@ impl ExactIntersectionGraph {
     }
 }
 
-/// Build an exact event graph from two exact meshes.
-pub(crate) fn build_intersection_graph(
+/// Build an exact event graph from two exact meshes without validating the
+/// retained event handles against source replay.
+///
+/// This is for replay comparisons and tests that intentionally retain stale
+/// graphs. Ordinary algorithm consumers should use
+/// [`build_validated_intersection_graph`].
+pub(crate) fn build_unvalidated_intersection_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
     let left = prepare_intersection_graph_view(left)?;
     let right = prepare_intersection_graph_view(right)?;
-    build_intersection_graph_from_prepared_views(&left, &right)
+    build_unvalidated_intersection_graph_from_prepared_views(&left, &right)
 }
 
 fn prepare_intersection_graph_view(
@@ -1192,8 +1197,9 @@ fn prepare_intersection_graph_view(
     })
 }
 
-/// Build an exact event graph from replay-validated prepared mesh views.
-pub(crate) fn build_intersection_graph_from_prepared_views(
+/// Build an exact event graph from replay-validated prepared mesh views without
+/// validating the retained event handles against source replay.
+pub(crate) fn build_unvalidated_intersection_graph_from_prepared_views(
     left: &PreparedMeshView<'_>,
     right: &PreparedMeshView<'_>,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
@@ -1226,7 +1232,7 @@ pub(crate) fn build_validated_intersection_graph_from_prepared_views(
     left: &PreparedMeshView<'_>,
     right: &PreparedMeshView<'_>,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let graph = build_intersection_graph_from_prepared_views(left, right)?;
+    let graph = build_unvalidated_intersection_graph_from_prepared_views(left, right)?;
     graph
         .validate_against_meshes(left.view().mesh(), right.view().mesh())
         .map_err(|error| {
@@ -2477,7 +2483,8 @@ fn validate_edge_split_plan_against_sources(
         return report;
     }
 
-    let replay = build_intersection_graph(left, right).map(|graph| graph.edge_split_plan());
+    let replay =
+        build_unvalidated_intersection_graph(left, right).map(|graph| graph.edge_split_plan());
     match replay {
         Ok(replay) if replay == *split_plan => report,
         Ok(_) => {
@@ -2768,18 +2775,19 @@ fn validate_face_split_plan_against_sources(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> SplitPlanValidationReport {
-    let topology =
-        match build_intersection_graph(left, right).map(|graph| graph.split_topology_plan()) {
-            Ok(topology) => topology,
-            Err(error) => {
-                return SplitPlanValidationReport {
-                    blockers: vec![SplitPlanBlocker::new(
-                        SplitPlanBlockerKind::SourceReplayMismatch,
-                        format!("face split plan source replay failed: {error}"),
-                    )],
-                };
-            }
-        };
+    let topology = match build_unvalidated_intersection_graph(left, right)
+        .map(|graph| graph.split_topology_plan())
+    {
+        Ok(topology) => topology,
+        Err(error) => {
+            return SplitPlanValidationReport {
+                blockers: vec![SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::SourceReplayMismatch,
+                    format!("face split plan source replay failed: {error}"),
+                )],
+            };
+        }
+    };
 
     let mut report = validate_face_split_plan(face_plan, &topology);
     if !report.is_valid() {
@@ -3152,7 +3160,7 @@ fn validate_face_split_geometry_against_sources(
         return report;
     }
 
-    let replay = build_intersection_graph(left, right)
+    let replay = build_unvalidated_intersection_graph(left, right)
         .and_then(|graph| graph.face_split_geometry_plan(left, right));
     match replay {
         Ok(replay) if replay == *geometry => report,
@@ -3377,7 +3385,7 @@ fn validate_face_region_plan_against_sources(
         return report;
     }
 
-    let replay = build_intersection_graph(left, right)
+    let replay = build_unvalidated_intersection_graph(left, right)
         .and_then(|graph| graph.face_split_geometry_plan(left, right))
         .map(|geometry| geometry.region_plan(left, right));
     match replay {
@@ -4074,7 +4082,7 @@ mod tests {
             ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let graph = build_intersection_graph(&left, &right).unwrap();
+        let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
         let geometry = graph.face_split_geometry_plan(&left, &right).unwrap();
         let regions = geometry.region_plan(&left, &right);
 
@@ -4141,7 +4149,7 @@ mod tests {
         )
         .unwrap();
 
-        let graph = build_intersection_graph(&left, &right).unwrap();
+        let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
         let (cell_regions, cell_triangulations) = graph
             .triangulate_face_cells_with_cdt(&left, &right)
             .unwrap()
@@ -4187,7 +4195,7 @@ mod tests {
         )
         .unwrap();
 
-        let graph = build_intersection_graph(&left, &right).unwrap();
+        let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
         graph.validate_against_sources(&left, &right).unwrap();
         let retained_pair = graph
             .face_pairs
@@ -4256,11 +4264,15 @@ mod tests {
         )
         .unwrap();
 
-        let graph = build_intersection_graph(&left, &right).unwrap();
+        let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
         let prepared_left = left.view().prepare_broad_phase().unwrap();
         let prepared_right = right.view().prepare_broad_phase().unwrap();
         assert_eq!(
-            build_intersection_graph_from_prepared_views(&prepared_left, &prepared_right).unwrap(),
+            build_unvalidated_intersection_graph_from_prepared_views(
+                &prepared_left,
+                &prepared_right
+            )
+            .unwrap(),
             graph
         );
         assert_eq!(

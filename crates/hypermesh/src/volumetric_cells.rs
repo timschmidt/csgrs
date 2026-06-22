@@ -22,7 +22,9 @@ use hyperlimit::{
 };
 
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::graph::{ExactIntersectionGraph, IntersectionEvent, MeshSide, build_intersection_graph};
+use super::graph::{
+    ExactIntersectionGraph, IntersectionEvent, MeshSide, build_validated_intersection_graph,
+};
 use super::intersection::MeshFacePairRelation;
 use super::mesh::ExactMesh;
 use super::solid::{ClosedMeshOrientation, exact_mesh_orientation};
@@ -373,10 +375,7 @@ pub(crate) fn certify_coplanar_volumetric_cell_evidence(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<CoplanarVolumetricCellEvidenceReport, ExactMeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    graph
-        .validate_against_meshes(left, right)
-        .map_err(volumetric_cell_graph_mesh_error)?;
+    let graph = build_validated_intersection_graph(left, right)?;
     let report = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
     report.validate().map_err(volumetric_cell_mesh_error)?;
     Ok(report)
@@ -719,15 +718,6 @@ fn volumetric_cell_mesh_error(error: CoplanarVolumetricCellEvidenceError) -> Exa
     ExactMeshError::one(ExactMeshBlocker::new(
         ExactMeshBlockerKind::UnsupportedExactOperation,
         format!("coplanar volumetric-cell evidence failed validation: {error:?}"),
-    ))
-}
-
-fn volumetric_cell_graph_mesh_error(
-    error: super::graph::IntersectionGraphValidationError,
-) -> ExactMeshError {
-    ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::UnsupportedExactOperation,
-        format!("retained volumetric-cell graph failed source-mesh validation: {error:?}"),
     ))
 }
 

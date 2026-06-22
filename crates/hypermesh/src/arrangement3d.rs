@@ -24,7 +24,7 @@ use super::exact_key::{
 use super::graph::{
     CoplanarEdgeSplitConstruction, CoplanarOverlapGraph, ExactFaceRegionPlan,
     ExactIntersectionGraph, ExactSplitTopologyPlan, FaceRegionBoundary, FaceSplitBoundaryNode,
-    MeshSide, SplitEdgeNode, SplitPlanValidationReport, build_intersection_graph,
+    MeshSide, SplitEdgeNode, SplitPlanValidationReport, build_validated_intersection_graph,
 };
 use super::loop_triangulation::{
     group_exact_coplanar_loops, projected_loop_interior_witness, triangulate_exact_loop_group,
@@ -1233,7 +1233,7 @@ impl ExactArrangement3d {
         right: &ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> Result<Self, ExactMeshError> {
-        let graph = build_intersection_graph(left, right)?;
+        let graph = build_validated_intersection_graph(left, right)?;
         Self::from_intersection_graph_with_policy(graph, left, right, policy)
     }
 
@@ -5252,7 +5252,7 @@ mod tests {
     fn arrangement_from_retained_graph_matches_mesh_construction() {
         let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
         let right = tetrahedron_i64([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]);
-        let graph = build_intersection_graph(&left, &right).unwrap();
+        let graph = crate::graph::build_unvalidated_intersection_graph(&left, &right).unwrap();
 
         let from_meshes = ExactArrangement::from_meshes_with_policy(
             &left,
@@ -6852,7 +6852,7 @@ mod tests {
         let right = open_triangle_i64([0, 0, 0], [0, 4, 0], [0, 0, 4]);
         let outside_endpoint = p3(0, 3, 3);
 
-        let graph = build_intersection_graph(&left, &right).unwrap();
+        let graph = crate::graph::build_unvalidated_intersection_graph(&left, &right).unwrap();
         assert!(
             graph
                 .face_pairs

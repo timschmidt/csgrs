@@ -55,9 +55,10 @@ use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::facts::MeshFacts;
 #[cfg(test)]
 use super::graph::FacePairEvents;
+#[cfg(test)]
+use super::graph::build_unvalidated_intersection_graph;
 use super::graph::{
-    ExactIntersectionGraph, IntersectionEvent, MeshSide, build_intersection_graph,
-    build_validated_intersection_graph,
+    ExactIntersectionGraph, IntersectionEvent, MeshSide, build_validated_intersection_graph,
 };
 use super::intersection::MeshFacePairRelation;
 use super::loop_triangulation::{group_exact_coplanar_loops, triangulate_exact_loop_group};
@@ -5319,7 +5320,7 @@ fn materialize_boolean_exact_request_with_graph(
         return materialize_boolean_exact_request_from_ready_graph(&graph, left, right, request);
     }
 
-    match validated_intersection_graph(left, right) {
+    match build_validated_intersection_graph(left, right) {
         Ok(graph) => {
             materialize_boolean_exact_request_from_ready_graph(&graph, left, right, request)
         }
@@ -6884,8 +6885,7 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
         return Ok(None);
     }
 
-    let reverse_graph = build_intersection_graph(right, left)?;
-    validate_graph_source_replay(&reverse_graph, right, left)?;
+    let reverse_graph = build_validated_intersection_graph(right, left)?;
     let Some(right_minus_left) = materialize_arrangement_volumetric_split_cell_result_from_graph(
         &reverse_graph,
         right,
@@ -9481,7 +9481,7 @@ pub(crate) fn open_surface_disjoint_result_matches_sources(
     operation: ExactBooleanOperation,
     validation: ExactMeshValidationPolicy,
 ) -> bool {
-    let Ok(graph) = validated_intersection_graph(left, right) else {
+    let Ok(graph) = build_validated_intersection_graph(left, right) else {
         return false;
     };
     let report = open_surface_disjoint_report_from_graph(&graph, left, right);
@@ -9993,7 +9993,7 @@ pub(crate) fn boundary_policy_shortcut_result_matches_sources(
     if boundary_policy != ExactBoundaryBooleanPolicy::PreserveSeparateShells {
         return false;
     }
-    let Ok(graph) = validated_intersection_graph(left, right) else {
+    let Ok(graph) = build_validated_intersection_graph(left, right) else {
         return false;
     };
     let Ok(report) = boundary_touching_report_from_graph(&graph, left, right) else {
@@ -10261,15 +10261,6 @@ fn validate_graph_source_replay(
                 format!("retained exact intersection graph failed source replay: {error:?}"),
             ))
         })
-}
-
-fn validated_intersection_graph(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_replay(&graph, left, right)?;
-    Ok(graph)
 }
 
 fn retained_graph_counts(graph: &super::graph::ExactIntersectionGraph) -> ExactBooleanBlocker {
@@ -12312,7 +12303,7 @@ mod tests {
         )
         .unwrap();
 
-        let stale_graph = build_intersection_graph(&left, &separated_right).unwrap();
+        let stale_graph = build_unvalidated_intersection_graph(&left, &separated_right).unwrap();
         assert!(
             boolean_open_surface_disjoint_meshes_from_graph(
                 &stale_graph,
@@ -12358,7 +12349,7 @@ mod tests {
             ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let stale_graph = build_intersection_graph(&left, &separated_right).unwrap();
+        let stale_graph = build_unvalidated_intersection_graph(&left, &separated_right).unwrap();
         let request = ExactBooleanRequest::new(
             ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
             ExactMeshValidationPolicy::ALLOW_BOUNDARY,
@@ -12467,7 +12458,8 @@ mod tests {
     fn arrangement_coplanar_evidence_retains_source_handoff() {
         let boundary_left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
         let boundary_right = axis_aligned_box_i64([2, 0, 0], [4, 2, 2]);
-        let boundary_graph = build_intersection_graph(&boundary_left, &boundary_right).unwrap();
+        let boundary_graph =
+            build_unvalidated_intersection_graph(&boundary_left, &boundary_right).unwrap();
         validate_graph_source_replay(&boundary_graph, &boundary_left, &boundary_right).unwrap();
         let evidence = certified_arrangement_cell_complex_coplanar_evidence(
             &boundary_graph,
@@ -13242,7 +13234,7 @@ mod tests {
     fn materialized_arrangement_preflight_probe_certifies_full_pipeline_output() {
         let left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
         let right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
-        let graph = build_intersection_graph(&left, &right).unwrap();
+        let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
 
         let preflight = certified_arrangement_cell_complex_preflight_if_materialized(
             ExactBooleanOperation::Union,
@@ -13457,7 +13449,7 @@ mod tests {
     fn axis_aligned_orthogonal_union_reaches_generic_arrangement_triangulation() {
         let left = axis_aligned_orthogonal_l_solid_i64();
         let right = axis_aligned_box_i64([1, 0, 0], [3, 1, 1]);
-        let graph = build_intersection_graph(&left, &right).unwrap();
+        let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
 
         let arrangement = ExactArrangement::from_intersection_graph_with_policy(
             graph,
@@ -13900,7 +13892,7 @@ mod tests {
         assert!(!meshes_are_certified_bounds_disjoint(
             &container, &contained
         ));
-        let graph = build_intersection_graph(&container, &contained).unwrap();
+        let graph = build_unvalidated_intersection_graph(&container, &contained).unwrap();
         validate_graph_source_replay(&graph, &container, &contained).unwrap();
         assert!(!graph.has_unknowns());
         assert!(graph.face_pairs.is_empty());
@@ -14522,7 +14514,7 @@ mod tests {
         )
         .unwrap();
         let right = tetrahedron_i64([-1, 1, 0], [3, 1, 0], [-1, 5, 0], [-1, 1, 4]);
-        let graph = build_intersection_graph(&left, &right).unwrap();
+        let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
         validate_graph_source_replay(&graph, &left, &right).unwrap();
 
         let union_closure = test_volumetric_boundary_closure(
@@ -14653,7 +14645,7 @@ mod tests {
         operation: ExactBooleanOperation,
         validation: ExactMeshValidationPolicy,
     ) -> bool {
-        let Ok(graph) = validated_intersection_graph(left, right) else {
+        let Ok(graph) = build_validated_intersection_graph(left, right) else {
             return false;
         };
         match run_arrangement_cell_complex_attempt_from_graph(
@@ -14688,7 +14680,7 @@ mod tests {
         )
         .unwrap();
 
-        let graph = validated_intersection_graph(&left, &right).unwrap();
+        let graph = build_validated_intersection_graph(&left, &right).unwrap();
         for operation in [
             ExactBooleanOperation::Union,
             ExactBooleanOperation::Intersection,
@@ -15654,7 +15646,7 @@ mod tests {
         let right = tetrahedron_i64([0, 0, 0], [-4, 0, 0], [0, -4, 0], [0, 0, -4]);
         let separated_right = tetrahedron_i64([100, 0, 0], [104, 0, 0], [100, 4, 0], [100, 0, 4]);
         let overlapping_right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
-        let graph = build_intersection_graph(&left, &right).unwrap();
+        let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
         validate_graph_source_replay(&graph, &left, &right).unwrap();
         assert!(!graph.has_unknowns());
         assert!(!graph.face_pairs.is_empty());
@@ -15878,7 +15870,7 @@ mod tests {
     fn noncoplanar_convex_report_cases_retain_graph_counts() {
         let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
         let right = tetrahedron_i64([1, 1, 1], [5, 1, 2], [1, 5, 1], [2, 1, 5]);
-        let graph = build_intersection_graph(&left, &right).unwrap();
+        let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
         validate_graph_source_replay(&graph, &left, &right).unwrap();
         assert!(!graph.has_unknowns());
         assert_eq!(graph.face_pairs.len(), 3);
@@ -16647,7 +16639,7 @@ mod tests {
         )
         .unwrap();
         let right = left.clone();
-        let graph = build_intersection_graph(&left, &right).unwrap();
+        let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
         validate_graph_source_replay(&graph, &left, &right).unwrap();
         assert!(!graph.face_pairs.is_empty());
         assert!(graph.event_count() > 0);
@@ -16704,7 +16696,7 @@ mod tests {
         )
         .unwrap();
         let right = tetrahedron_i64([2, 0, 0], [6, 0, 0], [2, 4, 0], [2, 0, -4]);
-        let graph = build_intersection_graph(&left, &right).unwrap();
+        let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
         validate_graph_source_replay(&graph, &left, &right).unwrap();
 
         let evidence = arrangement_cell_complex_already_materialized_winding_evidence(
@@ -16769,7 +16761,7 @@ mod tests {
         )
         .unwrap()
         .expect("regularized boundary-touch intersection should materialize through overlay");
-        let graph = build_intersection_graph(&left, &right).unwrap();
+        let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
         validate_graph_source_replay(&graph, &left, &right).unwrap();
         let request = ExactBooleanRequest::new(
             ExactBooleanOperation::Intersection,

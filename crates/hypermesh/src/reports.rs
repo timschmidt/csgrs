@@ -2827,7 +2827,7 @@ fn arrangement_cell_complex_output_matches_sources(
         retained_mismatch = true;
     }
 
-    let graph = super::graph::build_intersection_graph(left, right)
+    let graph = super::graph::build_unvalidated_intersection_graph(left, right)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
 
     if let Some((replay, evidence)) =

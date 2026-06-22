@@ -379,15 +379,7 @@ fn replay_region_plan(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactFaceRegionPlan, super::error::ExactMeshError> {
-    let graph = super::graph::build_intersection_graph(left, right)?;
-    graph
-        .validate_against_meshes(left, right)
-        .map_err(|error| {
-            super::error::ExactMeshError::one(super::error::ExactMeshBlocker::new(
-                super::error::ExactMeshBlockerKind::UnsupportedExactOperation,
-                format!("exact region source replay failed: {error:?}"),
-            ))
-        })?;
+    let graph = super::graph::build_validated_intersection_graph(left, right)?;
     let geometry = graph.face_split_geometry_plan(left, right)?;
     Ok(geometry.region_plan(left, right))
 }
@@ -1996,7 +1988,7 @@ fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::graph::build_intersection_graph;
+    use super::super::graph::build_unvalidated_intersection_graph;
     use super::*;
     use hyperreal::Real;
 
@@ -2050,7 +2042,7 @@ mod tests {
         )
         .unwrap();
 
-        let graph = build_intersection_graph(&left, &right).unwrap();
+        let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
         let geometry = graph.face_split_geometry_plan(&left, &right).unwrap();
         let region_plan = geometry.region_plan(&left, &right);
         let triangulations =
