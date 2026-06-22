@@ -273,9 +273,11 @@ fn validate_blocker_count_bounds(
     else {
         return Err(ExactReportValidationError::InvalidBlockerCounts);
     };
-    if retained_face_pairs == 0 && retained_events != 0
-        || retained_face_pairs != 0 && retained_events == 0
-        || (retained_face_pairs != 0 && !blocker_has_any_evidence(blocker))
+    let retained_graph_is_partial = (retained_face_pairs == 0) != (retained_events == 0);
+    let retained_pairs_without_evidence =
+        retained_face_pairs != 0 && !blocker_has_any_evidence(blocker);
+    if retained_graph_is_partial
+        || retained_pairs_without_evidence
         || classified_relation_pairs > retained_face_pairs
         || blocker.unknown_pairs > retained_face_pairs
         || covered_relation_pairs < retained_face_pairs
@@ -371,41 +373,38 @@ const fn certified_preflight_support_matches_operation(
     support: ExactBooleanSupport,
     operation: ExactBooleanOperation,
 ) -> bool {
-    match (support, operation) {
+    matches!(
+        (support, operation),
         (
             ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
-            | ExactBooleanSupport::CertifiedConvexUnion,
+                | ExactBooleanSupport::CertifiedConvexUnion,
             ExactBooleanOperation::Union,
-        )
-        | (
+        ) | (
             ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
-            | ExactBooleanSupport::CertifiedConvexIntersection,
+                | ExactBooleanSupport::CertifiedConvexIntersection,
             ExactBooleanOperation::Intersection,
-        )
-        | (
+        ) | (
             ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
-            | ExactBooleanSupport::CertifiedConvexDifference,
+                | ExactBooleanSupport::CertifiedConvexDifference,
             ExactBooleanOperation::Difference,
-        ) => true,
-        (
+        ) | (
             ExactBooleanSupport::CertifiedEmptyOperand
-            | ExactBooleanSupport::CertifiedBoundsDisjoint
-            | ExactBooleanSupport::CertifiedIdentical
-            | ExactBooleanSupport::CertifiedSameSurface
-            | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
-            | ExactBooleanSupport::CertifiedClosedWindingSeparated
-            | ExactBooleanSupport::CertifiedClosedWindingContainment
-            | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
-            | ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid
-            | ExactBooleanSupport::CertifiedBoundaryPolicyShortcut
-            | ExactBooleanSupport::CertifiedConvexContainment
-            | ExactBooleanSupport::CertifiedConvexSeparated,
+                | ExactBooleanSupport::CertifiedBoundsDisjoint
+                | ExactBooleanSupport::CertifiedIdentical
+                | ExactBooleanSupport::CertifiedSameSurface
+                | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
+                | ExactBooleanSupport::CertifiedClosedWindingSeparated
+                | ExactBooleanSupport::CertifiedClosedWindingContainment
+                | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
+                | ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid
+                | ExactBooleanSupport::CertifiedBoundaryPolicyShortcut
+                | ExactBooleanSupport::CertifiedConvexContainment
+                | ExactBooleanSupport::CertifiedConvexSeparated,
             ExactBooleanOperation::Union
-            | ExactBooleanOperation::Intersection
-            | ExactBooleanOperation::Difference,
-        ) => true,
-        _ => false,
-    }
+                | ExactBooleanOperation::Intersection
+                | ExactBooleanOperation::Difference,
+        )
+    )
 }
 
 fn checked_region_facts(

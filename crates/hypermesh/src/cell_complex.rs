@@ -1179,12 +1179,8 @@ fn arrangement_volume_evidence(
         .cloned()
         .map(label_face_cell)
         .collect::<Vec<_>>();
-    let Some(volume_regions) = arrangement.volume_regions.as_deref() else {
-        return None;
-    };
-    let Some(volume_adjacencies) = arrangement.volume_adjacencies.as_deref() else {
-        return None;
-    };
+    let volume_regions = arrangement.volume_regions.as_deref()?;
+    let volume_adjacencies = arrangement.volume_adjacencies.as_deref()?;
     let volume_regions = labeled_volume_regions_from_arrangement(volume_regions);
     Some((faces, volume_regions, volume_adjacencies))
 }

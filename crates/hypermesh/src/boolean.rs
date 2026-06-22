@@ -8039,9 +8039,7 @@ fn map_cap_vertices_to_boundary_or_insert(
                 if used_boundary_vertices[index] {
                     continue;
                 }
-                let Some(existing) = mesh.vertices().get(boundary_vertex) else {
-                    return None;
-                };
+                let existing = mesh.vertices().get(boundary_vertex)?;
                 match point3_exact_equal(existing, &point) {
                     Some(true) => {
                         used_boundary_vertices[index] = true;

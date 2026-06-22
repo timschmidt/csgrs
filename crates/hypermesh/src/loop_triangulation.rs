@@ -716,7 +716,7 @@ fn triangulate_selected_overlay_faces(
                     .get(vertex)
                     .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?
                     .point;
-                lift_projected_point_to_carrier(point, &carrier, projection)
+                lift_projected_point_to_carrier(point, carrier, projection)
             })
             .collect::<Result<Vec<_>, _>>()?;
         triangulate_simple_arrangement_face(
