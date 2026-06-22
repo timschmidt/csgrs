@@ -182,6 +182,19 @@ impl Axis {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum SweepDirection {
+    LeftDriven,
+    RightDriven,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct SweepPlan {
+    axis: Axis,
+    direction: SweepDirection,
+    cost: usize,
+}
+
 impl MeshBounds {
     /// Build retained bounds from predicate points and triangle indices.
     pub fn from_triangles(points: &[Point3], triangles: &[[usize; 3]]) -> Self {
@@ -248,10 +261,20 @@ impl<'a> PreparedMeshBounds<'a> {
         if !self.mesh_bounds_may_overlap(other) {
             return Ok(());
         }
-        let Some((axis, _)) = self.best_sweep_axis(other) else {
+        let Some(plan) = self.best_sweep_plan(other) else {
             return self.try_visit_candidate_face_pairs_quadratic(other, &mut visit);
         };
-        if !self.try_visit_candidate_face_pairs_sweep_axis(other, axis, &mut visit)? {
+        let used_sweep = match plan.direction {
+            SweepDirection::LeftDriven => {
+                self.try_visit_candidate_face_pairs_sweep_axis(other, plan.axis, &mut visit)?
+            }
+            SweepDirection::RightDriven => {
+                other.try_visit_candidate_face_pairs_sweep_axis(self, plan.axis, &mut |pair| {
+                    visit([pair[1], pair[0]])
+                })?
+            }
+        };
+        if !used_sweep {
             return self.try_visit_candidate_face_pairs_quadratic(other, &mut visit);
         }
         Ok(())
@@ -290,18 +313,34 @@ impl<'a> PreparedMeshBounds<'a> {
         Ok(())
     }
 
-    fn best_sweep_axis(&self, other: &PreparedMeshBounds<'_>) -> Option<(Axis, usize)> {
-        let mut best_axis = None;
+    fn best_sweep_plan(&self, other: &PreparedMeshBounds<'_>) -> Option<SweepPlan> {
+        let mut best_plan = None;
         for axis in [Axis::X, Axis::Y, Axis::Z] {
-            if let Some(pair_count) = self.interval_candidate_pair_count_sweep_axis(other, axis)
-                && best_axis
-                    .as_ref()
-                    .is_none_or(|&(_, best_count)| pair_count < best_count)
-            {
-                best_axis = Some((axis, pair_count));
-            }
+            best_plan = choose_better_sweep_plan(
+                best_plan,
+                self.sweep_plan_for_axis(other, axis, SweepDirection::LeftDriven),
+            );
+            best_plan = choose_better_sweep_plan(
+                best_plan,
+                other.sweep_plan_for_axis(self, axis, SweepDirection::RightDriven),
+            );
         }
-        best_axis
+        best_plan
+    }
+
+    fn sweep_plan_for_axis(
+        &self,
+        other: &PreparedMeshBounds<'_>,
+        axis: Axis,
+        direction: SweepDirection,
+    ) -> Option<SweepPlan> {
+        let pair_count = self.interval_candidate_pair_count_sweep_axis(other, axis)?;
+        let cost = pair_count.checked_add(self.bounds.faces.len())?;
+        Some(SweepPlan {
+            axis,
+            direction,
+            cost,
+        })
     }
 
     fn interval_candidate_pair_count_sweep_axis(
@@ -578,6 +617,23 @@ fn count_axis_bound_lt(
     Some(start)
 }
 
+fn choose_better_sweep_plan(
+    current: Option<SweepPlan>,
+    candidate: Option<SweepPlan>,
+) -> Option<SweepPlan> {
+    match (current, candidate) {
+        (None, candidate) => candidate,
+        (Some(current), None) => Some(current),
+        (Some(current), Some(candidate)) => {
+            if candidate.cost < current.cost {
+                Some(candidate)
+            } else {
+                Some(current)
+            }
+        }
+    }
+}
+
 fn axis_bound(bounds: &ExactAabb3, axis: Axis, bound: AxisBound) -> &Real {
     match bound {
         AxisBound::Min => axis_min(bounds, axis),
@@ -760,6 +816,43 @@ mod tests {
         let prepared_left = left.prepare();
         let prepared_right = right.prepare();
 
+        assert_eq!(
+            prepared_left.candidate_face_pairs(&prepared_right),
+            prepared_left.candidate_face_pairs_quadratic(&prepared_right)
+        );
+    }
+
+    #[test]
+    fn prepared_sweep_can_drive_from_smaller_right_side() {
+        let left_points = vec![
+            p(0, 0, 0),
+            p(10, 0, 0),
+            p(0, 10, 0),
+            p(0, 0, 1),
+            p(10, 0, 1),
+            p(0, 10, 1),
+            p(0, 0, 2),
+            p(10, 0, 2),
+            p(0, 10, 2),
+            p(0, 0, 3),
+            p(10, 0, 3),
+            p(0, 10, 3),
+        ];
+        let right_points = vec![p(0, 0, 0), p(10, 0, 0), p(0, 10, 0)];
+        let left_triangles = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11]];
+        let right_triangles = [[0, 1, 2]];
+        let left = MeshBounds::from_triangles(&left_points, &left_triangles);
+        let right = MeshBounds::from_triangles(&right_points, &right_triangles);
+        let prepared_left = left.prepare();
+        let prepared_right = right.prepare();
+
+        assert_eq!(
+            prepared_left
+                .best_sweep_plan(&prepared_right)
+                .unwrap()
+                .direction,
+            SweepDirection::RightDriven
+        );
         assert_eq!(
             prepared_left.candidate_face_pairs(&prepared_right),
             prepared_left.candidate_face_pairs_quadratic(&prepared_right)
