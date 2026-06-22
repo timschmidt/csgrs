@@ -81,7 +81,7 @@ for difficult inputs.
 
 The default crate root centers on `ExactMesh`, validation, errors, and borrowed
 mesh/triangle/face/arrangement views. Unsupported boolean, intersection, or
-simplification topology is reported as a diagnostic instead of falling back to
+simplification topology is reported as a blocker instead of falling back to
 tolerance-based geometry.
 
 ## Installation

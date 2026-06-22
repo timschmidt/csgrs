@@ -24,8 +24,8 @@ use hyperreal::Real;
 pub(crate) struct ValidationReport {
     /// Exact facts collected during validation.
     pub(crate) facts: MeshValidationFacts,
-    /// Diagnostics collected during validation.
-    pub(crate) diagnostics: Vec<ExactMeshBlocker>,
+    /// Blockers collected during validation.
+    pub(crate) blockers: Vec<ExactMeshBlocker>,
 }
 
 /// Boundary policy for mesh validation.
@@ -76,7 +76,7 @@ impl Default for ValidationPolicy {
 impl ValidationReport {
     /// Return whether the report contains no fatal blockers.
     pub(crate) fn is_valid(&self) -> bool {
-        self.diagnostics.is_empty()
+        self.blockers.is_empty()
     }
 }
 
@@ -89,14 +89,14 @@ pub(crate) fn validate_triangles(points: &[Point3], triangles: &[[usize; 3]]) ->
 ///
 /// Closed validation treats boundary edges as errors. Boundary-allowed
 /// validation still records boundary facts but does not promote them to fatal
-/// diagnostics. The policy object keeps that topological contract explicit,
+/// blockers. The policy object keeps that topological contract explicit,
 /// approximation policies must be visible at API boundaries.
 pub(crate) fn validate_triangles_with_policy(
     points: &[Point3],
     triangles: &[[usize; 3]],
     policy: ValidationPolicy,
 ) -> ValidationReport {
-    let mut diagnostics = Vec::new();
+    let mut blockers = Vec::new();
     let mut edges = BTreeMap::<[usize; 2], EdgeAccumulator>::new();
     let mut vertex_links = vec![VertexLinkAccumulator::default(); points.len()];
     let mut duplicate_triangles = BTreeSet::<[usize; 3]>::new();
@@ -108,7 +108,7 @@ pub(crate) fn validate_triangles_with_policy(
         let mut sorted_tri = tri;
         sorted_tri.sort_unstable();
         if !seen_triangles.insert(sorted_tri) && duplicate_triangles.insert(sorted_tri) {
-            diagnostics.push(
+            blockers.push(
                 ExactMeshBlocker::new(
                     ExactMeshBlockerKind::DuplicateTriangle,
                     format!("face {face} duplicates triangle vertex set {sorted_tri:?}"),
@@ -135,7 +135,7 @@ pub(crate) fn validate_triangles_with_policy(
 
         if !non_degenerate {
             degenerate_triangles += 1;
-            diagnostics.push(
+            blockers.push(
                 ExactMeshBlocker::new(
                     ExactMeshBlockerKind::DegenerateTriangle,
                     format!("face {face} is not a certified non-degenerate triangle"),
@@ -173,7 +173,7 @@ pub(crate) fn validate_triangles_with_policy(
         if incident_faces == 1 {
             boundary_edges += 1;
             if policy.boundary == BoundaryPolicy::Closed {
-                diagnostics.push(
+                blockers.push(
                     ExactMeshBlocker::new(
                         ExactMeshBlockerKind::BoundaryEdge,
                         format!("edge {vertices:?} has only one incident face"),
@@ -183,7 +183,7 @@ pub(crate) fn validate_triangles_with_policy(
             }
         } else if incident_faces > 2 {
             non_manifold_edges += 1;
-            diagnostics.push(
+            blockers.push(
                 ExactMeshBlocker::new(
                     ExactMeshBlockerKind::NonManifoldEdge,
                     format!("edge {vertices:?} has {incident_faces} incident faces"),
@@ -194,7 +194,7 @@ pub(crate) fn validate_triangles_with_policy(
 
         if directed_uses[0] > 1 || directed_uses[1] > 1 {
             duplicate_directed_edges += 1;
-            diagnostics.push(
+            blockers.push(
                 ExactMeshBlocker::new(
                     ExactMeshBlockerKind::DuplicateDirectedEdge,
                     format!("edge {vertices:?} has duplicate directed uses {directed_uses:?}"),
@@ -215,7 +215,7 @@ pub(crate) fn validate_triangles_with_policy(
             let link_facts = vertex_links[index].classify();
             if link_facts.kind == VertexLinkKind::NonManifold {
                 non_manifold_vertices += 1;
-                diagnostics.push(
+                blockers.push(
                     ExactMeshBlocker::new(
                         ExactMeshBlockerKind::NonManifoldVertexLink,
                         format!("vertex {index} has a nonmanifold link"),
@@ -264,7 +264,7 @@ pub(crate) fn validate_triangles_with_policy(
             edges: edge_facts,
             faces,
         },
-        diagnostics,
+        blockers,
     }
 }
 

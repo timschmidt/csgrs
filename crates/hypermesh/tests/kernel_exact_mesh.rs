@@ -291,7 +291,7 @@ fn exact_mesh_transform_by_rejects_non_affine_homogeneous_rows() {
 }
 
 #[test]
-fn exact_mesh_error_names_cover_kernel_diagnostics() {
+fn exact_mesh_error_names_cover_kernel_blockers() {
     let error: ExactMeshError = ExactMesh::new(
         vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)],
         vec![Triangle([0, 1, 3])],
