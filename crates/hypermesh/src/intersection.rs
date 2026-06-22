@@ -221,9 +221,11 @@ fn retained_triangle_edge_events(
     triangle_edges(segment_mesh.triangles()[segment_face].0)
         .into_iter()
         .map(|edge| {
-            let p0 = segment_mesh.vertices()[edge[0]].clone();
-            let p1 = segment_mesh.vertices()[edge[1]].clone();
-            intersect_segment_with_retained_face_plane(plane, &p0, &p1)
+            intersect_segment_with_retained_face_plane(
+                plane,
+                &segment_mesh.vertices()[edge[0]],
+                &segment_mesh.vertices()[edge[1]],
+            )
         })
         .collect()
 }
