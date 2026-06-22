@@ -436,30 +436,29 @@ impl<'a> PreparedMeshBounds<'a> {
         other: &PreparedMeshBounds<'_>,
         axis: Axis,
     ) -> Option<usize> {
-        self.min_axis_order(axis)?;
+        let left_min_order = self.min_axis_order(axis)?;
+        let left_max_order = self.max_axis_order(axis)?;
         let right_min_order = other.min_axis_order(axis)?;
         let right_max_order = other.max_axis_order(axis)?;
-        let mut pair_count = 0usize;
-
-        for left_interval in self.axis_intervals(axis) {
-            let starts_before_left_ends = count_axis_bound_le(
-                right_min_order,
-                other.axis_intervals(axis),
-                AxisBound::Min,
-                left_interval.max,
-            )?;
-            let ends_before_left_starts = count_axis_bound_lt(
-                right_max_order,
-                other.axis_intervals(axis),
-                AxisBound::Max,
-                left_interval.min,
-            )?;
-            let overlapping_intervals =
-                starts_before_left_ends.checked_sub(ends_before_left_starts)?;
-            pair_count = pair_count.checked_add(overlapping_intervals)?;
-        }
-
-        Some(pair_count)
+        let starts_before_left_ends = count_ordered_axis_bounds(
+            left_max_order,
+            self.axis_intervals(axis),
+            AxisBound::Max,
+            right_min_order,
+            other.axis_intervals(axis),
+            AxisBound::Min,
+            AxisBoundCount::LessOrEqual,
+        )?;
+        let ends_before_left_starts = count_ordered_axis_bounds(
+            left_min_order,
+            self.axis_intervals(axis),
+            AxisBound::Min,
+            right_max_order,
+            other.axis_intervals(axis),
+            AxisBound::Max,
+            AxisBoundCount::Less,
+        )?;
+        starts_before_left_ends.checked_sub(ends_before_left_starts)
     }
 
     fn try_visit_candidate_face_pairs_sweep_axis<E>(
@@ -655,6 +654,12 @@ enum AxisBound {
     Max,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum AxisBoundCount {
+    Less,
+    LessOrEqual,
+}
+
 fn face_axis_intervals(faces: &[ExactAabb3], axis: Axis) -> Vec<FaceAxisInterval<'_>> {
     faces
         .iter()
@@ -686,46 +691,6 @@ fn sorted_face_indices_by_axis_bound(
     decided.then_some(indices)
 }
 
-fn count_axis_bound_le(
-    order: &[usize],
-    intervals: &[FaceAxisInterval<'_>],
-    bound: AxisBound,
-    query: &Real,
-) -> Option<usize> {
-    let mut start = 0usize;
-    let mut end = order.len();
-    while start < end {
-        let mid = start + (end - start) / 2;
-        let value = axis_bound(intervals[order[mid]], bound);
-        if compare(value, query)? == Ordering::Greater {
-            end = mid;
-        } else {
-            start = mid + 1;
-        }
-    }
-    Some(start)
-}
-
-fn count_axis_bound_lt(
-    order: &[usize],
-    intervals: &[FaceAxisInterval<'_>],
-    bound: AxisBound,
-    query: &Real,
-) -> Option<usize> {
-    let mut start = 0usize;
-    let mut end = order.len();
-    while start < end {
-        let mid = start + (end - start) / 2;
-        let value = axis_bound(intervals[order[mid]], bound);
-        if compare(value, query)? == Ordering::Less {
-            start = mid + 1;
-        } else {
-            end = mid;
-        }
-    }
-    Some(start)
-}
-
 fn choose_better_sweep_plan(
     current: Option<SweepPlan>,
     candidate: Option<SweepPlan>,
@@ -741,6 +706,35 @@ fn choose_better_sweep_plan(
             }
         }
     }
+}
+
+fn count_ordered_axis_bounds(
+    query_order: &[usize],
+    query_intervals: &[FaceAxisInterval<'_>],
+    query_bound: AxisBound,
+    value_order: &[usize],
+    value_intervals: &[FaceAxisInterval<'_>],
+    value_bound: AxisBound,
+    count: AxisBoundCount,
+) -> Option<usize> {
+    let mut total = 0usize;
+    let mut values_before_query = 0usize;
+    for &query in query_order {
+        let query_value = axis_bound(query_intervals[query], query_bound);
+        while let Some(&value) = value_order.get(values_before_query) {
+            let ordering = compare(axis_bound(value_intervals[value], value_bound), query_value)?;
+            let retain_value = match count {
+                AxisBoundCount::Less => ordering == Ordering::Less,
+                AxisBoundCount::LessOrEqual => ordering != Ordering::Greater,
+            };
+            if !retain_value {
+                break;
+            }
+            values_before_query += 1;
+        }
+        total = total.checked_add(values_before_query)?;
+    }
+    Some(total)
 }
 
 fn axis_bound(interval: FaceAxisInterval<'_>, bound: AxisBound) -> &Real {
