@@ -430,17 +430,14 @@ impl ExactMesh {
                 actual: self.facts.mesh.face_count,
             });
         }
-        let points = self.vertices.to_vec();
-        let triangles = self
-            .triangles
-            .iter()
-            .map(|triangle| triangle.0)
-            .collect::<Vec<_>>();
-        self.bounds
-            .validate_against_sources(&points, &triangles)
-            .map_err(ExactMeshValidationError::Bounds)?;
+        let triangles = self.triangle_indices();
+        self.validate_retained_bounds_with_indices(&triangles)?;
         self.facts
-            .validate_against_sources_with_policy(&points, &triangles, self.validation_policy)
+            .validate_against_sources_with_policy(
+                &self.vertices,
+                &triangles,
+                self.validation_policy,
+            )
             .map_err(ExactMeshValidationError::Facts)?;
         self.provenance
             .validate()
@@ -456,6 +453,32 @@ impl ExactMesh {
             return Err(ExactMeshValidationError::PredicateRetentionMismatch);
         }
         Ok(())
+    }
+
+    /// Replay retained exact bounds against this mesh's source vertices and faces.
+    ///
+    /// This is the acceleration-structure audit used before broad-phase
+    /// scheduling. It intentionally validates only bounds facts, avoiding the
+    /// full topology/provenance audit required by [`Self::validate_retained_state`].
+    pub fn validate_retained_bounds(&self) -> Result<(), ExactMeshValidationError> {
+        let triangles = self.triangle_indices();
+        self.validate_retained_bounds_with_indices(&triangles)
+    }
+
+    fn validate_retained_bounds_with_indices(
+        &self,
+        triangles: &[[usize; 3]],
+    ) -> Result<(), ExactMeshValidationError> {
+        self.bounds
+            .validate_against_sources(&self.vertices, triangles)
+            .map_err(ExactMeshValidationError::Bounds)
+    }
+
+    fn triangle_indices(&self) -> Vec<[usize; 3]> {
+        self.triangles
+            .iter()
+            .map(|triangle| triangle.0)
+            .collect::<Vec<_>>()
     }
 
     /// Build a retained arrangement against `right` and run `query` on its

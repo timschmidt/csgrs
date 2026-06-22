@@ -87,6 +87,11 @@ impl<'a> ExactMeshRef<'a> {
         self.mesh.validate_retained_state()
     }
 
+    /// Replay retained exact bounds against the source mesh.
+    pub fn validate_retained_bounds(self) -> Result<(), ExactMeshValidationError> {
+        self.mesh.validate_retained_bounds()
+    }
+
     /// Borrow one face by index.
     pub fn face(self, index: usize) -> Option<FaceRef<'a>> {
         (index < self.mesh.triangles().len()).then_some(FaceRef {
@@ -151,7 +156,7 @@ impl<'a> ExactMeshRef<'a> {
 
     /// Prepare replay-validated broad-phase facts for repeated pair queries.
     pub fn prepare_broad_phase(self) -> Result<PreparedMeshView<'a>, ExactMeshValidationError> {
-        self.validate_retained_state()?;
+        self.validate_retained_bounds()?;
         Ok(PreparedMeshView {
             view: self,
             bounds: self.mesh.bounds().prepare(),

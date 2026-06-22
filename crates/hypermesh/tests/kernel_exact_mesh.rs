@@ -116,6 +116,7 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
     let overlapping = tetra([0, 0, 0]);
     let disjoint = tetra([5, 0, 0]);
 
+    left.view().validate_retained_bounds().unwrap();
     let candidates = left
         .view()
         .candidate_face_pairs(overlapping.view())
