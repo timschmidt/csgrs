@@ -1717,7 +1717,7 @@ impl ExactArrangement3d {
 
 fn arrangement_blocker_mesh_error(blocker: ExactArrangementBlocker) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::UnsupportedExactOperation,
+        ExactMeshBlockerKind::ExactConstructionFailure,
         format!("retained arrangement validation failed: {blocker:?}"),
     ))
 }

@@ -89,13 +89,13 @@ impl ConvexSolidUnion {
         self.right_facts.validate().map_err(report_error)?;
         if !self.left_facts.is_certified_convex() || !self.right_facts.is_certified_convex() {
             return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::ExactConstructionFailure,
                 "convex union retained non-certified solid facts",
             )));
         }
         self.mesh.validate_retained_state().map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::ExactConstructionFailure,
                 format!("convex union output failed retained-state replay: {error:?}"),
             ))
         })
@@ -109,13 +109,13 @@ impl ConvexSolidDifference {
         self.right_facts.validate().map_err(report_error)?;
         if !self.left_facts.is_certified_convex() || !self.right_facts.is_certified_convex() {
             return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::ExactConstructionFailure,
                 "convex difference retained non-certified solid facts",
             )));
         }
         self.mesh.validate_retained_state().map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::ExactConstructionFailure,
                 format!("convex difference output failed retained-state replay: {error:?}"),
             ))
         })
@@ -129,13 +129,13 @@ impl ConvexSolidIntersection {
         self.right_facts.validate().map_err(report_error)?;
         if !self.left_facts.is_certified_convex() || !self.right_facts.is_certified_convex() {
             return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::ExactConstructionFailure,
                 "convex intersection retained non-certified solid facts",
             )));
         }
         self.mesh.validate_retained_state().map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::ExactConstructionFailure,
                 format!("convex intersection output failed retained-state replay: {error:?}"),
             ))
         })

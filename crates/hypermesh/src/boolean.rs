@@ -925,7 +925,7 @@ fn replay_regularized_arrangement_attempt(
             Ok(arrangement) => {
                 arrangement.validate().map_err(|blocker| {
                     ExactMeshError::one(ExactMeshBlocker::new(
-                        ExactMeshBlockerKind::UnsupportedExactOperation,
+                        ExactMeshBlockerKind::ExactConstructionFailure,
                         format!("exact boolean arrangement report failed: {blocker:?}"),
                     ))
                 })?;
@@ -1047,6 +1047,20 @@ fn exact_boolean_replay_report_error(error: ExactReportValidationError) -> Exact
         ExactMeshBlockerKind::StaleFactReplay,
         format!("exact boolean retained report failed replay validation: {error:?}"),
     ))
+}
+
+fn retained_report_validation_error(
+    context: &'static str,
+    error: ExactReportValidationError,
+) -> ExactMeshError {
+    let kind = match error {
+        ExactReportValidationError::SourceReplayMismatch
+        | ExactReportValidationError::OutputSourceReplayMismatch => {
+            ExactMeshBlockerKind::StaleFactReplay
+        }
+        _ => ExactMeshBlockerKind::ExactConstructionFailure,
+    };
+    ExactMeshError::one(ExactMeshBlocker::new(kind, format!("{context}: {error:?}")))
 }
 
 fn record_selected_orientation_counts(
@@ -1248,10 +1262,10 @@ impl ExactBooleanCertificationSet {
             attempt
                 .validate_for_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
                 .map_err(|error| {
-                    ExactMeshError::one(ExactMeshBlocker::new(
-                        ExactMeshBlockerKind::UnsupportedExactOperation,
-                        format!("retained arrangement attempt failed validation: {error:?}"),
-                    ))
+                    retained_report_validation_error(
+                        "retained arrangement attempt failed validation",
+                        error,
+                    )
                 })?;
         }
         let trivial = source_facts.trivial.clone();
@@ -2752,7 +2766,7 @@ fn graph_for_certified_materialization<'a>(
 
 fn unsupported_certified_materialization_error(support: ExactBooleanSupport) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::UnsupportedExactOperation,
+        ExactMeshBlockerKind::ExactConstructionFailure,
         format!("certified exact boolean support did not materialize: {support:?}"),
     ))
 }
@@ -3091,10 +3105,7 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
         ExactRegularizationPolicy::REGULARIZED_SOLID,
     )
     .map_err(|error| {
-        ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::UnsupportedExactOperation,
-            format!("retained arrangement attempt failed validation: {error:?}"),
-        ))
+        retained_report_validation_error("retained arrangement attempt failed validation", error)
     })?;
     if let Some(attempt) = retained_arrangement_attempt
         && let Some(result) =
@@ -3364,7 +3375,7 @@ fn materialize_selected_region_result_from_graph(
     let graph_had_unknowns = graph.has_unknowns();
     if graph_had_unknowns {
         return Err(ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::UndecidablePredicate,
             "exact boolean graph contains unresolved predicate events",
         )));
     }
@@ -3415,7 +3426,7 @@ fn materialize_selected_region_result_from_graph(
     };
     result.validate().map_err(|error| {
         ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::ExactConstructionFailure,
             format!("exact selected-region result validation failed: {error:?}"),
         ))
     })?;
@@ -3450,7 +3461,7 @@ fn replay_selected_region_boolean_result_from_graph(
     ) || result.mesh.validation_policy() != validation
     {
         return Err(ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::StaleFactReplay,
             "exact selected-region replay returned mismatched operation or validation policy",
         )));
     }
@@ -3706,7 +3717,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
         evidence.validate().map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::ExactConstructionFailure,
                 format!("exact no-volume-overlap evidence validation failed: {error:?}"),
             ))
         })?;
@@ -3766,7 +3777,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
         evidence.validate().map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::ExactConstructionFailure,
                 format!("exact no-volume-overlap union evidence validation failed: {error:?}"),
             ))
         })?;
@@ -4225,7 +4236,7 @@ fn volumetric_boundary_closure_report_from_materialized(
         .validate_retained_state()
         .map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::ExactConstructionFailure,
                 format!("volumetric boundary closure source mesh validation failed: {error:?}"),
             ))
         })?;
@@ -4294,7 +4305,7 @@ fn volumetric_boundary_closure_report_from_materialized(
         .map(|split| split.into_iter().flatten().collect::<Vec<_>>())
         .map_err(|blocker| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::ExactConstructionFailure,
                 format!(
                     "volumetric boundary closure self-contact canonicalization failed: {blocker:?}"
                 ),
@@ -4561,10 +4572,10 @@ pub(crate) fn certified_arrangement_cell_complex_preflight_from_retained_attempt
         .validate_for_request_policy(request, policy)
         .and_then(|()| attempt.validate_against_sources_for_request(left, right, request))
         .map_err(|error| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
-                format!("retained arrangement attempt failed validation: {error:?}"),
-            ))
+            retained_report_validation_error(
+                "retained arrangement attempt failed validation",
+                error,
+            )
         })?;
     if materialize_retained_arrangement_cell_complex_attempt(left, right, request, attempt)?
         .is_some()
@@ -4720,7 +4731,7 @@ fn coplanar_boundary_only_evidence_if_consumed(
     let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
     evidence.validate().map_err(|error| {
         ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::ExactConstructionFailure,
             format!("exact boundary-only coplanar evidence validation failed: {error:?}"),
         ))
     })?;
@@ -5210,7 +5221,7 @@ fn materialize_arrangement_lower_dimensional_intersection_from_graph(
     )?;
     evidence.validate().map_err(|error| {
         ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::ExactConstructionFailure,
             format!("exact arrangement lower-dimensional evidence validation failed: {error:?}"),
         ))
     })?;
@@ -5851,7 +5862,7 @@ fn boolean_arrangement_regularized_boundary_contact_from_graph(
         certified_closed_boundary_touching_regularized_report_from_graph(graph, left, right)?
     {
         report.validate_against_sources(left, right).map_err(|error| {
-            ExactMeshError::one(ExactMeshBlocker::new(ExactMeshBlockerKind::UnsupportedExactOperation,
+            ExactMeshError::one(ExactMeshBlocker::new(ExactMeshBlockerKind::StaleFactReplay,
                 format!(
                     "exact arrangement regularized boundary contact consumed invalid certificate: {error:?}"
                 ),
@@ -6790,7 +6801,7 @@ pub(crate) fn materialize_adjacent_union_completion_from_graph_for_request(
     }
     report.validate().map_err(|error| {
         ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::ExactConstructionFailure,
             format!("exact adjacent-union completion report validation failed: {error:?}"),
         ))
     })?;
@@ -6842,7 +6853,7 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
     let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
     evidence.validate().map_err(|error| {
         ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::ExactConstructionFailure,
             format!("exact no-volume-overlap evidence validation failed: {error:?}"),
         ))
     })?;
@@ -6948,7 +6959,7 @@ pub(crate) fn materialize_closed_no_volume_overlap_regularized_boolean_with_evid
     let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
     evidence.validate().map_err(|error| {
         ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::ExactConstructionFailure,
             format!("exact no-volume-overlap evidence validation failed: {error:?}"),
         ))
     })?;
@@ -7252,7 +7263,7 @@ fn certified_convex_relation_shortcut_from_graph(
         .validate_against_sources(left, right)
         .map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::StaleFactReplay,
                 format!("left convex relation replay failed: {error:?}"),
             ))
         })?;
@@ -7261,7 +7272,7 @@ fn certified_convex_relation_shortcut_from_graph(
         .validate_against_sources(right, left)
         .map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::StaleFactReplay,
                 format!("right convex relation replay failed: {error:?}"),
             ))
         })?;
@@ -7518,7 +7529,7 @@ fn result_with_arrangement_gate_reports_from_graph(
         .region_ownership_report_with_policy(left, right, ownership_policy)
         .map_err(|blocker| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::ExactConstructionFailure,
                 format!("exact region ownership report failed: {blocker:?}"),
             ))
         })?;
@@ -9706,7 +9717,7 @@ fn materialize_open_surface_arrangement_plan(
     };
     result.validate().map_err(|error| {
         ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::ExactConstructionFailure,
             format!("open-surface arrangement validation failed: {error:?}"),
         ))
     })?;
@@ -9837,7 +9848,7 @@ fn certified_closed_boundary_touching_regularized_report_from_graph(
     }
     report.validate().map_err(|error| {
         ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::ExactConstructionFailure,
             format!("exact closed-boundary-touch report validation failed: {error:?}"),
         ))
     })?;
@@ -9856,7 +9867,7 @@ fn certified_closed_boundary_only_contact_from_graph(
     let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
     evidence.validate().map_err(|error| {
         ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::ExactConstructionFailure,
             format!("exact boundary-only coplanar evidence validation failed: {error:?}"),
         ))
     })?;
@@ -9875,7 +9886,7 @@ fn closed_zero_area_boundary_contact_evidence_from_graph(
     let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
     evidence.validate().map_err(|error| {
         ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::ExactConstructionFailure,
             format!("exact zero-area boundary contact evidence validation failed: {error:?}"),
         ))
     })?;
@@ -10033,7 +10044,7 @@ fn boolean_boundary_touching_meshes_from_graph(
         .validate_against_sources(left, right)
         .map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::StaleFactReplay,
                 format!("exact boundary-policy projection consumed invalid certificate: {error:?}"),
             ))
         })?;
