@@ -503,41 +503,18 @@ impl MeshBounds {
 }
 
 fn sorted_face_indices_by_min_axis(faces: &[ExactAabb3], axis: Axis) -> Option<Vec<usize>> {
-    exact_merge_sort_face_indices((0..faces.len()).collect(), faces, axis)
-}
-
-fn exact_merge_sort_face_indices(
-    mut indices: Vec<usize>,
-    faces: &[ExactAabb3],
-    axis: Axis,
-) -> Option<Vec<usize>> {
-    if indices.len() <= 1 {
-        return Some(indices);
-    }
-    let right = indices.split_off(indices.len() / 2);
-    let left = exact_merge_sort_face_indices(indices, faces, axis)?;
-    let right = exact_merge_sort_face_indices(right, faces, axis)?;
-    merge_face_indices_by_min_axis(left, right, faces, axis)
-}
-
-fn merge_face_indices_by_min_axis(
-    left: Vec<usize>,
-    right: Vec<usize>,
-    faces: &[ExactAabb3],
-    axis: Axis,
-) -> Option<Vec<usize>> {
-    let mut merged = Vec::with_capacity(left.len() + right.len());
-    let mut left_iter = left.into_iter().peekable();
-    let mut right_iter = right.into_iter().peekable();
-    while let (Some(&left), Some(&right)) = (left_iter.peek(), right_iter.peek()) {
-        match compare(axis_min(&faces[left], axis), axis_min(&faces[right], axis))? {
-            Ordering::Less | Ordering::Equal => merged.push(left_iter.next()?),
-            Ordering::Greater => merged.push(right_iter.next()?),
+    let mut decided = true;
+    let mut indices = (0..faces.len()).collect::<Vec<_>>();
+    indices.sort_by(|&left, &right| {
+        match compare(axis_min(&faces[left], axis), axis_min(&faces[right], axis)) {
+            Some(ordering) => ordering,
+            None => {
+                decided = false;
+                Ordering::Equal
+            }
         }
-    }
-    merged.extend(left_iter);
-    merged.extend(right_iter);
-    Some(merged)
+    });
+    decided.then_some(indices)
 }
 
 fn axis_min(bounds: &ExactAabb3, axis: Axis) -> &Real {
