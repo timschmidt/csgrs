@@ -155,20 +155,6 @@ pub enum ExactLabeledCellComplexFreshness {
     StaleLabeledCells,
 }
 
-/// Freshness status for a retained selected cell complex.
-#[allow(dead_code)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactSelectedCellComplexFreshness {
-    /// The selected complex replays exactly from the current source operands.
-    Current,
-    /// Rebuilding the arrangement from the source operands is currently blocked.
-    SourceReplayBlocked,
-    /// Arrangement construction replays, but labeling or selection is blocked.
-    SelectionReplayBlocked,
-    /// The source operands select, but the retained selected complex no longer matches.
-    StaleSelectedCells,
-}
-
 /// Region-ownership readiness for a retained labeled cell complex.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactRegionOwnershipStatus {
@@ -438,40 +424,6 @@ impl ExactRegionOwnershipReport {
         }
         Ok(())
     }
-
-    /// Validate this ownership report by replaying arrangement construction and
-    /// region labeling from source operands.
-    #[cfg(test)]
-    #[allow(dead_code)]
-    pub fn validate_against_sources(
-        &self,
-        left: &super::mesh::ExactMesh,
-        right: &super::mesh::ExactMesh,
-        policy: ExactRegularizationPolicy,
-    ) -> Result<(), ExactArrangementBlocker> {
-        self.validate()?;
-        let arrangement = ExactArrangement::from_meshes_with_policy(left, right, policy)
-            .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
-        self.validate_against_arrangement(&arrangement, left, right, policy)
-    }
-
-    #[cfg(test)]
-    #[allow(dead_code)]
-    pub(crate) fn validate_against_arrangement(
-        &self,
-        arrangement: &ExactArrangement,
-        left: &super::mesh::ExactMesh,
-        right: &super::mesh::ExactMesh,
-        policy: ExactRegularizationPolicy,
-    ) -> Result<(), ExactArrangementBlocker> {
-        self.validate()?;
-        let replay = arrangement.region_ownership_report_with_policy(left, right, policy)?;
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
-        }
-    }
 }
 
 impl ExactCellComplex {
@@ -530,7 +482,6 @@ impl ExactCellComplex {
     }
 }
 
-#[allow(dead_code)]
 impl ExactLabeledCellComplex {
     /// Validate local labeled-cell consistency without replaying source meshes.
     pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
@@ -540,6 +491,7 @@ impl ExactLabeledCellComplex {
 
     /// Validate this labeled complex by replaying arrangement construction and
     /// region labeling from source operands.
+    #[cfg(test)]
     pub fn validate_against_sources(
         &self,
         left: &super::mesh::ExactMesh,
@@ -710,6 +662,7 @@ impl ExactLabeledCellComplex {
     }
 
     /// Select face-cells for a named Boolean operation.
+    #[cfg(test)]
     pub fn select(
         self,
         operation: ExactBooleanOperation,
@@ -836,7 +789,6 @@ impl ExactLabeledCellComplex {
     }
 }
 
-#[allow(dead_code)]
 impl ExactSelectedCellComplex {
     pub(crate) fn with_gate_reports(
         mut self,
@@ -952,6 +904,7 @@ impl ExactSelectedCellComplex {
 
     /// Validate this selected complex by replaying arrangement construction,
     /// labeling, and selection from source operands.
+    #[cfg(test)]
     pub fn validate_against_sources(
         &self,
         left: &super::mesh::ExactMesh,
@@ -970,40 +923,8 @@ impl ExactSelectedCellComplex {
         }
     }
 
-    /// Classify whether this retained selected complex is fresh for the source operands.
-    pub fn freshness_against_sources(
-        &self,
-        left: &super::mesh::ExactMesh,
-        right: &super::mesh::ExactMesh,
-        policy: ExactRegularizationPolicy,
-    ) -> ExactSelectedCellComplexFreshness {
-        let arrangement = match ExactArrangement::from_meshes_with_policy(left, right, policy) {
-            Ok(arrangement) => arrangement,
-            Err(_) => return ExactSelectedCellComplexFreshness::SourceReplayBlocked,
-        };
-        self.freshness_against_arrangement(arrangement, left, right, policy)
-    }
-
-    pub(crate) fn freshness_against_arrangement(
-        &self,
-        arrangement: ExactArrangement,
-        left: &super::mesh::ExactMesh,
-        right: &super::mesh::ExactMesh,
-        policy: ExactRegularizationPolicy,
-    ) -> ExactSelectedCellComplexFreshness {
-        if self.validate().is_err() {
-            return ExactSelectedCellComplexFreshness::StaleSelectedCells;
-        }
-        match select_arrangement_for_replay(arrangement, left, right, self.operation, policy) {
-            Ok(replay) if selected_cell_complex_matches_replay(self, &replay) => {
-                ExactSelectedCellComplexFreshness::Current
-            }
-            Ok(_) => ExactSelectedCellComplexFreshness::StaleSelectedCells,
-            Err(_) => ExactSelectedCellComplexFreshness::SelectionReplayBlocked,
-        }
-    }
-
     /// Run exact canonicalization on selected cells.
+    #[cfg(test)]
     pub fn simplify_exact(self) -> Result<ExactSimplifiedCellComplex, ExactArrangementBlocker> {
         self.simplify_exact_with_policy(ExactRegularizationPolicy::default())
     }
@@ -1055,7 +976,7 @@ pub(crate) fn select_arrangement_for_replay(
     Ok(selected)
 }
 
-#[allow(dead_code)]
+#[cfg(test)]
 fn selected_cell_complex_matches_replay(
     retained: &ExactSelectedCellComplex,
     replay: &ExactSelectedCellComplex,

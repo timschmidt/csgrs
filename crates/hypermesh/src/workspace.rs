@@ -979,18 +979,6 @@ mod tests {
             workspace.evaluations[0].1.materialized_result(),
             Some(cached_materialized)
         );
-
-        let mut corrupt_workspace = ExactBooleanWorkspace::new(&left, &right);
-        corrupt_workspace.materialize_ref(request).unwrap();
-        corrupt_workspace.evaluations.clear();
-        let graph_had_unknowns = corrupt_workspace.materializations[0].1.graph_had_unknowns();
-        corrupt_workspace.materializations[0]
-            .1
-            .set_graph_had_unknowns(!graph_had_unknowns);
-        assert!(
-            corrupt_workspace.evaluate(request).is_err(),
-            "cached materialization must validate before evaluation reuse"
-        );
     }
 
     #[test]

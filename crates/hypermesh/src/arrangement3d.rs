@@ -404,7 +404,6 @@ fn validate_lower_dimensional_artifact_not_duplicate_of_candidates(
     Ok(())
 }
 
-#[allow(dead_code)]
 fn validate_lower_dimensional_artifacts_against_sources(
     artifacts: &[ArrangementLowerDimensionalArtifact],
     left: &ExactMesh,
@@ -494,7 +493,6 @@ fn lower_dimensional_artifact_exact_key(
     }
 }
 
-#[allow(dead_code)]
 fn validate_lower_dimensional_point_on_source_face(
     mesh: &ExactMesh,
     face: usize,
@@ -1289,40 +1287,6 @@ impl ExactTopologyAssemblyReport {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
         Ok(())
-    }
-
-    /// Validate this topology report by replaying arrangement construction from
-    /// source operands.
-    #[cfg(test)]
-    #[allow(dead_code)]
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        policy: ExactRegularizationPolicy,
-    ) -> Result<(), ExactArrangementBlocker> {
-        self.validate()?;
-        let arrangement = ExactArrangement::from_meshes_with_policy(left, right, policy)
-            .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
-        self.validate_against_arrangement(&arrangement, left, right, policy)
-    }
-
-    #[cfg(test)]
-    #[allow(dead_code)]
-    pub(crate) fn validate_against_arrangement(
-        &self,
-        arrangement: &ExactArrangement,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        policy: ExactRegularizationPolicy,
-    ) -> Result<(), ExactArrangementBlocker> {
-        self.validate()?;
-        let replay = arrangement.topology_assembly_report_with_policy(left, right, policy);
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
-        }
     }
 }
 

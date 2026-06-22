@@ -79,10 +79,7 @@ pub enum ExactArrangementBlocker {
     /// needed to form closed shells.
     UnregularizedOpenSheetComplex,
     /// The primitive family is outside the current exact arrangement kernel.
-    #[allow(dead_code)]
     UnsupportedCurvedPrimitive,
-    /// The requested output requires an explicit approximation/export policy.
-    ApproximationPolicyRequired,
     /// Retained intersection graph evidence was structurally invalid.
     InvalidIntersectionGraph(IntersectionGraphValidationError),
     /// Retained split-plan evidence was structurally invalid.

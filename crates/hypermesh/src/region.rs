@@ -504,24 +504,6 @@ pub struct ExactBooleanAssemblyPlan {
 }
 
 impl ExactBooleanAssemblyPlan {
-    /// Assemble exact output triangles from region triangulations.
-    #[cfg(test)]
-    #[allow(dead_code)]
-    pub fn from_region_triangulations(
-        triangulations: &[FaceRegionTriangulation],
-        selection: ExactRegionSelection,
-    ) -> hypertri::Result<Self> {
-        let should_keep =
-            move |triangulation: &FaceRegionTriangulation| selection.keeps(triangulation.side);
-        assemble_region_triangulations_with_retention(triangulations, None, &mut |triangulation| {
-            if should_keep(triangulation) {
-                ExactRegionRetention::Keep
-            } else {
-                ExactRegionRetention::Drop
-            }
-        })
-    }
-
     /// Assemble exact output triangles with source-face orientation replay.
     ///
     /// `hypertri` correctly triangulates the projected region, but the index
@@ -550,66 +532,6 @@ impl ExactBooleanAssemblyPlan {
                     ExactRegionRetention::Drop
                 }
             },
-        )
-    }
-
-    /// Assemble exact output triangles from region triangulations with an
-    /// arbitrary retention predicate.
-    ///
-    /// The same split-region triangulation can be reused under alternate
-    /// inside/outside semantics without replaying the narrow phase. This
-    /// artifact, while semantic policy stays explicit at the assembly boundary.
-    #[cfg(test)]
-    #[allow(dead_code)]
-    pub fn from_region_triangulations_with_selection(
-        triangulations: &[FaceRegionTriangulation],
-        mut should_keep: impl FnMut(&FaceRegionTriangulation) -> bool,
-    ) -> hypertri::Result<Self> {
-        assemble_region_triangulations_with_retention(triangulations, None, &mut |triangulation| {
-            if should_keep(triangulation) {
-                ExactRegionRetention::Keep
-            } else {
-                ExactRegionRetention::Drop
-            }
-        })
-    }
-
-    /// Assemble exact output triangles from region triangulations with explicit
-    /// per-region orientation policy.
-    ///
-    /// This is the assembly hook used by winding-backed named booleans. The
-    /// classifier decides whether each exact split region is inside or outside
-    /// the opposite closed mesh; this method then records that decision as
-    /// kept, dropped, or source-reversed output topology. The split geometry
-    /// and semantic retention policy remain separate auditable artifacts, as
-    #[cfg(test)]
-    #[allow(dead_code)]
-    pub fn from_region_triangulations_with_retention(
-        triangulations: &[FaceRegionTriangulation],
-        mut retain: impl FnMut(&FaceRegionTriangulation) -> ExactRegionRetention,
-    ) -> hypertri::Result<Self> {
-        assemble_region_triangulations_with_retention(triangulations, None, &mut retain)
-    }
-
-    /// Assemble exact output triangles with explicit retention and source
-    /// orientation replay.
-    ///
-    /// This is the named-boolean materialization hook: winding classification
-    /// decides whether a split region is kept, dropped, or reversed, and this
-    /// method uses exact source-face orientation predicates to make the emitted
-    /// than a convention inherited blindly from a triangulation index buffer.
-    #[cfg(test)]
-    #[allow(dead_code)]
-    pub fn from_region_triangulations_with_retention_and_sources(
-        triangulations: &[FaceRegionTriangulation],
-        left: &ExactMesh,
-        right: &ExactMesh,
-        mut retain: impl FnMut(&FaceRegionTriangulation) -> ExactRegionRetention,
-    ) -> hypertri::Result<Self> {
-        assemble_region_triangulations_with_retention(
-            triangulations,
-            Some((left, right)),
-            &mut retain,
         )
     }
 
@@ -716,22 +638,6 @@ impl ExactBooleanAssemblyPlan {
         )
     }
 
-    /// Validate and materialize the assembly plan as an [`ExactMesh`].
-    ///
-    /// Direct callers sometimes hold an assembly plan before choosing an
-    /// output policy. This checked entry point preserves the same handoff used
-    /// by the selected-region pipeline: index/provenance invariants are
-    /// checked before exact mesh validation consumes the output triangles.
-    /// combinatorics before committing them to mesh topology.
-    #[cfg(test)]
-    #[allow(dead_code)]
-    pub fn checked_to_exact_mesh(
-        &self,
-        policy: ValidationPolicy,
-    ) -> Result<ExactMesh, super::error::MeshError> {
-        self.to_exact_mesh(policy)
-    }
-
     /// Validate assembly invariants, source-face incidence, and materialize.
     ///
     /// This is the preferred output boundary for selected-region booleans. It
@@ -791,24 +697,6 @@ impl ExactBooleanAssemblyPlan {
         right: &ExactMesh,
     ) -> hypertri::Result<()> {
         validate_assembly_source_face_incidence(self, left, right)
-    }
-
-    /// Return the first retained original source-vertex handle in the output
-    /// assembly.
-    ///
-    /// This keeps public provenance audits from matching on graph-internal
-    /// boundary-node variants when they only need to perturb source incidence
-    /// and verify replay freshness.
-    #[cfg(test)]
-    #[allow(dead_code)]
-    pub fn first_original_source_vertex_mut(&mut self) -> Option<&mut usize> {
-        self.vertices
-            .iter_mut()
-            .find_map(|vertex| match &mut vertex.source {
-                FaceSplitBoundaryNode::OriginalVertex { vertex, .. } => Some(vertex),
-                FaceSplitBoundaryNode::GraphVertex { .. }
-                | FaceSplitBoundaryNode::FaceInterior { .. } => None,
-            })
     }
 
     /// Split exact-equal assembly vertices whose retained triangle fans are

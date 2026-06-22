@@ -7,17 +7,20 @@
 
 use std::cmp::Ordering;
 
+#[cfg(test)]
+use super::arrangement3d::ExactArrangement;
 use super::arrangement3d::{
-    ArrangementFaceCellNode, ArrangementLowerDimensionalArtifact, ExactArrangement,
-    ExactTopologyAssemblyReport, validate_lower_dimensional_artifacts,
+    ArrangementFaceCellNode, ArrangementLowerDimensionalArtifact, ExactTopologyAssemblyReport,
+    validate_lower_dimensional_artifacts,
 };
 use super::boolean::ExactBooleanOperation;
+#[cfg(test)]
+use super::cell_complex::select_arrangement_for_replay;
 use super::cell_complex::{
     ExactCellComplexFace, ExactCellRegionLabel, ExactOppositeRegionLabel,
     ExactRegionOwnershipReport, ExactSelectedCellComplex, ExactSelectedFaceOrientation,
-    select_arrangement_for_replay, selected_cell_complex_gate_counts,
-    validate_selected_gate_reports, validate_selected_gate_reports_against_counts,
-    validate_volume_adjacency_face_provenance,
+    selected_cell_complex_gate_counts, validate_selected_gate_reports,
+    validate_selected_gate_reports_against_counts, validate_volume_adjacency_face_provenance,
 };
 use super::loop_triangulation::{
     choose_polygon_projection, group_exact_coplanar_loops, triangulate_exact_loop_group,
@@ -25,9 +28,8 @@ use super::loop_triangulation::{
 use super::mesh::{ExactMesh, Triangle};
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::validation::ValidationPolicy;
-use super::view::{ApproximateMeshF64View, approximate_mesh_f64_view};
 use hyperlimit::CoplanarProjection;
-use hyperlimit::{ApproximationPolicy, SourceProvenance};
+use hyperlimit::SourceProvenance;
 use hyperlimit::{
     Point3, Sign, compare_reals, orient2d_report, orient3d_report, point_on_segment3, point3_equal,
     project_point3, projected_polygon_area2_value,
@@ -82,23 +84,6 @@ pub struct ExactSimplifiedCellComplex {
     pub blockers: Vec<ExactArrangementBlocker>,
 }
 
-/// Freshness status for a retained simplified cell complex.
-#[allow(dead_code)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactSimplifiedCellComplexFreshness {
-    /// The simplified complex replays exactly from the current source operands.
-    Current,
-    /// Rebuilding the arrangement from the source operands is currently blocked.
-    SourceReplayBlocked,
-    /// Arrangement construction replays, but labeling or selection is blocked.
-    SelectionReplayBlocked,
-    /// Selection replays, but exact simplification is currently blocked.
-    SimplificationReplayBlocked,
-    /// The source operands simplify, but the retained simplified complex no longer matches.
-    StaleSimplifiedCells,
-}
-
-#[allow(dead_code)]
 impl ExactSimplifiedCellComplex {
     /// Validate local simplified-cell consistency without replaying source meshes.
     pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
@@ -188,6 +173,7 @@ impl ExactSimplifiedCellComplex {
 
     /// Validate this simplified complex by replaying the full arrangement,
     /// label, selection, and simplification pipeline from source operands.
+    #[cfg(test)]
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -207,44 +193,6 @@ impl ExactSimplifiedCellComplex {
         }
     }
 
-    /// Classify whether this retained simplified complex is fresh for the source operands.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        policy: ExactRegularizationPolicy,
-    ) -> ExactSimplifiedCellComplexFreshness {
-        let arrangement = match ExactArrangement::from_meshes_with_policy(left, right, policy) {
-            Ok(arrangement) => arrangement,
-            Err(_) => return ExactSimplifiedCellComplexFreshness::SourceReplayBlocked,
-        };
-        self.freshness_against_arrangement(arrangement, left, right, policy)
-    }
-
-    pub(crate) fn freshness_against_arrangement(
-        &self,
-        arrangement: ExactArrangement,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        policy: ExactRegularizationPolicy,
-    ) -> ExactSimplifiedCellComplexFreshness {
-        if self.validate().is_err() {
-            return ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells;
-        }
-        let selected =
-            match select_arrangement_for_replay(arrangement, left, right, self.operation, policy) {
-                Ok(selected) => selected,
-                Err(_) => return ExactSimplifiedCellComplexFreshness::SelectionReplayBlocked,
-            };
-        match selected.simplify_exact_with_policy(policy) {
-            Ok(replay) if simplified_cell_complex_matches_replay(self, &replay) => {
-                ExactSimplifiedCellComplexFreshness::Current
-            }
-            Ok(_) => ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells,
-            Err(_) => ExactSimplifiedCellComplexFreshness::SimplificationReplayBlocked,
-        }
-    }
-
     /// Triangulate selected cells into an exact mesh.
     ///
     /// The retained boundary of each selected face-cell is projected through a
@@ -252,32 +200,6 @@ impl ExactSimplifiedCellComplex {
     /// `hypertri` over exact coordinates. No primitive-float tolerance is used.
     pub fn triangulate(&self) -> Result<ExactMesh, ExactArrangementBlocker> {
         triangulate_simplified_cell_complex(self)
-    }
-
-    /// Refuse primitive-float export unless the caller names the approximation
-    /// policy at the exact-to-view boundary.
-    pub fn approximate_f64_view(&self) -> Result<ApproximateMeshF64View, ExactArrangementBlocker> {
-        Err(ExactArrangementBlocker::ApproximationPolicyRequired)
-    }
-
-    /// Build a primitive-float view only under an explicit export policy.
-    ///
-    /// Simplification remains exact; the lossy `f64` rows are produced after
-    /// exact triangulation and retain the normal exact mesh replay audit.
-    pub fn approximate_f64_view_with_policy(
-        &self,
-        policy: ApproximationPolicy,
-    ) -> Result<ApproximateMeshF64View, ExactArrangementBlocker> {
-        match policy {
-            ApproximationPolicy::ExactOnly => {
-                Err(ExactArrangementBlocker::ApproximationPolicyRequired)
-            }
-            ApproximationPolicy::EdgeOnly | ApproximationPolicy::ExplicitApproximateDecision => {
-                let mesh = self.triangulate()?;
-                approximate_mesh_f64_view(&mesh)
-                    .map_err(|_| ExactArrangementBlocker::ApproximationPolicyRequired)
-            }
-        }
     }
 }
 
@@ -531,7 +453,7 @@ pub(crate) fn simplify_selected_cell_complex(
     })
 }
 
-#[allow(dead_code)]
+#[cfg(test)]
 fn simplified_cell_complex_matches_replay(
     retained: &ExactSimplifiedCellComplex,
     replay: &ExactSimplifiedCellComplex,
@@ -2720,27 +2642,6 @@ mod tests {
             simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
-    }
-
-    #[test]
-    fn approximate_view_requires_explicit_policy() {
-        let simplified = simplified_square();
-
-        assert_eq!(
-            simplified.approximate_f64_view(),
-            Err(ExactArrangementBlocker::ApproximationPolicyRequired)
-        );
-        assert_eq!(
-            simplified.approximate_f64_view_with_policy(ApproximationPolicy::ExactOnly),
-            Err(ExactArrangementBlocker::ApproximationPolicyRequired)
-        );
-
-        let view = simplified
-            .approximate_f64_view_with_policy(ApproximationPolicy::EdgeOnly)
-            .unwrap();
-        assert!(view.lossy_view);
-        assert_eq!(view.positions.len(), 12);
-        assert_eq!(view.indices.len(), 6);
     }
 
     #[test]
