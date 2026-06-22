@@ -1745,7 +1745,7 @@ fn events_for_face_pair(
     let right_tri = right.triangles()[classification.right_face].0;
     let left_edges = triangle_edges(left_tri);
     let right_edges = triangle_edges(right_tri);
-    let mut events = Vec::new();
+    let mut events = Vec::with_capacity(face_pair_event_capacity(classification));
     let mut projection = None;
 
     if let Some(triangle) = &classification.triangle {
@@ -1792,6 +1792,45 @@ fn events_for_face_pair(
         projection,
         events,
     }
+}
+
+fn face_pair_event_capacity(classification: &MeshFacePairClassification) -> usize {
+    let mut capacity = usize::from(classification.relation == MeshFacePairRelation::Unknown);
+    let Some(triangle) = &classification.triangle else {
+        return capacity;
+    };
+
+    capacity += triangle
+        .right_edge_events
+        .iter()
+        .chain(&triangle.left_edge_events)
+        .filter(|event| event.relation != SegmentPlaneRelation::Disjoint)
+        .count();
+
+    if let Some(coplanar) = &triangle.coplanar {
+        capacity += coplanar
+            .edge_intersections
+            .iter()
+            .filter(|&&relation| relation != SegmentIntersection::Disjoint)
+            .count();
+        capacity += coplanar
+            .right_vertices_in_left
+            .iter()
+            .chain(&coplanar.left_vertices_in_right)
+            .filter(|&&location| {
+                matches!(
+                    location,
+                    Some(
+                        TriangleLocation::Inside
+                            | TriangleLocation::OnEdge
+                            | TriangleLocation::OnVertex
+                    ) | None
+                )
+            })
+            .count();
+    }
+
+    capacity
 }
 
 fn edge_split_plan(graph: &ExactIntersectionGraph) -> ExactEdgeSplitPlan {
