@@ -363,13 +363,11 @@ impl<'a> PreparedMeshBounds<'a> {
         axis: Axis,
         direction: SweepDirection,
     ) -> Option<SweepPlanEstimate> {
-        if !self.sweep_axis_is_usable(other, axis, direction) {
-            return None;
-        }
         let (driver, target) = match direction {
             SweepDirection::LeftDriven => (self, other),
             SweepDirection::RightDriven => (other, self),
         };
+        driver.min_axis_order(axis)?;
         let estimate = driver.axis_interval_overlap_estimate(target, axis)?;
         Some(SweepPlanEstimate {
             plan: SweepPlan { axis, direction },
@@ -377,26 +375,6 @@ impl<'a> PreparedMeshBounds<'a> {
             driver_face_count: driver.bounds.faces.len(),
             active_face_capacity_hint: estimate.max_target_active,
         })
-    }
-
-    fn sweep_axis_is_usable(
-        &self,
-        other: &PreparedMeshBounds<'_>,
-        axis: Axis,
-        direction: SweepDirection,
-    ) -> bool {
-        match direction {
-            SweepDirection::LeftDriven => {
-                self.min_axis_order(axis).is_some()
-                    && other.min_axis_order(axis).is_some()
-                    && other.max_axis_order(axis).is_some()
-            }
-            SweepDirection::RightDriven => {
-                other.min_axis_order(axis).is_some()
-                    && self.min_axis_order(axis).is_some()
-                    && self.max_axis_order(axis).is_some()
-            }
-        }
     }
 
     fn axis_interval_overlap_estimate(
