@@ -154,16 +154,10 @@ fn classify_triangle_triangle_points_retained(
 }
 
 fn retained_plane_side(plane: &super::facts::FacePlaneFacts, point: &Point3) -> Option<PlaneSide> {
-    let value = add(
-        &add(
-            &add(
-                &mul(&plane.normal[0], &point.x),
-                &mul(&plane.normal[1], &point.y),
-            ),
-            &mul(&plane.normal[2], &point.z),
-        ),
-        &plane.offset,
-    );
+    let x_term = &plane.normal[0] * &point.x;
+    let y_term = &plane.normal[1] * &point.y;
+    let z_term = &plane.normal[2] * &point.z;
+    let value = &(&(&x_term + &y_term) + &z_term) + &plane.offset;
     // `hyperlimit::orient3d_report(a, b, c, p)` uses the opposite sign
     // convention from this stored `(b - a) x (c - a)` dot-product form, so the
     // exact comparison is inverted to preserve the public `PlaneSide` contract.
@@ -172,14 +166,6 @@ fn retained_plane_side(plane: &super::facts::FacePlaneFacts, point: &Point3) -> 
         Ordering::Equal => Some(PlaneSide::On),
         Ordering::Greater => Some(PlaneSide::Below),
     }
-}
-
-fn add(left: &Real, right: &Real) -> Real {
-    left.clone() + right
-}
-
-fn mul(left: &Real, right: &Real) -> Real {
-    left.clone() * right
 }
 
 fn triangle_triangle_relation(

@@ -589,7 +589,7 @@ fn mesh_off_plane_side(
 ) -> Option<PlaneSide> {
     let mut side = None;
     for vertex in mesh.vertices() {
-        match retained_plane_side(plane, &vertex.clone())? {
+        match retained_plane_side(plane, vertex)? {
             PlaneSide::On => {}
             candidate => {
                 if let Some(existing) = side {

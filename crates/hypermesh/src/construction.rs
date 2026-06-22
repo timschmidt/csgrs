@@ -33,10 +33,10 @@ pub(crate) fn intersect_segment_with_retained_face_plane(
 }
 
 fn retained_point_plane_value(plane: &FacePlaneFacts, point: &Point3) -> Real {
-    plane.normal[0].clone() * point.x.clone()
-        + plane.normal[1].clone() * point.y.clone()
-        + plane.normal[2].clone() * point.z.clone()
-        + &plane.offset
+    let x_term = &plane.normal[0] * &point.x;
+    let y_term = &plane.normal[1] * &point.y;
+    let z_term = &plane.normal[2] * &point.z;
+    &(&(&x_term + &y_term) + &z_term) + &plane.offset
 }
 
 fn retained_plane_side(value: &Real) -> Option<PlaneSide> {
