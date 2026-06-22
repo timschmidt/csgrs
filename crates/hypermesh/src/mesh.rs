@@ -8,7 +8,6 @@ use super::adapter::{
     ExactI64MeshInputReport, LossyF64MeshInputReport, inspect_f64_mesh_input,
     inspect_i64_mesh_input,
 };
-use super::artifact::MeshArtifactManifest;
 use super::audit::{ExactMeshAuditReport, audit_exact_mesh};
 use super::boolean::{
     ExactBooleanOperation, ExactBooleanRequest, materialize_boolean_exact_request,
@@ -16,10 +15,6 @@ use super::boolean::{
 use super::bounds::{BoundsValidationError, MeshBounds};
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::facts::{MeshFactsValidationError, MeshValidationFacts};
-use super::package::{
-    ExactMeshHandoffPackage, ExactMeshHandoffPackageError, exact_mesh_handoff_package,
-};
-use super::proposal::{ExactMeshProposalReport, ExactMeshProposalReportError};
 use super::scalar::LossyF64Import;
 use super::validation::{ValidationPolicy, ValidationReport, validate_triangles_with_policy};
 use super::view::ExactMeshRef;
@@ -378,29 +373,41 @@ impl ExactMesh {
         Ok(())
     }
 
-    /// Build a bundled report-bearing handoff package for downstream consumers.
-    ///
-    /// The package is a cache-friendly envelope over the independently
-    /// validated audit, readiness, surface, solid, and lossy-view reports. It
-    /// keeps optional domain artifacts explicit, so open surfaces are not
-    /// promoted to solids and lossy views are not promoted to topology.
-    pub fn handoff_package(&self) -> Result<ExactMeshHandoffPackage, ExactMeshHandoffPackageError> {
-        exact_mesh_handoff_package(self)
-    }
-
     /// Build a replayed retained-state audit report from this exact mesh.
     pub fn audit_report(&self) -> Result<ExactMeshAuditReport, ExactMeshValidationError> {
         audit_exact_mesh(self)
     }
 
+    /// Build a bundled report-bearing handoff package for downstream consumers.
+    ///
+    /// This compatibility API is moving to csgrs with product-facing handoff
+    /// routing. The default hypermesh API keeps exact mesh facts and kernel
+    /// methods only.
+    #[cfg(feature = "legacy-public-api")]
+    pub fn handoff_package(
+        &self,
+    ) -> Result<super::package::ExactMeshHandoffPackage, super::package::ExactMeshHandoffPackageError>
+    {
+        super::package::exact_mesh_handoff_package(self)
+    }
+
     /// Build a replayed proposal report from this accepted exact mesh.
-    pub fn proposal_report(&self) -> Result<ExactMeshProposalReport, ExactMeshProposalReportError> {
-        ExactMeshProposalReport::from_mesh(self)
+    #[cfg(feature = "legacy-public-api")]
+    pub fn proposal_report(
+        &self,
+    ) -> Result<
+        super::proposal::ExactMeshProposalReport,
+        super::proposal::ExactMeshProposalReportError,
+    > {
+        super::proposal::ExactMeshProposalReport::from_mesh(self)
     }
 
     /// Build an artifact manifest from this accepted exact mesh.
-    pub fn artifact_manifest(&self) -> Result<MeshArtifactManifest, ExactMeshValidationError> {
-        MeshArtifactManifest::from_exact_mesh(self)
+    #[cfg(feature = "legacy-public-api")]
+    pub fn artifact_manifest(
+        &self,
+    ) -> Result<super::artifact::MeshArtifactManifest, ExactMeshValidationError> {
+        super::artifact::MeshArtifactManifest::from_exact_mesh(self)
     }
 
     /// Materialize the exact closed union of this mesh and `right`.
@@ -449,11 +456,13 @@ impl ExactMesh {
 
     /// Build an artifact manifest for a proposal report that replays against
     /// this accepted exact mesh.
+    #[cfg(feature = "legacy-public-api")]
     pub fn proposal_artifact_manifest(
         &self,
-        proposal: &ExactMeshProposalReport,
-    ) -> Result<MeshArtifactManifest, ExactMeshProposalReportError> {
-        MeshArtifactManifest::from_exact_mesh_proposal(self, proposal)
+        proposal: &super::proposal::ExactMeshProposalReport,
+    ) -> Result<super::artifact::MeshArtifactManifest, super::proposal::ExactMeshProposalReportError>
+    {
+        super::artifact::MeshArtifactManifest::from_exact_mesh_proposal(self, proposal)
     }
 }
 
