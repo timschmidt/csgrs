@@ -387,7 +387,8 @@ impl<'a> PreparedMeshBounds<'a> {
         let mut pair_count = 0usize;
         let mut max_target_active = 0usize;
 
-        for driver_interval in self.face_axis_intervals(axis) {
+        for driver_bounds in &self.bounds.faces {
+            let driver_interval = face_axis_interval(driver_bounds, axis);
             let started = upper_bound_axis_bound(
                 other_min_order,
                 other.bounds.faces.as_slice(),
@@ -616,13 +617,6 @@ impl<'a> PreparedMeshBounds<'a> {
 
     fn max_axis_order(&self, axis: Axis) -> Option<&[usize]> {
         self.max_axis_orders[axis.index()].as_deref()
-    }
-
-    fn face_axis_intervals(&self, axis: Axis) -> impl Iterator<Item = FaceAxisInterval<'a>> + '_ {
-        self.bounds
-            .faces
-            .iter()
-            .map(move |bounds| face_axis_interval(bounds, axis))
     }
 
     fn axis_interval(&self, axis: Axis, face: usize) -> FaceAxisInterval<'a> {
