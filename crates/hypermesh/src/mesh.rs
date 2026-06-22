@@ -116,7 +116,7 @@ impl ExactAffineTransform3 {
             .value()
             .ok_or_else(|| {
                 ExactMeshError::one(ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::UnsupportedExactOperation,
+                    ExactMeshBlockerKind::UndecidablePredicate,
                     "exact transform determinant sign could not be certified",
                 ))
             })
@@ -913,7 +913,7 @@ fn real_equals(left: &Real, right: &Real) -> Result<bool, ExactMeshError> {
         .map(|ordering| ordering == Ordering::Equal)
         .ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UndecidablePredicate,
                 "exact transform coefficient comparison could not be certified",
             ))
         })

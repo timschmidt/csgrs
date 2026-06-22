@@ -1598,7 +1598,7 @@ fn split_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> ExactMe
             .into_iter()
             .map(|blocker| {
                 let mut mesh = ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::UnsupportedExactOperation,
+                    split_plan_blocker_mesh_kind(blocker.kind),
                     blocker.message,
                 );
                 if let Some(face) = blocker.face {
@@ -1611,6 +1611,44 @@ fn split_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> ExactMe
             })
             .collect(),
     )
+}
+
+fn split_plan_blocker_mesh_kind(kind: SplitPlanBlockerKind) -> ExactMeshBlockerKind {
+    match kind {
+        SplitPlanBlockerKind::UnknownOrdering
+        | SplitPlanBlockerKind::UnresolvedEquality
+        | SplitPlanBlockerKind::UnknownBoundaryIncidence => {
+            ExactMeshBlockerKind::UndecidablePredicate
+        }
+        #[cfg(test)]
+        SplitPlanBlockerKind::SourceReplayMismatch => ExactMeshBlockerKind::StaleFactReplay,
+        SplitPlanBlockerKind::SourceTriangleMismatch
+        | SplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange
+        | SplitPlanBlockerKind::BoundaryNodeSourceVertexNotOnTriangle
+        | SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch => {
+            ExactMeshBlockerKind::StaleFactReplay
+        }
+        SplitPlanBlockerKind::UnresolvedVertexLookup
+        | SplitPlanBlockerKind::MissingEndpointSideFacts
+        | SplitPlanBlockerKind::NonCrossingEndpointSideFacts
+        | SplitPlanBlockerKind::InvalidConstructionRatio
+        | SplitPlanBlockerKind::EmptyOrShortEdgeChain
+        | SplitPlanBlockerKind::WrongChainStart
+        | SplitPlanBlockerKind::WrongChainEnd
+        | SplitPlanBlockerKind::ChainSideMismatch
+        | SplitPlanBlockerKind::GraphVertexOutOfRange
+        | SplitPlanBlockerKind::EmptyGraphVertexUses
+        | SplitPlanBlockerKind::EmptyFaceSplit
+        | SplitPlanBlockerKind::EmptyFaceSplitEdge
+        | SplitPlanBlockerKind::DuplicateFaceSplitEdge
+        | SplitPlanBlockerKind::MissingFaceSplitSourceUse
+        | SplitPlanBlockerKind::BoundaryNodeOffFacePlane
+        | SplitPlanBlockerKind::EmptyOrShortRegionBoundary
+        | SplitPlanBlockerKind::DuplicateConsecutiveRegionNode
+        | SplitPlanBlockerKind::BoundaryChainEdgeNotOnTriangle => {
+            ExactMeshBlockerKind::ExactConstructionFailure
+        }
+    }
 }
 
 /// Validation report for exact split topology and face split plans.
@@ -3610,11 +3648,45 @@ fn coplanar_split_validation_mesh_error(
 ) -> ExactMeshError {
     ExactMeshError {
         blockers: vec![ExactMeshBlocker::new(
-            ExactMeshBlockerKind::UnsupportedExactOperation,
+            coplanar_split_validation_mesh_kind(error),
             format!(
                 "retained coplanar split construction failed source-edge validation: {error:?}"
             ),
         )],
+    }
+}
+
+fn coplanar_split_validation_mesh_kind(
+    error: CoplanarOverlapSplitValidationError,
+) -> ExactMeshBlockerKind {
+    match error {
+        CoplanarOverlapSplitValidationError::UnknownSplitParameterOrder
+        | CoplanarOverlapSplitValidationError::UnknownIntervalOrder
+        | CoplanarOverlapSplitValidationError::UnknownSplitPointEquality => {
+            ExactMeshBlockerKind::UndecidablePredicate
+        }
+        CoplanarOverlapSplitValidationError::SplitPointDoesNotMatchLeftParameter
+        | CoplanarOverlapSplitValidationError::SplitPointDoesNotMatchRightParameter
+        | CoplanarOverlapSplitValidationError::SameSideVertexOverlap
+        | CoplanarOverlapSplitValidationError::NonConstructiveVertexOverlap => {
+            ExactMeshBlockerKind::StaleFactReplay
+        }
+        #[cfg(test)]
+        CoplanarOverlapSplitValidationError::SourceReplayMismatch => {
+            ExactMeshBlockerKind::StaleFactReplay
+        }
+        CoplanarOverlapSplitValidationError::MissingPointConstruction
+        | CoplanarOverlapSplitValidationError::DisjointEdgeSplit
+        | CoplanarOverlapSplitValidationError::MissingIntervalConstruction
+        | CoplanarOverlapSplitValidationError::MissingIntervalEndpoints
+        | CoplanarOverlapSplitValidationError::UnexpectedIntervalConstruction
+        | CoplanarOverlapSplitValidationError::UnexpectedPointConstruction
+        | CoplanarOverlapSplitValidationError::SplitParameterOutOfRange
+        | CoplanarOverlapSplitValidationError::EndpointTouchWithoutEndpointParameter
+        | CoplanarOverlapSplitValidationError::ProperCrossingEndpointParameter
+        | CoplanarOverlapSplitValidationError::DegenerateInterval => {
+            ExactMeshBlockerKind::ExactConstructionFailure
+        }
     }
 }
 

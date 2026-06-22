@@ -27,6 +27,12 @@ pub enum ExactMeshBlockerKind {
     NonManifoldVertexLink,
     /// Duplicate triangle vertex set.
     DuplicateTriangle,
+    /// An exact predicate or exact comparison could not produce a decided
+    /// value.
+    UndecidablePredicate,
+    /// A retained exact construction artifact is missing, internally
+    /// inconsistent, or failed its construction-family audit.
+    ExactConstructionFailure,
     /// Retained exact facts or acceleration structures did not replay against
     /// the supplied source mesh objects.
     StaleFactReplay,
