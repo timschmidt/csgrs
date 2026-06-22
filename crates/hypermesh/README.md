@@ -9,8 +9,8 @@ retained validation facts, exact bounds, construction provenance, and cached
 predicate evidence.
 
 `hyperreal` is the canonical geometry scalar. Primitive floats are accepted only
-at explicit import or preview boundaries where approximation policy and
-provenance are recorded.
+at explicit import boundaries where approximation policy and provenance are
+recorded.
 
 ## Scope
 
@@ -31,7 +31,7 @@ required by downstream CSG layers.
 - `ExactMesh` is the owned mesh type.
 - `Triangle` stores triangle indices.
 - `ValidationPolicy` selects the mesh validation contract.
-- `MeshError` and `MeshDiagnostic` report invalid input, unsupported exact
+- `MeshError` and `ExactMeshBlocker` report invalid input, unsupported exact
   topology, stale replay, and construction blockers with provenance where
   available.
 - `ExactMeshRef`, `TriangleRef`, `FaceRef`, and `EdgeRef` provide borrowed

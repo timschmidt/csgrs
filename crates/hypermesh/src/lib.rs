@@ -9,7 +9,7 @@
 //!
 //! Mesh coordinates are carried as [`hyperlimit::Point3`] over
 //! [`hyperreal::Real`]. Topology-affecting decisions are exposed through exact
-//! predicate reports, certified outputs, or explicit blockers when the
+//! predicate evidence, certified outputs, or explicit blockers when the
 //! implementation cannot prove a requested operation.
 
 mod adjacent;
@@ -18,7 +18,6 @@ mod affine_box;
 mod affine_solid;
 mod arrangement2d;
 mod arrangement3d;
-mod audit;
 mod boolean;
 mod bounds;
 mod box_solid;

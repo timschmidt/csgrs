@@ -4,7 +4,6 @@
 //! `hyperreal::Real`. Primitive-float construction is a named lossy adapter
 //! and validates every coordinate before import.
 
-use super::audit::{ExactMeshAuditReport, audit_exact_mesh};
 use super::boolean::{
     ExactBooleanOperation, ExactBooleanRequest, materialize_boolean_exact_request,
 };
@@ -456,11 +455,6 @@ impl ExactMesh {
             return Err(ExactMeshValidationError::PredicateRetentionMismatch);
         }
         Ok(())
-    }
-
-    /// Build a replayed retained-state audit report from this exact mesh.
-    pub fn audit_report(&self) -> Result<ExactMeshAuditReport, ExactMeshValidationError> {
-        audit_exact_mesh(self)
     }
 
     /// Materialize this mesh after an exact affine transform.
