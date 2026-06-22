@@ -31,7 +31,14 @@ proptest = "1.7.0"
 
 [features]
 default = []
+legacy-public-api = []
 
 [[bench]]
 name = "exact_boolean_stages"
 harness = false
+required-features = ["legacy-public-api"]
+
+[[test]]
+name = "exact_mesh"
+path = "tests/exact_mesh.rs"
+required-features = ["legacy-public-api"]

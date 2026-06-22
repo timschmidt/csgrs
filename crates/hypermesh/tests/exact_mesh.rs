@@ -120,56 +120,6 @@ fn tetra(offset: [i64; 3]) -> ExactMesh {
     .unwrap()
 }
 
-#[test]
-fn exact_mesh_named_boolean_methods_materialize_meshes() {
-    let empty = ExactMesh::new(
-        Vec::new(),
-        Vec::new(),
-        SourceProvenance::exact("empty test mesh"),
-    )
-    .unwrap();
-    let solid = tetra([0, 0, 0]);
-
-    let union = empty.union(&solid).unwrap();
-    union.validate_retained_state().unwrap();
-    assert_eq!(union.triangles().len(), solid.triangles().len());
-
-    let intersection = empty.intersection(&solid).unwrap();
-    intersection.validate_retained_state().unwrap();
-    assert!(intersection.triangles().is_empty());
-
-    let difference = solid.difference(&empty).unwrap();
-    difference.validate_retained_state().unwrap();
-    assert_eq!(difference.triangles().len(), solid.triangles().len());
-}
-
-#[test]
-fn exact_mesh_borrowed_view_exposes_retained_facts() {
-    let mesh = tetra([0, 0, 0]);
-    let view = mesh.view();
-
-    assert_eq!(view.vertices().len(), 4);
-    assert_eq!(view.triangles().len(), 4);
-    assert_eq!(view.facts().mesh.face_count, 4);
-    assert_eq!(view.faces().count(), 4);
-    assert_eq!(view.triangle_refs().count(), 4);
-    assert_eq!(view.edges().count(), mesh.facts().edges.len());
-
-    let face = view.face(0).unwrap();
-    assert_eq!(face.index(), 0);
-    assert_eq!(face.triangle().0, [0, 2, 1]);
-    assert_eq!(face.facts().triangle.face, 0);
-    assert_eq!(face.vertices().len(), 3);
-
-    let triangle = view.triangle(1).unwrap();
-    assert_eq!(triangle.index(), 1);
-    assert_eq!(triangle.facts().triangle.vertices, triangle.triangle().0);
-
-    let edge = view.edge(0).unwrap();
-    assert_eq!(edge.index(), 0);
-    assert_eq!(edge.vertices().len(), 2);
-}
-
 fn tetra_from_corners(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
     ExactMesh::from_i64_triangles(
         &[

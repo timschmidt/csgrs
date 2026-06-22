@@ -70,6 +70,7 @@ pub use view::{EdgeRef, ExactMeshRef, FaceRef, MeshView, TriangleRef};
 /// New hypermesh callers should prefer [`ExactMesh`] and borrowed views. This
 /// module keeps existing tests, fuzzers, benchmarks, and downstream migration
 /// work building while the workspace-level policy API is extracted.
+#[cfg(feature = "legacy-public-api")]
 pub mod legacy {
     pub use crate::artifact::MeshArtifactManifest;
     pub use crate::boolean::{

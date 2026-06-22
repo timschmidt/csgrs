@@ -10,7 +10,7 @@ cargo-fuzz = true
 [dependencies]
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-hypermesh = { path = "..", default-features = false }
+hypermesh = { path = "..", default-features = false, features = ["legacy-public-api"] }
 hyperlimit = { path = "../../hyperlimit" }
 hyperreal = { path = "../../hyperreal" }
 hypertri = { path = "../../hypertri", default-features = false, features = ["cdt", "earcut"] }
