@@ -386,7 +386,7 @@ impl<'a> PreparedMeshBounds<'a> {
                     return Ok(false);
                 };
                 if ordering == Ordering::Greater {
-                    continue;
+                    break;
                 }
                 let pair = [left, right];
                 if self.full_aabb_may_overlap(other, pair) {
