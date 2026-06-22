@@ -2,7 +2,6 @@
 
 use super::bounds::{CandidateFacePairPlan, PreparedMeshBounds};
 use super::error::ExactMeshError;
-use super::facts::{EdgeFacts, FaceFacts, FacePlaneFacts, MeshValidationFacts};
 use super::mesh::{ExactAffineTransform3, Triangle};
 use super::validation::ValidationPolicy;
 use super::{ExactMesh, ExactMeshValidationError};
@@ -75,9 +74,54 @@ impl<'a> ExactMeshRef<'a> {
         self.mesh.triangles()
     }
 
-    /// Return retained validation facts.
-    pub const fn facts(self) -> &'a MeshValidationFacts {
-        self.mesh.facts()
+    /// Retained vertex count.
+    pub const fn vertex_count(self) -> usize {
+        self.mesh.facts().mesh.vertex_count
+    }
+
+    /// Retained face count.
+    pub const fn face_count(self) -> usize {
+        self.mesh.facts().mesh.face_count
+    }
+
+    /// Retained undirected edge count.
+    pub const fn edge_count(self) -> usize {
+        self.mesh.facts().mesh.edge_count
+    }
+
+    /// Retained Euler characteristic `V - E + F`.
+    pub const fn euler_characteristic(self) -> isize {
+        self.mesh.facts().mesh.euler_characteristic
+    }
+
+    /// Retained boundary edge count.
+    pub const fn boundary_edge_count(self) -> usize {
+        self.mesh.facts().mesh.boundary_edges
+    }
+
+    /// Retained non-manifold edge count.
+    pub const fn non_manifold_edge_count(self) -> usize {
+        self.mesh.facts().mesh.non_manifold_edges
+    }
+
+    /// Retained non-manifold vertex-link count.
+    pub const fn non_manifold_vertex_count(self) -> usize {
+        self.mesh.facts().mesh.non_manifold_vertices
+    }
+
+    /// Retained degenerate triangle count.
+    pub const fn degenerate_triangle_count(self) -> usize {
+        self.mesh.facts().mesh.degenerate_triangles
+    }
+
+    /// Whether retained facts certify a closed two-manifold mesh.
+    pub const fn is_closed_manifold(self) -> bool {
+        self.mesh.facts().mesh.closed_manifold
+    }
+
+    /// Whether retained facts record exact rational coordinates for every vertex.
+    pub const fn has_exact_rational_coordinates(self) -> bool {
+        self.mesh.facts().mesh.fixed_coordinates_exact_rational
     }
 
     /// Return the validation policy attached to this mesh.
@@ -302,14 +346,19 @@ impl<'a> FaceRef<'a> {
         &self.mesh.triangles()[self.index]
     }
 
-    /// Retained face facts.
-    pub fn facts(self) -> &'a FaceFacts {
-        &self.mesh.facts().faces[self.index]
+    /// Retained exact oriented plane normal.
+    pub fn plane_normal(self) -> &'a [Real; 3] {
+        &self.mesh.facts().faces[self.index].plane.normal
     }
 
-    /// Retained exact oriented face plane.
-    pub fn plane(self) -> &'a FacePlaneFacts {
-        &self.facts().plane
+    /// Retained exact oriented plane offset.
+    pub fn plane_offset(self) -> &'a Real {
+        &self.mesh.facts().faces[self.index].plane.offset
+    }
+
+    /// Retained exact oriented plane coefficients.
+    pub fn plane_coefficients(self) -> (&'a [Real; 3], &'a Real) {
+        (self.plane_normal(), self.plane_offset())
     }
 
     /// Exact face vertices.
@@ -329,14 +378,19 @@ impl<'a> TriangleRef<'a> {
         &self.mesh.triangles()[self.index]
     }
 
-    /// Retained face facts for this triangle.
-    pub fn facts(self) -> &'a FaceFacts {
-        &self.mesh.facts().faces[self.index]
+    /// Retained exact oriented plane normal.
+    pub fn plane_normal(self) -> &'a [Real; 3] {
+        &self.mesh.facts().faces[self.index].plane.normal
     }
 
-    /// Retained exact oriented face plane.
-    pub fn plane(self) -> &'a FacePlaneFacts {
-        &self.facts().plane
+    /// Retained exact oriented plane offset.
+    pub fn plane_offset(self) -> &'a Real {
+        &self.mesh.facts().faces[self.index].plane.offset
+    }
+
+    /// Retained exact oriented plane coefficients.
+    pub fn plane_coefficients(self) -> (&'a [Real; 3], &'a Real) {
+        (self.plane_normal(), self.plane_offset())
     }
 
     /// Exact triangle vertices.
@@ -351,14 +405,30 @@ impl<'a> EdgeRef<'a> {
         self.index
     }
 
-    /// Retained edge facts.
-    pub fn facts(self) -> &'a EdgeFacts {
-        &self.mesh.facts().edges[self.index]
+    /// Retained endpoint vertex indices.
+    pub fn vertex_indices(self) -> [usize; 2] {
+        self.mesh.facts().edges[self.index].vertices
+    }
+
+    /// Retained incident face count.
+    pub fn incident_face_count(self) -> usize {
+        self.mesh.facts().edges[self.index].incident_faces
+    }
+
+    /// Retained directed use counts for the canonical edge orientation.
+    pub fn directed_use_counts(self) -> [usize; 2] {
+        self.mesh.facts().edges[self.index].directed_uses
+    }
+
+    /// Whether retained facts classify this edge as a closed-manifold edge.
+    pub fn is_closed_manifold_edge(self) -> bool {
+        let facts = &self.mesh.facts().edges[self.index];
+        facts.is_closed_manifold_edge()
     }
 
     /// Exact edge endpoints.
     pub fn vertices(self) -> [&'a Point3; 2] {
-        let [a, b] = self.facts().vertices;
+        let [a, b] = self.vertex_indices();
         [&self.mesh.vertices()[a], &self.mesh.vertices()[b]]
     }
 }

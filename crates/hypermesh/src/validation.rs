@@ -80,25 +80,6 @@ impl ValidationReport {
     }
 }
 
-/// Validate indexed triangles against exact points.
-pub(crate) fn validate_triangles(points: &[Point3], triangles: &[[usize; 3]]) -> ValidationReport {
-    validate_triangles_with_policy(points, triangles, ValidationPolicy::default())
-}
-
-/// Validate indexed triangles against exact points with an explicit policy.
-///
-/// Closed validation treats boundary edges as errors. Boundary-allowed
-/// validation still records boundary facts but does not promote them to fatal
-/// blockers. The policy object keeps that topological contract explicit,
-/// approximation policies must be visible at API boundaries.
-pub(crate) fn validate_triangles_with_policy(
-    points: &[Point3],
-    triangles: &[[usize; 3]],
-    policy: ValidationPolicy,
-) -> ValidationReport {
-    validate_triangle_rows_with_policy(points, triangles.len(), triangles.iter().copied(), policy)
-}
-
 pub(crate) fn validate_triangle_rows_with_policy(
     points: &[Point3],
     triangle_count: usize,

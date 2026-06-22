@@ -7,26 +7,26 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use super::topology::sorted_edge;
-use super::validation::{ValidationPolicy, validate_triangle_rows_with_policy, validate_triangles};
+use super::validation::{ValidationPolicy, validate_triangle_rows_with_policy};
 use hyperlimit::Point3;
 use hyperlimit::PredicateUse;
 use hyperreal::Real;
 
 /// Facts known for one mesh vertex.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct VertexFacts {
+pub(crate) struct VertexFacts {
     /// Vertex index in the exact mesh.
-    pub index: usize,
+    pub(crate) index: usize,
     /// Whether all coordinates are exact rational values in `hyperreal`.
-    pub fixed_coordinates_exact_rational: bool,
+    pub(crate) fixed_coordinates_exact_rational: bool,
     /// Whether the point has known sparse coordinate support.
-    pub sparse_support: bool,
+    pub(crate) sparse_support: bool,
     /// Number of incident faces.
-    pub incident_faces: usize,
+    pub(crate) incident_faces: usize,
     /// Number of incident undirected edges.
-    pub incident_edges: usize,
+    pub(crate) incident_edges: usize,
     /// Certified combinatorial shape of the vertex link.
-    pub link: VertexLinkKind,
+    pub(crate) link: VertexLinkKind,
 }
 
 /// Combinatorial shape of one vertex link.
@@ -36,7 +36,7 @@ pub struct VertexFacts {
 /// stores the classification explicitly so boolean stages can reject a local
 /// nonmanifold mutation before it becomes a global mesh.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum VertexLinkKind {
+pub(crate) enum VertexLinkKind {
     /// No incident faces.
     Isolated,
     /// Link is a single cycle, as expected for a closed 2-manifold vertex.
@@ -49,40 +49,40 @@ pub enum VertexLinkKind {
 
 /// Facts known for one undirected edge.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct EdgeFacts {
+pub(crate) struct EdgeFacts {
     /// Canonical edge endpoints.
-    pub vertices: [usize; 2],
+    pub(crate) vertices: [usize; 2],
     /// Incident face count.
-    pub incident_faces: usize,
+    pub(crate) incident_faces: usize,
     /// Number of faces using each directed orientation.
-    pub directed_uses: [usize; 2],
+    pub(crate) directed_uses: [usize; 2],
 }
 
 impl EdgeFacts {
     /// Return whether the edge has exactly two opposing incident faces.
-    pub const fn is_closed_manifold_edge(&self) -> bool {
+    pub(crate) const fn is_closed_manifold_edge(&self) -> bool {
         self.incident_faces == 2 && self.directed_uses[0] == 1 && self.directed_uses[1] == 1
     }
 }
 
 /// Facts known for one triangle.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct TriangleFacts {
+pub(crate) struct TriangleFacts {
     /// Face index.
-    pub face: usize,
+    pub(crate) face: usize,
     /// Vertex indices.
-    pub vertices: [usize; 3],
+    pub(crate) vertices: [usize; 3],
     /// Whether predicate validation proved a non-degenerate triangle.
-    pub non_degenerate: bool,
+    pub(crate) non_degenerate: bool,
     /// Predicate certificates used while checking degeneracy.
-    pub degeneracy_predicates: Vec<PredicateUse>,
+    pub(crate) degeneracy_predicates: Vec<PredicateUse>,
 }
 
 /// Facts known for one oriented face.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct OrientedFaceFacts {
+pub(crate) struct OrientedFaceFacts {
     /// Directed triangle edges.
-    pub directed_edges: [[usize; 2]; 3],
+    pub(crate) directed_edges: [[usize; 2]; 3],
 }
 
 /// Exact oriented plane equation retained for one face.
@@ -92,62 +92,62 @@ pub struct OrientedFaceFacts {
 /// reuse exact object facts instead of re-deriving topology from rounded
 /// representatives.
 #[derive(Clone, Debug, PartialEq)]
-pub struct FacePlaneFacts {
+pub(crate) struct FacePlaneFacts {
     /// Oriented plane normal from the indexed triangle order.
-    pub normal: [Real; 3],
+    pub(crate) normal: [Real; 3],
     /// Exact plane offset.
-    pub offset: Real,
+    pub(crate) offset: Real,
 }
 
 /// Facts known for one face.
 #[derive(Clone, Debug, PartialEq)]
-pub struct FaceFacts {
+pub(crate) struct FaceFacts {
     /// Triangle facts.
-    pub triangle: TriangleFacts,
+    pub(crate) triangle: TriangleFacts,
     /// Oriented edge facts.
-    pub oriented: OrientedFaceFacts,
+    pub(crate) oriented: OrientedFaceFacts,
     /// Exact oriented plane equation.
-    pub plane: FacePlaneFacts,
+    pub(crate) plane: FacePlaneFacts,
 }
 
 /// Topology and exactness facts for a whole mesh.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct MeshFacts {
+pub(crate) struct MeshFacts {
     /// Number of vertices.
-    pub vertex_count: usize,
+    pub(crate) vertex_count: usize,
     /// Number of triangular faces.
-    pub face_count: usize,
+    pub(crate) face_count: usize,
     /// Number of undirected edges.
-    pub edge_count: usize,
+    pub(crate) edge_count: usize,
     /// Euler characteristic `V - E + F`.
-    pub euler_characteristic: isize,
+    pub(crate) euler_characteristic: isize,
     /// Number of boundary edges.
-    pub boundary_edges: usize,
+    pub(crate) boundary_edges: usize,
     /// Number of non-manifold undirected edges.
-    pub non_manifold_edges: usize,
+    pub(crate) non_manifold_edges: usize,
     /// Number of duplicate directed edges.
-    pub duplicate_directed_edges: usize,
+    pub(crate) duplicate_directed_edges: usize,
     /// Number of degenerate triangles.
-    pub degenerate_triangles: usize,
+    pub(crate) degenerate_triangles: usize,
     /// Number of nonmanifold vertex links.
-    pub non_manifold_vertices: usize,
+    pub(crate) non_manifold_vertices: usize,
     /// Whether all accepted triangles and edges form a closed two-manifold.
-    pub closed_manifold: bool,
+    pub(crate) closed_manifold: bool,
     /// Whether all coordinates are exact rational values in `hyperreal`.
-    pub fixed_coordinates_exact_rational: bool,
+    pub(crate) fixed_coordinates_exact_rational: bool,
 }
 
 /// Expanded validation facts for vertices, edges, and faces.
 #[derive(Clone, Debug, PartialEq)]
-pub struct MeshValidationFacts {
+pub(crate) struct MeshValidationFacts {
     /// Whole-mesh summary.
-    pub mesh: MeshFacts,
+    pub(crate) mesh: MeshFacts,
     /// Per-vertex facts.
-    pub vertices: Vec<VertexFacts>,
+    pub(crate) vertices: Vec<VertexFacts>,
     /// Per-edge facts.
-    pub edges: Vec<EdgeFacts>,
+    pub(crate) edges: Vec<EdgeFacts>,
     /// Per-face facts.
-    pub faces: Vec<FaceFacts>,
+    pub(crate) faces: Vec<FaceFacts>,
 }
 
 /// Error returned when retained mesh validation facts contradict themselves.
@@ -304,7 +304,7 @@ impl MeshValidationFacts {
     /// predicates remain in [`TriangleFacts::degeneracy_predicates`], while
     /// this method verifies that the structural bookkeeping has not drifted
     /// from those retained predicate outcomes.
-    pub fn validate(&self) -> Result<(), MeshFactsValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), MeshFactsValidationError> {
         expect_len("vertex_count", self.vertices.len(), self.mesh.vertex_count)?;
         expect_len("edge_count", self.edges.len(), self.mesh.edge_count)?;
         expect_len("face_count", self.faces.len(), self.mesh.face_count)?;
@@ -508,48 +508,6 @@ impl MeshValidationFacts {
         }
 
         Ok(())
-    }
-
-    /// Validate retained mesh facts against exact source geometry and topology.
-    ///
-    /// Local validation proves that the retained summary, vertex, edge, and
-    /// face tables are internally coherent. Source replay rebuilds those facts
-    /// from `points` and `triangles` and requires the retained object to match
-    /// remain reusable only while they can be audited against the exact source
-    /// objects they summarize.
-    pub fn validate_against_sources(
-        &self,
-        points: &[Point3],
-        triangles: &[[usize; 3]],
-    ) -> Result<(), MeshFactsValidationError> {
-        self.validate()?;
-        let replay = validate_triangles(points, triangles);
-        if self == &replay.facts {
-            Ok(())
-        } else {
-            Err(MeshFactsValidationError::SourceReplayMismatch)
-        }
-    }
-
-    /// Validate retained mesh facts against exact source geometry, topology,
-    /// and an explicit validation policy.
-    ///
-    /// Boundary policy is an API-level contract rather than a numeric fact.
-    /// Retaining it beside replay keeps open-surface artifacts from being
-    /// consumed as if they were produced by a closed-surface constructor. This
-    /// predicate evidence replayable as separate artifacts.
-    pub fn validate_against_sources_with_policy(
-        &self,
-        points: &[Point3],
-        triangles: &[[usize; 3]],
-        policy: ValidationPolicy,
-    ) -> Result<(), MeshFactsValidationError> {
-        self.validate_against_triangle_rows_with_policy(
-            points,
-            triangles.len(),
-            triangles.iter().copied(),
-            policy,
-        )
     }
 
     pub(crate) fn validate_against_triangle_rows_with_policy(

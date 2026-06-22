@@ -351,7 +351,7 @@ impl ExactMesh {
     }
 
     /// Return retained validation facts.
-    pub const fn facts(&self) -> &MeshValidationFacts {
+    pub(crate) const fn facts(&self) -> &MeshValidationFacts {
         &self.facts
     }
 
@@ -420,7 +420,13 @@ impl ExactMesh {
             .faces
             .iter()
             .flat_map(|face| face.triangle.degeneracy_predicates.iter().copied());
-        if !self.provenance.predicates.iter().copied().eq(retained_predicates) {
+        if !self
+            .provenance
+            .predicates
+            .iter()
+            .copied()
+            .eq(retained_predicates)
+        {
             return Err(ExactMeshValidationError::PredicateRetentionMismatch);
         }
         Ok(())

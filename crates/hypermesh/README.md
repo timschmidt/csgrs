@@ -108,9 +108,9 @@ let mesh = ExactMesh::from_i64_triangles_with_policy(
     ValidationPolicy::ALLOW_BOUNDARY,
 )?;
 
-let facts = mesh.facts();
-assert_eq!(facts.mesh.face_count, 1);
-assert_eq!(facts.mesh.boundary_edges, 3);
+let view = mesh.view();
+assert_eq!(view.face_count(), 1);
+assert_eq!(view.boundary_edge_count(), 3);
 mesh.validate_retained_state()?;
 ```
 

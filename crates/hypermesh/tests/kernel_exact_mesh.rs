@@ -88,25 +88,35 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     view.validate_retained_state().unwrap();
     assert_eq!(view.vertices().len(), 4);
     assert_eq!(view.triangles().len(), 4);
-    assert_eq!(view.facts().mesh.face_count, 4);
+    assert_eq!(view.face_count(), 4);
+    assert_eq!(view.edge_count(), 6);
+    assert!(view.is_closed_manifold());
     assert_eq!(view.faces().count(), 4);
     assert_eq!(view.triangle_refs().count(), 4);
-    assert_eq!(view.edges().count(), mesh.facts().edges.len());
+    assert_eq!(view.edges().count(), view.edge_count());
 
     let face = view.face(0).unwrap();
     assert_eq!(face.index(), 0);
     assert_eq!(face.triangle().0, [0, 2, 1]);
-    assert_eq!(face.facts().triangle.face, 0);
-    assert_eq!(face.plane(), &face.facts().plane);
+    assert_eq!(
+        face.plane_coefficients(),
+        (face.plane_normal(), face.plane_offset())
+    );
     assert_eq!(face.vertices().len(), 3);
 
     let triangle = view.triangle(1).unwrap();
     assert_eq!(triangle.index(), 1);
-    assert_eq!(triangle.facts().triangle.vertices, triangle.triangle().0);
-    assert_eq!(triangle.plane(), &triangle.facts().plane);
+    assert_eq!(triangle.triangle().0, [0, 1, 3]);
+    assert_eq!(
+        triangle.plane_coefficients(),
+        (triangle.plane_normal(), triangle.plane_offset())
+    );
 
     let edge = view.edge(0).unwrap();
     assert_eq!(edge.index(), 0);
+    assert_eq!(edge.incident_face_count(), 2);
+    assert_eq!(edge.directed_use_counts(), [1, 1]);
+    assert!(edge.is_closed_manifold_edge());
     assert_eq!(edge.vertices().len(), 2);
 }
 
