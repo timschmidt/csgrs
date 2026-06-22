@@ -161,7 +161,7 @@ enum SweepDirection {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct SweepPlan {
+pub(crate) struct SweepPlan {
     axis: Axis,
     direction: SweepDirection,
 }
@@ -191,26 +191,33 @@ const MAX_CANDIDATE_PAIR_PREALLOC: usize = 1 << 20;
 
 /// Prepared broad-phase plan for one retained bounds pair.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) struct CandidateFacePairPlan {
-    mesh_bounds_overlap: bool,
-    sweep: Option<SweepPlan>,
-    candidate_pair_capacity_hint: usize,
+pub(crate) enum CandidateFacePairPlan {
+    Empty,
+    Sweep {
+        plan: SweepPlan,
+        candidate_pair_capacity_hint: usize,
+    },
+    Quadratic,
 }
 
 impl CandidateFacePairPlan {
     const fn empty() -> Self {
-        Self {
-            mesh_bounds_overlap: false,
-            sweep: None,
-            candidate_pair_capacity_hint: 0,
-        }
+        Self::Empty
     }
 
     pub(crate) const fn candidate_pair_capacity_hint(self) -> usize {
-        if self.candidate_pair_capacity_hint > MAX_CANDIDATE_PAIR_PREALLOC {
-            MAX_CANDIDATE_PAIR_PREALLOC
-        } else {
-            self.candidate_pair_capacity_hint
+        match self {
+            Self::Sweep {
+                candidate_pair_capacity_hint,
+                ..
+            } => {
+                if candidate_pair_capacity_hint > MAX_CANDIDATE_PAIR_PREALLOC {
+                    MAX_CANDIDATE_PAIR_PREALLOC
+                } else {
+                    candidate_pair_capacity_hint
+                }
+            }
+            Self::Empty | Self::Quadratic => 0,
         }
     }
 }
@@ -283,17 +290,12 @@ impl<'a> PreparedMeshBounds<'a> {
             return CandidateFacePairPlan::empty();
         }
         if let Some(sweep) = self.sweep_plan(other) {
-            return CandidateFacePairPlan {
-                mesh_bounds_overlap: true,
-                sweep: Some(sweep.plan),
+            return CandidateFacePairPlan::Sweep {
+                plan: sweep.plan,
                 candidate_pair_capacity_hint: sweep.axis_pair_count,
             };
         }
-        CandidateFacePairPlan {
-            mesh_bounds_overlap: true,
-            sweep: None,
-            candidate_pair_capacity_hint: 0,
-        }
+        CandidateFacePairPlan::Quadratic
     }
 
     pub(crate) fn try_visit_candidate_face_pairs<E>(
@@ -311,21 +313,22 @@ impl<'a> PreparedMeshBounds<'a> {
         plan: CandidateFacePairPlan,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
-        if !plan.mesh_bounds_overlap {
-            return Ok(());
-        }
-        let Some(sweep) = plan.sweep else {
-            return self.try_visit_candidate_face_pairs_quadratic(other, visit);
+        let sweep_plan = match plan {
+            CandidateFacePairPlan::Empty => return Ok(()),
+            CandidateFacePairPlan::Quadratic => {
+                return self.try_visit_candidate_face_pairs_quadratic(other, visit);
+            }
+            CandidateFacePairPlan::Sweep { plan, .. } => plan,
         };
-        let used_sweep = match sweep.direction {
+        let used_sweep = match sweep_plan.direction {
             SweepDirection::LeftDriven => {
-                self.try_visit_candidate_face_pairs_sweep_axis(other, sweep.axis, visit)?
+                self.try_visit_candidate_face_pairs_sweep_axis(other, sweep_plan.axis, visit)?
             }
-            SweepDirection::RightDriven => {
-                other.try_visit_candidate_face_pairs_sweep_axis(self, sweep.axis, &mut |pair| {
-                    visit([pair[1], pair[0]])
-                })?
-            }
+            SweepDirection::RightDriven => other.try_visit_candidate_face_pairs_sweep_axis(
+                self,
+                sweep_plan.axis,
+                &mut |pair| visit([pair[1], pair[0]]),
+            )?,
         };
         if !used_sweep {
             return self.try_visit_candidate_face_pairs_quadratic(other, visit);
@@ -845,7 +848,13 @@ mod tests {
         let prepared_left = left.prepare();
         let prepared_right = right.prepare();
         let plan = prepared_left.candidate_face_pair_plan(&prepared_right);
-        assert_eq!(plan.sweep.unwrap().axis, Axis::Y);
+        let CandidateFacePairPlan::Sweep {
+            plan: sweep_plan, ..
+        } = plan
+        else {
+            panic!("expected sweep plan");
+        };
+        assert_eq!(sweep_plan.axis, Axis::Y);
         assert_eq!(plan.candidate_pair_capacity_hint(), 1);
         assert_eq!(candidate_face_pairs(&left, &right), vec![[1, 0]]);
     }
