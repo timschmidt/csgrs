@@ -324,20 +324,27 @@ impl<'a> PreparedMeshBounds<'a> {
         plan: CandidateFacePairPlan,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
-        let sweep_plan = match plan {
+        let (sweep_plan, active_pair_capacity_hint) = match plan {
             CandidateFacePairPlan::Empty => return Ok(()),
             CandidateFacePairPlan::Quadratic { .. } => {
                 return self.try_visit_candidate_face_pairs_quadratic(other, visit);
             }
-            CandidateFacePairPlan::Sweep { plan, .. } => plan,
+            CandidateFacePairPlan::Sweep {
+                plan,
+                candidate_pair_capacity_hint,
+            } => (plan, candidate_pair_capacity_hint),
         };
         let used_sweep = match sweep_plan.direction {
-            SweepDirection::LeftDriven => {
-                self.try_visit_candidate_face_pairs_sweep_axis(other, sweep_plan.axis, visit)?
-            }
+            SweepDirection::LeftDriven => self.try_visit_candidate_face_pairs_sweep_axis(
+                other,
+                sweep_plan.axis,
+                active_pair_capacity_hint,
+                visit,
+            )?,
             SweepDirection::RightDriven => other.try_visit_candidate_face_pairs_sweep_axis(
                 self,
                 sweep_plan.axis,
+                active_pair_capacity_hint,
                 &mut |pair| visit([pair[1], pair[0]]),
             )?,
         };
@@ -462,6 +469,7 @@ impl<'a> PreparedMeshBounds<'a> {
         &self,
         other: &PreparedMeshBounds<'_>,
         axis: Axis,
+        active_pair_capacity_hint: usize,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<bool, E> {
         let Some(left_order) = self.min_axis_order(axis) else {
@@ -473,7 +481,8 @@ impl<'a> PreparedMeshBounds<'a> {
         let Some(right_max_order) = other.max_axis_order(axis) else {
             return Ok(false);
         };
-        let mut active_right = Vec::<usize>::new();
+        let active_right_capacity = active_pair_capacity_hint.min(other.bounds.faces.len());
+        let mut active_right = Vec::<usize>::with_capacity(active_right_capacity);
         let mut right_active = vec![0u8; other.bounds.faces.len()];
         let mut next_right = 0usize;
         let mut next_expiring_right = 0usize;
@@ -873,6 +882,22 @@ mod tests {
     #[test]
     fn quadratic_plan_capacity_hint_is_capped() {
         let plan = CandidateFacePairPlan::Quadratic {
+            candidate_pair_capacity_hint: MAX_CANDIDATE_PAIR_PREALLOC + 1,
+        };
+
+        assert_eq!(
+            plan.candidate_pair_capacity_hint(),
+            MAX_CANDIDATE_PAIR_PREALLOC
+        );
+    }
+
+    #[test]
+    fn sweep_plan_capacity_hint_is_capped() {
+        let plan = CandidateFacePairPlan::Sweep {
+            plan: SweepPlan {
+                axis: Axis::X,
+                direction: SweepDirection::LeftDriven,
+            },
             candidate_pair_capacity_hint: MAX_CANDIDATE_PAIR_PREALLOC + 1,
         };
 
