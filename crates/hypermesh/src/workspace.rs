@@ -121,9 +121,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                     MeshError::one(MeshDiagnostic::new(
                         Severity::Error,
                         DiagnosticKind::UnsupportedExactOperation,
-                        format!(
-                            "exact boolean workspace arrangement cache failed replay: {blocker:?}"
-                        ),
+                        format!("exact boolean arrangement cache failed replay: {blocker:?}"),
                     ))
                 })?;
             return Ok(&self.arrangements[index].1);
@@ -137,7 +135,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             MeshError::one(MeshDiagnostic::new(
                 Severity::Error,
                 DiagnosticKind::UnsupportedExactOperation,
-                format!("exact boolean workspace arrangement report failed: {blocker:?}"),
+                format!("exact boolean arrangement report failed: {blocker:?}"),
             ))
         })?;
         self.arrangements.push((policy, arrangement));
@@ -416,9 +414,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
     }
 
     /// Materialize an exact boolean result and return the cached retained value.
-    ///
-    /// This is the public materialization path so callers consume the retained
-    /// replay cache tied to this workspace session.
     #[cfg(test)]
     pub(crate) fn materialize_ref(
         &mut self,
@@ -541,7 +536,7 @@ fn workspace_report_validation_error(error: ExactReportValidationError) -> MeshE
     MeshError::one(MeshDiagnostic::new(
         Severity::Error,
         DiagnosticKind::UnsupportedExactOperation,
-        format!("exact boolean workspace retained report failed replay validation: {error:?}"),
+        format!("exact boolean retained report failed replay validation: {error:?}"),
     ))
 }
 

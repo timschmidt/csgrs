@@ -53,7 +53,10 @@ use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::facts::MeshFacts;
 #[cfg(test)]
 use super::graph::FacePairEvents;
-use super::graph::{ExactIntersectionGraph, IntersectionEvent, MeshSide, build_intersection_graph};
+use super::graph::{
+    ExactIntersectionGraph, IntersectionEvent, MeshSide, build_intersection_graph,
+    build_validated_intersection_graph,
+};
 use super::intersection::MeshFacePairRelation;
 use super::loop_triangulation::{group_exact_coplanar_loops, triangulate_exact_loop_group};
 use super::mesh::{ExactMesh, Triangle};
@@ -777,7 +780,7 @@ fn arrangement_attempt_materialized_outputs_match(
     fallback_match
 }
 
-pub(crate) fn workspace_evaluation_for_replay(
+pub(crate) fn exact_boolean_evaluation_for_replay(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
@@ -2184,7 +2187,7 @@ impl ExactArrangementCellComplexShortcutFacts {
     }
 }
 
-/// Replayable source-scoped boolean facts retained for one workspace session.
+/// Replayable source-scoped boolean facts retained for one evaluation replay.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ExactBooleanSourceFacts {
     /// Trivial non-topological shortcut facts.
@@ -2352,9 +2355,8 @@ pub(crate) struct ExactBooleanEvaluation {
     certifications: ExactBooleanCertificationSet,
     /// Materialized exact result, when available under `request`.
     ///
-    /// Borrow through [`Self::materialized_result`] or from the retained
-    /// workspace cache with
-    /// [`ExactBooleanWorkspace::materialize_ref`](crate::workspace::ExactBooleanWorkspace::materialize_ref).
+    /// Borrow through [`Self::materialized_result`] when evaluation
+    /// materialized a certified result.
     result: Option<ExactBooleanResult>,
 }
 
@@ -2456,7 +2458,7 @@ impl ExactBooleanEvaluation {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = workspace_evaluation_for_replay(left, right, self.request)?;
+        let replay = exact_boolean_evaluation_for_replay(left, right, self.request)?;
         if &self.preflight != replay.preflight() || self.certifications != replay.certifications {
             return Err(ExactReportValidationError::SourceReplayMismatch);
         }
@@ -3231,9 +3233,8 @@ pub(crate) fn replay_selected_region_boolean_result(
     selection: ExactRegionSelection,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
-    let mut workspace = ExactBooleanWorkspace::new(left, right);
-    let graph = workspace.validated_graph()?;
-    replay_selected_region_boolean_result_from_graph(graph, left, right, selection, validation)
+    let graph = build_validated_intersection_graph(left, right)?;
+    replay_selected_region_boolean_result_from_graph(&graph, left, right, selection, validation)
 }
 
 fn replay_selected_region_boolean_result_from_graph(
@@ -6342,10 +6343,9 @@ pub(crate) fn adjacent_union_completion_certification(
             None,
         ));
     }
-    let mut workspace = ExactBooleanWorkspace::new(left, right);
-    let graph = workspace.validated_graph()?;
+    let graph = build_validated_intersection_graph(left, right)?;
     adjacent_union_completion_certification_from_graph(
-        graph,
+        &graph,
         left,
         right,
         operation,
@@ -7234,7 +7234,7 @@ fn boolean_convex_relation_meshes_optional_from_graph(
 
 /// Certify and materialize a named boolean for closed convex solids.
 ///
-/// This replay helper follows [`ExactBooleanWorkspace::materialize_ref`]
+/// This replay helper follows the retained exact materialization path
 /// precedence: it only materializes when preflight certifies the requested
 /// operation as a convex operation or convex relation shortcut. Inputs handled
 /// by earlier exact shortcuts, such as orthogonal-cell recovery or bounds
@@ -7370,10 +7370,9 @@ pub(crate) fn materialize_volumetric_coplanar_boundary_closure_output(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<(ExactMesh, ExactVolumetricBoundaryClosureReport)>, MeshError> {
-    let mut workspace = ExactBooleanWorkspace::new(left, right);
-    let graph = workspace.validated_graph()?;
+    let graph = build_validated_intersection_graph(left, right)?;
     materialize_volumetric_coplanar_boundary_closure_output_from_graph(
-        graph, left, right, operation, validation,
+        &graph, left, right, operation, validation,
     )
 }
 
@@ -9447,10 +9446,9 @@ pub(crate) fn replay_open_surface_arrangement_result(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let mut workspace = ExactBooleanWorkspace::new(left, right);
-    let graph = workspace.validated_graph()?;
+    let graph = build_validated_intersection_graph(left, right)?;
     let Some(result) =
-        open_surface_arrangement_result_from_graph(graph, left, right, operation, validation)?
+        open_surface_arrangement_result_from_graph(&graph, left, right, operation, validation)?
     else {
         return Ok(None);
     };

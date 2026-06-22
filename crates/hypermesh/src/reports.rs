@@ -27,7 +27,7 @@ use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanOperation, ExactBooleanRequest,
     ExactBoundaryBooleanPolicy, adjacent_union_completion_certification,
     boolean_coplanar_mesh_overlay_optional, boundary_policy_shortcut_result_matches_sources,
-    boundary_touching_report_from_graph,
+    boundary_touching_report_from_graph, exact_boolean_evaluation_for_replay,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
     materialize_volumetric_coplanar_boundary_closure_output,
@@ -38,7 +38,7 @@ use super::boolean::{
     replay_closed_same_surface_boolean_result_if_certified,
     replay_generic_arrangement_cell_complex_result, replay_open_surface_arrangement_result,
     replay_selected_region_boolean_result, same_surface_report_from_sources,
-    volumetric_boundary_closure_report_from_graph, workspace_evaluation_for_replay,
+    volumetric_boundary_closure_report_from_graph,
 };
 use super::bounds::AabbIntersectionKind;
 use super::cell_complex::{
@@ -2918,7 +2918,7 @@ fn arrangement_cell_complex_sources_match(
             return Ok(true);
         }
     }
-    let evaluation = workspace_evaluation_for_replay(
+    let evaluation = exact_boolean_evaluation_for_replay(
         left,
         right,
         ExactBooleanRequest::new(operation, validation),
@@ -3706,10 +3706,10 @@ impl ExactBooleanSupport {
 /// Preflight report for an exact boolean operation request.
 ///
 /// The report gives internal callers a stable way to audit the current
-/// implementation boundary. Shortcut variants are executable by
-/// [`ExactBooleanWorkspace::materialize_ref`]. For nontrivial named booleans,
-/// the report retains certified split-region plane classifications without
-/// dispatching to the specialized tolerance kernel.
+/// implementation boundary. Shortcut variants are retained as materializable
+/// exact results. For nontrivial named booleans, the report retains certified
+/// split-region plane classifications without dispatching to the specialized
+/// tolerance kernel.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ExactBooleanPreflight {
     /// Requested operation.
@@ -4083,7 +4083,7 @@ fn validate_winding_readiness_against_sources_for_request(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<(), ExactReportValidationError> {
-    if let Ok(evaluation) = workspace_evaluation_for_replay(left, right, request)
+    if let Ok(evaluation) = exact_boolean_evaluation_for_replay(left, right, request)
         && report == evaluation.certifications().winding_readiness()
     {
         return Ok(());
@@ -4769,7 +4769,7 @@ impl ExactRefinementReport {
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        if let Ok(evaluation) = workspace_evaluation_for_replay(left, right, request)
+        if let Ok(evaluation) = exact_boolean_evaluation_for_replay(left, right, request)
             && self == evaluation.certifications().refinement()
         {
             return Ok(());
@@ -5805,7 +5805,7 @@ impl ExactPlanarArrangementReport {
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        if let Ok(evaluation) = workspace_evaluation_for_replay(left, right, request)
+        if let Ok(evaluation) = exact_boolean_evaluation_for_replay(left, right, request)
             && self == evaluation.certifications().planar_arrangement()
         {
             return Ok(());
@@ -6766,7 +6766,7 @@ mod tests {
         let left = report_test_tetra([0, 0, 0]);
         let right = report_test_tetra([3, 0, 0]);
 
-        let preflight = workspace_evaluation_for_replay(
+        let preflight = exact_boolean_evaluation_for_replay(
             &left,
             &right,
             ExactBooleanRequest::new(
