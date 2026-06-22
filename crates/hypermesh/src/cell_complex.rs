@@ -144,7 +144,7 @@ pub(crate) struct ExactSelectedCellComplexCounts {
 
 /// Freshness status for a retained labeled cell complex.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactLabeledCellComplexFreshness {
+pub(crate) enum ExactLabeledCellComplexFreshness {
     /// The labeled complex replays exactly from the current source operands.
     Current,
     /// Rebuilding the arrangement from the source operands is currently blocked.
@@ -155,9 +155,9 @@ pub enum ExactLabeledCellComplexFreshness {
     StaleLabeledCells,
 }
 
-/// Region-ownership readiness for a retained labeled cell complex.
+/// Region-ownership status for a retained labeled cell complex.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactRegionOwnershipStatus {
+pub(crate) enum ExactRegionOwnershipStatus {
     /// Volume-region ownership resolves selection without per-face winding
     /// ambiguity.
     VolumeResolved,
@@ -192,7 +192,7 @@ impl ExactRegionOwnershipStatus {
 /// Compact exact ownership report for arrangement regions.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ExactRegionOwnershipReport {
-    /// Overall ownership readiness.
+    /// Overall ownership status.
     pub(crate) status: ExactRegionOwnershipStatus,
     /// Source replay freshness for the labeled cell complex.
     pub(crate) freshness: ExactLabeledCellComplexFreshness,
