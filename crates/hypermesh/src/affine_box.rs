@@ -28,15 +28,15 @@ use hyperreal::Real;
 /// the certificate: every source and output vertex must replay through it
 /// exactly before a copied boolean artifact is accepted.
 #[derive(Clone, Debug, PartialEq)]
-pub struct AffineBoxBasis {
+pub(crate) struct AffineBoxBasis {
     /// Exact 3D affine origin.
-    pub origin: Point3,
+    pub(crate) origin: Point3,
     /// Exact vector for the normalized `u` axis.
-    pub basis_u: Point3,
+    pub(crate) basis_u: Point3,
     /// Exact vector for the normalized `v` axis.
-    pub basis_v: Point3,
+    pub(crate) basis_v: Point3,
     /// Exact vector for the normalized `w` axis.
-    pub basis_w: Point3,
+    pub(crate) basis_w: Point3,
 }
 
 pub(crate) fn mesh_to_uvw(
