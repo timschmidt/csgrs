@@ -5185,6 +5185,14 @@ pub(crate) fn replay_boolean_exact_request_for_result_validation(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<ExactBooleanResult, MeshError> {
+    materialize_boolean_exact_request(left, right, request)
+}
+
+pub(crate) fn materialize_boolean_exact_request(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<ExactBooleanResult, MeshError> {
     materialize_boolean_exact_request_with_graph(left, right, request, None)
 }
 

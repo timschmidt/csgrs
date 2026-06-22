@@ -10,6 +10,9 @@ use super::adapter::{
 };
 use super::artifact::MeshArtifactManifest;
 use super::audit::{ExactMeshAuditReport, audit_exact_mesh};
+use super::boolean::{
+    ExactBooleanOperation, ExactBooleanRequest, materialize_boolean_exact_request,
+};
 use super::bounds::{BoundsValidationError, MeshBounds};
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::facts::{MeshFactsValidationError, MeshValidationFacts};
@@ -392,6 +395,50 @@ impl ExactMesh {
     /// Build an artifact manifest from this accepted exact mesh.
     pub fn artifact_manifest(&self) -> Result<MeshArtifactManifest, ExactMeshValidationError> {
         MeshArtifactManifest::from_exact_mesh(self)
+    }
+
+    /// Materialize the exact closed union of this mesh and `right`.
+    ///
+    /// This is the mesh-kernel convenience entry point for named booleans. It
+    /// returns only the output mesh; callers that need retained arrangement
+    /// evidence should use the lower-level internal kernel stages from csgrs.
+    pub fn union(&self, right: &ExactMesh) -> Result<ExactMesh, MeshError> {
+        self.named_boolean_mesh(
+            right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+    }
+
+    /// Materialize the exact closed intersection of this mesh and `right`.
+    ///
+    /// Lower-dimensional contact is regularized into the representable triangle
+    /// mesh result for the default closed output contract.
+    pub fn intersection(&self, right: &ExactMesh) -> Result<ExactMesh, MeshError> {
+        self.named_boolean_mesh(
+            right,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        )
+    }
+
+    /// Materialize the exact closed difference of this mesh minus `right`.
+    pub fn difference(&self, right: &ExactMesh) -> Result<ExactMesh, MeshError> {
+        self.named_boolean_mesh(
+            right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+        )
+    }
+
+    fn named_boolean_mesh(
+        &self,
+        right: &ExactMesh,
+        operation: ExactBooleanOperation,
+        validation: ValidationPolicy,
+    ) -> Result<ExactMesh, MeshError> {
+        let request = ExactBooleanRequest::new(operation, validation);
+        materialize_boolean_exact_request(self, right, request).map(|result| result.mesh().clone())
     }
 
     /// Build an artifact manifest for a proposal report that replays against
