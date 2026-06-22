@@ -9,7 +9,7 @@ use super::graph::{IntersectionGraphValidationError, SplitPlanDiagnosticKind};
 
 /// Policy for lower-dimensional arrangement remnants.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactLowerDimensionalPolicy {
+pub(crate) enum ExactLowerDimensionalPolicy {
     /// Drop lower-dimensional contacts from regularized solid output.
     Drop,
     /// Retain lower-dimensional contacts as separate artifacts.
@@ -20,7 +20,7 @@ pub enum ExactLowerDimensionalPolicy {
 
 /// Policy for exact predicates or constructions that do not resolve.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactUnresolvedPolicy {
+pub(crate) enum ExactUnresolvedPolicy {
     /// Block the operation when an exact decision is unresolved.
     Block,
     /// Retain unresolved evidence as an artifact for later replay.
@@ -29,7 +29,7 @@ pub enum ExactUnresolvedPolicy {
 
 /// Regularization policy for arrangement/cell-complex operations.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ExactRegularizationPolicy {
+pub(crate) struct ExactRegularizationPolicy {
     /// How lower-dimensional contacts are handled.
     pub(crate) lower_dimensional: ExactLowerDimensionalPolicy,
     /// How unresolved predicates/constructions are handled.
@@ -39,14 +39,14 @@ pub struct ExactRegularizationPolicy {
 impl ExactRegularizationPolicy {
     /// Regularized solid policy: drop lower-dimensional leftovers and block on
     /// unresolved exact decisions.
-    pub const REGULARIZED_SOLID: Self = Self {
+    pub(crate) const REGULARIZED_SOLID: Self = Self {
         lower_dimensional: ExactLowerDimensionalPolicy::Drop,
         unresolved: ExactUnresolvedPolicy::Block,
     };
 
     /// Diagnostic policy: keep lower-dimensional and unresolved evidence as
     /// artifacts where the downstream type can represent them.
-    pub const RETAIN_ARTIFACTS: Self = Self {
+    pub(crate) const RETAIN_ARTIFACTS: Self = Self {
         lower_dimensional: ExactLowerDimensionalPolicy::RetainArtifacts,
         unresolved: ExactUnresolvedPolicy::RetainArtifacts,
     };

@@ -191,79 +191,82 @@ impl ExactRegionOwnershipStatus {
 
 /// Compact exact ownership report for arrangement regions.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactRegionOwnershipReport {
+pub(crate) struct ExactRegionOwnershipReport {
     /// Overall ownership readiness.
-    pub status: ExactRegionOwnershipStatus,
+    pub(crate) status: ExactRegionOwnershipStatus,
     /// Source replay freshness for the labeled cell complex.
-    pub freshness: ExactLabeledCellComplexFreshness,
+    pub(crate) freshness: ExactLabeledCellComplexFreshness,
     /// Labeling blockers retained by the cell complex.
-    pub blockers: Vec<ExactArrangementBlocker>,
+    pub(crate) blockers: Vec<ExactArrangementBlocker>,
     /// Retained face-cell count.
-    pub face_cells: usize,
+    pub(crate) face_cells: usize,
     /// Boundary nodes across retained face cells.
-    pub face_cell_boundary_nodes: usize,
+    pub(crate) face_cell_boundary_nodes: usize,
     /// Boundary coordinates across retained face cells.
-    pub face_cell_boundary_points: usize,
+    pub(crate) face_cell_boundary_points: usize,
     /// Face-cells carried by the left source boundary.
-    pub left_boundary_faces: usize,
+    pub(crate) left_boundary_faces: usize,
     /// Face-cells carried by the right source boundary.
-    pub right_boundary_faces: usize,
+    pub(crate) right_boundary_faces: usize,
     /// Face-cells classified inside the opposite source.
-    pub opposite_inside_faces: usize,
+    pub(crate) opposite_inside_faces: usize,
     /// Face-cells classified outside the opposite source.
-    pub opposite_outside_faces: usize,
+    pub(crate) opposite_outside_faces: usize,
     /// Face-cells classified on the opposite boundary.
-    pub opposite_boundary_faces: usize,
+    pub(crate) opposite_boundary_faces: usize,
     /// Face-cells whose opposite ownership is still unknown.
-    pub opposite_unknown_faces: usize,
+    pub(crate) opposite_unknown_faces: usize,
     /// Retained volume-region count.
-    pub volume_regions: usize,
+    pub(crate) volume_regions: usize,
     /// Unbounded exterior volume-region count.
-    pub exterior_volume_regions: usize,
+    pub(crate) exterior_volume_regions: usize,
     /// Volume regions owned by the left source.
-    pub left_owned_volumes: usize,
+    pub(crate) left_owned_volumes: usize,
     /// Volume regions owned by the right source.
-    pub right_owned_volumes: usize,
+    pub(crate) right_owned_volumes: usize,
     /// Volume regions owned by both sources.
-    pub shared_owned_volumes: usize,
+    pub(crate) shared_owned_volumes: usize,
     /// Bounded volume regions not owned by either source.
-    pub unowned_bounded_volumes: usize,
+    pub(crate) unowned_bounded_volumes: usize,
     /// Retained volume adjacencies through shell components.
-    pub volume_adjacencies: usize,
+    pub(crate) volume_adjacencies: usize,
     /// Oriented face-side witnesses carried by retained volume adjacencies.
-    pub volume_adjacency_face_sides: usize,
+    pub(crate) volume_adjacency_face_sides: usize,
     /// Separating face-cell references carried by retained volume adjacencies.
-    pub volume_adjacency_separating_faces: usize,
+    pub(crate) volume_adjacency_separating_faces: usize,
     /// Whether retained volume adjacency evidence can drive every named
     /// Boolean selection without opposite-face winding labels.
-    pub volume_selection_resolved: bool,
+    pub(crate) volume_selection_resolved: bool,
     /// Whether retained volume adjacency evidence can drive union selection.
-    pub volume_union_resolved: bool,
+    pub(crate) volume_union_resolved: bool,
     /// Whether retained volume adjacency evidence can drive intersection
     /// selection.
-    pub volume_intersection_resolved: bool,
+    pub(crate) volume_intersection_resolved: bool,
     /// Whether retained volume adjacency evidence can drive difference
     /// selection.
-    pub volume_difference_resolved: bool,
+    pub(crate) volume_difference_resolved: bool,
     /// Retained lower-dimensional artifacts.
-    pub lower_dimensional_artifacts: usize,
+    pub(crate) lower_dimensional_artifacts: usize,
     /// Retained point-contact lower-dimensional artifacts.
-    pub lower_dimensional_point_contacts: usize,
+    pub(crate) lower_dimensional_point_contacts: usize,
     /// Retained edge-contact lower-dimensional artifacts.
-    pub lower_dimensional_edge_contacts: usize,
+    pub(crate) lower_dimensional_edge_contacts: usize,
     /// Endpoints carried by retained edge-contact artifacts.
-    pub lower_dimensional_edge_endpoints: usize,
+    pub(crate) lower_dimensional_edge_endpoints: usize,
 }
 
 impl ExactRegionOwnershipReport {
     /// Return whether retained exact evidence resolves region ownership.
-    pub fn is_resolved(&self) -> bool {
+    pub(crate) fn is_resolved(&self) -> bool {
         self.status.is_resolved()
     }
 
     /// Return whether retained volume-region evidence resolves this named
     /// operation even if other named operations still require winding.
-    pub fn volume_selection_resolves_operation(&self, operation: ExactBooleanOperation) -> bool {
+    pub(crate) fn volume_selection_resolves_operation(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> bool {
         match operation {
             ExactBooleanOperation::Union => self.volume_union_resolved,
             ExactBooleanOperation::Intersection => self.volume_intersection_resolved,
@@ -274,12 +277,12 @@ impl ExactRegionOwnershipReport {
 
     /// Return whether retained ownership evidence can select the requested
     /// operation without falling back to winding.
-    pub fn resolves_operation_selection(&self, operation: ExactBooleanOperation) -> bool {
+    pub(crate) fn resolves_operation_selection(&self, operation: ExactBooleanOperation) -> bool {
         self.is_resolved() || self.volume_selection_resolves_operation(operation)
     }
 
     /// Validate local ownership report shape without source replay.
-    pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
+    pub(crate) fn validate(&self) -> Result<(), ExactArrangementBlocker> {
         let expected_status = region_ownership_status(
             self.freshness,
             &self.blockers,
@@ -531,7 +534,7 @@ impl ExactLabeledCellComplex {
     }
 
     /// Report whether retained exact evidence resolves region ownership.
-    pub fn region_ownership_report(
+    pub(crate) fn region_ownership_report(
         &self,
         left: &super::mesh::ExactMesh,
         right: &super::mesh::ExactMesh,

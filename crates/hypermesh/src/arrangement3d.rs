@@ -1049,7 +1049,7 @@ impl<'a> ArrangementFaceCellRef<'a> {
 
 /// Freshness status for a retained exact 3D arrangement.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactArrangementFreshness {
+pub(crate) enum ExactArrangementFreshness {
     /// The arrangement replays exactly from the current source operands.
     Current,
     /// Rebuilding the arrangement from the source operands is currently blocked.
@@ -1060,7 +1060,7 @@ pub enum ExactArrangementFreshness {
 
 /// Exact topology-assembly bridge status for a retained arrangement.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactTopologyAssemblyStatus {
+pub(crate) enum ExactTopologyAssemblyStatus {
     /// The arrangement, split topology, and face-region loops replay from the
     /// source operands with no arrangement blockers.
     Complete,
@@ -1080,7 +1080,7 @@ pub enum ExactTopologyAssemblyStatus {
 impl ExactTopologyAssemblyStatus {
     /// Return whether retained arrangement topology completed the exact
     /// graph/split/region bridge.
-    pub const fn is_complete(self) -> bool {
+    pub(crate) const fn is_complete(self) -> bool {
         matches!(self, Self::Complete)
     }
 }
@@ -1088,87 +1088,87 @@ impl ExactTopologyAssemblyStatus {
 /// Compact retained-topology report connecting graph/split plans to arrangement
 /// topology.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactTopologyAssemblyReport {
+pub(crate) struct ExactTopologyAssemblyReport {
     /// Overall topology-assembly status.
-    pub status: ExactTopologyAssemblyStatus,
+    pub(crate) status: ExactTopologyAssemblyStatus,
     /// Source replay freshness for the retained arrangement.
-    pub freshness: ExactArrangementFreshness,
+    pub(crate) freshness: ExactArrangementFreshness,
     /// Arrangement blockers retained by the topology bridge.
-    pub blockers: Vec<ExactArrangementBlocker>,
+    pub(crate) blockers: Vec<ExactArrangementBlocker>,
     /// Retained face-pair records in the exact intersection graph.
-    pub graph_face_pairs: usize,
+    pub(crate) graph_face_pairs: usize,
     /// Retained exact intersection events in the graph.
-    pub graph_events: usize,
+    pub(crate) graph_events: usize,
     /// Merged graph vertices in the split topology plan.
-    pub split_graph_vertices: usize,
+    pub(crate) split_graph_vertices: usize,
     /// Ordered split-edge chains in the split topology plan.
-    pub split_edge_chains: usize,
+    pub(crate) split_edge_chains: usize,
     /// Graph-vertex references across all split-edge chains.
-    pub split_graph_vertex_references: usize,
+    pub(crate) split_graph_vertex_references: usize,
     /// Split vertex lookups that could not be resolved.
-    pub unresolved_vertex_lookups: usize,
+    pub(crate) unresolved_vertex_lookups: usize,
     /// Equality checks that could not be certified while merging split points.
-    pub unresolved_equalities: usize,
+    pub(crate) unresolved_equalities: usize,
     /// Edge parameter comparisons that could not be certified.
-    pub unknown_orderings: usize,
+    pub(crate) unknown_orderings: usize,
     /// Retained face-region boundary loops.
-    pub region_boundaries: usize,
+    pub(crate) region_boundaries: usize,
     /// Boundary nodes across retained face-region loops.
-    pub region_boundary_nodes: usize,
+    pub(crate) region_boundary_nodes: usize,
     /// Arrangement vertices retained for topology consumers.
-    pub arrangement_vertices: usize,
+    pub(crate) arrangement_vertices: usize,
     /// Arrangement edges retained for topology consumers.
-    pub arrangement_edges: usize,
+    pub(crate) arrangement_edges: usize,
     /// Arrangement face cells retained for topology consumers.
-    pub arrangement_face_cells: usize,
+    pub(crate) arrangement_face_cells: usize,
     /// Boundary nodes across retained arrangement face cells.
-    pub arrangement_face_cell_boundary_nodes: usize,
+    pub(crate) arrangement_face_cell_boundary_nodes: usize,
     /// Boundary coordinates across retained arrangement face cells.
-    pub arrangement_face_cell_boundary_points: usize,
+    pub(crate) arrangement_face_cell_boundary_points: usize,
     /// Connected arrangement shell/region components retained for topology.
-    pub arrangement_regions: usize,
+    pub(crate) arrangement_regions: usize,
     /// Face-cell memberships across retained arrangement regions.
-    pub arrangement_region_face_cells: usize,
+    pub(crate) arrangement_region_face_cells: usize,
     /// Adjacency pairs across retained arrangement regions.
-    pub arrangement_region_adjacencies: usize,
+    pub(crate) arrangement_region_adjacencies: usize,
     /// Edge incidences across retained arrangement regions.
-    pub arrangement_region_edge_incidences: usize,
+    pub(crate) arrangement_region_edge_incidences: usize,
     /// Oriented sides across retained arrangement regions.
-    pub arrangement_region_oriented_sides: usize,
+    pub(crate) arrangement_region_oriented_sides: usize,
     /// Boundary edges across retained arrangement regions.
-    pub arrangement_region_boundary_edges: usize,
+    pub(crate) arrangement_region_boundary_edges: usize,
     /// Non-manifold edges across retained arrangement regions.
-    pub arrangement_region_non_manifold_edges: usize,
+    pub(crate) arrangement_region_non_manifold_edges: usize,
     /// Retained carrier-plane overlays.
-    pub carrier_plane_overlays: usize,
+    pub(crate) carrier_plane_overlays: usize,
     /// Retained per-source-face plane arrangements.
-    pub face_plane_arrangements: usize,
+    pub(crate) face_plane_arrangements: usize,
     /// Lower-dimensional artifacts retained under regularization policy.
-    pub lower_dimensional_artifacts: usize,
+    pub(crate) lower_dimensional_artifacts: usize,
     /// Retained point-contact lower-dimensional artifacts.
-    pub lower_dimensional_point_contacts: usize,
+    pub(crate) lower_dimensional_point_contacts: usize,
     /// Retained edge-contact lower-dimensional artifacts.
-    pub lower_dimensional_edge_contacts: usize,
+    pub(crate) lower_dimensional_edge_contacts: usize,
     /// Endpoints carried by retained edge-contact artifacts.
-    pub lower_dimensional_edge_endpoints: usize,
+    pub(crate) lower_dimensional_edge_endpoints: usize,
     /// Explicit volume regions retained by the arrangement.
-    pub volume_regions: usize,
+    pub(crate) volume_regions: usize,
     /// Explicit volume adjacencies retained by the arrangement.
-    pub volume_adjacencies: usize,
+    pub(crate) volume_adjacencies: usize,
     /// Oriented face-side witnesses carried by retained volume adjacencies.
-    pub volume_adjacency_face_sides: usize,
+    pub(crate) volume_adjacency_face_sides: usize,
     /// Separating face-cell references carried by retained volume adjacencies.
-    pub volume_adjacency_separating_faces: usize,
+    pub(crate) volume_adjacency_separating_faces: usize,
 }
 
 impl ExactTopologyAssemblyReport {
     /// Return whether this report represents a complete topology bridge.
-    pub fn is_complete(&self) -> bool {
+    pub(crate) fn is_complete(&self) -> bool {
         self.status.is_complete()
     }
 
     /// Validate local topology-assembly report shape without source replay.
-    pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
+    pub(crate) fn validate(&self) -> Result<(), ExactArrangementBlocker> {
         let has_non_ownership_blocker = self
             .blockers
             .iter()
@@ -1605,19 +1605,6 @@ impl ExactArrangement3d {
         } else {
             Err(ExactArrangementBlocker::UnresolvedIntersection)
         }
-    }
-
-    /// Classify whether this retained arrangement is fresh for the source operands.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> ExactArrangementFreshness {
-        self.freshness_against_sources_with_policy(
-            left,
-            right,
-            ExactRegularizationPolicy::default(),
-        )
     }
 
     /// Classify arrangement freshness under an explicit regularization policy.
@@ -5689,7 +5676,11 @@ mod tests {
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
         assert_eq!(
-            arrangement.freshness_against_sources(&left, &right),
+            arrangement.freshness_against_sources_with_policy(
+                &left,
+                &right,
+                ExactRegularizationPolicy::default()
+            ),
             ExactArrangementFreshness::StaleArrangement
         );
     }

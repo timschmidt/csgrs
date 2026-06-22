@@ -21,16 +21,16 @@ use hyperreal::Real;
 
 /// Validation result for a triangle mesh.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ValidationReport {
+pub(crate) struct ValidationReport {
     /// Exact facts collected during validation.
-    pub facts: MeshValidationFacts,
+    pub(crate) facts: MeshValidationFacts,
     /// Diagnostics collected during validation.
-    pub diagnostics: Vec<MeshDiagnostic>,
+    pub(crate) diagnostics: Vec<MeshDiagnostic>,
 }
 
 /// Boundary policy for mesh validation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum BoundaryPolicy {
+pub(crate) enum BoundaryPolicy {
     /// Every undirected edge must have exactly two incident faces.
     Closed,
     /// Boundary edges are allowed, but nonmanifold edges and vertex links are
@@ -75,7 +75,7 @@ impl Default for ValidationPolicy {
 
 impl ValidationReport {
     /// Return whether the report contains no error diagnostics.
-    pub fn is_valid(&self) -> bool {
+    pub(crate) fn is_valid(&self) -> bool {
         self.diagnostics
             .iter()
             .all(|diagnostic| diagnostic.severity != Severity::Error)

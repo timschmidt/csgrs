@@ -1549,14 +1549,14 @@ fn split_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> MeshErr
 
 /// Validation report for exact split topology and face split plans.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct SplitPlanValidationReport {
+pub(crate) struct SplitPlanValidationReport {
     /// Diagnostics collected during validation.
-    pub diagnostics: Vec<SplitPlanDiagnostic>,
+    pub(crate) diagnostics: Vec<SplitPlanDiagnostic>,
 }
 
 impl SplitPlanValidationReport {
     /// Return whether the checked split plan is ready for the next exact stage.
-    pub fn is_valid(&self) -> bool {
+    pub(crate) fn is_valid(&self) -> bool {
         self.diagnostics.is_empty()
     }
 }
