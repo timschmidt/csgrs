@@ -811,8 +811,8 @@ impl FacePairEvents {
             return None;
         }
 
-        let mut edge_overlaps = Vec::new();
-        let mut vertex_overlaps = Vec::new();
+        let mut edge_overlaps = Vec::with_capacity(self.events.len());
+        let mut vertex_overlaps = Vec::with_capacity(self.events.len());
         for event in &self.events {
             match event {
                 IntersectionEvent::CoplanarEdge {
