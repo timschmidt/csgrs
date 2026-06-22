@@ -196,7 +196,6 @@ enum SweepDirection {
 struct SweepPlan {
     axis: Axis,
     direction: SweepDirection,
-    cost: usize,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -306,7 +305,7 @@ impl<'a> PreparedMeshBounds<'a> {
         if !self.mesh_bounds_may_overlap(other) {
             return CandidateFacePairPlan::empty();
         }
-        if let Some(sweep) = self.best_sweep_plan(other) {
+        if let Some(sweep) = self.sweep_plan(other) {
             return CandidateFacePairPlan {
                 mesh_bounds_overlap: true,
                 sweep: Some(sweep),
@@ -388,64 +387,40 @@ impl<'a> PreparedMeshBounds<'a> {
         Ok(())
     }
 
-    fn best_sweep_plan(&self, other: &PreparedMeshBounds<'_>) -> Option<SweepPlan> {
-        let mut best_plan = None;
-        for axis in [Axis::X, Axis::Y, Axis::Z] {
-            best_plan = choose_better_sweep_plan(
-                best_plan,
-                self.sweep_plan_for_axis(other, axis, SweepDirection::LeftDriven),
-            );
-            best_plan = choose_better_sweep_plan(
-                best_plan,
-                other.sweep_plan_for_axis(self, axis, SweepDirection::RightDriven),
-            );
+    fn sweep_plan(&self, other: &PreparedMeshBounds<'_>) -> Option<SweepPlan> {
+        let directions = if self.bounds.faces.len() <= other.bounds.faces.len() {
+            [SweepDirection::LeftDriven, SweepDirection::RightDriven]
+        } else {
+            [SweepDirection::RightDriven, SweepDirection::LeftDriven]
+        };
+        for direction in directions {
+            for axis in Axis::ALL {
+                if self.sweep_axis_is_usable(other, axis, direction) {
+                    return Some(SweepPlan { axis, direction });
+                }
+            }
         }
-        best_plan
+        None
     }
 
-    fn sweep_plan_for_axis(
+    fn sweep_axis_is_usable(
         &self,
         other: &PreparedMeshBounds<'_>,
         axis: Axis,
         direction: SweepDirection,
-    ) -> Option<SweepPlan> {
-        let interval_pairs = self.interval_candidate_pair_count_sweep_axis(other, axis)?;
-        let cost = interval_pairs.checked_add(self.bounds.faces.len())?;
-        Some(SweepPlan {
-            axis,
-            direction,
-            cost,
-        })
-    }
-
-    fn interval_candidate_pair_count_sweep_axis(
-        &self,
-        other: &PreparedMeshBounds<'_>,
-        axis: Axis,
-    ) -> Option<usize> {
-        let left_min_order = self.min_axis_order(axis)?;
-        let left_max_order = self.max_axis_order(axis)?;
-        let right_min_order = other.min_axis_order(axis)?;
-        let right_max_order = other.max_axis_order(axis)?;
-        let starts_before_left_ends = count_ordered_axis_bounds(
-            left_max_order,
-            self.axis_intervals(axis),
-            AxisBound::Max,
-            right_min_order,
-            other.axis_intervals(axis),
-            AxisBound::Min,
-            AxisBoundCount::LessOrEqual,
-        )?;
-        let ends_before_left_starts = count_ordered_axis_bounds(
-            left_min_order,
-            self.axis_intervals(axis),
-            AxisBound::Min,
-            right_max_order,
-            other.axis_intervals(axis),
-            AxisBound::Max,
-            AxisBoundCount::Less,
-        )?;
-        starts_before_left_ends.checked_sub(ends_before_left_starts)
+    ) -> bool {
+        match direction {
+            SweepDirection::LeftDriven => {
+                self.min_axis_order(axis).is_some()
+                    && other.min_axis_order(axis).is_some()
+                    && other.max_axis_order(axis).is_some()
+            }
+            SweepDirection::RightDriven => {
+                other.min_axis_order(axis).is_some()
+                    && self.min_axis_order(axis).is_some()
+                    && self.max_axis_order(axis).is_some()
+            }
+        }
     }
 
     fn try_visit_candidate_face_pairs_sweep_axis<E>(
@@ -641,12 +616,6 @@ enum AxisBound {
     Max,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum AxisBoundCount {
-    Less,
-    LessOrEqual,
-}
-
 fn face_axis_intervals(faces: &[ExactAabb3], axis: Axis) -> Vec<FaceAxisInterval<'_>> {
     faces
         .iter()
@@ -676,52 +645,6 @@ fn sorted_face_indices_by_axis_bound(
         }
     });
     decided.then_some(indices)
-}
-
-fn choose_better_sweep_plan(
-    current: Option<SweepPlan>,
-    candidate: Option<SweepPlan>,
-) -> Option<SweepPlan> {
-    match (current, candidate) {
-        (None, candidate) => candidate,
-        (Some(current), None) => Some(current),
-        (Some(current), Some(candidate)) => {
-            if candidate.cost < current.cost {
-                Some(candidate)
-            } else {
-                Some(current)
-            }
-        }
-    }
-}
-
-fn count_ordered_axis_bounds(
-    query_order: &[usize],
-    query_intervals: &[FaceAxisInterval<'_>],
-    query_bound: AxisBound,
-    value_order: &[usize],
-    value_intervals: &[FaceAxisInterval<'_>],
-    value_bound: AxisBound,
-    count: AxisBoundCount,
-) -> Option<usize> {
-    let mut total = 0usize;
-    let mut values_before_query = 0usize;
-    for &query in query_order {
-        let query_value = axis_bound(query_intervals[query], query_bound);
-        while let Some(&value) = value_order.get(values_before_query) {
-            let ordering = compare(axis_bound(value_intervals[value], value_bound), query_value)?;
-            let retain_value = match count {
-                AxisBoundCount::Less => ordering == Ordering::Less,
-                AxisBoundCount::LessOrEqual => ordering != Ordering::Greater,
-            };
-            if !retain_value {
-                break;
-            }
-            values_before_query += 1;
-        }
-        total = total.checked_add(values_before_query)?;
-    }
-    Some(total)
 }
 
 fn axis_bound(interval: FaceAxisInterval<'_>, bound: AxisBound) -> &Real {
@@ -948,7 +871,7 @@ mod tests {
 
         assert_eq!(
             prepared_left
-                .best_sweep_plan(&prepared_right)
+                .sweep_plan(&prepared_right)
                 .unwrap()
                 .direction,
             SweepDirection::RightDriven
