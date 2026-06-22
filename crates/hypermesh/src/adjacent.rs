@@ -26,7 +26,8 @@ use hyperlimit::{
 
 use super::adjacent_polygon::polygon_patch_pairs;
 use super::graph::{
-    ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph,
+    ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide,
+    build_validated_intersection_graph,
 };
 use super::intersection::MeshFacePairRelation;
 use super::mesh::{ExactMesh, ExactMeshValidationError, Triangle};
@@ -190,8 +191,7 @@ fn full_face_adjacent_union_certificate(
     if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
         return None;
     }
-    let graph = build_intersection_graph(left, right).ok()?;
-    graph.validate_against_meshes(left, right).ok()?;
+    let graph = build_validated_intersection_graph(left, right).ok()?;
     full_face_adjacent_union_certificate_from_graph(left, right, &graph)
 }
 

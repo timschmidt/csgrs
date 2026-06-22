@@ -24,7 +24,8 @@ use hyperlimit::{
 use super::arrangement2d::{ExactArrangement2dBoundaryPolicy, ExactArrangement2dSetOperation};
 use super::boolean::{coplanar_mesh_overlay_carrier, materialize_coplanar_mesh_overlay_mesh};
 use super::graph::{
-    ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph,
+    ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide,
+    build_validated_intersection_graph,
 };
 use super::intersection::MeshFacePairRelation;
 use super::mesh::{ExactMesh, ExactMeshValidationError, Triangle};
@@ -185,8 +186,7 @@ fn contained_face_adjacent_union_certificate(
     if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
         return None;
     }
-    let graph = build_intersection_graph(left, right).ok()?;
-    graph.validate_against_meshes(left, right).ok()?;
+    let graph = build_validated_intersection_graph(left, right).ok()?;
     if graph.has_unknowns() || graph.face_pairs.is_empty() {
         return None;
     }
