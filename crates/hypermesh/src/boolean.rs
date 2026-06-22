@@ -1228,7 +1228,7 @@ pub(crate) struct ExactBooleanCertificationSet {
 }
 
 impl ExactBooleanCertificationSet {
-    /// Return the planar-arrangement readiness certification report.
+    /// Return the planar-arrangement evidence certification report.
     #[cfg(test)]
     pub(crate) fn planar_arrangement(&self) -> &ExactPlanarArrangementReport {
         &self.planar_arrangement
@@ -1674,7 +1674,7 @@ impl ExactBooleanCertificationSet {
             && preflight.region_count == 0
             && preflight.region_classifications.is_empty()
             && preflight.blocker.is_none()
-            && preflight.arrangement_readiness.is_none()
+            && preflight.coplanar_arrangement_evidence.is_none()
     }
 
     fn open_surface_disjoint_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
@@ -1685,7 +1685,7 @@ impl ExactBooleanCertificationSet {
             && preflight.region_count == 0
             && preflight.region_classifications.is_empty()
             && preflight.blocker.is_none()
-            && preflight.arrangement_readiness.is_none()
+            && preflight.coplanar_arrangement_evidence.is_none()
             && preflight.coplanar_volumetric_evidence.is_none()
     }
 
@@ -1697,8 +1697,8 @@ impl ExactBooleanCertificationSet {
             && preflight.region_count == 0
             && preflight.region_classifications.is_empty()
             && preflight.blocker.as_ref() == Some(self.planar_arrangement.blocker())
-            && preflight.arrangement_readiness.as_ref()
-                == self.planar_arrangement.arrangement_readiness()
+            && preflight.coplanar_arrangement_evidence.as_ref()
+                == self.planar_arrangement.coplanar_arrangement_evidence()
             && preflight.coplanar_volumetric_evidence.is_none()
     }
 
@@ -1715,11 +1715,14 @@ impl ExactBooleanCertificationSet {
             && preflight.retained_face_pairs == self.winding_readiness.retained_face_pairs()
             && preflight.retained_events == self.winding_readiness.retained_events()
             && preflight.blocker.is_none()
-            && preflight.arrangement_readiness.is_none()
+            && preflight.coplanar_arrangement_evidence.is_none()
             && preflight.coplanar_volumetric_evidence.is_none()
             && self.winding_readiness.region_count() == 0
             && self.winding_readiness.region_classifications().is_empty()
-            && self.winding_readiness.arrangement_readiness().is_none()
+            && self
+                .winding_readiness
+                .coplanar_arrangement_evidence()
+                .is_none()
             && self
                 .winding_readiness
                 .coplanar_volumetric_evidence()
@@ -1759,7 +1762,7 @@ impl ExactBooleanCertificationSet {
             && preflight.retained_events == self.boundary_touching.retained_events
             && preflight.region_count == 0
             && preflight.region_classifications.is_empty()
-            && preflight.arrangement_readiness.is_none()
+            && preflight.coplanar_arrangement_evidence.is_none()
             && preflight.coplanar_volumetric_evidence.is_none()
             && if requires_blocker {
                 preflight.blocker.as_ref() == Some(&self.boundary_touching.blocker)
@@ -1785,7 +1788,7 @@ impl ExactBooleanCertificationSet {
                         && preflight.region_classifications
                             == self.winding_readiness.region_classifications()
                         && preflight.blocker.is_none()
-                        && preflight.arrangement_readiness.is_none()
+                        && preflight.coplanar_arrangement_evidence.is_none()
                         && preflight.coplanar_volumetric_evidence.is_some()
                         && preflight.coplanar_volumetric_evidence.as_ref()
                             == self.winding_readiness.coplanar_volumetric_evidence())))
@@ -1816,7 +1819,7 @@ impl ExactBooleanCertificationSet {
             && preflight.region_count == self.winding_readiness.region_count()
             && preflight.region_classifications == self.winding_readiness.region_classifications()
             && preflight.blocker.is_none()
-            && preflight.arrangement_readiness.is_none()
+            && preflight.coplanar_arrangement_evidence.is_none()
             && preflight.coplanar_volumetric_evidence.is_none()
             && self
                 .winding_readiness
@@ -1829,7 +1832,7 @@ impl ExactBooleanCertificationSet {
                 && preflight.region_count != 0
                 && !preflight.region_classifications.is_empty()
                 && preflight.blocker.is_none()
-                && preflight.arrangement_readiness.is_none()
+                && preflight.coplanar_arrangement_evidence.is_none()
                 && preflight.coplanar_volumetric_evidence.is_none())
     }
 
@@ -1912,7 +1915,7 @@ impl ExactBooleanCertificationSet {
             && preflight.region_count == 0
             && preflight.region_classifications.is_empty()
             && preflight.blocker.is_none()
-            && preflight.arrangement_readiness.is_none()
+            && preflight.coplanar_arrangement_evidence.is_none()
     }
 
     fn winding_handoff_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
@@ -1922,7 +1925,7 @@ impl ExactBooleanCertificationSet {
             && preflight.region_count == self.winding_readiness.region_count()
             && preflight.region_classifications == self.winding_readiness.region_classifications()
             && preflight.blocker.as_ref() == Some(self.winding_readiness.blocker())
-            && preflight.arrangement_readiness.is_none()
+            && preflight.coplanar_arrangement_evidence.is_none()
             && preflight.coplanar_volumetric_evidence.as_ref()
                 == self.winding_readiness.coplanar_volumetric_evidence()
     }
@@ -2067,7 +2070,7 @@ impl ExactBooleanCertificationSet {
             && preflight.region_count == self.winding_readiness.region_count()
             && preflight.region_classifications == self.winding_readiness.region_classifications()
             && preflight.blocker.is_none()
-            && preflight.arrangement_readiness.is_none()
+            && preflight.coplanar_arrangement_evidence.is_none()
             && preflight.coplanar_volumetric_evidence.as_ref()
                 == self.winding_readiness.coplanar_volumetric_evidence()
             && self
@@ -2104,8 +2107,8 @@ impl ExactBooleanCertificationSet {
                         && preflight.retained_events == self.winding_readiness.retained_events()
                         && region_handoff_matches
                         && preflight.blocker.is_none()
-                        && preflight.arrangement_readiness.as_ref()
-                            == self.winding_readiness.arrangement_readiness()
+                        && preflight.coplanar_arrangement_evidence.as_ref()
+                            == self.winding_readiness.coplanar_arrangement_evidence()
                         && preflight.coplanar_volumetric_evidence.as_ref()
                             == self.winding_readiness.coplanar_volumetric_evidence()
                 })
@@ -3601,7 +3604,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             region_count: 0,
             region_classifications: Vec::new(),
             blocker: Some(relation_counts.into_blocker(ExactBooleanBlockerKind::NeedsRefinement)),
-            arrangement_readiness: None,
+            coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: None,
         });
     }
@@ -3619,7 +3622,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             region_count: region_plan.regions.len(),
             region_classifications,
             blocker: None,
-            arrangement_readiness: None,
+            coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: None,
         });
     }
@@ -3861,7 +3864,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             region_count,
             region_classifications,
             blocker: None,
-            arrangement_readiness: None,
+            coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: None,
         });
     }
@@ -3876,7 +3879,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             region_count: 0,
             region_classifications: Vec::new(),
             blocker: Some(boundary_report.blocker),
-            arrangement_readiness: None,
+            coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: None,
         });
     }
@@ -3902,7 +3905,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             region_count: 0,
             region_classifications: Vec::new(),
             blocker: Some(planar_report.blocker),
-            arrangement_readiness: planar_report.arrangement_readiness,
+            coplanar_arrangement_evidence: planar_report.coplanar_arrangement_evidence,
             coplanar_volumetric_evidence: None,
         });
     }
@@ -4005,7 +4008,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
                 region_count: winding_readiness.region_count,
                 region_classifications: winding_readiness.region_classifications,
                 blocker: Some(winding_readiness.blocker),
-                arrangement_readiness: winding_readiness.arrangement_readiness,
+                coplanar_arrangement_evidence: winding_readiness.coplanar_arrangement_evidence,
                 coplanar_volumetric_evidence: winding_readiness.coplanar_volumetric_evidence,
             });
         }
@@ -4020,7 +4023,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             blocker: Some(
                 relation_counts.into_blocker(ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells),
             ),
-            arrangement_readiness: None,
+            coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
                 &graph, left, right,
             ),
@@ -4038,7 +4041,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             blocker: Some(
                 relation_counts.into_blocker(ExactBooleanBlockerKind::NeedsBoundaryPolicy),
             ),
-            arrangement_readiness: None,
+            coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: None,
         });
     }
@@ -4078,7 +4081,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         region_count: winding_report.region_count,
         region_classifications: winding_report.region_classifications,
         blocker: Some(winding_report.blocker),
-        arrangement_readiness: None,
+        coplanar_arrangement_evidence: None,
         coplanar_volumetric_evidence: winding_report.coplanar_volumetric_evidence,
     })
 }
@@ -4505,7 +4508,7 @@ fn certified_preflight(
         region_count: 0,
         region_classifications: Vec::new(),
         blocker: None,
-        arrangement_readiness: None,
+        coplanar_arrangement_evidence: None,
         coplanar_volumetric_evidence,
     }
 }
@@ -5233,7 +5236,7 @@ fn materialize_arrangement_lower_dimensional_intersection_from_graph(
     readiness.validate().map_err(|error| {
         ExactMeshError::one(ExactMeshBlocker::new(
             ExactMeshBlockerKind::UnsupportedExactOperation,
-            format!("exact arrangement lower-dimensional readiness validation failed: {error:?}"),
+            format!("exact arrangement lower-dimensional evidence validation failed: {error:?}"),
         ))
     })?;
     if !matches!(
@@ -10384,10 +10387,10 @@ fn planar_arrangement_report_from_graph_with_cell_complex_cache(
 
     let graph_had_unknowns = graph.has_unknowns();
     let counts = retained_graph_counts(graph);
-    let arrangement_readiness = if graph_had_unknowns {
+    let coplanar_arrangement_evidence = if graph_had_unknowns {
         None
     } else {
-        Some(graph.coplanar_arrangement_readiness_report(left, right)?)
+        Some(graph.coplanar_arrangement_evidence(left, right)?)
     };
     let requires_planar_arrangement = !graph.face_pairs.is_empty()
         && graph.face_pairs.iter().all(|pair| {
@@ -10438,7 +10441,7 @@ fn planar_arrangement_report_from_graph_with_cell_complex_cache(
         graph.face_pairs.len(),
         graph.event_count(),
         counts,
-        arrangement_readiness,
+        coplanar_arrangement_evidence,
     ))
 }
 
@@ -10463,7 +10466,7 @@ fn planar_arrangement_report(
     retained_face_pairs: usize,
     retained_events: usize,
     counts: ExactBooleanBlocker,
-    arrangement_readiness: Option<super::graph::CoplanarArrangementReadinessReport>,
+    coplanar_arrangement_evidence: Option<super::graph::CoplanarArrangementEvidence>,
 ) -> ExactPlanarArrangementReport {
     let blocker_kind = match status {
         ExactPlanarArrangementStatus::GraphUnknowns => ExactBooleanBlockerKind::NeedsRefinement,
@@ -10482,7 +10485,7 @@ fn planar_arrangement_report(
         retained_face_pairs,
         retained_events,
         blocker: counts.into_blocker(blocker_kind),
-        arrangement_readiness,
+        coplanar_arrangement_evidence,
     }
 }
 
@@ -10879,7 +10882,7 @@ fn winding_readiness_report_from_graph_with_facts(
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::NeedsPlanarArrangement),
-            planar_report.arrangement_readiness,
+            planar_report.coplanar_arrangement_evidence,
             None,
         ));
     }
@@ -10893,7 +10896,7 @@ fn winding_readiness_report_from_graph_with_facts(
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::NeedsPlanarArrangement),
-            planar_report.arrangement_readiness,
+            planar_report.coplanar_arrangement_evidence,
             None,
         ));
     }
@@ -11113,7 +11116,7 @@ fn winding_readiness_report(
     region_count: usize,
     region_classifications: Vec<FaceRegionPlaneClassification>,
     blocker: ExactBooleanBlocker,
-    arrangement_readiness: Option<super::graph::CoplanarArrangementReadinessReport>,
+    coplanar_arrangement_evidence: Option<super::graph::CoplanarArrangementEvidence>,
     coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 ) -> ExactWindingReadinessReport {
     ExactWindingReadinessReport {
@@ -11125,7 +11128,7 @@ fn winding_readiness_report(
         region_count,
         region_classifications,
         blocker,
-        arrangement_readiness,
+        coplanar_arrangement_evidence,
         coplanar_volumetric_evidence,
     }
 }
@@ -13716,7 +13719,7 @@ mod tests {
                 unknown_pairs: 0,
                 construction_failed_events: 0,
             },
-            arrangement_readiness: None,
+            coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: None,
         };
         assert!(ready_report.is_ready());

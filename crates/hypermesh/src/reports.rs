@@ -51,7 +51,7 @@ use super::convex::{
 };
 use super::graph::MeshSide;
 use super::graph::{
-    CoplanarArrangementReadinessReport, CoplanarArrangementReadinessStatus, ExactIntersectionGraph,
+    CoplanarArrangementEvidence, CoplanarArrangementEvidenceStatus, ExactIntersectionGraph,
     IntersectionEvent, build_validated_intersection_graph,
 };
 use super::intersection::MeshFacePairRelation;
@@ -189,14 +189,14 @@ pub(crate) enum ExactReportValidationError {
     /// retained relation count.
     MissingRelationCount,
     /// A planar-arrangement report did not retain the checked coplanar graph
-    /// readiness summary required for its status.
-    MissingArrangementReadiness,
-    /// A planar-arrangement report retained a readiness summary where none is
+    /// evidence summary required for its status.
+    MissingCoplanarArrangementEvidence,
+    /// A planar-arrangement report retained an evidence summary where none is
     /// coherent for its status.
-    UnexpectedArrangementReadiness,
-    /// A retained planar-arrangement readiness summary failed its own count
+    UnexpectedCoplanarArrangementEvidence,
+    /// A retained planar-arrangement evidence summary failed its own count
     /// audit.
-    InvalidArrangementReadiness,
+    InvalidCoplanarArrangementEvidence,
     /// A coplanar-volumetric blocker did not retain its source-aware evidence.
     MissingCoplanarVolumetricEvidence,
     /// Coplanar-volumetric evidence was retained for a report state that
@@ -212,9 +212,9 @@ pub(crate) enum ExactReportValidationError {
     /// The report status contradicts retained preconditions, relation counts,
     /// operation class, or graph evidence.
     StatusEvidenceMismatch,
-    /// Planar-arrangement blocker counts and retained readiness counts
+    /// Planar-arrangement blocker counts and retained evidence counts
     /// disagree.
-    ArrangementReadinessMismatch,
+    CoplanarArrangementEvidenceMismatch,
     /// A same-surface report retained a non-bijective vertex permutation.
     InvalidPermutation,
     /// A certified same-surface report retained unequal remapped triangle sets.
@@ -301,11 +301,11 @@ fn validate_retained_graph_count_shape(
     }
 }
 
-fn validate_arrangement_readiness_matches_blocker(
-    readiness: &CoplanarArrangementReadinessReport,
+fn validate_coplanar_arrangement_evidence_matches_blocker(
+    readiness: &CoplanarArrangementEvidence,
     blocker: &ExactBooleanBlocker,
 ) -> Result<(), ExactReportValidationError> {
-    // The compact readiness report and blocker are two projections of the same
+    // The compact evidence report and blocker are two projections of the same
     // exact graph state; downstream planar-cell or winding checks must not
     // consume a summary with relabeled graph counts.
     if readiness.overlapping_graphs != blocker.coplanar_overlapping_pairs
@@ -314,9 +314,9 @@ fn validate_arrangement_readiness_matches_blocker(
             != blocker
                 .coplanar_overlapping_pairs
                 .checked_add(blocker.coplanar_touching_pairs)
-                .ok_or(ExactReportValidationError::ArrangementReadinessMismatch)?
+                .ok_or(ExactReportValidationError::CoplanarArrangementEvidenceMismatch)?
     {
-        Err(ExactReportValidationError::ArrangementReadinessMismatch)
+        Err(ExactReportValidationError::CoplanarArrangementEvidenceMismatch)
     } else {
         Ok(())
     }
@@ -3561,7 +3561,7 @@ pub(crate) struct ExactBooleanPreflight {
     ///
     /// This keeps positive-area coplanar graph evidence visible to structured
     /// replay instead of flattening it into a generic "unsupported" boolean.
-    pub(crate) arrangement_readiness: Option<CoplanarArrangementReadinessReport>,
+    pub(crate) coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
     /// Source-aware coplanar volumetric-cell evidence retained when the
     /// preflight crosses that exact boundary.
     ///
@@ -3597,7 +3597,7 @@ pub(crate) enum ExactVolumetricBoundaryClosureStatus {
     BoundaryClosureBlocked(ExactArrangementBlocker),
 }
 
-/// Auditable closure-readiness report for volumetric split-cell output.
+/// Auditable closure-evidence report for volumetric split-cell output.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ExactVolumetricBoundaryClosureReport {
     /// Requested named operation.
@@ -3980,8 +3980,8 @@ impl ExactBooleanPreflight {
                 if self.blocker.is_some() {
                     return Err(ExactReportValidationError::CertifiedReportHasBlocker);
                 }
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
@@ -4013,8 +4013,8 @@ impl ExactBooleanPreflight {
                 if self.blocker.is_some() {
                     return Err(ExactReportValidationError::CertifiedReportHasBlocker);
                 }
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
@@ -4032,8 +4032,8 @@ impl ExactBooleanPreflight {
                 if self.blocker.is_some() {
                     return Err(ExactReportValidationError::CertifiedReportHasBlocker);
                 }
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
@@ -4064,7 +4064,7 @@ impl ExactBooleanPreflight {
                     || self.graph_had_unknowns
                     || self.blocker.is_some()
                     || self.retained_face_pairs == 0
-                    || self.arrangement_readiness.is_some()
+                    || self.coplanar_arrangement_evidence.is_some()
                     || !certified_preflight_support_matches_operation(self.support, self.operation)
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -4078,8 +4078,8 @@ impl ExactBooleanPreflight {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 if let Some(evidence) = self.coplanar_volumetric_evidence.as_ref() {
                     validate_arrangement_materialized_coplanar_evidence(
@@ -4113,8 +4113,8 @@ impl ExactBooleanPreflight {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 checked_region_facts(self.region_count, &self.region_classifications)
             }
@@ -4137,8 +4137,8 @@ impl ExactBooleanPreflight {
                     self.retained_face_pairs,
                     self.retained_events,
                 )?;
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
@@ -4162,20 +4162,20 @@ impl ExactBooleanPreflight {
                     self.retained_events,
                 )?;
                 let readiness = self
-                    .arrangement_readiness
+                    .coplanar_arrangement_evidence
                     .as_ref()
-                    .ok_or(ExactReportValidationError::MissingArrangementReadiness)?;
+                    .ok_or(ExactReportValidationError::MissingCoplanarArrangementEvidence)?;
                 readiness
                     .validate()
-                    .map_err(|_| ExactReportValidationError::InvalidArrangementReadiness)?;
-                validate_arrangement_readiness_matches_blocker(
+                    .map_err(|_| ExactReportValidationError::InvalidCoplanarArrangementEvidence)?;
+                validate_coplanar_arrangement_evidence_matches_blocker(
                     readiness,
                     self.blocker.as_ref().unwrap(),
                 )?;
                 if !readiness.needs_planar_cells()
                     || self.blocker.as_ref().unwrap().coplanar_touching_pairs != 0
                 {
-                    return Err(ExactReportValidationError::ArrangementReadinessMismatch);
+                    return Err(ExactReportValidationError::CoplanarArrangementEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
@@ -4198,8 +4198,8 @@ impl ExactBooleanPreflight {
                     self.retained_face_pairs,
                     self.retained_events,
                 )?;
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 let evidence = self
                     .coplanar_volumetric_evidence
@@ -4237,8 +4237,8 @@ impl ExactBooleanPreflight {
                     self.retained_face_pairs,
                     self.retained_events,
                 )?;
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 match (expected, self.coplanar_volumetric_evidence.as_ref()) {
                     (ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells, Some(evidence)) => {
@@ -4290,14 +4290,14 @@ impl ExactBooleanPreflight {
                     self.retained_face_pairs,
                     self.retained_events,
                 )?;
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::SelectedRegionPolicy => {
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 if !matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
@@ -5330,9 +5330,9 @@ pub(crate) struct ExactPlanarArrangementReport {
     pub(crate) retained_events: usize,
     /// Relation counts for retained face pairs.
     pub(crate) blocker: ExactBooleanBlocker,
-    /// Checked coplanar-overlap readiness summary retained from the graph
+    /// Checked coplanar-overlap evidence summary retained from the graph
     /// layer.
-    pub(crate) arrangement_readiness: Option<CoplanarArrangementReadinessReport>,
+    pub(crate) coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
 }
 
 impl ExactPlanarArrangementReport {
@@ -5361,9 +5361,9 @@ impl ExactPlanarArrangementReport {
         &self.blocker
     }
 
-    /// Return the retained coplanar arrangement readiness summary.
-    pub(crate) fn arrangement_readiness(&self) -> Option<&CoplanarArrangementReadinessReport> {
-        self.arrangement_readiness.as_ref()
+    /// Return the retained coplanar arrangement evidence summary.
+    pub(crate) fn coplanar_arrangement_evidence(&self) -> Option<&CoplanarArrangementEvidence> {
+        self.coplanar_arrangement_evidence.as_ref()
     }
 
     /// Return whether this operation is blocked on planar arrangement output.
@@ -5454,42 +5454,42 @@ impl ExactPlanarArrangementReport {
         match self.status {
             ExactPlanarArrangementStatus::Required => {
                 let readiness = self
-                    .arrangement_readiness
+                    .coplanar_arrangement_evidence
                     .as_ref()
-                    .ok_or(ExactReportValidationError::MissingArrangementReadiness)?;
+                    .ok_or(ExactReportValidationError::MissingCoplanarArrangementEvidence)?;
                 readiness
                     .validate()
-                    .map_err(|_| ExactReportValidationError::InvalidArrangementReadiness)?;
-                validate_arrangement_readiness_matches_blocker(readiness, &self.blocker)?;
+                    .map_err(|_| ExactReportValidationError::InvalidCoplanarArrangementEvidence)?;
+                validate_coplanar_arrangement_evidence_matches_blocker(readiness, &self.blocker)?;
                 if !readiness.needs_planar_cells()
                     || self.blocker.coplanar_touching_pairs != 0
                     || readiness.graph_count != self.blocker.coplanar_overlapping_pairs
                 {
-                    return Err(ExactReportValidationError::ArrangementReadinessMismatch);
+                    return Err(ExactReportValidationError::CoplanarArrangementEvidenceMismatch);
                 }
             }
             ExactPlanarArrangementStatus::AlreadyMaterialized
             | ExactPlanarArrangementStatus::NoPositiveOverlap
             | ExactPlanarArrangementStatus::BoundaryPolicyRequired => {
                 let readiness = self
-                    .arrangement_readiness
+                    .coplanar_arrangement_evidence
                     .as_ref()
-                    .ok_or(ExactReportValidationError::MissingArrangementReadiness)?;
+                    .ok_or(ExactReportValidationError::MissingCoplanarArrangementEvidence)?;
                 readiness
                     .validate()
-                    .map_err(|_| ExactReportValidationError::InvalidArrangementReadiness)?;
-                validate_arrangement_readiness_matches_blocker(readiness, &self.blocker)?;
-                if readiness.status == CoplanarArrangementReadinessStatus::NoCoplanarOverlap
+                    .map_err(|_| ExactReportValidationError::InvalidCoplanarArrangementEvidence)?;
+                validate_coplanar_arrangement_evidence_matches_blocker(readiness, &self.blocker)?;
+                if readiness.status == CoplanarArrangementEvidenceStatus::NoCoplanarOverlap
                     && (self.blocker.coplanar_overlapping_pairs != 0
                         || self.blocker.coplanar_touching_pairs != 0)
                 {
-                    return Err(ExactReportValidationError::ArrangementReadinessMismatch);
+                    return Err(ExactReportValidationError::CoplanarArrangementEvidenceMismatch);
                 }
             }
             ExactPlanarArrangementStatus::NotNamedOperation
             | ExactPlanarArrangementStatus::GraphUnknowns => {
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
             }
         }
@@ -5508,7 +5508,7 @@ impl ExactPlanarArrangementReport {
 
     /// Validate this planar-arrangement report against source meshes and request.
     ///
-    /// The retained arrangement-readiness summary is a compact view of exact
+    /// The retained arrangement-evidence summary is a compact view of exact
     /// coplanar graph state. This source replay recomputes that view for the
     /// same operation and rejects stale count/blocker summaries before a
     #[cfg(test)]
@@ -5677,7 +5677,7 @@ pub(crate) struct ExactWindingReadinessReport {
     pub(crate) blocker: ExactBooleanBlocker,
     /// Checked coplanar-overlap readiness retained when winding is blocked by
     /// planar-cell extraction rather than by volumetric inside/outside policy.
-    pub(crate) arrangement_readiness: Option<CoplanarArrangementReadinessReport>,
+    pub(crate) coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
     /// Source-aware coplanar volumetric-cell evidence retained when readiness
     /// is blocked by, or has just consumed, coplanar source-face cells.
     ///
@@ -5728,9 +5728,9 @@ impl ExactWindingReadinessReport {
         &self.blocker
     }
 
-    /// Return the retained coplanar arrangement readiness summary.
-    pub(crate) fn arrangement_readiness(&self) -> Option<&CoplanarArrangementReadinessReport> {
-        self.arrangement_readiness.as_ref()
+    /// Return the retained coplanar arrangement evidence summary.
+    pub(crate) fn coplanar_arrangement_evidence(&self) -> Option<&CoplanarArrangementEvidence> {
+        self.coplanar_arrangement_evidence.as_ref()
     }
 
     /// Return the retained coplanar volumetric-cell evidence.
@@ -5745,7 +5745,7 @@ impl ExactWindingReadinessReport {
         matches!(self.status, ExactWindingReadinessStatus::Ready)
     }
 
-    /// Validate this winding-readiness report against the source meshes.
+    /// Validate this winding-evidence report against the source meshes.
     ///
     /// Winding readiness retains exact split-region and opposite-plane facts.
     /// This replay recomputes the report for the same operation, making stale
@@ -5795,8 +5795,8 @@ impl ExactWindingReadinessReport {
         }
         match self.status {
             ExactWindingReadinessStatus::GraphUnknowns => {
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 blocker_kind(
                     Some(&self.blocker),
@@ -5812,8 +5812,8 @@ impl ExactWindingReadinessReport {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::BoundaryPolicyRequired => {
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -5847,15 +5847,15 @@ impl ExactWindingReadinessReport {
                     self.retained_events,
                 )?;
                 let readiness = self
-                    .arrangement_readiness
+                    .coplanar_arrangement_evidence
                     .as_ref()
-                    .ok_or(ExactReportValidationError::MissingArrangementReadiness)?;
+                    .ok_or(ExactReportValidationError::MissingCoplanarArrangementEvidence)?;
                 readiness
                     .validate()
-                    .map_err(|_| ExactReportValidationError::InvalidArrangementReadiness)?;
-                validate_arrangement_readiness_matches_blocker(readiness, &self.blocker)?;
+                    .map_err(|_| ExactReportValidationError::InvalidCoplanarArrangementEvidence)?;
+                validate_coplanar_arrangement_evidence_matches_blocker(readiness, &self.blocker)?;
                 if !readiness.needs_planar_cells() || self.blocker.coplanar_touching_pairs != 0 {
-                    return Err(ExactReportValidationError::ArrangementReadinessMismatch);
+                    return Err(ExactReportValidationError::CoplanarArrangementEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
@@ -5875,21 +5875,21 @@ impl ExactWindingReadinessReport {
                     self.retained_events,
                 )?;
                 let readiness = self
-                    .arrangement_readiness
+                    .coplanar_arrangement_evidence
                     .as_ref()
-                    .ok_or(ExactReportValidationError::MissingArrangementReadiness)?;
+                    .ok_or(ExactReportValidationError::MissingCoplanarArrangementEvidence)?;
                 readiness
                     .validate()
-                    .map_err(|_| ExactReportValidationError::InvalidArrangementReadiness)?;
-                validate_arrangement_readiness_matches_blocker(readiness, &self.blocker)?;
+                    .map_err(|_| ExactReportValidationError::InvalidCoplanarArrangementEvidence)?;
+                validate_coplanar_arrangement_evidence_matches_blocker(readiness, &self.blocker)?;
                 if !readiness.needs_planar_cells() {
-                    return Err(ExactReportValidationError::ArrangementReadinessMismatch);
+                    return Err(ExactReportValidationError::CoplanarArrangementEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired => {
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -5921,8 +5921,8 @@ impl ExactWindingReadinessReport {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized => {
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -5954,8 +5954,8 @@ impl ExactWindingReadinessReport {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::VolumetricAssemblyRequired => {
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.retained_face_pairs == 0
@@ -6007,8 +6007,8 @@ impl ExactWindingReadinessReport {
                 checked_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized => {
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -6079,7 +6079,7 @@ impl ExactWindingReadinessReport {
             }
             ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
             | ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized => {
-                if self.arrangement_readiness.is_some()
+                if self.coplanar_arrangement_evidence.is_some()
                     || self.coplanar_volumetric_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
@@ -6094,7 +6094,7 @@ impl ExactWindingReadinessReport {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized => {
-                if self.arrangement_readiness.is_some()
+                if self.coplanar_arrangement_evidence.is_some()
                     || self.coplanar_volumetric_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
@@ -6112,7 +6112,7 @@ impl ExactWindingReadinessReport {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized => {
-                if self.arrangement_readiness.is_some()
+                if self.coplanar_arrangement_evidence.is_some()
                     || self.coplanar_volumetric_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
@@ -6132,7 +6132,7 @@ impl ExactWindingReadinessReport {
             }
             ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized => {
                 let has_coplanar_evidence = self.coplanar_volumetric_evidence.is_some();
-                if self.arrangement_readiness.is_some()
+                if self.coplanar_arrangement_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                     || (!has_coplanar_evidence
@@ -6158,7 +6158,7 @@ impl ExactWindingReadinessReport {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized => {
-                if self.arrangement_readiness.is_some()
+                if self.coplanar_arrangement_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                     || self.retained_face_pairs == 0
@@ -6198,7 +6198,7 @@ impl ExactWindingReadinessReport {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized => {
-                if self.arrangement_readiness.is_some()
+                if self.coplanar_arrangement_evidence.is_some()
                     || self.coplanar_volumetric_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
@@ -6224,7 +6224,7 @@ impl ExactWindingReadinessReport {
             | ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
             | ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
             | ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized => {
-                if self.arrangement_readiness.is_some()
+                if self.coplanar_arrangement_evidence.is_some()
                     || self.coplanar_volumetric_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
@@ -6239,8 +6239,8 @@ impl ExactWindingReadinessReport {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::Ready => {
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.retained_face_pairs == 0
@@ -6293,8 +6293,8 @@ impl ExactWindingReadinessReport {
             }
             ExactWindingReadinessStatus::NotNamedOperation
             | ExactWindingReadinessStatus::NoNontrivialOverlap => {
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                if self.coplanar_arrangement_evidence.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 match self.status {
                     ExactWindingReadinessStatus::NotNamedOperation
@@ -6348,7 +6348,7 @@ mod tests {
             region_count: 0,
             region_classifications: Vec::new(),
             blocker: None,
-            arrangement_readiness: None,
+            coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: None,
         };
 
@@ -7008,8 +7008,8 @@ mod tests {
                 unknown_pairs: 0,
                 construction_failed_events: 0,
             },
-            arrangement_readiness: Some(CoplanarArrangementReadinessReport {
-                status: CoplanarArrangementReadinessStatus::NeedsPlanarCells,
+            coplanar_arrangement_evidence: Some(CoplanarArrangementEvidence {
+                status: CoplanarArrangementEvidenceStatus::NeedsPlanarCells,
                 graph_count: 1,
                 overlapping_graphs: 1,
                 touching_graphs: 0,
@@ -7040,7 +7040,7 @@ mod tests {
             region_count: 0,
             region_classifications: Vec::new(),
             blocker: Some(report.blocker.clone()),
-            arrangement_readiness: report.arrangement_readiness.clone(),
+            coplanar_arrangement_evidence: report.coplanar_arrangement_evidence.clone(),
             coplanar_volumetric_evidence: None,
         };
         preflight.validate().unwrap();
@@ -7071,8 +7071,8 @@ mod tests {
                 unknown_pairs: 0,
                 construction_failed_events: 0,
             },
-            arrangement_readiness: Some(CoplanarArrangementReadinessReport {
-                status: CoplanarArrangementReadinessStatus::NeedsPlanarCells,
+            coplanar_arrangement_evidence: Some(CoplanarArrangementEvidence {
+                status: CoplanarArrangementEvidenceStatus::NeedsPlanarCells,
                 graph_count: 1,
                 overlapping_graphs: 1,
                 touching_graphs: 0,
@@ -7278,8 +7278,8 @@ mod tests {
                 unknown_pairs: 0,
                 construction_failed_events: 0,
             },
-            arrangement_readiness: Some(CoplanarArrangementReadinessReport {
-                status: CoplanarArrangementReadinessStatus::NoCoplanarOverlap,
+            coplanar_arrangement_evidence: Some(CoplanarArrangementEvidence {
+                status: CoplanarArrangementEvidenceStatus::NoCoplanarOverlap,
                 graph_count: 0,
                 overlapping_graphs: 0,
                 touching_graphs: 0,
@@ -7304,7 +7304,7 @@ mod tests {
             region_count: 0,
             region_classifications: Vec::new(),
             blocker: None,
-            arrangement_readiness: None,
+            coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: None,
         };
         assert_eq!(
@@ -7328,7 +7328,7 @@ mod tests {
                 unknown_pairs: 0,
                 construction_failed_events: 0,
             },
-            arrangement_readiness: None,
+            coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: None,
         };
         assert_eq!(
@@ -7382,7 +7382,7 @@ mod tests {
                 unknown_pairs: 0,
                 construction_failed_events: 0,
             },
-            arrangement_readiness: None,
+            coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: None,
         };
         assert_eq!(
@@ -7407,8 +7407,8 @@ mod tests {
                 unknown_pairs: 0,
                 construction_failed_events: 0,
             },
-            arrangement_readiness: Some(CoplanarArrangementReadinessReport {
-                status: CoplanarArrangementReadinessStatus::NeedsPlanarCells,
+            coplanar_arrangement_evidence: Some(CoplanarArrangementEvidence {
+                status: CoplanarArrangementEvidenceStatus::NeedsPlanarCells,
                 graph_count: 1,
                 overlapping_graphs: 1,
                 touching_graphs: 0,
@@ -7422,10 +7422,10 @@ mod tests {
         already_materialized.validate().unwrap();
         assert!(already_materialized.is_already_materialized());
         assert!(!already_materialized.is_required());
-        already_materialized.arrangement_readiness = None;
+        already_materialized.coplanar_arrangement_evidence = None;
         assert_eq!(
             already_materialized.validate(),
-            Err(ExactReportValidationError::MissingArrangementReadiness)
+            Err(ExactReportValidationError::MissingCoplanarArrangementEvidence)
         );
 
         let mut no_positive_overlap = ExactPlanarArrangementReport {
@@ -7442,8 +7442,8 @@ mod tests {
                 unknown_pairs: 0,
                 construction_failed_events: 0,
             },
-            arrangement_readiness: Some(CoplanarArrangementReadinessReport {
-                status: CoplanarArrangementReadinessStatus::NoCoplanarOverlap,
+            coplanar_arrangement_evidence: Some(CoplanarArrangementEvidence {
+                status: CoplanarArrangementEvidenceStatus::NoCoplanarOverlap,
                 graph_count: 0,
                 overlapping_graphs: 0,
                 touching_graphs: 0,
@@ -7457,10 +7457,10 @@ mod tests {
         no_positive_overlap.validate().unwrap();
         assert!(!no_positive_overlap.is_already_materialized());
         assert!(!no_positive_overlap.is_required());
-        no_positive_overlap.arrangement_readiness = None;
+        no_positive_overlap.coplanar_arrangement_evidence = None;
         assert_eq!(
             no_positive_overlap.validate(),
-            Err(ExactReportValidationError::MissingArrangementReadiness)
+            Err(ExactReportValidationError::MissingCoplanarArrangementEvidence)
         );
 
         let mut boundary_policy = ExactPlanarArrangementReport {
@@ -7477,8 +7477,8 @@ mod tests {
                 unknown_pairs: 0,
                 construction_failed_events: 0,
             },
-            arrangement_readiness: Some(CoplanarArrangementReadinessReport {
-                status: CoplanarArrangementReadinessStatus::BoundaryOnly,
+            coplanar_arrangement_evidence: Some(CoplanarArrangementEvidence {
+                status: CoplanarArrangementEvidenceStatus::BoundaryOnly,
                 graph_count: 1,
                 overlapping_graphs: 0,
                 touching_graphs: 1,
@@ -7490,17 +7490,17 @@ mod tests {
             }),
         };
         boundary_policy.validate().unwrap();
-        boundary_policy.arrangement_readiness = None;
+        boundary_policy.coplanar_arrangement_evidence = None;
         assert_eq!(
             boundary_policy.validate(),
-            Err(ExactReportValidationError::MissingArrangementReadiness)
+            Err(ExactReportValidationError::MissingCoplanarArrangementEvidence)
         );
     }
 
     #[test]
     fn winding_planar_arrangement_materialized_requires_retained_readiness() {
-        let readiness = CoplanarArrangementReadinessReport {
-            status: CoplanarArrangementReadinessStatus::NeedsPlanarCells,
+        let readiness = CoplanarArrangementEvidence {
+            status: CoplanarArrangementEvidenceStatus::NeedsPlanarCells,
             graph_count: 1,
             overlapping_graphs: 1,
             touching_graphs: 0,
@@ -7526,15 +7526,15 @@ mod tests {
                 unknown_pairs: 0,
                 construction_failed_events: 0,
             },
-            arrangement_readiness: Some(readiness),
+            coplanar_arrangement_evidence: Some(readiness),
             coplanar_volumetric_evidence: None,
         };
         report.validate().unwrap();
 
-        report.arrangement_readiness = None;
+        report.coplanar_arrangement_evidence = None;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::MissingArrangementReadiness)
+            Err(ExactReportValidationError::MissingCoplanarArrangementEvidence)
         );
     }
 
@@ -7581,7 +7581,7 @@ mod tests {
                 unknown_pairs: 0,
                 construction_failed_events: 0,
             },
-            arrangement_readiness: None,
+            coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: Some(evidence.clone()),
         };
         report.validate().unwrap();
@@ -7649,7 +7649,7 @@ mod tests {
             region_count: 0,
             region_classifications: Vec::new(),
             blocker: Some(blocker.clone()),
-            arrangement_readiness: None,
+            coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: Some(evidence.clone()),
         };
         preflight.validate().unwrap();
@@ -7669,7 +7669,7 @@ mod tests {
             region_count: 0,
             region_classifications: Vec::new(),
             blocker,
-            arrangement_readiness: None,
+            coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: Some(evidence),
         };
         readiness.validate().unwrap();

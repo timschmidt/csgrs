@@ -244,7 +244,7 @@ pub(crate) struct CoplanarOverlapSplitGraph {
 /// area overlaps require planar cells before named boolean output can be
 /// materialized.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum CoplanarArrangementReadinessStatus {
+pub(crate) enum CoplanarArrangementEvidenceStatus {
     /// No retained coplanar overlap graph exists.
     NoCoplanarOverlap,
     /// Retained coplanar graphs contain boundary-only touching evidence.
@@ -261,9 +261,9 @@ pub(crate) enum CoplanarArrangementReadinessStatus {
 /// their validated counts before exact planar-cell extraction. That lets
 /// blockers retain actionable provenance instead of a plain unsupported flag.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) struct CoplanarArrangementReadinessReport {
+pub(crate) struct CoplanarArrangementEvidence {
     /// Coarse state of the retained coplanar arrangement evidence.
-    pub(crate) status: CoplanarArrangementReadinessStatus,
+    pub(crate) status: CoplanarArrangementEvidenceStatus,
     /// Number of retained coplanar overlap graphs.
     pub(crate) graph_count: usize,
     /// Number of graphs whose coarse relation is positive-area overlap.
@@ -352,9 +352,9 @@ pub(crate) enum CoplanarOverlapSplitValidationError {
     SourceReplayMismatch,
 }
 
-/// Structural inconsistency in a coplanar arrangement readiness report.
+/// Structural inconsistency in a coplanar arrangement evidence.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum CoplanarArrangementReadinessValidationError {
+pub(crate) enum CoplanarArrangementEvidenceError {
     /// `NoCoplanarOverlap` retained nonzero graph or event counts.
     NoOverlapWithEvidence,
     /// Boundary-only status retained positive-area overlap graphs.
@@ -372,7 +372,7 @@ pub(crate) enum CoplanarArrangementReadinessValidationError {
     /// Retained interval endpoint facts do not match retained interval
     /// contacts.
     IntervalEndpointCountMismatch,
-    /// Recomputing the readiness summary from the supplied source meshes did
+    /// Recomputing the evidence summary from the supplied source meshes did
     /// not reproduce this retained report.
     #[cfg(test)]
     SourceReplayMismatch,
@@ -448,26 +448,26 @@ impl CoplanarOverlapGraph {
     }
 }
 
-impl CoplanarArrangementReadinessReport {
+impl CoplanarArrangementEvidence {
     /// Return whether later planar-cell extraction is required.
     pub const fn needs_planar_cells(&self) -> bool {
         matches!(
             self.status,
-            CoplanarArrangementReadinessStatus::NeedsPlanarCells
+            CoplanarArrangementEvidenceStatus::NeedsPlanarCells
         )
     }
 
-    /// Validate that the compact readiness summary is internally coherent.
+    /// Validate that the compact evidence summary is internally coherent.
     ///
     /// The report validates counts, not source geometry. That still keeps the
     /// compact retained-state summary auditable before it influences
     /// combinatorial output.
-    pub fn validate(&self) -> Result<(), CoplanarArrangementReadinessValidationError> {
+    pub fn validate(&self) -> Result<(), CoplanarArrangementEvidenceError> {
         let Some(graph_count) = self.overlapping_graphs.checked_add(self.touching_graphs) else {
-            return Err(CoplanarArrangementReadinessValidationError::GraphCountMismatch);
+            return Err(CoplanarArrangementEvidenceError::GraphCountMismatch);
         };
         if self.graph_count != graph_count {
-            return Err(CoplanarArrangementReadinessValidationError::GraphCountMismatch);
+            return Err(CoplanarArrangementEvidenceError::GraphCountMismatch);
         }
         // Split summaries must be dominated by the edge contacts that produced
         // them.
@@ -475,22 +475,22 @@ impl CoplanarArrangementReadinessReport {
             .point_split_count
             .checked_add(self.interval_overlap_count)
         else {
-            return Err(CoplanarArrangementReadinessValidationError::SplitCountExceedsEdgeEvidence);
+            return Err(CoplanarArrangementEvidenceError::SplitCountExceedsEdgeEvidence);
         };
         if edge_split_constructions > self.edge_overlap_count {
-            return Err(CoplanarArrangementReadinessValidationError::SplitCountExceedsEdgeEvidence);
+            return Err(CoplanarArrangementEvidenceError::SplitCountExceedsEdgeEvidence);
         }
         let Some(interval_endpoint_count) = self.interval_overlap_count.checked_mul(2) else {
-            return Err(CoplanarArrangementReadinessValidationError::IntervalEndpointCountMismatch);
+            return Err(CoplanarArrangementEvidenceError::IntervalEndpointCountMismatch);
         };
         if self.interval_endpoint_count != interval_endpoint_count {
-            return Err(CoplanarArrangementReadinessValidationError::IntervalEndpointCountMismatch);
+            return Err(CoplanarArrangementEvidenceError::IntervalEndpointCountMismatch);
         }
         if self.graph_count > 0 && self.edge_overlap_count == 0 && self.vertex_overlap_count == 0 {
-            return Err(CoplanarArrangementReadinessValidationError::MissingOverlapEvidence);
+            return Err(CoplanarArrangementEvidenceError::MissingOverlapEvidence);
         }
         match self.status {
-            CoplanarArrangementReadinessStatus::NoCoplanarOverlap => {
+            CoplanarArrangementEvidenceStatus::NoCoplanarOverlap => {
                 if self.graph_count == 0
                     && self.edge_overlap_count == 0
                     && self.vertex_overlap_count == 0
@@ -500,33 +500,29 @@ impl CoplanarArrangementReadinessReport {
                 {
                     Ok(())
                 } else {
-                    Err(CoplanarArrangementReadinessValidationError::NoOverlapWithEvidence)
+                    Err(CoplanarArrangementEvidenceError::NoOverlapWithEvidence)
                 }
             }
-            CoplanarArrangementReadinessStatus::BoundaryOnly => {
+            CoplanarArrangementEvidenceStatus::BoundaryOnly => {
                 if self.overlapping_graphs != 0 {
-                    return Err(
-                        CoplanarArrangementReadinessValidationError::BoundaryOnlyHasOverlap,
-                    );
+                    return Err(CoplanarArrangementEvidenceError::BoundaryOnlyHasOverlap);
                 }
                 if self.touching_graphs == 0 {
-                    return Err(
-                        CoplanarArrangementReadinessValidationError::BoundaryOnlyMissingTouchingGraph,
-                    );
+                    return Err(CoplanarArrangementEvidenceError::BoundaryOnlyMissingTouchingGraph);
                 }
                 Ok(())
             }
-            CoplanarArrangementReadinessStatus::NeedsPlanarCells => {
+            CoplanarArrangementEvidenceStatus::NeedsPlanarCells => {
                 if self.overlapping_graphs > 0 {
                     Ok(())
                 } else {
-                    Err(CoplanarArrangementReadinessValidationError::NeedsCellsMissingOverlap)
+                    Err(CoplanarArrangementEvidenceError::NeedsCellsMissingOverlap)
                 }
             }
         }
     }
 
-    /// Validate this readiness report against the source meshes that produced it.
+    /// Validate this evidence report against the source meshes that produced it.
     ///
     /// Local validation proves only that the compact counters are internally
     /// coherent. Source replay rebuilds the exact intersection graph and
@@ -537,15 +533,15 @@ impl CoplanarArrangementReadinessReport {
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
-    ) -> Result<(), CoplanarArrangementReadinessValidationError> {
+    ) -> Result<(), CoplanarArrangementEvidenceError> {
         self.validate()?;
         let replay = build_intersection_graph(left, right)
-            .and_then(|graph| graph.coplanar_arrangement_readiness_report(left, right))
-            .map_err(|_| CoplanarArrangementReadinessValidationError::SourceReplayMismatch)?;
+            .and_then(|graph| graph.coplanar_arrangement_evidence(left, right))
+            .map_err(|_| CoplanarArrangementEvidenceError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
         } else {
-            Err(CoplanarArrangementReadinessValidationError::SourceReplayMismatch)
+            Err(CoplanarArrangementEvidenceError::SourceReplayMismatch)
         }
     }
 }
@@ -980,12 +976,12 @@ impl ExactIntersectionGraph {
     /// a named operation is blocked on boundary policy or true planar-cell
     /// evidence is preserved and checked, while the missing cell extraction
     /// algorithm remains an explicit status rather than a tolerance fallback.
-    pub(crate) fn coplanar_arrangement_readiness_report(
+    pub(crate) fn coplanar_arrangement_evidence(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
-    ) -> Result<CoplanarArrangementReadinessReport, ExactMeshError> {
-        // Planar-readiness is a compact view of retained graph state.
+    ) -> Result<CoplanarArrangementEvidence, ExactMeshError> {
+        // Coplanar arrangement evidence is a compact view of retained graph state.
         // Before collapsing counts, replay the graph's face/edge/vertex handles
         // against the source meshes and later replay split parameters against
         // state; stale handles must not survive simply because the summary
@@ -998,8 +994,8 @@ impl ExactIntersectionGraph {
         })?;
         let overlap_graphs = self.coplanar_overlap_graphs();
         if overlap_graphs.is_empty() {
-            return Ok(CoplanarArrangementReadinessReport {
-                status: CoplanarArrangementReadinessStatus::NoCoplanarOverlap,
+            return Ok(CoplanarArrangementEvidence {
+                status: CoplanarArrangementEvidenceStatus::NoCoplanarOverlap,
                 graph_count: 0,
                 overlapping_graphs: 0,
                 touching_graphs: 0,
@@ -1023,7 +1019,7 @@ impl ExactIntersectionGraph {
             graph.validate().map_err(|_| ExactMeshError {
                 blockers: vec![ExactMeshBlocker::new(
                     ExactMeshBlockerKind::UnsupportedExactOperation,
-                    "retained coplanar overlap graph failed readiness validation",
+                    "retained coplanar overlap graph failed evidence validation",
                 )],
             })?;
             match graph.relation {
@@ -1057,11 +1053,11 @@ impl ExactIntersectionGraph {
         }
 
         let status = if overlapping_graphs > 0 {
-            CoplanarArrangementReadinessStatus::NeedsPlanarCells
+            CoplanarArrangementEvidenceStatus::NeedsPlanarCells
         } else {
-            CoplanarArrangementReadinessStatus::BoundaryOnly
+            CoplanarArrangementEvidenceStatus::BoundaryOnly
         };
-        let report = CoplanarArrangementReadinessReport {
+        let report = CoplanarArrangementEvidence {
             status,
             graph_count: overlap_graphs.len(),
             overlapping_graphs,
@@ -1075,7 +1071,7 @@ impl ExactIntersectionGraph {
         report.validate().map_err(|_| ExactMeshError {
             blockers: vec![ExactMeshBlocker::new(
                 ExactMeshBlockerKind::UnsupportedExactOperation,
-                "coplanar arrangement readiness report failed validation",
+                "coplanar arrangement evidence failed validation",
             )],
         })?;
         Ok(report)
@@ -4233,9 +4229,7 @@ mod tests {
                 .is_err()
         );
 
-        let readiness = graph
-            .coplanar_arrangement_readiness_report(&left, &right)
-            .unwrap();
+        let readiness = graph.coplanar_arrangement_evidence(&left, &right).unwrap();
         readiness.validate_against_sources(&left, &right).unwrap();
         let mut invalid_readiness = readiness.clone();
         invalid_readiness.graph_count += 1;
@@ -4604,9 +4598,9 @@ mod tests {
     }
 
     #[test]
-    fn coplanar_arrangement_readiness_rejects_overflowing_counts() {
-        let graph_overflow = CoplanarArrangementReadinessReport {
-            status: CoplanarArrangementReadinessStatus::NeedsPlanarCells,
+    fn coplanar_arrangement_evidence_rejects_overflowing_counts() {
+        let graph_overflow = CoplanarArrangementEvidence {
+            status: CoplanarArrangementEvidenceStatus::NeedsPlanarCells,
             graph_count: usize::MAX,
             overlapping_graphs: usize::MAX,
             touching_graphs: 1,
@@ -4618,11 +4612,11 @@ mod tests {
         };
         assert_eq!(
             graph_overflow.validate(),
-            Err(CoplanarArrangementReadinessValidationError::GraphCountMismatch)
+            Err(CoplanarArrangementEvidenceError::GraphCountMismatch)
         );
 
-        let split_overflow = CoplanarArrangementReadinessReport {
-            status: CoplanarArrangementReadinessStatus::NeedsPlanarCells,
+        let split_overflow = CoplanarArrangementEvidence {
+            status: CoplanarArrangementEvidenceStatus::NeedsPlanarCells,
             graph_count: 1,
             overlapping_graphs: 1,
             touching_graphs: 0,
@@ -4634,11 +4628,11 @@ mod tests {
         };
         assert_eq!(
             split_overflow.validate(),
-            Err(CoplanarArrangementReadinessValidationError::SplitCountExceedsEdgeEvidence)
+            Err(CoplanarArrangementEvidenceError::SplitCountExceedsEdgeEvidence)
         );
 
-        let interval_overflow = CoplanarArrangementReadinessReport {
-            status: CoplanarArrangementReadinessStatus::NeedsPlanarCells,
+        let interval_overflow = CoplanarArrangementEvidence {
+            status: CoplanarArrangementEvidenceStatus::NeedsPlanarCells,
             graph_count: 1,
             overlapping_graphs: 1,
             touching_graphs: 0,
@@ -4650,7 +4644,7 @@ mod tests {
         };
         assert_eq!(
             interval_overflow.validate(),
-            Err(CoplanarArrangementReadinessValidationError::IntervalEndpointCountMismatch)
+            Err(CoplanarArrangementEvidenceError::IntervalEndpointCountMismatch)
         );
     }
 }
