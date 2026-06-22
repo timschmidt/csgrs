@@ -15,9 +15,9 @@ use super::construction::intersect_segment_with_retained_face_plane;
 use super::error::ExactMeshError;
 use super::mesh::ExactMesh;
 use super::narrow::{
+    TriangleTriangleClassification, TriangleTriangleRelation,
     classify_mesh_triangle_against_retained_face_plane_unchecked,
-    classify_triangle_triangle_points_from_plane_relations, TriangleTriangleClassification,
-    TriangleTriangleRelation,
+    classify_triangle_triangle_points_from_plane_relations,
 };
 use super::topology::triangle_edges;
 use super::view::PreparedMeshPairView;

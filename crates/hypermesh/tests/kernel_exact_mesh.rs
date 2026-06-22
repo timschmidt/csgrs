@@ -165,6 +165,7 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
     prepared_pair.visit_candidate_face_pairs(|pair| prepared_pair_candidates.push(pair));
     prepared_pair_candidates.sort_unstable();
     assert_eq!(prepared_pair_candidates, candidates);
+    assert_eq!(prepared_pair.candidate_face_pair_count(), candidates.len());
     let mut prepared_visited = Vec::new();
     prepared_pair.visit_candidate_face_pairs(|pair| prepared_visited.push(pair));
     prepared_visited.sort_unstable();

@@ -1550,11 +1550,7 @@ impl ExactBooleanCertificationSet {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
-        if self
-            .winding_evidence
-            .status()
-            .routes_to_certified_winding()
-        {
+        if self.winding_evidence.status().routes_to_certified_winding() {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
@@ -1734,8 +1730,7 @@ impl ExactBooleanCertificationSet {
         preflight: &ExactBooleanPreflight,
     ) -> bool {
         self.boundary_touching.is_certified()
-            && self.winding_evidence.status()
-                == ExactWindingEvidenceStatus::BoundaryPolicyRequired
+            && self.winding_evidence.status() == ExactWindingEvidenceStatus::BoundaryPolicyRequired
             && self.boundary_report_matches_preflight(preflight, true)
     }
 
@@ -1899,9 +1894,7 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        self.winding_evidence
-            .status()
-            .routes_to_certified_winding()
+        self.winding_evidence.status().routes_to_certified_winding()
             && self.winding_evidence_matches_preflight(preflight)
     }
 
@@ -3993,8 +3986,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
                 None,
             ));
         }
-        let winding_evidence =
-            winding_evidence_report_from_graph(&graph, left, right, operation)?;
+        let winding_evidence = winding_evidence_report_from_graph(&graph, left, right, operation)?;
         if winding_evidence.status.routes_to_certified_winding()
             && winding_evidence.blocker.kind
                 == ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
@@ -12702,10 +12694,7 @@ mod tests {
             ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
             "{evidence:?}"
         );
-        assert_eq!(
-            evidence.blocker.kind,
-            ExactBooleanBlockerKind::NeedsWinding
-        );
+        assert_eq!(evidence.blocker.kind, ExactBooleanBlockerKind::NeedsWinding);
         evidence.validate_against_sources(&left, &right).unwrap();
     }
 
@@ -13806,8 +13795,7 @@ mod tests {
 
     #[test]
     fn trivial_shortcuts_report_materialized_evidence() {
-        let empty =
-            empty_mesh("empty operand evidence fixture", ValidationPolicy::CLOSED).unwrap();
+        let empty = empty_mesh("empty operand evidence fixture", ValidationPolicy::CLOSED).unwrap();
         let solid = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
         let far_solid = axis_aligned_box_i64([4, 0, 0], [6, 2, 2]);
         let left_open = ExactMesh::from_i64_triangles_with_policy(
@@ -15926,10 +15914,7 @@ mod tests {
             );
             assert_eq!(evidence.retained_face_pairs, graph.face_pairs.len());
             assert_eq!(evidence.retained_events, graph.event_count());
-            assert_eq!(
-                evidence.blocker.kind,
-                ExactBooleanBlockerKind::NeedsWinding
-            );
+            assert_eq!(evidence.blocker.kind, ExactBooleanBlockerKind::NeedsWinding);
             assert_eq!(evidence.blocker.candidate_pairs, graph.face_pairs.len());
             evidence.validate().unwrap();
             evidence.validate_against_sources(&left, &right).unwrap();

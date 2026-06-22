@@ -17,9 +17,9 @@
 use core::cmp::Ordering;
 
 use hyperlimit::{
-    classify_coplanar_triangle_points, compare_reals, triangle_plane_relation_from_sides,
     PlaneSide, Point3, SegmentPlaneIntersection, TrianglePlaneClassification,
-    TrianglePlaneRelation,
+    TrianglePlaneRelation, classify_coplanar_triangle_points, compare_reals,
+    triangle_plane_relation_from_sides,
 };
 
 use super::mesh::ExactMesh;

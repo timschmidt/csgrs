@@ -1,6 +1,6 @@
 //! Borrowed exact views of retained mesh data.
 
-use super::bounds::{CandidateFacePairPlan, PreparedMeshBounds};
+use super::bounds::PreparedMeshBounds;
 use super::error::ExactMeshError;
 use super::mesh::{ExactAffineTransform3, Triangle};
 use super::validation::ValidationPolicy;
@@ -50,7 +50,7 @@ pub struct PreparedMeshView<'a> {
 pub struct PreparedMeshPairView<'a, 'b> {
     left: PreparedMeshView<'a>,
     right: PreparedMeshView<'b>,
-    bounds_plan: CandidateFacePairPlan,
+    candidate_pairs: Vec<[usize; 2]>,
 }
 
 impl<'a> ExactMeshRef<'a> {
@@ -220,10 +220,20 @@ impl<'a> ExactMeshRef<'a> {
         let left = self.prepare_broad_phase()?;
         let right = right.prepare_broad_phase()?;
         let bounds_plan = left.bounds.candidate_face_pair_plan(&right.bounds);
+        let mut candidate_pairs = Vec::new();
+        let result = left.bounds.try_visit_candidate_face_pairs_with_plan(
+            &right.bounds,
+            bounds_plan,
+            &mut |pair| {
+                candidate_pairs.push(pair);
+                Ok::<(), ()>(())
+            },
+        );
+        debug_assert!(result.is_ok());
         Ok(PreparedMeshPairView {
             left,
             right,
-            bounds_plan,
+            candidate_pairs,
         })
     }
 
@@ -309,17 +319,16 @@ impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
         &self.right
     }
 
+    /// Number of cached broad-phase candidate face pairs.
+    pub fn candidate_face_pair_count(&self) -> usize {
+        self.candidate_pairs.len()
+    }
+
     /// Visit exact broad-phase candidate face pairs without collecting them.
     pub fn visit_candidate_face_pairs(&self, mut visit: impl FnMut([usize; 2])) {
-        let result = self.left.bounds.try_visit_candidate_face_pairs_with_plan(
-            &self.right.bounds,
-            self.bounds_plan,
-            &mut |pair| {
-                visit(pair);
-                Ok::<(), ()>(())
-            },
-        );
-        debug_assert!(result.is_ok());
+        for pair in self.candidate_pairs.iter().copied() {
+            visit(pair);
+        }
     }
 
     /// Try to visit exact broad-phase candidate face pairs, allowing early exit.
@@ -327,11 +336,10 @@ impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
         &self,
         mut visit: impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
-        self.left.bounds.try_visit_candidate_face_pairs_with_plan(
-            &self.right.bounds,
-            self.bounds_plan,
-            &mut visit,
-        )
+        for pair in self.candidate_pairs.iter().copied() {
+            visit(pair)?;
+        }
+        Ok(())
     }
 }
 
