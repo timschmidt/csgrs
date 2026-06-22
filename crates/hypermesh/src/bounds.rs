@@ -198,6 +198,21 @@ struct SweepPlan {
     direction: SweepDirection,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct SweepPlanEstimate {
+    plan: SweepPlan,
+    axis_pair_count: usize,
+    driver_face_count: usize,
+}
+
+impl SweepPlanEstimate {
+    const fn is_better_than(self, other: Self) -> bool {
+        self.axis_pair_count < other.axis_pair_count
+            || (self.axis_pair_count == other.axis_pair_count
+                && self.driver_face_count < other.driver_face_count)
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 struct FaceAxisInterval<'a> {
     min: &'a Real,
@@ -374,14 +389,38 @@ impl<'a> PreparedMeshBounds<'a> {
         } else {
             [SweepDirection::RightDriven, SweepDirection::LeftDriven]
         };
+        let mut best = None::<SweepPlanEstimate>;
         for direction in directions {
             for axis in Axis::ALL {
-                if self.sweep_axis_is_usable(other, axis, direction) {
-                    return Some(SweepPlan { axis, direction });
+                let Some(estimate) = self.estimate_sweep_plan(other, axis, direction) else {
+                    continue;
+                };
+                if best.is_none_or(|best| estimate.is_better_than(best)) {
+                    best = Some(estimate);
                 }
             }
         }
-        None
+        best.map(|estimate| estimate.plan)
+    }
+
+    fn estimate_sweep_plan(
+        &self,
+        other: &PreparedMeshBounds<'_>,
+        axis: Axis,
+        direction: SweepDirection,
+    ) -> Option<SweepPlanEstimate> {
+        if !self.sweep_axis_is_usable(other, axis, direction) {
+            return None;
+        }
+        let (driver, target) = match direction {
+            SweepDirection::LeftDriven => (self, other),
+            SweepDirection::RightDriven => (other, self),
+        };
+        Some(SweepPlanEstimate {
+            plan: SweepPlan { axis, direction },
+            axis_pair_count: driver.count_axis_interval_overlaps(target, axis)?,
+            driver_face_count: driver.bounds.faces.len(),
+        })
     }
 
     fn sweep_axis_is_usable(
@@ -402,6 +441,46 @@ impl<'a> PreparedMeshBounds<'a> {
                     && self.max_axis_order(axis).is_some()
             }
         }
+    }
+
+    fn count_axis_interval_overlaps(
+        &self,
+        other: &PreparedMeshBounds<'_>,
+        axis: Axis,
+    ) -> Option<usize> {
+        let driver_order = self.min_axis_order(axis)?;
+        let other_min_order = other.min_axis_order(axis)?;
+        let other_max_order = other.max_axis_order(axis)?;
+        let mut next_starting_other = 0usize;
+        let mut next_ending_other = 0usize;
+        let mut count = 0usize;
+
+        for &driver in driver_order {
+            let driver_interval = self.axis_interval(axis, driver);
+            while let Some(&other_face) = other_min_order.get(next_starting_other) {
+                let ordering = compare(
+                    other.axis_interval(axis, other_face).min,
+                    driver_interval.max,
+                )?;
+                if ordering == Ordering::Greater {
+                    break;
+                }
+                next_starting_other += 1;
+            }
+            while let Some(&other_face) = other_max_order.get(next_ending_other) {
+                let ordering = compare(
+                    other.axis_interval(axis, other_face).max,
+                    driver_interval.min,
+                )?;
+                if ordering != Ordering::Less {
+                    break;
+                }
+                next_ending_other += 1;
+            }
+            count = count.saturating_add(next_starting_other.saturating_sub(next_ending_other));
+        }
+
+        Some(count)
     }
 
     fn try_visit_candidate_face_pairs_sweep_axis<E>(
@@ -777,6 +856,10 @@ mod tests {
         let left = MeshBounds::from_triangles(&left_points, &triangles);
         let right = MeshBounds::from_triangles(&right_points, &triangles);
 
+        assert_eq!(
+            left.prepare().sweep_plan(&right.prepare()).unwrap().axis,
+            Axis::Y
+        );
         assert_eq!(candidate_face_pairs(&left, &right), vec![[1, 0]]);
     }
 
@@ -893,10 +976,7 @@ mod tests {
         let prepared_right = right.prepare();
 
         assert_eq!(
-            prepared_left
-                .sweep_plan(&prepared_right)
-                .unwrap()
-                .direction,
+            prepared_left.sweep_plan(&prepared_right).unwrap().direction,
             SweepDirection::RightDriven
         );
         assert_eq!(
