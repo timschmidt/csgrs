@@ -432,6 +432,51 @@ impl<'a> PreparedMeshBounds<'a> {
         other: &PreparedMeshBounds<'_>,
         axis: Axis,
     ) -> Option<usize> {
+        let driver_min_order = self.min_axis_order(axis)?;
+        let Some(driver_max_order) = self.max_axis_order(axis) else {
+            return self.count_axis_interval_overlaps_by_binary_search(other, axis);
+        };
+        let other_min_order = other.min_axis_order(axis)?;
+        let other_max_order = other.max_axis_order(axis)?;
+        let driver_intervals = self.axis_intervals(axis);
+        let other_intervals = other.axis_intervals(axis);
+        let mut started_by_driver = vec![0usize; driver_intervals.len()];
+        let mut next_other_start = 0usize;
+
+        for &driver in driver_max_order {
+            let driver_max = driver_intervals[driver].max;
+            while let Some(&other_face) = other_min_order.get(next_other_start) {
+                let ordering = compare(other_intervals[other_face].min, driver_max)?;
+                if ordering == Ordering::Greater {
+                    break;
+                }
+                next_other_start += 1;
+            }
+            started_by_driver[driver] = next_other_start;
+        }
+
+        let mut count = 0usize;
+        let mut next_other_end = 0usize;
+        for &driver in driver_min_order {
+            let driver_min = driver_intervals[driver].min;
+            while let Some(&other_face) = other_max_order.get(next_other_end) {
+                let ordering = compare(other_intervals[other_face].max, driver_min)?;
+                if ordering != Ordering::Less {
+                    break;
+                }
+                next_other_end += 1;
+            }
+            count = count.saturating_add(started_by_driver[driver].saturating_sub(next_other_end));
+        }
+
+        Some(count)
+    }
+
+    fn count_axis_interval_overlaps_by_binary_search(
+        &self,
+        other: &PreparedMeshBounds<'_>,
+        axis: Axis,
+    ) -> Option<usize> {
         let other_min_order = other.min_axis_order(axis)?;
         let other_max_order = other.max_axis_order(axis)?;
         let other_intervals = other.axis_intervals(axis);
