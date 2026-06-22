@@ -329,8 +329,16 @@ impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
     }
 
     /// Visit exact broad-phase candidate face pairs without collecting them.
-    pub fn visit_candidate_face_pairs(&self, visit: impl FnMut([usize; 2])) {
-        self.left.visit_candidate_face_pairs(&self.right, visit);
+    pub fn visit_candidate_face_pairs(&self, mut visit: impl FnMut([usize; 2])) {
+        let result = self.left.bounds.try_visit_candidate_face_pairs_with_plan(
+            &self.right.bounds,
+            self.bounds_plan,
+            &mut |pair| {
+                visit(pair);
+                Ok::<(), ()>(())
+            },
+        );
+        debug_assert!(result.is_ok());
     }
 
     /// Try to visit exact broad-phase candidate face pairs, allowing early exit.
