@@ -1287,6 +1287,10 @@ pub(crate) struct ExactEdgeSplitPlan {
 }
 
 impl ExactEdgeSplitPlan {
+    fn split_point_count(&self) -> usize {
+        self.splits.iter().map(|split| split.points.len()).sum()
+    }
+
     /// Validate exact edge split events before graph-vertex merging.
     ///
     /// This is the first handoff after segment/plane construction. It keeps
@@ -1906,7 +1910,7 @@ fn edge_split_plan(graph: &ExactIntersectionGraph) -> ExactEdgeSplitPlan {
                 .or_insert_with(|| EdgeSplit {
                     side: *segment_side,
                     edge: *edge,
-                    points: Vec::new(),
+                    points: Vec::with_capacity(1),
                 })
                 .points
                 .push(EdgeSplitPoint {
@@ -1932,9 +1936,10 @@ fn edge_split_plan(graph: &ExactIntersectionGraph) -> ExactEdgeSplitPlan {
 }
 
 fn graph_vertex_plan(split_plan: &ExactEdgeSplitPlan) -> ExactGraphVertexPlan {
-    let mut vertices = Vec::<ExactGraphVertex>::new();
+    let split_point_count = split_plan.split_point_count();
+    let mut vertices = Vec::<ExactGraphVertex>::with_capacity(split_point_count);
     let mut point_key_buckets = BTreeMap::<ExactPoint3Key, Vec<usize>>::new();
-    let mut unkeyed_vertices = Vec::<usize>::new();
+    let mut unkeyed_vertices = Vec::<usize>::with_capacity(split_point_count);
     let mut unresolved_equalities = 0;
 
     for split in &split_plan.splits {
