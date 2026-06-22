@@ -5,12 +5,18 @@ pub fn exercise_mesh_kernel_pair(left: &ExactMesh, right: &ExactMesh) {
     right.validate_retained_state().unwrap();
     let left_view = left.view();
     let right_view = right.view();
-    let _ = left_view.candidate_face_pairs(right_view);
+    let mut retained_pair_count = 0usize;
+    let _ = left_view.visit_candidate_face_pairs(right_view, |_| {
+        retained_pair_count += 1;
+    });
     if let (Ok(left_prepared), Ok(right_prepared)) = (
         left_view.prepare_broad_phase(),
         right_view.prepare_broad_phase(),
     ) {
-        let _ = left_prepared.candidate_face_pairs(&right_prepared);
+        let _ = left_prepared.try_visit_candidate_face_pairs(&right_prepared, |_| {
+            retained_pair_count += 1;
+            Ok::<(), ()>(())
+        });
     }
 }
 

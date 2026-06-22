@@ -149,9 +149,26 @@ impl<'a> ExactMeshRef<'a> {
         self,
         right: ExactMeshRef<'_>,
     ) -> Result<Vec<[usize; 2]>, ExactMeshValidationError> {
+        let mut pairs = Vec::new();
+        self.visit_candidate_face_pairs(right, |pair| pairs.push(pair))?;
+        pairs.sort_unstable();
+        Ok(pairs)
+    }
+
+    /// Visit exact broad-phase candidate face pairs without collecting them.
+    ///
+    /// This validates retained bounds for both source meshes before any AABB
+    /// rejection is allowed. The visitor receives only broad-phase candidates;
+    /// exact narrow predicates still decide topology.
+    pub fn visit_candidate_face_pairs(
+        self,
+        right: ExactMeshRef<'_>,
+        mut visit: impl FnMut([usize; 2]),
+    ) -> Result<(), ExactMeshValidationError> {
         let left = self.prepare_broad_phase()?;
         let right = right.prepare_broad_phase()?;
-        Ok(left.candidate_face_pairs(&right))
+        left.visit_candidate_face_pairs(&right, |pair| visit(pair));
+        Ok(())
     }
 
     /// Prepare replay-validated broad-phase facts for repeated pair queries.
@@ -212,10 +229,27 @@ impl<'a> PreparedMeshView<'a> {
 
     /// Return exact broad-phase candidate face pairs for this view and `right`.
     pub fn candidate_face_pairs(&self, right: &PreparedMeshView<'_>) -> Vec<[usize; 2]> {
-        self.bounds.candidate_face_pairs(&right.bounds)
+        let mut pairs = Vec::new();
+        self.visit_candidate_face_pairs(right, |pair| pairs.push(pair));
+        pairs.sort_unstable();
+        pairs
     }
 
-    pub(crate) fn try_visit_candidate_face_pairs<E>(
+    /// Visit exact broad-phase candidate face pairs without collecting them.
+    pub fn visit_candidate_face_pairs(
+        &self,
+        right: &PreparedMeshView<'_>,
+        mut visit: impl FnMut([usize; 2]),
+    ) {
+        let result = self.try_visit_candidate_face_pairs(right, |pair| {
+            visit(pair);
+            Ok::<(), ()>(())
+        });
+        debug_assert!(result.is_ok());
+    }
+
+    /// Try to visit exact broad-phase candidate face pairs, allowing early exit.
+    pub fn try_visit_candidate_face_pairs<E>(
         &self,
         right: &PreparedMeshView<'_>,
         visit: impl FnMut([usize; 2]) -> Result<(), E>,
