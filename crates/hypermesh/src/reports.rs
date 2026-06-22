@@ -727,9 +727,9 @@ impl ExactBooleanResult {
         self.region_ownership_report.as_ref()
     }
 
-    /// Borrow the materialized exact output mesh.
-    pub(crate) fn mesh(&self) -> &ExactMesh {
-        &self.mesh
+    /// Consume this result and return the materialized exact output mesh.
+    pub(crate) fn into_mesh(self) -> ExactMesh {
+        self.mesh
     }
 
     pub(crate) fn with_gate_reports(

@@ -195,10 +195,9 @@ impl ExactMesh {
             return Err(MeshError::new(index_diagnostics));
         }
 
-        let points = vertices.to_vec();
         let triangle_indices = triangles.iter().map(|tri| tri.0).collect::<Vec<_>>();
-        let bounds = MeshBounds::from_triangles(&points, &triangle_indices);
-        let report = validate_triangles_with_policy(&points, &triangle_indices, policy);
+        let bounds = MeshBounds::from_triangles(&vertices, &triangle_indices);
+        let report = validate_triangles_with_policy(&vertices, &triangle_indices, policy);
         if !report.is_valid() {
             return Err(MeshError::new(report.diagnostics));
         }
@@ -579,7 +578,7 @@ impl ExactMesh {
         validation: ValidationPolicy,
     ) -> Result<ExactMesh, MeshError> {
         let request = ExactBooleanRequest::new(operation, validation);
-        materialize_boolean_exact_request(self, right, request).map(|result| result.mesh().clone())
+        materialize_boolean_exact_request(self, right, request).map(|result| result.into_mesh())
     }
 }
 
