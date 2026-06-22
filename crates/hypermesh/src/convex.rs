@@ -1478,8 +1478,9 @@ fn report_error(error: ConvexSolidReportError) -> MeshError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::boolean::{ExactBooleanOperation, ExactBooleanRequest};
-    use crate::workspace::ExactBooleanWorkspace;
+    use crate::boolean::{
+        ExactBooleanOperation, ExactBooleanRequest, exact_boolean_evaluation_for_replay,
+    };
 
     fn with_materialized_evaluation_for_test<R>(
         left: &ExactMesh,
@@ -1487,8 +1488,8 @@ mod tests {
         request: ExactBooleanRequest,
         f: impl FnOnce(&crate::boolean::ExactBooleanEvaluation) -> R,
     ) -> R {
-        let mut workspace = ExactBooleanWorkspace::new(left, right);
-        f(workspace.evaluate(request).unwrap())
+        let evaluation = exact_boolean_evaluation_for_replay(left, right, request).unwrap();
+        f(&evaluation)
     }
 
     fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {

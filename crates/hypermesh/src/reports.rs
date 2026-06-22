@@ -20,6 +20,8 @@ use super::affine_solid::{
 };
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 #[cfg(test)]
+use super::boolean::materialize_boolean_exact_request;
+#[cfg(test)]
 use super::boolean::refinement_report_from_graph;
 #[cfg(test)]
 use super::boolean::winding_readiness_report_for_request_from_graph;
@@ -77,8 +79,6 @@ use super::volumetric_cells::{
 use super::winding::{
     ClosedMeshWindingMeshRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
-#[cfg(test)]
-use super::workspace::ExactBooleanWorkspace;
 use hyperlimit::PredicateUse;
 
 /// Validation failure for an exact report object.
@@ -715,11 +715,6 @@ impl ExactBooleanResult {
     /// Return whether graph extraction contained unknown events before policy checks.
     pub(crate) fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns
-    }
-
-    #[cfg(test)]
-    pub(crate) fn set_graph_had_unknowns(&mut self, graph_had_unknowns: bool) {
-        self.graph_had_unknowns = graph_had_unknowns;
     }
 
     /// Return retained topology assembly gate evidence, when present.
@@ -4124,10 +4119,9 @@ impl ExactBooleanPreflight {
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let mut workspace = ExactBooleanWorkspace::new(left, right);
-        let replay = workspace
-            .preflight(request)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let replay = exact_boolean_evaluation_for_replay(left, right, request)?
+            .preflight()
+            .clone();
         if self == &replay {
             Ok(())
         } else {
@@ -6622,7 +6616,6 @@ mod tests {
     use crate::boolean::ExactBooleanRequest;
     use crate::graph::FaceSplitBoundaryNode;
     use crate::region::{ExactOutputVertex, FaceRegionPlaneRelation};
-    use crate::workspace::ExactBooleanWorkspace;
 
     #[test]
     fn freshness_classifies_retained_region_provenance_drift() {
@@ -6904,8 +6897,7 @@ mod tests {
             ValidationPolicy::CLOSED,
             ExactBoundaryBooleanPolicy::Reject,
         );
-        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-        let result = workspace.materialize_ref(request).unwrap();
+        let result = materialize_boolean_exact_request(&left, &right, request).unwrap();
 
         assert_eq!(
             result.freshness_against_sources(&left, &right),
@@ -6955,14 +6947,15 @@ mod tests {
     fn selected_region_result_rejects_duplicate_assembly_triangle() {
         let left = report_test_triangle(&[[0, 0, 0], [4, 0, 0], [0, 4, 0]]);
         let right = report_test_triangle(&[[1, -1, -1], [1, 3, 1], [1, 3, -1]]);
-        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-        let mut result = workspace
-            .materialize_ref(ExactBooleanRequest::new(
+        let mut result = materialize_boolean_exact_request(
+            &left,
+            &right,
+            ExactBooleanRequest::new(
                 ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
                 ValidationPolicy::ALLOW_BOUNDARY,
-            ))
-            .cloned()
-            .unwrap();
+            ),
+        )
+        .unwrap();
         result.validate().unwrap();
         assert!(!result.assembly.triangles.is_empty());
 

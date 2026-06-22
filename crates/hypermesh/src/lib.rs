@@ -48,8 +48,6 @@ mod volumetric;
 mod volumetric_cells;
 mod winding;
 mod witness;
-#[cfg(test)]
-mod workspace;
 
 pub use arrangement3d::{
     ArrangementEdgeRef, ArrangementFaceCellRef, ArrangementVertexRef, ArrangementView,

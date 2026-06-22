@@ -107,8 +107,6 @@ use super::winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
     WindingReportError, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
-#[cfg(test)]
-use super::workspace::ExactBooleanWorkspace;
 use hyperlimit::{
     CoplanarProjection, Point2, Point3, SegmentIntersection, Sign, TriangleLocation,
     classify_point_triangle, compare_reals, compare_reals_report, orient3d_report, project_point3,
@@ -1234,17 +1232,6 @@ impl ExactBooleanCertificationSet {
     #[cfg(test)]
     pub(crate) fn refinement(&self) -> &ExactRefinementReport {
         &self.refinement
-    }
-
-    #[cfg(test)]
-    pub(crate) fn refinement_mut(&mut self) -> &mut ExactRefinementReport {
-        &mut self.refinement
-    }
-
-    /// Return the adjacent closed-solid union completion certification report.
-    #[cfg(test)]
-    pub(crate) fn adjacent_union_completion(&self) -> &ExactAdjacentUnionCompletionReport {
-        &self.adjacent_union_completion
     }
 
     /// Return the planar-arrangement readiness certification report.
@@ -2660,21 +2647,11 @@ impl ExactBooleanEvaluation {
         &self.certifications
     }
 
-    #[cfg(test)]
-    pub(crate) fn preflight_mut(&mut self) -> &mut ExactBooleanPreflight {
-        &mut self.preflight
-    }
-
     /// Return the materialized result retained by this evaluation, when the
     /// request reached a certified output.
     #[cfg(test)]
     pub(crate) fn materialized_result(&self) -> Option<&ExactBooleanResult> {
         self.result.as_ref()
-    }
-
-    #[cfg(test)]
-    pub(crate) fn materialized_result_mut(&mut self) -> Option<&mut ExactBooleanResult> {
-        self.result.as_mut()
     }
 
     /// Validate the retained evaluation shape without replaying sources.
@@ -2698,22 +2675,6 @@ impl ExactBooleanEvaluation {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         Ok(())
-    }
-
-    #[cfg(test)]
-    pub(crate) fn retain_materialized_result(
-        &mut self,
-        result: &ExactBooleanResult,
-    ) -> Result<(), ExactReportValidationError> {
-        self.validate()?;
-        match self.result.as_ref() {
-            Some(existing) if existing == result => Ok(()),
-            Some(_) => Err(ExactReportValidationError::StatusEvidenceMismatch),
-            None => {
-                self.result = Some(result.clone());
-                self.validate()
-            }
-        }
     }
 
     /// Validate the retained evaluation by replaying all source-bound reports
@@ -5331,17 +5292,6 @@ fn materialize_arrangement_lower_dimensional_intersection_from_graph(
 /// intersection and difference do not need that projection policy once the
 /// same exact boundary-touch report proves no shared interior volume; those
 /// two operations use certified shortcuts before the policy layer.
-#[cfg(test)]
-pub(crate) fn materialize_boolean_exact_request_from_retained_graph(
-    graph: &ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactBooleanResult, MeshError> {
-    validate_graph_source_handoff(graph, left, right)?;
-    materialize_boolean_exact_request_with_graph(left, right, request, Some(graph))
-}
-
 pub(crate) fn replay_boolean_exact_request_for_result_validation(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -12112,8 +12062,10 @@ mod tests {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactBooleanPreflight {
-        let mut workspace = ExactBooleanWorkspace::new(left, right);
-        workspace.preflight(request).unwrap()
+        exact_boolean_evaluation_for_replay(left, right, request)
+            .unwrap()
+            .preflight()
+            .clone()
     }
 
     fn with_test_evaluation<R>(
@@ -12122,10 +12074,9 @@ mod tests {
         right: &ExactMesh,
         f: impl FnOnce(&ExactBooleanEvaluation) -> R,
     ) -> R {
-        let mut workspace = ExactBooleanWorkspace::new(left, right);
-        let evaluation = workspace.evaluate(request).unwrap();
-        evaluation.validate_against_sources(left, right).unwrap();
-        f(evaluation)
+        let evaluation = exact_boolean_evaluation_for_replay(left, right, request).unwrap();
+        evaluation.validate().unwrap();
+        f(&evaluation)
     }
 
     fn test_materialized_result(
@@ -12133,11 +12084,13 @@ mod tests {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactBooleanResult {
-        let mut workspace = ExactBooleanWorkspace::new(left, right);
-        let result = workspace.materialize_ref(request).cloned().unwrap();
-        let evaluation = workspace.evaluate(request).unwrap();
-        evaluation.validate_against_sources(left, right).unwrap();
-        assert_eq!(evaluation.materialized_result(), Some(&result));
+        let result = materialize_boolean_exact_request(left, right, request).unwrap();
+        let evaluation = exact_boolean_evaluation_for_replay(left, right, request).unwrap();
+        evaluation.validate().unwrap();
+        if let Some(retained) = evaluation.materialized_result() {
+            assert_eq!(retained, &result);
+        }
+        result.validate_against_sources(left, right).unwrap();
         result
     }
 
@@ -12156,12 +12109,11 @@ mod tests {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactVolumetricBoundaryClosureReport {
-        let mut workspace = ExactBooleanWorkspace::new(left, right);
         if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
             return no_materialized_boundary_output_report(request.operation);
         }
-        let graph = workspace.validated_graph().unwrap();
-        volumetric_boundary_closure_report_from_graph(graph, left, right, request.operation)
+        let graph = build_validated_intersection_graph(left, right).unwrap();
+        volumetric_boundary_closure_report_from_graph(&graph, left, right, request.operation)
             .unwrap()
     }
 
@@ -12170,12 +12122,11 @@ mod tests {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactPlanarArrangementReport {
-        let mut workspace = ExactBooleanWorkspace::new(left, right);
         if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
             return not_named_planar_arrangement_report(request.operation);
         }
-        let graph = workspace.validated_graph().unwrap();
-        planar_arrangement_report_from_graph(graph, left, right, request.operation).unwrap()
+        let graph = build_validated_intersection_graph(left, right).unwrap();
+        planar_arrangement_report_from_graph(&graph, left, right, request.operation).unwrap()
     }
 
     fn test_arrangement_attempt(
@@ -12184,20 +12135,31 @@ mod tests {
         right: &ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> ExactArrangementBooleanAttempt {
-        let mut workspace = crate::workspace::ExactBooleanWorkspace::new(left, right);
-        workspace
-            .arrangement_attempt(request, policy)
-            .unwrap()
-            .clone()
+        assert_eq!(policy, ExactRegularizationPolicy::REGULARIZED_SOLID);
+        let graph = build_validated_intersection_graph(left, right).unwrap();
+        let shortcut_facts =
+            ExactBooleanSourceFacts::from_sources(left, right).arrangement_cell_complex_shortcuts;
+        let mut retained_arrangement = None;
+        let mut retained_attempt = None;
+        replay_regularized_arrangement_attempt(
+            left,
+            right,
+            request,
+            &graph,
+            &shortcut_facts,
+            &mut retained_arrangement,
+            &mut retained_attempt,
+        )
+        .unwrap();
+        retained_attempt.unwrap()
     }
 
     fn test_boundary_touching_report(
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactBoundaryTouchingReport {
-        let mut workspace = ExactBooleanWorkspace::new(left, right);
-        let graph = workspace.validated_graph().unwrap();
-        boundary_touching_report_from_graph(graph, left, right).unwrap()
+        let graph = build_validated_intersection_graph(left, right).unwrap();
+        boundary_touching_report_from_graph(&graph, left, right).unwrap()
     }
 
     fn assert_current_arrangement_attempt(
@@ -12548,23 +12510,26 @@ mod tests {
     fn coplanar_volumetric_gate_uses_source_side_evidence() {
         let boundary_left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
         let boundary_right = axis_aligned_box_i64([2, 0, 0], [4, 2, 2]);
-        let mut boundary_workspace = ExactBooleanWorkspace::new(&boundary_left, &boundary_right);
-        let boundary_graph = boundary_workspace.validated_graph().unwrap();
+        let boundary_graph =
+            build_validated_intersection_graph(&boundary_left, &boundary_right).unwrap();
         assert!(graph_requires_coplanar_volumetric_cells(
-            &ExactBooleanBlocker::from_graph(boundary_graph, ExactBooleanBlockerKind::NeedsWinding)
+            &ExactBooleanBlocker::from_graph(
+                &boundary_graph,
+                ExactBooleanBlockerKind::NeedsWinding
+            )
         ));
         assert!(!graph_requires_coplanar_volumetric_cells_for_sources(
-            boundary_graph,
+            &boundary_graph,
             &boundary_left,
             &boundary_right
         ));
 
         let same_side_left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
         let same_side_right = same_side_left.clone();
-        let mut same_side_workspace = ExactBooleanWorkspace::new(&same_side_left, &same_side_right);
-        let same_side_graph = same_side_workspace.validated_graph().unwrap();
+        let same_side_graph =
+            build_validated_intersection_graph(&same_side_left, &same_side_right).unwrap();
         assert!(graph_requires_coplanar_volumetric_cells_for_sources(
-            same_side_graph,
+            &same_side_graph,
             &same_side_left,
             &same_side_right
         ));
@@ -12657,8 +12622,7 @@ mod tests {
         right: &ExactMesh,
         request: ExactBooleanRequest,
     ) {
-        let mut workspace = ExactBooleanWorkspace::new(left, right);
-        let evaluation = workspace.evaluate(request).unwrap();
+        let evaluation = exact_boolean_evaluation_for_replay(left, right, request).unwrap();
         evaluation.validate().unwrap();
         evaluation.validate_against_sources(left, right).unwrap();
         let result = evaluation
@@ -13378,8 +13342,7 @@ mod tests {
         assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
         assert_eq!(preflight.retained_events, graph.event_count());
 
-        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-        let evaluation = workspace.evaluate(request).unwrap();
+        let evaluation = exact_boolean_evaluation_for_replay(&left, &right, request).unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
         let attempt = evaluation
             .retained_arrangement_attempt()
@@ -13408,12 +13371,13 @@ mod tests {
             ExactBooleanOperation::Union,
             ValidationPolicy::ALLOW_BOUNDARY,
         );
-        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-        let retained_attempt = workspace
-            .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap()
-            .clone();
-        let evaluation = workspace.evaluate(request).unwrap();
+        let retained_attempt = test_arrangement_attempt(
+            request,
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        );
+        let evaluation = exact_boolean_evaluation_for_replay(&left, &right, request).unwrap();
         evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
         assert_eq!(
@@ -14123,8 +14087,7 @@ mod tests {
         assert!(left.facts().mesh.closed_manifold);
         assert!(right.facts().mesh.closed_manifold);
         assert!(!meshes_are_certified_bounds_disjoint(&left, &right));
-        let mut graph_workspace = ExactBooleanWorkspace::new(&left, &right);
-        let graph = graph_workspace.validated_graph().unwrap();
+        let graph = build_validated_intersection_graph(&left, &right).unwrap();
         assert!(!graph.has_unknowns());
         assert!(graph.face_pairs.is_empty());
 
@@ -14415,8 +14378,7 @@ mod tests {
         let right = tetrahedron_i64([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]);
         assert!(left.facts().mesh.closed_manifold, "{:?}", left.facts().mesh);
         assert!(right.facts().mesh.closed_manifold);
-        let mut graph_workspace = ExactBooleanWorkspace::new(&left, &right);
-        let graph = graph_workspace.validated_graph().unwrap();
+        let graph = build_validated_intersection_graph(&left, &right).unwrap();
 
         let reject_closed_request = ExactBooleanRequest::with_boundary_policy(
             ExactBooleanOperation::Union,
@@ -14961,8 +14923,7 @@ mod tests {
             stale_ownership_shape.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
-        let mut graph_workspace = ExactBooleanWorkspace::new(&left, &right);
-        let graph = graph_workspace.validated_graph().unwrap();
+        let graph = build_validated_intersection_graph(&left, &right).unwrap();
         let mut stale_replay_report = replayable_result.clone();
         stale_replay_report
             .topology_assembly_report
@@ -15167,8 +15128,7 @@ mod tests {
         retained_attempt.validate().unwrap();
         assert!(retained_attempt.resolves_requested_volume_ownership());
 
-        let mut graph_workspace = ExactBooleanWorkspace::new(&left, &right);
-        let graph = graph_workspace.validated_graph().unwrap();
+        let graph = build_validated_intersection_graph(&left, &right).unwrap();
         let error = certified_arrangement_cell_complex_preflight_from_retained_attempt(
             &graph,
             &left,
