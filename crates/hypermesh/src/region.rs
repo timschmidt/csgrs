@@ -419,8 +419,6 @@ pub enum ExactRegionSelection {
     KeepAll,
     /// Keep only regions originating from the left mesh.
     KeepLeft,
-    /// Keep only regions originating from the right mesh.
-    KeepRight,
 }
 
 /// Per-region retention decision for exact boolean assembly.
@@ -446,9 +444,7 @@ impl ExactRegionSelection {
     pub const fn keeps(self, side: MeshSide) -> bool {
         matches!(
             (self, side),
-            (Self::KeepAll, _)
-                | (Self::KeepLeft, MeshSide::Left)
-                | (Self::KeepRight, MeshSide::Right)
+            (Self::KeepAll, _) | (Self::KeepLeft, MeshSide::Left)
         )
     }
 }

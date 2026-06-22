@@ -3572,9 +3572,7 @@ fn points_equal(left: &Point3, right: &Point3) -> bool {
 fn selection_keeps(selection: ExactRegionSelection, side: MeshSide) -> bool {
     matches!(
         (selection, side),
-        (ExactRegionSelection::KeepAll, _)
-            | (ExactRegionSelection::KeepLeft, MeshSide::Left)
-            | (ExactRegionSelection::KeepRight, MeshSide::Right)
+        (ExactRegionSelection::KeepAll, _) | (ExactRegionSelection::KeepLeft, MeshSide::Left)
     )
 }
 
