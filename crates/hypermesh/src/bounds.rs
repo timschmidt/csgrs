@@ -349,11 +349,41 @@ impl<'a> PreparedMeshBounds<'a> {
         let Some(right_order) = other.min_axis_order(axis) else {
             return Ok(false);
         };
+        let Some(right_max_order) = other.max_axis_order(axis) else {
+            return Ok(false);
+        };
         let mut active_right = Vec::<usize>::new();
+        let mut right_active = vec![false; other.bounds.faces.len()];
+        let mut right_expired = vec![false; other.bounds.faces.len()];
         let mut next_right = 0usize;
+        let mut next_expiring_right = 0usize;
+        let mut inactive_rights = 0usize;
 
         for &left in left_order {
             let left_box = &self.bounds.faces[left];
+            while let Some(&right) = right_max_order.get(next_expiring_right) {
+                let Some(ordering) = compare(
+                    axis_max(&other.bounds.faces[right], axis),
+                    axis_min(left_box, axis),
+                ) else {
+                    return Ok(false);
+                };
+                if ordering != Ordering::Less {
+                    break;
+                }
+                right_expired[right] = true;
+                if right_active[right] {
+                    right_active[right] = false;
+                    inactive_rights += 1;
+                }
+                next_expiring_right += 1;
+            }
+
+            if inactive_rights > active_right.len() / 2 {
+                active_right.retain(|&right| right_active[right]);
+                inactive_rights = 0;
+            }
+
             while let Some(&right) = right_order.get(next_right) {
                 let Some(ordering) = compare(
                     axis_min(&other.bounds.faces[right], axis),
@@ -364,19 +394,11 @@ impl<'a> PreparedMeshBounds<'a> {
                 if ordering == Ordering::Greater {
                     break;
                 }
-                active_right.push(right);
+                if !right_expired[right] {
+                    active_right.push(right);
+                    right_active[right] = true;
+                }
                 next_right += 1;
-            }
-
-            if retain_active_right_axis(
-                &mut active_right,
-                &other.bounds.faces,
-                axis,
-                axis_min(left_box, axis),
-            )
-            .is_none()
-            {
-                return Ok(false);
             }
 
             for &right in &active_right {
@@ -387,6 +409,9 @@ impl<'a> PreparedMeshBounds<'a> {
                 };
                 if ordering == Ordering::Greater {
                     break;
+                }
+                if !right_active[right] {
+                    continue;
                 }
                 let pair = [left, right];
                 if self.full_aabb_may_overlap(other, pair) {
@@ -412,24 +437,6 @@ impl<'a> PreparedMeshBounds<'a> {
     fn max_axis_order(&self, axis: Axis) -> Option<&[usize]> {
         self.max_axis_orders[axis.index()].as_deref()
     }
-}
-
-fn retain_active_right_axis(
-    active_right: &mut Vec<usize>,
-    right_faces: &[ExactAabb3],
-    axis: Axis,
-    left_min: &Real,
-) -> Option<()> {
-    let mut retained = 0usize;
-    for index in 0..active_right.len() {
-        let right = active_right[index];
-        if compare(axis_max(&right_faces[right], axis), left_min)? != Ordering::Less {
-            active_right[retained] = right;
-            retained += 1;
-        }
-    }
-    active_right.truncate(retained);
-    Some(())
 }
 
 impl MeshBounds {
@@ -710,6 +717,46 @@ mod tests {
         let triangles = [[0, 1, 2], [3, 4, 5], [6, 7, 8]];
         let left = MeshBounds::from_triangles(&left_points, &triangles);
         let right = MeshBounds::from_triangles(&right_points, &triangles);
+        let prepared_left = left.prepare();
+        let prepared_right = right.prepare();
+
+        assert_eq!(
+            prepared_left.candidate_face_pairs(&prepared_right),
+            prepared_left.candidate_face_pairs_quadratic(&prepared_right)
+        );
+    }
+
+    #[test]
+    fn prepared_sweep_expires_active_intervals_by_max_order() {
+        let left_points = vec![
+            p(0, 0, 0),
+            p(100, 0, 0),
+            p(0, 1, 0),
+            p(50, 0, 0),
+            p(51, 0, 0),
+            p(50, 1, 0),
+            p(80, 0, 0),
+            p(81, 0, 0),
+            p(80, 1, 0),
+        ];
+        let right_points = vec![
+            p(1, 0, 0),
+            p(2, 0, 0),
+            p(1, 1, 0),
+            p(3, 0, 0),
+            p(4, 0, 0),
+            p(3, 1, 0),
+            p(50, 0, 0),
+            p(51, 0, 0),
+            p(50, 1, 0),
+            p(90, 0, 0),
+            p(91, 0, 0),
+            p(90, 1, 0),
+        ];
+        let left_triangles = [[0, 1, 2], [3, 4, 5], [6, 7, 8]];
+        let right_triangles = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11]];
+        let left = MeshBounds::from_triangles(&left_points, &left_triangles);
+        let right = MeshBounds::from_triangles(&right_points, &right_triangles);
         let prepared_left = left.prepare();
         let prepared_right = right.prepare();
 
