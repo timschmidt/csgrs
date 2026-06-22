@@ -222,14 +222,25 @@ impl CandidateFacePairPlan {
 
 impl MeshBounds {
     /// Build retained bounds from predicate points and triangle indices.
+    #[cfg(test)]
     pub(crate) fn from_triangles(points: &[Point3], triangles: &[[usize; 3]]) -> Self {
+        Self::from_triangle_rows(points, triangles.len(), triangles.iter().copied())
+    }
+
+    pub(crate) fn from_triangle_rows(
+        points: &[Point3],
+        triangle_count: usize,
+        triangles: impl IntoIterator<Item = [usize; 3]>,
+    ) -> Self {
         let mesh = ExactAabb3::from_points(points);
-        let faces = triangles
-            .iter()
-            .map(|tri| {
-                ExactAabb3::from_triangle([&points[tri[0]], &points[tri[1]], &points[tri[2]]])
-            })
-            .collect();
+        let mut faces = Vec::with_capacity(triangle_count);
+        for tri in triangles {
+            faces.push(ExactAabb3::from_triangle([
+                &points[tri[0]],
+                &points[tri[1]],
+                &points[tri[2]],
+            ]));
+        }
         Self { mesh, faces }
     }
 

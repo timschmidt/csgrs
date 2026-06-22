@@ -12,7 +12,7 @@ use super::bounds::{BoundsValidationError, MeshBounds};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::facts::{MeshFactsValidationError, MeshValidationFacts};
 use super::scalar::LossyF64Import;
-use super::validation::{ValidationPolicy, ValidationReport, validate_triangles_with_policy};
+use super::validation::{ValidationPolicy, ValidationReport, validate_triangle_rows_with_policy};
 use super::view::ExactMeshRef;
 use hyperlimit::{
     ConstructionProvenance, ConstructionProvenanceValidationError, Point3, PredicateUse,
@@ -196,9 +196,17 @@ impl ExactMesh {
             return Err(ExactMeshError::new(index_blockers));
         }
 
-        let triangle_indices = triangles.iter().map(|tri| tri.0).collect::<Vec<_>>();
-        let bounds = MeshBounds::from_triangles(&vertices, &triangle_indices);
-        let report = validate_triangles_with_policy(&vertices, &triangle_indices, policy);
+        let bounds = MeshBounds::from_triangle_rows(
+            &vertices,
+            triangles.len(),
+            triangles.iter().map(|tri| tri.0),
+        );
+        let report = validate_triangle_rows_with_policy(
+            &vertices,
+            triangles.len(),
+            triangles.iter().map(|tri| tri.0),
+            policy,
+        );
         if !report.is_valid() {
             return Err(ExactMeshError::new(report.blockers));
         }
@@ -400,9 +408,8 @@ impl ExactMesh {
             .facts
             .faces
             .iter()
-            .flat_map(|face| face.triangle.degeneracy_predicates.iter().copied())
-            .collect::<Vec<_>>();
-        if self.provenance.predicates != retained_predicates {
+            .flat_map(|face| face.triangle.degeneracy_predicates.iter().copied());
+        if !self.provenance.predicates.iter().copied().eq(retained_predicates) {
             return Err(ExactMeshValidationError::PredicateRetentionMismatch);
         }
         Ok(())
