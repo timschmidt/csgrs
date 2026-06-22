@@ -254,8 +254,8 @@ impl<'a> PreparedMeshView<'a> {
         debug_assert!(result.is_ok());
     }
 
-    /// Visit cached broad-phase candidate face pairs without materializing a pair cache.
-    pub(crate) fn try_visit_candidate_face_pairs<'b, E>(
+    /// Visit replay-validated candidate face pairs and allow the visitor to stop early.
+    pub fn try_visit_candidate_face_pairs<'b, E>(
         &self,
         right: &PreparedMeshView<'b>,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,

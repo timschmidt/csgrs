@@ -28,25 +28,24 @@ downstream CSG layers.
 
 ## Public Surface
 
-- `ExactMesh` is the owned mesh type.
-- `Triangle` stores triangle indices.
-- `ValidationPolicy` selects the mesh validation contract.
-- `ExactMeshError` and `ExactMeshBlocker` report invalid input, unsupported exact
-  topology, stale replay, and construction blockers with provenance where
-  available.
-- `ExactMeshRef`, `TriangleRef`, `FaceRef`, and `EdgeRef` provide borrowed
-  access for queries that should not clone mesh storage.
-- `PreparedMeshView` reuses replay-validated broad-phase facts and streams
-  candidate face pairs without exposing raw acceleration carriers.
-- `ExactMesh::union`, `ExactMesh::intersection`, `ExactMesh::difference`, and
-  `ExactMesh::xor` materialize named closed boolean outputs as exact meshes.
-- `ExactMesh::transform`, `ExactMesh::transform_by`, and `ExactMesh::inverse`
-  provide exact affine transforms and orientation inversion for CSG adapters.
-- `ExactMeshRef` exposes the same named operations and transform methods for
-  borrowed callers, plus prepared broad-phase views.
-- `ExactMesh::with_arrangement_view` exposes borrowed `ArrangementView` queries
-  for algorithms that need retained topology without cloning arrangement
-  storage or naming an owned arrangement type.
+`ExactMesh` is the entry point: it owns exact vertices, triangle topology,
+validation facts, bounds, and construction provenance. It also carries the
+convenience methods downstream CSG layers need: `union`, `intersection`,
+`difference`, `xor`, `transform`, `transform_by`, `inverse`, and
+`with_arrangement_view`.
+
+Supporting root exports are deliberately small. `Triangle` is the construction
+index row, `ValidationPolicy` selects the mesh validation contract, and
+`ExactMeshError`/`ExactMeshBlocker` report invalid input, unsupported exact
+topology, stale replay, and construction blockers with provenance where
+available.
+
+Borrowed queries start from `ExactMesh::view()`. `ExactMeshRef`, `TriangleRef`,
+`FaceRef`, and `EdgeRef` avoid cloning mesh storage; `PreparedMeshView` reuses
+replay-validated broad-phase facts and streams candidate face pairs with
+fallible early-stop support. `ExactMesh::with_arrangement_view` exposes borrowed
+`ArrangementView` queries for algorithms that need retained topology without
+cloning arrangement storage or naming an owned arrangement type.
 
 Retained graph, arrangement, cell-complex, winding, and shortcut evidence remain
 kernel internals unless a borrowed view is needed for exact query reuse.

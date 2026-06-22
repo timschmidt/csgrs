@@ -159,6 +159,23 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
 }
 
 #[test]
+fn prepared_broad_phase_candidate_visitor_can_stop_early() {
+    let left = tetra([0, 0, 0]);
+    let right = tetra([0, 0, 0]);
+    let prepared_left = left.view().prepare_broad_phase().unwrap();
+    let prepared_right = right.view().prepare_broad_phase().unwrap();
+
+    let mut visited = 0;
+    let result = prepared_left.try_visit_candidate_face_pairs(&prepared_right, &mut |_| {
+        visited += 1;
+        Err("stop")
+    });
+
+    assert_eq!(result, Err("stop"));
+    assert_eq!(visited, 1);
+}
+
+#[test]
 fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);

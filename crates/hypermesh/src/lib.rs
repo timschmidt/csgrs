@@ -7,6 +7,12 @@
 
 //! Exact-facing mesh API for the hyper geometry stack.
 //!
+//! [`ExactMesh`] is the primary entry point. It owns exact vertices, triangle
+//! topology, retained validation facts, broad-phase bounds, and construction
+//! provenance. Borrowed query and acceleration APIs start from
+//! [`ExactMesh::view`] so callers can inspect retained facts without cloning
+//! mesh storage.
+//!
 //! Mesh coordinates are carried as [`hyperlimit::Point3`] over
 //! [`hyperreal::Real`]. Topology-affecting decisions are exposed through exact
 //! predicate evidence, certified outputs, or explicit blockers when the
