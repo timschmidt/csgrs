@@ -4,9 +4,9 @@
 </h1>
 
 `hypermesh` is the experimental 3D mesh-topology crate in the Hyper workspace. It
-uses Hyper-native exact scalar evidence for mesh validation, provenance, face-pair
-classification, coplanar arrangements, split plans, exact-aware boolean preflight, and
-exact boolean assembly.
+uses Hyper-native exact scalar evidence for mesh validation, provenance, retained
+facts, face-pair classification, coplanar arrangements, split plans, and exact mesh
+assembly.
 
 `hyperreal` is the canonical geometry scalar. Primitive floats are only accepted at
 explicit import or preview boundaries where approximation policy and provenance are
@@ -70,12 +70,11 @@ from exact predicates and retained evidence.
   reports rather than a broad root-level facts API.
 - `SourceProvenance`, `ApproximationPolicy`, `PredicateUse`, and construction
   provenance records preserve import and decision history.
-- `ExactBooleanWorkspace` retains graph, arrangement, attempt, evaluation, and
-  materialization artifacts for replayable boolean sessions.
-- `ExactBooleanEvaluation` and `ExactBooleanResult` describe retained readiness,
-  assembly state, and materialized outputs.
-- Surface, region, convex-solid, boundary-touching, winding, handoff-package, and
-  consumer-readiness reports capture certified fast paths and downstream contracts.
+- `ExactMesh::union`, `ExactMesh::intersection`, and `ExactMesh::difference`
+  materialize named closed boolean outputs as exact meshes.
+- Internal graph, arrangement, cell-complex, winding, and shortcut evidence
+  remains replayable kernel state. Workspace-level policy and product reports
+  belong in csgrs rather than the default hypermesh API.
 
 ## Precision Model
 
@@ -101,39 +100,16 @@ DOPs, coplanar arrangement reports, and handoff packages are intended to narrow 
 before expensive predicates or topology rebuilds. Feature flags are reserved for
 diagnostic/probing hooks and Bevy/demo surfaces.
 
-`ExactBooleanWorkspace` provides a native exact session for a fixed mesh pair. It
-caches replayable graph, arrangement, arrangement-attempt, selected cell-complex,
-simplified cell-complex, preflight, evaluation, and certified materialization
-artifacts while keeping source freshness tied to the borrowed exact meshes.
-Workspace evaluation reuses the retained regularized arrangement for boolean
-certification evidence instead of reconstructing that object internally. First-call
-workspace materialization also consumes retained graph, preflight, and arrangement
-artifacts directly for certified supports, and repeat materialization reuses a
-separate result cache without forcing the evaluation cache to exist. Workspace
-evaluation performs local
-proof-bundle validation first, and workspace replay validation reuses retained
-graph and regularized-arrangement artifacts for evaluations, plus retained graph
-artifacts for materialized result replay, while preserving stale-evidence checks.
-Workspace arrangement-attempt validation replays against the retained arrangement,
-and selected and simplified cell-complex accessors retain the topology and
-ownership reports consumed by the selection gate, giving benchmarks a direct view
-of local gate-report validation, workspace session validation, and full source
-replay validation costs.
-Certified shortcut evaluations can also retain arrangement-attempt evidence in
-the same workspace session. Validation treats that retained attempt as an
-additional exact witness only when the shortcut-specific source facts still
-certify the request, so shortcuts remain certified accelerators rather than a
-parallel boolean API.
-`ExactBooleanRequest` now only describes the operation and policy; evaluation and
-materialization run through `ExactBooleanWorkspace` so retained artifacts and
-cache freshness stay tied to one explicit session. `ExactBooleanEvaluation`
-exposes scheduling through `preflight`, retained subreports through its
-`certifications` bundle, retained arrangement/cell-complex evidence through the
-primary arrangement attempt, and materialized output through `ExactBooleanResult`;
-report-specific evaluation accessors have been folded into those canonical
-fields. Volumetric split-cell recovery reuses its retained graph for internal
-result proof before exposing the strict public `validate_against_sources` replay
-API.
+Named booleans use the exact graph-backed arrangement/cell-complex path and
+certified exact shortcuts where those shortcuts prove the same output contract.
+Shortcut outputs remain acceleration facts rather than a separate policy API.
+
+The performance direction is EMBER-style one-shot local arrangements with
+retained exact source facts: broad-phase pruning, adaptive spatial subdivision,
+local per-leaf splitting, propagated winding references, early-out leaves,
+indirect predicates for constructed intersections, and replay-validated cached
+facts. The generic fallback remains exact arrangement/cell-complex construction
+with winding/ownership evidence and CDT remeshing for difficult inputs.
 
 Topology assembly subreports record the retained bridge from intersection graph
 events through split topology and face-region loops into arrangement vertices,
@@ -167,31 +143,11 @@ retained-arrangement sessions.
 
 Region ownership subreports record whether labeled arrangement cells are
 volume-resolved, face-label-resolved, still waiting on exact winding, or blocked by
-other arrangement evidence. Volume-resolved reports also retain adjacency
-face-side and separating-face counts, so local validation requires explicit
-volume-boundary proof instead of only region counts, and they carry the same
-lower-dimensional artifact shape counts as the topology bridge. Ownership reports
-also retain face-cell boundary-node and boundary-coordinate counts for the
-labeled cell-complex view. They validate directly against source operands and
-through workspace retained-arrangement sessions. Named exact boolean evaluations
-retain this report as arrangement-attempt evidence, mirrored by the certification
-bundle where needed, so materializers can reject stale or missing ownership proof
-before consuming arrangement-cell-complex output. Materialized arrangement outputs
-locally cross-check retained topology and ownership report counts for face cells,
-boundary nodes, and lower-dimensional artifact shape before source replay.
-Retained arrangement attempts try topology/label/selection before bounded
-recovery materializers; those attempts now retain the ownership report and status
-observed before selection. Recovery materializers remain available only when
-their retained certificates prove coverage for cases not yet supported by the
-generic graph-backed cell-complex stage.
-Replay-selected and simplified cell-complex artifacts likewise carry the consumed
-ownership report when it is available. Arrangement-cell-complex results can also
-carry those consumed gate reports at the materialized result boundary, and result
-source replay now recomputes the gate reports from the current operands before
-accepting retained topology/ownership evidence as fresh. Workspace retained-result
-validation can reuse its cached regularized arrangement for that gate-report replay,
-and exact matches against materialization/evaluation cache entries are accepted as
-session-local replay evidence after local result validation.
+other arrangement evidence. Materialized arrangement outputs locally cross-check
+retained topology and ownership report counts for face cells, boundary nodes, and
+lower-dimensional artifact shape before source replay. Result source replay
+recomputes source facts before accepting retained topology or ownership evidence
+as fresh.
 
 Benchmarks should keep broad phase, narrow classification, split planning, region
 assembly, simplification, triangulation, and materialization visible as separate stages
@@ -204,8 +160,7 @@ Implemented today:
 - exact mesh topology path;
 - exact mesh, bounds, facts, provenance, validation, audit, face-pair, coplanar,
   construction, split-plan, support, surface, winding, convex-solid, exact arrangement,
-  cell-complex simplification, consumer-readiness, handoff-package, preflight,
-  exact-boolean workspace, and exact-boolean APIs;
+  cell-complex simplification, and `ExactMesh` named boolean methods;
 - tests, proptests, fuzz targets, examples, and exact-validation benchmarks.
 
 Known limits: unsupported boolean/intersection/simplification topology is reported as a
@@ -248,32 +203,16 @@ assert_eq!(facts.mesh.boundary_edges, 3);
 mesh.validate_retained_state()?;
 ```
 
-Use exact validation, audit, face-pair classification, split-plan, preflight,
-consumer-readiness, and handoff-package reports to audit topology before relying on
-boolean output.
+Use exact validation and retained-state audits before relying on mesh output.
 
-Named booleans converge on the exact arrangement/cell-complex path. Certified
-shortcuts remain only where they prove coverage for cases that path does not
-yet support:
+Named booleans are mesh methods:
 
 ```rust,ignore
-use hypermesh::{
-    ExactBooleanOperation, ExactBooleanRequest, ExactBooleanWorkspace,
-    ValidationPolicy,
-};
+let union = left.union(&right)?;
+let intersection = left.intersection(&right)?;
+let difference = left.difference(&right)?;
 
-let request = ExactBooleanRequest::new(
-    ExactBooleanOperation::Union,
-    ValidationPolicy::ALLOW_BOUNDARY,
-);
-let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-
-let result = workspace.materialize_ref(request)?;
-
-let evaluation = workspace.evaluate(request)?;
-if let Some(attempt) = evaluation.retained_arrangement_attempt() {
-    attempt.validate()?;
-}
+union.validate_retained_state()?;
 ```
 
 ## References
