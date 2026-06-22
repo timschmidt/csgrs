@@ -1968,15 +1968,15 @@ fn find_matching_graph_vertex(
     unresolved_equalities: &mut usize,
 ) -> Option<usize> {
     if let Some(key) = point_key {
-        if let Some(bucket) = point_key_buckets.get(key) {
-            if let Some(index) = find_matching_graph_vertex_in_indices(
+        if let Some(bucket) = point_key_buckets.get(key)
+            && let Some(index) = find_matching_graph_vertex_in_indices(
                 point,
                 vertices,
                 bucket,
                 unresolved_equalities,
-            ) {
-                return Some(index);
-            }
+            )
+        {
+            return Some(index);
         }
         return find_matching_graph_vertex_in_indices(
             point,
