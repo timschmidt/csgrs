@@ -102,11 +102,11 @@ pub(crate) enum ExactTriangleInteriorWitnessError {
 
 /// Deterministic retry lattice for volumetric region classification.
 ///
-/// The ordering keeps the historical centroid and quarter-point retries first
-/// for compatibility, then expands to asymmetric interior witnesses. The
-/// asymmetric points matter for adversarial arrangements where symmetric
-/// points sit on retained boundaries or ray-degenerate loci. No randomness or
-/// floating perturbation is introduced; every candidate remains replayable.
+/// The ordering starts with low-denominator symmetric witnesses, then expands
+/// to asymmetric interior witnesses. The asymmetric points matter for
+/// adversarial arrangements where symmetric points sit on retained boundaries
+/// or ray-degenerate loci. No randomness or floating perturbation is
+/// introduced; every candidate remains replayable.
 pub(crate) const EXACT_TRIANGLE_INTERIOR_WITNESSES: &[ExactTriangleInteriorWitness] = &[
     ExactTriangleInteriorWitness::new([1, 1, 1]),
     ExactTriangleInteriorWitness::new([2, 1, 1]),

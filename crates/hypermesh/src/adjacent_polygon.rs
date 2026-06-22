@@ -2,15 +2,15 @@
 //!
 //! This module is the branch-face companion to [`crate::adjacent`].
 //! It accepts source-owned, coplanar face disks when both solids replay the same
-//! simple projected boundary with opposite signed area. The certificate keeps a
-//! lists and edge incidences, while exact predicates certify that replayed
-//! topology is valid in both source and projected spaces.
+//! simple projected boundary with opposite signed area. The certificate retains
+//! source face lists, boundary points, and edge incidences while exact
+//! predicates certify replayed topology in both source and projected spaces.
 //!
 //! The strict point-in-ring check uses the even-odd crossing classifier of
-//! Hormann and Agathos, "The point in polygon problem for arbitrary polygons,"
-//! cycle reconstruction over the candidate boundary edge graph. Broader non-rectilinear
-//! coplanar-cell materialization remains intentionally separate from this full-face
-//! shortcut.
+//! Hormann and Agathos, "The point in polygon problem for arbitrary polygons."
+//! Boundary cycles are reconstructed from candidate edge graphs; broader
+//! non-rectilinear coplanar-cell materialization remains separate from this
+//! full-face shortcut.
 
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
@@ -39,8 +39,8 @@ struct PolygonPatchCandidate {
 /// is certified directly, while connected subpatches are exhaustively searched
 /// inside that finite component.
 ///
-/// object/predicate split: source topology is replayed from combinatorial adjacency,
-/// while exact predicates certify coplanarity, interior inclusion, and signed-area
+/// Source topology is replayed from combinatorial adjacency, while exact
+/// predicates certify coplanarity, interior inclusion, and signed-area
 /// compatibility.
 pub(crate) fn polygon_patch_pairs(
     left: &ExactMesh,
