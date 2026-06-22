@@ -60,7 +60,7 @@ impl Default for ExactRegularizationPolicy {
 
 /// Blocker emitted by exact arrangement and cell-complex stages.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ExactArrangementBlocker {
+pub(crate) enum ExactArrangementBlocker {
     /// Exact ordering could not be certified.
     UndecidableOrdering,
     /// An intersection predicate or construction did not resolve.
@@ -78,8 +78,6 @@ pub enum ExactArrangementBlocker {
     /// not yet reconstructed the missing regularized volume-boundary cells
     /// needed to form closed shells.
     UnregularizedOpenSheetComplex,
-    /// The primitive family is outside the current exact arrangement kernel.
-    UnsupportedCurvedPrimitive,
     /// Retained intersection graph evidence was structurally invalid.
     InvalidIntersectionGraph(ExactArrangementGraphBlockerKind),
     /// Retained split-plan evidence was structurally invalid.
@@ -92,7 +90,7 @@ pub enum ExactArrangementBlocker {
 
 /// Stable public category for retained intersection-graph blockers.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactArrangementGraphBlockerKind {
+pub(crate) enum ExactArrangementGraphBlockerKind {
     /// A retained face-pair record references a missing source face.
     FaceIndexOutOfRange,
     /// A retained event references a missing source vertex or face.
@@ -169,7 +167,7 @@ impl From<IntersectionGraphValidationError> for ExactArrangementGraphBlockerKind
 
 /// Stable public category for retained split-plan blockers.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactArrangementSplitPlanBlockerKind {
+pub(crate) enum ExactArrangementSplitPlanBlockerKind {
     /// Exact parameter ordering could not be certified.
     UnknownOrdering,
     /// Exact split-point equality could not be certified.
@@ -206,8 +204,6 @@ pub enum ExactArrangementSplitPlanBlockerKind {
     UnknownBoundaryIncidence,
     /// A split boundary node is not on the original face plane.
     BoundaryNodeOffFacePlane,
-    /// Source replay did not reproduce the retained split artifact.
-    SourceReplayMismatch,
     /// A retained split face or region carried a mismatched source triangle.
     SourceTriangleMismatch,
     /// A split face region has fewer than three boundary nodes.
@@ -248,7 +244,7 @@ impl From<SplitPlanBlockerKind> for ExactArrangementSplitPlanBlockerKind {
             SplitPlanBlockerKind::UnknownBoundaryIncidence => Self::UnknownBoundaryIncidence,
             SplitPlanBlockerKind::BoundaryNodeOffFacePlane => Self::BoundaryNodeOffFacePlane,
             #[cfg(test)]
-            SplitPlanBlockerKind::SourceReplayMismatch => Self::SourceReplayMismatch,
+            SplitPlanBlockerKind::SourceReplayMismatch => Self::SourceTriangleMismatch,
             SplitPlanBlockerKind::SourceTriangleMismatch => Self::SourceTriangleMismatch,
             SplitPlanBlockerKind::EmptyOrShortRegionBoundary => Self::EmptyOrShortRegionBoundary,
             SplitPlanBlockerKind::DuplicateConsecutiveRegionNode => {

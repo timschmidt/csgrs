@@ -6928,7 +6928,7 @@ mod tests {
         report.validate().unwrap();
 
         report.status = ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(
-            ExactArrangementBlocker::UnsupportedCurvedPrimitive,
+            ExactArrangementBlocker::UnresolvedRegionClassification,
         );
         assert_eq!(
             report.validate(),

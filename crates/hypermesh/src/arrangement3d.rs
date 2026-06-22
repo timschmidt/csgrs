@@ -50,9 +50,9 @@ use hyperlimit::SourceProvenance;
 use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::{
-    Point2, Point3, SegmentIntersection, Sign, TriangleLocation, classify_point_triangle,
-    classify_segment_intersection, compare_point2_lexicographic, compare_reals, orient3d_report,
-    point_on_segment, point_on_segment3, point2_equal, point3_equal, project_point3,
+    Point2, Point3, SegmentIntersection, TriangleLocation, classify_point_triangle,
+    classify_segment_intersection, compare_point2_lexicographic, compare_reals, point_on_segment,
+    point_on_segment3, point2_equal, point3_equal, project_point3,
     proper_segment_intersection_point,
 };
 use hyperreal::Real;
@@ -404,36 +404,6 @@ fn validate_lower_dimensional_artifact_not_duplicate_of_candidates(
     Ok(())
 }
 
-fn validate_lower_dimensional_artifacts_against_sources(
-    artifacts: &[ArrangementLowerDimensionalArtifact],
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<(), ExactArrangementBlocker> {
-    for artifact in artifacts {
-        match artifact {
-            ArrangementLowerDimensionalArtifact::PointContact {
-                left_face,
-                right_face,
-                point,
-            } => {
-                validate_lower_dimensional_point_on_source_face(left, *left_face, point)?;
-                validate_lower_dimensional_point_on_source_face(right, *right_face, point)?;
-            }
-            ArrangementLowerDimensionalArtifact::EdgeContact {
-                left_face,
-                right_face,
-                endpoints,
-            } => {
-                for endpoint in endpoints {
-                    validate_lower_dimensional_point_on_source_face(left, *left_face, endpoint)?;
-                    validate_lower_dimensional_point_on_source_face(right, *right_face, endpoint)?;
-                }
-            }
-        }
-    }
-    Ok(())
-}
-
 fn lower_dimensional_artifact_faces(
     artifact: &ArrangementLowerDimensionalArtifact,
 ) -> (usize, usize) {
@@ -490,55 +460,6 @@ fn lower_dimensional_artifact_exact_key(
             right_face: *right_face,
             edge: exact_undirected_point3_edge_key(endpoints)?,
         }),
-    }
-}
-
-fn validate_lower_dimensional_point_on_source_face(
-    mesh: &ExactMesh,
-    face: usize,
-    point: &Point3,
-) -> Result<(), ExactArrangementBlocker> {
-    let triangle = mesh
-        .triangles()
-        .get(face)
-        .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?
-        .0;
-    let [Some(a), Some(b), Some(c)] = [
-        mesh.vertices().get(triangle[0]),
-        mesh.vertices().get(triangle[1]),
-        mesh.vertices().get(triangle[2]),
-    ] else {
-        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
-    };
-    match orient3d_report(a, b, c, point).value() {
-        Some(Sign::Zero) => {}
-        Some(Sign::Positive | Sign::Negative) => {
-            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
-        }
-        None => return Err(ExactArrangementBlocker::UndecidableOrdering),
-    }
-
-    let mut blockers = Vec::new();
-    let projection =
-        choose_triangle_projection(mesh, triangle, &mut blockers).ok_or_else(|| {
-            blockers
-                .into_iter()
-                .next()
-                .unwrap_or(ExactArrangementBlocker::NonManifoldCellComplex)
-        })?;
-    let location = classify_point_triangle(
-        &project_point3(a, projection),
-        &project_point3(b, projection),
-        &project_point3(c, projection),
-        &project_point3(point, projection),
-    )
-    .value()
-    .ok_or(ExactArrangementBlocker::UndecidableOrdering)?;
-    match location {
-        TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex => Ok(()),
-        TriangleLocation::Outside | TriangleLocation::Degenerate => {
-            Err(ExactArrangementBlocker::NonManifoldCellComplex)
-        }
     }
 }
 
@@ -899,8 +820,10 @@ impl<'a> ExactArrangementRef<'a> {
     }
 
     /// Validate retained arrangement state without cloning arrangement storage.
-    pub fn validate_retained_state(self) -> Result<(), ExactArrangementBlocker> {
-        self.arrangement.validate()
+    pub fn validate_retained_state(self) -> Result<(), ExactMeshError> {
+        self.arrangement
+            .validate()
+            .map_err(arrangement_blocker_mesh_error)
     }
 
     /// Retained arrangement vertex count.
@@ -1509,7 +1432,7 @@ impl ExactArrangement3d {
     }
 
     /// Validate arrangement-internal consistency without replaying source meshes.
-    pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
+    pub(crate) fn validate(&self) -> Result<(), ExactArrangementBlocker> {
         validate_lower_dimensional_artifacts(&self.lower_dimensional_artifacts)?;
         validate_arrangement_face_cells(&self.face_cells)?;
         self.graph
@@ -1572,38 +1495,6 @@ impl ExactArrangement3d {
             &mut blockers,
         );
         blockers
-    }
-
-    /// Validate this arrangement by rebuilding it from source operands.
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), ExactArrangementBlocker> {
-        self.validate_against_sources_with_policy(left, right, ExactRegularizationPolicy::default())
-    }
-
-    /// Validate this arrangement by rebuilding it with an explicit
-    /// regularization policy.
-    pub(crate) fn validate_against_sources_with_policy(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        policy: ExactRegularizationPolicy,
-    ) -> Result<(), ExactArrangementBlocker> {
-        self.validate()?;
-        validate_lower_dimensional_artifacts_against_sources(
-            &self.lower_dimensional_artifacts,
-            left,
-            right,
-        )?;
-        let replay = Self::from_meshes_with_policy(left, right, policy)
-            .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
-        if replay == *self {
-            Ok(())
-        } else {
-            Err(ExactArrangementBlocker::UnresolvedIntersection)
-        }
     }
 
     /// Classify arrangement freshness under an explicit regularization policy.
@@ -1819,6 +1710,13 @@ impl ExactArrangement3d {
         self.label_regions(labeling_policy)?
             .select_with_policy(operation, policy)
     }
+}
+
+fn arrangement_blocker_mesh_error(blocker: ExactArrangementBlocker) -> ExactMeshError {
+    ExactMeshError::one(ExactMeshBlocker::new(
+        ExactMeshBlockerKind::UnsupportedExactOperation,
+        format!("retained arrangement validation failed: {blocker:?}"),
+    ))
 }
 
 fn blockers_from_graph_validation(graph: &ExactIntersectionGraph) -> Vec<ExactArrangementBlocker> {
@@ -5638,7 +5536,14 @@ mod tests {
                             && adjacency.separating_face_cells.contains(&side.face_cell)
                     }))
         );
-        assert!(arrangement.validate_against_sources(&left, &right).is_ok());
+        assert_eq!(
+            arrangement.freshness_against_sources_with_policy(
+                &left,
+                &right,
+                ExactRegularizationPolicy::default()
+            ),
+            ExactArrangementFreshness::Current
+        );
     }
 
     #[test]
@@ -6824,14 +6729,13 @@ mod tests {
             "{:?}",
             retained.lower_dimensional_artifacts
         );
-        assert!(
-            retained
-                .validate_against_sources_with_policy(
-                    &left,
-                    &right,
-                    ExactRegularizationPolicy::RETAIN_ARTIFACTS
-                )
-                .is_ok()
+        assert_eq!(
+            retained.freshness_against_sources_with_policy(
+                &left,
+                &right,
+                ExactRegularizationPolicy::RETAIN_ARTIFACTS
+            ),
+            ExactArrangementFreshness::Current
         );
         let topology_report = retained.topology_assembly_report_with_policy(
             &left,
@@ -6910,12 +6814,12 @@ mod tests {
             ArrangementLowerDimensionalArtifact::EdgeContact { .. } => unreachable!(),
         }
         assert_eq!(
-            off_source_face.validate_against_sources_with_policy(
+            off_source_face.freshness_against_sources_with_policy(
                 &left,
                 &right,
                 ExactRegularizationPolicy::RETAIN_ARTIFACTS
             ),
-            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+            ExactArrangementFreshness::StaleArrangement
         );
 
         let reported = ExactArrangement::from_meshes_with_policy(
@@ -7039,14 +6943,13 @@ mod tests {
             "{:?}",
             retained.lower_dimensional_artifacts
         );
-        assert!(
-            retained
-                .validate_against_sources_with_policy(
-                    &left,
-                    &right,
-                    ExactRegularizationPolicy::RETAIN_ARTIFACTS
-                )
-                .is_ok()
+        assert_eq!(
+            retained.freshness_against_sources_with_policy(
+                &left,
+                &right,
+                ExactRegularizationPolicy::RETAIN_ARTIFACTS
+            ),
+            ExactArrangementFreshness::Current
         );
         let topology_report = retained.topology_assembly_report_with_policy(
             &left,
@@ -7223,14 +7126,13 @@ mod tests {
             "{:?}",
             retained.lower_dimensional_artifacts
         );
-        assert!(
-            retained
-                .validate_against_sources_with_policy(
-                    &left,
-                    &right,
-                    ExactRegularizationPolicy::RETAIN_ARTIFACTS
-                )
-                .is_ok()
+        assert_eq!(
+            retained.freshness_against_sources_with_policy(
+                &left,
+                &right,
+                ExactRegularizationPolicy::RETAIN_ARTIFACTS
+            ),
+            ExactArrangementFreshness::Current
         );
 
         let mut stale_edge_source = retained.clone();
@@ -7251,12 +7153,12 @@ mod tests {
             ArrangementLowerDimensionalArtifact::PointContact { .. } => unreachable!(),
         }
         assert_eq!(
-            stale_edge_source.validate_against_sources_with_policy(
+            stale_edge_source.freshness_against_sources_with_policy(
                 &left,
                 &right,
                 ExactRegularizationPolicy::RETAIN_ARTIFACTS
             ),
-            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+            ExactArrangementFreshness::StaleArrangement
         );
     }
 }

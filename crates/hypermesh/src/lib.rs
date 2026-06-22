@@ -55,9 +55,6 @@ pub use arrangement3d::{
 pub use bounds::{BoundsValidationError, ExactAabb3, MeshBounds};
 pub use error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 pub use mesh::{ExactAffineTransform3, ExactMesh, ExactMeshValidationError, Triangle};
-pub use regularization::{
-    ExactArrangementBlocker, ExactArrangementGraphBlockerKind, ExactArrangementSplitPlanBlockerKind,
-};
 pub use validation::ValidationPolicy;
 pub use view::{
     EdgeRef, ExactMeshRef, FaceRef, MeshView, PreparedMeshPairView, PreparedMeshView, TriangleRef,
