@@ -163,8 +163,19 @@ pub enum ExactMeshValidationError {
         /// Retained mesh-fact count.
         actual: usize,
     },
-    /// Retained bounds failed their own validation.
-    Bounds(BoundsValidationError),
+    /// A retained bounds axis minimum is certified greater than its maximum.
+    RetainedBoundsInvertedAxis,
+    /// A retained bounds axis minimum/maximum relation could not be certified.
+    RetainedBoundsUnknownAxisOrder,
+    /// Retained mesh-level bounds are missing for a nonempty vertex set.
+    RetainedBoundsMissingMeshBounds,
+    /// Retained mesh-level bounds exist for an empty vertex set.
+    RetainedBoundsUnexpectedMeshBounds,
+    /// The retained face-bound vector length does not match the face count.
+    RetainedBoundsFaceCountMismatch,
+    /// Recomputing bounds from the source vertices and triangles did not
+    /// reproduce the retained bounds object.
+    RetainedBoundsSourceReplayMismatch,
     /// Retained mesh facts failed their own validation.
     Facts(MeshFactsValidationError),
     /// Retained provenance failed its own validation.
@@ -391,7 +402,7 @@ impl ExactMesh {
                 self.triangles.len(),
                 self.triangles.iter().map(|triangle| triangle.0),
             )
-            .map_err(ExactMeshValidationError::Bounds)?;
+            .map_err(retained_bounds_validation_error)?;
         self.facts
             .validate_against_triangle_rows_with_policy(
                 &self.vertices,
@@ -427,7 +438,7 @@ impl ExactMesh {
                 self.triangles.len(),
                 self.triangles.iter().map(|triangle| triangle.0),
             )
-            .map_err(ExactMeshValidationError::Bounds)
+            .map_err(retained_bounds_validation_error)
     }
 
     /// Build a retained arrangement against `right` and run `query` on its
@@ -594,6 +605,29 @@ fn retain_predicates(provenance: &mut ConstructionProvenance, report: &Validatio
     for face in &report.facts.faces {
         for predicate in &face.triangle.degeneracy_predicates {
             provenance.push_predicate(PredicateUse::from_certificate(predicate.certificate));
+        }
+    }
+}
+
+const fn retained_bounds_validation_error(
+    error: BoundsValidationError,
+) -> ExactMeshValidationError {
+    match error {
+        BoundsValidationError::InvertedAxis => ExactMeshValidationError::RetainedBoundsInvertedAxis,
+        BoundsValidationError::UnknownAxisOrder => {
+            ExactMeshValidationError::RetainedBoundsUnknownAxisOrder
+        }
+        BoundsValidationError::MissingMeshBounds => {
+            ExactMeshValidationError::RetainedBoundsMissingMeshBounds
+        }
+        BoundsValidationError::UnexpectedMeshBounds => {
+            ExactMeshValidationError::RetainedBoundsUnexpectedMeshBounds
+        }
+        BoundsValidationError::FaceBoundsCountMismatch => {
+            ExactMeshValidationError::RetainedBoundsFaceCountMismatch
+        }
+        BoundsValidationError::SourceReplayMismatch => {
+            ExactMeshValidationError::RetainedBoundsSourceReplayMismatch
         }
     }
 }
