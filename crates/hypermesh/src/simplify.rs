@@ -38,55 +38,55 @@ use hyperreal::Real;
 
 /// One simplified selected face-cell.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactSimplifiedFaceCell {
+pub(crate) struct ExactSimplifiedFaceCell {
     /// Original selected face index in the labeled complex.
-    pub source_face: usize,
+    pub(crate) source_face: usize,
     /// Canonicalized face-cell payload.
-    pub face: ExactCellComplexFace,
+    pub(crate) face: ExactCellComplexFace,
 }
 
 /// Exact simplification report and retained output cells.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactSimplifiedCellComplex {
+pub(crate) struct ExactSimplifiedCellComplex {
     /// Boolean operation whose selected cells were simplified.
-    pub operation: ExactBooleanOperation,
+    pub(crate) operation: ExactBooleanOperation,
     /// Canonical selected face-cells.
-    pub faces: Vec<ExactSimplifiedFaceCell>,
+    pub(crate) faces: Vec<ExactSimplifiedFaceCell>,
     /// Retained lower-dimensional arrangement artifacts under policy.
-    pub lower_dimensional_artifacts: Vec<ArrangementLowerDimensionalArtifact>,
+    pub(crate) lower_dimensional_artifacts: Vec<ArrangementLowerDimensionalArtifact>,
     /// Topology assembly report consumed before the selected cells were simplified.
-    pub topology_assembly_report: Option<ExactTopologyAssemblyReport>,
+    pub(crate) topology_assembly_report: Option<ExactTopologyAssemblyReport>,
     /// Region ownership report consumed before the selected cells were simplified.
-    pub region_ownership_report: Option<ExactRegionOwnershipReport>,
+    pub(crate) region_ownership_report: Option<ExactRegionOwnershipReport>,
     /// Selected face count consumed before simplification merged or dissolved cells.
-    pub selected_faces_before_simplification: usize,
+    pub(crate) selected_faces_before_simplification: usize,
     /// Boundary-node count across selected faces before simplification.
-    pub selected_boundary_nodes_before_simplification: usize,
+    pub(crate) selected_boundary_nodes_before_simplification: usize,
     /// Selected faces with explicit orientation evidence before simplification.
-    pub oriented_selected_faces_before_simplification: usize,
+    pub(crate) oriented_selected_faces_before_simplification: usize,
     /// Selected oriented faces whose output orientation was reversed before simplification.
-    pub reversed_selected_faces_before_simplification: usize,
+    pub(crate) reversed_selected_faces_before_simplification: usize,
     /// Selected oriented faces justified by volume adjacency evidence before simplification.
-    pub volume_oriented_selected_faces_before_simplification: usize,
+    pub(crate) volume_oriented_selected_faces_before_simplification: usize,
     /// Selected oriented faces justified by source-label operation rules before simplification.
-    pub label_oriented_selected_faces_before_simplification: usize,
+    pub(crate) label_oriented_selected_faces_before_simplification: usize,
     /// Number of duplicate selected cells removed.
-    pub duplicate_cells_removed: usize,
+    pub(crate) duplicate_cells_removed: usize,
     /// Number of consecutive duplicate boundary nodes removed.
-    pub duplicate_boundary_nodes_removed: usize,
+    pub(crate) duplicate_boundary_nodes_removed: usize,
     /// Number of exact collinear boundary nodes removed.
-    pub collinear_boundary_nodes_removed: usize,
+    pub(crate) collinear_boundary_nodes_removed: usize,
     /// Number of zero-area selected cells dissolved.
-    pub zero_area_cells_removed: usize,
+    pub(crate) zero_area_cells_removed: usize,
     /// Number of exact internal edges removed between compatible selected cells.
-    pub interior_edges_removed: usize,
+    pub(crate) interior_edges_removed: usize,
     /// Blockers inherited or introduced during simplification.
-    pub blockers: Vec<ExactArrangementBlocker>,
+    pub(crate) blockers: Vec<ExactArrangementBlocker>,
 }
 
 impl ExactSimplifiedCellComplex {
     /// Validate local simplified-cell consistency without replaying source meshes.
-    pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
+    pub(crate) fn validate(&self) -> Result<(), ExactArrangementBlocker> {
         validate_lower_dimensional_artifacts(&self.lower_dimensional_artifacts)?;
         validate_selected_gate_reports(
             self.topology_assembly_report.as_ref(),
@@ -174,7 +174,7 @@ impl ExactSimplifiedCellComplex {
     /// Validate this simplified complex by replaying the full arrangement,
     /// label, selection, and simplification pipeline from source operands.
     #[cfg(test)]
-    pub fn validate_against_sources(
+    pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -198,7 +198,7 @@ impl ExactSimplifiedCellComplex {
     /// The retained boundary of each selected face-cell is projected through a
     /// certified nonzero carrier-plane projection and triangulated by
     /// `hypertri` over exact coordinates. No primitive-float tolerance is used.
-    pub fn triangulate(&self) -> Result<ExactMesh, ExactArrangementBlocker> {
+    pub(crate) fn triangulate(&self) -> Result<ExactMesh, ExactArrangementBlocker> {
         triangulate_simplified_cell_complex(self)
     }
 }
