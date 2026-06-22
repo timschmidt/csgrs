@@ -1,6 +1,5 @@
 #![no_main]
 
-use hypermesh::legacy::{ExactBooleanOperation, ExactBooleanRequest, ExactBooleanWorkspace};
 use hypermesh::{ExactMesh, ValidationPolicy};
 use libfuzzer_sys::fuzz_target;
 
@@ -18,36 +17,22 @@ fuzz_target!(|data: &[u8]| {
 
     if let Ok(mesh) = ExactMesh::from_f64_triangles(&pos, &idx) {
         mesh.validate_retained_state().unwrap();
-        exercise_workspace_against_self(&mesh, ValidationPolicy::ALLOW_BOUNDARY);
+        exercise_mesh_pair(&mesh, &mesh);
     }
 
     if let Some((left, right)) = generated_tetra_pair(data) {
-        exercise_workspace_pair(&left, &right, ValidationPolicy::CLOSED);
+        exercise_mesh_pair(&left, &right);
     }
 });
 
-fn exercise_workspace_against_self(mesh: &ExactMesh, validation: ValidationPolicy) {
-    exercise_workspace_pair(mesh, mesh, validation);
-}
-
-fn exercise_workspace_pair(left: &ExactMesh, right: &ExactMesh, validation: ValidationPolicy) {
-    for operation in [
-        ExactBooleanOperation::Union,
-        ExactBooleanOperation::Intersection,
-        ExactBooleanOperation::Difference,
+fn exercise_mesh_pair(left: &ExactMesh, right: &ExactMesh) {
+    for result in [
+        left.union(right),
+        left.intersection(right),
+        left.difference(right),
     ] {
-        let request = ExactBooleanRequest::new(operation, validation);
-        let mut workspace = ExactBooleanWorkspace::new(left, right);
-        if let Ok(evaluation) = workspace.evaluate(request) {
-            let _ = evaluation.validate();
-            let _ = evaluation.validate_against_sources(left, right);
-            let _ = evaluation.validate_retained_arrangement_attempt_against_sources(left, right);
-        }
-        if let Ok(result) = workspace.materialize_ref(request) {
-            let _ = result.validate();
-            if let Ok(evaluation) = workspace.evaluate(request) {
-                let _ = evaluation.validate_against_sources(left, right);
-            }
+        if let Ok(mesh) = result {
+            let _ = mesh.validate_retained_state();
         }
     }
 }
