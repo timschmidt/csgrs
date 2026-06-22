@@ -3395,11 +3395,10 @@ fn validate_coplanar_edge_split(
             let point = &split.points[0];
             validate_unit_parameter(&point.left_parameter)?;
             validate_unit_parameter(&point.right_parameter)?;
-            // numerical structure needed by later combinatorial decisions.
-            // These edge parameters are the compact structure a future
-            // planar-cell extractor will sort and merge, so endpoint/proper
-            // relation labels must agree with certified parameter positions
-            // before the record can cross an API boundary.
+            // These edge parameters are the retained structure sorted and
+            // merged by planar-cell extraction, so endpoint/proper relation
+            // labels must agree with certified parameter positions before the
+            // record can be consumed.
             match split.overlap.relation {
                 SegmentIntersection::EndpointTouch => {
                     if parameter_is_endpoint(&point.left_parameter)?

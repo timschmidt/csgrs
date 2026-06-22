@@ -2,8 +2,8 @@
 //!
 //! The reusable segment/plane event model lives in `hyperlimit`: endpoint
 //! predicates decide the combinatorial relation, and proper crossings retain
-//! the exact determinant-ratio parameter `d0 / (d0 - d1)`. That is the
-//! retained [`FacePlaneFacts`] adapter here.
+//! the exact determinant-ratio parameter `d0 / (d0 - d1)`. This module
+//! replays those retained [`FacePlaneFacts`] into construction records.
 
 use hyperlimit::{
     PlaneSide, Point3, SegmentPlaneIntersection, compare_reals, intersect_segment_with_plane_values,
