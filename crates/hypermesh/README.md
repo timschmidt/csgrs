@@ -38,6 +38,8 @@ required by downstream CSG layers.
   queries that should not clone mesh storage.
 - `ExactMesh::union`, `ExactMesh::intersection`, `ExactMesh::difference`, and
   `ExactMesh::xor` materialize named closed boolean outputs as exact meshes.
+- `ExactMesh::transform`, `ExactMesh::transform_by`, and `ExactMesh::inverse`
+  provide exact affine transforms and orientation inversion for CSG adapters.
 
 Retained graph, arrangement, cell-complex, winding, and shortcut evidence remain
 kernel internals unless a borrowed view is needed for exact query reuse.
@@ -126,6 +128,7 @@ let union = left.union(&right)?;
 let intersection = left.intersection(&right)?;
 let difference = left.difference(&right)?;
 let xor = left.xor(&right)?;
+let inverse = left.inverse()?;
 
 union.validate_retained_state()?;
 ```

@@ -20,13 +20,112 @@ use super::validation::{ValidationPolicy, ValidationReport, validate_triangles_w
 use super::view::ExactMeshRef;
 use hyperlimit::{
     ConstructionProvenance, ConstructionProvenanceValidationError, Point3, PredicateUse,
-    SourceProvenance,
+    SourceProvenance, compare_reals,
 };
 use hyperreal::Real;
+use std::cmp::Ordering;
 
 /// Triangle index triplet.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Triangle(pub [usize; 3]);
+
+/// Exact row-major affine transform for [`ExactMesh`] vertices.
+///
+/// The transform evaluates
+/// `linear * [x, y, z]^T + translation` with `hyperreal::Real` arithmetic.
+/// A negative linear determinant reverses triangle winding so transformed
+/// closed shells keep their outside orientation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactAffineTransform3 {
+    linear: [[Real; 3]; 3],
+    translation: [Real; 3],
+}
+
+impl ExactAffineTransform3 {
+    /// Identity transform.
+    pub fn identity() -> Self {
+        Self::from_rows(
+            [
+                [Real::one(), Real::zero(), Real::zero()],
+                [Real::zero(), Real::one(), Real::zero()],
+                [Real::zero(), Real::zero(), Real::one()],
+            ],
+            [Real::zero(), Real::zero(), Real::zero()],
+        )
+    }
+
+    /// Exact translation.
+    pub fn translation(offset: Point3) -> Self {
+        Self::from_rows(
+            [
+                [Real::one(), Real::zero(), Real::zero()],
+                [Real::zero(), Real::one(), Real::zero()],
+                [Real::zero(), Real::zero(), Real::one()],
+            ],
+            [offset.x, offset.y, offset.z],
+        )
+    }
+
+    /// Build from row-major linear rows and translation.
+    pub const fn from_rows(linear: [[Real; 3]; 3], translation: [Real; 3]) -> Self {
+        Self {
+            linear,
+            translation,
+        }
+    }
+
+    /// Build from a row-major affine 4x4 homogeneous matrix.
+    pub fn from_homogeneous_rows(matrix: [[Real; 4]; 4]) -> Result<Self, MeshError> {
+        let [
+            [m00, m01, m02, tx],
+            [m10, m11, m12, ty],
+            [m20, m21, m22, tz],
+            affine_row,
+        ] = matrix;
+        if !homogeneous_affine_row_is_exact(&affine_row)? {
+            return Err(MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                "homogeneous mesh transform must be affine with final row [0, 0, 0, 1]",
+            )));
+        }
+        Ok(Self::from_rows(
+            [[m00, m01, m02], [m10, m11, m12], [m20, m21, m22]],
+            [tx, ty, tz],
+        ))
+    }
+
+    /// Return row-major linear coefficients.
+    pub const fn linear(&self) -> &[[Real; 3]; 3] {
+        &self.linear
+    }
+
+    /// Return translation coefficients.
+    pub const fn translation_terms(&self) -> &[Real; 3] {
+        &self.translation
+    }
+
+    /// Apply this transform to one exact point.
+    pub fn transform_point(&self, point: &Point3) -> Point3 {
+        Point3::new(
+            transformed_coordinate(&self.linear[0], point, &self.translation[0]),
+            transformed_coordinate(&self.linear[1], point, &self.translation[1]),
+            transformed_coordinate(&self.linear[2], point, &self.translation[2]),
+        )
+    }
+
+    fn orientation(&self) -> Result<Ordering, MeshError> {
+        compare_reals(&det3_rows(&self.linear), &Real::zero())
+            .value()
+            .ok_or_else(|| {
+                MeshError::one(MeshDiagnostic::new(
+                    Severity::Error,
+                    DiagnosticKind::UnsupportedExactOperation,
+                    "exact transform determinant sign could not be certified",
+                ))
+            })
+    }
+}
 
 /// Exact triangular mesh with retained validation facts.
 #[derive(Clone, Debug, PartialEq)]
@@ -378,6 +477,40 @@ impl ExactMesh {
         audit_exact_mesh(self)
     }
 
+    /// Materialize this mesh after an exact affine transform.
+    pub fn transform(&self, transform: &ExactAffineTransform3) -> Result<ExactMesh, MeshError> {
+        let vertices = self
+            .vertices
+            .iter()
+            .map(|point| transform.transform_point(point))
+            .collect::<Vec<_>>();
+        let triangles = match transform.orientation()? {
+            Ordering::Less => self.triangles.iter().map(reverse_triangle).collect(),
+            Ordering::Equal | Ordering::Greater => self.triangles.clone(),
+        };
+        ExactMesh::new_with_policy(
+            vertices,
+            triangles,
+            SourceProvenance::exact("exact affine mesh transform"),
+            self.validation_policy,
+        )
+    }
+
+    /// Materialize this mesh after a row-major exact homogeneous affine transform.
+    pub fn transform_by(&self, matrix: [[Real; 4]; 4]) -> Result<ExactMesh, MeshError> {
+        self.transform(&ExactAffineTransform3::from_homogeneous_rows(matrix)?)
+    }
+
+    /// Materialize this mesh with every triangle orientation reversed.
+    pub fn inverse(&self) -> Result<ExactMesh, MeshError> {
+        ExactMesh::new_with_policy(
+            self.vertices.clone(),
+            self.triangles.iter().map(reverse_triangle).collect(),
+            SourceProvenance::exact("exact inverse mesh orientation"),
+            self.validation_policy,
+        )
+    }
+
     /// Materialize the exact closed union of this mesh and `right`.
     ///
     /// This is the mesh-kernel convenience entry point for named booleans. It
@@ -474,4 +607,45 @@ fn retain_predicates(provenance: &mut ConstructionProvenance, report: &Validatio
             provenance.push_predicate(PredicateUse::from_certificate(predicate.certificate));
         }
     }
+}
+
+fn transformed_coordinate(row: &[Real; 3], point: &Point3, translation: &Real) -> Real {
+    Real::sum_owned([
+        &row[0] * &point.x,
+        &row[1] * &point.y,
+        &row[2] * &point.z,
+        translation.clone(),
+    ])
+}
+
+fn det3_rows(rows: &[[Real; 3]; 3]) -> Real {
+    let x_minor = &(&rows[1][1] * &rows[2][2]) - &(&rows[1][2] * &rows[2][1]);
+    let y_minor = &(&rows[1][0] * &rows[2][2]) - &(&rows[1][2] * &rows[2][0]);
+    let z_minor = &(&rows[1][0] * &rows[2][1]) - &(&rows[1][1] * &rows[2][0]);
+    &(&rows[0][0] * &x_minor) - &(&rows[0][1] * &y_minor) + &(&rows[0][2] * &z_minor)
+}
+
+fn homogeneous_affine_row_is_exact(row: &[Real; 4]) -> Result<bool, MeshError> {
+    Ok(real_equals(&row[0], &Real::zero())?
+        && real_equals(&row[1], &Real::zero())?
+        && real_equals(&row[2], &Real::zero())?
+        && real_equals(&row[3], &Real::one())?)
+}
+
+fn real_equals(left: &Real, right: &Real) -> Result<bool, MeshError> {
+    compare_reals(left, right)
+        .value()
+        .map(|ordering| ordering == Ordering::Equal)
+        .ok_or_else(|| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                "exact transform coefficient comparison could not be certified",
+            ))
+        })
+}
+
+fn reverse_triangle(triangle: &Triangle) -> Triangle {
+    let [a, b, c] = triangle.0;
+    Triangle([a, c, b])
 }

@@ -1,5 +1,5 @@
 use hyperlimit::{Point3, SourceProvenance};
-use hypermesh::{ExactMesh, ExactMeshBlocker, ExactMeshError, Triangle};
+use hypermesh::{ExactAffineTransform3, ExactMesh, ExactMeshBlocker, ExactMeshError, Triangle};
 use hyperreal::Real;
 
 fn p(x: i64, y: i64, z: i64) -> Point3 {
@@ -81,6 +81,71 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let edge = view.edge(0).unwrap();
     assert_eq!(edge.index(), 0);
     assert_eq!(edge.vertices().len(), 2);
+}
+
+#[test]
+fn exact_mesh_transform_and_inverse_replay_retained_state() {
+    let mesh = tetra([0, 0, 0]);
+    let translated = mesh
+        .transform(&ExactAffineTransform3::translation(p(2, -3, 5)))
+        .unwrap();
+
+    translated.validate_retained_state().unwrap();
+    assert_eq!(translated.vertices()[0], p(2, -3, 5));
+    assert_eq!(translated.triangles(), mesh.triangles());
+
+    let reflected = mesh
+        .transform(&ExactAffineTransform3::from_rows(
+            [
+                [Real::from(-1), Real::from(0), Real::from(0)],
+                [Real::from(0), Real::from(1), Real::from(0)],
+                [Real::from(0), Real::from(0), Real::from(1)],
+            ],
+            [Real::from(0), Real::from(0), Real::from(0)],
+        ))
+        .unwrap();
+
+    reflected.validate_retained_state().unwrap();
+    assert_eq!(reflected.triangles()[0], Triangle([0, 1, 2]));
+
+    let inverted = mesh.inverse().unwrap();
+    inverted.validate_retained_state().unwrap();
+    assert_eq!(inverted.vertices(), mesh.vertices());
+    assert_eq!(inverted.triangles()[0], Triangle([0, 1, 2]));
+}
+
+#[test]
+fn exact_mesh_transform_by_accepts_homogeneous_affine_rows() {
+    let mesh = tetra([0, 0, 0]);
+    let transformed = mesh
+        .transform_by([
+            [Real::from(1), Real::from(0), Real::from(0), Real::from(4)],
+            [Real::from(0), Real::from(1), Real::from(0), Real::from(5)],
+            [Real::from(0), Real::from(0), Real::from(1), Real::from(6)],
+            [Real::from(0), Real::from(0), Real::from(0), Real::from(1)],
+        ])
+        .unwrap();
+
+    transformed.validate_retained_state().unwrap();
+    assert_eq!(transformed.vertices()[0], p(4, 5, 6));
+}
+
+#[test]
+fn exact_mesh_transform_by_rejects_non_affine_homogeneous_rows() {
+    let mesh = tetra([0, 0, 0]);
+    let error = mesh
+        .transform_by([
+            [Real::from(1), Real::from(0), Real::from(0), Real::from(0)],
+            [Real::from(0), Real::from(1), Real::from(0), Real::from(0)],
+            [Real::from(0), Real::from(0), Real::from(1), Real::from(0)],
+            [Real::from(0), Real::from(0), Real::from(1), Real::from(1)],
+        ])
+        .unwrap_err();
+
+    assert_eq!(
+        error.diagnostics[0].kind,
+        hypermesh::ExactMeshBlockerKind::UnsupportedExactOperation
+    );
 }
 
 #[test]
