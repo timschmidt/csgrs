@@ -1787,7 +1787,7 @@ fn events_for_face_pair(
     let right_tri = right.triangles()[classification.right_face].0;
     let left_edges = triangle_edges(left_tri);
     let right_edges = triangle_edges(right_tri);
-    let mut events = Vec::with_capacity(face_pair_event_capacity(classification));
+    let mut events = Vec::with_capacity(face_pair_event_capacity_hint(classification));
     let mut projection = None;
 
     if let Some(triangle) = &classification.triangle {
@@ -1836,39 +1836,24 @@ fn events_for_face_pair(
     }
 }
 
-fn face_pair_event_capacity(classification: &MeshFacePairClassification) -> usize {
+fn face_pair_event_capacity_hint(classification: &MeshFacePairClassification) -> usize {
     let mut capacity = usize::from(classification.relation == MeshFacePairRelation::Unknown);
     let Some(triangle) = &classification.triangle else {
         return capacity;
     };
 
-    capacity += segment_plane_event_slice(&triangle.right_edge_events)
-        .iter()
-        .chain(segment_plane_event_slice(&triangle.left_edge_events))
-        .filter(|event| event.relation != SegmentPlaneRelation::Disjoint)
-        .count();
-
+    capacity += triangle
+        .right_edge_events
+        .as_ref()
+        .map_or(0, |events| events.len());
+    capacity += triangle
+        .left_edge_events
+        .as_ref()
+        .map_or(0, |events| events.len());
     if let Some(coplanar) = &triangle.coplanar {
-        capacity += coplanar
-            .edge_intersections
-            .iter()
-            .filter(|&&relation| relation != SegmentIntersection::Disjoint)
-            .count();
-        capacity += coplanar
-            .right_vertices_in_left
-            .iter()
-            .chain(&coplanar.left_vertices_in_right)
-            .filter(|&&location| {
-                matches!(
-                    location,
-                    Some(
-                        TriangleLocation::Inside
-                            | TriangleLocation::OnEdge
-                            | TriangleLocation::OnVertex
-                    ) | None
-                )
-            })
-            .count();
+        capacity += coplanar.edge_intersections.len();
+        capacity += coplanar.right_vertices_in_left.len();
+        capacity += coplanar.left_vertices_in_right.len();
     }
 
     capacity
