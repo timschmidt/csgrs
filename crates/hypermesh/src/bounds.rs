@@ -436,15 +436,30 @@ impl MeshBounds {
         points: &[Point3],
         triangles: &[[usize; 3]],
     ) -> Result<(), BoundsValidationError> {
-        self.validate(points.len(), triangles.len())?;
-        if triangles
-            .iter()
-            .flatten()
-            .any(|&vertex| vertex >= points.len())
-        {
-            return Err(BoundsValidationError::SourceReplayMismatch);
+        self.validate_against_triangle_rows(points, triangles.len(), triangles.iter().copied())
+    }
+
+    pub(crate) fn validate_against_triangle_rows(
+        &self,
+        points: &[Point3],
+        triangle_count: usize,
+        triangles: impl IntoIterator<Item = [usize; 3]>,
+    ) -> Result<(), BoundsValidationError> {
+        self.validate(points.len(), triangle_count)?;
+        let mut replay = Self {
+            mesh: ExactAabb3::from_points(points),
+            faces: Vec::with_capacity(triangle_count),
+        };
+        for triangle in triangles {
+            if triangle.iter().any(|&vertex| vertex >= points.len()) {
+                return Err(BoundsValidationError::SourceReplayMismatch);
+            }
+            replay.faces.push(ExactAabb3::from_triangle([
+                &points[triangle[0]],
+                &points[triangle[1]],
+                &points[triangle[2]],
+            ]));
         }
-        let replay = Self::from_triangles(points, triangles);
         if self == &replay {
             Ok(())
         } else {

@@ -431,7 +431,9 @@ impl ExactMesh {
             });
         }
         let triangles = self.triangle_indices();
-        self.validate_retained_bounds_with_indices(&triangles)?;
+        self.bounds
+            .validate_against_sources(&self.vertices, &triangles)
+            .map_err(ExactMeshValidationError::Bounds)?;
         self.facts
             .validate_against_sources_with_policy(
                 &self.vertices,
@@ -461,16 +463,12 @@ impl ExactMesh {
     /// scheduling. It intentionally validates only bounds facts, avoiding the
     /// full topology/provenance audit required by [`Self::validate_retained_state`].
     pub fn validate_retained_bounds(&self) -> Result<(), ExactMeshValidationError> {
-        let triangles = self.triangle_indices();
-        self.validate_retained_bounds_with_indices(&triangles)
-    }
-
-    fn validate_retained_bounds_with_indices(
-        &self,
-        triangles: &[[usize; 3]],
-    ) -> Result<(), ExactMeshValidationError> {
         self.bounds
-            .validate_against_sources(&self.vertices, triangles)
+            .validate_against_triangle_rows(
+                &self.vertices,
+                self.triangles.len(),
+                self.triangles.iter().map(|triangle| triangle.0),
+            )
             .map_err(ExactMeshValidationError::Bounds)
     }
 
