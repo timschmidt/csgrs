@@ -244,11 +244,6 @@ impl<'a> PreparedMeshView<'a> {
         self.view
     }
 
-    /// Return prepared retained bounds.
-    pub const fn bounds(&self) -> &PreparedMeshBounds<'a> {
-        &self.bounds
-    }
-
     /// Return exact broad-phase candidate face pairs for this view and `right`.
     pub fn candidate_face_pairs(&self, right: &PreparedMeshView<'_>) -> Vec<[usize; 2]> {
         let plan = self.bounds.candidate_face_pair_plan(&right.bounds);

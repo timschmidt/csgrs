@@ -160,7 +160,7 @@ pub struct MeshBounds {
 /// may reject work, while retained pairs still require exact narrow-phase
 /// predicates.
 #[derive(Clone, Debug)]
-pub struct PreparedMeshBounds<'a> {
+pub(crate) struct PreparedMeshBounds<'a> {
     bounds: &'a MeshBounds,
     axis_intervals: [Vec<FaceAxisInterval<'a>>; 3],
     min_axis_orders: [Option<Vec<usize>>; 3],
@@ -242,7 +242,8 @@ impl MeshBounds {
     }
 
     /// Return face-pair candidates whose exact boxes are not disjoint.
-    pub fn candidate_face_pairs(&self, other: &Self) -> Vec<[usize; 2]> {
+    #[cfg(test)]
+    pub(crate) fn candidate_face_pairs(&self, other: &Self) -> Vec<[usize; 2]> {
         self.prepare().candidate_face_pairs(&other.prepare())
     }
 
@@ -251,7 +252,7 @@ impl MeshBounds {
     /// An axis order is retained only when all exact comparisons needed for
     /// sorting were decided. Querying two prepared bounds falls back to the
     /// exact quadratic scheduler when no common sweep axis is usable.
-    pub fn prepare(&self) -> PreparedMeshBounds<'_> {
+    pub(crate) fn prepare(&self) -> PreparedMeshBounds<'_> {
         let axis_intervals = [
             face_axis_intervals(&self.faces, Axis::X),
             face_axis_intervals(&self.faces, Axis::Y),
@@ -278,12 +279,9 @@ impl MeshBounds {
 
 impl<'a> PreparedMeshBounds<'a> {
     /// Return the retained bounds object this prepared scheduler borrows.
-    pub const fn bounds(&self) -> &'a MeshBounds {
-        self.bounds
-    }
-
     /// Return face-pair candidates whose exact boxes are not disjoint.
-    pub fn candidate_face_pairs(&self, other: &PreparedMeshBounds<'_>) -> Vec<[usize; 2]> {
+    #[cfg(test)]
+    pub(crate) fn candidate_face_pairs(&self, other: &PreparedMeshBounds<'_>) -> Vec<[usize; 2]> {
         let mut pairs = Vec::with_capacity(self.candidate_face_pair_capacity_hint(other));
         let result = self.try_visit_candidate_face_pairs(other, |pair| {
             pairs.push(pair);
@@ -300,7 +298,10 @@ impl<'a> PreparedMeshBounds<'a> {
     /// one-dimensional interval overlap count. Otherwise it falls back to the
     /// quadratic face-pair product. The final full-AABB filter may emit fewer
     /// pairs.
-    pub fn candidate_face_pair_capacity_hint(&self, other: &PreparedMeshBounds<'_>) -> usize {
+    pub(crate) fn candidate_face_pair_capacity_hint(
+        &self,
+        other: &PreparedMeshBounds<'_>,
+    ) -> usize {
         self.candidate_face_pair_plan(other).capacity_hint()
     }
 

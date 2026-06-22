@@ -52,6 +52,7 @@ mod witness;
 pub use arrangement3d::{
     ArrangementEdgeRef, ArrangementFaceCellRef, ArrangementVertexRef, ArrangementView,
 };
+pub use bounds::{BoundsValidationError, ExactAabb3, MeshBounds};
 pub use error::{
     DiagnosticKind as ExactMeshBlockerKind, ExactMeshBlocker, ExactMeshError, MeshError,
 };
