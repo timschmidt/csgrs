@@ -8,7 +8,7 @@
 use std::cmp::Ordering;
 
 use hyperlimit::{
-    classify_aabb3_intersection, compare_reals, Aabb3Intersection, Point3, PredicateOutcome,
+    Aabb3Intersection, Point3, PredicateOutcome, classify_aabb3_intersection, compare_reals,
 };
 use hyperreal::Real;
 
@@ -20,7 +20,7 @@ pub(crate) type AabbIntersectionKind = Aabb3Intersection;
 /// Bounds are object-level acceleration facts, not topology certificates.
 /// They must replay before they can reject or retain topological work.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum BoundsValidationError {
+pub(crate) enum BoundsValidationError {
     /// An axis minimum is certified greater than its maximum.
     InvertedAxis,
     /// An axis minimum/maximum relation could not be certified.
