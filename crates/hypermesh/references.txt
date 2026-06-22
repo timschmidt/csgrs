@@ -1,0 +1,105 @@
+Here’s the condensed reference list I’d keep for **Hypermesh fast exact mesh booleans**, grouped by use.
+
+## Highest-priority mesh boolean / arrangement papers
+
+1. **Trettner, P.; Nehring-Wirxel, J.; Kobbelt, L.** “**EMBER: Exact Mesh Booleans via Efficient & Robust Local Arrangements**.” *ACM Transactions on Graphics* 41(4), SIGGRAPH 2022. doi:10.1145/3528223.3530181.
+   Best fit for Hypermesh’s likely direction: exact local arrangements, homogeneous/integer-style constructions, adaptive subdivision, early-outs, parallelism. ([Graphics RWTH Aachen][1])
+
+2. **Cherchi, G.; Pellacini, F.; Attene, M.; Livesu, M.** “**Interactive and Robust Mesh Booleans**.” *ACM Transactions on Graphics* 41(6), 2022, pp. 1–14. doi:10.1145/3550454.3555460.
+   Strong practical performance reference for robust booleans at interactive scale. ([Unifind][2])
+
+3. **Zhou, Q.; Grinspun, E.; Zorin, D.; Jacobson, A.** “**Mesh Arrangements for Solid Geometry**.” *ACM Transactions on Graphics* 35(4), SIGGRAPH 2016. doi:10.1145/2897824.2925901.
+   Core arrangement + winding-vector formulation for robust mesh booleans. ([Columbia Computer Science][3])
+
+4. **Lévy, B.** “**Exact Predicates, Exact Constructions and Combinatorics for Mesh CSG**.” arXiv:2405.12949, 2024.
+   Especially relevant for exact co-refinement, Weiler model construction, radial sorting around non-manifold intersection edges, and CDT remeshing. ([arXiv][4])
+
+5. **Barki, H.; Guennebaud, G.; Foufou, S.** “**Exact, Robust, and Efficient Regularized Booleans on General 3D Meshes**.” *Computers & Mathematics with Applications* 70(6), 2015, pp. 1235–1254. doi:10.1016/j.camwa.2015.06.016.
+   Good reference for regularized booleans and degenerate closed/orientable mesh cases. ([ScienceDirect][5])
+
+6. **Bernstein, G.; Fussell, D.** “**Fast, Exact, Linear Booleans**.” *Computer Graphics Forum* 28(5), 2009, pp. 1269–1278. doi:10.1111/j.1467-8659.2009.01504.x.
+   Older but important BSP-style exact boolean reference with a small predicate substrate. ([Wiley Online Library][6])
+
+7. **Nehring-Wirxel, J.; Trettner, P.; Kobbelt, L.** “**Fast Exact Booleans for Iterated CSG using Octree-Embedded BSPs**.” *Computer-Aided Design* 135, 2021, 103015. doi:10.1016/j.cad.2021.103015.
+   Important if Hypermesh grows an iterated-CSG or plane/BSP backend. ([ScienceDirect][7])
+
+8. **Hachenberger, P.; Kettner, L.; Mehlhorn, K.** “**Boolean Operations on 3D Selective Nef Complexes: Data Structure, Algorithms, Optimized Implementation and Experiments**.” *Computational Geometry* 38(1–2), 2007, pp. 64–99. doi:10.1016/j.comgeo.2006.11.009.
+   Semantics reference for mixed-dimensional, non-manifold, open/closed, and regularized topology. ([ScienceDirect][8])
+
+## Predicate / construction substrate
+
+9. **Attene, M.** “**Indirect Predicates for Geometric Constructions**.” *Computer-Aided Design* 126, 2020, 102856. doi:10.1016/j.cad.2020.102856.
+   Probably the most important subalgorithmic reference for Hypermesh: compare constructed intersection points through their source primitives instead of eagerly materializing exact coordinates. ([ScienceDirect][9])
+
+10. **Shewchuk, J. R.** “**Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric Predicates**.” *Discrete & Computational Geometry* 18(3), 1997, pp. 305–363. doi:10.1007/PL00009321.
+    Foundational adaptive exact predicate work. ([CiNii Research][10])
+
+11. **Yap, C. K.** “**Towards Exact Geometric Computation**.” *Computational Geometry* 7(1–2), 1997, pp. 3–23. doi:10.1016/0925-7721(95)00040-2.
+    Foundational exact geometric computation framing. ([ScienceDirect][11])
+
+12. **Guigue, P.; Devillers, O.** “**Fast and Robust Triangle-Triangle Overlap Test Using Orientation Predicates**.” *Journal of Graphics Tools* 8(1), 2003, pp. 25–32. doi:10.1080/10867651.2003.10487580.
+    Good fit for `hyperlimit`-style orientation-only triangle overlap decisions. ([Taylor & Francis Online][12])
+
+13. **Möller, T.** “**A Fast Triangle-Triangle Intersection Test**.” *Journal of Graphics Tools* 2(2), 1997, pp. 25–30. doi:10.1080/10867651.1997.10487472.
+    Classic fast triangle-triangle staging reference. ([Taylor & Francis Online][13])
+
+14. **Garau, L.; Cherchi, G.** “**A Robust Approach to Detect Intersections between Triangles with Different Numerical Representations**.” arXiv:2507.08478, 2025.
+    Newer and relevant because Hypermesh/Hyperreal may need predicates across exact, rational, floating, and implicit representations. ([arXiv][14])
+
+## Broad phase / spatial indexing
+
+15. **Klosowski, J. T.; Held, M.; Mitchell, J. S. B.; Sowizral, H.; Zikan, K.** “**Efficient Collision Detection Using Bounding Volume Hierarchies of k-DOPs**.” *IEEE Transactions on Visualization and Computer Graphics* 4(1), 1998, pp. 21–36. doi:10.1109/2945.675649.
+    Best classic k-DOP/BVH reference; maps well to Hyper’s support-DOP direction. ([SUNY Research Connect][15])
+
+16. **Xu, S.; Keyser, J.** “**Fast and Robust Booleans on Polyhedra**.” *Computer-Aided Design* 45(2), 2013, pp. 529–534. doi:10.1016/j.cad.2012.10.036.
+    Useful for broad-phase spatial hashing + exact topology / approximate geometry separation. ([ScienceDirect][16])
+
+## Planar arrangements / triangulation support
+
+17. **Held, M.** “**FIST: Fast Industrial-Strength Triangulation of Polygons**.” *Algorithmica* 30(4), 2001, pp. 563–596. doi:10.1007/s00453-001-0028-4.
+    Useful for practical earcut-style polygon triangulation behavior. ([ResearchGate][17])
+
+18. **Boissonnat, J.-D.; Devillers, O.; Pion, S.; Teillaud, M.; Yvinec, M.** “**Triangulations in CGAL**.” *Computational Geometry* 22(1–3), 2002, pp. 5–19. doi:10.1016/S0925-7721(01)00054-2.
+    Good implementation reference for robust triangulation package design. ([ScienceDirect][18])
+
+19. **Lee, D. T.; Lin, A. K.** “**Generalized Delaunay Triangulation for Planar Graphs**.” *Discrete & Computational Geometry* 1, 1986, pp. 201–218.
+    Relevant to constrained/generalized Delaunay topology for face-cell remeshing. ([EuDML][19])
+
+## Practical baselines / libraries to inspect
+
+20. **CGAL Polygon Mesh Processing: Corefinement and Boolean Operations.**
+    Corefinement baseline: refine both meshes so intersection polylines become edges, then compute union/intersection/difference. ([CGAL 6.2 Manual][20])
+
+21. **CGAL 3D Nef Polyhedra.**
+    Baseline for fully general boolean/topological semantics, including open/closed sets, mixed-dimensional cells, non-manifold cases, closure/interior/boundary operations. ([CGAL 6.2 Manual][21])
+
+22. **Manifold Library.**
+    Practical robust manifold-output boolean implementation; useful as an engineering comparison even though it is not the same exact-arithmetic philosophy as Hypermesh. ([GitHub][22])
+
+23. **Solidean / EMBER-derived production kernel.**
+    Commercial/production descendant of the EMBER line; useful mainly as a signal for engineering choices around exact predicates/constructions, fixed-width arithmetic, attributes, and production throughput. ([solidean.com][23])
+
+[1]: https://www.graphics.rwth-aachen.de/publication/03339/?utm_source=chatgpt.com "EMBER: Exact Mesh Booleans via Efficient & Robust Local Arrangements - Computer Graphics and Multimedia"
+[2]: https://unimore.unifind.cineca.it/resource/item/358135?language=en_US&utm_source=chatgpt.com "UNIFIND - UNIMORE - Interactive and Robust Mesh Booleans"
+[3]: https://www.cs.columbia.edu/cg/mesh-arrangements/?utm_source=chatgpt.com "Mesh Arrangements for Solid Geometry"
+[4]: https://arxiv.org/abs/2405.12949?utm_source=chatgpt.com "Exact predicates, exact constructions and combinatorics for mesh CSG"
+[5]: https://www.sciencedirect.com/science/article/pii/S0898122115003028?utm_source=chatgpt.com "Exact, robust, and efficient regularized Booleans on general 3D meshes - ScienceDirect"
+[6]: https://onlinelibrary.wiley.com/doi/10.1111/j.1467-8659.2009.01504.x?utm_source=chatgpt.com "Fast, Exact, Linear Booleans - Bernstein - 2009 - Computer Graphics Forum - Wiley Online Library"
+[7]: https://www.sciencedirect.com/science/article/pii/S0010448521000269?utm_source=chatgpt.com "Fast Exact Booleans for Iterated CSG using Octree-Embedded BSPs - ScienceDirect"
+[8]: https://www.sciencedirect.com/science/article/pii/S0925772107000181?utm_source=chatgpt.com "Boolean operations on 3D selective Nef complexes: Data structure, algorithms, optimized implementation and experiments - ScienceDirect"
+[9]: https://www.sciencedirect.com/science/article/abs/pii/S001044852030049X?utm_source=chatgpt.com "Indirect Predicates for Geometric Constructions - ScienceDirect"
+[10]: https://cir.nii.ac.jp/crid/1363107370932150016?utm_source=chatgpt.com "Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric Predicates | CiNii Research"
+[11]: https://www.sciencedirect.com/science/article/pii/0925772195000402?utm_source=chatgpt.com "Towards exact geometric computation - ScienceDirect"
+[12]: https://www.tandfonline.com/doi/abs/10.1080/10867651.2003.10487580?utm_source=chatgpt.com "Fast and Robust Triangle-Triangle Overlap Test Using Orientation Predicates: Journal of Graphics Tools: Vol 8, No 1"
+[13]: https://www.tandfonline.com/doi/abs/10.1080/10867651.1997.10487472?utm_source=chatgpt.com "A Fast Triangle-Triangle Intersection Test: Journal of Graphics Tools: Vol 2, No 2"
+[14]: https://arxiv.org/abs/2507.08478?utm_source=chatgpt.com "A Robust Approach to Detect Intersections between Triangles with Different Numerical Representations"
+[15]: https://researchconnect.suny.edu/en/publications/efficient-collision-detection-using-bounding-volume-hierarchies-o/?utm_source=chatgpt.com "Efficient collision detection using bounding volume hierarchies of k-DOPs - SUNY Research Connect"
+[16]: https://www.sciencedirect.com/science/article/pii/S0010448512002412?utm_source=chatgpt.com "Fast and robust Booleans on polyhedra - ScienceDirect"
+[17]: https://www.researchgate.net/publication/225776379_FIST_Fast_Industrial-Strength_Triangulation_of_Polygons?utm_source=chatgpt.com "FIST: Fast Industrial-Strength Triangulation of Polygons"
+[18]: https://www.sciencedirect.com/science/article/pii/S0925772101000542?utm_source=chatgpt.com "Triangulations in CGAL - ScienceDirect"
+[19]: https://eudml.org/doc/130991?utm_source=chatgpt.com "EUDML  |  Generalized Delaunay Triangulation for Planar Graphs."
+[20]: https://doc.cgal.org/latest/Polygon_mesh_processing/?utm_source=chatgpt.com "CGAL 6.1 - Polygon Mesh Processing: User Manual"
+[21]: https://doc.cgal.org/latest/Nef_3/index.html?utm_source=chatgpt.com "CGAL 6.1.1 - 3D Boolean Operations on Nef Polyhedra: User Manual"
+[22]: https://github.com/elalish/manifold/wiki/Manifold-Library?utm_source=chatgpt.com "Manifold Library · elalish/manifold Wiki · GitHub"
+[23]: https://solidean.com/?utm_source=chatgpt.com "Solidean | A Boolean Revolution in Geometry Processing"
+

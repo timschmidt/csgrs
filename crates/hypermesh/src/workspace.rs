@@ -1,8 +1,10 @@
 use super::arrangement3d::ExactArrangement;
 use super::boolean::{
-    ExactArrangementBooleanAttempt, ExactBooleanCertificationSet, ExactBooleanEvaluation,
-    ExactBooleanRequest, arrangement_boolean_attempt_report_from_arrangement,
-    arrangement_cell_complex_shortcut_attempt,
+    ExactArrangementBooleanAttempt, ExactArrangementCellComplexShortcutFacts,
+    ExactBooleanCertificationSet, ExactBooleanEvaluation, ExactBooleanRequest,
+    ExactBooleanSourceFacts, ExactBoundaryBooleanPolicy,
+    arrangement_boolean_attempt_report_from_arrangement,
+    arrangement_cell_complex_shortcut_attempt_with_facts,
     certified_arrangement_cell_complex_preflight_from_retained_attempt,
     materialize_boolean_exact_request_from_retained_graph,
     preflight_boolean_exact_request_from_graph_with_retained_attempt,
@@ -15,6 +17,7 @@ use super::regularization::ExactRegularizationPolicy;
 use super::reports::{
     ExactBooleanPreflight, ExactBooleanResult, ExactBooleanSupport, ExactReportValidationError,
 };
+use super::validation::ValidationPolicy;
 
 /// Reusable exact boolean session for a fixed source-mesh pair.
 ///
@@ -25,6 +28,7 @@ use super::reports::{
 pub struct ExactBooleanWorkspace<'a> {
     left: &'a ExactMesh,
     right: &'a ExactMesh,
+    source_facts: Option<ExactBooleanSourceFacts>,
     graph: Option<ExactIntersectionGraph>,
     arrangements: Vec<(ExactRegularizationPolicy, ExactArrangement)>,
     arrangement_attempts: Vec<(
@@ -42,6 +46,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         Self {
             left,
             right,
+            source_facts: None,
             graph: None,
             arrangements: Vec::new(),
             arrangement_attempts: Vec::new(),
@@ -56,6 +61,15 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .graph
             .as_ref()
             .expect("validated graph cache was just populated"))
+    }
+
+    fn source_facts(&mut self) -> &ExactBooleanSourceFacts {
+        if self.source_facts.is_none() {
+            self.source_facts = Some(ExactBooleanSourceFacts::from_sources(self.left, self.right));
+        }
+        self.source_facts
+            .as_ref()
+            .expect("source facts cache was just populated")
     }
 
     fn ensure_validated_graph(&mut self) -> Result<(), MeshError> {
@@ -84,17 +98,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .graph
             .take()
             .expect("validated graph cache was just populated"))
-    }
-
-    pub(crate) fn into_arrangement_attempt(
-        mut self,
-        request: ExactBooleanRequest,
-        policy: ExactRegularizationPolicy,
-    ) -> Result<ExactArrangementBooleanAttempt, MeshError> {
-        self.arrangement_attempt(request, policy)?;
-        let index = cached_by_request_and_policy_index(&self.arrangement_attempts, request, policy)
-            .expect("arrangement attempt cache was just populated");
-        Ok(self.arrangement_attempts.swap_remove(index).2)
     }
 
     pub(crate) fn into_evaluation(
@@ -190,6 +193,10 @@ impl<'a> ExactBooleanWorkspace<'a> {
 
         let left = self.left;
         let right = self.right;
+        let shortcut_facts = self
+            .source_facts()
+            .arrangement_cell_complex_shortcuts()
+            .clone();
         let attempt = match self.arrangement(policy) {
             Ok(arrangement) => {
                 let attempt = arrangement_boolean_attempt_report_from_arrangement(
@@ -202,14 +209,24 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 if attempt.materialized_arrangement_cell_complex_output() {
                     attempt
                 } else {
-                    arrangement_cell_complex_shortcut_attempt(left, right, request, policy)?
-                        .unwrap_or(attempt)
+                    arrangement_cell_complex_shortcut_attempt_with_facts(
+                        left,
+                        right,
+                        request,
+                        policy,
+                        &shortcut_facts,
+                    )?
+                    .unwrap_or(attempt)
                 }
             }
             Err(error) => {
-                if let Some(attempt) =
-                    arrangement_cell_complex_shortcut_attempt(left, right, request, policy)?
-                {
+                if let Some(attempt) = arrangement_cell_complex_shortcut_attempt_with_facts(
+                    left,
+                    right,
+                    request,
+                    policy,
+                    &shortcut_facts,
+                )? {
                     attempt
                 } else {
                     return Err(error);
@@ -246,6 +263,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
         {
             let _ = self.arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID);
         }
+        let source_facts = self.source_facts();
+        let shortcut_facts = source_facts.arrangement_cell_complex_shortcuts();
+        let graph_preflight_has_source_arrangement_shortcut = shortcut_facts
+            .certified_support(request.operation)
+            == Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
+        let graph_preflight_has_certified_axis_aligned_box_pair =
+            shortcut_facts.certifies_axis_aligned_box_pair();
+        let shortcut_facts = shortcut_facts.clone();
         self.ensure_validated_graph()?;
         let retained_attempt = self.validated_regularized_solid_arrangement_attempt(request)?;
         let graph = self
@@ -258,6 +283,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             right,
             request,
             retained_attempt,
+            &shortcut_facts,
         )?;
         if graph_preflight.operation != request.operation {
             return Err(workspace_report_validation_error(
@@ -275,11 +301,22 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 | ExactBooleanSupport::CertifiedSameSurface
                 | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
                 | ExactBooleanSupport::CertifiedConvexSeparated
-        ) {
+        ) || (matches!(
+            graph_preflight.support,
+            ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+                | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+                | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+        ) && !graph_preflight_has_source_arrangement_shortcut
+            && !graph_preflight_has_certified_axis_aligned_box_pair)
+        {
             return Ok(graph_preflight);
         }
-        if let Some(attempt) = retained_attempt
-            && let Some(preflight) =
+        if (!(request.validation == ValidationPolicy::ALLOW_BOUNDARY
+            && request.boundary_policy == ExactBoundaryBooleanPolicy::Reject)
+            || graph_preflight_has_source_arrangement_shortcut
+            || graph_preflight_has_certified_axis_aligned_box_pair)
+            && let Some(attempt) = retained_attempt
+            && let Ok(Some(preflight)) =
                 certified_arrangement_cell_complex_preflight_from_retained_attempt(
                     graph,
                     left,
@@ -287,7 +324,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                     request,
                     ExactRegularizationPolicy::REGULARIZED_SOLID,
                     attempt,
-                )?
+                )
         {
             preflight
                 .validate()
@@ -315,6 +352,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         if preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex {
             self.arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)?;
         }
+        let source_facts = self.source_facts().clone();
         let graph = self
             .graph
             .as_ref()
@@ -328,6 +366,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             request,
             regularized_arrangement,
             regularized_attempt,
+            &source_facts,
         )?;
         let result = if preflight.is_certified() {
             if let Some(index) = cached_by_request_index(&self.materializations, request) {
@@ -342,6 +381,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                     preflight.support,
                     regularized_arrangement,
                     regularized_attempt,
+                    source_facts.arrangement_cell_complex_shortcuts(),
                 )
                 .ok()
                 .flatten()
@@ -351,6 +391,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                     preflight.support,
                     regularized_arrangement,
                     regularized_attempt,
+                    source_facts.arrangement_cell_complex_shortcuts(),
                 )?
             }
         } else {
@@ -378,6 +419,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             if let Some(result) = evaluation.materialized_result() {
                 return Ok(result.clone());
             }
+            let source_facts = self.source_facts().clone();
             let regularized_arrangement = self.regularized_solid_arrangement();
             let regularized_attempt =
                 self.validated_regularized_solid_arrangement_attempt(request)?;
@@ -387,6 +429,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                     support,
                     regularized_arrangement,
                     regularized_attempt,
+                    source_facts.arrangement_cell_complex_shortcuts(),
                 )?
                 .ok_or_else(|| {
                     workspace_report_validation_error(
@@ -431,6 +474,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
         result: &ExactBooleanResult,
     ) -> Result<(), MeshError> {
         let retained_attempt = self.validated_regularized_solid_arrangement_attempt(request)?;
+        let retained_attempt = if result.is_arrangement_cell_complex_shortcut_for(request.operation)
+            || result.topology_assembly_report().is_some()
+            || result.region_ownership_report().is_some()
+        {
+            retained_attempt
+        } else {
+            None
+        };
         result
             .validate_request_against_sources_with_retained_attempt(
                 self.left,
@@ -447,6 +498,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         support: ExactBooleanSupport,
         regularized_arrangement: Option<&ExactArrangement>,
         regularized_attempt: Option<&ExactArrangementBooleanAttempt>,
+        shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
         let graph = self
             .graph
@@ -460,6 +512,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             Some(graph),
             regularized_arrangement,
             regularized_attempt,
+            shortcut_facts,
         )
     }
 
@@ -1095,12 +1148,21 @@ mod tests {
             .materialize_ref(request)
             .cloned()
             .unwrap();
+        assert!(
+            expected_result
+                .is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection),
+            "{expected_result:?}"
+        );
         let expected_evidence = ExactBooleanWorkspace::new(&left, &right)
             .evaluate(request)
             .unwrap()
             .preflight()
             .clone()
             .coplanar_volumetric_evidence;
+        assert_eq!(
+            workspace.preflight(request).unwrap().support,
+            ExactBooleanSupport::CertifiedArrangementCellComplex
+        );
         assert_eq!(workspace.materializations[0].1, expected_result);
         assert_eq!(workspace.materializations.len(), 1);
         assert_eq!(
@@ -1151,6 +1213,9 @@ mod tests {
         .0;
         materialized.validate().unwrap();
         assert!(materialized.matches_request(request));
+        materialized
+            .validate_request_against_sources_with_retained_attempt(&left, &right, request, None)
+            .unwrap();
         let borrowed = workspace.materialize_ref(request).unwrap() as *const ExactBooleanResult;
         let cached = &workspace.materializations[0].1 as *const ExactBooleanResult;
         assert_eq!(borrowed, cached);

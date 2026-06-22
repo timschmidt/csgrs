@@ -35,7 +35,7 @@ Target public surface
 Public API removals or moves
 ----------------------------
 
-Move to csgrs:
+Remove:
 
 - `ExactBooleanWorkspace`.
 - `ExactBooleanRequest`, `ExactBooleanOperation` as public operation API, `ExactBooleanEvaluation`, `ExactBooleanResult`.
@@ -50,6 +50,41 @@ Keep in hypermesh but narrow:
 - Certified shortcut algorithms for adjacent, contained-adjacent, convex, affine/orthogonal, and box solids.
 - Optional triangulation helpers if they are used as exact kernel algorithms.
 - Exact validation/audit facts only when they are about `ExactMesh` itself.
+
+Performance architecture
+------------------------
+
+Performance must be designed around Yap-style retained facts from the first API
+shape, not added after the boolean pipeline exists. The kernel should make every
+expensive stage consume a cacheable fact package with source-replay validation.
+
+1. Mesh-local fact caches.
+   - Store exact vertex facts, edge facts, triangle facts, determinant-form face
+     planes, exact face AABBs, optional support/k-DOP intervals, adjacency, edge
+     incidence, orientation, manifold/boundary summaries, and provenance in
+     `ExactMesh`.
+   - Prefer compact stable indices and borrowed views over cloning facts into
+     result objects.
+   - Keep exact rational keys as bucket accelerators only; equality and topology
+     still replay through exact predicates when keys are absent or symbolic.
+
+2. Mesh-pair session caches.
+   - Expose low-level borrowed caches for pair broad phase, retained face-pair
+     classification, intersection graph events, coplanar overlap graphs, split
+     topology plans, local arrangements, winding/ownership facts, and
+     triangulation products.
+   - Invalidate by source identity plus construction version rather than by
+     object address alone.
+   - Make cache freshness explicit: current, replay-blocked, stale, or
+     unsupported with a typed blocker.
+
+3. Stage metrics.
+   - Bench candidate-pair count, AABB/k-DOP rejection rate, predicate filter hit
+     rate, constructed-point count, indirect-predicate use count, local
+     arrangement cell count, CDT triangle count, winding query count, replay
+     validation cost, cache hit rate, memory bytes per retained fact, and
+     parallel task count.
+   - Keep these metrics in benchmark/debug surfaces, not default public policy.
 
 Refactor phases
 ---------------
@@ -73,10 +108,29 @@ Refactor phases
    - Move large test-only helper sections into tests.
 
 5. Preserve and improve performance structures.
-   - Keep exact AABB sweep and add BVH/k-DOP exploration from references.
-   - Use EMBER-style local arrangements and early-outs where source-pair topology allows.
-   - Use indirect predicates for constructed intersection objects where eager exact coordinates are expensive.
-   - Keep CDT face-cell triangulation and local arrangement decomposition as core.
+   - Keep exact AABB sweep as the baseline broad phase; add a pluggable exact
+     broad-phase trait that can support Morton tiling, BVH, k-DOP/support-DOP
+     intervals, or octree cells without changing narrow-phase outputs.
+   - Implement EMBER-style adaptive local arrangements for one-shot mesh
+     booleans: recursively subdivide space, propagate local winding reference
+     facts, split only local leaf polygons, and terminate early when a leaf
+     cannot contribute to the requested result.
+   - Do not prebuild a global arrangement unless the caller requests reusable
+     multi-operation evidence or the local path detects that global replay will
+     be cheaper.
+   - Use indirect predicates for constructed intersection objects where eager
+     exact coordinates are expensive. Retain the source primitives and
+     construction family for line-plane, plane-plane-plane, segment-plane,
+     projected edge-edge, and radial-order predicates.
+   - Keep exact co-refinement, radial sorting around non-manifold intersection
+     edges, and CDT face remeshing as the fallback complete path for difficult
+     general inputs.
+   - Keep CDT face-cell triangulation and local arrangement decomposition as
+     core. Use symbolic perturbation or an equivalent retained tie-breaker for
+     co-circular or duplicate projected configurations.
+   - Keep specialized exact shortcuts for disjoint, adjacent, contained,
+     convex, affine/orthogonal, and box solids, but require them to return the
+     same retained blockers/facts as the generic path.
 
 6. Tighten provenance and useful errors.
    - Require every graph event, split point, arrangement vertex/edge/cell, simplified cell, and output triangle to retain source provenance or construction evidence.
@@ -91,12 +145,56 @@ Refactor phases
 Research integration
 --------------------
 
-- Implement an EMBER-inspired local arrangement path before broad global materialization.
-- Evaluate indirect predicate storage for intersection points and radial ordering.
-- Use mesh arrangement/winding-vector ideas for closed solids, but keep Nef/regularized semantics in csgrs policy.
-- Keep Guigue/Devillers and Moller triangle staging as narrow-phase baselines.
-- Explore k-DOP/BVH broad phase once exact AABB sweep limits become visible.
-- Compare CGAL corefinement/Nef and Manifold/Solidean as behavior/performance baselines, not as API templates.
+Primary research conclusions to bake into the plan:
+
+- EMBER is the main performance target for one-shot exact booleans. Use
+  adaptive recursive spatial subdivision, local per-leaf BSP/arrangement
+  splitting, propagated local winding number references, exact plane-based
+  representation, early-out leaf pruning, and a work-stealing parallel task
+  model. Source: https://graphics.rwth-aachen.de/media/papers/339/ember_exact_mesh_booleans_via_efficient_and_robust_local_arrangements.pdf
+- Mesh Arrangements for Solid Geometry is the robust semantic fallback:
+  construct exact arrangements, assign winding-number vectors to cells, and let
+  csgrs extract named boolean results from those vectors. It is not the default
+  fastest path, but it is the correctness model for arbitrary inputs. Source:
+  https://www.cs.columbia.edu/cg/mesh-arrangements/
+- Levy 2024 should guide the complete exact CSG backend: exact co-refinement,
+  exact Weiler/arrangement model, radial sorting around non-manifold
+  intersection edges, simple combinatorial handoff between stages, exact
+  expansion or multiprecision kernels, and CDT remeshing with retained
+  tie-breakers for ambiguous projected cases. Source:
+  https://arxiv.org/abs/2405.12949
+- Attene indirect predicates should be a core optimization for constructed
+  intersections. Represent constructed points by source primitives and
+  denominator/numerator facts, then evaluate orientation/incidence/radial-order
+  predicates without eagerly materializing every exact coordinate. Source:
+  https://arxiv.org/abs/2105.09772
+- Interactive and Robust Mesh Booleans validates that exact predicate pipelines
+  can be interactive when intermediate facts are lightweight and filtered; use
+  it as a performance bar for batch and million-triangle cases. Source:
+  https://arxiv.org/abs/2205.14151
+- Octree-embedded BSPs are the specialized backend for iterated CSG and
+  repeated plane cuts. Keep this separate from the triangle-arrangement kernel,
+  but design `ExactMesh` facts so plane-based cells can borrow face-plane and
+  provenance caches. Source: https://arxiv.org/abs/2103.02486
+- CGAL corefinement/autorefinement is a practical baseline for triangle soup
+  refinement and intersection polylines; it also demonstrates where concurrency
+  and visitor hooks are useful. Treat snap rounding as an adapter policy, not a
+  kernel topology decision. Source:
+  https://doc.cgal.org/latest/PMP_Boolean_operations/group__PMP__corefinement__grp.html
+- CGAL Nef polyhedra are the semantic reference for closure under boolean,
+  complement, boundary, closure, interior, and regularization operations.
+  Keep these set-operation semantics in csgrs policy while hypermesh retains
+  lower-dimensional artifacts and cell facts. Source:
+  https://doc.cgal.org/latest/Nef_3/index.html
+- Guigue/Devillers, Moller, and Shewchuk remain narrow-phase/predicate
+  baselines: plane-side rejection, exact orientation predicates, and adaptive
+  filters should decide branch conditions before any topology mutation. Source:
+  https://www.cs.cmu.edu/~quake/robust.html
+- Broad phase should evolve from exact AABB sweep to a measured hierarchy:
+  Morton tiles for locality, BVH/k-DOP/support-DOP intervals for tighter
+  rejection, and octree cells when local arrangements or iterated CSG need
+  spatial subdivision. Each broad-phase object is an acceleration fact, never a
+  topology certificate.
 
 Definition of done
 ------------------
@@ -105,5 +203,5 @@ Definition of done
 - The default crate root no longer exports workspace-level boolean policy, handoff packages, readiness, proposal, or broad public report APIs.
 - Borrowed mesh/face/triangle/arrangement views exist and are preferred for queries.
 - Exact facts and acceleration structures replay against source objects before use.
-- csgrs can still perform named booleans by composing hypermesh low-level algorithms.
+- csgrs can still perform named booleans by ExactMesh.union(ExactMesh); or difference, intersection, xor, or the borrowed equivalents and all other functions required by the CSG trait.
 - Every exact algorithm returns a decided value or a typed useful blocker with retained provenance.

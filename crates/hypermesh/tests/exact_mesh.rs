@@ -18,6 +18,7 @@ fn with_exact_boolean_evaluation<R>(
 ) -> R {
     let mut workspace = ExactBooleanWorkspace::new(left, right);
     let evaluation = workspace.evaluate(request).unwrap();
+    evaluation.validate_against_sources(left, right).unwrap();
     f(evaluation)
 }
 
@@ -37,10 +38,11 @@ fn exact_boolean_result(
 ) -> ExactBooleanResult {
     let mut workspace = ExactBooleanWorkspace::new(left, right);
     let result = workspace.materialize_ref(request).cloned().unwrap();
-    workspace
-        .evaluate(request)
-        .unwrap()
-        .validate_against_sources(left, right)
+    let evaluation = workspace.evaluate(request).unwrap();
+    evaluation.validate_against_sources(left, right).unwrap();
+    assert_eq!(evaluation.materialized_result(), Some(&result));
+    result
+        .validate_for_request_against_sources(left, right, request)
         .unwrap();
     result
 }
@@ -54,6 +56,7 @@ macro_rules! with_exact_boolean_evaluation_for_attempt_replay {
             $evaluation.has_retained_arrangement_attempt(),
             "evaluation should retain an arrangement attempt"
         );
+        $evaluation.validate_against_sources($left, $right).unwrap();
         $body
     }};
 }
@@ -65,16 +68,13 @@ fn assert_public_full_face_adjacent_union(
     _expected_shared_patches: usize,
 ) -> ExactBooleanResult {
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-    with_exact_boolean_evaluation(left, right, request, |evaluation| {
-        evaluation.validate_against_sources(left, right).unwrap();
-    });
+    with_exact_boolean_evaluation(left, right, request, |_| {});
 
     let result = exact_boolean_result(left, right, request);
     assert!(
         result.is_certified_shortcut_for(ExactBooleanOperation::Union),
         "{result:?}"
     );
-    result.validate_against_sources(left, right).unwrap();
     assert!(result.mesh().facts().mesh.closed_manifold);
     assert!(!result.mesh().triangles().is_empty());
     result
@@ -87,16 +87,13 @@ fn assert_public_contained_face_adjacent_union(
     _expected_contained_faces: usize,
 ) -> ExactBooleanResult {
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-    with_exact_boolean_evaluation(left, right, request, |evaluation| {
-        evaluation.validate_against_sources(left, right).unwrap();
-    });
+    with_exact_boolean_evaluation(left, right, request, |_| {});
 
     let result = exact_boolean_result(left, right, request);
     assert!(
         result.is_certified_shortcut_for(ExactBooleanOperation::Union),
         "{result:?}"
     );
-    result.validate_against_sources(left, right).unwrap();
     assert!(result.mesh().facts().mesh.closed_manifold);
     assert!(!result.mesh().triangles().is_empty());
     result
@@ -203,7 +200,6 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
     );
 
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        evaluation.validate_against_sources(&left, &right).unwrap();
         assert!(evaluation.materialized_result().is_some());
         assert!(!evaluation.has_blocker());
         assert!(evaluation.materialized_result().is_some_and(|result| {
@@ -225,7 +221,6 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
 
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        evaluation.validate_against_sources(&left, &right).unwrap();
         assert!(
             evaluation.has_retained_arrangement_attempt(),
             "named boolean certifications should retain arrangement attempt"
@@ -256,7 +251,6 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     );
 
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        evaluation.validate_against_sources(&left, &right).unwrap();
         assert!(evaluation.materialized_result().is_some());
         assert!(!evaluation.has_blocker());
         let result = evaluation
@@ -270,7 +264,6 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
         ExactBoundaryBooleanPolicy::Reject,
     );
     with_exact_boolean_evaluation(&left, &right, rejected_request, |rejected| {
-        rejected.validate().unwrap();
         assert!(rejected.materialized_result().is_none());
     });
     assert!(
@@ -821,7 +814,6 @@ fn exact_affine_orthogonal_solid_boolean_is_publicly_replayable() {
         result.is_certified_shortcut_for(operation),
         "{operation:?}: {result:?}"
     );
-    result.validate().unwrap();
     assert!(result.mesh().facts().mesh.closed_manifold);
 }
 
@@ -849,10 +841,6 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
                     !preflight_evaluation.has_blocker(),
                     "{operation:?}: {preflight_evaluation:?}"
                 );
-                preflight_evaluation.validate().unwrap();
-                preflight_evaluation
-                    .validate_against_sources(&left, &right)
-                    .unwrap_or_else(|error| panic!("{operation:?}: {error:?}"));
             },
         );
 
@@ -868,8 +856,6 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
                     result.is_arrangement_cell_complex_shortcut_for(operation),
                     "{operation:?}: {result:?}"
                 );
-                evaluation.validate_against_sources(&left, &right).unwrap();
-                result.validate().unwrap();
                 assert!(result.mesh().facts().mesh.closed_manifold);
             },
         );
@@ -906,7 +892,6 @@ fn exact_axis_aligned_orthogonal_solid_boolean_is_publicly_replayable() {
             result.is_arrangement_cell_complex_shortcut_for(operation),
             "{operation:?}: {result:?}"
         );
-        result.validate().unwrap();
         assert!(
             result
                 .validate_against_sources(&left, &separated_right)
@@ -933,7 +918,6 @@ fn axis_aligned_orthogonal_solid_accepts_face_fan_triangulated_box() {
         result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection),
         "{result:?}"
     );
-    result.validate_against_sources(&fan_box, &cutter).unwrap();
     assert!(result.mesh().facts().mesh.closed_manifold);
 }
 
@@ -957,7 +941,6 @@ fn axis_aligned_orthogonal_solid_materializes_multiple_cavities() {
         result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Difference),
         "{result:?}"
     );
-    result.validate_against_sources(&outer, &cavities).unwrap();
     assert!(result.mesh().facts().mesh.closed_manifold);
 }
 
@@ -981,7 +964,6 @@ fn affine_orthogonal_solid_recovers_face_fan_basis_from_cell_edges() {
         result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection),
         "{result:?}"
     );
-    result.validate_against_sources(&fan_box, &cutter).unwrap();
     assert!(result.mesh().facts().mesh.closed_manifold);
 }
 
@@ -997,7 +979,6 @@ fn exact_coplanar_volumetric_cell_policy_is_publicly_replayable() {
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
         |evaluation| {
-            evaluation.validate().unwrap();
             assert!(
                 evaluation.has_blocker()
                     || evaluation.has_retained_arrangement_attempt()
@@ -1010,7 +991,6 @@ fn exact_coplanar_volumetric_cell_policy_is_publicly_replayable() {
                     || evaluation.requires_coplanar_volumetric_cells(),
                 "{evaluation:?}"
             );
-            evaluation.validate_against_sources(&left, &right).unwrap();
             assert!(evaluation.requires_coplanar_volumetric_cells());
 
             let separated_right = tetra([10, 0, 0]);
@@ -1057,7 +1037,6 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         assert!(predicate(&result, operation), "{operation:?}: {result:?}");
-        result.validate_against_sources(&left, &right).unwrap();
         assert!(
             result
                 .validate_against_sources(&left, &stale_open_right)
@@ -1081,9 +1060,6 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
         "{separated:?}"
     );
     separated.validate().unwrap();
-    separated
-        .validate_against_sources(&separated_left, &separated_right)
-        .unwrap();
     with_exact_boolean_evaluation(
         &separated_left,
         &separated_right,
@@ -1197,9 +1173,7 @@ fn full_face_adjacent_union_refines_side_faces_for_boundary_subdivided_shared_fa
     assert_public_full_face_adjacent_union(&left, &right, 0, 1);
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-    with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        evaluation.validate_against_sources(&left, &right).unwrap();
-    });
+    with_exact_boolean_evaluation(&left, &right, request, |_| {});
 }
 
 #[test]
@@ -1262,9 +1236,7 @@ fn full_face_adjacent_union_accepts_dual_boundary_subdivided_shared_face() {
     assert_public_full_face_adjacent_union(&left, &right, 0, 1);
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-    with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        evaluation.validate_against_sources(&left, &right).unwrap();
-    });
+    with_exact_boolean_evaluation(&left, &right, request, |_| {});
 }
 
 fn tetra_with_subdivided_base() -> ExactMesh {
@@ -1325,7 +1297,6 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        evaluation.validate_against_sources(&left, &right).unwrap();
         assert!(
             evaluation
                 .validate_against_sources(&left, &separated_right)
@@ -1342,7 +1313,6 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
         "{result:?}"
     );
-    result.validate_against_sources(&left, &right).unwrap();
     assert!(
         result
             .validate_against_sources(&left, &separated_right)
@@ -1354,9 +1324,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ValidationPolicy::CLOSED,
     );
-    with_exact_boolean_evaluation(&left, &right, intersection_request, |evaluation| {
-        evaluation.validate_against_sources(&left, &right).unwrap();
-    });
+    with_exact_boolean_evaluation(&left, &right, intersection_request, |_| {});
 
     let axis_left = axis_aligned_box([0, 0, 0], [1, 1, 1]);
     let axis_right = axis_aligned_box([1, 0, 0], [2, 1, 1]);
@@ -1632,9 +1600,7 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
             ExactBooleanOperation::SelectedRegions(selection),
             validation,
         ),
-        |evaluation| {
-            evaluation.validate_against_sources(&left, &right).unwrap();
-        },
+        |_| {},
     );
 }
 
@@ -1731,7 +1697,6 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
     ] {
         let request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
         with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-            evaluation.validate_against_sources(&left, &right).unwrap();
             let materialized = evaluation
                 .materialized_result()
                 .expect("lower-dimensional regularized evaluation should materialize");
@@ -1752,13 +1717,15 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         assert!(
-            result.is_certified_shortcut_for(operation)
-                || result.is_arrangement_cell_complex_shortcut_for(operation)
-                || result.is_arrangement_cell_complex_materialized_for(operation),
+            if operation == ExactBooleanOperation::Intersection {
+                result.is_arrangement_cell_complex_shortcut_for(operation)
+                    || result.is_arrangement_cell_complex_materialized_for(operation)
+            } else {
+                result.is_certified_shortcut_for(operation)
+            },
             "{operation:?}: {result:?}"
         );
         assert!(result.mesh().triangles().is_empty());
-        result.validate_against_sources(&left, &right).unwrap();
         assert!(
             result
                 .validate_against_sources(&left, &closed_right)
@@ -1766,10 +1733,6 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
         );
         let disjoint_request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
         with_exact_boolean_evaluation(&left, &disjoint_right, disjoint_request, |evaluation| {
-            evaluation.validate().unwrap();
-            evaluation
-                .validate_against_sources(&left, &disjoint_right)
-                .unwrap();
             let materialized = evaluation
                 .materialized_result()
                 .expect("disjoint lower-dimensional evaluation should materialize");
@@ -1821,7 +1784,6 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 result.is_certified_shortcut_for(operation),
                 "{operation:?}: {result:?}"
             );
-            result.validate_against_sources(left, right).unwrap();
             let keeps_solid = matches!(operation, ExactBooleanOperation::Union)
                 || (solid_is_left && matches!(operation, ExactBooleanOperation::Difference));
             let stale_replay = result.validate_against_sources(stale_left, stale_right);
@@ -1943,7 +1905,9 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
                 ExactBoundaryBooleanPolicy::Reject,
             ))
             .unwrap();
-        reject_evaluation.validate().unwrap();
+        reject_evaluation
+            .validate_against_sources(&left, &right)
+            .unwrap();
         assert!(
             reject_evaluation.materialized_result().is_none(),
             "{reject_evaluation:?}"
@@ -1959,7 +1923,6 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             ),
         );
-        result.validate_against_sources(&left, &right).unwrap();
         assert!(
             result
                 .validate_against_sources(&left, &separated_right)
@@ -1990,8 +1953,7 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
             ),
         );
         assert!(
-            direct.is_arrangement_cell_complex_shortcut_for(operation)
-                || direct.is_certified_shortcut_for(operation),
+            direct.is_arrangement_cell_complex_shortcut_for(operation),
             "{operation:?}: {direct:?}"
         );
         let replay = exact_boolean_result(
@@ -2004,8 +1966,7 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
             ),
         );
         assert!(
-            replay.is_arrangement_cell_complex_shortcut_for(operation)
-                || replay.is_certified_shortcut_for(operation),
+            replay.is_arrangement_cell_complex_shortcut_for(operation),
             "{operation:?}: {replay:?}"
         );
     }
@@ -2036,30 +1997,18 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
                 "{operation:?}: {preflight_evaluation:?}"
             );
             assert!(!preflight_evaluation.has_blocker());
-            preflight_evaluation.validate().unwrap();
-            preflight_evaluation
-                .validate_against_sources(&left, &right)
-                .unwrap_or_else(|error| panic!("{operation:?}: {error:?}"));
-            assert!(preflight_evaluation.validate().is_ok());
         });
 
-        let result = exact_boolean_result(
-            &left,
-            &right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-        );
+        let request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
+        let result = exact_boolean_result(&left, &right, request);
         assert!(
-            result.is_arrangement_cell_complex_shortcut_for(operation)
-                || result.is_certified_shortcut_for(operation),
+            result.is_arrangement_cell_complex_shortcut_for(operation),
             "{operation:?}: {result:?}"
         );
-        result.validate_against_sources(&left, &right).unwrap();
-        with_exact_boolean_evaluation(
-            &left,
-            &right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-            |evaluation| evaluation.validate().unwrap(),
-        );
+        result
+            .validate_for_request_against_sources(&left, &right, request)
+            .unwrap();
+        with_exact_boolean_evaluation(&left, &right, request, |_| {});
         assert!(
             result
                 .validate_against_sources(&left, &separated_right)
@@ -2092,17 +2041,14 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             &left,
             &right,
             preflight_request,
-            |preflight_evaluation| {
-                preflight_evaluation.validate().unwrap();
-                preflight_evaluation.requires_coplanar_volumetric_cells()
-            },
+            |preflight_evaluation| preflight_evaluation.requires_coplanar_volumetric_cells(),
         );
         if let Some(retained_requires_coplanar_volumetric_cells) =
             retained_requires_coplanar_volumetric_cells
         {
             assert_eq!(
                 requires_coplanar_volumetric_cells, retained_requires_coplanar_volumetric_cells,
-                "{operation:?}: positive-area no-volume shortcut should retain stable source-aware boundary-only evidence policy"
+                "{operation:?}: positive-area arrangement no-volume certificate should retain stable source-aware boundary-only evidence policy"
             );
         } else {
             retained_requires_coplanar_volumetric_cells = Some(requires_coplanar_volumetric_cells);
@@ -2126,7 +2072,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
                         readiness_evaluation.requires_coplanar_volumetric_cells(),
                         retained_requires_coplanar_volumetric_cells
                             .expect("preflight should retain coplanar volumetric evidence policy"),
-                        "{operation:?}: no-volume readiness should retain consumed source-aware evidence policy"
+                        "{operation:?}: boundary-only arrangement readiness should retain consumed source-aware evidence policy"
                     );
                 },
             );
@@ -2134,24 +2080,19 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
                 &left,
                 &right,
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-                |evaluation| evaluation.validate().unwrap(),
+                |_| {},
             );
         }
 
-        let result = exact_boolean_result(
-            &left,
-            &right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-        );
+        let request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
+        let result = exact_boolean_result(&left, &right, request);
         assert!(
-            if operation == ExactBooleanOperation::Union {
-                result.is_arrangement_cell_complex_shortcut_for(operation)
-            } else {
-                result.is_certified_shortcut_for(operation)
-            },
+            result.is_arrangement_cell_complex_shortcut_for(operation),
             "{operation:?}: {result:?}"
         );
-        result.validate_against_sources(&left, &right).unwrap();
+        result
+            .validate_for_request_against_sources(&left, &right, request)
+            .unwrap();
         if operation == ExactBooleanOperation::Union {
             assert_eq!(
                 result.mesh().triangles().len(),
@@ -2179,32 +2120,17 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let result = exact_boolean_result(
-            &separated_left,
-            &separated_right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-        );
+        let request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
+        let result = exact_boolean_result(&separated_left, &separated_right, request);
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(operation)
-                || result.is_arrangement_cell_complex_materialized_for(operation)
-                || result.is_certified_shortcut_for(operation),
+                || result.is_arrangement_cell_complex_materialized_for(operation),
             "{operation:?}: {result:?}"
         );
-        result.validate().unwrap();
         result
-            .validate_against_sources(&separated_left, &separated_right)
+            .validate_for_request_against_sources(&separated_left, &separated_right, request)
             .unwrap();
-        assert!(
-            result
-                .validate_against_sources(&separated_left, &separated_right)
-                .is_ok()
-        );
-        with_exact_boolean_evaluation(
-            &separated_left,
-            &separated_right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-            |separated_evaluation| separated_evaluation.validate().unwrap(),
-        );
+        with_exact_boolean_evaluation(&separated_left, &separated_right, request, |_| {});
         assert!(
             result
                 .validate_against_sources(&separated_left, &intersecting_right)
@@ -2227,26 +2153,16 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let result = exact_boolean_result(
-            &container,
-            &contained,
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-        );
+        let request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
+        let result = exact_boolean_result(&container, &contained, request);
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(operation)
-                || result.is_arrangement_cell_complex_materialized_for(operation)
-                || result.is_certified_shortcut_for(operation),
+                || result.is_arrangement_cell_complex_materialized_for(operation),
             "{operation:?}: {result:?}"
         );
-        result.validate().unwrap();
         result
-            .validate_against_sources(&container, &contained)
+            .validate_for_request_against_sources(&container, &contained, request)
             .unwrap();
-        assert!(
-            result
-                .validate_against_sources(&container, &contained)
-                .is_ok()
-        );
         assert!(
             result
                 .validate_against_sources(&container, &uncontained)
@@ -2303,7 +2219,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     let mut workspace = ExactBooleanWorkspace::new(&left, &right);
     {
         let evaluation = workspace.evaluate(union_request).unwrap();
-        evaluation.validate().unwrap();
+        evaluation.validate_against_sources(&left, &right).unwrap();
 
         assert!(
             evaluation.has_retained_arrangement_attempt(),
@@ -2322,9 +2238,9 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             assert_evaluation_retains_attempt_gate_reports(evaluation);
         }
 
-        result.validate().unwrap();
-        assert!(result.validate_against_sources(&left, &right).is_ok());
-        evaluation.validate().unwrap();
+        result
+            .validate_for_request_against_sources(&left, &right, union_request)
+            .unwrap();
         if !result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
             assert!(
                 result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
@@ -2352,14 +2268,15 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let difference_evaluation = workspace.evaluate(difference_request).unwrap();
-    difference_evaluation.validate().unwrap();
     difference_evaluation
         .validate_against_sources(&left, &right)
         .unwrap();
     let difference = difference_evaluation
         .materialized_result()
         .expect("certified arrangement evaluation should retain difference result");
-    difference.validate().unwrap();
+    difference
+        .validate_for_request_against_sources(&left, &right, difference_request)
+        .unwrap();
     if !difference.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Difference) {
         assert!(
             difference.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Difference),
@@ -2405,24 +2322,20 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
             assert_evaluation_retains_attempt_gate_reports(evaluation);
         }
 
-        let result = workspace
-            .materialize_ref(ExactBooleanRequest::new(
-                operation,
-                ValidationPolicy::CLOSED,
-            ))
-            .cloned()
-            .unwrap();
+        let request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
+        let result = workspace.materialize_ref(request).cloned().unwrap();
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(operation),
             "{operation:?}: {result:?}"
         );
-        result.validate().unwrap();
         assert!(
             result.mesh().facts().mesh.closed_manifold || result.mesh().triangles().is_empty(),
             "{operation:?}: {:?}",
             result.mesh().facts().mesh
         );
-        result.validate_against_sources(&left, &right).unwrap();
+        result
+            .validate_for_request_against_sources(&left, &right, request)
+            .unwrap();
     }
 }
 
@@ -2464,9 +2377,11 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
             || result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
         "{result:?}"
     );
-    result.validate().unwrap();
     let evaluation = workspace.evaluate(request).unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
+    result
+        .validate_for_request_against_sources(&left, &right, request)
+        .unwrap();
     assert!(
         evaluation
             .validate_against_sources(&left, &stale_right)
@@ -2483,19 +2398,13 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
 
     let horizontal = axis_aligned_box([0, 0, 0], [2, 2, 2]);
     let vertical = axis_aligned_box([1, 1, 1], [3, 3, 3]);
-    let shortcut = exact_boolean_result(
-        &horizontal,
-        &vertical,
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
-    );
+    let shortcut_request =
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
+    let shortcut = exact_boolean_result(&horizontal, &vertical, shortcut_request);
     assert!(
         shortcut.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
         "{shortcut:?}"
     );
-    shortcut.validate().unwrap();
-    shortcut
-        .validate_against_sources(&horizontal, &vertical)
-        .unwrap();
     let convex_left = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let convex_right = tetra_from_corners([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]);
     let convex_intersection_request = ExactBooleanRequest::new(
@@ -2506,6 +2415,13 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
     let convex_intersection = convex_workspace
         .materialize_ref(convex_intersection_request)
         .cloned()
+        .unwrap();
+    convex_intersection
+        .validate_for_request_against_sources(
+            &convex_left,
+            &convex_right,
+            convex_intersection_request,
+        )
         .unwrap();
     if !convex_intersection
         .is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Intersection)
@@ -2567,31 +2483,33 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         "test disconnected multi-face contained-cap fixture",
     );
 
-    let stronger_result = exact_boolean_result(
-        &left,
-        &right,
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
-    );
+    let stronger_request =
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
+    let stronger_result = exact_boolean_result(&left, &right, stronger_request);
     assert!(
         stronger_result.is_certified_shortcut_for(ExactBooleanOperation::Union),
         "{stronger_result:?}"
     );
-    stronger_result.validate().unwrap();
     stronger_result
-        .validate_against_sources(&left, &right)
+        .validate_for_request_against_sources(&left, &right, stronger_request)
         .unwrap();
 
     let result = assert_public_contained_face_adjacent_union(&container, &right, 1, 1);
     assert_public_contained_face_adjacent_union(&split_container, &split_crossing_right, 2, 1);
     assert_public_contained_face_adjacent_union(&square_container, &square_cap_right, 2, 1);
+    let same_orientation_request =
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     let same_orientation_result = exact_boolean_result(
         &square_container,
         &same_orientation_square_cap,
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+        same_orientation_request,
     );
-    same_orientation_result.validate().unwrap();
     same_orientation_result
-        .validate_against_sources(&square_container, &same_orientation_square_cap)
+        .validate_for_request_against_sources(
+            &square_container,
+            &same_orientation_square_cap,
+            same_orientation_request,
+        )
         .unwrap();
     assert_public_contained_face_adjacent_union(
         &square_disk_container,
@@ -2602,17 +2520,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     assert_public_contained_face_adjacent_union(&container, &two_caps_right, 1, 2);
     let multi_hole_request =
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-    with_exact_boolean_evaluation(
-        &container,
-        &two_caps_right,
-        multi_hole_request,
-        |multi_hole_evaluation| {
-            multi_hole_evaluation.validate().unwrap();
-            multi_hole_evaluation
-                .validate_against_sources(&container, &two_caps_right)
-                .unwrap();
-        },
-    );
+    with_exact_boolean_evaluation(&container, &two_caps_right, multi_hole_request, |_| {});
 
     assert!(
         result
@@ -2625,12 +2533,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         &split_container,
         &split_crossing_right,
         split_request,
-        |split_evaluation| {
-            split_evaluation.validate().unwrap();
-            split_evaluation
-                .validate_against_sources(&split_container, &split_crossing_right)
-                .unwrap();
-        },
+        |_| {},
     );
 
     let square_disk_request =
@@ -2639,36 +2542,25 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         &square_disk_container,
         &square_disk_cap_right,
         square_disk_request,
-        |square_disk_evaluation| {
-            square_disk_evaluation.validate().unwrap();
-            square_disk_evaluation
-                .validate_against_sources(&square_disk_container, &square_disk_cap_right)
-                .unwrap();
-        },
+        |_| {},
     );
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     with_exact_boolean_evaluation(&container, &right, request, |evaluation| {
-        evaluation.validate().unwrap();
-        evaluation
-            .validate_against_sources(&container, &right)
-            .unwrap();
         assert!(
             evaluation
                 .validate_against_sources(&container, &separated_right)
                 .is_err()
         );
     });
-    let result = exact_boolean_result(
-        &container,
-        &right,
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
-    );
+    let result = exact_boolean_result(&container, &right, request);
     assert!(
         result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
         "{result:?}"
     );
-    result.validate_against_sources(&container, &right).unwrap();
+    result
+        .validate_for_request_against_sources(&container, &right, request)
+        .unwrap();
 
     assert!(
         result
@@ -2834,7 +2726,6 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
         assert!(evaluation.materialized_result().is_none(), "{evaluation:?}");
         assert!(evaluation.has_blocker(), "{evaluation:?}");
-        evaluation.validate_against_sources(&left, &right).unwrap();
     });
 }
 
@@ -2860,7 +2751,6 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
         assert!(evaluation.materialized_result().is_none(), "{evaluation:?}");
         assert!(evaluation.has_blocker(), "{evaluation:?}");
-        evaluation.validate_against_sources(&left, &right).unwrap();
     });
 }
 
@@ -3530,7 +3420,6 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
         assert!(evaluation.materialized_result().is_some(), "{evaluation:?}");
         assert!(!evaluation.has_blocker(), "{evaluation:?}");
-        evaluation.validate_against_sources(&left, &right).unwrap();
     });
     with_exact_boolean_evaluation(
         &left,
@@ -3563,23 +3452,6 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             "{policy_evaluation:?}"
         );
         assert!(!policy_evaluation.has_blocker(), "{policy_evaluation:?}");
-        policy_evaluation
-            .validate_against_sources(&left, &right)
-            .unwrap();
-        assert!(
-            policy_evaluation
-                .validate_against_sources(&left, &right)
-                .is_ok(),
-            "default replay should certify a boundary-policy preflight"
-        );
-        assert!(
-            policy_evaluation.materialized_result().is_some(),
-            "{policy_evaluation:?}"
-        );
-        assert!(!policy_evaluation.has_blocker(), "{policy_evaluation:?}");
-        policy_evaluation
-            .validate_against_sources(&left, &right)
-            .unwrap();
     });
     with_exact_boolean_evaluation(
         &left,
@@ -3660,12 +3532,10 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
                 .materialized_result()
                 .expect("closed lower-dimensional intersection should materialize");
             assert!(
-                materialized.is_certified_shortcut_for(ExactBooleanOperation::Intersection),
+                materialized
+                    .is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection),
                 "{closed_intersection_evaluation:?}"
             );
-            closed_intersection_evaluation
-                .validate_against_sources(&left, &right)
-                .unwrap();
         },
     );
     let closed_intersection = exact_boolean_result(
@@ -3678,7 +3548,8 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ),
     );
     assert!(
-        closed_intersection.is_certified_shortcut_for(ExactBooleanOperation::Intersection),
+        closed_intersection
+            .is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection),
         "{closed_intersection:?}"
     );
     assert!(closed_intersection.mesh().triangles().is_empty());
@@ -3702,12 +3573,9 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
                     .materialized_result()
                     .expect("closed lower-dimensional policy evaluation should materialize");
                 assert!(
-                    materialized.is_certified_shortcut_for(operation),
+                    materialized.is_arrangement_cell_complex_shortcut_for(operation),
                     "{operation:?}: {closed_policy_evaluation:?}"
                 );
-                closed_policy_evaluation
-                    .validate_against_sources(&left, &right)
-                    .unwrap();
             },
         );
         let materialized = exact_boolean_result(
@@ -3720,7 +3588,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ),
         );
         assert!(
-            materialized.is_certified_shortcut_for(operation),
+            materialized.is_arrangement_cell_complex_shortcut_for(operation),
             "{operation:?}: {materialized:?}"
         );
         let closed_regularized = exact_boolean_result(
@@ -3733,14 +3601,14 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ),
         );
         assert!(
-            closed_regularized.is_certified_shortcut_for(operation),
+            closed_regularized.is_arrangement_cell_complex_shortcut_for(operation),
             "{operation:?}: {closed_regularized:?}"
         );
     }
 }
 
 #[test]
-fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
+fn proper_crossing_open_surface_union_materializes_without_boundary_blocker() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
@@ -3759,8 +3627,12 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        assert!(evaluation.materialized_result().is_none(), "{evaluation:?}");
-        assert!(evaluation.has_blocker(), "{evaluation:?}");
-        evaluation.validate_against_sources(&left, &right).unwrap();
+        let materialized = evaluation
+            .materialized_result()
+            .expect("proper-crossing open surface union should materialize");
+        materialized
+            .validate_against_sources(&left, &right)
+            .unwrap();
+        assert!(!evaluation.has_blocker(), "{evaluation:?}");
     });
 }
