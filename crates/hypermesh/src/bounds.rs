@@ -244,20 +244,20 @@ impl<'a> PreparedMeshBounds<'a> {
         &self,
         other: &PreparedMeshBounds<'_>,
     ) -> Option<Vec<[usize; 2]>> {
-        let mut best = None;
+        let mut best_axis_pairs = None;
         for axis in [Axis::X, Axis::Y, Axis::Z] {
-            if let Some(pairs) = self.candidate_face_pairs_sweep_axis(other, axis)
-                && best
+            if let Some(pairs) = self.interval_candidate_pairs_sweep_axis(other, axis)
+                && best_axis_pairs
                     .as_ref()
                     .is_none_or(|best: &Vec<[usize; 2]>| pairs.len() < best.len())
             {
-                best = Some(pairs);
+                best_axis_pairs = Some(pairs);
             }
         }
-        best
+        best_axis_pairs.map(|pairs| self.filter_full_aabb_candidates(other, pairs))
     }
 
-    fn candidate_face_pairs_sweep_axis(
+    fn interval_candidate_pairs_sweep_axis(
         &self,
         other: &PreparedMeshBounds<'_>,
         axis: Axis,
@@ -301,14 +301,27 @@ impl<'a> PreparedMeshBounds<'a> {
                 {
                     continue;
                 }
-                if must_keep_candidate(left_box.classify_intersection(right_box)) {
-                    pairs.push([left, right]);
-                }
+                pairs.push([left, right]);
             }
         }
 
         pairs.sort_unstable();
         Some(pairs)
+    }
+
+    fn filter_full_aabb_candidates(
+        &self,
+        other: &PreparedMeshBounds<'_>,
+        pairs: Vec<[usize; 2]>,
+    ) -> Vec<[usize; 2]> {
+        pairs
+            .into_iter()
+            .filter(|[left, right]| {
+                let left_box = &self.bounds.faces[*left];
+                let right_box = &other.bounds.faces[*right];
+                must_keep_candidate(left_box.classify_intersection(right_box))
+            })
+            .collect()
     }
 
     fn min_axis_order(&self, axis: Axis) -> Option<&[usize]> {
@@ -511,5 +524,41 @@ mod tests {
         let right = MeshBounds::from_triangles(&right_points, &triangles);
 
         assert_eq!(left.candidate_face_pairs(&right), vec![[1, 0]]);
+    }
+
+    #[test]
+    fn prepared_sweep_matches_quadratic_candidates() {
+        let left_points = vec![
+            p(0, 0, 0),
+            p(5, 0, 0),
+            p(0, 5, 0),
+            p(10, 10, 0),
+            p(15, 10, 0),
+            p(10, 15, 0),
+            p(20, 0, 0),
+            p(25, 0, 0),
+            p(20, 5, 0),
+        ];
+        let right_points = vec![
+            p(4, 4, 0),
+            p(9, 4, 0),
+            p(4, 9, 0),
+            p(12, 12, 0),
+            p(17, 12, 0),
+            p(12, 17, 0),
+            p(30, 0, 0),
+            p(35, 0, 0),
+            p(30, 5, 0),
+        ];
+        let triangles = [[0, 1, 2], [3, 4, 5], [6, 7, 8]];
+        let left = MeshBounds::from_triangles(&left_points, &triangles);
+        let right = MeshBounds::from_triangles(&right_points, &triangles);
+        let prepared_left = left.prepare();
+        let prepared_right = right.prepare();
+
+        assert_eq!(
+            prepared_left.candidate_face_pairs(&prepared_right),
+            prepared_left.candidate_face_pairs_quadratic(&prepared_right)
+        );
     }
 }
