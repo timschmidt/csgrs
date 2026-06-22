@@ -17,7 +17,7 @@ use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::mesh::{ExactMesh, ExactMeshValidationError};
 use super::narrow::{
     TriangleTriangleClassification, TriangleTriangleRelation,
-    classify_mesh_triangle_against_retained_face_plane,
+    classify_mesh_triangle_against_retained_face_plane_unchecked,
     classify_triangle_triangle_points_without_candidate_events,
 };
 use super::topology::triangle_edges;
@@ -68,16 +68,12 @@ impl MeshFacePairClassification {
     }
 }
 
-/// Classify one face pair from two exact meshes.
-pub(crate) fn classify_mesh_face_pair(
+fn classify_mesh_face_pair_unchecked(
     left: &ExactMesh,
     left_face: usize,
     right: &ExactMesh,
     right_face: usize,
-) -> Result<MeshFacePairClassification, MeshError> {
-    validate_face(left, left_face, "left")?;
-    validate_face(right, right_face, "right")?;
-
+) -> MeshFacePairClassification {
     let bounds =
         left.bounds().faces[left_face].classify_intersection(&right.bounds().faces[right_face]);
     if matches!(
@@ -87,19 +83,20 @@ pub(crate) fn classify_mesh_face_pair(
             ..
         }
     ) {
-        return Ok(MeshFacePairClassification {
+        return MeshFacePairClassification {
             left_face,
             right_face,
             bounds,
             triangle: None,
             relation: MeshFacePairRelation::BoundsDisjoint,
-        });
+        };
     }
 
-    let right_against_left =
-        classify_mesh_triangle_against_retained_face_plane(left, left_face, right, right_face)?;
+    let right_against_left = classify_mesh_triangle_against_retained_face_plane_unchecked(
+        left, left_face, right, right_face,
+    );
     if triangle_is_strictly_one_sided(right_against_left.relation) {
-        return Ok(MeshFacePairClassification {
+        return MeshFacePairClassification {
             left_face,
             right_face,
             bounds,
@@ -107,13 +104,14 @@ pub(crate) fn classify_mesh_face_pair(
                 left, left_face, right, right_face,
             )),
             relation: MeshFacePairRelation::PlaneSeparated,
-        });
+        };
     }
 
-    let left_against_right =
-        classify_mesh_triangle_against_retained_face_plane(right, right_face, left, left_face)?;
+    let left_against_right = classify_mesh_triangle_against_retained_face_plane_unchecked(
+        right, right_face, left, left_face,
+    );
     if triangle_is_strictly_one_sided(left_against_right.relation) {
-        return Ok(MeshFacePairClassification {
+        return MeshFacePairClassification {
             left_face,
             right_face,
             bounds,
@@ -121,7 +119,7 @@ pub(crate) fn classify_mesh_face_pair(
                 left, left_face, right, right_face,
             )),
             relation: MeshFacePairRelation::PlaneSeparated,
-        });
+        };
     }
 
     let mut triangle =
@@ -134,13 +132,13 @@ pub(crate) fn classify_mesh_face_pair(
     }
     let relation = mesh_relation_from_triangle(triangle.relation);
 
-    Ok(MeshFacePairClassification {
+    MeshFacePairClassification {
         left_face,
         right_face,
         bounds,
         triangle: Some(triangle),
         relation,
-    })
+    }
 }
 
 /// Visit every face pair that survives exact broad/narrow rejection.
@@ -166,7 +164,8 @@ pub(crate) fn visit_mesh_face_pair_classifications(
     left_broad_phase.try_visit_candidate_face_pairs(
         &right_broad_phase,
         |[left_face, right_face]| {
-            let classification = classify_mesh_face_pair(left, left_face, right, right_face)?;
+            let classification =
+                classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
             if classification.needs_graph_construction() {
                 visit(classification)?;
             }
@@ -239,21 +238,4 @@ fn mesh_relation_from_triangle(relation: TriangleTriangleRelation) -> MeshFacePa
         TriangleTriangleRelation::Candidate => MeshFacePairRelation::Candidate,
         TriangleTriangleRelation::Unknown => MeshFacePairRelation::Unknown,
     }
-}
-
-fn validate_face(mesh: &ExactMesh, face: usize, side: &str) -> Result<(), MeshError> {
-    if face < mesh.triangles().len() {
-        return Ok(());
-    }
-    Err(MeshError::one(
-        MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::IndexOutOfBounds,
-            format!(
-                "{side} face {face} is out of range for {} triangles",
-                mesh.triangles().len()
-            ),
-        )
-        .with_face(face),
-    ))
 }

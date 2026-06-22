@@ -22,7 +22,6 @@ use hyperlimit::{
     classify_triangle_against_oriented_plane, compare_reals, triangle_plane_relation_from_sides,
 };
 
-use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::mesh::ExactMesh;
 use hyperlimit::{CoplanarTriangleClassification, CoplanarTriangleRelation};
 use hyperreal::Real;
@@ -89,39 +88,24 @@ fn classify_triangle_against_face_plane_points(
 /// this shape directly: object-level numerical structure should survive so
 /// later topology stages can reuse exact facts instead of reconstructing
 /// normals or representative floats.
-pub(crate) fn classify_mesh_triangle_against_retained_face_plane(
+pub(crate) fn classify_mesh_triangle_against_retained_face_plane_unchecked(
     plane_mesh: &ExactMesh,
     plane_face: usize,
     query_mesh: &ExactMesh,
     query_face: usize,
-) -> Result<TrianglePlaneClassification, MeshError> {
-    if plane_face >= plane_mesh.triangles().len() {
-        return Err(index_error(
-            "plane face index is out of range",
-            Some(plane_face),
-            None,
-        ));
-    }
-    if query_face >= query_mesh.triangles().len() {
-        return Err(index_error(
-            "query face index is out of range",
-            Some(query_face),
-            None,
-        ));
-    }
+) -> TrianglePlaneClassification {
     let plane = &plane_mesh.facts().faces[plane_face].plane;
     let query = query_mesh.triangles()[query_face].0;
     let mut sides = [None, None, None];
     for (side, vertex) in sides.iter_mut().zip(query) {
-        let point = query_mesh.vertices()[vertex].clone();
-        *side = retained_plane_side(plane, &point);
+        *side = retained_plane_side(plane, &query_mesh.vertices()[vertex]);
     }
 
-    Ok(TrianglePlaneClassification {
+    TrianglePlaneClassification {
         relation: triangle_plane_relation_from_sides(sides),
         vertex_sides: sides,
         predicates: Vec::new(),
-    })
+    }
 }
 
 /// Classify two triangles without materializing generic candidate edge events.
@@ -188,18 +172,6 @@ fn retained_plane_side(plane: &super::facts::FacePlaneFacts, point: &Point3) -> 
         Ordering::Equal => Some(PlaneSide::On),
         Ordering::Greater => Some(PlaneSide::Below),
     }
-}
-
-fn index_error(message: &'static str, face: Option<usize>, vertex: Option<usize>) -> MeshError {
-    let mut diagnostic =
-        MeshDiagnostic::new(Severity::Error, DiagnosticKind::IndexOutOfBounds, message);
-    if let Some(face) = face {
-        diagnostic = diagnostic.with_face(face);
-    }
-    if let Some(vertex) = vertex {
-        diagnostic = diagnostic.with_vertex(vertex);
-    }
-    MeshError::one(diagnostic)
 }
 
 fn add(left: &Real, right: &Real) -> Real {
