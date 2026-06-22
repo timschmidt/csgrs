@@ -1,0 +1,134 @@
+hypercurve kernel audit
+=======================
+
+Scope
+-----
+
+Audit date: 2026-06-22.
+
+Tracked-file inventory reviewed from `git ls-files`: 137 files, 129700 counted lines. The audit target is to revise hypercurve into a minimal, full-featured exact 2D CAD curve kernel whose primary top-level type is `ExactFace`. Source code was reviewed by module and by file inventory; tests, benches, examples, fuzz targets, UI, lockfiles, and assets are covered as boundary/support files.
+
+Reference input: no `references.txt` exists in this repo. The workspace-level Yap paper PDF was checked and used for exact-geometric-computation framing. Hypermesh's `references.txt` contains mesh-specific research; its predicate/exact-computation entries apply here indirectly, but hypercurve should add its own curve-arrangement and CAD-curve references.
+
+Global findings
+---------------
+
+1. `ExactFace` does not exist. The public face-like carrier is `Region2` / `RegionView2`, plus several retained Bezier/planar pcurve face objects. The requested primary top-level type must be introduced as the minimal owned 2D CAD face carrier with borrowed views.
+2. `src/lib.rs` and `README.md` expose a much higher-level API than a kernel should: `ExactCurveWorkspace2`, `ExactCurveArrangement*`, `RegionBoolean*`, SVG import/export, reconstruction, reports, policy types, and UI-facing retained reports all leak through the crate root.
+3. The code contains useful kernel material: exact `Real`-backed point/segment/Bezier/NURBS carriers, cached structural facts, exact AABB filters, prepared borrowed query caches, region/contour topology, arrangement fragments, split/trim algorithms, and useful uncertainty/error vocabulary.
+4. The main complexity concentration is policy/workflow surface rather than pure geometry storage. `src/region_nesting.rs` is 15350 lines and owns workspace, arrangement requests, reports, caches, unordered region building, and role assignment. `src/curve_string.rs`, `src/bezier_topology.rs`, `src/rational_bezier.rs`, `src/region_boolean.rs`, and `tests/hypercurve_region.rs` are also large.
+5. `CurvePolicy` is a public policy object with preview/certified/symbolic modes. Kernel internals need a predicate/evaluation context, but csgrs should own product/API policy. The kernel should return exact decisions, blockers, and typed useful errors, not application policy choices.
+6. Yap alignment is partially strong already. Many modules explicitly separate exact objects from finite adapters and retain construction evidence. That should become an invariant: approximate finite output remains an adapter boundary, not a primary kernel operation.
+7. Owned and borrowed APIs are uneven. Some borrowed views exist (`RegionView2`, prepared views), but top-level operations often allocate owned reports and results. The revised kernel should privilege borrowed views for classification, acceleration, and topology queries, with owned mutation/construction only at explicit boundaries.
+
+Core source files
+-----------------
+
+- `src/point.rs` (77): keep. Exact `Point2` carrier with `Real` coordinates and structural facts is appropriate kernel material.
+- `src/segment.rs` (492): keep as core primitive geometry. `LineSeg2`, `CircularArc2`, and `Segment2` are exact carriers with useful containment/predicate hooks; review policy arguments when moving to a kernel predicate context.
+- `src/bezier.rs` (980): keep polynomial Bezier carriers and exact evaluation/splitting/facts. Move interpolation/report-heavy convenience out of the core surface.
+- `src/rational_bezier.rs` (3793): keep rational quadratic/conic carriers and exact conic facts. Shrink broad public topology/report exports; expose only kernel primitives, facts, and bounded query APIs.
+- `src/bspline.rs` (2104): retain exact B-spline/NURBS carriers and Boehm span extraction. Treat retained non-native spans as provenance-bearing facts; keep report types internal or adapter-scoped.
+- `src/bulge.rs` (34): keep as a tiny retained finite/import boundary for bulge vertices if exact promotion is explicit.
+- `src/retained_curve.rs` (547): keep vocabulary that records source identity, family, periodicity, trim interval, endpoint evidence, and cache summaries. Collapse overlapping report concepts into `ExactFace`/curve fact records.
+- `src/retained_import.rs` (442): adapter boundary. Useful provenance/tolerance/status types should exist, but csgrs/importers should own most import workflow API.
+- `src/retained_status.rs` (45): keep small status enum if it remains exact-object evidence; avoid using it as high-level product state.
+
+Predicates, errors, and facts
+-----------------------------
+
+- `src/classify.rs` (292): useful exact decision vocabulary (`Classification`, `UncertaintyReason`, `LineSide`) and predicate helpers. Revise toward kernel-specific `ExactDecision` / blocker errors and hide numeric-mode policy.
+- `src/error.rs` (131): useful `CurveError` foundation. Split construction/topology/kernel errors from adapter/import/report errors.
+- `src/facts.rs` (718): keep. This is the clearest Yap-style cached fact layer for points, lines, arcs, Beziers, curve strings, contours, and regions.
+- `src/policy.rs` (93): move policy surface up to csgrs. Kernel may keep an internal predicate context but should not expose preview/certified/application modes as primary API.
+- `src/bbox.rs` (470): keep. Exact AABB and decided-miss logic are acceleration facts and fit the kernel.
+
+Curve algorithms and topology
+-----------------------------
+
+- `src/intersect.rs` (1297): keep exact line/arc intersection algorithms as kernel internals. Remove preview tolerance branches from public API; return exact blockers where predicates are unsupported.
+- `src/events.rs` (887): keep normalized curve event records internally; expose only stable fact/query outputs.
+- `src/split.rs` (524): keep split-marker logic as internal topology algorithm.
+- `src/fragment.rs` (541): keep contour fragment data structures and assembly algorithms, but make them internal to face/boolean operations.
+- `src/curve_string.rs` (8979): important but oversized. Keep ordered segment-chain storage, borrowed views, trim/intersection caches, and exact editing kernels. Move editing workflows, large reports, cache audit/public helper APIs, and UI-style results to csgrs or feature modules.
+- `src/contour.rs` (2061): keep closed-loop carrier and point/winding/area algorithms. Trim report-heavy closure/chamfer/fillet/merge APIs from the kernel surface.
+- `src/region.rs` (399): replace or wrap with `ExactFace` as the top-level owned face. Existing material/hole bins and `RegionView2` are useful implementation inputs.
+- `src/region_events.rs` (428): keep keyed region/contour event collection as internal arrangement input.
+- `src/region_fragments.rs` (946): keep fragment selection/splitting data structures inside exact boolean/arrangement internals.
+- `src/region_nesting.rs` (15350): main refactor target. It mixes exact arrangement cache, workspace API, unordered-region constructors, reports, contour role assignment, and high-level evaluation. Retain internal arrangement/cache algorithms; move workspace/request/report/evaluation API to csgrs.
+- `src/boolean.rs` (1059): keep fragment-selection primitives as internal kernels. Public boolean operation API belongs at csgrs layer.
+- `src/boolean_boundary.rs` (2024): keep loop-set assembly and boundary traversal algorithms. Public result/report types should narrow or move.
+- `src/region_boolean.rs` (3074): move region-level named boolean materialization API to csgrs. Retain exact shared-boundary, containment, split/classify/emit algorithms as internal face-kernel routines.
+- `src/prepared.rs` (1651): keep prepared borrowed query caches. Strong fit for borrowed API; remove direct dependency on public `CurvePolicy`.
+- `src/prepared_boolean.rs` (993): keep prepared traversal algorithms as internal acceleration path; move report/result public surface up.
+- `src/self_intersect.rs` (553): keep exact self-contact scan and AABB filtering; expose as `ExactFace`/curve diagnostic with useful blockers.
+- `src/offset.rs` (2032): offsetting is partly CAD operation/policy. Keep primitive parallel line/arc constructors and validation helpers; move full offset/outline workflows and cap policy to csgrs unless the kernel exposes them as low-level exact constructions.
+- `src/triangulation.rs` (111): feature-gated adapter to `hypertri`. Keep as optional low-level triangulation handoff, not a top-level policy API.
+- `src/transform.rs` (185): keep exact transforms for core carriers.
+
+Bezier-specific modules
+-----------------------
+
+- `src/bezier_algebraic_image.rs` (1067): keep exact algebraic image/status evidence; make it internal fact/query support.
+- `src/bezier_arrangement.rs` (1833): keep arrangement/tangent/endpoint algorithms; expose through `ExactFace` curve-arrangement internals rather than many public report types.
+- `src/bezier_fit.rs` (606): fitting is an adapter/authoring operation. Move public workflow to csgrs; keep exact validation of promoted fits if needed.
+- `src/bezier_flatten.rs` (356): finite flattening is output/preview boundary. Keep optional adapter, not kernel core.
+- `src/bezier_metric.rs` (659): keep exact/retained metric helpers where they can produce certified facts; finite approximation options move out.
+- `src/bezier_moment.rs` (897): keep exact moment/area computations as kernel facts.
+- `src/bezier_offset.rs` (479): same policy split as `offset.rs`; retain exact primitive math, move workflow.
+- `src/bezier_parameter.rs` (502): keep exact parameter-domain carrier and interval checks.
+- `src/bezier_region.rs` (1966): useful retained Bezier region algorithms. Consolidate under `ExactFace` instead of separate public region family.
+- `src/bezier_retained_measure.rs` (846): keep retained measure facts, narrow public report surface.
+- `src/bezier_retained_overlap.rs` (2018): keep overlap detection evidence internally for arrangements.
+- `src/bezier_split.rs` (794): keep exact split and subcurve construction.
+- `src/bezier_split_endpoint.rs` (198): keep endpoint evidence helpers.
+- `src/bezier_tangent_order.rs` (1184): keep tangent ordering predicates; important for arrangement robustness.
+- `src/bezier_topology.rs` (3916): keep Bezier topology predicates and monotone-span logic. It is too public/report-heavy and should become internal machinery behind exact curve arrangements.
+
+Adapters and IO boundaries
+--------------------------
+
+- `src/finite_projection.rs` (540): finite f64 projection is explicitly an IO/rendering boundary. Move to csgrs or an adapter feature; kernel may expose only a trait hook.
+- `src/reconstruct.rs` (1368): lossy polyline-to-curve reconstruction is importer/authoring workflow. Move public API up; retain exact promotion checks.
+- `src/svg_io.rs` (1641): feature-gated SVG import/export boundary. Move to csgrs or an integration crate; kernel should not expose SVG by default.
+- `src/planar_pcurve.rs` (1111): valuable retained planar trim-loop and pcurve equality evidence. Reconcile with `ExactFace` as face provenance/trim-loop support; avoid broad public BREP policy in the minimal kernel.
+
+Crate surface and docs
+----------------------
+
+- `src/lib.rs` (991): too broad. It re-exports primitives plus `CurvePolicy`, `ExactCurveWorkspace2`, `ExactCurveArrangement*`, many reports, finite projection, reconstruction, SVG, and boolean APIs. Revised crate root should prioritize `ExactFace`, primitive carriers, borrowed views, facts, errors, and selected low-level algorithms.
+- `Cargo.toml` (82): features (`serde`, `svg`, `triangulation`, `hyperlimit`) are useful but currently encourage adapter APIs inside the kernel. Keep optional deps but move high-level feature surfaces out.
+- `Cargo.lock` (1075): dependency snapshot only.
+- `README.md` (350): currently documents high-level workspace, arrangements, and policy APIs. Rewrite after refactor around `ExactFace`, exact facts, borrowed views, and csgrs handoff.
+- `LICENSE` (21), `.gitignore` (2), `.github/workflows/deploy-ui-pages.yml` (105): repo/support files, no kernel logic.
+- `doc/hypercurve.png` (4376 counted lines): visual asset only.
+
+Examples, UI, benches, and fuzzing
+----------------------------------
+
+- `examples/arrangement_report.rs` (44): demonstrates high-level arrangement reports; should move with csgrs-facing APIs.
+- `examples/hypercurve_ui/*` (tracked UI crate: lockfile, manifest, Trunk config, HTML, app/editor/geometry/plotting/scenes/share/theme files): demo/authoring surface, not kernel. Good regression consumer for future csgrs API.
+- `benches/bezier_algebraic_parameter.rs` (109), `benches/bezier_arrangement.rs` (255), `benches/bezier_region.rs` (319), `benches/bezier_split_materialization.rs` (111), `benches/bezier_tangent_order.rs` (213), `benches/bspline.rs` (156), `benches/containment.rs` (429), `benches/editing.rs` (781), `benches/intersection.rs` (370), `benches/offset.rs` (402), `benches/reconstruction.rs` (135), `benches/svg_io.rs` (198): useful performance coverage. After refactor, split into kernel benches and csgrs/adapter benches.
+- `fuzz/Cargo.toml` (82), `fuzz/Cargo.lock` (233), `fuzz/.gitignore` (3): fuzz support.
+- `fuzz/fuzz_targets/bezier_algebraic_image.rs` (125), `bezier_algebraic_parameter.rs` (49), `bezier_arrangement.rs` (200), `bezier_region.rs` (270), `bezier_split_materialization.rs` (112), `bezier_tangent_order.rs` (180), `bspline.rs` (133), `curve_string_editing.rs` (221), `planar_pcurve.rs` (127), `retained_import.rs` (80): valuable regression coverage; retarget to kernel internals or csgrs adapters according to ownership.
+
+Tests and regressions
+---------------------
+
+- `tests/exact_structural_facts.rs` (277): keep and expand around `ExactFace`.
+- `tests/hypercurve_bbox.rs` (185), `hypercurve_circle_predicates.rs` (152), `hypercurve_events.rs` (437), `hypercurve_split.rs` (204), `hypercurve_self_contacts.rs` (378): kernel tests.
+- Bezier tests: `tests/hypercurve_bezier_algebraic_image.rs` (293), `hypercurve_bezier_algebraic_parameter.rs` (204), `hypercurve_bezier_arrangement.rs` (1834), `hypercurve_bezier_fit_offset.rs` (102), `hypercurve_bezier_interpolation.rs` (437), `hypercurve_bezier_region.rs` (1348), `hypercurve_bezier_split_materialization.rs` (636), `hypercurve_bezier_tangent_order.rs` (364), plus `hypercurve_bezier.proptest-regressions` (8) and `hypercurve_bezier_algebraic_image.proptest-regressions` (7). Preserve as kernel tests where they hit exact predicates/facts; move fitting/adapter expectations as needed.
+- Region/boolean tests: `hypercurve_boolean.rs` (1360), `hypercurve_region.rs` (10181), `hypercurve_region_events.rs` (295), `hypercurve_region_fragments.rs` (441), `hypercurve_fragments.rs` (1550), regression files. These are the main behavior lock for `ExactFace`; many assertions will need API-level migration.
+- Region/fragment regression files: `hypercurve_fragments.proptest-regressions` (7), `hypercurve_fuzz_invariants.proptest-regressions` (8), `hypercurve_fuzz_regressions.rs` (29).
+- Curve-string/contour tests: `hypercurve_curve_string.rs` (4514), `hypercurve_contour.rs` (1300), `hypercurve_adversarial_polygons.rs` (354), `hypercurve_adversarial_polygons.proptest-regressions` (7). Preserve to validate loop storage and borrowed views.
+- Adapter/regression tests: `hypercurve_offset.rs` (1166), `hypercurve_planar_pcurve.rs` (599), `hypercurve_reconstruct.rs` (609), `hypercurve_svg_io.rs` (593), `hypercurve_triangulation.rs` (128), `hypercurve_geo_regressions.rs` (472), `hypercurve_pr59_shape_regressions.rs` (908), `hypercurve_bspline.rs` (1343). Split between kernel exact checks and csgrs/adapter tests.
+
+Coverage manifest
+-----------------
+
+Every tracked file from `git ls-files` is covered above by exact path or by an explicit path family with each member named in that family. Source files are covered one-by-one. Bench files, fuzz target files, example/UI files, docs/assets, manifests, lockfiles, and tests are covered as support/boundary files. No source edits were made during this audit.
+
+Audit conclusion
+----------------
+
+hypercurve has most of the exact curve-kernel ingredients, but they are not organized around a minimal face carrier. The refactor should not delete the arrangement, split, retained B-spline, pcurve, prepared-cache, or fact work; it should make those internals of `ExactFace`/borrowed views and move public workspace, reports, finite IO, reconstruction, UI, and policy APIs to csgrs.

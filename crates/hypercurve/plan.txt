@@ -1,0 +1,91 @@
+hypercurve revision plan
+========================
+
+Goal
+----
+
+Make hypercurve a minimal, full-featured, exact, high-performance, provenance-preserving 2D CAD curve kernel. The primary top-level type becomes `ExactFace`. The crate should contain geometry carriers, cached Yap-style facts, acceleration data structures, and algorithms that operate on that geometry. It should not contain product policy, workspace-level APIs, SVG/reconstruction workflows, UI-facing reports, or csgrs orchestration.
+
+Target public surface
+---------------------
+
+1. Primary owned type:
+   - `ExactFace`: exact planar face with material loops, hole loops, fill semantics, source/provenance identity, cached facts, and optional internal acceleration caches.
+   - `ExactFace::new`, checked constructors from exact loops/contours, and exact replay validation.
+   - `ExactFace::as_ref()` returning a borrowed view.
+
+2. Borrowed APIs:
+   - `ExactFaceRef<'a>` or `FaceView2<'a>` for classification, bounds, topology queries, and boolean/arrangement preflight without cloning.
+   - Borrowed curve/loop views for `CurveString`, `Contour`, `Segment`, and prepared caches.
+   - Prepared borrowed query objects for repeated point/loop/face classification.
+
+3. Core geometry:
+   - `Point2`, `LineSeg2`, `CircularArc2`, polynomial Beziers, rational quadratic Beziers/conics, retained B-spline/NURBS carriers, parameters, trim intervals, and exact transforms.
+   - Structural facts for each carrier: bounds, degeneracy, endpoints, parameter intervals, tangent/monotonicity, algebraic image, sweep/radius facts, source identity, and exact replay evidence.
+
+4. Kernel errors:
+   - Replace broad public policy/report status with `ExactCurveError`, `ExactCurveBlocker`, and `ExactDecision<T>`-style returns.
+   - Errors must say which exact predicate, construction, topology invariant, or unsupported curve family blocked progress.
+   - Preserve provenance in errors: source loop, segment index, parameter interval, and retained construction path where known.
+
+5. Crate root:
+   - Re-export only core primitives, `ExactFace`, borrowed views, facts, exact errors, and selected low-level algorithms.
+   - Remove public `ExactCurveWorkspace2`, `ExactCurveArrangement*`, `RegionBoolean*`, SVG/reconstruction/fitting/finite projection workflows, and broad report families from the default root.
+
+Refactor phases
+---------------
+
+1. Introduce `ExactFace` without changing behavior.
+   - Wrap existing `Region2` material/hole bins and `RegionView2` as the first implementation.
+   - Add `ExactFaceRef` borrowed view.
+   - Add conversion shims from `Region2` for tests, then migrate tests to `ExactFace`.
+
+2. Separate kernel predicates from product policy.
+   - Replace public `CurvePolicy` use in core methods with an internal `PredicateContext` and exact/default context constructors.
+   - Keep preview/finite/authoring policy in csgrs or adapter features.
+   - Make all uncertainty paths produce typed blockers instead of loosely returning `UncertaintyReason::Unsupported`.
+
+3. Move workspace APIs up.
+   - Extract `ExactCurveWorkspace2`, arrangement requests, arrangement/evaluation/report objects, unordered region constructors, and named boolean request/result APIs from `src/region_nesting.rs` and `src/region_boolean.rs` into csgrs.
+   - Keep internal arrangement cache builders, loop role assignment, split markers, fragment selection, event normalization, and prepared cache machinery in hypercurve.
+
+4. Consolidate retained facts.
+   - Keep `src/facts.rs`, Bezier retained facts, B-spline span facts, pcurve face evidence, and prepared cache summaries.
+   - Store/cache them through `ExactFace` and borrowed views with explicit freshness/replay validation.
+   - Do not let finite adapters become topology authority.
+
+5. Split adapters.
+   - Move SVG, polyline reconstruction, fitting, flattening, finite projection, UI examples, and report-bearing import/export workflows to csgrs or adapter crates/features.
+   - Leave minimal exact promotion/validation helpers in hypercurve when they are needed to accept exact kernel objects.
+
+6. Keep high-performance algorithms.
+   - Retain exact AABB filters, prepared segment predicates, monotone Bezier spans, tangent ordering, algebraic parameter images, exact segment intersections, self-contact scans, split/trim assembly, loop nesting, and pcurve equality.
+   - Replace quadratic scans where practical with sweep-line or indexed candidate generation while preserving exact decisions.
+   - Keep caches borrowed by default and owned only when repeated query sessions justify it.
+
+7. Update tests and docs.
+   - Reframe README around `ExactFace`, exact primitives, facts, borrowed views, and csgrs ownership of workspace-level APIs.
+   - Split tests into kernel tests and adapter/csgrs tests.
+   - Preserve adversarial and proptest regression coverage before deleting old public APIs.
+
+Research follow-up
+------------------
+
+Add a `references.txt` for hypercurve. Minimum topics:
+
+- Yap exact geometric computation and object/fact/predicate separation.
+- Shewchuk/adaptive predicates as the predicate substrate model.
+- Bentley-Ottmann sweep-line candidate generation for curve/segment intersections.
+- de Boor, Boehm, Farin, Piegl/Tiller for B-spline/NURBS exact span extraction and CAD curve representation.
+- Sederberg-Nishita Bezier clipping and exact Bezier intersection/topology literature.
+- CGAL Arrangement_2 and exact arrangement kernels as API/design baselines.
+- Greiner-Hormann/Martinez polygon clipping only as historical boundary traversal references, not as tolerance-driven policy.
+
+Definition of done
+------------------
+
+- `ExactFace` is the first documented type in README and crate root.
+- Core APIs support owned and borrowed use, with borrowed paths preferred for classification and repeated queries.
+- No default public API exposes workspace/request/report policy, SVG/reconstruction/finite projection workflow, or application-level boolean orchestration.
+- Every exact topology branch either decides, returns a useful typed blocker, or reports an explicitly unsupported exact construction.
+- Existing useful algorithms remain available to csgrs through narrow kernel APIs without making hypercurve a workspace layer.
