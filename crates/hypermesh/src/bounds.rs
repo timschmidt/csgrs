@@ -439,7 +439,7 @@ impl<'a> PreparedMeshBounds<'a> {
             return Ok(false);
         };
         let mut active_right = Vec::<usize>::new();
-        let mut right_active = vec![false; other.bounds.faces.len()];
+        let mut right_active = vec![0u8; other.bounds.faces.len()];
         let mut next_right = 0usize;
         let mut next_expiring_right = 0usize;
         let mut inactive_rights = 0usize;
@@ -455,15 +455,15 @@ impl<'a> PreparedMeshBounds<'a> {
                 if ordering != Ordering::Less {
                     break;
                 }
-                if right_active[right] {
-                    right_active[right] = false;
+                if right_active[right] != 0 {
+                    right_active[right] = 0;
                     inactive_rights += 1;
                 }
                 next_expiring_right += 1;
             }
 
             if inactive_rights > active_right.len() / 2 {
-                active_right.retain(|&right| right_active[right]);
+                active_right.retain(|&right| right_active[right] != 0);
                 inactive_rights = 0;
             }
 
@@ -480,7 +480,7 @@ impl<'a> PreparedMeshBounds<'a> {
                 };
                 if ordering != Ordering::Less {
                     active_right.push(right);
-                    right_active[right] = true;
+                    right_active[right] = 1;
                 }
                 next_right += 1;
             }
@@ -493,7 +493,7 @@ impl<'a> PreparedMeshBounds<'a> {
                 if ordering == Ordering::Greater {
                     break;
                 }
-                if !right_active[right] {
+                if right_active[right] == 0 {
                     continue;
                 }
                 let pair = [left, right];
