@@ -7,8 +7,8 @@
 //! interior overlap. The regularized union is obtained by deleting those
 //! internal faces and welding only their exact shared vertices.
 //!
-//! This module keeps that promotion as a source-replayed certificate rather
-//! allowed to change output topology.
+//! This module keeps that promotion as a source-replayed certificate before it
+//! is allowed to change output topology.
 //!
 //! The union artifact is also the proof object used by named boolean dispatch
 //! for the matching regularized intersection and difference shortcuts:

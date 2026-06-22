@@ -13346,7 +13346,7 @@ mod tests {
         evaluation.validate_against_sources(&left, &right).unwrap();
         let attempt = evaluation
             .retained_arrangement_attempt()
-            .expect("workspace evaluation should retain an arrangement attempt");
+            .expect("replay evaluation should retain an arrangement attempt");
         assert!(
             attempt.certifies_arrangement_cell_complex_output_for_request(
                 request,
