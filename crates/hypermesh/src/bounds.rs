@@ -412,64 +412,10 @@ impl<'a> PreparedMeshBounds<'a> {
         other: &PreparedMeshBounds<'_>,
         axis: Axis,
     ) -> Option<AxisOverlapEstimate> {
-        let driver_min_order = self.min_axis_order(axis)?;
-        let Some(driver_max_order) = self.max_axis_order(axis) else {
-            return self.axis_interval_overlap_estimate_by_binary_search(other, axis);
-        };
-        let other_min_order = other.min_axis_order(axis)?;
-        let other_max_order = other.max_axis_order(axis)?;
-        let driver_intervals = self.axis_intervals(axis);
-        let other_intervals = other.axis_intervals(axis);
-
-        let total_pairs = driver_intervals.len().saturating_mul(other_intervals.len());
-        let mut driver_before_other = 0usize;
-        let mut next_driver_end = 0usize;
-        for &other_face in other_min_order {
-            let other_min = other_intervals[other_face].min;
-            while let Some(&driver_face) = driver_max_order.get(next_driver_end) {
-                let ordering = compare(driver_intervals[driver_face].max, other_min)?;
-                if ordering != Ordering::Less {
-                    break;
-                }
-                next_driver_end += 1;
-            }
-            driver_before_other = driver_before_other.saturating_add(next_driver_end);
-        }
-
-        let mut other_before_driver = 0usize;
-        let mut next_other_end = 0usize;
-        for &driver in driver_min_order {
-            let driver_min = driver_intervals[driver].min;
-            while let Some(&other_face) = other_max_order.get(next_other_end) {
-                let ordering = compare(other_intervals[other_face].max, driver_min)?;
-                if ordering != Ordering::Less {
-                    break;
-                }
-                next_other_end += 1;
-            }
-            other_before_driver = other_before_driver.saturating_add(next_other_end);
-        }
-
-        let pair_count = total_pairs
-            .saturating_sub(driver_before_other)
-            .saturating_sub(other_before_driver);
-        let max_target_active = self.max_axis_active_interval_count(other, axis)?;
-
-        Some(AxisOverlapEstimate {
-            pair_count,
-            max_target_active,
-        })
-    }
-
-    fn axis_interval_overlap_estimate_by_binary_search(
-        &self,
-        other: &PreparedMeshBounds<'_>,
-        axis: Axis,
-    ) -> Option<AxisOverlapEstimate> {
         let other_min_order = other.min_axis_order(axis)?;
         let other_max_order = other.max_axis_order(axis)?;
         let other_intervals = other.axis_intervals(axis);
-        let mut count = 0usize;
+        let mut pair_count = 0usize;
         let mut max_target_active = 0usize;
 
         for driver_interval in self.axis_intervals(axis) {
@@ -486,41 +432,14 @@ impl<'a> PreparedMeshBounds<'a> {
                 driver_interval.min,
             )?;
             let active = started.saturating_sub(ended);
-            count = count.saturating_add(active);
+            pair_count = pair_count.saturating_add(active);
             max_target_active = max_target_active.max(active);
         }
 
         Some(AxisOverlapEstimate {
-            pair_count: count,
+            pair_count,
             max_target_active,
         })
-    }
-
-    fn max_axis_active_interval_count(
-        &self,
-        other: &PreparedMeshBounds<'_>,
-        axis: Axis,
-    ) -> Option<usize> {
-        let other_min_order = other.min_axis_order(axis)?;
-        let other_max_order = other.max_axis_order(axis)?;
-        let other_intervals = other.axis_intervals(axis);
-        let mut max_target_active = 0usize;
-        for driver_interval in self.axis_intervals(axis) {
-            let started = upper_bound_axis_bound(
-                other_min_order,
-                other_intervals,
-                AxisBound::Min,
-                driver_interval.max,
-            )?;
-            let ended = lower_bound_axis_bound(
-                other_max_order,
-                other_intervals,
-                AxisBound::Max,
-                driver_interval.min,
-            )?;
-            max_target_active = max_target_active.max(started.saturating_sub(ended));
-        }
-        Some(max_target_active)
     }
 
     fn try_visit_candidate_face_pairs_sweep_axis<E>(
