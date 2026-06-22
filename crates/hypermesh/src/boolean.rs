@@ -107,6 +107,7 @@ use super::winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
     WindingReportError, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
+#[cfg(test)]
 use super::workspace::ExactBooleanWorkspace;
 use hyperlimit::{
     CoplanarProjection, Point2, Point3, SegmentIntersection, Sign, TriangleLocation,
@@ -785,11 +786,275 @@ pub(crate) fn exact_boolean_evaluation_for_replay(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<ExactBooleanEvaluation, ExactReportValidationError> {
-    let mut workspace = ExactBooleanWorkspace::new(left, right);
-    workspace
-        .evaluate(request)
-        .cloned()
+    exact_boolean_evaluation_for_replay_result(left, right, request)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
+}
+
+fn exact_boolean_evaluation_for_replay_result(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<ExactBooleanEvaluation, MeshError> {
+    let source_facts = ExactBooleanSourceFacts::from_sources(left, right);
+    let shortcut_facts = source_facts.arrangement_cell_complex_shortcuts().clone();
+    let graph = build_validated_intersection_graph(left, right)?;
+    let mut regularized_arrangement = None;
+    let mut regularized_attempt = None;
+    if !matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
+        let _ = replay_regularized_arrangement_attempt(
+            left,
+            right,
+            request,
+            &graph,
+            &shortcut_facts,
+            &mut regularized_arrangement,
+            &mut regularized_attempt,
+        );
+    }
+    let mut preflight = exact_boolean_replay_preflight(
+        left,
+        right,
+        request,
+        &graph,
+        &shortcut_facts,
+        regularized_attempt.as_ref(),
+    )?;
+    if preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex {
+        replay_regularized_arrangement_attempt(
+            left,
+            right,
+            request,
+            &graph,
+            &shortcut_facts,
+            &mut regularized_arrangement,
+            &mut regularized_attempt,
+        )?;
+        if regularized_attempt.is_some() {
+            preflight = exact_boolean_replay_preflight(
+                left,
+                right,
+                request,
+                &graph,
+                &shortcut_facts,
+                regularized_attempt.as_ref(),
+            )?;
+        }
+    }
+    let certifications = ExactBooleanCertificationSet::from_graph_and_regularized_arrangement(
+        &graph,
+        left,
+        right,
+        request,
+        regularized_arrangement.as_ref(),
+        regularized_attempt.as_ref(),
+        &source_facts,
+    )?;
+    let result = if preflight.is_certified() {
+        if matches!(preflight.support, ExactBooleanSupport::SelectedRegionPolicy) {
+            try_materialize_certified_boolean_support_with_artifacts(
+                left,
+                right,
+                request,
+                preflight.support,
+                Some(&graph),
+                regularized_arrangement.as_ref(),
+                regularized_attempt.as_ref(),
+                &shortcut_facts,
+            )
+            .ok()
+            .flatten()
+        } else {
+            try_materialize_certified_boolean_support_with_artifacts(
+                left,
+                right,
+                request,
+                preflight.support,
+                Some(&graph),
+                regularized_arrangement.as_ref(),
+                regularized_attempt.as_ref(),
+                &shortcut_facts,
+            )?
+        }
+    } else {
+        None
+    };
+    ExactBooleanEvaluation::from_parts(request, preflight, certifications, result)
+        .map_err(exact_boolean_replay_report_error)
+}
+
+fn replay_regularized_arrangement_attempt(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    graph: &ExactIntersectionGraph,
+    shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
+    retained_arrangement: &mut Option<ExactArrangement>,
+    retained_attempt: &mut Option<ExactArrangementBooleanAttempt>,
+) -> Result<(), MeshError> {
+    let policy = ExactRegularizationPolicy::REGULARIZED_SOLID;
+    if let Some(attempt) = retained_attempt.as_ref() {
+        attempt
+            .validate_for_request_policy(request, policy)
+            .and_then(|()| attempt.validate_against_sources_for_request(left, right, request))
+            .map_err(exact_boolean_replay_report_error)?;
+        return Ok(());
+    }
+
+    let attempt = match retained_arrangement {
+        Some(arrangement) => {
+            let attempt = arrangement_boolean_attempt_report_from_arrangement(
+                left,
+                right,
+                request,
+                policy,
+                arrangement,
+            )?;
+            if attempt.materialized_arrangement_cell_complex_output() {
+                attempt
+            } else {
+                arrangement_cell_complex_shortcut_attempt_with_facts(
+                    left,
+                    right,
+                    request,
+                    policy,
+                    shortcut_facts,
+                )?
+                .unwrap_or(attempt)
+            }
+        }
+        None => match ExactArrangement::from_intersection_graph_with_policy(
+            graph.clone(),
+            left,
+            right,
+            policy,
+        ) {
+            Ok(arrangement) => {
+                arrangement.validate().map_err(|blocker| {
+                    MeshError::one(MeshDiagnostic::new(
+                        Severity::Error,
+                        DiagnosticKind::UnsupportedExactOperation,
+                        format!("exact boolean arrangement report failed: {blocker:?}"),
+                    ))
+                })?;
+                let attempt = arrangement_boolean_attempt_report_from_arrangement(
+                    left,
+                    right,
+                    request,
+                    policy,
+                    &arrangement,
+                )?;
+                *retained_arrangement = Some(arrangement);
+                if attempt.materialized_arrangement_cell_complex_output() {
+                    attempt
+                } else {
+                    arrangement_cell_complex_shortcut_attempt_with_facts(
+                        left,
+                        right,
+                        request,
+                        policy,
+                        shortcut_facts,
+                    )?
+                    .unwrap_or(attempt)
+                }
+            }
+            Err(error) => {
+                if let Some(attempt) = arrangement_cell_complex_shortcut_attempt_with_facts(
+                    left,
+                    right,
+                    request,
+                    policy,
+                    shortcut_facts,
+                )? {
+                    attempt
+                } else {
+                    return Err(error);
+                }
+            }
+        },
+    };
+    attempt
+        .validate_for_request_policy(request, policy)
+        .map_err(exact_boolean_replay_report_error)?;
+    *retained_attempt = Some(attempt);
+    Ok(())
+}
+
+fn exact_boolean_replay_preflight(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    graph: &ExactIntersectionGraph,
+    shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
+    retained_attempt: Option<&ExactArrangementBooleanAttempt>,
+) -> Result<ExactBooleanPreflight, MeshError> {
+    let graph_preflight_has_source_arrangement_shortcut = shortcut_facts
+        .certified_support(request.operation)
+        == Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
+    let graph_preflight_has_certified_axis_aligned_box_pair =
+        shortcut_facts.certifies_axis_aligned_box_pair();
+    let graph_preflight = preflight_boolean_exact_request_from_graph_with_retained_attempt(
+        graph,
+        left,
+        right,
+        request,
+        retained_attempt,
+        shortcut_facts,
+    )?;
+    if graph_preflight.operation != request.operation {
+        return Err(exact_boolean_replay_report_error(
+            ExactReportValidationError::StatusEvidenceMismatch,
+        ));
+    }
+    graph_preflight
+        .validate()
+        .map_err(exact_boolean_replay_report_error)?;
+    if matches!(
+        graph_preflight.support,
+        ExactBooleanSupport::CertifiedEmptyOperand
+            | ExactBooleanSupport::CertifiedBoundsDisjoint
+            | ExactBooleanSupport::CertifiedIdentical
+            | ExactBooleanSupport::CertifiedSameSurface
+            | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
+            | ExactBooleanSupport::CertifiedConvexSeparated
+    ) || (matches!(
+        graph_preflight.support,
+        ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+    ) && !graph_preflight_has_source_arrangement_shortcut
+        && !graph_preflight_has_certified_axis_aligned_box_pair)
+    {
+        return Ok(graph_preflight);
+    }
+    if (!(request.validation == ValidationPolicy::ALLOW_BOUNDARY
+        && request.boundary_policy == ExactBoundaryBooleanPolicy::Reject)
+        || graph_preflight_has_source_arrangement_shortcut
+        || graph_preflight_has_certified_axis_aligned_box_pair)
+        && let Some(attempt) = retained_attempt
+        && let Ok(Some(preflight)) =
+            certified_arrangement_cell_complex_preflight_from_retained_attempt(
+                graph,
+                left,
+                right,
+                request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+                attempt,
+            )
+    {
+        preflight
+            .validate()
+            .map_err(exact_boolean_replay_report_error)?;
+        return Ok(preflight);
+    }
+    Ok(graph_preflight)
+}
+
+fn exact_boolean_replay_report_error(error: ExactReportValidationError) -> MeshError {
+    MeshError::one(MeshDiagnostic::new(
+        Severity::Error,
+        DiagnosticKind::UnsupportedExactOperation,
+        format!("exact boolean retained report failed replay validation: {error:?}"),
+    ))
 }
 
 fn record_selected_orientation_counts(
@@ -2379,6 +2644,7 @@ impl ExactBooleanEvaluation {
 
     /// Return the retained arrangement/cell-complex attempt for this request,
     /// when evaluation reached that canonical pipeline.
+    #[cfg(test)]
     pub(crate) fn retained_arrangement_attempt(&self) -> Option<&ExactArrangementBooleanAttempt> {
         self.certifications.arrangement_attempt.as_ref()
     }
@@ -2452,6 +2718,7 @@ impl ExactBooleanEvaluation {
 
     /// Validate the retained evaluation by replaying all source-bound reports
     /// and the materialized result under the original request policy.
+    #[cfg(test)]
     pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
