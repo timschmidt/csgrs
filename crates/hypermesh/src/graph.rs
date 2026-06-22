@@ -1192,8 +1192,8 @@ pub(crate) fn build_intersection_graph(
 pub(crate) fn build_intersection_graph_from_prepared_pair(
     pair: &PreparedMeshPairView<'_, '_>,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let left = pair.left().view().mesh();
-    let right = pair.right().view().mesh();
+    let left = pair.left().mesh();
+    let right = pair.right().mesh();
     let mut face_pairs = Vec::with_capacity(pair.candidate_face_pairs().len());
     for [left_face, right_face] in pair.candidate_face_pairs().iter().copied() {
         let classification = classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
@@ -1226,8 +1226,8 @@ pub(crate) fn build_validated_intersection_graph_from_prepared_pair(
     pair: &PreparedMeshPairView<'_, '_>,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
     let graph = build_intersection_graph_from_prepared_pair(pair)?;
-    let left = pair.left().view().mesh();
-    let right = pair.right().view().mesh();
+    let left = pair.left().mesh();
+    let right = pair.right().mesh();
     graph
         .validate_against_meshes(left, right)
         .map_err(|error| {

@@ -38,17 +38,17 @@ pub struct EdgeRef<'a> {
 }
 
 /// Borrowed exact mesh view with prepared broad-phase acceleration facts.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct PreparedMeshView<'a> {
     view: ExactMeshRef<'a>,
     bounds: PreparedMeshBounds<'a>,
 }
 
 /// Borrowed pair view with replay-validated broad-phase acceleration facts.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct PreparedMeshPairView<'a, 'b> {
-    left: PreparedMeshView<'a>,
-    right: PreparedMeshView<'b>,
+    left: ExactMeshRef<'a>,
+    right: ExactMeshRef<'b>,
     candidate_pairs: Vec<[usize; 2]>,
 }
 
@@ -259,22 +259,22 @@ impl<'a> PreparedMeshView<'a> {
         );
         debug_assert!(result.is_ok());
         PreparedMeshPairView {
-            left: self.clone(),
-            right: right.clone(),
+            left: self.view,
+            right: right.view,
             candidate_pairs,
         }
     }
 }
 
 impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
-    /// Return the prepared left mesh view.
-    pub const fn left(&self) -> &PreparedMeshView<'a> {
-        &self.left
+    /// Return the left mesh view.
+    pub const fn left(&self) -> ExactMeshRef<'a> {
+        self.left
     }
 
-    /// Return the prepared right mesh view.
-    pub const fn right(&self) -> &PreparedMeshView<'b> {
-        &self.right
+    /// Return the right mesh view.
+    pub const fn right(&self) -> ExactMeshRef<'b> {
+        self.right
     }
 
     /// Cached broad-phase candidate face pairs in left/right face-index order.

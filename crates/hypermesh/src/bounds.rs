@@ -127,7 +127,7 @@ pub(crate) struct MeshBounds {
 /// orders. It is an acceleration fact, not topology evidence: disjoint AABBs
 /// may reject work, while retained pairs still require exact narrow-phase
 /// predicates.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub(crate) struct PreparedMeshBounds<'a> {
     bounds: &'a MeshBounds,
     axis_intervals: [Vec<FaceAxisInterval<'a>>; 3],
