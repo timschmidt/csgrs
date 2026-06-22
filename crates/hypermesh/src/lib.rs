@@ -19,6 +19,7 @@ mod affine_box;
 mod affine_solid;
 mod arrangement2d;
 mod arrangement3d;
+#[cfg(feature = "legacy-public-api")]
 mod artifact;
 mod audit;
 mod boolean;
@@ -35,14 +36,18 @@ mod exact_key;
 mod facts;
 #[allow(dead_code)]
 mod graph;
+#[cfg(feature = "legacy-public-api")]
 mod handoff;
 mod intersection;
 pub(crate) mod loop_triangulation;
 mod mesh;
 mod narrow;
 mod orthogonal_solid;
+#[cfg(feature = "legacy-public-api")]
 mod package;
+#[cfg(feature = "legacy-public-api")]
 mod proposal;
+#[cfg(feature = "legacy-public-api")]
 mod readiness;
 #[allow(dead_code)]
 mod region;
