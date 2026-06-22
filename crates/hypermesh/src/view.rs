@@ -1,6 +1,6 @@
 //! Borrowed exact views of retained mesh data.
 
-use super::bounds::MeshBounds;
+use super::bounds::{MeshBounds, PreparedMeshBounds};
 use super::error::MeshError;
 use super::facts::{EdgeFacts, FaceFacts, FacePlaneFacts, MeshValidationFacts};
 use super::mesh::{ExactAffineTransform3, Triangle};
@@ -37,6 +37,13 @@ pub struct TriangleRef<'a> {
 pub struct EdgeRef<'a> {
     mesh: &'a ExactMesh,
     index: usize,
+}
+
+/// Borrowed exact mesh view with prepared broad-phase acceleration facts.
+#[derive(Clone, Debug)]
+pub struct PreparedMeshView<'a> {
+    view: ExactMeshRef<'a>,
+    bounds: PreparedMeshBounds<'a>,
 }
 
 impl<'a> ExactMeshRef<'a> {
@@ -137,9 +144,18 @@ impl<'a> ExactMeshRef<'a> {
         self,
         right: ExactMeshRef<'_>,
     ) -> Result<Vec<[usize; 2]>, ExactMeshValidationError> {
+        let left = self.prepare_broad_phase()?;
+        let right = right.prepare_broad_phase()?;
+        Ok(left.candidate_face_pairs(&right))
+    }
+
+    /// Prepare replay-validated broad-phase facts for repeated pair queries.
+    pub fn prepare_broad_phase(self) -> Result<PreparedMeshView<'a>, ExactMeshValidationError> {
         self.validate_retained_state()?;
-        right.validate_retained_state()?;
-        Ok(self.mesh.bounds().candidate_face_pairs(right.mesh.bounds()))
+        Ok(PreparedMeshView {
+            view: self,
+            bounds: self.mesh.bounds().prepare(),
+        })
     }
 
     /// Materialize this view after an exact affine transform.
@@ -175,6 +191,23 @@ impl<'a> ExactMeshRef<'a> {
     /// Materialize the exact closed symmetric difference of this view and `right`.
     pub fn xor(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, MeshError> {
         self.mesh.xor(right.mesh)
+    }
+}
+
+impl<'a> PreparedMeshView<'a> {
+    /// Return the underlying borrowed mesh view.
+    pub const fn view(&self) -> ExactMeshRef<'a> {
+        self.view
+    }
+
+    /// Return prepared retained bounds.
+    pub const fn bounds(&self) -> &PreparedMeshBounds<'a> {
+        &self.bounds
+    }
+
+    /// Return exact broad-phase candidate face pairs for this view and `right`.
+    pub fn candidate_face_pairs(&self, right: &PreparedMeshView<'_>) -> Vec<[usize; 2]> {
+        self.bounds.candidate_face_pairs(&right.bounds)
     }
 }
 

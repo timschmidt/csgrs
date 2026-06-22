@@ -153,11 +153,32 @@ pub struct MeshBounds {
     pub faces: Vec<ExactAabb3>,
 }
 
+/// Exact broad-phase face ordering prepared for repeated pair queries.
+///
+/// This borrows retained source bounds and caches only axis sort orders. It is
+/// an acceleration fact, not topology evidence: disjoint AABBs may reject work,
+/// while retained pairs still require exact narrow-phase predicates.
+#[derive(Clone, Debug)]
+pub struct PreparedMeshBounds<'a> {
+    bounds: &'a MeshBounds,
+    min_axis_orders: [Option<Vec<usize>>; 3],
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Axis {
     X,
     Y,
     Z,
+}
+
+impl Axis {
+    const fn index(self) -> usize {
+        match self {
+            Self::X => 0,
+            Self::Y => 1,
+            Self::Z => 2,
+        }
+    }
 }
 
 impl MeshBounds {
@@ -175,14 +196,42 @@ impl MeshBounds {
 
     /// Return face-pair candidates whose exact boxes are not disjoint.
     pub fn candidate_face_pairs(&self, other: &Self) -> Vec<[usize; 2]> {
+        self.prepare().candidate_face_pairs(&other.prepare())
+    }
+
+    /// Prepare exact min-axis face orders for repeated broad-phase queries.
+    ///
+    /// An axis order is retained only when all exact comparisons needed for
+    /// sorting were decided. Querying two prepared bounds falls back to the
+    /// exact quadratic scheduler when no common sweep axis is usable.
+    pub fn prepare(&self) -> PreparedMeshBounds<'_> {
+        PreparedMeshBounds {
+            bounds: self,
+            min_axis_orders: [
+                sorted_face_indices_by_min_axis(&self.faces, Axis::X),
+                sorted_face_indices_by_min_axis(&self.faces, Axis::Y),
+                sorted_face_indices_by_min_axis(&self.faces, Axis::Z),
+            ],
+        }
+    }
+}
+
+impl<'a> PreparedMeshBounds<'a> {
+    /// Return the retained bounds object this prepared scheduler borrows.
+    pub const fn bounds(&self) -> &'a MeshBounds {
+        self.bounds
+    }
+
+    /// Return face-pair candidates whose exact boxes are not disjoint.
+    pub fn candidate_face_pairs(&self, other: &PreparedMeshBounds<'_>) -> Vec<[usize; 2]> {
         self.candidate_face_pairs_sweep(other)
             .unwrap_or_else(|| self.candidate_face_pairs_quadratic(other))
     }
 
-    fn candidate_face_pairs_quadratic(&self, other: &Self) -> Vec<[usize; 2]> {
+    fn candidate_face_pairs_quadratic(&self, other: &PreparedMeshBounds<'_>) -> Vec<[usize; 2]> {
         let mut pairs = Vec::new();
-        for (left, left_box) in self.faces.iter().enumerate() {
-            for (right, right_box) in other.faces.iter().enumerate() {
+        for (left, left_box) in self.bounds.faces.iter().enumerate() {
+            for (right, right_box) in other.bounds.faces.iter().enumerate() {
                 if must_keep_candidate(left_box.classify_intersection(right_box)) {
                     pairs.push([left, right]);
                 }
@@ -191,7 +240,10 @@ impl MeshBounds {
         pairs
     }
 
-    fn candidate_face_pairs_sweep(&self, other: &Self) -> Option<Vec<[usize; 2]>> {
+    fn candidate_face_pairs_sweep(
+        &self,
+        other: &PreparedMeshBounds<'_>,
+    ) -> Option<Vec<[usize; 2]>> {
         let mut best = None;
         for axis in [Axis::X, Axis::Y, Axis::Z] {
             if let Some(pairs) = self.candidate_face_pairs_sweep_axis(other, axis)
@@ -205,18 +257,22 @@ impl MeshBounds {
         best
     }
 
-    fn candidate_face_pairs_sweep_axis(&self, other: &Self, axis: Axis) -> Option<Vec<[usize; 2]>> {
-        let left_order = sorted_face_indices_by_min_axis(&self.faces, axis)?;
-        let right_order = sorted_face_indices_by_min_axis(&other.faces, axis)?;
+    fn candidate_face_pairs_sweep_axis(
+        &self,
+        other: &PreparedMeshBounds<'_>,
+        axis: Axis,
+    ) -> Option<Vec<[usize; 2]>> {
+        let left_order = self.min_axis_order(axis)?;
+        let right_order = other.min_axis_order(axis)?;
         let mut active_right = Vec::<usize>::new();
         let mut next_right = 0usize;
         let mut pairs = Vec::new();
 
-        for left in left_order {
-            let left_box = &self.faces[left];
+        for &left in left_order {
+            let left_box = &self.bounds.faces[left];
             while let Some(&right) = right_order.get(next_right) {
                 if compare(
-                    axis_min(&other.faces[right], axis),
+                    axis_min(&other.bounds.faces[right], axis),
                     axis_max(left_box, axis),
                 )? == Ordering::Greater
                 {
@@ -229,7 +285,7 @@ impl MeshBounds {
             let mut retained_active = Vec::with_capacity(active_right.len());
             for right in active_right {
                 if compare(
-                    axis_max(&other.faces[right], axis),
+                    axis_max(&other.bounds.faces[right], axis),
                     axis_min(left_box, axis),
                 )? != Ordering::Less
                 {
@@ -239,7 +295,7 @@ impl MeshBounds {
             active_right = retained_active;
 
             for &right in &active_right {
-                let right_box = &other.faces[right];
+                let right_box = &other.bounds.faces[right];
                 if compare(axis_min(right_box, axis), axis_max(left_box, axis))?
                     == Ordering::Greater
                 {
@@ -255,6 +311,12 @@ impl MeshBounds {
         Some(pairs)
     }
 
+    fn min_axis_order(&self, axis: Axis) -> Option<&[usize]> {
+        self.min_axis_orders[axis.index()].as_deref()
+    }
+}
+
+impl MeshBounds {
     /// Validate retained mesh and face bounds against expected topology sizes.
     ///
     /// This validates only the bounds object shape and interval ordering. It

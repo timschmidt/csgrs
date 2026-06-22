@@ -14,7 +14,7 @@ use hyperlimit::{PredicateOutcome, SegmentPlaneIntersection, TrianglePlaneRelati
 use super::bounds::AabbIntersectionKind;
 use super::construction::intersect_segment_with_retained_face_plane;
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-use super::mesh::ExactMesh;
+use super::mesh::{ExactMesh, ExactMeshValidationError};
 use super::narrow::{
     TriangleTriangleClassification, TriangleTriangleRelation,
     classify_mesh_triangle_against_retained_face_plane,
@@ -154,14 +154,30 @@ pub(crate) fn classify_mesh_face_pairs(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Vec<MeshFacePairClassification>, MeshError> {
+    let left_broad_phase = left
+        .view()
+        .prepare_broad_phase()
+        .map_err(mesh_retained_state_error)?;
+    let right_broad_phase = right
+        .view()
+        .prepare_broad_phase()
+        .map_err(mesh_retained_state_error)?;
     let mut retained = Vec::new();
-    for [left_face, right_face] in left.bounds().candidate_face_pairs(right.bounds()) {
+    for [left_face, right_face] in left_broad_phase.candidate_face_pairs(&right_broad_phase) {
         let classification = classify_mesh_face_pair(left, left_face, right, right_face)?;
         if classification.needs_graph_construction() {
             retained.push(classification);
         }
     }
     Ok(retained)
+}
+
+fn mesh_retained_state_error(error: ExactMeshValidationError) -> MeshError {
+    MeshError::one(MeshDiagnostic::new(
+        Severity::Error,
+        DiagnosticKind::UnsupportedExactOperation,
+        format!("exact mesh retained broad-phase facts failed source replay: {error:?}"),
+    ))
 }
 
 fn triangle_is_strictly_one_sided(relation: TrianglePlaneRelation) -> bool {

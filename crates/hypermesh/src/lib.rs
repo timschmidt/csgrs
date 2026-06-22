@@ -58,4 +58,4 @@ pub use error::{
 pub use mesh::{ExactAffineTransform3, ExactMesh, ExactMeshValidationError, Triangle};
 pub use regularization::ExactArrangementBlocker;
 pub use validation::ValidationPolicy;
-pub use view::{EdgeRef, ExactMeshRef, FaceRef, MeshView, TriangleRef};
+pub use view::{EdgeRef, ExactMeshRef, FaceRef, MeshView, PreparedMeshView, TriangleRef};

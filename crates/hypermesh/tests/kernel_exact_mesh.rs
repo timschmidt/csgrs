@@ -127,6 +127,13 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
 
     let disjoint_candidates = left.view().candidate_face_pairs(disjoint.view()).unwrap();
     assert!(disjoint_candidates.is_empty());
+
+    let prepared_left = left.view().prepare_broad_phase().unwrap();
+    let prepared_overlapping = overlapping.view().prepare_broad_phase().unwrap();
+    assert_eq!(
+        prepared_left.candidate_face_pairs(&prepared_overlapping),
+        candidates
+    );
 }
 
 #[test]
