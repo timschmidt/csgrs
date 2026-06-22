@@ -32,7 +32,7 @@ use super::solid::{
     ClosedMeshOrientation, ConvexSolidFacts, ConvexSolidReportError, certify_convex_solid,
 };
 use super::topology::triangle_edges;
-use super::validation::ValidationPolicy;
+use super::validation::ExactMeshValidationPolicy;
 use hyperlimit::SourceProvenance;
 use hyperlimit::{CoplanarProjection, project_point3, projected_polygon_area2_value};
 use hyperreal::Real;
@@ -172,7 +172,7 @@ pub(crate) fn union_closed_convex_solids(
         vertices.clone(),
         triangles.clone(),
         SourceProvenance::exact("exact closed-convex solid union"),
-        ValidationPolicy::CLOSED,
+        ExactMeshValidationPolicy::CLOSED,
     )
     .ok()
     .or_else(|| close_planar_boundary_loops(vertices.clone(), triangles.clone()))
@@ -219,7 +219,7 @@ pub(crate) fn subtract_closed_convex_solids(
         vertices,
         triangles,
         SourceProvenance::exact("exact closed-convex solid difference"),
-        ValidationPolicy::CLOSED,
+        ExactMeshValidationPolicy::CLOSED,
     )
     .ok()?;
     if !mesh_has_nonzero_signed_volume(&mesh)? {
@@ -257,7 +257,7 @@ fn union_from_difference_and_operand(left: &ExactMesh, right: &ExactMesh) -> Opt
         vertices,
         triangles,
         SourceProvenance::exact("exact closed-convex solid union from exact difference"),
-        ValidationPolicy::CLOSED,
+        ExactMeshValidationPolicy::CLOSED,
     )
     .ok()
 }
@@ -284,7 +284,7 @@ fn close_planar_boundary_loops(
         vertices,
         triangles,
         SourceProvenance::exact("exact closed-convex solid union with exact planar caps"),
-        ValidationPolicy::CLOSED,
+        ExactMeshValidationPolicy::CLOSED,
     )
     .ok()
 }
@@ -371,7 +371,7 @@ pub(crate) fn intersect_closed_convex_solids(
     let mesh = polygons_to_closed_mesh(
         &hull_polygons,
         "exact closed-convex solid intersection",
-        ValidationPolicy::CLOSED,
+        ExactMeshValidationPolicy::CLOSED,
     )?;
     if !mesh_has_nonzero_signed_volume(&mesh)? {
         return None;
@@ -1177,7 +1177,7 @@ fn orient3d_value(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Real {
 fn polygons_to_closed_mesh(
     polygons: &[Vec<Point3>],
     label: &str,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
 ) -> Option<ExactMesh> {
     let mut vertices: Vec<Point3> = Vec::new();
     let mut triangles = Vec::new();
@@ -1508,7 +1508,10 @@ mod tests {
         with_materialized_evaluation_for_test(
             &left,
             &right,
-            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+            ExactBooleanRequest::new(
+                ExactBooleanOperation::Union,
+                ExactMeshValidationPolicy::CLOSED,
+            ),
             |evaluation| {
                 evaluation.validate_against_sources(&left, &right).unwrap();
             },
@@ -1522,7 +1525,10 @@ mod tests {
         with_materialized_evaluation_for_test(
             &left,
             &right,
-            ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED),
+            ExactBooleanRequest::new(
+                ExactBooleanOperation::Difference,
+                ExactMeshValidationPolicy::CLOSED,
+            ),
             |evaluation| {
                 evaluation.validate_against_sources(&left, &right).unwrap();
             },

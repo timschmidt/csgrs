@@ -1,4 +1,4 @@
-use hypermesh::{ExactMesh, ValidationPolicy};
+use hypermesh::{ExactMesh, ExactMeshValidationPolicy};
 
 pub fn exercise_mesh_kernel_pair(left: &ExactMesh, right: &ExactMesh) {
     left.validate_retained_state().unwrap();
@@ -55,7 +55,7 @@ fn tetrahedron(offset: [i64; 3], scale: i64) -> Option<ExactMesh> {
             offset[2] + scale,
         ],
         &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
-        ValidationPolicy::CLOSED,
+        ExactMeshValidationPolicy::CLOSED,
     )
     .ok()
 }

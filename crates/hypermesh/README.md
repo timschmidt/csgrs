@@ -35,7 +35,7 @@ convenience methods downstream CSG layers need: `union`, `intersection`,
 `with_arrangement_view`.
 
 Supporting root exports are deliberately small. `Triangle` is the construction
-index row, `ValidationPolicy` selects the mesh validation contract, and
+index row, `ExactMeshValidationPolicy` selects the mesh validation contract, and
 `ExactMeshError`/`ExactMeshBlocker` report invalid input, unsupported exact
 topology, stale replay, and construction blockers with provenance where
 available.
@@ -94,7 +94,7 @@ hypermesh = "0.3.0"
 The exact-facing path is the preferred boundary for new code:
 
 ```rust,ignore
-use hypermesh::{ExactMesh, ValidationPolicy};
+use hypermesh::{ExactMesh, ExactMeshValidationPolicy};
 
 let mesh = ExactMesh::from_i64_triangles_with_policy(
     &[
@@ -103,7 +103,7 @@ let mesh = ExactMesh::from_i64_triangles_with_policy(
         0, 1, 0,
     ],
     &[0, 1, 2],
-    ValidationPolicy::ALLOW_BOUNDARY,
+    ExactMeshValidationPolicy::ALLOW_BOUNDARY,
 )?;
 
 let view = mesh.view();

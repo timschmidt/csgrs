@@ -31,7 +31,7 @@ use super::graph::{
 };
 use super::intersection::MeshFacePairRelation;
 use super::mesh::{ExactMesh, ExactMeshValidationError, Triangle};
-use super::validation::ValidationPolicy;
+use super::validation::ExactMeshValidationPolicy;
 use super::winding::{
     ClosedMeshWindingRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
@@ -142,7 +142,7 @@ impl FullFaceAdjacentUnion {
 pub(crate) fn materialize_full_face_adjacent_union(
     left: &ExactMesh,
     right: &ExactMesh,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
 ) -> Option<FullFaceAdjacentUnion> {
     let certificate = full_face_adjacent_certificate(left, right)?;
     materialize_full_face_adjacent_union_from_certificate(left, right, &certificate, validation)
@@ -171,7 +171,7 @@ pub(crate) fn materialize_full_face_adjacent_union_from_certificate(
     left: &ExactMesh,
     right: &ExactMesh,
     certificate: &FullFaceAdjacentCertificate,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
 ) -> Option<FullFaceAdjacentUnion> {
     let certificate = &certificate.inner;
     let mesh = merged_union_mesh(left, right, certificate, validation)?;
@@ -538,7 +538,7 @@ fn merged_union_mesh(
     left: &ExactMesh,
     right: &ExactMesh,
     certificate: &FullFaceAdjacencyCertificate,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
 ) -> Option<ExactMesh> {
     let mut right_to_left = BTreeMap::<usize, usize>::new();
     let mut skip_left = BTreeSet::new();

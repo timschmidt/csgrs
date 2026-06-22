@@ -30,7 +30,7 @@ use super::graph::{
 use super::intersection::MeshFacePairRelation;
 use super::mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 use super::topology::{mesh_for_side, triangle_tuple_edges};
-use super::validation::ValidationPolicy;
+use super::validation::ExactMeshValidationPolicy;
 use super::winding::{
     ClosedMeshWindingRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
@@ -128,7 +128,7 @@ impl ContainedFaceAdjacentUnion {
 pub(crate) fn materialize_contained_face_adjacent_union(
     left: &ExactMesh,
     right: &ExactMesh,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
 ) -> Option<ContainedFaceAdjacentUnion> {
     let certificate = contained_face_adjacent_certificate(left, right)?;
     materialize_contained_face_adjacent_union_from_certificate(
@@ -163,7 +163,7 @@ pub(crate) fn materialize_contained_face_adjacent_union_from_certificate(
     left: &ExactMesh,
     right: &ExactMesh,
     certificate: &ContainedFaceAdjacentCertificate,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
 ) -> Option<ContainedFaceAdjacentUnion> {
     let certificate = &certificate.inner;
     let mesh = contained_face_union_mesh(left, right, certificate, validation)?;
@@ -537,7 +537,7 @@ fn contained_face_union_mesh(
     left: &ExactMesh,
     right: &ExactMesh,
     certificate: &ContainedFaceAdjacencyCertificate,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
 ) -> Option<ExactMesh> {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
@@ -671,7 +671,7 @@ fn faces_mesh(mesh: &ExactMesh, faces: &[usize], label: &'static str) -> Option<
         vertices,
         triangles,
         SourceProvenance::exact(label),
-        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .ok()
 }

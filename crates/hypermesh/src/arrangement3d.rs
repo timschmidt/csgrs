@@ -39,7 +39,7 @@ use super::solid::{
     classify_point_against_convex_solid_report, exact_mesh_orientation,
 };
 use super::topology::mesh_for_side;
-use super::validation::ValidationPolicy;
+use super::validation::ExactMeshValidationPolicy;
 use super::winding::{
     ClosedMeshWindingRelation, PointMeshWindingReport,
     classify_point_against_closed_mesh_winding_report,
@@ -4287,7 +4287,7 @@ fn shell_region_mesh(
         vertices,
         triangles,
         SourceProvenance::exact("exact arrangement shell replay"),
-        ValidationPolicy::CLOSED,
+        ExactMeshValidationPolicy::CLOSED,
     )
     .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)
 }
@@ -5058,7 +5058,7 @@ mod tests {
     use crate::boolean::ExactBooleanOperation;
     use crate::cell_complex::ExactRegionOwnershipStatus;
     use crate::loop_triangulation::projected_loop_orientation;
-    use crate::validation::ValidationPolicy;
+    use crate::validation::ExactMeshValidationPolicy;
     use hyperlimit::{
         RingPointLocation, classify_point_ring_even_odd, projected_polygon_area2_value,
     };
@@ -5308,7 +5308,7 @@ mod tests {
         ExactMesh::from_i64_triangles_with_policy(
             &[a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]],
             &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap()
     }
@@ -6688,15 +6688,11 @@ mod tests {
                     ArrangementVertexProvenance::FacePlaneVertex { .. }
                 )))
         );
-        assert!(
-            arrangement
-                .edges
+        assert!(arrangement.edges.iter().any(|edge| {
+            edge.provenance
                 .iter()
-                .any(|edge| edge.provenance.iter().any(|provenance| matches!(
-                    provenance,
-                    ArrangementEdgeProvenance::FacePlane { .. }
-                )))
-        );
+                .any(|provenance| matches!(provenance, ArrangementEdgeProvenance::FacePlane { .. }))
+        }));
         assert!(arrangement.face_cells.len() > 2);
     }
 

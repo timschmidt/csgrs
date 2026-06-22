@@ -12,7 +12,9 @@ use super::bounds::{BoundsValidationError, MeshBounds};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::facts::{MeshFactsValidationError, MeshValidationFacts};
 use super::scalar::LossyF64Import;
-use super::validation::{ValidationPolicy, ValidationReport, validate_triangle_rows_with_policy};
+use super::validation::{
+    ExactMeshValidationPolicy, ValidationReport, validate_triangle_rows_with_policy,
+};
 use super::view::ExactMeshRef;
 use hyperlimit::{
     ConstructionProvenance, ConstructionProvenanceValidationError, Point3, PredicateUse,
@@ -128,7 +130,7 @@ pub struct ExactMesh {
     triangles: Vec<Triangle>,
     bounds: MeshBounds,
     facts: MeshValidationFacts,
-    validation_policy: ValidationPolicy,
+    validation_policy: ExactMeshValidationPolicy,
     provenance: ConstructionProvenance,
 }
 
@@ -324,7 +326,12 @@ impl ExactMesh {
         triangles: Vec<Triangle>,
         source: SourceProvenance,
     ) -> Result<Self, ExactMeshError> {
-        Self::new_with_policy(vertices, triangles, source, ValidationPolicy::CLOSED)
+        Self::new_with_policy(
+            vertices,
+            triangles,
+            source,
+            ExactMeshValidationPolicy::CLOSED,
+        )
     }
 
     /// Construct an exact mesh with an explicit validation policy.
@@ -332,7 +339,7 @@ impl ExactMesh {
         vertices: Vec<Point3>,
         triangles: Vec<Triangle>,
         source: SourceProvenance,
-        policy: ValidationPolicy,
+        policy: ExactMeshValidationPolicy,
     ) -> Result<Self, ExactMeshError> {
         let index_blockers = validate_indices(vertices.len(), &triangles);
         if !index_blockers.is_empty() {
@@ -373,12 +380,12 @@ impl ExactMesh {
     /// `Real` values with lossy source provenance. They are not used later as
     /// tolerance-bearing floats.
     pub fn from_lossy_f64_triangles(pos: &[f64], idx: &[usize]) -> Result<Self, ExactMeshError> {
-        Self::from_lossy_f64_triangles_with_policy(pos, idx, ValidationPolicy::CLOSED)
+        Self::from_lossy_f64_triangles_with_policy(pos, idx, ExactMeshValidationPolicy::CLOSED)
     }
 
     /// Construct an exact mesh from flat hyperreal coordinates.
     pub fn from_real_triangles(pos: &[Real], idx: &[usize]) -> Result<Self, ExactMeshError> {
-        Self::from_real_triangles_with_policy(pos, idx, ValidationPolicy::CLOSED)
+        Self::from_real_triangles_with_policy(pos, idx, ExactMeshValidationPolicy::CLOSED)
     }
 
     /// Construct an exact mesh from flat hyperreal coordinates with an explicit
@@ -386,7 +393,7 @@ impl ExactMesh {
     pub fn from_real_triangles_with_policy(
         pos: &[Real],
         idx: &[usize],
-        policy: ValidationPolicy,
+        policy: ExactMeshValidationPolicy,
     ) -> Result<Self, ExactMeshError> {
         validate_flat_mesh_buffers(pos.len(), idx.len())?;
 
@@ -408,7 +415,7 @@ impl ExactMesh {
     pub fn from_lossy_f64_triangles_with_policy(
         pos: &[f64],
         idx: &[usize],
-        policy: ValidationPolicy,
+        policy: ExactMeshValidationPolicy,
     ) -> Result<Self, ExactMeshError> {
         validate_flat_mesh_buffers(pos.len(), idx.len())?;
 
@@ -432,7 +439,7 @@ impl ExactMesh {
     /// primitive-float edge, keeping exact predicates and determinant schedules
     /// on structural input coordinates.
     pub fn from_i64_triangles(pos: &[i64], idx: &[usize]) -> Result<Self, ExactMeshError> {
-        Self::from_i64_triangles_with_policy(pos, idx, ValidationPolicy::CLOSED)
+        Self::from_i64_triangles_with_policy(pos, idx, ExactMeshValidationPolicy::CLOSED)
     }
 
     /// Construct an exact mesh from integer coordinates with an explicit
@@ -440,7 +447,7 @@ impl ExactMesh {
     pub fn from_i64_triangles_with_policy(
         pos: &[i64],
         idx: &[usize],
-        policy: ValidationPolicy,
+        policy: ExactMeshValidationPolicy,
     ) -> Result<Self, ExactMeshError> {
         validate_flat_mesh_buffers(pos.len(), idx.len())?;
 
@@ -490,10 +497,10 @@ impl ExactMesh {
     /// Return the validation policy retained at construction.
     ///
     /// The policy is part of the exact artifact boundary: an open-surface mesh
-    /// constructed with [`ValidationPolicy::ALLOW_BOUNDARY`] must not later be
+    /// constructed with [`ExactMeshValidationPolicy::ALLOW_BOUNDARY`] must not later be
     /// mistaken for closed-solid evidence merely because its retained facts are
     /// locally coherent.
-    pub(crate) const fn validation_policy(&self) -> ValidationPolicy {
+    pub(crate) const fn validation_policy(&self) -> ExactMeshValidationPolicy {
         self.validation_policy
     }
 
@@ -640,7 +647,7 @@ impl ExactMesh {
         self.named_boolean_mesh(
             right,
             ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
+            ExactMeshValidationPolicy::CLOSED,
         )
     }
 
@@ -652,7 +659,7 @@ impl ExactMesh {
         self.named_boolean_mesh(
             right,
             ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
+            ExactMeshValidationPolicy::CLOSED,
         )
     }
 
@@ -661,7 +668,7 @@ impl ExactMesh {
         self.named_boolean_mesh(
             right,
             ExactBooleanOperation::Difference,
-            ValidationPolicy::CLOSED,
+            ExactMeshValidationPolicy::CLOSED,
         )
     }
 
@@ -679,7 +686,7 @@ impl ExactMesh {
         &self,
         right: &ExactMesh,
         operation: ExactBooleanOperation,
-        validation: ValidationPolicy,
+        validation: ExactMeshValidationPolicy,
     ) -> Result<ExactMesh, ExactMeshError> {
         let request = ExactBooleanRequest::new(operation, validation);
         materialize_boolean_exact_request(self, right, request).map(|result| result.into_mesh())

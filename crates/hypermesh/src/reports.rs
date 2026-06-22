@@ -69,7 +69,7 @@ use super::solid::{
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
     classify_mesh_vertices_against_convex_solid_report,
 };
-use super::validation::ValidationPolicy;
+use super::validation::ExactMeshValidationPolicy;
 use super::volumetric::{ExactVolumetricRegionClassification, ExactVolumetricRegionError};
 use super::volumetric_cells::{
     CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle,
@@ -1707,7 +1707,7 @@ impl ExactBooleanResult {
         if self.is_arrangement_cell_complex_shortcut_for(request.operation)
             && self.satisfies_request_shape(request)
         {
-            if request.validation == ValidationPolicy::CLOSED
+            if request.validation == ExactMeshValidationPolicy::CLOSED
                 && lower_dimensional_regularized_sources(left, right)
                 && mesh_output_is_empty(&self.mesh)
             {
@@ -1809,7 +1809,7 @@ impl ExactBooleanResult {
 fn certified_shortcut_sources_match(
     shortcut: ExactBooleanShortcutKind,
     operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<bool, ExactReportValidationError> {
@@ -1866,7 +1866,7 @@ fn certified_shortcut_sources_match(
 fn certified_shortcut_output_matches_sources(
     shortcut: ExactBooleanShortcutKind,
     operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
     mesh: &ExactMesh,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -1899,7 +1899,7 @@ fn certified_shortcut_output_matches_sources(
             )
         }
         ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid => {
-            if validation == ValidationPolicy::CLOSED
+            if validation == ExactMeshValidationPolicy::CLOSED
                 && operation == ExactBooleanOperation::Intersection
                 && lower_dimensional_regularized_sources(left, right)
             {
@@ -1916,7 +1916,7 @@ fn certified_shortcut_output_matches_sources(
             )? {
                 return Ok(false);
             }
-            validation == ValidationPolicy::CLOSED
+            validation == ExactMeshValidationPolicy::CLOSED
                 && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
                 && mesh_output_is_empty(mesh)
         }
@@ -1937,7 +1937,7 @@ fn certified_shortcut_output_matches_sources(
 
 fn empty_operand_output_matches_sources(
     operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
     mesh: &ExactMesh,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -1947,7 +1947,7 @@ fn empty_operand_output_matches_sources(
     }
     match operation {
         ExactBooleanOperation::Union
-            if validation == ValidationPolicy::CLOSED
+            if validation == ExactMeshValidationPolicy::CLOSED
                 && mesh_is_lower_dimensional(left)
                 && mesh_is_lower_dimensional(right) =>
         {
@@ -1959,7 +1959,7 @@ fn empty_operand_output_matches_sources(
             mesh_output_is_empty(mesh)
         }
         ExactBooleanOperation::Difference
-            if validation == ValidationPolicy::CLOSED
+            if validation == ExactMeshValidationPolicy::CLOSED
                 && right.triangles().is_empty()
                 && mesh_is_lower_dimensional(left) =>
         {
@@ -1972,14 +1972,14 @@ fn empty_operand_output_matches_sources(
 
 fn bounds_disjoint_output_matches_sources(
     operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
     mesh: &ExactMesh,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> bool {
     if left.triangles().is_empty()
         || right.triangles().is_empty()
-        || (validation == ValidationPolicy::CLOSED
+        || (validation == ExactMeshValidationPolicy::CLOSED
             && (lower_dimensional_regularized_sources(left, right)
                 || mixed_dimensional_regularized_sources(left, right)))
     {
@@ -1995,13 +1995,13 @@ fn bounds_disjoint_output_matches_sources(
 
 fn identical_output_matches_sources(
     operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
     mesh: &ExactMesh,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> bool {
     if (mesh_is_closed_solid(left) && mesh_is_closed_solid(right))
-        || (validation == ValidationPolicy::CLOSED
+        || (validation == ExactMeshValidationPolicy::CLOSED
             && (lower_dimensional_regularized_sources(left, right)
                 || mixed_dimensional_regularized_sources(left, right)))
     {
@@ -2018,12 +2018,14 @@ fn identical_output_matches_sources(
 
 fn mixed_dimensional_regularized_output_matches_sources(
     operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
     mesh: &ExactMesh,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> bool {
-    if validation != ValidationPolicy::CLOSED && meshes_are_certified_bounds_disjoint(left, right) {
+    if validation != ExactMeshValidationPolicy::CLOSED
+        && meshes_are_certified_bounds_disjoint(left, right)
+    {
         return false;
     }
     let left_closed = mesh_is_closed_solid(left);
@@ -2457,7 +2459,7 @@ fn closed_boundary_touching_sources_match(
 fn closed_boundary_touching_output_matches_sources(
     shortcut: ExactBooleanShortcutKind,
     operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
     mesh: &ExactMesh,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2524,7 +2526,7 @@ fn closed_winding_sources_match(
 fn closed_winding_output_matches_sources(
     shortcut: ExactBooleanShortcutKind,
     operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
     mesh: &ExactMesh,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2704,11 +2706,12 @@ fn convex_boundary_containment_sources_match(
 
 fn arrangement_cell_complex_sources_match(
     operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<bool, ExactReportValidationError> {
-    if validation == ValidationPolicy::CLOSED && lower_dimensional_regularized_sources(left, right)
+    if validation == ExactMeshValidationPolicy::CLOSED
+        && lower_dimensional_regularized_sources(left, right)
     {
         return Ok(true);
     }
@@ -2764,7 +2767,7 @@ fn axis_aligned_orthogonal_solid_operation(
 
 fn axis_aligned_orthogonal_solid_output_matches_sources(
     operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
     mesh: &ExactMesh,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2788,7 +2791,7 @@ fn axis_aligned_orthogonal_solid_output_matches_sources(
 
 fn arrangement_cell_complex_output_matches_sources(
     operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
     mesh: &ExactMesh,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2857,7 +2860,7 @@ fn arrangement_cell_complex_output_matches_sources(
         retained_mismatch = true;
     }
 
-    if validation == ValidationPolicy::CLOSED
+    if validation == ExactMeshValidationPolicy::CLOSED
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && lower_dimensional_regularized_sources(left, right)
     {
@@ -4271,10 +4274,7 @@ impl ExactBooleanPreflight {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-                blocker_kind(
-                    self.blocker.as_ref(),
-                    ExactBooleanBlockerKind::Refinement,
-                )?;
+                blocker_kind(self.blocker.as_ref(), ExactBooleanBlockerKind::Refinement)?;
                 self.blocker
                     .as_ref()
                     .unwrap()
@@ -4556,10 +4556,7 @@ impl ExactRefinementReport {
             .map_err(|_| ExactReportValidationError::InvalidBlockerCounts)?;
         match self.status {
             ExactRefinementStatus::Required => {
-                blocker_kind(
-                    self.blocker.as_ref(),
-                    ExactBooleanBlockerKind::Refinement,
-                )?;
+                blocker_kind(self.blocker.as_ref(), ExactBooleanBlockerKind::Refinement)?;
                 let blocker = self.blocker.as_ref().unwrap();
                 blocker.validate_for_kind(ExactBooleanBlockerKind::Refinement)?;
                 validate_blocker_count_bounds(
@@ -4792,9 +4789,7 @@ impl ExactOpenSurfaceDisjointReport {
             return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
         }
         let expected_kind = match self.status {
-            ExactOpenSurfaceDisjointStatus::GraphUnknowns => {
-                ExactBooleanBlockerKind::Refinement
-            }
+            ExactOpenSurfaceDisjointStatus::GraphUnknowns => ExactBooleanBlockerKind::Refinement,
             ExactOpenSurfaceDisjointStatus::NotOpenSurface
             | ExactOpenSurfaceDisjointStatus::GraphHasFacePairs
             | ExactOpenSurfaceDisjointStatus::Certified => self.blocker.inferred_kind(),
@@ -5389,9 +5384,7 @@ impl ExactPlanarArrangementReport {
             ExactPlanarArrangementStatus::BoundaryPolicyRequired => {
                 ExactBooleanBlockerKind::BoundaryPolicy
             }
-            ExactPlanarArrangementStatus::Required => {
-                ExactBooleanBlockerKind::PlanarArrangement
-            }
+            ExactPlanarArrangementStatus::Required => ExactBooleanBlockerKind::PlanarArrangement,
             ExactPlanarArrangementStatus::NotNamedOperation
             | ExactPlanarArrangementStatus::AlreadyMaterialized
             | ExactPlanarArrangementStatus::NoPositiveOverlap => self.blocker.inferred_kind(),
@@ -5753,7 +5746,7 @@ impl ExactWindingEvidenceReport {
         self.validate()?;
         let request = ExactBooleanRequest::with_boundary_policy(
             self.operation,
-            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
             ExactBoundaryBooleanPolicy::Reject,
         );
         validate_winding_evidence_against_sources_for_request(self, left, right, request)
@@ -5792,10 +5785,7 @@ impl ExactWindingEvidenceReport {
                 if self.coplanar_arrangement_evidence.is_some() {
                     return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
-                blocker_kind(
-                    Some(&self.blocker),
-                    ExactBooleanBlockerKind::Refinement,
-                )?;
+                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::Refinement)?;
                 self.blocker
                     .validate_for_kind(ExactBooleanBlockerKind::Refinement)?;
                 validate_blocker_count_bounds(
@@ -5812,10 +5802,7 @@ impl ExactWindingEvidenceReport {
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-                blocker_kind(
-                    Some(&self.blocker),
-                    ExactBooleanBlockerKind::BoundaryPolicy,
-                )?;
+                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::BoundaryPolicy)?;
                 self.blocker
                     .validate_for_kind(ExactBooleanBlockerKind::BoundaryPolicy)?;
                 validate_blocker_count_bounds(
@@ -6159,10 +6146,7 @@ impl ExactWindingEvidenceReport {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-                blocker_kind(
-                    Some(&self.blocker),
-                    ExactBooleanBlockerKind::BoundaryPolicy,
-                )?;
+                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::BoundaryPolicy)?;
                 self.blocker
                     .validate_for_kind(ExactBooleanBlockerKind::BoundaryPolicy)?;
                 validate_blocker_count_bounds(
@@ -6200,10 +6184,7 @@ impl ExactWindingEvidenceReport {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-                blocker_kind(
-                    Some(&self.blocker),
-                    ExactBooleanBlockerKind::BoundaryPolicy,
-                )?;
+                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::BoundaryPolicy)?;
                 self.blocker
                     .validate_for_kind(ExactBooleanBlockerKind::BoundaryPolicy)?;
                 validate_blocker_count_bounds(
@@ -6369,7 +6350,7 @@ mod tests {
                 points[2][2],
             ],
             &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap()
     }
@@ -6383,7 +6364,7 @@ mod tests {
             &right,
             ExactBooleanRequest::new(
                 ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
-                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
             ),
         )
         .unwrap();
@@ -6459,7 +6440,7 @@ mod tests {
             }],
         };
         let mesh = assembly
-            .to_exact_mesh(ValidationPolicy::ALLOW_BOUNDARY)
+            .to_exact_mesh(ExactMeshValidationPolicy::ALLOW_BOUNDARY)
             .unwrap();
         let result = ExactBooleanResult {
             kind: ExactBooleanResultKind::SelectedRegions {
@@ -7713,8 +7694,7 @@ mod tests {
             }],
         };
 
-        let blocker =
-            ExactBooleanBlocker::from_graph(&graph, ExactBooleanBlockerKind::Refinement);
+        let blocker = ExactBooleanBlocker::from_graph(&graph, ExactBooleanBlockerKind::Refinement);
         assert_eq!(blocker.candidate_pairs, 1);
         assert_eq!(blocker.unknown_pairs, 1);
         assert_eq!(blocker.construction_failed_events, 0);

@@ -1020,8 +1020,7 @@ pub(crate) fn validate_selected_gate_reports_against_counts(
     region_ownership_report: Option<&ExactRegionOwnershipReport>,
     counts: &SelectedCellComplexGateCounts,
 ) -> Result<(), ExactArrangementBlocker> {
-    if topology_assembly_report
-        .is_some_and(|report| !topology_report_counts_match(report, counts))
+    if topology_assembly_report.is_some_and(|report| !topology_report_counts_match(report, counts))
     {
         return Err(ExactArrangementBlocker::NonManifoldCellComplex);
     }

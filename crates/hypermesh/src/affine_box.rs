@@ -17,7 +17,7 @@ use hyperlimit::{Point3, compare_reals};
 
 use super::error::ExactMeshError;
 use super::mesh::{ExactMesh, Triangle};
-use super::validation::ValidationPolicy;
+use super::validation::ExactMeshValidationPolicy;
 use hyperlimit::SourceProvenance;
 use hyperreal::Real;
 
@@ -42,7 +42,7 @@ pub(crate) struct AffineBoxBasis {
 pub(crate) fn mesh_to_uvw(
     mesh: &ExactMesh,
     basis: &AffineBoxBasis,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
 ) -> Option<ExactMesh> {
     let vertices = mesh
         .vertices()
@@ -65,7 +65,7 @@ pub(crate) fn mesh_from_uvw(
     mesh: &ExactMesh,
     basis: &AffineBoxBasis,
     label: &'static str,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
 ) -> Result<ExactMesh, ExactMeshError> {
     let vertices = mesh
         .vertices()

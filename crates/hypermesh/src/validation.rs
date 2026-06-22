@@ -40,12 +40,12 @@ pub(crate) enum BoundaryPolicy {
 
 /// Validation policy for exact triangle meshes.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ValidationPolicy {
+pub struct ExactMeshValidationPolicy {
     /// How boundary edges are handled.
     pub(crate) boundary: BoundaryPolicy,
 }
 
-impl ValidationPolicy {
+impl ExactMeshValidationPolicy {
     /// Closed two-manifold validation.
     pub const CLOSED: Self = Self {
         boundary: BoundaryPolicy::Closed,
@@ -67,7 +67,7 @@ impl ValidationPolicy {
     }
 }
 
-impl Default for ValidationPolicy {
+impl Default for ExactMeshValidationPolicy {
     fn default() -> Self {
         Self::CLOSED
     }
@@ -84,7 +84,7 @@ pub(crate) fn validate_triangle_rows_with_policy(
     points: &[Point3],
     triangle_count: usize,
     triangles: impl IntoIterator<Item = [usize; 3]>,
-    policy: ValidationPolicy,
+    policy: ExactMeshValidationPolicy,
 ) -> ValidationReport {
     let mut blockers = Vec::new();
     let mut edges = BTreeMap::<[usize; 2], EdgeAccumulator>::new();

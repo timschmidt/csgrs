@@ -633,7 +633,7 @@ mod tests {
     use std::collections::BTreeSet;
 
     use super::*;
-    use crate::ValidationPolicy;
+    use crate::ExactMeshValidationPolicy;
     use proptest::prelude::*;
 
     const OVERSIZED_COMPONENT_FACES: usize = 33;
@@ -646,7 +646,7 @@ mod tests {
         ExactMesh::from_i64_triangles_with_policy(
             &coordinates,
             triangles,
-            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap()
     }

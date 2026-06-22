@@ -1646,12 +1646,16 @@ fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
 #[cfg(test)]
 mod tests {
     use super::super::graph::CoplanarOverlapSplitGraph;
-    use super::super::validation::ValidationPolicy;
+    use super::super::validation::ExactMeshValidationPolicy;
     use super::*;
 
     fn open_triangle_mesh(pos: &[i64]) -> ExactMesh {
-        ExactMesh::from_i64_triangles_with_policy(pos, &[0, 1, 2], ValidationPolicy::ALLOW_BOUNDARY)
-            .unwrap()
+        ExactMesh::from_i64_triangles_with_policy(
+            pos,
+            &[0, 1, 2],
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
     }
 
     fn ep(x: i64, y: i64) -> hypertri::ExactPoint {

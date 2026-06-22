@@ -147,8 +147,7 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
     assert!(disjoint_candidates.is_empty());
 
     let mut direct_pair_candidates = Vec::new();
-    left
-        .view()
+    left.view()
         .visit_candidate_face_pairs(overlapping.view(), &mut |pair| {
             direct_pair_candidates.push(pair);
         })

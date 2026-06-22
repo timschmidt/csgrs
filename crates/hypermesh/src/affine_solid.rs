@@ -21,7 +21,7 @@ use super::orthogonal_solid::{
     axis_aligned_orthogonal_solid_cell_plan, axis_aligned_orthogonal_solid_cell_selected_count,
     is_axis_aligned_orthogonal_solid, materialize_axis_aligned_orthogonal_solid_cell_plan,
 };
-use super::validation::ValidationPolicy;
+use super::validation::ExactMeshValidationPolicy;
 use core::cmp::Ordering;
 use hyperreal::Real;
 
@@ -119,7 +119,7 @@ impl AffineOrthogonalSolidArrangement {
 pub(crate) fn materialize_affine_orthogonal_solid_union(
     left: &ExactMesh,
     right: &ExactMesh,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
 ) -> Result<Option<AffineOrthogonalSolidArrangement>, ExactMeshError> {
     materialize_affine_orthogonal_solids(
         left,
@@ -133,7 +133,7 @@ pub(crate) fn materialize_affine_orthogonal_solid_union(
 pub(crate) fn materialize_affine_orthogonal_solid_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
 ) -> Result<Option<AffineOrthogonalSolidArrangement>, ExactMeshError> {
     materialize_affine_orthogonal_solids(
         left,
@@ -147,7 +147,7 @@ pub(crate) fn materialize_affine_orthogonal_solid_intersection(
 pub(crate) fn materialize_affine_orthogonal_solid_difference(
     left: &ExactMesh,
     right: &ExactMesh,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
 ) -> Result<Option<AffineOrthogonalSolidArrangement>, ExactMeshError> {
     materialize_affine_orthogonal_solids(
         left,
@@ -189,7 +189,7 @@ fn materialize_affine_orthogonal_solids(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: AffineOrthogonalSolidOperation,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
 ) -> Result<Option<AffineOrthogonalSolidArrangement>, ExactMeshError> {
     let Some(inputs) = certify_affine_orthogonal_solid_inputs(left, right, operation) else {
         return Ok(None);
@@ -197,7 +197,7 @@ fn materialize_affine_orthogonal_solids(
     let uvw_output = materialize_axis_aligned_orthogonal_solid_cell_plan(
         inputs.uvw_output_plan,
         "exact affine-normalized orthogonal solid cell boolean",
-        ValidationPolicy::CLOSED,
+        ExactMeshValidationPolicy::CLOSED,
     )?;
     let mesh = mesh_from_uvw(
         &uvw_output,
@@ -267,8 +267,8 @@ fn find_affine_orthogonal_solid_basis<T>(
             return None;
         }
         seen.push(basis.clone());
-        let left_uvw = mesh_to_uvw(left, &basis, ValidationPolicy::CLOSED)?;
-        let right_uvw = mesh_to_uvw(right, &basis, ValidationPolicy::CLOSED)?;
+        let left_uvw = mesh_to_uvw(left, &basis, ExactMeshValidationPolicy::CLOSED)?;
+        let right_uvw = mesh_to_uvw(right, &basis, ExactMeshValidationPolicy::CLOSED)?;
         accept(left_uvw, right_uvw).map(|accepted| (basis, accepted))
     };
 

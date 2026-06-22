@@ -18,7 +18,7 @@ use hyperlimit::{Point3, compare_reals};
 
 use super::error::ExactMeshError;
 use super::mesh::{ExactMesh, Triangle};
-use super::validation::ValidationPolicy;
+use super::validation::ExactMeshValidationPolicy;
 use hyperlimit::SourceProvenance;
 use hyperreal::Real;
 
@@ -196,7 +196,7 @@ pub(crate) fn axis_aligned_orthogonal_solid_cell_plan(
 pub(crate) fn materialize_axis_aligned_orthogonal_solid_cell_plan(
     plan: OrthogonalCellPlan,
     label: &'static str,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
 ) -> Result<ExactMesh, ExactMeshError> {
     plan.to_mesh(label, validation)
 }
@@ -206,7 +206,7 @@ pub(crate) fn materialize_axis_aligned_orthogonal_solid_cell_output(
     right: &ExactMesh,
     operation: AxisAlignedOrthogonalSolidOperation,
     label: &'static str,
-    validation: ValidationPolicy,
+    validation: ExactMeshValidationPolicy,
 ) -> Result<Option<ExactMesh>, ExactMeshError> {
     let Some(plan) = axis_aligned_orthogonal_solid_cell_plan(left, right, operation) else {
         return Ok(None);
@@ -872,7 +872,7 @@ impl OrthogonalCellPlan {
     fn to_mesh(
         &self,
         label: &'static str,
-        validation: ValidationPolicy,
+        validation: ExactMeshValidationPolicy,
     ) -> Result<ExactMesh, ExactMeshError> {
         if self.selected_count == 0 {
             return ExactMesh::new_with_policy(
@@ -1552,7 +1552,7 @@ mod tests {
         let mesh = materialize_axis_aligned_orthogonal_solid_cell_plan(
             plan,
             "test axis-aligned orthogonal solid cell union",
-            ValidationPolicy::CLOSED,
+            ExactMeshValidationPolicy::CLOSED,
         )
         .unwrap();
         assert!(certify_axis_aligned_orthogonal_solid(&mesh).is_some());

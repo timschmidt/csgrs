@@ -24,7 +24,7 @@ use super::graph::SplitPlanValidationReport;
 use super::graph::{ExactFaceRegionPlan, FaceSplitBoundaryNode, MeshSide};
 use super::mesh::ExactMesh;
 use super::mesh::Triangle;
-use super::validation::ValidationPolicy;
+use super::validation::ExactMeshValidationPolicy;
 use hyperlimit::CoplanarProjection;
 use hyperlimit::PredicateUse;
 use hyperlimit::SourceProvenance;
@@ -594,7 +594,7 @@ impl ExactBooleanAssemblyPlan {
     /// topology consumer treats them as mesh state.
     pub(crate) fn to_exact_mesh(
         &self,
-        policy: ValidationPolicy,
+        policy: ExactMeshValidationPolicy,
     ) -> Result<ExactMesh, super::error::ExactMeshError> {
         self.validate().map_err(assembly_validation_error)?;
         let vertices = self
@@ -632,7 +632,7 @@ impl ExactBooleanAssemblyPlan {
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
-        policy: ValidationPolicy,
+        policy: ExactMeshValidationPolicy,
     ) -> Result<ExactMesh, super::error::ExactMeshError> {
         self.validate().map_err(assembly_validation_error)?;
         self.validate_source_face_incidence(left, right)
@@ -2040,13 +2040,13 @@ mod tests {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0],
             &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
         let right = ExactMesh::from_i64_triangles_with_policy(
             &[1, -1, -1, 1, 3, 1, 1, 3, -1],
             &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
 
@@ -2135,12 +2135,15 @@ mod tests {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 2, 0, 0, 0, 2, 0],
             &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let right =
-            ExactMesh::from_i64_triangles_with_policy(&[], &[], ValidationPolicy::ALLOW_BOUNDARY)
-                .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[],
+            &[],
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
 
         let assembly = ExactBooleanAssemblyPlan {
             vertices: vec![
@@ -2178,12 +2181,15 @@ mod tests {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 2, 0, 0, 0, 2, 0],
             &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let right =
-            ExactMesh::from_i64_triangles_with_policy(&[], &[], ValidationPolicy::ALLOW_BOUNDARY)
-                .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[],
+            &[],
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
 
         let mut assembly = ExactBooleanAssemblyPlan {
             vertices: vec![
@@ -2238,7 +2244,11 @@ mod tests {
         assert_eq!(triangle_sets, vec![[0, 2, 3], [1, 2, 3]]);
 
         let mesh = assembly
-            .checked_to_exact_mesh_with_sources(&left, &right, ValidationPolicy::ALLOW_BOUNDARY)
+            .checked_to_exact_mesh_with_sources(
+                &left,
+                &right,
+                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            )
             .unwrap();
         assert_eq!(mesh.triangles().len(), 2);
         assert_eq!(mesh.facts().mesh.boundary_edges, 4);

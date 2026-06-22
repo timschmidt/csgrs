@@ -60,5 +60,5 @@ pub use arrangement3d::{
 };
 pub use error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 pub use mesh::{ExactAffineTransform3, ExactMesh, ExactMeshValidationError, Triangle};
-pub use validation::ValidationPolicy;
+pub use validation::ExactMeshValidationPolicy;
 pub use view::{EdgeRef, ExactMeshRef, FaceRef, MeshView, PreparedMeshView, TriangleRef};

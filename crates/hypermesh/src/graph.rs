@@ -4026,7 +4026,7 @@ mod tests {
     use super::*;
     use crate::mesh::ExactMesh;
     use crate::region::FaceRegionPlaneRelation;
-    use crate::validation::ValidationPolicy;
+    use crate::validation::ExactMeshValidationPolicy;
 
     fn q(numerator: i64, denominator: i64) -> Real {
         (Real::from(numerator) / &Real::from(denominator)).expect("nonzero denominator")
@@ -4059,19 +4059,19 @@ mod tests {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0],
             &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
         let right = ExactMesh::from_i64_triangles_with_policy(
             &[1, -1, -1, 1, 3, 1, 1, 3, -1],
             &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
         let stale_right = ExactMesh::from_i64_triangles_with_policy(
             &[8, -1, -1, 8, 3, 1, 8, 3, -1],
             &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
         let graph = build_intersection_graph(&left, &right).unwrap();
@@ -4177,13 +4177,13 @@ mod tests {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 2, 0, 0, 0, 2, 0, 9, 9, 9],
             &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
         let right = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 1, 0, 0, 0, 1, 0, -9, -9, -9],
             &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
 
@@ -4231,7 +4231,7 @@ mod tests {
         let separated_right = ExactMesh::from_i64_triangles_with_policy(
             &[9, 0, 0, 10, 0, 0, 9, 1, 0, -9, -9, -9],
             &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
         assert!(
@@ -4246,13 +4246,13 @@ mod tests {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0],
             &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
         let right = ExactMesh::from_i64_triangles_with_policy(
             &[1, -1, -1, 1, 3, 1, 1, 3, -1],
             &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
 
@@ -4287,7 +4287,7 @@ mod tests {
         let separated_right = ExactMesh::from_i64_triangles_with_policy(
             &[9, -1, -1, 9, 3, 1, 9, 3, -1],
             &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
         assert!(

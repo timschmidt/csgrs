@@ -27,7 +27,7 @@ use super::loop_triangulation::{
 };
 use super::mesh::{ExactMesh, Triangle};
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
-use super::validation::ValidationPolicy;
+use super::validation::ExactMeshValidationPolicy;
 use hyperlimit::CoplanarProjection;
 use hyperlimit::SourceProvenance;
 use hyperlimit::{
@@ -1175,7 +1175,7 @@ fn triangulate_simplified_cell_complex(
         vertices,
         triangles,
         SourceProvenance::exact("exact simplified arrangement cell complex"),
-        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)
 }
