@@ -536,6 +536,35 @@ impl<'a> PreparedMeshBounds<'a> {
         let Some(right_order) = other.min_axis_order(axis) else {
             return Ok(false);
         };
+        if should_use_sparse_sweep(active_face_capacity_hint, other.bounds.faces.len()) {
+            return self.try_visit_candidate_face_pairs_sparse_sweep_axis(
+                other,
+                axis,
+                active_face_capacity_hint,
+                left_order,
+                right_order,
+                visit,
+            );
+        }
+        self.try_visit_candidate_face_pairs_marked_sweep_axis(
+            other,
+            axis,
+            active_face_capacity_hint,
+            left_order,
+            right_order,
+            visit,
+        )
+    }
+
+    fn try_visit_candidate_face_pairs_marked_sweep_axis<E>(
+        &self,
+        other: &PreparedMeshBounds<'_>,
+        axis: Axis,
+        active_face_capacity_hint: usize,
+        left_order: &[usize],
+        right_order: &[usize],
+        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<bool, E> {
         let Some(right_max_order) = other.max_axis_order(axis) else {
             return Ok(false);
         };
@@ -591,6 +620,71 @@ impl<'a> PreparedMeshBounds<'a> {
                 if right_active[right] == 0 {
                     continue;
                 }
+                let right_interval = other.axis_interval(axis, right);
+                let Some(ordering) = compare(right_interval.min, left_interval.max) else {
+                    return Ok(false);
+                };
+                if ordering == Ordering::Greater {
+                    break;
+                }
+                let pair = [left, right];
+                if self.full_aabb_may_overlap_on_remaining_axes(other, pair, axis) {
+                    visit(pair)?;
+                }
+            }
+        }
+
+        Ok(true)
+    }
+
+    fn try_visit_candidate_face_pairs_sparse_sweep_axis<E>(
+        &self,
+        other: &PreparedMeshBounds<'_>,
+        axis: Axis,
+        active_face_capacity_hint: usize,
+        left_order: &[usize],
+        right_order: &[usize],
+        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<bool, E> {
+        let active_right_capacity = active_face_capacity_hint.min(other.bounds.faces.len());
+        let mut active_right = Vec::<usize>::with_capacity(active_right_capacity);
+        let mut next_right = 0usize;
+
+        for &left in left_order {
+            let left_interval = self.axis_interval(axis, left);
+            let mut retained = 0usize;
+            for read in 0..active_right.len() {
+                let right = active_right[read];
+                let Some(ordering) =
+                    compare(other.axis_interval(axis, right).max, left_interval.min)
+                else {
+                    return Ok(false);
+                };
+                if ordering != Ordering::Less {
+                    active_right[retained] = right;
+                    retained += 1;
+                }
+            }
+            active_right.truncate(retained);
+
+            while let Some(&right) = right_order.get(next_right) {
+                let right_interval = other.axis_interval(axis, right);
+                let Some(ordering) = compare(right_interval.min, left_interval.max) else {
+                    return Ok(false);
+                };
+                if ordering == Ordering::Greater {
+                    break;
+                }
+                let Some(ordering) = compare(right_interval.max, left_interval.min) else {
+                    return Ok(false);
+                };
+                if ordering != Ordering::Less {
+                    active_right.push(right);
+                }
+                next_right += 1;
+            }
+
+            for &right in &active_right {
                 let right_interval = other.axis_interval(axis, right);
                 let Some(ordering) = compare(right_interval.min, left_interval.max) else {
                     return Ok(false);
@@ -779,6 +873,13 @@ fn upper_bound_axis_bound(
         }
     }
     Some(start)
+}
+
+const fn should_use_sparse_sweep(
+    active_face_capacity_hint: usize,
+    target_face_count: usize,
+) -> bool {
+    active_face_capacity_hint.saturating_mul(4) < target_face_count
 }
 
 fn axis_intervals_may_overlap(left: FaceAxisInterval<'_>, right: FaceAxisInterval<'_>) -> bool {
@@ -1017,7 +1118,7 @@ mod tests {
     fn prepared_sweep_capacity_hint_tracks_peak_active_targets() {
         let mut left_points = Vec::new();
         let mut left_triangles = Vec::new();
-        for face in 0..4 {
+        for face in 0..5 {
             let base = left_points.len();
             let x = face as i64 * 10;
             left_points.extend([p(x, 0, 0), p(x + 2, 0, 0), p(x, 1, 0)]);
@@ -1026,7 +1127,7 @@ mod tests {
 
         let mut right_points = Vec::new();
         let mut right_triangles = Vec::new();
-        for face in 0..4 {
+        for face in 0..5 {
             let base = right_points.len();
             let x = face as i64 * 10 + 1;
             right_points.extend([p(x, 0, 0), p(x + 1, 0, 0), p(x, 1, 0)]);
@@ -1041,8 +1142,12 @@ mod tests {
             .axis_interval_overlap_estimate(&prepared_right, Axis::X)
             .unwrap();
 
-        assert_eq!(estimate.pair_count, 4);
+        assert_eq!(estimate.pair_count, 5);
         assert_eq!(estimate.max_target_active, 1);
+        assert!(should_use_sparse_sweep(
+            estimate.max_target_active,
+            prepared_right.bounds.faces.len()
+        ));
 
         let CandidateFacePairPlan::Sweep {
             active_face_capacity_hint,
@@ -1062,6 +1167,13 @@ mod tests {
                 &prepared_right
             ))
         );
+    }
+
+    #[test]
+    fn prepared_sweep_keeps_marker_path_for_dense_active_targets() {
+        assert!(!should_use_sparse_sweep(3, 12));
+        assert!(!should_use_sparse_sweep(8, 12));
+        assert!(should_use_sparse_sweep(2, 12));
     }
 
     #[test]
