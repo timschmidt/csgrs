@@ -216,12 +216,13 @@ impl ExactMesh {
         })
     }
 
-    /// Construct an exact mesh from flat primitive-float coordinates.
+    /// Import an exact mesh from flat primitive-float coordinates.
     ///
     /// The `f64` values are checked for finiteness and imported as exact dyadic
-    /// `Real` values. They are not used later as tolerance-bearing floats.
-    pub fn from_f64_triangles(pos: &[f64], idx: &[usize]) -> Result<Self, ExactMeshError> {
-        Self::from_f64_triangles_with_policy(pos, idx, ValidationPolicy::CLOSED)
+    /// `Real` values with lossy source provenance. They are not used later as
+    /// tolerance-bearing floats.
+    pub fn from_lossy_f64_triangles(pos: &[f64], idx: &[usize]) -> Result<Self, ExactMeshError> {
+        Self::from_lossy_f64_triangles_with_policy(pos, idx, ValidationPolicy::CLOSED)
     }
 
     /// Construct an exact mesh from flat hyperreal coordinates.
@@ -251,9 +252,9 @@ impl ExactMesh {
         )
     }
 
-    /// Construct an exact mesh from flat primitive-float coordinates with an
-    /// explicit validation policy.
-    pub fn from_f64_triangles_with_policy(
+    /// Import an exact mesh from flat primitive-float coordinates with an
+    /// explicit validation policy and lossy source provenance.
+    pub fn from_lossy_f64_triangles_with_policy(
         pos: &[f64],
         idx: &[usize],
         policy: ValidationPolicy,

@@ -55,10 +55,11 @@ kernel internals unless a borrowed view is needed for exact query reuse.
 
 ## Precision Model
 
-Geometry is stored as `hyperreal::Real`. Finite `f64` coordinates can be
-imported by dyadic lifting with lossy import policy recorded explicitly;
-integer-grid input is lifted directly into exact `Real` values. Retained face
-planes keep unnormalized determinant coefficients instead of unit normals.
+Geometry is stored as `hyperreal::Real`. Finite `f64` coordinates enter through
+`ExactMesh::from_lossy_f64_triangles`, which imports by dyadic lifting with
+lossy provenance recorded explicitly; integer-grid input is lifted directly into
+exact `Real` values. Retained face planes keep unnormalized determinant
+coefficients instead of unit normals.
 
 Exact predicates and replayable facts are the source of topology decisions.
 Unresolved coplanar, boundary, winding, or construction state is returned as a
