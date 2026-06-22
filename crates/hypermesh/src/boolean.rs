@@ -5114,13 +5114,6 @@ fn materialize_boolean_exact_request_with_graph(
             return Ok(result);
         }
     }
-    if closed_validation_regularized_solid_support(left, right, operation, validation).is_some()
-        && let Some(result) = boolean_closed_regularized_lower_dimensional_optional(
-            left, right, operation, validation,
-        )?
-    {
-        return Ok(result);
-    }
     if left.triangles().is_empty() || right.triangles().is_empty() {
         return boolean_empty_operand(left, right, operation, validation);
     }

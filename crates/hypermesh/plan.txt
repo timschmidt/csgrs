@@ -203,5 +203,5 @@ Definition of done
 - The default crate root no longer exports workspace-level boolean policy, handoff packages, readiness, proposal, or broad public report APIs.
 - Borrowed mesh/face/triangle/arrangement views exist and are preferred for queries.
 - Exact facts and acceleration structures replay against source objects before use.
-- csgrs can still perform named booleans by ExactMesh.union(ExactMesh); or difference, intersection, xor, or the borrowed equivalents and all other functions required by the CSG trait.
+- csgrs can still perform named booleans by ExactMesh.union(ExactMesh); or difference, intersection, xor, transform, inverse, or the borrowed equivalents and all other functions required by the CSG trait.
 - Every exact algorithm returns a decided value or a typed useful blocker with retained provenance.

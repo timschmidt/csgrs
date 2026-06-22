@@ -186,8 +186,8 @@ impl ExactMeshAuditReport {
     ///
     /// This is a local guard for copied audit summaries. It cannot prove that
     /// the audit is fresh for a specific [`ExactMesh`], but it rejects
-    /// impossible retained facts before downstream handoff and package reports
-    /// derive readiness from them.
+    /// impossible retained facts before downstream crates derive policy from
+    /// them.
     pub fn validate(&self) -> Result<(), ExactMeshAuditError> {
         if self.source_label.trim().is_empty() {
             return Err(ExactMeshAuditError::EmptySourceLabel);

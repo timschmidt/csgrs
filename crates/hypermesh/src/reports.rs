@@ -1,11 +1,9 @@
 //! Auditable exact boolean reports.
 //!
-//! These types are the public evidence objects produced by the exact boolean
-//! staging layer. They intentionally carry graph counts, predicate
-//! certificates, and checked handoff artifacts instead of collapsing exact
-//! topology decisions to `bool`. Callers can inspect whether a combinatorial
-//! decision was certified, unsupported, or blocked on an application-level
-//! policy.
+//! These types are internal evidence objects produced by the exact boolean
+//! staging layer. They carry graph counts, predicate certificates, and checked
+//! kernel artifacts instead of collapsing exact topology decisions to `bool`.
+//! Downstream policy layers should consume narrower borrowed kernel views.
 
 use hyperlimit::{
     ApproximationPolicy, MeshSource, Point3, TriangleLocation, classify_point_triangle,
