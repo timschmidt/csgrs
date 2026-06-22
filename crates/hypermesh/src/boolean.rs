@@ -73,7 +73,7 @@ use super::region::{
     checked_triangulate_face_regions_with_earcut, choose_region_projection,
 };
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
-pub use super::reports::ExactBooleanResult;
+pub(crate) use super::reports::ExactBooleanResult;
 use super::reports::{
     ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus, ExactBooleanBlocker,
     ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResultKind,
@@ -835,7 +835,7 @@ fn retained_arrangement_attempt_for_request<'a>(
 /// return [`DiagnosticKind::UnsupportedExactOperation`] until split-region
 /// inside/outside classification is complete.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactBooleanOperation {
+pub(crate) enum ExactBooleanOperation {
     /// Assemble explicitly selected source-side split regions.
     SelectedRegions(ExactRegionSelection),
     /// Exact union through the graph-backed arrangement/cell-complex path.
@@ -854,7 +854,7 @@ pub enum ExactBooleanOperation {
 /// triangle-mesh-only result that preserves separate shells and discards
 /// lower-dimensional intersection geometry.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactBoundaryBooleanPolicy {
+pub(crate) enum ExactBoundaryBooleanPolicy {
     /// Reject boundary-only named booleans until a caller chooses a projection
     /// policy.
     Reject,
@@ -869,7 +869,7 @@ pub enum ExactBoundaryBooleanPolicy {
 /// lower-dimensional boundary projection policy together so preflight,
 /// certification, and materialization replay the same exact contract.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ExactBooleanRequest {
+pub(crate) struct ExactBooleanRequest {
     /// Named or selected-region operation to evaluate.
     pub(crate) operation: ExactBooleanOperation,
     /// Output mesh validation policy.
@@ -887,7 +887,10 @@ impl ExactBooleanRequest {
     /// mesh for lower-dimensional contact. Call
     /// [`Self::with_boundary_policy`] with [`ExactBoundaryBooleanPolicy::Reject`]
     /// when a caller wants to retain that state as an explicit blocker.
-    pub const fn new(operation: ExactBooleanOperation, validation: ValidationPolicy) -> Self {
+    pub(crate) const fn new(
+        operation: ExactBooleanOperation,
+        validation: ValidationPolicy,
+    ) -> Self {
         Self {
             operation,
             validation,
@@ -896,7 +899,7 @@ impl ExactBooleanRequest {
     }
 
     /// Creates a request with an explicit boundary projection policy.
-    pub const fn with_boundary_policy(
+    pub(crate) const fn with_boundary_policy(
         operation: ExactBooleanOperation,
         validation: ValidationPolicy,
         boundary_policy: ExactBoundaryBooleanPolicy,
@@ -2338,7 +2341,7 @@ impl ExactTrivialBooleanFacts {
 /// blocker/provenance facts instead of collapsing the request to an
 /// approximate or prose-only error.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactBooleanEvaluation {
+pub(crate) struct ExactBooleanEvaluation {
     /// Request policy evaluated.
     request: ExactBooleanRequest,
     /// Exact preflight/scheduling result.
@@ -2395,7 +2398,7 @@ impl ExactBooleanEvaluation {
     /// Return the materialized result retained by this evaluation, when the
     /// request reached a certified output.
     #[cfg(test)]
-    pub fn materialized_result(&self) -> Option<&ExactBooleanResult> {
+    pub(crate) fn materialized_result(&self) -> Option<&ExactBooleanResult> {
         self.result.as_ref()
     }
 
@@ -2405,7 +2408,7 @@ impl ExactBooleanEvaluation {
     }
 
     /// Validate the retained evaluation shape without replaying sources.
-    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
         if self.preflight.operation != self.request.operation {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
@@ -2445,7 +2448,7 @@ impl ExactBooleanEvaluation {
 
     /// Validate the retained evaluation by replaying all source-bound reports
     /// and the materialized result under the original request policy.
-    pub fn validate_against_sources(
+    pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,

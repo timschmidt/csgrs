@@ -87,7 +87,7 @@ use hyperlimit::PredicateUse;
 /// status, blocker kind, graph counts, and retained artifacts agree before
 /// metadata consistency part of the certified boundary.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ExactReportValidationError {
+pub(crate) enum ExactReportValidationError {
     /// A certified shortcut report unexpectedly carried a blocker.
     CertifiedReportHasBlocker,
     /// A blocked or unresolved report did not carry the required blocker.
@@ -677,7 +677,7 @@ fn validate_arrangement_materialized_coplanar_evidence(
 
 /// Auditable result of an exact selected-region boolean pipeline.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactBooleanResult {
+pub(crate) struct ExactBooleanResult {
     /// Declared production path for this result.
     pub(crate) kind: ExactBooleanResultKind,
     /// Whether graph extraction contained unknown events before policy checks.
@@ -1103,7 +1103,7 @@ impl ExactBooleanResult {
     /// boundary. The retained assembly must also avoid dead vertices so the
     /// topology handoff is the exact set consumed by mesh materialization. That
     /// rather than an opaque output mesh.
-    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
         let retains_region_artifacts = matches!(
             self.kind,
             ExactBooleanResultKind::SelectedRegions { .. }
@@ -1491,7 +1491,7 @@ impl ExactBooleanResult {
     /// `source_face` labels. That source-aware replay is the executable form of
     /// topology must remain tied to the geometric objects and predicate facts
     /// that produced it, not just to a locally consistent output mesh.
-    pub fn validate_against_sources(
+    pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,

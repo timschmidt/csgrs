@@ -26,7 +26,7 @@ use super::validation::ValidationPolicy;
 /// artifacts. It does not weaken freshness: every artifact is still built from
 /// the same retained source objects and can be validated against those sources.
 #[derive(Debug)]
-pub struct ExactBooleanWorkspace<'a> {
+pub(crate) struct ExactBooleanWorkspace<'a> {
     left: &'a ExactMesh,
     right: &'a ExactMesh,
     source_facts: Option<ExactBooleanSourceFacts>,
@@ -44,7 +44,7 @@ pub struct ExactBooleanWorkspace<'a> {
 
 impl<'a> ExactBooleanWorkspace<'a> {
     /// Creates an empty exact workspace for a fixed left/right mesh pair.
-    pub fn new(left: &'a ExactMesh, right: &'a ExactMesh) -> Self {
+    pub(crate) fn new(left: &'a ExactMesh, right: &'a ExactMesh) -> Self {
         Self {
             left,
             right,
@@ -339,7 +339,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
 
     /// Returns an exact boolean evaluation for `request`, building it once per
     /// request.
-    pub fn evaluate(
+    pub(crate) fn evaluate(
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactBooleanEvaluation, MeshError> {
@@ -451,7 +451,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
     /// This is the public materialization path so callers consume the retained
     /// replay cache tied to this workspace session.
     #[cfg(test)]
-    pub fn materialize_ref(
+    pub(crate) fn materialize_ref(
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactBooleanResult, MeshError> {
