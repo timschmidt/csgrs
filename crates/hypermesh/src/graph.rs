@@ -935,10 +935,26 @@ impl ExactIntersectionGraph {
 
     /// Return grouped coplanar overlap graphs for retained coplanar face pairs.
     pub fn coplanar_overlap_graphs(&self) -> Vec<CoplanarOverlapGraph> {
+        let mut graphs = Vec::with_capacity(self.coplanar_overlap_graph_count_hint());
+        for pair in &self.face_pairs {
+            if let Some(graph) = pair.coplanar_overlap_graph() {
+                graphs.push(graph);
+            }
+        }
+        graphs
+    }
+
+    fn coplanar_overlap_graph_count_hint(&self) -> usize {
         self.face_pairs
             .iter()
-            .filter_map(FacePairEvents::coplanar_overlap_graph)
-            .collect()
+            .filter(|pair| {
+                matches!(
+                    pair.relation,
+                    MeshFacePairRelation::CoplanarTouching
+                        | MeshFacePairRelation::CoplanarOverlapping
+                )
+            })
+            .count()
     }
 
     /// Construct exact split-point/interval records for coplanar overlap graphs.
@@ -947,12 +963,14 @@ impl ExactIntersectionGraph {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<CoplanarOverlapSplitPlan, MeshError> {
-        let graphs = self
-            .coplanar_overlap_graphs()
-            .iter()
-            .map(|graph| graph.split_constructions(left, right))
-            .collect::<Result<Vec<_>, _>>()?;
-        Ok(CoplanarOverlapSplitPlan { graphs })
+        let overlap_graphs = self.coplanar_overlap_graphs();
+        let mut split_graphs = Vec::with_capacity(overlap_graphs.len());
+        for graph in &overlap_graphs {
+            split_graphs.push(graph.split_constructions(left, right)?);
+        }
+        Ok(CoplanarOverlapSplitPlan {
+            graphs: split_graphs,
+        })
     }
 
     /// Summarize retained coplanar overlap evidence for planar-cell extraction.
@@ -4204,6 +4222,7 @@ mod tests {
         assert!(retained_pair.has_constructive_events());
 
         let overlap = graph.coplanar_overlap_graphs().pop().unwrap();
+        assert!(graph.coplanar_overlap_graph_count_hint() >= graph.coplanar_overlap_graphs().len());
         overlap.validate_against_sources(&left, &right).unwrap();
         let mut invalid_overlap = overlap.clone();
         invalid_overlap.edge_overlaps.clear();
