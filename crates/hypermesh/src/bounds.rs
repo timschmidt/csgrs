@@ -456,15 +456,15 @@ impl<'a> PreparedMeshBounds<'a> {
             }
 
             for &right in &active_right {
+                if right_active[right] == 0 {
+                    continue;
+                }
                 let right_interval = other.axis_interval(axis, right);
                 let Some(ordering) = compare(right_interval.min, left_interval.max) else {
                     return Ok(false);
                 };
                 if ordering == Ordering::Greater {
                     break;
-                }
-                if right_active[right] == 0 {
-                    continue;
                 }
                 let pair = [left, right];
                 if self.full_aabb_may_overlap_on_remaining_axes(other, pair, axis) {
