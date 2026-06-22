@@ -28,7 +28,7 @@ use hyperreal::Real;
 
 /// Certified coarse relation between two exact triangles.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum TriangleTriangleRelation {
+pub(crate) enum TriangleTriangleRelation {
     /// The second triangle lies strictly on one side of the first triangle's
     /// plane.
     SeparatedByFirstPlane,
@@ -57,19 +57,19 @@ pub enum TriangleTriangleRelation {
 /// `hyperlimit::orient3d_report` and keeps the segment/plane construction
 /// events needed by the later exact splitter.
 #[derive(Clone, Debug, PartialEq)]
-pub struct TriangleTriangleClassification {
+pub(crate) struct TriangleTriangleClassification {
     /// Coarse relation.
-    pub relation: TriangleTriangleRelation,
+    pub(crate) relation: TriangleTriangleRelation,
     /// Classification of the right triangle against the left triangle's plane.
-    pub right_against_left_plane: TrianglePlaneClassification,
+    pub(crate) right_against_left_plane: TrianglePlaneClassification,
     /// Classification of the left triangle against the right triangle's plane.
-    pub left_against_right_plane: TrianglePlaneClassification,
+    pub(crate) left_against_right_plane: TrianglePlaneClassification,
     /// Right-triangle edge events against the left plane.
-    pub right_edge_events: Option<[SegmentPlaneIntersection; 3]>,
+    pub(crate) right_edge_events: Option<[SegmentPlaneIntersection; 3]>,
     /// Left-triangle edge events against the right plane.
-    pub left_edge_events: Option<[SegmentPlaneIntersection; 3]>,
+    pub(crate) left_edge_events: Option<[SegmentPlaneIntersection; 3]>,
     /// Exact projected overlap result for coplanar pairs.
-    pub coplanar: Option<CoplanarTriangleClassification>,
+    pub(crate) coplanar: Option<CoplanarTriangleClassification>,
 }
 
 /// Classify a query triangle against an oriented face plane.

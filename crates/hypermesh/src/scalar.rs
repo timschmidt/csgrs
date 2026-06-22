@@ -9,11 +9,9 @@ use hyperreal::Real;
 
 /// A checked primitive-float import into [`hyperreal::Real`].
 #[derive(Clone, Debug, PartialEq)]
-pub struct LossyF64Import {
+pub(crate) struct LossyF64Import {
     /// Exact dyadic value stored by `hyperreal`.
-    pub value: Real,
-    /// Original primitive-float bit pattern supplied by the caller.
-    pub original_bits: u64,
+    pub(crate) value: Real,
 }
 
 impl LossyF64Import {
@@ -23,7 +21,7 @@ impl LossyF64Import {
     /// was a primitive float. Once accepted, the stored `Real` exactly
     /// represents that dyadic value and predicate code must not re-consult
     /// primitive-float tolerances.
-    pub fn new(value: f64, coordinate_index: usize) -> Result<Self, ExactMeshBlocker> {
+    pub(crate) fn new(value: f64, coordinate_index: usize) -> Result<Self, ExactMeshBlocker> {
         if !value.is_finite() {
             return Err(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::NonFiniteCoordinate,
@@ -40,9 +38,6 @@ impl LossyF64Import {
             .with_coordinate(coordinate_index)
         })?;
 
-        Ok(Self {
-            value: real,
-            original_bits: value.to_bits(),
-        })
+        Ok(Self { value: real })
     }
 }

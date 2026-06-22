@@ -27,7 +27,7 @@ use super::witness::{
 /// Exact relation between one triangulated split cell and the opposite closed
 /// mesh.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactVolumetricRegionRelation {
+pub(crate) enum ExactVolumetricRegionRelation {
     /// The opposite mesh was not a closed two-manifold.
     NotClosed,
     /// The region representative was certified strictly inside the opposite
@@ -44,7 +44,7 @@ pub enum ExactVolumetricRegionRelation {
 impl ExactVolumetricRegionRelation {
     /// Return whether this relation can directly drive named volumetric
     /// union/intersection/difference assembly.
-    pub const fn is_strictly_decided(self) -> bool {
+    pub(crate) const fn is_strictly_decided(self) -> bool {
         matches!(self, Self::Inside | Self::Outside)
     }
 
@@ -56,25 +56,25 @@ impl ExactVolumetricRegionRelation {
     /// source cell replayed to the opposite closed mesh boundary. The boolean
     /// pipeline may consume that state only through an explicit topology
     /// policy; it must not relabel it as inside/outside.
-    pub const fn is_materialization_decided(self) -> bool {
+    pub(crate) const fn is_materialization_decided(self) -> bool {
         matches!(self, Self::Inside | Self::Outside | Self::Boundary)
     }
 }
 
 /// Retained winding evidence for one triangulated split cell.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactVolumetricRegionClassification {
+pub(crate) struct ExactVolumetricRegionClassification {
     /// Mesh side owning the split source face.
-    pub region_side: MeshSide,
+    pub(crate) region_side: MeshSide,
     /// Source face index on [`Self::region_side`].
-    pub region_face: usize,
+    pub(crate) region_face: usize,
     /// Triangle indices into the retained [`FaceRegionTriangulation`] that
     /// produced [`Self::representative`].
     ///
     /// A single source face can be divided by several exact intersection
     /// segments. Retaining the local triangle handles makes the winding
     /// decision a per-cell certificate instead of a face-wide approximation,
-    pub triangle: [usize; 3],
+    pub(crate) triangle: [usize; 3],
     /// Exact interior representative point used for winding parity.
     ///
     /// The classifier records the first deterministic barycentric witness that
@@ -82,17 +82,16 @@ pub struct ExactVolumetricRegionClassification {
     /// boundary/unknown witness only when every candidate remains non-strict.
     /// This avoids treating an unlucky centroid-on-boundary event as a
     /// semantic blocker while keeping the chosen point replayable.
-    pub representative: Point3,
+    pub(crate) representative: Point3,
     /// Exact barycentric witness that produced [`Self::representative`].
     ///
     /// Retaining the integer weights keeps the representative tied to the
-    /// source triangle rather than to an opaque coordinate. Replaying those
-    /// itself auditable.
-    pub representative_witness: ExactTriangleInteriorWitness,
+    /// source triangle rather than to an opaque coordinate.
+    pub(crate) representative_witness: ExactTriangleInteriorWitness,
     /// Relation derived from [`Self::winding`].
-    pub relation: ExactVolumetricRegionRelation,
+    pub(crate) relation: ExactVolumetricRegionRelation,
     /// Exact closed-mesh ray-parity report for [`Self::representative`].
-    pub winding: PointMeshWindingReport,
+    pub(crate) winding: PointMeshWindingReport,
     /// Ordered exact witness attempts that justify the retained
     /// representative.
     ///
@@ -100,8 +99,7 @@ pub struct ExactVolumetricRegionClassification {
     /// retry up to the first strict witness. Boundary/unknown classifications
     /// retain the full deterministic witness lattice, proving that no hidden
     /// perturbation was used after all exact candidates remained non-strict.
-    /// carries replayable failed exact attempts instead of only a status bit.
-    pub witness_attempts: Vec<ExactVolumetricWitnessAttempt>,
+    pub(crate) witness_attempts: Vec<ExactVolumetricWitnessAttempt>,
 }
 
 /// One exact barycentric representative tried for a volumetric cell.
@@ -112,15 +110,15 @@ pub struct ExactVolumetricRegionClassification {
 /// classification is non-strict, the caller can distinguish "one sample was
 /// boundary" from "the deterministic exact witness lattice was exhausted."
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactVolumetricWitnessAttempt {
+pub(crate) struct ExactVolumetricWitnessAttempt {
     /// Exact barycentric witness used for this attempt.
-    pub witness: ExactTriangleInteriorWitness,
+    pub(crate) witness: ExactTriangleInteriorWitness,
     /// Exact representative point materialized from [`Self::witness`].
-    pub representative: Point3,
+    pub(crate) representative: Point3,
     /// Relation derived from [`Self::winding`].
-    pub relation: ExactVolumetricRegionRelation,
+    pub(crate) relation: ExactVolumetricRegionRelation,
     /// Exact closed-mesh ray-parity report for [`Self::representative`].
-    pub winding: PointMeshWindingReport,
+    pub(crate) winding: PointMeshWindingReport,
 }
 
 impl ExactVolumetricRegionClassification {
@@ -130,9 +128,8 @@ impl ExactVolumetricRegionClassification {
     /// The representative is not a free coordinate: source replay recomputes it
     /// from a retained triangulation. This local audit checks the part that can
     /// be verified without the source mesh, namely that the relation mirrors
-    /// the retained exact winding report and that the winding report is itself
-    /// local certificate shape and source-object replay are both explicit.
-    pub fn validate(&self) -> Result<(), ExactVolumetricRegionError> {
+    /// the retained exact winding report and that the winding report is valid.
+    pub(crate) fn validate(&self) -> Result<(), ExactVolumetricRegionError> {
         self.representative_witness
             .validate()
             .map_err(ExactVolumetricRegionError::InvalidRepresentativeWitness)?;
@@ -148,7 +145,7 @@ impl ExactVolumetricRegionClassification {
 
     /// Validate retained representative points against the retained
     /// triangulation cell without replaying the opposite source mesh.
-    pub fn validate_representatives_against_triangulation(
+    pub(crate) fn validate_representatives_against_triangulation(
         &self,
         triangulation: &FaceRegionTriangulation,
     ) -> Result<(), ExactVolumetricRegionError> {
@@ -181,7 +178,7 @@ impl ExactVolumetricRegionClassification {
 
     /// Validate this classification by recomputing it from the retained
     /// triangulation cell and target mesh.
-    pub fn validate_against_sources(
+    pub(crate) fn validate_against_sources(
         &self,
         triangulation: &FaceRegionTriangulation,
         target: &ExactMesh,
@@ -202,7 +199,7 @@ impl ExactVolumetricRegionClassification {
 
 /// Validation or source-replay failure for volumetric region classifications.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactVolumetricRegionError {
+pub(crate) enum ExactVolumetricRegionError {
     /// The retained triangulation did not pass its exact handoff audit.
     InvalidTriangulation,
     /// The triangulation produced no output triangle from which to choose an
@@ -240,9 +237,8 @@ pub enum ExactVolumetricRegionError {
 /// representatives are the necessary semantic unit once a source face has been
 /// subdivided by constrained intersection segments; using one sample for the
 /// entire face would make inside/outside topology depend on an arbitrary
-/// triangulator order. Retrying with retained exact interior witnesses follows
-/// representational accident such as "centroid is on the boundary" should not
-/// force an approximate perturbation.
+/// triangulator order. Retained exact interior witnesses avoid approximate
+/// perturbation when the centroid lies on the boundary.
 pub(crate) fn classify_triangulated_region_triangle_against_closed_mesh(
     triangulation: &FaceRegionTriangulation,
     triangle: [usize; 3],

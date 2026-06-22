@@ -4,9 +4,8 @@
 //! retained source-face cell but still replayable from exact source geometry.
 //! This module keeps that policy as data: each witness is an exact positive
 //! barycentric combination of the cell triangle vertices. The classifier tries
-//! the centroid first, then a fixed lattice of rational interior points. That
-//! explicit, while the pipeline is allowed to try another exact object
-//! representation before declaring the cell undecided.
+//! the centroid first, then a fixed lattice of rational interior points before
+//! declaring the cell undecided.
 
 use hyperlimit::Point3;
 
@@ -19,13 +18,13 @@ use hyperreal::Real;
 /// source vertices. All production witnesses are strict interior points:
 /// every weight is positive and the denominator is exactly the weight sum.
 /// Keeping that certificate next to the winding result makes the sample choice
-/// implicit perturbation rule.
+/// replayable without implicit perturbation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ExactTriangleInteriorWitness {
+pub(crate) struct ExactTriangleInteriorWitness {
     /// Positive barycentric weights for the three triangle vertices.
-    pub weights: [i64; 3],
+    pub(crate) weights: [i64; 3],
     /// Sum of [`Self::weights`].
-    pub denominator: i64,
+    pub(crate) denominator: i64,
 }
 
 impl ExactTriangleInteriorWitness {
@@ -34,7 +33,7 @@ impl ExactTriangleInteriorWitness {
     /// This constructor is intentionally `const` for the built-in retry
     /// lattice. Runtime callers should still use [`Self::validate`] before
     /// accepting externally supplied witness data.
-    pub const fn new(weights: [i64; 3]) -> Self {
+    pub(crate) const fn new(weights: [i64; 3]) -> Self {
         let denominator = match weights[0].checked_add(weights[1]) {
             Some(partial) => match partial.checked_add(weights[2]) {
                 Some(sum) => sum,
@@ -49,7 +48,7 @@ impl ExactTriangleInteriorWitness {
     }
 
     /// Return whether the witness is a strict positive barycentric point.
-    pub const fn is_strict_interior(self) -> bool {
+    pub(crate) const fn is_strict_interior(self) -> bool {
         self.denominator > 0
             && self.weights[0] > 0
             && self.weights[1] > 0
@@ -64,7 +63,7 @@ impl ExactTriangleInteriorWitness {
     }
 
     /// Validate the retained witness shape.
-    pub fn validate(self) -> Result<(), ExactTriangleInteriorWitnessError> {
+    pub(crate) fn validate(self) -> Result<(), ExactTriangleInteriorWitnessError> {
         if self.is_strict_interior() {
             Ok(())
         } else {
@@ -74,8 +73,8 @@ impl ExactTriangleInteriorWitness {
 
     /// Materialize the exact representative point for a triangle.
     ///
-    /// The arithmetic stays in [`Real`], so replaying this method and then
-    /// replaying the winding report is an exact object-level check in the sense
+    /// The arithmetic stays in [`Real`], so replaying this method reproduces
+    /// the exact point used by the winding report.
     pub(crate) fn point_for_triangle(
         self,
         a: &Point3,
@@ -95,7 +94,7 @@ impl ExactTriangleInteriorWitness {
 
 /// Validation failure for retained triangle interior witnesses.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactTriangleInteriorWitnessError {
+pub(crate) enum ExactTriangleInteriorWitnessError {
     /// A witness had a non-positive weight, non-positive denominator, or a
     /// denominator that did not equal the exact weight sum.
     NotStrictInterior,
@@ -107,8 +106,8 @@ pub enum ExactTriangleInteriorWitnessError {
 /// for compatibility, then expands to asymmetric interior witnesses. The
 /// asymmetric points matter for adversarial arrangements where symmetric
 /// points sit on retained boundaries or ray-degenerate loci. No randomness or
-/// floating perturbation is introduced; every candidate remains a replayable
-pub const EXACT_TRIANGLE_INTERIOR_WITNESSES: &[ExactTriangleInteriorWitness] = &[
+/// floating perturbation is introduced; every candidate remains replayable.
+pub(crate) const EXACT_TRIANGLE_INTERIOR_WITNESSES: &[ExactTriangleInteriorWitness] = &[
     ExactTriangleInteriorWitness::new([1, 1, 1]),
     ExactTriangleInteriorWitness::new([2, 1, 1]),
     ExactTriangleInteriorWitness::new([1, 2, 1]),
