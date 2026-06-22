@@ -23,10 +23,12 @@ use hyperlimit::{
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::exact_key::{ExactPoint3Key, exact_point3_key};
 use super::intersection::{
-    MeshFacePairClassification, MeshFacePairRelation, visit_mesh_face_pair_classifications,
+    MeshFacePairClassification, MeshFacePairRelation,
+    visit_prepared_mesh_pair_face_pair_classifications,
 };
 use super::mesh::ExactMesh;
 use super::topology::{mesh_for_side, triangle_edges};
+use super::view::PreparedMeshPairView;
 use hyperlimit::{CoplanarProjection, CoplanarTriangleClassification};
 use hyperreal::Real;
 
@@ -1165,8 +1167,27 @@ pub(crate) fn build_intersection_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, MeshError> {
+    let pair = left
+        .view()
+        .prepare_pair_broad_phase(right.view())
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("exact mesh retained broad-phase facts failed source replay: {error:?}"),
+            ))
+        })?;
+    build_intersection_graph_from_prepared_pair(&pair)
+}
+
+/// Build an exact event graph from a replay-validated prepared mesh pair.
+pub(crate) fn build_intersection_graph_from_prepared_pair(
+    pair: &PreparedMeshPairView<'_, '_>,
+) -> Result<ExactIntersectionGraph, MeshError> {
+    let left = pair.left().view().mesh();
+    let right = pair.right().view().mesh();
     let mut face_pairs = Vec::new();
-    visit_mesh_face_pair_classifications(left, right, |classification| {
+    visit_prepared_mesh_pair_face_pair_classifications(pair, |classification| {
         face_pairs.push(events_for_face_pair(left, right, &classification));
         Ok(())
     })?;
@@ -4224,6 +4245,11 @@ mod tests {
         .unwrap();
 
         let graph = build_intersection_graph(&left, &right).unwrap();
+        let prepared_pair = left.view().prepare_pair_broad_phase(right.view()).unwrap();
+        assert_eq!(
+            build_intersection_graph_from_prepared_pair(&prepared_pair).unwrap(),
+            graph
+        );
         let retained_pair = graph
             .face_pairs
             .iter()

@@ -12,14 +12,15 @@
 use hyperlimit::{SegmentPlaneIntersection, TrianglePlaneRelation};
 
 use super::construction::intersect_segment_with_retained_face_plane;
-use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-use super::mesh::{ExactMesh, ExactMeshValidationError};
+use super::error::MeshError;
+use super::mesh::ExactMesh;
 use super::narrow::{
     TriangleTriangleClassification, TriangleTriangleRelation,
     classify_mesh_triangle_against_retained_face_plane_unchecked,
     classify_triangle_triangle_points_without_candidate_events,
 };
 use super::topology::triangle_edges;
+use super::view::PreparedMeshPairView;
 
 /// Coarse exact relation for one pair of mesh faces.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -111,45 +112,26 @@ fn classify_mesh_face_pair_unchecked(
     }
 }
 
-/// Visit every face pair that survives exact broad/narrow rejection.
+/// Visit every prepared face pair that survives exact broad/narrow rejection.
 ///
 /// The visitor receives only pairs that were not proven impossible by exact
 /// AABB disjointness, certified triangle plane separation, or exact coplanar
 /// disjointness. Coplanar touching/overlapping, non-coplanar candidate, and
 /// unknown pairs remain because they are exactly the cases that need
 /// overlap-graph construction or a policy decision.
-pub(crate) fn visit_mesh_face_pair_classifications(
-    left: &ExactMesh,
-    right: &ExactMesh,
+pub(crate) fn visit_prepared_mesh_pair_face_pair_classifications(
+    pair: &PreparedMeshPairView<'_, '_>,
     mut visit: impl FnMut(MeshFacePairClassification) -> Result<(), MeshError>,
 ) -> Result<(), MeshError> {
-    let left_broad_phase = left
-        .view()
-        .prepare_broad_phase()
-        .map_err(mesh_retained_state_error)?;
-    let right_broad_phase = right
-        .view()
-        .prepare_broad_phase()
-        .map_err(mesh_retained_state_error)?;
-    left_broad_phase.try_visit_candidate_face_pairs(
-        &right_broad_phase,
-        |[left_face, right_face]| {
-            let classification =
-                classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
-            if classification.needs_graph_construction() {
-                visit(classification)?;
-            }
-            Ok(())
-        },
-    )
-}
-
-fn mesh_retained_state_error(error: ExactMeshValidationError) -> MeshError {
-    MeshError::one(MeshDiagnostic::new(
-        Severity::Error,
-        DiagnosticKind::UnsupportedExactOperation,
-        format!("exact mesh retained broad-phase facts failed source replay: {error:?}"),
-    ))
+    let left = pair.left().view().mesh();
+    let right = pair.right().view().mesh();
+    pair.try_visit_candidate_face_pairs(|[left_face, right_face]| {
+        let classification = classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
+        if classification.needs_graph_construction() {
+            visit(classification)?;
+        }
+        Ok(())
+    })
 }
 
 fn triangle_is_strictly_one_sided(relation: TrianglePlaneRelation) -> bool {
