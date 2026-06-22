@@ -161,23 +161,11 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
     });
     prepared_candidates.sort_unstable();
     assert_eq!(prepared_candidates, candidates);
-    let mut prepared_pair_candidates = Vec::new();
-    prepared_pair.visit_candidate_face_pairs(|pair| prepared_pair_candidates.push(pair));
+    let mut prepared_pair_candidates = prepared_pair.candidate_face_pairs().to_vec();
     prepared_pair_candidates.sort_unstable();
     assert_eq!(prepared_pair_candidates, candidates);
     assert_eq!(prepared_pair.candidate_face_pair_count(), candidates.len());
-    let mut prepared_visited = Vec::new();
-    prepared_pair.visit_candidate_face_pairs(|pair| prepared_visited.push(pair));
-    prepared_visited.sort_unstable();
-    assert_eq!(prepared_visited, candidates);
-
-    let mut first_prepared = None;
-    let stopped = prepared_pair.try_visit_candidate_face_pairs(|pair| {
-        first_prepared = Some(pair);
-        Err::<(), _>(())
-    });
-    assert_eq!(stopped, Err(()));
-    assert!(first_prepared.is_some());
+    assert_eq!(prepared_pair.candidate_face_pairs().len(), candidates.len());
 }
 
 #[test]

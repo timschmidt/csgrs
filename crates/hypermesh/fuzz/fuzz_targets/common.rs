@@ -19,27 +19,10 @@ pub fn exercise_mesh_kernel_pair(left: &ExactMesh, right: &ExactMesh) {
         streamed_pair_count
     );
 
-    let mut prepared_pair_count = 0usize;
-    prepared_pair
-        .try_visit_candidate_face_pairs(|_| {
-            prepared_pair_count += 1;
-            Ok::<(), ()>(())
-        })
-        .unwrap();
-    assert_eq!(prepared_pair_count, streamed_pair_count);
-
-    let mut stopped_after_first_pair = false;
-    let stopped = prepared_pair.try_visit_candidate_face_pairs(|_| {
-        stopped_after_first_pair = true;
-        Err::<(), _>(())
-    });
-    if streamed_pair_count == 0 {
-        assert_eq!(stopped, Ok(()));
-        assert!(!stopped_after_first_pair);
-    } else {
-        assert_eq!(stopped, Err(()));
-        assert!(stopped_after_first_pair);
-    }
+    assert_eq!(
+        prepared_pair.candidate_face_pairs().len(),
+        streamed_pair_count
+    );
 }
 
 pub fn generated_tetra_pair(data: &[u8]) -> Option<(ExactMesh, ExactMesh)> {
