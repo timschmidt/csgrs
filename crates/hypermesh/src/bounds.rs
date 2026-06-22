@@ -175,6 +175,8 @@ enum Axis {
 }
 
 impl Axis {
+    const ALL: [Self; 3] = [Self::X, Self::Y, Self::Z];
+
     const fn index(self) -> usize {
         match self {
             Self::X => 0,
@@ -533,7 +535,7 @@ impl<'a> PreparedMeshBounds<'a> {
                     continue;
                 }
                 let pair = [left, right];
-                if self.full_aabb_may_overlap(other, pair) {
+                if self.full_aabb_may_overlap_on_remaining_axes(other, pair, axis) {
                     visit(pair)?;
                 }
             }
@@ -542,11 +544,22 @@ impl<'a> PreparedMeshBounds<'a> {
         Ok(true)
     }
 
-    fn full_aabb_may_overlap(&self, other: &PreparedMeshBounds<'_>, pair: [usize; 2]) -> bool {
+    fn full_aabb_may_overlap_on_remaining_axes(
+        &self,
+        other: &PreparedMeshBounds<'_>,
+        pair: [usize; 2],
+        sweep_axis: Axis,
+    ) -> bool {
         let [left, right] = pair;
-        let left_box = &self.bounds.faces[left];
-        let right_box = &other.bounds.faces[right];
-        must_keep_candidate(left_box.classify_intersection(right_box))
+        Axis::ALL
+            .into_iter()
+            .filter(|&axis| axis != sweep_axis)
+            .all(|axis| {
+                axis_intervals_may_overlap(
+                    self.axis_interval(axis, left),
+                    other.axis_interval(axis, right),
+                )
+            })
     }
 
     fn min_axis_order(&self, axis: Axis) -> Option<&[usize]> {
@@ -734,6 +747,11 @@ fn axis_bound(interval: FaceAxisInterval<'_>, bound: AxisBound) -> &Real {
         AxisBound::Min => interval.min,
         AxisBound::Max => interval.max,
     }
+}
+
+fn axis_intervals_may_overlap(left: FaceAxisInterval<'_>, right: FaceAxisInterval<'_>) -> bool {
+    !matches!(compare(left.max, right.min), Some(Ordering::Less))
+        && !matches!(compare(right.max, left.min), Some(Ordering::Less))
 }
 
 fn axis_min(bounds: &ExactAabb3, axis: Axis) -> &Real {
