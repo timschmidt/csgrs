@@ -171,6 +171,7 @@ struct SweepPlanEstimate {
     plan: SweepPlan,
     axis_pair_count: usize,
     driver_face_count: usize,
+    active_face_capacity_hint: usize,
 }
 
 impl SweepPlanEstimate {
@@ -179,6 +180,12 @@ impl SweepPlanEstimate {
             || (self.axis_pair_count == other.axis_pair_count
                 && self.driver_face_count < other.driver_face_count)
     }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct AxisOverlapEstimate {
+    pair_count: usize,
+    max_target_active: usize,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -193,7 +200,7 @@ pub(crate) enum CandidateFacePairPlan {
     Empty,
     Sweep {
         plan: SweepPlan,
-        active_pair_capacity_hint: usize,
+        active_face_capacity_hint: usize,
     },
     Quadratic,
 }
@@ -274,7 +281,7 @@ impl<'a> PreparedMeshBounds<'a> {
         if let Some(sweep) = self.sweep_plan(other) {
             return CandidateFacePairPlan::Sweep {
                 plan: sweep.plan,
-                active_pair_capacity_hint: sweep.axis_pair_count,
+                active_face_capacity_hint: sweep.active_face_capacity_hint,
             };
         }
         CandidateFacePairPlan::Quadratic
@@ -286,27 +293,27 @@ impl<'a> PreparedMeshBounds<'a> {
         plan: CandidateFacePairPlan,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
-        let (sweep_plan, active_pair_capacity_hint) = match plan {
+        let (sweep_plan, active_face_capacity_hint) = match plan {
             CandidateFacePairPlan::Empty => return Ok(()),
             CandidateFacePairPlan::Quadratic => {
                 return self.try_visit_candidate_face_pairs_quadratic(other, visit);
             }
             CandidateFacePairPlan::Sweep {
                 plan,
-                active_pair_capacity_hint,
-            } => (plan, active_pair_capacity_hint),
+                active_face_capacity_hint,
+            } => (plan, active_face_capacity_hint),
         };
         let used_sweep = match sweep_plan.direction {
             SweepDirection::LeftDriven => self.try_visit_candidate_face_pairs_sweep_axis(
                 other,
                 sweep_plan.axis,
-                active_pair_capacity_hint,
+                active_face_capacity_hint,
                 visit,
             )?,
             SweepDirection::RightDriven => other.try_visit_candidate_face_pairs_sweep_axis(
                 self,
                 sweep_plan.axis,
-                active_pair_capacity_hint,
+                active_face_capacity_hint,
                 &mut |pair| visit([pair[1], pair[0]]),
             )?,
         };
@@ -371,10 +378,12 @@ impl<'a> PreparedMeshBounds<'a> {
             SweepDirection::LeftDriven => (self, other),
             SweepDirection::RightDriven => (other, self),
         };
+        let estimate = driver.axis_interval_overlap_estimate(target, axis)?;
         Some(SweepPlanEstimate {
             plan: SweepPlan { axis, direction },
-            axis_pair_count: driver.count_axis_interval_overlaps(target, axis)?,
+            axis_pair_count: estimate.pair_count,
             driver_face_count: driver.bounds.faces.len(),
+            active_face_capacity_hint: estimate.max_target_active,
         })
     }
 
@@ -398,14 +407,14 @@ impl<'a> PreparedMeshBounds<'a> {
         }
     }
 
-    fn count_axis_interval_overlaps(
+    fn axis_interval_overlap_estimate(
         &self,
         other: &PreparedMeshBounds<'_>,
         axis: Axis,
-    ) -> Option<usize> {
+    ) -> Option<AxisOverlapEstimate> {
         let driver_min_order = self.min_axis_order(axis)?;
         let Some(driver_max_order) = self.max_axis_order(axis) else {
-            return self.count_axis_interval_overlaps_by_binary_search(other, axis);
+            return self.axis_interval_overlap_estimate_by_binary_search(other, axis);
         };
         let other_min_order = other.min_axis_order(axis)?;
         let other_max_order = other.max_axis_order(axis)?;
@@ -441,22 +450,27 @@ impl<'a> PreparedMeshBounds<'a> {
             other_before_driver = other_before_driver.saturating_add(next_other_end);
         }
 
-        Some(
-            total_pairs
-                .saturating_sub(driver_before_other)
-                .saturating_sub(other_before_driver),
-        )
+        let pair_count = total_pairs
+            .saturating_sub(driver_before_other)
+            .saturating_sub(other_before_driver);
+        let max_target_active = self.max_axis_active_interval_count(other, axis)?;
+
+        Some(AxisOverlapEstimate {
+            pair_count,
+            max_target_active,
+        })
     }
 
-    fn count_axis_interval_overlaps_by_binary_search(
+    fn axis_interval_overlap_estimate_by_binary_search(
         &self,
         other: &PreparedMeshBounds<'_>,
         axis: Axis,
-    ) -> Option<usize> {
+    ) -> Option<AxisOverlapEstimate> {
         let other_min_order = other.min_axis_order(axis)?;
         let other_max_order = other.max_axis_order(axis)?;
         let other_intervals = other.axis_intervals(axis);
         let mut count = 0usize;
+        let mut max_target_active = 0usize;
 
         for driver_interval in self.axis_intervals(axis) {
             let started = upper_bound_axis_bound(
@@ -471,17 +485,49 @@ impl<'a> PreparedMeshBounds<'a> {
                 AxisBound::Max,
                 driver_interval.min,
             )?;
-            count = count.saturating_add(started.saturating_sub(ended));
+            let active = started.saturating_sub(ended);
+            count = count.saturating_add(active);
+            max_target_active = max_target_active.max(active);
         }
 
-        Some(count)
+        Some(AxisOverlapEstimate {
+            pair_count: count,
+            max_target_active,
+        })
+    }
+
+    fn max_axis_active_interval_count(
+        &self,
+        other: &PreparedMeshBounds<'_>,
+        axis: Axis,
+    ) -> Option<usize> {
+        let other_min_order = other.min_axis_order(axis)?;
+        let other_max_order = other.max_axis_order(axis)?;
+        let other_intervals = other.axis_intervals(axis);
+        let mut max_target_active = 0usize;
+        for driver_interval in self.axis_intervals(axis) {
+            let started = upper_bound_axis_bound(
+                other_min_order,
+                other_intervals,
+                AxisBound::Min,
+                driver_interval.max,
+            )?;
+            let ended = lower_bound_axis_bound(
+                other_max_order,
+                other_intervals,
+                AxisBound::Max,
+                driver_interval.min,
+            )?;
+            max_target_active = max_target_active.max(started.saturating_sub(ended));
+        }
+        Some(max_target_active)
     }
 
     fn try_visit_candidate_face_pairs_sweep_axis<E>(
         &self,
         other: &PreparedMeshBounds<'_>,
         axis: Axis,
-        active_pair_capacity_hint: usize,
+        active_face_capacity_hint: usize,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<bool, E> {
         let Some(left_order) = self.min_axis_order(axis) else {
@@ -493,7 +539,7 @@ impl<'a> PreparedMeshBounds<'a> {
         let Some(right_max_order) = other.max_axis_order(axis) else {
             return Ok(false);
         };
-        let active_right_capacity = active_pair_capacity_hint.min(other.bounds.faces.len());
+        let active_right_capacity = active_face_capacity_hint.min(other.bounds.faces.len());
         let mut active_right = Vec::<usize>::with_capacity(active_right_capacity);
         let mut right_active = vec![0u8; other.bounds.faces.len()];
         let mut next_right = 0usize;
@@ -952,8 +998,11 @@ mod tests {
         let prepared_right = right.prepare();
 
         assert_eq!(
-            prepared_left.count_axis_interval_overlaps(&prepared_right, Axis::X),
-            Some(1)
+            prepared_left.axis_interval_overlap_estimate(&prepared_right, Axis::X),
+            Some(AxisOverlapEstimate {
+                pair_count: 1,
+                max_target_active: 1,
+            })
         );
         assert_eq!(
             sorted_pairs(prepared_candidate_face_pairs(
@@ -961,6 +1010,57 @@ mod tests {
                 &prepared_right
             )),
             vec![[0, 0]]
+        );
+    }
+
+    #[test]
+    fn prepared_sweep_capacity_hint_tracks_peak_active_targets() {
+        let mut left_points = Vec::new();
+        let mut left_triangles = Vec::new();
+        for face in 0..4 {
+            let base = left_points.len();
+            let x = face as i64 * 10;
+            left_points.extend([p(x, 0, 0), p(x + 2, 0, 0), p(x, 1, 0)]);
+            left_triangles.push([base, base + 1, base + 2]);
+        }
+
+        let mut right_points = Vec::new();
+        let mut right_triangles = Vec::new();
+        for face in 0..4 {
+            let base = right_points.len();
+            let x = face as i64 * 10 + 1;
+            right_points.extend([p(x, 0, 0), p(x + 1, 0, 0), p(x, 1, 0)]);
+            right_triangles.push([base, base + 1, base + 2]);
+        }
+
+        let left = MeshBounds::from_triangles(&left_points, &left_triangles);
+        let right = MeshBounds::from_triangles(&right_points, &right_triangles);
+        let prepared_left = left.prepare();
+        let prepared_right = right.prepare();
+        let estimate = prepared_left
+            .axis_interval_overlap_estimate(&prepared_right, Axis::X)
+            .unwrap();
+
+        assert_eq!(estimate.pair_count, 4);
+        assert_eq!(estimate.max_target_active, 1);
+
+        let CandidateFacePairPlan::Sweep {
+            active_face_capacity_hint,
+            ..
+        } = prepared_left.candidate_face_pair_plan(&prepared_right)
+        else {
+            panic!("expected sweep plan");
+        };
+        assert_eq!(active_face_capacity_hint, 1);
+        assert_eq!(
+            sorted_pairs(prepared_candidate_face_pairs(
+                &prepared_left,
+                &prepared_right
+            )),
+            sorted_pairs(quadratic_candidate_face_pairs(
+                &prepared_left,
+                &prepared_right
+            ))
         );
     }
 
