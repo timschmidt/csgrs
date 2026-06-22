@@ -8,12 +8,17 @@ pub fn exercise_mesh_kernel_pair(left: &ExactMesh, right: &ExactMesh) {
     let prepared_left = left_view.prepare_broad_phase().unwrap();
     let prepared_right = right_view.prepare_broad_phase().unwrap();
 
-    let prepared_pair = left_view.prepare_pair_broad_phase(right_view).unwrap();
-    let prepared_view_pair = prepared_left.prepare_pair_broad_phase(&prepared_right);
-    assert_eq!(
-        prepared_pair.candidate_face_pairs().len(),
-        prepared_view_pair.candidate_face_pairs().len()
-    );
+    let mut direct_candidate_pairs = 0;
+    left_view
+        .visit_candidate_face_pairs(right_view, &mut |_| {
+            direct_candidate_pairs += 1;
+        })
+        .unwrap();
+    let mut prepared_candidate_pairs = 0;
+    prepared_left.visit_candidate_face_pairs(&prepared_right, &mut |_| {
+        prepared_candidate_pairs += 1;
+    });
+    assert_eq!(direct_candidate_pairs, prepared_candidate_pairs);
 }
 
 pub fn generated_tetra_pair(data: &[u8]) -> Option<(ExactMesh, ExactMesh)> {

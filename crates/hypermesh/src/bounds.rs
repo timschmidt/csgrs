@@ -187,43 +187,20 @@ struct FaceAxisInterval<'a> {
     max: &'a Real,
 }
 
-const MAX_CANDIDATE_PAIR_PREALLOC: usize = 1 << 20;
-
 /// Prepared broad-phase plan for one retained bounds pair.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum CandidateFacePairPlan {
     Empty,
     Sweep {
         plan: SweepPlan,
-        candidate_pair_capacity_hint: usize,
+        active_pair_capacity_hint: usize,
     },
-    Quadratic {
-        candidate_pair_capacity_hint: usize,
-    },
+    Quadratic,
 }
 
 impl CandidateFacePairPlan {
     const fn empty() -> Self {
         Self::Empty
-    }
-
-    pub(crate) const fn candidate_pair_capacity_hint(self) -> usize {
-        match self {
-            Self::Sweep {
-                candidate_pair_capacity_hint,
-                ..
-            }
-            | Self::Quadratic {
-                candidate_pair_capacity_hint,
-            } => {
-                if candidate_pair_capacity_hint > MAX_CANDIDATE_PAIR_PREALLOC {
-                    MAX_CANDIDATE_PAIR_PREALLOC
-                } else {
-                    candidate_pair_capacity_hint
-                }
-            }
-            Self::Empty => 0,
-        }
     }
 }
 
@@ -297,16 +274,10 @@ impl<'a> PreparedMeshBounds<'a> {
         if let Some(sweep) = self.sweep_plan(other) {
             return CandidateFacePairPlan::Sweep {
                 plan: sweep.plan,
-                candidate_pair_capacity_hint: sweep.axis_pair_count,
+                active_pair_capacity_hint: sweep.axis_pair_count,
             };
         }
-        CandidateFacePairPlan::Quadratic {
-            candidate_pair_capacity_hint: self
-                .bounds
-                .faces
-                .len()
-                .saturating_mul(other.bounds.faces.len()),
-        }
+        CandidateFacePairPlan::Quadratic
     }
 
     pub(crate) fn try_visit_candidate_face_pairs_with_plan<E>(
@@ -317,13 +288,13 @@ impl<'a> PreparedMeshBounds<'a> {
     ) -> Result<(), E> {
         let (sweep_plan, active_pair_capacity_hint) = match plan {
             CandidateFacePairPlan::Empty => return Ok(()),
-            CandidateFacePairPlan::Quadratic { .. } => {
+            CandidateFacePairPlan::Quadratic => {
                 return self.try_visit_candidate_face_pairs_quadratic(other, visit);
             }
             CandidateFacePairPlan::Sweep {
                 plan,
-                candidate_pair_capacity_hint,
-            } => (plan, candidate_pair_capacity_hint),
+                active_pair_capacity_hint,
+            } => (plan, active_pair_capacity_hint),
         };
         let used_sweep = match sweep_plan.direction {
             SweepDirection::LeftDriven => self.try_visit_candidate_face_pairs_sweep_axis(
@@ -912,36 +883,7 @@ mod tests {
             panic!("expected sweep plan");
         };
         assert_eq!(sweep_plan.axis, Axis::Y);
-        assert_eq!(plan.candidate_pair_capacity_hint(), 1);
         assert_eq!(candidate_face_pairs(&left, &right), vec![[1, 0]]);
-    }
-
-    #[test]
-    fn quadratic_plan_capacity_hint_is_capped() {
-        let plan = CandidateFacePairPlan::Quadratic {
-            candidate_pair_capacity_hint: MAX_CANDIDATE_PAIR_PREALLOC + 1,
-        };
-
-        assert_eq!(
-            plan.candidate_pair_capacity_hint(),
-            MAX_CANDIDATE_PAIR_PREALLOC
-        );
-    }
-
-    #[test]
-    fn sweep_plan_capacity_hint_is_capped() {
-        let plan = CandidateFacePairPlan::Sweep {
-            plan: SweepPlan {
-                axis: Axis::X,
-                direction: SweepDirection::LeftDriven,
-            },
-            candidate_pair_capacity_hint: MAX_CANDIDATE_PAIR_PREALLOC + 1,
-        };
-
-        assert_eq!(
-            plan.candidate_pair_capacity_hint(),
-            MAX_CANDIDATE_PAIR_PREALLOC
-        );
     }
 
     #[test]

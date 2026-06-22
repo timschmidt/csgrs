@@ -36,9 +36,8 @@ downstream CSG layers.
   available.
 - `ExactMeshRef`, `TriangleRef`, `FaceRef`, and `EdgeRef` provide borrowed
   access for queries that should not clone mesh storage.
-- `PreparedMeshView` reuses replay-validated broad-phase facts, and
-  `PreparedMeshPairView` exposes cached candidate-pair slices for repeated
-  pair queries without exposing raw acceleration carriers.
+- `PreparedMeshView` reuses replay-validated broad-phase facts and streams
+  candidate face pairs without exposing raw acceleration carriers.
 - `ExactMesh::union`, `ExactMesh::intersection`, `ExactMesh::difference`, and
   `ExactMesh::xor` materialize named closed boolean outputs as exact meshes.
 - `ExactMesh::transform`, `ExactMesh::transform_by`, and `ExactMesh::inverse`
@@ -67,9 +66,9 @@ typed blocker rather than patched with a tolerance.
 ## Performance Model
 
 The performance direction is broad-phase pruning plus exact local decisions.
-Retained bounds, prepared mesh-pair views, face-pair classification, split
-plans, support intervals, coplanar arrangements, and borrowed views narrow work
-before expensive predicates or topology rebuilds.
+Retained bounds, prepared views, streamed face-pair classification, split plans,
+support intervals, coplanar arrangements, and borrowed views narrow work before
+expensive predicates or topology rebuilds.
 
 One-shot booleans should be driven by measured kernel stages: broad phase,
 narrow classification, split planning, local arrangements, winding/ownership,

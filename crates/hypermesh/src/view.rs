@@ -44,14 +44,6 @@ pub struct PreparedMeshView<'a> {
     bounds: PreparedMeshBounds<'a>,
 }
 
-/// Borrowed pair view with replay-validated broad-phase acceleration facts.
-#[derive(Debug)]
-pub struct PreparedMeshPairView<'a, 'b> {
-    left: ExactMeshRef<'a>,
-    right: ExactMeshRef<'b>,
-    candidate_pairs: Vec<[usize; 2]>,
-}
-
 impl<'a> ExactMeshRef<'a> {
     /// Borrow an exact mesh as a replayable view.
     pub const fn new(mesh: &'a ExactMesh) -> Self {
@@ -190,14 +182,16 @@ impl<'a> ExactMeshRef<'a> {
         })
     }
 
-    /// Prepare replay-validated broad-phase facts for one repeated mesh pair.
-    pub fn prepare_pair_broad_phase<'b>(
+    /// Visit broad-phase candidate face pairs after replay-validating both meshes.
+    pub fn visit_candidate_face_pairs<'b>(
         self,
         right: ExactMeshRef<'b>,
-    ) -> Result<PreparedMeshPairView<'a, 'b>, ExactMeshValidationError> {
+        visit: &mut impl FnMut([usize; 2]),
+    ) -> Result<(), ExactMeshValidationError> {
         let left = self.prepare_broad_phase()?;
         let right = right.prepare_broad_phase()?;
-        Ok(left.prepare_pair_broad_phase(&right))
+        left.visit_candidate_face_pairs(&right, visit);
+        Ok(())
     }
 
     /// Materialize this view after an exact affine transform.
@@ -242,27 +236,22 @@ impl<'a> PreparedMeshView<'a> {
         self.view
     }
 
-    /// Prepare cached broad-phase candidate face pairs for one mesh pair.
-    pub fn prepare_pair_broad_phase<'b>(
+    /// Visit replay-validated broad-phase candidate face pairs without materializing a pair cache.
+    pub fn visit_candidate_face_pairs<'b>(
         &self,
         right: &PreparedMeshView<'b>,
-    ) -> PreparedMeshPairView<'a, 'b> {
+        visit: &mut impl FnMut([usize; 2]),
+    ) {
         let plan = self.bounds.candidate_face_pair_plan(&right.bounds);
-        let mut candidate_pairs = Vec::with_capacity(plan.candidate_pair_capacity_hint());
         let result = self.bounds.try_visit_candidate_face_pairs_with_plan(
             &right.bounds,
             plan,
             &mut |pair| {
-                candidate_pairs.push(pair);
+                visit(pair);
                 Ok::<(), ()>(())
             },
         );
         debug_assert!(result.is_ok());
-        PreparedMeshPairView {
-            left: self.view,
-            right: right.view,
-            candidate_pairs,
-        }
     }
 
     /// Visit cached broad-phase candidate face pairs without materializing a pair cache.
@@ -274,23 +263,6 @@ impl<'a> PreparedMeshView<'a> {
         let plan = self.bounds.candidate_face_pair_plan(&right.bounds);
         self.bounds
             .try_visit_candidate_face_pairs_with_plan(&right.bounds, plan, visit)
-    }
-}
-
-impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
-    /// Return the left mesh view.
-    pub const fn left(&self) -> ExactMeshRef<'a> {
-        self.left
-    }
-
-    /// Return the right mesh view.
-    pub const fn right(&self) -> ExactMeshRef<'b> {
-        self.right
-    }
-
-    /// Cached broad-phase candidate face pairs in left/right face-index order.
-    pub fn candidate_face_pairs(&self) -> &[[usize; 2]] {
-        &self.candidate_pairs
     }
 }
 
