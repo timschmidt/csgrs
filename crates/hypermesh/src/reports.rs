@@ -22,7 +22,7 @@ use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 #[cfg(test)]
 use super::boolean::materialize_boolean_exact_request;
 #[cfg(test)]
-use super::boolean::winding_readiness_report_for_request_from_graph;
+use super::boolean::winding_evidence_report_for_request_from_graph;
 use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanOperation, ExactBooleanRequest,
     ExactBoundaryBooleanPolicy, adjacent_union_completion_certification,
@@ -97,7 +97,7 @@ pub(crate) enum ExactReportValidationError {
     InvalidBlockerCounts,
     /// A report that should not materialize split-region facts retained them.
     UnexpectedRegionFacts,
-    /// A winding-ready report did not retain checked region facts.
+    /// A winding-evidence report did not retain checked region facts.
     MissingRegionFacts,
     /// A selected-region triangulation has no matching retained region/plane
     /// classification for its source region.
@@ -117,7 +117,7 @@ pub(crate) enum ExactReportValidationError {
     UnreferencedAssemblyVertex,
     /// A retained region/plane classification failed its own side-fact audit.
     InvalidRegionClassification(FaceRegionPlaneValidationError),
-    /// A winding-ready report retained a region/plane classification that still
+    /// A winding-evidence report retained a region/plane classification that still
     /// depends on undecided or non-proof-producing predicate evidence.
     RegionClassificationNotProofProducing,
     /// The retained region count does not match the unique classified source
@@ -302,15 +302,15 @@ fn validate_retained_graph_count_shape(
 }
 
 fn validate_coplanar_arrangement_evidence_matches_blocker(
-    readiness: &CoplanarArrangementEvidence,
+    evidence: &CoplanarArrangementEvidence,
     blocker: &ExactBooleanBlocker,
 ) -> Result<(), ExactReportValidationError> {
     // The compact evidence report and blocker are two projections of the same
     // exact graph state; downstream planar-cell or winding checks must not
     // consume a summary with relabeled graph counts.
-    if readiness.overlapping_graphs != blocker.coplanar_overlapping_pairs
-        || readiness.touching_graphs != blocker.coplanar_touching_pairs
-        || readiness.graph_count
+    if evidence.overlapping_graphs != blocker.coplanar_overlapping_pairs
+        || evidence.touching_graphs != blocker.coplanar_touching_pairs
+        || evidence.graph_count
             != blocker
                 .coplanar_overlapping_pairs
                 .checked_add(blocker.coplanar_touching_pairs)
@@ -3556,7 +3556,7 @@ pub(crate) struct ExactBooleanPreflight {
     /// Structured explanation for named operations that are certified enough
     /// to inspect but not yet executable by the selected policy.
     pub(crate) blocker: Option<ExactBooleanBlocker>,
-    /// Checked coplanar-overlap readiness retained when preflight stops at a
+    /// Checked coplanar-overlap evidence retained when preflight stops at a
     /// planar arrangement boundary.
     ///
     /// This keeps positive-area coplanar graph evidence visible to structured
@@ -3890,14 +3890,14 @@ impl ExactVolumetricBoundaryClosureReport {
 }
 
 #[cfg(test)]
-fn validate_winding_readiness_against_sources_for_request(
-    report: &ExactWindingReadinessReport,
+fn validate_winding_evidence_against_sources_for_request(
+    report: &ExactWindingEvidenceReport,
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<(), ExactReportValidationError> {
     if let Ok(evaluation) = exact_boolean_evaluation_for_replay(left, right, request)
-        && report == evaluation.certifications().winding_readiness()
+        && report == evaluation.certifications().winding_evidence()
     {
         return Ok(());
     }
@@ -3907,7 +3907,7 @@ fn validate_winding_readiness_against_sources_for_request(
     // canonical evaluation cannot yet return them or supersedes them with an
     // arrangement/cell-complex materialization status.
     let graph = validated_report_intersection_graph(left, right)?;
-    let replay = winding_readiness_report_for_request_from_graph(&graph, left, right, request)
+    let replay = winding_evidence_report_for_request_from_graph(&graph, left, right, request)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
     if report == &replay {
         Ok(())
@@ -4161,18 +4161,18 @@ impl ExactBooleanPreflight {
                     self.retained_face_pairs,
                     self.retained_events,
                 )?;
-                let readiness = self
+                let evidence = self
                     .coplanar_arrangement_evidence
                     .as_ref()
                     .ok_or(ExactReportValidationError::MissingCoplanarArrangementEvidence)?;
-                readiness
+                evidence
                     .validate()
                     .map_err(|_| ExactReportValidationError::InvalidCoplanarArrangementEvidence)?;
                 validate_coplanar_arrangement_evidence_matches_blocker(
-                    readiness,
+                    evidence,
                     self.blocker.as_ref().unwrap(),
                 )?;
-                if !readiness.needs_planar_cells()
+                if !evidence.needs_planar_cells()
                     || self.blocker.as_ref().unwrap().coplanar_touching_pairs != 0
                 {
                     return Err(ExactReportValidationError::CoplanarArrangementEvidenceMismatch);
@@ -5453,17 +5453,17 @@ impl ExactPlanarArrangementReport {
         }
         match self.status {
             ExactPlanarArrangementStatus::Required => {
-                let readiness = self
+                let evidence = self
                     .coplanar_arrangement_evidence
                     .as_ref()
                     .ok_or(ExactReportValidationError::MissingCoplanarArrangementEvidence)?;
-                readiness
+                evidence
                     .validate()
                     .map_err(|_| ExactReportValidationError::InvalidCoplanarArrangementEvidence)?;
-                validate_coplanar_arrangement_evidence_matches_blocker(readiness, &self.blocker)?;
-                if !readiness.needs_planar_cells()
+                validate_coplanar_arrangement_evidence_matches_blocker(evidence, &self.blocker)?;
+                if !evidence.needs_planar_cells()
                     || self.blocker.coplanar_touching_pairs != 0
-                    || readiness.graph_count != self.blocker.coplanar_overlapping_pairs
+                    || evidence.graph_count != self.blocker.coplanar_overlapping_pairs
                 {
                     return Err(ExactReportValidationError::CoplanarArrangementEvidenceMismatch);
                 }
@@ -5471,15 +5471,15 @@ impl ExactPlanarArrangementReport {
             ExactPlanarArrangementStatus::AlreadyMaterialized
             | ExactPlanarArrangementStatus::NoPositiveOverlap
             | ExactPlanarArrangementStatus::BoundaryPolicyRequired => {
-                let readiness = self
+                let evidence = self
                     .coplanar_arrangement_evidence
                     .as_ref()
                     .ok_or(ExactReportValidationError::MissingCoplanarArrangementEvidence)?;
-                readiness
+                evidence
                     .validate()
                     .map_err(|_| ExactReportValidationError::InvalidCoplanarArrangementEvidence)?;
-                validate_coplanar_arrangement_evidence_matches_blocker(readiness, &self.blocker)?;
-                if readiness.status == CoplanarArrangementEvidenceStatus::NoCoplanarOverlap
+                validate_coplanar_arrangement_evidence_matches_blocker(evidence, &self.blocker)?;
+                if evidence.status == CoplanarArrangementEvidenceStatus::NoCoplanarOverlap
                     && (self.blocker.coplanar_overlapping_pairs != 0
                         || self.blocker.coplanar_touching_pairs != 0)
                 {
@@ -5528,9 +5528,9 @@ impl ExactPlanarArrangementReport {
     }
 }
 
-/// Certification status for the remaining exact winding handoff.
+/// Certification status for the remaining exact winding evidence.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum ExactWindingReadinessStatus {
+pub(crate) enum ExactWindingEvidenceStatus {
     /// Selected-region assembly already carries its own explicit region policy.
     NotNamedOperation,
     /// Exact graph extraction retained unresolved events.
@@ -5542,53 +5542,53 @@ pub(crate) enum ExactWindingReadinessStatus {
     /// planar arrangement output model rather than volumetric winding.
     PlanarArrangementRequired,
     /// The positive-area coplanar overlap was already handled by a certified
-    /// planar-arrangement shortcut, so no volumetric winding handoff is needed.
+    /// planar-arrangement shortcut, so no volumetric winding evidence is needed.
     PlanarArrangementAlreadyMaterialized,
     /// Coplanar source-face cells are part of a closed-volumetric overlap and
     /// must be materialized before winding can consume the split cells.
     CoplanarVolumetricCellsRequired,
     /// Coplanar source-face cells were required, but the certified
     /// arrangement/cell-complex path has already materialized them, so no
-    /// unresolved winding blocker remains at this handoff.
+    /// unresolved winding blocker remains in this evidence.
     CoplanarVolumetricCellsAlreadyMaterialized,
     /// Exact volumetric winding classifications are decided, but the retained
     /// split cells could not yet be assembled into certified output topology.
     VolumetricAssemblyRequired,
     /// A certified arrangement/cell-complex shortcut has already materialized
-    /// this named Boolean, so no unresolved winding blocker remains at this
-    /// handoff.
+    /// this named Boolean, so no unresolved winding blocker remains in this
+    /// evidence.
     ArrangementCellComplexAlreadyMaterialized,
     /// The named Boolean was already answered by regularized-solid semantics
     /// for one closed solid and one lower-dimensional open surface, so no
-    /// winding handoff is needed.
+    /// winding evidence is needed.
     MixedDimensionalRegularizedSolidAlreadyMaterialized,
     /// The named Boolean was already answered by closed-output regularization
-    /// of two lower-dimensional operands, so no winding handoff is needed.
+    /// of two lower-dimensional operands, so no winding evidence is needed.
     LowerDimensionalRegularizedSolidAlreadyMaterialized,
     /// The named Boolean was already answered by closed-convex exact
-    /// materialization, so no winding handoff is needed.
+    /// materialization, so no winding evidence is needed.
     ConvexBooleanAlreadyMaterialized,
     /// The named Boolean was already answered by exact open-surface
-    /// split-region arrangement, so no volumetric winding handoff is needed.
+    /// split-region arrangement, so no volumetric winding evidence is needed.
     OpenSurfaceArrangementAlreadyMaterialized,
     /// The named Boolean was already answered by exact surface identity or
-    /// same-surface equality, so no winding handoff is needed.
+    /// same-surface equality, so no winding evidence is needed.
     SurfaceEqualityAlreadyMaterialized,
     /// The named Boolean was already answered by certified closed-boundary
-    /// touching regularized semantics, so no winding handoff is needed.
+    /// touching regularized semantics, so no winding evidence is needed.
     ClosedBoundaryTouchingAlreadyMaterialized,
     /// A caller supplied a certified boundary-output policy, so boundary-only
-    /// contact has already been projected into output without a winding
-    /// handoff.
+    /// contact has already been projected into output without volumetric
+    /// winding.
     BoundaryPolicyShortcutAlreadyMaterialized,
     /// The named Boolean was already answered by exact empty-operand
-    /// semantics, so no winding handoff is needed.
+    /// semantics, so no winding evidence is needed.
     EmptyOperandAlreadyMaterialized,
     /// The named Boolean was already answered by certified disjoint mesh
-    /// bounds, so no winding handoff is needed.
+    /// bounds, so no winding evidence is needed.
     BoundsDisjointAlreadyMaterialized,
     /// The named Boolean was already answered by certified open-surface graph
-    /// disjointness, so no winding handoff is needed.
+    /// disjointness, so no winding evidence is needed.
     OpenSurfaceDisjointAlreadyMaterialized,
     /// The named Boolean was already answered by an empty exact intersection
     /// graph and replayable closed-mesh winding reports proving separation.
@@ -5603,9 +5603,9 @@ pub(crate) enum ExactWindingReadinessStatus {
     Ready,
 }
 
-impl ExactWindingReadinessStatus {
-    /// Returns whether this readiness state records a certified materialized
-    /// path rather than an unresolved winding handoff.
+impl ExactWindingEvidenceStatus {
+    /// Returns whether this evidence state records a certified materialized
+    /// path rather than an unresolved winding blocker.
     #[cfg(test)]
     pub(crate) const fn is_already_materialized(&self) -> bool {
         matches!(
@@ -5639,7 +5639,7 @@ impl ExactWindingReadinessStatus {
         )
     }
 
-    /// Returns whether this state belongs to the certified-winding handoff
+    /// Returns whether this state belongs to the certified-winding evidence
     /// support path rather than to a shortcut, caller policy, or arrangement
     /// prerequisite.
     pub(crate) const fn routes_to_certified_winding(&self) -> bool {
@@ -5650,7 +5650,7 @@ impl ExactWindingReadinessStatus {
     }
 }
 
-/// Auditable report for the nontrivial overlap winding handoff.
+/// Auditable report for the nontrivial overlap winding evidence.
 ///
 /// This report is the certified boundary immediately before full named
 /// union/intersection/difference winding semantics. It retains exact graph
@@ -5658,11 +5658,11 @@ impl ExactWindingReadinessStatus {
 /// topological policy remains explicit state instead of a hidden tolerance
 /// decision.
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct ExactWindingReadinessReport {
+pub(crate) struct ExactWindingEvidenceReport {
     /// Requested named operation.
     pub(crate) operation: ExactBooleanOperation,
-    /// Coarse readiness status.
-    pub(crate) status: ExactWindingReadinessStatus,
+    /// Coarse evidence status.
+    pub(crate) status: ExactWindingEvidenceStatus,
     /// Whether graph extraction retained unknown events.
     pub(crate) graph_had_unknowns: bool,
     /// Retained face-pair records after exact scheduling.
@@ -5675,26 +5675,26 @@ pub(crate) struct ExactWindingReadinessReport {
     pub(crate) region_classifications: Vec<FaceRegionPlaneClassification>,
     /// Relation counts for the blocker represented by this report.
     pub(crate) blocker: ExactBooleanBlocker,
-    /// Checked coplanar-overlap readiness retained when winding is blocked by
+    /// Checked coplanar-overlap evidence retained when winding is blocked by
     /// planar-cell extraction rather than by volumetric inside/outside policy.
     pub(crate) coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
-    /// Source-aware coplanar volumetric-cell evidence retained when readiness
+    /// Source-aware coplanar volumetric-cell evidence retained when evidence
     /// is blocked by, or has just consumed, coplanar source-face cells.
     ///
-    /// The winding handoff must not reduce this state to raw coplanar pair
+    /// The winding evidence must not reduce this state to raw coplanar pair
     /// counts: exact side evidence is what distinguishes boundary-only contact
     /// from a real volumetric-cell topology obligation.
     pub(crate) coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 }
 
-impl ExactWindingReadinessReport {
+impl ExactWindingEvidenceReport {
     /// Return the requested named operation.
     pub(crate) const fn operation(&self) -> ExactBooleanOperation {
         self.operation
     }
 
-    /// Return the coarse winding-readiness status.
-    pub(crate) const fn status(&self) -> ExactWindingReadinessStatus {
+    /// Return the coarse winding-evidence status.
+    pub(crate) const fn status(&self) -> ExactWindingEvidenceStatus {
         self.status
     }
 
@@ -5740,14 +5740,14 @@ impl ExactWindingReadinessReport {
         self.coplanar_volumetric_evidence.as_ref()
     }
 
-    /// Return whether the report reached the winding-ready handoff.
+    /// Return whether the report reached the winding-evidence handoff.
     pub(crate) const fn is_ready(&self) -> bool {
-        matches!(self.status, ExactWindingReadinessStatus::Ready)
+        matches!(self.status, ExactWindingEvidenceStatus::Ready)
     }
 
     /// Validate this winding-evidence report against the source meshes.
     ///
-    /// Winding readiness retains exact split-region and opposite-plane facts.
+    /// Winding evidence retains exact split-region and opposite-plane facts.
     /// This replay recomputes the report for the same operation, making stale
     /// region facts and blocker summaries fail before downstream topology
     #[cfg(test)]
@@ -5762,39 +5762,39 @@ impl ExactWindingReadinessReport {
             ValidationPolicy::ALLOW_BOUNDARY,
             ExactBoundaryBooleanPolicy::Reject,
         );
-        validate_winding_readiness_against_sources_for_request(self, left, right, request)
+        validate_winding_evidence_against_sources_for_request(self, left, right, request)
     }
 
     /// Validate status, blocker, and checked-region artifact consistency.
     pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
-        if matches!(self.status, ExactWindingReadinessStatus::GraphUnknowns)
+        if matches!(self.status, ExactWindingEvidenceStatus::GraphUnknowns)
             != self.graph_had_unknowns
-            && !matches!(self.status, ExactWindingReadinessStatus::NotNamedOperation)
+            && !matches!(self.status, ExactWindingEvidenceStatus::NotNamedOperation)
         {
             return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
         }
         validate_refinement_partition(
-            matches!(self.status, ExactWindingReadinessStatus::GraphUnknowns)
-                || (matches!(self.status, ExactWindingReadinessStatus::NotNamedOperation)
+            matches!(self.status, ExactWindingEvidenceStatus::GraphUnknowns)
+                || (matches!(self.status, ExactWindingEvidenceStatus::NotNamedOperation)
                     && self.graph_had_unknowns),
             &self.blocker,
         )?;
         if self.coplanar_volumetric_evidence.is_some()
             && !matches!(
                 self.status,
-                ExactWindingReadinessStatus::Ready
-                    | ExactWindingReadinessStatus::VolumetricAssemblyRequired
-                    | ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
-                    | ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
-                    | ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
+                ExactWindingEvidenceStatus::Ready
+                    | ExactWindingEvidenceStatus::VolumetricAssemblyRequired
+                    | ExactWindingEvidenceStatus::CoplanarVolumetricCellsRequired
+                    | ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized
+                    | ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized
             )
             && !self.status.materializes_arrangement_cell_complex()
         {
             return Err(ExactReportValidationError::UnexpectedCoplanarVolumetricEvidence);
         }
         match self.status {
-            ExactWindingReadinessStatus::GraphUnknowns => {
+            ExactWindingEvidenceStatus::GraphUnknowns => {
                 if self.coplanar_arrangement_evidence.is_some() {
                     return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
@@ -5811,7 +5811,7 @@ impl ExactWindingReadinessReport {
                 )?;
                 no_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactWindingReadinessStatus::BoundaryPolicyRequired => {
+            ExactWindingEvidenceStatus::BoundaryPolicyRequired => {
                 if self.coplanar_arrangement_evidence.is_some() {
                     return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
@@ -5831,7 +5831,7 @@ impl ExactWindingReadinessReport {
                 )?;
                 no_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactWindingReadinessStatus::PlanarArrangementRequired => {
+            ExactWindingEvidenceStatus::PlanarArrangementRequired => {
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
@@ -5846,20 +5846,20 @@ impl ExactWindingReadinessReport {
                     self.retained_face_pairs,
                     self.retained_events,
                 )?;
-                let readiness = self
+                let evidence = self
                     .coplanar_arrangement_evidence
                     .as_ref()
                     .ok_or(ExactReportValidationError::MissingCoplanarArrangementEvidence)?;
-                readiness
+                evidence
                     .validate()
                     .map_err(|_| ExactReportValidationError::InvalidCoplanarArrangementEvidence)?;
-                validate_coplanar_arrangement_evidence_matches_blocker(readiness, &self.blocker)?;
-                if !readiness.needs_planar_cells() || self.blocker.coplanar_touching_pairs != 0 {
+                validate_coplanar_arrangement_evidence_matches_blocker(evidence, &self.blocker)?;
+                if !evidence.needs_planar_cells() || self.blocker.coplanar_touching_pairs != 0 {
                     return Err(ExactReportValidationError::CoplanarArrangementEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized => {
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
@@ -5874,20 +5874,20 @@ impl ExactWindingReadinessReport {
                     self.retained_face_pairs,
                     self.retained_events,
                 )?;
-                let readiness = self
+                let evidence = self
                     .coplanar_arrangement_evidence
                     .as_ref()
                     .ok_or(ExactReportValidationError::MissingCoplanarArrangementEvidence)?;
-                readiness
+                evidence
                     .validate()
                     .map_err(|_| ExactReportValidationError::InvalidCoplanarArrangementEvidence)?;
-                validate_coplanar_arrangement_evidence_matches_blocker(readiness, &self.blocker)?;
-                if !readiness.needs_planar_cells() {
+                validate_coplanar_arrangement_evidence_matches_blocker(evidence, &self.blocker)?;
+                if !evidence.needs_planar_cells() {
                     return Err(ExactReportValidationError::CoplanarArrangementEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired => {
+            ExactWindingEvidenceStatus::CoplanarVolumetricCellsRequired => {
                 if self.coplanar_arrangement_evidence.is_some() {
                     return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
@@ -5920,7 +5920,7 @@ impl ExactWindingReadinessReport {
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::CoplanarVolumetricCellsAlreadyMaterialized => {
                 if self.coplanar_arrangement_evidence.is_some() {
                     return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
@@ -5953,7 +5953,7 @@ impl ExactWindingReadinessReport {
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactWindingReadinessStatus::VolumetricAssemblyRequired => {
+            ExactWindingEvidenceStatus::VolumetricAssemblyRequired => {
                 if self.coplanar_arrangement_evidence.is_some() {
                     return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
@@ -6006,7 +6006,7 @@ impl ExactWindingReadinessReport {
                 }
                 checked_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized => {
                 if self.coplanar_arrangement_evidence.is_some() {
                     return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
@@ -6077,8 +6077,8 @@ impl ExactWindingReadinessReport {
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
-            | ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
+            | ExactWindingEvidenceStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized => {
                 if self.coplanar_arrangement_evidence.is_some()
                     || self.coplanar_volumetric_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
@@ -6093,7 +6093,7 @@ impl ExactWindingReadinessReport {
                     .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)?;
                 no_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized => {
                 if self.coplanar_arrangement_evidence.is_some()
                     || self.coplanar_volumetric_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
@@ -6111,7 +6111,7 @@ impl ExactWindingReadinessReport {
                 )?;
                 no_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::OpenSurfaceArrangementAlreadyMaterialized => {
                 if self.coplanar_arrangement_evidence.is_some()
                     || self.coplanar_volumetric_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
@@ -6130,7 +6130,7 @@ impl ExactWindingReadinessReport {
                 )?;
                 checked_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized => {
                 let has_coplanar_evidence = self.coplanar_volumetric_evidence.is_some();
                 if self.coplanar_arrangement_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
@@ -6157,7 +6157,7 @@ impl ExactWindingReadinessReport {
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized => {
                 if self.coplanar_arrangement_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
@@ -6197,7 +6197,7 @@ impl ExactWindingReadinessReport {
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::BoundaryPolicyShortcutAlreadyMaterialized => {
                 if self.coplanar_arrangement_evidence.is_some()
                     || self.coplanar_volumetric_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
@@ -6219,11 +6219,11 @@ impl ExactWindingReadinessReport {
                 )?;
                 no_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
-            | ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized
-            | ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
-            | ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
-            | ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized
+            | ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized
+            | ExactWindingEvidenceStatus::OpenSurfaceDisjointAlreadyMaterialized
+            | ExactWindingEvidenceStatus::ClosedWindingSeparatedAlreadyMaterialized
+            | ExactWindingEvidenceStatus::ClosedWindingContainmentAlreadyMaterialized => {
                 if self.coplanar_arrangement_evidence.is_some()
                     || self.coplanar_volumetric_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
@@ -6238,7 +6238,7 @@ impl ExactWindingReadinessReport {
                     .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)?;
                 no_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactWindingReadinessStatus::Ready => {
+            ExactWindingEvidenceStatus::Ready => {
                 if self.coplanar_arrangement_evidence.is_some() {
                     return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
@@ -6291,18 +6291,18 @@ impl ExactWindingReadinessReport {
                 }
                 checked_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactWindingReadinessStatus::NotNamedOperation
-            | ExactWindingReadinessStatus::NoNontrivialOverlap => {
+            ExactWindingEvidenceStatus::NotNamedOperation
+            | ExactWindingEvidenceStatus::NoNontrivialOverlap => {
                 if self.coplanar_arrangement_evidence.is_some() {
                     return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 match self.status {
-                    ExactWindingReadinessStatus::NotNamedOperation
+                    ExactWindingEvidenceStatus::NotNamedOperation
                         if !matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) =>
                     {
                         return Err(ExactReportValidationError::StatusEvidenceMismatch);
                     }
-                    ExactWindingReadinessStatus::NoNontrivialOverlap
+                    ExactWindingEvidenceStatus::NoNontrivialOverlap
                         if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                             || self.retained_face_pairs != 0 =>
                     {
@@ -6310,7 +6310,7 @@ impl ExactWindingReadinessReport {
                     }
                     _ => {}
                 }
-                if matches!(self.status, ExactWindingReadinessStatus::NotNamedOperation) {
+                if matches!(self.status, ExactWindingEvidenceStatus::NotNamedOperation) {
                     let expected = self.blocker.inferred_kind();
                     blocker_kind(Some(&self.blocker), expected)?;
                     self.blocker.validate_for_kind(expected)?;
@@ -7312,9 +7312,9 @@ mod tests {
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
-        let readiness = ExactWindingReadinessReport {
+        let evidence = ExactWindingEvidenceReport {
             operation: ExactBooleanOperation::Union,
-            status: ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
+            status: ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized,
             graph_had_unknowns: false,
             retained_face_pairs: 2,
             retained_events: 1,
@@ -7332,7 +7332,7 @@ mod tests {
             coplanar_volumetric_evidence: None,
         };
         assert_eq!(
-            readiness.validate(),
+            evidence.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
     }
@@ -7366,9 +7366,9 @@ mod tests {
             "unknown-event evidence can overlap a classified candidate pair"
         );
 
-        let readiness = ExactWindingReadinessReport {
+        let evidence = ExactWindingEvidenceReport {
             operation: ExactBooleanOperation::Union,
-            status: ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
+            status: ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized,
             graph_had_unknowns: false,
             retained_face_pairs: 2,
             retained_events: 2,
@@ -7386,13 +7386,13 @@ mod tests {
             coplanar_volumetric_evidence: None,
         };
         assert_eq!(
-            readiness.validate(),
+            evidence.validate(),
             Err(ExactReportValidationError::InvalidBlockerCounts)
         );
     }
 
     #[test]
-    fn planar_arrangement_named_statuses_require_retained_readiness() {
+    fn planar_arrangement_named_statuses_require_retained_evidence() {
         let mut already_materialized = ExactPlanarArrangementReport {
             operation: ExactBooleanOperation::Union,
             status: ExactPlanarArrangementStatus::AlreadyMaterialized,
@@ -7498,8 +7498,8 @@ mod tests {
     }
 
     #[test]
-    fn winding_planar_arrangement_materialized_requires_retained_readiness() {
-        let readiness = CoplanarArrangementEvidence {
+    fn winding_planar_arrangement_materialized_requires_retained_evidence() {
+        let evidence = CoplanarArrangementEvidence {
             status: CoplanarArrangementEvidenceStatus::NeedsPlanarCells,
             graph_count: 1,
             overlapping_graphs: 1,
@@ -7510,9 +7510,9 @@ mod tests {
             interval_overlap_count: 0,
             interval_endpoint_count: 0,
         };
-        let mut report = ExactWindingReadinessReport {
+        let mut report = ExactWindingEvidenceReport {
             operation: ExactBooleanOperation::Union,
-            status: ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized,
+            status: ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized,
             graph_had_unknowns: false,
             retained_face_pairs: 1,
             retained_events: 1,
@@ -7526,7 +7526,7 @@ mod tests {
                 unknown_pairs: 0,
                 construction_failed_events: 0,
             },
-            coplanar_arrangement_evidence: Some(readiness),
+            coplanar_arrangement_evidence: Some(evidence),
             coplanar_volumetric_evidence: None,
         };
         report.validate().unwrap();
@@ -7565,9 +7565,9 @@ mod tests {
         };
         evidence.validate().unwrap();
 
-        let mut report = ExactWindingReadinessReport {
+        let mut report = ExactWindingEvidenceReport {
             operation: ExactBooleanOperation::Intersection,
-            status: ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+            status: ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized,
             graph_had_unknowns: false,
             retained_face_pairs: 1,
             retained_events: 1,
@@ -7660,9 +7660,9 @@ mod tests {
             Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch)
         );
 
-        let mut readiness = ExactWindingReadinessReport {
+        let mut evidence = ExactWindingEvidenceReport {
             operation: ExactBooleanOperation::Intersection,
-            status: ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired,
+            status: ExactWindingEvidenceStatus::CoplanarVolumetricCellsRequired,
             graph_had_unknowns: false,
             retained_face_pairs: 2,
             retained_events: 4,
@@ -7672,15 +7672,15 @@ mod tests {
             coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: Some(evidence),
         };
-        readiness.validate().unwrap();
+        evidence.validate().unwrap();
 
-        readiness.retained_events = 5;
+        evidence.retained_events = 5;
         assert_eq!(
-            readiness.validate(),
+            evidence.validate(),
             Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch)
         );
 
-        let mut overflowing_evidence = readiness
+        let mut overflowing_evidence = evidence
             .coplanar_volumetric_evidence
             .as_ref()
             .unwrap()
@@ -7688,10 +7688,10 @@ mod tests {
         overflowing_evidence.segment_plane_events = usize::MAX;
         overflowing_evidence.proper_crossing_events = usize::MAX;
         overflowing_evidence.validate().unwrap();
-        readiness.retained_events = usize::MAX;
-        readiness.coplanar_volumetric_evidence = Some(overflowing_evidence);
+        evidence.retained_events = usize::MAX;
+        evidence.coplanar_volumetric_evidence = Some(overflowing_evidence);
         assert_eq!(
-            readiness.validate(),
+            evidence.validate(),
             Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch)
         );
     }

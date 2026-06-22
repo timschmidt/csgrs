@@ -4234,12 +4234,12 @@ mod tests {
                 .is_err()
         );
 
-        let readiness = graph.coplanar_arrangement_evidence(&left, &right).unwrap();
-        readiness.validate_against_sources(&left, &right).unwrap();
-        let mut invalid_readiness = readiness.clone();
-        invalid_readiness.graph_count += 1;
+        let evidence = graph.coplanar_arrangement_evidence(&left, &right).unwrap();
+        evidence.validate_against_sources(&left, &right).unwrap();
+        let mut invalid_evidence = evidence.clone();
+        invalid_evidence.graph_count += 1;
         assert!(
-            invalid_readiness
+            invalid_evidence
                 .validate_against_sources(&left, &right)
                 .is_err()
         );
@@ -4250,7 +4250,7 @@ mod tests {
         )
         .unwrap();
         assert!(
-            readiness
+            evidence
                 .validate_against_sources(&left, &separated_right)
                 .is_err()
         );

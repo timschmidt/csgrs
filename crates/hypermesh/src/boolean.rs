@@ -87,7 +87,7 @@ use super::reports::{
     ExactPlanarArrangementReport, ExactPlanarArrangementStatus, ExactRefinementReport,
     ExactRefinementStatus, ExactReportValidationError, ExactSameSurfaceReport,
     ExactSameSurfaceStatus, ExactVolumetricBoundaryClosureReport,
-    ExactVolumetricBoundaryClosureStatus, ExactWindingReadinessReport, ExactWindingReadinessStatus,
+    ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
 };
 use super::simplify::ExactSimplifiedCellComplex;
 use super::solid::{
@@ -1217,11 +1217,11 @@ pub(crate) struct ExactBooleanCertificationSet {
     /// Arrangement-cell shortcut capabilities that cover cases not yet
     /// consumed by the full arrangement attempt report.
     arrangement_cell_complex_shortcuts: ExactArrangementCellComplexShortcutFacts,
-    /// Planar-arrangement readiness for coplanar surface output.
+    /// Planar-arrangement evidence for coplanar surface output.
     planar_arrangement: ExactPlanarArrangementReport,
-    /// Winding/inside-outside readiness for named volumetric output.
-    winding_readiness: ExactWindingReadinessReport,
-    /// Volumetric boundary closure readiness, when meaningful for the request.
+    /// Winding/inside-outside evidence for named volumetric output.
+    winding_evidence: ExactWindingEvidenceReport,
+    /// Volumetric boundary closure evidence, when meaningful for the request.
     volumetric_boundary_closure: Option<ExactVolumetricBoundaryClosureReport>,
     /// Arrangement/cell-complex materialization attempt.
     arrangement_attempt: Option<ExactArrangementBooleanAttempt>,
@@ -1234,10 +1234,10 @@ impl ExactBooleanCertificationSet {
         &self.planar_arrangement
     }
 
-    /// Return the winding/inside-outside readiness certification report.
+    /// Return the winding/inside-outside evidence certification report.
     #[cfg(test)]
-    pub(crate) fn winding_readiness(&self) -> &ExactWindingReadinessReport {
-        &self.winding_readiness
+    pub(crate) fn winding_evidence(&self) -> &ExactWindingEvidenceReport {
+        &self.winding_evidence
     }
 
     pub(crate) fn from_graph_and_regularized_arrangement(
@@ -1284,7 +1284,7 @@ impl ExactBooleanCertificationSet {
         let arrangement_cell_complex_shortcuts = source_facts.arrangement_cell_complex_shortcuts();
         let arrangement_cell_complex_shortcut_support =
             arrangement_cell_complex_shortcuts.certified_support(request.operation);
-        let reject_boundary_readiness_request = request.validation
+        let reject_boundary_evidence_request = request.validation
             == ValidationPolicy::ALLOW_BOUNDARY
             && request.boundary_policy == ExactBoundaryBooleanPolicy::Reject;
         let closed_shortcut_request = request.validation == ValidationPolicy::CLOSED;
@@ -1311,12 +1311,12 @@ impl ExactBooleanCertificationSet {
                 Some(no_materialized_boundary_output_report(request.operation))
             } else if request.validation == ValidationPolicy::CLOSED {
                 None
-            } else if (closed_shortcut_request || reject_boundary_readiness_request)
+            } else if (closed_shortcut_request || reject_boundary_evidence_request)
                 && arrangement_cell_complex_shortcut_support
                     == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
             {
                 None
-            } else if reject_boundary_readiness_request {
+            } else if reject_boundary_evidence_request {
                 None
             } else {
                 Some(volumetric_boundary_closure_report_from_graph(
@@ -1352,7 +1352,7 @@ impl ExactBooleanCertificationSet {
             if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_))
                 || arrangement_cell_complex_shortcut_certified
                 || adjacent_union_completion_certified
-                || reject_boundary_readiness_request
+                || reject_boundary_evidence_request
                 || request.validation == ValidationPolicy::CLOSED
                 || retained_attempt_has_regularized_reports
             {
@@ -1392,7 +1392,7 @@ impl ExactBooleanCertificationSet {
                 })
                 .transpose()?
         };
-        let winding_readiness = winding_readiness_report_for_request_from_graph_and_attempt(
+        let winding_evidence = winding_evidence_report_for_request_from_graph_and_attempt(
             graph,
             left,
             right,
@@ -1416,7 +1416,7 @@ impl ExactBooleanCertificationSet {
             convex_capabilities,
             arrangement_cell_complex_shortcuts: arrangement_cell_complex_shortcuts.clone(),
             planar_arrangement,
-            winding_readiness,
+            winding_evidence,
             volumetric_boundary_closure,
             arrangement_attempt,
         })
@@ -1470,9 +1470,9 @@ impl ExactBooleanCertificationSet {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         self.planar_arrangement.validate()?;
-        self.winding_readiness.validate()?;
+        self.winding_evidence.validate()?;
         if self.planar_arrangement.operation() != request.operation
-            || self.winding_readiness.operation() != request.operation
+            || self.winding_evidence.operation() != request.operation
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
@@ -1486,17 +1486,17 @@ impl ExactBooleanCertificationSet {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
-        if self.winding_readiness.status()
-            == ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized
+        if self.winding_evidence.status()
+            == ExactWindingEvidenceStatus::OpenSurfaceArrangementAlreadyMaterialized
         {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
         let boundary_policy_shortcut_certified = self.boundary_touching.is_certified()
             && matches!(
-                self.winding_readiness.status(),
-                ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized
-                    | ExactWindingReadinessStatus::BoundaryPolicyRequired
+                self.winding_evidence.status(),
+                ExactWindingEvidenceStatus::BoundaryPolicyShortcutAlreadyMaterialized
+                    | ExactWindingEvidenceStatus::BoundaryPolicyRequired
             );
         if boundary_policy_shortcut_certified {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
@@ -1519,21 +1519,21 @@ impl ExactBooleanCertificationSet {
                 .certified_support(request.operation)
                 == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
             && matches!(
-                self.winding_readiness.status(),
-                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
-                    | ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized
-                    | ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized
+                self.winding_evidence.status(),
+                ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
+                    | ExactWindingEvidenceStatus::CoplanarVolumetricCellsAlreadyMaterialized
+                    | ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized
             );
         if arrangement_cell_complex_shortcut_certified_by_source_facts {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
-        let arrangement_cell_complex_readiness_certified_by_source_facts = request.validation
+        let arrangement_cell_complex_evidence_certified_by_source_facts = request.validation
             == ValidationPolicy::ALLOW_BOUNDARY
             && request.boundary_policy == ExactBoundaryBooleanPolicy::Reject
-            && self.winding_readiness.status()
-                == ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized;
-        if arrangement_cell_complex_readiness_certified_by_source_facts {
+            && self.winding_evidence.status()
+                == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized;
+        if arrangement_cell_complex_evidence_certified_by_source_facts {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
@@ -1551,7 +1551,7 @@ impl ExactBooleanCertificationSet {
             return Ok(());
         }
         if self
-            .winding_readiness
+            .winding_evidence
             .status()
             .routes_to_certified_winding()
         {
@@ -1579,39 +1579,39 @@ impl ExactBooleanCertificationSet {
         &self,
         operation: ExactBooleanOperation,
     ) -> bool {
-        match self.winding_readiness.status() {
-            ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized => {
+        match self.winding_evidence.status() {
+            ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized => {
                 self.trivial.has_empty_operand()
             }
-            ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized => {
                 self.trivial.bounds_disjoint
             }
-            ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized => {
                 self.same_surface.is_certified()
             }
-            ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::OpenSurfaceDisjointAlreadyMaterialized => {
                 self.open_surface_disjoint.is_certified()
             }
-            ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized => {
                 self.closed_boundary_touching_materialization_certified_by_retained_evidence()
             }
-            ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized => {
                 (self.regularized_solid.left_closed_solid
                     && self.regularized_solid.right_open_surface)
                     || (self.regularized_solid.left_open_surface
                         && self.regularized_solid.right_closed_solid)
             }
-            ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized => {
                 self.regularized_solid.left_open_surface
                     && self.regularized_solid.right_open_surface
             }
-            ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized => {
                 self.convex_capabilities.resolves_operation(operation)
             }
-            ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::ClosedWindingSeparatedAlreadyMaterialized => {
                 self.closed_winding_reports_match_separated()
             }
-            ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized => {
+            ExactWindingEvidenceStatus::ClosedWindingContainmentAlreadyMaterialized => {
                 self.closed_winding_reports_match_containment()
             }
             _ => false,
@@ -1656,8 +1656,8 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        self.winding_readiness.status()
-            == ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
+        self.winding_evidence.status()
+            == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
             && self.arrangement_attempt_certifies_output_for_operation(preflight.operation)
     }
 
@@ -1690,7 +1690,7 @@ impl ExactBooleanCertificationSet {
     }
 
     fn planar_arrangement_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        self.winding_readiness.status() == ExactWindingReadinessStatus::PlanarArrangementRequired
+        self.winding_evidence.status() == ExactWindingEvidenceStatus::PlanarArrangementRequired
             && preflight.graph_had_unknowns == self.planar_arrangement.graph_had_unknowns()
             && preflight.retained_face_pairs == self.planar_arrangement.retained_face_pairs()
             && preflight.retained_events == self.planar_arrangement.retained_events()
@@ -1703,7 +1703,7 @@ impl ExactBooleanCertificationSet {
     }
 
     fn selected_region_policy_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        self.winding_readiness.status() == ExactWindingReadinessStatus::NotNamedOperation
+        self.winding_evidence.status() == ExactWindingEvidenceStatus::NotNamedOperation
             && matches!(
                 preflight.operation,
                 ExactBooleanOperation::SelectedRegions(_)
@@ -1711,20 +1711,20 @@ impl ExactBooleanCertificationSet {
             && preflight.graph_had_unknowns == self.refinement.graph_had_unknowns
             && preflight.retained_face_pairs == self.refinement.retained_face_pairs
             && preflight.retained_events == self.refinement.retained_events
-            && preflight.graph_had_unknowns == self.winding_readiness.graph_had_unknowns()
-            && preflight.retained_face_pairs == self.winding_readiness.retained_face_pairs()
-            && preflight.retained_events == self.winding_readiness.retained_events()
+            && preflight.graph_had_unknowns == self.winding_evidence.graph_had_unknowns()
+            && preflight.retained_face_pairs == self.winding_evidence.retained_face_pairs()
+            && preflight.retained_events == self.winding_evidence.retained_events()
             && preflight.blocker.is_none()
             && preflight.coplanar_arrangement_evidence.is_none()
             && preflight.coplanar_volumetric_evidence.is_none()
-            && self.winding_readiness.region_count() == 0
-            && self.winding_readiness.region_classifications().is_empty()
+            && self.winding_evidence.region_count() == 0
+            && self.winding_evidence.region_classifications().is_empty()
             && self
-                .winding_readiness
+                .winding_evidence
                 .coplanar_arrangement_evidence()
                 .is_none()
             && self
-                .winding_readiness
+                .winding_evidence
                 .coplanar_volumetric_evidence()
                 .is_none()
     }
@@ -1734,8 +1734,8 @@ impl ExactBooleanCertificationSet {
         preflight: &ExactBooleanPreflight,
     ) -> bool {
         self.boundary_touching.is_certified()
-            && self.winding_readiness.status()
-                == ExactWindingReadinessStatus::BoundaryPolicyRequired
+            && self.winding_evidence.status()
+                == ExactWindingEvidenceStatus::BoundaryPolicyRequired
             && self.boundary_report_matches_preflight(preflight, true)
     }
 
@@ -1745,9 +1745,9 @@ impl ExactBooleanCertificationSet {
     ) -> bool {
         self.boundary_touching.is_certified()
             && (matches!(
-                self.winding_readiness.status(),
-                ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized
-                    | ExactWindingReadinessStatus::BoundaryPolicyRequired
+                self.winding_evidence.status(),
+                ExactWindingEvidenceStatus::BoundaryPolicyShortcutAlreadyMaterialized
+                    | ExactWindingEvidenceStatus::BoundaryPolicyRequired
             ) || self.materialized_shortcut_certified_for_operation(preflight.operation))
             && self.boundary_report_matches_preflight(preflight, false)
     }
@@ -1776,29 +1776,29 @@ impl ExactBooleanCertificationSet {
         preflight: &ExactBooleanPreflight,
     ) -> bool {
         self.closed_boundary_touching_materialization_certified_by_retained_evidence()
-            && ((self.winding_readiness.status()
-                == ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
+            && ((self.winding_evidence.status()
+                == ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized
                 && (self.boundary_report_matches_preflight(preflight, false)
                     || (preflight.graph_had_unknowns
-                        == self.winding_readiness.graph_had_unknowns()
+                        == self.winding_evidence.graph_had_unknowns()
                         && preflight.retained_face_pairs
-                            == self.winding_readiness.retained_face_pairs()
-                        && preflight.retained_events == self.winding_readiness.retained_events()
-                        && preflight.region_count == self.winding_readiness.region_count()
+                            == self.winding_evidence.retained_face_pairs()
+                        && preflight.retained_events == self.winding_evidence.retained_events()
+                        && preflight.region_count == self.winding_evidence.region_count()
                         && preflight.region_classifications
-                            == self.winding_readiness.region_classifications()
+                            == self.winding_evidence.region_classifications()
                         && preflight.blocker.is_none()
                         && preflight.coplanar_arrangement_evidence.is_none()
                         && preflight.coplanar_volumetric_evidence.is_some()
                         && preflight.coplanar_volumetric_evidence.as_ref()
-                            == self.winding_readiness.coplanar_volumetric_evidence())))
+                            == self.winding_evidence.coplanar_volumetric_evidence())))
                 || self.arrangement_attempt_matches_certified_preflight(preflight))
     }
 
     fn closed_boundary_touching_materialization_certified_by_retained_evidence(&self) -> bool {
         self.boundary_touching.is_certified()
             || self
-                .winding_readiness
+                .winding_evidence
                 .coplanar_volumetric_evidence()
                 .is_some_and(|evidence| {
                     evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
@@ -1811,18 +1811,18 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        (self.winding_readiness.status()
-            == ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized
-            && preflight.graph_had_unknowns == self.winding_readiness.graph_had_unknowns()
-            && preflight.retained_face_pairs == self.winding_readiness.retained_face_pairs()
-            && preflight.retained_events == self.winding_readiness.retained_events()
-            && preflight.region_count == self.winding_readiness.region_count()
-            && preflight.region_classifications == self.winding_readiness.region_classifications()
+        (self.winding_evidence.status()
+            == ExactWindingEvidenceStatus::OpenSurfaceArrangementAlreadyMaterialized
+            && preflight.graph_had_unknowns == self.winding_evidence.graph_had_unknowns()
+            && preflight.retained_face_pairs == self.winding_evidence.retained_face_pairs()
+            && preflight.retained_events == self.winding_evidence.retained_events()
+            && preflight.region_count == self.winding_evidence.region_count()
+            && preflight.region_classifications == self.winding_evidence.region_classifications()
             && preflight.blocker.is_none()
             && preflight.coplanar_arrangement_evidence.is_none()
             && preflight.coplanar_volumetric_evidence.is_none()
             && self
-                .winding_readiness
+                .winding_evidence
                 .coplanar_volumetric_evidence()
                 .is_none())
             || (self.arrangement_attempt_matches_certified_preflight(preflight)
@@ -1861,7 +1861,7 @@ impl ExactBooleanCertificationSet {
                         || (self.adjacent_union_completion.is_certified()
                             && self.adjacent_union_completion.operation() == operation)
                         || self
-                            .winding_readiness
+                            .winding_evidence
                             .coplanar_volumetric_evidence()
                             .is_some_and(|evidence| {
                                 evidence.obstacle
@@ -1870,10 +1870,10 @@ impl ExactBooleanCertificationSet {
                                     && evidence.validate().is_ok()
                             })
                         || matches!(
-                        self.winding_readiness.status(),
-                        ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
-                            | ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
-                            | ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
+                        self.winding_evidence.status(),
+                        ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
+                            | ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized
+                            | ExactWindingEvidenceStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
                     ) || self
                         .arrangement_attempt_certifies_output_for_operation(request.operation))
             }
@@ -1885,27 +1885,27 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        self.winding_readiness.status()
-            == ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
-            && self.winding_handoff_matches_preflight(preflight)
+        self.winding_evidence.status()
+            == ExactWindingEvidenceStatus::CoplanarVolumetricCellsRequired
+            && self.winding_evidence_matches_preflight(preflight)
     }
 
     fn unresolved_graph_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        self.winding_readiness.status() == ExactWindingReadinessStatus::GraphUnknowns
-            && self.winding_handoff_matches_preflight(preflight)
+        self.winding_evidence.status() == ExactWindingEvidenceStatus::GraphUnknowns
+            && self.winding_evidence_matches_preflight(preflight)
     }
 
     fn certified_winding_requirement_matches_preflight(
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        self.winding_readiness
+        self.winding_evidence
             .status()
             .routes_to_certified_winding()
-            && self.winding_handoff_matches_preflight(preflight)
+            && self.winding_evidence_matches_preflight(preflight)
     }
 
-    fn refinement_output_handoff_matches_preflight(
+    fn refinement_output_evidence_matches_preflight(
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
@@ -1918,43 +1918,43 @@ impl ExactBooleanCertificationSet {
             && preflight.coplanar_arrangement_evidence.is_none()
     }
 
-    fn winding_handoff_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        preflight.graph_had_unknowns == self.winding_readiness.graph_had_unknowns()
-            && preflight.retained_face_pairs == self.winding_readiness.retained_face_pairs()
-            && preflight.retained_events == self.winding_readiness.retained_events()
-            && preflight.region_count == self.winding_readiness.region_count()
-            && preflight.region_classifications == self.winding_readiness.region_classifications()
-            && preflight.blocker.as_ref() == Some(self.winding_readiness.blocker())
+    fn winding_evidence_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
+        preflight.graph_had_unknowns == self.winding_evidence.graph_had_unknowns()
+            && preflight.retained_face_pairs == self.winding_evidence.retained_face_pairs()
+            && preflight.retained_events == self.winding_evidence.retained_events()
+            && preflight.region_count == self.winding_evidence.region_count()
+            && preflight.region_classifications == self.winding_evidence.region_classifications()
+            && preflight.blocker.as_ref() == Some(self.winding_evidence.blocker())
             && preflight.coplanar_arrangement_evidence.is_none()
             && preflight.coplanar_volumetric_evidence.as_ref()
-                == self.winding_readiness.coplanar_volumetric_evidence()
+                == self.winding_evidence.coplanar_volumetric_evidence()
     }
 
     fn empty_operand_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        (self.winding_readiness.status()
-            == ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
+        (self.winding_evidence.status()
+            == ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.trivial.has_empty_operand()
     }
 
     fn bounds_disjoint_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        (self.winding_readiness.status()
-            == ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized
+        (self.winding_evidence.status()
+            == ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.trivial.bounds_disjoint
     }
 
     fn identical_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        (self.winding_readiness.status()
-            == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
+        (self.winding_evidence.status()
+            == ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.identical.is_certified()
             && self.same_surface.is_certified()
     }
 
     fn same_surface_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        (self.winding_readiness.status()
-            == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
+        (self.winding_evidence.status()
+            == ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.same_surface.is_certified()
     }
@@ -1974,8 +1974,8 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        (self.winding_readiness.status()
-            == ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
+        (self.winding_evidence.status()
+            == ExactWindingEvidenceStatus::ClosedWindingSeparatedAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.closed_winding_reports_match_separated()
     }
@@ -1984,8 +1984,8 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        (self.winding_readiness.status()
-            == ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized
+        (self.winding_evidence.status()
+            == ExactWindingEvidenceStatus::ClosedWindingContainmentAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.closed_winding_reports_match_containment()
     }
@@ -1994,8 +1994,8 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        (self.winding_readiness.status()
-            == ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
+        (self.winding_evidence.status()
+            == ExactWindingEvidenceStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && ((self.regularized_solid.left_closed_solid
                 && self.regularized_solid.right_open_surface)
@@ -2007,8 +2007,8 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        (self.winding_readiness.status()
-            == ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
+        (self.winding_evidence.status()
+            == ExactWindingEvidenceStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.regularized_solid.left_open_surface
             && self.regularized_solid.right_open_surface
@@ -2033,28 +2033,28 @@ impl ExactBooleanCertificationSet {
     }
 
     fn convex_boolean_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        (self.winding_readiness.status()
-            == ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
+        (self.winding_evidence.status()
+            == ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.convex_reports_match_preflight_support(preflight)
     }
 
     fn convex_separated_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        (self.winding_readiness.status()
-            == ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
+        (self.winding_evidence.status()
+            == ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized
             && self.convex_reports_match_preflight_support(preflight))
-            || (self.winding_readiness.status()
-                == ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
+            || (self.winding_evidence.status()
+                == ExactWindingEvidenceStatus::ClosedWindingSeparatedAlreadyMaterialized
                 && self.closed_winding_reports_match_separated())
             || self.arrangement_attempt_matches_certified_preflight(preflight)
     }
 
     fn convex_containment_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        (self.winding_readiness.status()
-            == ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
+        (self.winding_evidence.status()
+            == ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized
             && self.convex_reports_match_preflight_support(preflight))
-            || (self.winding_readiness.status()
-                == ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized
+            || (self.winding_evidence.status()
+                == ExactWindingEvidenceStatus::ClosedWindingContainmentAlreadyMaterialized
                 && self.closed_winding_reports_match_containment())
             || self.arrangement_attempt_matches_certified_preflight(preflight)
     }
@@ -2064,53 +2064,53 @@ impl ExactBooleanCertificationSet {
         preflight: &ExactBooleanPreflight,
     ) -> bool {
         let coplanar_boundary_only_evidence_matches = preflight.graph_had_unknowns
-            == self.winding_readiness.graph_had_unknowns()
-            && preflight.retained_face_pairs == self.winding_readiness.retained_face_pairs()
-            && preflight.retained_events == self.winding_readiness.retained_events()
-            && preflight.region_count == self.winding_readiness.region_count()
-            && preflight.region_classifications == self.winding_readiness.region_classifications()
+            == self.winding_evidence.graph_had_unknowns()
+            && preflight.retained_face_pairs == self.winding_evidence.retained_face_pairs()
+            && preflight.retained_events == self.winding_evidence.retained_events()
+            && preflight.region_count == self.winding_evidence.region_count()
+            && preflight.region_classifications == self.winding_evidence.region_classifications()
             && preflight.blocker.is_none()
             && preflight.coplanar_arrangement_evidence.is_none()
             && preflight.coplanar_volumetric_evidence.as_ref()
-                == self.winding_readiness.coplanar_volumetric_evidence()
+                == self.winding_evidence.coplanar_volumetric_evidence()
             && self
-                .winding_readiness
+                .winding_evidence
                 .coplanar_volumetric_evidence()
                 .is_some_and(|evidence| {
                     evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
                         && evidence.positive_area_coplanar_overlapping_pairs != 0
                         && evidence.validate().is_ok()
                 });
-        let retained_attempt_handoff_matches = self
-            .refinement_output_handoff_matches_preflight(preflight)
+        let retained_attempt_evidence_matches = self
+            .refinement_output_evidence_matches_preflight(preflight)
             && ((self
                 .arrangement_cell_complex_shortcuts
                 .certified_support(preflight.operation)
                 == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
                 && self.arrangement_attempt_certifies_shortcut_for_operation(preflight.operation))
                 || self.arrangement_attempt_certifies_output_for_operation(preflight.operation));
-        retained_attempt_handoff_matches
+        retained_attempt_evidence_matches
             || self.adjacent_union_completion_matches_preflight(preflight)
             || coplanar_boundary_only_evidence_matches
             || (self.region_ownership_resolves_operation(preflight.operation)
                 && self.topology_assembly_complete()
                 && {
-                    let region_handoff_matches = (preflight.region_count
-                        == self.winding_readiness.region_count()
+                    let region_evidence_matches = (preflight.region_count
+                        == self.winding_evidence.region_count()
                         && preflight.region_classifications
-                            == self.winding_readiness.region_classifications())
+                            == self.winding_evidence.region_classifications())
                         || (preflight.region_count == 0
                             && preflight.region_classifications.is_empty());
-                    preflight.graph_had_unknowns == self.winding_readiness.graph_had_unknowns()
+                    preflight.graph_had_unknowns == self.winding_evidence.graph_had_unknowns()
                         && preflight.retained_face_pairs
-                            == self.winding_readiness.retained_face_pairs()
-                        && preflight.retained_events == self.winding_readiness.retained_events()
-                        && region_handoff_matches
+                            == self.winding_evidence.retained_face_pairs()
+                        && preflight.retained_events == self.winding_evidence.retained_events()
+                        && region_evidence_matches
                         && preflight.blocker.is_none()
                         && preflight.coplanar_arrangement_evidence.as_ref()
-                            == self.winding_readiness.coplanar_arrangement_evidence()
+                            == self.winding_evidence.coplanar_arrangement_evidence()
                         && preflight.coplanar_volumetric_evidence.as_ref()
-                            == self.winding_readiness.coplanar_volumetric_evidence()
+                            == self.winding_evidence.coplanar_volumetric_evidence()
                 })
     }
 
@@ -2146,8 +2146,8 @@ impl ExactBooleanCertificationSet {
                 self.closed_boundary_touching_matches_preflight(preflight)
             }
             ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
-                (self.winding_readiness.status()
-                    == ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
+                (self.winding_evidence.status()
+                    == ExactWindingEvidenceStatus::OpenSurfaceDisjointAlreadyMaterialized
                     || self.arrangement_attempt_matches_certified_preflight(preflight))
                     && self.open_surface_disjoint_matches_preflight(preflight)
             }
@@ -3993,23 +3993,23 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
                 None,
             ));
         }
-        let winding_readiness =
-            winding_readiness_report_from_graph(&graph, left, right, operation)?;
-        if winding_readiness.status.routes_to_certified_winding()
-            && winding_readiness.blocker.kind
+        let winding_evidence =
+            winding_evidence_report_from_graph(&graph, left, right, operation)?;
+        if winding_evidence.status.routes_to_certified_winding()
+            && winding_evidence.blocker.kind
                 == ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
         {
             return Ok(ExactBooleanPreflight {
                 operation,
                 support: ExactBooleanSupport::RequiresCertifiedWinding,
-                graph_had_unknowns: winding_readiness.graph_had_unknowns,
-                retained_face_pairs: winding_readiness.retained_face_pairs,
-                retained_events: winding_readiness.retained_events,
-                region_count: winding_readiness.region_count,
-                region_classifications: winding_readiness.region_classifications,
-                blocker: Some(winding_readiness.blocker),
-                coplanar_arrangement_evidence: winding_readiness.coplanar_arrangement_evidence,
-                coplanar_volumetric_evidence: winding_readiness.coplanar_volumetric_evidence,
+                graph_had_unknowns: winding_evidence.graph_had_unknowns,
+                retained_face_pairs: winding_evidence.retained_face_pairs,
+                retained_events: winding_evidence.retained_events,
+                region_count: winding_evidence.region_count,
+                region_classifications: winding_evidence.region_classifications,
+                blocker: Some(winding_evidence.blocker),
+                coplanar_arrangement_evidence: winding_evidence.coplanar_arrangement_evidence,
+                coplanar_volumetric_evidence: winding_evidence.coplanar_volumetric_evidence,
             });
         }
         return Ok(ExactBooleanPreflight {
@@ -4046,7 +4046,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         });
     }
 
-    let winding_report = winding_readiness_report_from_graph(&graph, left, right, operation)?;
+    let winding_report = winding_evidence_report_from_graph(&graph, left, right, operation)?;
     if winding_report
         .status
         .materializes_arrangement_cell_complex()
@@ -4687,7 +4687,7 @@ fn graph_requires_coplanar_volumetric_cells(counts: &ExactBooleanBlocker) -> boo
     // Coplanar source-face cells inside a closed volumetric overlap are not a
     // planar-surface output problem and not ordinary non-coplanar winding
     // state instead of approximating the cells or relabeling them as generic
-    // winding readiness.
+    // winding evidence.
     counts.coplanar_overlapping_pairs + counts.coplanar_touching_pairs > 0
 }
 
@@ -5225,7 +5225,7 @@ fn materialize_arrangement_lower_dimensional_intersection_from_graph(
     {
         return Ok(None);
     }
-    let readiness = winding_readiness_report_for_request_from_graph_and_attempt(
+    let evidence = winding_evidence_report_for_request_from_graph_and_attempt(
         graph,
         left,
         right,
@@ -5233,16 +5233,16 @@ fn materialize_arrangement_lower_dimensional_intersection_from_graph(
         retained_arrangement_attempt,
         shortcut_facts,
     )?;
-    readiness.validate().map_err(|error| {
+    evidence.validate().map_err(|error| {
         ExactMeshError::one(ExactMeshBlocker::new(
             ExactMeshBlockerKind::UnsupportedExactOperation,
             format!("exact arrangement lower-dimensional evidence validation failed: {error:?}"),
         ))
     })?;
     if !matches!(
-        readiness.status,
-        ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
-            | ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
+        evidence.status,
+        ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
+            | ExactWindingEvidenceStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
     ) {
         return Ok(None);
     }
@@ -10079,14 +10079,14 @@ fn boolean_boundary_touching_meshes_from_graph(
 }
 
 #[cfg(test)]
-pub(crate) fn winding_readiness_report_for_request_from_graph(
+pub(crate) fn winding_evidence_report_for_request_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
-) -> Result<ExactWindingReadinessReport, ExactMeshError> {
+) -> Result<ExactWindingEvidenceReport, ExactMeshError> {
     let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
-    winding_readiness_report_for_request_from_graph_and_attempt(
+    winding_evidence_report_for_request_from_graph_and_attempt(
         graph,
         left,
         right,
@@ -10096,18 +10096,18 @@ pub(crate) fn winding_readiness_report_for_request_from_graph(
     )
 }
 
-fn winding_readiness_report_for_request_from_graph_and_attempt(
+fn winding_evidence_report_for_request_from_graph_and_attempt(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
-) -> Result<ExactWindingReadinessReport, ExactMeshError> {
+) -> Result<ExactWindingEvidenceReport, ExactMeshError> {
     if request.validation == ValidationPolicy::ALLOW_BOUNDARY
         && request.boundary_policy == ExactBoundaryBooleanPolicy::Reject
     {
-        return winding_readiness_report_from_graph_with_facts(
+        return winding_evidence_report_from_graph_with_facts(
             graph,
             left,
             right,
@@ -10126,24 +10126,24 @@ fn winding_readiness_report_for_request_from_graph_and_attempt(
         )
     }) {
         return Ok(
-            arrangement_cell_complex_already_materialized_winding_readiness(
+            arrangement_cell_complex_already_materialized_winding_evidence(
                 graph, left, right, operation,
             ),
         );
     }
-    let readiness = if let Some(support) =
+    let evidence = if let Some(support) =
         closed_validation_regularized_solid_support(left, right, operation, validation)
     {
         let status = match support {
             ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
-                ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
+                ExactWindingEvidenceStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
             }
             ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
-                ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
+                ExactWindingEvidenceStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
             }
             _ => unreachable!("closed validation gate only certifies regularized support"),
         };
-        winding_readiness_report(
+        winding_evidence_report(
             operation,
             status,
             false,
@@ -10156,7 +10156,7 @@ fn winding_readiness_report_for_request_from_graph_and_attempt(
             None,
         )
     } else {
-        let readiness = winding_readiness_report_from_graph_with_facts(
+        let evidence = winding_evidence_report_from_graph_with_facts(
             graph,
             left,
             right,
@@ -10166,29 +10166,29 @@ fn winding_readiness_report_for_request_from_graph_and_attempt(
         if validation == ValidationPolicy::CLOSED
             || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
             || !matches!(
-                readiness.status,
-                ExactWindingReadinessStatus::VolumetricAssemblyRequired
-                    | ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
+                evidence.status,
+                ExactWindingEvidenceStatus::VolumetricAssemblyRequired
+                    | ExactWindingEvidenceStatus::CoplanarVolumetricCellsRequired
             )
         {
-            readiness
+            evidence
         } else if materialize_arrangement_volumetric_split_cell_result_from_graph(
             graph, left, right, operation, validation,
         )?
         .is_some()
         {
-            arrangement_cell_complex_already_materialized_winding_readiness(
+            arrangement_cell_complex_already_materialized_winding_evidence(
                 graph, left, right, operation,
             )
         } else {
-            readiness
+            evidence
         }
     };
     if boundary_policy == ExactBoundaryBooleanPolicy::Reject
         || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || readiness.status != ExactWindingReadinessStatus::BoundaryPolicyRequired
+        || evidence.status != ExactWindingEvidenceStatus::BoundaryPolicyRequired
     {
-        return Ok(readiness);
+        return Ok(evidence);
     }
 
     if boolean_boundary_touching_meshes_from_graph(
@@ -10202,9 +10202,9 @@ fn winding_readiness_report_for_request_from_graph_and_attempt(
     .is_some()
     {
         let counts = retained_graph_counts(graph);
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized,
+            ExactWindingEvidenceStatus::BoundaryPolicyShortcutAlreadyMaterialized,
             graph.has_unknowns(),
             graph.face_pairs.len(),
             graph.event_count(),
@@ -10215,21 +10215,21 @@ fn winding_readiness_report_for_request_from_graph_and_attempt(
             None,
         ));
     }
-    Ok(readiness)
+    Ok(evidence)
 }
 
-fn arrangement_cell_complex_already_materialized_winding_readiness(
+fn arrangement_cell_complex_already_materialized_winding_evidence(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-) -> ExactWindingReadinessReport {
+) -> ExactWindingEvidenceReport {
     let counts = retained_graph_counts(graph);
     let (blocker_kind, coplanar_evidence) =
-        arrangement_materialized_readiness_blocker_kind_and_evidence(graph, left, right);
-    winding_readiness_report(
+        arrangement_materialized_evidence_blocker_kind_and_evidence(graph, left, right);
+    winding_evidence_report(
         operation,
-        ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+        ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
         graph.has_unknowns(),
         graph.face_pairs.len(),
         graph.event_count(),
@@ -10241,7 +10241,7 @@ fn arrangement_cell_complex_already_materialized_winding_readiness(
     )
 }
 
-fn arrangement_materialized_readiness_blocker_kind_and_evidence(
+fn arrangement_materialized_evidence_blocker_kind_and_evidence(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -10489,28 +10489,28 @@ fn planar_arrangement_report(
     }
 }
 
-fn winding_readiness_report_from_graph(
+fn winding_evidence_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-) -> Result<ExactWindingReadinessReport, ExactMeshError> {
+) -> Result<ExactWindingEvidenceReport, ExactMeshError> {
     let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
-    winding_readiness_report_from_graph_with_facts(graph, left, right, operation, &shortcut_facts)
+    winding_evidence_report_from_graph_with_facts(graph, left, right, operation, &shortcut_facts)
 }
 
-fn winding_readiness_report_from_graph_with_facts(
+fn winding_evidence_report_from_graph_with_facts(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
-) -> Result<ExactWindingReadinessReport, ExactMeshError> {
+) -> Result<ExactWindingEvidenceReport, ExactMeshError> {
     let regular_operation = !matches!(operation, ExactBooleanOperation::SelectedRegions(_));
     if regular_operation && (left.triangles().is_empty() || right.triangles().is_empty()) {
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized,
+            ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized,
             false,
             0,
             0,
@@ -10522,9 +10522,9 @@ fn winding_readiness_report_from_graph_with_facts(
         ));
     }
     if regular_operation && meshes_are_certified_bounds_disjoint(left, right) {
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized,
+            ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized,
             false,
             0,
             0,
@@ -10540,9 +10540,9 @@ fn winding_readiness_report_from_graph_with_facts(
         && (meshes_are_certified_identical(left, right)
             || meshes_are_certified_same_surface(left, right))
     {
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
+            ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized,
             false,
             0,
             0,
@@ -10556,9 +10556,9 @@ fn winding_readiness_report_from_graph_with_facts(
     if regular_operation
         && certified_mixed_dimensional_regularized_solid_support(left, right).is_some()
     {
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
+            ExactWindingEvidenceStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
             false,
             0,
             0,
@@ -10574,9 +10574,9 @@ fn winding_readiness_report_from_graph_with_facts(
     let counts = retained_graph_counts(graph);
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         let blocker_kind = counts.inferred_kind();
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::NotNamedOperation,
+            ExactWindingEvidenceStatus::NotNamedOperation,
             graph_had_unknowns,
             graph.face_pairs.len(),
             graph.event_count(),
@@ -10588,9 +10588,9 @@ fn winding_readiness_report_from_graph_with_facts(
         ));
     }
     if graph_had_unknowns {
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::GraphUnknowns,
+            ExactWindingEvidenceStatus::GraphUnknowns,
             graph_had_unknowns,
             graph.face_pairs.len(),
             graph.event_count(),
@@ -10632,9 +10632,9 @@ fn winding_readiness_report_from_graph_with_facts(
                 ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
             )
         };
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized,
             graph_had_unknowns,
             retained_face_pairs,
             retained_events,
@@ -10650,9 +10650,9 @@ fn winding_readiness_report_from_graph_with_facts(
             != Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
         && let Some(evidence) = coplanar_boundary_only_evidence_if_consumed(graph, left, right)?
     {
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized,
             graph_had_unknowns,
             graph.face_pairs.len(),
             graph.event_count(),
@@ -10676,7 +10676,7 @@ fn winding_readiness_report_from_graph_with_facts(
         .is_some()
     {
         let (blocker_kind, mut coplanar_evidence) =
-            arrangement_materialized_readiness_blocker_kind_and_evidence(graph, left, right);
+            arrangement_materialized_evidence_blocker_kind_and_evidence(graph, left, right);
         let blocker_kind = if arrangement_cell_complex_shortcut_support
             == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
         {
@@ -10707,9 +10707,9 @@ fn winding_readiness_report_from_graph_with_facts(
                     None,
                 )
             };
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
             graph_had_unknowns,
             retained_face_pairs,
             retained_events,
@@ -10737,9 +10737,9 @@ fn winding_readiness_report_from_graph_with_facts(
                 ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
             )
         };
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized,
             graph_had_unknowns,
             retained_face_pairs,
             retained_events,
@@ -10753,9 +10753,9 @@ fn winding_readiness_report_from_graph_with_facts(
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && open_surface_disjoint_report_from_graph(graph, left, right).is_certified()
     {
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized,
+            ExactWindingEvidenceStatus::OpenSurfaceDisjointAlreadyMaterialized,
             graph_had_unknowns,
             0,
             graph.event_count(),
@@ -10770,9 +10770,9 @@ fn winding_readiness_report_from_graph_with_facts(
         open_surface_arrangement_plan_from_graph(graph, left, right, operation)?
     {
         let region_count = unique_classified_region_count(&region_classifications);
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized,
+            ExactWindingEvidenceStatus::OpenSurfaceArrangementAlreadyMaterialized,
             graph_had_unknowns,
             graph.face_pairs.len(),
             graph.event_count(),
@@ -10789,9 +10789,9 @@ fn winding_readiness_report_from_graph_with_facts(
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && closed_zero_area_boundary_contact_evidence_from_graph(graph, left, right)?.is_some()
     {
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized,
             graph_had_unknowns,
             graph.face_pairs.len(),
             graph.event_count(),
@@ -10809,9 +10809,9 @@ fn winding_readiness_report_from_graph_with_facts(
         )
         && certified_closed_boundary_only_contact_from_graph(graph, left, right)?
     {
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized,
             graph_had_unknowns,
             graph.face_pairs.len(),
             graph.event_count(),
@@ -10836,9 +10836,9 @@ fn winding_readiness_report_from_graph_with_facts(
                 ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
             )
         };
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
             graph_had_unknowns,
             retained_face_pairs,
             retained_events,
@@ -10850,9 +10850,9 @@ fn winding_readiness_report_from_graph_with_facts(
         ));
     }
     if boundary_policy_required {
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::BoundaryPolicyRequired,
+            ExactWindingEvidenceStatus::BoundaryPolicyRequired,
             graph_had_unknowns,
             graph.face_pairs.len(),
             graph.event_count(),
@@ -10873,9 +10873,9 @@ fn winding_readiness_report_from_graph_with_facts(
         None,
     )?;
     if planar_report.is_required() {
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::PlanarArrangementRequired,
+            ExactWindingEvidenceStatus::PlanarArrangementRequired,
             graph_had_unknowns,
             graph.face_pairs.len(),
             graph.event_count(),
@@ -10887,9 +10887,9 @@ fn winding_readiness_report_from_graph_with_facts(
         ));
     }
     if planar_report.is_already_materialized() {
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized,
+            ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized,
             graph_had_unknowns,
             graph.face_pairs.len(),
             graph.event_count(),
@@ -10901,7 +10901,7 @@ fn winding_readiness_report_from_graph_with_facts(
         ));
     }
     if arrangement_cell_complex_shortcut_materializes {
-        let mut materialized = arrangement_cell_complex_already_materialized_winding_readiness(
+        let mut materialized = arrangement_cell_complex_already_materialized_winding_evidence(
             graph, left, right, operation,
         );
         materialized.blocker =
@@ -10927,9 +10927,9 @@ fn winding_readiness_report_from_graph_with_facts(
             operation,
             ValidationPolicy::CLOSED,
         )? {
-            return Ok(winding_readiness_report(
+            return Ok(winding_evidence_report(
                 operation,
-                ExactWindingReadinessStatus::Ready,
+                ExactWindingEvidenceStatus::Ready,
                 graph_had_unknowns,
                 graph.face_pairs.len(),
                 graph.event_count(),
@@ -10958,7 +10958,7 @@ fn winding_readiness_report_from_graph_with_facts(
         .is_some()
         {
             return Ok(
-                arrangement_cell_complex_already_materialized_winding_readiness(
+                arrangement_cell_complex_already_materialized_winding_evidence(
                     graph, left, right, operation,
                 ),
             );
@@ -10968,9 +10968,9 @@ fn winding_readiness_report_from_graph_with_facts(
             .all(|classification| classification.relation.is_materialization_decided())
         {
             let region_count = unique_classified_region_count(&region_classifications);
-            return Ok(winding_readiness_report(
+            return Ok(winding_evidence_report(
                 operation,
-                ExactWindingReadinessStatus::VolumetricAssemblyRequired,
+                ExactWindingEvidenceStatus::VolumetricAssemblyRequired,
                 graph_had_unknowns,
                 graph.face_pairs.len(),
                 graph.event_count(),
@@ -10994,9 +10994,9 @@ fn winding_readiness_report_from_graph_with_facts(
         )?
         .is_some()
         {
-            return Ok(winding_readiness_report(
+            return Ok(winding_evidence_report(
                 operation,
-                ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized,
+                ExactWindingEvidenceStatus::CoplanarVolumetricCellsAlreadyMaterialized,
                 graph_had_unknowns,
                 graph.face_pairs.len(),
                 graph.event_count(),
@@ -11007,9 +11007,9 @@ fn winding_readiness_report_from_graph_with_facts(
                 coplanar_volumetric_evidence_if_required(graph, left, right),
             ));
         }
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired,
+            ExactWindingEvidenceStatus::CoplanarVolumetricCellsRequired,
             graph_had_unknowns,
             graph.face_pairs.len(),
             graph.event_count(),
@@ -11034,7 +11034,7 @@ fn winding_readiness_report_from_graph_with_facts(
         .is_some()
     {
         return Ok(
-            arrangement_cell_complex_already_materialized_winding_readiness(
+            arrangement_cell_complex_already_materialized_winding_evidence(
                 graph, left, right, operation,
             ),
         );
@@ -11045,9 +11045,9 @@ fn winding_readiness_report_from_graph_with_facts(
         && left_in_right == ClosedMeshWindingMeshRelation::Outside
         && right_in_left == ClosedMeshWindingMeshRelation::Outside
     {
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ClosedWindingSeparatedAlreadyMaterialized,
             graph_had_unknowns,
             0,
             graph.event_count(),
@@ -11061,9 +11061,9 @@ fn winding_readiness_report_from_graph_with_facts(
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && certified_closed_winding_containment_relation_from_graph(graph, left, right)?.is_some()
     {
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ClosedWindingContainmentAlreadyMaterialized,
             graph_had_unknowns,
             0,
             graph.event_count(),
@@ -11075,9 +11075,9 @@ fn winding_readiness_report_from_graph_with_facts(
         ));
     }
     if graph.face_pairs.is_empty() {
-        return Ok(winding_readiness_report(
+        return Ok(winding_evidence_report(
             operation,
-            ExactWindingReadinessStatus::NoNontrivialOverlap,
+            ExactWindingEvidenceStatus::NoNontrivialOverlap,
             graph_had_unknowns,
             0,
             graph.event_count(),
@@ -11093,9 +11093,9 @@ fn winding_readiness_report_from_graph_with_facts(
     let region_plan = geometry.region_plan(left, right);
     let region_classifications =
         checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
-    Ok(winding_readiness_report(
+    Ok(winding_evidence_report(
         operation,
-        ExactWindingReadinessStatus::Ready,
+        ExactWindingEvidenceStatus::Ready,
         graph_had_unknowns,
         graph.face_pairs.len(),
         graph.event_count(),
@@ -11107,9 +11107,9 @@ fn winding_readiness_report_from_graph_with_facts(
     ))
 }
 
-fn winding_readiness_report(
+fn winding_evidence_report(
     operation: ExactBooleanOperation,
-    status: ExactWindingReadinessStatus,
+    status: ExactWindingEvidenceStatus,
     graph_had_unknowns: bool,
     retained_face_pairs: usize,
     retained_events: usize,
@@ -11118,8 +11118,8 @@ fn winding_readiness_report(
     blocker: ExactBooleanBlocker,
     coplanar_arrangement_evidence: Option<super::graph::CoplanarArrangementEvidence>,
     coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
-) -> ExactWindingReadinessReport {
-    ExactWindingReadinessReport {
+) -> ExactWindingEvidenceReport {
+    ExactWindingEvidenceReport {
         operation,
         status,
         graph_had_unknowns,
@@ -12054,13 +12054,13 @@ mod tests {
         result
     }
 
-    fn test_winding_readiness(
+    fn test_winding_evidence(
         request: ExactBooleanRequest,
         left: &ExactMesh,
         right: &ExactMesh,
-    ) -> ExactWindingReadinessReport {
+    ) -> ExactWindingEvidenceReport {
         with_test_evaluation(request, left, right, |evaluation| {
-            evaluation.certifications.winding_readiness.clone()
+            evaluation.certifications.winding_evidence.clone()
         })
     }
 
@@ -12688,7 +12688,7 @@ mod tests {
             canonical.facts().mesh.boundary_edges
         );
 
-        let readiness = test_winding_readiness(
+        let evidence = test_winding_evidence(
             ExactBooleanRequest::with_boundary_policy(
                 ExactBooleanOperation::Difference,
                 ValidationPolicy::ALLOW_BOUNDARY,
@@ -12698,19 +12698,19 @@ mod tests {
             &right,
         );
         assert_eq!(
-            readiness.status,
-            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
-            "{readiness:?}"
+            evidence.status,
+            ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
+            "{evidence:?}"
         );
         assert_eq!(
-            readiness.blocker.kind,
+            evidence.blocker.kind,
             ExactBooleanBlockerKind::NeedsWinding
         );
-        readiness.validate_against_sources(&left, &right).unwrap();
+        evidence.validate_against_sources(&left, &right).unwrap();
     }
 
     #[test]
-    fn selected_region_winding_readiness_classifies_retained_graph_blocker() {
+    fn selected_region_winding_evidence_classifies_retained_graph_blocker() {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
             &[0, 1, 2, 0, 2, 3],
@@ -12728,26 +12728,26 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
             ExactBoundaryBooleanPolicy::Reject,
         );
-        let readiness = with_test_evaluation(request, &left, &right, |evaluation| {
+        let evidence = with_test_evaluation(request, &left, &right, |evaluation| {
             assert!(
                 evaluation.materialized_result().is_none(),
                 "selected-region evaluation should retain certifications when materialization declines"
             );
-            evaluation.certifications().winding_readiness().clone()
+            evaluation.certifications().winding_evidence().clone()
         });
         assert_eq!(
-            readiness.status,
-            ExactWindingReadinessStatus::NotNamedOperation
+            evidence.status,
+            ExactWindingEvidenceStatus::NotNamedOperation
         );
         assert_eq!(
-            readiness.blocker.kind,
+            evidence.blocker.kind,
             ExactBooleanBlockerKind::NeedsPlanarArrangement
         );
-        assert_eq!(readiness.blocker.coplanar_overlapping_pairs, 1);
-        assert_eq!(readiness.blocker.coplanar_touching_pairs, 2);
-        readiness.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(evidence.blocker.coplanar_overlapping_pairs, 1);
+        assert_eq!(evidence.blocker.coplanar_touching_pairs, 2);
+        evidence.validate_against_sources(&left, &right).unwrap();
 
-        let mut stale = readiness.clone();
+        let mut stale = evidence.clone();
         stale.blocker.kind = ExactBooleanBlockerKind::NeedsWinding;
         assert_eq!(
             stale.validate(),
@@ -12760,22 +12760,22 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let disjoint_readiness = test_winding_readiness(request, &left, &disjoint_right);
+        let disjoint_evidence = test_winding_evidence(request, &left, &disjoint_right);
         assert_eq!(
-            disjoint_readiness.status,
-            ExactWindingReadinessStatus::NotNamedOperation
+            disjoint_evidence.status,
+            ExactWindingEvidenceStatus::NotNamedOperation
         );
         assert_eq!(
-            disjoint_readiness.blocker.kind,
+            disjoint_evidence.blocker.kind,
             ExactBooleanBlockerKind::NeedsWinding
         );
-        assert_eq!(disjoint_readiness.retained_face_pairs, 0);
-        disjoint_readiness.validate().unwrap();
-        disjoint_readiness
+        assert_eq!(disjoint_evidence.retained_face_pairs, 0);
+        disjoint_evidence.validate().unwrap();
+        disjoint_evidence
             .validate_against_sources(&left, &disjoint_right)
             .unwrap();
 
-        let mut relabeled_empty = disjoint_readiness;
+        let mut relabeled_empty = disjoint_evidence;
         relabeled_empty.blocker.kind = ExactBooleanBlockerKind::NeedsBoundaryPolicy;
         assert_eq!(
             relabeled_empty.validate(),
@@ -13400,7 +13400,7 @@ mod tests {
                 "{operation:?}: {stale_preflight:?}"
             );
 
-            let readiness = test_winding_readiness(
+            let evidence = test_winding_evidence(
                 ExactBooleanRequest::with_boundary_policy(
                     operation,
                     ValidationPolicy::ALLOW_BOUNDARY,
@@ -13410,17 +13410,17 @@ mod tests {
                 &right,
             );
             assert_eq!(
-                readiness.status,
-                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
-                "{operation:?}: {readiness:?}"
+                evidence.status,
+                ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
+                "{operation:?}: {evidence:?}"
             );
-            assert!(readiness.status.is_already_materialized());
+            assert!(evidence.status.is_already_materialized());
             assert_eq!(
-                readiness.blocker.kind,
+                evidence.blocker.kind,
                 ExactBooleanBlockerKind::NeedsWinding,
-                "{operation:?}: {readiness:?}"
+                "{operation:?}: {evidence:?}"
             );
-            readiness.validate_against_sources(&left, &right).unwrap();
+            evidence.validate_against_sources(&left, &right).unwrap();
 
             let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
             let planar = test_planar_arrangement_report(request, &left, &right);
@@ -13637,7 +13637,7 @@ mod tests {
                 "{operation:?}: {preflight:?}"
             );
 
-            let readiness = test_winding_readiness(
+            let evidence = test_winding_evidence(
                 ExactBooleanRequest::with_boundary_policy(
                     operation,
                     ValidationPolicy::ALLOW_BOUNDARY,
@@ -13647,18 +13647,18 @@ mod tests {
                 &right,
             );
             assert_eq!(
-                readiness.status,
-                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
-                "{operation:?}: {readiness:?}"
+                evidence.status,
+                ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
+                "{operation:?}: {evidence:?}"
             );
-            assert!(readiness.status.is_already_materialized());
+            assert!(evidence.status.is_already_materialized());
             assert_eq!(
-                readiness.blocker.kind,
+                evidence.blocker.kind,
                 ExactBooleanBlockerKind::NeedsWinding,
-                "{operation:?}: {readiness:?}"
+                "{operation:?}: {evidence:?}"
             );
-            readiness.validate().unwrap();
-            readiness.validate_against_sources(&left, &right).unwrap();
+            evidence.validate().unwrap();
+            evidence.validate_against_sources(&left, &right).unwrap();
 
             let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
             let planar = test_planar_arrangement_report(request, &left, &right);
@@ -13670,42 +13670,42 @@ mod tests {
     }
 
     #[test]
-    fn winding_readiness_status_partition_identifies_materialized_handoffs() {
+    fn winding_evidence_status_partition_identifies_materialized_handoffs() {
         for status in [
-            ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized,
-            ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized,
-            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
-            ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
-            ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
-            ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
-            ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized,
-            ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
-            ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
-            ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized,
-            ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized,
-            ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized,
-            ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized,
-            ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized,
-            ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized,
+            ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized,
+            ExactWindingEvidenceStatus::CoplanarVolumetricCellsAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
+            ExactWindingEvidenceStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
+            ExactWindingEvidenceStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized,
+            ExactWindingEvidenceStatus::OpenSurfaceArrangementAlreadyMaterialized,
+            ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+            ExactWindingEvidenceStatus::BoundaryPolicyShortcutAlreadyMaterialized,
+            ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized,
+            ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized,
+            ExactWindingEvidenceStatus::OpenSurfaceDisjointAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ClosedWindingSeparatedAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ClosedWindingContainmentAlreadyMaterialized,
         ] {
             assert!(status.is_already_materialized());
         }
 
         for status in [
-            ExactWindingReadinessStatus::NotNamedOperation,
-            ExactWindingReadinessStatus::GraphUnknowns,
-            ExactWindingReadinessStatus::BoundaryPolicyRequired,
-            ExactWindingReadinessStatus::PlanarArrangementRequired,
-            ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired,
-            ExactWindingReadinessStatus::VolumetricAssemblyRequired,
-            ExactWindingReadinessStatus::NoNontrivialOverlap,
-            ExactWindingReadinessStatus::Ready,
+            ExactWindingEvidenceStatus::NotNamedOperation,
+            ExactWindingEvidenceStatus::GraphUnknowns,
+            ExactWindingEvidenceStatus::BoundaryPolicyRequired,
+            ExactWindingEvidenceStatus::PlanarArrangementRequired,
+            ExactWindingEvidenceStatus::CoplanarVolumetricCellsRequired,
+            ExactWindingEvidenceStatus::VolumetricAssemblyRequired,
+            ExactWindingEvidenceStatus::NoNontrivialOverlap,
+            ExactWindingEvidenceStatus::Ready,
         ] {
             assert!(!status.is_already_materialized());
         }
-        let ready_report = ExactWindingReadinessReport {
+        let ready_report = ExactWindingEvidenceReport {
             operation: ExactBooleanOperation::Union,
-            status: ExactWindingReadinessStatus::Ready,
+            status: ExactWindingEvidenceStatus::Ready,
             graph_had_unknowns: false,
             retained_face_pairs: 1,
             retained_events: 1,
@@ -13725,89 +13725,89 @@ mod tests {
         assert!(ready_report.is_ready());
 
         for status in [
-            ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized,
-            ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized,
-            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+            ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized,
+            ExactWindingEvidenceStatus::CoplanarVolumetricCellsAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
         ] {
             assert!(status.materializes_arrangement_cell_complex());
         }
 
         assert!(
-            !ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
+            !ExactWindingEvidenceStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
                 .materializes_arrangement_cell_complex()
         );
         assert!(
-            !ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
+            !ExactWindingEvidenceStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
                 .materializes_arrangement_cell_complex()
         );
         assert!(
-            !ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
+            !ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized
                 .materializes_arrangement_cell_complex()
         );
         assert!(
-            !ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized
+            !ExactWindingEvidenceStatus::OpenSurfaceArrangementAlreadyMaterialized
                 .materializes_arrangement_cell_complex()
         );
         assert!(
-            !ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
+            !ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized
                 .materializes_arrangement_cell_complex()
         );
         assert!(
-            !ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
+            !ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized
                 .materializes_arrangement_cell_complex()
         );
         assert!(
-            !ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized
+            !ExactWindingEvidenceStatus::BoundaryPolicyShortcutAlreadyMaterialized
                 .materializes_arrangement_cell_complex()
         );
         for status in [
-            ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized,
-            ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized,
-            ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized,
-            ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized,
-            ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized,
+            ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized,
+            ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized,
+            ExactWindingEvidenceStatus::OpenSurfaceDisjointAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ClosedWindingSeparatedAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ClosedWindingContainmentAlreadyMaterialized,
         ] {
             assert!(!status.materializes_arrangement_cell_complex());
         }
 
         for status in [
-            ExactWindingReadinessStatus::Ready,
-            ExactWindingReadinessStatus::NoNontrivialOverlap,
-            ExactWindingReadinessStatus::VolumetricAssemblyRequired,
+            ExactWindingEvidenceStatus::Ready,
+            ExactWindingEvidenceStatus::NoNontrivialOverlap,
+            ExactWindingEvidenceStatus::VolumetricAssemblyRequired,
         ] {
             assert!(status.routes_to_certified_winding());
         }
 
         for status in [
-            ExactWindingReadinessStatus::NotNamedOperation,
-            ExactWindingReadinessStatus::GraphUnknowns,
-            ExactWindingReadinessStatus::BoundaryPolicyRequired,
-            ExactWindingReadinessStatus::PlanarArrangementRequired,
-            ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized,
-            ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired,
-            ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized,
-            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
-            ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
-            ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
-            ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
-            ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized,
-            ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
-            ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
-            ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized,
-            ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized,
-            ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized,
-            ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized,
-            ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized,
-            ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized,
+            ExactWindingEvidenceStatus::NotNamedOperation,
+            ExactWindingEvidenceStatus::GraphUnknowns,
+            ExactWindingEvidenceStatus::BoundaryPolicyRequired,
+            ExactWindingEvidenceStatus::PlanarArrangementRequired,
+            ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized,
+            ExactWindingEvidenceStatus::CoplanarVolumetricCellsRequired,
+            ExactWindingEvidenceStatus::CoplanarVolumetricCellsAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
+            ExactWindingEvidenceStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
+            ExactWindingEvidenceStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized,
+            ExactWindingEvidenceStatus::OpenSurfaceArrangementAlreadyMaterialized,
+            ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+            ExactWindingEvidenceStatus::BoundaryPolicyShortcutAlreadyMaterialized,
+            ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized,
+            ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized,
+            ExactWindingEvidenceStatus::OpenSurfaceDisjointAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ClosedWindingSeparatedAlreadyMaterialized,
+            ExactWindingEvidenceStatus::ClosedWindingContainmentAlreadyMaterialized,
         ] {
             assert!(!status.routes_to_certified_winding());
         }
     }
 
     #[test]
-    fn trivial_shortcuts_report_materialized_readiness() {
+    fn trivial_shortcuts_report_materialized_evidence() {
         let empty =
-            empty_mesh("empty operand readiness fixture", ValidationPolicy::CLOSED).unwrap();
+            empty_mesh("empty operand evidence fixture", ValidationPolicy::CLOSED).unwrap();
         let solid = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
         let far_solid = axis_aligned_box_i64([4, 0, 0], [6, 2, 2]);
         let left_open = ExactMesh::from_i64_triangles_with_policy(
@@ -13841,7 +13841,7 @@ mod tests {
                 &solid,
                 ValidationPolicy::CLOSED,
                 ExactBooleanSupport::CertifiedEmptyOperand,
-                ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized,
+                ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized,
                 ExactBooleanShortcutKind::EmptyOperand,
             ),
             (
@@ -13849,7 +13849,7 @@ mod tests {
                 &far_solid,
                 ValidationPolicy::CLOSED,
                 ExactBooleanSupport::CertifiedBoundsDisjoint,
-                ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized,
+                ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized,
                 ExactBooleanShortcutKind::BoundsDisjoint,
             ),
             (
@@ -13857,7 +13857,7 @@ mod tests {
                 &right_open,
                 ValidationPolicy::ALLOW_BOUNDARY,
                 ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
-                ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized,
+                ExactWindingEvidenceStatus::OpenSurfaceDisjointAlreadyMaterialized,
                 ExactBooleanShortcutKind::OpenSurfaceDisjoint,
             ),
         ] {
@@ -13871,7 +13871,7 @@ mod tests {
                 assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
                 assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
 
-                let readiness = test_winding_readiness(
+                let evidence = test_winding_evidence(
                     ExactBooleanRequest::with_boundary_policy(
                         operation,
                         ValidationPolicy::ALLOW_BOUNDARY,
@@ -13880,19 +13880,19 @@ mod tests {
                     left,
                     right,
                 );
-                assert_eq!(readiness.status, status, "{operation:?}: {readiness:?}");
+                assert_eq!(evidence.status, status, "{operation:?}: {evidence:?}");
                 assert_eq!(
-                    readiness.blocker.kind,
+                    evidence.blocker.kind,
                     ExactBooleanBlockerKind::NeedsWinding,
-                    "{operation:?}: {readiness:?}"
+                    "{operation:?}: {evidence:?}"
                 );
-                assert_eq!(readiness.retained_face_pairs, 0, "{operation:?}");
-                assert_eq!(readiness.retained_events, 0, "{operation:?}");
-                assert_eq!(readiness.region_count, 0, "{operation:?}");
-                assert!(readiness.status.is_already_materialized());
-                assert!(!readiness.status.materializes_arrangement_cell_complex());
-                readiness.validate().unwrap();
-                readiness.validate_against_sources(left, right).unwrap();
+                assert_eq!(evidence.retained_face_pairs, 0, "{operation:?}");
+                assert_eq!(evidence.retained_events, 0, "{operation:?}");
+                assert_eq!(evidence.region_count, 0, "{operation:?}");
+                assert!(evidence.status.is_already_materialized());
+                assert!(!evidence.status.materializes_arrangement_cell_complex());
+                evidence.validate().unwrap();
+                evidence.validate_against_sources(left, right).unwrap();
 
                 let result = test_materialized_result(
                     ExactBooleanRequest::new(operation, validation),
@@ -13950,7 +13950,7 @@ mod tests {
                     .validate_against_sources_for_request(left, right, request)
                     .unwrap();
 
-                let readiness = test_winding_readiness(
+                let evidence = test_winding_evidence(
                     ExactBooleanRequest::with_boundary_policy(
                         operation,
                         ValidationPolicy::ALLOW_BOUNDARY,
@@ -13960,21 +13960,21 @@ mod tests {
                     right,
                 );
                 assert_eq!(
-                    readiness.status,
-                    ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
-                    "{right_inside_left:?} {operation:?}: {readiness:?}"
+                    evidence.status,
+                    ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
+                    "{right_inside_left:?} {operation:?}: {evidence:?}"
                 );
                 assert_eq!(
-                    readiness.blocker.kind,
+                    evidence.blocker.kind,
                     ExactBooleanBlockerKind::NeedsWinding,
-                    "{operation:?}: {readiness:?}"
+                    "{operation:?}: {evidence:?}"
                 );
-                assert_eq!(readiness.retained_face_pairs, 0, "{operation:?}");
-                assert_eq!(readiness.retained_events, 0, "{operation:?}");
-                assert!(readiness.status.is_already_materialized());
-                assert!(readiness.status.materializes_arrangement_cell_complex());
-                readiness.validate().unwrap();
-                readiness.validate_against_sources(left, right).unwrap();
+                assert_eq!(evidence.retained_face_pairs, 0, "{operation:?}");
+                assert_eq!(evidence.retained_events, 0, "{operation:?}");
+                assert!(evidence.status.is_already_materialized());
+                assert!(evidence.status.materializes_arrangement_cell_complex());
+                evidence.validate().unwrap();
+                evidence.validate_against_sources(left, right).unwrap();
 
                 let result = test_materialized_result(
                     ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
@@ -14069,7 +14069,7 @@ mod tests {
                 .validate_against_sources_for_request(&left, &right, request)
                 .unwrap();
 
-            let readiness = test_winding_readiness(
+            let evidence = test_winding_evidence(
                 ExactBooleanRequest::with_boundary_policy(
                     operation,
                     ValidationPolicy::ALLOW_BOUNDARY,
@@ -14079,21 +14079,21 @@ mod tests {
                 &right,
             );
             assert_eq!(
-                readiness.status,
-                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
-                "{operation:?}: {readiness:?}"
+                evidence.status,
+                ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
+                "{operation:?}: {evidence:?}"
             );
             assert_eq!(
-                readiness.blocker.kind,
+                evidence.blocker.kind,
                 ExactBooleanBlockerKind::NeedsWinding,
-                "{operation:?}: {readiness:?}"
+                "{operation:?}: {evidence:?}"
             );
-            assert_eq!(readiness.retained_face_pairs, 0, "{operation:?}");
-            assert_eq!(readiness.retained_events, 0, "{operation:?}");
-            assert!(readiness.status.is_already_materialized());
-            assert!(readiness.status.materializes_arrangement_cell_complex());
-            readiness.validate().unwrap();
-            readiness.validate_against_sources(&left, &right).unwrap();
+            assert_eq!(evidence.retained_face_pairs, 0, "{operation:?}");
+            assert_eq!(evidence.retained_events, 0, "{operation:?}");
+            assert!(evidence.status.is_already_materialized());
+            assert!(evidence.status.materializes_arrangement_cell_complex());
+            evidence.validate().unwrap();
+            evidence.validate_against_sources(&left, &right).unwrap();
 
             let result = test_materialized_result(
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
@@ -14145,7 +14145,7 @@ mod tests {
     }
 
     #[test]
-    fn mixed_dimensional_regularized_solid_reports_materialized_readiness() {
+    fn mixed_dimensional_regularized_solid_reports_materialized_evidence() {
         let solid = axis_aligned_box_i64([0, 0, 0], [4, 4, 4]);
         let sheet = ExactMesh::from_i64_triangles_with_policy(
             &[1, 1, 1, 3, 1, 1, 1, 3, 1],
@@ -14172,7 +14172,7 @@ mod tests {
                 );
                 assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
 
-                let readiness = test_winding_readiness(
+                let evidence = test_winding_evidence(
                     ExactBooleanRequest::with_boundary_policy(
                         operation,
                         ValidationPolicy::ALLOW_BOUNDARY,
@@ -14182,21 +14182,21 @@ mod tests {
                     right,
                 );
                 assert_eq!(
-                    readiness.status,
-                    ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
-                    "{operation:?}: {readiness:?}"
+                    evidence.status,
+                    ExactWindingEvidenceStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
+                    "{operation:?}: {evidence:?}"
                 );
                 assert_eq!(
-                    readiness.blocker.kind,
+                    evidence.blocker.kind,
                     ExactBooleanBlockerKind::NeedsWinding,
-                    "{operation:?}: {readiness:?}"
+                    "{operation:?}: {evidence:?}"
                 );
-                assert_eq!(readiness.retained_face_pairs, 0);
-                assert_eq!(readiness.retained_events, 0);
-                assert!(readiness.status.is_already_materialized());
-                assert!(!readiness.status.materializes_arrangement_cell_complex());
-                readiness.validate().unwrap();
-                readiness.validate_against_sources(left, right).unwrap();
+                assert_eq!(evidence.retained_face_pairs, 0);
+                assert_eq!(evidence.retained_events, 0);
+                assert!(evidence.status.is_already_materialized());
+                assert!(!evidence.status.materializes_arrangement_cell_complex());
+                evidence.validate().unwrap();
+                evidence.validate_against_sources(left, right).unwrap();
 
                 let result = test_materialized_result(
                     ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
@@ -14233,7 +14233,7 @@ mod tests {
     }
 
     #[test]
-    fn lower_dimensional_regularized_solid_reports_materialized_readiness() {
+    fn lower_dimensional_regularized_solid_reports_materialized_evidence() {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0],
             &[0, 1, 2],
@@ -14254,37 +14254,37 @@ mod tests {
         ] {
             let request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
             with_test_evaluation(request, &left, &right, |evaluation| {
-                let readiness = evaluation.certifications().winding_readiness();
+                let evidence = evaluation.certifications().winding_evidence();
                 let arrangement_materialized = operation == ExactBooleanOperation::Intersection;
                 let expected_status = if arrangement_materialized {
-                    ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
+                    ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
                 } else {
-                    ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
+                    ExactWindingEvidenceStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
                 };
                 assert_eq!(
-                    readiness.status, expected_status,
-                    "{operation:?}: {readiness:?}"
+                    evidence.status, expected_status,
+                    "{operation:?}: {evidence:?}"
                 );
                 assert_eq!(
-                    readiness.blocker.kind,
+                    evidence.blocker.kind,
                     ExactBooleanBlockerKind::NeedsWinding,
-                    "{operation:?}: {readiness:?}"
+                    "{operation:?}: {evidence:?}"
                 );
                 assert_eq!(
-                    readiness.retained_face_pairs,
+                    evidence.retained_face_pairs,
                     usize::from(arrangement_materialized)
                 );
                 assert_eq!(
-                    readiness.retained_events,
+                    evidence.retained_events,
                     if arrangement_materialized { 4 } else { 0 }
                 );
-                assert_eq!(readiness.region_count, 0);
-                assert!(readiness.status.is_already_materialized());
+                assert_eq!(evidence.region_count, 0);
+                assert!(evidence.status.is_already_materialized());
                 assert_eq!(
-                    readiness.status.materializes_arrangement_cell_complex(),
+                    evidence.status.materializes_arrangement_cell_complex(),
                     arrangement_materialized
                 );
-                readiness.validate().unwrap();
+                evidence.validate().unwrap();
                 evaluation.validate_against_sources(&left, &right).unwrap();
                 if arrangement_materialized {
                     let result = evaluation
@@ -14428,7 +14428,7 @@ mod tests {
             "closed replay should not certify an allow-boundary preflight"
         );
 
-        let readiness = test_winding_readiness(
+        let evidence = test_winding_evidence(
             ExactBooleanRequest::with_boundary_policy(
                 ExactBooleanOperation::Union,
                 ValidationPolicy::ALLOW_BOUNDARY,
@@ -14438,43 +14438,43 @@ mod tests {
             &right,
         );
         assert_eq!(
-            readiness.status,
-            ExactWindingReadinessStatus::VolumetricAssemblyRequired,
-            "{readiness:?}"
+            evidence.status,
+            ExactWindingEvidenceStatus::VolumetricAssemblyRequired,
+            "{evidence:?}"
         );
-        assert!(readiness.region_count > 0, "{readiness:?}");
-        readiness.validate().unwrap();
-        readiness.validate_against_sources(&left, &right).unwrap();
+        assert!(evidence.region_count > 0, "{evidence:?}");
+        evidence.validate().unwrap();
+        evidence.validate_against_sources(&left, &right).unwrap();
 
         let boundary_request = ExactBooleanRequest::new(
             ExactBooleanOperation::Union,
             ValidationPolicy::ALLOW_BOUNDARY,
         );
         with_test_evaluation(boundary_request, &left, &right, |boundary_evaluation| {
-            let boundary_readiness = boundary_evaluation.certifications().winding_readiness();
+            let boundary_evidence = boundary_evaluation.certifications().winding_evidence();
             assert_eq!(
-                boundary_readiness.status,
-                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
-                "{boundary_readiness:?}"
+                boundary_evidence.status,
+                ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
+                "{boundary_evidence:?}"
             );
             assert_eq!(
-                boundary_readiness.blocker.kind,
+                boundary_evidence.blocker.kind,
                 ExactBooleanBlockerKind::NeedsWinding,
-                "{boundary_readiness:?}"
+                "{boundary_evidence:?}"
             );
             assert_eq!(
-                boundary_readiness.retained_face_pairs,
+                boundary_evidence.retained_face_pairs,
                 graph.face_pairs.len()
             );
-            assert_eq!(boundary_readiness.retained_events, graph.event_count());
-            assert_eq!(boundary_readiness.region_count, 0);
-            assert!(boundary_readiness.status.is_already_materialized());
+            assert_eq!(boundary_evidence.retained_events, graph.event_count());
+            assert_eq!(boundary_evidence.region_count, 0);
+            assert!(boundary_evidence.status.is_already_materialized());
             assert!(
-                boundary_readiness
+                boundary_evidence
                     .status
                     .materializes_arrangement_cell_complex()
             );
-            boundary_readiness.validate().unwrap();
+            boundary_evidence.validate().unwrap();
             boundary_evaluation
                 .validate_against_sources(&left, &right)
                 .unwrap();
@@ -14616,7 +14616,7 @@ mod tests {
                 .validate_against_sources_for_request(&left, &right, request)
                 .unwrap();
 
-            let readiness = test_winding_readiness(
+            let evidence = test_winding_evidence(
                 ExactBooleanRequest::with_boundary_policy(
                     operation,
                     ValidationPolicy::ALLOW_BOUNDARY,
@@ -14626,11 +14626,11 @@ mod tests {
                 &right,
             );
             assert_eq!(
-                readiness.status,
-                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
-                "{operation:?}: {readiness:?}"
+                evidence.status,
+                ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
+                "{operation:?}: {evidence:?}"
             );
-            readiness.validate().unwrap();
+            evidence.validate().unwrap();
 
             let result = materialize_arrangement_volumetric_split_cell_result_from_graph(
                 &graph,
@@ -15245,7 +15245,7 @@ mod tests {
                 .validate_against_sources_for_request(&left, &right, request)
                 .unwrap();
 
-            let readiness = test_winding_readiness(
+            let evidence = test_winding_evidence(
                 ExactBooleanRequest::with_boundary_policy(
                     operation,
                     ValidationPolicy::ALLOW_BOUNDARY,
@@ -15255,24 +15255,24 @@ mod tests {
                 &right,
             );
             assert_eq!(
-                readiness.status,
-                ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized,
-                "{operation:?}: {readiness:?}"
+                evidence.status,
+                ExactWindingEvidenceStatus::OpenSurfaceArrangementAlreadyMaterialized,
+                "{operation:?}: {evidence:?}"
             );
             assert_eq!(
-                readiness.blocker.kind,
+                evidence.blocker.kind,
                 ExactBooleanBlockerKind::NeedsWinding,
-                "{operation:?}: {readiness:?}"
+                "{operation:?}: {evidence:?}"
             );
-            assert_eq!(readiness.region_count, preflight.region_count);
+            assert_eq!(evidence.region_count, preflight.region_count);
             assert_eq!(
-                readiness.region_classifications,
+                evidence.region_classifications,
                 preflight.region_classifications
             );
-            assert!(readiness.status.is_already_materialized());
-            assert!(!readiness.status.materializes_arrangement_cell_complex());
-            readiness.validate().unwrap();
-            readiness.validate_against_sources(&left, &right).unwrap();
+            assert!(evidence.status.is_already_materialized());
+            assert!(!evidence.status.materializes_arrangement_cell_complex());
+            evidence.validate().unwrap();
+            evidence.validate_against_sources(&left, &right).unwrap();
 
             let attempt = test_arrangement_attempt(
                 ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
@@ -15485,7 +15485,7 @@ mod tests {
                 "{operation:?}: {preflight:?}"
             );
 
-            let readiness = test_winding_readiness(
+            let evidence = test_winding_evidence(
                 ExactBooleanRequest::with_boundary_policy(
                     operation,
                     ValidationPolicy::ALLOW_BOUNDARY,
@@ -15495,19 +15495,19 @@ mod tests {
                 &right,
             );
             assert_eq!(
-                readiness.status,
-                ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
-                "{operation:?}: {readiness:?}"
+                evidence.status,
+                ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized,
+                "{operation:?}: {evidence:?}"
             );
             assert_eq!(
-                readiness.blocker.kind,
+                evidence.blocker.kind,
                 ExactBooleanBlockerKind::NeedsWinding,
-                "{operation:?}: {readiness:?}"
+                "{operation:?}: {evidence:?}"
             );
-            assert_eq!(readiness.retained_face_pairs, 0);
-            assert_eq!(readiness.retained_events, 0);
-            readiness.validate().unwrap();
-            readiness.validate_against_sources(&left, &right).unwrap();
+            assert_eq!(evidence.retained_face_pairs, 0);
+            assert_eq!(evidence.retained_events, 0);
+            evidence.validate().unwrap();
+            evidence.validate_against_sources(&left, &right).unwrap();
 
             let attempt = test_arrangement_attempt(
                 ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
@@ -15604,7 +15604,7 @@ mod tests {
     }
 
     #[test]
-    fn boundary_touching_orthogonal_shortcuts_report_materialized_readiness() {
+    fn boundary_touching_orthogonal_shortcuts_report_materialized_evidence() {
         let left = axis_aligned_box_i64([0, 0, 0], [1, 1, 1]);
         let right = axis_aligned_box_i64([1, 0, 0], [2, 1, 1]);
 
@@ -15622,7 +15622,7 @@ mod tests {
             );
             assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
 
-            let readiness = test_winding_readiness(
+            let evidence = test_winding_evidence(
                 ExactBooleanRequest::with_boundary_policy(
                     operation,
                     ValidationPolicy::ALLOW_BOUNDARY,
@@ -15632,18 +15632,18 @@ mod tests {
                 &right,
             );
             assert_eq!(
-                readiness.status,
-                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
-                "{operation:?}: {readiness:?}"
+                evidence.status,
+                ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
+                "{operation:?}: {evidence:?}"
             );
             assert_eq!(
-                readiness.blocker.kind,
+                evidence.blocker.kind,
                 ExactBooleanBlockerKind::NeedsWinding,
-                "{operation:?}: {readiness:?}"
+                "{operation:?}: {evidence:?}"
             );
-            assert!(readiness.status.is_already_materialized());
-            readiness.validate().unwrap();
-            readiness.validate_against_sources(&left, &right).unwrap();
+            assert!(evidence.status.is_already_materialized());
+            evidence.validate().unwrap();
+            evidence.validate_against_sources(&left, &right).unwrap();
         }
     }
 
@@ -15714,7 +15714,7 @@ mod tests {
                 .validate_against_sources_for_request(&left, &right, request)
                 .unwrap();
 
-            let readiness = test_winding_readiness(
+            let evidence = test_winding_evidence(
                 ExactBooleanRequest::with_boundary_policy(
                     operation,
                     ValidationPolicy::ALLOW_BOUNDARY,
@@ -15724,18 +15724,18 @@ mod tests {
                 &right,
             );
             assert_eq!(
-                readiness.status,
-                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
-                "{operation:?}: {readiness:?}"
+                evidence.status,
+                ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
+                "{operation:?}: {evidence:?}"
             );
             assert_eq!(
-                readiness.blocker.kind,
+                evidence.blocker.kind,
                 ExactBooleanBlockerKind::NeedsWinding,
-                "{operation:?}: {readiness:?}"
+                "{operation:?}: {evidence:?}"
             );
-            assert!(readiness.status.is_already_materialized());
-            readiness.validate().unwrap();
-            readiness.validate_against_sources(&left, &right).unwrap();
+            assert!(evidence.status.is_already_materialized());
+            evidence.validate().unwrap();
+            evidence.validate_against_sources(&left, &right).unwrap();
 
             let result = test_materialized_result(
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
@@ -15821,7 +15821,7 @@ mod tests {
         let mut relabeled_preflight = preflight.clone();
         relabeled_preflight.support = ExactBooleanSupport::CertifiedConvexDifference;
         assert!(relabeled_preflight.validate().is_err());
-        let readiness = test_winding_readiness(
+        let evidence = test_winding_evidence(
             ExactBooleanRequest::with_boundary_policy(
                 ExactBooleanOperation::Difference,
                 ValidationPolicy::ALLOW_BOUNDARY,
@@ -15831,12 +15831,12 @@ mod tests {
             &right,
         );
         assert_eq!(
-            readiness.status,
-            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
-            "{readiness:?}"
+            evidence.status,
+            ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
+            "{evidence:?}"
         );
-        readiness.validate().unwrap();
-        readiness.validate_against_sources(&left, &right).unwrap();
+        evidence.validate().unwrap();
+        evidence.validate_against_sources(&left, &right).unwrap();
 
         let difference = test_materialized_result(
             ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED),
@@ -15902,7 +15902,7 @@ mod tests {
                 .validate_against_sources_for_request(&left, &right, request)
                 .unwrap();
 
-            let readiness = test_winding_readiness(
+            let evidence = test_winding_evidence(
                 ExactBooleanRequest::with_boundary_policy(
                     operation,
                     ValidationPolicy::ALLOW_BOUNDARY,
@@ -15911,28 +15911,28 @@ mod tests {
                 &left,
                 &right,
             );
-            let expected_readiness_status = match operation {
+            let expected_evidence_status = match operation {
                 ExactBooleanOperation::Union | ExactBooleanOperation::Difference => {
-                    ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
+                    ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized
                 }
                 ExactBooleanOperation::Intersection => {
-                    ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
+                    ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
                 }
                 ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
             };
             assert_eq!(
-                readiness.status, expected_readiness_status,
-                "{operation:?}: {readiness:?}"
+                evidence.status, expected_evidence_status,
+                "{operation:?}: {evidence:?}"
             );
-            assert_eq!(readiness.retained_face_pairs, graph.face_pairs.len());
-            assert_eq!(readiness.retained_events, graph.event_count());
+            assert_eq!(evidence.retained_face_pairs, graph.face_pairs.len());
+            assert_eq!(evidence.retained_events, graph.event_count());
             assert_eq!(
-                readiness.blocker.kind,
+                evidence.blocker.kind,
                 ExactBooleanBlockerKind::NeedsWinding
             );
-            assert_eq!(readiness.blocker.candidate_pairs, graph.face_pairs.len());
-            readiness.validate().unwrap();
-            readiness.validate_against_sources(&left, &right).unwrap();
+            assert_eq!(evidence.blocker.candidate_pairs, graph.face_pairs.len());
+            evidence.validate().unwrap();
+            evidence.validate_against_sources(&left, &right).unwrap();
         }
     }
 
@@ -15949,17 +15949,17 @@ mod tests {
             let (expected_support, expected_status, expected_shortcut) = match operation {
                 ExactBooleanOperation::Union => (
                     ExactBooleanSupport::CertifiedArrangementCellComplex,
-                    ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+                    ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
                     ExactBooleanShortcutKind::ArrangementCellComplex,
                 ),
                 ExactBooleanOperation::Intersection => (
                     ExactBooleanSupport::CertifiedArrangementCellComplex,
-                    ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
+                    ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized,
                     ExactBooleanShortcutKind::ConvexIntersection,
                 ),
                 ExactBooleanOperation::Difference => (
                     ExactBooleanSupport::CertifiedArrangementCellComplex,
-                    ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
+                    ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized,
                     ExactBooleanShortcutKind::ConvexDifference,
                 ),
                 ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
@@ -15983,7 +15983,7 @@ mod tests {
                 "{operation:?}: {preflight:?}"
             );
 
-            let readiness = test_winding_readiness(
+            let evidence = test_winding_evidence(
                 ExactBooleanRequest::with_boundary_policy(
                     operation,
                     ValidationPolicy::ALLOW_BOUNDARY,
@@ -15993,11 +15993,11 @@ mod tests {
                 &right,
             );
             assert_eq!(
-                readiness.status, expected_status,
-                "{operation:?}: {readiness:?}"
+                evidence.status, expected_status,
+                "{operation:?}: {evidence:?}"
             );
-            readiness.validate().unwrap();
-            readiness.validate_against_sources(&left, &right).unwrap();
+            evidence.validate().unwrap();
+            evidence.validate_against_sources(&left, &right).unwrap();
 
             let result = test_materialized_result(
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
@@ -16510,7 +16510,7 @@ mod tests {
                 ExactBooleanSupport::CertifiedSameSurface,
                 "{operation:?}: {preflight:?}"
             );
-            let readiness = test_winding_readiness(
+            let evidence = test_winding_evidence(
                 ExactBooleanRequest::with_boundary_policy(
                     operation,
                     ValidationPolicy::ALLOW_BOUNDARY,
@@ -16520,14 +16520,14 @@ mod tests {
                 &right,
             );
             assert_eq!(
-                readiness.status,
-                ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
-                "{operation:?}: {readiness:?}"
+                evidence.status,
+                ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized,
+                "{operation:?}: {evidence:?}"
             );
-            assert_eq!(readiness.retained_face_pairs, 0);
-            assert_eq!(readiness.retained_events, 0);
-            readiness.validate().unwrap();
-            readiness.validate_against_sources(&left, &right).unwrap();
+            assert_eq!(evidence.retained_face_pairs, 0);
+            assert_eq!(evidence.retained_events, 0);
+            evidence.validate().unwrap();
+            evidence.validate_against_sources(&left, &right).unwrap();
 
             let result = test_materialized_result(
                 ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
@@ -16579,7 +16579,7 @@ mod tests {
             &right,
         );
         assert_eq!(preflight.support, ExactBooleanSupport::CertifiedIdentical);
-        let readiness = test_winding_readiness(
+        let evidence = test_winding_evidence(
             ExactBooleanRequest::with_boundary_policy(
                 ExactBooleanOperation::Union,
                 ValidationPolicy::ALLOW_BOUNDARY,
@@ -16589,12 +16589,12 @@ mod tests {
             &right,
         );
         assert_eq!(
-            readiness.status,
-            ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
-            "{readiness:?}"
+            evidence.status,
+            ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized,
+            "{evidence:?}"
         );
-        readiness.validate().unwrap();
-        readiness.validate_against_sources(&left, &right).unwrap();
+        evidence.validate().unwrap();
+        evidence.validate_against_sources(&left, &right).unwrap();
 
         let union = test_materialized_result(
             ExactBooleanRequest::new(
@@ -16664,7 +16664,7 @@ mod tests {
     }
 
     #[test]
-    fn arrangement_materialized_readiness_retains_boundary_only_evidence() {
+    fn arrangement_materialized_evidence_retains_boundary_only_evidence() {
         let left_a = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
         let left_b = tetrahedron_i64([10, 0, 0], [12, 0, 0], [10, 2, 0], [10, 0, 2]);
         let mut vertices = left_a.vertices().to_vec();
@@ -16680,7 +16680,7 @@ mod tests {
         let left = ExactMesh::new_with_policy(
             vertices,
             triangles,
-            SourceProvenance::exact("readiness disconnected positive-area boundary fixture"),
+            SourceProvenance::exact("evidence disconnected positive-area boundary fixture"),
             ValidationPolicy::CLOSED,
         )
         .unwrap();
@@ -16688,7 +16688,7 @@ mod tests {
         let graph = build_intersection_graph(&left, &right).unwrap();
         validate_graph_source_handoff(&graph, &left, &right).unwrap();
 
-        let readiness = arrangement_cell_complex_already_materialized_winding_readiness(
+        let evidence = arrangement_cell_complex_already_materialized_winding_evidence(
             &graph,
             &left,
             &right,
@@ -16696,26 +16696,26 @@ mod tests {
         );
 
         assert_eq!(
-            readiness.status,
-            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
+            evidence.status,
+            ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
         );
         assert_eq!(
-            readiness.blocker.kind,
+            evidence.blocker.kind,
             ExactBooleanBlockerKind::NeedsBoundaryPolicy
         );
-        let evidence = readiness
+        let volumetric_evidence = evidence
             .coplanar_volumetric_evidence
             .as_ref()
-            .expect("arrangement readiness should retain boundary-only evidence");
+            .expect("arrangement evidence should retain boundary-only evidence");
         assert_eq!(
-            evidence.obstacle,
+            volumetric_evidence.obstacle,
             CoplanarVolumetricCellObstacle::BoundaryOnlyContact
         );
         assert_eq!(
-            evidence.retained_face_pair_count,
-            readiness.retained_face_pairs
+            volumetric_evidence.retained_face_pair_count,
+            evidence.retained_face_pairs
         );
-        readiness.validate().unwrap();
+        volumetric_evidence.validate().unwrap();
     }
 
     #[test]
