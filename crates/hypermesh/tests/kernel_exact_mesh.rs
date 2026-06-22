@@ -97,7 +97,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
 
     let face = view.face(0).unwrap();
     assert_eq!(face.index(), 0);
-    assert_eq!(face.triangle().0, [0, 2, 1]);
+    assert_eq!(face.vertex_indices(), [0, 2, 1]);
     assert_eq!(
         face.plane_coefficients(),
         (face.plane_normal(), face.plane_offset())
@@ -106,7 +106,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
 
     let triangle = view.triangle(1).unwrap();
     assert_eq!(triangle.index(), 1);
-    assert_eq!(triangle.triangle().0, [0, 1, 3]);
+    assert_eq!(triangle.vertex_indices(), [0, 1, 3]);
     assert_eq!(
         triangle.plane_coefficients(),
         (triangle.plane_normal(), triangle.plane_offset())

@@ -336,9 +336,9 @@ impl<'a> FaceRef<'a> {
         self.index
     }
 
-    /// Triangle row for this face.
-    pub fn triangle(self) -> &'a Triangle {
-        &self.mesh.triangles()[self.index]
+    /// Triangle vertex indices for this face.
+    pub fn vertex_indices(self) -> [usize; 3] {
+        self.mesh.triangles()[self.index].0
     }
 
     /// Retained exact oriented plane normal.
@@ -358,7 +358,7 @@ impl<'a> FaceRef<'a> {
 
     /// Exact face vertices.
     pub fn vertices(self) -> [&'a Point3; 3] {
-        triangle_vertices(self.mesh, self.triangle())
+        triangle_vertices(self.mesh, self.vertex_indices())
     }
 }
 
@@ -368,9 +368,9 @@ impl<'a> TriangleRef<'a> {
         self.index
     }
 
-    /// Triangle row.
-    pub fn triangle(self) -> &'a Triangle {
-        &self.mesh.triangles()[self.index]
+    /// Triangle vertex indices.
+    pub fn vertex_indices(self) -> [usize; 3] {
+        self.mesh.triangles()[self.index].0
     }
 
     /// Retained exact oriented plane normal.
@@ -390,7 +390,7 @@ impl<'a> TriangleRef<'a> {
 
     /// Exact triangle vertices.
     pub fn vertices(self) -> [&'a Point3; 3] {
-        triangle_vertices(self.mesh, self.triangle())
+        triangle_vertices(self.mesh, self.vertex_indices())
     }
 }
 
@@ -428,8 +428,8 @@ impl<'a> EdgeRef<'a> {
     }
 }
 
-fn triangle_vertices<'a>(mesh: &'a ExactMesh, triangle: &Triangle) -> [&'a Point3; 3] {
-    let [a, b, c] = triangle.0;
+fn triangle_vertices(mesh: &ExactMesh, triangle: [usize; 3]) -> [&Point3; 3] {
+    let [a, b, c] = triangle;
     [
         &mesh.vertices()[a],
         &mesh.vertices()[b],
