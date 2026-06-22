@@ -59,7 +59,7 @@ use hyperreal::Real;
 
 /// Source of an arrangement vertex.
 #[derive(Clone, Debug, PartialEq)]
-pub enum ArrangementVertexProvenance {
+pub(crate) enum ArrangementVertexProvenance {
     /// Original source mesh vertex.
     SourceVertex { side: MeshSide, vertex: usize },
     /// Constructed intersection graph vertex.
@@ -72,16 +72,16 @@ pub enum ArrangementVertexProvenance {
 
 /// Exact arrangement vertex.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ArrangementVertex {
+pub(crate) struct ArrangementVertex {
     /// Exact coordinate.
-    pub point: Point3,
+    pub(crate) point: Point3,
     /// Construction/source provenance.
-    pub provenance: Vec<ArrangementVertexProvenance>,
+    pub(crate) provenance: Vec<ArrangementVertexProvenance>,
 }
 
 /// Source of an arrangement edge.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ArrangementEdgeProvenance {
+pub(crate) enum ArrangementEdgeProvenance {
     /// Split segment from one original mesh edge.
     SourceEdge { side: MeshSide, edge: [usize; 2] },
     /// Split edge from one retained carrier-plane overlay arrangement.
@@ -92,16 +92,16 @@ pub enum ArrangementEdgeProvenance {
 
 /// Exact arrangement edge.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ArrangementEdge {
+pub(crate) struct ArrangementEdge {
     /// Endpoint arrangement vertex indices.
-    pub vertices: [usize; 2],
+    pub(crate) vertices: [usize; 2],
     /// Construction/source provenance.
-    pub provenance: Vec<ArrangementEdgeProvenance>,
+    pub(crate) provenance: Vec<ArrangementEdgeProvenance>,
 }
 
 /// Boundary node reference for an arrangement face cell.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ArrangementFaceCellNode {
+pub(crate) enum ArrangementFaceCellNode {
     /// Original source vertex.
     SourceVertex { side: MeshSide, vertex: usize },
     /// Constructed graph vertex.
@@ -114,24 +114,24 @@ pub enum ArrangementFaceCellNode {
 
 /// Cell owner/carrier information.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ArrangementFaceCarrier {
+pub(crate) struct ArrangementFaceCarrier {
     /// Source mesh side owning the carrier triangle.
-    pub side: MeshSide,
+    pub(crate) side: MeshSide,
     /// Source face index.
-    pub face: usize,
+    pub(crate) face: usize,
     /// Source triangle vertex indices.
-    pub triangle: [usize; 3],
+    pub(crate) triangle: [usize; 3],
 }
 
 /// Exact classification of a face cell against the opposite mesh.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ArrangementOppositeClassification {
+pub(crate) struct ArrangementOppositeClassification {
     /// Exact representative point used for the winding query.
-    pub representative: Point3,
+    pub(crate) representative: Point3,
     /// Winding report against the opposite mesh.
-    pub winding: PointMeshWindingReport,
+    pub(crate) winding: PointMeshWindingReport,
     /// Exact convex-solid classification retained when it certifies a relation.
-    pub convex_fallback: Option<ConvexSolidPointClassification>,
+    pub(crate) convex_fallback: Option<ConvexSolidPointClassification>,
 }
 
 impl ArrangementOppositeClassification {
@@ -144,15 +144,15 @@ impl ArrangementOppositeClassification {
 
 /// Exact face cell in the retained arrangement.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ArrangementFaceCell {
+pub(crate) struct ArrangementFaceCell {
     /// Source carrier face.
-    pub carrier: ArrangementFaceCarrier,
+    pub(crate) carrier: ArrangementFaceCarrier,
     /// Boundary nodes in carrier-face order.
-    pub boundary: Vec<ArrangementFaceCellNode>,
+    pub(crate) boundary: Vec<ArrangementFaceCellNode>,
     /// Exact boundary coordinates in carrier-face order.
-    pub boundary_points: Vec<Point3>,
+    pub(crate) boundary_points: Vec<Point3>,
     /// Classification against the opposite mesh, when the query was meaningful.
-    pub opposite: Option<ArrangementOppositeClassification>,
+    pub(crate) opposite: Option<ArrangementOppositeClassification>,
 }
 
 pub(crate) fn validate_arrangement_face_cell(
@@ -187,7 +187,7 @@ pub(crate) fn arrangement_face_cell_boundary_counts(
 /// Exact lower-dimensional contact retained by arrangement regularization.
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq)]
-pub enum ArrangementLowerDimensionalArtifact {
+pub(crate) enum ArrangementLowerDimensionalArtifact {
     /// A certified point contact between source faces.
     PointContact {
         /// Left source face.
@@ -529,56 +529,56 @@ fn endpoint_pairs_equal(
 
 /// Retained 2D arrangement for one coplanar carrier-plane face pair.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ArrangementCarrierPlaneOverlay {
+pub(crate) struct ArrangementCarrierPlaneOverlay {
     /// Left carrier face.
-    pub left_face: usize,
+    pub(crate) left_face: usize,
     /// Right carrier face.
-    pub right_face: usize,
+    pub(crate) right_face: usize,
     /// Projection used by the retained exact coplanar predicates.
-    pub projection: CoplanarProjection,
+    pub(crate) projection: CoplanarProjection,
     /// Exact 2D cell overlay of the projected source face boundaries.
-    pub overlay: ExactArrangement2dOverlay,
+    pub(crate) overlay: ExactArrangement2dOverlay,
 }
 
 /// Retained 2D arrangement for one source carrier face split by non-coplanar
 /// intersection chords.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ArrangementFacePlaneArrangement {
+pub(crate) struct ArrangementFacePlaneArrangement {
     /// Source mesh side owning the carrier face.
-    pub side: MeshSide,
+    pub(crate) side: MeshSide,
     /// Source carrier face.
-    pub face: usize,
+    pub(crate) face: usize,
     /// Projection used to run exact 2D subdivision on the carrier plane.
-    pub projection: CoplanarProjection,
+    pub(crate) projection: CoplanarProjection,
     /// Exact 2D arrangement over the source triangle boundary and retained
     /// graph-vertex intersection chords.
-    pub arrangement: ExactArrangement2d,
+    pub(crate) arrangement: ExactArrangement2d,
     /// Arrangement vertex classification back to original source vertices or
     /// graph vertices. `None` means a local face-interior construction.
-    pub vertex_provenance: Vec<Option<ArrangementFaceCellNode>>,
+    pub(crate) vertex_provenance: Vec<Option<ArrangementFaceCellNode>>,
 }
 
 /// Connected arrangement face-cell region.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ArrangementRegion {
+pub(crate) struct ArrangementRegion {
     /// Face-cell indices belonging to this connected component.
-    pub face_cells: Vec<usize>,
+    pub(crate) face_cells: Vec<usize>,
     /// Undirected adjacency pairs between face-cells in this region.
-    pub adjacent_face_cells: Vec<[usize; 2]>,
+    pub(crate) adjacent_face_cells: Vec<[usize; 2]>,
     /// Exact edge incidences internal or boundary to this shell component.
-    pub edge_incidences: Vec<ArrangementRegionEdgeIncidence>,
+    pub(crate) edge_incidences: Vec<ArrangementRegionEdgeIncidence>,
     /// Oriented sides contributed by face cells in this shell component.
-    pub oriented_sides: Vec<ArrangementRegionSide>,
+    pub(crate) oriented_sides: Vec<ArrangementRegionSide>,
     /// Number of exact boundary edges incident to only one face-cell.
-    pub boundary_edges: usize,
+    pub(crate) boundary_edges: usize,
     /// Number of exact boundary edges incident to more than two face-cells.
-    pub non_manifold_edges: usize,
+    pub(crate) non_manifold_edges: usize,
     /// Source sides represented by this connected shell component.
-    pub source_sides: Vec<MeshSide>,
+    pub(crate) source_sides: Vec<MeshSide>,
     /// Whether every retained boundary edge has exactly two incident cells.
-    pub closed: bool,
+    pub(crate) closed: bool,
     /// Whether no retained boundary edge has more than two incident cells.
-    pub manifold: bool,
+    pub(crate) manifold: bool,
 }
 
 pub(crate) fn arrangement_region_topology_counts(
@@ -675,78 +675,78 @@ pub(crate) fn validate_arrangement_regions(
 
 /// Exact edge incidence for one connected arrangement shell.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ArrangementRegionEdgeIncidence {
+pub(crate) struct ArrangementRegionEdgeIncidence {
     /// Canonical exact boundary edge.
-    pub edge: [ArrangementFaceCellNode; 2],
+    pub(crate) edge: [ArrangementFaceCellNode; 2],
     /// Face-cells in the owning shell incident to this edge.
-    pub face_cells: Vec<usize>,
+    pub(crate) face_cells: Vec<usize>,
     /// Whether this edge is used by exactly one retained face-cell.
-    pub boundary: bool,
+    pub(crate) boundary: bool,
     /// Whether this edge has more than two retained incident face-cells.
-    pub non_manifold: bool,
+    pub(crate) non_manifold: bool,
 }
 
 /// Oriented side evidence for a face cell in a shell component.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ArrangementRegionSide {
+pub(crate) struct ArrangementRegionSide {
     /// Face-cell contributing this side.
-    pub face_cell: usize,
+    pub(crate) face_cell: usize,
     /// Source side whose boundary owns the face-cell carrier.
-    pub source: MeshSide,
+    pub(crate) source: MeshSide,
     /// Carrier face index in the source mesh.
-    pub source_face: usize,
+    pub(crate) source_face: usize,
     /// Boundary node order as emitted by the carrier-face arrangement.
-    pub boundary: Vec<ArrangementFaceCellNode>,
+    pub(crate) boundary: Vec<ArrangementFaceCellNode>,
 }
 
 /// Exact volume-region node induced by closed manifold shell components.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ArrangementVolumeRegion {
+pub(crate) struct ArrangementVolumeRegion {
     /// Volume-region index in the arrangement volume graph.
-    pub index: usize,
+    pub(crate) index: usize,
     /// Whether this is the unbounded exterior region.
-    pub exterior: bool,
+    pub(crate) exterior: bool,
     /// Shell components bounding this volume region.
-    pub boundary_shells: Vec<usize>,
+    pub(crate) boundary_shells: Vec<usize>,
     /// Source sides whose closed shell interiors contribute this volume.
-    pub source_sides: Vec<MeshSide>,
+    pub(crate) source_sides: Vec<MeshSide>,
 }
 
 /// Adjacency between two volume regions across one closed shell component.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ArrangementVolumeAdjacency {
+pub(crate) struct ArrangementVolumeAdjacency {
     /// Shell component crossed by this adjacency.
-    pub shell_region: usize,
+    pub(crate) shell_region: usize,
     /// Unbounded/outside volume-region index for the shell.
-    pub exterior_volume: usize,
+    pub(crate) exterior_volume: usize,
     /// Bounded/interior volume-region index for the shell.
-    pub interior_volume: usize,
+    pub(crate) interior_volume: usize,
     /// Face-cells forming the separating shell.
-    pub separating_face_cells: Vec<usize>,
+    pub(crate) separating_face_cells: Vec<usize>,
     /// Oriented face-cell sides making this volume boundary explicit.
-    pub oriented_face_sides: Vec<ArrangementVolumeFaceSide>,
+    pub(crate) oriented_face_sides: Vec<ArrangementVolumeFaceSide>,
 }
 
 /// Oriented face-cell side crossing between two volume regions.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ArrangementVolumeFaceSide {
+pub(crate) struct ArrangementVolumeFaceSide {
     /// Face-cell contributing this volume side.
-    pub face_cell: usize,
+    pub(crate) face_cell: usize,
     /// Source side whose boundary owns the face-cell carrier.
-    pub source: MeshSide,
+    pub(crate) source: MeshSide,
     /// Carrier face index in the source mesh.
-    pub source_face: usize,
+    pub(crate) source_face: usize,
     /// Boundary node order as emitted by the carrier-face arrangement.
-    pub boundary: Vec<ArrangementFaceCellNode>,
+    pub(crate) boundary: Vec<ArrangementFaceCellNode>,
     /// Volume on the outside of the owning shell.
-    pub exterior_volume: usize,
+    pub(crate) exterior_volume: usize,
     /// Volume on the inside of the owning shell.
-    pub interior_volume: usize,
+    pub(crate) interior_volume: usize,
 }
 
 /// Exact 3D arrangement over two source meshes.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactArrangement3d {
+pub(crate) struct ExactArrangement3d {
     /// Exact vertices from source meshes and constructed intersections.
     pub(crate) vertices: Vec<ArrangementVertex>,
     /// Exact split edges from source edges and graph vertices.
@@ -776,7 +776,7 @@ pub struct ExactArrangement3d {
 }
 
 /// Public arrangement entry point for the exact Boolean pipeline.
-pub type ExactArrangement = ExactArrangement3d;
+pub(crate) type ExactArrangement = ExactArrangement3d;
 
 /// Borrowed exact arrangement view.
 #[derive(Clone, Copy, Debug)]
@@ -810,7 +810,7 @@ pub struct ArrangementFaceCellRef<'a> {
 
 impl<'a> ExactArrangementRef<'a> {
     /// Borrow a retained exact arrangement as a query view.
-    pub const fn new(arrangement: &'a ExactArrangement3d) -> Self {
+    pub(crate) const fn new(arrangement: &'a ExactArrangement3d) -> Self {
         Self { arrangement }
     }
 
@@ -1215,12 +1215,12 @@ impl ExactTopologyAssemblyReport {
 
 impl ExactArrangement3d {
     /// Borrow this exact arrangement through the lightweight query view API.
-    pub const fn view(&self) -> ExactArrangementRef<'_> {
+    pub(crate) const fn view(&self) -> ExactArrangementRef<'_> {
         ExactArrangementRef::new(self)
     }
 
     /// Build a retained exact arrangement from two meshes.
-    pub fn from_meshes(left: &ExactMesh, right: &ExactMesh) -> Result<Self, ExactMeshError> {
+    pub(crate) fn from_meshes(left: &ExactMesh, right: &ExactMesh) -> Result<Self, ExactMeshError> {
         Self::from_meshes_with_policy(left, right, ExactRegularizationPolicy::default())
     }
 
@@ -1427,7 +1427,7 @@ impl ExactArrangement3d {
     }
 
     /// Return whether construction reached a blocker-free arrangement handoff.
-    pub fn is_complete(&self) -> bool {
+    pub(crate) fn is_complete(&self) -> bool {
         self.blockers.is_empty()
     }
 
