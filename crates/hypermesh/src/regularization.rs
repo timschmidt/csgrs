@@ -81,11 +81,191 @@ pub enum ExactArrangementBlocker {
     /// The primitive family is outside the current exact arrangement kernel.
     UnsupportedCurvedPrimitive,
     /// Retained intersection graph evidence was structurally invalid.
-    InvalidIntersectionGraph(IntersectionGraphValidationError),
+    InvalidIntersectionGraph(ExactArrangementGraphBlockerKind),
     /// Retained split-plan evidence was structurally invalid.
-    InvalidSplitPlan(SplitPlanDiagnosticKind),
+    InvalidSplitPlan(ExactArrangementSplitPlanBlockerKind),
     /// Exact winding/inside-outside classification could not decide.
     UnresolvedRegionClassification,
     /// Lower-dimensional contact was produced but policy does not retain it.
     LowerDimensionalContact,
+}
+
+/// Stable public category for retained intersection-graph blockers.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactArrangementGraphBlockerKind {
+    /// A retained face-pair record references a missing source face.
+    FaceIndexOutOfRange,
+    /// A retained event references a missing source vertex or face.
+    EventSourceOutOfRange,
+    /// A retained event does not belong to the retained face pair.
+    EventSourceMismatch,
+    /// A rejected face-pair relation retained graph-construction events.
+    RejectedPairHasEvents,
+    /// A non-rejected face-pair relation retained no event evidence.
+    RetainedPairHasNoEvents,
+    /// An unknown face pair did not retain an unknown marker.
+    UnknownPairMissingUnknownEvent,
+    /// A coplanar face pair did not retain its certified projection.
+    CoplanarPairMissingProjection,
+    /// A non-coplanar relation retained a coplanar projection.
+    NonCoplanarPairHasProjection,
+    /// A coplanar face pair retained non-coplanar segment-plane evidence.
+    CoplanarPairHasSegmentPlaneEvent,
+    /// A non-coplanar face pair retained coplanar edge or vertex evidence.
+    NonCoplanarPairHasCoplanarEvent,
+    /// A segment/plane event retained a disjoint relation.
+    DisjointSegmentPlaneEvent,
+    /// A segment/plane event has inconsistent side facts or construction data.
+    InvalidSegmentPlaneEvent,
+    /// A coplanar edge event retained a disjoint relation.
+    DisjointCoplanarEdgeEvent,
+    /// A coplanar vertex event retained an outside or degenerate location.
+    NonConstructiveCoplanarVertexEvent,
+    /// Source replay did not reproduce the retained graph artifact.
+    SourceReplayMismatch,
+}
+
+impl From<IntersectionGraphValidationError> for ExactArrangementGraphBlockerKind {
+    fn from(error: IntersectionGraphValidationError) -> Self {
+        match error {
+            IntersectionGraphValidationError::FaceIndexOutOfRange => Self::FaceIndexOutOfRange,
+            IntersectionGraphValidationError::EventSourceOutOfRange => Self::EventSourceOutOfRange,
+            IntersectionGraphValidationError::EventSourceMismatch => Self::EventSourceMismatch,
+            IntersectionGraphValidationError::RejectedPairHasEvents => Self::RejectedPairHasEvents,
+            IntersectionGraphValidationError::RetainedPairHasNoEvents => {
+                Self::RetainedPairHasNoEvents
+            }
+            IntersectionGraphValidationError::UnknownPairMissingUnknownEvent => {
+                Self::UnknownPairMissingUnknownEvent
+            }
+            IntersectionGraphValidationError::CoplanarPairMissingProjection => {
+                Self::CoplanarPairMissingProjection
+            }
+            IntersectionGraphValidationError::NonCoplanarPairHasProjection => {
+                Self::NonCoplanarPairHasProjection
+            }
+            IntersectionGraphValidationError::CoplanarPairHasSegmentPlaneEvent => {
+                Self::CoplanarPairHasSegmentPlaneEvent
+            }
+            IntersectionGraphValidationError::NonCoplanarPairHasCoplanarEvent => {
+                Self::NonCoplanarPairHasCoplanarEvent
+            }
+            IntersectionGraphValidationError::DisjointSegmentPlaneEvent => {
+                Self::DisjointSegmentPlaneEvent
+            }
+            IntersectionGraphValidationError::InvalidSegmentPlaneEvent => {
+                Self::InvalidSegmentPlaneEvent
+            }
+            IntersectionGraphValidationError::DisjointCoplanarEdgeEvent => {
+                Self::DisjointCoplanarEdgeEvent
+            }
+            IntersectionGraphValidationError::NonConstructiveCoplanarVertexEvent => {
+                Self::NonConstructiveCoplanarVertexEvent
+            }
+            IntersectionGraphValidationError::SourceReplayMismatch => Self::SourceReplayMismatch,
+        }
+    }
+}
+
+/// Stable public category for retained split-plan blockers.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactArrangementSplitPlanBlockerKind {
+    /// Exact parameter ordering could not be certified.
+    UnknownOrdering,
+    /// Exact split-point equality could not be certified.
+    UnresolvedEquality,
+    /// A split point could not be matched to a graph vertex.
+    UnresolvedVertexLookup,
+    /// A segment/plane split point is missing endpoint side facts.
+    MissingEndpointSideFacts,
+    /// A segment/plane split point was not certified by opposite strict sides.
+    NonCrossingEndpointSideFacts,
+    /// A retained split-point determinant ratio does not match its parameter.
+    InvalidConstructionRatio,
+    /// A split chain has no usable endpoint-to-endpoint path.
+    EmptyOrShortEdgeChain,
+    /// A split chain does not begin at its directed edge start.
+    WrongChainStart,
+    /// A split chain does not end at its directed edge end.
+    WrongChainEnd,
+    /// An original vertex node appears on the wrong mesh side.
+    ChainSideMismatch,
+    /// A graph-vertex reference is out of range.
+    GraphVertexOutOfRange,
+    /// A merged graph vertex has no source uses.
+    EmptyGraphVertexUses,
+    /// A face split work item has no split edges.
+    EmptyFaceSplit,
+    /// A face split edge has no graph vertices.
+    EmptyFaceSplitEdge,
+    /// A face split plan repeats the same original edge for one face.
+    DuplicateFaceSplitEdge,
+    /// A face split edge references a graph vertex with no matching source use.
+    MissingFaceSplitSourceUse,
+    /// Boundary incidence against the original face plane could not be decided.
+    UnknownBoundaryIncidence,
+    /// A split boundary node is not on the original face plane.
+    BoundaryNodeOffFacePlane,
+    /// Source replay did not reproduce the retained split artifact.
+    SourceReplayMismatch,
+    /// A retained split face or region carried a mismatched source triangle.
+    SourceTriangleMismatch,
+    /// A split face region has fewer than three boundary nodes.
+    EmptyOrShortRegionBoundary,
+    /// A split face region contains consecutive duplicate boundary nodes.
+    DuplicateConsecutiveRegionNode,
+    /// A split-boundary chain references an edge that is not on the source triangle.
+    BoundaryChainEdgeNotOnTriangle,
+    /// A retained boundary original node references a missing source vertex.
+    BoundaryNodeSourceVertexOutOfRange,
+    /// A retained boundary original node is not part of its source triangle.
+    BoundaryNodeSourceVertexNotOnTriangle,
+    /// A retained boundary original node point no longer matches its source vertex.
+    BoundaryNodeSourcePointMismatch,
+}
+
+impl From<SplitPlanDiagnosticKind> for ExactArrangementSplitPlanBlockerKind {
+    fn from(kind: SplitPlanDiagnosticKind) -> Self {
+        match kind {
+            SplitPlanDiagnosticKind::UnknownOrdering => Self::UnknownOrdering,
+            SplitPlanDiagnosticKind::UnresolvedEquality => Self::UnresolvedEquality,
+            SplitPlanDiagnosticKind::UnresolvedVertexLookup => Self::UnresolvedVertexLookup,
+            SplitPlanDiagnosticKind::MissingEndpointSideFacts => Self::MissingEndpointSideFacts,
+            SplitPlanDiagnosticKind::NonCrossingEndpointSideFacts => {
+                Self::NonCrossingEndpointSideFacts
+            }
+            SplitPlanDiagnosticKind::InvalidConstructionRatio => Self::InvalidConstructionRatio,
+            SplitPlanDiagnosticKind::EmptyOrShortEdgeChain => Self::EmptyOrShortEdgeChain,
+            SplitPlanDiagnosticKind::WrongChainStart => Self::WrongChainStart,
+            SplitPlanDiagnosticKind::WrongChainEnd => Self::WrongChainEnd,
+            SplitPlanDiagnosticKind::ChainSideMismatch => Self::ChainSideMismatch,
+            SplitPlanDiagnosticKind::GraphVertexOutOfRange => Self::GraphVertexOutOfRange,
+            SplitPlanDiagnosticKind::EmptyGraphVertexUses => Self::EmptyGraphVertexUses,
+            SplitPlanDiagnosticKind::EmptyFaceSplit => Self::EmptyFaceSplit,
+            SplitPlanDiagnosticKind::EmptyFaceSplitEdge => Self::EmptyFaceSplitEdge,
+            SplitPlanDiagnosticKind::DuplicateFaceSplitEdge => Self::DuplicateFaceSplitEdge,
+            SplitPlanDiagnosticKind::MissingFaceSplitSourceUse => Self::MissingFaceSplitSourceUse,
+            SplitPlanDiagnosticKind::UnknownBoundaryIncidence => Self::UnknownBoundaryIncidence,
+            SplitPlanDiagnosticKind::BoundaryNodeOffFacePlane => Self::BoundaryNodeOffFacePlane,
+            #[cfg(test)]
+            SplitPlanDiagnosticKind::SourceReplayMismatch => Self::SourceReplayMismatch,
+            SplitPlanDiagnosticKind::SourceTriangleMismatch => Self::SourceTriangleMismatch,
+            SplitPlanDiagnosticKind::EmptyOrShortRegionBoundary => Self::EmptyOrShortRegionBoundary,
+            SplitPlanDiagnosticKind::DuplicateConsecutiveRegionNode => {
+                Self::DuplicateConsecutiveRegionNode
+            }
+            SplitPlanDiagnosticKind::BoundaryChainEdgeNotOnTriangle => {
+                Self::BoundaryChainEdgeNotOnTriangle
+            }
+            SplitPlanDiagnosticKind::BoundaryNodeSourceVertexOutOfRange => {
+                Self::BoundaryNodeSourceVertexOutOfRange
+            }
+            SplitPlanDiagnosticKind::BoundaryNodeSourceVertexNotOnTriangle => {
+                Self::BoundaryNodeSourceVertexNotOnTriangle
+            }
+            SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch => {
+                Self::BoundaryNodeSourcePointMismatch
+            }
+        }
+    }
 }

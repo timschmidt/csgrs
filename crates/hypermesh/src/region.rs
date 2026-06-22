@@ -260,7 +260,6 @@ fn region_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> MeshEr
                     | SplitPlanDiagnosticKind::DuplicateConsecutiveRegionNode
                     | SplitPlanDiagnosticKind::BoundaryNodeSourceVertexNotOnTriangle
                     | SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch
-                    | SplitPlanDiagnosticKind::DuplicateConsecutiveBoundaryNode
                     | SplitPlanDiagnosticKind::BoundaryChainEdgeNotOnTriangle => {
                         DiagnosticKind::DegenerateTriangle
                     }

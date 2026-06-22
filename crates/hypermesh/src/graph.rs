@@ -32,7 +32,7 @@ use hyperreal::Real;
 
 /// Side of a two-mesh graph event.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum MeshSide {
+pub(crate) enum MeshSide {
     /// The first mesh passed to graph construction.
     Left,
     /// The second mesh passed to graph construction.
@@ -48,7 +48,7 @@ pub enum MeshSide {
 /// paths must carry.
 #[derive(Clone, Debug, PartialEq)]
 #[allow(clippy::large_enum_variant)]
-pub enum IntersectionEvent {
+pub(crate) enum IntersectionEvent {
     /// A triangle edge intersects the opposite triangle plane.
     SegmentPlane {
         /// Mesh owning the segment edge.
@@ -124,9 +124,9 @@ impl IntersectionEvent {
 /// Retained projected edge contact in a coplanar face-pair overlap graph.
 ///
 /// These records are arrangement inputs, not final topology. They retain the
-/// coplanar decomposition while keeping mutation deferred until the full
+/// coplanar decomposition while keeping mutation deferred until split planning.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct CoplanarEdgeOverlap {
+pub(crate) struct CoplanarEdgeOverlap {
     /// Edge in the left face.
     pub left_edge: [usize; 2],
     /// Edge in the right face.
@@ -137,7 +137,7 @@ pub struct CoplanarEdgeOverlap {
 
 /// Retained vertex containment/touching fact in a coplanar overlap graph.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct CoplanarVertexOverlap {
+pub(crate) struct CoplanarVertexOverlap {
     /// Mesh owning the retained vertex.
     pub vertex_side: MeshSide,
     /// Vertex index in the owning mesh.
@@ -157,7 +157,7 @@ pub struct CoplanarVertexOverlap {
 /// already certified by `hyperlimit`, but deliberately avoids inventing split
 /// vertices or planar cells until a later exact arrangement stage can retain
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct CoplanarOverlapGraph {
+pub(crate) struct CoplanarOverlapGraph {
     /// Face index in the left mesh.
     pub left_face: usize,
     /// Face index in the right mesh.
@@ -180,7 +180,7 @@ pub struct CoplanarOverlapGraph {
 /// later planar arrangement stage can order interval topology without
 /// recovering it from primitive coordinates.
 #[derive(Clone, Debug, PartialEq)]
-pub struct CoplanarEdgeSplitPoint {
+pub(crate) struct CoplanarEdgeSplitPoint {
     /// Exact 3D point on the shared coplanar face plane.
     pub point: Point3,
     /// Parameter on [`CoplanarEdgeOverlap::left_edge`].
@@ -195,14 +195,14 @@ pub struct CoplanarEdgeSplitPoint {
 /// sort and merge interval topology from exact object facts rather than from
 /// projected labels or primitive-float coordinates.
 #[derive(Clone, Debug, PartialEq)]
-pub struct CoplanarEdgeInterval {
+pub(crate) struct CoplanarEdgeInterval {
     /// Certified closed interval endpoints.
     pub endpoints: [CoplanarEdgeSplitPoint; 2],
 }
 
 /// Retained split construction for one coplanar edge contact.
 #[derive(Clone, Debug, PartialEq)]
-pub struct CoplanarEdgeSplitConstruction {
+pub(crate) struct CoplanarEdgeSplitConstruction {
     /// Original edge contact record.
     pub overlap: CoplanarEdgeOverlap,
     /// Constructed point events for proper crossings or endpoint touches.
@@ -216,14 +216,14 @@ pub struct CoplanarEdgeSplitConstruction {
 
 /// Non-mutating split-construction plan for retained coplanar overlap graphs.
 #[derive(Clone, Debug, PartialEq)]
-pub struct CoplanarOverlapSplitPlan {
+pub(crate) struct CoplanarOverlapSplitPlan {
     /// Per-face-pair overlap graph split records.
     pub graphs: Vec<CoplanarOverlapSplitGraph>,
 }
 
 /// Split construction records for one coplanar face-pair overlap graph.
 #[derive(Clone, Debug, PartialEq)]
-pub struct CoplanarOverlapSplitGraph {
+pub(crate) struct CoplanarOverlapSplitGraph {
     /// Face index in the left mesh.
     pub left_face: usize,
     /// Face index in the right mesh.
@@ -284,7 +284,7 @@ pub(crate) struct CoplanarArrangementReadinessReport {
 
 /// Structural inconsistency in a retained coplanar overlap graph.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CoplanarOverlapGraphValidationError {
+pub(crate) enum CoplanarOverlapGraphValidationError {
     /// The graph relation is not a coplanar retained relation.
     NonCoplanarRelation,
     /// The graph has no edge or vertex evidence.
@@ -303,7 +303,7 @@ pub enum CoplanarOverlapGraphValidationError {
 
 /// Structural inconsistency in retained coplanar split construction records.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CoplanarOverlapSplitValidationError {
+pub(crate) enum CoplanarOverlapSplitValidationError {
     /// A proper or endpoint contact did not retain exactly one split point.
     MissingPointConstruction,
     /// A disjoint edge contact appeared in the split plan.
@@ -457,10 +457,9 @@ impl CoplanarArrangementReadinessReport {
 
     /// Validate that the compact readiness summary is internally coherent.
     ///
-    /// The report validates counts, not source geometry. That is still useful
-    /// because exact topology staging often crosses API or serialization
-    /// model requires those retained numerical-structure summaries to be
-    /// auditable before they influence combinatorial output.
+    /// The report validates counts, not source geometry. That still keeps the
+    /// compact retained-state summary auditable before it influences
+    /// combinatorial output.
     pub fn validate(&self) -> Result<(), CoplanarArrangementReadinessValidationError> {
         let Some(graph_count) = self.overlapping_graphs.checked_add(self.touching_graphs) else {
             return Err(CoplanarArrangementReadinessValidationError::GraphCountMismatch);
@@ -468,9 +467,8 @@ impl CoplanarArrangementReadinessReport {
         if self.graph_count != graph_count {
             return Err(CoplanarArrangementReadinessValidationError::GraphCountMismatch);
         }
-        // exact state. A compact planar-readiness report is therefore allowed
-        // to summarize split constructions, but those summaries must still be
-        // dominated by the edge contacts that produced them.
+        // Split summaries must be dominated by the edge contacts that produced
+        // them.
         let Some(edge_split_constructions) = self
             .point_split_count
             .checked_add(self.interval_overlap_count)
@@ -530,9 +528,8 @@ impl CoplanarArrangementReadinessReport {
     ///
     /// Local validation proves only that the compact counters are internally
     /// coherent. Source replay rebuilds the exact intersection graph and
-    /// coplanar split summaries from `left` and `right`, then requires the
-    /// summarized exact-topology handoff must remain attached to the predicate
-    /// and construction history that produced its numerical structure.
+    /// coplanar split summaries from `left` and `right`, then compares the
+    /// retained summary with the rebuilt predicate and construction history.
     #[cfg(test)]
     pub fn validate_against_sources(
         &self,
@@ -566,8 +563,7 @@ impl CoplanarOverlapSplitPlan {
     /// Mesh validation checks each retained split point against source-edge
     /// interpolation. This stronger audit also rebuilds the coplanar overlap
     /// graphs and split constructions from `left` and `right`, then compares
-    /// should consume only split records whose construction history still
-    /// replays from the source operands.
+    /// them with the retained plan.
     #[cfg(test)]
     pub fn validate_against_sources(
         &self,
@@ -656,7 +652,7 @@ impl CoplanarOverlapSplitGraph {
 /// combinatorial mutation; a graph event whose coarse relation and retained
 /// payload disagree must be rejected at that boundary.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum IntersectionGraphValidationError {
+pub(crate) enum IntersectionGraphValidationError {
     /// A retained face-pair record references a missing source face.
     FaceIndexOutOfRange,
     /// A retained event references a missing source vertex or face.
@@ -692,7 +688,7 @@ pub enum IntersectionGraphValidationError {
 
 /// Event records for one retained face pair.
 #[derive(Clone, Debug, PartialEq)]
-pub struct FacePairEvents {
+pub(crate) struct FacePairEvents {
     /// Face index in the left mesh.
     pub left_face: usize,
     /// Face index in the right mesh.
@@ -774,12 +770,9 @@ impl FacePairEvents {
 
     /// Validate retained event handles against the exact source meshes.
     ///
-    /// Plain [`FacePairEvents::validate`] checks relation/payload shape. This
-    /// stronger handoff also checks that every retained face, edge, and vertex
-    /// handle still belongs to the source meshes and to the face pair that
-    /// handles as part of the exact state: a later topology stage must not
-    /// consume predicate evidence after it has been relabeled onto a different
-    /// source object.
+    /// Plain [`FacePairEvents::validate`] checks relation/payload shape. Source
+    /// validation also checks that every retained face, edge, and vertex handle
+    /// still belongs to the source meshes and to this face pair.
     pub fn validate_against_meshes(
         &self,
         left: &ExactMesh,
@@ -864,7 +857,7 @@ impl FacePairEvents {
 
 /// Exact intersection event graph for two meshes.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactIntersectionGraph {
+pub(crate) struct ExactIntersectionGraph {
     /// Retained face-pair event records.
     pub face_pairs: Vec<FacePairEvents>,
 }
@@ -1200,7 +1193,7 @@ pub(crate) fn build_validated_intersection_graph(
 
 /// Exact split points for one directed mesh edge.
 #[derive(Clone, Debug, PartialEq)]
-pub struct EdgeSplit {
+pub(crate) struct EdgeSplit {
     /// Mesh side owning the edge.
     pub side: MeshSide,
     /// Directed edge endpoints in that mesh's vertex index space.
@@ -1211,7 +1204,7 @@ pub struct EdgeSplit {
 
 /// One exact split point on an edge.
 #[derive(Clone, Debug, PartialEq)]
-pub struct EdgeSplitPoint {
+pub(crate) struct EdgeSplitPoint {
     /// Face pair that produced the split.
     pub face_pair: [usize; 2],
     /// Opposite face whose plane produced the split.
@@ -1228,7 +1221,7 @@ pub struct EdgeSplitPoint {
 
 /// Edge split extraction result.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactEdgeSplitPlan {
+pub(crate) struct ExactEdgeSplitPlan {
     /// Per-edge split points.
     pub splits: Vec<EdgeSplit>,
     /// Number of parameter comparisons that could not be certified.
@@ -1263,7 +1256,7 @@ impl ExactEdgeSplitPlan {
 
 /// One merged exact graph vertex.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactGraphVertex {
+pub(crate) struct ExactGraphVertex {
     /// Representative exact point.
     pub point: Point3,
     /// Split-point uses that are exactly coincident with the representative.
@@ -1272,7 +1265,7 @@ pub struct ExactGraphVertex {
 
 /// One source use of a merged graph vertex.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactGraphVertexUse {
+pub(crate) struct ExactGraphVertexUse {
     /// Mesh side owning the split edge.
     pub side: MeshSide,
     /// Directed edge endpoints in that mesh's vertex index space.
@@ -1291,7 +1284,7 @@ pub struct ExactGraphVertexUse {
 
 /// Exact graph-vertex merge result.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactGraphVertexPlan {
+pub(crate) struct ExactGraphVertexPlan {
     /// Merged graph vertices.
     pub vertices: Vec<ExactGraphVertex>,
     /// Equality checks that could not be certified.
@@ -1310,7 +1303,7 @@ impl ExactGraphVertexPlan {
 
 /// One node in an ordered split-edge chain.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum SplitEdgeNode {
+pub(crate) enum SplitEdgeNode {
     /// Original mesh vertex.
     OriginalVertex {
         /// Mesh side owning the original vertex.
@@ -1327,7 +1320,7 @@ pub enum SplitEdgeNode {
 
 /// Ordered split chain for one original edge.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct SplitEdgeChain {
+pub(crate) struct SplitEdgeChain {
     /// Mesh side owning the edge.
     pub side: MeshSide,
     /// Directed original edge.
@@ -1338,7 +1331,7 @@ pub struct SplitEdgeChain {
 
 /// Non-mutating exact split topology plan.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactSplitTopologyPlan {
+pub(crate) struct ExactSplitTopologyPlan {
     /// Merged exact graph vertices used by edge chains.
     pub graph_vertices: Vec<ExactGraphVertex>,
     /// Ordered edge chains to materialize.
@@ -1372,7 +1365,7 @@ impl ExactSplitTopologyPlan {
 
 /// One split edge chain as used by an affected face.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct FaceSplitEdge {
+pub(crate) struct FaceSplitEdge {
     /// Original face edge endpoints.
     pub edge: [usize; 2],
     /// Graph vertices on that edge in directed edge order.
@@ -1381,7 +1374,7 @@ pub struct FaceSplitEdge {
 
 /// Face-local split work item.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct FaceSplitPlan {
+pub(crate) struct FaceSplitPlan {
     /// Mesh side owning the face.
     pub side: MeshSide,
     /// Face index.
@@ -1392,7 +1385,7 @@ pub struct FaceSplitPlan {
 
 /// Non-mutating exact face split plan.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ExactFaceSplitPlan {
+pub(crate) struct ExactFaceSplitPlan {
     /// Per-face split work items.
     pub faces: Vec<FaceSplitPlan>,
 }
@@ -1432,7 +1425,7 @@ impl ExactFaceSplitPlan {
 
 /// Stable category for split-plan validation diagnostics.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum SplitPlanDiagnosticKind {
+pub(crate) enum SplitPlanDiagnosticKind {
     /// Exact parameter ordering could not be certified.
     UnknownOrdering,
     /// Exact split-point equality could not be certified.
@@ -1470,6 +1463,7 @@ pub enum SplitPlanDiagnosticKind {
     /// A split boundary node is not on the original face plane.
     BoundaryNodeOffFacePlane,
     /// A public split-region artifact no longer matches source replay.
+    #[cfg(test)]
     SourceReplayMismatch,
     /// A retained split face or region carried a source triangle that no
     /// longer matches the retained source face handle.
@@ -1488,13 +1482,11 @@ pub enum SplitPlanDiagnosticKind {
     /// A retained boundary original node point no longer matches its source
     /// vertex coordinate.
     BoundaryNodeSourcePointMismatch,
-    /// A split-boundary chain contains consecutive duplicate nodes.
-    DuplicateConsecutiveBoundaryNode,
 }
 
 /// One split-plan validation diagnostic.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct SplitPlanDiagnostic {
+pub(crate) struct SplitPlanDiagnostic {
     /// Stable diagnostic category.
     pub kind: SplitPlanDiagnosticKind,
     /// Human-readable detail.
@@ -1586,7 +1578,7 @@ impl SplitPlanValidationReport {
 /// explicit construction evidence instead of relabeling coordinates as if they
 /// came from an older source object.
 #[derive(Clone, Debug, PartialEq)]
-pub enum FaceSplitBoundaryNode {
+pub(crate) enum FaceSplitBoundaryNode {
     /// Original mesh vertex with its exact point.
     OriginalVertex {
         /// Vertex index in the source mesh.
@@ -1616,7 +1608,7 @@ pub enum FaceSplitBoundaryNode {
 
 /// Exact boundary chain for one split edge of an original face.
 #[derive(Clone, Debug, PartialEq)]
-pub struct FaceSplitBoundaryChain {
+pub(crate) struct FaceSplitBoundaryChain {
     /// Original directed face edge.
     pub edge: [usize; 2],
     /// Boundary nodes in directed edge order.
@@ -1625,7 +1617,7 @@ pub struct FaceSplitBoundaryChain {
 
 /// Exact geometry handoff for one split face.
 #[derive(Clone, Debug, PartialEq)]
-pub struct FaceSplitGeometry {
+pub(crate) struct FaceSplitGeometry {
     /// Mesh side owning the face.
     pub side: MeshSide,
     /// Face index in the owning mesh.
@@ -1638,7 +1630,7 @@ pub struct FaceSplitGeometry {
 
 /// Non-mutating exact split-face geometry plan.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactFaceSplitGeometryPlan {
+pub(crate) struct ExactFaceSplitGeometryPlan {
     /// Per-face exact boundary geometry.
     pub faces: Vec<FaceSplitGeometry>,
 }
@@ -1688,7 +1680,7 @@ impl ExactFaceSplitGeometryPlan {
 
 /// One pre-triangulation boundary loop for an affected face.
 #[derive(Clone, Debug, PartialEq)]
-pub struct FaceRegionBoundary {
+pub(crate) struct FaceRegionBoundary {
     /// Mesh side owning the source face.
     pub side: MeshSide,
     /// Face index in the source mesh.
@@ -1702,7 +1694,7 @@ pub struct FaceRegionBoundary {
 
 /// Exact pre-triangulation region plan for affected faces.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactFaceRegionPlan {
+pub(crate) struct ExactFaceRegionPlan {
     /// One boundary loop per affected source face.
     pub regions: Vec<FaceRegionBoundary>,
 }

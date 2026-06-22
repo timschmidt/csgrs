@@ -1515,7 +1515,7 @@ impl ExactArrangement3d {
         validate_arrangement_face_cells(&self.face_cells)?;
         self.graph
             .validate()
-            .map_err(ExactArrangementBlocker::InvalidIntersectionGraph)?;
+            .map_err(|error| ExactArrangementBlocker::InvalidIntersectionGraph(error.into()))?;
         validate_lower_dimensional_artifact_graph_pairs(
             &self.lower_dimensional_artifacts,
             &self.graph,
@@ -1825,7 +1825,9 @@ impl ExactArrangement3d {
 fn blockers_from_graph_validation(graph: &ExactIntersectionGraph) -> Vec<ExactArrangementBlocker> {
     match graph.validate() {
         Ok(()) => Vec::new(),
-        Err(error) => vec![ExactArrangementBlocker::InvalidIntersectionGraph(error)],
+        Err(error) => vec![ExactArrangementBlocker::InvalidIntersectionGraph(
+            error.into(),
+        )],
     }
 }
 
@@ -1834,7 +1836,9 @@ fn extend_split_plan_blockers(
     report: &SplitPlanValidationReport,
 ) {
     for diagnostic in &report.diagnostics {
-        blockers.push(ExactArrangementBlocker::InvalidSplitPlan(diagnostic.kind));
+        blockers.push(ExactArrangementBlocker::InvalidSplitPlan(
+            diagnostic.kind.into(),
+        ));
         match diagnostic.kind {
             super::graph::SplitPlanDiagnosticKind::UnknownOrdering => {
                 blockers.push(ExactArrangementBlocker::UndecidableOrdering)

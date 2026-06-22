@@ -56,6 +56,8 @@ pub use error::{
     DiagnosticKind as ExactMeshBlockerKind, ExactMeshBlocker, ExactMeshError, MeshError,
 };
 pub use mesh::{ExactAffineTransform3, ExactMesh, ExactMeshValidationError, Triangle};
-pub use regularization::ExactArrangementBlocker;
+pub use regularization::{
+    ExactArrangementBlocker, ExactArrangementGraphBlockerKind, ExactArrangementSplitPlanBlockerKind,
+};
 pub use validation::ValidationPolicy;
 pub use view::{EdgeRef, ExactMeshRef, FaceRef, MeshView, PreparedMeshView, TriangleRef};

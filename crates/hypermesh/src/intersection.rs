@@ -6,8 +6,8 @@
 //! and retained plane separation may reject work, while coplanar and candidate
 //! outcomes must continue into exact overlap-graph construction. Retained exact
 //! face-plane coefficients are used as a cached plane-separation filter before
-//! the full triangle classifier is rebuilt, and candidate split events reuse
-//! those mutations wait for certified predicates and exact constructions.
+//! the full triangle classifier is rebuilt. Candidate split events are retained
+//! only after certified predicates and exact constructions agree.
 
 use hyperlimit::{SegmentPlaneIntersection, TrianglePlaneRelation};
 
@@ -23,7 +23,7 @@ use super::topology::triangle_edges;
 
 /// Coarse exact relation for one pair of mesh faces.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum MeshFacePairRelation {
+pub(crate) enum MeshFacePairRelation {
     /// Exact triangle plane-side predicates prove the faces are separated.
     PlaneSeparated,
     /// The triangles are coplanar and touch at a vertex or edge.
@@ -39,7 +39,7 @@ pub enum MeshFacePairRelation {
 
 /// Exact broad/narrow classification for one pair of mesh faces.
 #[derive(Clone, Debug, PartialEq)]
-pub struct MeshFacePairClassification {
+pub(crate) struct MeshFacePairClassification {
     /// Face index in the left mesh.
     pub left_face: usize,
     /// Face index in the right mesh.
