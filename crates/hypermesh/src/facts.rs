@@ -156,7 +156,7 @@ pub(crate) struct MeshValidationFacts {
 /// It does not re-run geometric predicates; instead it checks that the retained
 /// topology-affecting predicate decisions remain separately certified.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum MeshFactsValidationError {
+pub(crate) enum MeshFactsValidationError {
     /// A summary count does not match the corresponding retained table length.
     SummaryLengthMismatch {
         /// Summary field name.

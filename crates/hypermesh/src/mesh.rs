@@ -176,8 +176,140 @@ pub enum ExactMeshValidationError {
     /// Recomputing bounds from the source vertices and triangles did not
     /// reproduce the retained bounds object.
     RetainedBoundsSourceReplayMismatch,
-    /// Retained mesh facts failed their own validation.
-    Facts(MeshFactsValidationError),
+    /// A retained fact summary count does not match the corresponding table length.
+    RetainedFactsSummaryLengthMismatch {
+        /// Summary field name.
+        field: &'static str,
+        /// Count derived from the retained table.
+        expected: usize,
+        /// Count stored in the summary.
+        actual: usize,
+    },
+    /// A derived retained fact summary count does not match per-item facts.
+    RetainedFactsSummaryCountMismatch {
+        /// Summary field name.
+        field: &'static str,
+        /// Count derived from retained facts.
+        expected: usize,
+        /// Count stored in the summary.
+        actual: usize,
+    },
+    /// The retained Euler characteristic is not `V - E + F`.
+    RetainedFactsEulerCharacteristicMismatch {
+        /// Value derived from retained counts.
+        expected: isize,
+        /// Value stored in the summary.
+        actual: isize,
+    },
+    /// The retained closed-manifold summary bit disagrees with retained facts.
+    RetainedFactsClosedManifoldMismatch {
+        /// Value derived from retained facts.
+        expected: bool,
+        /// Value stored in the summary.
+        actual: bool,
+    },
+    /// The retained all-coordinates-exact bit disagrees with vertex facts.
+    RetainedFactsFixedCoordinatesMismatch {
+        /// Value derived from retained vertex facts.
+        expected: bool,
+        /// Value stored in the summary.
+        actual: bool,
+    },
+    /// Recomputing facts from the source vertices and triangle rows did not
+    /// reproduce the retained facts.
+    RetainedFactsSourceReplayMismatch,
+    /// A retained vertex fact is stored at a different slot than its index.
+    RetainedFactsVertexIndexMismatch {
+        /// Slot in the retained vertex table.
+        expected: usize,
+        /// Vertex index stored in the fact.
+        actual: usize,
+    },
+    /// A retained vertex incident-face count disagrees with face rows.
+    RetainedFactsVertexIncidentFaceMismatch {
+        /// Vertex index.
+        vertex: usize,
+        /// Count derived from retained faces.
+        expected: usize,
+        /// Count stored in the vertex fact.
+        actual: usize,
+    },
+    /// A retained vertex incident-edge count disagrees with edge rows.
+    RetainedFactsVertexIncidentEdgeMismatch {
+        /// Vertex index.
+        vertex: usize,
+        /// Count derived from retained edges.
+        expected: usize,
+        /// Count stored in the vertex fact.
+        actual: usize,
+    },
+    /// A retained edge fact uses an out-of-range vertex.
+    RetainedFactsEdgeVertexOutOfBounds {
+        /// Edge endpoints.
+        edge: [usize; 2],
+        /// Retained vertex count.
+        vertex_count: usize,
+    },
+    /// A retained edge fact is not in canonical endpoint order.
+    RetainedFactsEdgeEndpointOrder {
+        /// Edge endpoints.
+        edge: [usize; 2],
+    },
+    /// The same retained undirected edge appears more than once.
+    RetainedFactsDuplicateEdgeFact {
+        /// Repeated canonical edge.
+        edge: [usize; 2],
+    },
+    /// A retained face references an out-of-range vertex.
+    RetainedFactsFaceVertexOutOfBounds {
+        /// Face index.
+        face: usize,
+        /// Referenced vertex index.
+        vertex: usize,
+        /// Retained vertex count.
+        vertex_count: usize,
+    },
+    /// A retained face repeats a vertex.
+    RetainedFactsFaceRepeatedVertex {
+        /// Face index.
+        face: usize,
+        /// Face vertices.
+        vertices: [usize; 3],
+    },
+    /// A retained face fact is stored at a different slot than its face index.
+    RetainedFactsFaceIndexMismatch {
+        /// Slot in the retained face table.
+        expected: usize,
+        /// Face index stored in the fact.
+        actual: usize,
+    },
+    /// A retained face's oriented edge rows do not match its vertex order.
+    RetainedFactsFaceDirectedEdgesMismatch {
+        /// Face index.
+        face: usize,
+        /// Directed edges derived from `triangle.vertices`.
+        expected: [[usize; 2]; 3],
+        /// Directed edges stored in the oriented-face facts.
+        actual: [[usize; 2]; 3],
+    },
+    /// A retained edge fact disagrees with directed uses derived from face rows.
+    RetainedFactsEdgeUseMismatch {
+        /// Canonical edge.
+        edge: [usize; 2],
+        /// Derived directed-use counts.
+        expected_directed_uses: [usize; 2],
+        /// Stored directed-use counts.
+        actual_directed_uses: [usize; 2],
+        /// Derived incident-face count.
+        expected_incident_faces: usize,
+        /// Stored incident-face count.
+        actual_incident_faces: usize,
+    },
+    /// A retained face references an edge that has no retained edge fact.
+    RetainedFactsMissingEdgeFact {
+        /// Canonical edge.
+        edge: [usize; 2],
+    },
     /// Retained provenance failed its own validation.
     Provenance(ConstructionProvenanceValidationError),
     /// Predicate provenance no longer mirrors the retained face predicate
@@ -410,7 +542,7 @@ impl ExactMesh {
                 self.triangles.iter().map(|triangle| triangle.0),
                 self.validation_policy,
             )
-            .map_err(ExactMeshValidationError::Facts)?;
+            .map_err(retained_facts_validation_error)?;
         self.provenance
             .validate()
             .map_err(ExactMeshValidationError::Provenance)?;
@@ -634,6 +766,113 @@ const fn retained_bounds_validation_error(
         }
         BoundsValidationError::SourceReplayMismatch => {
             ExactMeshValidationError::RetainedBoundsSourceReplayMismatch
+        }
+    }
+}
+
+const fn retained_facts_validation_error(
+    error: MeshFactsValidationError,
+) -> ExactMeshValidationError {
+    match error {
+        MeshFactsValidationError::SummaryLengthMismatch {
+            field,
+            expected,
+            actual,
+        } => ExactMeshValidationError::RetainedFactsSummaryLengthMismatch {
+            field,
+            expected,
+            actual,
+        },
+        MeshFactsValidationError::SummaryCountMismatch {
+            field,
+            expected,
+            actual,
+        } => ExactMeshValidationError::RetainedFactsSummaryCountMismatch {
+            field,
+            expected,
+            actual,
+        },
+        MeshFactsValidationError::EulerCharacteristicMismatch { expected, actual } => {
+            ExactMeshValidationError::RetainedFactsEulerCharacteristicMismatch { expected, actual }
+        }
+        MeshFactsValidationError::ClosedManifoldMismatch { expected, actual } => {
+            ExactMeshValidationError::RetainedFactsClosedManifoldMismatch { expected, actual }
+        }
+        MeshFactsValidationError::FixedCoordinatesMismatch { expected, actual } => {
+            ExactMeshValidationError::RetainedFactsFixedCoordinatesMismatch { expected, actual }
+        }
+        MeshFactsValidationError::SourceReplayMismatch => {
+            ExactMeshValidationError::RetainedFactsSourceReplayMismatch
+        }
+        MeshFactsValidationError::VertexIndexMismatch { expected, actual } => {
+            ExactMeshValidationError::RetainedFactsVertexIndexMismatch { expected, actual }
+        }
+        MeshFactsValidationError::VertexIncidentFaceMismatch {
+            vertex,
+            expected,
+            actual,
+        } => ExactMeshValidationError::RetainedFactsVertexIncidentFaceMismatch {
+            vertex,
+            expected,
+            actual,
+        },
+        MeshFactsValidationError::VertexIncidentEdgeMismatch {
+            vertex,
+            expected,
+            actual,
+        } => ExactMeshValidationError::RetainedFactsVertexIncidentEdgeMismatch {
+            vertex,
+            expected,
+            actual,
+        },
+        MeshFactsValidationError::EdgeVertexOutOfBounds { edge, vertex_count } => {
+            ExactMeshValidationError::RetainedFactsEdgeVertexOutOfBounds { edge, vertex_count }
+        }
+        MeshFactsValidationError::EdgeEndpointOrder { edge } => {
+            ExactMeshValidationError::RetainedFactsEdgeEndpointOrder { edge }
+        }
+        MeshFactsValidationError::DuplicateEdgeFact { edge } => {
+            ExactMeshValidationError::RetainedFactsDuplicateEdgeFact { edge }
+        }
+        MeshFactsValidationError::FaceVertexOutOfBounds {
+            face,
+            vertex,
+            vertex_count,
+        } => ExactMeshValidationError::RetainedFactsFaceVertexOutOfBounds {
+            face,
+            vertex,
+            vertex_count,
+        },
+        MeshFactsValidationError::FaceRepeatedVertex { face, vertices } => {
+            ExactMeshValidationError::RetainedFactsFaceRepeatedVertex { face, vertices }
+        }
+        MeshFactsValidationError::FaceIndexMismatch { expected, actual } => {
+            ExactMeshValidationError::RetainedFactsFaceIndexMismatch { expected, actual }
+        }
+        MeshFactsValidationError::FaceDirectedEdgesMismatch {
+            face,
+            expected,
+            actual,
+        } => ExactMeshValidationError::RetainedFactsFaceDirectedEdgesMismatch {
+            face,
+            expected,
+            actual,
+        },
+        MeshFactsValidationError::EdgeUseMismatch {
+            edge,
+            expected_directed_uses,
+            actual_directed_uses,
+            expected_incident_faces,
+            actual_incident_faces,
+        } => ExactMeshValidationError::RetainedFactsEdgeUseMismatch {
+            edge,
+            expected_directed_uses,
+            actual_directed_uses,
+            expected_incident_faces,
+            actual_incident_faces,
+        },
+        MeshFactsValidationError::MissingEdgeFact { edge } => {
+            ExactMeshValidationError::RetainedFactsMissingEdgeFact { edge }
         }
     }
 }
