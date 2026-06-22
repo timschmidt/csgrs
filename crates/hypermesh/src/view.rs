@@ -148,21 +148,6 @@ impl<'a> ExactMeshRef<'a> {
         })
     }
 
-    /// Return exact broad-phase candidate face pairs for this view and `right`.
-    ///
-    /// The retained bounds on both source meshes are replayed before the AABB
-    /// scheduler is allowed to discard face pairs. Returned pairs are only
-    /// broad-phase candidates; narrow exact predicates still decide topology.
-    /// Pair order is an implementation detail of the selected broad-phase plan.
-    pub fn candidate_face_pairs(
-        self,
-        right: ExactMeshRef<'_>,
-    ) -> Result<Vec<[usize; 2]>, ExactMeshValidationError> {
-        let left = self.prepare_broad_phase()?;
-        let right = right.prepare_broad_phase()?;
-        Ok(left.candidate_face_pairs(&right))
-    }
-
     /// Visit exact broad-phase candidate face pairs without collecting them.
     ///
     /// This validates retained bounds for both source meshes before any AABB
@@ -245,24 +230,6 @@ impl<'a> PreparedMeshView<'a> {
         self.view
     }
 
-    /// Return exact broad-phase candidate face pairs for this view and `right`.
-    ///
-    /// Pair order is an implementation detail of the selected broad-phase plan.
-    pub fn candidate_face_pairs(&self, right: &PreparedMeshView<'_>) -> Vec<[usize; 2]> {
-        let plan = self.bounds.candidate_face_pair_plan(&right.bounds);
-        let mut pairs = Vec::new();
-        let result = self.bounds.try_visit_candidate_face_pairs_with_plan(
-            &right.bounds,
-            plan,
-            &mut |pair| {
-                pairs.push(pair);
-                Ok::<(), ()>(())
-            },
-        );
-        debug_assert!(result.is_ok());
-        pairs
-    }
-
     /// Visit exact broad-phase candidate face pairs without collecting them.
     pub fn visit_candidate_face_pairs(
         &self,
@@ -301,19 +268,6 @@ impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
     /// Return the prepared right mesh view.
     pub const fn right(&self) -> &PreparedMeshView<'b> {
         &self.right
-    }
-
-    /// Return exact broad-phase candidate face pairs for this prepared pair.
-    ///
-    /// Pair order is an implementation detail of the selected broad-phase plan.
-    pub fn candidate_face_pairs(&self) -> Vec<[usize; 2]> {
-        let mut pairs = Vec::new();
-        let result = self.try_visit_candidate_face_pairs(|pair| {
-            pairs.push(pair);
-            Ok::<(), ()>(())
-        });
-        debug_assert!(result.is_ok());
-        pairs
     }
 
     /// Visit exact broad-phase candidate face pairs without collecting them.

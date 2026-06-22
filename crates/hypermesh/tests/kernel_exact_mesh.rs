@@ -117,9 +117,9 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
     let disjoint = tetra([5, 0, 0]);
 
     left.view().validate_retained_bounds().unwrap();
-    let mut candidates = left
-        .view()
-        .candidate_face_pairs(overlapping.view())
+    let mut candidates = Vec::new();
+    left.view()
+        .visit_candidate_face_pairs(overlapping.view(), |pair| candidates.push(pair))
         .unwrap();
     candidates.sort_unstable();
     let mut visited_candidates = Vec::new();
@@ -133,7 +133,10 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
         *left_face < left.triangles().len() && *right_face < overlapping.triangles().len()
     }));
 
-    let disjoint_candidates = left.view().candidate_face_pairs(disjoint.view()).unwrap();
+    let mut disjoint_candidates = Vec::new();
+    left.view()
+        .visit_candidate_face_pairs(disjoint.view(), |pair| disjoint_candidates.push(pair))
+        .unwrap();
     assert!(disjoint_candidates.is_empty());
 
     let prepared_left = left.view().prepare_broad_phase().unwrap();
@@ -142,10 +145,14 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
         .view()
         .prepare_pair_broad_phase(overlapping.view())
         .unwrap();
-    let mut prepared_candidates = prepared_left.candidate_face_pairs(&prepared_overlapping);
+    let mut prepared_candidates = Vec::new();
+    prepared_left.visit_candidate_face_pairs(&prepared_overlapping, |pair| {
+        prepared_candidates.push(pair);
+    });
     prepared_candidates.sort_unstable();
     assert_eq!(prepared_candidates, candidates);
-    let mut prepared_pair_candidates = prepared_pair.candidate_face_pairs();
+    let mut prepared_pair_candidates = Vec::new();
+    prepared_pair.visit_candidate_face_pairs(|pair| prepared_pair_candidates.push(pair));
     prepared_pair_candidates.sort_unstable();
     assert_eq!(prepared_pair_candidates, candidates);
     let mut prepared_visited = Vec::new();
