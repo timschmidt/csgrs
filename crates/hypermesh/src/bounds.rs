@@ -411,22 +411,23 @@ impl<'a> PreparedMeshBounds<'a> {
         let other_max_order = other.max_axis_order(axis)?;
         let driver_intervals = self.axis_intervals(axis);
         let other_intervals = other.axis_intervals(axis);
-        let mut started_by_driver = vec![0usize; driver_intervals.len()];
-        let mut next_other_start = 0usize;
 
-        for &driver in driver_max_order {
-            let driver_max = driver_intervals[driver].max;
-            while let Some(&other_face) = other_min_order.get(next_other_start) {
-                let ordering = compare(other_intervals[other_face].min, driver_max)?;
-                if ordering == Ordering::Greater {
+        let total_pairs = driver_intervals.len().saturating_mul(other_intervals.len());
+        let mut driver_before_other = 0usize;
+        let mut next_driver_end = 0usize;
+        for &other_face in other_min_order {
+            let other_min = other_intervals[other_face].min;
+            while let Some(&driver_face) = driver_max_order.get(next_driver_end) {
+                let ordering = compare(driver_intervals[driver_face].max, other_min)?;
+                if ordering != Ordering::Less {
                     break;
                 }
-                next_other_start += 1;
+                next_driver_end += 1;
             }
-            started_by_driver[driver] = next_other_start;
+            driver_before_other = driver_before_other.saturating_add(next_driver_end);
         }
 
-        let mut count = 0usize;
+        let mut other_before_driver = 0usize;
         let mut next_other_end = 0usize;
         for &driver in driver_min_order {
             let driver_min = driver_intervals[driver].min;
@@ -437,10 +438,14 @@ impl<'a> PreparedMeshBounds<'a> {
                 }
                 next_other_end += 1;
             }
-            count = count.saturating_add(started_by_driver[driver].saturating_sub(next_other_end));
+            other_before_driver = other_before_driver.saturating_add(next_other_end);
         }
 
-        Some(count)
+        Some(
+            total_pairs
+                .saturating_sub(driver_before_other)
+                .saturating_sub(other_before_driver),
+        )
     }
 
     fn count_axis_interval_overlaps_by_binary_search(
