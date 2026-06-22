@@ -22,7 +22,7 @@ use super::solid::ConvexSolidPointRelation;
 
 /// Region label for one arrangement face-cell.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactCellRegionLabel {
+pub(crate) enum ExactCellRegionLabel {
     /// Cell belongs to the boundary of the left source mesh.
     LeftBoundary,
     /// Cell belongs to the boundary of the right source mesh.
@@ -31,7 +31,7 @@ pub enum ExactCellRegionLabel {
 
 /// Relation of a boundary cell to the opposite closed mesh.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactOppositeRegionLabel {
+pub(crate) enum ExactOppositeRegionLabel {
     /// Strictly inside the opposite mesh.
     Inside,
     /// Strictly outside the opposite mesh.
@@ -44,90 +44,90 @@ pub enum ExactOppositeRegionLabel {
 
 /// Retained cell-complex face-cell.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCellComplexFace {
+pub(crate) struct ExactCellComplexFace {
     /// Arrangement face-cell payload.
-    pub cell: ArrangementFaceCell,
+    pub(crate) cell: ArrangementFaceCell,
     /// Source boundary label.
-    pub source: ExactCellRegionLabel,
+    pub(crate) source: ExactCellRegionLabel,
     /// Opposite-region label derived from exact winding evidence.
-    pub opposite: ExactOppositeRegionLabel,
+    pub(crate) opposite: ExactOppositeRegionLabel,
 }
 
 /// Labeled volume region induced by closed arrangement shells.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ExactCellComplexVolumeRegion {
+pub(crate) struct ExactCellComplexVolumeRegion {
     /// Volume-region index from the source arrangement graph.
-    pub index: usize,
+    pub(crate) index: usize,
     /// Whether this region is the unbounded exterior.
-    pub exterior: bool,
+    pub(crate) exterior: bool,
     /// Shell components bounding this volume.
-    pub boundary_shells: Vec<usize>,
+    pub(crate) boundary_shells: Vec<usize>,
     /// Whether the volume is owned by the left source shell graph.
-    pub in_left: bool,
+    pub(crate) in_left: bool,
     /// Whether the volume is owned by the right source shell graph.
-    pub in_right: bool,
+    pub(crate) in_right: bool,
 }
 
 /// Exact cell complex built from a 3D arrangement.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCellComplex {
+pub(crate) struct ExactCellComplex {
     /// Source arrangement.
-    pub arrangement: ExactArrangement3d,
+    pub(crate) arrangement: ExactArrangement3d,
     /// Regularization policy used to build this view.
-    pub policy: ExactRegularizationPolicy,
+    pub(crate) policy: ExactRegularizationPolicy,
 }
 
 /// Labeled arrangement cells.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactLabeledCellComplex {
+pub(crate) struct ExactLabeledCellComplex {
     /// Labeled face-cells.
-    pub faces: Vec<ExactCellComplexFace>,
+    pub(crate) faces: Vec<ExactCellComplexFace>,
     /// Labeled volume-region graph nodes.
-    pub volume_regions: Vec<ExactCellComplexVolumeRegion>,
+    pub(crate) volume_regions: Vec<ExactCellComplexVolumeRegion>,
     /// Volume-region adjacencies through oriented shell face-cells.
-    pub volume_adjacencies: Vec<ArrangementVolumeAdjacency>,
+    pub(crate) volume_adjacencies: Vec<ArrangementVolumeAdjacency>,
     /// Retained lower-dimensional arrangement artifacts under policy.
-    pub lower_dimensional_artifacts: Vec<ArrangementLowerDimensionalArtifact>,
+    pub(crate) lower_dimensional_artifacts: Vec<ArrangementLowerDimensionalArtifact>,
     /// Blockers inherited or introduced during labeling.
-    pub blockers: Vec<ExactArrangementBlocker>,
+    pub(crate) blockers: Vec<ExactArrangementBlocker>,
 }
 
 /// Selected cells for a Boolean operation.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactSelectedCellComplex {
+pub(crate) struct ExactSelectedCellComplex {
     /// Labeled face-cells.
-    pub faces: Vec<ExactCellComplexFace>,
+    pub(crate) faces: Vec<ExactCellComplexFace>,
     /// Labeled volume-region graph nodes.
-    pub volume_regions: Vec<ExactCellComplexVolumeRegion>,
+    pub(crate) volume_regions: Vec<ExactCellComplexVolumeRegion>,
     /// Volume-region adjacencies through oriented shell face-cells.
-    pub volume_adjacencies: Vec<ArrangementVolumeAdjacency>,
+    pub(crate) volume_adjacencies: Vec<ArrangementVolumeAdjacency>,
     /// Retained lower-dimensional arrangement artifacts under policy.
-    pub lower_dimensional_artifacts: Vec<ArrangementLowerDimensionalArtifact>,
+    pub(crate) lower_dimensional_artifacts: Vec<ArrangementLowerDimensionalArtifact>,
     /// Topology assembly report consumed before this selection, when retained.
-    pub topology_assembly_report: Option<ExactTopologyAssemblyReport>,
+    pub(crate) topology_assembly_report: Option<ExactTopologyAssemblyReport>,
     /// Region ownership report consumed before this selection, when retained.
-    pub region_ownership_report: Option<ExactRegionOwnershipReport>,
+    pub(crate) region_ownership_report: Option<ExactRegionOwnershipReport>,
     /// Indices of selected `faces`.
-    pub selected_faces: Vec<usize>,
+    pub(crate) selected_faces: Vec<usize>,
     /// Per-selected-face orientation relative to the exported boundary.
-    pub selected_face_orientations: Vec<ExactSelectedFaceOrientation>,
+    pub(crate) selected_face_orientations: Vec<ExactSelectedFaceOrientation>,
     /// Indices of selected `volume_regions`.
-    pub selected_volume_regions: Vec<usize>,
+    pub(crate) selected_volume_regions: Vec<usize>,
     /// Boolean operation used for selection.
-    pub operation: ExactBooleanOperation,
+    pub(crate) operation: ExactBooleanOperation,
     /// Blockers inherited or introduced during selection.
-    pub blockers: Vec<ExactArrangementBlocker>,
+    pub(crate) blockers: Vec<ExactArrangementBlocker>,
 }
 
 /// Orientation chosen for one selected face-cell.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ExactSelectedFaceOrientation {
+pub(crate) struct ExactSelectedFaceOrientation {
     /// Index into [`ExactSelectedCellComplex::faces`].
-    pub face: usize,
+    pub(crate) face: usize,
     /// Whether the selected output boundary should reverse this face-cell.
-    pub reverse: bool,
+    pub(crate) reverse: bool,
     /// Whether this orientation came from explicit volume adjacency.
-    pub from_volume_adjacency: bool,
+    pub(crate) from_volume_adjacency: bool,
 }
 
 /// Retained selection count summary consumed by arrangement attempts and
@@ -178,13 +178,13 @@ pub(crate) enum ExactRegionOwnershipStatus {
 impl ExactRegionOwnershipStatus {
     /// Return whether this ownership status can select named Boolean regions
     /// without additional winding evidence.
-    pub const fn is_resolved(self) -> bool {
+    pub(crate) const fn is_resolved(self) -> bool {
         matches!(self, Self::VolumeResolved | Self::FaceResolved)
     }
 
     /// Return whether retained volume-region ownership resolves selection.
     #[cfg(test)]
-    pub const fn is_volume_resolved(self) -> bool {
+    pub(crate) const fn is_volume_resolved(self) -> bool {
         matches!(self, Self::VolumeResolved)
     }
 }
@@ -431,7 +431,7 @@ impl ExactRegionOwnershipReport {
 
 impl ExactCellComplex {
     /// Build a cell-complex view over an arrangement.
-    pub fn from_arrangement(
+    pub(crate) fn from_arrangement(
         arrangement: ExactArrangement3d,
         policy: ExactRegularizationPolicy,
     ) -> Self {
@@ -442,7 +442,7 @@ impl ExactCellComplex {
     }
 
     /// Label arrangement face-cells by source boundary and opposite winding.
-    pub fn label_regions(
+    pub(crate) fn label_regions(
         self,
         policy: ExactRegularizationPolicy,
     ) -> Result<ExactLabeledCellComplex, ExactArrangementBlocker> {
@@ -487,7 +487,7 @@ impl ExactCellComplex {
 
 impl ExactLabeledCellComplex {
     /// Validate local labeled-cell consistency without replaying source meshes.
-    pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
+    pub(crate) fn validate(&self) -> Result<(), ExactArrangementBlocker> {
         validate_lower_dimensional_artifacts(&self.lower_dimensional_artifacts)?;
         validate_cell_complex_parts(&self.faces, &self.volume_regions, &self.volume_adjacencies)
     }
@@ -495,7 +495,7 @@ impl ExactLabeledCellComplex {
     /// Validate this labeled complex by replaying arrangement construction and
     /// region labeling from source operands.
     #[cfg(test)]
-    pub fn validate_against_sources(
+    pub(crate) fn validate_against_sources(
         &self,
         left: &super::mesh::ExactMesh,
         right: &super::mesh::ExactMesh,
@@ -513,7 +513,7 @@ impl ExactLabeledCellComplex {
     }
 
     /// Classify whether this retained labeled complex is fresh for the source operands.
-    pub fn freshness_against_sources(
+    pub(crate) fn freshness_against_sources(
         &self,
         left: &super::mesh::ExactMesh,
         right: &super::mesh::ExactMesh,
@@ -666,7 +666,7 @@ impl ExactLabeledCellComplex {
 
     /// Select face-cells for a named Boolean operation.
     #[cfg(test)]
-    pub fn select(
+    pub(crate) fn select(
         self,
         operation: ExactBooleanOperation,
     ) -> Result<ExactSelectedCellComplex, ExactArrangementBlocker> {
@@ -674,7 +674,7 @@ impl ExactLabeledCellComplex {
     }
 
     /// Select face-cells for a named Boolean operation with explicit policy.
-    pub fn select_with_policy(
+    pub(crate) fn select_with_policy(
         self,
         operation: ExactBooleanOperation,
         policy: ExactRegularizationPolicy,
@@ -827,7 +827,7 @@ impl ExactSelectedCellComplex {
     }
 
     /// Validate local selected-cell consistency without replaying source meshes.
-    pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
+    pub(crate) fn validate(&self) -> Result<(), ExactArrangementBlocker> {
         validate_lower_dimensional_artifacts(&self.lower_dimensional_artifacts)?;
         validate_cell_complex_parts(&self.faces, &self.volume_regions, &self.volume_adjacencies)?;
         let gate_counts = selected_cell_complex_gate_counts(
@@ -908,7 +908,7 @@ impl ExactSelectedCellComplex {
     /// Validate this selected complex by replaying arrangement construction,
     /// labeling, and selection from source operands.
     #[cfg(test)]
-    pub fn validate_against_sources(
+    pub(crate) fn validate_against_sources(
         &self,
         left: &super::mesh::ExactMesh,
         right: &super::mesh::ExactMesh,
@@ -928,12 +928,14 @@ impl ExactSelectedCellComplex {
 
     /// Run exact canonicalization on selected cells.
     #[cfg(test)]
-    pub fn simplify_exact(self) -> Result<ExactSimplifiedCellComplex, ExactArrangementBlocker> {
+    pub(crate) fn simplify_exact(
+        self,
+    ) -> Result<ExactSimplifiedCellComplex, ExactArrangementBlocker> {
         self.simplify_exact_with_policy(ExactRegularizationPolicy::default())
     }
 
     /// Run exact canonicalization on selected cells with explicit policy.
-    pub fn simplify_exact_with_policy(
+    pub(crate) fn simplify_exact_with_policy(
         self,
         policy: ExactRegularizationPolicy,
     ) -> Result<ExactSimplifiedCellComplex, ExactArrangementBlocker> {
