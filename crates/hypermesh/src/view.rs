@@ -46,6 +46,13 @@ pub struct PreparedMeshView<'a> {
     bounds: PreparedMeshBounds<'a>,
 }
 
+/// Borrowed pair view with replay-validated broad-phase acceleration facts.
+#[derive(Clone, Debug)]
+pub struct PreparedMeshPairView<'a, 'b> {
+    left: PreparedMeshView<'a>,
+    right: PreparedMeshView<'b>,
+}
+
 impl<'a> ExactMeshRef<'a> {
     /// Borrow an exact mesh as a replayable view.
     pub const fn new(mesh: &'a ExactMesh) -> Self {
@@ -179,6 +186,17 @@ impl<'a> ExactMeshRef<'a> {
         })
     }
 
+    /// Prepare replay-validated broad-phase facts for one repeated mesh pair.
+    pub fn prepare_pair_broad_phase<'b>(
+        self,
+        right: ExactMeshRef<'b>,
+    ) -> Result<PreparedMeshPairView<'a, 'b>, ExactMeshValidationError> {
+        Ok(PreparedMeshPairView {
+            left: self.prepare_broad_phase()?,
+            right: right.prepare_broad_phase()?,
+        })
+    }
+
     /// Materialize this view after an exact affine transform.
     pub fn transform(self, transform: &ExactAffineTransform3) -> Result<ExactMesh, MeshError> {
         self.mesh.transform(transform)
@@ -261,6 +279,41 @@ impl<'a> PreparedMeshView<'a> {
     ) -> Result<(), E> {
         self.bounds
             .try_visit_candidate_face_pairs(&right.bounds, visit)
+    }
+}
+
+impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
+    /// Return the prepared left mesh view.
+    pub const fn left(&self) -> &PreparedMeshView<'a> {
+        &self.left
+    }
+
+    /// Return the prepared right mesh view.
+    pub const fn right(&self) -> &PreparedMeshView<'b> {
+        &self.right
+    }
+
+    /// Return an upper bound for collected candidate face pairs.
+    pub fn candidate_face_pair_capacity_hint(&self) -> usize {
+        self.left.candidate_face_pair_capacity_hint(&self.right)
+    }
+
+    /// Return exact broad-phase candidate face pairs for this prepared pair.
+    pub fn candidate_face_pairs(&self) -> Vec<[usize; 2]> {
+        self.left.candidate_face_pairs(&self.right)
+    }
+
+    /// Visit exact broad-phase candidate face pairs without collecting them.
+    pub fn visit_candidate_face_pairs(&self, visit: impl FnMut([usize; 2])) {
+        self.left.visit_candidate_face_pairs(&self.right, visit);
+    }
+
+    /// Try to visit exact broad-phase candidate face pairs, allowing early exit.
+    pub fn try_visit_candidate_face_pairs<E>(
+        &self,
+        visit: impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<(), E> {
+        self.left.try_visit_candidate_face_pairs(&self.right, visit)
     }
 }
 

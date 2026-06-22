@@ -60,4 +60,6 @@ pub use regularization::{
     ExactArrangementBlocker, ExactArrangementGraphBlockerKind, ExactArrangementSplitPlanBlockerKind,
 };
 pub use validation::ValidationPolicy;
-pub use view::{EdgeRef, ExactMeshRef, FaceRef, MeshView, PreparedMeshView, TriangleRef};
+pub use view::{
+    EdgeRef, ExactMeshRef, FaceRef, MeshView, PreparedMeshPairView, PreparedMeshView, TriangleRef,
+};

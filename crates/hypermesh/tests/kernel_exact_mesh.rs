@@ -137,21 +137,26 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
 
     let prepared_left = left.view().prepare_broad_phase().unwrap();
     let prepared_overlapping = overlapping.view().prepare_broad_phase().unwrap();
+    let prepared_pair = left
+        .view()
+        .prepare_pair_broad_phase(overlapping.view())
+        .unwrap();
     assert!(
         prepared_left.candidate_face_pair_capacity_hint(&prepared_overlapping) >= candidates.len()
     );
+    assert!(prepared_pair.candidate_face_pair_capacity_hint() >= candidates.len());
     assert_eq!(
         prepared_left.candidate_face_pairs(&prepared_overlapping),
         candidates
     );
+    assert_eq!(prepared_pair.candidate_face_pairs(), candidates);
     let mut prepared_visited = Vec::new();
-    prepared_left
-        .visit_candidate_face_pairs(&prepared_overlapping, |pair| prepared_visited.push(pair));
+    prepared_pair.visit_candidate_face_pairs(|pair| prepared_visited.push(pair));
     prepared_visited.sort_unstable();
     assert_eq!(prepared_visited, candidates);
 
     let mut first_prepared = None;
-    let stopped = prepared_left.try_visit_candidate_face_pairs(&prepared_overlapping, |pair| {
+    let stopped = prepared_pair.try_visit_candidate_face_pairs(|pair| {
         first_prepared = Some(pair);
         Err::<(), _>(())
     });

@@ -9,11 +9,8 @@ pub fn exercise_mesh_kernel_pair(left: &ExactMesh, right: &ExactMesh) {
     let _ = left_view.visit_candidate_face_pairs(right_view, |_| {
         retained_pair_count += 1;
     });
-    if let (Ok(left_prepared), Ok(right_prepared)) = (
-        left_view.prepare_broad_phase(),
-        right_view.prepare_broad_phase(),
-    ) {
-        let _ = left_prepared.try_visit_candidate_face_pairs(&right_prepared, |_| {
+    if let Ok(prepared_pair) = left_view.prepare_pair_broad_phase(right_view) {
+        let _ = prepared_pair.try_visit_candidate_face_pairs(|_| {
             retained_pair_count += 1;
             Ok::<(), ()>(())
         });
