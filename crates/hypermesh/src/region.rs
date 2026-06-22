@@ -31,7 +31,7 @@ use hyperlimit::SourceProvenance;
 
 /// Exact relation between a split region boundary and an opposite face plane.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum FaceRegionPlaneRelation {
+pub(crate) enum FaceRegionPlaneRelation {
     /// Every boundary node is strictly above the oriented plane.
     StrictlyAbove,
     /// Every boundary node is strictly below the oriented plane.
@@ -46,7 +46,7 @@ pub enum FaceRegionPlaneRelation {
 
 /// Certified classification of one region against one opposite face plane.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct FaceRegionPlaneClassification {
+pub(crate) struct FaceRegionPlaneClassification {
     /// Region mesh side.
     pub region_side: MeshSide,
     /// Region source face.
@@ -70,7 +70,7 @@ pub struct FaceRegionPlaneClassification {
 /// be able to audit that derivation directly, rather than trusting a summary
 /// tied to certified predicate facts and explicit unknowns.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum FaceRegionPlaneValidationError {
+pub(crate) enum FaceRegionPlaneValidationError {
     /// A region cannot be classified against a plane from the same mesh side.
     SameRegionAndPlaneSide {
         /// Side that owns the split region.
@@ -97,12 +97,13 @@ pub enum FaceRegionPlaneValidationError {
     },
     /// Recomputing the region/plane classification from source meshes did not
     /// reproduce the retained artifact.
+    #[cfg(test)]
     SourceReplayMismatch,
 }
 
 impl FaceRegionPlaneClassification {
     /// Return whether every retained predicate route was proof-producing.
-    pub fn all_proof_producing(&self) -> bool {
+    pub(crate) fn all_proof_producing(&self) -> bool {
         self.predicates
             .iter()
             .copied()
@@ -114,7 +115,7 @@ impl FaceRegionPlaneClassification {
     /// A retained region/plane side fact is only consumable by inside/outside
     /// policy when every predicate was proof-producing and the derived
     /// undecided relations remain explicit refinement state.
-    pub fn is_decided_and_proof_producing(&self) -> bool {
+    pub(crate) fn is_decided_and_proof_producing(&self) -> bool {
         self.all_proof_producing() && !matches!(self.relation, FaceRegionPlaneRelation::Unknown)
     }
 
@@ -127,7 +128,7 @@ impl FaceRegionPlaneClassification {
     /// came from the opposite mesh side, because winding and inside/outside
     /// policies consume these facts as cross-mesh evidence. Keeping that
     /// handoff should retain the exact predicate context it depends on.
-    pub fn validate(&self) -> Result<(), FaceRegionPlaneValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), FaceRegionPlaneValidationError> {
         if self.region_side == self.plane_side {
             return Err(FaceRegionPlaneValidationError::SameRegionAndPlaneSide {
                 region_side: self.region_side,
@@ -154,14 +155,8 @@ impl FaceRegionPlaneClassification {
     }
 
     /// Recompute this region/plane classification from the source meshes.
-    ///
-    /// Local validation proves that the retained node-side vector justifies the
-    /// coarse relation. This source replay is stronger: it rebuilds the exact
-    /// intersection graph, derives the face-region plan, reclassifies regions
-    /// against opposite planes, and requires this artifact to appear in that
-    /// computation history, so a future winding policy must not consume a
-    /// copied or relabeled region/plane record.
-    pub fn validate_against_sources(
+    #[cfg(test)]
+    pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -177,6 +172,27 @@ impl FaceRegionPlaneClassification {
         } else {
             Err(FaceRegionPlaneValidationError::SourceReplayMismatch)
         }
+    }
+}
+
+#[cfg(test)]
+impl ExactFaceRegionPlan {
+    /// Validate and classify split regions against every opposite face plane.
+    pub(crate) fn classify_against_opposite_face_planes(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Vec<FaceRegionPlaneClassification>, MeshError> {
+        checked_classify_face_regions_against_opposite_planes(self, left, right)
+    }
+
+    /// Validate and triangulate split face-region loops with exact earcut.
+    pub(crate) fn triangulate_with_earcut(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> hypertri::Result<Vec<FaceRegionTriangulation>> {
+        checked_triangulate_face_regions_with_earcut(self, left, right)
     }
 }
 
@@ -209,31 +225,6 @@ pub(crate) fn classify_face_regions_against_opposite_planes(
         }
     }
     classifications
-}
-
-/// Validate and classify split regions against every opposite face plane.
-///
-/// This is the checked handoff for future winding/inside-outside policy:
-/// region loops must satisfy exact structural and source-face incidence
-/// objects rather than unchecked boundary loops.
-impl ExactFaceRegionPlan {
-    /// Validate and classify split regions against every opposite face plane.
-    pub fn classify_against_opposite_face_planes(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Vec<FaceRegionPlaneClassification>, MeshError> {
-        checked_classify_face_regions_against_opposite_planes(self, left, right)
-    }
-
-    /// Validate and triangulate split face-region loops with exact earcut.
-    pub fn triangulate_with_earcut(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> hypertri::Result<Vec<FaceRegionTriangulation>> {
-        checked_triangulate_face_regions_with_earcut(self, left, right)
-    }
 }
 
 pub(crate) fn checked_classify_face_regions_against_opposite_planes(
@@ -290,7 +281,7 @@ fn region_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> MeshEr
 
 /// Exact earcut triangulation of one split face region.
 #[derive(Clone, Debug, PartialEq)]
-pub struct FaceRegionTriangulation {
+pub(crate) struct FaceRegionTriangulation {
     /// Mesh side owning the source face.
     pub side: MeshSide,
     /// Source face index.
@@ -314,7 +305,7 @@ impl FaceRegionTriangulation {
     /// is a certified non-degenerate projected triangle. This keeps the
     /// algorithms may transform representation, but each combinatorial result
     /// must carry enough certified facts to be audited before downstream
-    pub fn validate(&self) -> hypertri::Result<()> {
+    pub(crate) fn validate(&self) -> hypertri::Result<()> {
         if self.vertices.len() != self.boundary.len() {
             return Err(hypertri::Error::InvalidInput {
                 reason: "region triangulation vertex and boundary lengths differ",
@@ -360,14 +351,8 @@ impl FaceRegionTriangulation {
     }
 
     /// Recompute this exact region triangulation from the source meshes.
-    ///
-    /// The local audit checks projection and triangle-index invariants. This
-    /// replay rebuilds the exact graph and region loops from the operands,
-    /// reruns the exact `hypertri` handoff, and requires this
-    /// retained triangulation to match one recomputed artifact. That keeps
-    /// combinatorics remain tied to the exact source faces and graph vertices
-    /// that produced them.
-    pub fn validate_against_sources(
+    #[cfg(test)]
+    pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -412,7 +397,7 @@ fn replay_region_plan(
 /// Region selection policy for exact output assembly.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[allow(clippy::enum_variant_names)]
-pub enum ExactRegionSelection {
+pub(crate) enum ExactRegionSelection {
     /// Drop regions from both meshes.
     KeepNone,
     /// Keep regions originating from both meshes.
@@ -430,7 +415,7 @@ pub enum ExactRegionSelection {
 /// semantics are certified combinatorial choices, not post-hoc triangle-soup
 /// rewrites.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactRegionRetention {
+pub(crate) enum ExactRegionRetention {
     /// Drop this triangulated split region.
     Drop,
     /// Keep this region preserving source-face orientation.
@@ -451,7 +436,7 @@ impl ExactRegionSelection {
 
 /// One exact output vertex in an assembled region mesh.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactOutputVertex {
+pub(crate) struct ExactOutputVertex {
     /// Exact 3D point.
     pub point: Point3,
     /// Boundary node that produced this vertex.
@@ -460,7 +445,7 @@ pub struct ExactOutputVertex {
 
 /// One exact output triangle with source-region provenance.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ExactOutputTriangle {
+pub(crate) struct ExactOutputTriangle {
     /// Indices into [`ExactBooleanAssemblyPlan::vertices`].
     pub vertices: [usize; 3],
     /// Mesh side of the source split region.
@@ -479,7 +464,7 @@ pub struct ExactOutputTriangle {
 /// orientation-changing semantics, especially right-hand shell reversal for
 /// exact difference, without losing the source-face provenance required by
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactOutputTriangleOrientation {
+pub(crate) enum ExactOutputTriangleOrientation {
     /// The output triangle has the same projected orientation as its source
     /// face.
     PreserveSource,
@@ -496,7 +481,7 @@ pub enum ExactOutputTriangleOrientation {
 /// semantics in tolerances; callers pass an explicit region-selection policy,
 /// and undecided winding/inside-outside policy remains outside this assembly
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactBooleanAssemblyPlan {
+pub(crate) struct ExactBooleanAssemblyPlan {
     /// Exact output vertices.
     pub vertices: Vec<ExactOutputVertex>,
     /// Exact output triangles.
@@ -566,7 +551,7 @@ impl ExactBooleanAssemblyPlan {
     /// construction. These are exact
     /// `hyperlimit::compare_reals` checks, not tolerance comparisons,
     /// facts instead of trusting duplicated coordinates.
-    pub fn validate(&self) -> hypertri::Result<()> {
+    pub(crate) fn validate(&self) -> hypertri::Result<()> {
         for vertex in &self.vertices {
             validate_output_vertex_source(vertex)?;
         }
@@ -609,7 +594,7 @@ impl ExactBooleanAssemblyPlan {
     ///
     /// combinatorics must carry certified source and incidence facts before a
     /// topology consumer treats them as mesh state.
-    pub fn to_exact_mesh(
+    pub(crate) fn to_exact_mesh(
         &self,
         policy: ValidationPolicy,
     ) -> Result<ExactMesh, super::error::MeshError> {
@@ -645,7 +630,7 @@ impl ExactBooleanAssemblyPlan {
     /// replay before exact mesh construction receives any topology. That keeps
     /// combinatorial consumer receives certified geometric facts, not a
     /// coordinate-only approximation of earlier construction history.
-    pub fn checked_to_exact_mesh_with_sources(
+    pub(crate) fn checked_to_exact_mesh_with_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -671,7 +656,7 @@ impl ExactBooleanAssemblyPlan {
     /// disconnected exact-equal vertex fans, and orients paired edges
     /// consistently. All changes happen inside the assembly, so the output mesh
     /// can still replay exactly from retained source-face provenance.
-    pub fn canonicalize_for_mesh_with_sources(
+    pub(crate) fn canonicalize_for_mesh_with_sources(
         &mut self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -691,7 +676,7 @@ impl ExactBooleanAssemblyPlan {
     /// incidence with exact `hyperlimit::orient3d_report` predicates before
     /// handoffs should retain and revalidate the geometric certificates they
     /// depend on.
-    pub fn validate_source_face_incidence(
+    pub(crate) fn validate_source_face_incidence(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -716,7 +701,7 @@ impl ExactBooleanAssemblyPlan {
     /// No coordinate perturbation is introduced, and cloned vertices retain the
     /// same exact point and source witness. That preserves the object/predicate
     /// represent point contacts as separate vertices.
-    pub fn split_disconnected_vertex_fans(&mut self) -> hypertri::Result<usize> {
+    pub(crate) fn split_disconnected_vertex_fans(&mut self) -> hypertri::Result<usize> {
         let original_vertex_count = self.vertices.len();
         let mut cloned_vertices = 0;
         for vertex in 0..original_vertex_count {
@@ -752,7 +737,7 @@ impl ExactBooleanAssemblyPlan {
     /// evidence. Boundary and non-manifold edges are left as diagnostics for
     /// later mesh validation; contradictory parity means the selected complex
     /// is not orientable as a triangle manifold.
-    pub fn orient_paired_edge_uses(&mut self) -> hypertri::Result<usize> {
+    pub(crate) fn orient_paired_edge_uses(&mut self) -> hypertri::Result<usize> {
         let edge_uses = assembly_edge_uses(self);
         let mut adjacency = vec![Vec::<TriangleOrientationConstraint>::new(); self.triangles.len()];
         for uses in edge_uses.values() {
@@ -820,7 +805,7 @@ impl ExactBooleanAssemblyPlan {
     /// T-junction as a closed two-manifold, so the larger triangle is refined
     /// by replaying source-face incidence and exact projected point-on-segment
     /// predicates. No new coordinates are introduced.
-    pub fn refine_edges_at_existing_vertices(
+    pub(crate) fn refine_edges_at_existing_vertices(
         &mut self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -848,7 +833,7 @@ impl ExactBooleanAssemblyPlan {
     /// enough evidence to prove coincidence before this normal-form pass drops
     /// the duplicate topological face. The key is the sorted output vertex set;
     /// exact-equal vertices have already been welded by assembly.
-    pub fn remove_duplicate_triangle_vertex_sets(&mut self) -> hypertri::Result<usize> {
+    pub(crate) fn remove_duplicate_triangle_vertex_sets(&mut self) -> hypertri::Result<usize> {
         let original_len = self.triangles.len();
         let mut seen = std::collections::BTreeSet::<[usize; 3]>::new();
         self.triangles.retain(|triangle| {
@@ -871,7 +856,7 @@ impl ExactBooleanAssemblyPlan {
     /// consume a locally valid assembly that was relabeled from a different
     /// source pair or region-retention rule.
     #[cfg(test)]
-    pub fn validate_against_sources(
+    pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,

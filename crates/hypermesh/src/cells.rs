@@ -39,7 +39,8 @@ use hyperreal::Real;
 
 impl ExactIntersectionGraph {
     /// Triangulate every source face into exact constrained planar cells.
-    pub fn triangulate_face_cells_with_cdt(
+    #[cfg(test)]
+    pub(crate) fn triangulate_face_cells_with_cdt(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -48,7 +49,8 @@ impl ExactIntersectionGraph {
     }
 
     /// Validate a retained constrained face-cell triangulation by source replay.
-    pub fn validate_face_cell_cdt_against_sources(
+    #[cfg(test)]
+    pub(crate) fn validate_face_cell_cdt_against_sources(
         &self,
         regions: &ExactFaceRegionPlan,
         triangulations: &[FaceRegionTriangulation],
@@ -143,6 +145,7 @@ pub(crate) fn triangulate_all_face_cells_with_cdt(
 /// interior constraints and possible exact Steiner vertices, so their
 /// provenance must replay through [`triangulate_all_face_cells_with_cdt`]
 /// instead of the basic boundary-loop path.
+#[cfg(test)]
 pub(crate) fn validate_face_cell_cdt_against_sources(
     graph: &ExactIntersectionGraph,
     regions: &ExactFaceRegionPlan,
