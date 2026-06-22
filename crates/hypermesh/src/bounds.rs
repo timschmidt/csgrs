@@ -244,29 +244,31 @@ impl<'a> PreparedMeshBounds<'a> {
         &self,
         other: &PreparedMeshBounds<'_>,
     ) -> Option<Vec<[usize; 2]>> {
-        let mut best_axis_pairs = None;
+        let mut best_axis = None;
         for axis in [Axis::X, Axis::Y, Axis::Z] {
-            if let Some(pairs) = self.interval_candidate_pairs_sweep_axis(other, axis)
-                && best_axis_pairs
+            if let Some(pair_count) = self.interval_candidate_pair_count_sweep_axis(other, axis)
+                && best_axis
                     .as_ref()
-                    .is_none_or(|best: &Vec<[usize; 2]>| pairs.len() < best.len())
+                    .is_none_or(|&(_, best_count)| pair_count < best_count)
             {
-                best_axis_pairs = Some(pairs);
+                best_axis = Some((axis, pair_count));
             }
         }
-        best_axis_pairs.map(|pairs| self.filter_full_aabb_candidates(other, pairs))
+        let (axis, pair_count) = best_axis?;
+        let pairs = self.interval_candidate_pairs_sweep_axis(other, axis, pair_count)?;
+        Some(self.filter_full_aabb_candidates(other, pairs))
     }
 
-    fn interval_candidate_pairs_sweep_axis(
+    fn interval_candidate_pair_count_sweep_axis(
         &self,
         other: &PreparedMeshBounds<'_>,
         axis: Axis,
-    ) -> Option<Vec<[usize; 2]>> {
+    ) -> Option<usize> {
         let left_order = self.min_axis_order(axis)?;
         let right_order = other.min_axis_order(axis)?;
         let mut active_right = Vec::<usize>::new();
         let mut next_right = 0usize;
-        let mut pairs = Vec::new();
+        let mut pair_count = 0usize;
 
         for &left in left_order {
             let left_box = &self.bounds.faces[left];
@@ -282,17 +284,57 @@ impl<'a> PreparedMeshBounds<'a> {
                 next_right += 1;
             }
 
-            let mut retained_active = Vec::with_capacity(active_right.len());
-            for right in active_right {
-                if compare(
-                    axis_max(&other.bounds.faces[right], axis),
-                    axis_min(left_box, axis),
-                )? != Ordering::Less
+            retain_active_right_axis(
+                &mut active_right,
+                &other.bounds.faces,
+                axis,
+                axis_min(left_box, axis),
+            )?;
+            for &right in &active_right {
+                let right_box = &other.bounds.faces[right];
+                if compare(axis_min(right_box, axis), axis_max(left_box, axis))?
+                    != Ordering::Greater
                 {
-                    retained_active.push(right);
+                    pair_count += 1;
                 }
             }
-            active_right = retained_active;
+        }
+
+        Some(pair_count)
+    }
+
+    fn interval_candidate_pairs_sweep_axis(
+        &self,
+        other: &PreparedMeshBounds<'_>,
+        axis: Axis,
+        pair_capacity: usize,
+    ) -> Option<Vec<[usize; 2]>> {
+        let left_order = self.min_axis_order(axis)?;
+        let right_order = other.min_axis_order(axis)?;
+        let mut active_right = Vec::<usize>::new();
+        let mut next_right = 0usize;
+        let mut pairs = Vec::with_capacity(pair_capacity);
+
+        for &left in left_order {
+            let left_box = &self.bounds.faces[left];
+            while let Some(&right) = right_order.get(next_right) {
+                if compare(
+                    axis_min(&other.bounds.faces[right], axis),
+                    axis_max(left_box, axis),
+                )? == Ordering::Greater
+                {
+                    break;
+                }
+                active_right.push(right);
+                next_right += 1;
+            }
+
+            retain_active_right_axis(
+                &mut active_right,
+                &other.bounds.faces,
+                axis,
+                axis_min(left_box, axis),
+            )?;
 
             for &right in &active_right {
                 let right_box = &other.bounds.faces[right];
@@ -327,6 +369,24 @@ impl<'a> PreparedMeshBounds<'a> {
     fn min_axis_order(&self, axis: Axis) -> Option<&[usize]> {
         self.min_axis_orders[axis.index()].as_deref()
     }
+}
+
+fn retain_active_right_axis(
+    active_right: &mut Vec<usize>,
+    right_faces: &[ExactAabb3],
+    axis: Axis,
+    left_min: &Real,
+) -> Option<()> {
+    let mut retained = 0usize;
+    for index in 0..active_right.len() {
+        let right = active_right[index];
+        if compare(axis_max(&right_faces[right], axis), left_min)? != Ordering::Less {
+            active_right[retained] = right;
+            retained += 1;
+        }
+    }
+    active_right.truncate(retained);
+    Some(())
 }
 
 impl MeshBounds {
