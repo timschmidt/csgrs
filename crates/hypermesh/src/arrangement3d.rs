@@ -12,10 +12,9 @@ use super::arrangement2d::{
     ExactArrangement2dSegmentSource, ExactArrangement2dSetOperation, build_exact_arrangement2d,
     build_exact_arrangement2d_overlay, exact_arrangement2d_face_witness,
 };
-use super::boolean::ExactBooleanOperation;
 use super::cell_complex::{
     ExactCellComplex, ExactLabeledCellComplex, ExactLabeledCellComplexFreshness,
-    ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy, region_ownership_status,
+    ExactRegionOwnershipReport, region_ownership_status,
 };
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::exact_key::{
@@ -860,6 +859,196 @@ pub struct ExactArrangement3d {
 /// Public arrangement entry point for the exact Boolean pipeline.
 pub type ExactArrangement = ExactArrangement3d;
 
+/// Borrowed exact arrangement view.
+#[derive(Clone, Copy, Debug)]
+pub struct ExactArrangementRef<'a> {
+    arrangement: &'a ExactArrangement3d,
+}
+
+/// Preferred borrowed exact arrangement view type.
+pub type ArrangementView<'a> = ExactArrangementRef<'a>;
+
+/// Borrowed arrangement vertex view.
+#[derive(Clone, Copy, Debug)]
+pub struct ArrangementVertexRef<'a> {
+    arrangement: &'a ExactArrangement3d,
+    index: usize,
+}
+
+/// Borrowed arrangement edge view.
+#[derive(Clone, Copy, Debug)]
+pub struct ArrangementEdgeRef<'a> {
+    arrangement: &'a ExactArrangement3d,
+    index: usize,
+}
+
+/// Borrowed arrangement face-cell view.
+#[derive(Clone, Copy, Debug)]
+pub struct ArrangementFaceCellRef<'a> {
+    arrangement: &'a ExactArrangement3d,
+    index: usize,
+}
+
+impl<'a> ExactArrangementRef<'a> {
+    /// Borrow a retained exact arrangement as a query view.
+    pub const fn new(arrangement: &'a ExactArrangement3d) -> Self {
+        Self { arrangement }
+    }
+
+    /// Return whether construction reached a blocker-free arrangement handoff.
+    pub fn is_complete(self) -> bool {
+        self.arrangement.is_complete()
+    }
+
+    /// Validate retained arrangement state without cloning arrangement storage.
+    pub fn validate_retained_state(self) -> Result<(), ExactArrangementBlocker> {
+        self.arrangement.validate()
+    }
+
+    /// Retained arrangement vertex count.
+    pub fn vertex_count(self) -> usize {
+        self.arrangement.vertices.len()
+    }
+
+    /// Retained arrangement edge count.
+    pub fn edge_count(self) -> usize {
+        self.arrangement.edges.len()
+    }
+
+    /// Retained arrangement face-cell count.
+    pub fn face_cell_count(self) -> usize {
+        self.arrangement.face_cells.len()
+    }
+
+    /// Retained lower-dimensional artifact count.
+    pub fn lower_dimensional_artifact_count(self) -> usize {
+        self.arrangement.lower_dimensional_artifacts.len()
+    }
+
+    /// Retained blocker count.
+    pub fn blocker_count(self) -> usize {
+        self.arrangement.blockers.len()
+    }
+
+    /// Borrow one arrangement vertex by index.
+    pub fn vertex(self, index: usize) -> Option<ArrangementVertexRef<'a>> {
+        (index < self.arrangement.vertices.len()).then_some(ArrangementVertexRef {
+            arrangement: self.arrangement,
+            index,
+        })
+    }
+
+    /// Borrow one arrangement edge by index.
+    pub fn edge(self, index: usize) -> Option<ArrangementEdgeRef<'a>> {
+        (index < self.arrangement.edges.len()).then_some(ArrangementEdgeRef {
+            arrangement: self.arrangement,
+            index,
+        })
+    }
+
+    /// Borrow one arrangement face cell by index.
+    pub fn face_cell(self, index: usize) -> Option<ArrangementFaceCellRef<'a>> {
+        (index < self.arrangement.face_cells.len()).then_some(ArrangementFaceCellRef {
+            arrangement: self.arrangement,
+            index,
+        })
+    }
+
+    /// Iterate borrowed arrangement vertices.
+    pub fn vertices(self) -> impl Iterator<Item = ArrangementVertexRef<'a>> + 'a {
+        (0..self.arrangement.vertices.len()).map(move |index| ArrangementVertexRef {
+            arrangement: self.arrangement,
+            index,
+        })
+    }
+
+    /// Iterate borrowed arrangement edges.
+    pub fn edges(self) -> impl Iterator<Item = ArrangementEdgeRef<'a>> + 'a {
+        (0..self.arrangement.edges.len()).map(move |index| ArrangementEdgeRef {
+            arrangement: self.arrangement,
+            index,
+        })
+    }
+
+    /// Iterate borrowed arrangement face cells.
+    pub fn face_cells(self) -> impl Iterator<Item = ArrangementFaceCellRef<'a>> + 'a {
+        (0..self.arrangement.face_cells.len()).map(move |index| ArrangementFaceCellRef {
+            arrangement: self.arrangement,
+            index,
+        })
+    }
+}
+
+impl<'a> ArrangementVertexRef<'a> {
+    /// Vertex index in the retained arrangement.
+    pub const fn index(self) -> usize {
+        self.index
+    }
+
+    /// Exact retained vertex coordinate.
+    pub fn point(self) -> &'a Point3 {
+        &self.arrangement.vertices[self.index].point
+    }
+
+    /// Number of retained source/construction provenance records.
+    pub fn provenance_count(self) -> usize {
+        self.arrangement.vertices[self.index].provenance.len()
+    }
+}
+
+impl<'a> ArrangementEdgeRef<'a> {
+    /// Edge index in the retained arrangement.
+    pub const fn index(self) -> usize {
+        self.index
+    }
+
+    /// Endpoint arrangement vertex indices.
+    pub fn vertices(self) -> [usize; 2] {
+        self.arrangement.edges[self.index].vertices
+    }
+
+    /// Number of retained source/construction provenance records.
+    pub fn provenance_count(self) -> usize {
+        self.arrangement.edges[self.index].provenance.len()
+    }
+}
+
+impl<'a> ArrangementFaceCellRef<'a> {
+    /// Face-cell index in the retained arrangement.
+    pub const fn index(self) -> usize {
+        self.index
+    }
+
+    /// Source carrier face index.
+    pub fn carrier_face(self) -> usize {
+        self.arrangement.face_cells[self.index].carrier.face
+    }
+
+    /// Boundary node count in carrier-face order.
+    pub fn boundary_node_count(self) -> usize {
+        self.arrangement.face_cells[self.index].boundary.len()
+    }
+
+    /// Boundary point count in carrier-face order.
+    pub fn boundary_point_count(self) -> usize {
+        self.arrangement.face_cells[self.index]
+            .boundary_points
+            .len()
+    }
+
+    /// Iterate exact boundary coordinates in carrier-face order.
+    pub fn boundary_points(self) -> impl Iterator<Item = &'a Point3> + 'a {
+        self.arrangement.face_cells[self.index]
+            .boundary_points
+            .iter()
+    }
+
+    /// Return whether this face-cell retained an opposite-mesh classification.
+    pub fn has_opposite_classification(self) -> bool {
+        self.arrangement.face_cells[self.index].opposite.is_some()
+    }
+}
+
 /// Freshness status for a retained exact 3D arrangement.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactArrangementFreshness {
@@ -1137,15 +1326,19 @@ impl ExactTopologyAssemblyReport {
     }
 }
 
-#[allow(dead_code)]
 impl ExactArrangement3d {
+    /// Borrow this exact arrangement through the lightweight query view API.
+    pub const fn view(&self) -> ExactArrangementRef<'_> {
+        ExactArrangementRef::new(self)
+    }
+
     /// Build a retained exact arrangement from two meshes.
     pub fn from_meshes(left: &ExactMesh, right: &ExactMesh) -> Result<Self, MeshError> {
         Self::from_meshes_with_policy(left, right, ExactRegularizationPolicy::default())
     }
 
     /// Build a retained exact arrangement from two meshes with explicit policy.
-    pub fn from_meshes_with_policy(
+    pub(crate) fn from_meshes_with_policy(
         left: &ExactMesh,
         right: &ExactMesh,
         policy: ExactRegularizationPolicy,
@@ -1161,7 +1354,7 @@ impl ExactArrangement3d {
     /// then consumes it directly without replay-building the graph. Public
     /// exact-computation boundaries that require full source replay should
     /// perform that check before calling this constructor.
-    pub fn from_intersection_graph_with_policy(
+    pub(crate) fn from_intersection_graph_with_policy(
         graph: ExactIntersectionGraph,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -1429,7 +1622,7 @@ impl ExactArrangement3d {
 
     /// Validate this arrangement by rebuilding it with an explicit
     /// regularization policy.
-    pub fn validate_against_sources_with_policy(
+    pub(crate) fn validate_against_sources_with_policy(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -1464,7 +1657,7 @@ impl ExactArrangement3d {
     }
 
     /// Classify arrangement freshness under an explicit regularization policy.
-    pub fn freshness_against_sources_with_policy(
+    pub(crate) fn freshness_against_sources_with_policy(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -1647,29 +1840,32 @@ impl ExactArrangement3d {
     }
 
     /// Convert retained arrangement cells into a labeled cell complex.
-    pub fn label_regions(
+    pub(crate) fn label_regions(
         &self,
         policy: ExactRegularizationPolicy,
     ) -> Result<ExactLabeledCellComplex, ExactArrangementBlocker> {
         ExactCellComplex::from_arrangement(self.clone(), policy).label_regions(policy)
     }
 
-    /// Convenience entry point matching the intended public pipeline shape.
-    pub fn select(
+    #[cfg(test)]
+    fn select(
         &self,
-        operation: ExactBooleanOperation,
+        operation: super::boolean::ExactBooleanOperation,
     ) -> Result<super::cell_complex::ExactSelectedCellComplex, ExactArrangementBlocker> {
         self.select_with_policy(operation, ExactRegularizationPolicy::default())
     }
 
-    /// Convenience entry point with explicit regularization policy.
-    pub fn select_with_policy(
+    #[cfg(test)]
+    fn select_with_policy(
         &self,
-        operation: ExactBooleanOperation,
+        operation: super::boolean::ExactBooleanOperation,
         policy: ExactRegularizationPolicy,
     ) -> Result<super::cell_complex::ExactSelectedCellComplex, ExactArrangementBlocker> {
-        let labeling_policy =
-            arrangement_cell_complex_labeling_policy(self, Some(operation), policy);
+        let labeling_policy = super::cell_complex::arrangement_cell_complex_labeling_policy(
+            self,
+            Some(operation),
+            policy,
+        );
         self.label_regions(labeling_policy)?
             .select_with_policy(operation, policy)
     }

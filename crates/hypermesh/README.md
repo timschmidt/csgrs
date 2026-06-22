@@ -40,6 +40,8 @@ required by downstream CSG layers.
   `ExactMesh::xor` materialize named closed boolean outputs as exact meshes.
 - `ExactMesh::transform`, `ExactMesh::transform_by`, and `ExactMesh::inverse`
   provide exact affine transforms and orientation inversion for CSG adapters.
+- Low-level arrangement code exposes borrowed `ArrangementView` queries for
+  algorithms that need retained topology without cloning arrangement storage.
 
 Retained graph, arrangement, cell-complex, winding, and shortcut evidence remain
 kernel internals unless a borrowed view is needed for exact query reuse.
