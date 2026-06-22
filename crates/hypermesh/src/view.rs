@@ -187,22 +187,6 @@ impl<'a> ExactMeshRef<'a> {
         })
     }
 
-    /// Visit exact broad-phase candidate face pairs without collecting them.
-    ///
-    /// This validates retained bounds for both source meshes before any AABB
-    /// rejection is allowed. The visitor receives only broad-phase candidates;
-    /// exact narrow predicates still decide topology.
-    pub fn visit_candidate_face_pairs(
-        self,
-        right: ExactMeshRef<'_>,
-        mut visit: impl FnMut([usize; 2]),
-    ) -> Result<(), ExactMeshValidationError> {
-        let left = self.prepare_broad_phase()?;
-        let right = right.prepare_broad_phase()?;
-        left.visit_candidate_face_pairs(&right, |pair| visit(pair));
-        Ok(())
-    }
-
     /// Prepare replay-validated broad-phase facts for repeated pair queries.
     pub fn prepare_broad_phase(self) -> Result<PreparedMeshView<'a>, ExactMeshValidationError> {
         self.validate_retained_bounds()?;
@@ -317,11 +301,6 @@ impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
     /// Return the prepared right mesh view.
     pub const fn right(&self) -> &PreparedMeshView<'b> {
         &self.right
-    }
-
-    /// Number of cached broad-phase candidate face pairs.
-    pub fn candidate_face_pair_count(&self) -> usize {
-        self.candidate_pairs.len()
     }
 
     /// Cached broad-phase candidate face pairs in left/right face-index order.

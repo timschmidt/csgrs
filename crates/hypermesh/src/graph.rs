@@ -1194,7 +1194,7 @@ pub(crate) fn build_intersection_graph_from_prepared_pair(
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
     let left = pair.left().view().mesh();
     let right = pair.right().view().mesh();
-    let mut face_pairs = Vec::with_capacity(pair.candidate_face_pair_count());
+    let mut face_pairs = Vec::with_capacity(pair.candidate_face_pairs().len());
     for [left_face, right_face] in pair.candidate_face_pairs().iter().copied() {
         let classification = classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
         if classification.needs_graph_construction() {

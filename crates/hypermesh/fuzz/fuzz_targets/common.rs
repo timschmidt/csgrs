@@ -5,20 +5,15 @@ pub fn exercise_mesh_kernel_pair(left: &ExactMesh, right: &ExactMesh) {
     right.validate_retained_state().unwrap();
     let left_view = left.view();
     let right_view = right.view();
+    let prepared_left = left_view.prepare_broad_phase().unwrap();
+    let prepared_right = right_view.prepare_broad_phase().unwrap();
 
     let mut streamed_pair_count = 0usize;
-    left_view
-        .visit_candidate_face_pairs(right_view, |_| {
-            streamed_pair_count += 1;
-        })
-        .unwrap();
+    prepared_left.visit_candidate_face_pairs(&prepared_right, |_| {
+        streamed_pair_count += 1;
+    });
 
     let prepared_pair = left_view.prepare_pair_broad_phase(right_view).unwrap();
-    assert_eq!(
-        prepared_pair.candidate_face_pair_count(),
-        streamed_pair_count
-    );
-
     assert_eq!(
         prepared_pair.candidate_face_pairs().len(),
         streamed_pair_count
