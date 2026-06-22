@@ -8,7 +8,7 @@ readme = "README.md"
 repository = "https://github.com/timschmidt/hypermesh"
 authors = ["Saki Komikado <komietty@gmail.com>", "Timothy Schmidt <timschmidt@gmail.com>"]
 keywords = ["3d", "geometry", "graphics", "modeling", "mesh"]
-categories = ["algorithms", "mathematics", "graphics", "simulation", "game-development"]
+categories = ["algorithms", "mathematics", "graphics", "simulation"]
 exclude = ["/examples", ".gitignore"]
 
 [dependencies]
@@ -20,9 +20,6 @@ hypertri = { path = "../hypertri", default-features = false, features = ["earcut
 # hyperlimit = { version = "0.4.0" }
 # hyperreal = { version = "0.13.0" }
 # hypertri = { version = "0.4.0", default-features = false, features = ["earcut", "cdt"] }
-bevy = { version = "0.16.1", optional = true }
-bevy_panorbit_camera = { version = "0.26.0", optional = true }
-
 # Keep transitive sibling crates unified while using local path development mode.
 [patch.crates-io]
 hyperlattice = { path = "../hyperlattice" }
@@ -34,21 +31,6 @@ proptest = "1.7.0"
 
 [features]
 default = []
-
-bevy = [
-    "dep:bevy",
-    "dep:bevy_panorbit_camera",
-]
-
-[[example]]
-name = "menger_sponge"
-path = "examples/menger_sponge.rs"
-required-features = ["bevy"]
-
-[[example]]
-name = "multiple_models"
-path = "examples/multiple_models.rs"
-required-features = ["bevy"]
 
 [[bench]]
 name = "exact_boolean_stages"
