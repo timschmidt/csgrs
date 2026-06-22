@@ -14,8 +14,6 @@ pub(crate) enum ExactLowerDimensionalPolicy {
     Drop,
     /// Retain lower-dimensional contacts as separate artifacts.
     RetainArtifacts,
-    /// Report lower-dimensional contacts as blockers.
-    ReportBlocker,
 }
 
 /// Policy for exact predicates or constructions that do not resolve.
@@ -84,8 +82,6 @@ pub(crate) enum ExactArrangementBlocker {
     InvalidSplitPlan(ExactArrangementSplitPlanBlockerKind),
     /// Exact winding/inside-outside classification could not decide.
     UnresolvedRegionClassification,
-    /// Lower-dimensional contact was produced but policy does not retain it.
-    LowerDimensionalContact,
 }
 
 /// Stable public category for retained intersection-graph blockers.

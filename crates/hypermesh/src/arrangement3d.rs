@@ -2643,11 +2643,6 @@ fn lower_dimensional_artifacts(
         }
     }
 
-    if !artifacts.is_empty()
-        && policy.lower_dimensional == ExactLowerDimensionalPolicy::ReportBlocker
-    {
-        blockers.push(ExactArrangementBlocker::LowerDimensionalContact);
-    }
     artifacts
 }
 
@@ -6821,22 +6816,6 @@ mod tests {
             ),
             ExactArrangementFreshness::StaleArrangement
         );
-
-        let reported = ExactArrangement::from_meshes_with_policy(
-            &left,
-            &right,
-            ExactRegularizationPolicy {
-                lower_dimensional: ExactLowerDimensionalPolicy::ReportBlocker,
-                unresolved: crate::regularization::ExactUnresolvedPolicy::RetainArtifacts,
-            },
-        )
-        .unwrap();
-        assert!(
-            reported
-                .blockers
-                .contains(&ExactArrangementBlocker::LowerDimensionalContact)
-        );
-        assert!(!reported.lower_dimensional_artifacts.is_empty());
     }
 
     #[test]

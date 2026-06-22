@@ -6174,7 +6174,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         return Ok(ArrangementCellComplexOutcome::Declined(attempt));
     }
     let selected_result = if ownership_report.volume_selection_resolves_operation(operation) {
-        labeled.select_volume_resolved_with_policy(operation, policy)
+        labeled.select_volume_resolved(operation)
     } else {
         labeled.select_with_policy(operation, policy)
     };
@@ -12207,7 +12207,7 @@ mod tests {
                 synthetic_arrangement_attempt(
                     ExactArrangementBooleanStage::Labeled,
                     Some(ExactArrangementBooleanDecline::Selection(
-                        ExactArrangementBlocker::LowerDimensionalContact,
+                        ExactArrangementBlocker::UnresolvedRegionClassification,
                     )),
                 ),
                 ExactArrangementBooleanShortcutReason::SelectionBlocked,

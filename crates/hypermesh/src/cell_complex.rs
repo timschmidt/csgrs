@@ -731,10 +731,9 @@ impl ExactLabeledCellComplex {
         })
     }
 
-    pub(crate) fn select_volume_resolved_with_policy(
+    pub(crate) fn select_volume_resolved(
         self,
         operation: ExactBooleanOperation,
-        policy: ExactRegularizationPolicy,
     ) -> Result<ExactSelectedCellComplex, ExactArrangementBlocker> {
         if self
             .blockers
@@ -766,15 +765,6 @@ impl ExactLabeledCellComplex {
         else {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         };
-        if policy.lower_dimensional == ExactLowerDimensionalPolicy::ReportBlocker
-            && selected_faces.iter().any(|&index| {
-                self.faces
-                    .get(index)
-                    .is_some_and(|face| face.opposite == ExactOppositeRegionLabel::Boundary)
-            })
-        {
-            return Err(ExactArrangementBlocker::LowerDimensionalContact);
-        }
         let selected_volume_regions = selected_volume_regions(&self.volume_regions, operation);
         Ok(ExactSelectedCellComplex {
             faces: self.faces,
@@ -968,7 +958,7 @@ pub(crate) fn select_arrangement_for_replay(
     let ownership_report = labeled.region_ownership_report(left, right, labeling_policy);
     ownership_report.validate()?;
     let selected = if ownership_report.volume_selection_resolves_operation(operation) {
-        labeled.select_volume_resolved_with_policy(operation, policy)
+        labeled.select_volume_resolved(operation)
     } else {
         if !ownership_report.is_resolved()
             && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
@@ -1500,11 +1490,6 @@ fn select_faces_from_face_labels(
 ) -> Vec<usize> {
     let mut selected_faces = Vec::new();
     for (index, face) in faces.iter().enumerate() {
-        if face.opposite == ExactOppositeRegionLabel::Boundary
-            && policy.lower_dimensional == ExactLowerDimensionalPolicy::ReportBlocker
-        {
-            blockers.push(ExactArrangementBlocker::LowerDimensionalContact);
-        }
         match select_face(face, operation, policy) {
             Some(true) => selected_faces.push(index),
             Some(false) => {}
@@ -2472,10 +2457,7 @@ mod tests {
         );
 
         let selected = labeled
-            .select_volume_resolved_with_policy(
-                ExactBooleanOperation::Union,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            )
+            .select_volume_resolved(ExactBooleanOperation::Union)
             .unwrap();
 
         assert_eq!(selected.selected_faces, vec![0]);
@@ -2529,19 +2511,15 @@ mod tests {
             ExactBooleanOperation::Difference,
         ));
         assert_eq!(
-            labeled.clone().select_volume_resolved_with_policy(
-                ExactBooleanOperation::Union,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
+            labeled
+                .clone()
+                .select_volume_resolved(ExactBooleanOperation::Union),
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
         );
 
         let selected = labeled
             .clone()
-            .select_volume_resolved_with_policy(
-                ExactBooleanOperation::Difference,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            )
+            .select_volume_resolved(ExactBooleanOperation::Difference)
             .unwrap();
         assert_eq!(selected.selected_faces, vec![0]);
         assert_eq!(selected.selected_volume_regions, vec![1]);
@@ -2594,10 +2572,7 @@ mod tests {
         );
 
         assert_eq!(
-            labeled.select_volume_resolved_with_policy(
-                ExactBooleanOperation::Union,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
+            labeled.select_volume_resolved(ExactBooleanOperation::Union),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2611,10 +2586,7 @@ mod tests {
         labeled.volume_adjacencies[0].separating_face_cells.clear();
 
         assert_eq!(
-            labeled.select_volume_resolved_with_policy(
-                ExactBooleanOperation::Union,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
+            labeled.select_volume_resolved(ExactBooleanOperation::Union),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2628,10 +2600,7 @@ mod tests {
         labeled.volume_adjacencies[0].separating_face_cells = vec![0, 0];
 
         assert_eq!(
-            labeled.select_volume_resolved_with_policy(
-                ExactBooleanOperation::Union,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
+            labeled.select_volume_resolved(ExactBooleanOperation::Union),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2646,10 +2615,7 @@ mod tests {
         labeled.volume_adjacencies[0].separating_face_cells = vec![0, 1];
 
         assert_eq!(
-            labeled.select_volume_resolved_with_policy(
-                ExactBooleanOperation::Union,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
+            labeled.select_volume_resolved(ExactBooleanOperation::Union),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2663,10 +2629,7 @@ mod tests {
         labeled.volume_regions[1].index = 7;
 
         assert_eq!(
-            labeled.select_volume_resolved_with_policy(
-                ExactBooleanOperation::Union,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
+            labeled.select_volume_resolved(ExactBooleanOperation::Union),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2682,10 +2645,7 @@ mod tests {
         };
 
         assert_eq!(
-            labeled.select_volume_resolved_with_policy(
-                ExactBooleanOperation::Union,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
+            labeled.select_volume_resolved(ExactBooleanOperation::Union),
             Err(ExactArrangementBlocker::UnresolvedIntersection)
         );
     }
