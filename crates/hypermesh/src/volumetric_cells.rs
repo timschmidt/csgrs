@@ -716,7 +716,7 @@ fn projected_area2_signed(points: &[Point3; 3], projection: CoplanarProjection) 
 
 fn volumetric_cell_mesh_error(error: CoplanarVolumetricCellEvidenceError) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::UnsupportedExactOperation,
+        ExactMeshBlockerKind::ExactConstructionFailure,
         format!("coplanar volumetric-cell evidence failed validation: {error:?}"),
     ))
 }

@@ -250,20 +250,22 @@ fn region_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> ExactM
             .map(|blocker| {
                 let kind = match blocker.kind {
                     SplitPlanBlockerKind::UnknownBoundaryIncidence => {
-                        ExactMeshBlockerKind::UnsupportedExactOperation
+                        ExactMeshBlockerKind::UndecidablePredicate
                     }
                     SplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange => {
                         ExactMeshBlockerKind::IndexOutOfBounds
                     }
+                    SplitPlanBlockerKind::BoundaryNodeSourceVertexNotOnTriangle
+                    | SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch => {
+                        ExactMeshBlockerKind::StaleFactReplay
+                    }
                     SplitPlanBlockerKind::BoundaryNodeOffFacePlane
                     | SplitPlanBlockerKind::EmptyOrShortRegionBoundary
                     | SplitPlanBlockerKind::DuplicateConsecutiveRegionNode
-                    | SplitPlanBlockerKind::BoundaryNodeSourceVertexNotOnTriangle
-                    | SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch
                     | SplitPlanBlockerKind::BoundaryChainEdgeNotOnTriangle => {
-                        ExactMeshBlockerKind::DegenerateTriangle
+                        ExactMeshBlockerKind::ExactConstructionFailure
                     }
-                    _ => ExactMeshBlockerKind::UnsupportedExactOperation,
+                    _ => ExactMeshBlockerKind::ExactConstructionFailure,
                 };
                 let mut mesh = ExactMeshBlocker::new(kind, blocker.message);
                 if let Some(face) = blocker.face {

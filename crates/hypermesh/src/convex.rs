@@ -1463,7 +1463,7 @@ fn mul(left: &Real, right: &Real) -> Real {
 
 fn report_error(error: ConvexSolidReportError) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::UnsupportedExactOperation,
+        ExactMeshBlockerKind::ExactConstructionFailure,
         format!("invalid convex-solid facts retained by intersection: {error:?}"),
     ))
 }
