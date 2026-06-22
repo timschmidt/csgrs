@@ -235,33 +235,16 @@ impl ExactMesh {
         idx: &[usize],
         policy: ValidationPolicy,
     ) -> Result<Self, MeshError> {
-        if !pos.len().is_multiple_of(3) {
-            return Err(MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::VertexBufferArity,
-                "position buffer length must be a multiple of 3",
-            )));
-        }
-        if !idx.len().is_multiple_of(3) {
-            return Err(MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::IndexBufferArity,
-                "index buffer length must be a multiple of 3",
-            )));
-        }
+        validate_flat_mesh_buffers(pos.len(), idx.len())?;
 
         let vertices = pos
             .chunks_exact(3)
             .map(|coords| Point3::new(coords[0].clone(), coords[1].clone(), coords[2].clone()))
             .collect::<Vec<_>>();
-        let triangles = idx
-            .chunks_exact(3)
-            .map(|tri| Triangle([tri[0], tri[1], tri[2]]))
-            .collect::<Vec<_>>();
 
         Self::new_with_policy(
             vertices,
-            triangles,
+            flat_triangles(idx),
             SourceProvenance::exact("flat hyperreal triangle mesh"),
             policy,
         )
@@ -274,20 +257,7 @@ impl ExactMesh {
         idx: &[usize],
         policy: ValidationPolicy,
     ) -> Result<Self, MeshError> {
-        if !pos.len().is_multiple_of(3) {
-            return Err(MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::VertexBufferArity,
-                "position buffer length must be a multiple of 3",
-            )));
-        }
-        if !idx.len().is_multiple_of(3) {
-            return Err(MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::IndexBufferArity,
-                "index buffer length must be a multiple of 3",
-            )));
-        }
+        validate_flat_mesh_buffers(pos.len(), idx.len())?;
 
         let mut vertices = Vec::with_capacity(pos.len() / 3);
         for (vertex, coords) in pos.chunks_exact(3).enumerate() {
@@ -295,14 +265,9 @@ impl ExactMesh {
             vertices.push(point);
         }
 
-        let triangles = idx
-            .chunks_exact(3)
-            .map(|tri| Triangle([tri[0], tri[1], tri[2]]))
-            .collect::<Vec<_>>();
-
         Self::new_with_policy(
             vertices,
-            triangles,
+            flat_triangles(idx),
             SourceProvenance::lossy_f64("flat f64 triangle mesh"),
             policy,
         )
@@ -324,20 +289,7 @@ impl ExactMesh {
         idx: &[usize],
         policy: ValidationPolicy,
     ) -> Result<Self, MeshError> {
-        if !pos.len().is_multiple_of(3) {
-            return Err(MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::VertexBufferArity,
-                "position buffer length must be a multiple of 3",
-            )));
-        }
-        if !idx.len().is_multiple_of(3) {
-            return Err(MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::IndexBufferArity,
-                "index buffer length must be a multiple of 3",
-            )));
-        }
+        validate_flat_mesh_buffers(pos.len(), idx.len())?;
 
         let vertices = pos
             .chunks_exact(3)
@@ -349,14 +301,10 @@ impl ExactMesh {
                 )
             })
             .collect::<Vec<_>>();
-        let triangles = idx
-            .chunks_exact(3)
-            .map(|tri| Triangle([tri[0], tri[1], tri[2]]))
-            .collect::<Vec<_>>();
 
         Self::new_with_policy(
             vertices,
-            triangles,
+            flat_triangles(idx),
             SourceProvenance::exact("flat i64 triangle mesh"),
             policy,
         )
@@ -611,6 +559,30 @@ fn validate_indices(vertex_count: usize, triangles: &[Triangle]) -> Vec<MeshDiag
         }
     }
     diagnostics
+}
+
+fn validate_flat_mesh_buffers(position_len: usize, index_len: usize) -> Result<(), MeshError> {
+    if !position_len.is_multiple_of(3) {
+        return Err(MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::VertexBufferArity,
+            "position buffer length must be a multiple of 3",
+        )));
+    }
+    if !index_len.is_multiple_of(3) {
+        return Err(MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::IndexBufferArity,
+            "index buffer length must be a multiple of 3",
+        )));
+    }
+    Ok(())
+}
+
+fn flat_triangles(idx: &[usize]) -> Vec<Triangle> {
+    idx.chunks_exact(3)
+        .map(|tri| Triangle([tri[0], tri[1], tri[2]]))
+        .collect()
 }
 
 fn retain_predicates(provenance: &mut ConstructionProvenance, report: &ValidationReport) {
