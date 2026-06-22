@@ -248,12 +248,6 @@ impl MeshBounds {
         self.faces.get(face)
     }
 
-    /// Return face-pair candidates whose exact boxes are not disjoint.
-    #[cfg(test)]
-    pub(crate) fn candidate_face_pairs(&self, other: &Self) -> Vec<[usize; 2]> {
-        self.prepare().candidate_face_pairs(&other.prepare())
-    }
-
     /// Prepare exact axis intervals and face orders for repeated broad-phase queries.
     ///
     /// An axis order is retained only when all exact comparisons needed for
@@ -285,19 +279,6 @@ impl MeshBounds {
 }
 
 impl<'a> PreparedMeshBounds<'a> {
-    /// Return the retained bounds object this prepared scheduler borrows.
-    /// Return face-pair candidates whose exact boxes are not disjoint.
-    #[cfg(test)]
-    pub(crate) fn candidate_face_pairs(&self, other: &PreparedMeshBounds<'_>) -> Vec<[usize; 2]> {
-        let mut pairs = Vec::new();
-        let result = self.try_visit_candidate_face_pairs(other, |pair| {
-            pairs.push(pair);
-            Ok::<(), ()>(())
-        });
-        debug_assert!(result.is_ok());
-        pairs
-    }
-
     pub(crate) fn candidate_face_pair_plan(
         &self,
         other: &PreparedMeshBounds<'_>,
@@ -359,17 +340,6 @@ impl<'a> PreparedMeshBounds<'a> {
             (Some(left), Some(right)) => must_keep_candidate(left.classify_intersection(right)),
             _ => false,
         }
-    }
-
-    #[cfg(test)]
-    fn candidate_face_pairs_quadratic(&self, other: &PreparedMeshBounds<'_>) -> Vec<[usize; 2]> {
-        let mut pairs = Vec::new();
-        let result = self.try_visit_candidate_face_pairs_quadratic(other, &mut |pair| {
-            pairs.push(pair);
-            Ok::<(), ()>(())
-        });
-        debug_assert!(result.is_ok());
-        pairs
     }
 
     fn try_visit_candidate_face_pairs_quadratic<E>(
@@ -708,6 +678,36 @@ mod tests {
         pairs
     }
 
+    fn candidate_face_pairs(left: &MeshBounds, right: &MeshBounds) -> Vec<[usize; 2]> {
+        prepared_candidate_face_pairs(&left.prepare(), &right.prepare())
+    }
+
+    fn prepared_candidate_face_pairs(
+        left: &PreparedMeshBounds<'_>,
+        right: &PreparedMeshBounds<'_>,
+    ) -> Vec<[usize; 2]> {
+        let mut pairs = Vec::new();
+        let result = left.try_visit_candidate_face_pairs(right, |pair| {
+            pairs.push(pair);
+            Ok::<(), ()>(())
+        });
+        debug_assert!(result.is_ok());
+        pairs
+    }
+
+    fn quadratic_candidate_face_pairs(
+        left: &PreparedMeshBounds<'_>,
+        right: &PreparedMeshBounds<'_>,
+    ) -> Vec<[usize; 2]> {
+        let mut pairs = Vec::new();
+        let result = left.try_visit_candidate_face_pairs_quadratic(right, &mut |pair| {
+            pairs.push(pair);
+            Ok::<(), ()>(())
+        });
+        debug_assert!(result.is_ok());
+        pairs
+    }
+
     #[test]
     fn candidate_face_pairs_prune_certified_disjoint_bounds() {
         let left_points = vec![
@@ -730,7 +730,7 @@ mod tests {
         let left = MeshBounds::from_triangles(&left_points, &triangles);
         let right = MeshBounds::from_triangles(&right_points, &triangles);
 
-        assert_eq!(left.candidate_face_pairs(&right), vec![[0, 0]]);
+        assert_eq!(candidate_face_pairs(&left, &right), vec![[0, 0]]);
     }
 
     #[test]
@@ -741,7 +741,7 @@ mod tests {
         let left = MeshBounds::from_triangles(&left_points, &triangles);
         let right = MeshBounds::from_triangles(&right_points, &triangles);
 
-        assert_eq!(left.candidate_face_pairs(&right), vec![[0, 0]]);
+        assert_eq!(candidate_face_pairs(&left, &right), vec![[0, 0]]);
     }
 
     #[test]
@@ -766,7 +766,7 @@ mod tests {
         let left = MeshBounds::from_triangles(&left_points, &triangles);
         let right = MeshBounds::from_triangles(&right_points, &triangles);
 
-        assert_eq!(left.candidate_face_pairs(&right), vec![[1, 0]]);
+        assert_eq!(candidate_face_pairs(&left, &right), vec![[1, 0]]);
     }
 
     #[test]
@@ -800,8 +800,14 @@ mod tests {
         let prepared_right = right.prepare();
 
         assert_eq!(
-            sorted_pairs(prepared_left.candidate_face_pairs(&prepared_right)),
-            sorted_pairs(prepared_left.candidate_face_pairs_quadratic(&prepared_right))
+            sorted_pairs(prepared_candidate_face_pairs(
+                &prepared_left,
+                &prepared_right
+            )),
+            sorted_pairs(quadratic_candidate_face_pairs(
+                &prepared_left,
+                &prepared_right
+            ))
         );
     }
 
@@ -840,8 +846,14 @@ mod tests {
         let prepared_right = right.prepare();
 
         assert_eq!(
-            sorted_pairs(prepared_left.candidate_face_pairs(&prepared_right)),
-            sorted_pairs(prepared_left.candidate_face_pairs_quadratic(&prepared_right))
+            sorted_pairs(prepared_candidate_face_pairs(
+                &prepared_left,
+                &prepared_right
+            )),
+            sorted_pairs(quadratic_candidate_face_pairs(
+                &prepared_left,
+                &prepared_right
+            ))
         );
     }
 
@@ -877,8 +889,14 @@ mod tests {
             SweepDirection::RightDriven
         );
         assert_eq!(
-            sorted_pairs(prepared_left.candidate_face_pairs(&prepared_right)),
-            sorted_pairs(prepared_left.candidate_face_pairs_quadratic(&prepared_right))
+            sorted_pairs(prepared_candidate_face_pairs(
+                &prepared_left,
+                &prepared_right
+            )),
+            sorted_pairs(quadratic_candidate_face_pairs(
+                &prepared_left,
+                &prepared_right
+            ))
         );
     }
 }
