@@ -100,9 +100,7 @@ fn classify_mesh_face_pair_unchecked(
             left_face,
             right_face,
             bounds,
-            triangle: Some(classify_mesh_triangles_without_candidate_events(
-                left, left_face, right, right_face,
-            )),
+            triangle: None,
             relation: MeshFacePairRelation::PlaneSeparated,
         };
     }
@@ -115,9 +113,7 @@ fn classify_mesh_face_pair_unchecked(
             left_face,
             right_face,
             bounds,
-            triangle: Some(classify_mesh_triangles_without_candidate_events(
-                left, left_face, right, right_face,
-            )),
+            triangle: None,
             relation: MeshFacePairRelation::PlaneSeparated,
         };
     }
