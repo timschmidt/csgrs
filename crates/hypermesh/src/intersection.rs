@@ -9,14 +9,14 @@
 //! assembly. Candidate split events are retained only after certified
 //! predicates and exact constructions agree.
 
-use hyperlimit::{SegmentPlaneIntersection, TrianglePlaneClassification, TrianglePlaneRelation};
+use hyperlimit::{SegmentPlaneIntersection, TrianglePlaneRelation};
 
 use super::construction::intersect_segment_with_retained_face_plane;
 use super::error::ExactMeshError;
 use super::mesh::ExactMesh;
 use super::narrow::{
     classify_mesh_triangle_against_retained_face_plane_unchecked,
-    classify_triangle_triangle_points_from_plane_classifications, TriangleTriangleClassification,
+    classify_triangle_triangle_points_from_plane_relations, TriangleTriangleClassification,
     TriangleTriangleRelation,
 };
 use super::topology::triangle_edges;
@@ -94,13 +94,13 @@ fn classify_mesh_face_pair_unchecked(
         };
     }
 
-    let mut triangle = classify_mesh_triangles_from_retained_plane_classifications(
+    let mut triangle = classify_mesh_triangles_from_retained_plane_relations(
         left,
         left_face,
         right,
         right_face,
-        right_against_left,
-        left_against_right,
+        right_against_left.relation,
+        left_against_right.relation,
     );
     if triangle.relation == TriangleTriangleRelation::Candidate {
         triangle.right_edge_events = Some(retained_triangle_edge_events(
@@ -149,17 +149,17 @@ fn triangle_is_strictly_one_sided(relation: TrianglePlaneRelation) -> bool {
     )
 }
 
-fn classify_mesh_triangles_from_retained_plane_classifications(
+fn classify_mesh_triangles_from_retained_plane_relations(
     left: &ExactMesh,
     left_face: usize,
     right: &ExactMesh,
     right_face: usize,
-    right_against_left_plane: TrianglePlaneClassification,
-    left_against_right_plane: TrianglePlaneClassification,
+    right_against_left_plane: TrianglePlaneRelation,
+    left_against_right_plane: TrianglePlaneRelation,
 ) -> TriangleTriangleClassification {
     let left_tri = left.triangles()[left_face].0;
     let right_tri = right.triangles()[right_face].0;
-    classify_triangle_triangle_points_from_plane_classifications(
+    classify_triangle_triangle_points_from_plane_relations(
         [
             &left.vertices()[left_tri[0]],
             &left.vertices()[left_tri[1]],

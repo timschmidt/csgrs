@@ -59,10 +59,6 @@ pub(crate) enum TriangleTriangleRelation {
 pub(crate) struct TriangleTriangleClassification {
     /// Coarse relation.
     pub(crate) relation: TriangleTriangleRelation,
-    /// Classification of the right triangle against the left triangle's plane.
-    pub(crate) right_against_left_plane: TrianglePlaneClassification,
-    /// Classification of the left triangle against the right triangle's plane.
-    pub(crate) left_against_right_plane: TrianglePlaneClassification,
     /// Right-triangle edge events against the left plane.
     pub(crate) right_edge_events: Option<[SegmentPlaneIntersection; 3]>,
     /// Left-triangle edge events against the right plane.
@@ -99,23 +95,21 @@ pub(crate) fn classify_mesh_triangle_against_retained_face_plane_unchecked(
     }
 }
 
-/// Assemble a triangle-triangle classification from existing plane-side facts.
+/// Assemble a triangle-triangle classification from existing plane-side relations.
 ///
 /// Mesh face-pair classification first uses retained face-plane facts for
-/// cheap one-sided rejection. Non-separated pairs can reuse those exact facts
+/// cheap one-sided rejection. Non-separated pairs can reuse those exact results
 /// here instead of replaying the same plane predicates from point triples.
 /// Candidate edge events are still left empty because mesh classification
 /// replaces them immediately with retained source-plane constructions.
-pub(crate) fn classify_triangle_triangle_points_from_plane_classifications(
+pub(crate) fn classify_triangle_triangle_points_from_plane_relations(
     left: [&Point3; 3],
     right: [&Point3; 3],
-    right_against_left_plane: TrianglePlaneClassification,
-    left_against_right_plane: TrianglePlaneClassification,
+    right_against_left_plane: TrianglePlaneRelation,
+    left_against_right_plane: TrianglePlaneRelation,
 ) -> TriangleTriangleClassification {
-    let mut relation = triangle_triangle_relation(
-        right_against_left_plane.relation,
-        left_against_right_plane.relation,
-    );
+    let mut relation =
+        triangle_triangle_relation(right_against_left_plane, left_against_right_plane);
     let coplanar = if relation == TriangleTriangleRelation::CoplanarOverlapping {
         let coplanar = classify_coplanar_triangle_points(left, right);
         relation = match coplanar.relation {
@@ -131,8 +125,6 @@ pub(crate) fn classify_triangle_triangle_points_from_plane_classifications(
 
     TriangleTriangleClassification {
         relation,
-        right_against_left_plane,
-        left_against_right_plane,
         right_edge_events: None,
         left_edge_events: None,
         coplanar,
