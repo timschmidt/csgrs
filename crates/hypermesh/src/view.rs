@@ -43,12 +43,11 @@ pub struct PreparedMeshView<'a> {
 
 impl<'a> ExactMeshRef<'a> {
     /// Borrow an exact mesh as a replayable view.
-    pub const fn new(mesh: &'a ExactMesh) -> Self {
+    pub(crate) const fn new(mesh: &'a ExactMesh) -> Self {
         Self { mesh }
     }
 
-    /// Return the underlying mesh.
-    pub const fn mesh(self) -> &'a ExactMesh {
+    pub(crate) const fn mesh(self) -> &'a ExactMesh {
         self.mesh
     }
 
