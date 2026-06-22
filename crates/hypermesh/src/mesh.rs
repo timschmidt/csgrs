@@ -377,14 +377,18 @@ impl ExactMesh {
                 actual: self.facts.mesh.face_count,
             });
         }
-        let triangles = self.triangle_indices();
         self.bounds
-            .validate_against_sources(&self.vertices, &triangles)
+            .validate_against_triangle_rows(
+                &self.vertices,
+                self.triangles.len(),
+                self.triangles.iter().map(|triangle| triangle.0),
+            )
             .map_err(ExactMeshValidationError::Bounds)?;
         self.facts
-            .validate_against_sources_with_policy(
+            .validate_against_triangle_rows_with_policy(
                 &self.vertices,
-                &triangles,
+                self.triangles.len(),
+                self.triangles.iter().map(|triangle| triangle.0),
                 self.validation_policy,
             )
             .map_err(ExactMeshValidationError::Facts)?;
@@ -417,13 +421,6 @@ impl ExactMesh {
                 self.triangles.iter().map(|triangle| triangle.0),
             )
             .map_err(ExactMeshValidationError::Bounds)
-    }
-
-    fn triangle_indices(&self) -> Vec<[usize; 3]> {
-        self.triangles
-            .iter()
-            .map(|triangle| triangle.0)
-            .collect::<Vec<_>>()
     }
 
     /// Build a retained arrangement against `right` and run `query` on its

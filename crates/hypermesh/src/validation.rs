@@ -96,15 +96,24 @@ pub(crate) fn validate_triangles_with_policy(
     triangles: &[[usize; 3]],
     policy: ValidationPolicy,
 ) -> ValidationReport {
+    validate_triangle_rows_with_policy(points, triangles.len(), triangles.iter().copied(), policy)
+}
+
+pub(crate) fn validate_triangle_rows_with_policy(
+    points: &[Point3],
+    triangle_count: usize,
+    triangles: impl IntoIterator<Item = [usize; 3]>,
+    policy: ValidationPolicy,
+) -> ValidationReport {
     let mut blockers = Vec::new();
     let mut edges = BTreeMap::<[usize; 2], EdgeAccumulator>::new();
     let mut vertex_links = vec![VertexLinkAccumulator::default(); points.len()];
     let mut duplicate_triangles = BTreeSet::<[usize; 3]>::new();
     let mut seen_triangles = BTreeSet::<[usize; 3]>::new();
-    let mut faces = Vec::with_capacity(triangles.len());
+    let mut faces = Vec::with_capacity(triangle_count);
     let mut degenerate_triangles = 0_usize;
 
-    for (face, &tri) in triangles.iter().enumerate() {
+    for (face, tri) in triangles.into_iter().enumerate() {
         let mut sorted_tri = tri;
         sorted_tri.sort_unstable();
         if !seen_triangles.insert(sorted_tri) && duplicate_triangles.insert(sorted_tri) {
@@ -235,6 +244,7 @@ pub(crate) fn validate_triangles_with_policy(
         .collect::<Vec<_>>();
 
     let edge_count = edge_facts.len();
+    let face_count = faces.len();
     let closed_manifold = boundary_edges == 0
         && non_manifold_edges == 0
         && non_manifold_vertices == 0
@@ -248,10 +258,10 @@ pub(crate) fn validate_triangles_with_policy(
         facts: MeshValidationFacts {
             mesh: MeshFacts {
                 vertex_count: points.len(),
-                face_count: triangles.len(),
+                face_count,
                 edge_count,
                 euler_characteristic: points.len() as isize - edge_count as isize
-                    + triangles.len() as isize,
+                    + face_count as isize,
                 boundary_edges,
                 non_manifold_edges,
                 duplicate_directed_edges,
