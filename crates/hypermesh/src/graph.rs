@@ -25,7 +25,7 @@ use super::exact_key::{ExactPoint3Key, exact_point3_key};
 use super::intersection::{MeshFacePairClassification, MeshFacePairRelation};
 use super::mesh::ExactMesh;
 use super::topology::{mesh_for_side, triangle_edges};
-use super::view::{PreparedMeshPairClassifications, PreparedMeshPairView};
+use super::view::{PreparedMeshPairGraphClassifications, PreparedMeshPairView};
 use hyperlimit::{CoplanarProjection, CoplanarTriangleClassification};
 use hyperreal::Real;
 
@@ -1190,21 +1190,19 @@ pub(crate) fn build_intersection_graph(
 pub(crate) fn build_intersection_graph_from_prepared_pair(
     pair: &PreparedMeshPairView<'_, '_>,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let classifications = pair.classify_candidate_face_pairs();
-    build_intersection_graph_from_prepared_classifications(&classifications)
+    let classifications = pair.classify_graph_face_pairs();
+    build_intersection_graph_from_prepared_graph_classifications(&classifications)
 }
 
-/// Build an exact event graph from replay-validated face-pair classifications.
-pub(crate) fn build_intersection_graph_from_prepared_classifications(
-    pair: &PreparedMeshPairClassifications<'_, '_>,
+/// Build an exact event graph from replay-validated graph-driving face-pair classifications.
+pub(crate) fn build_intersection_graph_from_prepared_graph_classifications(
+    pair: &PreparedMeshPairGraphClassifications<'_, '_>,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
     let left = pair.left().mesh();
     let right = pair.right().mesh();
     let mut face_pairs = Vec::with_capacity(pair.classifications().len());
     for classification in pair.classifications() {
-        if classification.needs_graph_construction() {
-            face_pairs.push(events_for_face_pair(left, right, classification));
-        }
+        face_pairs.push(events_for_face_pair(left, right, classification));
     }
     Ok(ExactIntersectionGraph { face_pairs })
 }
@@ -1230,15 +1228,15 @@ pub(crate) fn build_validated_intersection_graph(
 pub(crate) fn build_validated_intersection_graph_from_prepared_pair(
     pair: &PreparedMeshPairView<'_, '_>,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let classifications = pair.classify_candidate_face_pairs();
-    build_validated_intersection_graph_from_prepared_classifications(&classifications)
+    let classifications = pair.classify_graph_face_pairs();
+    build_validated_intersection_graph_from_prepared_graph_classifications(&classifications)
 }
 
 /// Build an exact event graph from prepared classifications and replay it before use.
-pub(crate) fn build_validated_intersection_graph_from_prepared_classifications(
-    pair: &PreparedMeshPairClassifications<'_, '_>,
+pub(crate) fn build_validated_intersection_graph_from_prepared_graph_classifications(
+    pair: &PreparedMeshPairGraphClassifications<'_, '_>,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let graph = build_intersection_graph_from_prepared_classifications(pair)?;
+    let graph = build_intersection_graph_from_prepared_graph_classifications(pair)?;
     let left = pair.left().mesh();
     let right = pair.right().mesh();
     graph

@@ -53,9 +53,9 @@ pub struct PreparedMeshPairView<'a, 'b> {
     candidate_pairs: Vec<[usize; 2]>,
 }
 
-/// Borrowed pair view with cached narrow face-pair classifications.
+/// Borrowed pair view with cached graph-driving face-pair classifications.
 #[derive(Debug)]
-pub(crate) struct PreparedMeshPairClassifications<'a, 'b> {
+pub(crate) struct PreparedMeshPairGraphClassifications<'a, 'b> {
     left: ExactMeshRef<'a>,
     right: ExactMeshRef<'b>,
     classifications: Vec<MeshFacePairClassification>,
@@ -291,17 +291,19 @@ impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
         &self.candidate_pairs
     }
 
-    /// Classify cached broad-phase candidate face pairs with retained face-plane facts.
-    pub(crate) fn classify_candidate_face_pairs(&self) -> PreparedMeshPairClassifications<'a, 'b> {
+    /// Classify cached broad-phase candidates that must continue to graph construction.
+    pub(crate) fn classify_graph_face_pairs(&self) -> PreparedMeshPairGraphClassifications<'a, 'b> {
         let left = self.left.mesh();
         let right = self.right.mesh();
-        let mut classifications = Vec::with_capacity(self.candidate_pairs.len());
+        let mut classifications = Vec::new();
         for [left_face, right_face] in self.candidate_pairs.iter().copied() {
-            classifications.push(classify_mesh_face_pair_unchecked(
-                left, left_face, right, right_face,
-            ));
+            let classification =
+                classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
+            if classification.needs_graph_construction() {
+                classifications.push(classification);
+            }
         }
-        PreparedMeshPairClassifications {
+        PreparedMeshPairGraphClassifications {
             left: self.left,
             right: self.right,
             classifications,
@@ -309,7 +311,7 @@ impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
     }
 }
 
-impl<'a, 'b> PreparedMeshPairClassifications<'a, 'b> {
+impl<'a, 'b> PreparedMeshPairGraphClassifications<'a, 'b> {
     /// Return the left mesh view.
     pub(crate) const fn left(&self) -> ExactMeshRef<'a> {
         self.left
@@ -320,7 +322,7 @@ impl<'a, 'b> PreparedMeshPairClassifications<'a, 'b> {
         self.right
     }
 
-    /// Cached retained face-pair classifications in left/right face-index order.
+    /// Cached retained graph-driving classifications in left/right face-index order.
     pub(crate) fn classifications(&self) -> &[MeshFacePairClassification] {
         &self.classifications
     }
