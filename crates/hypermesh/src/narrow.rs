@@ -18,15 +18,13 @@ use core::cmp::Ordering;
 
 use hyperlimit::{
     PlaneSide, Point3, SegmentPlaneIntersection, TrianglePlaneClassification,
-    TrianglePlaneRelation, classify_triangle_against_oriented_plane, compare_reals,
-    triangle_plane_relation_from_sides,
+    TrianglePlaneRelation, classify_coplanar_triangle_points,
+    classify_triangle_against_oriented_plane, compare_reals, triangle_plane_relation_from_sides,
 };
 
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::mesh::ExactMesh;
-use hyperlimit::{
-    CoplanarTriangleClassification, CoplanarTriangleRelation, classify_coplanar_triangles,
-};
+use hyperlimit::{CoplanarTriangleClassification, CoplanarTriangleRelation};
 use hyperreal::Real;
 
 /// Certified coarse relation between two exact triangles.
@@ -76,15 +74,11 @@ pub struct TriangleTriangleClassification {
 }
 
 /// Classify a query triangle against an oriented face plane.
-fn classify_triangle_against_face_plane(
-    points: &[Point3],
-    face: [usize; 3],
-    query: [usize; 3],
+fn classify_triangle_against_face_plane_points(
+    face: [&Point3; 3],
+    query: [&Point3; 3],
 ) -> TrianglePlaneClassification {
-    classify_triangle_against_oriented_plane(
-        [&points[face[0]], &points[face[1]], &points[face[2]]],
-        [&points[query[0]], &points[query[1]], &points[query[2]]],
-    )
+    classify_triangle_against_oriented_plane(face, query)
 }
 
 /// Classify a mesh triangle against a retained exact face plane.
@@ -135,27 +129,25 @@ pub(crate) fn classify_mesh_triangle_against_retained_face_plane(
 /// Mesh face-pair classification replaces candidate edge events immediately
 /// with retained face-plane constructions from the source meshes. This helper
 /// keeps that path from building throwaway generic segment/plane evidence.
-pub(crate) fn classify_triangle_triangle_without_candidate_events(
-    points: &[Point3],
-    left: [usize; 3],
-    right: [usize; 3],
+pub(crate) fn classify_triangle_triangle_points_without_candidate_events(
+    left: [&Point3; 3],
+    right: [&Point3; 3],
 ) -> TriangleTriangleClassification {
-    classify_triangle_triangle_retained(points, left, right)
+    classify_triangle_triangle_points_retained(left, right)
 }
 
-fn classify_triangle_triangle_retained(
-    points: &[Point3],
-    left: [usize; 3],
-    right: [usize; 3],
+fn classify_triangle_triangle_points_retained(
+    left: [&Point3; 3],
+    right: [&Point3; 3],
 ) -> TriangleTriangleClassification {
-    let right_against_left_plane = classify_triangle_against_face_plane(points, left, right);
-    let left_against_right_plane = classify_triangle_against_face_plane(points, right, left);
+    let right_against_left_plane = classify_triangle_against_face_plane_points(left, right);
+    let left_against_right_plane = classify_triangle_against_face_plane_points(right, left);
     let mut relation = triangle_triangle_relation(
         right_against_left_plane.relation,
         left_against_right_plane.relation,
     );
     let coplanar = if relation == TriangleTriangleRelation::CoplanarOverlapping {
-        let coplanar = classify_coplanar_triangles(points, left, right);
+        let coplanar = classify_coplanar_triangle_points(left, right);
         relation = match coplanar.relation {
             CoplanarTriangleRelation::Disjoint => TriangleTriangleRelation::CoplanarDisjoint,
             CoplanarTriangleRelation::Touching => TriangleTriangleRelation::CoplanarTouching,

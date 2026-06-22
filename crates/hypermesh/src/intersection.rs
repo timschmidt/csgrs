@@ -18,7 +18,7 @@ use super::mesh::{ExactMesh, ExactMeshValidationError};
 use super::narrow::{
     TriangleTriangleClassification, TriangleTriangleRelation,
     classify_mesh_triangle_against_retained_face_plane,
-    classify_triangle_triangle_without_candidate_events,
+    classify_triangle_triangle_points_without_candidate_events,
 };
 use super::topology::triangle_edges;
 
@@ -198,15 +198,18 @@ fn classify_mesh_triangles_without_candidate_events(
 ) -> TriangleTriangleClassification {
     let left_tri = left.triangles()[left_face].0;
     let right_tri = right.triangles()[right_face].0;
-    let points = [
-        left.vertices()[left_tri[0]].clone(),
-        left.vertices()[left_tri[1]].clone(),
-        left.vertices()[left_tri[2]].clone(),
-        right.vertices()[right_tri[0]].clone(),
-        right.vertices()[right_tri[1]].clone(),
-        right.vertices()[right_tri[2]].clone(),
-    ];
-    classify_triangle_triangle_without_candidate_events(&points, [0, 1, 2], [3, 4, 5])
+    classify_triangle_triangle_points_without_candidate_events(
+        [
+            &left.vertices()[left_tri[0]],
+            &left.vertices()[left_tri[1]],
+            &left.vertices()[left_tri[2]],
+        ],
+        [
+            &right.vertices()[right_tri[0]],
+            &right.vertices()[right_tri[1]],
+            &right.vertices()[right_tri[2]],
+        ],
+    )
 }
 
 fn retained_triangle_edge_events(
