@@ -187,11 +187,14 @@ struct FaceAxisInterval<'a> {
     max: &'a Real,
 }
 
+const MAX_CANDIDATE_PAIR_PREALLOC: usize = 1 << 20;
+
 /// Prepared broad-phase plan for one retained bounds pair.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) struct CandidateFacePairPlan {
     mesh_bounds_overlap: bool,
     sweep: Option<SweepPlan>,
+    candidate_pair_capacity_hint: usize,
 }
 
 impl CandidateFacePairPlan {
@@ -199,6 +202,15 @@ impl CandidateFacePairPlan {
         Self {
             mesh_bounds_overlap: false,
             sweep: None,
+            candidate_pair_capacity_hint: 0,
+        }
+    }
+
+    pub(crate) const fn candidate_pair_capacity_hint(self) -> usize {
+        if self.candidate_pair_capacity_hint > MAX_CANDIDATE_PAIR_PREALLOC {
+            MAX_CANDIDATE_PAIR_PREALLOC
+        } else {
+            self.candidate_pair_capacity_hint
         }
     }
 }
@@ -273,12 +285,14 @@ impl<'a> PreparedMeshBounds<'a> {
         if let Some(sweep) = self.sweep_plan(other) {
             return CandidateFacePairPlan {
                 mesh_bounds_overlap: true,
-                sweep: Some(sweep),
+                sweep: Some(sweep.plan),
+                candidate_pair_capacity_hint: sweep.axis_pair_count,
             };
         }
         CandidateFacePairPlan {
             mesh_bounds_overlap: true,
             sweep: None,
+            candidate_pair_capacity_hint: 0,
         }
     }
 
@@ -341,7 +355,7 @@ impl<'a> PreparedMeshBounds<'a> {
         Ok(())
     }
 
-    fn sweep_plan(&self, other: &PreparedMeshBounds<'_>) -> Option<SweepPlan> {
+    fn sweep_plan(&self, other: &PreparedMeshBounds<'_>) -> Option<SweepPlanEstimate> {
         let directions = if self.bounds.faces.len() <= other.bounds.faces.len() {
             [SweepDirection::LeftDriven, SweepDirection::RightDriven]
         } else {
@@ -358,7 +372,7 @@ impl<'a> PreparedMeshBounds<'a> {
                 }
             }
         }
-        best.map(|estimate| estimate.plan)
+        best
     }
 
     fn estimate_sweep_plan(
@@ -828,10 +842,11 @@ mod tests {
         let left = MeshBounds::from_triangles(&left_points, &triangles);
         let right = MeshBounds::from_triangles(&right_points, &triangles);
 
-        assert_eq!(
-            left.prepare().sweep_plan(&right.prepare()).unwrap().axis,
-            Axis::Y
-        );
+        let prepared_left = left.prepare();
+        let prepared_right = right.prepare();
+        let plan = prepared_left.candidate_face_pair_plan(&prepared_right);
+        assert_eq!(plan.sweep.unwrap().axis, Axis::Y);
+        assert_eq!(plan.candidate_pair_capacity_hint(), 1);
         assert_eq!(candidate_face_pairs(&left, &right), vec![[1, 0]]);
     }
 
@@ -979,7 +994,11 @@ mod tests {
         let prepared_right = right.prepare();
 
         assert_eq!(
-            prepared_left.sweep_plan(&prepared_right).unwrap().direction,
+            prepared_left
+                .sweep_plan(&prepared_right)
+                .unwrap()
+                .plan
+                .direction,
             SweepDirection::RightDriven
         );
         assert_eq!(

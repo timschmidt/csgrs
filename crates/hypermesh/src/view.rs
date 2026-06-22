@@ -220,7 +220,7 @@ impl<'a> ExactMeshRef<'a> {
         let left = self.prepare_broad_phase()?;
         let right = right.prepare_broad_phase()?;
         let bounds_plan = left.bounds.candidate_face_pair_plan(&right.bounds);
-        let mut candidate_pairs = Vec::new();
+        let mut candidate_pairs = Vec::with_capacity(bounds_plan.candidate_pair_capacity_hint());
         let result = left.bounds.try_visit_candidate_face_pairs_with_plan(
             &right.bounds,
             bounds_plan,
