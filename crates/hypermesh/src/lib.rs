@@ -65,7 +65,7 @@ mod winding;
 mod witness;
 mod workspace;
 
-pub use error::MeshError;
+pub use error::{ExactMeshBlocker, ExactMeshError, MeshError};
 pub use mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 pub use validation::ValidationPolicy;
 pub use view::{EdgeRef, ExactMeshRef, FaceRef, MeshView, TriangleRef};

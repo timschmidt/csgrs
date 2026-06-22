@@ -1,5 +1,5 @@
 use hyperlimit::{Point3, SourceProvenance};
-use hypermesh::{ExactMesh, Triangle};
+use hypermesh::{ExactMesh, ExactMeshBlocker, ExactMeshError, Triangle};
 use hyperreal::Real;
 
 fn p(x: i64, y: i64, z: i64) -> Point3 {
@@ -74,4 +74,18 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let edge = view.edge(0).unwrap();
     assert_eq!(edge.index(), 0);
     assert_eq!(edge.vertices().len(), 2);
+}
+
+#[test]
+fn exact_mesh_error_names_cover_kernel_diagnostics() {
+    let error: ExactMeshError = ExactMesh::new(
+        vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)],
+        vec![Triangle([0, 1, 3])],
+        SourceProvenance::exact("invalid test mesh"),
+    )
+    .unwrap_err();
+    let blocker: ExactMeshBlocker = error.diagnostics[0].clone();
+
+    assert_eq!(blocker.face, Some(0));
+    assert_eq!(blocker.vertex, Some(3));
 }

@@ -132,3 +132,15 @@ impl fmt::Display for MeshError {
 }
 
 impl std::error::Error for MeshError {}
+
+/// Public exact-kernel error name for mesh construction and materialization.
+///
+/// This aliases the existing diagnostic container so downstream code can move
+/// to exact-kernel naming without losing source-compatible diagnostics.
+pub type ExactMeshError = MeshError;
+
+/// Public exact-kernel blocker name for a single retained diagnostic.
+///
+/// Blockers carry stable categories plus source vertex, face, edge, or flat
+/// coordinate locations when the failing kernel stage can identify them.
+pub type ExactMeshBlocker = MeshDiagnostic;
