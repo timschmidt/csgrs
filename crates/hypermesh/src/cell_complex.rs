@@ -130,6 +130,8 @@ pub(crate) struct ExactSelectedFaceOrientation {
     pub(crate) from_volume_adjacency: bool,
 }
 
+type VolumeResolvedFaceSelection = (Vec<usize>, Vec<ExactSelectedFaceOrientation>);
+
 /// Retained selection count summary consumed by arrangement attempts and
 /// simplification reports.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1018,54 +1020,55 @@ pub(crate) fn validate_selected_gate_reports_against_counts(
     region_ownership_report: Option<&ExactRegionOwnershipReport>,
     counts: &SelectedCellComplexGateCounts,
 ) -> Result<(), ExactArrangementBlocker> {
-    if let Some(topology_report) = topology_assembly_report {
-        if topology_report.arrangement_face_cells != counts.face_cells
-            || topology_report.arrangement_face_cell_boundary_nodes
-                != counts.face_cell_boundary_nodes
-            || topology_report.arrangement_face_cell_boundary_points
-                != counts.face_cell_boundary_points
-            || topology_report.volume_regions != counts.volume_regions
-            || topology_report.volume_adjacencies != counts.volume_adjacencies
-            || topology_report.volume_adjacency_face_sides != counts.volume_adjacency_face_sides
-            || topology_report.volume_adjacency_separating_faces
-                != counts.volume_adjacency_separating_faces
-            || topology_report.lower_dimensional_artifacts != counts.lower_dimensional_artifacts
-            || topology_report.lower_dimensional_point_contacts
-                != counts.lower_dimensional_point_contacts
-            || topology_report.lower_dimensional_edge_contacts
-                != counts.lower_dimensional_edge_contacts
-            || topology_report.lower_dimensional_edge_endpoints
-                != counts.lower_dimensional_edge_endpoints
-        {
-            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
-        }
+    if topology_assembly_report
+        .is_some_and(|report| !topology_report_counts_match(report, counts))
+    {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
     }
-    if let Some(ownership_report) = region_ownership_report {
-        if ownership_report.face_cells != counts.face_cells
-            || ownership_report.face_cell_boundary_nodes != counts.face_cell_boundary_nodes
-            || ownership_report.face_cell_boundary_points != counts.face_cell_boundary_points
-            || ownership_report.volume_regions != counts.volume_regions
-            || ownership_report.exterior_volume_regions != counts.exterior_volume_regions
-            || ownership_report.left_owned_volumes != counts.left_owned_volumes
-            || ownership_report.right_owned_volumes != counts.right_owned_volumes
-            || ownership_report.shared_owned_volumes != counts.shared_owned_volumes
-            || ownership_report.unowned_bounded_volumes != counts.unowned_bounded_volumes
-            || ownership_report.volume_adjacencies != counts.volume_adjacencies
-            || ownership_report.volume_adjacency_face_sides != counts.volume_adjacency_face_sides
-            || ownership_report.volume_adjacency_separating_faces
-                != counts.volume_adjacency_separating_faces
-            || ownership_report.lower_dimensional_artifacts != counts.lower_dimensional_artifacts
-            || ownership_report.lower_dimensional_point_contacts
-                != counts.lower_dimensional_point_contacts
-            || ownership_report.lower_dimensional_edge_contacts
-                != counts.lower_dimensional_edge_contacts
-            || ownership_report.lower_dimensional_edge_endpoints
-                != counts.lower_dimensional_edge_endpoints
-        {
-            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
-        }
+    if region_ownership_report.is_some_and(|report| !ownership_report_counts_match(report, counts))
+    {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
     }
     Ok(())
+}
+
+fn topology_report_counts_match(
+    report: &ExactTopologyAssemblyReport,
+    counts: &SelectedCellComplexGateCounts,
+) -> bool {
+    report.arrangement_face_cells == counts.face_cells
+        && report.arrangement_face_cell_boundary_nodes == counts.face_cell_boundary_nodes
+        && report.arrangement_face_cell_boundary_points == counts.face_cell_boundary_points
+        && report.volume_regions == counts.volume_regions
+        && report.volume_adjacencies == counts.volume_adjacencies
+        && report.volume_adjacency_face_sides == counts.volume_adjacency_face_sides
+        && report.volume_adjacency_separating_faces == counts.volume_adjacency_separating_faces
+        && report.lower_dimensional_artifacts == counts.lower_dimensional_artifacts
+        && report.lower_dimensional_point_contacts == counts.lower_dimensional_point_contacts
+        && report.lower_dimensional_edge_contacts == counts.lower_dimensional_edge_contacts
+        && report.lower_dimensional_edge_endpoints == counts.lower_dimensional_edge_endpoints
+}
+
+fn ownership_report_counts_match(
+    report: &ExactRegionOwnershipReport,
+    counts: &SelectedCellComplexGateCounts,
+) -> bool {
+    report.face_cells == counts.face_cells
+        && report.face_cell_boundary_nodes == counts.face_cell_boundary_nodes
+        && report.face_cell_boundary_points == counts.face_cell_boundary_points
+        && report.volume_regions == counts.volume_regions
+        && report.exterior_volume_regions == counts.exterior_volume_regions
+        && report.left_owned_volumes == counts.left_owned_volumes
+        && report.right_owned_volumes == counts.right_owned_volumes
+        && report.shared_owned_volumes == counts.shared_owned_volumes
+        && report.unowned_bounded_volumes == counts.unowned_bounded_volumes
+        && report.volume_adjacencies == counts.volume_adjacencies
+        && report.volume_adjacency_face_sides == counts.volume_adjacency_face_sides
+        && report.volume_adjacency_separating_faces == counts.volume_adjacency_separating_faces
+        && report.lower_dimensional_artifacts == counts.lower_dimensional_artifacts
+        && report.lower_dimensional_point_contacts == counts.lower_dimensional_point_contacts
+        && report.lower_dimensional_edge_contacts == counts.lower_dimensional_edge_contacts
+        && report.lower_dimensional_edge_endpoints == counts.lower_dimensional_edge_endpoints
 }
 
 pub(crate) struct SelectedCellComplexGateCounts {
@@ -1500,7 +1503,7 @@ fn select_faces_from_volume_adjacencies(
     volume_regions: &[ExactCellComplexVolumeRegion],
     volume_adjacencies: &[ArrangementVolumeAdjacency],
     operation: ExactBooleanOperation,
-) -> Result<Option<(Vec<usize>, Vec<ExactSelectedFaceOrientation>)>, ExactArrangementBlocker> {
+) -> Result<Option<VolumeResolvedFaceSelection>, ExactArrangementBlocker> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || volume_regions.is_empty()
         || volume_adjacencies.is_empty()
@@ -1567,7 +1570,7 @@ fn checked_volume_resolved_face_selection(
     volume_regions: &[ExactCellComplexVolumeRegion],
     volume_adjacencies: &[ArrangementVolumeAdjacency],
     operation: ExactBooleanOperation,
-) -> Result<Option<(Vec<usize>, Vec<ExactSelectedFaceOrientation>)>, ExactArrangementBlocker> {
+) -> Result<Option<VolumeResolvedFaceSelection>, ExactArrangementBlocker> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || volume_regions.is_empty()
         || volume_adjacencies.is_empty()
@@ -1782,7 +1785,7 @@ mod tests {
                 },
                 boundary: [0, 1, 2]
                     .into_iter()
-                    .map(|vertex| ArrangementFaceCellNode::SourceVertex { side, vertex })
+                    .map(|vertex| ArrangementFaceCellNode::Source { side, vertex })
                     .collect(),
                 boundary_points: vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)],
                 opposite: None,
@@ -1839,7 +1842,7 @@ mod tests {
         face.cell.carrier.triangle = [1, 2, 3];
         face.cell.boundary = [1, 2, 3]
             .into_iter()
-            .map(|vertex| ArrangementFaceCellNode::SourceVertex { side, vertex })
+            .map(|vertex| ArrangementFaceCellNode::Source { side, vertex })
             .collect();
         face
     }
@@ -1901,7 +1904,7 @@ mod tests {
                     source_face: 0,
                     boundary: [0, 1, 2]
                         .into_iter()
-                        .map(|vertex| ArrangementFaceCellNode::SourceVertex {
+                        .map(|vertex| ArrangementFaceCellNode::Source {
                             side: MeshSide::Left,
                             vertex,
                         })

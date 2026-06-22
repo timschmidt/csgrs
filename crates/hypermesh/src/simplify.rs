@@ -1721,7 +1721,7 @@ mod tests {
     }
 
     fn source_node_on(side: MeshSide, vertex: usize) -> ArrangementFaceCellNode {
-        ArrangementFaceCellNode::SourceVertex { side, vertex }
+        ArrangementFaceCellNode::Source { side, vertex }
     }
 
     fn selected_face(

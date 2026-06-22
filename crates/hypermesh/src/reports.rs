@@ -342,11 +342,11 @@ fn validate_adjacent_certified_boundary_blocker(
     retained_events: usize,
 ) -> Result<(), ExactReportValidationError> {
     if retained_face_pairs == 0 && retained_events == 0 && !blocker_has_any_evidence(blocker) {
-        return (blocker.kind == ExactBooleanBlockerKind::NeedsBoundaryPolicy)
+        return (blocker.kind == ExactBooleanBlockerKind::BoundaryPolicy)
             .then_some(())
             .ok_or(ExactReportValidationError::WrongBlockerKind);
     }
-    blocker.validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)
+    blocker.validate_for_kind(ExactBooleanBlockerKind::BoundaryPolicy)
 }
 
 fn validate_refinement_partition(
@@ -1433,17 +1433,17 @@ impl ExactBooleanResult {
                     .map_err(ExactReportValidationError::InvalidVolumetricClassification)?;
             }
         }
-        if let ExactBooleanResultKind::BoundaryPolicyShortcut { operation } = self.kind {
-            if !boundary_policy_shortcut_result_matches_sources(
+        if let ExactBooleanResultKind::BoundaryPolicyShortcut { operation } = self.kind
+            && !boundary_policy_shortcut_result_matches_sources(
                 self,
                 left,
                 right,
                 operation,
                 self.mesh.validation_policy(),
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-            ) {
-                return Err(ExactReportValidationError::SourceReplayMismatch);
-            }
+            )
+        {
+            return Err(ExactReportValidationError::SourceReplayMismatch);
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
@@ -1484,37 +1484,33 @@ impl ExactBooleanResult {
             operation,
             shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
         } = self.kind
-        {
-            if let Some(replay) = boolean_coplanar_mesh_overlay_optional(
+            && let Some(replay) = boolean_coplanar_mesh_overlay_optional(
                 left,
                 right,
                 operation,
                 self.mesh.validation_policy(),
             )
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-            {
-                if self == &replay {
-                    arrangement_cell_complex_output_replayed = true;
-                }
-            }
+            && self == &replay
+        {
+            arrangement_cell_complex_output_replayed = true;
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
             shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
         } = self.kind
-        {
-            if let Some(matches_output) = arrangement_cell_complex_output_matches_sources(
+            && let Some(matches_output) = arrangement_cell_complex_output_matches_sources(
                 operation,
                 self.mesh.validation_policy(),
                 &self.mesh,
                 left,
                 right,
-            )? {
-                if !matches_output {
-                    return Err(ExactReportValidationError::SourceReplayMismatch);
-                }
-                arrangement_cell_complex_output_replayed = true;
+            )?
+        {
+            if !matches_output {
+                return Err(ExactReportValidationError::SourceReplayMismatch);
             }
+            arrangement_cell_complex_output_replayed = true;
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
@@ -2597,7 +2593,7 @@ fn certified_closed_winding_relation_from_sources(
         return Ok(None);
     }
     let graph = validated_report_intersection_graph(left, right)?;
-    let counts = ExactBooleanBlocker::from_graph(&graph, ExactBooleanBlockerKind::NeedsWinding);
+    let counts = ExactBooleanBlocker::from_graph(&graph, ExactBooleanBlockerKind::Winding);
     if graph.has_unknowns()
         || !graph.face_pairs.is_empty()
         || counts.construction_failed_events != 0
@@ -3797,17 +3793,16 @@ impl ExactVolumetricBoundaryClosureReport {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-                if self.coplanar_loop_groups != 0 {
-                    if *blocker != ExactArrangementBlocker::NonManifoldCellComplex
+                if self.coplanar_loop_groups != 0
+                    && (*blocker != ExactArrangementBlocker::NonManifoldCellComplex
                         || self.noncoplanar_boundary_loops != 0
                         || self.repeated_exact_boundary_points != 0
                         || self.self_contact_exact_points != 0
                         || self.self_contact_topological_vertices != 0
                         || self.self_contact_degenerate_cycles != 0
-                        || self.self_contact_nondegenerate_cycles != 0
-                    {
-                        return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                    }
+                        || self.self_contact_nondegenerate_cycles != 0)
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
             }
         }
@@ -4125,12 +4120,12 @@ impl ExactBooleanPreflight {
                 }
                 blocker_kind(
                     self.blocker.as_ref(),
-                    ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+                    ExactBooleanBlockerKind::BoundaryPolicy,
                 )?;
                 self.blocker
                     .as_ref()
                     .unwrap()
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::BoundaryPolicy)?;
                 validate_blocker_count_bounds(
                     self.blocker.as_ref().unwrap(),
                     self.retained_face_pairs,
@@ -4149,12 +4144,12 @@ impl ExactBooleanPreflight {
                 }
                 blocker_kind(
                     self.blocker.as_ref(),
-                    ExactBooleanBlockerKind::NeedsPlanarArrangement,
+                    ExactBooleanBlockerKind::PlanarArrangement,
                 )?;
                 self.blocker
                     .as_ref()
                     .unwrap()
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsPlanarArrangement)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::PlanarArrangement)?;
                 validate_blocker_count_bounds(
                     self.blocker.as_ref().unwrap(),
                     self.retained_face_pairs,
@@ -4186,12 +4181,12 @@ impl ExactBooleanPreflight {
                 }
                 blocker_kind(
                     self.blocker.as_ref(),
-                    ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells,
+                    ExactBooleanBlockerKind::CoplanarVolumetricCells,
                 )?;
                 self.blocker
                     .as_ref()
                     .unwrap()
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::CoplanarVolumetricCells)?;
                 validate_blocker_count_bounds(
                     self.blocker.as_ref().unwrap(),
                     self.retained_face_pairs,
@@ -4224,10 +4219,10 @@ impl ExactBooleanPreflight {
                 }
                 let blocker = self.blocker.as_ref().unwrap();
                 let expected = match blocker.kind {
-                    ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells => {
-                        ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+                    ExactBooleanBlockerKind::CoplanarVolumetricCells => {
+                        ExactBooleanBlockerKind::CoplanarVolumetricCells
                     }
-                    _ => ExactBooleanBlockerKind::NeedsWinding,
+                    _ => ExactBooleanBlockerKind::Winding,
                 };
                 blocker_kind(self.blocker.as_ref(), expected)?;
                 blocker.validate_for_kind(expected)?;
@@ -4240,7 +4235,7 @@ impl ExactBooleanPreflight {
                     return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
                 }
                 match (expected, self.coplanar_volumetric_evidence.as_ref()) {
-                    (ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells, Some(evidence)) => {
+                    (ExactBooleanBlockerKind::CoplanarVolumetricCells, Some(evidence)) => {
                         validate_coplanar_volumetric_evidence_matches_blocker(
                             evidence,
                             blocker,
@@ -4253,7 +4248,7 @@ impl ExactBooleanPreflight {
                             );
                         }
                     }
-                    (ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells, None) => {
+                    (ExactBooleanBlockerKind::CoplanarVolumetricCells, None) => {
                         return Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence);
                     }
                     (_, Some(evidence)) => {
@@ -4278,12 +4273,12 @@ impl ExactBooleanPreflight {
                 }
                 blocker_kind(
                     self.blocker.as_ref(),
-                    ExactBooleanBlockerKind::NeedsRefinement,
+                    ExactBooleanBlockerKind::Refinement,
                 )?;
                 self.blocker
                     .as_ref()
                     .unwrap()
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsRefinement)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::Refinement)?;
                 validate_blocker_count_bounds(
                     self.blocker.as_ref().unwrap(),
                     self.retained_face_pairs,
@@ -4340,7 +4335,7 @@ pub(crate) struct ExactBooleanBlocker {
 impl Default for ExactBooleanBlocker {
     fn default() -> Self {
         Self {
-            kind: ExactBooleanBlockerKind::NeedsWinding,
+            kind: ExactBooleanBlockerKind::Winding,
             candidate_pairs: 0,
             coplanar_overlapping_pairs: 0,
             coplanar_touching_pairs: 0,
@@ -4421,17 +4416,17 @@ impl ExactBooleanBlocker {
     /// remaining resolved non-coplanar graph state needs winding.
     pub(crate) fn inferred_kind(&self) -> ExactBooleanBlockerKind {
         if blocker_has_refinement_evidence(self) {
-            ExactBooleanBlockerKind::NeedsRefinement
+            ExactBooleanBlockerKind::Refinement
         } else if self.coplanar_overlapping_pairs != 0 || self.coplanar_touching_pairs != 0 {
             if self.candidate_pairs == 0 && self.coplanar_overlapping_pairs > 0 {
-                ExactBooleanBlockerKind::NeedsPlanarArrangement
+                ExactBooleanBlockerKind::PlanarArrangement
             } else if self.candidate_pairs == 0 {
-                ExactBooleanBlockerKind::NeedsBoundaryPolicy
+                ExactBooleanBlockerKind::BoundaryPolicy
             } else {
-                ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+                ExactBooleanBlockerKind::CoplanarVolumetricCells
             }
         } else {
-            ExactBooleanBlockerKind::NeedsWinding
+            ExactBooleanBlockerKind::Winding
         }
     }
 
@@ -4450,28 +4445,28 @@ impl ExactBooleanBlocker {
             return Err(ExactReportValidationError::WrongBlockerKind);
         }
         let valid = match expected {
-            ExactBooleanBlockerKind::NeedsRefinement => {
+            ExactBooleanBlockerKind::Refinement => {
                 self.unknown_pairs > 0 || self.construction_failed_events > 0
             }
-            ExactBooleanBlockerKind::NeedsBoundaryPolicy => {
+            ExactBooleanBlockerKind::BoundaryPolicy => {
                 (self.candidate_pairs != 0
                     || self.coplanar_touching_pairs != 0
                     || self.coplanar_overlapping_pairs != 0)
                     && self.unknown_pairs == 0
                     && self.construction_failed_events == 0
             }
-            ExactBooleanBlockerKind::NeedsPlanarArrangement => {
+            ExactBooleanBlockerKind::PlanarArrangement => {
                 self.coplanar_overlapping_pairs > 0
                     && self.unknown_pairs == 0
                     && self.construction_failed_events == 0
                     && self.candidate_pairs == 0
             }
-            ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells => {
+            ExactBooleanBlockerKind::CoplanarVolumetricCells => {
                 (self.coplanar_touching_pairs != 0 || self.coplanar_overlapping_pairs != 0)
                     && self.unknown_pairs == 0
                     && self.construction_failed_events == 0
             }
-            ExactBooleanBlockerKind::NeedsWinding => {
+            ExactBooleanBlockerKind::Winding => {
                 self.unknown_pairs == 0
                     && self.construction_failed_events == 0
                     && self.coplanar_overlapping_pairs == 0
@@ -4490,16 +4485,16 @@ impl ExactBooleanBlocker {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ExactBooleanBlockerKind {
     /// Predicate or equality refinement is required before policy can run.
-    NeedsRefinement,
+    Refinement,
     /// A lower-dimensional shared-boundary output policy is required.
-    NeedsBoundaryPolicy,
+    BoundaryPolicy,
     /// A planar arrangement output model is required for coplanar surfaces.
-    NeedsPlanarArrangement,
+    PlanarArrangement,
     /// Coplanar source-face cells must be materialized before closed
     /// volumetric winding can decide named output.
-    NeedsCoplanarVolumetricCells,
+    CoplanarVolumetricCells,
     /// Full winding/inside-outside classification is required.
-    NeedsWinding,
+    Winding,
 }
 
 /// Certification status for exact refinement preflight.
@@ -4563,10 +4558,10 @@ impl ExactRefinementReport {
             ExactRefinementStatus::Required => {
                 blocker_kind(
                     self.blocker.as_ref(),
-                    ExactBooleanBlockerKind::NeedsRefinement,
+                    ExactBooleanBlockerKind::Refinement,
                 )?;
                 let blocker = self.blocker.as_ref().unwrap();
-                blocker.validate_for_kind(ExactBooleanBlockerKind::NeedsRefinement)?;
+                blocker.validate_for_kind(ExactBooleanBlockerKind::Refinement)?;
                 validate_blocker_count_bounds(
                     blocker,
                     self.retained_face_pairs,
@@ -4798,7 +4793,7 @@ impl ExactOpenSurfaceDisjointReport {
         }
         let expected_kind = match self.status {
             ExactOpenSurfaceDisjointStatus::GraphUnknowns => {
-                ExactBooleanBlockerKind::NeedsRefinement
+                ExactBooleanBlockerKind::Refinement
             }
             ExactOpenSurfaceDisjointStatus::NotOpenSurface
             | ExactOpenSurfaceDisjointStatus::GraphHasFacePairs
@@ -5002,11 +4997,11 @@ impl ExactAdjacentUnionCompletionReport {
         }
         let expected_kind = match self.status {
             ExactAdjacentUnionCompletionStatus::GraphUnresolved => {
-                ExactBooleanBlockerKind::NeedsRefinement
+                ExactBooleanBlockerKind::Refinement
             }
             ExactAdjacentUnionCompletionStatus::CertifiedFullFace
             | ExactAdjacentUnionCompletionStatus::CertifiedContainedFace => {
-                ExactBooleanBlockerKind::NeedsBoundaryPolicy
+                ExactBooleanBlockerKind::BoundaryPolicy
             }
             _ => self.blocker.inferred_kind(),
         };
@@ -5215,15 +5210,15 @@ impl ExactBoundaryTouchingReport {
             return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
         }
         let expected_kind = match self.status {
-            ExactBoundaryTouchingStatus::GraphUnknowns => ExactBooleanBlockerKind::NeedsRefinement,
-            ExactBoundaryTouchingStatus::Certified => ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+            ExactBoundaryTouchingStatus::GraphUnknowns => ExactBooleanBlockerKind::Refinement,
+            ExactBoundaryTouchingStatus::Certified => ExactBooleanBlockerKind::BoundaryPolicy,
             ExactBoundaryTouchingStatus::NotBoundaryOnly => {
                 let coplanar_pairs = self.blocker.coplanar_overlapping_pairs != 0
                     || self.blocker.coplanar_touching_pairs != 0;
                 if blocker_has_refinement_evidence(&self.blocker) {
-                    ExactBooleanBlockerKind::NeedsRefinement
+                    ExactBooleanBlockerKind::Refinement
                 } else if self.blocker.candidate_pairs == 0 && !coplanar_pairs {
-                    ExactBooleanBlockerKind::NeedsWinding
+                    ExactBooleanBlockerKind::Winding
                 } else if self.blocker.candidate_pairs == 0
                     && self.blocker.coplanar_overlapping_pairs == 0
                 {
@@ -5232,12 +5227,12 @@ impl ExactBoundaryTouchingReport {
                     if self.blocker.candidate_pairs == 0
                         && self.blocker.coplanar_overlapping_pairs > 0
                     {
-                        ExactBooleanBlockerKind::NeedsPlanarArrangement
+                        ExactBooleanBlockerKind::PlanarArrangement
                     } else {
-                        ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+                        ExactBooleanBlockerKind::CoplanarVolumetricCells
                     }
                 } else {
-                    ExactBooleanBlockerKind::NeedsWinding
+                    ExactBooleanBlockerKind::Winding
                 }
             }
         };
@@ -5261,7 +5256,7 @@ impl ExactBoundaryTouchingReport {
         }
         if self.is_certified() {
             self.blocker
-                .validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)?;
+                .validate_for_kind(ExactBooleanBlockerKind::BoundaryPolicy)?;
         }
         Ok(())
     }
@@ -5390,12 +5385,12 @@ impl ExactPlanarArrangementReport {
         // A graph-unknown arrangement report has not reached planar-cell
         // policy. It is still blocked on predicate/construction refinement, a
         let expected_kind = match self.status {
-            ExactPlanarArrangementStatus::GraphUnknowns => ExactBooleanBlockerKind::NeedsRefinement,
+            ExactPlanarArrangementStatus::GraphUnknowns => ExactBooleanBlockerKind::Refinement,
             ExactPlanarArrangementStatus::BoundaryPolicyRequired => {
-                ExactBooleanBlockerKind::NeedsBoundaryPolicy
+                ExactBooleanBlockerKind::BoundaryPolicy
             }
             ExactPlanarArrangementStatus::Required => {
-                ExactBooleanBlockerKind::NeedsPlanarArrangement
+                ExactBooleanBlockerKind::PlanarArrangement
             }
             ExactPlanarArrangementStatus::NotNamedOperation
             | ExactPlanarArrangementStatus::AlreadyMaterialized
@@ -5494,13 +5489,13 @@ impl ExactPlanarArrangementReport {
         }
         if self.is_required() {
             self.blocker
-                .validate_for_kind(ExactBooleanBlockerKind::NeedsPlanarArrangement)?;
+                .validate_for_kind(ExactBooleanBlockerKind::PlanarArrangement)?;
         } else if matches!(
             self.status,
             ExactPlanarArrangementStatus::BoundaryPolicyRequired
         ) {
             self.blocker
-                .validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)?;
+                .validate_for_kind(ExactBooleanBlockerKind::BoundaryPolicy)?;
         }
         Ok(())
     }
@@ -5799,10 +5794,10 @@ impl ExactWindingEvidenceReport {
                 }
                 blocker_kind(
                     Some(&self.blocker),
-                    ExactBooleanBlockerKind::NeedsRefinement,
+                    ExactBooleanBlockerKind::Refinement,
                 )?;
                 self.blocker
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsRefinement)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::Refinement)?;
                 validate_blocker_count_bounds(
                     &self.blocker,
                     self.retained_face_pairs,
@@ -5819,10 +5814,10 @@ impl ExactWindingEvidenceReport {
                 }
                 blocker_kind(
                     Some(&self.blocker),
-                    ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+                    ExactBooleanBlockerKind::BoundaryPolicy,
                 )?;
                 self.blocker
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::BoundaryPolicy)?;
                 validate_blocker_count_bounds(
                     &self.blocker,
                     self.retained_face_pairs,
@@ -5836,10 +5831,10 @@ impl ExactWindingEvidenceReport {
                 }
                 blocker_kind(
                     Some(&self.blocker),
-                    ExactBooleanBlockerKind::NeedsPlanarArrangement,
+                    ExactBooleanBlockerKind::PlanarArrangement,
                 )?;
                 self.blocker
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsPlanarArrangement)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::PlanarArrangement)?;
                 validate_blocker_count_bounds(
                     &self.blocker,
                     self.retained_face_pairs,
@@ -5864,10 +5859,10 @@ impl ExactWindingEvidenceReport {
                 }
                 blocker_kind(
                     Some(&self.blocker),
-                    ExactBooleanBlockerKind::NeedsPlanarArrangement,
+                    ExactBooleanBlockerKind::PlanarArrangement,
                 )?;
                 self.blocker
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsPlanarArrangement)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::PlanarArrangement)?;
                 validate_blocker_count_bounds(
                     &self.blocker,
                     self.retained_face_pairs,
@@ -5895,10 +5890,10 @@ impl ExactWindingEvidenceReport {
                 }
                 blocker_kind(
                     Some(&self.blocker),
-                    ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells,
+                    ExactBooleanBlockerKind::CoplanarVolumetricCells,
                 )?;
                 self.blocker
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::CoplanarVolumetricCells)?;
                 validate_blocker_count_bounds(
                     &self.blocker,
                     self.retained_face_pairs,
@@ -5928,10 +5923,10 @@ impl ExactWindingEvidenceReport {
                 }
                 blocker_kind(
                     Some(&self.blocker),
-                    ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells,
+                    ExactBooleanBlockerKind::CoplanarVolumetricCells,
                 )?;
                 self.blocker
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::CoplanarVolumetricCells)?;
                 validate_blocker_count_bounds(
                     &self.blocker,
                     self.retained_face_pairs,
@@ -5962,10 +5957,10 @@ impl ExactWindingEvidenceReport {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
                 let expected = match self.blocker.kind {
-                    ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells => {
-                        ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+                    ExactBooleanBlockerKind::CoplanarVolumetricCells => {
+                        ExactBooleanBlockerKind::CoplanarVolumetricCells
                     }
-                    _ => ExactBooleanBlockerKind::NeedsWinding,
+                    _ => ExactBooleanBlockerKind::Winding,
                 };
                 blocker_kind(Some(&self.blocker), expected)?;
                 self.blocker.validate_for_kind(expected)?;
@@ -5978,7 +5973,7 @@ impl ExactWindingEvidenceReport {
                     self.blocker.kind,
                     self.coplanar_volumetric_evidence.as_ref(),
                 ) {
-                    (ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells, Some(evidence)) => {
+                    (ExactBooleanBlockerKind::CoplanarVolumetricCells, Some(evidence)) => {
                         validate_coplanar_volumetric_evidence_matches_blocker(
                             evidence,
                             &self.blocker,
@@ -5991,7 +5986,7 @@ impl ExactWindingEvidenceReport {
                             );
                         }
                     }
-                    (ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells, None) => {
+                    (ExactBooleanBlockerKind::CoplanarVolumetricCells, None) => {
                         return Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence);
                     }
                     (_, Some(evidence)) => {
@@ -6013,18 +6008,18 @@ impl ExactWindingEvidenceReport {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
                 let expected = match self.blocker.kind {
-                    ExactBooleanBlockerKind::NeedsBoundaryPolicy => {
-                        ExactBooleanBlockerKind::NeedsBoundaryPolicy
+                    ExactBooleanBlockerKind::BoundaryPolicy => {
+                        ExactBooleanBlockerKind::BoundaryPolicy
                     }
-                    ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells => {
-                        ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+                    ExactBooleanBlockerKind::CoplanarVolumetricCells => {
+                        ExactBooleanBlockerKind::CoplanarVolumetricCells
                     }
-                    _ => ExactBooleanBlockerKind::NeedsWinding,
+                    _ => ExactBooleanBlockerKind::Winding,
                 };
                 blocker_kind(Some(&self.blocker), expected)?;
                 self.blocker.validate_for_kind(expected)?;
                 match (expected, self.coplanar_volumetric_evidence.as_ref()) {
-                    (ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells, Some(evidence)) => {
+                    (ExactBooleanBlockerKind::CoplanarVolumetricCells, Some(evidence)) => {
                         validate_coplanar_volumetric_evidence_matches_blocker(
                             evidence,
                             &self.blocker,
@@ -6037,10 +6032,10 @@ impl ExactWindingEvidenceReport {
                             );
                         }
                     }
-                    (ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells, None) => {
+                    (ExactBooleanBlockerKind::CoplanarVolumetricCells, None) => {
                         return Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence);
                     }
-                    (ExactBooleanBlockerKind::NeedsBoundaryPolicy, Some(evidence)) => {
+                    (ExactBooleanBlockerKind::BoundaryPolicy, Some(evidence)) => {
                         validate_coplanar_volumetric_evidence_matches_blocker(
                             evidence,
                             &self.blocker,
@@ -6053,8 +6048,8 @@ impl ExactWindingEvidenceReport {
                             self.retained_events,
                         )?;
                     }
-                    (ExactBooleanBlockerKind::NeedsBoundaryPolicy, None)
-                    | (ExactBooleanBlockerKind::NeedsWinding, None) => {
+                    (ExactBooleanBlockerKind::BoundaryPolicy, None)
+                    | (ExactBooleanBlockerKind::Winding, None) => {
                         validate_blocker_count_bounds(
                             &self.blocker,
                             self.retained_face_pairs,
@@ -6062,8 +6057,8 @@ impl ExactWindingEvidenceReport {
                         )?;
                     }
                     (
-                        ExactBooleanBlockerKind::NeedsRefinement
-                        | ExactBooleanBlockerKind::NeedsPlanarArrangement,
+                        ExactBooleanBlockerKind::Refinement
+                        | ExactBooleanBlockerKind::PlanarArrangement,
                         None,
                     ) => {
                         return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -6087,9 +6082,9 @@ impl ExactWindingEvidenceReport {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::NeedsWinding)?;
+                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::Winding)?;
                 self.blocker
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::Winding)?;
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized => {
@@ -6100,9 +6095,9 @@ impl ExactWindingEvidenceReport {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::NeedsWinding)?;
+                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::Winding)?;
                 self.blocker
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::Winding)?;
                 validate_blocker_count_bounds(
                     &self.blocker,
                     self.retained_face_pairs,
@@ -6119,9 +6114,9 @@ impl ExactWindingEvidenceReport {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::NeedsWinding)?;
+                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::Winding)?;
                 self.blocker
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::Winding)?;
                 validate_blocker_count_bounds(
                     &self.blocker,
                     self.retained_face_pairs,
@@ -6139,9 +6134,9 @@ impl ExactWindingEvidenceReport {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::NeedsWinding)?;
+                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::Winding)?;
                 self.blocker
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::Winding)?;
                 if let Some(evidence) = self.coplanar_volumetric_evidence.as_ref() {
                     validate_coplanar_volumetric_evidence_counts(
                         evidence,
@@ -6166,10 +6161,10 @@ impl ExactWindingEvidenceReport {
                 }
                 blocker_kind(
                     Some(&self.blocker),
-                    ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+                    ExactBooleanBlockerKind::BoundaryPolicy,
                 )?;
                 self.blocker
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::BoundaryPolicy)?;
                 validate_blocker_count_bounds(
                     &self.blocker,
                     self.retained_face_pairs,
@@ -6207,10 +6202,10 @@ impl ExactWindingEvidenceReport {
                 }
                 blocker_kind(
                     Some(&self.blocker),
-                    ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+                    ExactBooleanBlockerKind::BoundaryPolicy,
                 )?;
                 self.blocker
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::BoundaryPolicy)?;
                 validate_blocker_count_bounds(
                     &self.blocker,
                     self.retained_face_pairs,
@@ -6232,9 +6227,9 @@ impl ExactWindingEvidenceReport {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::NeedsWinding)?;
+                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::Winding)?;
                 self.blocker
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::Winding)?;
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingEvidenceStatus::Ready => {
@@ -6247,10 +6242,10 @@ impl ExactWindingEvidenceReport {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
                 let expected = match self.blocker.kind {
-                    ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells => {
-                        ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+                    ExactBooleanBlockerKind::CoplanarVolumetricCells => {
+                        ExactBooleanBlockerKind::CoplanarVolumetricCells
                     }
-                    _ => ExactBooleanBlockerKind::NeedsWinding,
+                    _ => ExactBooleanBlockerKind::Winding,
                 };
                 blocker_kind(Some(&self.blocker), expected)?;
                 self.blocker.validate_for_kind(expected)?;
@@ -6263,7 +6258,7 @@ impl ExactWindingEvidenceReport {
                     self.blocker.kind,
                     self.coplanar_volumetric_evidence.as_ref(),
                 ) {
-                    (ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells, Some(evidence)) => {
+                    (ExactBooleanBlockerKind::CoplanarVolumetricCells, Some(evidence)) => {
                         validate_coplanar_volumetric_evidence_matches_blocker(
                             evidence,
                             &self.blocker,
@@ -6276,7 +6271,7 @@ impl ExactWindingEvidenceReport {
                             );
                         }
                     }
-                    (ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells, None) => {
+                    (ExactBooleanBlockerKind::CoplanarVolumetricCells, None) => {
                         return Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence);
                     }
                     (_, Some(evidence)) => {
@@ -6314,9 +6309,9 @@ impl ExactWindingEvidenceReport {
                     blocker_kind(Some(&self.blocker), expected)?;
                     self.blocker.validate_for_kind(expected)?;
                 } else {
-                    blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::NeedsWinding)?;
+                    blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::Winding)?;
                     self.blocker
-                        .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)?;
+                        .validate_for_kind(ExactBooleanBlockerKind::Winding)?;
                 }
                 validate_blocker_count_bounds(
                     &self.blocker,
@@ -7000,7 +6995,7 @@ mod tests {
             retained_face_pairs: 1,
             retained_events: 1,
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsPlanarArrangement,
+                kind: ExactBooleanBlockerKind::PlanarArrangement,
                 candidate_pairs: 0,
                 coplanar_overlapping_pairs: 1,
                 coplanar_touching_pairs: 0,
@@ -7063,7 +7058,7 @@ mod tests {
             retained_face_pairs: 1,
             retained_events: 1,
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsPlanarArrangement,
+                kind: ExactBooleanBlockerKind::PlanarArrangement,
                 candidate_pairs: 0,
                 coplanar_overlapping_pairs: 1,
                 coplanar_touching_pairs: 0,
@@ -7089,7 +7084,7 @@ mod tests {
 
         report.retained_face_pairs = 2;
         report.retained_events = 2;
-        report.blocker.kind = ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells;
+        report.blocker.kind = ExactBooleanBlockerKind::CoplanarVolumetricCells;
         report.blocker.candidate_pairs = 1;
         report.validate().unwrap();
     }
@@ -7103,7 +7098,7 @@ mod tests {
             retained_face_pairs: 2,
             retained_events: 1,
             blocker: Some(ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsRefinement,
+                kind: ExactBooleanBlockerKind::Refinement,
                 candidate_pairs: 0,
                 coplanar_overlapping_pairs: 0,
                 coplanar_touching_pairs: 0,
@@ -7123,7 +7118,7 @@ mod tests {
             retained_face_pairs: usize::MAX,
             retained_events: usize::MAX,
             blocker: Some(ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsRefinement,
+                kind: ExactBooleanBlockerKind::Refinement,
                 candidate_pairs: usize::MAX,
                 coplanar_overlapping_pairs: 1,
                 coplanar_touching_pairs: 0,
@@ -7144,7 +7139,7 @@ mod tests {
             retained_face_pairs: 2,
             retained_events: 1,
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsWinding,
+                kind: ExactBooleanBlockerKind::Winding,
                 candidate_pairs: 2,
                 coplanar_overlapping_pairs: 0,
                 coplanar_touching_pairs: 0,
@@ -7168,7 +7163,7 @@ mod tests {
             retained_face_pairs: 2,
             retained_events: 1,
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsWinding,
+                kind: ExactBooleanBlockerKind::Winding,
                 candidate_pairs: 2,
                 coplanar_overlapping_pairs: 0,
                 coplanar_touching_pairs: 0,
@@ -7197,7 +7192,7 @@ mod tests {
             retained_face_pairs: 2,
             retained_events: 2,
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+                kind: ExactBooleanBlockerKind::BoundaryPolicy,
                 candidate_pairs: 2,
                 coplanar_overlapping_pairs: 0,
                 coplanar_touching_pairs: 0,
@@ -7226,7 +7221,7 @@ mod tests {
             retained_face_pairs: 2,
             retained_events: 2,
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+                kind: ExactBooleanBlockerKind::BoundaryPolicy,
                 candidate_pairs: 2,
                 coplanar_overlapping_pairs: 0,
                 coplanar_touching_pairs: 0,
@@ -7250,7 +7245,7 @@ mod tests {
             retained_face_pairs: 2,
             retained_events: 1,
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsWinding,
+                kind: ExactBooleanBlockerKind::Winding,
                 candidate_pairs: 2,
                 coplanar_overlapping_pairs: 0,
                 coplanar_touching_pairs: 0,
@@ -7270,7 +7265,7 @@ mod tests {
             retained_face_pairs: 2,
             retained_events: 1,
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsWinding,
+                kind: ExactBooleanBlockerKind::Winding,
                 candidate_pairs: 2,
                 coplanar_overlapping_pairs: 0,
                 coplanar_touching_pairs: 0,
@@ -7320,7 +7315,7 @@ mod tests {
             region_count: 0,
             region_classifications: Vec::new(),
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsWinding,
+                kind: ExactBooleanBlockerKind::Winding,
                 candidate_pairs: 2,
                 coplanar_overlapping_pairs: 0,
                 coplanar_touching_pairs: 0,
@@ -7345,7 +7340,7 @@ mod tests {
             retained_face_pairs: 2,
             retained_events: 2,
             blocker: Some(ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsRefinement,
+                kind: ExactBooleanBlockerKind::Refinement,
                 candidate_pairs: 0,
                 coplanar_overlapping_pairs: 0,
                 coplanar_touching_pairs: 0,
@@ -7374,7 +7369,7 @@ mod tests {
             region_count: 0,
             region_classifications: Vec::new(),
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsWinding,
+                kind: ExactBooleanBlockerKind::Winding,
                 candidate_pairs: 1,
                 coplanar_overlapping_pairs: 0,
                 coplanar_touching_pairs: 0,
@@ -7399,7 +7394,7 @@ mod tests {
             retained_face_pairs: 1,
             retained_events: 1,
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsPlanarArrangement,
+                kind: ExactBooleanBlockerKind::PlanarArrangement,
                 candidate_pairs: 0,
                 coplanar_overlapping_pairs: 1,
                 coplanar_touching_pairs: 0,
@@ -7434,7 +7429,7 @@ mod tests {
             retained_face_pairs: 1,
             retained_events: 1,
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsWinding,
+                kind: ExactBooleanBlockerKind::Winding,
                 candidate_pairs: 1,
                 coplanar_overlapping_pairs: 0,
                 coplanar_touching_pairs: 0,
@@ -7469,7 +7464,7 @@ mod tests {
             retained_face_pairs: 1,
             retained_events: 1,
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+                kind: ExactBooleanBlockerKind::BoundaryPolicy,
                 candidate_pairs: 0,
                 coplanar_overlapping_pairs: 0,
                 coplanar_touching_pairs: 1,
@@ -7518,7 +7513,7 @@ mod tests {
             region_count: 0,
             region_classifications: Vec::new(),
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsPlanarArrangement,
+                kind: ExactBooleanBlockerKind::PlanarArrangement,
                 candidate_pairs: 0,
                 coplanar_overlapping_pairs: 1,
                 coplanar_touching_pairs: 0,
@@ -7573,7 +7568,7 @@ mod tests {
             region_count: 0,
             region_classifications: Vec::new(),
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+                kind: ExactBooleanBlockerKind::BoundaryPolicy,
                 candidate_pairs: 0,
                 coplanar_overlapping_pairs: 1,
                 coplanar_touching_pairs: 0,
@@ -7632,7 +7627,7 @@ mod tests {
         evidence.validate().unwrap();
 
         let blocker = ExactBooleanBlocker {
-            kind: ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells,
+            kind: ExactBooleanBlockerKind::CoplanarVolumetricCells,
             candidate_pairs: 1,
             coplanar_overlapping_pairs: 1,
             coplanar_touching_pairs: 0,
@@ -7719,13 +7714,13 @@ mod tests {
         };
 
         let blocker =
-            ExactBooleanBlocker::from_graph(&graph, ExactBooleanBlockerKind::NeedsRefinement);
+            ExactBooleanBlocker::from_graph(&graph, ExactBooleanBlockerKind::Refinement);
         assert_eq!(blocker.candidate_pairs, 1);
         assert_eq!(blocker.unknown_pairs, 1);
         assert_eq!(blocker.construction_failed_events, 0);
         assert!(
             blocker
-                .validate_for_kind(ExactBooleanBlockerKind::NeedsRefinement)
+                .validate_for_kind(ExactBooleanBlockerKind::Refinement)
                 .is_ok()
         );
     }
@@ -7739,7 +7734,7 @@ mod tests {
             retained_face_pairs: 1,
             retained_events: 1,
             blocker: Some(ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::NeedsRefinement,
+                kind: ExactBooleanBlockerKind::Refinement,
                 candidate_pairs: 1,
                 coplanar_overlapping_pairs: 0,
                 coplanar_touching_pairs: 0,

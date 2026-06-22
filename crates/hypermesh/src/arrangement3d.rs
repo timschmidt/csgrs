@@ -83,11 +83,11 @@ pub(crate) struct ArrangementVertex {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) enum ArrangementEdgeProvenance {
     /// Split segment from one original mesh edge.
-    SourceEdge { side: MeshSide, edge: [usize; 2] },
+    Source { side: MeshSide, edge: [usize; 2] },
     /// Split edge from one retained carrier-plane overlay arrangement.
-    CarrierPlaneEdge { overlay: usize, edge: usize },
+    CarrierPlane { overlay: usize, edge: usize },
     /// Split edge from one retained per-source-face arrangement.
-    FacePlaneEdge { arrangement: usize, edge: usize },
+    FacePlane { arrangement: usize, edge: usize },
 }
 
 /// Exact arrangement edge.
@@ -103,13 +103,13 @@ pub(crate) struct ArrangementEdge {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) enum ArrangementFaceCellNode {
     /// Original source vertex.
-    SourceVertex { side: MeshSide, vertex: usize },
+    Source { side: MeshSide, vertex: usize },
     /// Constructed graph vertex.
-    GraphVertex { graph_vertex: usize },
+    Graph { graph_vertex: usize },
     /// Vertex from a retained carrier-plane 2D overlay.
-    CarrierPlaneVertex { overlay: usize, vertex: usize },
+    CarrierPlane { overlay: usize, vertex: usize },
     /// Vertex from a retained per-source-face 2D split arrangement.
-    FacePlaneVertex { arrangement: usize, vertex: usize },
+    FacePlane { arrangement: usize, vertex: usize },
 }
 
 /// Cell owner/carrier information.
@@ -2021,7 +2021,7 @@ fn arrangement_edges(
                     &mut edge_lookup,
                     left,
                     right,
-                    ArrangementEdgeProvenance::SourceEdge {
+                    ArrangementEdgeProvenance::Source {
                         side: chain.side,
                         edge: chain.edge,
                     },
@@ -2054,7 +2054,7 @@ fn arrangement_edges(
                 &mut edge_lookup,
                 left,
                 right,
-                ArrangementEdgeProvenance::CarrierPlaneEdge {
+                ArrangementEdgeProvenance::CarrierPlane {
                     overlay: overlay_index,
                     edge: edge_index,
                 },
@@ -2086,7 +2086,7 @@ fn arrangement_edges(
                 &mut edge_lookup,
                 left,
                 right,
-                ArrangementEdgeProvenance::FacePlaneEdge {
+                ArrangementEdgeProvenance::FacePlane {
                     arrangement: arrangement_index,
                     edge: edge_index,
                 },
@@ -2538,7 +2538,7 @@ fn face_plane_vertex_provenance(
     let triangle = mesh.triangles()[face].0;
     for vertex in triangle {
         match point2_equal(&project_point3(&mesh.vertices()[vertex], projection), point).value() {
-            Some(true) => return Some(ArrangementFaceCellNode::SourceVertex { side, vertex }),
+            Some(true) => return Some(ArrangementFaceCellNode::Source { side, vertex }),
             Some(false) => {}
             None => blockers.push(ExactArrangementBlocker::UndecidableOrdering),
         }
@@ -2551,7 +2551,7 @@ fn face_plane_vertex_provenance(
         .value()
         {
             Some(true) => {
-                return Some(ArrangementFaceCellNode::GraphVertex {
+                return Some(ArrangementFaceCellNode::Graph {
                     graph_vertex: *graph_vertex,
                 });
             }
@@ -3047,7 +3047,7 @@ fn face_cell_from_face_plane_arrangement(
             blockers,
         )?;
         boundary.push(arrangement.vertex_provenance[*vertex].clone().unwrap_or(
-            ArrangementFaceCellNode::FacePlaneVertex {
+            ArrangementFaceCellNode::FacePlane {
                 arrangement: arrangement_index,
                 vertex: *vertex,
             },
@@ -3119,7 +3119,7 @@ fn face_cell_from_carrier_plane_overlay(
         let point2 = &overlay.overlay.arrangement.vertices.get(*vertex)?.point;
         let point3 =
             lift_carrier_plane_point(mesh, carrier_face, overlay.projection, point2, blockers)?;
-        boundary.push(ArrangementFaceCellNode::CarrierPlaneVertex {
+        boundary.push(ArrangementFaceCellNode::CarrierPlane {
             overlay: overlay_index,
             vertex: *vertex,
         });
@@ -4709,10 +4709,10 @@ fn canonical_cell_edge(
 
 fn cell_node_key(node: &ArrangementFaceCellNode) -> (usize, usize, usize) {
     match node {
-        ArrangementFaceCellNode::SourceVertex { side, vertex } => (0, side_key(*side), *vertex),
-        ArrangementFaceCellNode::GraphVertex { graph_vertex } => (1, 0, *graph_vertex),
-        ArrangementFaceCellNode::CarrierPlaneVertex { overlay, vertex } => (2, *overlay, *vertex),
-        ArrangementFaceCellNode::FacePlaneVertex {
+        ArrangementFaceCellNode::Source { side, vertex } => (0, side_key(*side), *vertex),
+        ArrangementFaceCellNode::Graph { graph_vertex } => (1, 0, *graph_vertex),
+        ArrangementFaceCellNode::CarrierPlane { overlay, vertex } => (2, *overlay, *vertex),
+        ArrangementFaceCellNode::FacePlane {
             arrangement,
             vertex,
         } => (3, *arrangement, *vertex),
@@ -4738,13 +4738,13 @@ fn face_cell_from_region(
         .iter()
         .filter_map(|node| match node {
             FaceSplitBoundaryNode::OriginalVertex { vertex, .. } => {
-                Some(ArrangementFaceCellNode::SourceVertex {
+                Some(ArrangementFaceCellNode::Source {
                     side: region.side,
                     vertex: *vertex,
                 })
             }
             FaceSplitBoundaryNode::GraphVertex { graph_vertex, .. } => {
-                Some(ArrangementFaceCellNode::GraphVertex {
+                Some(ArrangementFaceCellNode::Graph {
                     graph_vertex: *graph_vertex,
                 })
             }
@@ -4788,7 +4788,7 @@ fn face_cell_from_original_triangle(
     let mesh = mesh_for_side(side, left, right);
     let boundary = triangle
         .iter()
-        .map(|vertex| ArrangementFaceCellNode::SourceVertex {
+        .map(|vertex| ArrangementFaceCellNode::Source {
             side,
             vertex: *vertex,
         })
@@ -5085,7 +5085,7 @@ mod tests {
             boundary: points
                 .iter()
                 .enumerate()
-                .map(|(vertex, _)| ArrangementFaceCellNode::FacePlaneVertex {
+                .map(|(vertex, _)| ArrangementFaceCellNode::FacePlane {
                     arrangement: 0,
                     vertex,
                 })
@@ -5156,7 +5156,7 @@ mod tests {
     #[test]
     fn arrangement_boundary_point_index_buckets_exact_rational_points() {
         let boundary_point = |side, vertex, point| ArrangementFaceCellBoundaryPoint {
-            node: ArrangementFaceCellNode::SourceVertex { side, vertex },
+            node: ArrangementFaceCellNode::Source { side, vertex },
             point,
         };
         let point = rational_p3([1, 2], [-3, 4], [5, 6]);
@@ -5178,7 +5178,7 @@ mod tests {
         assert_eq!(points.len(), 3);
         assert_eq!(
             points[0].node,
-            ArrangementFaceCellNode::SourceVertex {
+            ArrangementFaceCellNode::Source {
                 side: MeshSide::Left,
                 vertex: 0
             }
@@ -5192,7 +5192,7 @@ mod tests {
         let point_a = rational_p3([1, 2], [2, 3], [3, 4]);
         let point_b = rational_p3([-5, 6], [7, 8], [-9, 10]);
         let boundary_point = |side, vertex, point| ArrangementFaceCellBoundaryPoint {
-            node: ArrangementFaceCellNode::SourceVertex { side, vertex },
+            node: ArrangementFaceCellNode::Source { side, vertex },
             point,
         };
         let left_edge = boundary_edge_from_points(
@@ -5332,7 +5332,7 @@ mod tests {
             boundary: points
                 .iter()
                 .enumerate()
-                .map(|(vertex, _)| ArrangementFaceCellNode::FacePlaneVertex {
+                .map(|(vertex, _)| ArrangementFaceCellNode::FacePlane {
                     arrangement: 0,
                     vertex,
                 })
@@ -5752,7 +5752,7 @@ mod tests {
             },
             boundary: vertices
                 .iter()
-                .map(|vertex| ArrangementFaceCellNode::SourceVertex {
+                .map(|vertex| ArrangementFaceCellNode::Source {
                     side,
                     vertex: *vertex,
                 })
@@ -5790,7 +5790,7 @@ mod tests {
             },
             boundary: vertices
                 .iter()
-                .map(|vertex| ArrangementFaceCellNode::SourceVertex {
+                .map(|vertex| ArrangementFaceCellNode::Source {
                     side,
                     vertex: *vertex,
                 })
@@ -6514,7 +6514,7 @@ mod tests {
             arrangement.face_cells.iter().any(|cell| cell
                 .boundary
                 .iter()
-                .any(|node| matches!(node, ArrangementFaceCellNode::CarrierPlaneVertex { .. }))),
+                .any(|node| matches!(node, ArrangementFaceCellNode::CarrierPlane { .. }))),
             "coplanar overlay cells should be lifted into 3D face cells"
         );
         assert!(
@@ -6532,7 +6532,7 @@ mod tests {
                 .iter()
                 .any(|edge| edge.provenance.iter().any(|provenance| matches!(
                     provenance,
-                    ArrangementEdgeProvenance::CarrierPlaneEdge { .. }
+                    ArrangementEdgeProvenance::CarrierPlane { .. }
                 )))
         );
         assert!(arrangement.face_cells.len() > 2);
@@ -6674,8 +6674,8 @@ mod tests {
                 .iter()
                 .any(|cell| cell.boundary.iter().any(|node| matches!(
                     node,
-                    ArrangementFaceCellNode::FacePlaneVertex { .. }
-                        | ArrangementFaceCellNode::GraphVertex { .. }
+                    ArrangementFaceCellNode::FacePlane { .. }
+                        | ArrangementFaceCellNode::Graph { .. }
                 ))),
             "non-coplanar split cells should be lifted into 3D face cells"
         );
@@ -6694,7 +6694,7 @@ mod tests {
                 .iter()
                 .any(|edge| edge.provenance.iter().any(|provenance| matches!(
                     provenance,
-                    ArrangementEdgeProvenance::FacePlaneEdge { .. }
+                    ArrangementEdgeProvenance::FacePlane { .. }
                 )))
         );
         assert!(arrangement.face_cells.len() > 2);
