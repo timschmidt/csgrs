@@ -1146,11 +1146,17 @@ impl ExactTopologyAssemblyReport {
         {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
-        if (self.split_graph_vertices == 0
-            && (self.split_edge_chains != 0 || self.split_graph_vertex_references != 0))
-            || (self.split_edge_chains == 0 && self.split_graph_vertex_references != 0)
-            || (self.split_edge_chains != 0
-                && self.split_graph_vertex_references < self.split_edge_chains)
+        let has_split_edge_chains = self.split_edge_chains != 0;
+        let has_split_graph_vertex_references = self.split_graph_vertex_references != 0;
+        let split_vertices_missing_for_retained_splits = self.split_graph_vertices == 0
+            && (has_split_edge_chains || has_split_graph_vertex_references);
+        let split_references_without_chains =
+            !has_split_edge_chains && has_split_graph_vertex_references;
+        let split_chains_missing_references =
+            has_split_edge_chains && self.split_graph_vertex_references < self.split_edge_chains;
+        if split_vertices_missing_for_retained_splits
+            || split_references_without_chains
+            || split_chains_missing_references
         {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
