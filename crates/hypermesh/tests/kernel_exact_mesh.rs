@@ -58,6 +58,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let mesh = tetra([0, 0, 0]);
     let view = mesh.view();
 
+    view.validate_retained_state().unwrap();
     assert_eq!(view.vertices().len(), 4);
     assert_eq!(view.triangles().len(), 4);
     assert_eq!(view.facts().mesh.face_count, 4);
@@ -69,11 +70,13 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(face.index(), 0);
     assert_eq!(face.triangle().0, [0, 2, 1]);
     assert_eq!(face.facts().triangle.face, 0);
+    assert_eq!(face.plane(), &face.facts().plane);
     assert_eq!(face.vertices().len(), 3);
 
     let triangle = view.triangle(1).unwrap();
     assert_eq!(triangle.index(), 1);
     assert_eq!(triangle.facts().triangle.vertices, triangle.triangle().0);
+    assert_eq!(triangle.plane(), &triangle.facts().plane);
 
     let edge = view.edge(0).unwrap();
     assert_eq!(edge.index(), 0);

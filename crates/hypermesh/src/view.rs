@@ -8,12 +8,12 @@
 //! useful, but exact geometric decisions must remain tied to exact objects and
 //! proof-producing predicates.
 
-use super::ExactMesh;
 use super::audit::ExactMeshAuditError;
 use super::bounds::MeshBounds;
-use super::facts::{EdgeFacts, FaceFacts, MeshValidationFacts};
+use super::facts::{EdgeFacts, FaceFacts, FacePlaneFacts, MeshValidationFacts};
 use super::mesh::Triangle;
 use super::validation::ValidationPolicy;
+use super::{ExactMesh, ExactMeshValidationError};
 use crate::audit::{ExactMeshAuditReport, audit_exact_mesh};
 use hyperlimit::Point3;
 use hyperreal::Real;
@@ -84,6 +84,11 @@ impl<'a> ExactMeshRef<'a> {
         self.mesh.validation_policy()
     }
 
+    /// Replay retained bounds, topology facts, and provenance against the source mesh.
+    pub fn validate_retained_state(self) -> Result<(), ExactMeshValidationError> {
+        self.mesh.validate_retained_state()
+    }
+
     /// Borrow one face by index.
     pub fn face(self, index: usize) -> Option<FaceRef<'a>> {
         (index < self.mesh.triangles().len()).then_some(FaceRef {
@@ -149,6 +154,11 @@ impl<'a> FaceRef<'a> {
         &self.mesh.facts().faces[self.index]
     }
 
+    /// Retained exact oriented face plane.
+    pub fn plane(self) -> &'a FacePlaneFacts {
+        &self.facts().plane
+    }
+
     /// Exact face vertices.
     pub fn vertices(self) -> [&'a Point3; 3] {
         triangle_vertices(self.mesh, self.triangle())
@@ -169,6 +179,11 @@ impl<'a> TriangleRef<'a> {
     /// Retained face facts for this triangle.
     pub fn facts(self) -> &'a FaceFacts {
         &self.mesh.facts().faces[self.index]
+    }
+
+    /// Retained exact oriented face plane.
+    pub fn plane(self) -> &'a FacePlaneFacts {
+        &self.facts().plane
     }
 
     /// Exact triangle vertices.
