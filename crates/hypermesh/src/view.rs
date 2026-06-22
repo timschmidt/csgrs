@@ -13,9 +13,6 @@ pub struct ExactMeshRef<'a> {
     mesh: &'a ExactMesh,
 }
 
-/// Preferred borrowed exact mesh view type.
-pub type MeshView<'a> = ExactMeshRef<'a>;
-
 /// Borrowed face view.
 #[derive(Clone, Copy, Debug)]
 pub struct FaceRef<'a> {
