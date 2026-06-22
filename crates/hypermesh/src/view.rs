@@ -250,7 +250,7 @@ impl<'a> PreparedMeshView<'a> {
     /// Pair order is an implementation detail of the selected broad-phase plan.
     pub fn candidate_face_pairs(&self, right: &PreparedMeshView<'_>) -> Vec<[usize; 2]> {
         let plan = self.bounds.candidate_face_pair_plan(&right.bounds);
-        let mut pairs = Vec::with_capacity(plan.capacity_hint());
+        let mut pairs = Vec::new();
         let result = self.bounds.try_visit_candidate_face_pairs_with_plan(
             &right.bounds,
             plan,
@@ -317,7 +317,7 @@ impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
     ///
     /// Pair order is an implementation detail of the selected broad-phase plan.
     pub fn candidate_face_pairs(&self) -> Vec<[usize; 2]> {
-        let mut pairs = Vec::with_capacity(self.bounds_plan.capacity_hint());
+        let mut pairs = Vec::new();
         let result = self.try_visit_candidate_face_pairs(|pair| {
             pairs.push(pair);
             Ok::<(), ()>(())

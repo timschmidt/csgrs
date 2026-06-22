@@ -297,7 +297,7 @@ impl<'a> PreparedMeshBounds<'a> {
     /// Return face-pair candidates whose exact boxes are not disjoint.
     #[cfg(test)]
     pub(crate) fn candidate_face_pairs(&self, other: &PreparedMeshBounds<'_>) -> Vec<[usize; 2]> {
-        let mut pairs = Vec::with_capacity(self.candidate_face_pair_capacity_hint(other));
+        let mut pairs = Vec::new();
         let result = self.try_visit_candidate_face_pairs(other, |pair| {
             pairs.push(pair);
             Ok::<(), ()>(())
