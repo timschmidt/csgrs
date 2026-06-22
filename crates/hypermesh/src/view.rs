@@ -128,6 +128,20 @@ impl<'a> ExactMeshRef<'a> {
         })
     }
 
+    /// Return exact broad-phase candidate face pairs for this view and `right`.
+    ///
+    /// The retained bounds on both source meshes are replayed before the AABB
+    /// scheduler is allowed to discard face pairs. Returned pairs are only
+    /// broad-phase candidates; narrow exact predicates still decide topology.
+    pub fn candidate_face_pairs(
+        self,
+        right: ExactMeshRef<'_>,
+    ) -> Result<Vec<[usize; 2]>, ExactMeshValidationError> {
+        self.validate_retained_state()?;
+        right.validate_retained_state()?;
+        Ok(self.mesh.bounds().candidate_face_pairs(right.mesh.bounds()))
+    }
+
     /// Materialize this view after an exact affine transform.
     pub fn transform(self, transform: &ExactAffineTransform3) -> Result<ExactMesh, MeshError> {
         self.mesh.transform(transform)

@@ -34,12 +34,14 @@ required by downstream CSG layers.
 - `MeshError` and `MeshDiagnostic` report invalid input, unsupported exact
   topology, stale replay, and construction blockers with provenance where
   available.
-- `ExactMeshRef`, `TriangleRef`, and `FaceRef` provide borrowed access for
-  queries that should not clone mesh storage.
+- `ExactMeshRef`, `TriangleRef`, `FaceRef`, and `EdgeRef` provide borrowed
+  access for queries that should not clone mesh storage.
 - `ExactMesh::union`, `ExactMesh::intersection`, `ExactMesh::difference`, and
   `ExactMesh::xor` materialize named closed boolean outputs as exact meshes.
 - `ExactMesh::transform`, `ExactMesh::transform_by`, and `ExactMesh::inverse`
   provide exact affine transforms and orientation inversion for CSG adapters.
+- `ExactMeshRef` exposes the same named operations and transform methods for
+  borrowed callers, plus replay-validated broad-phase candidate face pairs.
 - Low-level arrangement code exposes borrowed `ArrangementView` queries for
   algorithms that need retained topology without cloning arrangement storage.
 

@@ -113,6 +113,25 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
 }
 
 #[test]
+fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
+    let left = tetra([0, 0, 0]);
+    let overlapping = tetra([0, 0, 0]);
+    let disjoint = tetra([5, 0, 0]);
+
+    let candidates = left
+        .view()
+        .candidate_face_pairs(overlapping.view())
+        .unwrap();
+    assert!(!candidates.is_empty());
+    assert!(candidates.iter().all(|[left_face, right_face]| {
+        *left_face < left.triangles().len() && *right_face < overlapping.triangles().len()
+    }));
+
+    let disjoint_candidates = left.view().candidate_face_pairs(disjoint.view()).unwrap();
+    assert!(disjoint_candidates.is_empty());
+}
+
+#[test]
 fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);
