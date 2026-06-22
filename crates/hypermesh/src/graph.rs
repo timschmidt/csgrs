@@ -23,8 +23,7 @@ use hyperlimit::{
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::exact_key::{ExactPoint3Key, exact_point3_key};
 use super::intersection::{
-    MeshFacePairClassification, MeshFacePairRelation,
-    visit_prepared_mesh_pair_face_pair_classifications,
+    MeshFacePairClassification, MeshFacePairRelation, classify_mesh_face_pair_unchecked,
 };
 use super::mesh::ExactMesh;
 use super::topology::{mesh_for_side, triangle_edges};
@@ -1196,10 +1195,12 @@ pub(crate) fn build_intersection_graph_from_prepared_pair(
     let left = pair.left().view().mesh();
     let right = pair.right().view().mesh();
     let mut face_pairs = Vec::with_capacity(pair.candidate_face_pair_count());
-    visit_prepared_mesh_pair_face_pair_classifications(pair, |classification| {
-        face_pairs.push(events_for_face_pair(left, right, &classification));
-        Ok(())
-    })?;
+    for [left_face, right_face] in pair.candidate_face_pairs().iter().copied() {
+        let classification = classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
+        if classification.needs_graph_construction() {
+            face_pairs.push(events_for_face_pair(left, right, &classification));
+        }
+    }
     Ok(ExactIntersectionGraph { face_pairs })
 }
 

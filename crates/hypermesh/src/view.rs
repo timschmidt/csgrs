@@ -324,6 +324,11 @@ impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
         self.candidate_pairs.len()
     }
 
+    /// Cached broad-phase candidate face pairs in left/right face-index order.
+    pub(crate) fn candidate_face_pairs(&self) -> &[[usize; 2]] {
+        &self.candidate_pairs
+    }
+
     /// Visit exact broad-phase candidate face pairs without collecting them.
     pub fn visit_candidate_face_pairs(&self, mut visit: impl FnMut([usize; 2])) {
         for pair in self.candidate_pairs.iter().copied() {

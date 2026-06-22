@@ -12,7 +12,6 @@
 use hyperlimit::{SegmentPlaneIntersection, TrianglePlaneRelation};
 
 use super::construction::intersect_segment_with_retained_face_plane;
-use super::error::ExactMeshError;
 use super::mesh::ExactMesh;
 use super::narrow::{
     TriangleTriangleClassification, TriangleTriangleRelation,
@@ -20,7 +19,6 @@ use super::narrow::{
     classify_triangle_triangle_points_from_plane_relations,
 };
 use super::topology::triangle_edges;
-use super::view::PreparedMeshPairView;
 
 /// Coarse exact relation for one pair of mesh faces.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -64,7 +62,7 @@ impl MeshFacePairClassification {
     }
 }
 
-fn classify_mesh_face_pair_unchecked(
+pub(crate) fn classify_mesh_face_pair_unchecked(
     left: &ExactMesh,
     left_face: usize,
     right: &ExactMesh,
@@ -118,28 +116,6 @@ fn classify_mesh_face_pair_unchecked(
         triangle: Some(triangle),
         relation,
     }
-}
-
-/// Visit every prepared face pair that survives exact broad/narrow rejection.
-///
-/// The visitor receives only pairs that were not proven impossible by exact
-/// AABB disjointness, certified triangle plane separation, or exact coplanar
-/// disjointness. Coplanar touching/overlapping, non-coplanar candidate, and
-/// unknown pairs remain because they are exactly the cases that need
-/// overlap-graph construction or a policy decision.
-pub(crate) fn visit_prepared_mesh_pair_face_pair_classifications(
-    pair: &PreparedMeshPairView<'_, '_>,
-    mut visit: impl FnMut(MeshFacePairClassification) -> Result<(), ExactMeshError>,
-) -> Result<(), ExactMeshError> {
-    let left = pair.left().view().mesh();
-    let right = pair.right().view().mesh();
-    pair.try_visit_candidate_face_pairs(|[left_face, right_face]| {
-        let classification = classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
-        if classification.needs_graph_construction() {
-            visit(classification)?;
-        }
-        Ok(())
-    })
 }
 
 fn triangle_is_strictly_one_sided(relation: TrianglePlaneRelation) -> bool {
