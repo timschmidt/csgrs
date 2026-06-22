@@ -1180,6 +1180,24 @@ pub(crate) fn build_intersection_graph(
     Ok(ExactIntersectionGraph { face_pairs })
 }
 
+/// Build an exact event graph and replay it against the source meshes before use.
+pub(crate) fn build_validated_intersection_graph(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<ExactIntersectionGraph, MeshError> {
+    let graph = build_intersection_graph(left, right)?;
+    graph
+        .validate_against_meshes(left, right)
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("exact intersection graph failed source replay: {error:?}"),
+            ))
+        })?;
+    Ok(graph)
+}
+
 /// Exact split points for one directed mesh edge.
 #[derive(Clone, Debug, PartialEq)]
 pub struct EdgeSplit {

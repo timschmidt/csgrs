@@ -2534,7 +2534,9 @@ fn graph_for_certified_materialization<'a>(
         return Ok(graph);
     }
     if owned_graph.is_none() {
-        *owned_graph = Some(ExactBooleanWorkspace::new(left, right).into_validated_graph()?);
+        *owned_graph = Some(super::graph::build_validated_intersection_graph(
+            left, right,
+        )?);
     }
     Ok(owned_graph
         .as_ref()

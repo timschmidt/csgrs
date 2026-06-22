@@ -12,7 +12,7 @@ use super::boolean::{
     try_materialize_certified_boolean_support_with_artifacts,
 };
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-use super::graph::{ExactIntersectionGraph, build_intersection_graph};
+use super::graph::{ExactIntersectionGraph, build_validated_intersection_graph};
 use super::mesh::ExactMesh;
 use super::regularization::ExactRegularizationPolicy;
 use super::reports::{
@@ -77,30 +77,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
 
     fn ensure_validated_graph(&mut self) -> Result<(), MeshError> {
         if self.graph.is_none() {
-            self.graph = Some(build_intersection_graph(self.left, self.right)?);
+            self.graph = Some(build_validated_intersection_graph(self.left, self.right)?);
         }
-        let graph = self
-            .graph
-            .as_ref()
-            .expect("intersection graph was just initialized");
-        graph
-            .validate_against_meshes(self.left, self.right)
-            .map_err(|error| {
-                MeshError::one(MeshDiagnostic::new(
-                    Severity::Error,
-                    DiagnosticKind::UnsupportedExactOperation,
-                    format!("exact boolean workspace graph failed validation: {error:?}"),
-                ))
-            })?;
         Ok(())
-    }
-
-    pub(crate) fn into_validated_graph(mut self) -> Result<ExactIntersectionGraph, MeshError> {
-        self.validated_graph()?;
-        Ok(self
-            .graph
-            .take()
-            .expect("validated graph cache was just populated"))
     }
 
     pub(crate) fn into_evaluation(

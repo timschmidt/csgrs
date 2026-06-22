@@ -52,7 +52,7 @@ use super::convex::{
 use super::graph::MeshSide;
 use super::graph::{
     CoplanarArrangementReadinessReport, CoplanarArrangementReadinessStatus, ExactIntersectionGraph,
-    IntersectionEvent,
+    IntersectionEvent, build_validated_intersection_graph,
 };
 use super::intersection::MeshFacePairRelation;
 use super::orthogonal_solid::{
@@ -77,6 +77,7 @@ use super::volumetric_cells::{
 use super::winding::{
     ClosedMeshWindingMeshRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
+#[cfg(test)]
 use super::workspace::ExactBooleanWorkspace;
 use hyperlimit::PredicateUse;
 
@@ -358,8 +359,7 @@ fn validated_report_intersection_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, ExactReportValidationError> {
-    ExactBooleanWorkspace::new(left, right)
-        .into_validated_graph()
+    build_validated_intersection_graph(left, right)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
 }
 
