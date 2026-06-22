@@ -8,7 +8,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::Point3;
 
-use super::error::{DiagnosticKind, MeshDiagnostic, Severity};
+use super::error::{ExactMeshBlockerKind, ExactMeshBlocker, Severity};
 use super::facts::{
     EdgeFacts, FaceFacts, FacePlaneFacts, MeshFacts, MeshValidationFacts, OrientedFaceFacts,
     TriangleFacts, VertexFacts, VertexLinkKind,
@@ -25,7 +25,7 @@ pub(crate) struct ValidationReport {
     /// Exact facts collected during validation.
     pub(crate) facts: MeshValidationFacts,
     /// Diagnostics collected during validation.
-    pub(crate) diagnostics: Vec<MeshDiagnostic>,
+    pub(crate) diagnostics: Vec<ExactMeshBlocker>,
 }
 
 /// Boundary policy for mesh validation.
@@ -111,9 +111,9 @@ pub(crate) fn validate_triangles_with_policy(
         sorted_tri.sort_unstable();
         if !seen_triangles.insert(sorted_tri) && duplicate_triangles.insert(sorted_tri) {
             diagnostics.push(
-                MeshDiagnostic::new(
+                ExactMeshBlocker::new(
                     Severity::Error,
-                    DiagnosticKind::DuplicateTriangle,
+                    ExactMeshBlockerKind::DuplicateTriangle,
                     format!("face {face} duplicates triangle vertex set {sorted_tri:?}"),
                 )
                 .with_face(face),
@@ -139,9 +139,9 @@ pub(crate) fn validate_triangles_with_policy(
         if !non_degenerate {
             degenerate_triangles += 1;
             diagnostics.push(
-                MeshDiagnostic::new(
+                ExactMeshBlocker::new(
                     Severity::Error,
-                    DiagnosticKind::DegenerateTriangle,
+                    ExactMeshBlockerKind::DegenerateTriangle,
                     format!("face {face} is not a certified non-degenerate triangle"),
                 )
                 .with_face(face),
@@ -178,9 +178,9 @@ pub(crate) fn validate_triangles_with_policy(
             boundary_edges += 1;
             if policy.boundary == BoundaryPolicy::Closed {
                 diagnostics.push(
-                    MeshDiagnostic::new(
+                    ExactMeshBlocker::new(
                         Severity::Error,
-                        DiagnosticKind::BoundaryEdge,
+                        ExactMeshBlockerKind::BoundaryEdge,
                         format!("edge {vertices:?} has only one incident face"),
                     )
                     .with_edge(vertices),
@@ -189,9 +189,9 @@ pub(crate) fn validate_triangles_with_policy(
         } else if incident_faces > 2 {
             non_manifold_edges += 1;
             diagnostics.push(
-                MeshDiagnostic::new(
+                ExactMeshBlocker::new(
                     Severity::Error,
-                    DiagnosticKind::NonManifoldEdge,
+                    ExactMeshBlockerKind::NonManifoldEdge,
                     format!("edge {vertices:?} has {incident_faces} incident faces"),
                 )
                 .with_edge(vertices),
@@ -201,9 +201,9 @@ pub(crate) fn validate_triangles_with_policy(
         if directed_uses[0] > 1 || directed_uses[1] > 1 {
             duplicate_directed_edges += 1;
             diagnostics.push(
-                MeshDiagnostic::new(
+                ExactMeshBlocker::new(
                     Severity::Error,
-                    DiagnosticKind::DuplicateDirectedEdge,
+                    ExactMeshBlockerKind::DuplicateDirectedEdge,
                     format!("edge {vertices:?} has duplicate directed uses {directed_uses:?}"),
                 )
                 .with_edge(vertices),
@@ -223,9 +223,9 @@ pub(crate) fn validate_triangles_with_policy(
             if link_facts.kind == VertexLinkKind::NonManifold {
                 non_manifold_vertices += 1;
                 diagnostics.push(
-                    MeshDiagnostic::new(
+                    ExactMeshBlocker::new(
                         Severity::Error,
-                        DiagnosticKind::NonManifoldVertexLink,
+                        ExactMeshBlockerKind::NonManifoldVertexLink,
                         format!("vertex {index} has a nonmanifold link"),
                     )
                     .with_vertex(index),

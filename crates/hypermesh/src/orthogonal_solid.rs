@@ -16,7 +16,7 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use hyperlimit::{Point3, compare_reals};
 
-use super::error::MeshError;
+use super::error::ExactMeshError;
 use super::mesh::{ExactMesh, Triangle};
 use super::validation::ValidationPolicy;
 use hyperlimit::SourceProvenance;
@@ -197,7 +197,7 @@ pub(crate) fn materialize_axis_aligned_orthogonal_solid_cell_plan(
     plan: OrthogonalCellPlan,
     label: &'static str,
     validation: ValidationPolicy,
-) -> Result<ExactMesh, MeshError> {
+) -> Result<ExactMesh, ExactMeshError> {
     plan.to_mesh(label, validation)
 }
 
@@ -207,7 +207,7 @@ pub(crate) fn materialize_axis_aligned_orthogonal_solid_cell_output(
     operation: AxisAlignedOrthogonalSolidOperation,
     label: &'static str,
     validation: ValidationPolicy,
-) -> Result<Option<ExactMesh>, MeshError> {
+) -> Result<Option<ExactMesh>, ExactMeshError> {
     let Some(plan) = axis_aligned_orthogonal_solid_cell_plan(left, right, operation) else {
         return Ok(None);
     };
@@ -873,7 +873,7 @@ impl OrthogonalCellPlan {
         &self,
         label: &'static str,
         validation: ValidationPolicy,
-    ) -> Result<ExactMesh, MeshError> {
+    ) -> Result<ExactMesh, ExactMeshError> {
         if self.selected_count == 0 {
             return ExactMesh::new_with_policy(
                 Vec::new(),

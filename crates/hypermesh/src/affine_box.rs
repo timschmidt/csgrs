@@ -15,7 +15,7 @@ use core::cmp::Ordering;
 
 use hyperlimit::{Point3, compare_reals};
 
-use super::error::MeshError;
+use super::error::ExactMeshError;
 use super::mesh::{ExactMesh, Triangle};
 use super::validation::ValidationPolicy;
 use hyperlimit::SourceProvenance;
@@ -66,7 +66,7 @@ pub(crate) fn mesh_from_uvw(
     basis: &AffineBoxBasis,
     label: &'static str,
     validation: ValidationPolicy,
-) -> Result<ExactMesh, MeshError> {
+) -> Result<ExactMesh, ExactMeshError> {
     let vertices = mesh
         .vertices()
         .iter()

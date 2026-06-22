@@ -15,7 +15,7 @@ pub enum Severity {
 
 /// Stable category for a mesh diagnostic.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum DiagnosticKind {
+pub enum ExactMeshBlockerKind {
     /// Coordinate buffer length is not divisible by three.
     VertexBufferArity,
     /// Index buffer length is not divisible by three.
@@ -44,11 +44,11 @@ pub enum DiagnosticKind {
 
 /// One validation or import diagnostic.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct MeshDiagnostic {
+pub struct ExactMeshBlocker {
     /// Severity.
     pub severity: Severity,
     /// Stable category.
-    pub kind: DiagnosticKind,
+    pub kind: ExactMeshBlockerKind,
     /// Human-readable detail.
     pub message: String,
     /// Optional vertex index.
@@ -61,9 +61,9 @@ pub struct MeshDiagnostic {
     pub edge: Option<[usize; 2]>,
 }
 
-impl MeshDiagnostic {
+impl ExactMeshBlocker {
     /// Build a diagnostic with no object location.
-    pub fn new(severity: Severity, kind: DiagnosticKind, message: impl Into<String>) -> Self {
+    pub fn new(severity: Severity, kind: ExactMeshBlockerKind, message: impl Into<String>) -> Self {
         Self {
             severity,
             kind,
@@ -102,26 +102,26 @@ impl MeshDiagnostic {
 
 /// Error returned when mesh construction has one or more fatal diagnostics.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct MeshError {
+pub struct ExactMeshError {
     /// Diagnostics collected before construction stopped.
-    pub diagnostics: Vec<MeshDiagnostic>,
+    pub diagnostics: Vec<ExactMeshBlocker>,
 }
 
-impl MeshError {
+impl ExactMeshError {
     /// Build an error from diagnostics.
-    pub fn new(diagnostics: Vec<MeshDiagnostic>) -> Self {
+    pub fn new(diagnostics: Vec<ExactMeshBlocker>) -> Self {
         Self { diagnostics }
     }
 
     /// Build an error containing one diagnostic.
-    pub fn one(diagnostic: MeshDiagnostic) -> Self {
+    pub fn one(diagnostic: ExactMeshBlocker) -> Self {
         Self {
             diagnostics: vec![diagnostic],
         }
     }
 }
 
-impl fmt::Display for MeshError {
+impl fmt::Display for ExactMeshError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.diagnostics.as_slice() {
             [] => write!(f, "mesh validation failed"),
@@ -131,16 +131,4 @@ impl fmt::Display for MeshError {
     }
 }
 
-impl std::error::Error for MeshError {}
-
-/// Public exact-kernel error name for mesh construction and materialization.
-///
-/// This aliases the existing diagnostic container so downstream code can move
-/// to exact-kernel naming without losing source-compatible diagnostics.
-pub type ExactMeshError = MeshError;
-
-/// Public exact-kernel blocker name for a single retained diagnostic.
-///
-/// Blockers carry stable categories plus source vertex, face, edge, or flat
-/// coordinate locations when the failing kernel stage can identify them.
-pub type ExactMeshBlocker = MeshDiagnostic;
+impl std::error::Error for ExactMeshError {}

@@ -51,7 +51,7 @@ use super::contained_adjacent::{
 use super::convex::{
     intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
 };
-use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
+use super::error::{ExactMeshBlockerKind, ExactMeshBlocker, ExactMeshError, Severity};
 use super::facts::MeshFacts;
 #[cfg(test)]
 use super::graph::FacePairEvents;
@@ -794,7 +794,7 @@ fn exact_boolean_evaluation_for_replay_result(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
-) -> Result<ExactBooleanEvaluation, MeshError> {
+) -> Result<ExactBooleanEvaluation, ExactMeshError> {
     let source_facts = ExactBooleanSourceFacts::from_sources(left, right);
     let shortcut_facts = source_facts.arrangement_cell_complex_shortcuts().clone();
     let graph = build_validated_intersection_graph(left, right)?;
@@ -890,7 +890,7 @@ fn replay_regularized_arrangement_attempt(
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
     retained_arrangement: &mut Option<ExactArrangement>,
     retained_attempt: &mut Option<ExactArrangementBooleanAttempt>,
-) -> Result<(), MeshError> {
+) -> Result<(), ExactMeshError> {
     let policy = ExactRegularizationPolicy::REGULARIZED_SOLID;
     if let Some(attempt) = retained_attempt.as_ref() {
         attempt
@@ -930,9 +930,9 @@ fn replay_regularized_arrangement_attempt(
         ) {
             Ok(arrangement) => {
                 arrangement.validate().map_err(|blocker| {
-                    MeshError::one(MeshDiagnostic::new(
+                    ExactMeshError::one(ExactMeshBlocker::new(
                         Severity::Error,
-                        DiagnosticKind::UnsupportedExactOperation,
+                        ExactMeshBlockerKind::UnsupportedExactOperation,
                         format!("exact boolean arrangement report failed: {blocker:?}"),
                     ))
                 })?;
@@ -986,7 +986,7 @@ fn exact_boolean_replay_preflight(
     graph: &ExactIntersectionGraph,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
     retained_attempt: Option<&ExactArrangementBooleanAttempt>,
-) -> Result<ExactBooleanPreflight, MeshError> {
+) -> Result<ExactBooleanPreflight, ExactMeshError> {
     let graph_preflight_has_source_arrangement_shortcut = shortcut_facts
         .certified_support(request.operation)
         == Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
@@ -1049,10 +1049,10 @@ fn exact_boolean_replay_preflight(
     Ok(graph_preflight)
 }
 
-fn exact_boolean_replay_report_error(error: ExactReportValidationError) -> MeshError {
-    MeshError::one(MeshDiagnostic::new(
+fn exact_boolean_replay_report_error(error: ExactReportValidationError) -> ExactMeshError {
+    ExactMeshError::one(ExactMeshBlocker::new(
         Severity::Error,
-        DiagnosticKind::UnsupportedExactOperation,
+        ExactMeshBlockerKind::UnsupportedExactOperation,
         format!("exact boolean retained report failed replay validation: {error:?}"),
     ))
 }
@@ -1102,7 +1102,7 @@ fn retained_arrangement_attempt_for_request<'a>(
 /// to approximate float winding. They prefer the exact graph-backed
 /// arrangement/cell-complex path; certified shortcut cases execute only where
 /// they cover cases that path does not yet support. Remaining named overlaps
-/// return [`DiagnosticKind::UnsupportedExactOperation`] until split-region
+/// return [`ExactMeshBlockerKind::UnsupportedExactOperation`] until split-region
 /// inside/outside classification is complete.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ExactBooleanOperation {
@@ -1250,15 +1250,15 @@ impl ExactBooleanCertificationSet {
         retained_regularized_arrangement: Option<&ExactArrangement>,
         retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
         source_facts: &ExactBooleanSourceFacts,
-    ) -> Result<Self, MeshError> {
+    ) -> Result<Self, ExactMeshError> {
         validate_graph_source_handoff(graph, left, right)?;
         if let Some(attempt) = retained_arrangement_attempt {
             attempt
                 .validate_for_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
                 .map_err(|error| {
-                    MeshError::one(MeshDiagnostic::new(
+                    ExactMeshError::one(ExactMeshBlocker::new(
                         Severity::Error,
-                        DiagnosticKind::UnsupportedExactOperation,
+                        ExactMeshBlockerKind::UnsupportedExactOperation,
                         format!("retained arrangement attempt failed validation: {error:?}"),
                     ))
                 })?;
@@ -2756,7 +2756,7 @@ fn graph_for_certified_materialization<'a>(
     owned_graph: &'a mut Option<ExactIntersectionGraph>,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<&'a ExactIntersectionGraph, MeshError> {
+) -> Result<&'a ExactIntersectionGraph, ExactMeshError> {
     if let Some(graph) = retained_graph {
         validate_graph_source_handoff(graph, left, right)?;
         return Ok(graph);
@@ -2771,10 +2771,10 @@ fn graph_for_certified_materialization<'a>(
         .expect("certified materialization graph was just built"))
 }
 
-fn unsupported_certified_materialization_error(support: ExactBooleanSupport) -> MeshError {
-    MeshError::one(MeshDiagnostic::new(
+fn unsupported_certified_materialization_error(support: ExactBooleanSupport) -> ExactMeshError {
+    ExactMeshError::one(ExactMeshBlocker::new(
         Severity::Error,
-        DiagnosticKind::UnsupportedExactOperation,
+        ExactMeshBlockerKind::UnsupportedExactOperation,
         format!("certified exact boolean support did not materialize: {support:?}"),
     ))
 }
@@ -2788,7 +2788,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
     retained_regularized_arrangement: Option<&ExactArrangement>,
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let operation = request.operation;
     let validation = request.validation;
     let mut owned_graph = None;
@@ -3102,7 +3102,7 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     retained_regularized_arrangement: Option<&ExactArrangement>,
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let operation = request.operation;
     let validation = request.validation;
     let retained_arrangement_attempt = retained_arrangement_attempt_for_request(
@@ -3113,9 +3113,9 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
         ExactRegularizationPolicy::REGULARIZED_SOLID,
     )
     .map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
+        ExactMeshError::one(ExactMeshBlocker::new(
             Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::UnsupportedExactOperation,
             format!("retained arrangement attempt failed validation: {error:?}"),
         ))
     })?;
@@ -3247,13 +3247,13 @@ fn materialize_retained_arrangement_cell_complex_attempt(
     right: &ExactMesh,
     request: ExactBooleanRequest,
     attempt: &ExactArrangementBooleanAttempt,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     attempt
         .validate_against_sources_for_request(left, right, request)
         .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("retained arrangement attempt failed replay: {error:?}"),
             ))
         })?;
@@ -3287,7 +3287,7 @@ fn materialize_retained_arrangement_cell_complex_attempt(
 pub(crate) fn rematerialize_retained_arrangement_cell_complex_attempt(
     request: ExactBooleanRequest,
     attempt: &ExactArrangementBooleanAttempt,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     if !attempt.materialized_arrangement_cell_complex_output()
         || attempt.materialized_arrangement_cell_complex_shortcut()
     {
@@ -3305,7 +3305,7 @@ pub(crate) fn rematerialize_retained_arrangement_cell_complex_attempt(
 fn rematerialize_simplified_arrangement_cell_complex(
     request: ExactBooleanRequest,
     simplified: &ExactSimplifiedCellComplex,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     if simplified.operation != request.operation || simplified.validate().is_err() {
         return Ok(None);
     }
@@ -3348,7 +3348,7 @@ pub(crate) fn replay_generic_arrangement_cell_complex_result(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
@@ -3384,12 +3384,12 @@ fn materialize_selected_region_result_from_graph(
     right: &ExactMesh,
     selection: ExactRegionSelection,
     validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
+) -> Result<ExactBooleanResult, ExactMeshError> {
     let graph_had_unknowns = graph.has_unknowns();
     if graph_had_unknowns {
-        return Err(MeshError::one(MeshDiagnostic::new(
+        return Err(ExactMeshError::one(ExactMeshBlocker::new(
             Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::UnsupportedExactOperation,
             "exact boolean graph contains unresolved predicate events",
         )));
     }
@@ -3400,9 +3400,9 @@ fn materialize_selected_region_result_from_graph(
         checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
     let triangulations = checked_triangulate_face_regions_with_earcut(&region_plan, left, right)
         .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::DegenerateTriangle,
+                ExactMeshBlockerKind::DegenerateTriangle,
                 format!("exact region triangulation failed: {error}"),
             ))
         })?;
@@ -3413,18 +3413,18 @@ fn materialize_selected_region_result_from_graph(
         right,
     )
     .map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
+        ExactMeshError::one(ExactMeshBlocker::new(
             Severity::Error,
-            DiagnosticKind::IndexOutOfBounds,
+            ExactMeshBlockerKind::IndexOutOfBounds,
             format!("exact boolean assembly failed: {error}"),
         ))
     })?;
     assembly
         .canonicalize_for_mesh_with_sources(left, right)
         .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::IndexOutOfBounds,
+                ExactMeshBlockerKind::IndexOutOfBounds,
                 format!("exact boolean assembly canonicalization failed: {error}"),
             ))
         })?;
@@ -3442,9 +3442,9 @@ fn materialize_selected_region_result_from_graph(
         mesh,
     };
     result.validate().map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
+        ExactMeshError::one(ExactMeshBlocker::new(
             Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::UnsupportedExactOperation,
             format!("exact selected-region result validation failed: {error:?}"),
         ))
     })?;
@@ -3456,7 +3456,7 @@ pub(crate) fn replay_selected_region_boolean_result(
     right: &ExactMesh,
     selection: ExactRegionSelection,
     validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
+) -> Result<ExactBooleanResult, ExactMeshError> {
     let graph = build_validated_intersection_graph(left, right)?;
     replay_selected_region_boolean_result_from_graph(&graph, left, right, selection, validation)
 }
@@ -3467,7 +3467,7 @@ fn replay_selected_region_boolean_result_from_graph(
     right: &ExactMesh,
     selection: ExactRegionSelection,
     validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
+) -> Result<ExactBooleanResult, ExactMeshError> {
     validate_graph_source_handoff(graph, left, right)?;
     let result =
         materialize_selected_region_result_from_graph(graph, left, right, selection, validation)?;
@@ -3478,9 +3478,9 @@ fn replay_selected_region_boolean_result_from_graph(
         } if result_selection == selection
     ) || result.mesh.validation_policy() != validation
     {
-        return Err(MeshError::one(MeshDiagnostic::new(
+        return Err(ExactMeshError::one(ExactMeshBlocker::new(
             Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::UnsupportedExactOperation,
             "exact selected-region replay returned mismatched operation or validation policy",
         )));
     }
@@ -3552,7 +3552,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     request: ExactBooleanRequest,
     retained_attempt: Option<&ExactArrangementBooleanAttempt>,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
-) -> Result<ExactBooleanPreflight, MeshError> {
+) -> Result<ExactBooleanPreflight, ExactMeshError> {
     let operation = request.operation;
     let support = initial_reject_boundary_preflight_support(left, right, operation, shortcut_facts);
     if support.is_certified()
@@ -3735,9 +3735,9 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     {
         let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
         evidence.validate().map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("exact no-volume-overlap evidence validation failed: {error:?}"),
             ))
         })?;
@@ -3796,9 +3796,9 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     {
         let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
         evidence.validate().map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("exact no-volume-overlap union evidence validation failed: {error:?}"),
             ))
         })?;
@@ -4107,7 +4107,7 @@ pub(crate) fn preflight_boolean_exact_request_from_graph_with_retained_attempt(
     request: ExactBooleanRequest,
     retained_attempt: Option<&ExactArrangementBooleanAttempt>,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
-) -> Result<ExactBooleanPreflight, MeshError> {
+) -> Result<ExactBooleanPreflight, ExactMeshError> {
     validate_graph_source_handoff(graph, left, right)?;
     let operation = request.operation;
     let validation = request.validation;
@@ -4212,7 +4212,7 @@ pub(crate) fn volumetric_boundary_closure_report_from_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-) -> Result<ExactVolumetricBoundaryClosureReport, MeshError> {
+) -> Result<ExactVolumetricBoundaryClosureReport, ExactMeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(no_materialized_boundary_output_report(operation));
     }
@@ -4255,14 +4255,14 @@ pub(crate) fn no_materialized_boundary_output_report(
 fn volumetric_boundary_closure_report_from_materialized(
     materialized: &MaterializedVolumetricWindingRegionPlan,
     operation: ExactBooleanOperation,
-) -> Result<ExactVolumetricBoundaryClosureReport, MeshError> {
+) -> Result<ExactVolumetricBoundaryClosureReport, ExactMeshError> {
     materialized
         .mesh
         .validate_retained_state()
         .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("volumetric boundary closure source mesh validation failed: {error:?}"),
             ))
         })?;
@@ -4319,9 +4319,9 @@ fn volumetric_boundary_closure_report_from_materialized(
         })
         .collect::<Option<Vec<_>>>()
         .ok_or_else(|| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::IndexOutOfBounds,
+                ExactMeshBlockerKind::IndexOutOfBounds,
                 "volumetric boundary closure report referenced a missing output vertex",
             ))
         })?;
@@ -4331,9 +4331,9 @@ fn volumetric_boundary_closure_report_from_materialized(
         .collect::<Result<Vec<_>, _>>()
         .map(|split| split.into_iter().flatten().collect::<Vec<_>>())
         .map_err(|blocker| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!(
                     "volumetric boundary closure self-contact canonicalization failed: {blocker:?}"
                 ),
@@ -4551,7 +4551,7 @@ fn certified_arrangement_cell_complex_preflight_if_materialized(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<Option<ExactBooleanPreflight>, MeshError> {
+) -> Result<Option<ExactBooleanPreflight>, ExactMeshError> {
     let arrangement_materializes =
         [false, true]
             .into_iter()
@@ -4595,14 +4595,14 @@ pub(crate) fn certified_arrangement_cell_complex_preflight_from_retained_attempt
     request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
     attempt: &ExactArrangementBooleanAttempt,
-) -> Result<Option<ExactBooleanPreflight>, MeshError> {
+) -> Result<Option<ExactBooleanPreflight>, ExactMeshError> {
     attempt
         .validate_for_request_policy(request, policy)
         .and_then(|()| attempt.validate_against_sources_for_request(left, right, request))
         .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("retained arrangement attempt failed validation: {error:?}"),
             ))
         })?;
@@ -4630,7 +4630,7 @@ fn cached_certified_arrangement_cell_complex_preflight(
     right: &ExactMesh,
     retained_request: Option<ExactBooleanRequest>,
     retained_attempt: Option<&ExactArrangementBooleanAttempt>,
-) -> Result<Option<ExactBooleanPreflight>, MeshError> {
+) -> Result<Option<ExactBooleanPreflight>, ExactMeshError> {
     if cache.is_none() {
         let retained_preflight = retained_request
             .zip(retained_attempt)
@@ -4672,7 +4672,7 @@ fn graph_requires_boundary_policy(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<bool, MeshError> {
+) -> Result<bool, ExactMeshError> {
     if !graph.face_pairs.is_empty()
         && graph
             .face_pairs
@@ -4755,13 +4755,13 @@ fn coplanar_boundary_only_evidence_if_consumed(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<Option<CoplanarVolumetricCellEvidenceReport>, MeshError> {
+) -> Result<Option<CoplanarVolumetricCellEvidenceReport>, ExactMeshError> {
     validate_graph_source_handoff(graph, left, right)?;
     let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
     evidence.validate().map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
+        ExactMeshError::one(ExactMeshBlocker::new(
             Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::UnsupportedExactOperation,
             format!("exact boundary-only coplanar evidence validation failed: {error:?}"),
         ))
     })?;
@@ -4869,7 +4869,7 @@ fn real_sign(value: &Real) -> Option<Sign> {
 fn certified_closed_boundary_contact(
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<bool, MeshError> {
+) -> Result<bool, ExactMeshError> {
     if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
         return Ok(false);
     }
@@ -4907,7 +4907,7 @@ fn closed_winding_vertex_relations_from_empty_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<Option<(ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshRelation)>, MeshError> {
+) -> Result<Option<(ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshRelation)>, ExactMeshError> {
     if !left.facts().mesh.closed_manifold
         || !right.facts().mesh.closed_manifold
         || graph.has_unknowns()
@@ -4943,7 +4943,7 @@ fn certified_closed_winding_containment_relation_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<Option<ClosedWindingContainmentRelation>, MeshError> {
+) -> Result<Option<ClosedWindingContainmentRelation>, ExactMeshError> {
     let Some((left_in_right, right_in_left)) =
         closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
     else {
@@ -4966,7 +4966,7 @@ fn boolean_closed_winding_containment_meshes_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let Some(containment) =
         certified_closed_winding_containment_relation_from_graph(graph, left, right)?
     else {
@@ -5035,7 +5035,7 @@ fn materialize_graph_shortcut_from_graph_for_request(
     request: ExactBooleanRequest,
     support: ExactBooleanSupport,
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let operation = request.operation;
     let validation = request.validation;
     let result = match support {
@@ -5148,7 +5148,7 @@ fn boolean_closed_winding_separated_meshes_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let Some((left_in_right, right_in_left)) =
         closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
     else {
@@ -5231,7 +5231,7 @@ fn materialize_arrangement_lower_dimensional_intersection_from_graph(
     request: ExactBooleanRequest,
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     if !request_uses_arrangement_lower_dimensional_regularized_shortcut(request)
         || closed_regularized_operand_kind(left)
             != Some(ClosedRegularizedOperandKind::LowerDimensional)
@@ -5249,9 +5249,9 @@ fn materialize_arrangement_lower_dimensional_intersection_from_graph(
         shortcut_facts,
     )?;
     readiness.validate().map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
+        ExactMeshError::one(ExactMeshBlocker::new(
             Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::UnsupportedExactOperation,
             format!("exact arrangement lower-dimensional readiness validation failed: {error:?}"),
         ))
     })?;
@@ -5290,7 +5290,7 @@ pub(crate) fn replay_boolean_exact_request_for_result_validation(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
-) -> Result<ExactBooleanResult, MeshError> {
+) -> Result<ExactBooleanResult, ExactMeshError> {
     materialize_boolean_exact_request(left, right, request)
 }
 
@@ -5298,7 +5298,7 @@ pub(crate) fn materialize_boolean_exact_request(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
-) -> Result<ExactBooleanResult, MeshError> {
+) -> Result<ExactBooleanResult, ExactMeshError> {
     materialize_boolean_exact_request_with_graph(left, right, request, None)
 }
 
@@ -5307,7 +5307,7 @@ fn materialize_boolean_exact_request_with_graph(
     right: &ExactMesh,
     request: ExactBooleanRequest,
     retained_graph: Option<&ExactIntersectionGraph>,
-) -> Result<ExactBooleanResult, MeshError> {
+) -> Result<ExactBooleanResult, ExactMeshError> {
     let operation = request.operation;
     let validation = request.validation;
     let mut owned_graph = None;
@@ -5386,7 +5386,7 @@ fn materialize_boolean_exact_request_from_ready_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
-) -> Result<ExactBooleanResult, MeshError> {
+) -> Result<ExactBooleanResult, ExactMeshError> {
     let operation = request.operation;
     let validation = request.validation;
     let boundary_policy = request.boundary_policy;
@@ -5487,9 +5487,9 @@ fn materialize_boolean_exact_request_from_ready_graph(
             )? {
                 return Ok(result);
             }
-            Err(MeshError::one(MeshDiagnostic::new(
+            Err(ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 "named exact booleans require certified winding/inside-outside classification",
             )))
         }
@@ -5502,7 +5502,7 @@ fn materialize_closed_boundary_or_no_volume_overlap_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     if let Some((result, _evidence)) =
         materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
             graph, left, right, operation, validation,
@@ -5668,7 +5668,7 @@ pub(crate) fn arrangement_cell_complex_shortcut_attempt(
     right: &ExactMesh,
     request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
-) -> Result<Option<ExactArrangementBooleanAttempt>, MeshError> {
+) -> Result<Option<ExactArrangementBooleanAttempt>, ExactMeshError> {
     let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
     arrangement_cell_complex_shortcut_attempt_with_facts(
         left,
@@ -5685,7 +5685,7 @@ pub(crate) fn arrangement_cell_complex_shortcut_attempt_with_facts(
     request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
-) -> Result<Option<ExactArrangementBooleanAttempt>, MeshError> {
+) -> Result<Option<ExactArrangementBooleanAttempt>, ExactMeshError> {
     if policy != ExactRegularizationPolicy::REGULARIZED_SOLID {
         return Ok(None);
     }
@@ -5723,7 +5723,7 @@ pub(crate) fn arrangement_boolean_attempt_report_from_arrangement(
     request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
     arrangement: &ExactArrangement,
-) -> Result<ExactArrangementBooleanAttempt, MeshError> {
+) -> Result<ExactArrangementBooleanAttempt, ExactMeshError> {
     let outcome = run_arrangement_cell_complex_attempt_from_arrangement(
         arrangement,
         left,
@@ -5816,7 +5816,7 @@ fn arrangement_cell_complex_materializes_for_preflight_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     regularize_unregularized_sheet_complex: bool,
-) -> Result<bool, MeshError> {
+) -> Result<bool, ExactMeshError> {
     let validation_policies: &[ValidationPolicy] =
         if left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold {
             &[ValidationPolicy::CLOSED]
@@ -5847,7 +5847,7 @@ fn certified_arrangement_cell_complex_result_from_graph(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
     regularize_unregularized_sheet_complex: bool,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let outcome = match run_arrangement_cell_complex_attempt_from_graph(
         graph,
         left,
@@ -5875,7 +5875,7 @@ fn boolean_arrangement_regularized_boundary_contact_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     if !matches!(
         operation,
         ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
@@ -5890,9 +5890,9 @@ fn boolean_arrangement_regularized_boundary_contact_from_graph(
         certified_closed_boundary_touching_regularized_report_from_graph(graph, left, right)?
     {
         report.validate_against_sources(left, right).map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!(
                     "exact arrangement regularized boundary contact consumed invalid certificate: {error:?}"
                 ),
@@ -5927,7 +5927,7 @@ fn certified_arrangement_regularized_boundary_contact_from_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-) -> Result<bool, MeshError> {
+) -> Result<bool, ExactMeshError> {
     if !matches!(
         operation,
         ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
@@ -5962,7 +5962,7 @@ fn run_arrangement_cell_complex_attempt_from_graph(
     request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
     regularize_unregularized_sheet_complex: bool,
-) -> Result<ArrangementCellComplexOutcome, MeshError> {
+) -> Result<ArrangementCellComplexOutcome, ExactMeshError> {
     let arrangement =
         ExactArrangement::from_intersection_graph_with_policy(graph.clone(), left, right, policy)?;
     run_arrangement_cell_complex_attempt_from_arrangement(
@@ -5982,7 +5982,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
     request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
     regularize_unregularized_sheet_complex: bool,
-) -> Result<ArrangementCellComplexOutcome, MeshError> {
+) -> Result<ArrangementCellComplexOutcome, ExactMeshError> {
     let operation = request.operation;
     let validation = request.validation;
     let mut attempt = ExactArrangementBooleanAttempt {
@@ -6369,7 +6369,7 @@ fn arrangement_open_surface_recovery_outcome(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
+) -> Result<Option<ArrangementCellComplexOutcome>, ExactMeshError> {
     let Some(plan) = open_surface_arrangement_plan_from_graph(graph, left, right, operation)?
     else {
         return Ok(None);
@@ -6483,7 +6483,7 @@ pub(crate) fn adjacent_union_completion_certification(
         ExactAdjacentUnionCompletionReport,
         Option<ExactBooleanResult>,
     ),
-    MeshError,
+    ExactMeshError,
 > {
     let left_closed = left.facts().mesh.closed_manifold;
     let right_closed = right.facts().mesh.closed_manifold;
@@ -6575,7 +6575,7 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
         ExactAdjacentUnionCompletionReport,
         Option<ExactBooleanResult>,
     ),
-    MeshError,
+    ExactMeshError,
 > {
     let left_closed = left.facts().mesh.closed_manifold;
     let right_closed = right.facts().mesh.closed_manifold;
@@ -6820,7 +6820,7 @@ pub(crate) fn materialize_adjacent_union_completion_from_graph_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
-) -> Result<Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>, MeshError> {
+) -> Result<Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>, ExactMeshError> {
     let (report, result) = adjacent_union_completion_certification_from_graph(
         graph,
         left,
@@ -6832,9 +6832,9 @@ pub(crate) fn materialize_adjacent_union_completion_from_graph_for_request(
         return Ok(None);
     }
     report.validate().map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
+        ExactMeshError::one(ExactMeshBlocker::new(
             Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::UnsupportedExactOperation,
             format!("exact adjacent-union completion report validation failed: {error:?}"),
         ))
     })?;
@@ -6856,7 +6856,7 @@ fn boolean_arrangement_regularized_sheet_complex_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     // Unregularized sheet arrangements already retain exact split cells but can
     // lack a closed shell graph. The volumetric split-cell assembly supplies
     // the missing regularized caps without changing predicates or tolerances.
@@ -6876,7 +6876,7 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || !left.facts().mesh.closed_manifold
         || !right.facts().mesh.closed_manifold
@@ -6885,9 +6885,9 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
     }
     let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
     evidence.validate().map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
+        ExactMeshError::one(ExactMeshBlocker::new(
             Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::UnsupportedExactOperation,
             format!("exact no-volume-overlap evidence validation failed: {error:?}"),
         ))
     })?;
@@ -6987,15 +6987,15 @@ pub(crate) fn materialize_closed_no_volume_overlap_regularized_boolean_with_evid
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
+) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, ExactMeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
     let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
     evidence.validate().map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
+        ExactMeshError::one(ExactMeshBlocker::new(
             Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::UnsupportedExactOperation,
             format!("exact no-volume-overlap evidence validation failed: {error:?}"),
         ))
     })?;
@@ -7122,7 +7122,7 @@ fn arrangement_volumetric_split_cell_recovery_outcome(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
+) -> Result<Option<ArrangementCellComplexOutcome>, ExactMeshError> {
     let Some(result) = materialize_arrangement_volumetric_split_cell_result_from_graph(
         graph, left, right, operation, validation,
     )?
@@ -7157,7 +7157,7 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
+) -> Result<Option<ArrangementCellComplexOutcome>, ExactMeshError> {
     if enabled && regularized_sheet_recovery_surface {
         if let Some(result) = boolean_arrangement_regularized_sheet_complex_from_graph(
             graph, left, right, operation, validation,
@@ -7231,7 +7231,7 @@ fn boolean_convex_meshes_optional(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let (mesh, shortcut, label) = match operation {
         ExactBooleanOperation::Union => {
             let Some(union) = union_closed_convex_solids(left, right) else {
@@ -7285,7 +7285,7 @@ fn certified_convex_relation_shortcut_from_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-) -> Result<Option<ConvexRelationShortcut>, MeshError> {
+) -> Result<Option<ConvexRelationShortcut>, ExactMeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
@@ -7298,9 +7298,9 @@ fn certified_convex_relation_shortcut_from_graph(
     left_in_right
         .validate_against_sources(left, right)
         .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("left convex relation replay failed: {error:?}"),
             ))
         })?;
@@ -7308,9 +7308,9 @@ fn certified_convex_relation_shortcut_from_graph(
     right_in_left
         .validate_against_sources(right, left)
         .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("right convex relation replay failed: {error:?}"),
             ))
         })?;
@@ -7358,7 +7358,7 @@ fn boolean_convex_relation_meshes_optional_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     validate_graph_source_handoff(graph, left, right)?;
     let Some(relation) =
         certified_convex_relation_shortcut_from_graph(graph, left, right, operation)?
@@ -7455,7 +7455,7 @@ fn boolean_arrangement_convex_regularized_sheet_recovery(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let (mesh, label) = match operation {
         ExactBooleanOperation::Union => {
             let Some(union) = union_closed_convex_solids(left, right) else {
@@ -7504,7 +7504,7 @@ fn materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<(ExactBooleanResult, ExactVolumetricBoundaryClosureReport)>, MeshError> {
+) -> Result<Option<(ExactBooleanResult, ExactVolumetricBoundaryClosureReport)>, ExactMeshError> {
     let Some((mesh, closure_report)) =
         materialize_volumetric_coplanar_boundary_closure_output_from_graph(
             graph, left, right, operation, validation,
@@ -7546,7 +7546,7 @@ fn result_with_arrangement_gate_reports_from_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-) -> Result<ExactBooleanResult, MeshError> {
+) -> Result<ExactBooleanResult, ExactMeshError> {
     let arrangement = ExactArrangement::from_intersection_graph_with_policy(
         graph.clone(),
         left,
@@ -7566,9 +7566,9 @@ fn result_with_arrangement_gate_reports_from_graph(
     let ownership_report = arrangement
         .region_ownership_report_with_policy(left, right, ownership_policy)
         .map_err(|blocker| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("exact region ownership report failed: {blocker:?}"),
             ))
         })?;
@@ -7580,7 +7580,7 @@ pub(crate) fn materialize_volumetric_coplanar_boundary_closure_output(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<(ExactMesh, ExactVolumetricBoundaryClosureReport)>, MeshError> {
+) -> Result<Option<(ExactMesh, ExactVolumetricBoundaryClosureReport)>, ExactMeshError> {
     let graph = build_validated_intersection_graph(left, right)?;
     materialize_volumetric_coplanar_boundary_closure_output_from_graph(
         &graph, left, right, operation, validation,
@@ -7593,7 +7593,7 @@ fn materialize_volumetric_coplanar_boundary_closure_output_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<(ExactMesh, ExactVolumetricBoundaryClosureReport)>, MeshError> {
+) -> Result<Option<(ExactMesh, ExactVolumetricBoundaryClosureReport)>, ExactMeshError> {
     let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
         graph,
         left,
@@ -7638,7 +7638,7 @@ fn materialize_arrangement_volumetric_split_cell_result_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     if validation == ValidationPolicy::CLOSED {
         let Some(mut materialized) = materialize_volumetric_winding_region_plan_from_graph(
             graph,
@@ -7770,7 +7770,7 @@ fn volumetric_winding_open_boundary_candidate_counts(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-) -> Result<Option<(usize, usize)>, MeshError> {
+) -> Result<Option<(usize, usize)>, ExactMeshError> {
     let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
         graph,
         left,
@@ -7870,7 +7870,7 @@ fn certified_coplanar_boundary_closure_from_materialized(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactMesh>, MeshError> {
+) -> Result<Option<ExactMesh>, ExactMeshError> {
     let Some(mesh) = close_exact_coplanar_boundary_loops(
         &materialized.mesh,
         "exact volumetric split-cell coplanar boundary closure",
@@ -8588,7 +8588,7 @@ fn materialize_simple_coplanar_overlay_arrangement(
     operation: ExactBooleanOperation,
     validation: Option<ValidationPolicy>,
     arrangement: &ExactArrangement,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     if arrangement.carrier_plane_overlays.len() != 1
         || !arrangement.face_plane_arrangements.is_empty()
     {
@@ -8674,7 +8674,7 @@ pub(crate) fn boolean_coplanar_mesh_overlay_optional(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     if !coplanar_mesh_overlay_should_preempt_surface_paths(left, right, operation) {
         return Ok(None);
     }
@@ -9383,7 +9383,7 @@ fn boolean_arrangement_cell_complex_recovery(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     if let Some(result) =
         boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
     {
@@ -9397,7 +9397,7 @@ fn boolean_arrangement_orthogonal_solid_cell_recovery(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation) else {
         return Ok(None);
     };
@@ -9438,7 +9438,7 @@ fn boolean_arrangement_affine_orthogonal_solid_recovery(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let affine_operation = match operation {
         ExactBooleanOperation::Union => AffineOrthogonalSolidOperation::Union,
         ExactBooleanOperation::Intersection => AffineOrthogonalSolidOperation::Intersection,
@@ -9476,7 +9476,7 @@ fn materialize_open_surface_disjoint_meshes(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
+) -> Result<ExactBooleanResult, ExactMeshError> {
     let mesh = match operation {
         ExactBooleanOperation::Union => concatenate_meshes_with_options(
             left,
@@ -9509,7 +9509,7 @@ fn boolean_open_surface_disjoint_meshes_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let disjoint_report = open_surface_disjoint_report_from_graph(graph, left, right);
     if disjoint_report.is_certified() {
         let result = materialize_open_surface_disjoint_meshes(left, right, operation, validation)?;
@@ -9656,7 +9656,7 @@ pub(crate) fn replay_open_surface_arrangement_result(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let graph = build_validated_intersection_graph(left, right)?;
     let Some(result) =
         open_surface_arrangement_result_from_graph(&graph, left, right, operation, validation)?
@@ -9677,7 +9677,7 @@ fn open_surface_arrangement_result_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let Some(plan) = open_surface_arrangement_plan_from_graph(graph, left, right, operation)?
     else {
         return Ok(None);
@@ -9709,7 +9709,7 @@ fn materialize_open_surface_arrangement_plan(
     validation: ValidationPolicy,
     graph_had_unknowns: bool,
     plan: OpenSurfaceArrangementPlan,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let (_support, region_classifications, triangulations) = plan;
     let selection = match operation {
         ExactBooleanOperation::Union => ExactRegionSelection::KeepAll,
@@ -9729,18 +9729,18 @@ fn materialize_open_surface_arrangement_plan(
         right,
     )
     .map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
+        ExactMeshError::one(ExactMeshBlocker::new(
             Severity::Error,
-            DiagnosticKind::IndexOutOfBounds,
+            ExactMeshBlockerKind::IndexOutOfBounds,
             format!("open-surface arrangement assembly failed: {error}"),
         ))
     })?;
     assembly
         .canonicalize_for_mesh_with_sources(left, right)
         .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::IndexOutOfBounds,
+                ExactMeshBlockerKind::IndexOutOfBounds,
                 format!("open-surface arrangement assembly canonicalization failed: {error}"),
             ))
         })?;
@@ -9759,9 +9759,9 @@ fn materialize_open_surface_arrangement_plan(
         mesh,
     };
     result.validate().map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
+        ExactMeshError::one(ExactMeshBlocker::new(
             Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::UnsupportedExactOperation,
             format!("open-surface arrangement validation failed: {error:?}"),
         ))
     })?;
@@ -9777,7 +9777,7 @@ fn open_surface_arrangement_plan_from_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-) -> Result<Option<OpenSurfaceArrangementPlan>, MeshError> {
+) -> Result<Option<OpenSurfaceArrangementPlan>, ExactMeshError> {
     let support = match operation {
         ExactBooleanOperation::Union => ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion,
         ExactBooleanOperation::Intersection => {
@@ -9832,9 +9832,9 @@ fn open_surface_arrangement_plan_from_graph(
     }
     let triangulations = checked_triangulate_face_regions_with_earcut(&region_plan, left, right)
         .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::DegenerateTriangle,
+                ExactMeshBlockerKind::DegenerateTriangle,
                 format!("open-surface arrangement triangulation failed: {error}"),
             ))
         })?;
@@ -9845,7 +9845,7 @@ fn boolean_same_surface_meshes(
     mesh: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
+) -> Result<ExactBooleanResult, ExactMeshError> {
     let mesh = match operation {
         ExactBooleanOperation::Union | ExactBooleanOperation::Intersection => {
             copy_mesh(mesh, "exact same-surface boolean result", validation)?
@@ -9868,7 +9868,7 @@ pub(crate) fn replay_closed_same_surface_boolean_result_if_certified(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || !left.facts().mesh.closed_manifold
         || !right.facts().mesh.closed_manifold
@@ -9883,7 +9883,7 @@ fn certified_closed_boundary_touching_regularized_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<Option<ExactBoundaryTouchingReport>, MeshError> {
+) -> Result<Option<ExactBoundaryTouchingReport>, ExactMeshError> {
     if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
         return Ok(None);
     }
@@ -9892,9 +9892,9 @@ fn certified_closed_boundary_touching_regularized_report_from_graph(
         return Ok(None);
     }
     report.validate().map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
+        ExactMeshError::one(ExactMeshBlocker::new(
             Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::UnsupportedExactOperation,
             format!("exact closed-boundary-touch report validation failed: {error:?}"),
         ))
     })?;
@@ -9905,16 +9905,16 @@ fn certified_closed_boundary_only_contact_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<bool, MeshError> {
+) -> Result<bool, ExactMeshError> {
     if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
         return Ok(false);
     }
     validate_graph_source_handoff(graph, left, right)?;
     let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
     evidence.validate().map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
+        ExactMeshError::one(ExactMeshBlocker::new(
             Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::UnsupportedExactOperation,
             format!("exact boundary-only coplanar evidence validation failed: {error:?}"),
         ))
     })?;
@@ -9925,16 +9925,16 @@ fn closed_zero_area_boundary_contact_evidence_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<Option<CoplanarVolumetricCellEvidenceReport>, MeshError> {
+) -> Result<Option<CoplanarVolumetricCellEvidenceReport>, ExactMeshError> {
     if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
         return Ok(None);
     }
     validate_graph_source_handoff(graph, left, right)?;
     let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
     evidence.validate().map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
+        ExactMeshError::one(ExactMeshBlocker::new(
             Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
+            ExactMeshBlockerKind::UnsupportedExactOperation,
             format!("exact zero-area boundary contact evidence validation failed: {error:?}"),
         ))
     })?;
@@ -9951,7 +9951,7 @@ pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evid
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
+) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, ExactMeshError> {
     let Some(evidence) = closed_zero_area_boundary_contact_evidence_from_graph(graph, left, right)?
     else {
         return Ok(None);
@@ -10002,7 +10002,7 @@ fn materialize_boundary_policy_shortcut_result(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let mesh = match operation {
         ExactBooleanOperation::Union => concatenate_meshes_with_options(
             left,
@@ -10080,7 +10080,7 @@ fn boolean_boundary_touching_meshes_from_graph(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
     boundary_policy: ExactBoundaryBooleanPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     if boundary_policy == ExactBoundaryBooleanPolicy::Reject {
         return Ok(None);
     }
@@ -10091,9 +10091,9 @@ fn boolean_boundary_touching_meshes_from_graph(
     report
         .validate_against_sources(left, right)
         .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("exact boundary-policy projection consumed invalid certificate: {error:?}"),
             ))
         })?;
@@ -10117,7 +10117,7 @@ pub(crate) fn winding_readiness_report_for_request_from_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
-) -> Result<ExactWindingReadinessReport, MeshError> {
+) -> Result<ExactWindingReadinessReport, ExactMeshError> {
     let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
     winding_readiness_report_for_request_from_graph_and_attempt(
         graph,
@@ -10136,7 +10136,7 @@ fn winding_readiness_report_for_request_from_graph_and_attempt(
     request: ExactBooleanRequest,
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
-) -> Result<ExactWindingReadinessReport, MeshError> {
+) -> Result<ExactWindingReadinessReport, ExactMeshError> {
     if request.validation == ValidationPolicy::ALLOW_BOUNDARY
         && request.boundary_policy == ExactBoundaryBooleanPolicy::Reject
     {
@@ -10312,13 +10312,13 @@ fn validate_graph_source_handoff(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<(), MeshError> {
+) -> Result<(), ExactMeshError> {
     graph
         .validate_against_sources(left, right)
         .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("retained exact intersection graph failed source replay: {error:?}"),
             ))
         })
@@ -10327,7 +10327,7 @@ fn validate_graph_source_handoff(
 fn validated_intersection_graph(
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<ExactIntersectionGraph, MeshError> {
+) -> Result<ExactIntersectionGraph, ExactMeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
     Ok(graph)
@@ -10341,7 +10341,7 @@ pub(crate) fn boundary_touching_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<ExactBoundaryTouchingReport, MeshError> {
+) -> Result<ExactBoundaryTouchingReport, ExactMeshError> {
     let graph_had_unknowns = graph.has_unknowns();
     let counts = retained_graph_counts(graph);
     let status = if graph_had_unknowns {
@@ -10392,7 +10392,7 @@ pub(crate) fn planar_arrangement_report_from_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-) -> Result<ExactPlanarArrangementReport, MeshError> {
+) -> Result<ExactPlanarArrangementReport, ExactMeshError> {
     let mut arrangement_cell_complex_preflight: CertifiedArrangementCellComplexPreflightCache =
         None;
     planar_arrangement_report_from_graph_with_cell_complex_cache(
@@ -10414,7 +10414,7 @@ fn planar_arrangement_report_from_graph_with_cell_complex_cache(
     arrangement_cell_complex_preflight: &mut CertifiedArrangementCellComplexPreflightCache,
     retained_request: Option<ExactBooleanRequest>,
     retained_attempt: Option<&ExactArrangementBooleanAttempt>,
-) -> Result<ExactPlanarArrangementReport, MeshError> {
+) -> Result<ExactPlanarArrangementReport, ExactMeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(not_named_planar_arrangement_report(operation));
     }
@@ -10528,7 +10528,7 @@ fn winding_readiness_report_from_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-) -> Result<ExactWindingReadinessReport, MeshError> {
+) -> Result<ExactWindingReadinessReport, ExactMeshError> {
     let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
     winding_readiness_report_from_graph_with_facts(graph, left, right, operation, &shortcut_facts)
 }
@@ -10539,7 +10539,7 @@ fn winding_readiness_report_from_graph_with_facts(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
-) -> Result<ExactWindingReadinessReport, MeshError> {
+) -> Result<ExactWindingReadinessReport, ExactMeshError> {
     let regular_operation = !matches!(operation, ExactBooleanOperation::SelectedRegions(_));
     if regular_operation && (left.triangles().is_empty() || right.triangles().is_empty()) {
         return Ok(winding_readiness_report(
@@ -11187,7 +11187,7 @@ fn materialize_volumetric_winding_region_plan_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<MaterializedVolumetricWindingRegionPlan>, MeshError> {
+) -> Result<Option<MaterializedVolumetricWindingRegionPlan>, ExactMeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
@@ -11212,7 +11212,7 @@ fn materialize_closed_volumetric_winding_boundary_caps_from_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-) -> Result<Option<ExactMesh>, MeshError> {
+) -> Result<Option<ExactMesh>, ExactMeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
@@ -11243,7 +11243,7 @@ fn materialize_volumetric_winding_region_plan(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<MaterializedVolumetricWindingRegionPlan>, MeshError> {
+) -> Result<Option<MaterializedVolumetricWindingRegionPlan>, ExactMeshError> {
     if !volumetric_classifications
         .iter()
         .all(|classification| classification.relation.is_materialization_decided())
@@ -11321,7 +11321,7 @@ fn volumetric_winding_region_plan_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<Option<VolumetricWindingRegionPlan>, MeshError> {
+) -> Result<Option<VolumetricWindingRegionPlan>, ExactMeshError> {
     let counts = retained_graph_counts(graph);
     if graph.has_unknowns()
         || graph.face_pairs.is_empty()
@@ -11346,9 +11346,9 @@ fn volumetric_winding_region_plan_from_graph(
             return Ok(None);
         }
         Err(error) => {
-            return Err(MeshError::one(MeshDiagnostic::new(
+            return Err(ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::DegenerateTriangle,
+                ExactMeshBlockerKind::DegenerateTriangle,
                 format!("exact winding face-cell triangulation failed: {error}"),
             )));
         }
@@ -11361,9 +11361,9 @@ fn volumetric_winding_region_plan_from_graph(
     let volumetric_classifications =
         classify_triangulated_regions_against_opposite_meshes(&triangulations, left, right)
             .map_err(|error| {
-                MeshError::one(MeshDiagnostic::new(
+                ExactMeshError::one(ExactMeshBlocker::new(
                     Severity::Error,
-                    DiagnosticKind::UnsupportedExactOperation,
+                    ExactMeshBlockerKind::UnsupportedExactOperation,
                     format!(
                         "exact volumetric winding region report/source replay failed: {error:?}"
                     ),
@@ -11482,10 +11482,10 @@ fn convex_boundary_containment_is_supported(
             .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Outside))
 }
 
-fn winding_error(error: WindingReportError) -> MeshError {
-    MeshError::one(MeshDiagnostic::new(
+fn winding_error(error: WindingReportError) -> ExactMeshError {
+    ExactMeshError::one(ExactMeshBlocker::new(
         Severity::Error,
-        DiagnosticKind::UnsupportedExactOperation,
+        ExactMeshBlockerKind::UnsupportedExactOperation,
         format!("exact winding report/source replay failed: {error:?}"),
     ))
 }
@@ -11494,7 +11494,7 @@ fn copy_mesh(
     mesh: &ExactMesh,
     label: &'static str,
     validation: ValidationPolicy,
-) -> Result<ExactMesh, MeshError> {
+) -> Result<ExactMesh, ExactMeshError> {
     ExactMesh::new_with_policy(
         mesh.vertices().to_vec(),
         mesh.triangles().to_vec(),
@@ -11509,7 +11509,7 @@ fn concatenate_meshes_with_options(
     reverse_right: bool,
     label: &'static str,
     validation: ValidationPolicy,
-) -> Result<ExactMesh, MeshError> {
+) -> Result<ExactMesh, ExactMeshError> {
     let mut vertices = left.vertices().to_vec();
     let right_offset = vertices.len();
     vertices.extend_from_slice(right.vertices());
@@ -11776,7 +11776,7 @@ fn boolean_closed_regularized_lower_dimensional_optional(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     if left.triangles().is_empty() || right.triangles().is_empty() {
         return Ok(None);
     }
@@ -11883,7 +11883,7 @@ fn boolean_disjoint_meshes(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
+) -> Result<ExactBooleanResult, ExactMeshError> {
     let mesh = match operation {
         ExactBooleanOperation::Union => concatenate_meshes(left, right, validation)?,
         ExactBooleanOperation::Intersection => {
@@ -11908,7 +11908,7 @@ fn boolean_empty_operand(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
+) -> Result<ExactBooleanResult, ExactMeshError> {
     let mesh = match operation {
         ExactBooleanOperation::Union
             if validation == ValidationPolicy::CLOSED
@@ -11967,7 +11967,7 @@ fn boolean_identical_meshes(
     mesh: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
+) -> Result<ExactBooleanResult, ExactMeshError> {
     let mesh = match operation {
         ExactBooleanOperation::Union | ExactBooleanOperation::Intersection => {
             ExactMesh::new_with_policy(
@@ -11993,7 +11993,7 @@ fn boolean_identical_meshes(
     ))
 }
 
-fn empty_mesh(label: &'static str, validation: ValidationPolicy) -> Result<ExactMesh, MeshError> {
+fn empty_mesh(label: &'static str, validation: ValidationPolicy) -> Result<ExactMesh, ExactMeshError> {
     ExactMesh::new_with_policy(
         Vec::new(),
         Vec::new(),
@@ -12030,7 +12030,7 @@ fn concatenate_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
     validation: ValidationPolicy,
-) -> Result<ExactMesh, MeshError> {
+) -> Result<ExactMesh, ExactMeshError> {
     let mut vertices = left.vertices().to_vec();
     let right_offset = vertices.len();
     vertices.extend_from_slice(right.vertices());

@@ -16,7 +16,7 @@ use super::cell_complex::{
     ExactCellComplex, ExactLabeledCellComplex, ExactLabeledCellComplexFreshness,
     ExactRegionOwnershipReport, region_ownership_status,
 };
-use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
+use super::error::{ExactMeshBlockerKind, ExactMeshBlocker, ExactMeshError, Severity};
 use super::exact_key::{
     ExactPoint3Key, ExactUndirectedPoint3EdgeKey, exact_point3_key,
     exact_undirected_point3_edge_key,
@@ -1297,7 +1297,7 @@ impl ExactArrangement3d {
     }
 
     /// Build a retained exact arrangement from two meshes.
-    pub fn from_meshes(left: &ExactMesh, right: &ExactMesh) -> Result<Self, MeshError> {
+    pub fn from_meshes(left: &ExactMesh, right: &ExactMesh) -> Result<Self, ExactMeshError> {
         Self::from_meshes_with_policy(left, right, ExactRegularizationPolicy::default())
     }
 
@@ -1306,7 +1306,7 @@ impl ExactArrangement3d {
         left: &ExactMesh,
         right: &ExactMesh,
         policy: ExactRegularizationPolicy,
-    ) -> Result<Self, MeshError> {
+    ) -> Result<Self, ExactMeshError> {
         let graph = build_intersection_graph(left, right)?;
         Self::from_intersection_graph_with_policy(graph, left, right, policy)
     }
@@ -1323,13 +1323,13 @@ impl ExactArrangement3d {
         left: &ExactMesh,
         right: &ExactMesh,
         policy: ExactRegularizationPolicy,
-    ) -> Result<Self, MeshError> {
+    ) -> Result<Self, ExactMeshError> {
         graph
             .validate_against_meshes(left, right)
             .map_err(|error| {
-                MeshError::one(MeshDiagnostic::new(
+                ExactMeshError::one(ExactMeshBlocker::new(
                     Severity::Error,
-                    DiagnosticKind::UnsupportedExactOperation,
+                    ExactMeshBlockerKind::UnsupportedExactOperation,
                     format!("retained exact intersection graph failed mesh handoff: {error:?}"),
                 ))
             })?;

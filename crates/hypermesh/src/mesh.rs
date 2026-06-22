@@ -9,7 +9,7 @@ use super::boolean::{
     ExactBooleanOperation, ExactBooleanRequest, materialize_boolean_exact_request,
 };
 use super::bounds::{BoundsValidationError, MeshBounds};
-use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
+use super::error::{ExactMeshBlockerKind, ExactMeshBlocker, ExactMeshError, Severity};
 use super::facts::{MeshFactsValidationError, MeshValidationFacts};
 use super::scalar::LossyF64Import;
 use super::validation::{ValidationPolicy, ValidationReport, validate_triangles_with_policy};
@@ -71,7 +71,7 @@ impl ExactAffineTransform3 {
     }
 
     /// Build from a row-major affine 4x4 homogeneous matrix.
-    pub fn from_homogeneous_rows(matrix: [[Real; 4]; 4]) -> Result<Self, MeshError> {
+    pub fn from_homogeneous_rows(matrix: [[Real; 4]; 4]) -> Result<Self, ExactMeshError> {
         let [
             [m00, m01, m02, tx],
             [m10, m11, m12, ty],
@@ -79,9 +79,9 @@ impl ExactAffineTransform3 {
             affine_row,
         ] = matrix;
         if !homogeneous_affine_row_is_exact(&affine_row)? {
-            return Err(MeshError::one(MeshDiagnostic::new(
+            return Err(ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 "homogeneous mesh transform must be affine with final row [0, 0, 0, 1]",
             )));
         }
@@ -110,13 +110,13 @@ impl ExactAffineTransform3 {
         )
     }
 
-    fn orientation(&self) -> Result<Ordering, MeshError> {
+    fn orientation(&self) -> Result<Ordering, ExactMeshError> {
         compare_reals(&det3_rows(&self.linear), &Real::zero())
             .value()
             .ok_or_else(|| {
-                MeshError::one(MeshDiagnostic::new(
+                ExactMeshError::one(ExactMeshBlocker::new(
                     Severity::Error,
-                    DiagnosticKind::UnsupportedExactOperation,
+                    ExactMeshBlockerKind::UnsupportedExactOperation,
                     "exact transform determinant sign could not be certified",
                 ))
             })
@@ -134,10 +134,10 @@ pub struct ExactMesh {
     provenance: ConstructionProvenance,
 }
 
-fn point_from_f64_lossy(values: [f64; 3], first_coordinate: usize) -> Result<Point3, MeshError> {
-    let x = LossyF64Import::new(values[0], first_coordinate).map_err(MeshError::one)?;
-    let y = LossyF64Import::new(values[1], first_coordinate + 1).map_err(MeshError::one)?;
-    let z = LossyF64Import::new(values[2], first_coordinate + 2).map_err(MeshError::one)?;
+fn point_from_f64_lossy(values: [f64; 3], first_coordinate: usize) -> Result<Point3, ExactMeshError> {
+    let x = LossyF64Import::new(values[0], first_coordinate).map_err(ExactMeshError::one)?;
+    let y = LossyF64Import::new(values[1], first_coordinate + 1).map_err(ExactMeshError::one)?;
+    let z = LossyF64Import::new(values[2], first_coordinate + 2).map_err(ExactMeshError::one)?;
     Ok(Point3::new(x.value, y.value, z.value))
 }
 
@@ -179,7 +179,7 @@ impl ExactMesh {
         vertices: Vec<Point3>,
         triangles: Vec<Triangle>,
         source: SourceProvenance,
-    ) -> Result<Self, MeshError> {
+    ) -> Result<Self, ExactMeshError> {
         Self::new_with_policy(vertices, triangles, source, ValidationPolicy::CLOSED)
     }
 
@@ -189,17 +189,17 @@ impl ExactMesh {
         triangles: Vec<Triangle>,
         source: SourceProvenance,
         policy: ValidationPolicy,
-    ) -> Result<Self, MeshError> {
+    ) -> Result<Self, ExactMeshError> {
         let index_diagnostics = validate_indices(vertices.len(), &triangles);
         if !index_diagnostics.is_empty() {
-            return Err(MeshError::new(index_diagnostics));
+            return Err(ExactMeshError::new(index_diagnostics));
         }
 
         let triangle_indices = triangles.iter().map(|tri| tri.0).collect::<Vec<_>>();
         let bounds = MeshBounds::from_triangles(&vertices, &triangle_indices);
         let report = validate_triangles_with_policy(&vertices, &triangle_indices, policy);
         if !report.is_valid() {
-            return Err(MeshError::new(report.diagnostics));
+            return Err(ExactMeshError::new(report.diagnostics));
         }
 
         let mut provenance = ConstructionProvenance::new(source);
@@ -219,12 +219,12 @@ impl ExactMesh {
     ///
     /// The `f64` values are checked for finiteness and imported as exact dyadic
     /// `Real` values. They are not used later as tolerance-bearing floats.
-    pub fn from_f64_triangles(pos: &[f64], idx: &[usize]) -> Result<Self, MeshError> {
+    pub fn from_f64_triangles(pos: &[f64], idx: &[usize]) -> Result<Self, ExactMeshError> {
         Self::from_f64_triangles_with_policy(pos, idx, ValidationPolicy::CLOSED)
     }
 
     /// Construct an exact mesh from flat hyperreal coordinates.
-    pub fn from_real_triangles(pos: &[Real], idx: &[usize]) -> Result<Self, MeshError> {
+    pub fn from_real_triangles(pos: &[Real], idx: &[usize]) -> Result<Self, ExactMeshError> {
         Self::from_real_triangles_with_policy(pos, idx, ValidationPolicy::CLOSED)
     }
 
@@ -234,7 +234,7 @@ impl ExactMesh {
         pos: &[Real],
         idx: &[usize],
         policy: ValidationPolicy,
-    ) -> Result<Self, MeshError> {
+    ) -> Result<Self, ExactMeshError> {
         validate_flat_mesh_buffers(pos.len(), idx.len())?;
 
         let vertices = pos
@@ -256,7 +256,7 @@ impl ExactMesh {
         pos: &[f64],
         idx: &[usize],
         policy: ValidationPolicy,
-    ) -> Result<Self, MeshError> {
+    ) -> Result<Self, ExactMeshError> {
         validate_flat_mesh_buffers(pos.len(), idx.len())?;
 
         let mut vertices = Vec::with_capacity(pos.len() / 3);
@@ -278,7 +278,7 @@ impl ExactMesh {
     /// Integer grid input is lifted directly into `hyperreal::Real` without a
     /// primitive-float edge, keeping exact predicates and determinant schedules
     /// on structural input coordinates.
-    pub fn from_i64_triangles(pos: &[i64], idx: &[usize]) -> Result<Self, MeshError> {
+    pub fn from_i64_triangles(pos: &[i64], idx: &[usize]) -> Result<Self, ExactMeshError> {
         Self::from_i64_triangles_with_policy(pos, idx, ValidationPolicy::CLOSED)
     }
 
@@ -288,7 +288,7 @@ impl ExactMesh {
         pos: &[i64],
         idx: &[usize],
         policy: ValidationPolicy,
-    ) -> Result<Self, MeshError> {
+    ) -> Result<Self, ExactMeshError> {
         validate_flat_mesh_buffers(pos.len(), idx.len())?;
 
         let vertices = pos
@@ -434,13 +434,13 @@ impl ExactMesh {
         &self,
         right: &ExactMesh,
         query: impl for<'a> FnOnce(ArrangementView<'a>) -> R,
-    ) -> Result<R, MeshError> {
+    ) -> Result<R, ExactMeshError> {
         let arrangement = ExactArrangement::from_meshes(self, right)?;
         Ok(query(arrangement.view()))
     }
 
     /// Materialize this mesh after an exact affine transform.
-    pub fn transform(&self, transform: &ExactAffineTransform3) -> Result<ExactMesh, MeshError> {
+    pub fn transform(&self, transform: &ExactAffineTransform3) -> Result<ExactMesh, ExactMeshError> {
         let vertices = self
             .vertices
             .iter()
@@ -459,12 +459,12 @@ impl ExactMesh {
     }
 
     /// Materialize this mesh after a row-major exact homogeneous affine transform.
-    pub fn transform_by(&self, matrix: [[Real; 4]; 4]) -> Result<ExactMesh, MeshError> {
+    pub fn transform_by(&self, matrix: [[Real; 4]; 4]) -> Result<ExactMesh, ExactMeshError> {
         self.transform(&ExactAffineTransform3::from_homogeneous_rows(matrix)?)
     }
 
     /// Materialize this mesh with every triangle orientation reversed.
-    pub fn inverse(&self) -> Result<ExactMesh, MeshError> {
+    pub fn inverse(&self) -> Result<ExactMesh, ExactMeshError> {
         ExactMesh::new_with_policy(
             self.vertices.clone(),
             self.triangles.iter().map(reverse_triangle).collect(),
@@ -478,7 +478,7 @@ impl ExactMesh {
     /// This is the mesh-kernel convenience entry point for named booleans. It
     /// returns only the output mesh; callers that need retained arrangement
     /// evidence should use the lower-level internal kernel stages from csgrs.
-    pub fn union(&self, right: &ExactMesh) -> Result<ExactMesh, MeshError> {
+    pub fn union(&self, right: &ExactMesh) -> Result<ExactMesh, ExactMeshError> {
         self.named_boolean_mesh(
             right,
             ExactBooleanOperation::Union,
@@ -490,7 +490,7 @@ impl ExactMesh {
     ///
     /// Lower-dimensional contact is regularized into the representable triangle
     /// mesh result for the default closed output contract.
-    pub fn intersection(&self, right: &ExactMesh) -> Result<ExactMesh, MeshError> {
+    pub fn intersection(&self, right: &ExactMesh) -> Result<ExactMesh, ExactMeshError> {
         self.named_boolean_mesh(
             right,
             ExactBooleanOperation::Intersection,
@@ -499,7 +499,7 @@ impl ExactMesh {
     }
 
     /// Materialize the exact closed difference of this mesh minus `right`.
-    pub fn difference(&self, right: &ExactMesh) -> Result<ExactMesh, MeshError> {
+    pub fn difference(&self, right: &ExactMesh) -> Result<ExactMesh, ExactMeshError> {
         self.named_boolean_mesh(
             right,
             ExactBooleanOperation::Difference,
@@ -511,7 +511,7 @@ impl ExactMesh {
     ///
     /// Each side difference is materialized through the exact kernel and then
     /// unioned under the same closed output contract.
-    pub fn xor(&self, right: &ExactMesh) -> Result<ExactMesh, MeshError> {
+    pub fn xor(&self, right: &ExactMesh) -> Result<ExactMesh, ExactMeshError> {
         let left_only = self.difference(right)?;
         let right_only = right.difference(self)?;
         left_only.union(&right_only)
@@ -522,22 +522,22 @@ impl ExactMesh {
         right: &ExactMesh,
         operation: ExactBooleanOperation,
         validation: ValidationPolicy,
-    ) -> Result<ExactMesh, MeshError> {
+    ) -> Result<ExactMesh, ExactMeshError> {
         let request = ExactBooleanRequest::new(operation, validation);
         materialize_boolean_exact_request(self, right, request).map(|result| result.into_mesh())
     }
 }
 
-fn validate_indices(vertex_count: usize, triangles: &[Triangle]) -> Vec<MeshDiagnostic> {
+fn validate_indices(vertex_count: usize, triangles: &[Triangle]) -> Vec<ExactMeshBlocker> {
     let mut diagnostics = Vec::new();
     for (face, triangle) in triangles.iter().enumerate() {
         let [a, b, c] = triangle.0;
         for vertex in [a, b, c] {
             if vertex >= vertex_count {
                 diagnostics.push(
-                    MeshDiagnostic::new(
+                    ExactMeshBlocker::new(
                         Severity::Error,
-                        DiagnosticKind::IndexOutOfBounds,
+                        ExactMeshBlockerKind::IndexOutOfBounds,
                         format!(
                             "face {face} references vertex {vertex}, but only {vertex_count} vertices exist"
                         ),
@@ -549,9 +549,9 @@ fn validate_indices(vertex_count: usize, triangles: &[Triangle]) -> Vec<MeshDiag
         }
         if a == b || b == c || c == a {
             diagnostics.push(
-                MeshDiagnostic::new(
+                ExactMeshBlocker::new(
                     Severity::Error,
-                    DiagnosticKind::DegenerateTriangle,
+                    ExactMeshBlockerKind::DegenerateTriangle,
                     format!("face {face} repeats a vertex"),
                 )
                 .with_face(face),
@@ -561,18 +561,18 @@ fn validate_indices(vertex_count: usize, triangles: &[Triangle]) -> Vec<MeshDiag
     diagnostics
 }
 
-fn validate_flat_mesh_buffers(position_len: usize, index_len: usize) -> Result<(), MeshError> {
+fn validate_flat_mesh_buffers(position_len: usize, index_len: usize) -> Result<(), ExactMeshError> {
     if !position_len.is_multiple_of(3) {
-        return Err(MeshError::one(MeshDiagnostic::new(
+        return Err(ExactMeshError::one(ExactMeshBlocker::new(
             Severity::Error,
-            DiagnosticKind::VertexBufferArity,
+            ExactMeshBlockerKind::VertexBufferArity,
             "position buffer length must be a multiple of 3",
         )));
     }
     if !index_len.is_multiple_of(3) {
-        return Err(MeshError::one(MeshDiagnostic::new(
+        return Err(ExactMeshError::one(ExactMeshBlocker::new(
             Severity::Error,
-            DiagnosticKind::IndexBufferArity,
+            ExactMeshBlockerKind::IndexBufferArity,
             "index buffer length must be a multiple of 3",
         )));
     }
@@ -609,21 +609,21 @@ fn det3_rows(rows: &[[Real; 3]; 3]) -> Real {
     &(&rows[0][0] * &x_minor) - &(&rows[0][1] * &y_minor) + &(&rows[0][2] * &z_minor)
 }
 
-fn homogeneous_affine_row_is_exact(row: &[Real; 4]) -> Result<bool, MeshError> {
+fn homogeneous_affine_row_is_exact(row: &[Real; 4]) -> Result<bool, ExactMeshError> {
     Ok(real_equals(&row[0], &Real::zero())?
         && real_equals(&row[1], &Real::zero())?
         && real_equals(&row[2], &Real::zero())?
         && real_equals(&row[3], &Real::one())?)
 }
 
-fn real_equals(left: &Real, right: &Real) -> Result<bool, MeshError> {
+fn real_equals(left: &Real, right: &Real) -> Result<bool, ExactMeshError> {
     compare_reals(left, right)
         .value()
         .map(|ordering| ordering == Ordering::Equal)
         .ok_or_else(|| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 "exact transform coefficient comparison could not be certified",
             ))
         })

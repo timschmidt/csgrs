@@ -12,7 +12,7 @@
 use hyperlimit::{SegmentPlaneIntersection, TrianglePlaneRelation};
 
 use super::construction::intersect_segment_with_retained_face_plane;
-use super::error::MeshError;
+use super::error::ExactMeshError;
 use super::mesh::ExactMesh;
 use super::narrow::{
     TriangleTriangleClassification, TriangleTriangleRelation,
@@ -121,8 +121,8 @@ fn classify_mesh_face_pair_unchecked(
 /// overlap-graph construction or a policy decision.
 pub(crate) fn visit_prepared_mesh_pair_face_pair_classifications(
     pair: &PreparedMeshPairView<'_, '_>,
-    mut visit: impl FnMut(MeshFacePairClassification) -> Result<(), MeshError>,
-) -> Result<(), MeshError> {
+    mut visit: impl FnMut(MeshFacePairClassification) -> Result<(), ExactMeshError>,
+) -> Result<(), ExactMeshError> {
     let left = pair.left().view().mesh();
     let right = pair.right().view().mesh();
     pair.try_visit_candidate_face_pairs(|[left_face, right_face]| {

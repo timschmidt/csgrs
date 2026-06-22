@@ -18,7 +18,7 @@ use hyperlimit::{
 };
 use hyperlimit::{Point2 as PredicatePoint2, Sign, compare_reals, orient2d_report, project_point3};
 
-use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
+use super::error::{ExactMeshBlockerKind, ExactMeshBlocker, ExactMeshError, Severity};
 use super::graph::SplitPlanDiagnosticKind;
 use super::graph::SplitPlanValidationReport;
 use super::graph::{ExactFaceRegionPlan, FaceSplitBoundaryNode, MeshSide};
@@ -182,7 +182,7 @@ impl ExactFaceRegionPlan {
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
-    ) -> Result<Vec<FaceRegionPlaneClassification>, MeshError> {
+    ) -> Result<Vec<FaceRegionPlaneClassification>, ExactMeshError> {
         checked_classify_face_regions_against_opposite_planes(self, left, right)
     }
 
@@ -231,7 +231,7 @@ pub(crate) fn checked_classify_face_regions_against_opposite_planes(
     regions: &ExactFaceRegionPlan,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<Vec<FaceRegionPlaneClassification>, MeshError> {
+) -> Result<Vec<FaceRegionPlaneClassification>, ExactMeshError> {
     let report = regions.validate(left, right);
     if report.is_valid() {
         Ok(classify_face_regions_against_opposite_planes(
@@ -242,18 +242,18 @@ pub(crate) fn checked_classify_face_regions_against_opposite_planes(
     }
 }
 
-fn region_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> MeshError {
-    MeshError::new(
+fn region_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> ExactMeshError {
+    ExactMeshError::new(
         report
             .diagnostics
             .into_iter()
             .map(|diagnostic| {
                 let kind = match diagnostic.kind {
                     SplitPlanDiagnosticKind::UnknownBoundaryIncidence => {
-                        DiagnosticKind::UnsupportedExactOperation
+                        ExactMeshBlockerKind::UnsupportedExactOperation
                     }
                     SplitPlanDiagnosticKind::BoundaryNodeSourceVertexOutOfRange => {
-                        DiagnosticKind::IndexOutOfBounds
+                        ExactMeshBlockerKind::IndexOutOfBounds
                     }
                     SplitPlanDiagnosticKind::BoundaryNodeOffFacePlane
                     | SplitPlanDiagnosticKind::EmptyOrShortRegionBoundary
@@ -261,11 +261,11 @@ fn region_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> MeshEr
                     | SplitPlanDiagnosticKind::BoundaryNodeSourceVertexNotOnTriangle
                     | SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch
                     | SplitPlanDiagnosticKind::BoundaryChainEdgeNotOnTriangle => {
-                        DiagnosticKind::DegenerateTriangle
+                        ExactMeshBlockerKind::DegenerateTriangle
                     }
-                    _ => DiagnosticKind::UnsupportedExactOperation,
+                    _ => ExactMeshBlockerKind::UnsupportedExactOperation,
                 };
-                let mut mesh = MeshDiagnostic::new(Severity::Error, kind, diagnostic.message);
+                let mut mesh = ExactMeshBlocker::new(Severity::Error, kind, diagnostic.message);
                 if let Some(face) = diagnostic.face {
                     mesh = mesh.with_face(face);
                 }
@@ -378,14 +378,14 @@ impl FaceRegionTriangulation {
 fn replay_region_plan(
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<ExactFaceRegionPlan, super::error::MeshError> {
+) -> Result<ExactFaceRegionPlan, super::error::ExactMeshError> {
     let graph = super::graph::build_intersection_graph(left, right)?;
     graph
         .validate_against_meshes(left, right)
         .map_err(|error| {
-            super::error::MeshError::one(super::error::MeshDiagnostic::new(
+            super::error::ExactMeshError::one(super::error::ExactMeshBlocker::new(
                 super::error::Severity::Error,
-                super::error::DiagnosticKind::UnsupportedExactOperation,
+                super::error::ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("exact region source replay failed: {error:?}"),
             ))
         })?;
@@ -596,7 +596,7 @@ impl ExactBooleanAssemblyPlan {
     pub(crate) fn to_exact_mesh(
         &self,
         policy: ValidationPolicy,
-    ) -> Result<ExactMesh, super::error::MeshError> {
+    ) -> Result<ExactMesh, super::error::ExactMeshError> {
         self.validate().map_err(assembly_validation_error)?;
         let vertices = self
             .vertices
@@ -634,13 +634,13 @@ impl ExactBooleanAssemblyPlan {
         left: &ExactMesh,
         right: &ExactMesh,
         policy: ValidationPolicy,
-    ) -> Result<ExactMesh, super::error::MeshError> {
+    ) -> Result<ExactMesh, super::error::ExactMeshError> {
         self.validate().map_err(assembly_validation_error)?;
         self.validate_source_face_incidence(left, right)
             .map_err(|error| {
-                super::error::MeshError::one(super::error::MeshDiagnostic::new(
+                super::error::ExactMeshError::one(super::error::ExactMeshBlocker::new(
                     super::error::Severity::Error,
-                    super::error::DiagnosticKind::DegenerateTriangle,
+                    super::error::ExactMeshBlockerKind::DegenerateTriangle,
                     format!("exact boolean assembly source incidence failed: {error}"),
                 ))
             })?;
@@ -1396,10 +1396,10 @@ fn validate_output_triangle_source_orientation(
     Ok(())
 }
 
-fn assembly_validation_error(error: hypertri::Error) -> super::error::MeshError {
-    super::error::MeshError::one(super::error::MeshDiagnostic::new(
+fn assembly_validation_error(error: hypertri::Error) -> super::error::ExactMeshError {
+    super::error::ExactMeshError::one(super::error::ExactMeshBlocker::new(
         super::error::Severity::Error,
-        super::error::DiagnosticKind::IndexOutOfBounds,
+        super::error::ExactMeshBlockerKind::IndexOutOfBounds,
         format!("exact boolean assembly validation failed: {error}"),
     ))
 }

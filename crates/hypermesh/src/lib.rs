@@ -53,9 +53,7 @@ pub use arrangement3d::{
     ArrangementEdgeRef, ArrangementFaceCellRef, ArrangementVertexRef, ArrangementView,
 };
 pub use bounds::{BoundsValidationError, ExactAabb3, MeshBounds};
-pub use error::{
-    DiagnosticKind as ExactMeshBlockerKind, ExactMeshBlocker, ExactMeshError, MeshError,
-};
+pub use error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, Severity};
 pub use mesh::{ExactAffineTransform3, ExactMesh, ExactMeshValidationError, Triangle};
 pub use regularization::{
     ExactArrangementBlocker, ExactArrangementGraphBlockerKind, ExactArrangementSplitPlanBlockerKind,

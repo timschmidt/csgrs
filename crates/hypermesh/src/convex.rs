@@ -26,7 +26,7 @@ use super::arrangement2d::{
     ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
     build_exact_arrangement2d_overlay_with_boundary_policy,
 };
-use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
+use super::error::{ExactMeshBlockerKind, ExactMeshBlocker, ExactMeshError, Severity};
 use super::mesh::{ExactMesh, Triangle};
 use super::solid::{
     ClosedMeshOrientation, ConvexSolidFacts, ConvexSolidReportError, certify_convex_solid,
@@ -84,20 +84,20 @@ pub struct ConvexSolidDifference {
 
 impl ConvexSolidUnion {
     /// Validate retained facts and the materialized mesh.
-    pub fn validate(&self) -> Result<(), MeshError> {
+    pub fn validate(&self) -> Result<(), ExactMeshError> {
         self.left_facts.validate().map_err(report_error)?;
         self.right_facts.validate().map_err(report_error)?;
         if !self.left_facts.is_certified_convex() || !self.right_facts.is_certified_convex() {
-            return Err(MeshError::one(MeshDiagnostic::new(
+            return Err(ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 "convex union retained non-certified solid facts",
             )));
         }
         self.mesh.validate_retained_state().map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("convex union output failed retained-state replay: {error:?}"),
             ))
         })
@@ -106,20 +106,20 @@ impl ConvexSolidUnion {
 
 impl ConvexSolidDifference {
     /// Validate retained facts and the materialized mesh.
-    pub fn validate(&self) -> Result<(), MeshError> {
+    pub fn validate(&self) -> Result<(), ExactMeshError> {
         self.left_facts.validate().map_err(report_error)?;
         self.right_facts.validate().map_err(report_error)?;
         if !self.left_facts.is_certified_convex() || !self.right_facts.is_certified_convex() {
-            return Err(MeshError::one(MeshDiagnostic::new(
+            return Err(ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 "convex difference retained non-certified solid facts",
             )));
         }
         self.mesh.validate_retained_state().map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("convex difference output failed retained-state replay: {error:?}"),
             ))
         })
@@ -128,20 +128,20 @@ impl ConvexSolidDifference {
 
 impl ConvexSolidIntersection {
     /// Validate retained facts and the materialized mesh.
-    pub fn validate(&self) -> Result<(), MeshError> {
+    pub fn validate(&self) -> Result<(), ExactMeshError> {
         self.left_facts.validate().map_err(report_error)?;
         self.right_facts.validate().map_err(report_error)?;
         if !self.left_facts.is_certified_convex() || !self.right_facts.is_certified_convex() {
-            return Err(MeshError::one(MeshDiagnostic::new(
+            return Err(ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 "convex intersection retained non-certified solid facts",
             )));
         }
         self.mesh.validate_retained_state().map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
+            ExactMeshError::one(ExactMeshBlocker::new(
                 Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 format!("convex intersection output failed retained-state replay: {error:?}"),
             ))
         })
@@ -1467,10 +1467,10 @@ fn mul(left: &Real, right: &Real) -> Real {
     left.clone() * right
 }
 
-fn report_error(error: ConvexSolidReportError) -> MeshError {
-    MeshError::one(MeshDiagnostic::new(
+fn report_error(error: ConvexSolidReportError) -> ExactMeshError {
+    ExactMeshError::one(ExactMeshBlocker::new(
         Severity::Error,
-        DiagnosticKind::UnsupportedExactOperation,
+        ExactMeshBlockerKind::UnsupportedExactOperation,
         format!("invalid convex-solid facts retained by intersection: {error:?}"),
     ))
 }

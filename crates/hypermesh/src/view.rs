@@ -1,7 +1,7 @@
 //! Borrowed exact views of retained mesh data.
 
 use super::bounds::{CandidateFacePairPlan, MeshBounds, PreparedMeshBounds};
-use super::error::MeshError;
+use super::error::ExactMeshError;
 use super::facts::{EdgeFacts, FaceFacts, FacePlaneFacts, MeshValidationFacts};
 use super::mesh::{ExactAffineTransform3, Triangle};
 use super::validation::ValidationPolicy;
@@ -203,37 +203,37 @@ impl<'a> ExactMeshRef<'a> {
     }
 
     /// Materialize this view after an exact affine transform.
-    pub fn transform(self, transform: &ExactAffineTransform3) -> Result<ExactMesh, MeshError> {
+    pub fn transform(self, transform: &ExactAffineTransform3) -> Result<ExactMesh, ExactMeshError> {
         self.mesh.transform(transform)
     }
 
     /// Materialize this view after a row-major exact homogeneous affine transform.
-    pub fn transform_by(self, matrix: [[Real; 4]; 4]) -> Result<ExactMesh, MeshError> {
+    pub fn transform_by(self, matrix: [[Real; 4]; 4]) -> Result<ExactMesh, ExactMeshError> {
         self.mesh.transform_by(matrix)
     }
 
     /// Materialize this view with every triangle orientation reversed.
-    pub fn inverse(self) -> Result<ExactMesh, MeshError> {
+    pub fn inverse(self) -> Result<ExactMesh, ExactMeshError> {
         self.mesh.inverse()
     }
 
     /// Materialize the exact closed union of this view and `right`.
-    pub fn union(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, MeshError> {
+    pub fn union(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, ExactMeshError> {
         self.mesh.union(right.mesh)
     }
 
     /// Materialize the exact closed intersection of this view and `right`.
-    pub fn intersection(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, MeshError> {
+    pub fn intersection(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, ExactMeshError> {
         self.mesh.intersection(right.mesh)
     }
 
     /// Materialize the exact closed difference of this view minus `right`.
-    pub fn difference(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, MeshError> {
+    pub fn difference(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, ExactMeshError> {
         self.mesh.difference(right.mesh)
     }
 
     /// Materialize the exact closed symmetric difference of this view and `right`.
-    pub fn xor(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, MeshError> {
+    pub fn xor(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, ExactMeshError> {
         self.mesh.xor(right.mesh)
     }
 }

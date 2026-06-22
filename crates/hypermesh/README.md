@@ -32,7 +32,7 @@ downstream CSG layers.
 - `Triangle` stores triangle indices.
 - `ExactAabb3` and `MeshBounds` expose retained exact bounds facts.
 - `ValidationPolicy` selects the mesh validation contract.
-- `MeshError` and `ExactMeshBlocker` report invalid input, unsupported exact
+- `ExactMeshError` and `ExactMeshBlocker` report invalid input, unsupported exact
   topology, stale replay, and construction blockers with provenance where
   available.
 - `ExactMeshRef`, `TriangleRef`, `FaceRef`, and `EdgeRef` provide borrowed

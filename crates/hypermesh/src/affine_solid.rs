@@ -14,7 +14,7 @@
 use hyperlimit::{Point3, compare_reals};
 
 use super::affine_box::{AffineBoxBasis, mesh_from_uvw, mesh_to_uvw};
-use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
+use super::error::{ExactMeshBlockerKind, ExactMeshBlocker, ExactMeshError, Severity};
 use super::mesh::ExactMesh;
 use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, OrthogonalCellPlan,
@@ -66,7 +66,7 @@ impl AffineOrthogonalSolidArrangement {
     /// mesh remains valid and that every lifted vertex maps back to an exact
     /// axis-aligned orthogonal solid cell complex in the retained frame. Source
     /// replay is handled by the retained boolean result evidence.
-    pub fn validate(&self) -> Result<(), MeshError> {
+    pub fn validate(&self) -> Result<(), ExactMeshError> {
         self.mesh.validate_retained_state().map_err(|error| {
             affine_solid_error(format!(
                 "affine orthogonal solid output mesh is stale: {error:?}"
@@ -94,7 +94,7 @@ impl AffineOrthogonalSolidArrangement {
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
-    ) -> Result<(), MeshError> {
+    ) -> Result<(), ExactMeshError> {
         self.validate()?;
         let replay = materialize_affine_orthogonal_solids(
             left,
@@ -120,7 +120,7 @@ pub(crate) fn materialize_affine_orthogonal_solid_union(
     left: &ExactMesh,
     right: &ExactMesh,
     validation: ValidationPolicy,
-) -> Result<Option<AffineOrthogonalSolidArrangement>, MeshError> {
+) -> Result<Option<AffineOrthogonalSolidArrangement>, ExactMeshError> {
     materialize_affine_orthogonal_solids(
         left,
         right,
@@ -134,7 +134,7 @@ pub(crate) fn materialize_affine_orthogonal_solid_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
     validation: ValidationPolicy,
-) -> Result<Option<AffineOrthogonalSolidArrangement>, MeshError> {
+) -> Result<Option<AffineOrthogonalSolidArrangement>, ExactMeshError> {
     materialize_affine_orthogonal_solids(
         left,
         right,
@@ -148,7 +148,7 @@ pub(crate) fn materialize_affine_orthogonal_solid_difference(
     left: &ExactMesh,
     right: &ExactMesh,
     validation: ValidationPolicy,
-) -> Result<Option<AffineOrthogonalSolidArrangement>, MeshError> {
+) -> Result<Option<AffineOrthogonalSolidArrangement>, ExactMeshError> {
     materialize_affine_orthogonal_solids(
         left,
         right,
@@ -190,7 +190,7 @@ fn materialize_affine_orthogonal_solids(
     right: &ExactMesh,
     operation: AffineOrthogonalSolidOperation,
     validation: ValidationPolicy,
-) -> Result<Option<AffineOrthogonalSolidArrangement>, MeshError> {
+) -> Result<Option<AffineOrthogonalSolidArrangement>, ExactMeshError> {
     let Some(inputs) = certify_affine_orthogonal_solid_inputs(left, right, operation) else {
         return Ok(None);
     };
@@ -465,10 +465,10 @@ impl AffineOrthogonalSolidOperation {
     }
 }
 
-fn affine_solid_error(message: impl Into<String>) -> MeshError {
-    MeshError::one(MeshDiagnostic::new(
+fn affine_solid_error(message: impl Into<String>) -> ExactMeshError {
+    ExactMeshError::one(ExactMeshBlocker::new(
         Severity::Error,
-        DiagnosticKind::UnsupportedExactOperation,
+        ExactMeshBlockerKind::UnsupportedExactOperation,
         message,
     ))
 }
