@@ -1186,7 +1186,7 @@ pub(crate) fn build_intersection_graph_from_prepared_pair(
 ) -> Result<ExactIntersectionGraph, MeshError> {
     let left = pair.left().view().mesh();
     let right = pair.right().view().mesh();
-    let mut face_pairs = Vec::new();
+    let mut face_pairs = Vec::with_capacity(pair.candidate_face_pair_capacity_hint());
     visit_prepared_mesh_pair_face_pair_classifications(pair, |classification| {
         face_pairs.push(events_for_face_pair(left, right, &classification));
         Ok(())
@@ -4246,6 +4246,7 @@ mod tests {
 
         let graph = build_intersection_graph(&left, &right).unwrap();
         let prepared_pair = left.view().prepare_pair_broad_phase(right.view()).unwrap();
+        assert!(prepared_pair.candidate_face_pair_capacity_hint() >= graph.face_pairs.len());
         assert_eq!(
             build_intersection_graph_from_prepared_pair(&prepared_pair).unwrap(),
             graph
