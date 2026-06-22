@@ -780,12 +780,9 @@ pub(crate) type ExactArrangement = ExactArrangement3d;
 
 /// Borrowed exact arrangement view.
 #[derive(Clone, Copy, Debug)]
-pub struct ExactArrangementRef<'a> {
+pub struct ArrangementView<'a> {
     arrangement: &'a ExactArrangement3d,
 }
-
-/// Preferred borrowed exact arrangement view type.
-pub type ArrangementView<'a> = ExactArrangementRef<'a>;
 
 /// Borrowed arrangement vertex view.
 #[derive(Clone, Copy, Debug)]
@@ -808,7 +805,7 @@ pub struct ArrangementFaceCellRef<'a> {
     index: usize,
 }
 
-impl<'a> ExactArrangementRef<'a> {
+impl<'a> ArrangementView<'a> {
     /// Borrow a retained exact arrangement as a query view.
     pub(crate) const fn new(arrangement: &'a ExactArrangement3d) -> Self {
         Self { arrangement }
@@ -1221,8 +1218,8 @@ impl ExactTopologyAssemblyReport {
 
 impl ExactArrangement3d {
     /// Borrow this exact arrangement through the lightweight query view API.
-    pub(crate) const fn view(&self) -> ExactArrangementRef<'_> {
-        ExactArrangementRef::new(self)
+    pub(crate) const fn view(&self) -> ArrangementView<'_> {
+        ArrangementView::new(self)
     }
 
     /// Build a retained exact arrangement from two meshes.
