@@ -224,8 +224,18 @@ impl<'a> PreparedMeshBounds<'a> {
 
     /// Return face-pair candidates whose exact boxes are not disjoint.
     pub fn candidate_face_pairs(&self, other: &PreparedMeshBounds<'_>) -> Vec<[usize; 2]> {
+        if !self.mesh_bounds_may_overlap(other) {
+            return Vec::new();
+        }
         self.candidate_face_pairs_sweep(other)
             .unwrap_or_else(|| self.candidate_face_pairs_quadratic(other))
+    }
+
+    fn mesh_bounds_may_overlap(&self, other: &PreparedMeshBounds<'_>) -> bool {
+        match (&self.bounds.mesh, &other.bounds.mesh) {
+            (Some(left), Some(right)) => must_keep_candidate(left.classify_intersection(right)),
+            _ => false,
+        }
     }
 
     fn candidate_face_pairs_quadratic(&self, other: &PreparedMeshBounds<'_>) -> Vec<[usize; 2]> {
