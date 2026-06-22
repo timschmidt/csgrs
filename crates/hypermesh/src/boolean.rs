@@ -6069,17 +6069,17 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         )? {
             return Ok(outcome);
         }
-        if unregularized_sheet_complex {
-            if let Some(result) = boolean_arrangement_convex_regularized_sheet_recovery(
+        if unregularized_sheet_complex
+            && let Some(result) = boolean_arrangement_convex_regularized_sheet_recovery(
                 left, right, operation, validation,
-            )? {
-                return Ok(materialized_arrangement_attempt_outcome(
-                    &mut attempt,
-                    result,
-                    true,
-                    Some(ExactBooleanShortcutKind::ArrangementCellComplex),
-                ));
-            }
+            )?
+        {
+            return Ok(materialized_arrangement_attempt_outcome(
+                &mut attempt,
+                result,
+                true,
+                Some(ExactBooleanShortcutKind::ArrangementCellComplex),
+            ));
         }
         attempt.decline = Some(ExactArrangementBooleanDecline::ArrangementBlockers(
             arrangement.blockers.clone(),
