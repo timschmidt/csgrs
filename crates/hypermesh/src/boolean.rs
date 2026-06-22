@@ -19,7 +19,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use hyperlimit::SegmentPlaneRelation;
 
 use super::adjacent::{
-    full_face_adjacent_certificate, materialize_full_face_adjacent_union_from_certificate,
+    full_face_adjacent_certificate_from_graph,
+    materialize_full_face_adjacent_union_from_certificate,
 };
 use super::affine_solid::{
     AffineOrthogonalSolidOperation, has_affine_orthogonal_solid_cells,
@@ -44,7 +45,8 @@ use super::cell_complex::{
 };
 use super::cells::triangulate_all_face_cells_with_cdt;
 use super::contained_adjacent::{
-    contained_face_adjacent_certificate, materialize_contained_face_adjacent_union_from_certificate,
+    contained_face_adjacent_certificate_from_graph,
+    materialize_contained_face_adjacent_union_from_certificate,
 };
 use super::convex::{
     intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
@@ -6678,7 +6680,7 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
         ));
     }
 
-    if let Some(certificate) = full_face_adjacent_certificate(left, right)
+    if let Some(certificate) = full_face_adjacent_certificate_from_graph(left, right, graph)
         && let Some(union) = materialize_full_face_adjacent_union_from_certificate(
             left,
             right,
@@ -6756,7 +6758,7 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
         ));
     }
 
-    if let Some(certificate) = contained_face_adjacent_certificate(left, right)
+    if let Some(certificate) = contained_face_adjacent_certificate_from_graph(left, right, graph)
         && let Some(union) = materialize_contained_face_adjacent_union_from_certificate(
             left,
             right,

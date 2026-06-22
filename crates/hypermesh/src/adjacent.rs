@@ -156,6 +156,16 @@ pub(crate) fn full_face_adjacent_certificate(
         .map(|inner| FullFaceAdjacentCertificate { inner })
 }
 
+/// Return the retained full-face adjacency certificate from a validated graph.
+pub(crate) fn full_face_adjacent_certificate_from_graph(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    graph: &ExactIntersectionGraph,
+) -> Option<FullFaceAdjacentCertificate> {
+    full_face_adjacent_union_certificate_from_graph(left, right, graph)
+        .map(|inner| FullFaceAdjacentCertificate { inner })
+}
+
 pub(crate) fn materialize_full_face_adjacent_union_from_certificate(
     left: &ExactMesh,
     right: &ExactMesh,

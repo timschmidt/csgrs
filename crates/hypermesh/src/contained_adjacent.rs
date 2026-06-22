@@ -23,7 +23,9 @@ use hyperlimit::{
 
 use super::arrangement2d::{ExactArrangement2dBoundaryPolicy, ExactArrangement2dSetOperation};
 use super::boolean::{coplanar_mesh_overlay_carrier, materialize_coplanar_mesh_overlay_mesh};
-use super::graph::{FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph};
+use super::graph::{
+    ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph,
+};
 use super::intersection::MeshFacePairRelation;
 use super::mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 use super::topology::{mesh_for_side, triangle_tuple_edges};
@@ -145,6 +147,16 @@ pub(crate) fn contained_face_adjacent_certificate(
         .map(|inner| ContainedFaceAdjacentCertificate { inner })
 }
 
+/// Return the retained contained-face adjacency certificate from a validated graph.
+pub(crate) fn contained_face_adjacent_certificate_from_graph(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    graph: &ExactIntersectionGraph,
+) -> Option<ContainedFaceAdjacentCertificate> {
+    contained_face_adjacent_union_certificate_from_graph(left, right, graph)
+        .map(|inner| ContainedFaceAdjacentCertificate { inner })
+}
+
 /// Materialize a contained-face adjacent union from an already-retained certificate.
 pub(crate) fn materialize_contained_face_adjacent_union_from_certificate(
     left: &ExactMesh,
@@ -175,6 +187,24 @@ fn contained_face_adjacent_union_certificate(
     }
     let graph = build_intersection_graph(left, right).ok()?;
     graph.validate_against_meshes(left, right).ok()?;
+    if graph.has_unknowns() || graph.face_pairs.is_empty() {
+        return None;
+    }
+    if !closed_boundary_contact_only(left, right)? {
+        return None;
+    }
+
+    contained_face_adjacency_certificate(left, right, &graph.face_pairs)
+}
+
+fn contained_face_adjacent_union_certificate_from_graph(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    graph: &ExactIntersectionGraph,
+) -> Option<ContainedFaceAdjacencyCertificate> {
+    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        return None;
+    }
     if graph.has_unknowns() || graph.face_pairs.is_empty() {
         return None;
     }
