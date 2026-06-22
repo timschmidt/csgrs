@@ -17,9 +17,9 @@
 use core::cmp::Ordering;
 
 use hyperlimit::{
+    classify_coplanar_triangle_points, compare_reals, triangle_plane_relation_from_sides,
     PlaneSide, Point3, SegmentPlaneIntersection, TrianglePlaneClassification,
-    TrianglePlaneRelation, classify_coplanar_triangle_points,
-    classify_triangle_against_oriented_plane, compare_reals, triangle_plane_relation_from_sides,
+    TrianglePlaneRelation,
 };
 
 use super::mesh::ExactMesh;
@@ -52,10 +52,9 @@ pub(crate) enum TriangleTriangleRelation {
 
 /// Certified triangle/triangle coarse classification.
 ///
-/// This intentionally stops before coplanar overlap and full intersection
-/// other triangle's plane. Hypermesh performs that stage through
-/// `hyperlimit::orient3d_report` and keeps the segment/plane construction
-/// events needed by the later exact splitter.
+/// This intentionally stops before full intersection materialization.
+/// Hypermesh performs that stage through retained segment/plane constructions
+/// and keeps those events for the later exact splitter.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct TriangleTriangleClassification {
     /// Coarse relation.
@@ -70,14 +69,6 @@ pub(crate) struct TriangleTriangleClassification {
     pub(crate) left_edge_events: Option<[SegmentPlaneIntersection; 3]>,
     /// Exact projected overlap result for coplanar pairs.
     pub(crate) coplanar: Option<CoplanarTriangleClassification>,
-}
-
-/// Classify a query triangle against an oriented face plane.
-fn classify_triangle_against_face_plane_points(
-    face: [&Point3; 3],
-    query: [&Point3; 3],
-) -> TrianglePlaneClassification {
-    classify_triangle_against_oriented_plane(face, query)
 }
 
 /// Classify a mesh triangle against a retained exact face plane.
@@ -108,24 +99,19 @@ pub(crate) fn classify_mesh_triangle_against_retained_face_plane_unchecked(
     }
 }
 
-/// Classify two triangles without materializing generic candidate edge events.
+/// Assemble a triangle-triangle classification from existing plane-side facts.
 ///
-/// Mesh face-pair classification replaces candidate edge events immediately
-/// with retained face-plane constructions from the source meshes. This helper
-/// keeps that path from building throwaway generic segment/plane evidence.
-pub(crate) fn classify_triangle_triangle_points_without_candidate_events(
+/// Mesh face-pair classification first uses retained face-plane facts for
+/// cheap one-sided rejection. Non-separated pairs can reuse those exact facts
+/// here instead of replaying the same plane predicates from point triples.
+/// Candidate edge events are still left empty because mesh classification
+/// replaces them immediately with retained source-plane constructions.
+pub(crate) fn classify_triangle_triangle_points_from_plane_classifications(
     left: [&Point3; 3],
     right: [&Point3; 3],
+    right_against_left_plane: TrianglePlaneClassification,
+    left_against_right_plane: TrianglePlaneClassification,
 ) -> TriangleTriangleClassification {
-    classify_triangle_triangle_points_retained(left, right)
-}
-
-fn classify_triangle_triangle_points_retained(
-    left: [&Point3; 3],
-    right: [&Point3; 3],
-) -> TriangleTriangleClassification {
-    let right_against_left_plane = classify_triangle_against_face_plane_points(left, right);
-    let left_against_right_plane = classify_triangle_against_face_plane_points(right, left);
     let mut relation = triangle_triangle_relation(
         right_against_left_plane.relation,
         left_against_right_plane.relation,

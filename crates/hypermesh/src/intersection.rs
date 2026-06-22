@@ -5,19 +5,19 @@
 //! collector, not the final boolean graph builder: broad-phase disjointness
 //! and retained plane separation may reject work, while coplanar and candidate
 //! outcomes must continue into exact overlap-graph construction. Retained exact
-//! face-plane coefficients are used as a cached plane-separation filter before
-//! the full triangle classifier is rebuilt. Candidate split events are retained
-//! only after certified predicates and exact constructions agree.
+//! face-plane coefficients are used as cached plane-side facts before relation
+//! assembly. Candidate split events are retained only after certified
+//! predicates and exact constructions agree.
 
-use hyperlimit::{SegmentPlaneIntersection, TrianglePlaneRelation};
+use hyperlimit::{SegmentPlaneIntersection, TrianglePlaneClassification, TrianglePlaneRelation};
 
 use super::construction::intersect_segment_with_retained_face_plane;
 use super::error::ExactMeshError;
 use super::mesh::ExactMesh;
 use super::narrow::{
-    TriangleTriangleClassification, TriangleTriangleRelation,
     classify_mesh_triangle_against_retained_face_plane_unchecked,
-    classify_triangle_triangle_points_without_candidate_events,
+    classify_triangle_triangle_points_from_plane_classifications, TriangleTriangleClassification,
+    TriangleTriangleRelation,
 };
 use super::topology::triangle_edges;
 use super::view::PreparedMeshPairView;
@@ -94,8 +94,14 @@ fn classify_mesh_face_pair_unchecked(
         };
     }
 
-    let mut triangle =
-        classify_mesh_triangles_without_candidate_events(left, left_face, right, right_face);
+    let mut triangle = classify_mesh_triangles_from_retained_plane_classifications(
+        left,
+        left_face,
+        right,
+        right_face,
+        right_against_left,
+        left_against_right,
+    );
     if triangle.relation == TriangleTriangleRelation::Candidate {
         triangle.right_edge_events = Some(retained_triangle_edge_events(
             left, left_face, right, right_face,
@@ -143,15 +149,17 @@ fn triangle_is_strictly_one_sided(relation: TrianglePlaneRelation) -> bool {
     )
 }
 
-fn classify_mesh_triangles_without_candidate_events(
+fn classify_mesh_triangles_from_retained_plane_classifications(
     left: &ExactMesh,
     left_face: usize,
     right: &ExactMesh,
     right_face: usize,
+    right_against_left_plane: TrianglePlaneClassification,
+    left_against_right_plane: TrianglePlaneClassification,
 ) -> TriangleTriangleClassification {
     let left_tri = left.triangles()[left_face].0;
     let right_tri = right.triangles()[right_face].0;
-    classify_triangle_triangle_points_without_candidate_events(
+    classify_triangle_triangle_points_from_plane_classifications(
         [
             &left.vertices()[left_tri[0]],
             &left.vertices()[left_tri[1]],
@@ -162,6 +170,8 @@ fn classify_mesh_triangles_without_candidate_events(
             &right.vertices()[right_tri[1]],
             &right.vertices()[right_tri[2]],
         ],
+        right_against_left_plane,
+        left_against_right_plane,
     )
 }
 
