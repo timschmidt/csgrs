@@ -36,15 +36,15 @@ downstream CSG layers.
   available.
 - `ExactMeshRef`, `TriangleRef`, `FaceRef`, and `EdgeRef` provide borrowed
   access for queries that should not clone mesh storage.
-- `PreparedMeshView` and `PreparedMeshPairView` provide replay-validated
-  broad-phase caches for repeated candidate queries without exposing raw
-  acceleration carriers.
+- `PreparedMeshView` streams replay-validated broad-phase candidates, and
+  `PreparedMeshPairView` exposes cached candidate-pair slices for repeated
+  pair queries without exposing raw acceleration carriers.
 - `ExactMesh::union`, `ExactMesh::intersection`, `ExactMesh::difference`, and
   `ExactMesh::xor` materialize named closed boolean outputs as exact meshes.
 - `ExactMesh::transform`, `ExactMesh::transform_by`, and `ExactMesh::inverse`
   provide exact affine transforms and orientation inversion for CSG adapters.
 - `ExactMeshRef` exposes the same named operations and transform methods for
-  borrowed callers, plus replay-validated broad-phase candidate face pairs.
+  borrowed callers, plus prepared broad-phase views.
 - `ExactMesh::with_arrangement_view` exposes borrowed `ArrangementView` queries
   for algorithms that need retained topology without cloning arrangement
   storage or naming an owned arrangement type.
