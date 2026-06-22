@@ -224,11 +224,31 @@ impl<'a> PreparedMeshBounds<'a> {
 
     /// Return face-pair candidates whose exact boxes are not disjoint.
     pub fn candidate_face_pairs(&self, other: &PreparedMeshBounds<'_>) -> Vec<[usize; 2]> {
+        let mut pairs = Vec::new();
+        let result = self.try_visit_candidate_face_pairs(other, |pair| {
+            pairs.push(pair);
+            Ok::<(), ()>(())
+        });
+        debug_assert!(result.is_ok());
+        pairs.sort_unstable();
+        pairs
+    }
+
+    pub(crate) fn try_visit_candidate_face_pairs<E>(
+        &self,
+        other: &PreparedMeshBounds<'_>,
+        mut visit: impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<(), E> {
         if !self.mesh_bounds_may_overlap(other) {
-            return Vec::new();
+            return Ok(());
         }
-        self.candidate_face_pairs_sweep(other)
-            .unwrap_or_else(|| self.candidate_face_pairs_quadratic(other))
+        let Some((axis, _)) = self.best_sweep_axis(other) else {
+            return self.try_visit_candidate_face_pairs_quadratic(other, &mut visit);
+        };
+        if !self.try_visit_candidate_face_pairs_sweep_axis(other, axis, &mut visit)? {
+            return self.try_visit_candidate_face_pairs_quadratic(other, &mut visit);
+        }
+        Ok(())
     }
 
     fn mesh_bounds_may_overlap(&self, other: &PreparedMeshBounds<'_>) -> bool {
@@ -238,22 +258,33 @@ impl<'a> PreparedMeshBounds<'a> {
         }
     }
 
+    #[cfg(test)]
     fn candidate_face_pairs_quadratic(&self, other: &PreparedMeshBounds<'_>) -> Vec<[usize; 2]> {
         let mut pairs = Vec::new();
-        for (left, left_box) in self.bounds.faces.iter().enumerate() {
-            for (right, right_box) in other.bounds.faces.iter().enumerate() {
-                if must_keep_candidate(left_box.classify_intersection(right_box)) {
-                    pairs.push([left, right]);
-                }
-            }
-        }
+        let result = self.try_visit_candidate_face_pairs_quadratic(other, &mut |pair| {
+            pairs.push(pair);
+            Ok::<(), ()>(())
+        });
+        debug_assert!(result.is_ok());
         pairs
     }
 
-    fn candidate_face_pairs_sweep(
+    fn try_visit_candidate_face_pairs_quadratic<E>(
         &self,
         other: &PreparedMeshBounds<'_>,
-    ) -> Option<Vec<[usize; 2]>> {
+        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<(), E> {
+        for (left, left_box) in self.bounds.faces.iter().enumerate() {
+            for (right, right_box) in other.bounds.faces.iter().enumerate() {
+                if must_keep_candidate(left_box.classify_intersection(right_box)) {
+                    visit([left, right])?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn best_sweep_axis(&self, other: &PreparedMeshBounds<'_>) -> Option<(Axis, usize)> {
         let mut best_axis = None;
         for axis in [Axis::X, Axis::Y, Axis::Z] {
             if let Some(pair_count) = self.interval_candidate_pair_count_sweep_axis(other, axis)
@@ -264,9 +295,7 @@ impl<'a> PreparedMeshBounds<'a> {
                 best_axis = Some((axis, pair_count));
             }
         }
-        let (axis, pair_count) = best_axis?;
-        let pairs = self.interval_candidate_pairs_sweep_axis(other, axis, pair_count)?;
-        Some(self.filter_full_aabb_candidates(other, pairs))
+        best_axis
     }
 
     fn interval_candidate_pair_count_sweep_axis(
@@ -313,67 +342,72 @@ impl<'a> PreparedMeshBounds<'a> {
         Some(pair_count)
     }
 
-    fn interval_candidate_pairs_sweep_axis(
+    fn try_visit_candidate_face_pairs_sweep_axis<E>(
         &self,
         other: &PreparedMeshBounds<'_>,
         axis: Axis,
-        pair_capacity: usize,
-    ) -> Option<Vec<[usize; 2]>> {
-        let left_order = self.min_axis_order(axis)?;
-        let right_order = other.min_axis_order(axis)?;
+        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<bool, E> {
+        let Some(left_order) = self.min_axis_order(axis) else {
+            return Ok(false);
+        };
+        let Some(right_order) = other.min_axis_order(axis) else {
+            return Ok(false);
+        };
         let mut active_right = Vec::<usize>::new();
         let mut next_right = 0usize;
-        let mut pairs = Vec::with_capacity(pair_capacity);
 
         for &left in left_order {
             let left_box = &self.bounds.faces[left];
             while let Some(&right) = right_order.get(next_right) {
-                if compare(
+                let Some(ordering) = compare(
                     axis_min(&other.bounds.faces[right], axis),
                     axis_max(left_box, axis),
-                )? == Ordering::Greater
-                {
+                ) else {
+                    return Ok(false);
+                };
+                if ordering == Ordering::Greater {
                     break;
                 }
                 active_right.push(right);
                 next_right += 1;
             }
 
-            retain_active_right_axis(
+            if retain_active_right_axis(
                 &mut active_right,
                 &other.bounds.faces,
                 axis,
                 axis_min(left_box, axis),
-            )?;
+            )
+            .is_none()
+            {
+                return Ok(false);
+            }
 
             for &right in &active_right {
                 let right_box = &other.bounds.faces[right];
-                if compare(axis_min(right_box, axis), axis_max(left_box, axis))?
-                    == Ordering::Greater
-                {
+                let Some(ordering) = compare(axis_min(right_box, axis), axis_max(left_box, axis))
+                else {
+                    return Ok(false);
+                };
+                if ordering == Ordering::Greater {
                     continue;
                 }
-                pairs.push([left, right]);
+                let pair = [left, right];
+                if self.full_aabb_may_overlap(other, pair) {
+                    visit(pair)?;
+                }
             }
         }
 
-        pairs.sort_unstable();
-        Some(pairs)
+        Ok(true)
     }
 
-    fn filter_full_aabb_candidates(
-        &self,
-        other: &PreparedMeshBounds<'_>,
-        pairs: Vec<[usize; 2]>,
-    ) -> Vec<[usize; 2]> {
-        pairs
-            .into_iter()
-            .filter(|[left, right]| {
-                let left_box = &self.bounds.faces[*left];
-                let right_box = &other.bounds.faces[*right];
-                must_keep_candidate(left_box.classify_intersection(right_box))
-            })
-            .collect()
+    fn full_aabb_may_overlap(&self, other: &PreparedMeshBounds<'_>, pair: [usize; 2]) -> bool {
+        let [left, right] = pair;
+        let left_box = &self.bounds.faces[left];
+        let right_box = &other.bounds.faces[right];
+        must_keep_candidate(left_box.classify_intersection(right_box))
     }
 
     fn min_axis_order(&self, axis: Axis) -> Option<&[usize]> {

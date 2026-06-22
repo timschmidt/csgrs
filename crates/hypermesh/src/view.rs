@@ -214,6 +214,15 @@ impl<'a> PreparedMeshView<'a> {
     pub fn candidate_face_pairs(&self, right: &PreparedMeshView<'_>) -> Vec<[usize; 2]> {
         self.bounds.candidate_face_pairs(&right.bounds)
     }
+
+    pub(crate) fn try_visit_candidate_face_pairs<E>(
+        &self,
+        right: &PreparedMeshView<'_>,
+        visit: impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<(), E> {
+        self.bounds
+            .try_visit_candidate_face_pairs(&right.bounds, visit)
+    }
 }
 
 impl<'a> FaceRef<'a> {

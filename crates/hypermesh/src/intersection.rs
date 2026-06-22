@@ -163,13 +163,16 @@ pub(crate) fn visit_mesh_face_pair_classifications(
         .view()
         .prepare_broad_phase()
         .map_err(mesh_retained_state_error)?;
-    for [left_face, right_face] in left_broad_phase.candidate_face_pairs(&right_broad_phase) {
-        let classification = classify_mesh_face_pair(left, left_face, right, right_face)?;
-        if classification.needs_graph_construction() {
-            visit(classification)?;
-        }
-    }
-    Ok(())
+    left_broad_phase.try_visit_candidate_face_pairs(
+        &right_broad_phase,
+        |[left_face, right_face]| {
+            let classification = classify_mesh_face_pair(left, left_face, right, right_face)?;
+            if classification.needs_graph_construction() {
+                visit(classification)?;
+            }
+            Ok(())
+        },
+    )
 }
 
 fn mesh_retained_state_error(error: ExactMeshValidationError) -> MeshError {
