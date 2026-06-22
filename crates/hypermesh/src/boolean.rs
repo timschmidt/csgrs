@@ -10089,13 +10089,12 @@ fn arrangement_materialized_readiness_blocker_kind_and_evidence(
     (blocker_kind, coplanar_evidence)
 }
 
-/// Validate the retained graph/source-handle handoff for public reports.
+/// Validate retained graph handles against their source meshes.
 ///
-/// Boolean preflight and report constructors are public exact computation
-/// boundaries. They must reject a retained graph whose face, edge, vertex, or
-/// plane handles no longer replay against the source meshes before policy
-/// includes the combinatorial object handles attached to predicate evidence,
-/// not just the numeric predicate result.
+/// Boolean preflight and materialization must reject a retained graph whose
+/// face, edge, vertex, or plane handles no longer replay against the source
+/// meshes. Predicate evidence is only useful when the combinatorial object
+/// handles attached to it are still current.
 fn validate_graph_source_handoff(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,

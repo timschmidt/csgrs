@@ -259,11 +259,11 @@ pub struct CoplanarOverlapSplitGraph {
     pub vertex_overlaps: Vec<CoplanarVertexOverlap>,
 }
 
-/// Readiness status for the future exact planar-cell extraction stage.
+/// Status of retained coplanar evidence for exact planar-cell extraction.
 ///
-/// The current port can already retain certified coplanar edge and
-/// vertex-contact facts. Full planar arrangements need a later stage that
-/// callers infer it from a generic unsupported boolean result.
+/// The graph retains certified coplanar edge and vertex-contact facts. Positive
+/// area overlaps require planar cells before named boolean output can be
+/// materialized.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CoplanarArrangementReadinessStatus {
     /// No retained coplanar overlap graph exists.
@@ -279,10 +279,8 @@ pub enum CoplanarArrangementReadinessStatus {
 ///
 /// This report is intentionally compact: it does not replace the underlying
 /// [`CoplanarOverlapGraph`] or [`CoplanarOverlapSplitPlan`], but summarizes
-/// their validated counts at the API boundary where the exact port still lacks
-/// general multi-component planar-cell extraction. It gives fuzzing,
-/// benchmarks, and downstream planners a checked handoff rather than a plain
-/// "not implemented" flag.
+/// their validated counts before exact planar-cell extraction. That lets
+/// blockers retain actionable provenance instead of a plain unsupported flag.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CoplanarArrangementReadinessReport {
     /// Coarse state of the retained coplanar arrangement evidence.
@@ -300,8 +298,8 @@ pub struct CoplanarArrangementReadinessReport {
     /// Number of exact point split constructions retained for proper or
     /// endpoint edge contacts.
     pub point_split_count: usize,
-    /// Number of positive-length collinear interval contacts retained for the
-    /// future planar arrangement pass.
+    /// Number of positive-length collinear interval contacts retained for
+    /// planar-cell extraction.
     pub interval_overlap_count: usize,
     /// Number of exact interval endpoint facts retained for collinear contacts.
     pub interval_endpoint_count: usize,
@@ -701,8 +699,8 @@ impl CoplanarOverlapSplitPlan {
     ///
     /// Plain split validation checks the self-contained construction record.
     /// This method additionally replays retained parameters against source
-    /// edge geometry, which is the stronger handoff future planar-cell
-    /// extraction should use when mesh handles are available.
+    /// edge geometry, which planar-cell extraction should use when mesh
+    /// handles are available.
     pub fn validate_against_meshes(
         &self,
         left: &ExactMesh,
@@ -1866,10 +1864,10 @@ pub struct SplitPlanDiagnostic {
 
 /// Error returned when a split-plan validation report is itself malformed.
 ///
-/// Split-plan diagnostics are public handoff evidence for exact graph,
-/// topology, and region stages. A diagnostic without the location data needed
-/// to interpret it is not useful to downstream exact-policy code. Keeping that
-/// explicit artifacts, not prose-only failures.
+/// Split-plan diagnostics are evidence for exact graph, topology, and region
+/// stages. A diagnostic without the location data needed to interpret it is not
+/// useful to exact kernel code, so malformed diagnostic artifacts fail
+/// explicitly instead of becoming prose-only failures.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SplitPlanReportValidationError {
     /// A diagnostic message was empty or whitespace only.

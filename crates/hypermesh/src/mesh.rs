@@ -311,8 +311,8 @@ impl ExactMesh {
     /// Construct an exact mesh from flat integer coordinates.
     ///
     /// Integer grid input is lifted directly into `hyperreal::Real` without a
-    /// primitive-float edge. Keeping grid coordinates exact and structurally
-    /// structure for downstream exact predicates and determinant schedules.
+    /// primitive-float edge, keeping exact predicates and determinant schedules
+    /// on structural input coordinates.
     pub fn from_i64_triangles(pos: &[i64], idx: &[usize]) -> Result<Self, MeshError> {
         Self::from_i64_triangles_with_policy(pos, idx, ValidationPolicy::CLOSED)
     }

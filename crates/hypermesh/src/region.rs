@@ -66,9 +66,9 @@ pub(crate) struct FaceRegionPlaneClassification {
 /// Error returned when a retained region/plane classification is incoherent.
 ///
 /// The classification stores the per-boundary-node plane-side facts used to
-/// derive a coarser relation. Consumers such as future winding policy should
-/// be able to audit that derivation directly, rather than trusting a summary
-/// tied to certified predicate facts and explicit unknowns.
+/// derive a coarser relation. Exact region selection audits that derivation
+/// directly instead of trusting a summary detached from predicate facts and
+/// explicit unknowns.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum FaceRegionPlaneValidationError {
     /// A region cannot be classified against a plane from the same mesh side.
@@ -475,11 +475,11 @@ pub(crate) enum ExactOutputTriangleOrientation {
 
 /// Non-mutating exact output mesh assembly plan.
 ///
-/// This plan is the first boolean-output handoff: exact region loops have been
-/// classified and triangulated, and this type records the exact 3D triangles
-/// that a future halfedge builder can materialize. It does not hide operation
-/// semantics in tolerances; callers pass an explicit region-selection policy,
-/// and undecided winding/inside-outside policy remains outside this assembly
+/// Exact region loops have been classified and triangulated, and this type
+/// records the exact 3D triangles ready for mesh materialization. It does not
+/// hide operation semantics in tolerances; callers pass an explicit
+/// region-selection policy, and undecided winding/inside-outside policy remains
+/// outside this assembly.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ExactBooleanAssemblyPlan {
     /// Exact output vertices.
