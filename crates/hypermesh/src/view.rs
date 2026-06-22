@@ -1,6 +1,6 @@
 //! Borrowed exact views of retained mesh data.
 
-use super::bounds::{MeshBounds, PreparedMeshBounds};
+use super::bounds::{CandidateFacePairPlan, MeshBounds, PreparedMeshBounds};
 use super::error::MeshError;
 use super::facts::{EdgeFacts, FaceFacts, FacePlaneFacts, MeshValidationFacts};
 use super::mesh::{ExactAffineTransform3, Triangle};
@@ -51,6 +51,7 @@ pub struct PreparedMeshView<'a> {
 pub struct PreparedMeshPairView<'a, 'b> {
     left: PreparedMeshView<'a>,
     right: PreparedMeshView<'b>,
+    bounds_plan: CandidateFacePairPlan,
 }
 
 impl<'a> ExactMeshRef<'a> {
@@ -191,9 +192,13 @@ impl<'a> ExactMeshRef<'a> {
         self,
         right: ExactMeshRef<'b>,
     ) -> Result<PreparedMeshPairView<'a, 'b>, ExactMeshValidationError> {
+        let left = self.prepare_broad_phase()?;
+        let right = right.prepare_broad_phase()?;
+        let bounds_plan = left.bounds.candidate_face_pair_plan(&right.bounds);
         Ok(PreparedMeshPairView {
-            left: self.prepare_broad_phase()?,
-            right: right.prepare_broad_phase()?,
+            left,
+            right,
+            bounds_plan,
         })
     }
 
@@ -246,9 +251,17 @@ impl<'a> PreparedMeshView<'a> {
 
     /// Return exact broad-phase candidate face pairs for this view and `right`.
     pub fn candidate_face_pairs(&self, right: &PreparedMeshView<'_>) -> Vec<[usize; 2]> {
-        let mut pairs =
-            Vec::with_capacity(self.bounds.candidate_face_pair_capacity_hint(&right.bounds));
-        self.visit_candidate_face_pairs(right, |pair| pairs.push(pair));
+        let plan = self.bounds.candidate_face_pair_plan(&right.bounds);
+        let mut pairs = Vec::with_capacity(plan.capacity_hint());
+        let result = self.bounds.try_visit_candidate_face_pairs_with_plan(
+            &right.bounds,
+            plan,
+            &mut |pair| {
+                pairs.push(pair);
+                Ok::<(), ()>(())
+            },
+        );
+        debug_assert!(result.is_ok());
         pairs.sort_unstable();
         pairs
     }
@@ -264,10 +277,15 @@ impl<'a> PreparedMeshView<'a> {
         right: &PreparedMeshView<'_>,
         mut visit: impl FnMut([usize; 2]),
     ) {
-        let result = self.try_visit_candidate_face_pairs(right, |pair| {
-            visit(pair);
-            Ok::<(), ()>(())
-        });
+        let plan = self.bounds.candidate_face_pair_plan(&right.bounds);
+        let result = self.bounds.try_visit_candidate_face_pairs_with_plan(
+            &right.bounds,
+            plan,
+            &mut |pair| {
+                visit(pair);
+                Ok::<(), ()>(())
+            },
+        );
         debug_assert!(result.is_ok());
     }
 
@@ -295,12 +313,19 @@ impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
 
     /// Return an upper bound for collected candidate face pairs.
     pub fn candidate_face_pair_capacity_hint(&self) -> usize {
-        self.left.candidate_face_pair_capacity_hint(&self.right)
+        self.bounds_plan.capacity_hint()
     }
 
     /// Return exact broad-phase candidate face pairs for this prepared pair.
     pub fn candidate_face_pairs(&self) -> Vec<[usize; 2]> {
-        self.left.candidate_face_pairs(&self.right)
+        let mut pairs = Vec::with_capacity(self.bounds_plan.capacity_hint());
+        let result = self.try_visit_candidate_face_pairs(|pair| {
+            pairs.push(pair);
+            Ok::<(), ()>(())
+        });
+        debug_assert!(result.is_ok());
+        pairs.sort_unstable();
+        pairs
     }
 
     /// Visit exact broad-phase candidate face pairs without collecting them.
@@ -311,9 +336,13 @@ impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
     /// Try to visit exact broad-phase candidate face pairs, allowing early exit.
     pub fn try_visit_candidate_face_pairs<E>(
         &self,
-        visit: impl FnMut([usize; 2]) -> Result<(), E>,
+        mut visit: impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
-        self.left.try_visit_candidate_face_pairs(&self.right, visit)
+        self.left.bounds.try_visit_candidate_face_pairs_with_plan(
+            &self.right.bounds,
+            self.bounds_plan,
+            &mut visit,
+        )
     }
 }
 

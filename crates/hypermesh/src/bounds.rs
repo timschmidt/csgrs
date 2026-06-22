@@ -18,7 +18,7 @@ pub type AabbIntersectionKind = Aabb3Intersection;
 /// Structural inconsistency in retained exact bounds.
 ///
 /// Bounds are object-level acceleration facts, not topology certificates.
-/// validated before they can reject or retain topological work.
+/// They must replay before they can reject or retain topological work.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BoundsValidationError {
     /// An axis minimum is certified greater than its maximum.
@@ -196,6 +196,28 @@ struct SweepPlan {
     cost: usize,
 }
 
+/// Prepared broad-phase plan for one retained bounds pair.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct CandidateFacePairPlan {
+    mesh_bounds_overlap: bool,
+    sweep: Option<SweepPlan>,
+    capacity_hint: usize,
+}
+
+impl CandidateFacePairPlan {
+    const fn empty() -> Self {
+        Self {
+            mesh_bounds_overlap: false,
+            sweep: None,
+            capacity_hint: 0,
+        }
+    }
+
+    pub(crate) const fn capacity_hint(self) -> usize {
+        self.capacity_hint
+    }
+}
+
 impl MeshBounds {
     /// Build retained bounds from predicate points and triangle indices.
     pub fn from_triangles(points: &[Point3], triangles: &[[usize; 3]]) -> Self {
@@ -261,17 +283,32 @@ impl<'a> PreparedMeshBounds<'a> {
     /// quadratic face-pair product. The final full-AABB filter may emit fewer
     /// pairs.
     pub fn candidate_face_pair_capacity_hint(&self, other: &PreparedMeshBounds<'_>) -> usize {
+        self.candidate_face_pair_plan(other).capacity_hint()
+    }
+
+    pub(crate) fn candidate_face_pair_plan(
+        &self,
+        other: &PreparedMeshBounds<'_>,
+    ) -> CandidateFacePairPlan {
         if !self.mesh_bounds_may_overlap(other) {
-            return 0;
+            return CandidateFacePairPlan::empty();
         }
-        self.best_sweep_plan(other)
-            .map(|plan| plan.interval_pairs)
-            .unwrap_or_else(|| {
-                self.bounds
-                    .faces
-                    .len()
-                    .saturating_mul(other.bounds.faces.len())
-            })
+        if let Some(sweep) = self.best_sweep_plan(other) {
+            return CandidateFacePairPlan {
+                mesh_bounds_overlap: true,
+                sweep: Some(sweep),
+                capacity_hint: sweep.interval_pairs,
+            };
+        }
+        CandidateFacePairPlan {
+            mesh_bounds_overlap: true,
+            sweep: None,
+            capacity_hint: self
+                .bounds
+                .faces
+                .len()
+                .saturating_mul(other.bounds.faces.len()),
+        }
     }
 
     pub(crate) fn try_visit_candidate_face_pairs<E>(
@@ -279,24 +316,34 @@ impl<'a> PreparedMeshBounds<'a> {
         other: &PreparedMeshBounds<'_>,
         mut visit: impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
-        if !self.mesh_bounds_may_overlap(other) {
+        let plan = self.candidate_face_pair_plan(other);
+        self.try_visit_candidate_face_pairs_with_plan(other, plan, &mut visit)
+    }
+
+    pub(crate) fn try_visit_candidate_face_pairs_with_plan<E>(
+        &self,
+        other: &PreparedMeshBounds<'_>,
+        plan: CandidateFacePairPlan,
+        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<(), E> {
+        if !plan.mesh_bounds_overlap {
             return Ok(());
         }
-        let Some(plan) = self.best_sweep_plan(other) else {
-            return self.try_visit_candidate_face_pairs_quadratic(other, &mut visit);
+        let Some(sweep) = plan.sweep else {
+            return self.try_visit_candidate_face_pairs_quadratic(other, visit);
         };
-        let used_sweep = match plan.direction {
+        let used_sweep = match sweep.direction {
             SweepDirection::LeftDriven => {
-                self.try_visit_candidate_face_pairs_sweep_axis(other, plan.axis, &mut visit)?
+                self.try_visit_candidate_face_pairs_sweep_axis(other, sweep.axis, visit)?
             }
             SweepDirection::RightDriven => {
-                other.try_visit_candidate_face_pairs_sweep_axis(self, plan.axis, &mut |pair| {
+                other.try_visit_candidate_face_pairs_sweep_axis(self, sweep.axis, &mut |pair| {
                     visit([pair[1], pair[0]])
                 })?
             }
         };
         if !used_sweep {
-            return self.try_visit_candidate_face_pairs_quadratic(other, &mut visit);
+            return self.try_visit_candidate_face_pairs_quadratic(other, visit);
         }
         Ok(())
     }
