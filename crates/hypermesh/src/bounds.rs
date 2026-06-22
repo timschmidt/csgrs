@@ -8,7 +8,7 @@
 use std::cmp::Ordering;
 
 use hyperlimit::{
-    Aabb3Intersection, Point3, PredicateOutcome, classify_aabb3_intersection, compare_reals,
+    classify_aabb3_intersection, compare_reals, Aabb3Intersection, Point3, PredicateOutcome,
 };
 use hyperreal::Real;
 
@@ -448,36 +448,25 @@ impl<'a> PreparedMeshBounds<'a> {
         other: &PreparedMeshBounds<'_>,
         axis: Axis,
     ) -> Option<usize> {
-        let driver_order = self.min_axis_order(axis)?;
         let other_min_order = other.min_axis_order(axis)?;
         let other_max_order = other.max_axis_order(axis)?;
-        let mut next_starting_other = 0usize;
-        let mut next_ending_other = 0usize;
+        let other_intervals = other.axis_intervals(axis);
         let mut count = 0usize;
 
-        for &driver in driver_order {
-            let driver_interval = self.axis_interval(axis, driver);
-            while let Some(&other_face) = other_min_order.get(next_starting_other) {
-                let ordering = compare(
-                    other.axis_interval(axis, other_face).min,
-                    driver_interval.max,
-                )?;
-                if ordering == Ordering::Greater {
-                    break;
-                }
-                next_starting_other += 1;
-            }
-            while let Some(&other_face) = other_max_order.get(next_ending_other) {
-                let ordering = compare(
-                    other.axis_interval(axis, other_face).max,
-                    driver_interval.min,
-                )?;
-                if ordering != Ordering::Less {
-                    break;
-                }
-                next_ending_other += 1;
-            }
-            count = count.saturating_add(next_starting_other.saturating_sub(next_ending_other));
+        for driver_interval in self.axis_intervals(axis) {
+            let started = upper_bound_axis_bound(
+                other_min_order,
+                other_intervals,
+                AxisBound::Min,
+                driver_interval.max,
+            )?;
+            let ended = lower_bound_axis_bound(
+                other_max_order,
+                other_intervals,
+                AxisBound::Max,
+                driver_interval.min,
+            )?;
+            count = count.saturating_add(started.saturating_sub(ended));
         }
 
         Some(count)
@@ -714,6 +703,46 @@ fn axis_bound(interval: FaceAxisInterval<'_>, bound: AxisBound) -> &Real {
     }
 }
 
+fn lower_bound_axis_bound(
+    order: &[usize],
+    intervals: &[FaceAxisInterval<'_>],
+    bound: AxisBound,
+    value: &Real,
+) -> Option<usize> {
+    let mut start = 0usize;
+    let mut end = order.len();
+    while start < end {
+        let mid = start + (end - start) / 2;
+        let ordering = compare(axis_bound(intervals[order[mid]], bound), value)?;
+        if ordering == Ordering::Less {
+            start = mid + 1;
+        } else {
+            end = mid;
+        }
+    }
+    Some(start)
+}
+
+fn upper_bound_axis_bound(
+    order: &[usize],
+    intervals: &[FaceAxisInterval<'_>],
+    bound: AxisBound,
+    value: &Real,
+) -> Option<usize> {
+    let mut start = 0usize;
+    let mut end = order.len();
+    while start < end {
+        let mid = start + (end - start) / 2;
+        let ordering = compare(axis_bound(intervals[order[mid]], bound), value)?;
+        if ordering == Ordering::Greater {
+            end = mid;
+        } else {
+            start = mid + 1;
+        }
+    }
+    Some(start)
+}
+
 fn axis_intervals_may_overlap(left: FaceAxisInterval<'_>, right: FaceAxisInterval<'_>) -> bool {
     !matches!(compare(left.max, right.min), Some(Ordering::Less))
         && !matches!(compare(right.max, left.min), Some(Ordering::Less))
@@ -902,6 +931,37 @@ mod tests {
                 &prepared_left,
                 &prepared_right
             ))
+        );
+    }
+
+    #[test]
+    fn prepared_sweep_counts_nonmonotonic_driver_maxima() {
+        let left_points = vec![
+            p(0, 0, 0),
+            p(100, 0, 0),
+            p(0, 1, 0),
+            p(50, 0, 0),
+            p(51, 0, 0),
+            p(50, 1, 0),
+        ];
+        let right_points = vec![p(60, 0, 0), p(61, 0, 0), p(60, 1, 0)];
+        let left_triangles = [[0, 1, 2], [3, 4, 5]];
+        let right_triangles = [[0, 1, 2]];
+        let left = MeshBounds::from_triangles(&left_points, &left_triangles);
+        let right = MeshBounds::from_triangles(&right_points, &right_triangles);
+        let prepared_left = left.prepare();
+        let prepared_right = right.prepare();
+
+        assert_eq!(
+            prepared_left.count_axis_interval_overlaps(&prepared_right, Axis::X),
+            Some(1)
+        );
+        assert_eq!(
+            sorted_pairs(prepared_candidate_face_pairs(
+                &prepared_left,
+                &prepared_right
+            )),
+            vec![[0, 0]]
         );
     }
 
