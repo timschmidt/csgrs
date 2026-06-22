@@ -197,22 +197,7 @@ impl<'a> ExactMeshRef<'a> {
     ) -> Result<PreparedMeshPairView<'a, 'b>, ExactMeshValidationError> {
         let left = self.prepare_broad_phase()?;
         let right = right.prepare_broad_phase()?;
-        let bounds_plan = left.bounds.candidate_face_pair_plan(&right.bounds);
-        let mut candidate_pairs = Vec::with_capacity(bounds_plan.candidate_pair_capacity_hint());
-        let result = left.bounds.try_visit_candidate_face_pairs_with_plan(
-            &right.bounds,
-            bounds_plan,
-            &mut |pair| {
-                candidate_pairs.push(pair);
-                Ok::<(), ()>(())
-            },
-        );
-        debug_assert!(result.is_ok());
-        Ok(PreparedMeshPairView {
-            left,
-            right,
-            candidate_pairs,
-        })
+        Ok(left.prepare_pair_broad_phase(&right))
     }
 
     /// Materialize this view after an exact affine transform.
@@ -257,32 +242,27 @@ impl<'a> PreparedMeshView<'a> {
         self.view
     }
 
-    /// Visit exact broad-phase candidate face pairs without collecting them.
-    pub fn visit_candidate_face_pairs(
+    /// Prepare cached broad-phase candidate face pairs for one mesh pair.
+    pub fn prepare_pair_broad_phase<'b>(
         &self,
-        right: &PreparedMeshView<'_>,
-        mut visit: impl FnMut([usize; 2]),
-    ) {
+        right: &PreparedMeshView<'b>,
+    ) -> PreparedMeshPairView<'a, 'b> {
         let plan = self.bounds.candidate_face_pair_plan(&right.bounds);
+        let mut candidate_pairs = Vec::with_capacity(plan.candidate_pair_capacity_hint());
         let result = self.bounds.try_visit_candidate_face_pairs_with_plan(
             &right.bounds,
             plan,
             &mut |pair| {
-                visit(pair);
+                candidate_pairs.push(pair);
                 Ok::<(), ()>(())
             },
         );
         debug_assert!(result.is_ok());
-    }
-
-    /// Try to visit exact broad-phase candidate face pairs, allowing early exit.
-    pub fn try_visit_candidate_face_pairs<E>(
-        &self,
-        right: &PreparedMeshView<'_>,
-        visit: impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E> {
-        self.bounds
-            .try_visit_candidate_face_pairs(&right.bounds, visit)
+        PreparedMeshPairView {
+            left: self.clone(),
+            right: right.clone(),
+            candidate_pairs,
+        }
     }
 }
 

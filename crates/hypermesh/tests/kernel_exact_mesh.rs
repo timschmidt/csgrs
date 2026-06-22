@@ -129,43 +129,30 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
     left.view().validate_retained_bounds().unwrap();
     let prepared_left = left.view().prepare_broad_phase().unwrap();
     let prepared_overlapping = overlapping.view().prepare_broad_phase().unwrap();
-    let mut candidates = Vec::new();
-    prepared_left.visit_candidate_face_pairs(&prepared_overlapping, |pair| {
-        candidates.push(pair);
-    });
+    let prepared_pair = prepared_left.prepare_pair_broad_phase(&prepared_overlapping);
+    let mut candidates = prepared_pair.candidate_face_pairs().to_vec();
     candidates.sort_unstable();
-    let mut visited_candidates = Vec::new();
-    prepared_left.visit_candidate_face_pairs(&prepared_overlapping, |pair| {
-        visited_candidates.push(pair);
-    });
-    visited_candidates.sort_unstable();
-    assert_eq!(visited_candidates, candidates);
     assert!(!candidates.is_empty());
     assert!(candidates.iter().all(|[left_face, right_face]| {
         *left_face < left.triangles().len() && *right_face < overlapping.triangles().len()
     }));
 
-    let mut disjoint_candidates = Vec::new();
     let prepared_disjoint = disjoint.view().prepare_broad_phase().unwrap();
-    prepared_left.visit_candidate_face_pairs(&prepared_disjoint, |pair| {
-        disjoint_candidates.push(pair);
-    });
-    assert!(disjoint_candidates.is_empty());
+    assert!(
+        prepared_left
+            .prepare_pair_broad_phase(&prepared_disjoint)
+            .candidate_face_pairs()
+            .is_empty()
+    );
 
-    let prepared_pair = left
+    let direct_pair = left
         .view()
         .prepare_pair_broad_phase(overlapping.view())
         .unwrap();
-    let mut prepared_candidates = Vec::new();
-    prepared_left.visit_candidate_face_pairs(&prepared_overlapping, |pair| {
-        prepared_candidates.push(pair);
-    });
-    prepared_candidates.sort_unstable();
-    assert_eq!(prepared_candidates, candidates);
-    let mut prepared_pair_candidates = prepared_pair.candidate_face_pairs().to_vec();
-    prepared_pair_candidates.sort_unstable();
-    assert_eq!(prepared_pair_candidates, candidates);
-    assert_eq!(prepared_pair.candidate_face_pairs().len(), candidates.len());
+    let mut direct_pair_candidates = direct_pair.candidate_face_pairs().to_vec();
+    direct_pair_candidates.sort_unstable();
+    assert_eq!(direct_pair_candidates, candidates);
+    assert_eq!(direct_pair.candidate_face_pairs().len(), candidates.len());
 }
 
 #[test]

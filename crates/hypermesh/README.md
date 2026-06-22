@@ -36,7 +36,7 @@ downstream CSG layers.
   available.
 - `ExactMeshRef`, `TriangleRef`, `FaceRef`, and `EdgeRef` provide borrowed
   access for queries that should not clone mesh storage.
-- `PreparedMeshView` streams replay-validated broad-phase candidates, and
+- `PreparedMeshView` reuses replay-validated broad-phase facts, and
   `PreparedMeshPairView` exposes cached candidate-pair slices for repeated
   pair queries without exposing raw acceleration carriers.
 - `ExactMesh::union`, `ExactMesh::intersection`, `ExactMesh::difference`, and

@@ -309,15 +309,6 @@ impl<'a> PreparedMeshBounds<'a> {
         }
     }
 
-    pub(crate) fn try_visit_candidate_face_pairs<E>(
-        &self,
-        other: &PreparedMeshBounds<'_>,
-        mut visit: impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E> {
-        let plan = self.candidate_face_pair_plan(other);
-        self.try_visit_candidate_face_pairs_with_plan(other, plan, &mut visit)
-    }
-
     pub(crate) fn try_visit_candidate_face_pairs_with_plan<E>(
         &self,
         other: &PreparedMeshBounds<'_>,
@@ -786,7 +777,8 @@ mod tests {
         right: &PreparedMeshBounds<'_>,
     ) -> Vec<[usize; 2]> {
         let mut pairs = Vec::new();
-        let result = left.try_visit_candidate_face_pairs(right, |pair| {
+        let plan = left.candidate_face_pair_plan(right);
+        let result = left.try_visit_candidate_face_pairs_with_plan(right, plan, &mut |pair| {
             pairs.push(pair);
             Ok::<(), ()>(())
         });
