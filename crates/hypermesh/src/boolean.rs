@@ -1249,7 +1249,7 @@ impl ExactBooleanCertificationSet {
         retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
         source_facts: &ExactBooleanSourceFacts,
     ) -> Result<Self, ExactMeshError> {
-        validate_graph_source_handoff(graph, left, right)?;
+        validate_graph_source_replay(graph, left, right)?;
         if let Some(attempt) = retained_arrangement_attempt {
             attempt
                 .validate_for_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
@@ -2758,7 +2758,7 @@ fn graph_for_certified_materialization<'a>(
     right: &ExactMesh,
 ) -> Result<&'a ExactIntersectionGraph, ExactMeshError> {
     if let Some(graph) = retained_graph {
-        validate_graph_source_handoff(graph, left, right)?;
+        validate_graph_source_replay(graph, left, right)?;
         return Ok(graph);
     }
     if owned_graph.is_none() {
@@ -3460,7 +3460,7 @@ fn replay_selected_region_boolean_result_from_graph(
     selection: ExactRegionSelection,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, ExactMeshError> {
-    validate_graph_source_handoff(graph, left, right)?;
+    validate_graph_source_replay(graph, left, right)?;
     let result =
         materialize_selected_region_result_from_graph(graph, left, right, selection, validation)?;
     if !matches!(
@@ -4097,7 +4097,7 @@ pub(crate) fn preflight_boolean_exact_request_from_graph_with_retained_attempt(
     retained_attempt: Option<&ExactArrangementBooleanAttempt>,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
 ) -> Result<ExactBooleanPreflight, ExactMeshError> {
-    validate_graph_source_handoff(graph, left, right)?;
+    validate_graph_source_replay(graph, left, right)?;
     let operation = request.operation;
     let validation = request.validation;
     let boundary_policy = request.boundary_policy;
@@ -4523,7 +4523,7 @@ fn certified_arrangement_cell_complex_coplanar_evidence(
         return None;
     }
     let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
-    if validate_graph_source_handoff(graph, left, right).is_err() || evidence.validate().is_err() {
+    if validate_graph_source_replay(graph, left, right).is_err() || evidence.validate().is_err() {
         return None;
     }
     (evidence.obstacle.requires_coplanar_volumetric_cells()
@@ -4700,7 +4700,7 @@ fn graph_requires_coplanar_volumetric_cells_for_sources(
     if !graph_requires_coplanar_volumetric_cells(&counts) {
         return false;
     }
-    if validate_graph_source_handoff(graph, left, right).is_err() {
+    if validate_graph_source_replay(graph, left, right).is_err() {
         return false;
     }
     // This is the source-aware replacement for the coarse relation-count gate
@@ -4723,7 +4723,7 @@ fn coplanar_volumetric_evidence_if_required(
     if !graph_requires_coplanar_volumetric_cells(&counts) {
         return None;
     }
-    if validate_graph_source_handoff(graph, left, right).is_err() {
+    if validate_graph_source_replay(graph, left, right).is_err() {
         return None;
     }
     let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
@@ -4741,7 +4741,7 @@ fn coplanar_boundary_only_evidence_if_consumed(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<CoplanarVolumetricCellEvidenceReport>, ExactMeshError> {
-    validate_graph_source_handoff(graph, left, right)?;
+    validate_graph_source_replay(graph, left, right)?;
     let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
     evidence.validate().map_err(|error| {
         ExactMeshError::one(ExactMeshBlocker::new(
@@ -6910,7 +6910,7 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
     }
 
     let reverse_graph = build_intersection_graph(right, left)?;
-    validate_graph_source_handoff(&reverse_graph, right, left)?;
+    validate_graph_source_replay(&reverse_graph, right, left)?;
     let Some(right_minus_left) = materialize_arrangement_volumetric_split_cell_result_from_graph(
         &reverse_graph,
         right,
@@ -7335,7 +7335,7 @@ fn boolean_convex_relation_meshes_optional_from_graph(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
-    validate_graph_source_handoff(graph, left, right)?;
+    validate_graph_source_replay(graph, left, right)?;
     let Some(relation) =
         certified_convex_relation_shortcut_from_graph(graph, left, right, operation)?
     else {
@@ -9879,7 +9879,7 @@ fn certified_closed_boundary_only_contact_from_graph(
     if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
         return Ok(false);
     }
-    validate_graph_source_handoff(graph, left, right)?;
+    validate_graph_source_replay(graph, left, right)?;
     let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
     evidence.validate().map_err(|error| {
         ExactMeshError::one(ExactMeshBlocker::new(
@@ -9898,7 +9898,7 @@ fn closed_zero_area_boundary_contact_evidence_from_graph(
     if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
         return Ok(None);
     }
-    validate_graph_source_handoff(graph, left, right)?;
+    validate_graph_source_replay(graph, left, right)?;
     let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
     evidence.validate().map_err(|error| {
         ExactMeshError::one(ExactMeshBlocker::new(
@@ -10275,7 +10275,7 @@ fn arrangement_materialized_evidence_blocker_kind_and_evidence(
 /// face, edge, vertex, or plane handles no longer replay against the source
 /// meshes. Predicate evidence is only useful when the combinatorial object
 /// handles attached to it are still current.
-fn validate_graph_source_handoff(
+fn validate_graph_source_replay(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -10295,7 +10295,7 @@ fn validated_intersection_graph(
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
     let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    validate_graph_source_replay(&graph, left, right)?;
     Ok(graph)
 }
 
@@ -12500,7 +12500,7 @@ mod tests {
         let boundary_left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
         let boundary_right = axis_aligned_box_i64([2, 0, 0], [4, 2, 2]);
         let boundary_graph = build_intersection_graph(&boundary_left, &boundary_right).unwrap();
-        validate_graph_source_handoff(&boundary_graph, &boundary_left, &boundary_right).unwrap();
+        validate_graph_source_replay(&boundary_graph, &boundary_left, &boundary_right).unwrap();
         let evidence = certified_arrangement_cell_complex_coplanar_evidence(
             &boundary_graph,
             &boundary_left,
@@ -12521,7 +12521,7 @@ mod tests {
                 &stale_right,
             )
             .is_none(),
-            "coplanar arrangement evidence must not survive stale source handoff"
+            "coplanar arrangement evidence must not survive stale source replay"
         );
         assert!(!graph_requires_coplanar_volumetric_cells_for_sources(
             &boundary_graph,
@@ -12535,7 +12535,7 @@ mod tests {
                 &stale_right,
             )
             .is_err(),
-            "boundary-only coplanar evidence must reject stale graph/source handoff"
+            "boundary-only coplanar evidence must reject stale graph/source replay"
         );
         assert!(
             certified_closed_boundary_only_contact_from_graph(
@@ -12544,7 +12544,7 @@ mod tests {
                 &stale_right,
             )
             .is_err(),
-            "closed boundary-only contact certification must reject stale graph/source handoff"
+            "closed boundary-only contact certification must reject stale graph/source replay"
         );
     }
 
@@ -13924,7 +13924,7 @@ mod tests {
             &container, &contained
         ));
         let graph = build_intersection_graph(&container, &contained).unwrap();
-        validate_graph_source_handoff(&graph, &container, &contained).unwrap();
+        validate_graph_source_replay(&graph, &container, &contained).unwrap();
         assert!(!graph.has_unknowns());
         assert!(graph.face_pairs.is_empty());
 
@@ -14544,7 +14544,7 @@ mod tests {
         .unwrap();
         let right = tetrahedron_i64([-1, 1, 0], [3, 1, 0], [-1, 5, 0], [-1, 1, 4]);
         let graph = build_intersection_graph(&left, &right).unwrap();
-        validate_graph_source_handoff(&graph, &left, &right).unwrap();
+        validate_graph_source_replay(&graph, &left, &right).unwrap();
 
         let union_closure = test_volumetric_boundary_closure(
             ExactBooleanRequest::new(
@@ -15657,7 +15657,7 @@ mod tests {
         let separated_right = tetrahedron_i64([100, 0, 0], [104, 0, 0], [100, 4, 0], [100, 0, 4]);
         let overlapping_right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
         let graph = build_intersection_graph(&left, &right).unwrap();
-        validate_graph_source_handoff(&graph, &left, &right).unwrap();
+        validate_graph_source_replay(&graph, &left, &right).unwrap();
         assert!(!graph.has_unknowns());
         assert!(!graph.face_pairs.is_empty());
         assert!(
@@ -15877,7 +15877,7 @@ mod tests {
         let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
         let right = tetrahedron_i64([1, 1, 1], [5, 1, 2], [1, 5, 1], [2, 1, 5]);
         let graph = build_intersection_graph(&left, &right).unwrap();
-        validate_graph_source_handoff(&graph, &left, &right).unwrap();
+        validate_graph_source_replay(&graph, &left, &right).unwrap();
         assert!(!graph.has_unknowns());
         assert_eq!(graph.face_pairs.len(), 3);
         assert_eq!(graph.event_count(), 12);
@@ -16629,7 +16629,7 @@ mod tests {
         .unwrap();
         let right = left.clone();
         let graph = build_intersection_graph(&left, &right).unwrap();
-        validate_graph_source_handoff(&graph, &left, &right).unwrap();
+        validate_graph_source_replay(&graph, &left, &right).unwrap();
         assert!(!graph.face_pairs.is_empty());
         assert!(graph.event_count() > 0);
 
@@ -16686,7 +16686,7 @@ mod tests {
         .unwrap();
         let right = tetrahedron_i64([2, 0, 0], [6, 0, 0], [2, 4, 0], [2, 0, -4]);
         let graph = build_intersection_graph(&left, &right).unwrap();
-        validate_graph_source_handoff(&graph, &left, &right).unwrap();
+        validate_graph_source_replay(&graph, &left, &right).unwrap();
 
         let evidence = arrangement_cell_complex_already_materialized_winding_evidence(
             &graph,
@@ -16751,7 +16751,7 @@ mod tests {
         .unwrap()
         .expect("regularized boundary-touch intersection should materialize through overlay");
         let graph = build_intersection_graph(&left, &right).unwrap();
-        validate_graph_source_handoff(&graph, &left, &right).unwrap();
+        validate_graph_source_replay(&graph, &left, &right).unwrap();
         let request = ExactBooleanRequest::new(
             ExactBooleanOperation::Intersection,
             ValidationPolicy::ALLOW_BOUNDARY,
