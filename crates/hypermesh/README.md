@@ -97,16 +97,6 @@ The exact-facing path is the preferred boundary for new code:
 ```rust,ignore
 use hypermesh::{ExactMesh, ValidationPolicy};
 
-let input = ExactMesh::inspect_i64_triangles(
-    &[
-        0, 0, 0,
-        1, 0, 0,
-        0, 1, 0,
-    ],
-    &[0, 1, 2],
-);
-assert!(input.edge_ready());
-
 let mesh = ExactMesh::from_i64_triangles_with_policy(
     &[
         0, 0, 0,

@@ -12,7 +12,6 @@
 //! predicate reports, certified outputs, or explicit blockers when the
 //! implementation cannot prove a requested operation.
 
-mod adapter;
 mod adjacent;
 pub(crate) mod adjacent_polygon;
 mod affine_box;

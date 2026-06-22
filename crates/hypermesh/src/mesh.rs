@@ -4,10 +4,6 @@
 //! `hyperreal::Real`. Primitive-float construction is a named lossy adapter
 //! and validates every coordinate before import.
 
-use super::adapter::{
-    ExactI64MeshInputReport, LossyF64MeshInputReport, inspect_f64_mesh_input,
-    inspect_i64_mesh_input,
-};
 use super::audit::{ExactMeshAuditReport, audit_exact_mesh};
 use super::boolean::{
     ExactBooleanOperation, ExactBooleanRequest, materialize_boolean_exact_request,
@@ -313,11 +309,6 @@ impl ExactMesh {
         )
     }
 
-    /// Audit a flat primitive-float mesh input stream without constructing a mesh.
-    pub fn inspect_f64_triangles(pos: &[f64], idx: &[usize]) -> LossyF64MeshInputReport {
-        inspect_f64_mesh_input(pos, idx)
-    }
-
     /// Construct an exact mesh from flat integer coordinates.
     ///
     /// Integer grid input is lifted directly into `hyperreal::Real` without a
@@ -370,11 +361,6 @@ impl ExactMesh {
             SourceProvenance::exact("flat i64 triangle mesh"),
             policy,
         )
-    }
-
-    /// Audit a flat exact-integer mesh input stream without constructing a mesh.
-    pub fn inspect_i64_triangles(pos: &[i64], idx: &[usize]) -> ExactI64MeshInputReport {
-        inspect_i64_mesh_input(pos, idx)
     }
 
     /// Return exact vertices.
