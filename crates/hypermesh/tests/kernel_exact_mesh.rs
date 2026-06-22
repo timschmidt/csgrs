@@ -139,17 +139,10 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
     let view = arrangement.view();
 
     view.validate_retained_state().unwrap();
-    assert_eq!(view.vertex_count(), arrangement.vertices.len());
-    assert_eq!(view.edge_count(), arrangement.edges.len());
-    assert_eq!(view.face_cell_count(), arrangement.face_cells.len());
-    assert_eq!(
-        view.lower_dimensional_artifact_count(),
-        arrangement.lower_dimensional_artifacts.len()
-    );
-    assert_eq!(view.blocker_count(), arrangement.blockers.len());
     assert_eq!(view.vertices().count(), view.vertex_count());
     assert_eq!(view.edges().count(), view.edge_count());
     assert_eq!(view.face_cells().count(), view.face_cell_count());
+    assert_eq!(view.blocker_count(), 0);
 
     if let Some(vertex) = view.vertex(0) {
         assert_eq!(vertex.index(), 0);

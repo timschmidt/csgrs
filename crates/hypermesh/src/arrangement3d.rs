@@ -827,31 +827,31 @@ pub struct ArrangementVolumeFaceSide {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactArrangement3d {
     /// Exact vertices from source meshes and constructed intersections.
-    pub vertices: Vec<ArrangementVertex>,
+    pub(crate) vertices: Vec<ArrangementVertex>,
     /// Exact split edges from source edges and graph vertices.
-    pub edges: Vec<ArrangementEdge>,
+    pub(crate) edges: Vec<ArrangementEdge>,
     /// Face cells retained in carrier-face coordinates.
-    pub face_cells: Vec<ArrangementFaceCell>,
+    pub(crate) face_cells: Vec<ArrangementFaceCell>,
     /// Per-carrier-plane 2D arrangements for retained coplanar overlap graphs.
-    pub carrier_plane_overlays: Vec<ArrangementCarrierPlaneOverlay>,
+    pub(crate) carrier_plane_overlays: Vec<ArrangementCarrierPlaneOverlay>,
     /// Per-source-face 2D arrangements for non-coplanar intersection chords.
-    pub face_plane_arrangements: Vec<ArrangementFacePlaneArrangement>,
+    pub(crate) face_plane_arrangements: Vec<ArrangementFacePlaneArrangement>,
     /// Lower-dimensional contacts retained by regularization policy.
-    pub lower_dimensional_artifacts: Vec<ArrangementLowerDimensionalArtifact>,
+    pub(crate) lower_dimensional_artifacts: Vec<ArrangementLowerDimensionalArtifact>,
     /// Connected face-cell regions/shell components retained by the arrangement.
-    pub shells_or_regions: Option<Vec<ArrangementRegion>>,
+    pub(crate) shells_or_regions: Option<Vec<ArrangementRegion>>,
     /// Explicit volume regions induced by closed manifold shell components.
-    pub volume_regions: Option<Vec<ArrangementVolumeRegion>>,
+    pub(crate) volume_regions: Option<Vec<ArrangementVolumeRegion>>,
     /// Volume adjacency through closed shell components.
-    pub volume_adjacencies: Option<Vec<ArrangementVolumeAdjacency>>,
+    pub(crate) volume_adjacencies: Option<Vec<ArrangementVolumeAdjacency>>,
     /// Retained exact intersection graph.
-    pub graph: ExactIntersectionGraph,
+    pub(crate) graph: ExactIntersectionGraph,
     /// Checked split topology, when exact ordering/equality completed.
-    pub topology: Option<ExactSplitTopologyPlan>,
+    pub(crate) topology: Option<ExactSplitTopologyPlan>,
     /// Checked face-region loop plan, when available.
-    pub region_plan: Option<ExactFaceRegionPlan>,
+    pub(crate) region_plan: Option<ExactFaceRegionPlan>,
     /// Explicit blockers for incomplete exact arrangement construction.
-    pub blockers: Vec<ExactArrangementBlocker>,
+    pub(crate) blockers: Vec<ExactArrangementBlocker>,
 }
 
 /// Public arrangement entry point for the exact Boolean pipeline.

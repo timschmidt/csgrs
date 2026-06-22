@@ -214,29 +214,6 @@ pub struct CoplanarEdgeSplitConstruction {
     pub interval: Option<CoplanarEdgeInterval>,
 }
 
-impl CoplanarEdgeSplitConstruction {
-    /// Validate point-vs-interval construction consistency for one edge contact.
-    pub fn validate(&self) -> Result<(), CoplanarOverlapSplitValidationError> {
-        validate_coplanar_edge_split(self)
-    }
-
-    /// Validate construction consistency and exact source-edge incidence.
-    ///
-    /// This is the geometry-aware version of [`Self::validate`]. It checks
-    /// that each retained split point is exactly the interpolation of both
-    /// source edges at the stored parameters. That retained construction check
-    /// but those parameters must still replay to retained object geometry
-    /// before they become combinatorial evidence.
-    pub fn validate_against_edges(
-        &self,
-        left_edge: [Point3; 2],
-        right_edge: [Point3; 2],
-    ) -> Result<(), CoplanarOverlapSplitValidationError> {
-        validate_coplanar_edge_split(self)?;
-        validate_coplanar_edge_split_against_edges(self, &left_edge, &right_edge)
-    }
-}
-
 /// Non-mutating split-construction plan for retained coplanar overlap graphs.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarOverlapSplitPlan {
@@ -320,17 +297,7 @@ pub enum CoplanarOverlapGraphValidationError {
     SameSideVertexOverlap,
     /// Recomputing coplanar overlap graphs from the supplied source meshes did
     /// not reproduce this retained graph.
-    SourceReplayMismatch,
-}
-
-/// Freshness status for a retained coplanar overlap graph.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CoplanarOverlapGraphFreshness {
-    /// The overlap graph is locally valid and replays from the source operands.
-    Current,
-    /// The retained overlap graph is internally inconsistent.
-    InvalidGraph,
-    /// The graph is locally valid but no longer replays from the source operands.
+    #[cfg(test)]
     SourceReplayMismatch,
 }
 
@@ -379,17 +346,7 @@ pub enum CoplanarOverlapSplitValidationError {
     NonConstructiveVertexOverlap,
     /// Recomputing coplanar split constructions from the supplied source
     /// meshes did not reproduce this retained split artifact.
-    SourceReplayMismatch,
-}
-
-/// Freshness status for retained coplanar split-construction evidence.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CoplanarOverlapSplitFreshness {
-    /// The split evidence is locally valid and replays from the source operands.
-    Current,
-    /// The retained split evidence is internally inconsistent.
-    InvalidSplit,
-    /// The split evidence is locally valid but no longer replays from the sources.
+    #[cfg(test)]
     SourceReplayMismatch,
 }
 
@@ -415,78 +372,8 @@ pub enum CoplanarArrangementReadinessValidationError {
     IntervalEndpointCountMismatch,
     /// Recomputing the readiness summary from the supplied source meshes did
     /// not reproduce this retained report.
+    #[cfg(test)]
     SourceReplayMismatch,
-}
-
-/// Freshness status for a retained coplanar arrangement readiness summary.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CoplanarArrangementReadinessFreshness {
-    /// The readiness summary is locally valid and replays from the source operands.
-    Current,
-    /// The retained readiness summary is internally inconsistent.
-    InvalidReadiness,
-    /// The summary is locally valid but no longer replays from the source operands.
-    SourceReplayMismatch,
-}
-
-impl From<CoplanarOverlapGraphValidationError> for CoplanarOverlapGraphFreshness {
-    fn from(error: CoplanarOverlapGraphValidationError) -> Self {
-        match error {
-            CoplanarOverlapGraphValidationError::SourceReplayMismatch => Self::SourceReplayMismatch,
-            CoplanarOverlapGraphValidationError::NonCoplanarRelation
-            | CoplanarOverlapGraphValidationError::EmptyOverlapGraph
-            | CoplanarOverlapGraphValidationError::DisjointEdgeOverlap
-            | CoplanarOverlapGraphValidationError::NonConstructiveVertexOverlap
-            | CoplanarOverlapGraphValidationError::SameSideVertexOverlap => Self::InvalidGraph,
-        }
-    }
-}
-
-impl From<CoplanarOverlapSplitValidationError> for CoplanarOverlapSplitFreshness {
-    fn from(error: CoplanarOverlapSplitValidationError) -> Self {
-        match error {
-            CoplanarOverlapSplitValidationError::SourceReplayMismatch => Self::SourceReplayMismatch,
-            CoplanarOverlapSplitValidationError::MissingPointConstruction
-            | CoplanarOverlapSplitValidationError::DisjointEdgeSplit
-            | CoplanarOverlapSplitValidationError::MissingIntervalConstruction
-            | CoplanarOverlapSplitValidationError::MissingIntervalEndpoints
-            | CoplanarOverlapSplitValidationError::UnexpectedIntervalConstruction
-            | CoplanarOverlapSplitValidationError::UnexpectedPointConstruction
-            | CoplanarOverlapSplitValidationError::SplitParameterOutOfRange
-            | CoplanarOverlapSplitValidationError::UnknownSplitParameterOrder
-            | CoplanarOverlapSplitValidationError::EndpointTouchWithoutEndpointParameter
-            | CoplanarOverlapSplitValidationError::ProperCrossingEndpointParameter
-            | CoplanarOverlapSplitValidationError::DegenerateInterval
-            | CoplanarOverlapSplitValidationError::UnknownIntervalOrder
-            | CoplanarOverlapSplitValidationError::SplitPointDoesNotMatchLeftParameter
-            | CoplanarOverlapSplitValidationError::SplitPointDoesNotMatchRightParameter
-            | CoplanarOverlapSplitValidationError::UnknownSplitPointEquality
-            | CoplanarOverlapSplitValidationError::SameSideVertexOverlap
-            | CoplanarOverlapSplitValidationError::NonConstructiveVertexOverlap => {
-                Self::InvalidSplit
-            }
-        }
-    }
-}
-
-impl From<CoplanarArrangementReadinessValidationError> for CoplanarArrangementReadinessFreshness {
-    fn from(error: CoplanarArrangementReadinessValidationError) -> Self {
-        match error {
-            CoplanarArrangementReadinessValidationError::SourceReplayMismatch => {
-                Self::SourceReplayMismatch
-            }
-            CoplanarArrangementReadinessValidationError::NoOverlapWithEvidence
-            | CoplanarArrangementReadinessValidationError::BoundaryOnlyHasOverlap
-            | CoplanarArrangementReadinessValidationError::BoundaryOnlyMissingTouchingGraph
-            | CoplanarArrangementReadinessValidationError::NeedsCellsMissingOverlap
-            | CoplanarArrangementReadinessValidationError::MissingOverlapEvidence
-            | CoplanarArrangementReadinessValidationError::GraphCountMismatch
-            | CoplanarArrangementReadinessValidationError::SplitCountExceedsEdgeEvidence
-            | CoplanarArrangementReadinessValidationError::IntervalEndpointCountMismatch => {
-                Self::InvalidReadiness
-            }
-        }
-    }
 }
 
 impl CoplanarOverlapGraph {
@@ -526,6 +413,7 @@ impl CoplanarOverlapGraph {
     /// locally coherent. Source replay rebuilds the exact intersection graph
     /// from `left` and `right`, extracts all coplanar overlap graphs, and
     /// evidence must remain tied to the operands whose predicates produced it.
+    #[cfg(test)]
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -539,18 +427,6 @@ impl CoplanarOverlapGraph {
             Ok(())
         } else {
             Err(CoplanarOverlapGraphValidationError::SourceReplayMismatch)
-        }
-    }
-
-    /// Classify whether this retained overlap graph is fresh for the source operands.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> CoplanarOverlapGraphFreshness {
-        match self.validate_against_sources(left, right) {
-            Ok(()) => CoplanarOverlapGraphFreshness::Current,
-            Err(error) => error.into(),
         }
     }
 
@@ -657,6 +533,7 @@ impl CoplanarArrangementReadinessReport {
     /// coplanar split summaries from `left` and `right`, then requires the
     /// summarized exact-topology handoff must remain attached to the predicate
     /// and construction history that produced its numerical structure.
+    #[cfg(test)]
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -672,42 +549,14 @@ impl CoplanarArrangementReadinessReport {
             Err(CoplanarArrangementReadinessValidationError::SourceReplayMismatch)
         }
     }
-
-    /// Classify whether this retained readiness summary is fresh for the sources.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> CoplanarArrangementReadinessFreshness {
-        match self.validate_against_sources(left, right) {
-            Ok(()) => CoplanarArrangementReadinessFreshness::Current,
-            Err(error) => error.into(),
-        }
-    }
 }
 
 impl CoplanarOverlapSplitPlan {
     /// Validate every retained coplanar split construction record.
+    #[cfg(test)]
     pub fn validate(&self) -> Result<(), CoplanarOverlapSplitValidationError> {
         for graph in &self.graphs {
             graph.validate()?;
-        }
-        Ok(())
-    }
-
-    /// Validate split records against the exact source meshes they reference.
-    ///
-    /// Plain split validation checks the self-contained construction record.
-    /// This method additionally replays retained parameters against source
-    /// edge geometry, which planar-cell extraction should use when mesh
-    /// handles are available.
-    pub fn validate_against_meshes(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), MeshError> {
-        for graph in &self.graphs {
-            graph.validate_against_meshes(left, right)?;
         }
         Ok(())
     }
@@ -719,6 +568,7 @@ impl CoplanarOverlapSplitPlan {
     /// graphs and split constructions from `left` and `right`, then compares
     /// should consume only split records whose construction history still
     /// replays from the source operands.
+    #[cfg(test)]
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -735,18 +585,6 @@ impl CoplanarOverlapSplitPlan {
             Ok(())
         } else {
             Err(CoplanarOverlapSplitValidationError::SourceReplayMismatch)
-        }
-    }
-
-    /// Classify whether this retained split plan is fresh for the source operands.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> CoplanarOverlapSplitFreshness {
-        match self.validate_against_sources(left, right) {
-            Ok(()) => CoplanarOverlapSplitFreshness::Current,
-            Err(error) => error.into(),
         }
     }
 }
@@ -786,6 +624,7 @@ impl CoplanarOverlapSplitGraph {
     /// of the coplanar split plan, then requires this graph to appear
     /// unchanged. It keeps interval and point-split construction records as
     /// certified objects rather than detachable projected labels, matching the
+    #[cfg(test)]
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -806,18 +645,6 @@ impl CoplanarOverlapSplitGraph {
             Ok(())
         } else {
             Err(CoplanarOverlapSplitValidationError::SourceReplayMismatch)
-        }
-    }
-
-    /// Classify whether this retained split graph is fresh for the source operands.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> CoplanarOverlapSplitFreshness {
-        match self.validate_against_sources(left, right) {
-            Ok(()) => CoplanarOverlapSplitFreshness::Current,
-            Err(error) => error.into(),
         }
     }
 }
@@ -863,41 +690,6 @@ pub enum IntersectionGraphValidationError {
     SourceReplayMismatch,
 }
 
-/// Freshness status for retained exact intersection graph event evidence.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum IntersectionGraphFreshness {
-    /// The graph event evidence is locally valid and replays from the sources.
-    Current,
-    /// The retained graph event evidence is internally inconsistent.
-    InvalidGraph,
-    /// The graph is locally valid but no longer replays from the source operands.
-    SourceReplayMismatch,
-}
-
-impl From<IntersectionGraphValidationError> for IntersectionGraphFreshness {
-    fn from(error: IntersectionGraphValidationError) -> Self {
-        match error {
-            IntersectionGraphValidationError::SourceReplayMismatch => Self::SourceReplayMismatch,
-            IntersectionGraphValidationError::FaceIndexOutOfRange
-            | IntersectionGraphValidationError::EventSourceOutOfRange
-            | IntersectionGraphValidationError::EventSourceMismatch
-            | IntersectionGraphValidationError::RejectedPairHasEvents
-            | IntersectionGraphValidationError::RetainedPairHasNoEvents
-            | IntersectionGraphValidationError::UnknownPairMissingUnknownEvent
-            | IntersectionGraphValidationError::CoplanarPairMissingProjection
-            | IntersectionGraphValidationError::NonCoplanarPairHasProjection
-            | IntersectionGraphValidationError::CoplanarPairHasSegmentPlaneEvent
-            | IntersectionGraphValidationError::NonCoplanarPairHasCoplanarEvent
-            | IntersectionGraphValidationError::DisjointSegmentPlaneEvent
-            | IntersectionGraphValidationError::InvalidSegmentPlaneEvent
-            | IntersectionGraphValidationError::DisjointCoplanarEdgeEvent
-            | IntersectionGraphValidationError::NonConstructiveCoplanarVertexEvent => {
-                Self::InvalidGraph
-            }
-        }
-    }
-}
-
 /// Event records for one retained face pair.
 #[derive(Clone, Debug, PartialEq)]
 pub struct FacePairEvents {
@@ -916,6 +708,7 @@ pub struct FacePairEvents {
 impl FacePairEvents {
     /// Return whether the pair contains at least one event that can drive graph
     /// construction.
+    #[cfg(test)]
     pub fn has_constructive_events(&self) -> bool {
         self.events.iter().any(|event| {
             !matches!(
@@ -1007,40 +800,6 @@ impl FacePairEvents {
             validate_intersection_event_sources(event, self, left, right, left_tri, right_tri)?;
         }
         Ok(())
-    }
-
-    /// Validate this face-pair event record by replaying source classification.
-    ///
-    /// Source-handle validation proves the retained events still point into
-    /// the supplied meshes. This method additionally rebuilds the exact
-    /// intersection graph from `left` and `right`, then requires this pair to
-    /// event records are certified numerical/combinatorial objects, not labels
-    /// that can be copied between face pairs.
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), IntersectionGraphValidationError> {
-        self.validate_against_meshes(left, right)?;
-        let replay = build_intersection_graph(left, right)
-            .map_err(|_| IntersectionGraphValidationError::SourceReplayMismatch)?;
-        if replay.face_pairs.iter().any(|pair| pair == self) {
-            Ok(())
-        } else {
-            Err(IntersectionGraphValidationError::SourceReplayMismatch)
-        }
-    }
-
-    /// Classify whether this retained face-pair event record is fresh for the sources.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> IntersectionGraphFreshness {
-        match self.validate_against_sources(left, right) {
-            Ok(()) => IntersectionGraphFreshness::Current,
-            Err(error) => error.into(),
-        }
     }
 
     /// Group retained coplanar events into a non-mutating overlap graph.
@@ -1176,18 +935,6 @@ impl ExactIntersectionGraph {
             Ok(())
         } else {
             Err(IntersectionGraphValidationError::SourceReplayMismatch)
-        }
-    }
-
-    /// Classify whether this retained intersection graph is fresh for the sources.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> IntersectionGraphFreshness {
-        match self.validate_against_sources(left, right) {
-            Ok(()) => IntersectionGraphFreshness::Current,
-            Err(error) => error.into(),
         }
     }
 
@@ -1341,30 +1088,9 @@ impl ExactIntersectionGraph {
     /// `hyperlimit::compare_reals`. Unknown comparisons do not merge points;
     /// they increment [`ExactGraphVertexPlan::unresolved_equalities`] so a
     /// caller can choose a refinement or unsupported-degeneracy policy.
+    #[cfg(test)]
     pub fn graph_vertex_plan(&self) -> ExactGraphVertexPlan {
         graph_vertex_plan(&self.edge_split_plan())
-    }
-
-    /// Merge coincident split points after validating edge split facts.
-    ///
-    /// This checked entry point rejects invalid segment/plane construction
-    /// facts before point equality is used to form graph vertices. That keeps
-    /// topology consume coordinates whose construction context has already
-    pub fn checked_graph_vertex_plan(
-        &self,
-    ) -> Result<ExactGraphVertexPlan, SplitPlanValidationReport> {
-        let edge_splits = self.edge_split_plan();
-        let edge_report = edge_splits.validate();
-        if !edge_report.is_valid() {
-            return Err(edge_report);
-        }
-        let graph_vertices = graph_vertex_plan(&edge_splits);
-        let graph_report = graph_vertices.validate();
-        if graph_report.is_valid() {
-            Ok(graph_vertices)
-        } else {
-            Err(graph_report)
-        }
     }
 
     /// Build a non-mutating split-topology plan.
@@ -1413,25 +1139,9 @@ impl ExactIntersectionGraph {
     /// The result tells later triangulation which original face boundary edges
     /// gained graph vertices. It does not infer a polygonization or winding
     /// decision; those remain exact downstream steps.
+    #[cfg(test)]
     pub fn face_split_plan(&self) -> ExactFaceSplitPlan {
         face_split_plan(&self.split_topology_plan())
-    }
-
-    /// Build and validate face-local split work items from checked topology.
-    ///
-    /// This keeps the face-local handoff explicit: topology chains are checked
-    /// first, then face work items must prove every referenced graph vertex has
-    /// a matching exact source use on that face edge before boundary geometry
-    /// is materialized.
-    pub fn checked_face_split_plan(&self) -> Result<ExactFaceSplitPlan, SplitPlanValidationReport> {
-        let topology = self.checked_split_topology_plan()?;
-        let face_plan = face_split_plan(&topology);
-        let face_report = face_plan.validate_against_topology(&topology);
-        if face_report.is_valid() {
-            Ok(face_plan)
-        } else {
-            Err(face_report)
-        }
     }
 
     /// Build exact face-boundary geometry for later triangulation.
@@ -1508,11 +1218,6 @@ pub struct ExactEdgeSplitPlan {
 }
 
 impl ExactEdgeSplitPlan {
-    /// Count split points across all edges.
-    pub fn point_count(&self) -> usize {
-        self.splits.iter().map(|split| split.points.len()).sum()
-    }
-
     /// Validate exact edge split events before graph-vertex merging.
     ///
     /// This is the first handoff after segment/plane construction. It keeps
@@ -1528,21 +1233,13 @@ impl ExactEdgeSplitPlan {
     /// extracts its edge split plan, and compares it with this artifact after
     /// local construction-fact validation. Replaying the first split handoff
     /// keeps segment/plane certificates attached to their original operands,
+    #[cfg(test)]
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> SplitPlanValidationReport {
         validate_edge_split_plan_against_sources(self, left, right)
-    }
-
-    /// Classify whether this retained edge split plan is fresh for the sources.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> SplitPlanFreshness {
-        self.validate_against_sources(left, right).freshness()
     }
 }
 
@@ -1584,40 +1281,12 @@ pub struct ExactGraphVertexPlan {
 }
 
 impl ExactGraphVertexPlan {
-    /// Count retained source uses across all graph vertices.
-    pub fn source_use_count(&self) -> usize {
-        self.vertices.iter().map(|vertex| vertex.uses.len()).sum()
-    }
-
     /// Validate merged graph vertices before topology consumes them.
     ///
     /// The graph-vertex plan is the first place where multiple exact
     /// facts instead of trusting the representative coordinate alone.
     pub fn validate(&self) -> SplitPlanValidationReport {
         validate_graph_vertex_plan(self)
-    }
-
-    /// Validate graph-vertex merging by replaying from source operands.
-    ///
-    /// Merged graph vertices are only meaningful for the exact split events
-    /// that produced them. This method rebuilds those events from `left` and
-    /// `right`, redoes the merge, and requires the public artifact to match the
-    /// and later combinatorial topology.
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> SplitPlanValidationReport {
-        validate_graph_vertex_plan_against_sources(self, left, right)
-    }
-
-    /// Classify whether this retained graph-vertex plan is fresh for the sources.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> SplitPlanFreshness {
-        self.validate_against_sources(left, right).freshness()
     }
 }
 
@@ -1681,29 +1350,6 @@ impl ExactSplitTopologyPlan {
     pub fn validate(&self) -> SplitPlanValidationReport {
         validate_split_topology_plan(self)
     }
-
-    /// Validate split topology by replaying from source operands.
-    ///
-    /// The topology plan orders original edge endpoints and exact graph
-    /// vertices into non-mutating chains. This source replay rebuilds the
-    /// graph, graph-vertex merge, and topology from `left` and `right` before
-    /// decisions remain tied to exact predicate and construction evidence.
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> SplitPlanValidationReport {
-        validate_split_topology_plan_against_sources(self, left, right)
-    }
-
-    /// Classify whether this retained split-topology plan is fresh for the sources.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> SplitPlanFreshness {
-        self.validate_against_sources(left, right).freshness()
-    }
 }
 
 /// One split edge chain as used by an affected face.
@@ -1734,15 +1380,6 @@ pub struct ExactFaceSplitPlan {
 }
 
 impl ExactFaceSplitPlan {
-    /// Count graph-vertex references across all face work items.
-    pub fn graph_vertex_references(&self) -> usize {
-        self.faces
-            .iter()
-            .flat_map(|face| face.edges.iter())
-            .map(|edge| edge.graph_vertices.len())
-            .sum()
-    }
-
     /// Validate face-local split work items against a split-topology plan.
     ///
     /// The face plan is still deliberately pre-triangulation: it only says
@@ -1765,21 +1402,13 @@ impl ExactFaceSplitPlan {
     /// topology, and face-local work items from `left` and `right`, then
     /// compares the rebuilt plan with this public artifact. That keeps the
     /// copied face work list tied to the certified predicate/construction
+    #[cfg(test)]
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> SplitPlanValidationReport {
         validate_face_split_plan_against_sources(self, left, right)
-    }
-
-    /// Classify whether this retained face split plan is fresh for the sources.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> SplitPlanFreshness {
-        self.validate_against_sources(left, right).freshness()
     }
 }
 
@@ -1862,40 +1491,6 @@ pub struct SplitPlanDiagnostic {
     pub graph_vertex: Option<usize>,
 }
 
-/// Error returned when a split-plan validation report is itself malformed.
-///
-/// Split-plan diagnostics are evidence for exact graph, topology, and region
-/// stages. A diagnostic without the location data needed to interpret it is not
-/// useful to exact kernel code, so malformed diagnostic artifacts fail
-/// explicitly instead of becoming prose-only failures.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum SplitPlanReportValidationError {
-    /// A diagnostic message was empty or whitespace only.
-    EmptyMessage,
-    /// A diagnostic is missing the mesh side required by its kind.
-    MissingSide,
-    /// A diagnostic is missing the face index required by its kind.
-    MissingFace,
-    /// A diagnostic is missing the directed edge required by its kind.
-    MissingEdge,
-    /// A diagnostic is missing the graph-vertex index required by its kind.
-    MissingGraphVertex,
-    /// A missing-source-face diagnostic did not retain either a face or graph
-    /// vertex location.
-    MissingLocation,
-}
-
-/// Freshness status for retained exact split-plan artifacts.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum SplitPlanFreshness {
-    /// The split plan is locally valid and replays from the source operands.
-    Current,
-    /// The retained split plan is internally inconsistent.
-    InvalidPlan,
-    /// The plan is locally valid but no longer replays from the source operands.
-    SourceReplayMismatch,
-}
-
 impl SplitPlanDiagnostic {
     fn new(kind: SplitPlanDiagnosticKind, message: impl Into<String>) -> Self {
         Self {
@@ -1964,136 +1559,6 @@ impl SplitPlanValidationReport {
     pub fn is_valid(&self) -> bool {
         self.diagnostics.is_empty()
     }
-
-    /// Validate that diagnostics retain the structured locations their kinds
-    /// require.
-    ///
-    /// This does not decide whether the underlying split plan is valid; use
-    /// [`Self::is_valid`] for that. It audits the report object so callers can
-    /// rely on its diagnostics as machine-readable exact handoff evidence.
-    pub fn validate(&self) -> Result<(), SplitPlanReportValidationError> {
-        for diagnostic in &self.diagnostics {
-            validate_split_plan_diagnostic(diagnostic)?;
-        }
-        Ok(())
-    }
-
-    /// Classify this validation report as a compact freshness status.
-    pub fn freshness(&self) -> SplitPlanFreshness {
-        if self.is_valid() {
-            SplitPlanFreshness::Current
-        } else if self
-            .diagnostics
-            .iter()
-            .any(|diagnostic| diagnostic.kind == SplitPlanDiagnosticKind::SourceReplayMismatch)
-        {
-            SplitPlanFreshness::SourceReplayMismatch
-        } else {
-            SplitPlanFreshness::InvalidPlan
-        }
-    }
-}
-
-fn validate_split_plan_diagnostic(
-    diagnostic: &SplitPlanDiagnostic,
-) -> Result<(), SplitPlanReportValidationError> {
-    if diagnostic.message.trim().is_empty() {
-        return Err(SplitPlanReportValidationError::EmptyMessage);
-    }
-    match diagnostic.kind {
-        SplitPlanDiagnosticKind::UnknownOrdering
-        | SplitPlanDiagnosticKind::UnresolvedEquality
-        | SplitPlanDiagnosticKind::UnresolvedVertexLookup
-        | SplitPlanDiagnosticKind::SourceReplayMismatch => Ok(()),
-        SplitPlanDiagnosticKind::SourceTriangleMismatch => {
-            require_side(diagnostic)?;
-            require_face(diagnostic)
-        }
-        SplitPlanDiagnosticKind::MissingEndpointSideFacts
-        | SplitPlanDiagnosticKind::NonCrossingEndpointSideFacts
-        | SplitPlanDiagnosticKind::InvalidConstructionRatio
-        | SplitPlanDiagnosticKind::EmptyOrShortEdgeChain
-        | SplitPlanDiagnosticKind::WrongChainStart
-        | SplitPlanDiagnosticKind::WrongChainEnd
-        | SplitPlanDiagnosticKind::ChainSideMismatch => {
-            require_side(diagnostic)?;
-            require_edge(diagnostic)
-        }
-        SplitPlanDiagnosticKind::GraphVertexOutOfRange => {
-            require_side(diagnostic)?;
-            if diagnostic.graph_vertex.is_some() || diagnostic.face.is_some() {
-                Ok(())
-            } else {
-                Err(SplitPlanReportValidationError::MissingLocation)
-            }
-        }
-        SplitPlanDiagnosticKind::EmptyGraphVertexUses => require_graph_vertex(diagnostic),
-        SplitPlanDiagnosticKind::EmptyFaceSplit
-        | SplitPlanDiagnosticKind::EmptyOrShortRegionBoundary
-        | SplitPlanDiagnosticKind::DuplicateConsecutiveRegionNode => {
-            require_side(diagnostic)?;
-            require_face(diagnostic)
-        }
-        SplitPlanDiagnosticKind::BoundaryNodeSourceVertexOutOfRange
-        | SplitPlanDiagnosticKind::BoundaryNodeSourceVertexNotOnTriangle
-        | SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch => {
-            require_side(diagnostic)?;
-            require_face(diagnostic)
-        }
-        SplitPlanDiagnosticKind::BoundaryChainEdgeNotOnTriangle
-        | SplitPlanDiagnosticKind::DuplicateConsecutiveBoundaryNode => {
-            require_side(diagnostic)?;
-            require_face(diagnostic)?;
-            require_edge(diagnostic)
-        }
-        SplitPlanDiagnosticKind::EmptyFaceSplitEdge
-        | SplitPlanDiagnosticKind::DuplicateFaceSplitEdge => {
-            require_side(diagnostic)?;
-            require_face(diagnostic)?;
-            require_edge(diagnostic)
-        }
-        SplitPlanDiagnosticKind::MissingFaceSplitSourceUse => {
-            require_side(diagnostic)?;
-            require_face(diagnostic)?;
-            require_edge(diagnostic)?;
-            require_graph_vertex(diagnostic)
-        }
-        SplitPlanDiagnosticKind::UnknownBoundaryIncidence
-        | SplitPlanDiagnosticKind::BoundaryNodeOffFacePlane => {
-            require_side(diagnostic)?;
-            require_face(diagnostic)
-        }
-    }
-}
-
-fn require_side(diagnostic: &SplitPlanDiagnostic) -> Result<(), SplitPlanReportValidationError> {
-    diagnostic
-        .side
-        .map(|_| ())
-        .ok_or(SplitPlanReportValidationError::MissingSide)
-}
-
-fn require_face(diagnostic: &SplitPlanDiagnostic) -> Result<(), SplitPlanReportValidationError> {
-    diagnostic
-        .face
-        .map(|_| ())
-        .ok_or(SplitPlanReportValidationError::MissingFace)
-}
-
-fn require_edge(diagnostic: &SplitPlanDiagnostic) -> Result<(), SplitPlanReportValidationError> {
-    diagnostic
-        .edge
-        .map(|_| ())
-        .ok_or(SplitPlanReportValidationError::MissingEdge)
-}
-
-fn require_graph_vertex(
-    diagnostic: &SplitPlanDiagnostic,
-) -> Result<(), SplitPlanReportValidationError> {
-    diagnostic
-        .graph_vertex
-        .map(|_| ())
-        .ok_or(SplitPlanReportValidationError::MissingGraphVertex)
 }
 
 /// Exact boundary node for a split face.
@@ -2161,16 +1626,6 @@ pub struct ExactFaceSplitGeometryPlan {
 }
 
 impl ExactFaceSplitGeometryPlan {
-    /// Count exact graph vertices referenced by boundary geometry.
-    pub fn graph_vertex_references(&self) -> usize {
-        self.faces
-            .iter()
-            .flat_map(|face| face.boundary_chains.iter())
-            .flat_map(|chain| chain.nodes.iter())
-            .filter(|node| matches!(node, FaceSplitBoundaryNode::GraphVertex { .. }))
-            .count()
-    }
-
     /// Validate that every split boundary node lies on its original face plane.
     ///
     /// Segment/plane crossings create points that should be incident to the
@@ -2192,21 +1647,13 @@ impl ExactFaceSplitGeometryPlan {
     /// compares the rebuilt artifact with this value. The replay boundary is
     /// combinatorics are consumed only with their certified construction
     /// history still attached to the original operands.
+    #[cfg(test)]
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> SplitPlanValidationReport {
         validate_face_split_geometry_against_sources(self, left, right)
-    }
-
-    /// Classify whether this retained face-boundary geometry is fresh for the sources.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> SplitPlanFreshness {
-        self.validate_against_sources(left, right).freshness()
     }
 
     /// Build full face-region boundary loops for downstream exact triangulation.
@@ -2243,15 +1690,6 @@ pub struct ExactFaceRegionPlan {
 }
 
 impl ExactFaceRegionPlan {
-    /// Count graph vertices referenced by all region loops.
-    pub fn graph_vertex_references(&self) -> usize {
-        self.regions
-            .iter()
-            .flat_map(|region| region.boundary.iter())
-            .filter(|node| matches!(node, FaceSplitBoundaryNode::GraphVertex { .. }))
-            .count()
-    }
-
     /// Validate boundary-loop structure and original-face incidence.
     ///
     /// Region loops are the direct input expected by exact triangulation. This
@@ -2270,21 +1708,13 @@ impl ExactFaceRegionPlan {
     /// and final region loops from `left` and `right`, then requires the public
     /// algorithms should pass certified algebraic artifacts across topology
     /// boundaries instead of trusting copied combinatorial state.
+    #[cfg(test)]
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> SplitPlanValidationReport {
         validate_face_region_plan_against_sources(self, left, right)
-    }
-
-    /// Classify whether this retained face-region plan is fresh for the sources.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> SplitPlanFreshness {
-        self.validate_against_sources(left, right).freshness()
     }
 }
 
@@ -2532,36 +1962,6 @@ fn validate_graph_vertex_plan(plan: &ExactGraphVertexPlan) -> SplitPlanValidatio
     }
 
     SplitPlanValidationReport { diagnostics }
-}
-
-fn validate_graph_vertex_plan_against_sources(
-    plan: &ExactGraphVertexPlan,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> SplitPlanValidationReport {
-    let mut report = validate_graph_vertex_plan(plan);
-    if !report.is_valid() {
-        return report;
-    }
-
-    let replay = build_intersection_graph(left, right).map(|graph| graph.graph_vertex_plan());
-    match replay {
-        Ok(replay) if replay == *plan => report,
-        Ok(_) => {
-            report.diagnostics.push(SplitPlanDiagnostic::new(
-                SplitPlanDiagnosticKind::SourceReplayMismatch,
-                "graph-vertex plan does not match exact replay from source operands",
-            ));
-            report
-        }
-        Err(error) => {
-            report.diagnostics.push(SplitPlanDiagnostic::new(
-                SplitPlanDiagnosticKind::SourceReplayMismatch,
-                format!("graph-vertex plan source replay failed: {error}"),
-            ));
-            report
-        }
-    }
 }
 
 fn push_graph_vertex_source_use_diagnostics(
@@ -2982,6 +2382,7 @@ fn validate_edge_split_plan(split_plan: &ExactEdgeSplitPlan) -> SplitPlanValidat
     SplitPlanValidationReport { diagnostics }
 }
 
+#[cfg(test)]
 fn validate_edge_split_plan_against_sources(
     split_plan: &ExactEdgeSplitPlan,
     left: &ExactMesh,
@@ -3178,36 +2579,6 @@ fn validate_split_topology_plan(topology: &ExactSplitTopologyPlan) -> SplitPlanV
     SplitPlanValidationReport { diagnostics }
 }
 
-fn validate_split_topology_plan_against_sources(
-    topology: &ExactSplitTopologyPlan,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> SplitPlanValidationReport {
-    let mut report = validate_split_topology_plan(topology);
-    if !report.is_valid() {
-        return report;
-    }
-
-    let replay = build_intersection_graph(left, right).map(|graph| graph.split_topology_plan());
-    match replay {
-        Ok(replay) if replay == *topology => report,
-        Ok(_) => {
-            report.diagnostics.push(SplitPlanDiagnostic::new(
-                SplitPlanDiagnosticKind::SourceReplayMismatch,
-                "split topology plan does not match exact replay from source operands",
-            ));
-            report
-        }
-        Err(error) => {
-            report.diagnostics.push(SplitPlanDiagnostic::new(
-                SplitPlanDiagnosticKind::SourceReplayMismatch,
-                format!("split topology plan source replay failed: {error}"),
-            ));
-            report
-        }
-    }
-}
-
 fn validate_face_split_plan(
     face_plan: &ExactFaceSplitPlan,
     topology: &ExactSplitTopologyPlan,
@@ -3307,6 +2678,7 @@ fn validate_face_split_plan(
     SplitPlanValidationReport { diagnostics }
 }
 
+#[cfg(test)]
 fn validate_face_split_plan_against_sources(
     face_plan: &ExactFaceSplitPlan,
     left: &ExactMesh,
@@ -3691,6 +3063,7 @@ fn original_boundary_vertex(node: Option<&FaceSplitBoundaryNode>) -> Option<usiz
     }
 }
 
+#[cfg(test)]
 fn validate_face_split_geometry_against_sources(
     geometry: &ExactFaceSplitGeometryPlan,
     left: &ExactMesh,
@@ -3915,6 +3288,7 @@ fn validate_face_region_original_boundary_nodes(
     }
 }
 
+#[cfg(test)]
 fn validate_face_region_plan_against_sources(
     plan: &ExactFaceRegionPlan,
     left: &ExactMesh,
