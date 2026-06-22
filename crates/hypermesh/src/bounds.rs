@@ -197,7 +197,9 @@ pub(crate) enum CandidateFacePairPlan {
         plan: SweepPlan,
         candidate_pair_capacity_hint: usize,
     },
-    Quadratic,
+    Quadratic {
+        candidate_pair_capacity_hint: usize,
+    },
 }
 
 impl CandidateFacePairPlan {
@@ -210,6 +212,9 @@ impl CandidateFacePairPlan {
             Self::Sweep {
                 candidate_pair_capacity_hint,
                 ..
+            }
+            | Self::Quadratic {
+                candidate_pair_capacity_hint,
             } => {
                 if candidate_pair_capacity_hint > MAX_CANDIDATE_PAIR_PREALLOC {
                     MAX_CANDIDATE_PAIR_PREALLOC
@@ -217,7 +222,7 @@ impl CandidateFacePairPlan {
                     candidate_pair_capacity_hint
                 }
             }
-            Self::Empty | Self::Quadratic => 0,
+            Self::Empty => 0,
         }
     }
 }
@@ -295,7 +300,13 @@ impl<'a> PreparedMeshBounds<'a> {
                 candidate_pair_capacity_hint: sweep.axis_pair_count,
             };
         }
-        CandidateFacePairPlan::Quadratic
+        CandidateFacePairPlan::Quadratic {
+            candidate_pair_capacity_hint: self
+                .bounds
+                .faces
+                .len()
+                .saturating_mul(other.bounds.faces.len()),
+        }
     }
 
     pub(crate) fn try_visit_candidate_face_pairs<E>(
@@ -315,7 +326,7 @@ impl<'a> PreparedMeshBounds<'a> {
     ) -> Result<(), E> {
         let sweep_plan = match plan {
             CandidateFacePairPlan::Empty => return Ok(()),
-            CandidateFacePairPlan::Quadratic => {
+            CandidateFacePairPlan::Quadratic { .. } => {
                 return self.try_visit_candidate_face_pairs_quadratic(other, visit);
             }
             CandidateFacePairPlan::Sweep { plan, .. } => plan,
@@ -857,6 +868,18 @@ mod tests {
         assert_eq!(sweep_plan.axis, Axis::Y);
         assert_eq!(plan.candidate_pair_capacity_hint(), 1);
         assert_eq!(candidate_face_pairs(&left, &right), vec![[1, 0]]);
+    }
+
+    #[test]
+    fn quadratic_plan_capacity_hint_is_capped() {
+        let plan = CandidateFacePairPlan::Quadratic {
+            candidate_pair_capacity_hint: MAX_CANDIDATE_PAIR_PREALLOC + 1,
+        };
+
+        assert_eq!(
+            plan.candidate_pair_capacity_hint(),
+            MAX_CANDIDATE_PAIR_PREALLOC
+        );
     }
 
     #[test]
