@@ -24,7 +24,7 @@ use hyperreal::Real;
 
 /// Region role for a 2D arrangement overlay.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum ExactArrangement2dRegion {
+pub(crate) enum ExactArrangement2dRegion {
     /// First input region.
     Left,
     /// Second input region.
@@ -33,7 +33,7 @@ pub enum ExactArrangement2dRegion {
 
 /// Boolean operation evaluated over classified arrangement cells.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactArrangement2dSetOperation {
+pub(crate) enum ExactArrangement2dSetOperation {
     /// Select cells covered by either region.
     Union,
     /// Select cells covered by both regions.
@@ -44,7 +44,7 @@ pub enum ExactArrangement2dSetOperation {
 
 /// Origin metadata attached to an input arrangement segment.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum ExactArrangement2dSegmentSource {
+pub(crate) enum ExactArrangement2dSegmentSource {
     /// The segment is identified only by caller-local ordinal.
     Anonymous(usize),
     /// The segment came from a region boundary ring.
@@ -60,124 +60,127 @@ pub enum ExactArrangement2dSegmentSource {
 
 /// Closed segment supplied to the exact arrangement builder.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactArrangement2dInputSegment {
+pub(crate) struct ExactArrangement2dInputSegment {
     /// Segment endpoints.
-    pub endpoints: [Point2; 2],
+    pub(crate) endpoints: [Point2; 2],
     /// Caller-visible provenance retained on split output edges.
-    pub source: ExactArrangement2dSegmentSource,
+    pub(crate) source: ExactArrangement2dSegmentSource,
 }
 
 impl ExactArrangement2dInputSegment {
     /// Construct an input segment with explicit provenance.
-    pub const fn new(endpoints: [Point2; 2], source: ExactArrangement2dSegmentSource) -> Self {
+    pub(crate) const fn new(
+        endpoints: [Point2; 2],
+        source: ExactArrangement2dSegmentSource,
+    ) -> Self {
         Self { endpoints, source }
     }
 }
 
 /// Closed boundary ring supplied to the region overlay builder.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactArrangement2dRegionRing {
+pub(crate) struct ExactArrangement2dRegionRing {
     /// Region owning the ring.
-    pub region: ExactArrangement2dRegion,
+    pub(crate) region: ExactArrangement2dRegion,
     /// Ring vertices. A repeated closing vertex is accepted and normalized
     /// away; otherwise the ring is interpreted cyclically.
-    pub vertices: Vec<Point2>,
+    pub(crate) vertices: Vec<Point2>,
 }
 
 impl ExactArrangement2dRegionRing {
     /// Construct a region boundary ring.
-    pub fn new(region: ExactArrangement2dRegion, vertices: Vec<Point2>) -> Self {
+    pub(crate) fn new(region: ExactArrangement2dRegion, vertices: Vec<Point2>) -> Self {
         Self { region, vertices }
     }
 }
 
 /// Vertex in the exact planar arrangement graph.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactArrangement2dVertex {
+pub(crate) struct ExactArrangement2dVertex {
     /// Exact vertex coordinate.
-    pub point: Point2,
+    pub(crate) point: Point2,
     /// Undirected split edges incident on this vertex.
-    pub incident_edges: Vec<usize>,
+    pub(crate) incident_edges: Vec<usize>,
 }
 
 /// Undirected split edge in the exact planar arrangement graph.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactArrangement2dEdge {
+pub(crate) struct ExactArrangement2dEdge {
     /// Endpoint vertex indices, stored in canonical ascending order.
-    pub vertices: [usize; 2],
+    pub(crate) vertices: [usize; 2],
     /// Input segment sources whose geometry contributed this split edge.
-    pub sources: Vec<ExactArrangement2dSegmentSource>,
+    pub(crate) sources: Vec<ExactArrangement2dSegmentSource>,
 }
 
 /// Bounded face recovered from the split edge graph.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactArrangement2dFace {
+pub(crate) struct ExactArrangement2dFace {
     /// Boundary vertices in counter-clockwise order.
-    pub vertices: Vec<usize>,
+    pub(crate) vertices: Vec<usize>,
     /// Boundary split edges matching `vertices`.
-    pub edges: Vec<usize>,
+    pub(crate) edges: Vec<usize>,
     /// Twice the signed exact area of the boundary. Bounded faces are retained
     /// only when this sign is certified positive.
-    pub signed_area_twice: Real,
+    pub(crate) signed_area_twice: Real,
 }
 
 /// Per-face region classification retained by the overlay simplifier.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactArrangement2dOverlayFace {
+pub(crate) struct ExactArrangement2dOverlayFace {
     /// Arrangement face index.
-    pub face: usize,
+    pub(crate) face: usize,
     /// Exact interior witness used for point/ring classification.
-    pub witness: Point2,
+    pub(crate) witness: Point2,
     /// Whether the witness lies in the left input region under even-odd ring
     /// parity.
-    pub in_left: bool,
+    pub(crate) in_left: bool,
     /// Whether the witness lies in the right input region under even-odd ring
     /// parity.
-    pub in_right: bool,
+    pub(crate) in_right: bool,
     /// Whether this face was selected by the requested set operation.
-    pub selected: bool,
+    pub(crate) selected: bool,
 }
 
 /// Simplified output boundary loop from selected arrangement cells.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactArrangement2dOutputLoop {
+pub(crate) struct ExactArrangement2dOutputLoop {
     /// Arrangement vertex indices in boundary order.
-    pub vertices: Vec<usize>,
+    pub(crate) vertices: Vec<usize>,
     /// Exact boundary coordinates in the same order as `vertices`.
-    pub points: Vec<Point2>,
+    pub(crate) points: Vec<Point2>,
     /// Twice the signed area of the loop after collinear simplification.
-    pub signed_area_twice: Real,
+    pub(crate) signed_area_twice: Real,
 }
 
 /// A connected selected output component with zero or more owned holes.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ExactArrangement2dOutputComponent {
+pub(crate) struct ExactArrangement2dOutputComponent {
     /// Index into [`ExactArrangement2dOverlay::output_loops`] for the positive
     /// outer loop.
-    pub outer_loop: usize,
+    pub(crate) outer_loop: usize,
     /// Indices into [`ExactArrangement2dOverlay::output_loops`] for negative
     /// hole loops owned by `outer_loop`.
-    pub hole_loops: Vec<usize>,
+    pub(crate) hole_loops: Vec<usize>,
 }
 
 /// Region overlay/simplification output over a 2D exact arrangement.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactArrangement2dOverlay {
+pub(crate) struct ExactArrangement2dOverlay {
     /// Underlying split arrangement.
-    pub arrangement: ExactArrangement2d,
+    pub(crate) arrangement: ExactArrangement2d,
     /// Per-bounded-face region classification.
-    pub faces: Vec<ExactArrangement2dOverlayFace>,
+    pub(crate) faces: Vec<ExactArrangement2dOverlayFace>,
     /// Simplified boundary loops of the selected cells.
-    pub output_loops: Vec<ExactArrangement2dOutputLoop>,
+    pub(crate) output_loops: Vec<ExactArrangement2dOutputLoop>,
     /// Exact ownership grouping for `output_loops`.
-    pub output_components: Vec<ExactArrangement2dOutputComponent>,
+    pub(crate) output_components: Vec<ExactArrangement2dOutputComponent>,
     /// Explicit reasons why the overlay is incomplete.
-    pub blockers: Vec<ExactArrangement2dBlocker>,
+    pub(crate) blockers: Vec<ExactArrangement2dBlocker>,
 }
 
 /// Boundary loop export policy for selected overlay cells.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactArrangement2dBoundaryPolicy {
+pub(crate) enum ExactArrangement2dBoundaryPolicy {
     /// Remove exact collinear subdivision vertices from emitted loops.
     SimplifyCollinear,
     /// Preserve exact boundary-use vertices from the arrangement graph.
@@ -187,7 +190,7 @@ pub enum ExactArrangement2dBoundaryPolicy {
 impl ExactArrangement2dOverlay {
     /// Return whether arrangement construction, face classification, and output
     /// loop simplification all completed.
-    pub fn is_complete(&self) -> bool {
+    pub(crate) fn is_complete(&self) -> bool {
         self.blockers.is_empty()
     }
 }
@@ -207,7 +210,7 @@ pub(crate) fn exact_arrangement2d_face_witness(
 
 /// Reason an exact arrangement could not be completed.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ExactArrangement2dBlocker {
+pub(crate) enum ExactArrangement2dBlocker {
     /// An input segment collapsed to a point.
     DegenerateSegment { segment: usize },
     /// Exact point equality could not be decided.
@@ -283,15 +286,15 @@ pub enum ExactArrangement2dBlocker {
 
 /// Exact planar segment arrangement.
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct ExactArrangement2d {
+pub(crate) struct ExactArrangement2d {
     /// Deduplicated exact arrangement vertices.
-    pub vertices: Vec<ExactArrangement2dVertex>,
+    pub(crate) vertices: Vec<ExactArrangement2dVertex>,
     /// Deduplicated exact split edges.
-    pub edges: Vec<ExactArrangement2dEdge>,
+    pub(crate) edges: Vec<ExactArrangement2dEdge>,
     /// Certified bounded faces in counter-clockwise orientation.
-    pub faces: Vec<ExactArrangement2dFace>,
+    pub(crate) faces: Vec<ExactArrangement2dFace>,
     /// Explicit reasons why construction is incomplete.
-    pub blockers: Vec<ExactArrangement2dBlocker>,
+    pub(crate) blockers: Vec<ExactArrangement2dBlocker>,
 }
 
 /// Build an exact 2D arrangement from closed input segments.
