@@ -148,9 +148,9 @@ impl ExactAabb3 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct MeshBounds {
     /// Whole-mesh bounds, or `None` for an empty mesh.
-    pub mesh: Option<ExactAabb3>,
+    mesh: Option<ExactAabb3>,
     /// Per-face bounds in face order.
-    pub faces: Vec<ExactAabb3>,
+    faces: Vec<ExactAabb3>,
 }
 
 /// Exact broad-phase face ordering prepared for repeated pair queries.
@@ -230,7 +230,7 @@ impl CandidateFacePairPlan {
 
 impl MeshBounds {
     /// Build retained bounds from predicate points and triangle indices.
-    pub fn from_triangles(points: &[Point3], triangles: &[[usize; 3]]) -> Self {
+    pub(crate) fn from_triangles(points: &[Point3], triangles: &[[usize; 3]]) -> Self {
         let mesh = ExactAabb3::from_points(points);
         let faces = triangles
             .iter()
@@ -239,6 +239,21 @@ impl MeshBounds {
             })
             .collect();
         Self { mesh, faces }
+    }
+
+    /// Return retained whole-mesh bounds, or `None` for an empty mesh.
+    pub fn mesh(&self) -> Option<&ExactAabb3> {
+        self.mesh.as_ref()
+    }
+
+    /// Return retained per-face bounds in face order.
+    pub fn face_bounds(&self) -> &[ExactAabb3] {
+        &self.faces
+    }
+
+    /// Return retained bounds for one face.
+    pub fn face_bound(&self, face: usize) -> Option<&ExactAabb3> {
+        self.faces.get(face)
     }
 
     /// Return face-pair candidates whose exact boxes are not disjoint.

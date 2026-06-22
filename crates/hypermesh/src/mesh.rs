@@ -390,8 +390,8 @@ impl ExactMesh {
     ///
     /// The policy is part of the exact artifact boundary: an open-surface mesh
     /// constructed with [`ValidationPolicy::ALLOW_BOUNDARY`] must not later be
-    /// mistaken for closed-solid evidence merely because its structural facts
-    /// approximation and domain policies visible at API boundaries.
+    /// mistaken for closed-solid evidence merely because its retained facts are
+    /// locally coherent.
     pub const fn validation_policy(&self) -> ValidationPolicy {
         self.validation_policy
     }
@@ -413,9 +413,7 @@ impl ExactMesh {
     /// downstream exact algorithms that receive an `ExactMesh` artifact and
     /// want to audit that its retained bounds, topology facts, and provenance
     /// still agree before consuming them. The bounds and topology facts are
-    /// replayed from the exact vertices and triangle rows before acceptance;
-    /// structure as valid only while it reproduces from the exact source
-    /// object it summarizes.
+    /// replayed from the exact vertices and triangle rows before acceptance.
     pub fn validate_retained_state(&self) -> Result<(), ExactMeshValidationError> {
         if self.vertices.len() != self.facts.mesh.vertex_count {
             return Err(ExactMeshValidationError::VertexCountMismatch {

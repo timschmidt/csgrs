@@ -45,7 +45,7 @@ fn certify_axis_aligned_box(mesh: &ExactMesh) -> Option<AxisAlignedBox> {
     if mesh.vertices().len() != 8 || mesh.triangles().len() != 12 {
         return None;
     }
-    let bounds = mesh.bounds().mesh.as_ref()?;
+    let bounds = mesh.bounds().mesh()?;
     let box_bounds = AxisAlignedBox {
         min: bounds.min.clone(),
         max: bounds.max.clone(),

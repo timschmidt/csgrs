@@ -2385,7 +2385,7 @@ const fn shortcut_operation_matches(
 }
 
 fn meshes_are_certified_bounds_disjoint(left: &ExactMesh, right: &ExactMesh) -> bool {
-    let (Some(left_bounds), Some(right_bounds)) = (&left.bounds().mesh, &right.bounds().mesh)
+    let (Some(left_bounds), Some(right_bounds)) = (left.bounds().mesh(), right.bounds().mesh())
     else {
         return left.triangles().is_empty() || right.triangles().is_empty();
     };
