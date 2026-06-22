@@ -78,10 +78,9 @@ use super::region::{
     checked_triangulate_face_regions_with_earcut, choose_region_projection,
 };
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
-pub(crate) use super::reports::ExactBooleanResult;
 use super::reports::{
     ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus, ExactBooleanBlocker,
-    ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResultKind,
+    ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind,
     ExactBooleanShortcutKind, ExactBooleanSupport, ExactBoundaryTouchingReport,
     ExactBoundaryTouchingStatus, ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus,
     ExactPlanarArrangementReport, ExactPlanarArrangementStatus, ExactRefinementReport,

@@ -2,7 +2,7 @@
 name = "hypermesh"
 version = "0.3.0"
 edition = "2024"
-description = "Robust 3D mesh boolean and topology library for the hyper geometry stack"
+description = "Exact 3D mesh kernel for the Hyper geometry stack"
 license = "MPL-2.0"
 readme = "README.md"
 repository = "https://github.com/timschmidt/hypermesh"
