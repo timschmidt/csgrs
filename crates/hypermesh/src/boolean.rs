@@ -527,8 +527,8 @@ impl ExactArrangementBooleanAttempt {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
         }
-        if let Some(simplified) = &self.simplified_cell_complex {
-            if arrangement_attempt_stage_rank(self.stage)
+        if let Some(simplified) = &self.simplified_cell_complex
+            && (arrangement_attempt_stage_rank(self.stage)
                 < arrangement_attempt_stage_rank(ExactArrangementBooleanStage::Simplified)
                 || self.selected_cell_complex.is_none()
                 || simplified.operation != self.operation
@@ -541,10 +541,9 @@ impl ExactArrangementBooleanAttempt {
                 || simplified.volume_oriented_selected_faces_before_simplification
                     != self.volume_oriented_selected_faces
                 || simplified.label_oriented_selected_faces_before_simplification
-                    != self.label_oriented_selected_faces
-            {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
-            }
+                    != self.label_oriented_selected_faces)
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         if self.stage == ExactArrangementBooleanStage::NotAttempted {
             if self.topology_assembly.is_some()
@@ -579,34 +578,32 @@ impl ExactArrangementBooleanAttempt {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         match self.decline.as_ref() {
-            Some(ExactArrangementBooleanDecline::TopologyAssembly(status)) => {
-                if self.topology_assembly != Some(*status) || self.region_ownership.is_some() {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
+            Some(ExactArrangementBooleanDecline::TopologyAssembly(status))
+                if self.topology_assembly != Some(*status) || self.region_ownership.is_some() =>
+            {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
-            Some(ExactArrangementBooleanDecline::Labeling(_)) => {
-                if self.topology_assembly.is_none() || self.region_ownership.is_some() {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
+            Some(ExactArrangementBooleanDecline::Labeling(_))
+                if self.topology_assembly.is_none() || self.region_ownership.is_some() =>
+            {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
-            Some(ExactArrangementBooleanDecline::RegionOwnership(status)) => {
-                if self.region_ownership != Some(*status) {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
+            Some(ExactArrangementBooleanDecline::RegionOwnership(status))
+                if self.region_ownership != Some(*status) =>
+            {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
             Some(
                 ExactArrangementBooleanDecline::Selection(_)
                 | ExactArrangementBooleanDecline::Simplification(_)
                 | ExactArrangementBooleanDecline::Triangulation(_),
-            ) => {
-                if self.region_ownership.is_none() {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
+            ) if self.region_ownership.is_none() => {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
-            Some(ExactArrangementBooleanDecline::OutputValidation) => {
-                if !pre_gate_output_validation && self.region_ownership.is_none() {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
+            Some(ExactArrangementBooleanDecline::OutputValidation)
+                if !pre_gate_output_validation && self.region_ownership.is_none() =>
+            {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
             _ => {}
         }
