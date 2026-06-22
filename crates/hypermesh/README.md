@@ -36,6 +36,9 @@ downstream CSG layers.
   available.
 - `ExactMeshRef`, `TriangleRef`, `FaceRef`, and `EdgeRef` provide borrowed
   access for queries that should not clone mesh storage.
+- `PreparedMeshView` and `PreparedMeshPairView` provide replay-validated
+  broad-phase caches for repeated candidate queries without rebuilding bounds
+  orderings.
 - `ExactMesh::union`, `ExactMesh::intersection`, `ExactMesh::difference`, and
   `ExactMesh::xor` materialize named closed boolean outputs as exact meshes.
 - `ExactMesh::transform`, `ExactMesh::transform_by`, and `ExactMesh::inverse`
@@ -63,9 +66,9 @@ typed blocker rather than patched with a tolerance.
 ## Performance Model
 
 The performance direction is broad-phase pruning plus exact local decisions.
-Retained bounds, face-pair classification, split plans, support intervals,
-coplanar arrangements, and borrowed views narrow work before expensive
-predicates or topology rebuilds.
+Retained bounds, prepared mesh-pair views, face-pair classification, split
+plans, support intervals, coplanar arrangements, and borrowed views narrow work
+before expensive predicates or topology rebuilds.
 
 One-shot booleans should be driven by measured kernel stages: broad phase,
 narrow classification, split planning, local arrangements, winding/ownership,
@@ -146,7 +149,6 @@ Useful local checks:
 cargo check --all-targets
 cargo test --test kernel_exact_mesh
 cargo test bounds::tests
-cargo test --no-default-features
 cargo check --manifest-path fuzz/Cargo.toml
 cargo fuzz run exact_mesh_input
 cargo fuzz run exact_integer_mesh_input
