@@ -1,0 +1,109 @@
+hypermesh revision plan
+=======================
+
+Goal
+----
+
+Make hypermesh a minimal, full-featured, exact, high-performance, provenance-preserving mesh kernel. `ExactMesh` remains the primary top-level type. The crate should contain geometry/fact storage, acceleration structures, exact graph/arrangement/cell algorithms, and useful kernel errors. csgrs should own workspace-level named boolean APIs, operation policy, handoff routing, adapters, and product-facing reports.
+
+Target public surface
+---------------------
+
+1. Primary owned type:
+   - `ExactMesh`: exact vertices, triangles, retained validation facts, exact bounds, construction provenance, and cached predicate/fact evidence.
+   - Checked constructors from exact coordinates, integers, and explicit exact source records.
+   - Minimal lossy input only as named adapter constructors, not the main path.
+
+2. Borrowed APIs:
+   - `ExactMeshRef<'a>` / `MeshView<'a>` for vertices, triangles, facts, bounds, adjacency, face planes, and validation replay.
+   - `FaceRef`, `TriangleRef`, `EdgeRef`, and borrowed graph/arrangement views for algorithms that should not clone meshes.
+   - Prepared/cached borrowed broad-phase views where repeated mesh-pair queries benefit.
+
+3. Kernel modules:
+   - Facts and validation.
+   - Exact AABB/broad phase.
+   - Narrow triangle predicates and retained constructions.
+   - Intersection graph event extraction.
+   - 2D coplanar arrangements and 3D arrangement/cell complexes.
+   - Exact simplification, loop triangulation, CDT face cells, winding, volumetric-cell evidence.
+   - Specialized exact shortcuts as internal algorithms, not policy.
+
+4. Kernel errors:
+   - `ExactMeshError` / `ExactMeshBlocker` should identify invalid indices, degeneracy, non-manifold topology, undecidable predicate, failed exact construction, stale fact replay, unsupported cell materializer, and policy-required-but-missing evidence.
+   - Every error should carry source side, face/edge/vertex indices, predicate/construction family, and provenance where possible.
+
+Public API removals or moves
+----------------------------
+
+Move to csgrs:
+
+- `ExactBooleanWorkspace`.
+- `ExactBooleanRequest`, `ExactBooleanOperation` as public operation API, `ExactBooleanEvaluation`, `ExactBooleanResult`.
+- Boundary/regularization/lower-dimensional/unresolved policies.
+- Public report families in `src/reports.rs`.
+- Handoff packages, readiness summaries, proposal acceptance reports, artifact routing vocabulary, and consumer-domain APIs.
+- Bevy/demo/runtime/export examples that depend on product-level semantics.
+
+Keep in hypermesh but narrow:
+
+- Low-level graph/arrangement/cell-complex builders and replay validation.
+- Certified shortcut algorithms for adjacent, contained-adjacent, convex, affine/orthogonal, and box solids.
+- Optional triangulation helpers if they are used as exact kernel algorithms.
+- Exact validation/audit facts only when they are about `ExactMesh` itself.
+
+Refactor phases
+---------------
+
+1. Freeze source-compatible facts.
+   - Define the minimal `ExactMesh` public contract.
+   - Add borrowed view types without changing existing internals.
+   - Add compatibility shims for current tests.
+
+2. Separate workspace orchestration.
+   - Extract `src/workspace.rs`, public request/evaluation/materialization flow, and most of `src/reports.rs` into csgrs.
+   - Keep graph, arrangement, attempt internals callable from csgrs through low-level borrowed APIs.
+
+3. Split policy from algorithms.
+   - Move named boolean operation, validation-output policy, regularization semantics, boundary behavior, and consumer readiness to csgrs.
+   - Keep only kernel-local blockers and exact construction choices.
+
+4. Rework `src/boolean.rs`.
+   - Pull out reusable kernel algorithms into smaller modules: graph preflight, arrangement attempt, cell selection, shortcut certification, output triangulation.
+   - Leave a thin internal algorithm layer, not public orchestration.
+   - Move large test-only helper sections into tests.
+
+5. Preserve and improve performance structures.
+   - Keep exact AABB sweep and add BVH/k-DOP exploration from references.
+   - Use EMBER-style local arrangements and early-outs where source-pair topology allows.
+   - Use indirect predicates for constructed intersection objects where eager exact coordinates are expensive.
+   - Keep CDT face-cell triangulation and local arrangement decomposition as core.
+
+6. Tighten provenance and useful errors.
+   - Require every graph event, split point, arrangement vertex/edge/cell, simplified cell, and output triangle to retain source provenance or construction evidence.
+   - Make unsupported cases explicit blockers such as `NeedsCoplanarVolumetricCells`, not generic unsupported operation diagnostics.
+   - Validate caches by source replay before they authorize topology decisions.
+
+7. Tests and docs.
+   - Split `tests/exact_mesh.rs` into kernel-focused integration tests and csgrs policy tests.
+   - Retarget fuzz harnesses to exact mesh construction, arrangements, and artifact adapters according to ownership.
+   - Rewrite README around `ExactMesh`, borrowed views, exact facts, low-level algorithms, and csgrs-level booleans.
+
+Research integration
+--------------------
+
+- Implement an EMBER-inspired local arrangement path before broad global materialization.
+- Evaluate indirect predicate storage for intersection points and radial ordering.
+- Use mesh arrangement/winding-vector ideas for closed solids, but keep Nef/regularized semantics in csgrs policy.
+- Keep Guigue/Devillers and Moller triangle staging as narrow-phase baselines.
+- Explore k-DOP/BVH broad phase once exact AABB sweep limits become visible.
+- Compare CGAL corefinement/Nef and Manifold/Solidean as behavior/performance baselines, not as API templates.
+
+Definition of done
+------------------
+
+- `ExactMesh` is the only primary top-level type documented in hypermesh.
+- The default crate root no longer exports workspace-level boolean policy, handoff packages, readiness, proposal, or broad public report APIs.
+- Borrowed mesh/face/triangle/arrangement views exist and are preferred for queries.
+- Exact facts and acceleration structures replay against source objects before use.
+- csgrs can still perform named booleans by composing hypermesh low-level algorithms.
+- Every exact algorithm returns a decided value or a typed useful blocker with retained provenance.

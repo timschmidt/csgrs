@@ -1,0 +1,128 @@
+hypermesh kernel audit
+======================
+
+Scope
+-----
+
+Audit date: 2026-06-22.
+
+Tracked-file inventory reviewed from `git ls-files`: 820 files. Non-corpus tracked files: 66 files, 175043 counted lines including binary/model assets. Fuzz corpus tracked files: 754 individual seed files across three directories. The audit target is to revise hypermesh into a minimal, full-featured exact high-performance provenance-preserving mesh kernel whose primary top-level type is `ExactMesh`.
+
+Reference input: `references.txt` was present and reviewed, but it is currently untracked. It identifies EMBER, interactive robust mesh booleans, mesh arrangements, Levy 2024 CSG, Barki regularized booleans, Bernstein/Fussell exact booleans, octree BSPs, selective Nef complexes, indirect predicates, Shewchuk, Yap, triangle-triangle predicates, BVH/k-DOPs, planar triangulation, CGAL, Manifold, and Solidean as research inputs.
+
+Workspace state note: before this audit, the repo already had modified source/test files and untracked `references.txt`. This audit does not modify source files and should not stage those pre-existing changes.
+
+Global findings
+---------------
+
+1. `ExactMesh` already exists and is the right primary top-level type, but the crate root also exposes workspace, policy, request/result, consumer, and handoff APIs: `ExactBooleanWorkspace`, `ExactBooleanRequest`, `ExactBooleanResult`, `ExactRegularizationPolicy`, `ValidationPolicy`, `ExactMeshConsumerDomain`, and more.
+2. The kernel contains valuable exact algorithms and data structures: exact mesh storage, retained bounds, validation facts, face-plane facts, broad-phase scheduling, triangle narrow phase, intersection graph events, coplanar overlap graphs, 2D/3D arrangements, cell complexes, simplification, CDT face-cell triangulation, winding, and volumetric classification evidence.
+3. The biggest policy/workspace concentrations are `src/boolean.rs` (16923), `src/reports.rs` (8376), `src/workspace.rs` (1272), and much of the handoff/package/proposal/readiness/artifact family. These should move to csgrs or integration crates.
+4. Public API should become mesh-kernel shaped: `ExactMesh`, borrowed mesh views, triangle/edge/face views, exact facts, acceleration structures, low-level graph/arrangement builders, and useful errors. Named booleans, regularization selection, downstream package routing, and product readiness policy belong above this crate.
+5. Yap alignment is strong in facts/provenance/replay vocabulary, but it is overexposed as many public reports. Keep the fact/provenance discipline while narrowing the API.
+6. The current tests are valuable behavior locks but are concentrated in one large integration test and embedded module tests. Refactor should preserve them while moving policy assertions to csgrs-level tests.
+
+Core mesh and validation
+------------------------
+
+- `src/lib.rs` (74): too broad for a kernel root. It should keep `ExactMesh`, `Triangle`, exact errors, facts, borrowed views, and maybe low-level algorithm modules; remove high-level boolean workspace/request/result and consumer-domain exports.
+- `src/mesh.rs` (446): keep. `ExactMesh` stores exact vertices, triangles, bounds, validation facts, policy, and construction provenance. Reduce direct public handoff/proposal/report conveniences and add borrowed mesh/face/triangle views.
+- `src/facts.rs` (587): keep. Mesh, vertex, edge, face-plane, triangle, and validation facts are the Yap-style cache layer.
+- `src/validation.rs` (417): keep validation algorithms and useful topology errors. Public `ValidationPolicy` is partly kernel construction policy and partly product acceptance policy; narrow it or move higher-level variants up.
+- `src/bounds.rs` (453): keep. Exact AABB facts and sweep candidate generation are core acceleration structures.
+- `src/exact_key.rs` (65): keep internal exact rational point/edge bucketing.
+- `src/error.rs` (134): keep diagnostic shape. Split kernel errors from unsupported high-level operation diagnostics.
+- `src/scalar.rs` (50): lossy f64 import marker belongs at adapter boundary; keep only if isolated from core mesh constructors.
+- `src/view.rs` (278): lossy approximate f64 view is an adapter/export boundary. Move public API to csgrs or feature module.
+- `src/audit.rs` (328): useful retained-state audit, but public downstream audit summaries should move up unless used as a compact `ExactMesh` replay fact.
+
+Broad/narrow phase and arrangement internals
+--------------------------------------------
+
+- `src/narrow.rs` (248): keep. Exact triangle/plane and triangle/triangle classification with `hyperlimit` predicates is core.
+- `src/intersection.rs` (237): keep. It joins exact AABB broad phase with retained face-plane and triangle classification; good acceleration boundary.
+- `src/graph.rs` (5186): keep as internal/advanced kernel. It retains intersection events, coplanar edge/vertex facts, split topology plans, and validation. Public access should be through borrowed graph views or explicit low-level builders, not workspace sessions.
+- `src/arrangement2d.rs` (2105): keep exact planar segment arrangement and overlay machinery for coplanar faces and loop simplification. Boundary policy should be internal or moved up if it describes output preference.
+- `src/arrangement3d.rs` (7108): keep 3D arrangement artifact, face cells, lower-dimensional artifacts, volume regions, and provenance. This is a central exact mesh-kernel data structure.
+- `src/cell_complex.rs` (2887): keep labeled/selected cell-complex structures and selection internals. Public named-operation selection policy should move to csgrs.
+- `src/simplify.rs` (3186): keep deterministic exact simplification and triangulation of selected cell complexes as kernel algorithms. Public operation/policy APIs should narrow.
+- `src/cells.rs` (1861): keep exact CDT face-cell triangulation and validation; aligns with Levy/CDT references and EMBER-style local cells.
+- `src/loop_triangulation.rs` (1241): keep shared exact loop triangulation and projection checks; this is low-level geometry support.
+- `src/construction.rs` (50): keep exact segment/face-plane construction helper.
+- `src/topology.rs` (49): keep small topology helpers.
+- `src/witness.rs` (195): keep exact representative witness lattice for volumetric cells.
+
+Boolean, selection, and policy modules
+--------------------------------------
+
+- `src/boolean.rs` (16923): main refactor target. It mixes named boolean operations, request/policy/result evaluation, shortcuts, exact arrangement attempts, regularization, materialization, many test helpers, and kernel algorithms. Retain graph/arrangement/cell algorithms and certified shortcut facts; move `ExactBooleanRequest`, named operation API, boundary policy, evaluation/materialization orchestration, and public result types to csgrs.
+- `src/reports.rs` (8376): public evidence/report layer for exact boolean staging. Most belongs with csgrs workspace APIs. Keep only compact kernel blockers/facts needed by low-level algorithm replay.
+- `src/workspace.rs` (1272): move to csgrs. It is explicitly a reusable boolean session caching graph, arrangements, attempts, evaluations, and materializations for a fixed pair. Hypermesh can provide borrowable cache primitives, but not the workspace-level API.
+- `src/regularization.rs` (94): high-level regularization/lower-dimensional/unresolved policy. Move public policy to csgrs; keep internal enums if algorithms need them.
+- `src/region.rs` (2382): keep exact split-region and triangulation evidence as kernel internals. Named selection/classification policy should be upper-layer.
+- `src/volumetric.rs` (468): keep exact winding classification of triangulated volumetric split cells. Selection policy belongs above.
+- `src/volumetric_cells.rs` (1007): keep coplanar volumetric-cell evidence and blockers. This is exactly the useful-error shape needed when a certified materializer is missing.
+- `src/winding.rs` (1135): keep exact ray-parity reports for closed meshes; useful core classifier with explicit degeneracy blockers.
+
+Special-case algorithms
+-----------------------
+
+- `src/adjacent.rs` (1208): contains full-face adjacent union certificates and materializers. Keep as certified shortcut internals; public shortcut policy moves up.
+- `src/contained_adjacent.rs` (1016): same split for contained adjacent cases.
+- `src/adjacent_polygon.rs` (890): keep exact polygon adjacency helper internals.
+- `src/affine_box.rs` (201), `src/box_solid.rs` (124): keep exact box recognition/construction helpers where they serve acceleration or certified shortcuts.
+- `src/affine_solid.rs` (474): keep affine/orthogonal solid algorithms as certified shortcut internals, not public policy.
+- `src/orthogonal_solid.rs` (1571): keep axis-aligned/orthogonal solid cell logic as specialized exact algorithms.
+- `src/convex.rs` (1537): keep convex solid classifiers/materializers as certified exact shortcuts.
+- `src/solid.rs` (612): keep closed mesh orientation and convex solid facts/classification.
+
+Adapters, handoff, and downstream routing
+-----------------------------------------
+
+- `src/adapter.rs` (675): external/f64/i64 proposal and readiness adapters. Move public adapter workflow to csgrs; keep exact checked constructors in `ExactMesh`.
+- `src/artifact.rs` (1124): shared mesh artifact vocabulary for downstream crates. This is cross-crate integration policy, not minimal kernel.
+- `src/handoff.rs` (409): exact solid/surface handoff reports for downstream crates. Move to csgrs/handoff layer.
+- `src/package.rs` (920): bundled handoff package and consumer domain routing. Move out.
+- `src/proposal.rs` (276): proposal acceptance report. Move public proposal workflow out; keep exact replay validation in kernel.
+- `src/readiness.rs` (214): consumer readiness summary. Move out.
+
+Repository/support files
+------------------------
+
+- `Cargo.toml` (55): local dependencies on `hyperlimit`, `hyperreal`, `hypertri`; optional `bevy`. Kernel should keep exact predicate/real/triangulation dependencies but avoid default high-level example/runtime surfaces.
+- `Cargo.lock` (5296): dependency snapshot.
+- `README.md` (321): documents `ExactBooleanWorkspace` and exact request/result APIs. Rewrite after refactor around `ExactMesh`, borrowed views, facts, low-level algorithms, and csgrs ownership of workspace booleans.
+- `LICENSE` (372), `LICENSE-MIT` (21), `.gitignore` (10), `.github/workflows/ci.yml` (71): support files.
+- `doc/ChatGPT Image May 12, 2026, 05_22_15 AM.png` (4428 counted lines), `examples/docs/demo.png` (2229 counted lines): assets only.
+- `examples/menger_sponge.rs` (173), `examples/multiple_models.rs` (146), `examples/models/double-torus.obj` (9217), `examples/models/gargoyle.obj` (77855): examples/assets. Useful for performance/regression consumers; not kernel API.
+- `benches/exact_boolean_stages.rs` (432): useful benchmark, but after refactor should split kernel stages from csgrs orchestration.
+- `tests/exact_mesh.rs` (3638): primary integration coverage. Preserve kernel tests for construction, validation, facts, graph/arrangement internals; move named boolean/policy/report assertions to csgrs.
+
+Fuzz coverage
+-------------
+
+- `fuzz/Cargo.toml` (56), `fuzz/Cargo.lock` (227), fuzz targets `exact_arrangement.rs` (133), `exact_integer_mesh_input.rs` (93), `exact_mesh_input.rs` (93), `mesh_artifact_manifest.rs` (84): valuable fuzz harnesses. Retarget according to kernel vs adapter ownership.
+- `fuzz/corpus/exact_integer_mesh_input/*`: 256 tracked seed files. Audited as individual opaque regression inputs for exact integer mesh ingestion.
+- `fuzz/corpus/exact_mesh_input/*`: 435 tracked seed files. Audited as individual opaque regression inputs for exact mesh ingestion.
+- `fuzz/corpus/mesh_artifact_manifest/*`: 63 tracked seed files. Audited as individual opaque regression inputs for artifact manifests.
+
+The corpus files are hash-named fuzzer payloads rather than source modules. Each of the 754 tracked seed files was audited with the same per-file semantic note within its harness: preserve as a regression input unless the owning harness is removed or moved. The exact per-file coverage boundary is the tracked directory and seed count above; each seed should remain with the harness that owns the corresponding behavior after refactor.
+
+Coverage manifest
+-----------------
+
+Every non-corpus tracked file from `git ls-files | rg -v '^fuzz/corpus/'` is named above with its path and role. Every corpus file under the three hash-named corpus directories is covered by its exact owning directory and tracked count. No Rust source, test source, manifest, reference, example, or corpus file was modified during this audit.
+
+Reference-driven notes
+----------------------
+
+- EMBER is the best near-term direction for high-performance exact local arrangements, early-outs, and parallel/local decomposition.
+- Zhou/Jacobson mesh arrangements and Levy 2024 support the current graph -> arrangement -> cell-complex architecture, including winding vectors, co-refinement, radial sorting, and CDT remeshing.
+- Attene indirect predicates suggest reducing eager exact point materialization and comparing constructed objects through provenance where possible.
+- Shewchuk, Guigue/Devillers, and Moller validate the current predicate-first triangle staging, but exact construction/fact replay should be the authority.
+- Nef complexes and regularized boolean papers are semantic references for csgrs policy, not necessarily direct public hypermesh API.
+
+Audit conclusion
+----------------
+
+hypermesh has a strong exact mesh-kernel core, with `ExactMesh` already in place. The refactor should preserve exact facts, bounds, graph events, arrangements, cell complexes, triangulation, simplification, winding, and useful blockers. It should move workspace sessions, named boolean policy, broad reports, downstream handoff packages, proposal/readiness routing, and adapter workflow APIs to csgrs or integration layers.
