@@ -5,15 +5,40 @@ pub fn exercise_mesh_kernel_pair(left: &ExactMesh, right: &ExactMesh) {
     right.validate_retained_state().unwrap();
     let left_view = left.view();
     let right_view = right.view();
-    let mut retained_pair_count = 0usize;
-    let _ = left_view.visit_candidate_face_pairs(right_view, |_| {
-        retained_pair_count += 1;
-    });
-    if let Ok(prepared_pair) = left_view.prepare_pair_broad_phase(right_view) {
-        let _ = prepared_pair.try_visit_candidate_face_pairs(|_| {
-            retained_pair_count += 1;
+
+    let mut streamed_pair_count = 0usize;
+    left_view
+        .visit_candidate_face_pairs(right_view, |_| {
+            streamed_pair_count += 1;
+        })
+        .unwrap();
+
+    let prepared_pair = left_view.prepare_pair_broad_phase(right_view).unwrap();
+    assert_eq!(
+        prepared_pair.candidate_face_pair_count(),
+        streamed_pair_count
+    );
+
+    let mut prepared_pair_count = 0usize;
+    prepared_pair
+        .try_visit_candidate_face_pairs(|_| {
+            prepared_pair_count += 1;
             Ok::<(), ()>(())
-        });
+        })
+        .unwrap();
+    assert_eq!(prepared_pair_count, streamed_pair_count);
+
+    let mut stopped_after_first_pair = false;
+    let stopped = prepared_pair.try_visit_candidate_face_pairs(|_| {
+        stopped_after_first_pair = true;
+        Err::<(), _>(())
+    });
+    if streamed_pair_count == 0 {
+        assert_eq!(stopped, Ok(()));
+        assert!(!stopped_after_first_pair);
+    } else {
+        assert_eq!(stopped, Err(()));
+        assert!(stopped_after_first_pair);
     }
 }
 
