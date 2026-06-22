@@ -1834,17 +1834,17 @@ fn extend_split_plan_blockers(
     blockers: &mut Vec<ExactArrangementBlocker>,
     report: &SplitPlanValidationReport,
 ) {
-    for diagnostic in &report.diagnostics {
+    for blocker in &report.blockers {
         blockers.push(ExactArrangementBlocker::InvalidSplitPlan(
-            diagnostic.kind.into(),
+            blocker.kind.into(),
         ));
-        match diagnostic.kind {
-            super::graph::SplitPlanDiagnosticKind::UnknownOrdering => {
+        match blocker.kind {
+            super::graph::SplitPlanBlockerKind::UnknownOrdering => {
                 blockers.push(ExactArrangementBlocker::UndecidableOrdering)
             }
-            super::graph::SplitPlanDiagnosticKind::UnresolvedEquality
-            | super::graph::SplitPlanDiagnosticKind::UnresolvedVertexLookup
-            | super::graph::SplitPlanDiagnosticKind::UnknownBoundaryIncidence => {
+            super::graph::SplitPlanBlockerKind::UnresolvedEquality
+            | super::graph::SplitPlanBlockerKind::UnresolvedVertexLookup
+            | super::graph::SplitPlanBlockerKind::UnknownBoundaryIncidence => {
                 blockers.push(ExactArrangementBlocker::UnresolvedIntersection)
             }
             _ => {}
@@ -6435,7 +6435,7 @@ mod tests {
         );
         assert!(
             arrangement.volume_regions.is_some(),
-            "diagnostic volume graph should still be retained"
+            "blocker volume graph should still be retained"
         );
         assert_eq!(
             arrangement
@@ -6529,7 +6529,7 @@ mod tests {
         let regions = arrangement
             .shells_or_regions
             .as_ref()
-            .expect("arrangement should retain region diagnostics");
+            .expect("arrangement should retain region blockers");
         assert_eq!(regions.len(), 2);
         assert!(regions.iter().all(|region| region.boundary_edges == 3));
         assert!(
@@ -6710,7 +6710,7 @@ mod tests {
         let regions = retained
             .shells_or_regions
             .as_ref()
-            .expect("retained arrangement should keep sheet diagnostics");
+            .expect("retained arrangement should keep sheet blockers");
         assert_eq!(regions.len(), 1);
         assert!(!regions[0].closed);
         assert!(!regions[0].manifold);

@@ -19,7 +19,7 @@ use hyperlimit::{
 use hyperlimit::{Point2 as PredicatePoint2, Sign, compare_reals, orient2d_report, project_point3};
 
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::graph::SplitPlanDiagnosticKind;
+use super::graph::SplitPlanBlockerKind;
 use super::graph::SplitPlanValidationReport;
 use super::graph::{ExactFaceRegionPlan, FaceSplitBoundaryNode, MeshSide};
 use super::mesh::ExactMesh;
@@ -245,31 +245,31 @@ pub(crate) fn checked_classify_face_regions_against_opposite_planes(
 fn region_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> ExactMeshError {
     ExactMeshError::new(
         report
-            .diagnostics
+            .blockers
             .into_iter()
-            .map(|diagnostic| {
-                let kind = match diagnostic.kind {
-                    SplitPlanDiagnosticKind::UnknownBoundaryIncidence => {
+            .map(|blocker| {
+                let kind = match blocker.kind {
+                    SplitPlanBlockerKind::UnknownBoundaryIncidence => {
                         ExactMeshBlockerKind::UnsupportedExactOperation
                     }
-                    SplitPlanDiagnosticKind::BoundaryNodeSourceVertexOutOfRange => {
+                    SplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange => {
                         ExactMeshBlockerKind::IndexOutOfBounds
                     }
-                    SplitPlanDiagnosticKind::BoundaryNodeOffFacePlane
-                    | SplitPlanDiagnosticKind::EmptyOrShortRegionBoundary
-                    | SplitPlanDiagnosticKind::DuplicateConsecutiveRegionNode
-                    | SplitPlanDiagnosticKind::BoundaryNodeSourceVertexNotOnTriangle
-                    | SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch
-                    | SplitPlanDiagnosticKind::BoundaryChainEdgeNotOnTriangle => {
+                    SplitPlanBlockerKind::BoundaryNodeOffFacePlane
+                    | SplitPlanBlockerKind::EmptyOrShortRegionBoundary
+                    | SplitPlanBlockerKind::DuplicateConsecutiveRegionNode
+                    | SplitPlanBlockerKind::BoundaryNodeSourceVertexNotOnTriangle
+                    | SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch
+                    | SplitPlanBlockerKind::BoundaryChainEdgeNotOnTriangle => {
                         ExactMeshBlockerKind::DegenerateTriangle
                     }
                     _ => ExactMeshBlockerKind::UnsupportedExactOperation,
                 };
-                let mut mesh = ExactMeshBlocker::new(kind, diagnostic.message);
-                if let Some(face) = diagnostic.face {
+                let mut mesh = ExactMeshBlocker::new(kind, blocker.message);
+                if let Some(face) = blocker.face {
                     mesh = mesh.with_face(face);
                 }
-                if let Some(edge) = diagnostic.edge {
+                if let Some(edge) = blocker.edge {
                     mesh = mesh.with_edge(edge);
                 }
                 mesh
@@ -731,7 +731,7 @@ impl ExactBooleanAssemblyPlan {
     /// selected volume boundary. This pass uses only retained topology: every
     /// two-triangle edge imposes a parity constraint, and flipping one side of
     /// a component also toggles the triangle's recorded source-orientation
-    /// evidence. Boundary and non-manifold edges are left as diagnostics for
+    /// evidence. Boundary and non-manifold edges are left as blockers for
     /// later mesh validation; contradictory parity means the selected complex
     /// is not orientable as a triangle manifold.
     pub(crate) fn orient_paired_edge_uses(&mut self) -> hypertri::Result<usize> {
@@ -1454,9 +1454,9 @@ pub(crate) fn checked_triangulate_face_regions_with_earcut(
     let report = regions.validate(left, right);
     if !report.is_valid() {
         if report
-            .diagnostics
+            .blockers
             .iter()
-            .any(|diagnostic| diagnostic.kind == SplitPlanDiagnosticKind::UnknownBoundaryIncidence)
+            .any(|blocker| blocker.kind == SplitPlanBlockerKind::UnknownBoundaryIncidence)
         {
             return Err(hypertri::Error::PredicateUndecided {
                 predicate: "face_region_boundary_incidence",

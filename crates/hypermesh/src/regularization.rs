@@ -5,7 +5,7 @@
 //! unsupported primitive families are retained as explicit blockers or
 //! artifacts according to caller policy.
 
-use super::graph::{IntersectionGraphValidationError, SplitPlanDiagnosticKind};
+use super::graph::{IntersectionGraphValidationError, SplitPlanBlockerKind};
 
 /// Policy for lower-dimensional arrangement remnants.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -224,46 +224,46 @@ pub enum ExactArrangementSplitPlanBlockerKind {
     BoundaryNodeSourcePointMismatch,
 }
 
-impl From<SplitPlanDiagnosticKind> for ExactArrangementSplitPlanBlockerKind {
-    fn from(kind: SplitPlanDiagnosticKind) -> Self {
+impl From<SplitPlanBlockerKind> for ExactArrangementSplitPlanBlockerKind {
+    fn from(kind: SplitPlanBlockerKind) -> Self {
         match kind {
-            SplitPlanDiagnosticKind::UnknownOrdering => Self::UnknownOrdering,
-            SplitPlanDiagnosticKind::UnresolvedEquality => Self::UnresolvedEquality,
-            SplitPlanDiagnosticKind::UnresolvedVertexLookup => Self::UnresolvedVertexLookup,
-            SplitPlanDiagnosticKind::MissingEndpointSideFacts => Self::MissingEndpointSideFacts,
-            SplitPlanDiagnosticKind::NonCrossingEndpointSideFacts => {
+            SplitPlanBlockerKind::UnknownOrdering => Self::UnknownOrdering,
+            SplitPlanBlockerKind::UnresolvedEquality => Self::UnresolvedEquality,
+            SplitPlanBlockerKind::UnresolvedVertexLookup => Self::UnresolvedVertexLookup,
+            SplitPlanBlockerKind::MissingEndpointSideFacts => Self::MissingEndpointSideFacts,
+            SplitPlanBlockerKind::NonCrossingEndpointSideFacts => {
                 Self::NonCrossingEndpointSideFacts
             }
-            SplitPlanDiagnosticKind::InvalidConstructionRatio => Self::InvalidConstructionRatio,
-            SplitPlanDiagnosticKind::EmptyOrShortEdgeChain => Self::EmptyOrShortEdgeChain,
-            SplitPlanDiagnosticKind::WrongChainStart => Self::WrongChainStart,
-            SplitPlanDiagnosticKind::WrongChainEnd => Self::WrongChainEnd,
-            SplitPlanDiagnosticKind::ChainSideMismatch => Self::ChainSideMismatch,
-            SplitPlanDiagnosticKind::GraphVertexOutOfRange => Self::GraphVertexOutOfRange,
-            SplitPlanDiagnosticKind::EmptyGraphVertexUses => Self::EmptyGraphVertexUses,
-            SplitPlanDiagnosticKind::EmptyFaceSplit => Self::EmptyFaceSplit,
-            SplitPlanDiagnosticKind::EmptyFaceSplitEdge => Self::EmptyFaceSplitEdge,
-            SplitPlanDiagnosticKind::DuplicateFaceSplitEdge => Self::DuplicateFaceSplitEdge,
-            SplitPlanDiagnosticKind::MissingFaceSplitSourceUse => Self::MissingFaceSplitSourceUse,
-            SplitPlanDiagnosticKind::UnknownBoundaryIncidence => Self::UnknownBoundaryIncidence,
-            SplitPlanDiagnosticKind::BoundaryNodeOffFacePlane => Self::BoundaryNodeOffFacePlane,
+            SplitPlanBlockerKind::InvalidConstructionRatio => Self::InvalidConstructionRatio,
+            SplitPlanBlockerKind::EmptyOrShortEdgeChain => Self::EmptyOrShortEdgeChain,
+            SplitPlanBlockerKind::WrongChainStart => Self::WrongChainStart,
+            SplitPlanBlockerKind::WrongChainEnd => Self::WrongChainEnd,
+            SplitPlanBlockerKind::ChainSideMismatch => Self::ChainSideMismatch,
+            SplitPlanBlockerKind::GraphVertexOutOfRange => Self::GraphVertexOutOfRange,
+            SplitPlanBlockerKind::EmptyGraphVertexUses => Self::EmptyGraphVertexUses,
+            SplitPlanBlockerKind::EmptyFaceSplit => Self::EmptyFaceSplit,
+            SplitPlanBlockerKind::EmptyFaceSplitEdge => Self::EmptyFaceSplitEdge,
+            SplitPlanBlockerKind::DuplicateFaceSplitEdge => Self::DuplicateFaceSplitEdge,
+            SplitPlanBlockerKind::MissingFaceSplitSourceUse => Self::MissingFaceSplitSourceUse,
+            SplitPlanBlockerKind::UnknownBoundaryIncidence => Self::UnknownBoundaryIncidence,
+            SplitPlanBlockerKind::BoundaryNodeOffFacePlane => Self::BoundaryNodeOffFacePlane,
             #[cfg(test)]
-            SplitPlanDiagnosticKind::SourceReplayMismatch => Self::SourceReplayMismatch,
-            SplitPlanDiagnosticKind::SourceTriangleMismatch => Self::SourceTriangleMismatch,
-            SplitPlanDiagnosticKind::EmptyOrShortRegionBoundary => Self::EmptyOrShortRegionBoundary,
-            SplitPlanDiagnosticKind::DuplicateConsecutiveRegionNode => {
+            SplitPlanBlockerKind::SourceReplayMismatch => Self::SourceReplayMismatch,
+            SplitPlanBlockerKind::SourceTriangleMismatch => Self::SourceTriangleMismatch,
+            SplitPlanBlockerKind::EmptyOrShortRegionBoundary => Self::EmptyOrShortRegionBoundary,
+            SplitPlanBlockerKind::DuplicateConsecutiveRegionNode => {
                 Self::DuplicateConsecutiveRegionNode
             }
-            SplitPlanDiagnosticKind::BoundaryChainEdgeNotOnTriangle => {
+            SplitPlanBlockerKind::BoundaryChainEdgeNotOnTriangle => {
                 Self::BoundaryChainEdgeNotOnTriangle
             }
-            SplitPlanDiagnosticKind::BoundaryNodeSourceVertexOutOfRange => {
+            SplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange => {
                 Self::BoundaryNodeSourceVertexOutOfRange
             }
-            SplitPlanDiagnosticKind::BoundaryNodeSourceVertexNotOnTriangle => {
+            SplitPlanBlockerKind::BoundaryNodeSourceVertexNotOnTriangle => {
                 Self::BoundaryNodeSourceVertexNotOnTriangle
             }
-            SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch => {
+            SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch => {
                 Self::BoundaryNodeSourcePointMismatch
             }
         }

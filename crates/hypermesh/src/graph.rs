@@ -1478,9 +1478,9 @@ impl ExactFaceSplitPlan {
     }
 }
 
-/// Stable category for split-plan validation diagnostics.
+/// Stable category for split-plan validation blockers.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum SplitPlanDiagnosticKind {
+pub(crate) enum SplitPlanBlockerKind {
     /// Exact parameter ordering could not be certified.
     UnknownOrdering,
     /// Exact split-point equality could not be certified.
@@ -1539,11 +1539,11 @@ pub(crate) enum SplitPlanDiagnosticKind {
     BoundaryNodeSourcePointMismatch,
 }
 
-/// One split-plan validation diagnostic.
+/// One split-plan validation blocker.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) struct SplitPlanDiagnostic {
-    /// Stable diagnostic category.
-    pub kind: SplitPlanDiagnosticKind,
+pub(crate) struct SplitPlanBlocker {
+    /// Stable blocker category.
+    pub kind: SplitPlanBlockerKind,
     /// Human-readable detail.
     pub message: String,
     /// Optional mesh side.
@@ -1556,8 +1556,8 @@ pub(crate) struct SplitPlanDiagnostic {
     pub graph_vertex: Option<usize>,
 }
 
-impl SplitPlanDiagnostic {
-    fn new(kind: SplitPlanDiagnosticKind, message: impl Into<String>) -> Self {
+impl SplitPlanBlocker {
+    fn new(kind: SplitPlanBlockerKind, message: impl Into<String>) -> Self {
         Self {
             kind,
             message: message.into(),
@@ -1592,17 +1592,17 @@ impl SplitPlanDiagnostic {
 fn split_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> ExactMeshError {
     ExactMeshError::new(
         report
-            .diagnostics
+            .blockers
             .into_iter()
-            .map(|diagnostic| {
+            .map(|blocker| {
                 let mut mesh = ExactMeshBlocker::new(
                     ExactMeshBlockerKind::UnsupportedExactOperation,
-                    diagnostic.message,
+                    blocker.message,
                 );
-                if let Some(face) = diagnostic.face {
+                if let Some(face) = blocker.face {
                     mesh = mesh.with_face(face);
                 }
-                if let Some(edge) = diagnostic.edge {
+                if let Some(edge) = blocker.edge {
                     mesh = mesh.with_edge(edge);
                 }
                 mesh
@@ -1614,14 +1614,14 @@ fn split_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> ExactMe
 /// Validation report for exact split topology and face split plans.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct SplitPlanValidationReport {
-    /// Diagnostics collected during validation.
-    pub(crate) diagnostics: Vec<SplitPlanDiagnostic>,
+    /// Blockers collected during validation.
+    pub(crate) blockers: Vec<SplitPlanBlocker>,
 }
 
 impl SplitPlanValidationReport {
     /// Return whether the checked split plan is ready for the next exact stage.
     pub(crate) fn is_valid(&self) -> bool {
-        self.diagnostics.is_empty()
+        self.blockers.is_empty()
     }
 }
 
@@ -2032,20 +2032,20 @@ fn find_matching_graph_vertex_in_indices(
 }
 
 fn validate_graph_vertex_plan(plan: &ExactGraphVertexPlan) -> SplitPlanValidationReport {
-    let mut diagnostics = Vec::new();
+    let mut blockers = Vec::new();
 
     for _ in 0..plan.unresolved_equalities {
-        diagnostics.push(SplitPlanDiagnostic::new(
-            SplitPlanDiagnosticKind::UnresolvedEquality,
+        blockers.push(SplitPlanBlocker::new(
+            SplitPlanBlockerKind::UnresolvedEquality,
             "graph-vertex equality could not be certified",
         ));
     }
 
     for (index, vertex) in plan.vertices.iter().enumerate() {
         if vertex.uses.is_empty() {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::EmptyGraphVertexUses,
+            blockers.push(
+                SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::EmptyGraphVertexUses,
                     "graph vertex has no exact source uses",
                 )
                 .with_graph_vertex(index),
@@ -2054,8 +2054,8 @@ fn validate_graph_vertex_plan(plan: &ExactGraphVertexPlan) -> SplitPlanValidatio
         }
 
         for vertex_use in &vertex.uses {
-            push_graph_vertex_source_use_diagnostics(
-                &mut diagnostics,
+            push_graph_vertex_source_use_blockers(
+                &mut blockers,
                 index,
                 vertex_use,
                 "graph vertex source use determinant ratio does not match its parameter",
@@ -2065,11 +2065,11 @@ fn validate_graph_vertex_plan(plan: &ExactGraphVertexPlan) -> SplitPlanValidatio
         }
     }
 
-    SplitPlanValidationReport { diagnostics }
+    SplitPlanValidationReport { blockers }
 }
 
-fn push_graph_vertex_source_use_diagnostics(
-    diagnostics: &mut Vec<SplitPlanDiagnostic>,
+fn push_graph_vertex_source_use_blockers(
+    blockers: &mut Vec<SplitPlanBlocker>,
     graph_vertex: usize,
     vertex_use: &ExactGraphVertexUse,
     ratio_message: &'static str,
@@ -2079,9 +2079,9 @@ fn push_graph_vertex_source_use_diagnostics(
     // construction object, not only the rounded coordinate it produced. Every
     // later graph/topology handoff therefore rechecks the determinant ratio and
     if !ratio_matches_parameter(&vertex_use.parameter_ratio, &vertex_use.parameter) {
-        diagnostics.push(
-            SplitPlanDiagnostic::new(
-                SplitPlanDiagnosticKind::InvalidConstructionRatio,
+        blockers.push(
+            SplitPlanBlocker::new(
+                SplitPlanBlockerKind::InvalidConstructionRatio,
                 ratio_message,
             )
             .with_side(vertex_use.side)
@@ -2093,18 +2093,18 @@ fn push_graph_vertex_source_use_diagnostics(
     match vertex_use.endpoint_sides {
         [Some(PlaneSide::Above), Some(PlaneSide::Below)]
         | [Some(PlaneSide::Below), Some(PlaneSide::Above)] => {}
-        [Some(_), Some(_)] => diagnostics.push(
-            SplitPlanDiagnostic::new(
-                SplitPlanDiagnosticKind::NonCrossingEndpointSideFacts,
+        [Some(_), Some(_)] => blockers.push(
+            SplitPlanBlocker::new(
+                SplitPlanBlockerKind::NonCrossingEndpointSideFacts,
                 non_crossing_message,
             )
             .with_side(vertex_use.side)
             .with_edge(vertex_use.edge)
             .with_graph_vertex(graph_vertex),
         ),
-        _ => diagnostics.push(
-            SplitPlanDiagnostic::new(
-                SplitPlanDiagnosticKind::MissingEndpointSideFacts,
+        _ => blockers.push(
+            SplitPlanBlocker::new(
+                SplitPlanBlockerKind::MissingEndpointSideFacts,
                 missing_message,
             )
             .with_side(vertex_use.side)
@@ -2439,11 +2439,11 @@ fn split_topology_plan(
 }
 
 fn validate_edge_split_plan(split_plan: &ExactEdgeSplitPlan) -> SplitPlanValidationReport {
-    let mut diagnostics = Vec::new();
+    let mut blockers = Vec::new();
 
     for _ in 0..split_plan.unknown_orderings {
-        diagnostics.push(SplitPlanDiagnostic::new(
-            SplitPlanDiagnosticKind::UnknownOrdering,
+        blockers.push(SplitPlanBlocker::new(
+            SplitPlanBlockerKind::UnknownOrdering,
             "edge split parameters have an uncertified ordering",
         ));
     }
@@ -2451,9 +2451,9 @@ fn validate_edge_split_plan(split_plan: &ExactEdgeSplitPlan) -> SplitPlanValidat
     for split in &split_plan.splits {
         for point in &split.points {
             if !ratio_matches_parameter(&point.parameter_ratio, &point.parameter) {
-                diagnostics.push(
-                    SplitPlanDiagnostic::new(
-                        SplitPlanDiagnosticKind::InvalidConstructionRatio,
+                blockers.push(
+                    SplitPlanBlocker::new(
+                        SplitPlanBlockerKind::InvalidConstructionRatio,
                         "edge split point determinant ratio does not match its parameter",
                     )
                     .with_side(split.side)
@@ -2463,17 +2463,17 @@ fn validate_edge_split_plan(split_plan: &ExactEdgeSplitPlan) -> SplitPlanValidat
             match point.endpoint_sides {
                 [Some(PlaneSide::Above), Some(PlaneSide::Below)]
                 | [Some(PlaneSide::Below), Some(PlaneSide::Above)] => {}
-                [Some(_), Some(_)] => diagnostics.push(
-                    SplitPlanDiagnostic::new(
-                        SplitPlanDiagnosticKind::NonCrossingEndpointSideFacts,
+                [Some(_), Some(_)] => blockers.push(
+                    SplitPlanBlocker::new(
+                        SplitPlanBlockerKind::NonCrossingEndpointSideFacts,
                         "edge split point was not certified by opposite strict endpoint sides",
                     )
                     .with_side(split.side)
                     .with_edge(split.edge),
                 ),
-                _ => diagnostics.push(
-                    SplitPlanDiagnostic::new(
-                        SplitPlanDiagnosticKind::MissingEndpointSideFacts,
+                _ => blockers.push(
+                    SplitPlanBlocker::new(
+                        SplitPlanBlockerKind::MissingEndpointSideFacts,
                         "edge split point is missing endpoint side facts",
                     )
                     .with_side(split.side)
@@ -2483,7 +2483,7 @@ fn validate_edge_split_plan(split_plan: &ExactEdgeSplitPlan) -> SplitPlanValidat
         }
     }
 
-    SplitPlanValidationReport { diagnostics }
+    SplitPlanValidationReport { blockers }
 }
 
 #[cfg(test)]
@@ -2501,15 +2501,15 @@ fn validate_edge_split_plan_against_sources(
     match replay {
         Ok(replay) if replay == *split_plan => report,
         Ok(_) => {
-            report.diagnostics.push(SplitPlanDiagnostic::new(
-                SplitPlanDiagnosticKind::SourceReplayMismatch,
+            report.blockers.push(SplitPlanBlocker::new(
+                SplitPlanBlockerKind::SourceReplayMismatch,
                 "edge split plan does not match exact replay from source operands",
             ));
             report
         }
         Err(error) => {
-            report.diagnostics.push(SplitPlanDiagnostic::new(
-                SplitPlanDiagnosticKind::SourceReplayMismatch,
+            report.blockers.push(SplitPlanBlocker::new(
+                SplitPlanBlockerKind::SourceReplayMismatch,
                 format!("edge split plan source replay failed: {error}"),
             ));
             report
@@ -2561,32 +2561,32 @@ fn face_split_plan(topology: &ExactSplitTopologyPlan) -> ExactFaceSplitPlan {
 }
 
 fn validate_split_topology_plan(topology: &ExactSplitTopologyPlan) -> SplitPlanValidationReport {
-    let mut diagnostics = Vec::new();
+    let mut blockers = Vec::new();
 
     for _ in 0..topology.unknown_orderings {
-        diagnostics.push(SplitPlanDiagnostic::new(
-            SplitPlanDiagnosticKind::UnknownOrdering,
+        blockers.push(SplitPlanBlocker::new(
+            SplitPlanBlockerKind::UnknownOrdering,
             "edge split parameters have an uncertified ordering",
         ));
     }
     for _ in 0..topology.unresolved_equalities {
-        diagnostics.push(SplitPlanDiagnostic::new(
-            SplitPlanDiagnosticKind::UnresolvedEquality,
+        blockers.push(SplitPlanBlocker::new(
+            SplitPlanBlockerKind::UnresolvedEquality,
             "graph-vertex equality could not be certified",
         ));
     }
     for _ in 0..topology.unresolved_vertex_lookups {
-        diagnostics.push(SplitPlanDiagnostic::new(
-            SplitPlanDiagnosticKind::UnresolvedVertexLookup,
+        blockers.push(SplitPlanBlocker::new(
+            SplitPlanBlockerKind::UnresolvedVertexLookup,
             "split point could not be matched to a graph vertex",
         ));
     }
 
     for (index, vertex) in topology.graph_vertices.iter().enumerate() {
         if vertex.uses.is_empty() {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::EmptyGraphVertexUses,
+            blockers.push(
+                SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::EmptyGraphVertexUses,
                     "graph vertex has no exact source uses",
                 )
                 .with_graph_vertex(index),
@@ -2594,8 +2594,8 @@ fn validate_split_topology_plan(topology: &ExactSplitTopologyPlan) -> SplitPlanV
         }
 
         for vertex_use in &vertex.uses {
-            push_graph_vertex_source_use_diagnostics(
-                &mut diagnostics,
+            push_graph_vertex_source_use_blockers(
+                &mut blockers,
                 index,
                 vertex_use,
                 "split topology graph vertex determinant ratio does not match its parameter",
@@ -2607,9 +2607,9 @@ fn validate_split_topology_plan(topology: &ExactSplitTopologyPlan) -> SplitPlanV
 
     for chain in &topology.edge_chains {
         if chain.nodes.len() < 2 {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::EmptyOrShortEdgeChain,
+            blockers.push(
+                SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::EmptyOrShortEdgeChain,
                     "split edge chain does not connect both original endpoints",
                 )
                 .with_side(chain.side)
@@ -2624,9 +2624,9 @@ fn validate_split_topology_plan(topology: &ExactSplitTopologyPlan) -> SplitPlanV
                 vertex: chain.edge[0],
             })
         {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::WrongChainStart,
+            blockers.push(
+                SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::WrongChainStart,
                     "split edge chain does not start at the directed edge start",
                 )
                 .with_side(chain.side)
@@ -2640,9 +2640,9 @@ fn validate_split_topology_plan(topology: &ExactSplitTopologyPlan) -> SplitPlanV
                 vertex: chain.edge[1],
             })
         {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::WrongChainEnd,
+            blockers.push(
+                SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::WrongChainEnd,
                     "split edge chain does not end at the directed edge end",
                 )
                 .with_side(chain.side)
@@ -2653,9 +2653,9 @@ fn validate_split_topology_plan(topology: &ExactSplitTopologyPlan) -> SplitPlanV
         for node in &chain.nodes {
             match node {
                 SplitEdgeNode::OriginalVertex { side, .. } if *side != chain.side => {
-                    diagnostics.push(
-                        SplitPlanDiagnostic::new(
-                            SplitPlanDiagnosticKind::ChainSideMismatch,
+                    blockers.push(
+                        SplitPlanBlocker::new(
+                            SplitPlanBlockerKind::ChainSideMismatch,
                             "original vertex node is on a different mesh side from its chain",
                         )
                         .with_side(chain.side)
@@ -2665,9 +2665,9 @@ fn validate_split_topology_plan(topology: &ExactSplitTopologyPlan) -> SplitPlanV
                 SplitEdgeNode::GraphVertex { graph_vertex }
                     if *graph_vertex >= topology.graph_vertices.len() =>
                 {
-                    diagnostics.push(
-                        SplitPlanDiagnostic::new(
-                            SplitPlanDiagnosticKind::GraphVertexOutOfRange,
+                    blockers.push(
+                        SplitPlanBlocker::new(
+                            SplitPlanBlockerKind::GraphVertexOutOfRange,
                             "split edge chain references a missing graph vertex",
                         )
                         .with_side(chain.side)
@@ -2680,20 +2680,20 @@ fn validate_split_topology_plan(topology: &ExactSplitTopologyPlan) -> SplitPlanV
         }
     }
 
-    SplitPlanValidationReport { diagnostics }
+    SplitPlanValidationReport { blockers }
 }
 
 fn validate_face_split_plan(
     face_plan: &ExactFaceSplitPlan,
     topology: &ExactSplitTopologyPlan,
 ) -> SplitPlanValidationReport {
-    let mut diagnostics = Vec::new();
+    let mut blockers = Vec::new();
 
     for face in &face_plan.faces {
         if face.edges.is_empty() {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::EmptyFaceSplit,
+            blockers.push(
+                SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::EmptyFaceSplit,
                     "face split work item has no split edges",
                 )
                 .with_side(face.side)
@@ -2704,9 +2704,9 @@ fn validate_face_split_plan(
         let mut seen_edges = BTreeSet::new();
         for edge in &face.edges {
             if !seen_edges.insert(edge.edge) {
-                diagnostics.push(
-                    SplitPlanDiagnostic::new(
-                        SplitPlanDiagnosticKind::DuplicateFaceSplitEdge,
+                blockers.push(
+                    SplitPlanBlocker::new(
+                        SplitPlanBlockerKind::DuplicateFaceSplitEdge,
                         "face split work item repeats an original edge",
                     )
                     .with_side(face.side)
@@ -2716,9 +2716,9 @@ fn validate_face_split_plan(
             }
 
             if edge.graph_vertices.is_empty() {
-                diagnostics.push(
-                    SplitPlanDiagnostic::new(
-                        SplitPlanDiagnosticKind::EmptyFaceSplitEdge,
+                blockers.push(
+                    SplitPlanBlocker::new(
+                        SplitPlanBlockerKind::EmptyFaceSplitEdge,
                         "face split edge has no graph vertices",
                     )
                     .with_side(face.side)
@@ -2729,9 +2729,9 @@ fn validate_face_split_plan(
 
             for &graph_vertex in &edge.graph_vertices {
                 let Some(vertex) = topology.graph_vertices.get(graph_vertex) else {
-                    diagnostics.push(
-                        SplitPlanDiagnostic::new(
-                            SplitPlanDiagnosticKind::GraphVertexOutOfRange,
+                    blockers.push(
+                        SplitPlanBlocker::new(
+                            SplitPlanBlockerKind::GraphVertexOutOfRange,
                             "face split edge references a missing graph vertex",
                         )
                         .with_side(face.side)
@@ -2753,8 +2753,8 @@ fn validate_face_split_plan(
                 let mut matched_source = false;
                 for vertex_use in matching_uses {
                     matched_source = true;
-                    push_graph_vertex_source_use_diagnostics(
-                        &mut diagnostics,
+                    push_graph_vertex_source_use_blockers(
+                        &mut blockers,
                         graph_vertex,
                         vertex_use,
                         "face split source use determinant ratio does not match its parameter",
@@ -2764,9 +2764,9 @@ fn validate_face_split_plan(
                 }
 
                 if !matched_source {
-                    diagnostics.push(
-                        SplitPlanDiagnostic::new(
-                            SplitPlanDiagnosticKind::MissingFaceSplitSourceUse,
+                    blockers.push(
+                        SplitPlanBlocker::new(
+                            SplitPlanBlockerKind::MissingFaceSplitSourceUse,
                             "face split edge graph vertex has no exact source use on this face edge",
                         )
                         .with_side(face.side)
@@ -2779,7 +2779,7 @@ fn validate_face_split_plan(
         }
     }
 
-    SplitPlanValidationReport { diagnostics }
+    SplitPlanValidationReport { blockers }
 }
 
 #[cfg(test)]
@@ -2793,8 +2793,8 @@ fn validate_face_split_plan_against_sources(
             Ok(topology) => topology,
             Err(error) => {
                 return SplitPlanValidationReport {
-                    diagnostics: vec![SplitPlanDiagnostic::new(
-                        SplitPlanDiagnosticKind::SourceReplayMismatch,
+                    blockers: vec![SplitPlanBlocker::new(
+                        SplitPlanBlockerKind::SourceReplayMismatch,
                         format!("face split plan source replay failed: {error}"),
                     )],
                 };
@@ -2808,8 +2808,8 @@ fn validate_face_split_plan_against_sources(
 
     let replay = face_split_plan(&topology);
     if replay != *face_plan {
-        report.diagnostics.push(SplitPlanDiagnostic::new(
-            SplitPlanDiagnosticKind::SourceReplayMismatch,
+        report.blockers.push(SplitPlanBlocker::new(
+            SplitPlanBlockerKind::SourceReplayMismatch,
             "face split plan does not match exact replay from source operands",
         ));
     }
@@ -2822,8 +2822,8 @@ fn face_split_geometry_plan(
     topology: &ExactSplitTopologyPlan,
     face_plan: &ExactFaceSplitPlan,
 ) -> Result<ExactFaceSplitGeometryPlan, ExactMeshError> {
-    if let Some(diagnostic) = first_face_geometry_error(left, right, topology, face_plan) {
-        return Err(ExactMeshError::one(diagnostic));
+    if let Some(blocker) = first_face_geometry_error(left, right, topology, face_plan) {
+        return Err(ExactMeshError::one(blocker));
     }
 
     let chains = topology
@@ -2968,14 +2968,14 @@ fn validate_face_split_geometry_incidence(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> SplitPlanValidationReport {
-    let mut diagnostics = Vec::new();
+    let mut blockers = Vec::new();
 
     for face in &geometry.faces {
         let mesh = mesh_for_side(face.side, left, right);
         if face.face >= mesh.triangles().len() {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::GraphVertexOutOfRange,
+            blockers.push(
+                SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::GraphVertexOutOfRange,
                     "split-face geometry references a missing source face",
                 )
                 .with_side(face.side)
@@ -2986,9 +2986,9 @@ fn validate_face_split_geometry_incidence(
 
         let triangle = mesh.triangles()[face.face].0;
         if face.triangle != triangle {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::SourceTriangleMismatch,
+            blockers.push(
+                SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::SourceTriangleMismatch,
                     "split-face geometry source triangle does not match its source face",
                 )
                 .with_side(face.side)
@@ -2998,9 +2998,9 @@ fn validate_face_split_geometry_incidence(
         }
 
         if face.boundary_chains.is_empty() {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::EmptyFaceSplit,
+            blockers.push(
+                SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::EmptyFaceSplit,
                     "split-face geometry has no retained boundary chains",
                 )
                 .with_side(face.side)
@@ -3017,9 +3017,9 @@ fn validate_face_split_geometry_incidence(
         let c = mesh.vertices()[triangle[2]].clone();
         for chain in &face.boundary_chains {
             if !seen_edges.insert(chain.edge) {
-                diagnostics.push(
-                    SplitPlanDiagnostic::new(
-                        SplitPlanDiagnosticKind::DuplicateFaceSplitEdge,
+                blockers.push(
+                    SplitPlanBlocker::new(
+                        SplitPlanBlockerKind::DuplicateFaceSplitEdge,
                         "split-face geometry repeats a retained boundary chain edge",
                     )
                     .with_side(face.side)
@@ -3028,9 +3028,9 @@ fn validate_face_split_geometry_incidence(
                 );
             }
             if !triangle_edge_set.contains(&chain.edge) {
-                diagnostics.push(
-                    SplitPlanDiagnostic::new(
-                        SplitPlanDiagnosticKind::BoundaryChainEdgeNotOnTriangle,
+                blockers.push(
+                    SplitPlanBlocker::new(
+                        SplitPlanBlockerKind::BoundaryChainEdgeNotOnTriangle,
                         "split-face geometry boundary chain edge is not on its source triangle",
                     )
                     .with_side(face.side)
@@ -3040,7 +3040,7 @@ fn validate_face_split_geometry_incidence(
                 continue;
             }
             validate_face_split_boundary_chain_shape(
-                &mut diagnostics,
+                &mut blockers,
                 mesh,
                 face.side,
                 face.face,
@@ -3050,18 +3050,18 @@ fn validate_face_split_geometry_incidence(
                 let point = boundary_node_point(node);
                 match orient3d_report(&a, &b, &c, point).value() {
                     Some(Sign::Zero) => {}
-                    Some(Sign::Negative | Sign::Positive) => diagnostics.push(
-                        SplitPlanDiagnostic::new(
-                            SplitPlanDiagnosticKind::BoundaryNodeOffFacePlane,
+                    Some(Sign::Negative | Sign::Positive) => blockers.push(
+                        SplitPlanBlocker::new(
+                            SplitPlanBlockerKind::BoundaryNodeOffFacePlane,
                             "split boundary node is not incident to its original face plane",
                         )
                         .with_side(face.side)
                         .with_face(face.face)
                         .with_edge(chain.edge),
                     ),
-                    None => diagnostics.push(
-                        SplitPlanDiagnostic::new(
-                            SplitPlanDiagnosticKind::UnknownBoundaryIncidence,
+                    None => blockers.push(
+                        SplitPlanBlocker::new(
+                            SplitPlanBlockerKind::UnknownBoundaryIncidence,
                             "split boundary node incidence could not be certified",
                         )
                         .with_side(face.side)
@@ -3073,20 +3073,20 @@ fn validate_face_split_geometry_incidence(
         }
     }
 
-    SplitPlanValidationReport { diagnostics }
+    SplitPlanValidationReport { blockers }
 }
 
 fn validate_face_split_boundary_chain_shape(
-    diagnostics: &mut Vec<SplitPlanDiagnostic>,
+    blockers: &mut Vec<SplitPlanBlocker>,
     mesh: &ExactMesh,
     side: MeshSide,
     face: usize,
     chain: &FaceSplitBoundaryChain,
 ) {
     if chain.nodes.len() < 2 {
-        diagnostics.push(
-            SplitPlanDiagnostic::new(
-                SplitPlanDiagnosticKind::EmptyOrShortEdgeChain,
+        blockers.push(
+            SplitPlanBlocker::new(
+                SplitPlanBlockerKind::EmptyOrShortEdgeChain,
                 "split-face geometry boundary chain does not connect both edge endpoints",
             )
             .with_side(side)
@@ -3099,9 +3099,9 @@ fn validate_face_split_boundary_chain_shape(
     let expected_start = Some(chain.edge[0]);
     let expected_end = Some(chain.edge[1]);
     if original_boundary_vertex(chain.nodes.first()) != expected_start {
-        diagnostics.push(
-            SplitPlanDiagnostic::new(
-                SplitPlanDiagnosticKind::WrongChainStart,
+        blockers.push(
+            SplitPlanBlocker::new(
+                SplitPlanBlockerKind::WrongChainStart,
                 "split-face geometry boundary chain does not start at its source edge start",
             )
             .with_side(side)
@@ -3110,9 +3110,9 @@ fn validate_face_split_boundary_chain_shape(
         );
     }
     if original_boundary_vertex(chain.nodes.last()) != expected_end {
-        diagnostics.push(
-            SplitPlanDiagnostic::new(
-                SplitPlanDiagnosticKind::WrongChainEnd,
+        blockers.push(
+            SplitPlanBlocker::new(
+                SplitPlanBlockerKind::WrongChainEnd,
                 "split-face geometry boundary chain does not end at its source edge end",
             )
             .with_side(side)
@@ -3126,9 +3126,9 @@ fn validate_face_split_boundary_chain_shape(
             continue;
         };
         let Some(source_point) = mesh.vertices().get(*vertex) else {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::BoundaryNodeSourceVertexOutOfRange,
+            blockers.push(
+                SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange,
                     "split-face geometry boundary node references a missing source vertex",
                 )
                 .with_side(side)
@@ -3138,9 +3138,9 @@ fn validate_face_split_boundary_chain_shape(
             continue;
         };
         if points_equal(point, source_point) != Some(true) {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch,
+            blockers.push(
+                SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch,
                     "split-face geometry original boundary node point does not match its source vertex",
                 )
                 .with_side(side)
@@ -3177,15 +3177,15 @@ fn validate_face_split_geometry_against_sources(
     match replay {
         Ok(replay) if replay == *geometry => report,
         Ok(_) => {
-            report.diagnostics.push(SplitPlanDiagnostic::new(
-                SplitPlanDiagnosticKind::SourceReplayMismatch,
+            report.blockers.push(SplitPlanBlocker::new(
+                SplitPlanBlockerKind::SourceReplayMismatch,
                 "split-face geometry does not match exact replay from source operands",
             ));
             report
         }
         Err(error) => {
-            report.diagnostics.push(SplitPlanDiagnostic::new(
-                SplitPlanDiagnosticKind::SourceReplayMismatch,
+            report.blockers.push(SplitPlanBlocker::new(
+                SplitPlanBlockerKind::SourceReplayMismatch,
                 format!("split-face geometry source replay failed: {error}"),
             ));
             report
@@ -3246,12 +3246,12 @@ fn validate_face_region_plan(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> SplitPlanValidationReport {
-    let mut diagnostics = Vec::new();
+    let mut blockers = Vec::new();
     for region in &plan.regions {
         if region.boundary.len() < 3 {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::EmptyOrShortRegionBoundary,
+            blockers.push(
+                SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::EmptyOrShortRegionBoundary,
                     "face region boundary has fewer than three nodes",
                 )
                 .with_side(region.side)
@@ -3261,9 +3261,9 @@ fn validate_face_region_plan(
 
         for window in region.boundary.windows(2) {
             if boundary_nodes_equal(&window[0], &window[1]) == Some(true) {
-                diagnostics.push(
-                    SplitPlanDiagnostic::new(
-                        SplitPlanDiagnosticKind::DuplicateConsecutiveRegionNode,
+                blockers.push(
+                    SplitPlanBlocker::new(
+                        SplitPlanBlockerKind::DuplicateConsecutiveRegionNode,
                         "face region boundary contains consecutive duplicate nodes",
                     )
                     .with_side(region.side)
@@ -3277,9 +3277,9 @@ fn validate_face_region_plan(
             .zip(region.boundary.last())
             .is_some_and(|(first, last)| boundary_nodes_equal(first, last) == Some(true))
         {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::DuplicateConsecutiveRegionNode,
+            blockers.push(
+                SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::DuplicateConsecutiveRegionNode,
                     "face region boundary repeats its first node at the end",
                 )
                 .with_side(region.side)
@@ -3289,9 +3289,9 @@ fn validate_face_region_plan(
 
         let mesh = mesh_for_side(region.side, left, right);
         if region.face >= mesh.triangles().len() {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::GraphVertexOutOfRange,
+            blockers.push(
+                SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::GraphVertexOutOfRange,
                     "face region references a missing source face",
                 )
                 .with_side(region.side)
@@ -3302,9 +3302,9 @@ fn validate_face_region_plan(
 
         let triangle = mesh.triangles()[region.face].0;
         if region.triangle != triangle {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::SourceTriangleMismatch,
+            blockers.push(
+                SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::SourceTriangleMismatch,
                     "face region source triangle does not match its source face",
                 )
                 .with_side(region.side)
@@ -3312,7 +3312,7 @@ fn validate_face_region_plan(
             );
             continue;
         }
-        validate_face_region_original_boundary_nodes(&mut diagnostics, mesh, region);
+        validate_face_region_original_boundary_nodes(&mut blockers, mesh, region);
         let a = mesh.vertices()[triangle[0]].clone();
         let b = mesh.vertices()[triangle[1]].clone();
         let c = mesh.vertices()[triangle[2]].clone();
@@ -3320,17 +3320,17 @@ fn validate_face_region_plan(
             let point = boundary_node_point(node);
             match orient3d_report(&a, &b, &c, point).value() {
                 Some(Sign::Zero) => {}
-                Some(Sign::Negative | Sign::Positive) => diagnostics.push(
-                    SplitPlanDiagnostic::new(
-                        SplitPlanDiagnosticKind::BoundaryNodeOffFacePlane,
+                Some(Sign::Negative | Sign::Positive) => blockers.push(
+                    SplitPlanBlocker::new(
+                        SplitPlanBlockerKind::BoundaryNodeOffFacePlane,
                         "face region boundary node is not incident to its source face plane",
                     )
                     .with_side(region.side)
                     .with_face(region.face),
                 ),
-                None => diagnostics.push(
-                    SplitPlanDiagnostic::new(
-                        SplitPlanDiagnosticKind::UnknownBoundaryIncidence,
+                None => blockers.push(
+                    SplitPlanBlocker::new(
+                        SplitPlanBlockerKind::UnknownBoundaryIncidence,
                         "face region boundary incidence could not be certified",
                     )
                     .with_side(region.side)
@@ -3340,11 +3340,11 @@ fn validate_face_region_plan(
         }
     }
 
-    SplitPlanValidationReport { diagnostics }
+    SplitPlanValidationReport { blockers }
 }
 
 fn validate_face_region_original_boundary_nodes(
-    diagnostics: &mut Vec<SplitPlanDiagnostic>,
+    blockers: &mut Vec<SplitPlanBlocker>,
     mesh: &ExactMesh,
     region: &FaceRegionBoundary,
 ) {
@@ -3353,9 +3353,9 @@ fn validate_face_region_original_boundary_nodes(
             continue;
         };
         let Some(source_point) = mesh.vertices().get(*vertex) else {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::BoundaryNodeSourceVertexOutOfRange,
+            blockers.push(
+                SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange,
                     "face region original boundary node references a missing source vertex",
                 )
                 .with_side(region.side)
@@ -3364,9 +3364,9 @@ fn validate_face_region_original_boundary_nodes(
             continue;
         };
         if !region.triangle.contains(vertex) {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::BoundaryNodeSourceVertexNotOnTriangle,
+            blockers.push(
+                SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::BoundaryNodeSourceVertexNotOnTriangle,
                     "face region original boundary node is not part of its source triangle",
                 )
                 .with_side(region.side)
@@ -3374,9 +3374,9 @@ fn validate_face_region_original_boundary_nodes(
             );
         }
         if points_equal(point, source_point) != Some(true) {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch,
+            blockers.push(
+                SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch,
                     "face region original boundary node point does not match its source vertex",
                 )
                 .with_side(region.side)
@@ -3403,15 +3403,15 @@ fn validate_face_region_plan_against_sources(
     match replay {
         Ok(replay) if replay == *plan => report,
         Ok(_) => {
-            report.diagnostics.push(SplitPlanDiagnostic::new(
-                SplitPlanDiagnosticKind::SourceReplayMismatch,
+            report.blockers.push(SplitPlanBlocker::new(
+                SplitPlanBlockerKind::SourceReplayMismatch,
                 "face region plan does not match exact replay from source operands",
             ));
             report
         }
         Err(error) => {
-            report.diagnostics.push(SplitPlanDiagnostic::new(
-                SplitPlanDiagnosticKind::SourceReplayMismatch,
+            report.blockers.push(SplitPlanBlocker::new(
+                SplitPlanBlockerKind::SourceReplayMismatch,
                 format!("face region plan source replay failed: {error}"),
             ));
             report
@@ -4311,34 +4311,34 @@ mod tests {
                 .is_err()
         );
         let edge_splits = graph.edge_split_plan();
-        assert!(edge_splits.validate().diagnostics.is_empty());
+        assert!(edge_splits.validate().blockers.is_empty());
         assert!(
             edge_splits
                 .validate_against_sources(&left, &separated_right)
-                .diagnostics
+                .blockers
                 .iter()
-                .any(|diagnostic| diagnostic.kind == SplitPlanDiagnosticKind::SourceReplayMismatch)
+                .any(|blocker| blocker.kind == SplitPlanBlockerKind::SourceReplayMismatch)
         );
         let mut stale_edge_splits = edge_splits.clone();
         stale_edge_splits.unknown_orderings += 1;
-        assert!(!stale_edge_splits.validate().diagnostics.is_empty());
+        assert!(!stale_edge_splits.validate().blockers.is_empty());
 
         let graph_vertices = graph.graph_vertex_plan();
-        assert!(graph_vertices.validate().diagnostics.is_empty());
+        assert!(graph_vertices.validate().blockers.is_empty());
         let topology = graph.split_topology_plan();
-        assert!(topology.validate().diagnostics.is_empty());
+        assert!(topology.validate().blockers.is_empty());
         let face_plan = graph.face_split_plan();
         assert!(
             face_plan
                 .validate_against_sources(&left, &right)
-                .diagnostics
+                .blockers
                 .is_empty()
         );
         let geometry = graph.face_split_geometry_plan(&left, &right).unwrap();
         assert!(
             geometry
                 .validate_against_sources(&left, &right)
-                .diagnostics
+                .blockers
                 .is_empty()
         );
         let mut noncanonical_chain_geometry = geometry.clone();
@@ -4349,12 +4349,12 @@ mod tests {
             noncanonical_chain_geometry.validate_boundary_incidence(&left, &right);
         assert!(
             noncanonical_chain_report
-                .diagnostics
+                .blockers
                 .iter()
-                .any(|diagnostic| diagnostic.kind == SplitPlanDiagnosticKind::WrongChainStart),
+                .any(|blocker| blocker.kind == SplitPlanBlockerKind::WrongChainStart),
             "{noncanonical_chain_report:?}"
         );
-        assert!(!noncanonical_chain_report.diagnostics.is_empty());
+        assert!(!noncanonical_chain_report.blockers.is_empty());
         let mut duplicate_chain_geometry = geometry.clone();
         let duplicate_chain = duplicate_chain_geometry.faces[0].boundary_chains[0].clone();
         duplicate_chain_geometry.faces[0]
@@ -4363,12 +4363,13 @@ mod tests {
         let duplicate_chain_report =
             duplicate_chain_geometry.validate_boundary_incidence(&left, &right);
         assert!(
-            duplicate_chain_report.diagnostics.iter().any(|diagnostic| {
-                diagnostic.kind == SplitPlanDiagnosticKind::DuplicateFaceSplitEdge
-            }),
+            duplicate_chain_report
+                .blockers
+                .iter()
+                .any(|blocker| { blocker.kind == SplitPlanBlockerKind::DuplicateFaceSplitEdge }),
             "{duplicate_chain_report:?}"
         );
-        assert!(!duplicate_chain_report.diagnostics.is_empty());
+        assert!(!duplicate_chain_report.blockers.is_empty());
         let mut stale_original_point_geometry = geometry.clone();
         if let FaceSplitBoundaryNode::OriginalVertex { point, .. } =
             &mut stale_original_point_geometry.faces[0].boundary_chains[0].nodes[0]
@@ -4378,30 +4379,28 @@ mod tests {
         let stale_original_point_report =
             stale_original_point_geometry.validate_boundary_incidence(&left, &right);
         assert!(
-            stale_original_point_report
-                .diagnostics
-                .iter()
-                .any(|diagnostic| {
-                    diagnostic.kind == SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch
-                }),
+            stale_original_point_report.blockers.iter().any(|blocker| {
+                blocker.kind == SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch
+            }),
             "{stale_original_point_report:?}"
         );
-        assert!(!stale_original_point_report.diagnostics.is_empty());
+        assert!(!stale_original_point_report.blockers.is_empty());
         let mut relabeled_geometry = geometry.clone();
         relabeled_geometry.faces[0].triangle.swap(0, 1);
         let geometry_report = relabeled_geometry.validate_boundary_incidence(&left, &right);
         assert!(
-            geometry_report.diagnostics.iter().any(|diagnostic| {
-                diagnostic.kind == SplitPlanDiagnosticKind::SourceTriangleMismatch
-            }),
+            geometry_report
+                .blockers
+                .iter()
+                .any(|blocker| { blocker.kind == SplitPlanBlockerKind::SourceTriangleMismatch }),
             "{geometry_report:?}"
         );
-        assert!(!geometry_report.diagnostics.is_empty());
+        assert!(!geometry_report.blockers.is_empty());
         let regions = geometry.region_plan(&left, &right);
         assert!(
             regions
                 .validate_against_sources(&left, &right)
-                .diagnostics
+                .blockers
                 .is_empty()
         );
         let mut closed_duplicate_regions = regions.clone();
@@ -4411,15 +4410,12 @@ mod tests {
             .push(first_region_node);
         let closed_duplicate_report = closed_duplicate_regions.validate(&left, &right);
         assert!(
-            closed_duplicate_report
-                .diagnostics
-                .iter()
-                .any(|diagnostic| {
-                    diagnostic.kind == SplitPlanDiagnosticKind::DuplicateConsecutiveRegionNode
-                }),
+            closed_duplicate_report.blockers.iter().any(|blocker| {
+                blocker.kind == SplitPlanBlockerKind::DuplicateConsecutiveRegionNode
+            }),
             "{closed_duplicate_report:?}"
         );
-        assert!(!closed_duplicate_report.diagnostics.is_empty());
+        assert!(!closed_duplicate_report.blockers.is_empty());
         let mut stale_region_point = regions.clone();
         if let FaceSplitBoundaryNode::OriginalVertex { point, .. } =
             &mut stale_region_point.regions[0].boundary[0]
@@ -4428,15 +4424,12 @@ mod tests {
         }
         let stale_region_point_report = stale_region_point.validate(&left, &right);
         assert!(
-            stale_region_point_report
-                .diagnostics
-                .iter()
-                .any(|diagnostic| {
-                    diagnostic.kind == SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch
-                }),
+            stale_region_point_report.blockers.iter().any(|blocker| {
+                blocker.kind == SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch
+            }),
             "{stale_region_point_report:?}"
         );
-        assert!(!stale_region_point_report.diagnostics.is_empty());
+        assert!(!stale_region_point_report.blockers.is_empty());
         let mut missing_region_vertex = regions.clone();
         if let FaceSplitBoundaryNode::OriginalVertex { vertex, .. } =
             &mut missing_region_vertex.regions[0].boundary[0]
@@ -4445,25 +4438,23 @@ mod tests {
         }
         let missing_region_vertex_report = missing_region_vertex.validate(&left, &right);
         assert!(
-            missing_region_vertex_report
-                .diagnostics
-                .iter()
-                .any(|diagnostic| {
-                    diagnostic.kind == SplitPlanDiagnosticKind::BoundaryNodeSourceVertexOutOfRange
-                }),
+            missing_region_vertex_report.blockers.iter().any(|blocker| {
+                blocker.kind == SplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange
+            }),
             "{missing_region_vertex_report:?}"
         );
-        assert!(!missing_region_vertex_report.diagnostics.is_empty());
+        assert!(!missing_region_vertex_report.blockers.is_empty());
         let mut relabeled_regions = regions.clone();
         relabeled_regions.regions[0].triangle.swap(0, 1);
         let region_report = relabeled_regions.validate(&left, &right);
         assert!(
-            region_report.diagnostics.iter().any(|diagnostic| {
-                diagnostic.kind == SplitPlanDiagnosticKind::SourceTriangleMismatch
-            }),
+            region_report
+                .blockers
+                .iter()
+                .any(|blocker| { blocker.kind == SplitPlanBlockerKind::SourceTriangleMismatch }),
             "{region_report:?}"
         );
-        assert!(!region_report.diagnostics.is_empty());
+        assert!(!region_report.blockers.is_empty());
     }
 
     #[test]
