@@ -13,7 +13,7 @@ use hyperlimit::{
 use hyperreal::Real;
 
 /// Exact broad-phase relation between two 3D boxes.
-pub type AabbIntersectionKind = Aabb3Intersection;
+pub(crate) type AabbIntersectionKind = Aabb3Intersection;
 
 /// Structural inconsistency in retained exact bounds.
 ///
@@ -38,7 +38,7 @@ pub enum BoundsValidationError {
 
 /// Exact 3D axis-aligned bounding box.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactAabb3 {
+pub(crate) struct ExactAabb3 {
     /// Minimum corner.
     pub min: Point3,
     /// Maximum corner.
@@ -47,7 +47,7 @@ pub struct ExactAabb3 {
 
 impl ExactAabb3 {
     /// Build an exact box around one point.
-    pub fn point(point: &Point3) -> Self {
+    pub(crate) fn point(point: &Point3) -> Self {
         Self {
             min: point.clone(),
             max: point.clone(),
@@ -55,7 +55,7 @@ impl ExactAabb3 {
     }
 
     /// Build an exact box around a nonempty point slice.
-    pub fn from_points(points: &[Point3]) -> Option<Self> {
+    pub(crate) fn from_points(points: &[Point3]) -> Option<Self> {
         let first = points.first()?;
         let mut bounds = Self::point(first);
         for point in &points[1..] {
@@ -65,7 +65,7 @@ impl ExactAabb3 {
     }
 
     /// Build an exact box around one triangle.
-    pub fn from_triangle(points: [&Point3; 3]) -> Self {
+    pub(crate) fn from_triangle(points: [&Point3; 3]) -> Self {
         let mut bounds = Self::point(points[0]);
         bounds.include(points[1]);
         bounds.include(points[2]);
@@ -73,7 +73,7 @@ impl ExactAabb3 {
     }
 
     /// Expand the box to include one point.
-    pub fn include(&mut self, point: &Point3) {
+    pub(crate) fn include(&mut self, point: &Point3) {
         include_axis(&mut self.min.x, &mut self.max.x, &point.x);
         include_axis(&mut self.min.y, &mut self.max.y, &point.y);
         include_axis(&mut self.min.z, &mut self.max.z, &point.z);
@@ -84,7 +84,10 @@ impl ExactAabb3 {
     /// `Disjoint` is a certified broad-phase rejection. `Touching`,
     /// `Overlapping`, and [`PredicateOutcome::Unknown`] must be treated as
     /// candidates for exact narrow-phase predicates before topology changes.
-    pub fn classify_intersection(&self, other: &Self) -> PredicateOutcome<AabbIntersectionKind> {
+    pub(crate) fn classify_intersection(
+        &self,
+        other: &Self,
+    ) -> PredicateOutcome<AabbIntersectionKind> {
         classify_aabb3_intersection(&self.min, &self.max, &other.min, &other.max)
     }
 
@@ -93,7 +96,7 @@ impl ExactAabb3 {
     /// Unknown comparisons are rejected here because a bounds object with an
     /// uncertified min/max ordering cannot safely serve as an exact broad-phase
     /// fact for later predicate scheduling.
-    pub fn validate(&self) -> Result<(), BoundsValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), BoundsValidationError> {
         for (min, max) in [
             (&self.min.x, &self.max.x),
             (&self.min.y, &self.max.y),
@@ -107,46 +110,11 @@ impl ExactAabb3 {
         }
         Ok(())
     }
-
-    /// Validate this box against the source points it summarizes.
-    ///
-    /// Local validation proves only that each interval is ordered. Source
-    /// replay rebuilds the box from the exact points and requires equality
-    /// before the box may act as broad-phase evidence. This is the bounds-level
-    /// object summary can schedule predicate work only while it still replays
-    /// from the exact object it summarizes.
-    pub fn validate_against_points(&self, points: &[Point3]) -> Result<(), BoundsValidationError> {
-        self.validate()?;
-        let replay = Self::from_points(points).ok_or(BoundsValidationError::MissingMeshBounds)?;
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(BoundsValidationError::SourceReplayMismatch)
-        }
-    }
-
-    /// Validate this box against one source triangle.
-    ///
-    /// This is the per-face counterpart to [`Self::validate_against_points`].
-    /// It lets callers audit retained face AABBs directly before broad-phase
-    /// face-pair scheduling consumes them.
-    pub fn validate_against_triangle(
-        &self,
-        points: [&Point3; 3],
-    ) -> Result<(), BoundsValidationError> {
-        self.validate()?;
-        let replay = Self::from_triangle(points);
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(BoundsValidationError::SourceReplayMismatch)
-        }
-    }
 }
 
 /// Retained mesh and face bounds.
 #[derive(Clone, Debug, PartialEq)]
-pub struct MeshBounds {
+pub(crate) struct MeshBounds {
     /// Whole-mesh bounds, or `None` for an empty mesh.
     mesh: Option<ExactAabb3>,
     /// Per-face bounds in face order.
@@ -260,18 +228,8 @@ impl MeshBounds {
     }
 
     /// Return retained whole-mesh bounds, or `None` for an empty mesh.
-    pub fn mesh(&self) -> Option<&ExactAabb3> {
+    pub(crate) fn mesh(&self) -> Option<&ExactAabb3> {
         self.mesh.as_ref()
-    }
-
-    /// Return retained per-face bounds in face order.
-    pub fn face_bounds(&self) -> &[ExactAabb3] {
-        &self.faces
-    }
-
-    /// Return retained bounds for one face.
-    pub fn face_bound(&self, face: usize) -> Option<&ExactAabb3> {
-        self.faces.get(face)
     }
 
     /// Prepare exact axis intervals and face orders for repeated broad-phase queries.
@@ -596,7 +554,7 @@ impl MeshBounds {
     /// This validates only the bounds object shape and interval ordering. It
     /// does not recompute bounds from vertices; construction code owns that
     /// stronger check when it builds [`MeshBounds`] from exact points.
-    pub fn validate(
+    pub(crate) fn validate(
         &self,
         vertex_count: usize,
         face_count: usize,
@@ -615,21 +573,6 @@ impl MeshBounds {
         }
         Ok(())
     }
-
-    /// Validate retained bounds against the source points and triangle rows.
-    ///
-    /// Local validation proves only interval ordering and table shape. Source
-    /// replay rebuilds the mesh and per-face AABBs from exact source geometry
-    /// broad-phase facts may schedule or reject work only while they still
-    /// replay from the exact objects they summarize.
-    pub fn validate_against_sources(
-        &self,
-        points: &[Point3],
-        triangles: &[[usize; 3]],
-    ) -> Result<(), BoundsValidationError> {
-        self.validate_against_triangle_rows(points, triangles.len(), triangles.iter().copied())
-    }
-
     pub(crate) fn validate_against_triangle_rows(
         &self,
         points: &[Point3],

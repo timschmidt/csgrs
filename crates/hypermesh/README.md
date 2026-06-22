@@ -30,7 +30,6 @@ downstream CSG layers.
 
 - `ExactMesh` is the owned mesh type.
 - `Triangle` stores triangle indices.
-- `ExactAabb3` and `MeshBounds` expose retained exact bounds facts.
 - `ValidationPolicy` selects the mesh validation contract.
 - `ExactMeshError` and `ExactMeshBlocker` report invalid input, unsupported exact
   topology, stale replay, and construction blockers with provenance where
@@ -38,8 +37,8 @@ downstream CSG layers.
 - `ExactMeshRef`, `TriangleRef`, `FaceRef`, and `EdgeRef` provide borrowed
   access for queries that should not clone mesh storage.
 - `PreparedMeshView` and `PreparedMeshPairView` provide replay-validated
-  broad-phase caches for repeated candidate queries without rebuilding bounds
-  orderings.
+  broad-phase caches for repeated candidate queries without exposing raw
+  acceleration carriers.
 - `ExactMesh::union`, `ExactMesh::intersection`, `ExactMesh::difference`, and
   `ExactMesh::xor` materialize named closed boolean outputs as exact meshes.
 - `ExactMesh::transform`, `ExactMesh::transform_by`, and `ExactMesh::inverse`

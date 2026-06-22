@@ -1,6 +1,6 @@
 //! Borrowed exact views of retained mesh data.
 
-use super::bounds::{CandidateFacePairPlan, MeshBounds, PreparedMeshBounds};
+use super::bounds::{CandidateFacePairPlan, PreparedMeshBounds};
 use super::error::ExactMeshError;
 use super::facts::{EdgeFacts, FaceFacts, FacePlaneFacts, MeshValidationFacts};
 use super::mesh::{ExactAffineTransform3, Triangle};
@@ -73,11 +73,6 @@ impl<'a> ExactMeshRef<'a> {
     /// Return triangle index rows.
     pub fn triangles(self) -> &'a [Triangle] {
         self.mesh.triangles()
-    }
-
-    /// Return exact mesh bounds.
-    pub const fn bounds(self) -> &'a MeshBounds {
-        self.mesh.bounds()
     }
 
     /// Return retained validation facts.

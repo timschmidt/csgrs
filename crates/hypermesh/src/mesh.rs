@@ -335,7 +335,7 @@ impl ExactMesh {
     /// The bounds can safely reject disjoint pairs. Non-disjoint box relations
     /// are only candidates for exact narrow-phase predicates and must not be
     /// treated as topology decisions.
-    pub const fn bounds(&self) -> &MeshBounds {
+    pub(crate) const fn bounds(&self) -> &MeshBounds {
         &self.bounds
     }
 
