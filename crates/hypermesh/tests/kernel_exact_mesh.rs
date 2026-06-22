@@ -47,6 +47,10 @@ fn exact_mesh_named_boolean_methods_materialize_meshes() {
     let difference = solid.difference(&empty).unwrap();
     difference.validate_retained_state().unwrap();
     assert_eq!(difference.triangles().len(), solid.triangles().len());
+
+    let xor = empty.xor(&solid).unwrap();
+    xor.validate_retained_state().unwrap();
+    assert_eq!(xor.triangles().len(), solid.triangles().len());
 }
 
 #[test]

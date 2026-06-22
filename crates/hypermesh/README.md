@@ -70,8 +70,8 @@ from exact predicates and retained evidence.
   reports rather than a broad root-level facts API.
 - `SourceProvenance`, `ApproximationPolicy`, `PredicateUse`, and construction
   provenance records preserve import and decision history.
-- `ExactMesh::union`, `ExactMesh::intersection`, and `ExactMesh::difference`
-  materialize named closed boolean outputs as exact meshes.
+- `ExactMesh::union`, `ExactMesh::intersection`, `ExactMesh::difference`, and
+  `ExactMesh::xor` materialize named closed boolean outputs as exact meshes.
 - Internal graph, arrangement, cell-complex, winding, and shortcut evidence
   remains replayable kernel state. Workspace-level policy and product reports
   belong in csgrs rather than the default hypermesh API.
@@ -96,9 +96,9 @@ unless a downstream topology stage needs that evidence.
 
 The performance direction is to combine broad-phase pruning with exact local decisions.
 Morton broad-phase, retained bounds, face-pair classification, split plans, support
-DOPs, coplanar arrangement reports, and handoff packages are intended to narrow work
-before expensive predicates or topology rebuilds. Feature flags are reserved for
-diagnostic/probing hooks and Bevy/demo surfaces.
+DOPs, and coplanar arrangement reports are intended to narrow work before expensive
+predicates or topology rebuilds. Product handoff routing belongs in csgrs rather than
+the default hypermesh API.
 
 Named booleans use the exact graph-backed arrangement/cell-complex path and
 certified exact shortcuts where those shortcuts prove the same output contract.

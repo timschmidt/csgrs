@@ -444,6 +444,18 @@ impl ExactMesh {
         )
     }
 
+    /// Materialize the exact closed symmetric difference of this mesh and `right`.
+    ///
+    /// This keeps XOR as an `ExactMesh` convenience instead of exposing another
+    /// workspace-level operation policy: each side difference is materialized
+    /// through the exact kernel and then unioned under the same closed output
+    /// contract.
+    pub fn xor(&self, right: &ExactMesh) -> Result<ExactMesh, MeshError> {
+        let left_only = self.difference(right)?;
+        let right_only = right.difference(self)?;
+        left_only.union(&right_only)
+    }
+
     fn named_boolean_mesh(
         &self,
         right: &ExactMesh,
