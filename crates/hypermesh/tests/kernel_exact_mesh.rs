@@ -1,7 +1,5 @@
 use hyperlimit::{Point3, SourceProvenance};
-use hypermesh::{
-    ExactAffineTransform3, ExactArrangement, ExactMesh, ExactMeshBlocker, ExactMeshError, Triangle,
-};
+use hypermesh::{ExactAffineTransform3, ExactMesh, ExactMeshBlocker, ExactMeshError, Triangle};
 use hyperreal::Real;
 
 fn p(x: i64, y: i64, z: i64) -> Point3 {
@@ -135,35 +133,35 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
 fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);
-    let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
-    let view = arrangement.view();
+    left.with_arrangement_view(&right, |view| {
+        view.validate_retained_state().unwrap();
+        assert_eq!(view.vertices().count(), view.vertex_count());
+        assert_eq!(view.edges().count(), view.edge_count());
+        assert_eq!(view.face_cells().count(), view.face_cell_count());
+        assert_eq!(view.blocker_count(), 0);
 
-    view.validate_retained_state().unwrap();
-    assert_eq!(view.vertices().count(), view.vertex_count());
-    assert_eq!(view.edges().count(), view.edge_count());
-    assert_eq!(view.face_cells().count(), view.face_cell_count());
-    assert_eq!(view.blocker_count(), 0);
-
-    if let Some(vertex) = view.vertex(0) {
-        assert_eq!(vertex.index(), 0);
-        assert!(vertex.provenance_count() > 0);
-        let _ = vertex.point();
-    }
-    if let Some(edge) = view.edge(0) {
-        assert_eq!(edge.index(), 0);
-        assert_eq!(edge.vertices().len(), 2);
-    }
-    if let Some(face_cell) = view.face_cell(0) {
-        assert_eq!(face_cell.index(), 0);
-        assert_eq!(
-            face_cell.boundary_node_count(),
-            face_cell.boundary_point_count()
-        );
-        assert_eq!(
-            face_cell.boundary_points().count(),
-            face_cell.boundary_point_count()
-        );
-    }
+        if let Some(vertex) = view.vertex(0) {
+            assert_eq!(vertex.index(), 0);
+            assert!(vertex.provenance_count() > 0);
+            let _ = vertex.point();
+        }
+        if let Some(edge) = view.edge(0) {
+            assert_eq!(edge.index(), 0);
+            assert_eq!(edge.vertices().len(), 2);
+        }
+        if let Some(face_cell) = view.face_cell(0) {
+            assert_eq!(face_cell.index(), 0);
+            assert_eq!(
+                face_cell.boundary_node_count(),
+                face_cell.boundary_point_count()
+            );
+            assert_eq!(
+                face_cell.boundary_points().count(),
+                face_cell.boundary_point_count()
+            );
+        }
+    })
+    .unwrap();
 }
 
 #[test]

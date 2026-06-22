@@ -42,8 +42,9 @@ required by downstream CSG layers.
   provide exact affine transforms and orientation inversion for CSG adapters.
 - `ExactMeshRef` exposes the same named operations and transform methods for
   borrowed callers, plus replay-validated broad-phase candidate face pairs.
-- Low-level arrangement code exposes borrowed `ArrangementView` queries for
-  algorithms that need retained topology without cloning arrangement storage.
+- `ExactMesh::with_arrangement_view` exposes borrowed `ArrangementView` queries
+  for algorithms that need retained topology without cloning arrangement
+  storage or naming an owned arrangement type.
 
 Retained graph, arrangement, cell-complex, winding, and shortcut evidence remain
 kernel internals unless a borrowed view is needed for exact query reuse.
@@ -81,8 +82,8 @@ spent.
 ## Status
 
 The default crate root centers on `ExactMesh`, validation, errors, and borrowed
-mesh/triangle/face views. Unsupported boolean, intersection, or simplification
-topology is reported as a diagnostic instead of falling back to
+mesh/triangle/face/arrangement views. Unsupported boolean, intersection, or
+simplification topology is reported as a diagnostic instead of falling back to
 tolerance-based geometry.
 
 ## Installation

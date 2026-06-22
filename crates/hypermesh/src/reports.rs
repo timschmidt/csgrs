@@ -733,7 +733,7 @@ impl ExactBooleanResult {
     }
 
     /// Borrow the materialized exact output mesh.
-    pub fn mesh(&self) -> &ExactMesh {
+    pub(crate) fn mesh(&self) -> &ExactMesh {
         &self.mesh
     }
 
@@ -873,7 +873,7 @@ pub(crate) enum ExactBooleanShortcutKind {
 impl ExactBooleanResult {
     /// Return whether this result is a certified shortcut for `operation`.
     #[cfg(test)]
-    pub fn is_certified_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
+    pub(crate) fn is_certified_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
         matches!(
             self.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -899,7 +899,7 @@ impl ExactBooleanResult {
     }
 
     /// Return whether this result is the arrangement/cell-complex shortcut.
-    pub fn is_arrangement_cell_complex_shortcut_for(
+    pub(crate) fn is_arrangement_cell_complex_shortcut_for(
         &self,
         operation: ExactBooleanOperation,
     ) -> bool {
@@ -933,7 +933,7 @@ impl ExactBooleanResult {
     }
 
     /// Return whether this result was materialized by the arrangement/cell-complex path.
-    pub fn is_arrangement_cell_complex_materialized_for(
+    pub(crate) fn is_arrangement_cell_complex_materialized_for(
         &self,
         operation: ExactBooleanOperation,
     ) -> bool {

@@ -52,7 +52,6 @@ mod workspace;
 
 pub use arrangement3d::{
     ArrangementEdgeRef, ArrangementFaceCellRef, ArrangementVertexRef, ArrangementView,
-    ExactArrangement, ExactArrangementRef,
 };
 pub use error::{
     DiagnosticKind as ExactMeshBlockerKind, ExactMeshBlocker, ExactMeshError, MeshError,

@@ -4,6 +4,7 @@
 //! `hyperreal::Real`. Primitive-float construction is a named lossy adapter
 //! and validates every coordinate before import.
 
+use super::arrangement3d::{ArrangementView, ExactArrangement};
 use super::boolean::{
     ExactBooleanOperation, ExactBooleanRequest, materialize_boolean_exact_request,
 };
@@ -455,6 +456,21 @@ impl ExactMesh {
             return Err(ExactMeshValidationError::PredicateRetentionMismatch);
         }
         Ok(())
+    }
+
+    /// Build a retained arrangement against `right` and run `query` on its
+    /// borrowed view.
+    ///
+    /// The owned arrangement stays local to this call; callers that only need
+    /// counts or topology references can query it without adding another owned
+    /// top-level type to their API surface.
+    pub fn with_arrangement_view<R>(
+        &self,
+        right: &ExactMesh,
+        query: impl for<'a> FnOnce(ArrangementView<'a>) -> R,
+    ) -> Result<R, MeshError> {
+        let arrangement = ExactArrangement::from_meshes(self, right)?;
+        Ok(query(arrangement.view()))
     }
 
     /// Materialize this mesh after an exact affine transform.
