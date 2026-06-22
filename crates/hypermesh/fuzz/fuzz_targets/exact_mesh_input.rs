@@ -2,7 +2,7 @@
 
 mod common;
 
-use common::{exercise_mesh_pair, generated_tetra_pair};
+use common::{exercise_mesh_kernel_pair, generated_tetra_pair};
 use hypermesh::ExactMesh;
 use libfuzzer_sys::fuzz_target;
 
@@ -20,10 +20,10 @@ fuzz_target!(|data: &[u8]| {
 
     if let Ok(mesh) = ExactMesh::from_f64_triangles(&pos, &idx) {
         mesh.validate_retained_state().unwrap();
-        exercise_mesh_pair(&mesh, &mesh);
+        exercise_mesh_kernel_pair(&mesh, &mesh);
     }
 
     if let Some((left, right)) = generated_tetra_pair(data) {
-        exercise_mesh_pair(&left, &right);
+        exercise_mesh_kernel_pair(&left, &right);
     }
 });

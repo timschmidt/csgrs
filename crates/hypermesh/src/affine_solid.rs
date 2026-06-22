@@ -64,8 +64,8 @@ impl AffineOrthogonalSolidArrangement {
     ///
     /// This does not inspect the original operands. It checks that the output
     /// mesh remains valid and that every lifted vertex maps back to an exact
-    /// axis-aligned orthogonal solid cell complex in the retained frame. Public
-    /// source replay is handled by `ExactBooleanResult`.
+    /// axis-aligned orthogonal solid cell complex in the retained frame. Source
+    /// replay is handled by the retained boolean result evidence.
     pub fn validate(&self) -> Result<(), MeshError> {
         self.mesh.validate_retained_state().map_err(|error| {
             affine_solid_error(format!(

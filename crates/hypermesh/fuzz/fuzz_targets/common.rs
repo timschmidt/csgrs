@@ -1,16 +1,16 @@
 use hypermesh::{ExactMesh, ValidationPolicy};
 
-pub fn exercise_mesh_pair(left: &ExactMesh, right: &ExactMesh) {
-    let _ = left.view().candidate_face_pairs(right.view());
-    for result in [
-        left.union(right),
-        left.intersection(right),
-        left.difference(right),
-        left.xor(right),
-    ] {
-        if let Ok(mesh) = result {
-            let _ = mesh.validate_retained_state();
-        }
+pub fn exercise_mesh_kernel_pair(left: &ExactMesh, right: &ExactMesh) {
+    left.validate_retained_state().unwrap();
+    right.validate_retained_state().unwrap();
+    let left_view = left.view();
+    let right_view = right.view();
+    let _ = left_view.candidate_face_pairs(right_view);
+    if let (Ok(left_prepared), Ok(right_prepared)) = (
+        left_view.prepare_broad_phase(),
+        right_view.prepare_broad_phase(),
+    ) {
+        let _ = left_prepared.candidate_face_pairs(&right_prepared);
     }
 }
 

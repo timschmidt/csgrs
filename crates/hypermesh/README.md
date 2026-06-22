@@ -3,8 +3,8 @@
   <img src="./doc/hypermesh.png" alt="hypermesh logo" width="144" align="right">
 </h1>
 
-`hypermesh` is the experimental exact 3D mesh-topology crate in the Hyper
-workspace. Its primary type is `ExactMesh`: exact vertices, triangle topology,
+`hypermesh` is the experimental exact 3D mesh-topology crate for the Hyper
+stack. Its primary type is `ExactMesh`: exact vertices, triangle topology,
 retained validation facts, exact bounds, construction provenance, and cached
 predicate evidence.
 
@@ -21,10 +21,10 @@ non-manifold input, and tolerance-based repair can all change output topology.
 validation, broad phase, face-pair classification, coplanar arrangements, split
 planning, winding, and mesh assembly.
 
-Workspace-level boolean policy and application adapters belong above this crate.
-`hypermesh` provides the mesh kernel data structures, replayable acceleration
-facts, low-level algorithms, typed blockers, and `ExactMesh` convenience methods
-required by downstream CSG layers.
+Application adapters and operation routing belong above this crate. `hypermesh`
+provides mesh-kernel storage, replayable acceleration facts, low-level exact
+algorithms, typed blockers, and `ExactMesh` convenience methods required by
+downstream CSG layers.
 
 ## Public Surface
 
@@ -67,17 +67,11 @@ Retained bounds, face-pair classification, split plans, support intervals,
 coplanar arrangements, and borrowed views narrow work before expensive
 predicates or topology rebuilds.
 
-One-shot booleans should move toward EMBER-style local arrangements: adaptive
-spatial subdivision, local per-leaf splitting, propagated winding references,
-early-out leaves, indirect predicates for constructed intersections, and
-replay-validated cached facts. The generic fallback remains exact
-arrangement/cell-complex construction with winding/ownership evidence and CDT
-remeshing for difficult inputs.
-
-Benchmarks should keep broad phase, narrow classification, split planning,
-region assembly, simplification, triangulation, and materialization visible as
-separate stages so exactness work can be optimized without hiding where time is
-spent.
+One-shot booleans should be driven by measured kernel stages: broad phase,
+narrow classification, split planning, local arrangements, winding/ownership,
+triangulation, and materialization. The generic fallback remains exact
+arrangement/cell-complex construction with winding evidence and CDT remeshing
+for difficult inputs.
 
 ## Status
 
@@ -149,8 +143,11 @@ union.validate_retained_state()?;
 Useful local checks:
 
 ```sh
-cargo test
+cargo check --all-targets
+cargo test --test kernel_exact_mesh
+cargo test bounds::tests
 cargo test --no-default-features
+cargo check --manifest-path fuzz/Cargo.toml
 cargo fuzz run exact_mesh_input
 cargo fuzz run exact_integer_mesh_input
 ```
