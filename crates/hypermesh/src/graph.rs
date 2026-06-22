@@ -1199,7 +1199,26 @@ pub(crate) fn build_validated_intersection_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
+    let pair = left
+        .view()
+        .prepare_pair_broad_phase(right.view())
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("exact mesh retained broad-phase facts failed source replay: {error:?}"),
+            ))
+        })?;
+    build_validated_intersection_graph_from_prepared_pair(&pair)
+}
+
+/// Build an exact event graph from a prepared pair and replay it before use.
+pub(crate) fn build_validated_intersection_graph_from_prepared_pair(
+    pair: &PreparedMeshPairView<'_, '_>,
+) -> Result<ExactIntersectionGraph, MeshError> {
+    let graph = build_intersection_graph_from_prepared_pair(pair)?;
+    let left = pair.left().view().mesh();
+    let right = pair.right().view().mesh();
     graph
         .validate_against_meshes(left, right)
         .map_err(|error| {
@@ -4249,6 +4268,10 @@ mod tests {
         assert!(prepared_pair.candidate_face_pair_capacity_hint() >= graph.face_pairs.len());
         assert_eq!(
             build_intersection_graph_from_prepared_pair(&prepared_pair).unwrap(),
+            graph
+        );
+        assert_eq!(
+            build_validated_intersection_graph_from_prepared_pair(&prepared_pair).unwrap(),
             graph
         );
         let retained_pair = graph
