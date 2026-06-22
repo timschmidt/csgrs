@@ -22,10 +22,12 @@ use hyperlimit::{
 
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::exact_key::{ExactPoint3Key, exact_point3_key};
-use super::intersection::{MeshFacePairClassification, MeshFacePairRelation};
+use super::intersection::{
+    MeshFacePairClassification, MeshFacePairRelation, classify_mesh_face_pair_unchecked,
+};
 use super::mesh::ExactMesh;
 use super::topology::{mesh_for_side, triangle_edges};
-use super::view::{PreparedMeshPairGraphClassifications, PreparedMeshPairView};
+use super::view::PreparedMeshView;
 use hyperlimit::{CoplanarProjection, CoplanarTriangleClassification};
 use hyperreal::Real;
 
@@ -1174,36 +1176,38 @@ pub(crate) fn build_intersection_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let pair = left
-        .view()
-        .prepare_pair_broad_phase(right.view())
-        .map_err(|error| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
-                format!("exact mesh retained broad-phase facts failed source replay: {error:?}"),
-            ))
-        })?;
-    build_intersection_graph_from_prepared_pair(&pair)
+    let left = prepare_intersection_graph_view(left)?;
+    let right = prepare_intersection_graph_view(right)?;
+    build_intersection_graph_from_prepared_views(&left, &right)
 }
 
-/// Build an exact event graph from a replay-validated prepared mesh pair.
-pub(crate) fn build_intersection_graph_from_prepared_pair(
-    pair: &PreparedMeshPairView<'_, '_>,
-) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let classifications = pair.classify_graph_face_pairs();
-    build_intersection_graph_from_prepared_graph_classifications(&classifications)
+fn prepare_intersection_graph_view(
+    mesh: &ExactMesh,
+) -> Result<PreparedMeshView<'_>, ExactMeshError> {
+    mesh.view().prepare_broad_phase().map_err(|error| {
+        ExactMeshError::one(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::UnsupportedExactOperation,
+            format!("exact mesh retained broad-phase facts failed source replay: {error:?}"),
+        ))
+    })
 }
 
-/// Build an exact event graph from replay-validated graph-driving face-pair classifications.
-pub(crate) fn build_intersection_graph_from_prepared_graph_classifications(
-    pair: &PreparedMeshPairGraphClassifications<'_, '_>,
+/// Build an exact event graph from replay-validated prepared mesh views.
+pub(crate) fn build_intersection_graph_from_prepared_views(
+    left: &PreparedMeshView<'_>,
+    right: &PreparedMeshView<'_>,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let left = pair.left().mesh();
-    let right = pair.right().mesh();
-    let mut face_pairs = Vec::with_capacity(pair.classifications().len());
-    for classification in pair.classifications() {
-        face_pairs.push(events_for_face_pair(left, right, classification));
-    }
+    let left_mesh = left.view().mesh();
+    let right_mesh = right.view().mesh();
+    let mut face_pairs = Vec::new();
+    left.try_visit_candidate_face_pairs(right, &mut |[left_face, right_face]| {
+        let classification =
+            classify_mesh_face_pair_unchecked(left_mesh, left_face, right_mesh, right_face);
+        if classification.needs_graph_construction() {
+            face_pairs.push(events_for_face_pair(left_mesh, right_mesh, &classification));
+        }
+        Ok::<(), ExactMeshError>(())
+    })?;
     Ok(ExactIntersectionGraph { face_pairs })
 }
 
@@ -1212,35 +1216,19 @@ pub(crate) fn build_validated_intersection_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let pair = left
-        .view()
-        .prepare_pair_broad_phase(right.view())
-        .map_err(|error| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
-                format!("exact mesh retained broad-phase facts failed source replay: {error:?}"),
-            ))
-        })?;
-    build_validated_intersection_graph_from_prepared_pair(&pair)
+    let left = prepare_intersection_graph_view(left)?;
+    let right = prepare_intersection_graph_view(right)?;
+    build_validated_intersection_graph_from_prepared_views(&left, &right)
 }
 
-/// Build an exact event graph from a prepared pair and replay it before use.
-pub(crate) fn build_validated_intersection_graph_from_prepared_pair(
-    pair: &PreparedMeshPairView<'_, '_>,
+/// Build an exact event graph from prepared views and validate retained event handles.
+pub(crate) fn build_validated_intersection_graph_from_prepared_views(
+    left: &PreparedMeshView<'_>,
+    right: &PreparedMeshView<'_>,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let classifications = pair.classify_graph_face_pairs();
-    build_validated_intersection_graph_from_prepared_graph_classifications(&classifications)
-}
-
-/// Build an exact event graph from prepared classifications and replay it before use.
-pub(crate) fn build_validated_intersection_graph_from_prepared_graph_classifications(
-    pair: &PreparedMeshPairGraphClassifications<'_, '_>,
-) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let graph = build_intersection_graph_from_prepared_graph_classifications(pair)?;
-    let left = pair.left().mesh();
-    let right = pair.right().mesh();
+    let graph = build_intersection_graph_from_prepared_views(left, right)?;
     graph
-        .validate_against_meshes(left, right)
+        .validate_against_meshes(left.view().mesh(), right.view().mesh())
         .map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::UnsupportedExactOperation,
@@ -4269,13 +4257,15 @@ mod tests {
         .unwrap();
 
         let graph = build_intersection_graph(&left, &right).unwrap();
-        let prepared_pair = left.view().prepare_pair_broad_phase(right.view()).unwrap();
+        let prepared_left = left.view().prepare_broad_phase().unwrap();
+        let prepared_right = right.view().prepare_broad_phase().unwrap();
         assert_eq!(
-            build_intersection_graph_from_prepared_pair(&prepared_pair).unwrap(),
+            build_intersection_graph_from_prepared_views(&prepared_left, &prepared_right).unwrap(),
             graph
         );
         assert_eq!(
-            build_validated_intersection_graph_from_prepared_pair(&prepared_pair).unwrap(),
+            build_validated_intersection_graph_from_prepared_views(&prepared_left, &prepared_right)
+                .unwrap(),
             graph
         );
         let retained_pair = graph

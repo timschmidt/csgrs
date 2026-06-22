@@ -2,7 +2,6 @@
 
 use super::bounds::PreparedMeshBounds;
 use super::error::ExactMeshError;
-use super::intersection::{MeshFacePairClassification, classify_mesh_face_pair_unchecked};
 use super::mesh::{ExactAffineTransform3, Triangle};
 use super::{ExactMesh, ExactMeshValidationError};
 use hyperlimit::Point3;
@@ -51,14 +50,6 @@ pub struct PreparedMeshPairView<'a, 'b> {
     left: ExactMeshRef<'a>,
     right: ExactMeshRef<'b>,
     candidate_pairs: Vec<[usize; 2]>,
-}
-
-/// Borrowed pair view with cached graph-driving face-pair classifications.
-#[derive(Debug)]
-pub(crate) struct PreparedMeshPairGraphClassifications<'a, 'b> {
-    left: ExactMeshRef<'a>,
-    right: ExactMeshRef<'b>,
-    classifications: Vec<MeshFacePairClassification>,
 }
 
 impl<'a> ExactMeshRef<'a> {
@@ -273,6 +264,17 @@ impl<'a> PreparedMeshView<'a> {
             candidate_pairs,
         }
     }
+
+    /// Visit cached broad-phase candidate face pairs without materializing a pair cache.
+    pub(crate) fn try_visit_candidate_face_pairs<'b, E>(
+        &self,
+        right: &PreparedMeshView<'b>,
+        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<(), E> {
+        let plan = self.bounds.candidate_face_pair_plan(&right.bounds);
+        self.bounds
+            .try_visit_candidate_face_pairs_with_plan(&right.bounds, plan, visit)
+    }
 }
 
 impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
@@ -289,42 +291,6 @@ impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
     /// Cached broad-phase candidate face pairs in left/right face-index order.
     pub fn candidate_face_pairs(&self) -> &[[usize; 2]] {
         &self.candidate_pairs
-    }
-
-    /// Classify cached broad-phase candidates that must continue to graph construction.
-    pub(crate) fn classify_graph_face_pairs(&self) -> PreparedMeshPairGraphClassifications<'a, 'b> {
-        let left = self.left.mesh();
-        let right = self.right.mesh();
-        let mut classifications = Vec::new();
-        for [left_face, right_face] in self.candidate_pairs.iter().copied() {
-            let classification =
-                classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
-            if classification.needs_graph_construction() {
-                classifications.push(classification);
-            }
-        }
-        PreparedMeshPairGraphClassifications {
-            left: self.left,
-            right: self.right,
-            classifications,
-        }
-    }
-}
-
-impl<'a, 'b> PreparedMeshPairGraphClassifications<'a, 'b> {
-    /// Return the left mesh view.
-    pub(crate) const fn left(&self) -> ExactMeshRef<'a> {
-        self.left
-    }
-
-    /// Return the right mesh view.
-    pub(crate) const fn right(&self) -> ExactMeshRef<'b> {
-        self.right
-    }
-
-    /// Cached retained graph-driving classifications in left/right face-index order.
-    pub(crate) fn classifications(&self) -> &[MeshFacePairClassification] {
-        &self.classifications
     }
 }
 
