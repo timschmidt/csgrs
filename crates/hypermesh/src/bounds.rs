@@ -196,7 +196,6 @@ enum SweepDirection {
 struct SweepPlan {
     axis: Axis,
     direction: SweepDirection,
-    interval_pairs: usize,
     cost: usize,
 }
 
@@ -211,7 +210,6 @@ struct FaceAxisInterval<'a> {
 pub(crate) struct CandidateFacePairPlan {
     mesh_bounds_overlap: bool,
     sweep: Option<SweepPlan>,
-    capacity_hint: usize,
 }
 
 impl CandidateFacePairPlan {
@@ -219,12 +217,7 @@ impl CandidateFacePairPlan {
         Self {
             mesh_bounds_overlap: false,
             sweep: None,
-            capacity_hint: 0,
         }
-    }
-
-    pub(crate) const fn capacity_hint(self) -> usize {
-        self.capacity_hint
     }
 }
 
@@ -306,19 +299,6 @@ impl<'a> PreparedMeshBounds<'a> {
         pairs
     }
 
-    /// Return an upper bound for broad-phase candidate face pairs.
-    ///
-    /// When a certified sweep plan is available, this is the selected
-    /// one-dimensional interval overlap count. Otherwise it falls back to the
-    /// quadratic face-pair product. The final full-AABB filter may emit fewer
-    /// pairs.
-    pub(crate) fn candidate_face_pair_capacity_hint(
-        &self,
-        other: &PreparedMeshBounds<'_>,
-    ) -> usize {
-        self.candidate_face_pair_plan(other).capacity_hint()
-    }
-
     pub(crate) fn candidate_face_pair_plan(
         &self,
         other: &PreparedMeshBounds<'_>,
@@ -330,17 +310,11 @@ impl<'a> PreparedMeshBounds<'a> {
             return CandidateFacePairPlan {
                 mesh_bounds_overlap: true,
                 sweep: Some(sweep),
-                capacity_hint: sweep.interval_pairs,
             };
         }
         CandidateFacePairPlan {
             mesh_bounds_overlap: true,
             sweep: None,
-            capacity_hint: self
-                .bounds
-                .faces
-                .len()
-                .saturating_mul(other.bounds.faces.len()),
         }
     }
 
@@ -440,7 +414,6 @@ impl<'a> PreparedMeshBounds<'a> {
         Some(SweepPlan {
             axis,
             direction,
-            interval_pairs,
             cost,
         })
     }
@@ -907,10 +880,6 @@ mod tests {
             sorted_pairs(prepared_left.candidate_face_pairs(&prepared_right)),
             sorted_pairs(prepared_left.candidate_face_pairs_quadratic(&prepared_right))
         );
-        assert!(
-            prepared_left.candidate_face_pair_capacity_hint(&prepared_right)
-                >= prepared_left.candidate_face_pairs(&prepared_right).len()
-        );
     }
 
     #[test]
@@ -987,10 +956,6 @@ mod tests {
         assert_eq!(
             sorted_pairs(prepared_left.candidate_face_pairs(&prepared_right)),
             sorted_pairs(prepared_left.candidate_face_pairs_quadratic(&prepared_right))
-        );
-        assert!(
-            prepared_left.candidate_face_pair_capacity_hint(&prepared_right)
-                >= prepared_left.candidate_face_pairs(&prepared_right).len()
         );
     }
 }

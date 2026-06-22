@@ -4273,7 +4273,6 @@ mod tests {
 
         let graph = build_intersection_graph(&left, &right).unwrap();
         let prepared_pair = left.view().prepare_pair_broad_phase(right.view()).unwrap();
-        assert!(prepared_pair.candidate_face_pair_capacity_hint() >= graph.face_pairs.len());
         assert_eq!(
             build_intersection_graph_from_prepared_pair(&prepared_pair).unwrap(),
             graph

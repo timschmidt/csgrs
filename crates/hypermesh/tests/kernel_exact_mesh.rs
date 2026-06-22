@@ -142,10 +142,6 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
         .view()
         .prepare_pair_broad_phase(overlapping.view())
         .unwrap();
-    assert!(
-        prepared_left.candidate_face_pair_capacity_hint(&prepared_overlapping) >= candidates.len()
-    );
-    assert!(prepared_pair.candidate_face_pair_capacity_hint() >= candidates.len());
     let mut prepared_candidates = prepared_left.candidate_face_pairs(&prepared_overlapping);
     prepared_candidates.sort_unstable();
     assert_eq!(prepared_candidates, candidates);

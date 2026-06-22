@@ -263,11 +263,6 @@ impl<'a> PreparedMeshView<'a> {
         pairs
     }
 
-    /// Return an upper bound for collected candidate face pairs.
-    pub fn candidate_face_pair_capacity_hint(&self, right: &PreparedMeshView<'_>) -> usize {
-        self.bounds.candidate_face_pair_capacity_hint(&right.bounds)
-    }
-
     /// Visit exact broad-phase candidate face pairs without collecting them.
     pub fn visit_candidate_face_pairs(
         &self,
@@ -306,11 +301,6 @@ impl<'a, 'b> PreparedMeshPairView<'a, 'b> {
     /// Return the prepared right mesh view.
     pub const fn right(&self) -> &PreparedMeshView<'b> {
         &self.right
-    }
-
-    /// Return an upper bound for collected candidate face pairs.
-    pub fn candidate_face_pair_capacity_hint(&self) -> usize {
-        self.bounds_plan.capacity_hint()
     }
 
     /// Return exact broad-phase candidate face pairs for this prepared pair.
