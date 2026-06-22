@@ -1284,7 +1284,6 @@ impl ExactBooleanCertificationSet {
         let reject_boundary_evidence_request = request.validation
             == ValidationPolicy::ALLOW_BOUNDARY
             && request.boundary_policy == ExactBoundaryBooleanPolicy::Reject;
-        let closed_shortcut_request = request.validation == ValidationPolicy::CLOSED;
         let planar_arrangement =
             if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
                 not_named_planar_arrangement_report(request.operation)
@@ -1306,14 +1305,9 @@ impl ExactBooleanCertificationSet {
                 None
             } else if adjacent_union_completion_certified {
                 Some(no_materialized_boundary_output_report(request.operation))
-            } else if request.validation == ValidationPolicy::CLOSED {
-                None
-            } else if (closed_shortcut_request || reject_boundary_evidence_request)
-                && arrangement_cell_complex_shortcut_support
-                    == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+            } else if request.validation == ValidationPolicy::CLOSED
+                || reject_boundary_evidence_request
             {
-                None
-            } else if reject_boundary_evidence_request {
                 None
             } else {
                 Some(volumetric_boundary_closure_report_from_graph(
@@ -3619,7 +3613,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
             &mut certified_arrangement_preflight,
             operation,
-            &graph,
+            graph,
             left,
             right,
             Some(request),
@@ -3630,7 +3624,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(convex_support) = certified_convex_relation_shortcut_from_graph(
-            &graph, left, right, operation,
+            graph, left, right, operation,
         )?
         .map(|relation| match relation {
             ConvexRelationShortcut::Separated => ExactBooleanSupport::CertifiedConvexSeparated,
@@ -3660,7 +3654,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && let Some((left_in_right, right_in_left)) =
-            closed_winding_vertex_relations_from_empty_graph(&graph, left, right)?
+            closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
         && left_in_right == ClosedMeshWindingMeshRelation::Outside
         && right_in_left == ClosedMeshWindingMeshRelation::Outside
     {
@@ -3673,7 +3667,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && certified_closed_winding_containment_relation_from_graph(&graph, left, right)?.is_some()
+        && certified_closed_winding_containment_relation_from_graph(graph, left, right)?.is_some()
     {
         return Ok(certified_preflight(
             operation,
@@ -3684,7 +3678,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && closed_zero_area_boundary_contact_evidence_from_graph(&graph, left, right)?.is_some()
+        && closed_zero_area_boundary_contact_evidence_from_graph(graph, left, right)?.is_some()
     {
         let boundary_support = match operation {
             ExactBooleanOperation::Union => {
@@ -3710,9 +3704,9 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             operation,
             ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
         )
-        && certified_closed_boundary_only_contact_from_graph(&graph, left, right)?
+        && certified_closed_boundary_only_contact_from_graph(graph, left, right)?
     {
-        let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
+        let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
         evidence.validate().map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::UnsupportedExactOperation,
@@ -3747,7 +3741,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && open_surface_disjoint_report_from_graph(&graph, left, right).is_certified()
+        && open_surface_disjoint_report_from_graph(graph, left, right).is_certified()
     {
         return Ok(certified_preflight(
             operation,
@@ -3758,7 +3752,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     }
     if operation == ExactBooleanOperation::Intersection
         && certified_arrangement_regularized_boundary_contact_from_graph(
-            &graph, left, right, operation,
+            graph, left, right, operation,
         )?
     {
         return Ok(certified_preflight(
@@ -3770,9 +3764,9 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && operation == ExactBooleanOperation::Union
-        && certified_closed_boundary_only_contact_from_graph(&graph, left, right)?
+        && certified_closed_boundary_only_contact_from_graph(graph, left, right)?
     {
-        let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
+        let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
         evidence.validate().map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::UnsupportedExactOperation,
@@ -3796,9 +3790,9 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && coplanar_boundary_only_evidence_if_consumed(&graph, left, right)?.is_none()
+        && coplanar_boundary_only_evidence_if_consumed(graph, left, right)?.is_none()
         && materialize_closed_boundary_or_no_volume_overlap_from_graph(
-            &graph,
+            graph,
             left,
             right,
             operation,
@@ -3840,7 +3834,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         ));
     }
     if let Some((support, region_classifications, _triangulations)) =
-        open_surface_arrangement_plan_from_graph(&graph, left, right, operation)?
+        open_surface_arrangement_plan_from_graph(graph, left, right, operation)?
     {
         let region_count = unique_classified_region_count(&region_classifications);
         return Ok(ExactBooleanPreflight {
@@ -3856,7 +3850,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             coplanar_volumetric_evidence: None,
         });
     }
-    let boundary_report = boundary_touching_report_from_graph(&graph, left, right)?;
+    let boundary_report = boundary_touching_report_from_graph(graph, left, right)?;
     if boundary_report.is_certified() {
         return Ok(ExactBooleanPreflight {
             operation,
@@ -3871,12 +3865,12 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             coplanar_volumetric_evidence: None,
         });
     }
-    let planar_report = planar_arrangement_report_from_graph(&graph, left, right, operation)?;
+    let planar_report = planar_arrangement_report_from_graph(graph, left, right, operation)?;
     if planar_report.is_required() {
         if let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
             &mut certified_arrangement_preflight,
             operation,
-            &graph,
+            graph,
             left,
             right,
             Some(request),
@@ -3901,7 +3895,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
             &mut certified_arrangement_preflight,
             operation,
-            &graph,
+            graph,
             left,
             right,
             Some(request),
@@ -3911,7 +3905,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         return Ok(preflight);
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && !graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right)
+        && !graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right)
         && operation == ExactBooleanOperation::Intersection
         && certified_convex_operation_shortcut_support(left, right, operation)
             == Some(ExactBooleanSupport::CertifiedConvexIntersection)
@@ -3947,11 +3941,11 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             None,
         ));
     }
-    if graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) {
+    if graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right) {
         if let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
             &mut certified_arrangement_preflight,
             operation,
-            &graph,
+            graph,
             left,
             right,
             Some(request),
@@ -3981,7 +3975,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
                 None,
             ));
         }
-        let winding_evidence = winding_evidence_report_from_graph(&graph, left, right, operation)?;
+        let winding_evidence = winding_evidence_report_from_graph(graph, left, right, operation)?;
         if winding_evidence.status.routes_to_certified_winding()
             && winding_evidence.blocker.kind
                 == ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
@@ -4012,7 +4006,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             ),
             coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
-                &graph, left, right,
+                graph, left, right,
             ),
         });
     }
@@ -4033,13 +4027,13 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         });
     }
 
-    let winding_report = winding_evidence_report_from_graph(&graph, left, right, operation)?;
+    let winding_report = winding_evidence_report_from_graph(graph, left, right, operation)?;
     if winding_report
         .status
         .materializes_arrangement_cell_complex()
         || (winding_report.is_ready()
             && materialize_volumetric_winding_region_plan_from_graph(
-                &graph,
+                graph,
                 left,
                 right,
                 operation,
@@ -4047,7 +4041,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             )?
             .is_some())
         || materialize_closed_volumetric_winding_boundary_caps_from_graph(
-            &graph, left, right, operation,
+            graph, left, right, operation,
         )?
         .is_some()
     {
