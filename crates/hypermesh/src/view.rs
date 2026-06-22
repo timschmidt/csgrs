@@ -149,10 +149,9 @@ impl<'a> ExactMeshRef<'a> {
         self,
         right: ExactMeshRef<'_>,
     ) -> Result<Vec<[usize; 2]>, ExactMeshValidationError> {
-        let mut pairs = Vec::new();
-        self.visit_candidate_face_pairs(right, |pair| pairs.push(pair))?;
-        pairs.sort_unstable();
-        Ok(pairs)
+        let left = self.prepare_broad_phase()?;
+        let right = right.prepare_broad_phase()?;
+        Ok(left.candidate_face_pairs(&right))
     }
 
     /// Visit exact broad-phase candidate face pairs without collecting them.
@@ -229,10 +228,16 @@ impl<'a> PreparedMeshView<'a> {
 
     /// Return exact broad-phase candidate face pairs for this view and `right`.
     pub fn candidate_face_pairs(&self, right: &PreparedMeshView<'_>) -> Vec<[usize; 2]> {
-        let mut pairs = Vec::new();
+        let mut pairs =
+            Vec::with_capacity(self.bounds.candidate_face_pair_capacity_hint(&right.bounds));
         self.visit_candidate_face_pairs(right, |pair| pairs.push(pair));
         pairs.sort_unstable();
         pairs
+    }
+
+    /// Return an upper bound for collected candidate face pairs.
+    pub fn candidate_face_pair_capacity_hint(&self, right: &PreparedMeshView<'_>) -> usize {
+        self.bounds.candidate_face_pair_capacity_hint(&right.bounds)
     }
 
     /// Visit exact broad-phase candidate face pairs without collecting them.

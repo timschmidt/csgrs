@@ -192,6 +192,7 @@ enum SweepDirection {
 struct SweepPlan {
     axis: Axis,
     direction: SweepDirection,
+    interval_pairs: usize,
     cost: usize,
 }
 
@@ -243,7 +244,7 @@ impl<'a> PreparedMeshBounds<'a> {
 
     /// Return face-pair candidates whose exact boxes are not disjoint.
     pub fn candidate_face_pairs(&self, other: &PreparedMeshBounds<'_>) -> Vec<[usize; 2]> {
-        let mut pairs = Vec::new();
+        let mut pairs = Vec::with_capacity(self.candidate_face_pair_capacity_hint(other));
         let result = self.try_visit_candidate_face_pairs(other, |pair| {
             pairs.push(pair);
             Ok::<(), ()>(())
@@ -251,6 +252,26 @@ impl<'a> PreparedMeshBounds<'a> {
         debug_assert!(result.is_ok());
         pairs.sort_unstable();
         pairs
+    }
+
+    /// Return an upper bound for broad-phase candidate face pairs.
+    ///
+    /// When a certified sweep plan is available, this is the selected
+    /// one-dimensional interval overlap count. Otherwise it falls back to the
+    /// quadratic face-pair product. The final full-AABB filter may emit fewer
+    /// pairs.
+    pub fn candidate_face_pair_capacity_hint(&self, other: &PreparedMeshBounds<'_>) -> usize {
+        if !self.mesh_bounds_may_overlap(other) {
+            return 0;
+        }
+        self.best_sweep_plan(other)
+            .map(|plan| plan.interval_pairs)
+            .unwrap_or_else(|| {
+                self.bounds
+                    .faces
+                    .len()
+                    .saturating_mul(other.bounds.faces.len())
+            })
     }
 
     pub(crate) fn try_visit_candidate_face_pairs<E>(
@@ -334,11 +355,12 @@ impl<'a> PreparedMeshBounds<'a> {
         axis: Axis,
         direction: SweepDirection,
     ) -> Option<SweepPlan> {
-        let pair_count = self.interval_candidate_pair_count_sweep_axis(other, axis)?;
-        let cost = pair_count.checked_add(self.bounds.faces.len())?;
+        let interval_pairs = self.interval_candidate_pair_count_sweep_axis(other, axis)?;
+        let cost = interval_pairs.checked_add(self.bounds.faces.len())?;
         Some(SweepPlan {
             axis,
             direction,
+            interval_pairs,
             cost,
         })
     }
@@ -780,6 +802,10 @@ mod tests {
             prepared_left.candidate_face_pairs(&prepared_right),
             prepared_left.candidate_face_pairs_quadratic(&prepared_right)
         );
+        assert!(
+            prepared_left.candidate_face_pair_capacity_hint(&prepared_right)
+                >= prepared_left.candidate_face_pairs(&prepared_right).len()
+        );
     }
 
     #[test]
@@ -856,6 +882,10 @@ mod tests {
         assert_eq!(
             prepared_left.candidate_face_pairs(&prepared_right),
             prepared_left.candidate_face_pairs_quadratic(&prepared_right)
+        );
+        assert!(
+            prepared_left.candidate_face_pair_capacity_hint(&prepared_right)
+                >= prepared_left.candidate_face_pairs(&prepared_right).len()
         );
     }
 }

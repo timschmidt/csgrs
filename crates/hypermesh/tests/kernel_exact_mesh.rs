@@ -137,6 +137,9 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
 
     let prepared_left = left.view().prepare_broad_phase().unwrap();
     let prepared_overlapping = overlapping.view().prepare_broad_phase().unwrap();
+    assert!(
+        prepared_left.candidate_face_pair_capacity_hint(&prepared_overlapping) >= candidates.len()
+    );
     assert_eq!(
         prepared_left.candidate_face_pairs(&prepared_overlapping),
         candidates
