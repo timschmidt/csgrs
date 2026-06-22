@@ -1,4 +1,6 @@
 use super::arrangement3d::ExactArrangement;
+#[cfg(test)]
+use super::boolean::materialize_boolean_exact_request_from_retained_graph;
 use super::boolean::{
     ExactArrangementBooleanAttempt, ExactArrangementCellComplexShortcutFacts,
     ExactBooleanCertificationSet, ExactBooleanEvaluation, ExactBooleanRequest,
@@ -6,7 +8,6 @@ use super::boolean::{
     arrangement_boolean_attempt_report_from_arrangement,
     arrangement_cell_complex_shortcut_attempt_with_facts,
     certified_arrangement_cell_complex_preflight_from_retained_attempt,
-    materialize_boolean_exact_request_from_retained_graph,
     preflight_boolean_exact_request_from_graph_with_retained_attempt,
     try_materialize_certified_boolean_support_with_artifacts,
 };
@@ -37,6 +38,7 @@ pub struct ExactBooleanWorkspace<'a> {
         ExactArrangementBooleanAttempt,
     )>,
     evaluations: Vec<(ExactBooleanRequest, ExactBooleanEvaluation)>,
+    #[cfg(test)]
     materializations: Vec<(ExactBooleanRequest, ExactBooleanResult)>,
 }
 
@@ -51,6 +53,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             arrangements: Vec::new(),
             arrangement_attempts: Vec::new(),
             evaluations: Vec::new(),
+            #[cfg(test)]
             materializations: Vec::new(),
         }
     }
@@ -369,13 +372,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             &source_facts,
         )?;
         let result = if preflight.is_certified() {
-            if let Some(index) = cached_by_request_index(&self.materializations, request) {
-                self.validate_materialized_result_for_request(
-                    request,
-                    &self.materializations[index].1,
-                )?;
-                Some(self.materializations[index].1.clone())
-            } else if matches!(preflight.support, ExactBooleanSupport::SelectedRegionPolicy) {
+            if matches!(preflight.support, ExactBooleanSupport::SelectedRegionPolicy) {
                 self.try_materialize_certified_support(
                     request,
                     preflight.support,
@@ -406,6 +403,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         Ok(&self.evaluations[index].1)
     }
 
+    #[cfg(test)]
     fn materialize_uncached(
         &mut self,
         request: ExactBooleanRequest,
@@ -452,6 +450,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
     ///
     /// This is the public materialization path so callers consume the retained
     /// replay cache tied to this workspace session.
+    #[cfg(test)]
     pub fn materialize_ref(
         &mut self,
         request: ExactBooleanRequest,
@@ -468,6 +467,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         Ok(&self.materializations[index].1)
     }
 
+    #[cfg(test)]
     fn validate_materialized_result_for_request(
         &self,
         request: ExactBooleanRequest,
@@ -516,6 +516,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         )
     }
 
+    #[cfg(test)]
     fn validate_materialization_and_sync_evaluation_cache(
         &mut self,
         request: ExactBooleanRequest,

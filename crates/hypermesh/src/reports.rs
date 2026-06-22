@@ -875,6 +875,7 @@ pub(crate) enum ExactBooleanShortcutKind {
 
 impl ExactBooleanResult {
     /// Return whether this result is a certified shortcut for `operation`.
+    #[cfg(test)]
     pub fn is_certified_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
         matches!(
             self.kind,
@@ -1730,22 +1731,6 @@ impl ExactBooleanResult {
             return Err(ExactReportValidationError::SourceReplayMismatch);
         }
         Ok(())
-    }
-
-    /// Validate this result by replaying the sources under a concrete Boolean
-    /// request.
-    ///
-    /// This keeps request-only policy, such as closed regularized empty outputs,
-    /// attached to the operation that produced the materialized result. Use
-    /// [`Self::validate_against_sources`] when the result kind alone is enough
-    /// context for the audit.
-    pub fn validate_for_request_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-    ) -> Result<(), ExactReportValidationError> {
-        self.validate_request_against_sources_with_retained_attempt(left, right, request, None)
     }
 
     /// Classify whether this retained result is fresh for the source meshes.
@@ -4126,18 +4111,6 @@ fn validate_winding_readiness_against_sources_for_request(
 }
 
 impl ExactBooleanPreflight {
-    /// Return the retained blocker, if this preflight is blocked.
-    pub(crate) const fn blocker(&self) -> Option<&ExactBooleanBlocker> {
-        self.blocker.as_ref()
-    }
-
-    /// Return retained coplanar volumetric-cell evidence, if present.
-    pub(crate) const fn coplanar_volumetric_evidence(
-        &self,
-    ) -> Option<&CoplanarVolumetricCellEvidenceReport> {
-        self.coplanar_volumetric_evidence.as_ref()
-    }
-
     /// Returns whether this preflight has certified support for materializing
     /// the requested operation under the policy used to produce the report.
     pub(crate) fn is_certified(&self) -> bool {

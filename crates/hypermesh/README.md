@@ -255,6 +255,6 @@ Useful local checks:
 ```sh
 cargo test
 cargo test --no-default-features
-cargo bench --bench exact_boolean_stages
-cargo fuzz run exact_arrangement
+cargo fuzz run exact_mesh_input
+cargo fuzz run exact_integer_mesh_input
 ```

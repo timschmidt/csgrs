@@ -197,6 +197,7 @@ impl ExactRegionOwnershipStatus {
     }
 
     /// Return whether retained volume-region ownership resolves selection.
+    #[cfg(test)]
     pub const fn is_volume_resolved(self) -> bool {
         matches!(self, Self::VolumeResolved)
     }

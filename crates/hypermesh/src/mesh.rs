@@ -378,38 +378,6 @@ impl ExactMesh {
         audit_exact_mesh(self)
     }
 
-    /// Build a bundled report-bearing handoff package for downstream consumers.
-    ///
-    /// This compatibility API is moving to csgrs with product-facing handoff
-    /// routing. The default hypermesh API keeps exact mesh facts and kernel
-    /// methods only.
-    #[cfg(feature = "legacy-public-api")]
-    pub fn handoff_package(
-        &self,
-    ) -> Result<super::package::ExactMeshHandoffPackage, super::package::ExactMeshHandoffPackageError>
-    {
-        super::package::exact_mesh_handoff_package(self)
-    }
-
-    /// Build a replayed proposal report from this accepted exact mesh.
-    #[cfg(feature = "legacy-public-api")]
-    pub fn proposal_report(
-        &self,
-    ) -> Result<
-        super::proposal::ExactMeshProposalReport,
-        super::proposal::ExactMeshProposalReportError,
-    > {
-        super::proposal::ExactMeshProposalReport::from_mesh(self)
-    }
-
-    /// Build an artifact manifest from this accepted exact mesh.
-    #[cfg(feature = "legacy-public-api")]
-    pub fn artifact_manifest(
-        &self,
-    ) -> Result<super::artifact::MeshArtifactManifest, ExactMeshValidationError> {
-        super::artifact::MeshArtifactManifest::from_exact_mesh(self)
-    }
-
     /// Materialize the exact closed union of this mesh and `right`.
     ///
     /// This is the mesh-kernel convenience entry point for named booleans. It
@@ -464,17 +432,6 @@ impl ExactMesh {
     ) -> Result<ExactMesh, MeshError> {
         let request = ExactBooleanRequest::new(operation, validation);
         materialize_boolean_exact_request(self, right, request).map(|result| result.mesh().clone())
-    }
-
-    /// Build an artifact manifest for a proposal report that replays against
-    /// this accepted exact mesh.
-    #[cfg(feature = "legacy-public-api")]
-    pub fn proposal_artifact_manifest(
-        &self,
-        proposal: &super::proposal::ExactMeshProposalReport,
-    ) -> Result<super::artifact::MeshArtifactManifest, super::proposal::ExactMeshProposalReportError>
-    {
-        super::artifact::MeshArtifactManifest::from_exact_mesh_proposal(self, proposal)
     }
 }
 

@@ -8,7 +8,6 @@
 //! useful, but exact geometric decisions must remain tied to exact objects and
 //! proof-producing predicates.
 
-use super::audit::ExactMeshAuditError;
 use super::bounds::MeshBounds;
 use super::facts::{EdgeFacts, FaceFacts, FacePlaneFacts, MeshValidationFacts};
 use super::mesh::Triangle;
@@ -230,8 +229,6 @@ pub struct ApproximateMeshF64View {
 pub enum ApproximateMeshF64ViewError {
     /// The source mesh failed retained-state audit.
     Audit(super::ExactMeshValidationError),
-    /// The retained audit in the view no longer matches the source mesh.
-    AuditReplay(ExactMeshAuditError),
     /// An exact coordinate could not be represented as finite `f64`.
     CoordinateExportFailed {
         /// Vertex index.
@@ -239,69 +236,6 @@ pub enum ApproximateMeshF64ViewError {
         /// Coordinate lane in `[x, y, z]`.
         coordinate: usize,
     },
-    /// A retained primitive-float coordinate is not finite.
-    NonFiniteCoordinate {
-        /// Flat coordinate index.
-        coordinate: usize,
-    },
-    /// Flat coordinate count does not match the source vertex count.
-    PositionCountMismatch {
-        /// Expected flat coordinate count.
-        expected: usize,
-        /// Actual flat coordinate count.
-        actual: usize,
-    },
-    /// Flat index count does not match the source triangle count.
-    IndexCountMismatch {
-        /// Expected flat index count.
-        expected: usize,
-        /// Actual flat index count.
-        actual: usize,
-    },
-    /// A retained primitive-float coordinate no longer replays from the source.
-    CoordinateReplayMismatch {
-        /// Flat coordinate index.
-        coordinate: usize,
-    },
-    /// A retained triangle index no longer replays from the source.
-    IndexReplayMismatch {
-        /// Flat index slot.
-        index: usize,
-    },
-    /// The view was relabeled as non-lossy.
-    MissingLossyViewFlag,
-    /// Exported coordinate count disagrees with retained rows.
-    ExportedCoordinateCountMismatch {
-        /// Expected exported coordinate count.
-        expected: usize,
-        /// Actual retained exported coordinate count.
-        actual: usize,
-    },
-}
-
-/// Freshness status for a retained primitive-float mesh view.
-///
-/// The status is an adapter diagnostic only. `Current` means the lossy view
-/// still replays bit-for-bit from the exact mesh; it does not authorize
-/// exact predicates and approximate representatives separate.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ApproximateMeshF64ViewFreshness {
-    /// The approximate view replays exactly against the current mesh.
-    Current,
-    /// The source mesh or retained audit is stale/invalid.
-    StaleAudit,
-    /// The view was relabeled as non-lossy.
-    MissingLossyFlag,
-    /// Flat coordinate or index row counts are stale.
-    StaleRows,
-    /// A retained primitive-float coordinate is non-finite.
-    NonFiniteCoordinate,
-    /// Exact coordinate export is no longer possible for this view.
-    CoordinateExportFailed,
-    /// A coordinate value no longer replays bit-for-bit.
-    StaleCoordinate,
-    /// An index value no longer replays.
-    StaleIndex,
 }
 
 impl ApproximateMeshF64View {
@@ -338,122 +272,6 @@ impl ApproximateMeshF64View {
             indices,
             lossy_view: true,
         })
-    }
-
-    /// Validate that this approximate view still replays from `mesh`.
-    pub fn validate_against_mesh(
-        &self,
-        mesh: &ExactMesh,
-    ) -> Result<(), ApproximateMeshF64ViewError> {
-        self.audit
-            .validate_against_mesh(mesh)
-            .map_err(ApproximateMeshF64ViewError::AuditReplay)?;
-        self.validate()?;
-        for (coordinate, value) in self.positions.iter().copied().enumerate() {
-            let vertex = coordinate / 3;
-            let lane = coordinate % 3;
-            let Some(expected) = point_coordinate(&mesh.vertices()[vertex], lane).to_f64_lossy()
-            else {
-                return Err(ApproximateMeshF64ViewError::CoordinateExportFailed {
-                    vertex,
-                    coordinate: lane,
-                });
-            };
-            if value.to_bits() != expected.to_bits() {
-                return Err(ApproximateMeshF64ViewError::CoordinateReplayMismatch { coordinate });
-            }
-        }
-        for (index, value) in self.indices.iter().copied().enumerate() {
-            let triangle = mesh.triangles()[index / 3].0[index % 3];
-            if value != triangle {
-                return Err(ApproximateMeshF64ViewError::IndexReplayMismatch { index });
-            }
-        }
-        Ok(())
-    }
-
-    /// Validate view-internal row and lossy-adapter consistency without a source mesh.
-    pub fn validate(&self) -> Result<(), ApproximateMeshF64ViewError> {
-        self.audit
-            .validate()
-            .map_err(ApproximateMeshF64ViewError::AuditReplay)?;
-        if !self.lossy_view {
-            return Err(ApproximateMeshF64ViewError::MissingLossyViewFlag);
-        }
-        let Some(expected_positions) = self.audit.vertex_count.checked_mul(3) else {
-            return Err(ApproximateMeshF64ViewError::PositionCountMismatch {
-                expected: usize::MAX,
-                actual: self.positions.len(),
-            });
-        };
-        if self.positions.len() != expected_positions {
-            return Err(ApproximateMeshF64ViewError::PositionCountMismatch {
-                expected: expected_positions,
-                actual: self.positions.len(),
-            });
-        }
-        if self.exported_coordinates != self.positions.len() {
-            return Err(
-                ApproximateMeshF64ViewError::ExportedCoordinateCountMismatch {
-                    expected: self.positions.len(),
-                    actual: self.exported_coordinates,
-                },
-            );
-        }
-        let Some(expected_indices) = self.audit.face_count.checked_mul(3) else {
-            return Err(ApproximateMeshF64ViewError::IndexCountMismatch {
-                expected: usize::MAX,
-                actual: self.indices.len(),
-            });
-        };
-        if self.indices.len() != expected_indices {
-            return Err(ApproximateMeshF64ViewError::IndexCountMismatch {
-                expected: expected_indices,
-                actual: self.indices.len(),
-            });
-        }
-        for (coordinate, value) in self.positions.iter().copied().enumerate() {
-            if !value.is_finite() {
-                return Err(ApproximateMeshF64ViewError::NonFiniteCoordinate { coordinate });
-            }
-        }
-        for (index, value) in self.indices.iter().copied().enumerate() {
-            if value >= self.audit.vertex_count {
-                return Err(ApproximateMeshF64ViewError::IndexReplayMismatch { index });
-            }
-        }
-        Ok(())
-    }
-
-    /// Classify whether this approximate view is fresh for `mesh`.
-    pub fn freshness_against_mesh(&self, mesh: &ExactMesh) -> ApproximateMeshF64ViewFreshness {
-        match self.validate_against_mesh(mesh) {
-            Ok(()) => ApproximateMeshF64ViewFreshness::Current,
-            Err(ApproximateMeshF64ViewError::Audit(_))
-            | Err(ApproximateMeshF64ViewError::AuditReplay(_)) => {
-                ApproximateMeshF64ViewFreshness::StaleAudit
-            }
-            Err(ApproximateMeshF64ViewError::MissingLossyViewFlag) => {
-                ApproximateMeshF64ViewFreshness::MissingLossyFlag
-            }
-            Err(ApproximateMeshF64ViewError::PositionCountMismatch { .. })
-            | Err(ApproximateMeshF64ViewError::IndexCountMismatch { .. })
-            | Err(ApproximateMeshF64ViewError::ExportedCoordinateCountMismatch { .. }) => {
-                ApproximateMeshF64ViewFreshness::StaleRows
-            }
-            Err(ApproximateMeshF64ViewError::NonFiniteCoordinate { .. }) => {
-                ApproximateMeshF64ViewFreshness::NonFiniteCoordinate
-            }
-            Err(ApproximateMeshF64ViewError::CoordinateExportFailed { .. }) => {
-                ApproximateMeshF64ViewFreshness::CoordinateExportFailed
-            }
-            Err(ApproximateMeshF64ViewError::CoordinateReplayMismatch { .. }) => {
-                ApproximateMeshF64ViewFreshness::StaleCoordinate
-            }
-            Err(ApproximateMeshF64ViewError::IndexReplayMismatch { .. }) => {
-                ApproximateMeshF64ViewFreshness::StaleIndex
-            }
-        }
     }
 }
 

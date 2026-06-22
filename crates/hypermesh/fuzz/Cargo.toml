@@ -10,7 +10,7 @@ cargo-fuzz = true
 [dependencies]
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-hypermesh = { path = "..", default-features = false, features = ["legacy-public-api"] }
+hypermesh = { path = "..", default-features = false }
 hyperlimit = { path = "../../hyperlimit" }
 hyperreal = { path = "../../hyperreal" }
 hypertri = { path = "../../hypertri", default-features = false, features = ["cdt", "earcut"] }
@@ -37,20 +37,6 @@ bench = false
 [[bin]]
 name = "exact_integer_mesh_input"
 path = "fuzz_targets/exact_integer_mesh_input.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
-name = "mesh_artifact_manifest"
-path = "fuzz_targets/mesh_artifact_manifest.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
-name = "exact_arrangement"
-path = "fuzz_targets/exact_arrangement.rs"
 test = false
 doc = false
 bench = false

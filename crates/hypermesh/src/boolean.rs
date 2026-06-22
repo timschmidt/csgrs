@@ -265,32 +265,6 @@ impl ExactArrangementBooleanAttempt {
         self.region_ownership_report.as_ref()
     }
 
-    /// Return whether retained topology assembly evidence completed.
-    pub(crate) fn topology_assembly_is_complete(&self) -> bool {
-        self.topology_assembly_report
-            .as_ref()
-            .is_some_and(|report| report.validate().is_ok() && report.is_complete())
-    }
-
-    /// Return whether retained region ownership resolves named Boolean selection.
-    pub(crate) fn region_ownership_is_resolved(&self) -> bool {
-        self.region_ownership_report
-            .as_ref()
-            .is_some_and(|report| report.validate().is_ok() && report.is_resolved())
-    }
-
-    /// Return whether retained volume ownership resolves named Boolean selection.
-    pub(crate) fn region_ownership_is_volume_resolved(&self) -> bool {
-        self.region_ownership_report
-            .as_ref()
-            .is_some_and(|report| report.validate().is_ok() && report.status.is_volume_resolved())
-    }
-
-    /// Return whether retained ownership evidence resolves this attempt's operation.
-    pub(crate) fn region_ownership_resolves_requested_operation(&self) -> bool {
-        self.resolves_requested_volume_ownership()
-    }
-
     fn retain_topology_assembly_report(&mut self, report: ExactTopologyAssemblyReport) {
         self.topology_assembly = Some(report.status);
         self.topology_assembly_report = Some(report);
@@ -2402,19 +2376,9 @@ impl ExactBooleanEvaluation {
         self.certifications.arrangement_attempt.as_ref()
     }
 
-    /// Return whether this evaluation retained an arrangement/cell-complex attempt.
-    pub fn has_retained_arrangement_attempt(&self) -> bool {
-        self.certifications.arrangement_attempt.is_some()
-    }
-
     /// Return the exact preflight/scheduling report retained by this evaluation.
     pub(crate) fn preflight(&self) -> &ExactBooleanPreflight {
         &self.preflight
-    }
-
-    /// Return whether this evaluation retained an explicit blocker.
-    pub fn has_blocker(&self) -> bool {
-        self.preflight.blocker().is_some()
     }
 
     /// Return the replayable certification bundle retained by this evaluation.
@@ -2430,59 +2394,9 @@ impl ExactBooleanEvaluation {
 
     /// Return the materialized result retained by this evaluation, when the
     /// request reached a certified output.
+    #[cfg(test)]
     pub fn materialized_result(&self) -> Option<&ExactBooleanResult> {
         self.result.as_ref()
-    }
-
-    /// Return retained source-aware coplanar volumetric-cell evidence, if the
-    /// canonical evaluation retained any for this request.
-    pub(crate) fn coplanar_volumetric_evidence(
-        &self,
-    ) -> Option<&CoplanarVolumetricCellEvidenceReport> {
-        self.preflight.coplanar_volumetric_evidence().or(self
-            .certifications
-            .winding_readiness
-            .coplanar_volumetric_evidence())
-    }
-
-    /// Return whether the retained arrangement attempt completed topology assembly.
-    pub fn topology_assembly_is_complete(&self) -> bool {
-        self.certifications
-            .arrangement_attempt
-            .as_ref()
-            .is_some_and(ExactArrangementBooleanAttempt::topology_assembly_is_complete)
-    }
-
-    /// Return whether retained ownership evidence resolved named Boolean selection.
-    pub fn region_ownership_is_resolved(&self) -> bool {
-        self.certifications
-            .arrangement_attempt
-            .as_ref()
-            .is_some_and(ExactArrangementBooleanAttempt::region_ownership_is_resolved)
-    }
-
-    /// Return whether retained ownership evidence resolved volume-region selection.
-    pub fn region_ownership_is_volume_resolved(&self) -> bool {
-        self.certifications
-            .arrangement_attempt
-            .as_ref()
-            .is_some_and(ExactArrangementBooleanAttempt::region_ownership_is_volume_resolved)
-    }
-
-    /// Return whether retained ownership evidence resolves this evaluation request.
-    pub fn region_ownership_resolves_requested_operation(&self) -> bool {
-        self.certifications
-            .arrangement_attempt
-            .as_ref()
-            .is_some_and(
-                ExactArrangementBooleanAttempt::region_ownership_resolves_requested_operation,
-            )
-    }
-
-    /// Return whether retained evidence requires coplanar volumetric cells.
-    pub fn requires_coplanar_volumetric_cells(&self) -> bool {
-        self.coplanar_volumetric_evidence()
-            .is_some_and(|evidence| evidence.obstacle.requires_coplanar_volumetric_cells())
     }
 
     #[cfg(test)]
@@ -2513,6 +2427,7 @@ impl ExactBooleanEvaluation {
         Ok(())
     }
 
+    #[cfg(test)]
     pub(crate) fn retain_materialized_result(
         &mut self,
         result: &ExactBooleanResult,
@@ -2561,35 +2476,6 @@ impl ExactBooleanEvaluation {
         } else {
             Ok(())
         }
-    }
-
-    /// Validate the retained arrangement attempt for this evaluation request,
-    /// when the evaluation reached the arrangement/cell-complex pipeline.
-    pub fn validate_retained_arrangement_attempt_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<bool, ExactReportValidationError> {
-        self.validate_retained_arrangement_attempt_for_request_against_sources(
-            left,
-            right,
-            self.request,
-        )
-    }
-
-    /// Validate the retained arrangement attempt against an explicit request,
-    /// returning `Ok(false)` when this evaluation did not retain one.
-    pub fn validate_retained_arrangement_attempt_for_request_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-    ) -> Result<bool, ExactReportValidationError> {
-        let Some(attempt) = self.retained_arrangement_attempt() else {
-            return Ok(false);
-        };
-        attempt.validate_against_sources_for_request(left, right, request)?;
-        Ok(true)
     }
 
     fn requires_materialized_result(&self) -> bool {
@@ -5170,6 +5056,7 @@ fn materialize_arrangement_lower_dimensional_intersection_from_graph(
 /// intersection and difference do not need that projection policy once the
 /// same exact boundary-touch report proves no shared interior volume; those
 /// two operations use certified shortcuts before the policy layer.
+#[cfg(test)]
 pub(crate) fn materialize_boolean_exact_request_from_retained_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,

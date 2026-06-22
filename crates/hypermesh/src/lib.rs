@@ -19,8 +19,6 @@ mod affine_box;
 mod affine_solid;
 mod arrangement2d;
 mod arrangement3d;
-#[cfg(feature = "legacy-public-api")]
-mod artifact;
 mod audit;
 mod boolean;
 mod bounds;
@@ -36,19 +34,11 @@ mod exact_key;
 mod facts;
 #[allow(dead_code)]
 mod graph;
-#[cfg(feature = "legacy-public-api")]
-mod handoff;
 mod intersection;
 pub(crate) mod loop_triangulation;
 mod mesh;
 mod narrow;
 mod orthogonal_solid;
-#[cfg(feature = "legacy-public-api")]
-mod package;
-#[cfg(feature = "legacy-public-api")]
-mod proposal;
-#[cfg(feature = "legacy-public-api")]
-mod readiness;
 #[allow(dead_code)]
 mod region;
 mod regularization;
@@ -69,21 +59,3 @@ pub use error::{ExactMeshBlocker, ExactMeshError, MeshError};
 pub use mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 pub use validation::ValidationPolicy;
 pub use view::{EdgeRef, ExactMeshRef, FaceRef, MeshView, TriangleRef};
-
-/// Compatibility surface for orchestration/report APIs that are moving to csgrs.
-///
-/// New hypermesh callers should prefer [`ExactMesh`] and borrowed views. This
-/// module keeps existing tests, fuzzers, benchmarks, and downstream migration
-/// work building while the workspace-level policy API is extracted.
-#[cfg(feature = "legacy-public-api")]
-pub mod legacy {
-    pub use crate::artifact::MeshArtifactManifest;
-    pub use crate::boolean::{
-        ExactBooleanEvaluation, ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult,
-        ExactBoundaryBooleanPolicy,
-    };
-    pub use crate::package::ExactMeshConsumerDomain;
-    pub use crate::region::ExactRegionSelection;
-    pub use crate::regularization::ExactRegularizationPolicy;
-    pub use crate::workspace::ExactBooleanWorkspace;
-}
