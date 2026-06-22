@@ -436,9 +436,9 @@ fn validate_arrangement_readiness_matches_blocker(
     readiness: &CoplanarArrangementReadinessReport,
     blocker: &ExactBooleanBlocker,
 ) -> Result<(), ExactReportValidationError> {
-    // The compact readiness report and the blocker are two public views of the
-    // structure as part of the exact state; a later planar-cell or winding
-    // policy must not be able to consume a summary with relabeled graph counts.
+    // The compact readiness report and blocker are two projections of the same
+    // exact graph state; downstream planar-cell or winding checks must not
+    // consume a summary with relabeled graph counts.
     if readiness.overlapping_graphs != blocker.coplanar_overlapping_pairs
         || readiness.touching_graphs != blocker.coplanar_touching_pairs
         || readiness.graph_count
@@ -569,10 +569,9 @@ fn checked_region_facts(
             return Err(ExactReportValidationError::DuplicateRegionClassification);
         }
         unique_classifications.push(classification_key);
-        // A winding-ready handoff is stronger than a stored classification
-        // artifact: future inside/outside policy must be able to consume
-        // decided side facts, not an "unknown" region/plane relation. This is
-        // predicates remain explicit blockers instead of being mislabeled as a
+        // Winding-ready evidence must carry decided side facts, not an
+        // "unknown" region/plane relation. Undecided predicates remain
+        // explicit blockers instead of being mislabeled as classified regions.
         if !classification.is_decided_and_proof_producing() {
             return Err(ExactReportValidationError::RegionClassificationNotProofProducing);
         }
@@ -1845,7 +1844,7 @@ impl ExactBooleanResult {
     /// including arrangement-cell-complex gate reports when present. This
     /// stronger replay accepts a retained certified arrangement attempt only
     /// when its materialized mesh and gate reports match the result, otherwise
-    /// it recomputes the public exact boolean entry point for the same
+    /// it recomputes the named exact boolean entry point for the same
     /// operands, operation, validation policy, and boundary policy. That closes
     /// the shortcut replay gap: a certified output mesh cannot be relabeled as
     /// a different named operation or shortcut kind while still passing the
@@ -3175,11 +3174,10 @@ fn mesh_is_open_surface(mesh: &ExactMesh) -> bool {
 
 /// Local per-cell retention state for an arrangement-materialized result.
 ///
-/// This mirrors the named-boolean assembly policy, but lives in the public
-/// report validator so a copied result can be audited without re-running the
-/// boolean executor. Keeping the operation decision replayable from retained
-/// only valid while the retained predicate facts still justify exactly the
-/// emitted combinatorics.
+/// This mirrors the named-boolean assembly policy inside the report validator
+/// so a copied result can be audited without re-running the boolean executor.
+/// The retained predicate facts must still justify exactly the emitted
+/// combinatorics.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum VolumetricCellRetention {
     Drop,
@@ -3707,11 +3705,11 @@ impl ExactBooleanSupport {
 
 /// Preflight report for an exact boolean operation request.
 ///
-/// The report gives callers a stable way to audit the current implementation
-/// boundary. Shortcut variants are executable by [`ExactBooleanWorkspace::materialize_ref`]. For
-/// nontrivial named booleans, the report exposes the certified split-region
-/// plane classifications that a future exact winding/inside-outside rule must
-/// consume, without dispatching to the specialized tolerance kernel.
+/// The report gives internal callers a stable way to audit the current
+/// implementation boundary. Shortcut variants are executable by
+/// [`ExactBooleanWorkspace::materialize_ref`]. For nontrivial named booleans,
+/// the report retains certified split-region plane classifications without
+/// dispatching to the specialized tolerance kernel.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ExactBooleanPreflight {
     /// Requested operation.
@@ -3735,9 +3733,8 @@ pub(crate) struct ExactBooleanPreflight {
     /// Checked coplanar-overlap readiness retained when preflight stops at a
     /// planar arrangement boundary.
     ///
-    /// This deliberately keeps the exact graph handoff visible at the public
-    /// structured program state; the positive-area coplanar graph evidence
-    /// must not be flattened into a generic "unsupported" boolean.
+    /// This keeps positive-area coplanar graph evidence visible to structured
+    /// replay instead of flattening it into a generic "unsupported" boolean.
     pub(crate) arrangement_readiness: Option<CoplanarArrangementReadinessReport>,
     /// Source-aware coplanar volumetric-cell evidence retained when the
     /// preflight crosses that exact boundary.
@@ -4151,9 +4148,9 @@ impl ExactBooleanPreflight {
 
     /// Validate support, blocker, and retained artifact consistency.
     pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
-        // Preflight is the public contract between exact graph construction and
-        // expose exact state rather than hide contradictions behind a boolean
-        // success/failure bit.
+        // Preflight connects exact graph construction to later selection and
+        // keeps contradictions visible as structured state rather than hiding
+        // them behind a boolean success/failure bit.
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
         if self.coplanar_volumetric_evidence.is_some()
             && !matches!(
@@ -5887,8 +5884,8 @@ pub(crate) enum ExactWindingReadinessStatus {
     ClosedWindingContainmentAlreadyMaterialized,
     /// The graph contains no retained face pairs requiring winding.
     NoNontrivialOverlap,
-    /// Split regions and opposite-plane classifications were checked and are
-    /// ready for the future exact winding/inside-outside policy.
+    /// Split regions and opposite-plane classifications were checked and can
+    /// be consumed by exact winding/inside-outside selection.
     Ready,
 }
 
@@ -6036,9 +6033,8 @@ impl ExactWindingReadinessReport {
 
     /// Validate this winding-readiness report against the source meshes.
     ///
-    /// Winding readiness retains exact split-region and opposite-plane facts
-    /// without choosing the final inside/outside policy. This replay
-    /// recomputes the whole public report for the same operation, making stale
+    /// Winding readiness retains exact split-region and opposite-plane facts.
+    /// This replay recomputes the report for the same operation, making stale
     /// region facts and blocker summaries fail before downstream topology
     #[cfg(test)]
     pub(crate) fn validate_against_sources(
