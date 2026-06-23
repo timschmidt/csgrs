@@ -838,6 +838,27 @@ impl<'a> ArrangementView<'a> {
         self.arrangement.face_cells.len()
     }
 
+    /// Retained connected face-cell region count.
+    pub fn region_count(self) -> usize {
+        self.arrangement
+            .shells_or_regions
+            .as_ref()
+            .map_or(0, Vec::len)
+    }
+
+    /// Retained volume-region count.
+    pub fn volume_region_count(self) -> usize {
+        self.arrangement.volume_regions.as_ref().map_or(0, Vec::len)
+    }
+
+    /// Retained volume-adjacency count.
+    pub fn volume_adjacency_count(self) -> usize {
+        self.arrangement
+            .volume_adjacencies
+            .as_ref()
+            .map_or(0, Vec::len)
+    }
+
     /// Retained lower-dimensional artifact count.
     pub fn lower_dimensional_artifact_count(self) -> usize {
         self.arrangement.lower_dimensional_artifacts.len()

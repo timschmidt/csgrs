@@ -219,6 +219,9 @@ pub struct PreparedMeshPairArrangementCounts {
     vertices: usize,
     edges: usize,
     face_cells: usize,
+    regions: usize,
+    volume_regions: usize,
+    volume_adjacencies: usize,
     lower_dimensional_artifacts: usize,
     blockers: usize,
 }
@@ -244,6 +247,21 @@ impl PreparedMeshPairArrangementCounts {
         self.face_cells
     }
 
+    /// Return the retained connected face-cell region count.
+    pub const fn region_count(self) -> usize {
+        self.regions
+    }
+
+    /// Return the retained volume-region count.
+    pub const fn volume_region_count(self) -> usize {
+        self.volume_regions
+    }
+
+    /// Return the retained volume-adjacency count.
+    pub const fn volume_adjacency_count(self) -> usize {
+        self.volume_adjacencies
+    }
+
     /// Return the retained lower-dimensional artifact count.
     pub const fn lower_dimensional_artifact_count(self) -> usize {
         self.lower_dimensional_artifacts
@@ -260,6 +278,9 @@ impl PreparedMeshPairArrangementCounts {
             vertices: arrangement.vertices.len(),
             edges: arrangement.edges.len(),
             face_cells: arrangement.face_cells.len(),
+            regions: arrangement.shells_or_regions.as_ref().map_or(0, Vec::len),
+            volume_regions: arrangement.volume_regions.as_ref().map_or(0, Vec::len),
+            volume_adjacencies: arrangement.volume_adjacencies.as_ref().map_or(0, Vec::len),
             lower_dimensional_artifacts: arrangement.lower_dimensional_artifacts.len(),
             blockers: arrangement.blockers.len(),
         }
