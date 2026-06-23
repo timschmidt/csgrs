@@ -779,6 +779,18 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         candidate_status.retained_candidate_face_pair_count(),
         Some(retained_candidate_count)
     );
+    assert_eq!(
+        candidate_status.retained_broad_phase_rejection_count(),
+        Some(broad_phase_summary.face_pair_product() - retained_candidate_count)
+    );
+    assert_eq!(
+        candidate_status.retained_candidate_upper_bound_slack(),
+        Some(broad_phase_summary.candidate_pair_upper_bound() - retained_candidate_count)
+    );
+    assert_eq!(
+        candidate_status.retained_candidate_upper_bound_saturated(),
+        Some(broad_phase_summary.candidate_pair_upper_bound() == retained_candidate_count)
+    );
     candidate_status
         .require_current_candidate_face_pairs()
         .unwrap();

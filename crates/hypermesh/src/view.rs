@@ -583,6 +583,30 @@ impl PreparedMeshPairCacheStatus {
         })
     }
 
+    /// Return retained face-pair product rejected by broad-phase bounds, when candidates are cached.
+    pub fn retained_broad_phase_rejection_count(self) -> Option<usize> {
+        self.retained_candidate_face_pair_count.map(|candidates| {
+            self.broad_phase_summary
+                .face_pair_product()
+                .saturating_sub(candidates)
+        })
+    }
+
+    /// Return retained candidate upper-bound slack, when candidates are cached.
+    pub fn retained_candidate_upper_bound_slack(self) -> Option<usize> {
+        self.retained_candidate_face_pair_count.map(|candidates| {
+            self.broad_phase_summary
+                .candidate_pair_upper_bound()
+                .saturating_sub(candidates)
+        })
+    }
+
+    /// Return whether the retained candidate count saturated the planned upper bound.
+    pub fn retained_candidate_upper_bound_saturated(self) -> Option<bool> {
+        self.retained_candidate_upper_bound_slack()
+            .map(|slack| slack == 0)
+    }
+
     /// Return the certificate state for coarse face-pair classifications.
     pub const fn face_pair_classifications(self) -> PreparedMeshPairFactState {
         self.face_pair_classifications
