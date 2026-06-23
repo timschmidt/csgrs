@@ -2616,35 +2616,35 @@ impl<'a> FaceRef<'a> {
     }
 
     /// Retained directed edge rows in face winding order.
-    pub fn directed_edges(self) -> [[usize; 2]; 3] {
-        self.mesh.facts().faces[self.index].oriented.directed_edges
+    pub fn directed_edges(self) -> Result<[[usize; 2]; 3], ExactMeshError> {
+        retained_face_facts(self.mesh, self.index).map(|facts| facts.oriented.directed_edges)
     }
 
     /// Whether retained predicate evidence certified a non-degenerate triangle.
-    pub fn is_non_degenerate(self) -> bool {
-        self.mesh.facts().faces[self.index].triangle.non_degenerate
+    pub fn is_non_degenerate(self) -> Result<bool, ExactMeshError> {
+        retained_face_facts(self.mesh, self.index).map(|facts| facts.triangle.non_degenerate)
     }
 
     /// Predicate evidence retained while certifying triangle degeneracy.
-    pub fn degeneracy_predicates(self) -> &'a [PredicateUse] {
-        &self.mesh.facts().faces[self.index]
-            .triangle
-            .degeneracy_predicates
+    pub fn degeneracy_predicates(self) -> Result<&'a [PredicateUse], ExactMeshError> {
+        retained_face_facts(self.mesh, self.index)
+            .map(|facts| facts.triangle.degeneracy_predicates.as_slice())
     }
 
     /// Retained exact oriented plane normal.
-    pub fn plane_normal(self) -> &'a [Real; 3] {
-        &self.mesh.facts().faces[self.index].plane.normal
+    pub fn plane_normal(self) -> Result<&'a [Real; 3], ExactMeshError> {
+        retained_face_facts(self.mesh, self.index).map(|facts| &facts.plane.normal)
     }
 
     /// Retained exact oriented plane offset.
-    pub fn plane_offset(self) -> &'a Real {
-        &self.mesh.facts().faces[self.index].plane.offset
+    pub fn plane_offset(self) -> Result<&'a Real, ExactMeshError> {
+        retained_face_facts(self.mesh, self.index).map(|facts| &facts.plane.offset)
     }
 
     /// Retained exact oriented plane coefficients.
-    pub fn plane_coefficients(self) -> (&'a [Real; 3], &'a Real) {
-        (self.plane_normal(), self.plane_offset())
+    pub fn plane_coefficients(self) -> Result<(&'a [Real; 3], &'a Real), ExactMeshError> {
+        let facts = retained_face_facts(self.mesh, self.index)?;
+        Ok((&facts.plane.normal, &facts.plane.offset))
     }
 
     /// Exact face vertices.
@@ -2679,35 +2679,35 @@ impl<'a> TriangleRef<'a> {
     }
 
     /// Retained directed edge rows in triangle winding order.
-    pub fn directed_edges(self) -> [[usize; 2]; 3] {
-        self.mesh.facts().faces[self.index].oriented.directed_edges
+    pub fn directed_edges(self) -> Result<[[usize; 2]; 3], ExactMeshError> {
+        retained_face_facts(self.mesh, self.index).map(|facts| facts.oriented.directed_edges)
     }
 
     /// Whether retained predicate evidence certified a non-degenerate triangle.
-    pub fn is_non_degenerate(self) -> bool {
-        self.mesh.facts().faces[self.index].triangle.non_degenerate
+    pub fn is_non_degenerate(self) -> Result<bool, ExactMeshError> {
+        retained_face_facts(self.mesh, self.index).map(|facts| facts.triangle.non_degenerate)
     }
 
     /// Predicate evidence retained while certifying triangle degeneracy.
-    pub fn degeneracy_predicates(self) -> &'a [PredicateUse] {
-        &self.mesh.facts().faces[self.index]
-            .triangle
-            .degeneracy_predicates
+    pub fn degeneracy_predicates(self) -> Result<&'a [PredicateUse], ExactMeshError> {
+        retained_face_facts(self.mesh, self.index)
+            .map(|facts| facts.triangle.degeneracy_predicates.as_slice())
     }
 
     /// Retained exact oriented plane normal.
-    pub fn plane_normal(self) -> &'a [Real; 3] {
-        &self.mesh.facts().faces[self.index].plane.normal
+    pub fn plane_normal(self) -> Result<&'a [Real; 3], ExactMeshError> {
+        retained_face_facts(self.mesh, self.index).map(|facts| &facts.plane.normal)
     }
 
     /// Retained exact oriented plane offset.
-    pub fn plane_offset(self) -> &'a Real {
-        &self.mesh.facts().faces[self.index].plane.offset
+    pub fn plane_offset(self) -> Result<&'a Real, ExactMeshError> {
+        retained_face_facts(self.mesh, self.index).map(|facts| &facts.plane.offset)
     }
 
     /// Retained exact oriented plane coefficients.
-    pub fn plane_coefficients(self) -> (&'a [Real; 3], &'a Real) {
-        (self.plane_normal(), self.plane_offset())
+    pub fn plane_coefficients(self) -> Result<(&'a [Real; 3], &'a Real), ExactMeshError> {
+        let facts = retained_face_facts(self.mesh, self.index)?;
+        Ok((&facts.plane.normal, &facts.plane.offset))
     }
 
     /// Exact triangle vertices.
@@ -2852,6 +2852,21 @@ fn retained_vertex_facts(
                 format!("retained mesh vertex {vertex} has no retained vertex fact row"),
             )
             .with_vertex(vertex),
+        )
+    })
+}
+
+fn retained_face_facts(
+    mesh: &ExactMesh,
+    face: usize,
+) -> Result<&super::facts::FaceFacts, ExactMeshError> {
+    mesh.facts().faces.get(face).ok_or_else(|| {
+        ExactMeshError::one(
+            ExactMeshBlocker::new(
+                ExactMeshBlockerKind::StaleFactReplay,
+                format!("retained mesh face {face} has no retained face fact row"),
+            )
+            .with_face(face),
         )
     })
 }

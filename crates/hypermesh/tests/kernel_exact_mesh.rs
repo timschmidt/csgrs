@@ -496,12 +496,12 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
         face.vertex_refs().unwrap().map(VertexRef::index),
         face.vertex_indices()
     );
-    assert_eq!(face.directed_edges(), [[0, 2], [2, 1], [1, 0]]);
-    assert!(face.is_non_degenerate());
-    assert!(!face.degeneracy_predicates().is_empty());
+    assert_eq!(face.directed_edges().unwrap(), [[0, 2], [2, 1], [1, 0]]);
+    assert!(face.is_non_degenerate().unwrap());
+    assert!(!face.degeneracy_predicates().unwrap().is_empty());
     assert_eq!(
-        face.plane_coefficients(),
-        (face.plane_normal(), face.plane_offset())
+        face.plane_coefficients().unwrap(),
+        (face.plane_normal().unwrap(), face.plane_offset().unwrap())
     );
     assert_eq!(face.vertices().unwrap().len(), 3);
 
@@ -524,12 +524,15 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
         triangle.vertex_refs().unwrap().map(VertexRef::index),
         triangle.vertex_indices()
     );
-    assert_eq!(triangle.directed_edges(), [[0, 1], [1, 3], [3, 0]]);
-    assert!(triangle.is_non_degenerate());
-    assert!(!triangle.degeneracy_predicates().is_empty());
+    assert_eq!(triangle.directed_edges().unwrap(), [[0, 1], [1, 3], [3, 0]]);
+    assert!(triangle.is_non_degenerate().unwrap());
+    assert!(!triangle.degeneracy_predicates().unwrap().is_empty());
     assert_eq!(
-        triangle.plane_coefficients(),
-        (triangle.plane_normal(), triangle.plane_offset())
+        triangle.plane_coefficients().unwrap(),
+        (
+            triangle.plane_normal().unwrap(),
+            triangle.plane_offset().unwrap()
+        )
     );
 
     assert_eq!(view.require_edge(0).unwrap().index(), 0);
