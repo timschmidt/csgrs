@@ -751,6 +751,38 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         ));
     }
     assert_eq!(
+        unprepared_status.candidate_face_pairs(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(unprepared_status.retained_candidate_face_pair_count(), None);
+    assert_eq!(
+        unprepared_status
+            .current_candidate_face_pair_count()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    let retained_candidate_count = prepared_pair.prepare_candidate_face_pairs();
+    assert!(retained_candidate_count > 0);
+    assert!(retained_candidate_count <= broad_phase_summary.candidate_pair_upper_bound());
+    assert_eq!(
+        prepared_pair.current_candidate_face_pair_count().unwrap(),
+        retained_candidate_count
+    );
+    let candidate_status = prepared_pair.cache_status();
+    assert_eq!(
+        candidate_status.candidate_face_pairs(),
+        PreparedMeshPairFactState::Current
+    );
+    assert_eq!(
+        candidate_status.retained_candidate_face_pair_count(),
+        Some(retained_candidate_count)
+    );
+    candidate_status
+        .require_current_candidate_face_pairs()
+        .unwrap();
+    assert_eq!(
         unprepared_status.face_pair_classifications(),
         PreparedMeshPairFactState::Missing
     );
@@ -767,6 +799,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
     );
     let classification_counts = prepared_pair.prepare_face_pair_classification_counts();
+    assert_eq!(
+        classification_counts.face_pair_count(),
+        retained_candidate_count
+    );
     assert_eq!(
         prepared_pair.prepare_face_pair_classifications(),
         classification_counts.face_pair_count()

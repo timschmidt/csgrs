@@ -75,6 +75,7 @@ pub struct PreparedMeshPair<'left, 'right> {
     broad_phase_summary: PreparedMeshPairBroadPhaseSummary,
     candidate_pair_capacity_hint: usize,
     scratch: RefCell<BroadPhaseScratch>,
+    candidate_face_pairs: RefCell<Option<Vec<[usize; 2]>>>,
     face_pair_classifications: RefCell<Option<Vec<MeshFacePairClassification>>>,
     face_pair_classification_counts: RefCell<Option<PreparedMeshPairClassificationCounts>>,
     intersection_graph: RefCell<Option<Rc<ExactIntersectionGraph>>>,
@@ -109,6 +110,8 @@ pub struct PreparedMeshPairCacheStatus {
     candidate_pair_plan: PreparedMeshPairPlanKind,
     candidate_pair_capacity_hint: usize,
     broad_phase_summary: PreparedMeshPairBroadPhaseSummary,
+    candidate_face_pairs: PreparedMeshPairFactState,
+    retained_candidate_face_pair_count: Option<usize>,
     face_pair_classifications: PreparedMeshPairFactState,
     retained_face_pair_classification_count: Option<usize>,
     retained_face_pair_classification_counts: Option<PreparedMeshPairClassificationCounts>,
@@ -551,6 +554,33 @@ impl PreparedMeshPairCacheStatus {
     /// Return retained broad-phase planning provenance for this session.
     pub const fn broad_phase_summary(self) -> PreparedMeshPairBroadPhaseSummary {
         self.broad_phase_summary
+    }
+
+    /// Return the certificate state for retained broad-phase candidate pairs.
+    pub const fn candidate_face_pairs(self) -> PreparedMeshPairFactState {
+        self.candidate_face_pairs
+    }
+
+    /// Return the retained broad-phase candidate pair count, when cached.
+    pub const fn retained_candidate_face_pair_count(self) -> Option<usize> {
+        self.retained_candidate_face_pair_count
+    }
+
+    /// Require retained broad-phase candidate pairs with current certificates.
+    pub fn require_current_candidate_face_pairs(self) -> Result<(), ExactMeshError> {
+        self.candidate_face_pairs
+            .require_current("broad-phase candidate face pairs")
+    }
+
+    /// Return retained broad-phase candidate pair count after requiring current evidence.
+    pub fn current_candidate_face_pair_count(self) -> Result<usize, ExactMeshError> {
+        self.require_current_candidate_face_pairs()?;
+        self.retained_candidate_face_pair_count.ok_or_else(|| {
+            ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::MissingRequiredEvidence,
+                "prepared mesh-pair session retained broad-phase candidate pairs without a count",
+            ))
+        })
     }
 
     /// Return the certificate state for coarse face-pair classifications.
@@ -1153,6 +1183,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             broad_phase_summary,
             candidate_pair_capacity_hint,
             scratch: RefCell::new(BroadPhaseScratch::default()),
+            candidate_face_pairs: RefCell::new(None),
             face_pair_classifications: RefCell::new(None),
             face_pair_classification_counts: RefCell::new(None),
             intersection_graph: RefCell::new(None),
@@ -1203,6 +1234,15 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.broad_phase_summary
     }
 
+    /// Build and retain broad-phase candidate face pairs, returning the retained count.
+    pub fn prepare_candidate_face_pairs(&self) -> usize {
+        self.ensure_candidate_face_pairs();
+        self.candidate_face_pairs
+            .borrow()
+            .as_ref()
+            .map_or(0, Vec::len)
+    }
+
     /// Build and retain coarse face-pair classifications, returning the retained count.
     pub fn prepare_face_pair_classifications(&self) -> usize {
         self.prepare_face_pair_classification_counts()
@@ -1221,6 +1261,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     /// Return a cheap summary of retained facts in this prepared pair session.
     pub fn cache_status(&self) -> PreparedMeshPairCacheStatus {
+        let candidate_face_pair_count = self.candidate_face_pairs.borrow().as_ref().map(Vec::len);
         let face_pair_classification_counts = *self.face_pair_classification_counts.borrow();
         let graph_counts = *self.intersection_graph_counts.borrow();
         let graph_retained = self.intersection_graph.borrow().is_some();
@@ -1233,6 +1274,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             candidate_pair_plan: PreparedMeshPairPlanKind::from_candidate_plan(self.plan),
             candidate_pair_capacity_hint: self.candidate_face_pair_capacity_hint(),
             broad_phase_summary: self.broad_phase_summary,
+            candidate_face_pairs: retained_current_state(candidate_face_pair_count.is_some()),
+            retained_candidate_face_pair_count: candidate_face_pair_count,
             face_pair_classifications: retained_current_state(
                 face_pair_classification_counts.is_some(),
             ),
@@ -1274,6 +1317,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     /// Return retained exact intersection graph counts after requiring a current certificate.
     pub fn current_intersection_graph_counts(&self) -> Result<(usize, usize), ExactMeshError> {
         self.cache_status().current_intersection_graph_counts()
+    }
+
+    /// Return the retained broad-phase candidate pair count after requiring current evidence.
+    pub fn current_candidate_face_pair_count(&self) -> Result<usize, ExactMeshError> {
+        self.cache_status().current_candidate_face_pair_count()
     }
 
     /// Return retained arrangement topology counts after requiring current evidence.
@@ -1376,14 +1424,16 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         }
 
         let mut classifications = Vec::with_capacity(self.candidate_face_pair_capacity_hint());
-        self.visit_candidate_face_pairs(&mut |[left_face, right_face]| {
+        self.ensure_candidate_face_pairs();
+        let candidate_face_pairs = self.candidate_face_pairs.borrow();
+        for &[left_face, right_face] in candidate_face_pairs.as_deref().unwrap_or(&[]) {
             classifications.push(classify_mesh_face_pair_unchecked(
                 self.left.view.mesh,
                 left_face,
                 self.right.view.mesh,
                 right_face,
             ));
-        });
+        }
         let counts = PreparedMeshPairClassificationCounts::from_classifications(&classifications);
         *self.face_pair_classifications.borrow_mut() = Some(classifications);
         *self.face_pair_classification_counts.borrow_mut() = Some(counts);
@@ -1635,6 +1685,32 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     /// Visit certificate-validated candidate face pairs and allow the visitor to stop early.
     pub fn try_visit_candidate_face_pairs<E>(
+        &self,
+        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<(), E> {
+        self.ensure_candidate_face_pairs();
+        let candidate_face_pairs = self.candidate_face_pairs.borrow();
+        for &pair in candidate_face_pairs.as_deref().unwrap_or(&[]) {
+            visit(pair)?;
+        }
+        Ok(())
+    }
+
+    fn ensure_candidate_face_pairs(&self) {
+        if self.candidate_face_pairs.borrow().is_some() {
+            return;
+        }
+
+        let mut candidate_face_pairs = Vec::with_capacity(self.candidate_face_pair_capacity_hint());
+        let result = self.try_visit_candidate_face_pairs_uncached(&mut |pair| {
+            candidate_face_pairs.push(pair);
+            Ok::<(), ()>(())
+        });
+        debug_assert!(result.is_ok());
+        *self.candidate_face_pairs.borrow_mut() = Some(candidate_face_pairs);
+    }
+
+    fn try_visit_candidate_face_pairs_uncached<E>(
         &self,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
