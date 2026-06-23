@@ -4557,6 +4557,14 @@ mod tests {
             PreparedMeshPairFactState::CertificateBlocked
         );
         assert_eq!(
+            prepared_pair
+                .current_intersection_graph_counts()
+                .unwrap_err()
+                .blockers()[0]
+                .kind(),
+            ExactMeshBlockerKind::MissingRequiredEvidence
+        );
+        assert_eq!(
             build_validated_intersection_graph_from_prepared_pair(&prepared_pair)
                 .unwrap()
                 .as_ref(),
@@ -4566,6 +4574,10 @@ mod tests {
         assert_eq!(
             prepared_pair.intersection_graph_state(),
             PreparedMeshPairFactState::Current
+        );
+        assert_eq!(
+            prepared_pair.current_intersection_graph_counts().unwrap(),
+            (graph.face_pairs.len(), graph.event_count())
         );
         assert_eq!(
             build_validated_intersection_graph_from_prepared_pair(&prepared_pair)

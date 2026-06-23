@@ -139,6 +139,21 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .kind(),
         hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
     );
+    assert_eq!(
+        initial_status
+            .current_intersection_graph_counts()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    assert_eq!(
+        pair.current_intersection_graph_counts()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
 
     let union = pair.union().unwrap();
     union.validate_retained_state().unwrap();
@@ -167,6 +182,11 @@ fn prepared_mesh_pair_materializes_named_operations() {
     retained_status
         .require_current_intersection_graph()
         .unwrap();
+    assert_eq!(
+        retained_status.current_intersection_graph_counts().unwrap(),
+        (0, 0)
+    );
+    assert_eq!(pair.current_intersection_graph_counts().unwrap(), (0, 0));
     assert_eq!(
         retained_status.arrangement_shortcut_facts(),
         PreparedMeshPairFactState::Current

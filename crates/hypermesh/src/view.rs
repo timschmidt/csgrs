@@ -192,6 +192,21 @@ impl PreparedMeshPairCacheStatus {
             .require_current("intersection graph")
     }
 
+    /// Return retained exact intersection graph counts after requiring a current certificate.
+    pub fn current_intersection_graph_counts(self) -> Result<(usize, usize), ExactMeshError> {
+        self.require_current_intersection_graph()?;
+        match (
+            self.retained_intersection_graph_face_pair_count,
+            self.retained_intersection_graph_event_count,
+        ) {
+            (Some(face_pairs), Some(events)) => Ok((face_pairs, events)),
+            _ => Err(ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::MissingRequiredEvidence,
+                "prepared mesh-pair session retained an intersection graph certificate without graph counts",
+            ))),
+        }
+    }
+
     /// Return the certificate state for arrangement shortcut facts.
     pub const fn arrangement_shortcut_facts(self) -> PreparedMeshPairFactState {
         self.arrangement_shortcut_facts
@@ -573,6 +588,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         } else {
             retained_certificate_state(*self.intersection_graph_validated.borrow())
         }
+    }
+
+    /// Return retained exact intersection graph counts after requiring a current certificate.
+    pub fn current_intersection_graph_counts(&self) -> Result<(usize, usize), ExactMeshError> {
+        self.cache_status().current_intersection_graph_counts()
     }
 
     /// Visit retained coarse face-pair classifications for this prepared mesh pair.
