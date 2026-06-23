@@ -41,7 +41,7 @@ struct PolygonPatchCandidate {
 ///
 /// Source topology is replayed from combinatorial adjacency, while exact
 /// predicates certify coplanarity, interior inclusion, and signed-area
-/// compatibility.
+/// agreement.
 pub(crate) fn polygon_patch_pairs(
     left: &ExactMesh,
     consumed_left_faces: &BTreeSet<usize>,

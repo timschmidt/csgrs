@@ -96,7 +96,6 @@ Refactor phases
 1. Freeze source-compatible facts.
    - Define the minimal `ExactMesh` public contract.
    - Add borrowed view types without changing existing internals.
-   - Add compatibility shims for current tests.
 
 2. Separate workspace orchestration.
    - Extract `src/workspace.rs`, public request/evaluation/materialization flow, and most of `src/reports.rs` into csgrs.
@@ -108,7 +107,7 @@ Refactor phases
 
 4. Rework `src/boolean.rs`.
    - Pull out reusable kernel algorithms into smaller modules: graph preflight, arrangement attempt, cell selection, shortcut certification, output triangulation.
-   - Leave a thin internal algorithm layer, not public orchestration.
+   - Leave a small internal algorithm layer, not public orchestration.
    - Move large test-only helper sections into tests.
 
 5. Preserve and improve performance structures.
