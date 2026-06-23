@@ -2469,6 +2469,16 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             return;
         }
 
+        if let Some(classifications) = self.face_pair_classifications.borrow().as_deref() {
+            let candidate_face_pairs = classifications
+                .iter()
+                .map(|classification| [classification.left_face, classification.right_face])
+                .collect::<Vec<_>>();
+            self.retain_broad_phase_traversal_count(candidate_face_pairs.len());
+            *self.candidate_face_pairs.borrow_mut() = Some(candidate_face_pairs);
+            return;
+        }
+
         let mut candidate_face_pairs = Vec::with_capacity(self.candidate_face_pair_capacity_hint());
         let result = self.try_visit_candidate_face_pairs_uncached(&mut |pair| {
             candidate_face_pairs.push(pair);

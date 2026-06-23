@@ -917,6 +917,19 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .unwrap(),
         streamed_classification_counts
     );
+    let classification_records_first_pair = left
+        .view()
+        .prepare_broad_phase_pair(overlapping.view())
+        .unwrap();
+    let classification_record_count =
+        classification_records_first_pair.prepare_face_pair_classifications();
+    assert!(classification_records_first_pair.face_pair_classifications_are_current());
+    assert!(!classification_records_first_pair.has_retained_candidate_face_pairs());
+    assert_eq!(
+        classification_records_first_pair.prepare_candidate_face_pairs(),
+        classification_record_count
+    );
+    assert!(classification_records_first_pair.candidate_face_pairs_are_current());
     let classification_counts: PreparedMeshPairClassificationCounts =
         prepared_pair.prepare_face_pair_classification_counts();
     assert_eq!(
@@ -1031,6 +1044,11 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     assert!(candidates.iter().all(|[left_face, right_face]| {
         *left_face < left.triangle_count() && *right_face < overlapping.triangle_count()
     }));
+    let mut classification_first_candidates = classification_records_first_pair
+        .with_current_candidate_face_pairs(|pairs| pairs.to_vec())
+        .unwrap();
+    classification_first_candidates.sort_unstable();
+    assert_eq!(classification_first_candidates, candidates);
 
     let prepared_disjoint = disjoint.view().prepare_broad_phase().unwrap();
     let disjoint_pair = left
