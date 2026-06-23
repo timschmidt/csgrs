@@ -190,6 +190,13 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
     });
     owned_pair_candidates.sort_unstable();
     assert_eq!(owned_pair_candidates, candidates);
+
+    let mut repeated_owned_pair_candidates = Vec::new();
+    prepared_pair.visit_candidate_face_pairs(&mut |pair| {
+        repeated_owned_pair_candidates.push(pair);
+    });
+    repeated_owned_pair_candidates.sort_unstable();
+    assert_eq!(repeated_owned_pair_candidates, candidates);
 }
 
 #[test]

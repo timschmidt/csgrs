@@ -1,8 +1,11 @@
 //! Borrowed exact views of retained mesh data.
 
+use std::cell::RefCell;
+
 use super::ExactMesh;
 use super::bounds::{
-    CandidateFacePairPlan, ExactAabbBroadPhase, ExactBroadPhaseStrategy, PreparedMeshBounds,
+    BroadPhaseScratch, CandidateFacePairPlan, ExactAabbBroadPhase, ExactBroadPhaseStrategy,
+    PreparedMeshBounds,
 };
 use super::error::ExactMeshError;
 use hyperlimit::Point3;
@@ -48,6 +51,7 @@ pub struct PreparedMeshPair<'left, 'right> {
     left: PreparedMeshView<'left>,
     right: PreparedMeshView<'right>,
     plan: CandidateFacePairPlan,
+    scratch: RefCell<BroadPhaseScratch>,
 }
 
 /// Borrowed prepared pair view with retained broad-phase pair planning.
@@ -304,7 +308,12 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     fn new(left: PreparedMeshView<'left>, right: PreparedMeshView<'right>) -> Self {
         let broad_phase = ExactAabbBroadPhase::default();
         let plan = broad_phase.candidate_face_pair_plan(&left.bounds, &right.bounds);
-        Self { left, right, plan }
+        Self {
+            left,
+            right,
+            plan,
+            scratch: RefCell::new(BroadPhaseScratch::default()),
+        }
     }
 
     /// Return the left prepared mesh view.
@@ -341,7 +350,15 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
-        self.as_view().try_visit_candidate_face_pairs(visit)
+        let mut scratch = self.scratch.borrow_mut();
+        let broad_phase = ExactAabbBroadPhase::default();
+        broad_phase.try_visit_candidate_face_pairs_with_plan_and_scratch(
+            &self.left.bounds,
+            &self.right.bounds,
+            self.plan,
+            &mut scratch,
+            visit,
+        )
     }
 }
 
