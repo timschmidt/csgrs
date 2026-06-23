@@ -3,7 +3,6 @@
 use super::ExactMesh;
 use super::bounds::PreparedMeshBounds;
 use super::error::ExactMeshError;
-use super::mesh::Triangle;
 use hyperlimit::Point3;
 use hyperreal::Real;
 
@@ -56,9 +55,9 @@ impl<'a> ExactMeshRef<'a> {
         self.mesh.vertices()
     }
 
-    /// Return triangle index rows.
-    pub fn triangles(self) -> &'a [Triangle] {
-        self.mesh.triangles()
+    /// Return copied triangle index rows.
+    pub fn triangle_indices(self) -> impl ExactSizeIterator<Item = [usize; 3]> + 'a {
+        self.mesh.triangle_indices()
     }
 
     /// Retained vertex count.

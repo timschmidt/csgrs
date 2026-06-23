@@ -25,7 +25,7 @@ use std::cmp::Ordering;
 
 /// Triangle index triplet.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct Triangle(pub [usize; 3]);
+pub(crate) struct Triangle(pub [usize; 3]);
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ExactAffineTransform3 {
@@ -469,8 +469,18 @@ impl ExactMesh {
         &self.vertices
     }
 
-    /// Return triangle indices.
-    pub fn triangles(&self) -> &[Triangle] {
+    /// Return retained triangle count.
+    pub fn triangle_count(&self) -> usize {
+        self.triangles.len()
+    }
+
+    /// Return copied triangle index rows.
+    pub fn triangle_indices(&self) -> impl ExactSizeIterator<Item = [usize; 3]> + '_ {
+        self.triangles.iter().map(|triangle| triangle.0)
+    }
+
+    /// Return retained triangle index storage.
+    pub(crate) fn triangles(&self) -> &[Triangle] {
         &self.triangles
     }
 
