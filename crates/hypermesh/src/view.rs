@@ -143,6 +143,7 @@ pub struct PreparedMeshPairCacheStatus {
 pub struct ExactMeshSourceStamp {
     source: MeshSource,
     approximation: ApproximationPolicy,
+    source_identity: u64,
     construction_version: u64,
     vertex_count: usize,
     face_count: usize,
@@ -157,6 +158,11 @@ impl ExactMeshSourceStamp {
     /// Return the retained approximation boundary policy.
     pub const fn approximation(self) -> ApproximationPolicy {
         self.approximation
+    }
+
+    /// Return the deterministic identity fingerprint for the retained source provenance.
+    pub const fn source_identity(self) -> u64 {
+        self.source_identity
     }
 
     /// Return the retained construction version for facts derived from this source.
@@ -179,11 +185,55 @@ impl ExactMeshSourceStamp {
         Self {
             source: provenance.source.source,
             approximation: provenance.source.approximation,
+            source_identity: source_provenance_identity(provenance),
             construction_version: provenance.construction_version,
             vertex_count: mesh.facts().mesh.vertex_count,
             face_count: mesh.facts().mesh.face_count,
         }
     }
+}
+
+fn source_provenance_identity(provenance: &hyperlimit::ConstructionProvenance) -> u64 {
+    let mut hash = 0xcbf29ce484222325u64;
+    hash = fnv1a_u64(hash, mesh_source_tag(provenance.source.source));
+    hash = fnv1a_u64(
+        hash,
+        approximation_policy_tag(provenance.source.approximation),
+    );
+    for &byte in provenance.source.label.as_bytes() {
+        hash = fnv1a_u8(hash, byte);
+    }
+    hash
+}
+
+const fn mesh_source_tag(source: MeshSource) -> u64 {
+    match source {
+        MeshSource::Exact => 0x01,
+        MeshSource::LossyF64 => 0x02,
+        MeshSource::HypermeshAdapter => 0x03,
+        MeshSource::ExternalAdapter => 0x04,
+    }
+}
+
+const fn approximation_policy_tag(approximation: ApproximationPolicy) -> u64 {
+    match approximation {
+        ApproximationPolicy::ExactOnly => 0x11,
+        ApproximationPolicy::EdgeOnly => 0x12,
+        ApproximationPolicy::ExplicitApproximateDecision => 0x13,
+    }
+}
+
+const fn fnv1a_u64(mut hash: u64, value: u64) -> u64 {
+    let mut shift = 0;
+    while shift < 64 {
+        hash = fnv1a_u8(hash, ((value >> shift) & 0xff) as u8);
+        shift += 8;
+    }
+    hash
+}
+
+const fn fnv1a_u8(hash: u64, byte: u8) -> u64 {
+    (hash ^ byte as u64).wrapping_mul(0x100000001b3)
 }
 
 /// Retained broad-phase plan chosen for a prepared mesh-pair session.

@@ -600,6 +600,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let source_stamp = view.source_stamp();
     assert_eq!(source_stamp.source(), MeshSource::Exact);
     assert_eq!(source_stamp.approximation(), ApproximationPolicy::ExactOnly);
+    assert_ne!(source_stamp.source_identity(), 0);
     assert_eq!(source_stamp.construction_version(), 1);
     assert_eq!(source_stamp.vertex_count(), view.vertex_count());
     assert_eq!(source_stamp.face_count(), view.face_count());
@@ -708,6 +709,36 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
 
     let prepared = view.prepare_broad_phase().unwrap();
     assert_eq!(prepared.mesh_bounds(), view.mesh_bounds());
+}
+
+#[test]
+fn exact_mesh_source_stamp_distinguishes_source_provenance() {
+    let vertices = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0), p(0, 0, 1)];
+    let triangles = vec![[0, 2, 1], [0, 1, 3], [1, 2, 3], [2, 0, 3]];
+    let left = ExactMesh::new(
+        vertices.clone(),
+        triangles.clone(),
+        SourceProvenance::exact("source identity left"),
+    )
+    .unwrap();
+    let right = ExactMesh::new(
+        vertices,
+        triangles,
+        SourceProvenance::exact("source identity right"),
+    )
+    .unwrap();
+
+    let left_stamp = left.view().source_stamp();
+    let right_stamp = right.view().source_stamp();
+    assert_eq!(left_stamp.source(), right_stamp.source());
+    assert_eq!(left_stamp.approximation(), right_stamp.approximation());
+    assert_eq!(
+        left_stamp.construction_version(),
+        right_stamp.construction_version()
+    );
+    assert_eq!(left_stamp.vertex_count(), right_stamp.vertex_count());
+    assert_eq!(left_stamp.face_count(), right_stamp.face_count());
+    assert_ne!(left_stamp.source_identity(), right_stamp.source_identity());
 }
 
 #[test]
