@@ -16,7 +16,7 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use hyperlimit::{Point3, compare_reals};
 
-use super::error::ExactMeshError;
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::mesh::{ExactMesh, Triangle};
 use super::validation::ExactMeshValidationPolicy;
 use hyperlimit::SourceProvenance;
@@ -824,15 +824,15 @@ fn face_side_cell(
 }
 
 impl AxisAlignedOrthogonalSolid {
-    fn selected_index(&self, i: usize, j: usize, k: usize) -> usize {
+    fn selected_index(&self, i: usize, j: usize, k: usize) -> Option<usize> {
         debug_assert!(i < self.nx);
         debug_assert!(j < self.ny);
         debug_assert!(k < self.nz);
-        cell_index(i, j, k, self.ny, self.nz).unwrap_or(usize::MAX)
+        cell_index(i, j, k, self.ny, self.nz)
     }
 
-    fn is_occupied(&self, i: usize, j: usize, k: usize) -> bool {
-        self.occupied[self.selected_index(i, j, k)]
+    fn is_occupied(&self, i: usize, j: usize, k: usize) -> Option<bool> {
+        self.occupied.get(self.selected_index(i, j, k)?).copied()
     }
 
     fn cell_contains_interval(
@@ -853,17 +853,33 @@ impl AxisAlignedOrthogonalSolid {
         let Some(k) = containing_interval_or_outside(&self.z, z_min, z_max)? else {
             return Some(false);
         };
-        Some(self.is_occupied(i, j, k))
+        self.is_occupied(i, j, k)
     }
 }
 
 impl OrthogonalCellPlan {
-    fn selected_index(&self, i: usize, j: usize, k: usize) -> usize {
-        cell_index(i, j, k, self.ny, self.nz).unwrap_or(usize::MAX)
+    fn selected_index(&self, i: usize, j: usize, k: usize) -> Result<usize, ExactMeshError> {
+        let Some(index) = cell_index(i, j, k, self.ny, self.nz) else {
+            return Err(orthogonal_retained_grid_error(
+                "retained orthogonal cell plan index overflowed",
+                i,
+                j,
+                k,
+            ));
+        };
+        if index >= self.selected.len() {
+            return Err(orthogonal_retained_grid_error(
+                "retained orthogonal cell plan index exceeded selected occupancy",
+                i,
+                j,
+                k,
+            ));
+        }
+        Ok(index)
     }
 
-    fn is_selected(&self, i: usize, j: usize, k: usize) -> bool {
-        self.selected[self.selected_index(i, j, k)]
+    fn is_selected(&self, i: usize, j: usize, k: usize) -> Result<bool, ExactMeshError> {
+        Ok(self.selected[self.selected_index(i, j, k)?])
     }
 
     fn to_mesh(
@@ -882,7 +898,7 @@ impl OrthogonalCellPlan {
         let mut vertices = Vec::new();
         let mut vertex_indices = BTreeMap::new();
         let mut triangles = Vec::new();
-        if let Some(bounds) = self.selected_rectangular_block_bounds() {
+        if let Some(bounds) = self.selected_rectangular_block_bounds()? {
             emit_rectangular_box_faces(
                 self,
                 bounds,
@@ -895,10 +911,10 @@ impl OrthogonalCellPlan {
             for i in 0..self.nx {
                 for j in 0..self.ny {
                     for k in 0..self.nz {
-                        if !self.is_selected(i, j, k) {
+                        if !self.is_selected(i, j, k)? {
                             continue;
                         }
-                        if i == 0 || !self.is_selected(i - 1, j, k) {
+                        if i == 0 || !self.is_selected(i - 1, j, k)? {
                             emit_cell_face(
                                 self,
                                 i,
@@ -910,7 +926,7 @@ impl OrthogonalCellPlan {
                                 &mut triangles,
                             );
                         }
-                        if i + 1 == self.nx || !self.is_selected(i + 1, j, k) {
+                        if i + 1 == self.nx || !self.is_selected(i + 1, j, k)? {
                             emit_cell_face(
                                 self,
                                 i,
@@ -922,7 +938,7 @@ impl OrthogonalCellPlan {
                                 &mut triangles,
                             );
                         }
-                        if j == 0 || !self.is_selected(i, j - 1, k) {
+                        if j == 0 || !self.is_selected(i, j - 1, k)? {
                             emit_cell_face(
                                 self,
                                 i,
@@ -934,7 +950,7 @@ impl OrthogonalCellPlan {
                                 &mut triangles,
                             );
                         }
-                        if j + 1 == self.ny || !self.is_selected(i, j + 1, k) {
+                        if j + 1 == self.ny || !self.is_selected(i, j + 1, k)? {
                             emit_cell_face(
                                 self,
                                 i,
@@ -946,7 +962,7 @@ impl OrthogonalCellPlan {
                                 &mut triangles,
                             );
                         }
-                        if k == 0 || !self.is_selected(i, j, k - 1) {
+                        if k == 0 || !self.is_selected(i, j, k - 1)? {
                             emit_cell_face(
                                 self,
                                 i,
@@ -958,7 +974,7 @@ impl OrthogonalCellPlan {
                                 &mut triangles,
                             );
                         }
-                        if k + 1 == self.nz || !self.is_selected(i, j, k + 1) {
+                        if k + 1 == self.nz || !self.is_selected(i, j, k + 1)? {
                             emit_cell_face(
                                 self,
                                 i,
@@ -982,9 +998,9 @@ impl OrthogonalCellPlan {
         )
     }
 
-    fn selected_rectangular_block_bounds(&self) -> Option<GridBoxBounds> {
+    fn selected_rectangular_block_bounds(&self) -> Result<Option<GridBoxBounds>, ExactMeshError> {
         if self.selected_count == 0 {
-            return None;
+            return Ok(None);
         }
         let mut i_min = self.nx;
         let mut i_max = 0usize;
@@ -995,7 +1011,7 @@ impl OrthogonalCellPlan {
         for i in 0..self.nx {
             for j in 0..self.ny {
                 for k in 0..self.nz {
-                    if !self.is_selected(i, j, k) {
+                    if !self.is_selected(i, j, k)? {
                         continue;
                     }
                     i_min = i_min.min(i);
@@ -1007,24 +1023,44 @@ impl OrthogonalCellPlan {
                 }
             }
         }
-        let volume = i_max
-            .checked_sub(i_min)?
-            .checked_mul(j_max.checked_sub(j_min)?)?
-            .checked_mul(k_max.checked_sub(k_min)?)?;
+        let Some(di) = i_max.checked_sub(i_min) else {
+            return Ok(None);
+        };
+        let Some(dj) = j_max.checked_sub(j_min) else {
+            return Ok(None);
+        };
+        let Some(dk) = k_max.checked_sub(k_min) else {
+            return Ok(None);
+        };
+        let Some(volume) = di.checked_mul(dj).and_then(|area| area.checked_mul(dk)) else {
+            return Ok(None);
+        };
         if volume != self.selected_count {
-            return None;
+            return Ok(None);
         }
         for i in i_min..i_max {
             for j in j_min..j_max {
                 for k in k_min..k_max {
-                    if !self.is_selected(i, j, k) {
-                        return None;
+                    if !self.is_selected(i, j, k)? {
+                        return Ok(None);
                     }
                 }
             }
         }
-        Some((i_min, i_max, j_min, j_max, k_min, k_max))
+        Ok(Some((i_min, i_max, j_min, j_max, k_min, k_max)))
     }
+}
+
+fn orthogonal_retained_grid_error(
+    message: &'static str,
+    i: usize,
+    j: usize,
+    k: usize,
+) -> ExactMeshError {
+    ExactMeshError::one(ExactMeshBlocker::new(
+        ExactMeshBlockerKind::StaleFactReplay,
+        format!("{message} at cell ({i}, {j}, {k})"),
+    ))
 }
 
 fn emit_cell_face(
@@ -1563,6 +1599,30 @@ mod tests {
                 AxisAlignedOrthogonalSolidOperation::Union
             )
             .is_some()
+        );
+    }
+
+    #[test]
+    fn corrupted_orthogonal_cell_plan_returns_typed_blocker() {
+        let left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+        let right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
+        let mut plan = axis_aligned_orthogonal_solid_cell_plan(
+            &left,
+            &right,
+            AxisAlignedOrthogonalSolidOperation::Union,
+        )
+        .expect("cell union should plan");
+        plan.selected.pop();
+
+        let error = materialize_axis_aligned_orthogonal_solid_cell_plan(
+            plan,
+            "test corrupted axis-aligned orthogonal solid cell union",
+            ExactMeshValidationPolicy::CLOSED,
+        )
+        .expect_err("corrupted retained occupancy should not materialize");
+        assert_eq!(
+            error.blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
         );
     }
 }
