@@ -273,12 +273,12 @@ impl ExactMesh {
     /// Construct an exact mesh from exact vertices and triangle indices.
     pub fn new(
         vertices: Vec<Point3>,
-        triangles: Vec<Triangle>,
+        triangles: Vec<[usize; 3]>,
         source: SourceProvenance,
     ) -> Result<Self, ExactMeshError> {
         Self::new_with_policy(
             vertices,
-            triangles,
+            triangles.into_iter().map(Triangle).collect(),
             source,
             ExactMeshValidationPolicy::CLOSED,
         )
@@ -288,12 +288,12 @@ impl ExactMesh {
     /// indices.
     pub fn new_allow_boundary(
         vertices: Vec<Point3>,
-        triangles: Vec<Triangle>,
+        triangles: Vec<[usize; 3]>,
         source: SourceProvenance,
     ) -> Result<Self, ExactMeshError> {
         Self::new_with_policy(
             vertices,
-            triangles,
+            triangles.into_iter().map(Triangle).collect(),
             source,
             ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )

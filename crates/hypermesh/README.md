@@ -33,11 +33,11 @@ validation facts, bounds, and construction provenance. It also carries the
 convenience methods downstream CSG layers need: `union`, `intersection`,
 `difference`, `xor`, `transform`, `inverse`, and `with_arrangement_view`.
 
-Supporting root exports are deliberately small. `Triangle` is the construction
-index row, while `ExactMeshError`/`ExactMeshBlocker` report invalid input,
-unsupported exact topology, stale replay, and construction blockers with
-provenance where available. Boundary-allowed input uses named `ExactMesh`
-constructors instead of a public policy object.
+Supporting root exports are deliberately small. `ExactMeshError` and
+`ExactMeshBlocker` report invalid input, unsupported exact topology, stale
+replay, and construction blockers with provenance where available.
+Boundary-allowed input uses named `ExactMesh` constructors instead of a public
+policy object.
 
 Borrowed queries start from `ExactMesh::view()`. Mesh, triangle, face, and edge
 views avoid cloning mesh storage; prepared views reuse replay-validated

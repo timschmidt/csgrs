@@ -16816,10 +16816,10 @@ mod tests {
                 .collect(),
             left.triangles()
                 .iter()
-                .copied()
+                .map(|triangle| triangle.0)
                 .chain(right.triangles().iter().map(|triangle| {
                     let [a, b, c] = triangle.0;
-                    Triangle([a + right_offset, b + right_offset, c + right_offset])
+                    [a + right_offset, b + right_offset, c + right_offset]
                 }))
                 .collect(),
             hyperlimit::SourceProvenance::exact(label),

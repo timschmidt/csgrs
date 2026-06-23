@@ -1,5 +1,5 @@
 use hyperlimit::{Point3, SourceProvenance};
-use hypermesh::{ExactMesh, ExactMeshBlocker, ExactMeshError, Triangle};
+use hypermesh::{ExactMesh, ExactMeshBlocker, ExactMeshError};
 use hyperreal::Real;
 
 fn p(x: i64, y: i64, z: i64) -> Point3 {
@@ -15,12 +15,7 @@ fn tetra(offset: [i64; 3]) -> ExactMesh {
             p(ox, oy + 1, oz),
             p(ox, oy, oz + 1),
         ],
-        vec![
-            Triangle([0, 2, 1]),
-            Triangle([0, 1, 3]),
-            Triangle([1, 2, 3]),
-            Triangle([2, 0, 3]),
-        ],
+        vec![[0, 2, 1], [0, 1, 3], [1, 2, 3], [2, 0, 3]],
         SourceProvenance::exact("test tetra"),
     )
     .unwrap()
@@ -235,12 +230,12 @@ fn exact_mesh_transform_and_inverse_replay_retained_state() {
         .unwrap();
 
     reflected.validate_retained_state().unwrap();
-    assert_eq!(reflected.triangles()[0], Triangle([0, 1, 2]));
+    assert_eq!(reflected.triangles()[0].0, [0, 1, 2]);
 
     let inverted = mesh.inverse().unwrap();
     inverted.validate_retained_state().unwrap();
     assert_eq!(inverted.vertices(), mesh.vertices());
-    assert_eq!(inverted.triangles()[0], Triangle([0, 1, 2]));
+    assert_eq!(inverted.triangles()[0].0, [0, 1, 2]);
 }
 
 #[test]
@@ -314,7 +309,7 @@ fn exact_mesh_transform_rejects_non_affine_homogeneous_rows() {
 fn exact_mesh_error_names_cover_kernel_blockers() {
     let error: ExactMeshError = ExactMesh::new(
         vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)],
-        vec![Triangle([0, 1, 3])],
+        vec![[0, 1, 3]],
         SourceProvenance::exact("invalid test mesh"),
     )
     .unwrap_err();
