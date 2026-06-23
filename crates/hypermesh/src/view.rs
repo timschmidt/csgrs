@@ -15,7 +15,7 @@ use super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
 use super::graph::ExactIntersectionGraph;
 use super::intersection::{MeshFacePairClassification, classify_mesh_face_pair_unchecked};
 use super::validation::ExactMeshValidationPolicy;
-use hyperlimit::Point3;
+use hyperlimit::{Point3, PredicateUse};
 use hyperreal::Real;
 
 /// Borrowed exact view of an [`ExactMesh`].
@@ -27,6 +27,13 @@ pub struct ExactMeshRef<'a> {
 /// Borrowed face view.
 #[derive(Clone, Copy, Debug)]
 pub struct FaceRef<'a> {
+    mesh: &'a ExactMesh,
+    index: usize,
+}
+
+/// Borrowed vertex view.
+#[derive(Clone, Copy, Debug)]
+pub struct VertexRef<'a> {
     mesh: &'a ExactMesh,
     index: usize,
 }
@@ -226,6 +233,14 @@ impl<'a> ExactMeshRef<'a> {
         self.mesh.vertices()
     }
 
+    /// Borrow one vertex by index.
+    pub fn vertex(self, index: usize) -> Option<VertexRef<'a>> {
+        (index < self.mesh.vertices().len()).then_some(VertexRef {
+            mesh: self.mesh,
+            index,
+        })
+    }
+
     /// Return copied triangle index rows.
     pub fn triangle_indices(self) -> impl ExactSizeIterator<Item = [usize; 3]> + 'a {
         self.mesh.triangle_indices()
@@ -315,6 +330,14 @@ impl<'a> ExactMeshRef<'a> {
     /// Borrow one retained edge by index.
     pub fn edge(self, index: usize) -> Option<EdgeRef<'a>> {
         (index < self.mesh.facts().edges.len()).then_some(EdgeRef {
+            mesh: self.mesh,
+            index,
+        })
+    }
+
+    /// Iterate borrowed vertices.
+    pub fn vertex_refs(self) -> impl Iterator<Item = VertexRef<'a>> + 'a {
+        (0..self.mesh.vertices().len()).map(move |index| VertexRef {
             mesh: self.mesh,
             index,
         })
@@ -804,6 +827,70 @@ impl<'pair, 'left, 'right> PreparedMeshPairView<'pair, 'left, 'right> {
     }
 }
 
+impl<'a> VertexRef<'a> {
+    /// Vertex index in the source mesh.
+    pub const fn index(self) -> usize {
+        self.index
+    }
+
+    /// Exact vertex coordinates.
+    pub fn point(self) -> &'a Point3 {
+        &self.mesh.vertices()[self.index]
+    }
+
+    /// Whether retained facts certify exact rational coordinates for this vertex.
+    pub fn has_exact_rational_coordinates(self) -> bool {
+        self.mesh.facts().vertices[self.index].fixed_coordinates_exact_rational
+    }
+
+    /// Whether retained facts record sparse coordinate support for this vertex.
+    pub fn has_sparse_coordinate_support(self) -> bool {
+        self.mesh.facts().vertices[self.index].sparse_support
+    }
+
+    /// Retained incident face count.
+    pub fn incident_face_count(self) -> usize {
+        self.mesh.facts().vertices[self.index].incident_faces
+    }
+
+    /// Retained incident undirected edge count.
+    pub fn incident_edge_count(self) -> usize {
+        self.mesh.facts().vertices[self.index].incident_edges
+    }
+
+    /// Whether retained facts classify the vertex link as isolated.
+    pub fn has_isolated_link(self) -> bool {
+        matches!(
+            self.mesh.facts().vertices[self.index].link,
+            super::facts::VertexLinkKind::Isolated
+        )
+    }
+
+    /// Whether retained facts classify the vertex link as a closed-manifold circle.
+    pub fn has_circle_link(self) -> bool {
+        matches!(
+            self.mesh.facts().vertices[self.index].link,
+            super::facts::VertexLinkKind::Circle
+        )
+    }
+
+    /// Whether retained facts classify the vertex link as a boundary-manifold disk.
+    pub fn has_disk_link(self) -> bool {
+        matches!(
+            self.mesh.facts().vertices[self.index].link,
+            super::facts::VertexLinkKind::Disk
+        )
+    }
+
+    /// Whether retained facts classify the vertex link as non-manifold.
+    pub fn has_non_manifold_link(self) -> bool {
+        matches!(
+            self.mesh.facts().vertices[self.index].link,
+            super::facts::VertexLinkKind::NonManifold
+        )
+    }
+}
+
 impl<'a> FaceRef<'a> {
     /// Face index in the source mesh.
     pub const fn index(self) -> usize {
@@ -813,6 +900,28 @@ impl<'a> FaceRef<'a> {
     /// Triangle vertex indices for this face.
     pub fn vertex_indices(self) -> [usize; 3] {
         self.mesh.triangles()[self.index].0
+    }
+
+    /// Borrow the face vertices.
+    pub fn vertex_refs(self) -> [VertexRef<'a>; 3] {
+        vertex_refs(self.mesh, self.vertex_indices())
+    }
+
+    /// Retained directed edge rows in face winding order.
+    pub fn directed_edges(self) -> [[usize; 2]; 3] {
+        self.mesh.facts().faces[self.index].oriented.directed_edges
+    }
+
+    /// Whether retained predicate evidence certified a non-degenerate triangle.
+    pub fn is_non_degenerate(self) -> bool {
+        self.mesh.facts().faces[self.index].triangle.non_degenerate
+    }
+
+    /// Predicate evidence retained while certifying triangle degeneracy.
+    pub fn degeneracy_predicates(self) -> &'a [PredicateUse] {
+        &self.mesh.facts().faces[self.index]
+            .triangle
+            .degeneracy_predicates
     }
 
     /// Retained exact oriented plane normal.
@@ -845,6 +954,28 @@ impl<'a> TriangleRef<'a> {
     /// Triangle vertex indices.
     pub fn vertex_indices(self) -> [usize; 3] {
         self.mesh.triangles()[self.index].0
+    }
+
+    /// Borrow the triangle vertices.
+    pub fn vertex_refs(self) -> [VertexRef<'a>; 3] {
+        vertex_refs(self.mesh, self.vertex_indices())
+    }
+
+    /// Retained directed edge rows in triangle winding order.
+    pub fn directed_edges(self) -> [[usize; 2]; 3] {
+        self.mesh.facts().faces[self.index].oriented.directed_edges
+    }
+
+    /// Whether retained predicate evidence certified a non-degenerate triangle.
+    pub fn is_non_degenerate(self) -> bool {
+        self.mesh.facts().faces[self.index].triangle.non_degenerate
+    }
+
+    /// Predicate evidence retained while certifying triangle degeneracy.
+    pub fn degeneracy_predicates(self) -> &'a [PredicateUse] {
+        &self.mesh.facts().faces[self.index]
+            .triangle
+            .degeneracy_predicates
     }
 
     /// Retained exact oriented plane normal.
@@ -908,5 +1039,14 @@ fn triangle_vertices(mesh: &ExactMesh, triangle: [usize; 3]) -> [&Point3; 3] {
         &mesh.vertices()[a],
         &mesh.vertices()[b],
         &mesh.vertices()[c],
+    ]
+}
+
+fn vertex_refs(mesh: &ExactMesh, triangle: [usize; 3]) -> [VertexRef<'_>; 3] {
+    let [a, b, c] = triangle;
+    [
+        VertexRef { mesh, index: a },
+        VertexRef { mesh, index: b },
+        VertexRef { mesh, index: c },
     ]
 }

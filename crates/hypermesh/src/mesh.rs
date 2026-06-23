@@ -418,16 +418,26 @@ impl ExactMesh {
     }
 
     /// Return exact vertices.
+    ///
+    /// Prefer [`Self::view`] for new query code so retained vertex facts can be
+    /// inspected beside coordinates without cloning or recomputing mesh state.
     pub fn vertices(&self) -> &[Point3] {
         &self.vertices
     }
 
     /// Return retained triangle count.
+    ///
+    /// Prefer [`Self::view`] for query-heavy code; the borrowed view exposes
+    /// this count with the rest of the retained mesh facts.
     pub fn triangle_count(&self) -> usize {
         self.triangles.len()
     }
 
     /// Return copied triangle index rows.
+    ///
+    /// Prefer [`Self::view`] and its borrowed face/triangle references for
+    /// algorithms that also need retained directed-edge, plane, or predicate
+    /// evidence.
     pub fn triangle_indices(&self) -> impl ExactSizeIterator<Item = [usize; 3]> + '_ {
         self.triangles.iter().map(|triangle| triangle.0)
     }

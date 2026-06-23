@@ -2,7 +2,7 @@ use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
     ArrangementView, EdgeRef, ExactMesh, ExactMeshBlocker, ExactMeshError, ExactMeshRef, FaceRef,
     PreparedMeshPair, PreparedMeshPairCacheStatus, PreparedMeshPairFactState, PreparedMeshPairView,
-    PreparedMeshView, TriangleRef,
+    PreparedMeshView, TriangleRef, VertexRef,
 };
 use hyperreal::Real;
 
@@ -251,12 +251,32 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(view.edge_count(), 6);
     assert!(view.is_closed_manifold());
     assert_eq!(view.faces().count(), 4);
+    assert_eq!(view.vertex_refs().count(), 4);
     assert_eq!(view.triangle_refs().count(), 4);
     assert_eq!(view.edges().count(), view.edge_count());
+
+    let vertex: VertexRef<'_> = view.vertex(0).unwrap();
+    assert_eq!(vertex.index(), 0);
+    assert_eq!(vertex.point(), &p(0, 0, 0));
+    assert!(vertex.has_exact_rational_coordinates());
+    assert!(vertex.has_sparse_coordinate_support());
+    assert_eq!(vertex.incident_face_count(), 3);
+    assert_eq!(vertex.incident_edge_count(), 3);
+    assert!(vertex.has_circle_link());
+    assert!(!vertex.has_disk_link());
+    assert!(!vertex.has_isolated_link());
+    assert!(!vertex.has_non_manifold_link());
 
     let face: FaceRef<'_> = view.face(0).unwrap();
     assert_eq!(face.index(), 0);
     assert_eq!(face.vertex_indices(), [0, 2, 1]);
+    assert_eq!(
+        face.vertex_refs().map(VertexRef::index),
+        face.vertex_indices()
+    );
+    assert_eq!(face.directed_edges(), [[0, 2], [2, 1], [1, 0]]);
+    assert!(face.is_non_degenerate());
+    assert!(!face.degeneracy_predicates().is_empty());
     assert_eq!(
         face.plane_coefficients(),
         (face.plane_normal(), face.plane_offset())
@@ -266,6 +286,13 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let triangle: TriangleRef<'_> = view.triangle(1).unwrap();
     assert_eq!(triangle.index(), 1);
     assert_eq!(triangle.vertex_indices(), [0, 1, 3]);
+    assert_eq!(
+        triangle.vertex_refs().map(VertexRef::index),
+        triangle.vertex_indices()
+    );
+    assert_eq!(triangle.directed_edges(), [[0, 1], [1, 3], [3, 0]]);
+    assert!(triangle.is_non_degenerate());
+    assert!(!triangle.degeneracy_predicates().is_empty());
     assert_eq!(
         triangle.plane_coefficients(),
         (triangle.plane_normal(), triangle.plane_offset())
