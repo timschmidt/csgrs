@@ -21,8 +21,6 @@ use super::affine_solid::{
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 #[cfg(test)]
 use super::boolean::materialize_boolean_exact_request;
-#[cfg(test)]
-use super::boolean::winding_evidence_report_for_request_from_graph;
 use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanOperation, ExactBooleanRequest,
     ExactBoundaryBooleanPolicy, adjacent_union_completion_certification,
@@ -39,6 +37,10 @@ use super::boolean::{
     replay_generic_arrangement_cell_complex_result, replay_open_surface_arrangement_result,
     replay_selected_region_boolean_result, same_surface_report_from_sources,
     volumetric_boundary_closure_report_from_graph,
+};
+#[cfg(test)]
+use super::boolean::{
+    preflight_report_for_request_from_graph, winding_evidence_report_for_request_from_graph,
 };
 use super::bounds::AabbIntersectionKind;
 use super::cell_complex::{
@@ -3898,6 +3900,30 @@ fn validate_winding_evidence_against_sources_for_request(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<(), ExactReportValidationError> {
+    let graph = validated_report_intersection_graph(left, right)?;
+    if report.operation == request.operation
+        && report.status == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
+        && !graph.has_unknowns()
+        && !matches!(report.operation, ExactBooleanOperation::SelectedRegions(_))
+        && report.retained_face_pairs == graph.face_pairs.len()
+        && report.retained_events == graph.event_count()
+        && report.region_count == 0
+        && report.region_classifications.is_empty()
+        && report.coplanar_arrangement_evidence.is_none()
+        && let Some(evidence) = report.coplanar_volumetric_evidence.as_ref()
+        && evidence == &CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right)
+        && volumetric_boundary_closure_report_from_graph(&graph, left, right, report.operation)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .is_coplanar_closure_available()
+    {
+        return Ok(());
+    }
+    let replay = winding_evidence_report_for_request_from_graph(&graph, left, right, request)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    if report == &replay {
+        return Ok(());
+    }
+
     if let Ok(evaluation) = exact_boolean_evaluation_for_replay(left, right, request)
         && report == evaluation.certifications().winding_evidence()
     {
@@ -3908,14 +3934,7 @@ fn validate_winding_evidence_against_sources_for_request(
     // lower-dimensional shortcut reports, are still exact even when the
     // canonical evaluation cannot yet return them or supersedes them with an
     // arrangement/cell-complex materialization status.
-    let graph = validated_report_intersection_graph(left, right)?;
-    let replay = winding_evidence_report_for_request_from_graph(&graph, left, right, request)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-    if report == &replay {
-        Ok(())
-    } else {
-        Err(ExactReportValidationError::SourceReplayMismatch)
-    }
+    Err(ExactReportValidationError::SourceReplayMismatch)
 }
 
 impl ExactBooleanPreflight {
@@ -3939,6 +3958,28 @@ impl ExactBooleanPreflight {
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
+        let graph = validated_report_intersection_graph(left, right)?;
+        if self.operation == request.operation
+            && self.support == ExactBooleanSupport::CertifiedArrangementCellComplex
+            && self.blocker.is_none()
+            && self.retained_face_pairs == graph.face_pairs.len()
+            && self.retained_events == graph.event_count()
+            && self.region_count == 0
+            && self.region_classifications.is_empty()
+            && self.coplanar_arrangement_evidence.is_none()
+            && let Some(evidence) = self.coplanar_volumetric_evidence.as_ref()
+            && evidence == &CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right)
+            && volumetric_boundary_closure_report_from_graph(&graph, left, right, request.operation)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+                .is_coplanar_closure_available()
+        {
+            return Ok(());
+        }
+        if let Ok(replay) = preflight_report_for_request_from_graph(&graph, left, right, request)
+            && self == &replay
+        {
+            return Ok(());
+        }
         let replay = exact_boolean_evaluation_for_replay(left, right, request)?
             .preflight()
             .clone();

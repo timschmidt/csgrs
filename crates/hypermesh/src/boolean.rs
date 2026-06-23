@@ -1059,6 +1059,17 @@ fn exact_boolean_replay_preflight(
     Ok(graph_preflight)
 }
 
+#[cfg(test)]
+pub(crate) fn preflight_report_for_request_from_graph(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<ExactBooleanPreflight, ExactMeshError> {
+    let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
+    exact_boolean_replay_preflight(left, right, request, graph, &shortcut_facts, None)
+}
+
 fn exact_boolean_replay_report_error(error: ExactReportValidationError) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
         ExactMeshBlockerKind::StaleFactReplay,
@@ -3777,6 +3788,19 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && request.validation == ExactMeshValidationPolicy::CLOSED
+        && graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right)
+        && volumetric_boundary_closure_report_from_graph(graph, left, right, operation)?
+            .is_coplanar_closure_available()
+    {
+        return Ok(certified_preflight(
+            operation,
+            ExactBooleanSupport::CertifiedArrangementCellComplex,
+            Some(graph),
+            certified_arrangement_cell_complex_coplanar_evidence(graph, left, right),
+        ));
+    }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
             &mut certified_arrangement_preflight,
             operation,
@@ -4117,6 +4141,17 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         ));
     }
     if graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right) {
+        if request.validation == ExactMeshValidationPolicy::CLOSED
+            && volumetric_boundary_closure_report_from_graph(graph, left, right, operation)?
+                .is_coplanar_closure_available()
+        {
+            return Ok(certified_preflight(
+                operation,
+                ExactBooleanSupport::CertifiedArrangementCellComplex,
+                Some(graph),
+                certified_arrangement_cell_complex_coplanar_evidence(graph, left, right),
+            ));
+        }
         if let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
             &mut certified_arrangement_preflight,
             operation,
@@ -4148,17 +4183,6 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
                 ExactBooleanSupport::CertifiedConvexIntersection,
                 Some(graph),
                 None,
-            ));
-        }
-        if request.validation == ExactMeshValidationPolicy::CLOSED
-            && volumetric_boundary_closure_report_from_graph(graph, left, right, operation)?
-                .is_coplanar_closure_available()
-        {
-            return Ok(certified_preflight(
-                operation,
-                ExactBooleanSupport::CertifiedArrangementCellComplex,
-                Some(graph),
-                certified_arrangement_cell_complex_coplanar_evidence(graph, left, right),
             ));
         }
         let winding_evidence = winding_evidence_report_from_graph(graph, left, right, operation)?;
@@ -4411,6 +4435,18 @@ fn volumetric_boundary_closure_report_from_materialized(
     materialized: &MaterializedVolumetricWindingRegionPlan,
     operation: ExactBooleanOperation,
 ) -> Result<ExactVolumetricBoundaryClosureReport, ExactMeshError> {
+    volumetric_boundary_closure_report_from_materialized_with_prevalidated_closure(
+        materialized,
+        operation,
+        None,
+    )
+}
+
+fn volumetric_boundary_closure_report_from_materialized_with_prevalidated_closure(
+    materialized: &MaterializedVolumetricWindingRegionPlan,
+    operation: ExactBooleanOperation,
+    prevalidated_coplanar_closure_available: Option<bool>,
+) -> Result<ExactVolumetricBoundaryClosureReport, ExactMeshError> {
     materialized
         .mesh
         .validate_retained_state()
@@ -4584,14 +4620,17 @@ fn volumetric_boundary_closure_report_from_materialized(
     match group_exact_coplanar_loops(boundary_points) {
         Ok(groups) => {
             let coplanar_loop_groups = groups.len();
-            if close_exact_coplanar_boundary_loops_from_loops(
-                &materialized.mesh,
-                boundary_loops.clone(),
-                "exact volumetric boundary closure certification cap",
-                ExactMeshValidationPolicy::CLOSED,
-            )?
-            .is_some()
-            {
+            let coplanar_closure_available = match prevalidated_coplanar_closure_available {
+                Some(available) => available,
+                None => close_exact_coplanar_boundary_loops_from_loops(
+                    &materialized.mesh,
+                    boundary_loops.clone(),
+                    "exact volumetric boundary closure certification cap",
+                    ExactMeshValidationPolicy::CLOSED,
+                )?
+                .is_some(),
+            };
+            if coplanar_closure_available {
                 Ok(ExactVolumetricBoundaryClosureReport {
                     operation,
                     status: ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
@@ -7755,22 +7794,7 @@ fn materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
     );
     let result =
         result_with_arrangement_gate_reports_from_graph(result, graph, left, right, operation)?;
-    if result
-        .validate_request_against_sources_with_retained_attempt(
-            left,
-            right,
-            ExactBooleanRequest::with_boundary_policy(
-                operation,
-                validation,
-                ExactBoundaryBooleanPolicy::Reject,
-            ),
-            None,
-        )
-        .is_err()
-        || closure_report
-            .validate_against_sources(left, right)
-            .is_err()
-    {
+    if result.validate().is_err() || closure_report.validate().is_err() {
         return Ok(None);
     }
     Ok(Some((result, closure_report)))
@@ -7851,13 +7875,12 @@ fn materialize_volumetric_coplanar_boundary_closure_output_from_graph(
         return Ok(None);
     };
     let closure_report =
-        volumetric_boundary_closure_report_from_materialized(&materialized, operation)?;
-    if !closure_report.is_coplanar_closure_available()
-        || closure_report.validate().is_err()
-        || closure_report
-            .validate_against_sources(left, right)
-            .is_err()
-    {
+        volumetric_boundary_closure_report_from_materialized_with_prevalidated_closure(
+            &materialized,
+            operation,
+            Some(true),
+        )?;
+    if !closure_report.is_coplanar_closure_available() || closure_report.validate().is_err() {
         return Ok(None);
     }
     Ok(Some((mesh, closure_report)))
@@ -8132,7 +8155,11 @@ fn certified_coplanar_boundary_closure_from_materialized(
         return Ok(None);
     };
     let closure_report =
-        volumetric_boundary_closure_report_from_materialized(materialized, operation)?;
+        volumetric_boundary_closure_report_from_materialized_with_prevalidated_closure(
+            materialized,
+            operation,
+            Some(true),
+        )?;
     if !closure_report.is_coplanar_closure_available()
         || closure_report.validate().is_err()
         || closure_report
