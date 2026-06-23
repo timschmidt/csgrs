@@ -599,6 +599,13 @@ impl PreparedMeshPairCacheStatus {
         self.union_result.require_current("union result")
     }
 
+    /// Return the retained prepared union outcome after requiring current evidence.
+    pub fn current_union_result_outcome(
+        self,
+    ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
+        self.current_result_outcome(self.union_result, self.union_result_outcome, "union result")
+    }
+
     /// Return the certificate state for the prepared intersection result or error.
     pub const fn intersection_result(self) -> PreparedMeshPairFactState {
         self.intersection_result
@@ -613,6 +620,17 @@ impl PreparedMeshPairCacheStatus {
     pub fn require_current_intersection_result(self) -> Result<(), ExactMeshError> {
         self.intersection_result
             .require_current("intersection result")
+    }
+
+    /// Return the retained prepared intersection outcome after requiring current evidence.
+    pub fn current_intersection_result_outcome(
+        self,
+    ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
+        self.current_result_outcome(
+            self.intersection_result,
+            self.intersection_result_outcome,
+            "intersection result",
+        )
     }
 
     /// Return the certificate state for the prepared difference result or error.
@@ -630,6 +648,17 @@ impl PreparedMeshPairCacheStatus {
         self.difference_result.require_current("difference result")
     }
 
+    /// Return the retained prepared difference outcome after requiring current evidence.
+    pub fn current_difference_result_outcome(
+        self,
+    ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
+        self.current_result_outcome(
+            self.difference_result,
+            self.difference_result_outcome,
+            "difference result",
+        )
+    }
+
     /// Return the certificate state for the prepared symmetric-difference result or error.
     pub const fn xor_result(self) -> PreparedMeshPairFactState {
         self.xor_result
@@ -643,6 +672,30 @@ impl PreparedMeshPairCacheStatus {
     /// Require a retained prepared symmetric-difference result or error.
     pub fn require_current_xor_result(self) -> Result<(), ExactMeshError> {
         self.xor_result.require_current("xor result")
+    }
+
+    /// Return the retained prepared symmetric-difference outcome after requiring current evidence.
+    pub fn current_xor_result_outcome(
+        self,
+    ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
+        self.current_result_outcome(self.xor_result, self.xor_result_outcome, "xor result")
+    }
+
+    fn current_result_outcome(
+        self,
+        state: PreparedMeshPairFactState,
+        outcome: Option<PreparedMeshPairResultOutcome>,
+        fact: &'static str,
+    ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
+        state.require_current(fact)?;
+        outcome.ok_or_else(|| {
+            ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::MissingRequiredEvidence,
+                format!(
+                    "prepared mesh-pair session retained {fact} evidence without an outcome summary"
+                ),
+            ))
+        })
     }
 }
 
