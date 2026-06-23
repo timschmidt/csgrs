@@ -5,10 +5,6 @@
 //! and validates every coordinate before import.
 
 use super::arrangement3d::{ArrangementView, ExactArrangement};
-use super::boolean::{
-    ExactBooleanOperation, ExactBooleanRequest,
-    materialize_boolean_exact_request_with_prepared_pair,
-};
 use super::bounds::{BoundsValidationError, MeshBounds};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::facts::{MeshFactsValidationError, MeshValidationFacts};
@@ -645,11 +641,7 @@ impl ExactMesh {
     /// returns only the output mesh; callers that need retained arrangement
     /// evidence should use the lower-level internal kernel stages from csgrs.
     pub fn union(&self, right: &ExactMesh) -> Result<ExactMesh, ExactMeshError> {
-        self.named_boolean_mesh(
-            right,
-            ExactBooleanOperation::Union,
-            ExactMeshValidationPolicy::CLOSED,
-        )
+        self.view().union(right.view())
     }
 
     /// Materialize the exact closed intersection of this mesh and `right`.
@@ -657,20 +649,12 @@ impl ExactMesh {
     /// Lower-dimensional contact is regularized into the representable triangle
     /// mesh result for the default closed output contract.
     pub fn intersection(&self, right: &ExactMesh) -> Result<ExactMesh, ExactMeshError> {
-        self.named_boolean_mesh(
-            right,
-            ExactBooleanOperation::Intersection,
-            ExactMeshValidationPolicy::CLOSED,
-        )
+        self.view().intersection(right.view())
     }
 
     /// Materialize the exact closed difference of this mesh minus `right`.
     pub fn difference(&self, right: &ExactMesh) -> Result<ExactMesh, ExactMeshError> {
-        self.named_boolean_mesh(
-            right,
-            ExactBooleanOperation::Difference,
-            ExactMeshValidationPolicy::CLOSED,
-        )
+        self.view().difference(right.view())
     }
 
     /// Materialize the exact closed symmetric difference of this mesh and `right`.
@@ -678,21 +662,7 @@ impl ExactMesh {
     /// Each side difference is materialized through the exact kernel and then
     /// unioned under the same closed output contract.
     pub fn xor(&self, right: &ExactMesh) -> Result<ExactMesh, ExactMeshError> {
-        let left_only = self.difference(right)?;
-        let right_only = right.difference(self)?;
-        left_only.union(&right_only)
-    }
-
-    fn named_boolean_mesh(
-        &self,
-        right: &ExactMesh,
-        operation: ExactBooleanOperation,
-        validation: ExactMeshValidationPolicy,
-    ) -> Result<ExactMesh, ExactMeshError> {
-        let request = ExactBooleanRequest::new(operation, validation);
-        let pair = self.view().prepare_broad_phase_pair(right.view())?;
-        materialize_boolean_exact_request_with_prepared_pair(&pair, request)
-            .map(|result| result.into_mesh())
+        self.view().xor(right.view())
     }
 }
 

@@ -335,22 +335,22 @@ impl<'a> ExactMeshRef<'a> {
 
     /// Materialize the exact closed union of this view and `right`.
     pub fn union(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, ExactMeshError> {
-        self.mesh.union(right.mesh)
+        self.prepare_broad_phase_pair(right)?.union()
     }
 
     /// Materialize the exact closed intersection of this view and `right`.
     pub fn intersection(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, ExactMeshError> {
-        self.mesh.intersection(right.mesh)
+        self.prepare_broad_phase_pair(right)?.intersection()
     }
 
     /// Materialize the exact closed difference of this view minus `right`.
     pub fn difference(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, ExactMeshError> {
-        self.mesh.difference(right.mesh)
+        self.prepare_broad_phase_pair(right)?.difference()
     }
 
     /// Materialize the exact closed symmetric difference of this view and `right`.
     pub fn xor(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, ExactMeshError> {
-        self.mesh.xor(right.mesh)
+        self.prepare_broad_phase_pair(right)?.xor()
     }
 }
 
