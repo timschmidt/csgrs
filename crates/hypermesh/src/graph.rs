@@ -914,8 +914,9 @@ impl ExactIntersectionGraph {
     ///
     /// [`Self::validate_against_meshes`] checks that retained event handles
     /// still belong to `left` and `right`. Source replay rebuilds the graph
-    /// from those operands and requires exact equality, making the whole graph
-    /// geometric-computation boundary.
+    /// from those operands and requires the same retained face-pair records.
+    /// Pair traversal order is an acceleration detail, so source replay
+    /// compares by source face handles instead of by vector position.
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -924,7 +925,7 @@ impl ExactIntersectionGraph {
         self.validate_against_meshes(left, right)?;
         let replay = build_unvalidated_intersection_graph(left, right)
             .map_err(|_| IntersectionGraphValidationError::SourceReplayMismatch)?;
-        if self == &replay {
+        if intersection_graphs_have_same_face_pair_records(self, &replay) {
             Ok(())
         } else {
             Err(IntersectionGraphValidationError::SourceReplayMismatch)
@@ -1172,6 +1173,33 @@ impl ExactIntersectionGraph {
         }
         face_split_geometry_plan(left, right, &topology, &face_plan)
     }
+}
+
+fn intersection_graphs_have_same_face_pair_records(
+    retained: &ExactIntersectionGraph,
+    replay: &ExactIntersectionGraph,
+) -> bool {
+    if retained.face_pairs.len() != replay.face_pairs.len() {
+        return false;
+    }
+    let mut retained_pairs = BTreeMap::new();
+    for pair in &retained.face_pairs {
+        if retained_pairs
+            .insert((pair.left_face, pair.right_face), pair)
+            .is_some()
+        {
+            return false;
+        }
+    }
+    for pair in &replay.face_pairs {
+        let Some(retained_pair) = retained_pairs.remove(&(pair.left_face, pair.right_face)) else {
+            return false;
+        };
+        if retained_pair != pair {
+            return false;
+        }
+    }
+    retained_pairs.is_empty()
 }
 
 /// Build an exact event graph from two exact meshes without validating the
@@ -4299,6 +4327,12 @@ mod tests {
         .unwrap();
 
         let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
+        assert!(graph.face_pairs.len() > 1);
+        let mut reversed_graph = graph.clone();
+        reversed_graph.face_pairs.reverse();
+        reversed_graph
+            .validate_against_sources(&left, &right)
+            .unwrap();
         let (cell_regions, cell_triangulations) = graph
             .triangulate_face_cells_with_cdt(&left, &right)
             .unwrap()
