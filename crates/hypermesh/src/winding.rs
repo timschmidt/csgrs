@@ -587,7 +587,14 @@ pub(crate) fn classify_mesh_vertices_against_closed_mesh_winding_report(
             ClosedMeshWindingRelation::Outside => outside += 1,
             ClosedMeshWindingRelation::Boundary => boundary += 1,
             ClosedMeshWindingRelation::Unknown => unknown += 1,
-            ClosedMeshWindingRelation::NotClosed => unreachable!("target closure checked above"),
+            ClosedMeshWindingRelation::NotClosed => {
+                return ClosedMeshWindingMeshReport {
+                    relation: ClosedMeshWindingMeshRelation::NotClosed,
+                    target_closed: false,
+                    subject_vertex_count: subject.vertices().len(),
+                    vertices: Vec::new(),
+                };
+            }
         }
         vertices.push(report);
     }

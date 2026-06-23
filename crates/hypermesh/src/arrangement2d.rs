@@ -544,12 +544,7 @@ fn normalize_region_rings(
             vertices.push(point.clone());
         }
         if vertices.len() > 1 {
-            match point2_equal(
-                vertices.first().expect("nonempty"),
-                vertices.last().expect("nonempty"),
-            )
-            .value()
-            {
+            match point2_equal(&vertices[0], &vertices[vertices.len() - 1]).value() {
                 Some(true) => {
                     vertices.pop();
                 }

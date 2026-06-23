@@ -1402,7 +1402,7 @@ fn point_equals_exact(left: &Point3, right: &Point3) -> bool {
 
 fn simplify_polygon(points: &mut Vec<Point3>) {
     points.dedup_by(|right, left| points_equal(left, right));
-    if points.len() > 1 && points_equal(points.first().unwrap(), points.last().unwrap()) {
+    if points.len() > 1 && points_equal(&points[0], &points[points.len() - 1]) {
         points.pop();
     }
 }

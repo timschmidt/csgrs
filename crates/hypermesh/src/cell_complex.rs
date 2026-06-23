@@ -1440,7 +1440,7 @@ fn select_face(
     let inside = match face.opposite {
         ExactOppositeRegionLabel::Inside => true,
         ExactOppositeRegionLabel::Outside => false,
-        ExactOppositeRegionLabel::Boundary => unreachable!("handled above"),
+        ExactOppositeRegionLabel::Boundary => return None,
         ExactOppositeRegionLabel::Unknown => return None,
     };
     match operation {
@@ -1450,7 +1450,7 @@ fn select_face(
             ExactCellRegionLabel::LeftBoundary => Some(!inside),
             ExactCellRegionLabel::RightBoundary => Some(inside),
         },
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
+        ExactBooleanOperation::SelectedRegions(_) => None,
     }
 }
 
@@ -1467,7 +1467,7 @@ fn select_boundary_face(
                 ExactCellRegionLabel::LeftBoundary => Some(false),
                 ExactCellRegionLabel::RightBoundary => Some(true),
             },
-            ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
+            ExactBooleanOperation::SelectedRegions(_) => None,
         };
     }
     match operation {
@@ -1476,7 +1476,7 @@ fn select_boundary_face(
             ExactCellRegionLabel::LeftBoundary => Some(true),
             ExactCellRegionLabel::RightBoundary => Some(false),
         },
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
+        ExactBooleanOperation::SelectedRegions(_) => None,
     }
 }
 
