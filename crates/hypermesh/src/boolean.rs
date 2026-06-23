@@ -1108,7 +1108,7 @@ fn retained_arrangement_attempt_for_request<'a>(
 /// to approximate float winding. They prefer the exact graph-backed
 /// arrangement/cell-complex path; certified shortcut cases execute only where
 /// they cover cases that path does not yet support. Remaining named overlaps
-/// return [`ExactMeshBlockerKind::UnsupportedExactOperation`] until split-region
+/// return [`ExactMeshBlockerKind::MissingRequiredEvidence`] until split-region
 /// inside/outside classification is complete.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ExactBooleanOperation {
@@ -2766,7 +2766,7 @@ fn graph_for_certified_materialization<'a>(
 
 fn unsupported_certified_materialization_error(support: ExactBooleanSupport) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::ExactConstructionFailure,
+        ExactMeshBlockerKind::UnsupportedCellMaterializer,
         format!("certified exact boolean support did not materialize: {support:?}"),
     ))
 }
@@ -5458,7 +5458,7 @@ fn materialize_boolean_exact_request_from_ready_graph(
                 return Ok(result);
             }
             Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+                ExactMeshBlockerKind::MissingRequiredEvidence,
                 "named exact booleans require certified winding/inside-outside classification",
             )))
         }

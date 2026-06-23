@@ -36,6 +36,12 @@ pub enum ExactMeshBlockerKind {
     /// Retained exact facts or acceleration structures did not replay against
     /// the supplied source mesh objects.
     StaleFactReplay,
+    /// A certified exact support path reached a topology case whose exact cell
+    /// materializer is not available.
+    UnsupportedCellMaterializer,
+    /// Requested policy requires exact evidence that was not retained or could
+    /// not be certified.
+    MissingRequiredEvidence,
     /// Requested exact operation is not yet certified by the exact stack.
     UnsupportedExactOperation,
 }
