@@ -614,6 +614,17 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
 
     let edge: EdgeRef<'_> = view.edge(0).unwrap();
     assert_eq!(edge.index(), 0);
+    assert_eq!(view.edge_bounds(0), Some((&p(0, 0, 0), &p(1, 0, 0))));
+    assert_eq!(
+        view.require_edge_bounds(0).unwrap(),
+        (&p(0, 0, 0), &p(1, 0, 0))
+    );
+    let missing_edge_bounds = view.require_edge_bounds(view.edge_count()).unwrap_err();
+    assert_eq!(
+        missing_edge_bounds.blockers()[0].kind(),
+        ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    assert_eq!(missing_edge_bounds.blockers()[0].edge(), None);
     assert_eq!(edge.incident_face_count(), 2);
     assert_eq!(edge.directed_use_counts(), [1, 1]);
     assert!(edge.is_closed_manifold_edge());

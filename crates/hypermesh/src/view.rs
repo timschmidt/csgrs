@@ -1120,6 +1120,11 @@ impl<'a> ExactMeshRef<'a> {
         self.mesh.bounds().face(index).map(bounds_corners)
     }
 
+    /// Borrow retained bounds for one edge as exact min/max corners.
+    pub fn edge_bounds(self, index: usize) -> Option<(&'a Point3, &'a Point3)> {
+        self.mesh.bounds().edge(index).map(bounds_corners)
+    }
+
     /// Borrow retained bounds for one face, returning a typed blocker when absent.
     pub fn require_face_bounds(
         self,
@@ -1127,6 +1132,15 @@ impl<'a> ExactMeshRef<'a> {
     ) -> Result<(&'a Point3, &'a Point3), ExactMeshError> {
         self.face_bounds(index)
             .ok_or_else(|| missing_retained_face_bounds("face", index))
+    }
+
+    /// Borrow retained bounds for one edge, returning a typed blocker when absent.
+    pub fn require_edge_bounds(
+        self,
+        index: usize,
+    ) -> Result<(&'a Point3, &'a Point3), ExactMeshError> {
+        self.edge_bounds(index)
+            .ok_or_else(|| missing_retained_edge_bounds(self.mesh, index))
     }
 
     /// Borrow one vertex by index.
@@ -2979,6 +2993,17 @@ fn missing_retained_face_bounds(kind: &'static str, face: usize) -> ExactMeshErr
         )
         .with_face(face),
     )
+}
+
+fn missing_retained_edge_bounds(mesh: &ExactMesh, edge: usize) -> ExactMeshError {
+    let mut blocker = ExactMeshBlocker::new(
+        ExactMeshBlockerKind::MissingRequiredEvidence,
+        format!("mesh edge {edge} has no retained exact bounds"),
+    );
+    if let Some(facts) = mesh.facts().edges.get(edge) {
+        blocker = blocker.with_edge(facts.vertices);
+    }
+    ExactMeshError::one(blocker)
 }
 
 fn retained_vertex_facts(
