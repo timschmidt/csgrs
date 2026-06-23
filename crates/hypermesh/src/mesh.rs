@@ -100,7 +100,7 @@ fn point_from_f64_lossy(
 /// object facts and proof-producing predicate provenance as part of the
 /// certified mesh state rather than as incidental cache entries.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactMeshValidationError {
+pub(crate) enum ExactMeshValidationError {
     /// The retained vertex count disagrees with the vertex buffer length.
     VertexCountMismatch {
         /// Vertex buffer length.
@@ -516,7 +516,13 @@ impl ExactMesh {
     /// want to audit that its retained bounds, topology facts, and provenance
     /// still agree before consuming them. The bounds and topology facts are
     /// replayed from the exact vertices and triangle rows before acceptance.
-    pub fn validate_retained_state(&self) -> Result<(), ExactMeshValidationError> {
+    pub fn validate_retained_state(&self) -> Result<(), ExactMeshError> {
+        self.validate_retained_state_detail().map_err(|error| {
+            retained_validation_mesh_error("exact mesh retained state replay failed", error)
+        })
+    }
+
+    pub(crate) fn validate_retained_state_detail(&self) -> Result<(), ExactMeshValidationError> {
         if self.vertices.len() != self.facts.mesh.vertex_count {
             return Err(ExactMeshValidationError::VertexCountMismatch {
                 expected: self.vertices.len(),
@@ -570,7 +576,13 @@ impl ExactMesh {
     /// This is the acceleration-structure audit used before broad-phase
     /// scheduling. It intentionally validates only bounds facts, avoiding the
     /// full topology/provenance audit required by [`Self::validate_retained_state`].
-    pub fn validate_retained_bounds(&self) -> Result<(), ExactMeshValidationError> {
+    pub fn validate_retained_bounds(&self) -> Result<(), ExactMeshError> {
+        self.validate_retained_bounds_detail().map_err(|error| {
+            retained_validation_mesh_error("exact mesh retained bounds replay failed", error)
+        })
+    }
+
+    pub(crate) fn validate_retained_bounds_detail(&self) -> Result<(), ExactMeshValidationError> {
         self.bounds
             .validate_against_triangle_rows(
                 &self.vertices,
@@ -879,6 +891,25 @@ const fn retained_facts_validation_error(
             ExactMeshValidationError::RetainedFactsMissingEdgeFact { edge }
         }
     }
+}
+
+fn retained_validation_mesh_error(
+    context: &'static str,
+    error: ExactMeshValidationError,
+) -> ExactMeshError {
+    let kind = match error {
+        ExactMeshValidationError::VertexCountMismatch { .. }
+        | ExactMeshValidationError::FaceCountMismatch { .. }
+        | ExactMeshValidationError::RetainedBoundsSourceReplayMismatch
+        | ExactMeshValidationError::RetainedFactsSourceReplayMismatch => {
+            ExactMeshBlockerKind::StaleFactReplay
+        }
+        ExactMeshValidationError::RetainedBoundsUnknownAxisOrder => {
+            ExactMeshBlockerKind::UndecidablePredicate
+        }
+        _ => ExactMeshBlockerKind::ExactConstructionFailure,
+    };
+    ExactMeshError::one(ExactMeshBlocker::new(kind, format!("{context}: {error:?}")))
 }
 
 fn transformed_coordinate(row: &[Real; 3], point: &Point3, translation: &Real) -> Real {

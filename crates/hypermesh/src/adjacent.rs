@@ -129,7 +129,7 @@ impl FullFaceAdjacentUnion {
             }
         }
         self.mesh
-            .validate_retained_state()
+            .validate_retained_state_detail()
             .map_err(FullFaceAdjacentUnionError::OutputMesh)?;
         if !self.mesh.facts().mesh.closed_manifold {
             return Err(FullFaceAdjacentUnionError::OutputNotClosed);

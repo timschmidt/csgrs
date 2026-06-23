@@ -56,4 +56,4 @@ mod winding;
 mod witness;
 
 pub use error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-pub use mesh::{ExactMesh, ExactMeshValidationError, Triangle};
+pub use mesh::{ExactMesh, Triangle};

@@ -90,7 +90,7 @@ impl ContainedFaceAdjacentUnion {
     pub fn validate(&self) -> Result<(), ContainedFaceAdjacentUnionError> {
         self.validate_certificate_shape()?;
         self.mesh
-            .validate_retained_state()
+            .validate_retained_state_detail()
             .map_err(ContainedFaceAdjacentUnionError::OutputMesh)?;
         if !self.mesh.facts().mesh.closed_manifold {
             return Err(ContainedFaceAdjacentUnionError::OutputNotClosed);

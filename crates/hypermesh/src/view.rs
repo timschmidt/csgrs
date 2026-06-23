@@ -1,9 +1,9 @@
 //! Borrowed exact views of retained mesh data.
 
+use super::ExactMesh;
 use super::bounds::PreparedMeshBounds;
 use super::error::ExactMeshError;
 use super::mesh::Triangle;
-use super::{ExactMesh, ExactMeshValidationError};
 use hyperlimit::Point3;
 use hyperreal::Real;
 
@@ -112,12 +112,12 @@ impl<'a> ExactMeshRef<'a> {
     }
 
     /// Replay retained bounds, topology facts, and provenance against the source mesh.
-    pub fn validate_retained_state(self) -> Result<(), ExactMeshValidationError> {
+    pub fn validate_retained_state(self) -> Result<(), ExactMeshError> {
         self.mesh.validate_retained_state()
     }
 
     /// Replay retained exact bounds against the source mesh.
-    pub fn validate_retained_bounds(self) -> Result<(), ExactMeshValidationError> {
+    pub fn validate_retained_bounds(self) -> Result<(), ExactMeshError> {
         self.mesh.validate_retained_bounds()
     }
 
@@ -170,7 +170,7 @@ impl<'a> ExactMeshRef<'a> {
     }
 
     /// Prepare replay-validated broad-phase facts for repeated pair queries.
-    pub fn prepare_broad_phase(self) -> Result<PreparedMeshView<'a>, ExactMeshValidationError> {
+    pub fn prepare_broad_phase(self) -> Result<PreparedMeshView<'a>, ExactMeshError> {
         self.validate_retained_bounds()?;
         Ok(PreparedMeshView {
             view: self,
@@ -183,7 +183,7 @@ impl<'a> ExactMeshRef<'a> {
         self,
         right: ExactMeshRef<'b>,
         visit: &mut impl FnMut([usize; 2]),
-    ) -> Result<(), ExactMeshValidationError> {
+    ) -> Result<(), ExactMeshError> {
         let left = self.prepare_broad_phase()?;
         let right = right.prepare_broad_phase()?;
         left.visit_candidate_face_pairs(&right, visit);
