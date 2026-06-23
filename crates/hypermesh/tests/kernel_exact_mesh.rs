@@ -398,6 +398,40 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         overlapping.triangle_count()
     );
     assert!(prepared_pair.candidate_face_pair_capacity_hint() > 0);
+    let retained_graph_counts = prepared_pair.prepare_intersection_graph().unwrap();
+    let graph_retained_status = prepared_pair.cache_status();
+    assert_eq!(
+        graph_retained_status.intersection_graph(),
+        PreparedMeshPairFactState::CertificateBlocked
+    );
+    assert_eq!(
+        graph_retained_status.retained_intersection_graph_face_pair_count(),
+        Some(retained_graph_counts.0)
+    );
+    assert_eq!(
+        graph_retained_status.retained_intersection_graph_event_count(),
+        Some(retained_graph_counts.1)
+    );
+    assert_eq!(
+        prepared_pair
+            .current_intersection_graph_counts()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    assert_eq!(
+        prepared_pair.prepare_current_intersection_graph().unwrap(),
+        retained_graph_counts
+    );
+    assert_eq!(
+        prepared_pair.cache_status().intersection_graph(),
+        PreparedMeshPairFactState::Current
+    );
+    assert_eq!(
+        prepared_pair.current_intersection_graph_counts().unwrap(),
+        retained_graph_counts
+    );
 
     let pair_view: PreparedMeshPairView<'_, '_, '_> =
         prepared_left.pair_with(&prepared_overlapping);

@@ -12,7 +12,10 @@ use super::bounds::{
 };
 use super::error::ExactMeshError;
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
-use super::graph::ExactIntersectionGraph;
+use super::graph::{
+    ExactIntersectionGraph, build_unvalidated_intersection_graph_from_prepared_pair_rc,
+    build_validated_intersection_graph_from_prepared_pair,
+};
 use super::intersection::{MeshFacePairClassification, classify_mesh_face_pair_unchecked};
 use super::validation::ExactMeshValidationPolicy;
 use hyperlimit::{Point3, PredicateUse};
@@ -644,6 +647,22 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     /// Return the retained coarse face-pair classification count after requiring current evidence.
     pub fn current_face_pair_classification_count(&self) -> Result<usize, ExactMeshError> {
         self.cache_status().current_face_pair_classification_count()
+    }
+
+    /// Build and retain the exact intersection graph without certifying source replay.
+    ///
+    /// The returned counts are retained for later status checks, but the graph
+    /// remains certificate-blocked until [`Self::prepare_current_intersection_graph`]
+    /// validates its retained source handles.
+    pub fn prepare_intersection_graph(&self) -> Result<(usize, usize), ExactMeshError> {
+        let graph = build_unvalidated_intersection_graph_from_prepared_pair_rc(self)?;
+        Ok((graph.face_pairs.len(), graph.event_count()))
+    }
+
+    /// Build, retain, and source-certify the exact intersection graph.
+    pub fn prepare_current_intersection_graph(&self) -> Result<(usize, usize), ExactMeshError> {
+        build_validated_intersection_graph_from_prepared_pair(self)?;
+        self.current_intersection_graph_counts()
     }
 
     /// Visit retained coarse face-pair classifications for this prepared mesh pair.
