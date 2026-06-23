@@ -55,20 +55,22 @@ mod volumetric_cells;
 mod winding;
 mod witness;
 
-#[doc(hidden)]
-pub use arrangement3d::{
-    ArrangementEdgeRef, ArrangementFaceCellRef, ArrangementVertexRef, ArrangementView,
-};
-#[doc(hidden)]
-pub use error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 pub use mesh::ExactMesh;
+
 #[doc(hidden)]
-pub use view::{
-    EdgeRef, ExactMeshRef, ExactMeshSourceStamp, FaceRef, MeshView, PreparedMeshPair,
-    PreparedMeshPairArrangementCounts, PreparedMeshPairBroadPhaseSummary,
-    PreparedMeshPairBroadPhaseTraversalSummary, PreparedMeshPairCacheStatus,
-    PreparedMeshPairClassificationCounts, PreparedMeshPairFactState,
-    PreparedMeshPairIntersectionGraphCounts, PreparedMeshPairPlanKind,
-    PreparedMeshPairResultOutcome, PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis,
-    PreparedMeshPairSweepDirection, PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,
-};
+pub mod kernel {
+    pub use crate::arrangement3d::{
+        ArrangementEdgeRef, ArrangementFaceCellRef, ArrangementVertexRef, ArrangementView,
+    };
+    pub use crate::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+    pub use crate::view::{
+        EdgeRef, ExactMeshRef, ExactMeshSourceStamp, FaceRef, MeshView, PreparedMeshPair,
+        PreparedMeshPairArrangementCounts, PreparedMeshPairBroadPhaseSummary,
+        PreparedMeshPairBroadPhaseTraversalSummary, PreparedMeshPairCacheStatus,
+        PreparedMeshPairClassificationCounts, PreparedMeshPairFactState,
+        PreparedMeshPairIntersectionGraphCounts, PreparedMeshPairPlanKind,
+        PreparedMeshPairResultOutcome, PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis,
+        PreparedMeshPairSweepDirection, PreparedMeshPairView, PreparedMeshView, TriangleRef,
+        VertexRef,
+    };
+}

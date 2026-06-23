@@ -33,12 +33,12 @@ validation facts, bounds, and construction provenance. It also carries the
 convenience methods downstream CSG layers need: `union`, `intersection`,
 `difference`, `xor`, `transform`, `inverse`, and `with_arrangement_view`.
 
-Supporting root exports are implementation support for `ExactMesh` methods, not
-additional primary entry points. Kernel errors report invalid input,
-unsupported exact topology, stale retained facts, and construction blockers with
-provenance where available. Workspace routing, boundary policy, output policy,
-and product-facing reports belong above this crate rather than in the default
-public API.
+The default crate root intentionally keeps that shape narrow: `ExactMesh` is the
+normal import. Kernel errors, borrowed views, prepared pair caches, and retained
+fact summaries support `ExactMesh` methods and low-level integrations without
+becoming additional root entry points. Workspace routing, boundary policy,
+output policy, and product-facing reports belong above this crate rather than in
+the default public API.
 
 Borrowed queries start from `ExactMesh::view()`. Mesh, triangle, face, and edge
 views avoid cloning mesh storage; prepared views reuse certificate-validated
@@ -80,10 +80,9 @@ for difficult inputs.
 
 ## Status
 
-The default crate root centers on `ExactMesh`, typed kernel errors, and borrowed
-mesh/triangle/face/arrangement views. Unsupported boolean, intersection, or
-simplification topology is reported as a blocker instead of falling back to
-tolerance-based geometry.
+The default crate root centers on `ExactMesh`. Unsupported boolean,
+intersection, or simplification topology is reported as a typed blocker instead
+of falling back to tolerance-based geometry.
 
 ## Installation
 

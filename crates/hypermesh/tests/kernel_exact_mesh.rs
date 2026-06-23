@@ -1,7 +1,8 @@
 use hyperlimit::{ApproximationPolicy, MeshSource, Point3, SourceProvenance};
-use hypermesh::{
-    ArrangementView, EdgeRef, ExactMesh, ExactMeshBlocker, ExactMeshError, ExactMeshRef, FaceRef,
-    MeshView, PreparedMeshPair, PreparedMeshPairCacheStatus, PreparedMeshPairFactState,
+use hypermesh::ExactMesh;
+use hypermesh::kernel::{
+    ArrangementView, EdgeRef, ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshRef,
+    FaceRef, MeshView, PreparedMeshPair, PreparedMeshPairCacheStatus, PreparedMeshPairFactState,
     PreparedMeshPairPlanKind, PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis,
     PreparedMeshPairSweepDirection, PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,
 };
@@ -101,7 +102,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .blocker("broad-phase candidate face pairs")
             .unwrap()
             .kind(),
-        hypermesh::ExactMeshBlockerKind::StaleFactReplay
+        ExactMeshBlockerKind::StaleFactReplay
     );
     assert_eq!(
         initial_status.candidate_pair_plan(),
@@ -160,7 +161,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         initial_status.union_result(),
@@ -173,7 +174,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         initial_status
@@ -181,15 +182,15 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         pair.current_union_result().unwrap_err().blockers()[0].kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         pair.current_union_result_outcome().unwrap_err().blockers()[0].kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         initial_status.intersection_result(),
@@ -202,7 +203,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         initial_status
@@ -210,18 +211,18 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         pair.current_intersection_result().unwrap_err().blockers()[0].kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         pair.current_intersection_result_outcome()
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         initial_status.difference_result(),
@@ -234,7 +235,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         initial_status
@@ -242,18 +243,18 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         pair.current_difference_result().unwrap_err().blockers()[0].kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         pair.current_difference_result_outcome()
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         initial_status.xor_result(),
@@ -266,7 +267,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         initial_status
@@ -274,15 +275,15 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         pair.current_xor_result().unwrap_err().blockers()[0].kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         pair.current_xor_result_outcome().unwrap_err().blockers()[0].kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         initial_status
@@ -290,7 +291,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         initial_status
@@ -298,7 +299,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         initial_status
@@ -306,7 +307,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         initial_status
@@ -314,25 +315,25 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         pair.current_face_pair_classification_count()
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         pair.current_intersection_graph_counts()
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         pair.current_arrangement_counts().unwrap_err().blockers()[0].kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
 
     assert_eq!(pair.prepare_face_pair_classifications(), 0);
@@ -416,14 +417,14 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         pair.current_intersection_graph_counts()
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         retained_status.arrangement_shortcut_facts(),
@@ -613,7 +614,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let missing_vertex = view.require_vertex(view.vertex_count()).unwrap_err();
     assert_eq!(
         missing_vertex.blockers()[0].kind(),
-        hypermesh::ExactMeshBlockerKind::IndexOutOfBounds
+        ExactMeshBlockerKind::IndexOutOfBounds
     );
     assert_eq!(
         missing_vertex.blockers()[0].vertex(),
@@ -636,7 +637,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let missing_face = view.require_face(view.face_count()).unwrap_err();
     assert_eq!(
         missing_face.blockers()[0].kind(),
-        hypermesh::ExactMeshBlockerKind::IndexOutOfBounds
+        ExactMeshBlockerKind::IndexOutOfBounds
     );
     assert_eq!(missing_face.blockers()[0].face(), Some(view.face_count()));
 
@@ -662,7 +663,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let missing_triangle = view.require_triangle(view.face_count()).unwrap_err();
     assert_eq!(
         missing_triangle.blockers()[0].kind(),
-        hypermesh::ExactMeshBlockerKind::IndexOutOfBounds
+        ExactMeshBlockerKind::IndexOutOfBounds
     );
     assert_eq!(
         missing_triangle.blockers()[0].face(),
@@ -689,7 +690,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let missing_edge = view.require_edge(view.edge_count()).unwrap_err();
     assert_eq!(
         missing_edge.blockers()[0].kind(),
-        hypermesh::ExactMeshBlockerKind::IndexOutOfBounds
+        ExactMeshBlockerKind::IndexOutOfBounds
     );
     assert_eq!(missing_edge.blockers()[0].edge(), None);
 
@@ -844,7 +845,7 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         unprepared_status
@@ -852,7 +853,7 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         prepared_pair
@@ -860,7 +861,7 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     let count_only_summary = prepared_pair.prepare_broad_phase_traversal_summary();
     let count_only_status = prepared_pair.cache_status();
@@ -890,7 +891,7 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     let retained_candidate_count = prepared_pair.prepare_candidate_face_pairs();
     assert_eq!(
@@ -964,7 +965,7 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     let streamed_graph_pair = left
         .view()
@@ -1090,7 +1091,7 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         prepared_pair.prepare_current_intersection_graph().unwrap(),
@@ -1286,7 +1287,7 @@ fn prepared_pair_candidate_visitor_streams_without_storing_records() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
 }
 
@@ -1315,7 +1316,7 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
             let missing_vertex = view.require_vertex(view.vertex_count()).unwrap_err();
             assert_eq!(
                 missing_vertex.blockers()[0].kind(),
-                hypermesh::ExactMeshBlockerKind::IndexOutOfBounds
+                ExactMeshBlockerKind::IndexOutOfBounds
             );
             assert_eq!(
                 missing_vertex.blockers()[0].vertex(),
@@ -1324,12 +1325,12 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
             let missing_edge = view.require_edge(view.edge_count()).unwrap_err();
             assert_eq!(
                 missing_edge.blockers()[0].kind(),
-                hypermesh::ExactMeshBlockerKind::IndexOutOfBounds
+                ExactMeshBlockerKind::IndexOutOfBounds
             );
             let missing_face_cell = view.require_face_cell(view.face_cell_count()).unwrap_err();
             assert_eq!(
                 missing_face_cell.blockers()[0].kind(),
-                hypermesh::ExactMeshBlockerKind::IndexOutOfBounds
+                ExactMeshBlockerKind::IndexOutOfBounds
             );
 
             if let Some(vertex) = view.vertex(0) {
@@ -1381,14 +1382,14 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         pair.with_current_arrangement_view(|view: ArrangementView<'_>| view.vertex_count())
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     let prepared_arrangement_counts = pair.prepare_arrangement().unwrap();
     assert!(prepared_arrangement_counts.is_complete());
@@ -1627,7 +1628,7 @@ fn exact_mesh_transform_rejects_non_affine_homogeneous_rows() {
 
     assert_eq!(
         error.blockers()[0].kind(),
-        hypermesh::ExactMeshBlockerKind::UnsupportedExactOperation
+        ExactMeshBlockerKind::UnsupportedExactOperation
     );
 }
 
