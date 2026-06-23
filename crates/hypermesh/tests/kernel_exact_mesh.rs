@@ -1,5 +1,8 @@
 use hyperlimit::{Point3, SourceProvenance};
-use hypermesh::{ExactMesh, ExactMeshBlocker, ExactMeshError};
+use hypermesh::{
+    ArrangementView, EdgeRef, ExactMesh, ExactMeshBlocker, ExactMeshError, ExactMeshRef, FaceRef,
+    PreparedMeshPair, PreparedMeshPairView, PreparedMeshView, TriangleRef,
+};
 use hyperreal::Real;
 
 fn p(x: i64, y: i64, z: i64) -> Point3 {
@@ -78,7 +81,7 @@ fn exact_mesh_borrowed_view_materializes_named_operations() {
 #[test]
 fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let mesh = tetra([0, 0, 0]);
-    let view = mesh.view();
+    let view: ExactMeshRef<'_> = mesh.view();
 
     view.validate_retained_state().unwrap();
     assert_eq!(view.vertices().len(), 4);
@@ -90,7 +93,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(view.triangle_refs().count(), 4);
     assert_eq!(view.edges().count(), view.edge_count());
 
-    let face = view.face(0).unwrap();
+    let face: FaceRef<'_> = view.face(0).unwrap();
     assert_eq!(face.index(), 0);
     assert_eq!(face.vertex_indices(), [0, 2, 1]);
     assert_eq!(
@@ -99,7 +102,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     );
     assert_eq!(face.vertices().len(), 3);
 
-    let triangle = view.triangle(1).unwrap();
+    let triangle: TriangleRef<'_> = view.triangle(1).unwrap();
     assert_eq!(triangle.index(), 1);
     assert_eq!(triangle.vertex_indices(), [0, 1, 3]);
     assert_eq!(
@@ -107,7 +110,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
         (triangle.plane_normal(), triangle.plane_offset())
     );
 
-    let edge = view.edge(0).unwrap();
+    let edge: EdgeRef<'_> = view.edge(0).unwrap();
     assert_eq!(edge.index(), 0);
     assert_eq!(edge.incident_face_count(), 2);
     assert_eq!(edge.directed_use_counts(), [1, 1]);
@@ -122,9 +125,10 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
     let disjoint = tetra([5, 0, 0]);
 
     left.view().validate_retained_bounds().unwrap();
-    let prepared_left = left.view().prepare_broad_phase().unwrap();
-    let prepared_overlapping = overlapping.view().prepare_broad_phase().unwrap();
-    let prepared_pair = left
+    let prepared_left: PreparedMeshView<'_> = left.view().prepare_broad_phase().unwrap();
+    let prepared_overlapping: PreparedMeshView<'_> =
+        overlapping.view().prepare_broad_phase().unwrap();
+    let prepared_pair: PreparedMeshPair<'_, '_> = left
         .view()
         .prepare_broad_phase_pair(overlapping.view())
         .unwrap();
@@ -138,7 +142,8 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
     );
     assert!(prepared_pair.candidate_face_pair_capacity_hint() > 0);
 
-    let pair_view = prepared_left.pair_with(&prepared_overlapping);
+    let pair_view: PreparedMeshPairView<'_, '_, '_> =
+        prepared_left.pair_with(&prepared_overlapping);
     assert_eq!(pair_view.left().view().face_count(), left.triangle_count());
     assert_eq!(
         pair_view.right().view().face_count(),
@@ -260,7 +265,7 @@ fn prepared_broad_phase_candidate_visitor_can_stop_early() {
 fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);
-    left.with_arrangement_view(&right, |view| {
+    left.with_arrangement_view(&right, |view: ArrangementView<'_>| {
         view.validate_retained_state().unwrap();
         assert_eq!(view.vertices().count(), view.vertex_count());
         assert_eq!(view.edges().count(), view.edge_count());

@@ -56,5 +56,14 @@ mod winding;
 mod witness;
 
 #[doc(hidden)]
+pub use arrangement3d::{
+    ArrangementEdgeRef, ArrangementFaceCellRef, ArrangementVertexRef, ArrangementView,
+};
+#[doc(hidden)]
 pub use error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 pub use mesh::ExactMesh;
+#[doc(hidden)]
+pub use view::{
+    EdgeRef, ExactMeshRef, FaceRef, PreparedMeshPair, PreparedMeshPairView, PreparedMeshView,
+    TriangleRef,
+};
