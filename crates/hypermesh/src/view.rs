@@ -3,6 +3,10 @@
 use std::cell::RefCell;
 
 use super::ExactMesh;
+use super::boolean::{
+    ExactBooleanOperation, ExactBooleanRequest,
+    materialize_boolean_exact_request_with_prepared_pair,
+};
 use super::bounds::{
     BroadPhaseScratch, CandidateFacePairPlan, ExactAabbBroadPhase, ExactBroadPhaseStrategy,
     PreparedMeshBounds,
@@ -10,6 +14,7 @@ use super::bounds::{
 use super::error::ExactMeshError;
 use super::graph::ExactIntersectionGraph;
 use super::intersection::{MeshFacePairClassification, classify_mesh_face_pair_unchecked};
+use super::validation::ExactMeshValidationPolicy;
 use hyperlimit::Point3;
 use hyperreal::Real;
 
@@ -401,6 +406,37 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     #[cfg(test)]
     pub(crate) fn has_cached_intersection_graph(&self) -> bool {
         self.intersection_graph.borrow().is_some()
+    }
+
+    /// Materialize the exact closed union using this retained pair session.
+    pub fn union(&self) -> Result<ExactMesh, ExactMeshError> {
+        self.named_boolean_mesh(ExactBooleanOperation::Union)
+    }
+
+    /// Materialize the exact closed intersection using this retained pair session.
+    pub fn intersection(&self) -> Result<ExactMesh, ExactMeshError> {
+        self.named_boolean_mesh(ExactBooleanOperation::Intersection)
+    }
+
+    /// Materialize the exact closed difference of the left mesh minus the right mesh.
+    pub fn difference(&self) -> Result<ExactMesh, ExactMeshError> {
+        self.named_boolean_mesh(ExactBooleanOperation::Difference)
+    }
+
+    /// Materialize the exact closed symmetric difference of the prepared meshes.
+    pub fn xor(&self) -> Result<ExactMesh, ExactMeshError> {
+        let left_only = self.difference()?;
+        let right_only = self.right.view().difference(self.left.view())?;
+        left_only.union(&right_only)
+    }
+
+    fn named_boolean_mesh(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> Result<ExactMesh, ExactMeshError> {
+        let request = ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::CLOSED);
+        materialize_boolean_exact_request_with_prepared_pair(self, request)
+            .map(|result| result.into_mesh())
     }
 
     /// Visit certificate-validated broad-phase candidate face pairs using the cached pair plan.

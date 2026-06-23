@@ -79,6 +79,38 @@ fn exact_mesh_borrowed_view_materializes_named_operations() {
 }
 
 #[test]
+fn prepared_mesh_pair_materializes_named_operations() {
+    let empty = ExactMesh::new(
+        Vec::new(),
+        Vec::new(),
+        SourceProvenance::exact("empty test mesh"),
+    )
+    .unwrap();
+    let solid = tetra([0, 0, 0]);
+    let pair = empty.view().prepare_broad_phase_pair(solid.view()).unwrap();
+
+    let union = pair.union().unwrap();
+    union.validate_retained_state().unwrap();
+    assert_eq!(union.triangle_count(), solid.triangle_count());
+
+    let repeated_union = pair.union().unwrap();
+    repeated_union.validate_retained_state().unwrap();
+    assert_eq!(repeated_union.triangle_count(), union.triangle_count());
+
+    let intersection = pair.intersection().unwrap();
+    intersection.validate_retained_state().unwrap();
+    assert_eq!(intersection.triangle_count(), 0);
+
+    let difference = pair.difference().unwrap();
+    difference.validate_retained_state().unwrap();
+    assert_eq!(difference.triangle_count(), 0);
+
+    let xor = pair.xor().unwrap();
+    xor.validate_retained_state().unwrap();
+    assert_eq!(xor.triangle_count(), solid.triangle_count());
+}
+
+#[test]
 fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let mesh = tetra([0, 0, 0]);
     let view: ExactMeshRef<'_> = mesh.view();
