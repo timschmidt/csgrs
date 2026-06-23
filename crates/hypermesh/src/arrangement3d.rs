@@ -970,13 +970,14 @@ impl<'a> ArrangementVertexRef<'a> {
     }
 
     /// Exact retained vertex coordinate.
-    pub fn point(self) -> &'a Point3 {
-        &self.arrangement.vertices[self.index].point
+    pub fn point(self) -> Result<&'a Point3, ExactMeshError> {
+        retained_arrangement_vertex(self.arrangement, self.index).map(|vertex| &vertex.point)
     }
 
     /// Number of retained source/construction provenance records.
-    pub fn provenance_count(self) -> usize {
-        self.arrangement.vertices[self.index].provenance.len()
+    pub fn provenance_count(self) -> Result<usize, ExactMeshError> {
+        retained_arrangement_vertex(self.arrangement, self.index)
+            .map(|vertex| vertex.provenance.len())
     }
 }
 
@@ -987,13 +988,13 @@ impl<'a> ArrangementEdgeRef<'a> {
     }
 
     /// Endpoint arrangement vertex indices.
-    pub fn vertices(self) -> [usize; 2] {
-        self.arrangement.edges[self.index].vertices
+    pub fn vertices(self) -> Result<[usize; 2], ExactMeshError> {
+        retained_arrangement_edge(self.arrangement, self.index).map(|edge| edge.vertices)
     }
 
     /// Number of retained source/construction provenance records.
-    pub fn provenance_count(self) -> usize {
-        self.arrangement.edges[self.index].provenance.len()
+    pub fn provenance_count(self) -> Result<usize, ExactMeshError> {
+        retained_arrangement_edge(self.arrangement, self.index).map(|edge| edge.provenance.len())
     }
 }
 
@@ -1004,33 +1005,76 @@ impl<'a> ArrangementFaceCellRef<'a> {
     }
 
     /// Source carrier face index.
-    pub fn carrier_face(self) -> usize {
-        self.arrangement.face_cells[self.index].carrier.face
+    pub fn carrier_face(self) -> Result<usize, ExactMeshError> {
+        retained_arrangement_face_cell(self.arrangement, self.index)
+            .map(|face_cell| face_cell.carrier.face)
     }
 
     /// Boundary node count in carrier-face order.
-    pub fn boundary_node_count(self) -> usize {
-        self.arrangement.face_cells[self.index].boundary.len()
+    pub fn boundary_node_count(self) -> Result<usize, ExactMeshError> {
+        retained_arrangement_face_cell(self.arrangement, self.index)
+            .map(|face_cell| face_cell.boundary.len())
     }
 
     /// Boundary point count in carrier-face order.
-    pub fn boundary_point_count(self) -> usize {
-        self.arrangement.face_cells[self.index]
-            .boundary_points
-            .len()
+    pub fn boundary_point_count(self) -> Result<usize, ExactMeshError> {
+        retained_arrangement_face_cell(self.arrangement, self.index)
+            .map(|face_cell| face_cell.boundary_points.len())
     }
 
     /// Iterate exact boundary coordinates in carrier-face order.
-    pub fn boundary_points(self) -> impl Iterator<Item = &'a Point3> + 'a {
-        self.arrangement.face_cells[self.index]
-            .boundary_points
-            .iter()
+    pub fn boundary_points(self) -> Result<impl Iterator<Item = &'a Point3> + 'a, ExactMeshError> {
+        retained_arrangement_face_cell(self.arrangement, self.index)
+            .map(|face_cell| face_cell.boundary_points.iter())
     }
 
     /// Return whether this face-cell retained an opposite-mesh classification.
-    pub fn has_opposite_classification(self) -> bool {
-        self.arrangement.face_cells[self.index].opposite.is_some()
+    pub fn has_opposite_classification(self) -> Result<bool, ExactMeshError> {
+        retained_arrangement_face_cell(self.arrangement, self.index)
+            .map(|face_cell| face_cell.opposite.is_some())
     }
+}
+
+fn retained_arrangement_vertex(
+    arrangement: &ExactArrangement3d,
+    vertex: usize,
+) -> Result<&ArrangementVertex, ExactMeshError> {
+    arrangement.vertices.get(vertex).ok_or_else(|| {
+        ExactMeshError::one(
+            ExactMeshBlocker::new(
+                ExactMeshBlockerKind::StaleFactReplay,
+                format!("retained arrangement vertex {vertex} has no vertex row"),
+            )
+            .with_vertex(vertex),
+        )
+    })
+}
+
+fn retained_arrangement_edge(
+    arrangement: &ExactArrangement3d,
+    edge: usize,
+) -> Result<&ArrangementEdge, ExactMeshError> {
+    arrangement.edges.get(edge).ok_or_else(|| {
+        ExactMeshError::one(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::StaleFactReplay,
+            format!("retained arrangement edge {edge} has no edge row"),
+        ))
+    })
+}
+
+fn retained_arrangement_face_cell(
+    arrangement: &ExactArrangement3d,
+    face_cell: usize,
+) -> Result<&ArrangementFaceCell, ExactMeshError> {
+    arrangement.face_cells.get(face_cell).ok_or_else(|| {
+        ExactMeshError::one(
+            ExactMeshBlocker::new(
+                ExactMeshBlockerKind::StaleFactReplay,
+                format!("retained arrangement face-cell {face_cell} has no face-cell row"),
+            )
+            .with_face(face_cell),
+        )
+    })
 }
 
 /// Freshness status for a retained exact 3D arrangement.

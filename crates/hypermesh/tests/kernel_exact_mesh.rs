@@ -1087,22 +1087,22 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
 
             if let Some(vertex) = view.vertex(0) {
                 assert_eq!(vertex.index(), 0);
-                assert!(vertex.provenance_count() > 0);
-                let _ = vertex.point();
+                assert!(vertex.provenance_count().unwrap() > 0);
+                let _ = vertex.point().unwrap();
             }
             if let Some(edge) = view.edge(0) {
                 assert_eq!(edge.index(), 0);
-                assert_eq!(edge.vertices().len(), 2);
+                assert_eq!(edge.vertices().unwrap().len(), 2);
             }
             if let Some(face_cell) = view.face_cell(0) {
                 assert_eq!(face_cell.index(), 0);
                 assert_eq!(
-                    face_cell.boundary_node_count(),
-                    face_cell.boundary_point_count()
+                    face_cell.boundary_node_count().unwrap(),
+                    face_cell.boundary_point_count().unwrap()
                 );
                 assert_eq!(
-                    face_cell.boundary_points().count(),
-                    face_cell.boundary_point_count()
+                    face_cell.boundary_points().unwrap().count(),
+                    face_cell.boundary_point_count().unwrap()
                 );
             }
 
