@@ -2618,8 +2618,8 @@ impl<'a> FaceRef<'a> {
     }
 
     /// Borrow the face vertices.
-    pub fn vertex_refs(self) -> [VertexRef<'a>; 3] {
-        vertex_refs(self.mesh, self.vertex_indices())
+    pub fn vertex_refs(self) -> Result<[VertexRef<'a>; 3], ExactMeshError> {
+        vertex_refs(self.mesh, self.index, self.vertex_indices())
     }
 
     /// Retained directed edge rows in face winding order.
@@ -2655,8 +2655,8 @@ impl<'a> FaceRef<'a> {
     }
 
     /// Exact face vertices.
-    pub fn vertices(self) -> [&'a Point3; 3] {
-        triangle_vertices(self.mesh, self.vertex_indices())
+    pub fn vertices(self) -> Result<[&'a Point3; 3], ExactMeshError> {
+        triangle_vertices(self.mesh, self.index, self.vertex_indices())
     }
 }
 
@@ -2681,8 +2681,8 @@ impl<'a> TriangleRef<'a> {
     }
 
     /// Borrow the triangle vertices.
-    pub fn vertex_refs(self) -> [VertexRef<'a>; 3] {
-        vertex_refs(self.mesh, self.vertex_indices())
+    pub fn vertex_refs(self) -> Result<[VertexRef<'a>; 3], ExactMeshError> {
+        vertex_refs(self.mesh, self.index, self.vertex_indices())
     }
 
     /// Retained directed edge rows in triangle winding order.
@@ -2718,8 +2718,8 @@ impl<'a> TriangleRef<'a> {
     }
 
     /// Exact triangle vertices.
-    pub fn vertices(self) -> [&'a Point3; 3] {
-        triangle_vertices(self.mesh, self.vertex_indices())
+    pub fn vertices(self) -> Result<[&'a Point3; 3], ExactMeshError> {
+        triangle_vertices(self.mesh, self.index, self.vertex_indices())
     }
 }
 
@@ -2797,22 +2797,41 @@ impl<'a> EdgeRef<'a> {
     }
 }
 
-fn triangle_vertices(mesh: &ExactMesh, triangle: [usize; 3]) -> [&Point3; 3] {
+fn triangle_vertices(
+    mesh: &ExactMesh,
+    face: usize,
+    triangle: [usize; 3],
+) -> Result<[&Point3; 3], ExactMeshError> {
     let [a, b, c] = triangle;
-    [
-        &mesh.vertices()[a],
-        &mesh.vertices()[b],
-        &mesh.vertices()[c],
-    ]
+    let a = mesh
+        .vertices()
+        .get(a)
+        .ok_or_else(|| retained_face_vertex_error(face, triangle, a))?;
+    let b = mesh
+        .vertices()
+        .get(b)
+        .ok_or_else(|| retained_face_vertex_error(face, triangle, b))?;
+    let c = mesh
+        .vertices()
+        .get(c)
+        .ok_or_else(|| retained_face_vertex_error(face, triangle, c))?;
+    Ok([a, b, c])
 }
 
-fn vertex_refs(mesh: &ExactMesh, triangle: [usize; 3]) -> [VertexRef<'_>; 3] {
+fn vertex_refs(
+    mesh: &ExactMesh,
+    face: usize,
+    triangle: [usize; 3],
+) -> Result<[VertexRef<'_>; 3], ExactMeshError> {
     let [a, b, c] = triangle;
-    [
+    require_retained_face_vertex(mesh, face, triangle, a)?;
+    require_retained_face_vertex(mesh, face, triangle, b)?;
+    require_retained_face_vertex(mesh, face, triangle, c)?;
+    Ok([
         VertexRef { mesh, index: a },
         VertexRef { mesh, index: b },
         VertexRef { mesh, index: c },
-    ]
+    ])
 }
 
 fn bounds_corners(bounds: &ExactAabb3) -> (&Point3, &Point3) {
@@ -2840,6 +2859,32 @@ fn require_retained_edge_endpoint(
         let edge_vertices = mesh.facts().edges[edge].vertices;
         Err(retained_edge_endpoint_error(edge, edge_vertices, vertex))
     }
+}
+
+fn require_retained_face_vertex(
+    mesh: &ExactMesh,
+    face: usize,
+    triangle: [usize; 3],
+    vertex: usize,
+) -> Result<(), ExactMeshError> {
+    if vertex < mesh.vertices().len() {
+        Ok(())
+    } else {
+        Err(retained_face_vertex_error(face, triangle, vertex))
+    }
+}
+
+fn retained_face_vertex_error(face: usize, triangle: [usize; 3], vertex: usize) -> ExactMeshError {
+    ExactMeshError::one(
+        ExactMeshBlocker::new(
+            ExactMeshBlockerKind::StaleFactReplay,
+            format!(
+                "retained mesh face {face} with vertex row {triangle:?} references missing vertex {vertex}"
+            ),
+        )
+        .with_face(face)
+        .with_vertex(vertex),
+    )
 }
 
 fn retained_edge_endpoint_error(

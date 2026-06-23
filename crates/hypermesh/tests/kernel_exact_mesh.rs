@@ -493,7 +493,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(view.face_bounds(0), Some((&p(0, 0, 0), &p(1, 1, 0))));
     assert_eq!(face.bounds().unwrap(), (&p(0, 0, 0), &p(1, 1, 0)));
     assert_eq!(
-        face.vertex_refs().map(VertexRef::index),
+        face.vertex_refs().unwrap().map(VertexRef::index),
         face.vertex_indices()
     );
     assert_eq!(face.directed_edges(), [[0, 2], [2, 1], [1, 0]]);
@@ -503,7 +503,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
         face.plane_coefficients(),
         (face.plane_normal(), face.plane_offset())
     );
-    assert_eq!(face.vertices().len(), 3);
+    assert_eq!(face.vertices().unwrap().len(), 3);
 
     assert_eq!(view.require_triangle(1).unwrap().index(), 1);
     let missing_triangle = view.require_triangle(view.face_count()).unwrap_err();
@@ -521,7 +521,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(triangle.vertex_indices(), [0, 1, 3]);
     assert_eq!(triangle.bounds().unwrap(), (&p(0, 0, 0), &p(1, 0, 1)));
     assert_eq!(
-        triangle.vertex_refs().map(VertexRef::index),
+        triangle.vertex_refs().unwrap().map(VertexRef::index),
         triangle.vertex_indices()
     );
     assert_eq!(triangle.directed_edges(), [[0, 1], [1, 3], [3, 0]]);
