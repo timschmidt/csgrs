@@ -132,6 +132,11 @@ fn prepared_mesh_pair_materializes_named_operations() {
         None
     );
     assert_eq!(
+        initial_status.arrangement(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(initial_status.retained_arrangement_counts(), None);
+    assert_eq!(
         initial_status.arrangement_shortcut_facts(),
         PreparedMeshPairFactState::Missing
     );
@@ -251,6 +256,10 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    assert_eq!(
+        pair.current_arrangement_counts().unwrap_err().blockers()[0].kind(),
         hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
     );
 
@@ -831,6 +840,18 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         pair.cache_status().intersection_graph(),
         PreparedMeshPairFactState::Missing
     );
+    assert_eq!(
+        pair.cache_status().arrangement(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        pair.cache_status()
+            .current_arrangement_counts()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
     let prepared_counts = pair
         .with_arrangement_view(|view: ArrangementView<'_>| {
             view.validate_retained_state().unwrap();
@@ -844,6 +865,42 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         })
         .unwrap();
     assert_eq!(prepared_counts, direct_counts);
+    let prepared_status = pair.cache_status();
+    assert_eq!(
+        prepared_status.arrangement(),
+        PreparedMeshPairFactState::Current
+    );
+    let retained_arrangement_counts = prepared_status.current_arrangement_counts().unwrap();
+    assert_eq!(
+        prepared_status.retained_arrangement_counts(),
+        Some(retained_arrangement_counts)
+    );
+    assert_eq!(
+        (
+            retained_arrangement_counts.vertex_count(),
+            retained_arrangement_counts.edge_count(),
+            retained_arrangement_counts.face_cell_count(),
+            retained_arrangement_counts.lower_dimensional_artifact_count(),
+            retained_arrangement_counts.blocker_count(),
+        ),
+        direct_counts
+    );
+    let repeated_counts = pair
+        .with_arrangement_view(|view: ArrangementView<'_>| {
+            (
+                view.vertex_count(),
+                view.edge_count(),
+                view.face_cell_count(),
+                view.lower_dimensional_artifact_count(),
+                view.blocker_count(),
+            )
+        })
+        .unwrap();
+    assert_eq!(repeated_counts, direct_counts);
+    assert_eq!(
+        pair.current_arrangement_counts().unwrap(),
+        retained_arrangement_counts
+    );
     assert_eq!(
         pair.cache_status().intersection_graph(),
         PreparedMeshPairFactState::Current

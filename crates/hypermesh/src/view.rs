@@ -80,6 +80,8 @@ pub struct PreparedMeshPair<'left, 'right> {
     intersection_graph: RefCell<Option<Rc<ExactIntersectionGraph>>>,
     intersection_graph_counts: RefCell<Option<RetainedIntersectionGraphCounts>>,
     intersection_graph_validated: RefCell<bool>,
+    arrangement: RefCell<Option<Rc<ExactArrangement>>>,
+    arrangement_counts: RefCell<Option<PreparedMeshPairArrangementCounts>>,
     arrangement_shortcut_facts: RefCell<Option<ExactArrangementCellComplexShortcutFacts>>,
     union_result: RefCell<Option<Result<ExactMesh, ExactMeshError>>>,
     intersection_result: RefCell<Option<Result<ExactMesh, ExactMeshError>>>,
@@ -108,6 +110,8 @@ pub struct PreparedMeshPairCacheStatus {
     intersection_graph: PreparedMeshPairFactState,
     retained_intersection_graph_face_pair_count: Option<usize>,
     retained_intersection_graph_event_count: Option<usize>,
+    arrangement: PreparedMeshPairFactState,
+    retained_arrangement_counts: Option<PreparedMeshPairArrangementCounts>,
     arrangement_shortcut_facts: PreparedMeshPairFactState,
     union_result: PreparedMeshPairFactState,
     intersection_result: PreparedMeshPairFactState,
@@ -197,6 +201,53 @@ impl PreparedMeshPairBroadPhaseSummary {
 struct RetainedIntersectionGraphCounts {
     face_pairs: usize,
     events: usize,
+}
+
+/// Retained topology counts for a prepared arrangement.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct PreparedMeshPairArrangementCounts {
+    vertices: usize,
+    edges: usize,
+    face_cells: usize,
+    lower_dimensional_artifacts: usize,
+    blockers: usize,
+}
+
+impl PreparedMeshPairArrangementCounts {
+    /// Return the retained arrangement vertex count.
+    pub const fn vertex_count(self) -> usize {
+        self.vertices
+    }
+
+    /// Return the retained arrangement edge count.
+    pub const fn edge_count(self) -> usize {
+        self.edges
+    }
+
+    /// Return the retained arrangement face-cell count.
+    pub const fn face_cell_count(self) -> usize {
+        self.face_cells
+    }
+
+    /// Return the retained lower-dimensional artifact count.
+    pub const fn lower_dimensional_artifact_count(self) -> usize {
+        self.lower_dimensional_artifacts
+    }
+
+    /// Return the retained arrangement blocker count.
+    pub const fn blocker_count(self) -> usize {
+        self.blockers
+    }
+
+    fn from_arrangement(arrangement: &ExactArrangement) -> Self {
+        Self {
+            vertices: arrangement.vertices.len(),
+            edges: arrangement.edges.len(),
+            face_cells: arrangement.face_cells.len(),
+            lower_dimensional_artifacts: arrangement.lower_dimensional_artifacts.len(),
+            blockers: arrangement.blockers.len(),
+        }
+    }
 }
 
 /// Certificate state for retained facts inside a prepared mesh-pair session.
@@ -407,6 +458,34 @@ impl PreparedMeshPairCacheStatus {
                 "prepared mesh-pair session retained an intersection graph certificate without graph counts",
             ))),
         }
+    }
+
+    /// Return the certificate state for the retained prepared arrangement.
+    pub const fn arrangement(self) -> PreparedMeshPairFactState {
+        self.arrangement
+    }
+
+    /// Return retained arrangement topology counts, when cached.
+    pub const fn retained_arrangement_counts(self) -> Option<PreparedMeshPairArrangementCounts> {
+        self.retained_arrangement_counts
+    }
+
+    /// Require a retained arrangement built from current certificates.
+    pub fn require_current_arrangement(self) -> Result<(), ExactMeshError> {
+        self.arrangement.require_current("arrangement")
+    }
+
+    /// Return retained arrangement topology counts after requiring current evidence.
+    pub fn current_arrangement_counts(
+        self,
+    ) -> Result<PreparedMeshPairArrangementCounts, ExactMeshError> {
+        self.require_current_arrangement()?;
+        self.retained_arrangement_counts.ok_or_else(|| {
+            ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::MissingRequiredEvidence,
+                "prepared mesh-pair session retained arrangement evidence without topology counts",
+            ))
+        })
     }
 
     /// Return the certificate state for arrangement shortcut facts.
@@ -766,6 +845,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             intersection_graph: RefCell::new(None),
             intersection_graph_counts: RefCell::new(None),
             intersection_graph_validated: RefCell::new(false),
+            arrangement: RefCell::new(None),
+            arrangement_counts: RefCell::new(None),
             arrangement_shortcut_facts: RefCell::new(None),
             union_result: RefCell::new(None),
             intersection_result: RefCell::new(None),
@@ -825,6 +906,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         let face_pair_classification_counts = *self.face_pair_classification_counts.borrow();
         let graph_counts = *self.intersection_graph_counts.borrow();
         let graph_retained = self.intersection_graph.borrow().is_some();
+        let arrangement_retained = self.arrangement.borrow().is_some();
         PreparedMeshPairCacheStatus {
             candidate_pair_plan: PreparedMeshPairPlanKind::from_candidate_plan(self.plan),
             candidate_pair_capacity_hint: self.candidate_face_pair_capacity_hint(),
@@ -843,6 +925,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             retained_intersection_graph_face_pair_count: graph_counts
                 .map(|counts| counts.face_pairs),
             retained_intersection_graph_event_count: graph_counts.map(|counts| counts.events),
+            arrangement: retained_current_state(arrangement_retained),
+            retained_arrangement_counts: *self.arrangement_counts.borrow(),
             arrangement_shortcut_facts: retained_current_state(
                 self.arrangement_shortcut_facts.borrow().is_some(),
             ),
@@ -866,6 +950,13 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     /// Return retained exact intersection graph counts after requiring a current certificate.
     pub fn current_intersection_graph_counts(&self) -> Result<(usize, usize), ExactMeshError> {
         self.cache_status().current_intersection_graph_counts()
+    }
+
+    /// Return retained arrangement topology counts after requiring current evidence.
+    pub fn current_arrangement_counts(
+        &self,
+    ) -> Result<PreparedMeshPairArrangementCounts, ExactMeshError> {
+        self.cache_status().current_arrangement_counts()
     }
 
     /// Build and retain arrangement shortcut facts for this prepared pair.
@@ -913,6 +1004,15 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         query: impl for<'a> FnOnce(ArrangementView<'a>) -> R,
     ) -> Result<R, ExactMeshError> {
+        let arrangement = self.retained_arrangement()?;
+        Ok(query(arrangement.view()))
+    }
+
+    fn retained_arrangement(&self) -> Result<Rc<ExactArrangement>, ExactMeshError> {
+        if let Some(arrangement) = self.arrangement.borrow().clone() {
+            return Ok(arrangement);
+        }
+
         let graph = build_validated_intersection_graph_from_prepared_pair(self)?;
         let arrangement = ExactArrangement::from_source_certified_intersection_graph_with_policy(
             graph.as_ref().clone(),
@@ -920,7 +1020,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             self.right.view().mesh(),
             ExactRegularizationPolicy::default(),
         )?;
-        Ok(query(arrangement.view()))
+        let counts = PreparedMeshPairArrangementCounts::from_arrangement(&arrangement);
+        let arrangement = Rc::new(arrangement);
+        *self.arrangement.borrow_mut() = Some(Rc::clone(&arrangement));
+        *self.arrangement_counts.borrow_mut() = Some(counts);
+        Ok(arrangement)
     }
 
     /// Visit retained coarse face-pair classifications for this prepared mesh pair.
@@ -971,6 +1075,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         *self.intersection_graph.borrow_mut() = Some(Rc::clone(&graph));
         *self.intersection_graph_counts.borrow_mut() = Some(counts);
         *self.intersection_graph_validated.borrow_mut() = false;
+        *self.arrangement.borrow_mut() = None;
+        *self.arrangement_counts.borrow_mut() = None;
         graph
     }
 
