@@ -70,6 +70,7 @@ pub struct PreparedMeshPair<'left, 'right> {
     left: PreparedMeshView<'left>,
     right: PreparedMeshView<'right>,
     plan: CandidateFacePairPlan,
+    broad_phase_summary: PreparedMeshPairBroadPhaseSummary,
     candidate_pair_capacity_hint: usize,
     scratch: RefCell<BroadPhaseScratch>,
     face_pair_classifications: RefCell<Option<Vec<MeshFacePairClassification>>>,
@@ -98,6 +99,7 @@ pub struct PreparedMeshPairView<'pair, 'left, 'right> {
 pub struct PreparedMeshPairCacheStatus {
     candidate_pair_plan: PreparedMeshPairPlanKind,
     candidate_pair_capacity_hint: usize,
+    broad_phase_summary: PreparedMeshPairBroadPhaseSummary,
     face_pair_classifications: PreparedMeshPairFactState,
     retained_face_pair_classification_count: Option<usize>,
     retained_face_pair_classification_counts: Option<PreparedMeshPairClassificationCounts>,
@@ -120,6 +122,73 @@ pub enum PreparedMeshPairPlanKind {
     Sweep,
     /// No certified sweep axis was retained, so candidate traversal falls back to exact quadratic checks.
     Quadratic,
+}
+
+/// Retained broad-phase planning provenance for a prepared mesh-pair session.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct PreparedMeshPairBroadPhaseSummary {
+    plan: PreparedMeshPairPlanKind,
+    left_face_count: usize,
+    right_face_count: usize,
+    face_pair_product: usize,
+    candidate_pair_upper_bound: usize,
+    candidate_pair_capacity_hint: usize,
+    active_face_capacity_hint: Option<usize>,
+}
+
+impl PreparedMeshPairBroadPhaseSummary {
+    /// Return the retained broad-phase candidate traversal plan.
+    pub const fn plan(self) -> PreparedMeshPairPlanKind {
+        self.plan
+    }
+
+    /// Return the left face count used when this pair plan was selected.
+    pub const fn left_face_count(self) -> usize {
+        self.left_face_count
+    }
+
+    /// Return the right face count used when this pair plan was selected.
+    pub const fn right_face_count(self) -> usize {
+        self.right_face_count
+    }
+
+    /// Return the exact Cartesian face-pair product before broad-phase rejection.
+    pub const fn face_pair_product(self) -> usize {
+        self.face_pair_product
+    }
+
+    /// Return the retained upper bound on pairs the broad phase may inspect.
+    pub const fn candidate_pair_upper_bound(self) -> usize {
+        self.candidate_pair_upper_bound
+    }
+
+    /// Return the bounded vector reserve hint used by retained pair stages.
+    pub const fn candidate_pair_capacity_hint(self) -> usize {
+        self.candidate_pair_capacity_hint
+    }
+
+    /// Return the retained sweep active-set capacity hint, when the plan uses a sweep.
+    pub const fn active_face_capacity_hint(self) -> Option<usize> {
+        self.active_face_capacity_hint
+    }
+
+    const fn from_plan(
+        plan: CandidateFacePairPlan,
+        left_face_count: usize,
+        right_face_count: usize,
+        candidate_pair_capacity_hint: usize,
+    ) -> Self {
+        Self {
+            plan: PreparedMeshPairPlanKind::from_candidate_plan(plan),
+            left_face_count,
+            right_face_count,
+            face_pair_product: left_face_count.saturating_mul(right_face_count),
+            candidate_pair_upper_bound: plan
+                .candidate_pair_upper_bound(left_face_count, right_face_count),
+            candidate_pair_capacity_hint,
+            active_face_capacity_hint: plan.active_face_capacity_hint(),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -252,6 +321,11 @@ impl PreparedMeshPairCacheStatus {
     /// Return the bounded storage hint for candidate face-pair traversal.
     pub const fn candidate_pair_capacity_hint(self) -> usize {
         self.candidate_pair_capacity_hint
+    }
+
+    /// Return retained broad-phase planning provenance for this session.
+    pub const fn broad_phase_summary(self) -> PreparedMeshPairBroadPhaseSummary {
+        self.broad_phase_summary
     }
 
     /// Return the certificate state for coarse face-pair classifications.
@@ -672,10 +746,17 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         let plan = broad_phase.candidate_face_pair_plan(&left.bounds, &right.bounds);
         let candidate_pair_capacity_hint =
             plan.bounded_capacity_hint(left.view.face_count(), right.view.face_count());
+        let broad_phase_summary = PreparedMeshPairBroadPhaseSummary::from_plan(
+            plan,
+            left.view.face_count(),
+            right.view.face_count(),
+            candidate_pair_capacity_hint,
+        );
         Self {
             left,
             right,
             plan,
+            broad_phase_summary,
             candidate_pair_capacity_hint,
             scratch: RefCell::new(BroadPhaseScratch::default()),
             face_pair_classifications: RefCell::new(None),
@@ -716,6 +797,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.candidate_pair_capacity_hint
     }
 
+    /// Return retained broad-phase planning provenance for this pair session.
+    pub const fn broad_phase_summary(&self) -> PreparedMeshPairBroadPhaseSummary {
+        self.broad_phase_summary
+    }
+
     /// Build and retain coarse face-pair classifications, returning the retained count.
     pub fn prepare_face_pair_classifications(&self) -> usize {
         self.prepare_face_pair_classification_counts()
@@ -740,6 +826,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         PreparedMeshPairCacheStatus {
             candidate_pair_plan: PreparedMeshPairPlanKind::from_candidate_plan(self.plan),
             candidate_pair_capacity_hint: self.candidate_face_pair_capacity_hint(),
+            broad_phase_summary: self.broad_phase_summary,
             face_pair_classifications: retained_current_state(
                 face_pair_classification_counts.is_some(),
             ),

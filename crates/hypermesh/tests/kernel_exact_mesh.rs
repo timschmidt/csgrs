@@ -95,6 +95,18 @@ fn prepared_mesh_pair_materializes_named_operations() {
         PreparedMeshPairPlanKind::Empty
     );
     assert_eq!(initial_status.candidate_pair_capacity_hint(), 0);
+    let initial_broad_phase = initial_status.broad_phase_summary();
+    assert_eq!(initial_broad_phase.plan(), PreparedMeshPairPlanKind::Empty);
+    assert_eq!(initial_broad_phase.left_face_count(), 0);
+    assert_eq!(
+        initial_broad_phase.right_face_count(),
+        solid.triangle_count()
+    );
+    assert_eq!(initial_broad_phase.face_pair_product(), 0);
+    assert_eq!(initial_broad_phase.candidate_pair_upper_bound(), 0);
+    assert_eq!(initial_broad_phase.candidate_pair_capacity_hint(), 0);
+    assert_eq!(initial_broad_phase.active_face_capacity_hint(), None);
+    assert_eq!(pair.broad_phase_summary(), initial_broad_phase);
     assert_eq!(
         initial_status.face_pair_classifications(),
         PreparedMeshPairFactState::Missing
@@ -526,6 +538,32 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     );
     assert!(prepared_pair.candidate_face_pair_capacity_hint() > 0);
     let unprepared_status = prepared_pair.cache_status();
+    let broad_phase_summary = unprepared_status.broad_phase_summary();
+    assert_eq!(
+        broad_phase_summary.plan(),
+        unprepared_status.candidate_pair_plan()
+    );
+    assert_eq!(broad_phase_summary.left_face_count(), left.triangle_count());
+    assert_eq!(
+        broad_phase_summary.right_face_count(),
+        overlapping.triangle_count()
+    );
+    assert_eq!(
+        broad_phase_summary.face_pair_product(),
+        left.triangle_count() * overlapping.triangle_count()
+    );
+    assert_eq!(
+        broad_phase_summary.candidate_pair_capacity_hint(),
+        prepared_pair.candidate_face_pair_capacity_hint()
+    );
+    assert_eq!(prepared_pair.broad_phase_summary(), broad_phase_summary);
+    assert!(broad_phase_summary.candidate_pair_upper_bound() > 0);
+    assert!(
+        broad_phase_summary.candidate_pair_upper_bound() <= broad_phase_summary.face_pair_product()
+    );
+    if broad_phase_summary.plan() == PreparedMeshPairPlanKind::Sweep {
+        assert!(broad_phase_summary.active_face_capacity_hint().is_some());
+    }
     assert_eq!(
         unprepared_status.face_pair_classifications(),
         PreparedMeshPairFactState::Missing
@@ -548,6 +586,9 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         classification_counts.face_pair_count()
     );
     assert!(classification_counts.face_pair_count() > 0);
+    assert!(
+        classification_counts.face_pair_count() <= broad_phase_summary.candidate_pair_upper_bound()
+    );
     assert!(classification_counts.graph_required_count() > 0);
     assert_eq!(
         classification_counts.graph_required_count(),
