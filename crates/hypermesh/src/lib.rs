@@ -55,5 +55,6 @@ mod volumetric_cells;
 mod winding;
 mod witness;
 
+#[doc(hidden)]
 pub use error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 pub use mesh::ExactMesh;
