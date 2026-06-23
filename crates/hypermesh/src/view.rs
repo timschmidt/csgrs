@@ -1198,9 +1198,21 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         *self.intersection_graph.borrow_mut() = Some(Rc::clone(&graph));
         *self.intersection_graph_counts.borrow_mut() = Some(counts);
         *self.intersection_graph_validated.borrow_mut() = false;
+        self.clear_graph_dependent_retained_facts();
+        graph
+    }
+
+    fn clear_graph_dependent_retained_facts(&self) {
         *self.arrangement.borrow_mut() = None;
         *self.arrangement_counts.borrow_mut() = None;
-        graph
+        *self.union_result.borrow_mut() = None;
+        *self.union_result_outcome.borrow_mut() = None;
+        *self.intersection_result.borrow_mut() = None;
+        *self.intersection_result_outcome.borrow_mut() = None;
+        *self.difference_result.borrow_mut() = None;
+        *self.difference_result_outcome.borrow_mut() = None;
+        *self.xor_result.borrow_mut() = None;
+        *self.xor_result_outcome.borrow_mut() = None;
     }
 
     #[cfg(test)]

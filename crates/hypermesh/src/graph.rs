@@ -4585,6 +4585,37 @@ mod tests {
                 .as_ref(),
             &graph
         );
+        let cached_union = prepared_pair.union().unwrap();
+        cached_union.validate_retained_state().unwrap();
+        assert_eq!(
+            prepared_pair.cache_status().union_result(),
+            PreparedMeshPairFactState::Current
+        );
+        prepared_pair
+            .with_arrangement_view(|view| {
+                view.validate_retained_state().unwrap();
+            })
+            .unwrap();
+        assert_eq!(
+            prepared_pair.cache_status().arrangement(),
+            PreparedMeshPairFactState::Current
+        );
+        prepared_pair
+            .retain_intersection_graph(ExactIntersectionGraph::from_face_pairs(Vec::new()));
+        let replaced_status = prepared_pair.cache_status();
+        assert_eq!(
+            replaced_status.intersection_graph(),
+            PreparedMeshPairFactState::CertificateBlocked
+        );
+        assert_eq!(
+            replaced_status.arrangement(),
+            PreparedMeshPairFactState::Missing
+        );
+        assert_eq!(
+            replaced_status.union_result(),
+            PreparedMeshPairFactState::Missing
+        );
+        assert_eq!(replaced_status.union_result_outcome(), None);
         let retained_pair = graph
             .face_pairs
             .iter()
