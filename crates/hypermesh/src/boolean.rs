@@ -787,10 +787,29 @@ pub(crate) fn exact_boolean_evaluation_for_replay(
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
 }
 
+#[cfg(test)]
+pub(crate) fn exact_boolean_report_evaluation_for_replay(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<ExactBooleanEvaluation, ExactReportValidationError> {
+    exact_boolean_evaluation_for_replay_result_with_materialization(left, right, request, false)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
+}
+
 fn exact_boolean_evaluation_for_replay_result(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
+) -> Result<ExactBooleanEvaluation, ExactMeshError> {
+    exact_boolean_evaluation_for_replay_result_with_materialization(left, right, request, true)
+}
+
+fn exact_boolean_evaluation_for_replay_result_with_materialization(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    materialize_result: bool,
 ) -> Result<ExactBooleanEvaluation, ExactMeshError> {
     left.validate_retained_bounds()?;
     right.validate_retained_bounds()?;
@@ -857,7 +876,7 @@ fn exact_boolean_evaluation_for_replay_result(
         regularized_attempt.as_ref(),
         &source_facts,
     )?;
-    let result = if preflight.is_certified() {
+    let result = if materialize_result && preflight.is_certified() {
         if matches!(preflight.support, ExactBooleanSupport::SelectedRegionPolicy) {
             try_materialize_certified_boolean_support_with_artifacts(
                 left,
@@ -3788,7 +3807,6 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && request.validation == ExactMeshValidationPolicy::CLOSED
         && graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right)
         && volumetric_boundary_closure_report_from_graph(graph, left, right, operation)?
             .is_coplanar_closure_available()
@@ -10948,6 +10966,18 @@ fn winding_evidence_report_from_graph_with_facts(
     let arrangement_cell_complex_shortcut_support = shortcut_facts.certified_support(operation);
     let mut arrangement_cell_complex_preflight: CertifiedArrangementCellComplexPreflightCache =
         None;
+    if arrangement_cell_complex_shortcut_support
+        != Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+        && graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right)
+        && volumetric_boundary_closure_report_from_graph(graph, left, right, operation)?
+            .is_coplanar_closure_available()
+    {
+        return Ok(
+            arrangement_cell_complex_already_materialized_winding_evidence(
+                graph, left, right, operation,
+            ),
+        );
+    }
     if !graph.face_pairs.is_empty()
         && arrangement_cell_complex_shortcut_support
             != Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
@@ -12385,7 +12415,7 @@ mod tests {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactBooleanPreflight {
-        exact_boolean_evaluation_for_replay(left, right, request)
+        exact_boolean_report_evaluation_for_replay(left, right, request)
             .unwrap()
             .preflight()
             .clone()
@@ -12422,9 +12452,9 @@ mod tests {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactWindingEvidenceReport {
-        with_test_evaluation(request, left, right, |evaluation| {
-            evaluation.certifications.winding_evidence.clone()
-        })
+        let evaluation = exact_boolean_report_evaluation_for_replay(left, right, request).unwrap();
+        evaluation.validate().unwrap();
+        evaluation.certifications.winding_evidence.clone()
     }
 
     fn test_volumetric_boundary_closure(
