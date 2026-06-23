@@ -28,6 +28,7 @@ use super::intersection::{
 };
 use super::mesh::ExactMesh;
 use super::topology::{mesh_for_side, triangle_edges};
+use super::view::PreparedMeshPair;
 #[cfg(test)]
 use super::view::PreparedMeshView;
 use hyperlimit::{CoplanarProjection, CoplanarTriangleClassification};
@@ -1237,14 +1238,7 @@ fn build_unvalidated_intersection_graph_from_certified_bounds(
     let pair = left
         .view()
         .prepare_broad_phase_pair_after_certificate(right.view());
-    let mut face_pairs = Vec::with_capacity(pair.candidate_face_pair_capacity_hint());
-    pair.try_visit_face_pair_classifications(&mut |classification| {
-        if classification.needs_graph_construction() {
-            face_pairs.push(events_for_face_pair(left, right, classification));
-        }
-        Ok::<(), ExactMeshError>(())
-    })?;
-    Ok(ExactIntersectionGraph { face_pairs })
+    build_unvalidated_intersection_graph_from_prepared_pair(&pair)
 }
 
 /// Build an exact event graph from certificate-validated prepared mesh views without
@@ -1277,6 +1271,39 @@ pub(crate) fn build_validated_intersection_graph(
     let graph = build_unvalidated_intersection_graph(left, right)?;
     graph
         .validate_against_meshes(left, right)
+        .map_err(|error| {
+            ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::StaleFactReplay,
+                format!("exact intersection graph failed source replay: {error:?}"),
+            ))
+        })?;
+    Ok(graph)
+}
+
+/// Build an exact event graph from a retained prepared pair session.
+pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair(
+    pair: &PreparedMeshPair<'_, '_>,
+) -> Result<ExactIntersectionGraph, ExactMeshError> {
+    let left = pair.left().view().mesh();
+    let right = pair.right().view().mesh();
+    let mut face_pairs = Vec::with_capacity(pair.candidate_face_pair_capacity_hint());
+    pair.try_visit_face_pair_classifications(&mut |classification| {
+        if classification.needs_graph_construction() {
+            face_pairs.push(events_for_face_pair(left, right, classification));
+        }
+        Ok::<(), ExactMeshError>(())
+    })?;
+    Ok(ExactIntersectionGraph { face_pairs })
+}
+
+/// Build an exact event graph from a retained prepared pair and validate retained event handles.
+#[cfg(test)]
+pub(crate) fn build_validated_intersection_graph_from_prepared_pair(
+    pair: &PreparedMeshPair<'_, '_>,
+) -> Result<ExactIntersectionGraph, ExactMeshError> {
+    let graph = build_unvalidated_intersection_graph_from_prepared_pair(pair)?;
+    graph
+        .validate_against_meshes(pair.left().view().mesh(), pair.right().view().mesh())
         .map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::StaleFactReplay,
@@ -4442,6 +4469,14 @@ mod tests {
         assert_eq!(
             first_classifications,
             vec![classify_mesh_face_pair_unchecked(&left, 0, &right, 0)]
+        );
+        assert_eq!(
+            build_unvalidated_intersection_graph_from_prepared_pair(&prepared_pair).unwrap(),
+            graph
+        );
+        assert_eq!(
+            build_validated_intersection_graph_from_prepared_pair(&prepared_pair).unwrap(),
+            graph
         );
         let retained_pair = graph
             .face_pairs

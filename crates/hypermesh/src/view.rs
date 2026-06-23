@@ -70,7 +70,6 @@ impl<'a> ExactMeshRef<'a> {
         Self { mesh }
     }
 
-    #[cfg(test)]
     pub(crate) const fn mesh(self) -> &'a ExactMesh {
         self.mesh
     }
