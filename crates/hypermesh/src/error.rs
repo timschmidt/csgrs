@@ -50,22 +50,22 @@ pub enum ExactMeshBlockerKind {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactMeshBlocker {
     /// Stable category.
-    pub kind: ExactMeshBlockerKind,
+    pub(crate) kind: ExactMeshBlockerKind,
     /// Human-readable detail.
-    pub message: String,
+    pub(crate) message: String,
     /// Optional vertex index.
-    pub vertex: Option<usize>,
+    pub(crate) vertex: Option<usize>,
     /// Optional face index.
-    pub face: Option<usize>,
+    pub(crate) face: Option<usize>,
     /// Optional coordinate index in a flat coordinate buffer.
-    pub coordinate: Option<usize>,
+    pub(crate) coordinate: Option<usize>,
     /// Optional undirected edge endpoints.
-    pub edge: Option<[usize; 2]>,
+    pub(crate) edge: Option<[usize; 2]>,
 }
 
 impl ExactMeshBlocker {
     /// Build a blocker with no object location.
-    pub fn new(kind: ExactMeshBlockerKind, message: impl Into<String>) -> Self {
+    pub(crate) fn new(kind: ExactMeshBlockerKind, message: impl Into<String>) -> Self {
         Self {
             kind,
             message: message.into(),
@@ -77,27 +77,57 @@ impl ExactMeshBlocker {
     }
 
     /// Attach a vertex index.
-    pub const fn with_vertex(mut self, vertex: usize) -> Self {
+    pub(crate) const fn with_vertex(mut self, vertex: usize) -> Self {
         self.vertex = Some(vertex);
         self
     }
 
     /// Attach a face index.
-    pub const fn with_face(mut self, face: usize) -> Self {
+    pub(crate) const fn with_face(mut self, face: usize) -> Self {
         self.face = Some(face);
         self
     }
 
     /// Attach a flat coordinate index.
-    pub const fn with_coordinate(mut self, coordinate: usize) -> Self {
+    pub(crate) const fn with_coordinate(mut self, coordinate: usize) -> Self {
         self.coordinate = Some(coordinate);
         self
     }
 
     /// Attach an undirected edge.
-    pub const fn with_edge(mut self, edge: [usize; 2]) -> Self {
+    pub(crate) const fn with_edge(mut self, edge: [usize; 2]) -> Self {
         self.edge = Some(edge);
         self
+    }
+
+    /// Stable blocker category.
+    pub const fn kind(&self) -> ExactMeshBlockerKind {
+        self.kind
+    }
+
+    /// Human-readable blocker detail.
+    pub fn message(&self) -> &str {
+        &self.message
+    }
+
+    /// Retained vertex provenance, when the blocker names one vertex.
+    pub const fn vertex(&self) -> Option<usize> {
+        self.vertex
+    }
+
+    /// Retained face provenance, when the blocker names one face.
+    pub const fn face(&self) -> Option<usize> {
+        self.face
+    }
+
+    /// Flat coordinate-buffer provenance, when the blocker names one coordinate.
+    pub const fn coordinate(&self) -> Option<usize> {
+        self.coordinate
+    }
+
+    /// Retained undirected-edge provenance, when the blocker names one edge.
+    pub const fn edge(&self) -> Option<[usize; 2]> {
+        self.edge
     }
 }
 
@@ -105,20 +135,25 @@ impl ExactMeshBlocker {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactMeshError {
     /// Blockers collected before construction stopped.
-    pub blockers: Vec<ExactMeshBlocker>,
+    pub(crate) blockers: Vec<ExactMeshBlocker>,
 }
 
 impl ExactMeshError {
     /// Build an error from blockers.
-    pub fn new(blockers: Vec<ExactMeshBlocker>) -> Self {
+    pub(crate) fn new(blockers: Vec<ExactMeshBlocker>) -> Self {
         Self { blockers }
     }
 
     /// Build an error containing one blocker.
-    pub fn one(blocker: ExactMeshBlocker) -> Self {
+    pub(crate) fn one(blocker: ExactMeshBlocker) -> Self {
         Self {
             blockers: vec![blocker],
         }
+    }
+
+    /// Blockers collected before construction stopped.
+    pub fn blockers(&self) -> &[ExactMeshBlocker] {
+        &self.blockers
     }
 }
 

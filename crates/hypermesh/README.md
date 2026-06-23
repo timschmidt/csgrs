@@ -36,8 +36,8 @@ convenience methods downstream CSG layers need: `union`, `intersection`,
 Supporting root exports are deliberately small. `ExactMeshError` and
 `ExactMeshBlocker` report invalid input, unsupported exact topology, stale
 replay, and construction blockers with provenance where available.
-Boundary-allowed input uses named `ExactMesh` constructors instead of a public
-policy object.
+Boundary and output policy stay inside kernel algorithms instead of becoming
+default public request objects.
 
 Borrowed queries start from `ExactMesh::view()`. Mesh, triangle, face, and edge
 views avoid cloning mesh storage; prepared views reuse replay-validated
