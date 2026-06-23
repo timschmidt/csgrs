@@ -142,6 +142,7 @@ pub struct ExactMeshSourceStamp {
     source_identity: u64,
     construction_version: u64,
     vertex_count: usize,
+    edge_count: usize,
     face_count: usize,
 }
 
@@ -171,6 +172,11 @@ impl ExactMeshSourceStamp {
         self.vertex_count
     }
 
+    /// Return the retained edge count covered by this stamp.
+    pub const fn edge_count(self) -> usize {
+        self.edge_count
+    }
+
     /// Return the retained face count covered by this stamp.
     pub const fn face_count(self) -> usize {
         self.face_count
@@ -184,6 +190,7 @@ impl ExactMeshSourceStamp {
             source_identity: source_provenance_identity(provenance),
             construction_version: provenance.construction_version,
             vertex_count: mesh.facts().mesh.vertex_count,
+            edge_count: mesh.facts().mesh.edge_count,
             face_count: mesh.facts().mesh.face_count,
         }
     }

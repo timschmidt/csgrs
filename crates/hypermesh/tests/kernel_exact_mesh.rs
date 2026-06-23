@@ -448,6 +448,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_ne!(source_stamp.source_identity(), 0);
     assert_eq!(source_stamp.construction_version(), 1);
     assert_eq!(source_stamp.vertex_count(), view.vertex_count());
+    assert_eq!(source_stamp.edge_count(), view.edge_count());
     assert_eq!(source_stamp.face_count(), view.face_count());
     assert_eq!(view.mesh_bounds(), Some((&p(0, 0, 0), &p(1, 1, 1))));
     assert!(view.is_closed_manifold());
@@ -596,6 +597,7 @@ fn exact_mesh_source_stamp_distinguishes_source_provenance() {
         right_stamp.construction_version()
     );
     assert_eq!(left_stamp.vertex_count(), right_stamp.vertex_count());
+    assert_eq!(left_stamp.edge_count(), right_stamp.edge_count());
     assert_eq!(left_stamp.face_count(), right_stamp.face_count());
     assert_ne!(left_stamp.source_identity(), right_stamp.source_identity());
 }
