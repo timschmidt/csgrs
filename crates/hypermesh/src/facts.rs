@@ -25,6 +25,10 @@ pub(crate) struct VertexFacts {
     pub(crate) incident_faces: usize,
     /// Number of incident undirected edges.
     pub(crate) incident_edges: usize,
+    /// Incident face indices in retained face order.
+    pub(crate) incident_face_indices: Vec<usize>,
+    /// Incident edge indices in retained canonical edge-fact order.
+    pub(crate) incident_edge_indices: Vec<usize>,
     /// Certified combinatorial shape of the vertex link.
     pub(crate) link: VertexLinkKind,
 }
@@ -226,6 +230,28 @@ pub(crate) enum MeshFactsValidationError {
         /// Count stored in the vertex fact.
         actual: usize,
     },
+    /// A vertex incident-face list disagrees with retained face rows.
+    VertexIncidentFaceListMismatch {
+        /// Vertex index.
+        vertex: usize,
+        /// First position where retained and derived lists diverge.
+        mismatch_index: usize,
+        /// Incident face count derived from retained faces.
+        expected_len: usize,
+        /// Retained incident face list length.
+        actual_len: usize,
+    },
+    /// A vertex incident-edge list disagrees with retained edge rows.
+    VertexIncidentEdgeListMismatch {
+        /// Vertex index.
+        vertex: usize,
+        /// First position where retained and derived lists diverge.
+        mismatch_index: usize,
+        /// Incident edge count derived from retained edges.
+        expected_len: usize,
+        /// Retained incident edge list length.
+        actual_len: usize,
+    },
     /// An edge fact uses an out-of-range vertex.
     EdgeVertexOutOfBounds {
         /// Edge endpoints.
@@ -323,7 +349,7 @@ impl MeshValidationFacts {
             });
         }
 
-        let mut vertex_incident_faces = vec![0_usize; self.mesh.vertex_count];
+        let mut vertex_incident_face_indices = vec![Vec::<usize>::new(); self.mesh.vertex_count];
         let mut vertex_edges = vec![BTreeSet::<usize>::new(); self.mesh.vertex_count];
         let mut derived_edge_uses = BTreeMap::<[usize; 2], [usize; 2]>::new();
         let mut degenerate_triangles = 0_usize;
@@ -354,7 +380,7 @@ impl MeshValidationFacts {
                         vertex_count: self.mesh.vertex_count,
                     });
                 }
-                vertex_incident_faces[vertex] += 1;
+                vertex_incident_face_indices[vertex].push(face_index);
             }
 
             let expected_directed_edges = [
@@ -384,11 +410,12 @@ impl MeshValidationFacts {
         }
 
         let mut seen_edges = BTreeSet::new();
+        let mut vertex_incident_edge_indices = vec![Vec::<usize>::new(); self.mesh.vertex_count];
         let mut boundary_edges = 0_usize;
         let mut non_manifold_edges = 0_usize;
         let mut duplicate_directed_edges = 0_usize;
 
-        for edge in &self.edges {
+        for (edge_index, edge) in self.edges.iter().enumerate() {
             if edge.vertices[0] >= self.mesh.vertex_count
                 || edge.vertices[1] >= self.mesh.vertex_count
             {
@@ -433,6 +460,8 @@ impl MeshValidationFacts {
             if edge.directed_uses[0] > 1 || edge.directed_uses[1] > 1 {
                 duplicate_directed_edges += 1;
             }
+            vertex_incident_edge_indices[edge.vertices[0]].push(edge_index);
+            vertex_incident_edge_indices[edge.vertices[1]].push(edge_index);
         }
 
         for edge in derived_edge_uses.keys().copied() {
@@ -453,11 +482,23 @@ impl MeshValidationFacts {
                     actual: vertex.index,
                 });
             }
-            if vertex.incident_faces != vertex_incident_faces[index] {
+            let incident_faces = vertex_incident_face_indices[index].len();
+            if vertex.incident_faces != incident_faces {
                 return Err(MeshFactsValidationError::VertexIncidentFaceMismatch {
                     vertex: index,
-                    expected: vertex_incident_faces[index],
+                    expected: incident_faces,
                     actual: vertex.incident_faces,
+                });
+            }
+            if vertex.incident_face_indices != vertex_incident_face_indices[index] {
+                return Err(MeshFactsValidationError::VertexIncidentFaceListMismatch {
+                    vertex: index,
+                    mismatch_index: first_mismatch_index(
+                        &vertex_incident_face_indices[index],
+                        &vertex.incident_face_indices,
+                    ),
+                    expected_len: vertex_incident_face_indices[index].len(),
+                    actual_len: vertex.incident_face_indices.len(),
                 });
             }
             let incident_edges = vertex_edges[index].len();
@@ -466,6 +507,17 @@ impl MeshValidationFacts {
                     vertex: index,
                     expected: incident_edges,
                     actual: vertex.incident_edges,
+                });
+            }
+            if vertex.incident_edge_indices != vertex_incident_edge_indices[index] {
+                return Err(MeshFactsValidationError::VertexIncidentEdgeListMismatch {
+                    vertex: index,
+                    mismatch_index: first_mismatch_index(
+                        &vertex_incident_edge_indices[index],
+                        &vertex.incident_edge_indices,
+                    ),
+                    expected_len: vertex_incident_edge_indices[index].len(),
+                    actual_len: vertex.incident_edge_indices.len(),
                 });
             }
             if vertex.link == VertexLinkKind::NonManifold {
@@ -563,4 +615,12 @@ fn expect_count(
             actual,
         })
     }
+}
+
+fn first_mismatch_index(expected: &[usize], actual: &[usize]) -> usize {
+    expected
+        .iter()
+        .zip(actual)
+        .position(|(expected, actual)| expected != actual)
+        .unwrap_or_else(|| expected.len().min(actual.len()))
 }

@@ -2639,6 +2639,50 @@ impl<'a> VertexRef<'a> {
         retained_vertex_facts(self.mesh, self.index).map(|facts| facts.incident_edges)
     }
 
+    /// Retained incident face indices in face order.
+    pub fn incident_face_indices(self) -> Result<&'a [usize], ExactMeshError> {
+        let facts = retained_vertex_facts(self.mesh, self.index)?;
+        require_retained_vertex_incident_faces(
+            self.mesh,
+            self.index,
+            &facts.incident_face_indices,
+        )?;
+        Ok(facts.incident_face_indices.as_slice())
+    }
+
+    /// Retained incident edge indices in canonical edge-fact order.
+    pub fn incident_edge_indices(self) -> Result<&'a [usize], ExactMeshError> {
+        let facts = retained_vertex_facts(self.mesh, self.index)?;
+        require_retained_vertex_incident_edges(
+            self.mesh,
+            self.index,
+            &facts.incident_edge_indices,
+        )?;
+        Ok(facts.incident_edge_indices.as_slice())
+    }
+
+    /// Iterate borrowed incident faces from retained adjacency facts.
+    pub fn incident_faces(
+        self,
+    ) -> Result<impl ExactSizeIterator<Item = FaceRef<'a>> + 'a, ExactMeshError> {
+        let indices = self.incident_face_indices()?;
+        Ok(indices.iter().copied().map(move |index| FaceRef {
+            mesh: self.mesh,
+            index,
+        }))
+    }
+
+    /// Iterate borrowed incident edges from retained adjacency facts.
+    pub fn incident_edges(
+        self,
+    ) -> Result<impl ExactSizeIterator<Item = EdgeRef<'a>> + 'a, ExactMeshError> {
+        let indices = self.incident_edge_indices()?;
+        Ok(indices.iter().copied().map(move |index| EdgeRef {
+            mesh: self.mesh,
+            index,
+        }))
+    }
+
     /// Whether retained facts classify the vertex link as isolated.
     pub fn has_isolated_link(self) -> Result<bool, ExactMeshError> {
         self.has_vertex_link(super::facts::VertexLinkKind::Isolated)
@@ -2945,6 +2989,51 @@ fn retained_face_facts(
             .with_face(face),
         )
     })
+}
+
+fn require_retained_vertex_incident_faces(
+    mesh: &ExactMesh,
+    vertex: usize,
+    faces: &[usize],
+) -> Result<(), ExactMeshError> {
+    for &face in faces {
+        if face >= mesh.facts().faces.len() {
+            return Err(ExactMeshError::one(
+                ExactMeshBlocker::new(
+                    ExactMeshBlockerKind::StaleFactReplay,
+                    format!(
+                        "retained mesh vertex {vertex} references incident face {face}, but only {} retained faces exist",
+                        mesh.facts().faces.len()
+                    ),
+                )
+                .with_vertex(vertex)
+                .with_face(face),
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn require_retained_vertex_incident_edges(
+    mesh: &ExactMesh,
+    vertex: usize,
+    edges: &[usize],
+) -> Result<(), ExactMeshError> {
+    for &edge in edges {
+        if edge >= mesh.facts().edges.len() {
+            return Err(ExactMeshError::one(
+                ExactMeshBlocker::new(
+                    ExactMeshBlockerKind::StaleFactReplay,
+                    format!(
+                        "retained mesh vertex {vertex} references incident edge row {edge}, but only {} retained edges exist",
+                        mesh.facts().edges.len()
+                    ),
+                )
+                .with_vertex(vertex),
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn require_retained_edge_endpoint(

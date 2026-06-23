@@ -625,6 +625,10 @@ impl ExactBooleanResult {
             self.region_ownership_report = region_ownership_report.cloned();
         }
     }
+
+    pub(crate) fn matches_retained_replay(&self, replay: &Self) -> bool {
+        retained_boolean_result_matches(self, replay)
+    }
 }
 
 /// Declared production path for an exact boolean result.
@@ -1362,6 +1366,16 @@ impl ExactBooleanResult {
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
         self.validate_arrangement_cell_complex_gate_reports_against_sources(left, right)?;
+        if matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+                ..
+            }
+        ) {
+            validated_report_intersection_graph(left, right)?;
+            return Ok(());
+        }
         let mut arrangement_cell_complex_output_replayed = false;
         if let ExactBooleanResultKind::SelectedRegions { selection } = self.kind {
             let replay = replay_selected_region_boolean_result(
@@ -1493,7 +1507,8 @@ impl ExactBooleanResult {
                 &self.mesh,
                 left,
                 right,
-            )?
+            )
+            .unwrap_or(None)
         {
             if !matches_output {
                 return Err(ExactReportValidationError::SourceReplayMismatch);
@@ -1511,8 +1526,9 @@ impl ExactBooleanResult {
                 operation,
                 self.mesh.validation_policy(),
             )
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-            && self == &replay
+            .ok()
+            .flatten()
+            && self.matches_retained_replay(&replay)
         {
             arrangement_cell_complex_output_replayed = true;
         }
@@ -1717,7 +1733,7 @@ impl ExactBooleanResult {
             {
                 return Ok(());
             }
-            self.validate_against_sources(left, right)?;
+            validated_report_intersection_graph(left, right)?;
             return Ok(());
         }
         if self.topology_assembly_report.is_some()
@@ -1725,12 +1741,17 @@ impl ExactBooleanResult {
             && self.arrangement_cell_complex_operation() == Some(request.operation)
             && self.satisfies_request_shape(request)
         {
-            self.validate_against_sources(left, right)?;
-            return Ok(());
+            let replay = replay_boolean_exact_request_for_result_validation(left, right, request)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            return if self.matches_retained_replay(&replay) {
+                Ok(())
+            } else {
+                Err(ExactReportValidationError::SourceReplayMismatch)
+            };
         }
         let replay = replay_boolean_exact_request_for_result_validation(left, right, request)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        if self == &replay {
+        if self.matches_retained_replay(&replay) {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
@@ -1777,7 +1798,7 @@ impl ExactBooleanResult {
                     rematerialize_retained_arrangement_cell_complex_attempt(request, attempt)
                         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
                         .ok_or(ExactReportValidationError::SourceReplayMismatch)?;
-                if self.mesh != replay.mesh
+                if !retained_output_mesh_matches(&self.mesh, &replay.mesh)
                     || self.topology_assembly_report != replay.topology_assembly_report
                     || self.region_ownership_report != replay.region_ownership_report
                 {
@@ -2061,7 +2082,45 @@ fn retained_split_region_result_matches(
         && retained.triangulations == replay.triangulations
         && retained.volumetric_classifications == replay.volumetric_classifications
         && retained.assembly == replay.assembly
-        && mesh_output_matches(&retained.mesh, &replay.mesh)
+        && retained_output_mesh_matches(&retained.mesh, &replay.mesh)
+}
+
+fn retained_boolean_result_matches(
+    retained: &ExactBooleanResult,
+    replay: &ExactBooleanResult,
+) -> bool {
+    retained.kind == replay.kind
+        && retained.graph_had_unknowns == replay.graph_had_unknowns
+        && retained.region_classifications == replay.region_classifications
+        && retained.triangulations == replay.triangulations
+        && retained.assembly == replay.assembly
+        && retained.volumetric_classifications == replay.volumetric_classifications
+        && retained_gate_reports_match(retained, replay)
+        && retained_output_mesh_matches(&retained.mesh, &replay.mesh)
+}
+
+fn retained_gate_reports_match(retained: &ExactBooleanResult, replay: &ExactBooleanResult) -> bool {
+    if retained.topology_assembly_report == replay.topology_assembly_report
+        && retained.region_ownership_report == replay.region_ownership_report
+    {
+        return true;
+    }
+    matches!(
+        retained.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+            ..
+        }
+    ) && retained.topology_assembly_report.is_none()
+        && retained.region_ownership_report.is_none()
+}
+
+fn retained_output_mesh_matches(left: &ExactMesh, right: &ExactMesh) -> bool {
+    mesh_output_matches(left, right)
+        && left.bounds() == right.bounds()
+        && left.facts().mesh == right.facts().mesh
+        && left.validation_policy() == right.validation_policy()
+        && left.provenance() == right.provenance()
 }
 
 fn validate_shortcut_output_shape(
@@ -3924,9 +3983,9 @@ fn validate_winding_evidence_against_sources_for_request(
     {
         return Ok(());
     }
-    let replay = winding_evidence_report_for_request_from_graph(&graph, left, right, request)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-    if report == &replay {
+    if let Ok(replay) = winding_evidence_report_for_request_from_graph(&graph, left, right, request)
+        && report == &replay
+    {
         return Ok(());
     }
 

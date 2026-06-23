@@ -133,9 +133,9 @@ pub(crate) fn validate_triangle_rows_with_policy(
             let key = sorted_edge(edge);
             edges.entry(key).or_default().push(edge[0] == key[0]);
         }
-        vertex_links[tri[0]].push_face([tri[1], tri[2]]);
-        vertex_links[tri[1]].push_face([tri[2], tri[0]]);
-        vertex_links[tri[2]].push_face([tri[0], tri[1]]);
+        vertex_links[tri[0]].push_face(face, [tri[1], tri[2]]);
+        vertex_links[tri[1]].push_face(face, [tri[2], tri[0]]);
+        vertex_links[tri[2]].push_face(face, [tri[0], tri[1]]);
 
         let predicate_report =
             classify_triangle_degeneracy(&points[tri[0]], &points[tri[1]], &points[tri[2]]);
@@ -217,6 +217,12 @@ pub(crate) fn validate_triangle_rows_with_policy(
         edge_facts.push(facts);
     }
 
+    let mut vertex_incident_edge_indices = vec![Vec::<usize>::new(); points.len()];
+    for (edge, facts) in edge_facts.iter().enumerate() {
+        vertex_incident_edge_indices[facts.vertices[0]].push(edge);
+        vertex_incident_edge_indices[facts.vertices[1]].push(edge);
+    }
+
     let mut non_manifold_vertices = 0_usize;
     let vertices = points
         .iter()
@@ -240,6 +246,8 @@ pub(crate) fn validate_triangle_rows_with_policy(
                 sparse_support: point_facts.has_sparse_support(),
                 incident_faces: link_facts.incident_faces,
                 incident_edges: link_facts.incident_edges,
+                incident_face_indices: vertex_links[index].incident_face_indices.clone(),
+                incident_edge_indices: vertex_incident_edge_indices[index].clone(),
                 link: link_facts.kind,
             }
         })
@@ -289,6 +297,7 @@ struct EdgeAccumulator {
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 struct VertexLinkAccumulator {
     incident_faces: usize,
+    incident_face_indices: Vec<usize>,
     neighbors: BTreeSet<usize>,
     link_edges: Vec<[usize; 2]>,
 }
@@ -301,8 +310,9 @@ struct VertexLinkFacts {
 }
 
 impl VertexLinkAccumulator {
-    fn push_face(&mut self, mut opposite_edge: [usize; 2]) {
+    fn push_face(&mut self, face: usize, mut opposite_edge: [usize; 2]) {
         self.incident_faces += 1;
+        self.incident_face_indices.push(face);
         self.neighbors.insert(opposite_edge[0]);
         self.neighbors.insert(opposite_edge[1]);
         opposite_edge.sort_unstable();

@@ -194,6 +194,28 @@ pub(crate) enum ExactMeshValidationError {
         /// Count stored in the vertex fact.
         actual: usize,
     },
+    /// A retained vertex incident-face list disagrees with face rows.
+    RetainedFactsVertexIncidentFaceListMismatch {
+        /// Vertex index.
+        vertex: usize,
+        /// First position where retained and derived lists diverge.
+        mismatch_index: usize,
+        /// Incident face count derived from retained faces.
+        expected_len: usize,
+        /// Retained incident face list length.
+        actual_len: usize,
+    },
+    /// A retained vertex incident-edge list disagrees with edge rows.
+    RetainedFactsVertexIncidentEdgeListMismatch {
+        /// Vertex index.
+        vertex: usize,
+        /// First position where retained and derived lists diverge.
+        mismatch_index: usize,
+        /// Incident edge count derived from retained edges.
+        expected_len: usize,
+        /// Retained incident edge list length.
+        actual_len: usize,
+    },
     /// A retained edge fact uses an out-of-range vertex.
     RetainedFactsEdgeVertexOutOfBounds {
         /// Edge endpoints.
@@ -813,6 +835,28 @@ const fn retained_facts_validation_error(
             expected,
             actual,
         },
+        MeshFactsValidationError::VertexIncidentFaceListMismatch {
+            vertex,
+            mismatch_index,
+            expected_len,
+            actual_len,
+        } => ExactMeshValidationError::RetainedFactsVertexIncidentFaceListMismatch {
+            vertex,
+            mismatch_index,
+            expected_len,
+            actual_len,
+        },
+        MeshFactsValidationError::VertexIncidentEdgeListMismatch {
+            vertex,
+            mismatch_index,
+            expected_len,
+            actual_len,
+        } => ExactMeshValidationError::RetainedFactsVertexIncidentEdgeListMismatch {
+            vertex,
+            mismatch_index,
+            expected_len,
+            actual_len,
+        },
         MeshFactsValidationError::EdgeVertexOutOfBounds { edge, vertex_count } => {
             ExactMeshValidationError::RetainedFactsEdgeVertexOutOfBounds { edge, vertex_count }
         }
@@ -952,6 +996,54 @@ mod tests {
         assert_eq!(
             mesh.validate_retained_state_detail(),
             Err(ExactMeshValidationError::RetainedFactsUnexpectedEdgeFact { edge: [0, 3] })
+        );
+    }
+
+    #[test]
+    fn retained_facts_reject_stale_vertex_incident_faces() {
+        let mut mesh = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 1, 0, 0, 0, 1, 0],
+            &[0, 1, 2],
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        mesh.facts.vertices[0].incident_face_indices.clear();
+
+        assert_eq!(
+            mesh.validate_retained_state_detail(),
+            Err(
+                ExactMeshValidationError::RetainedFactsVertexIncidentFaceListMismatch {
+                    vertex: 0,
+                    mismatch_index: 0,
+                    expected_len: 1,
+                    actual_len: 0,
+                },
+            )
+        );
+    }
+
+    #[test]
+    fn retained_facts_reject_stale_vertex_incident_edges() {
+        let mut mesh = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 1, 0, 0, 0, 1, 0],
+            &[0, 1, 2],
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        mesh.facts.vertices[0].incident_edge_indices.clear();
+
+        assert_eq!(
+            mesh.validate_retained_state_detail(),
+            Err(
+                ExactMeshValidationError::RetainedFactsVertexIncidentEdgeListMismatch {
+                    vertex: 0,
+                    mismatch_index: 0,
+                    expected_len: 2,
+                    actual_len: 0,
+                },
+            )
         );
     }
 }

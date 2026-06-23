@@ -475,6 +475,24 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert!(vertex.has_sparse_coordinate_support().unwrap());
     assert_eq!(vertex.incident_face_count().unwrap(), 3);
     assert_eq!(vertex.incident_edge_count().unwrap(), 3);
+    assert_eq!(vertex.incident_face_indices().unwrap(), &[0, 1, 3]);
+    assert_eq!(vertex.incident_edge_indices().unwrap(), &[0, 1, 2]);
+    assert_eq!(
+        vertex
+            .incident_faces()
+            .unwrap()
+            .map(FaceRef::index)
+            .collect::<Vec<_>>(),
+        vec![0, 1, 3]
+    );
+    assert_eq!(
+        vertex
+            .incident_edges()
+            .unwrap()
+            .map(EdgeRef::index)
+            .collect::<Vec<_>>(),
+        vec![0, 1, 2]
+    );
     assert!(vertex.has_circle_link().unwrap());
     assert!(!vertex.has_disk_link().unwrap());
     assert!(!vertex.has_isolated_link().unwrap());
