@@ -1311,6 +1311,13 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.current_named_boolean_mesh(ExactBooleanOperation::Union)
     }
 
+    /// Return the retained union outcome without materializing the mesh.
+    pub fn current_union_result_outcome(
+        &self,
+    ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
+        self.cache_status().current_union_result_outcome()
+    }
+
     /// Materialize the exact closed intersection using this retained pair session.
     pub fn intersection(&self) -> Result<ExactMesh, ExactMeshError> {
         self.named_boolean_mesh(ExactBooleanOperation::Intersection)
@@ -1321,6 +1328,13 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.current_named_boolean_mesh(ExactBooleanOperation::Intersection)
     }
 
+    /// Return the retained intersection outcome without materializing the mesh.
+    pub fn current_intersection_result_outcome(
+        &self,
+    ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
+        self.cache_status().current_intersection_result_outcome()
+    }
+
     /// Materialize the exact closed difference of the left mesh minus the right mesh.
     pub fn difference(&self) -> Result<ExactMesh, ExactMeshError> {
         self.named_boolean_mesh(ExactBooleanOperation::Difference)
@@ -1329,6 +1343,13 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     /// Return the retained difference result or cached error without materializing it.
     pub fn current_difference_result(&self) -> Result<ExactMesh, ExactMeshError> {
         self.current_named_boolean_mesh(ExactBooleanOperation::Difference)
+    }
+
+    /// Return the retained difference outcome without materializing the mesh.
+    pub fn current_difference_result_outcome(
+        &self,
+    ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
+        self.cache_status().current_difference_result_outcome()
     }
 
     /// Materialize the exact closed symmetric difference of the prepared meshes.
@@ -1359,6 +1380,13 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             .borrow()
             .clone()
             .unwrap_or_else(|| missing_retained_result("xor result"))
+    }
+
+    /// Return the retained symmetric-difference outcome without materializing the mesh.
+    pub fn current_xor_result_outcome(
+        &self,
+    ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
+        self.cache_status().current_xor_result_outcome()
     }
 
     fn named_boolean_mesh(
