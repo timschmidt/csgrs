@@ -1,6 +1,6 @@
 //! Borrowed exact views of retained mesh data.
 
-use std::cell::RefCell;
+use std::{cell::RefCell, rc::Rc};
 
 use super::ExactMesh;
 use super::boolean::{
@@ -59,7 +59,7 @@ pub struct PreparedMeshPair<'left, 'right> {
     plan: CandidateFacePairPlan,
     scratch: RefCell<BroadPhaseScratch>,
     face_pair_classifications: RefCell<Option<Vec<MeshFacePairClassification>>>,
-    intersection_graph: RefCell<Option<ExactIntersectionGraph>>,
+    intersection_graph: RefCell<Option<Rc<ExactIntersectionGraph>>>,
     intersection_graph_validated: RefCell<bool>,
     arrangement_shortcut_facts: RefCell<Option<ExactArrangementCellComplexShortcutFacts>>,
     union_result: RefCell<Option<Result<ExactMesh, ExactMeshError>>>,
@@ -482,13 +482,18 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         *self.face_pair_classifications.borrow_mut() = Some(classifications);
     }
 
-    pub(crate) fn cached_intersection_graph(&self) -> Option<ExactIntersectionGraph> {
+    pub(crate) fn cached_intersection_graph(&self) -> Option<Rc<ExactIntersectionGraph>> {
         self.intersection_graph.borrow().clone()
     }
 
-    pub(crate) fn retain_intersection_graph(&self, graph: ExactIntersectionGraph) {
-        *self.intersection_graph.borrow_mut() = Some(graph);
+    pub(crate) fn retain_intersection_graph(
+        &self,
+        graph: ExactIntersectionGraph,
+    ) -> Rc<ExactIntersectionGraph> {
+        let graph = Rc::new(graph);
+        *self.intersection_graph.borrow_mut() = Some(Rc::clone(&graph));
         *self.intersection_graph_validated.borrow_mut() = false;
+        graph
     }
 
     pub(crate) fn has_validated_intersection_graph(&self) -> bool {

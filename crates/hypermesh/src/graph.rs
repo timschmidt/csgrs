@@ -12,6 +12,7 @@
 
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
+use std::rc::Rc;
 
 use hyperlimit::{
     PlaneSide, Point3, SegmentIntersection, SegmentPlaneConstructionFailure,
@@ -1312,6 +1313,14 @@ pub(crate) fn build_validated_intersection_graph(
 pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair(
     pair: &PreparedMeshPair<'_, '_>,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
+    build_unvalidated_intersection_graph_from_prepared_pair_rc(pair)
+        .map(|graph| graph.as_ref().clone())
+}
+
+/// Build a shared exact event graph from a retained prepared pair session.
+pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
+    pair: &PreparedMeshPair<'_, '_>,
+) -> Result<Rc<ExactIntersectionGraph>, ExactMeshError> {
     if let Some(graph) = pair.cached_intersection_graph() {
         return Ok(graph);
     }
@@ -1326,15 +1335,14 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair(
         Ok::<(), ExactMeshError>(())
     })?;
     let graph = ExactIntersectionGraph { face_pairs };
-    pair.retain_intersection_graph(graph.clone());
-    Ok(graph)
+    Ok(pair.retain_intersection_graph(graph))
 }
 
 /// Build an exact event graph from a retained prepared pair and validate retained event handles.
 pub(crate) fn build_validated_intersection_graph_from_prepared_pair(
     pair: &PreparedMeshPair<'_, '_>,
-) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let graph = build_unvalidated_intersection_graph_from_prepared_pair(pair)?;
+) -> Result<Rc<ExactIntersectionGraph>, ExactMeshError> {
+    let graph = build_unvalidated_intersection_graph_from_prepared_pair_rc(pair)?;
     if pair.has_validated_intersection_graph() {
         return Ok(graph);
     }
@@ -4528,13 +4536,17 @@ mod tests {
         assert!(prepared_pair.has_cached_intersection_graph());
         assert!(!prepared_pair.has_validated_intersection_graph());
         assert_eq!(
-            build_validated_intersection_graph_from_prepared_pair(&prepared_pair).unwrap(),
-            graph
+            build_validated_intersection_graph_from_prepared_pair(&prepared_pair)
+                .unwrap()
+                .as_ref(),
+            &graph
         );
         assert!(prepared_pair.has_validated_intersection_graph());
         assert_eq!(
-            build_validated_intersection_graph_from_prepared_pair(&prepared_pair).unwrap(),
-            graph
+            build_validated_intersection_graph_from_prepared_pair(&prepared_pair)
+                .unwrap()
+                .as_ref(),
+            &graph
         );
         let retained_pair = graph
             .face_pairs

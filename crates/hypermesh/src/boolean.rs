@@ -119,6 +119,7 @@ use hyperlimit::{
 use hyperlimit::{PredicateUse, SourceProvenance};
 use hyperreal::Real;
 use std::cmp::Ordering;
+use std::rc::Rc;
 
 /// Exact selected-region boolean policy.
 ///
@@ -2757,18 +2758,24 @@ fn graph_for_certified_materialization<'a>(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<&'a ExactIntersectionGraph, ExactMeshError> {
-    graph_for_certified_materialization_with_prepared(
-        retained_graph,
-        owned_graph,
-        None,
-        left,
-        right,
-    )
+    if let Some(graph) = retained_graph {
+        validate_graph_source_replay(graph, left, right)?;
+        return Ok(graph);
+    }
+    if owned_graph.is_none() {
+        *owned_graph = Some(super::graph::build_validated_intersection_graph(
+            left, right,
+        )?);
+    }
+    owned_graph.as_ref().ok_or_else(|| {
+        exact_boolean_internal_error("certified materialization graph was not retained")
+    })
 }
 
 fn graph_for_certified_materialization_with_prepared<'a>(
     retained_graph: Option<&'a ExactIntersectionGraph>,
     owned_graph: &'a mut Option<ExactIntersectionGraph>,
+    prepared_graph: &'a mut Option<Rc<ExactIntersectionGraph>>,
     prepared_pair: Option<&PreparedMeshPair<'_, '_>>,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2777,12 +2784,20 @@ fn graph_for_certified_materialization_with_prepared<'a>(
         validate_graph_source_replay(graph, left, right)?;
         return Ok(graph);
     }
-    if owned_graph.is_none() {
-        *owned_graph = Some(if let Some(pair) = prepared_pair {
-            build_validated_intersection_graph_from_prepared_pair(pair)?
-        } else {
-            super::graph::build_validated_intersection_graph(left, right)?
+    if let Some(pair) = prepared_pair {
+        if prepared_graph.is_none() {
+            *prepared_graph = Some(build_validated_intersection_graph_from_prepared_pair(pair)?);
+        }
+        return prepared_graph.as_deref().ok_or_else(|| {
+            exact_boolean_internal_error(
+                "certified prepared materialization graph was not retained",
+            )
         });
+    }
+    if owned_graph.is_none() {
+        *owned_graph = Some(super::graph::build_validated_intersection_graph(
+            left, right,
+        )?);
     }
     owned_graph.as_ref().ok_or_else(|| {
         exact_boolean_internal_error("certified materialization graph was not retained")
@@ -5372,10 +5387,12 @@ fn materialize_boolean_exact_request_with_graph(
     let operation = request.operation;
     let validation = request.validation;
     let mut owned_graph = None;
+    let mut prepared_graph = None;
     if let ExactBooleanOperation::SelectedRegions(selection) = operation {
         let graph = graph_for_certified_materialization_with_prepared(
             retained_graph,
             &mut owned_graph,
+            &mut prepared_graph,
             prepared_pair,
             left,
             right,
@@ -5388,6 +5405,7 @@ fn materialize_boolean_exact_request_with_graph(
         let graph = graph_for_certified_materialization_with_prepared(
             retained_graph,
             &mut owned_graph,
+            &mut prepared_graph,
             prepared_pair,
             left,
             right,
@@ -5428,16 +5446,19 @@ fn materialize_boolean_exact_request_with_graph(
     if let Some(graph) = retained_graph {
         return materialize_boolean_exact_request_from_ready_graph(graph, left, right, request);
     }
-    if let Some(graph) = owned_graph {
+    if let Some(graph) = owned_graph.as_ref() {
+        return materialize_boolean_exact_request_from_ready_graph(graph, left, right, request);
+    }
+    if let Some(graph) = prepared_graph.as_deref() {
+        return materialize_boolean_exact_request_from_ready_graph(graph, left, right, request);
+    }
+
+    if let Some(pair) = prepared_pair {
+        let graph = build_validated_intersection_graph_from_prepared_pair(pair)?;
         return materialize_boolean_exact_request_from_ready_graph(&graph, left, right, request);
     }
 
-    let graph = if let Some(pair) = prepared_pair {
-        build_validated_intersection_graph_from_prepared_pair(pair)
-    } else {
-        build_validated_intersection_graph(left, right)
-    };
-    match graph {
+    match build_validated_intersection_graph(left, right) {
         Ok(graph) => {
             materialize_boolean_exact_request_from_ready_graph(&graph, left, right, request)
         }
