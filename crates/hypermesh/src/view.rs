@@ -72,6 +72,37 @@ pub struct PreparedMeshPairView<'pair, 'left, 'right> {
     plan: CandidateFacePairPlan,
 }
 
+/// Cheap status for retained facts inside a prepared mesh-pair session.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct PreparedMeshPairCacheStatus {
+    candidate_pair_capacity_hint: usize,
+    retains_face_pair_classifications: bool,
+    retains_intersection_graph: bool,
+    retains_arrangement_shortcut_facts: bool,
+}
+
+impl PreparedMeshPairCacheStatus {
+    /// Return the bounded storage hint for candidate face-pair traversal.
+    pub const fn candidate_pair_capacity_hint(self) -> usize {
+        self.candidate_pair_capacity_hint
+    }
+
+    /// Return whether coarse face-pair classifications have been retained.
+    pub const fn retains_face_pair_classifications(self) -> bool {
+        self.retains_face_pair_classifications
+    }
+
+    /// Return whether the exact intersection graph has been retained.
+    pub const fn retains_intersection_graph(self) -> bool {
+        self.retains_intersection_graph
+    }
+
+    /// Return whether arrangement shortcut facts have been retained.
+    pub const fn retains_arrangement_shortcut_facts(self) -> bool {
+        self.retains_arrangement_shortcut_facts
+    }
+}
+
 impl<'a> ExactMeshRef<'a> {
     /// Borrow an exact mesh as a replayable view.
     pub(crate) const fn new(mesh: &'a ExactMesh) -> Self {
@@ -365,6 +396,16 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     /// Return a bounded storage hint for candidate face-pair traversal.
     pub fn candidate_face_pair_capacity_hint(&self) -> usize {
         self.as_view().candidate_face_pair_capacity_hint()
+    }
+
+    /// Return a cheap summary of retained facts in this prepared pair session.
+    pub fn cache_status(&self) -> PreparedMeshPairCacheStatus {
+        PreparedMeshPairCacheStatus {
+            candidate_pair_capacity_hint: self.candidate_face_pair_capacity_hint(),
+            retains_face_pair_classifications: self.face_pair_classifications.borrow().is_some(),
+            retains_intersection_graph: self.intersection_graph.borrow().is_some(),
+            retains_arrangement_shortcut_facts: self.arrangement_shortcut_facts.borrow().is_some(),
+        }
     }
 
     /// Visit retained coarse face-pair classifications for this prepared mesh pair.

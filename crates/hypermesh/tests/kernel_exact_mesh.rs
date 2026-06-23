@@ -1,7 +1,8 @@
 use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
     ArrangementView, EdgeRef, ExactMesh, ExactMeshBlocker, ExactMeshError, ExactMeshRef, FaceRef,
-    PreparedMeshPair, PreparedMeshPairView, PreparedMeshView, TriangleRef,
+    PreparedMeshPair, PreparedMeshPairCacheStatus, PreparedMeshPairView, PreparedMeshView,
+    TriangleRef,
 };
 use hyperreal::Real;
 
@@ -88,10 +89,19 @@ fn prepared_mesh_pair_materializes_named_operations() {
     .unwrap();
     let solid = tetra([0, 0, 0]);
     let pair = empty.view().prepare_broad_phase_pair(solid.view()).unwrap();
+    let initial_status: PreparedMeshPairCacheStatus = pair.cache_status();
+    assert_eq!(initial_status.candidate_pair_capacity_hint(), 0);
+    assert!(!initial_status.retains_face_pair_classifications());
+    assert!(!initial_status.retains_intersection_graph());
+    assert!(!initial_status.retains_arrangement_shortcut_facts());
 
     let union = pair.union().unwrap();
     union.validate_retained_state().unwrap();
     assert_eq!(union.triangle_count(), solid.triangle_count());
+    let retained_status = pair.cache_status();
+    assert!(retained_status.retains_face_pair_classifications());
+    assert!(retained_status.retains_intersection_graph());
+    assert!(retained_status.retains_arrangement_shortcut_facts());
 
     let repeated_union = pair.union().unwrap();
     repeated_union.validate_retained_state().unwrap();
@@ -100,6 +110,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
     let intersection = pair.intersection().unwrap();
     intersection.validate_retained_state().unwrap();
     assert_eq!(intersection.triangle_count(), 0);
+    assert_eq!(pair.cache_status(), retained_status);
 
     let difference = pair.difference().unwrap();
     difference.validate_retained_state().unwrap();
