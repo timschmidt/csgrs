@@ -149,6 +149,8 @@ pub struct PreparedMeshPairBroadPhaseSummary {
     candidate_pair_upper_bound: usize,
     candidate_pair_capacity_hint: usize,
     active_face_capacity_hint: Option<usize>,
+    sweep_axis: Option<PreparedMeshPairSweepAxis>,
+    sweep_direction: Option<PreparedMeshPairSweepDirection>,
 }
 
 impl PreparedMeshPairBroadPhaseSummary {
@@ -187,6 +189,16 @@ impl PreparedMeshPairBroadPhaseSummary {
         self.active_face_capacity_hint
     }
 
+    /// Return the retained sweep axis, when the plan uses a sweep.
+    pub const fn sweep_axis(self) -> Option<PreparedMeshPairSweepAxis> {
+        self.sweep_axis
+    }
+
+    /// Return the retained sweep driver direction, when the plan uses a sweep.
+    pub const fn sweep_direction(self) -> Option<PreparedMeshPairSweepDirection> {
+        self.sweep_direction
+    }
+
     const fn from_plan(
         plan: CandidateFacePairPlan,
         left_face_count: usize,
@@ -202,6 +214,53 @@ impl PreparedMeshPairBroadPhaseSummary {
                 .candidate_pair_upper_bound(left_face_count, right_face_count),
             candidate_pair_capacity_hint,
             active_face_capacity_hint: plan.active_face_capacity_hint(),
+            sweep_axis: PreparedMeshPairSweepAxis::from_candidate_axis_index(
+                plan.sweep_axis_index(),
+            ),
+            sweep_direction: PreparedMeshPairSweepDirection::from_candidate_direction(
+                plan.sweep_is_left_driven(),
+            ),
+        }
+    }
+}
+
+/// Retained broad-phase sweep axis for a prepared mesh-pair session.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PreparedMeshPairSweepAxis {
+    /// Sweep along the X axis.
+    X,
+    /// Sweep along the Y axis.
+    Y,
+    /// Sweep along the Z axis.
+    Z,
+}
+
+impl PreparedMeshPairSweepAxis {
+    const fn from_candidate_axis_index(axis: Option<usize>) -> Option<Self> {
+        match axis {
+            Some(0) => Some(Self::X),
+            Some(1) => Some(Self::Y),
+            Some(2) => Some(Self::Z),
+            _ => None,
+        }
+    }
+}
+
+/// Retained broad-phase sweep driver direction for a prepared mesh-pair session.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PreparedMeshPairSweepDirection {
+    /// Left mesh faces drive the sweep active set.
+    LeftDriven,
+    /// Right mesh faces drive the sweep active set.
+    RightDriven,
+}
+
+impl PreparedMeshPairSweepDirection {
+    const fn from_candidate_direction(left_driven: Option<bool>) -> Option<Self> {
+        match left_driven {
+            Some(true) => Some(Self::LeftDriven),
+            Some(false) => Some(Self::RightDriven),
+            None => None,
         }
     }
 }

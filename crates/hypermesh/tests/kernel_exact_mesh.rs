@@ -2,7 +2,8 @@ use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
     ArrangementView, EdgeRef, ExactMesh, ExactMeshBlocker, ExactMeshError, ExactMeshRef, FaceRef,
     PreparedMeshPair, PreparedMeshPairCacheStatus, PreparedMeshPairFactState,
-    PreparedMeshPairPlanKind, PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,
+    PreparedMeshPairPlanKind, PreparedMeshPairSweepAxis, PreparedMeshPairSweepDirection,
+    PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,
 };
 use hyperreal::Real;
 
@@ -733,6 +734,21 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     );
     if broad_phase_summary.plan() == PreparedMeshPairPlanKind::Sweep {
         assert!(broad_phase_summary.active_face_capacity_hint().is_some());
+        assert!(matches!(
+            broad_phase_summary.sweep_axis(),
+            Some(
+                PreparedMeshPairSweepAxis::X
+                    | PreparedMeshPairSweepAxis::Y
+                    | PreparedMeshPairSweepAxis::Z
+            )
+        ));
+        assert!(matches!(
+            broad_phase_summary.sweep_direction(),
+            Some(
+                PreparedMeshPairSweepDirection::LeftDriven
+                    | PreparedMeshPairSweepDirection::RightDriven
+            )
+        ));
     }
     assert_eq!(
         unprepared_status.face_pair_classifications(),
@@ -863,6 +879,20 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     assert_eq!(
         disjoint_pair.cache_status().candidate_pair_plan(),
         PreparedMeshPairPlanKind::Empty
+    );
+    assert_eq!(
+        disjoint_pair
+            .cache_status()
+            .broad_phase_summary()
+            .sweep_axis(),
+        None
+    );
+    assert_eq!(
+        disjoint_pair
+            .cache_status()
+            .broad_phase_summary()
+            .sweep_direction(),
+        None
     );
     assert_eq!(disjoint_pair.candidate_face_pair_capacity_hint(), 0);
     let mut disjoint_candidates = Vec::new();

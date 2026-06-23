@@ -220,6 +220,20 @@ impl CandidateFacePairPlan {
         }
     }
 
+    pub(crate) const fn sweep_axis_index(self) -> Option<usize> {
+        match self {
+            Self::Sweep { plan, .. } => Some(plan.axis.index()),
+            Self::Empty | Self::Quadratic => None,
+        }
+    }
+
+    pub(crate) const fn sweep_is_left_driven(self) -> Option<bool> {
+        match self {
+            Self::Sweep { plan, .. } => Some(matches!(plan.direction, SweepDirection::LeftDriven)),
+            Self::Empty | Self::Quadratic => None,
+        }
+    }
+
     pub(crate) const fn candidate_pair_upper_bound(
         self,
         left_face_count: usize,
