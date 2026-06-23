@@ -332,11 +332,11 @@ pub(crate) fn simplify_selected_cell_complex(
             blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
             continue;
         };
-        let require_volume_orientation = require_volume_orientations
-            && volume_adjacency_faces
-                .get(source_face)
-                .copied()
-                .unwrap_or(false);
+        let Some(volume_adjacency_face) = volume_adjacency_faces.get(source_face).copied() else {
+            blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
+            continue;
+        };
+        let require_volume_orientation = require_volume_orientations && volume_adjacency_face;
         match selected_face_reverse_orientation(
             &face,
             source_face,
@@ -1100,13 +1100,13 @@ fn validate_selected_face_orientations(
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) {
     for orientation in orientations {
-        if orientation.face >= face_count
-            || !selected_faces
-                .get(orientation.face)
-                .copied()
-                .unwrap_or(false)
-        {
+        if orientation.face >= face_count {
             blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
+            continue;
+        }
+        match selected_faces.get(orientation.face).copied() {
+            Some(true) => {}
+            Some(false) | None => blockers.push(ExactArrangementBlocker::NonManifoldCellComplex),
         }
     }
 }
