@@ -1,4 +1,4 @@
-use hypermesh::{ExactMesh, ExactMeshValidationPolicy};
+use hypermesh::ExactMesh;
 
 pub fn exercise_mesh_kernel_pair(left: &ExactMesh, right: &ExactMesh) {
     left.validate_retained_state().unwrap();
@@ -39,7 +39,7 @@ pub fn generated_tetra_pair(data: &[u8]) -> Option<(ExactMesh, ExactMesh)> {
 }
 
 fn tetrahedron(offset: [i64; 3], scale: i64) -> Option<ExactMesh> {
-    ExactMesh::from_i64_triangles_with_policy(
+    ExactMesh::from_i64_triangles(
         &[
             offset[0],
             offset[1],
@@ -55,7 +55,6 @@ fn tetrahedron(offset: [i64; 3], scale: i64) -> Option<ExactMesh> {
             offset[2] + scale,
         ],
         &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
-        ExactMeshValidationPolicy::CLOSED,
     )
     .ok()
 }

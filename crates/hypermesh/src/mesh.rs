@@ -334,8 +334,23 @@ impl ExactMesh {
         )
     }
 
+    /// Construct a boundary-allowed exact mesh from exact vertices and triangle
+    /// indices.
+    pub fn new_allow_boundary(
+        vertices: Vec<Point3>,
+        triangles: Vec<Triangle>,
+        source: SourceProvenance,
+    ) -> Result<Self, ExactMeshError> {
+        Self::new_with_policy(
+            vertices,
+            triangles,
+            source,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        )
+    }
+
     /// Construct an exact mesh with an explicit validation policy.
-    pub fn new_with_policy(
+    pub(crate) fn new_with_policy(
         vertices: Vec<Point3>,
         triangles: Vec<Triangle>,
         source: SourceProvenance,
@@ -383,14 +398,35 @@ impl ExactMesh {
         Self::from_lossy_f64_triangles_with_policy(pos, idx, ExactMeshValidationPolicy::CLOSED)
     }
 
+    /// Import a boundary-allowed exact mesh from flat primitive-float
+    /// coordinates with lossy source provenance.
+    pub fn from_lossy_f64_triangles_allow_boundary(
+        pos: &[f64],
+        idx: &[usize],
+    ) -> Result<Self, ExactMeshError> {
+        Self::from_lossy_f64_triangles_with_policy(
+            pos,
+            idx,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        )
+    }
+
     /// Construct an exact mesh from flat hyperreal coordinates.
     pub fn from_real_triangles(pos: &[Real], idx: &[usize]) -> Result<Self, ExactMeshError> {
         Self::from_real_triangles_with_policy(pos, idx, ExactMeshValidationPolicy::CLOSED)
     }
 
+    /// Construct a boundary-allowed exact mesh from flat hyperreal coordinates.
+    pub fn from_real_triangles_allow_boundary(
+        pos: &[Real],
+        idx: &[usize],
+    ) -> Result<Self, ExactMeshError> {
+        Self::from_real_triangles_with_policy(pos, idx, ExactMeshValidationPolicy::ALLOW_BOUNDARY)
+    }
+
     /// Construct an exact mesh from flat hyperreal coordinates with an explicit
     /// validation policy.
-    pub fn from_real_triangles_with_policy(
+    pub(crate) fn from_real_triangles_with_policy(
         pos: &[Real],
         idx: &[usize],
         policy: ExactMeshValidationPolicy,
@@ -412,7 +448,7 @@ impl ExactMesh {
 
     /// Import an exact mesh from flat primitive-float coordinates with an
     /// explicit validation policy and lossy source provenance.
-    pub fn from_lossy_f64_triangles_with_policy(
+    pub(crate) fn from_lossy_f64_triangles_with_policy(
         pos: &[f64],
         idx: &[usize],
         policy: ExactMeshValidationPolicy,
@@ -442,9 +478,17 @@ impl ExactMesh {
         Self::from_i64_triangles_with_policy(pos, idx, ExactMeshValidationPolicy::CLOSED)
     }
 
+    /// Construct a boundary-allowed exact mesh from flat integer coordinates.
+    pub fn from_i64_triangles_allow_boundary(
+        pos: &[i64],
+        idx: &[usize],
+    ) -> Result<Self, ExactMeshError> {
+        Self::from_i64_triangles_with_policy(pos, idx, ExactMeshValidationPolicy::ALLOW_BOUNDARY)
+    }
+
     /// Construct an exact mesh from integer coordinates with an explicit
     /// validation policy.
-    pub fn from_i64_triangles_with_policy(
+    pub(crate) fn from_i64_triangles_with_policy(
         pos: &[i64],
         idx: &[usize],
         policy: ExactMeshValidationPolicy,

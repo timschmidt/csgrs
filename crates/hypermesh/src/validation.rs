@@ -40,7 +40,7 @@ pub(crate) enum BoundaryPolicy {
 
 /// Validation policy for exact triangle meshes.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ExactMeshValidationPolicy {
+pub(crate) struct ExactMeshValidationPolicy {
     /// How boundary edges are handled.
     pub(crate) boundary: BoundaryPolicy,
 }

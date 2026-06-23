@@ -35,10 +35,10 @@ convenience methods downstream CSG layers need: `union`, `intersection`,
 `with_arrangement_view`.
 
 Supporting root exports are deliberately small. `Triangle` is the construction
-index row, `ExactMeshValidationPolicy` selects the mesh validation contract, and
-`ExactMeshError`/`ExactMeshBlocker` report invalid input, unsupported exact
-topology, stale replay, and construction blockers with provenance where
-available.
+index row, while `ExactMeshError`/`ExactMeshBlocker` report invalid input,
+unsupported exact topology, stale replay, and construction blockers with
+provenance where available. Boundary-allowed input uses named `ExactMesh`
+constructors instead of a public policy object.
 
 Borrowed queries start from `ExactMesh::view()`. `ExactMeshRef`, `TriangleRef`,
 `FaceRef`, and `EdgeRef` avoid cloning mesh storage; `PreparedMeshView` reuses
@@ -77,7 +77,7 @@ for difficult inputs.
 
 ## Status
 
-The default crate root centers on `ExactMesh`, validation, errors, and borrowed
+The default crate root centers on `ExactMesh`, typed kernel errors, and borrowed
 mesh/triangle/face/arrangement views. Unsupported boolean, intersection, or
 simplification topology is reported as a blocker instead of falling back to
 tolerance-based geometry.
@@ -94,16 +94,15 @@ hypermesh = "0.3.0"
 The exact-facing path is the preferred boundary for new code:
 
 ```rust,ignore
-use hypermesh::{ExactMesh, ExactMeshValidationPolicy};
+use hypermesh::ExactMesh;
 
-let mesh = ExactMesh::from_i64_triangles_with_policy(
+let mesh = ExactMesh::from_i64_triangles_allow_boundary(
     &[
         0, 0, 0,
         1, 0, 0,
         0, 1, 0,
     ],
     &[0, 1, 2],
-    ExactMeshValidationPolicy::ALLOW_BOUNDARY,
 )?;
 
 let view = mesh.view();
