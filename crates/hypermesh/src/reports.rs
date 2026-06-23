@@ -40,7 +40,8 @@ use super::boolean::{
 };
 #[cfg(test)]
 use super::boolean::{
-    preflight_report_for_request_from_graph, winding_evidence_report_for_request_from_graph,
+    exact_boolean_report_evaluation_for_replay, preflight_report_for_request_from_graph,
+    winding_evidence_report_for_request_from_graph,
 };
 use super::bounds::AabbIntersectionKind;
 use super::cell_complex::{
@@ -1486,21 +1487,6 @@ impl ExactBooleanResult {
             operation,
             shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
         } = self.kind
-            && let Some(replay) = boolean_coplanar_mesh_overlay_optional(
-                left,
-                right,
-                operation,
-                self.mesh.validation_policy(),
-            )
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-            && self == &replay
-        {
-            arrangement_cell_complex_output_replayed = true;
-        }
-        if let ExactBooleanResultKind::CertifiedShortcut {
-            operation,
-            shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-        } = self.kind
             && let Some(matches_output) = arrangement_cell_complex_output_matches_sources(
                 operation,
                 self.mesh.validation_policy(),
@@ -1512,6 +1498,22 @@ impl ExactBooleanResult {
             if !matches_output {
                 return Err(ExactReportValidationError::SourceReplayMismatch);
             }
+            arrangement_cell_complex_output_replayed = true;
+        }
+        if let ExactBooleanResultKind::CertifiedShortcut {
+            operation,
+            shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+        } = self.kind
+            && !arrangement_cell_complex_output_replayed
+            && let Some(replay) = boolean_coplanar_mesh_overlay_optional(
+                left,
+                right,
+                operation,
+                self.mesh.validation_policy(),
+            )
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            && self == &replay
+        {
             arrangement_cell_complex_output_replayed = true;
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
@@ -2801,6 +2803,15 @@ fn arrangement_cell_complex_output_matches_sources(
     right: &ExactMesh,
 ) -> Result<Option<bool>, ExactReportValidationError> {
     let mut retained_mismatch = false;
+    if let Some(matches_output) = axis_aligned_orthogonal_solid_output_matches_sources(
+        operation, validation, mesh, left, right,
+    )? {
+        if matches_output {
+            return Ok(Some(true));
+        }
+        retained_mismatch = true;
+    }
+
     if let Some((replay, closure_report)) =
         materialize_volumetric_coplanar_boundary_closure_output(left, right, operation, validation)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
@@ -2869,15 +2880,6 @@ fn arrangement_cell_complex_output_matches_sources(
         && lower_dimensional_regularized_sources(left, right)
     {
         if mesh_output_is_empty(mesh) {
-            return Ok(Some(true));
-        }
-        retained_mismatch = true;
-    }
-
-    if let Some(matches_output) = axis_aligned_orthogonal_solid_output_matches_sources(
-        operation, validation, mesh, left, right,
-    )? {
-        if matches_output {
             return Ok(Some(true));
         }
         retained_mismatch = true;
@@ -3918,6 +3920,10 @@ fn validate_winding_evidence_against_sources_for_request(
     {
         return Ok(());
     }
+    if axis_aligned_orthogonal_solid_winding_evidence_matches_sources(report, left, right, request)?
+    {
+        return Ok(());
+    }
     let replay = winding_evidence_report_for_request_from_graph(&graph, left, right, request)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
     if report == &replay {
@@ -3935,6 +3941,45 @@ fn validate_winding_evidence_against_sources_for_request(
     // canonical evaluation cannot yet return them or supersedes them with an
     // arrangement/cell-complex materialization status.
     Err(ExactReportValidationError::SourceReplayMismatch)
+}
+
+#[cfg(test)]
+fn axis_aligned_orthogonal_solid_winding_evidence_matches_sources(
+    report: &ExactWindingEvidenceReport,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<bool, ExactReportValidationError> {
+    if report.operation != request.operation
+        || report.status != ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
+        || matches!(report.operation, ExactBooleanOperation::SelectedRegions(_))
+        || report.region_count != 0
+        || !report.region_classifications.is_empty()
+        || report.coplanar_arrangement_evidence.is_some()
+    {
+        return Ok(false);
+    }
+    let graph = validated_report_intersection_graph(left, right)?;
+    if graph.has_unknowns() {
+        return Ok(false);
+    }
+    let retains_graph_evidence = report.retained_face_pairs == graph.face_pairs.len()
+        && report.retained_events == graph.event_count()
+        && report
+            .coplanar_volumetric_evidence
+            .as_ref()
+            .is_none_or(|evidence| {
+                evidence == &CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right)
+            });
+    let collapsed_winding_evidence = report.retained_face_pairs == 0
+        && report.retained_events == 0
+        && report.coplanar_volumetric_evidence.is_none()
+        && report.blocker == ExactBooleanBlocker::default();
+    if retains_graph_evidence || collapsed_winding_evidence {
+        axis_aligned_orthogonal_solid_preflight_matches_sources(left, right, request)
+    } else {
+        Ok(false)
+    }
 }
 
 #[cfg(test)]
@@ -5585,7 +5630,7 @@ impl ExactPlanarArrangementReport {
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        if let Ok(evaluation) = exact_boolean_evaluation_for_replay(left, right, request)
+        if let Ok(evaluation) = exact_boolean_report_evaluation_for_replay(left, right, request)
             && self == evaluation.certifications().planar_arrangement()
         {
             return Ok(());
