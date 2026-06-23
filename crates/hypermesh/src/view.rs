@@ -342,7 +342,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     /// Visit replay-validated broad-phase candidate face pairs using the cached pair plan.
     pub fn visit_candidate_face_pairs(&self, visit: &mut impl FnMut([usize; 2])) {
-        self.as_view().visit_candidate_face_pairs(visit);
+        let result = self.try_visit_candidate_face_pairs(&mut |pair| {
+            visit(pair);
+            Ok::<(), ()>(())
+        });
+        debug_assert!(result.is_ok());
     }
 
     /// Visit replay-validated candidate face pairs and allow the visitor to stop early.

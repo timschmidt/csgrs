@@ -212,6 +212,20 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
         .unwrap_err();
     assert_eq!(outer_visits, 1);
     assert_eq!(inner_visits, 1);
+
+    let mut reentrant_outer_visits = 0;
+    let mut reentrant_inner_visits = 0;
+    prepared_pair.visit_candidate_face_pairs(&mut |_| {
+        reentrant_outer_visits += 1;
+        prepared_pair
+            .try_visit_candidate_face_pairs(&mut |_| {
+                reentrant_inner_visits += 1;
+                Err("inner stop")
+            })
+            .unwrap_err();
+    });
+    assert_eq!(reentrant_outer_visits, candidates.len());
+    assert_eq!(reentrant_inner_visits, candidates.len());
 }
 
 #[test]
