@@ -6,7 +6,8 @@
 
 use super::arrangement3d::{ArrangementView, ExactArrangement};
 use super::boolean::{
-    ExactBooleanOperation, ExactBooleanRequest, materialize_boolean_exact_request,
+    ExactBooleanOperation, ExactBooleanRequest,
+    materialize_boolean_exact_request_with_prepared_pair,
 };
 use super::bounds::{BoundsValidationError, MeshBounds};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
@@ -689,7 +690,9 @@ impl ExactMesh {
         validation: ExactMeshValidationPolicy,
     ) -> Result<ExactMesh, ExactMeshError> {
         let request = ExactBooleanRequest::new(operation, validation);
-        materialize_boolean_exact_request(self, right, request).map(|result| result.into_mesh())
+        let pair = self.view().prepare_broad_phase_pair(right.view())?;
+        materialize_boolean_exact_request_with_prepared_pair(&pair, request)
+            .map(|result| result.into_mesh())
     }
 }
 

@@ -59,6 +59,7 @@ use super::graph::FacePairEvents;
 use super::graph::build_unvalidated_intersection_graph;
 use super::graph::{
     ExactIntersectionGraph, IntersectionEvent, MeshSide, build_validated_intersection_graph,
+    build_validated_intersection_graph_from_prepared_pair,
 };
 use super::intersection::MeshFacePairRelation;
 use super::loop_triangulation::{group_exact_coplanar_loops, triangulate_exact_loop_group};
@@ -98,6 +99,7 @@ use super::topology::mesh_for_side;
 #[cfg(test)]
 use super::topology::triangle_edges as topology_triangle_edges;
 use super::validation::ExactMeshValidationPolicy;
+use super::view::PreparedMeshPair;
 use super::volumetric::{
     ExactVolumetricRegionClassification, ExactVolumetricRegionRelation,
     classify_triangulated_regions_against_opposite_meshes,
@@ -5318,6 +5320,16 @@ pub(crate) fn materialize_boolean_exact_request(
     request: ExactBooleanRequest,
 ) -> Result<ExactBooleanResult, ExactMeshError> {
     materialize_boolean_exact_request_with_graph(left, right, request, None)
+}
+
+pub(crate) fn materialize_boolean_exact_request_with_prepared_pair(
+    pair: &PreparedMeshPair<'_, '_>,
+    request: ExactBooleanRequest,
+) -> Result<ExactBooleanResult, ExactMeshError> {
+    let left = pair.left().view().mesh();
+    let right = pair.right().view().mesh();
+    let graph = build_validated_intersection_graph_from_prepared_pair(pair)?;
+    materialize_boolean_exact_request_with_graph(left, right, request, Some(&graph))
 }
 
 fn materialize_boolean_exact_request_with_graph(

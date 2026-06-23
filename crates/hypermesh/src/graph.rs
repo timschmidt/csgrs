@@ -1325,7 +1325,6 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair(
 }
 
 /// Build an exact event graph from a retained prepared pair and validate retained event handles.
-#[cfg(test)]
 pub(crate) fn build_validated_intersection_graph_from_prepared_pair(
     pair: &PreparedMeshPair<'_, '_>,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {

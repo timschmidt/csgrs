@@ -36,8 +36,9 @@ convenience methods downstream CSG layers need: `union`, `intersection`,
 Supporting root exports are implementation support for `ExactMesh` methods, not
 additional primary entry points. Kernel errors report invalid input,
 unsupported exact topology, stale retained facts, and construction blockers with
-provenance where available. Boundary and output policy stay inside kernel
-algorithms instead of becoming default public request objects.
+provenance where available. Workspace routing, boundary policy, output policy,
+and product-facing reports belong above this crate rather than in the default
+public API.
 
 Borrowed queries start from `ExactMesh::view()`. Mesh, triangle, face, and edge
 views avoid cloning mesh storage; prepared views reuse certificate-validated
