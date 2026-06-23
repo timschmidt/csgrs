@@ -90,6 +90,7 @@ pub struct PreparedMeshPairView<'pair, 'left, 'right> {
 /// Cheap status for retained facts inside a prepared mesh-pair session.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PreparedMeshPairCacheStatus {
+    candidate_pair_plan: PreparedMeshPairPlanKind,
     candidate_pair_capacity_hint: usize,
     face_pair_classifications: PreparedMeshPairFactState,
     retained_face_pair_classification_count: Option<usize>,
@@ -101,6 +102,17 @@ pub struct PreparedMeshPairCacheStatus {
     intersection_result: PreparedMeshPairFactState,
     difference_result: PreparedMeshPairFactState,
     xor_result: PreparedMeshPairFactState,
+}
+
+/// Retained broad-phase plan chosen for a prepared mesh-pair session.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PreparedMeshPairPlanKind {
+    /// Whole-mesh or face-level bounds prove that no candidate face pairs are needed.
+    Empty,
+    /// A sorted-axis sweep plan was retained for candidate traversal.
+    Sweep,
+    /// No certified sweep axis was retained, so candidate traversal falls back to exact quadratic checks.
+    Quadratic,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -156,6 +168,11 @@ impl PreparedMeshPairFactState {
 }
 
 impl PreparedMeshPairCacheStatus {
+    /// Return the retained broad-phase candidate traversal plan.
+    pub const fn candidate_pair_plan(self) -> PreparedMeshPairPlanKind {
+        self.candidate_pair_plan
+    }
+
     /// Return the bounded storage hint for candidate face-pair traversal.
     pub const fn candidate_pair_capacity_hint(self) -> usize {
         self.candidate_pair_capacity_hint
@@ -557,6 +574,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         let graph_counts = *self.intersection_graph_counts.borrow();
         let graph_retained = self.intersection_graph.borrow().is_some();
         PreparedMeshPairCacheStatus {
+            candidate_pair_plan: PreparedMeshPairPlanKind::from_candidate_plan(self.plan),
             candidate_pair_capacity_hint: self.candidate_face_pair_capacity_hint(),
             face_pair_classifications: retained_current_state(
                 face_pair_classification_count.is_some(),
@@ -804,6 +822,16 @@ const fn retained_certificate_state(certificate_current: bool) -> PreparedMeshPa
         PreparedMeshPairFactState::Current
     } else {
         PreparedMeshPairFactState::CertificateBlocked
+    }
+}
+
+impl PreparedMeshPairPlanKind {
+    const fn from_candidate_plan(plan: CandidateFacePairPlan) -> Self {
+        match plan {
+            CandidateFacePairPlan::Empty => Self::Empty,
+            CandidateFacePairPlan::Sweep { .. } => Self::Sweep,
+            CandidateFacePairPlan::Quadratic => Self::Quadratic,
+        }
     }
 }
 

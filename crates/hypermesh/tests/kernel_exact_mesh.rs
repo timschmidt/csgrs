@@ -1,8 +1,8 @@
 use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
     ArrangementView, EdgeRef, ExactMesh, ExactMeshBlocker, ExactMeshError, ExactMeshRef, FaceRef,
-    PreparedMeshPair, PreparedMeshPairCacheStatus, PreparedMeshPairFactState, PreparedMeshPairView,
-    PreparedMeshView, TriangleRef, VertexRef,
+    PreparedMeshPair, PreparedMeshPairCacheStatus, PreparedMeshPairFactState,
+    PreparedMeshPairPlanKind, PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,
 };
 use hyperreal::Real;
 
@@ -90,6 +90,10 @@ fn prepared_mesh_pair_materializes_named_operations() {
     let solid = tetra([0, 0, 0]);
     let pair = empty.view().prepare_broad_phase_pair(solid.view()).unwrap();
     let initial_status: PreparedMeshPairCacheStatus = pair.cache_status();
+    assert_eq!(
+        initial_status.candidate_pair_plan(),
+        PreparedMeshPairPlanKind::Empty
+    );
     assert_eq!(initial_status.candidate_pair_capacity_hint(), 0);
     assert_eq!(
         initial_status.face_pair_classifications(),
@@ -342,6 +346,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         .prepare_broad_phase_pair(overlapping.view())
         .unwrap();
     assert_eq!(
+        prepared_pair.cache_status().candidate_pair_plan(),
+        PreparedMeshPairPlanKind::Sweep
+    );
+    assert_eq!(
         prepared_pair.left().view().face_count(),
         left.triangle_count()
     );
@@ -374,6 +382,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         .view()
         .prepare_broad_phase_pair(disjoint.view())
         .unwrap();
+    assert_eq!(
+        disjoint_pair.cache_status().candidate_pair_plan(),
+        PreparedMeshPairPlanKind::Empty
+    );
     assert_eq!(disjoint_pair.candidate_face_pair_capacity_hint(), 0);
     let mut disjoint_candidates = Vec::new();
     prepared_left.visit_candidate_face_pairs(&prepared_disjoint, &mut |pair| {
