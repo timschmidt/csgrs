@@ -42,6 +42,14 @@ pub struct PreparedMeshView<'a> {
     bounds: PreparedMeshBounds<'a>,
 }
 
+/// Owned borrowed mesh-pair cache with replay-validated broad-phase facts.
+#[derive(Debug)]
+pub struct PreparedMeshPair<'left, 'right> {
+    left: PreparedMeshView<'left>,
+    right: PreparedMeshView<'right>,
+    plan: CandidateFacePairPlan,
+}
+
 /// Borrowed prepared pair view with retained broad-phase pair planning.
 #[derive(Debug)]
 pub struct PreparedMeshPairView<'pair, 'left, 'right> {
@@ -185,6 +193,16 @@ impl<'a> ExactMeshRef<'a> {
         Ok(self.prepare_broad_phase_after_replay())
     }
 
+    /// Prepare replay-validated broad-phase facts for this mesh pair.
+    pub fn prepare_broad_phase_pair<'b>(
+        self,
+        right: ExactMeshRef<'b>,
+    ) -> Result<PreparedMeshPair<'a, 'b>, ExactMeshError> {
+        let left = self.prepare_broad_phase()?;
+        let right = right.prepare_broad_phase()?;
+        Ok(PreparedMeshPair::new(left, right))
+    }
+
     pub(crate) fn prepare_broad_phase_after_replay(self) -> PreparedMeshView<'a> {
         PreparedMeshView {
             view: self,
@@ -279,6 +297,46 @@ impl<'a> PreparedMeshView<'a> {
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
         self.pair_with(right).try_visit_candidate_face_pairs(visit)
+    }
+}
+
+impl<'left, 'right> PreparedMeshPair<'left, 'right> {
+    fn new(left: PreparedMeshView<'left>, right: PreparedMeshView<'right>) -> Self {
+        let broad_phase = ExactAabbBroadPhase::default();
+        let plan = broad_phase.candidate_face_pair_plan(&left.bounds, &right.bounds);
+        Self { left, right, plan }
+    }
+
+    /// Return the left prepared mesh view.
+    pub const fn left(&self) -> &PreparedMeshView<'left> {
+        &self.left
+    }
+
+    /// Return the right prepared mesh view.
+    pub const fn right(&self) -> &PreparedMeshView<'right> {
+        &self.right
+    }
+
+    /// Borrow this pair cache as a lightweight pair view.
+    pub const fn as_view(&self) -> PreparedMeshPairView<'_, 'left, 'right> {
+        PreparedMeshPairView {
+            left: &self.left,
+            right: &self.right,
+            plan: self.plan,
+        }
+    }
+
+    /// Visit replay-validated broad-phase candidate face pairs using the cached pair plan.
+    pub fn visit_candidate_face_pairs(&self, visit: &mut impl FnMut([usize; 2])) {
+        self.as_view().visit_candidate_face_pairs(visit);
+    }
+
+    /// Visit replay-validated candidate face pairs and allow the visitor to stop early.
+    pub fn try_visit_candidate_face_pairs<E>(
+        &self,
+        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<(), E> {
+        self.as_view().try_visit_candidate_face_pairs(visit)
     }
 }
 

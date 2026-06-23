@@ -124,6 +124,19 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
     left.view().validate_retained_bounds().unwrap();
     let prepared_left = left.view().prepare_broad_phase().unwrap();
     let prepared_overlapping = overlapping.view().prepare_broad_phase().unwrap();
+    let prepared_pair = left
+        .view()
+        .prepare_broad_phase_pair(overlapping.view())
+        .unwrap();
+    assert_eq!(
+        prepared_pair.left().view().face_count(),
+        left.triangle_count()
+    );
+    assert_eq!(
+        prepared_pair.right().view().face_count(),
+        overlapping.triangle_count()
+    );
+
     let pair_view = prepared_left.pair_with(&prepared_overlapping);
     assert_eq!(pair_view.left().view().face_count(), left.triangle_count());
     assert_eq!(
@@ -164,6 +177,13 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
     prepared_pair_candidates.sort_unstable();
     assert_eq!(prepared_pair_candidates, candidates);
     assert_eq!(direct_pair_candidates.len(), candidates.len());
+
+    let mut owned_pair_candidates = Vec::new();
+    prepared_pair.visit_candidate_face_pairs(&mut |pair| {
+        owned_pair_candidates.push(pair);
+    });
+    owned_pair_candidates.sort_unstable();
+    assert_eq!(owned_pair_candidates, candidates);
 }
 
 #[test]
@@ -172,8 +192,18 @@ fn prepared_broad_phase_candidate_visitor_can_stop_early() {
     let right = tetra([0, 0, 0]);
     let prepared_left = left.view().prepare_broad_phase().unwrap();
     let prepared_right = right.view().prepare_broad_phase().unwrap();
+    let prepared_pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
 
     let mut visited = 0;
+    let result = prepared_pair.try_visit_candidate_face_pairs(&mut |_| {
+        visited += 1;
+        Err("stop")
+    });
+
+    assert_eq!(result, Err("stop"));
+    assert_eq!(visited, 1);
+
+    visited = 0;
     let pair_view = prepared_left.pair_with(&prepared_right);
     let result = pair_view.try_visit_candidate_face_pairs(&mut |_| {
         visited += 1;
