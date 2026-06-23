@@ -209,6 +209,121 @@ impl CandidateFacePairPlan {
     }
 }
 
+/// Internal broad-phase strategy for exact face-pair scheduling.
+///
+/// A strategy may reject only with replay-validated acceleration facts. Every
+/// retained pair is still a narrow-phase candidate; broad phase never certifies
+/// topology.
+pub(crate) trait ExactBroadPhaseStrategy {
+    fn candidate_face_pair_plan(
+        &self,
+        left: &PreparedMeshBounds<'_>,
+        right: &PreparedMeshBounds<'_>,
+    ) -> CandidateFacePairPlan;
+
+    fn candidate_face_pair_plan_one_shot(
+        &self,
+        left: &MeshBounds,
+        right: &MeshBounds,
+    ) -> CandidateFacePairPlan;
+
+    fn try_visit_candidate_face_pairs_one_shot<E>(
+        &self,
+        left: &MeshBounds,
+        right: &MeshBounds,
+        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<(), E>;
+
+    fn try_visit_candidate_face_pairs_with_plan<E>(
+        &self,
+        left: &PreparedMeshBounds<'_>,
+        right: &PreparedMeshBounds<'_>,
+        plan: CandidateFacePairPlan,
+        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<(), E>;
+}
+
+/// Exact AABB broad phase with an adaptive one-shot/prepared sweep split.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct ExactAabbBroadPhase {
+    one_shot_quadratic_face_pair_limit: usize,
+}
+
+impl ExactAabbBroadPhase {
+    const DEFAULT_ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT: usize = 64;
+
+    pub(crate) const fn new(one_shot_quadratic_face_pair_limit: usize) -> Self {
+        Self {
+            one_shot_quadratic_face_pair_limit,
+        }
+    }
+}
+
+impl Default for ExactAabbBroadPhase {
+    fn default() -> Self {
+        Self::new(Self::DEFAULT_ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT)
+    }
+}
+
+impl ExactBroadPhaseStrategy for ExactAabbBroadPhase {
+    fn candidate_face_pair_plan(
+        &self,
+        left: &PreparedMeshBounds<'_>,
+        right: &PreparedMeshBounds<'_>,
+    ) -> CandidateFacePairPlan {
+        left.candidate_face_pair_plan(right)
+    }
+
+    fn candidate_face_pair_plan_one_shot(
+        &self,
+        left: &MeshBounds,
+        right: &MeshBounds,
+    ) -> CandidateFacePairPlan {
+        if !left.mesh_may_overlap(right) {
+            return CandidateFacePairPlan::empty();
+        }
+        if should_use_quadratic_one_shot(
+            left.faces.len(),
+            right.faces.len(),
+            self.one_shot_quadratic_face_pair_limit,
+        ) {
+            return CandidateFacePairPlan::Quadratic;
+        }
+        let left = left.prepare();
+        let right = right.prepare();
+        self.candidate_face_pair_plan(&left, &right)
+    }
+
+    fn try_visit_candidate_face_pairs_one_shot<E>(
+        &self,
+        left: &MeshBounds,
+        right: &MeshBounds,
+        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<(), E> {
+        match self.candidate_face_pair_plan_one_shot(left, right) {
+            CandidateFacePairPlan::Empty => Ok(()),
+            CandidateFacePairPlan::Quadratic => {
+                left.try_visit_candidate_face_pairs_quadratic(right, visit)
+            }
+            plan @ CandidateFacePairPlan::Sweep { .. } => {
+                let left = left.prepare();
+                let right = right.prepare();
+                self.try_visit_candidate_face_pairs_with_plan(&left, &right, plan, visit)
+            }
+        }
+    }
+
+    fn try_visit_candidate_face_pairs_with_plan<E>(
+        &self,
+        left: &PreparedMeshBounds<'_>,
+        right: &PreparedMeshBounds<'_>,
+        plan: CandidateFacePairPlan,
+        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<(), E> {
+        left.try_visit_candidate_face_pairs_with_plan(right, plan, visit)
+    }
+}
+
 impl MeshBounds {
     /// Build retained bounds from predicate points and triangle indices.
     #[cfg(test)]
@@ -244,25 +359,6 @@ impl MeshBounds {
             (Some(left), Some(right)) => must_keep_candidate(left.classify_intersection(right)),
             _ => false,
         }
-    }
-
-    /// Visit candidate face pairs for one-shot callers without preparing sort
-    /// orders when a direct scan is cheaper.
-    pub(crate) fn try_visit_candidate_face_pairs_one_shot<E>(
-        &self,
-        other: &Self,
-        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E> {
-        if !self.mesh_may_overlap(other) {
-            return Ok(());
-        }
-        if should_use_quadratic_one_shot(self.faces.len(), other.faces.len()) {
-            return self.try_visit_candidate_face_pairs_quadratic(other, visit);
-        }
-        let left = self.prepare();
-        let right = other.prepare();
-        let plan = left.candidate_face_pair_plan(&right);
-        left.try_visit_candidate_face_pairs_with_plan(&right, plan, visit)
     }
 
     fn try_visit_candidate_face_pairs_quadratic<E>(
@@ -802,8 +898,12 @@ const fn should_use_sparse_sweep(
     active_face_capacity_hint.saturating_mul(4) < target_face_count
 }
 
-const fn should_use_quadratic_one_shot(left_face_count: usize, right_face_count: usize) -> bool {
-    left_face_count.saturating_mul(right_face_count) <= 64
+const fn should_use_quadratic_one_shot(
+    left_face_count: usize,
+    right_face_count: usize,
+    face_pair_limit: usize,
+) -> bool {
+    left_face_count.saturating_mul(right_face_count) <= face_pair_limit
 }
 
 fn axis_intervals_may_overlap(left: FaceAxisInterval<'_>, right: FaceAxisInterval<'_>) -> bool {
@@ -869,11 +969,13 @@ mod tests {
         right: &PreparedMeshBounds<'_>,
     ) -> Vec<[usize; 2]> {
         let mut pairs = Vec::new();
-        let plan = left.candidate_face_pair_plan(right);
-        let result = left.try_visit_candidate_face_pairs_with_plan(right, plan, &mut |pair| {
-            pairs.push(pair);
-            Ok::<(), ()>(())
-        });
+        let broad_phase = ExactAabbBroadPhase::default();
+        let plan = broad_phase.candidate_face_pair_plan(left, right);
+        let result =
+            broad_phase.try_visit_candidate_face_pairs_with_plan(left, right, plan, &mut |pair| {
+                pairs.push(pair);
+                Ok::<(), ()>(())
+            });
         debug_assert!(result.is_ok());
         pairs
     }
@@ -951,7 +1053,8 @@ mod tests {
 
         let prepared_left = left.prepare();
         let prepared_right = right.prepare();
-        let plan = prepared_left.candidate_face_pair_plan(&prepared_right);
+        let plan = ExactAabbBroadPhase::default()
+            .candidate_face_pair_plan(&prepared_left, &prepared_right);
         let CandidateFacePairPlan::Sweep {
             plan: sweep_plan, ..
         } = plan
@@ -1076,7 +1179,8 @@ mod tests {
         let CandidateFacePairPlan::Sweep {
             active_face_capacity_hint,
             ..
-        } = prepared_left.candidate_face_pair_plan(&prepared_right)
+        } = ExactAabbBroadPhase::default()
+            .candidate_face_pair_plan(&prepared_left, &prepared_right)
         else {
             panic!("expected sweep plan");
         };
@@ -1102,9 +1206,28 @@ mod tests {
 
     #[test]
     fn one_shot_uses_quadratic_for_small_face_products() {
-        assert!(should_use_quadratic_one_shot(8, 8));
-        assert!(should_use_quadratic_one_shot(1, 64));
-        assert!(!should_use_quadratic_one_shot(9, 8));
+        assert!(should_use_quadratic_one_shot(8, 8, 64));
+        assert!(should_use_quadratic_one_shot(1, 64, 64));
+        assert!(!should_use_quadratic_one_shot(9, 8, 64));
+    }
+
+    #[test]
+    fn one_shot_plan_is_strategy_owned() {
+        let left_points = vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0)];
+        let right_points = vec![p(1, 0, 0), p(3, 0, 0), p(1, 2, 0)];
+        let triangles = [[0, 1, 2]];
+        let left = MeshBounds::from_triangles(&left_points, &triangles);
+        let right = MeshBounds::from_triangles(&right_points, &triangles);
+
+        assert_eq!(
+            ExactAabbBroadPhase::new(0).candidate_face_pair_plan_one_shot(&left, &right),
+            ExactAabbBroadPhase::default()
+                .candidate_face_pair_plan(&left.prepare(), &right.prepare())
+        );
+        assert_eq!(
+            ExactAabbBroadPhase::default().candidate_face_pair_plan_one_shot(&left, &right),
+            CandidateFacePairPlan::Quadratic
+        );
     }
 
     #[test]
@@ -1129,11 +1252,12 @@ mod tests {
         let left = MeshBounds::from_triangles(&left_points, &triangles);
         let right = MeshBounds::from_triangles(&right_points, &triangles);
         let mut pairs = Vec::new();
-        left.try_visit_candidate_face_pairs_one_shot(&right, &mut |pair| {
-            pairs.push(pair);
-            Ok::<(), ()>(())
-        })
-        .unwrap();
+        ExactAabbBroadPhase::default()
+            .try_visit_candidate_face_pairs_one_shot(&left, &right, &mut |pair| {
+                pairs.push(pair);
+                Ok::<(), ()>(())
+            })
+            .unwrap();
 
         assert_eq!(
             sorted_pairs(pairs),

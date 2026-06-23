@@ -20,6 +20,7 @@ use hyperlimit::{
     project_point3, projected_line_parameter3, projected_segment_parameter3,
 };
 
+use super::bounds::{ExactAabbBroadPhase, ExactBroadPhaseStrategy};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::exact_key::{ExactPoint3Key, exact_point3_key};
 use super::intersection::{
@@ -1210,18 +1211,18 @@ fn build_unvalidated_intersection_graph_from_replayed_bounds(
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
     let mut face_pairs = Vec::new();
-    left.bounds()
-        .try_visit_candidate_face_pairs_one_shot(right.bounds(), &mut |[
-            left_face,
-            right_face,
-        ]| {
+    ExactAabbBroadPhase::default().try_visit_candidate_face_pairs_one_shot(
+        left.bounds(),
+        right.bounds(),
+        &mut |[left_face, right_face]| {
             let classification =
                 classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
             if classification.needs_graph_construction() {
                 face_pairs.push(events_for_face_pair(left, right, &classification));
             }
             Ok::<(), ExactMeshError>(())
-        })?;
+        },
+    )?;
     Ok(ExactIntersectionGraph { face_pairs })
 }
 

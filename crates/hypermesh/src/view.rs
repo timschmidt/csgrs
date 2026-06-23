@@ -1,7 +1,7 @@
 //! Borrowed exact views of retained mesh data.
 
 use super::ExactMesh;
-use super::bounds::PreparedMeshBounds;
+use super::bounds::{ExactAabbBroadPhase, ExactBroadPhaseStrategy, PreparedMeshBounds};
 use super::error::ExactMeshError;
 use hyperlimit::Point3;
 use hyperreal::Real;
@@ -190,7 +190,8 @@ impl<'a> ExactMeshRef<'a> {
     ) -> Result<(), ExactMeshError> {
         self.validate_retained_bounds()?;
         right.validate_retained_bounds()?;
-        let result = self.mesh.bounds().try_visit_candidate_face_pairs_one_shot(
+        let result = ExactAabbBroadPhase::default().try_visit_candidate_face_pairs_one_shot(
+            self.mesh.bounds(),
             right.mesh.bounds(),
             &mut |pair| {
                 visit(pair);
@@ -244,8 +245,10 @@ impl<'a> PreparedMeshView<'a> {
         right: &PreparedMeshView<'b>,
         visit: &mut impl FnMut([usize; 2]),
     ) {
-        let plan = self.bounds.candidate_face_pair_plan(&right.bounds);
-        let result = self.bounds.try_visit_candidate_face_pairs_with_plan(
+        let broad_phase = ExactAabbBroadPhase::default();
+        let plan = broad_phase.candidate_face_pair_plan(&self.bounds, &right.bounds);
+        let result = broad_phase.try_visit_candidate_face_pairs_with_plan(
+            &self.bounds,
             &right.bounds,
             plan,
             &mut |pair| {
@@ -262,9 +265,14 @@ impl<'a> PreparedMeshView<'a> {
         right: &PreparedMeshView<'b>,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
-        let plan = self.bounds.candidate_face_pair_plan(&right.bounds);
-        self.bounds
-            .try_visit_candidate_face_pairs_with_plan(&right.bounds, plan, visit)
+        let broad_phase = ExactAabbBroadPhase::default();
+        let plan = broad_phase.candidate_face_pair_plan(&self.bounds, &right.bounds);
+        broad_phase.try_visit_candidate_face_pairs_with_plan(
+            &self.bounds,
+            &right.bounds,
+            plan,
+            visit,
+        )
     }
 }
 
