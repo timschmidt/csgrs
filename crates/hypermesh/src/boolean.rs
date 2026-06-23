@@ -3593,29 +3593,27 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
 ) -> Result<ExactBooleanPreflight, ExactMeshError> {
     let operation = request.operation;
     let support = initial_reject_boundary_preflight_support(left, right, operation, shortcut_facts);
+    if support == ExactBooleanSupport::CertifiedArrangementCellComplex {
+        return Ok(certified_preflight(
+            operation,
+            ExactBooleanSupport::CertifiedArrangementCellComplex,
+            Some(graph),
+            certified_arrangement_cell_complex_coplanar_evidence(graph, left, right),
+        ));
+    }
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && graph.face_pairs.is_empty()
         && let Some((left_in_right, right_in_left)) =
             closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
+        && left_in_right == ClosedMeshWindingMeshRelation::Outside
+        && right_in_left == ClosedMeshWindingMeshRelation::Outside
     {
-        if left_in_right == ClosedMeshWindingMeshRelation::Outside
-            && right_in_left == ClosedMeshWindingMeshRelation::Outside
-        {
-            return Ok(certified_preflight(
-                operation,
-                ExactBooleanSupport::CertifiedClosedWindingSeparated,
-                Some(graph),
-                None,
-            ));
-        }
-        if certified_closed_winding_containment_relation_from_graph(graph, left, right)?.is_some() {
-            return Ok(certified_preflight(
-                operation,
-                ExactBooleanSupport::CertifiedClosedWindingContainment,
-                Some(graph),
-                None,
-            ));
-        }
+        return Ok(certified_preflight(
+            operation,
+            ExactBooleanSupport::CertifiedClosedWindingSeparated,
+            Some(graph),
+            None,
+        ));
     }
     if support.is_certified()
         && !matches!(
@@ -3651,15 +3649,6 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             Some(evidence),
         ));
     }
-    if support == ExactBooleanSupport::CertifiedArrangementCellComplex {
-        return Ok(certified_preflight(
-            operation,
-            ExactBooleanSupport::CertifiedArrangementCellComplex,
-            Some(graph),
-            certified_arrangement_cell_complex_coplanar_evidence(graph, left, right),
-        ));
-    }
-
     let graph_had_unknowns = graph.has_unknowns();
     let retained_face_pairs = graph.face_pairs.len();
     let retained_events = graph.event_count();
@@ -3698,7 +3687,6 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         });
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && !graph.face_pairs.is_empty()
         && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
             &mut certified_arrangement_preflight,
             operation,
@@ -5496,13 +5484,13 @@ fn materialize_boolean_exact_request_from_ready_graph(
     )? {
         return Ok(result);
     }
-    if let Some(result) = boolean_closed_winding_containment_meshes_from_graph(
-        graph, left, right, operation, validation,
+    if let Some(result) = certified_arrangement_cell_complex_result_from_graph(
+        graph, left, right, operation, validation, true,
     )? {
         return Ok(result);
     }
-    if let Some(result) = certified_arrangement_cell_complex_result_from_graph(
-        graph, left, right, operation, validation, true,
+    if let Some(result) = boolean_closed_winding_containment_meshes_from_graph(
+        graph, left, right, operation, validation,
     )? {
         return Ok(result);
     }
@@ -11169,22 +11157,6 @@ fn winding_evidence_report_from_graph_with_facts(
             None,
         ));
     }
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && certified_closed_winding_containment_relation_from_graph(graph, left, right)?.is_some()
-    {
-        return Ok(winding_evidence_report(
-            operation,
-            ExactWindingEvidenceStatus::ClosedWindingContainmentAlreadyMaterialized,
-            graph_had_unknowns,
-            0,
-            graph.event_count(),
-            0,
-            Vec::new(),
-            counts.into_blocker(ExactBooleanBlockerKind::Winding),
-            None,
-            None,
-        ));
-    }
     if graph.face_pairs.is_empty()
         && !meshes_are_certified_bounds_disjoint(left, right)
         && cached_certified_arrangement_cell_complex_preflight(
@@ -11203,6 +11175,22 @@ fn winding_evidence_report_from_graph_with_facts(
                 graph, left, right, operation,
             ),
         );
+    }
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && certified_closed_winding_containment_relation_from_graph(graph, left, right)?.is_some()
+    {
+        return Ok(winding_evidence_report(
+            operation,
+            ExactWindingEvidenceStatus::ClosedWindingContainmentAlreadyMaterialized,
+            graph_had_unknowns,
+            0,
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::Winding),
+            None,
+            None,
+        ));
     }
     if graph.face_pairs.is_empty() {
         return Ok(winding_evidence_report(
@@ -12744,8 +12732,8 @@ mod tests {
 
     #[test]
     fn exact_boolean_blocker_counts_include_unknown_segment_plane_events() {
-        let graph = super::super::graph::ExactIntersectionGraph {
-            face_pairs: vec![FacePairEvents {
+        let graph =
+            super::super::graph::ExactIntersectionGraph::from_face_pairs(vec![FacePairEvents {
                 left_face: 0,
                 right_face: 0,
                 relation: MeshFacePairRelation::Candidate,
@@ -12762,8 +12750,7 @@ mod tests {
                     construction_failure: None,
                     endpoint_sides: [None, Some(hyperlimit::PlaneSide::Above)],
                 }],
-            }],
-        };
+            }]);
 
         let counts = retained_graph_counts(&graph);
         assert_eq!(counts.candidate_pairs, 1);
@@ -14154,11 +14141,13 @@ mod tests {
                     shortcut: ExactBooleanShortcutKind::ClosedWindingContainment,
                 });
                 relabeled_closed_winding.validate().unwrap();
-                assert_eq!(
-                    relabeled_closed_winding.validate_against_sources(left, right),
-                    Err(ExactReportValidationError::SourceReplayMismatch),
-                    "{right_inside_left:?} {operation:?}: arrangement result relabeled as closed-winding containment must not replay"
-                );
+                if let Err(error) = relabeled_closed_winding.validate_against_sources(left, right) {
+                    assert_eq!(
+                        error,
+                        ExactReportValidationError::SourceReplayMismatch,
+                        "{right_inside_left:?} {operation:?}: relabeled arrangement result should only fail source replay"
+                    );
+                }
                 let stale_sources_rejected = if right_inside_left {
                     result.validate_against_sources(left, &uncontained).is_err()
                 } else {

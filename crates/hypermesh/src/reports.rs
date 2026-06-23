@@ -7671,26 +7671,24 @@ mod tests {
 
     #[test]
     fn blocker_source_counts_include_unknown_segment_plane_events() {
-        let graph = ExactIntersectionGraph {
-            face_pairs: vec![crate::graph::FacePairEvents {
-                left_face: 0,
-                right_face: 0,
-                relation: MeshFacePairRelation::Candidate,
-                projection: None,
-                events: vec![IntersectionEvent::SegmentPlane {
-                    segment_side: MeshSide::Left,
-                    edge: [0, 1],
-                    plane_side: MeshSide::Right,
-                    plane_face: 0,
-                    relation: hyperlimit::SegmentPlaneRelation::Unknown,
-                    point: None,
-                    parameter: None,
-                    parameter_ratio: None,
-                    construction_failure: None,
-                    endpoint_sides: [None, Some(hyperlimit::PlaneSide::Above)],
-                }],
+        let graph = ExactIntersectionGraph::from_face_pairs(vec![crate::graph::FacePairEvents {
+            left_face: 0,
+            right_face: 0,
+            relation: MeshFacePairRelation::Candidate,
+            projection: None,
+            events: vec![IntersectionEvent::SegmentPlane {
+                segment_side: MeshSide::Left,
+                edge: [0, 1],
+                plane_side: MeshSide::Right,
+                plane_face: 0,
+                relation: hyperlimit::SegmentPlaneRelation::Unknown,
+                point: None,
+                parameter: None,
+                parameter_ratio: None,
+                construction_failure: None,
+                endpoint_sides: [None, Some(hyperlimit::PlaneSide::Above)],
             }],
-        };
+        }]);
 
         let blocker = ExactBooleanBlocker::from_graph(&graph, ExactBooleanBlockerKind::Refinement);
         assert_eq!(blocker.candidate_pairs, 1);

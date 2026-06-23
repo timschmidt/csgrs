@@ -859,24 +859,34 @@ impl FacePairEvents {
 pub(crate) struct ExactIntersectionGraph {
     /// Retained face-pair event records.
     pub face_pairs: Vec<FacePairEvents>,
+    summary: ExactIntersectionGraphSummary,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct ExactIntersectionGraphSummary {
+    event_count: usize,
+    has_unknowns: bool,
+    coplanar_overlap_graph_count: usize,
 }
 
 impl ExactIntersectionGraph {
+    pub(crate) fn from_face_pairs(face_pairs: Vec<FacePairEvents>) -> Self {
+        let summary = ExactIntersectionGraphSummary::from_face_pairs(&face_pairs);
+        Self {
+            face_pairs,
+            summary,
+        }
+    }
+
     /// Count all retained events.
-    pub fn event_count(&self) -> usize {
-        self.face_pairs.iter().map(|pair| pair.events.len()).sum()
+    pub const fn event_count(&self) -> usize {
+        self.summary.event_count
     }
 
     /// Return whether any retained pair still needs a policy decision or
     /// additional refinement.
-    pub fn has_unknowns(&self) -> bool {
-        self.face_pairs.iter().any(|pair| {
-            pair.relation == MeshFacePairRelation::Unknown
-                || pair
-                    .events
-                    .iter()
-                    .any(IntersectionEvent::has_unknown_relation)
-        })
+    pub const fn has_unknowns(&self) -> bool {
+        self.summary.has_unknowns
     }
 
     /// Validate all retained face-pair event records.
@@ -941,16 +951,7 @@ impl ExactIntersectionGraph {
     }
 
     fn coplanar_overlap_graph_count_hint(&self) -> usize {
-        self.face_pairs
-            .iter()
-            .filter(|pair| {
-                matches!(
-                    pair.relation,
-                    MeshFacePairRelation::CoplanarTouching
-                        | MeshFacePairRelation::CoplanarOverlapping
-                )
-            })
-            .count()
+        self.summary.coplanar_overlap_graph_count
     }
 
     /// Construct exact split-point/interval records for coplanar overlap graphs.
@@ -1160,6 +1161,35 @@ impl ExactIntersectionGraph {
     }
 }
 
+impl ExactIntersectionGraphSummary {
+    fn from_face_pairs(face_pairs: &[FacePairEvents]) -> Self {
+        let mut event_count = 0;
+        let mut has_unknowns = false;
+        let mut coplanar_overlap_graph_count = 0;
+
+        for pair in face_pairs {
+            event_count += pair.events.len();
+            has_unknowns |= pair.relation == MeshFacePairRelation::Unknown
+                || pair
+                    .events
+                    .iter()
+                    .any(IntersectionEvent::has_unknown_relation);
+            if matches!(
+                pair.relation,
+                MeshFacePairRelation::CoplanarTouching | MeshFacePairRelation::CoplanarOverlapping
+            ) {
+                coplanar_overlap_graph_count += 1;
+            }
+        }
+
+        Self {
+            event_count,
+            has_unknowns,
+            coplanar_overlap_graph_count,
+        }
+    }
+}
+
 fn intersection_graphs_have_same_face_pair_records(
     retained: &ExactIntersectionGraph,
     replay: &ExactIntersectionGraph,
@@ -1245,7 +1275,7 @@ fn build_unvalidated_intersection_graph_from_certified_bounds(
                 Ok::<(), ExactMeshError>(())
             },
         )?;
-        return Ok(ExactIntersectionGraph { face_pairs });
+        return Ok(ExactIntersectionGraph::from_face_pairs(face_pairs));
     }
 
     let left = left.view().prepare_broad_phase_after_certificate();
@@ -1271,7 +1301,7 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_views(
         }
         Ok::<(), ExactMeshError>(())
     })?;
-    Ok(ExactIntersectionGraph { face_pairs })
+    Ok(ExactIntersectionGraph::from_face_pairs(face_pairs))
 }
 
 /// Build an exact event graph and replay it against the source meshes before use.
@@ -1317,7 +1347,7 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
         }
         Ok::<(), ExactMeshError>(())
     })?;
-    let graph = ExactIntersectionGraph { face_pairs };
+    let graph = ExactIntersectionGraph::from_face_pairs(face_pairs);
     Ok(pair.retain_intersection_graph(graph))
 }
 
@@ -4744,26 +4774,24 @@ mod tests {
 
     #[test]
     fn graph_unknowns_include_unknown_segment_plane_events() {
-        let graph = ExactIntersectionGraph {
-            face_pairs: vec![FacePairEvents {
-                left_face: 0,
-                right_face: 0,
-                relation: MeshFacePairRelation::Candidate,
-                projection: None,
-                events: vec![IntersectionEvent::SegmentPlane {
-                    segment_side: MeshSide::Left,
-                    edge: [0, 1],
-                    plane_side: MeshSide::Right,
-                    plane_face: 0,
-                    relation: SegmentPlaneRelation::Unknown,
-                    point: None,
-                    parameter: None,
-                    parameter_ratio: None,
-                    construction_failure: None,
-                    endpoint_sides: [None, Some(PlaneSide::Above)],
-                }],
+        let graph = ExactIntersectionGraph::from_face_pairs(vec![FacePairEvents {
+            left_face: 0,
+            right_face: 0,
+            relation: MeshFacePairRelation::Candidate,
+            projection: None,
+            events: vec![IntersectionEvent::SegmentPlane {
+                segment_side: MeshSide::Left,
+                edge: [0, 1],
+                plane_side: MeshSide::Right,
+                plane_face: 0,
+                relation: SegmentPlaneRelation::Unknown,
+                point: None,
+                parameter: None,
+                parameter_ratio: None,
+                construction_failure: None,
+                endpoint_sides: [None, Some(PlaneSide::Above)],
             }],
-        };
+        }]);
 
         assert!(graph.validate().is_ok());
         assert!(graph.has_unknowns());
