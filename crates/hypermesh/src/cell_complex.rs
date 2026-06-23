@@ -461,17 +461,22 @@ impl ExactCellComplex {
             .cloned()
             .map(label_face_cell)
             .collect::<Vec<_>>();
-        let volume_regions = self
-            .arrangement
-            .volume_regions
-            .as_deref()
-            .map(labeled_volume_regions_from_arrangement)
-            .unwrap_or_default();
-        let volume_adjacencies = self
-            .arrangement
-            .volume_adjacencies
-            .clone()
-            .unwrap_or_default();
+        let (volume_regions, volume_adjacencies) = match (
+            self.arrangement.volume_regions.as_deref(),
+            self.arrangement.volume_adjacencies.as_ref(),
+        ) {
+            (Some(volume_regions), Some(volume_adjacencies)) => (
+                labeled_volume_regions_from_arrangement(volume_regions),
+                volume_adjacencies.clone(),
+            ),
+            (None, None) => (Vec::new(), Vec::new()),
+            (Some(_), None) | (None, Some(_)) => {
+                if !blockers.contains(&ExactArrangementBlocker::NonManifoldCellComplex) {
+                    blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
+                }
+                (Vec::new(), Vec::new())
+            }
+        };
         if !blockers.is_empty()
             && policy.unresolved == super::regularization::ExactUnresolvedPolicy::Block
         {
