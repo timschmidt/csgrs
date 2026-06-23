@@ -1347,11 +1347,8 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
 
     let left = pair.left().view().mesh();
     let right = pair.right().view().mesh();
-    let classification_status = pair.cache_status();
-    if classification_status
-        .face_pair_classification_counts()
-        .is_current()
-        && classification_status
+    if pair.face_pair_classification_counts_are_current()
+        && pair
             .retained_face_pair_classification_counts()
             .is_some_and(|counts| counts.graph_required_count() == 0)
     {
@@ -1359,18 +1356,12 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
             pair.retain_intersection_graph(ExactIntersectionGraph::from_face_pairs(Vec::new()))
         );
     }
-    let mut face_pairs = Vec::with_capacity(
-        classification_status
-            .retained_face_pair_classification_counts()
-            .map_or_else(
-                || pair.candidate_face_pair_capacity_hint(),
-                PreparedMeshPairClassificationCounts::graph_required_count,
-            ),
-    );
-    if classification_status
-        .face_pair_classifications()
-        .is_current()
-    {
+    let mut face_pairs =
+        Vec::with_capacity(pair.retained_face_pair_classification_counts().map_or_else(
+            || pair.candidate_face_pair_capacity_hint(),
+            PreparedMeshPairClassificationCounts::graph_required_count,
+        ));
+    if pair.face_pair_classifications_are_current() {
         pair.with_current_face_pair_classifications(|classifications| {
             for classification in classifications {
                 if classification.needs_graph_construction() {
@@ -4643,35 +4634,19 @@ mod tests {
         );
         let cached_union = prepared_pair.union().unwrap();
         cached_union.validate_retained_state().unwrap();
-        assert_eq!(
-            prepared_pair.cache_status().union_result(),
-            PreparedMeshPairFactState::Current
-        );
+        assert!(prepared_pair.union_result_is_current());
         prepared_pair
             .with_arrangement_view(|view| {
                 view.validate_retained_state().unwrap();
             })
             .unwrap();
-        assert_eq!(
-            prepared_pair.cache_status().arrangement(),
-            PreparedMeshPairFactState::Current
-        );
+        assert!(prepared_pair.arrangement_is_current());
         prepared_pair
             .retain_intersection_graph(ExactIntersectionGraph::from_face_pairs(Vec::new()));
-        let replaced_status = prepared_pair.cache_status();
-        assert_eq!(
-            replaced_status.intersection_graph(),
-            PreparedMeshPairFactState::CertificateBlocked
-        );
-        assert_eq!(
-            replaced_status.arrangement(),
-            PreparedMeshPairFactState::Missing
-        );
-        assert_eq!(
-            replaced_status.union_result(),
-            PreparedMeshPairFactState::Missing
-        );
-        assert_eq!(replaced_status.union_result_outcome(), None);
+        assert!(prepared_pair.intersection_graph_is_certificate_blocked());
+        assert!(!prepared_pair.has_retained_arrangement());
+        assert!(!prepared_pair.has_retained_union_result());
+        assert_eq!(prepared_pair.retained_union_result_outcome(), None);
         let retained_pair = graph
             .face_pairs
             .iter()

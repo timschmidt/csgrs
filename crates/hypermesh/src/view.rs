@@ -111,22 +111,15 @@ pub struct PreparedMeshPairView<'pair, 'left, 'right> {
 
 /// Cheap status for retained facts inside a prepared mesh-pair session.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct PreparedMeshPairCacheStatus {
+pub(crate) struct PreparedMeshPairCacheStatus {
     source_pair: PreparedMeshPairFactState,
-    candidate_pair_plan: PreparedMeshPairPlanKind,
-    candidate_pair_capacity_hint: usize,
-    broad_phase_summary: PreparedMeshPairBroadPhaseSummary,
     broad_phase_traversal: PreparedMeshPairFactState,
     retained_broad_phase_traversal_summary: Option<PreparedMeshPairBroadPhaseTraversalSummary>,
     candidate_face_pairs: PreparedMeshPairFactState,
-    retained_candidate_face_pair_count: Option<usize>,
     face_pair_classifications: PreparedMeshPairFactState,
     face_pair_classification_counts: PreparedMeshPairFactState,
-    retained_face_pair_classification_count: Option<usize>,
     retained_face_pair_classification_counts: Option<PreparedMeshPairClassificationCounts>,
     intersection_graph: PreparedMeshPairFactState,
-    retained_intersection_graph_face_pair_count: Option<usize>,
-    retained_intersection_graph_event_count: Option<usize>,
     retained_intersection_graph_counts: Option<PreparedMeshPairIntersectionGraphCounts>,
     arrangement: PreparedMeshPairFactState,
     retained_arrangement_counts: Option<PreparedMeshPairArrangementCounts>,
@@ -665,7 +658,7 @@ impl PreparedMeshPairResultOutcome {
 
 /// Certificate state for retained facts inside a prepared mesh-pair session.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum PreparedMeshPairFactState {
+pub(crate) enum PreparedMeshPairFactState {
     /// The fact has not been computed for this session.
     Missing,
     /// The retained fact was built for source stamps that no longer match this session.
@@ -753,24 +746,9 @@ impl PreparedMeshPairFactState {
         matches!(self, Self::Current)
     }
 
-    /// Return whether this session has not computed the fact.
-    pub const fn is_missing(self) -> bool {
-        matches!(self, Self::Missing)
-    }
-
-    /// Return whether the retained fact was built for stale source stamps.
-    pub const fn is_stale(self) -> bool {
-        matches!(self, Self::Stale)
-    }
-
     /// Return whether the fact exists but lacks a current cheap certificate.
     pub const fn is_certificate_blocked(self) -> bool {
         matches!(self, Self::CertificateBlocked)
-    }
-
-    /// Return whether this session retains the fact in any state.
-    pub const fn is_retained(self) -> bool {
-        !matches!(self, Self::Missing)
     }
 
     /// Convert a non-current state into a typed blocker for callers that require a current fact.
@@ -804,41 +782,14 @@ impl PreparedMeshPairFactState {
 }
 
 impl PreparedMeshPairCacheStatus {
-    /// Return whether the retained pair source stamps match the current session meshes.
-    pub const fn source_pair(self) -> PreparedMeshPairFactState {
-        self.source_pair
-    }
-
     /// Require retained pair source stamps to match the current session meshes.
     pub fn require_current_sources(self) -> Result<(), ExactMeshError> {
         self.source_pair.require_current("source-pair stamp")
     }
 
-    /// Return the retained broad-phase candidate traversal plan.
-    pub const fn candidate_pair_plan(self) -> PreparedMeshPairPlanKind {
-        self.candidate_pair_plan
-    }
-
-    /// Return the bounded storage hint for candidate face-pair traversal.
-    pub const fn candidate_pair_capacity_hint(self) -> usize {
-        self.candidate_pair_capacity_hint
-    }
-
-    /// Return retained broad-phase planning provenance for this session.
-    pub const fn broad_phase_summary(self) -> PreparedMeshPairBroadPhaseSummary {
-        self.broad_phase_summary
-    }
-
     /// Return the certificate state for retained broad-phase traversal counts.
     pub const fn broad_phase_traversal(self) -> PreparedMeshPairFactState {
         self.broad_phase_traversal
-    }
-
-    /// Return retained broad-phase traversal counts, when candidate traversal has run.
-    pub const fn retained_broad_phase_traversal_summary(
-        self,
-    ) -> Option<PreparedMeshPairBroadPhaseTraversalSummary> {
-        self.retained_broad_phase_traversal_summary
     }
 
     /// Require retained broad-phase traversal counts with current certificates.
@@ -866,14 +817,6 @@ impl PreparedMeshPairCacheStatus {
         self.candidate_face_pairs
     }
 
-    /// Return the retained broad-phase candidate pair count, when cached.
-    pub const fn retained_candidate_face_pair_count(self) -> Option<usize> {
-        match self.retained_broad_phase_traversal_summary {
-            Some(summary) => Some(summary.candidate_pair_count()),
-            None => self.retained_candidate_face_pair_count,
-        }
-    }
-
     /// Require retained broad-phase candidate pairs with current certificates.
     pub fn require_current_candidate_face_pairs(self) -> Result<(), ExactMeshError> {
         self.candidate_face_pairs
@@ -886,24 +829,6 @@ impl PreparedMeshPairCacheStatus {
             .map(PreparedMeshPairBroadPhaseTraversalSummary::candidate_pair_count)
     }
 
-    /// Return retained face-pair product rejected by broad-phase bounds, when candidates are cached.
-    pub fn retained_broad_phase_rejection_count(self) -> Option<usize> {
-        self.retained_broad_phase_traversal_summary
-            .map(PreparedMeshPairBroadPhaseTraversalSummary::broad_phase_rejection_count)
-    }
-
-    /// Return retained candidate upper-bound slack, when candidates are cached.
-    pub fn retained_candidate_upper_bound_slack(self) -> Option<usize> {
-        self.retained_broad_phase_traversal_summary
-            .map(PreparedMeshPairBroadPhaseTraversalSummary::candidate_upper_bound_slack)
-    }
-
-    /// Return whether the retained candidate count saturated the planned upper bound.
-    pub fn retained_candidate_upper_bound_saturated(self) -> Option<bool> {
-        self.retained_broad_phase_traversal_summary
-            .map(PreparedMeshPairBroadPhaseTraversalSummary::candidate_upper_bound_saturated)
-    }
-
     /// Return the certificate state for coarse face-pair classifications.
     pub const fn face_pair_classifications(self) -> PreparedMeshPairFactState {
         self.face_pair_classifications
@@ -912,18 +837,6 @@ impl PreparedMeshPairCacheStatus {
     /// Return the certificate state for coarse face-pair classification counts.
     pub const fn face_pair_classification_counts(self) -> PreparedMeshPairFactState {
         self.face_pair_classification_counts
-    }
-
-    /// Return the retained coarse face-pair classification count, when cached.
-    pub const fn retained_face_pair_classification_count(self) -> Option<usize> {
-        self.retained_face_pair_classification_count
-    }
-
-    /// Return retained coarse face-pair decision counts, when cached.
-    pub const fn retained_face_pair_classification_counts(
-        self,
-    ) -> Option<PreparedMeshPairClassificationCounts> {
-        self.retained_face_pair_classification_counts
     }
 
     /// Require retained coarse face-pair classifications with current certificates.
@@ -953,28 +866,6 @@ impl PreparedMeshPairCacheStatus {
             })
     }
 
-    /// Return the certificate state for the exact intersection graph.
-    pub const fn intersection_graph(self) -> PreparedMeshPairFactState {
-        self.intersection_graph
-    }
-
-    /// Return the retained graph face-pair count, when cached.
-    pub const fn retained_intersection_graph_face_pair_count(self) -> Option<usize> {
-        self.retained_intersection_graph_face_pair_count
-    }
-
-    /// Return the retained graph event count, when cached.
-    pub const fn retained_intersection_graph_event_count(self) -> Option<usize> {
-        self.retained_intersection_graph_event_count
-    }
-
-    /// Return retained graph summary counts, when cached.
-    pub const fn retained_intersection_graph_counts(
-        self,
-    ) -> Option<PreparedMeshPairIntersectionGraphCounts> {
-        self.retained_intersection_graph_counts
-    }
-
     /// Require a retained exact intersection graph with a current replay certificate.
     pub fn require_current_intersection_graph(self) -> Result<(), ExactMeshError> {
         self.intersection_graph
@@ -997,11 +888,6 @@ impl PreparedMeshPairCacheStatus {
     /// Return the certificate state for the retained prepared arrangement.
     pub const fn arrangement(self) -> PreparedMeshPairFactState {
         self.arrangement
-    }
-
-    /// Return retained arrangement topology counts, when cached.
-    pub const fn retained_arrangement_counts(self) -> Option<PreparedMeshPairArrangementCounts> {
-        self.retained_arrangement_counts
     }
 
     /// Require a retained arrangement built from current certificates.
@@ -1038,11 +924,6 @@ impl PreparedMeshPairCacheStatus {
         self.union_result
     }
 
-    /// Return the retained prepared union outcome, when cached.
-    pub const fn union_result_outcome(self) -> Option<PreparedMeshPairResultOutcome> {
-        self.union_result_outcome
-    }
-
     /// Require a retained prepared union result or error.
     pub fn require_current_union_result(self) -> Result<(), ExactMeshError> {
         self.union_result.require_current("union result")
@@ -1058,11 +939,6 @@ impl PreparedMeshPairCacheStatus {
     /// Return the certificate state for the prepared intersection result or error.
     pub const fn intersection_result(self) -> PreparedMeshPairFactState {
         self.intersection_result
-    }
-
-    /// Return the retained prepared intersection outcome, when cached.
-    pub const fn intersection_result_outcome(self) -> Option<PreparedMeshPairResultOutcome> {
-        self.intersection_result_outcome
     }
 
     /// Require a retained prepared intersection result or error.
@@ -1087,11 +963,6 @@ impl PreparedMeshPairCacheStatus {
         self.difference_result
     }
 
-    /// Return the retained prepared difference outcome, when cached.
-    pub const fn difference_result_outcome(self) -> Option<PreparedMeshPairResultOutcome> {
-        self.difference_result_outcome
-    }
-
     /// Require a retained prepared difference result or error.
     pub fn require_current_difference_result(self) -> Result<(), ExactMeshError> {
         self.difference_result.require_current("difference result")
@@ -1111,11 +982,6 @@ impl PreparedMeshPairCacheStatus {
     /// Return the certificate state for the prepared symmetric-difference result or error.
     pub const fn xor_result(self) -> PreparedMeshPairFactState {
         self.xor_result
-    }
-
-    /// Return the retained prepared symmetric-difference outcome, when cached.
-    pub const fn xor_result_outcome(self) -> Option<PreparedMeshPairResultOutcome> {
-        self.xor_result_outcome
     }
 
     /// Require a retained prepared symmetric-difference result or error.
@@ -1576,6 +1442,69 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.broad_phase_summary
     }
 
+    /// Return the retained broad-phase plan kind.
+    pub const fn candidate_pair_plan(&self) -> PreparedMeshPairPlanKind {
+        PreparedMeshPairPlanKind::from_candidate_plan(self.plan)
+    }
+
+    /// Return whether retained pair-source stamps still match the borrowed meshes.
+    pub fn sources_are_current(&self) -> bool {
+        self.broad_phase_summary.left_source() == self.left.view.source_stamp()
+            && self.broad_phase_summary.right_source() == self.right.view.source_stamp()
+    }
+
+    /// Return whether broad-phase traversal counts have been retained.
+    pub fn has_retained_broad_phase_traversal_summary(&self) -> bool {
+        self.broad_phase_traversal_summary.borrow().is_some()
+    }
+
+    /// Return whether broad-phase traversal counts are retained and source-current.
+    pub fn broad_phase_traversal_summary_is_current(&self) -> bool {
+        self.cache_status().broad_phase_traversal().is_current()
+    }
+
+    /// Return retained broad-phase traversal counts, if present.
+    pub fn retained_broad_phase_traversal_summary(
+        &self,
+    ) -> Option<PreparedMeshPairBroadPhaseTraversalSummary> {
+        *self.broad_phase_traversal_summary.borrow()
+    }
+
+    /// Return retained broad-phase rejection count, if traversal counts are present.
+    pub fn retained_broad_phase_rejection_count(&self) -> Option<usize> {
+        self.retained_broad_phase_traversal_summary()
+            .map(PreparedMeshPairBroadPhaseTraversalSummary::broad_phase_rejection_count)
+    }
+
+    /// Return retained broad-phase candidate upper-bound slack, if present.
+    pub fn retained_candidate_upper_bound_slack(&self) -> Option<usize> {
+        self.retained_broad_phase_traversal_summary()
+            .map(PreparedMeshPairBroadPhaseTraversalSummary::candidate_upper_bound_slack)
+    }
+
+    /// Return whether the retained broad-phase candidate upper bound saturated, if present.
+    pub fn retained_candidate_upper_bound_saturated(&self) -> Option<bool> {
+        self.retained_broad_phase_traversal_summary()
+            .map(PreparedMeshPairBroadPhaseTraversalSummary::candidate_upper_bound_saturated)
+    }
+
+    /// Require retained broad-phase traversal counts with current source certificates.
+    pub fn current_broad_phase_traversal_summary(
+        &self,
+    ) -> Result<PreparedMeshPairBroadPhaseTraversalSummary, ExactMeshError> {
+        self.cache_status().current_broad_phase_traversal_summary()
+    }
+
+    /// Return whether candidate face-pair records have been retained.
+    pub fn has_retained_candidate_face_pairs(&self) -> bool {
+        self.candidate_face_pairs.borrow().is_some()
+    }
+
+    /// Return whether candidate face-pair records are retained and source-current.
+    pub fn candidate_face_pairs_are_current(&self) -> bool {
+        self.cache_status().candidate_face_pairs().is_current()
+    }
+
     /// Execute and retain broad-phase traversal counts without storing candidate records.
     pub fn prepare_broad_phase_traversal_summary(
         &self,
@@ -1622,9 +1551,9 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     }
 
     /// Return a cheap summary of retained facts in this prepared pair session.
-    pub fn cache_status(&self) -> PreparedMeshPairCacheStatus {
+    pub(crate) fn cache_status(&self) -> PreparedMeshPairCacheStatus {
         let sources_current = self.sources_are_current();
-        let candidate_face_pair_count = self.candidate_face_pairs.borrow().as_ref().map(Vec::len);
+        let candidate_face_pairs_retained = self.candidate_face_pairs.borrow().is_some();
         let broad_phase_traversal_summary = *self.broad_phase_traversal_summary.borrow();
         let face_pair_classifications_retained = self.face_pair_classifications.borrow().is_some();
         let face_pair_classification_counts = *self.face_pair_classification_counts.borrow();
@@ -1637,19 +1566,15 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         let xor_retained = self.xor_result.borrow().is_some();
         PreparedMeshPairCacheStatus {
             source_pair: source_pair_state(sources_current),
-            candidate_pair_plan: PreparedMeshPairPlanKind::from_candidate_plan(self.plan),
-            candidate_pair_capacity_hint: self.candidate_face_pair_capacity_hint(),
-            broad_phase_summary: self.broad_phase_summary,
             broad_phase_traversal: retained_current_state(
                 broad_phase_traversal_summary.is_some(),
                 sources_current,
             ),
             retained_broad_phase_traversal_summary: broad_phase_traversal_summary,
             candidate_face_pairs: retained_current_state(
-                candidate_face_pair_count.is_some(),
+                candidate_face_pairs_retained,
                 sources_current,
             ),
-            retained_candidate_face_pair_count: candidate_face_pair_count,
             face_pair_classifications: retained_current_state(
                 face_pair_classifications_retained,
                 sources_current,
@@ -1658,8 +1583,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
                 face_pair_classification_counts.is_some(),
                 sources_current,
             ),
-            retained_face_pair_classification_count: face_pair_classification_counts
-                .map(PreparedMeshPairClassificationCounts::face_pair_count),
             retained_face_pair_classification_counts: face_pair_classification_counts,
             intersection_graph: if graph_retained {
                 retained_certificate_state(
@@ -1669,10 +1592,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             } else {
                 PreparedMeshPairFactState::Missing
             },
-            retained_intersection_graph_face_pair_count: graph_counts
-                .map(PreparedMeshPairIntersectionGraphCounts::face_pair_count),
-            retained_intersection_graph_event_count: graph_counts
-                .map(PreparedMeshPairIntersectionGraphCounts::event_count),
             retained_intersection_graph_counts: graph_counts,
             arrangement: retained_current_state(arrangement_retained, sources_current),
             retained_arrangement_counts: *self.arrangement_counts.borrow(),
@@ -1724,6 +1643,43 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.cache_status().current_candidate_face_pair_count()
     }
 
+    /// Return whether retained face-pair classification records are present.
+    pub fn has_retained_face_pair_classifications(&self) -> bool {
+        self.face_pair_classifications.borrow().is_some()
+    }
+
+    /// Return whether retained face-pair classification records are source-current.
+    pub fn face_pair_classifications_are_current(&self) -> bool {
+        self.cache_status().face_pair_classifications().is_current()
+    }
+
+    /// Return whether retained face-pair classification counts are present.
+    pub fn has_retained_face_pair_classification_counts(&self) -> bool {
+        self.face_pair_classification_counts.borrow().is_some()
+    }
+
+    /// Return whether retained face-pair classification counts are source-current.
+    pub fn face_pair_classification_counts_are_current(&self) -> bool {
+        self.cache_status()
+            .face_pair_classification_counts()
+            .is_current()
+    }
+
+    /// Return retained face-pair classification record count, if records are present.
+    pub fn retained_face_pair_classification_count(&self) -> Option<usize> {
+        self.face_pair_classifications
+            .borrow()
+            .as_ref()
+            .map(Vec::len)
+    }
+
+    /// Return retained face-pair classification decision counts, if present.
+    pub fn retained_face_pair_classification_counts(
+        &self,
+    ) -> Option<PreparedMeshPairClassificationCounts> {
+        *self.face_pair_classification_counts.borrow()
+    }
+
     /// Borrow retained broad-phase candidate pairs without rebuilding missing evidence.
     pub fn with_current_candidate_face_pairs<R>(
         &self,
@@ -1750,6 +1706,33 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
     ) -> Result<PreparedMeshPairArrangementCounts, ExactMeshError> {
         self.cache_status().current_arrangement_counts()
+    }
+
+    /// Return retained arrangement topology counts, if present.
+    pub fn retained_arrangement_counts(&self) -> Option<PreparedMeshPairArrangementCounts> {
+        *self.arrangement_counts.borrow()
+    }
+
+    /// Return whether arrangement records are present.
+    pub fn has_retained_arrangement(&self) -> bool {
+        self.arrangement.borrow().is_some()
+    }
+
+    /// Return whether the retained arrangement is present and source-current.
+    pub fn arrangement_is_current(&self) -> bool {
+        self.cache_status().arrangement().is_current()
+    }
+
+    /// Return whether arrangement shortcut facts are retained and source-current.
+    pub fn arrangement_shortcut_facts_are_current(&self) -> bool {
+        self.cache_status()
+            .arrangement_shortcut_facts()
+            .is_current()
+    }
+
+    /// Return whether arrangement shortcut facts are present.
+    pub fn has_retained_arrangement_shortcut_facts(&self) -> bool {
+        self.arrangement_shortcut_facts.borrow().is_some()
     }
 
     /// Require a retained arrangement with current source certificates.
@@ -1792,6 +1775,40 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     pub fn require_current_face_pair_classifications(&self) -> Result<(), ExactMeshError> {
         self.cache_status()
             .require_current_face_pair_classifications()
+    }
+
+    /// Return retained intersection graph counts, if present.
+    pub fn retained_intersection_graph_counts(
+        &self,
+    ) -> Option<PreparedMeshPairIntersectionGraphCounts> {
+        *self.intersection_graph_counts.borrow()
+    }
+
+    /// Return whether an intersection graph is retained.
+    pub fn has_retained_intersection_graph(&self) -> bool {
+        self.intersection_graph.borrow().is_some()
+    }
+
+    /// Return retained intersection graph face-pair count, if present.
+    pub fn retained_intersection_graph_face_pair_count(&self) -> Option<usize> {
+        self.retained_intersection_graph_counts()
+            .map(|counts| counts.face_pair_count())
+    }
+
+    /// Return retained intersection graph event count, if present.
+    pub fn retained_intersection_graph_event_count(&self) -> Option<usize> {
+        self.retained_intersection_graph_counts()
+            .map(|counts| counts.event_count())
+    }
+
+    /// Return whether the retained intersection graph is source-current.
+    pub fn intersection_graph_is_current(&self) -> bool {
+        self.intersection_graph_state().is_current()
+    }
+
+    /// Return whether retained intersection graph source certification is blocked.
+    pub fn intersection_graph_is_certificate_blocked(&self) -> bool {
+        self.intersection_graph_state().is_certificate_blocked()
     }
 
     /// Build and retain the exact intersection graph without certifying source replay.
@@ -2034,11 +2051,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         *self.intersection_graph_validated.borrow_mut() = true;
     }
 
-    fn sources_are_current(&self) -> bool {
-        self.broad_phase_summary.left_source() == self.left.view.source_stamp()
-            && self.broad_phase_summary.right_source() == self.right.view.source_stamp()
-    }
-
     pub(crate) fn arrangement_cell_complex_shortcut_facts(
         &self,
     ) -> ExactArrangementCellComplexShortcutFacts {
@@ -2086,6 +2098,21 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.cache_status().current_union_result_outcome()
     }
 
+    /// Return whether a current retained union result or blocker exists.
+    pub fn union_result_is_current(&self) -> bool {
+        self.cache_status().union_result().is_current()
+    }
+
+    /// Return the retained union outcome summary, if present.
+    pub fn retained_union_result_outcome(&self) -> Option<PreparedMeshPairResultOutcome> {
+        *self.union_result_outcome.borrow()
+    }
+
+    /// Return whether a union result or blocker has been retained.
+    pub fn has_retained_union_result(&self) -> bool {
+        self.union_result.borrow().is_some()
+    }
+
     /// Require a retained union result or retained union blocker.
     pub fn require_current_union_result(&self) -> Result<(), ExactMeshError> {
         self.cache_status().require_current_union_result()
@@ -2116,6 +2143,21 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.cache_status().current_intersection_result_outcome()
     }
 
+    /// Return whether a current retained intersection result or blocker exists.
+    pub fn intersection_result_is_current(&self) -> bool {
+        self.cache_status().intersection_result().is_current()
+    }
+
+    /// Return the retained intersection outcome summary, if present.
+    pub fn retained_intersection_result_outcome(&self) -> Option<PreparedMeshPairResultOutcome> {
+        *self.intersection_result_outcome.borrow()
+    }
+
+    /// Return whether an intersection result or blocker has been retained.
+    pub fn has_retained_intersection_result(&self) -> bool {
+        self.intersection_result.borrow().is_some()
+    }
+
     /// Require a retained intersection result or retained intersection blocker.
     pub fn require_current_intersection_result(&self) -> Result<(), ExactMeshError> {
         self.cache_status().require_current_intersection_result()
@@ -2144,6 +2186,21 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
     ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
         self.cache_status().current_difference_result_outcome()
+    }
+
+    /// Return whether a current retained difference result or blocker exists.
+    pub fn difference_result_is_current(&self) -> bool {
+        self.cache_status().difference_result().is_current()
+    }
+
+    /// Return the retained difference outcome summary, if present.
+    pub fn retained_difference_result_outcome(&self) -> Option<PreparedMeshPairResultOutcome> {
+        *self.difference_result_outcome.borrow()
+    }
+
+    /// Return whether a difference result or blocker has been retained.
+    pub fn has_retained_difference_result(&self) -> bool {
+        self.difference_result.borrow().is_some()
     }
 
     /// Require a retained difference result or retained difference blocker.
@@ -2192,6 +2249,21 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
     ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
         self.cache_status().current_xor_result_outcome()
+    }
+
+    /// Return whether a current retained symmetric-difference result or blocker exists.
+    pub fn xor_result_is_current(&self) -> bool {
+        self.cache_status().xor_result().is_current()
+    }
+
+    /// Return the retained symmetric-difference outcome summary, if present.
+    pub fn retained_xor_result_outcome(&self) -> Option<PreparedMeshPairResultOutcome> {
+        *self.xor_result_outcome.borrow()
+    }
+
+    /// Return whether a symmetric-difference result or blocker has been retained.
+    pub fn has_retained_xor_result(&self) -> bool {
+        self.xor_result.borrow().is_some()
     }
 
     /// Require a retained symmetric-difference result or retained blocker.
