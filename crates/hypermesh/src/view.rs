@@ -8,6 +8,7 @@ use super::bounds::{
     PreparedMeshBounds,
 };
 use super::error::ExactMeshError;
+use super::intersection::{MeshFacePairClassification, classify_mesh_face_pair_unchecked};
 use hyperlimit::Point3;
 use hyperreal::Real;
 
@@ -52,6 +53,7 @@ pub struct PreparedMeshPair<'left, 'right> {
     right: PreparedMeshView<'right>,
     plan: CandidateFacePairPlan,
     scratch: RefCell<BroadPhaseScratch>,
+    face_pair_classifications: RefCell<Option<Vec<MeshFacePairClassification>>>,
 }
 
 /// Borrowed prepared pair view with retained broad-phase pair planning.
@@ -328,6 +330,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             right,
             plan,
             scratch: RefCell::new(BroadPhaseScratch::default()),
+            face_pair_classifications: RefCell::new(None),
         }
     }
 
@@ -353,6 +356,36 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     /// Return a bounded storage hint for candidate face-pair traversal.
     pub fn candidate_face_pair_capacity_hint(&self) -> usize {
         self.as_view().candidate_face_pair_capacity_hint()
+    }
+
+    /// Visit retained coarse face-pair classifications for this prepared mesh pair.
+    pub(crate) fn try_visit_face_pair_classifications<E>(
+        &self,
+        visit: &mut impl FnMut(&MeshFacePairClassification) -> Result<(), E>,
+    ) -> Result<(), E> {
+        self.ensure_face_pair_classifications();
+        let classifications = self.face_pair_classifications.borrow();
+        for classification in classifications.as_deref().unwrap_or(&[]) {
+            visit(classification)?;
+        }
+        Ok(())
+    }
+
+    fn ensure_face_pair_classifications(&self) {
+        if self.face_pair_classifications.borrow().is_some() {
+            return;
+        }
+
+        let mut classifications = Vec::with_capacity(self.candidate_face_pair_capacity_hint());
+        self.visit_candidate_face_pairs(&mut |[left_face, right_face]| {
+            classifications.push(classify_mesh_face_pair_unchecked(
+                self.left.view.mesh,
+                left_face,
+                self.right.view.mesh,
+                right_face,
+            ));
+        });
+        *self.face_pair_classifications.borrow_mut() = Some(classifications);
     }
 
     /// Visit certificate-validated broad-phase candidate face pairs using the cached pair plan.

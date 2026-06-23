@@ -1238,10 +1238,9 @@ fn build_unvalidated_intersection_graph_from_certified_bounds(
         .view()
         .prepare_broad_phase_pair_after_certificate(right.view());
     let mut face_pairs = Vec::with_capacity(pair.candidate_face_pair_capacity_hint());
-    pair.try_visit_candidate_face_pairs(&mut |[left_face, right_face]| {
-        let classification = classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
+    pair.try_visit_face_pair_classifications(&mut |classification| {
         if classification.needs_graph_construction() {
-            face_pairs.push(events_for_face_pair(left, right, &classification));
+            face_pairs.push(events_for_face_pair(left, right, classification));
         }
         Ok::<(), ExactMeshError>(())
     })?;
@@ -4423,6 +4422,26 @@ mod tests {
             build_validated_intersection_graph_from_prepared_views(&prepared_left, &prepared_right)
                 .unwrap(),
             graph
+        );
+        let prepared_pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
+        let mut first_classifications = Vec::new();
+        prepared_pair
+            .try_visit_face_pair_classifications(&mut |classification| {
+                first_classifications.push(classification.clone());
+                Ok::<(), ()>(())
+            })
+            .unwrap();
+        let mut repeated_classifications = Vec::new();
+        prepared_pair
+            .try_visit_face_pair_classifications(&mut |classification| {
+                repeated_classifications.push(classification.clone());
+                Ok::<(), ()>(())
+            })
+            .unwrap();
+        assert_eq!(first_classifications, repeated_classifications);
+        assert_eq!(
+            first_classifications,
+            vec![classify_mesh_face_pair_unchecked(&left, 0, &right, 0)]
         );
         let retained_pair = graph
             .face_pairs
