@@ -67,16 +67,4 @@ pub mod kernel {
         EdgeRef, ExactMeshRef, ExactMeshSourceStamp, FaceRef, MeshView, PreparedMeshPair,
         PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,
     };
-
-    #[doc(hidden)]
-    pub mod prepared {
-        pub use crate::view::{
-            PreparedMeshPairArrangementCounts, PreparedMeshPairBroadPhaseSummary,
-            PreparedMeshPairBroadPhaseTraversalSummary, PreparedMeshPairCacheStatus,
-            PreparedMeshPairClassificationCounts, PreparedMeshPairFactState,
-            PreparedMeshPairIntersectionGraphCounts, PreparedMeshPairPlanKind,
-            PreparedMeshPairResultOutcome, PreparedMeshPairSweepActiveSet,
-            PreparedMeshPairSweepAxis, PreparedMeshPairSweepDirection,
-        };
-    }
 }

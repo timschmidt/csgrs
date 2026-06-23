@@ -753,6 +753,21 @@ impl PreparedMeshPairFactState {
         matches!(self, Self::Current)
     }
 
+    /// Return whether this session has not computed the fact.
+    pub const fn is_missing(self) -> bool {
+        matches!(self, Self::Missing)
+    }
+
+    /// Return whether the retained fact was built for stale source stamps.
+    pub const fn is_stale(self) -> bool {
+        matches!(self, Self::Stale)
+    }
+
+    /// Return whether the fact exists but lacks a current cheap certificate.
+    pub const fn is_certificate_blocked(self) -> bool {
+        matches!(self, Self::CertificateBlocked)
+    }
+
     /// Return whether this session retains the fact in any state.
     pub const fn is_retained(self) -> bool {
         !matches!(self, Self::Missing)
@@ -2327,6 +2342,21 @@ const fn retained_certificate_state(
 }
 
 impl PreparedMeshPairPlanKind {
+    /// Return whether broad-phase bounds proved there are no candidate face pairs.
+    pub const fn is_empty(self) -> bool {
+        matches!(self, Self::Empty)
+    }
+
+    /// Return whether candidate traversal uses a retained sorted-axis sweep.
+    pub const fn is_sweep(self) -> bool {
+        matches!(self, Self::Sweep)
+    }
+
+    /// Return whether candidate traversal falls back to exact quadratic checks.
+    pub const fn is_quadratic(self) -> bool {
+        matches!(self, Self::Quadratic)
+    }
+
     const fn from_candidate_plan(plan: CandidateFacePairPlan) -> Self {
         match plan {
             CandidateFacePairPlan::Empty => Self::Empty,
