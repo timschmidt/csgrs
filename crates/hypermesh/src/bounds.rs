@@ -200,6 +200,7 @@ pub(crate) enum CandidateFacePairPlan {
     Sweep {
         plan: SweepPlan,
         active_face_capacity_hint: usize,
+        candidate_pair_capacity_hint: usize,
     },
     Quadratic,
 }
@@ -208,7 +209,34 @@ impl CandidateFacePairPlan {
     const fn empty() -> Self {
         Self::Empty
     }
+
+    pub(crate) fn bounded_capacity_hint(
+        self,
+        left_face_count: usize,
+        right_face_count: usize,
+    ) -> usize {
+        let hint = match self {
+            Self::Empty => 0,
+            Self::Sweep {
+                candidate_pair_capacity_hint,
+                ..
+            } => candidate_pair_capacity_hint,
+            Self::Quadratic
+                if should_use_quadratic_one_shot(
+                    left_face_count,
+                    right_face_count,
+                    ExactAabbBroadPhase::DEFAULT_ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT,
+                ) =>
+            {
+                left_face_count.saturating_mul(right_face_count)
+            }
+            Self::Quadratic => 0,
+        };
+        hint.min(MAX_CANDIDATE_FACE_PAIR_RESERVE)
+    }
 }
+
+const MAX_CANDIDATE_FACE_PAIR_RESERVE: usize = 4096;
 
 /// Internal broad-phase strategy for exact face-pair scheduling.
 ///
@@ -251,6 +279,10 @@ impl ExactAabbBroadPhase {
         Self {
             one_shot_quadratic_face_pair_limit,
         }
+    }
+
+    pub(crate) const fn one_shot_quadratic_face_pair_limit(self) -> usize {
+        self.one_shot_quadratic_face_pair_limit
     }
 
     #[cfg(test)]
@@ -403,6 +435,7 @@ impl<'a> PreparedMeshBounds<'a> {
             return CandidateFacePairPlan::Sweep {
                 plan: sweep.plan,
                 active_face_capacity_hint: sweep.active_face_capacity_hint,
+                candidate_pair_capacity_hint: sweep.axis_pair_count,
             };
         }
         CandidateFacePairPlan::Quadratic
@@ -422,6 +455,7 @@ impl<'a> PreparedMeshBounds<'a> {
             CandidateFacePairPlan::Sweep {
                 plan,
                 active_face_capacity_hint,
+                ..
             } => (plan, active_face_capacity_hint),
         };
         let used_sweep = match sweep_plan.direction {
@@ -1237,6 +1271,45 @@ mod tests {
                 &prepared_left,
                 &prepared_right
             ))
+        );
+    }
+
+    #[test]
+    fn prepared_sweep_plan_retains_bounded_candidate_capacity_hint() {
+        let left_points = vec![
+            p(0, 0, 0),
+            p(5, 0, 0),
+            p(0, 5, 0),
+            p(10, 10, 0),
+            p(15, 10, 0),
+            p(10, 15, 0),
+        ];
+        let right_points = vec![
+            p(4, 4, 0),
+            p(9, 4, 0),
+            p(4, 9, 0),
+            p(30, 0, 0),
+            p(35, 0, 0),
+            p(30, 5, 0),
+        ];
+        let triangles = [[0, 1, 2], [3, 4, 5]];
+        let left = MeshBounds::from_triangles(&left_points, &triangles);
+        let right = MeshBounds::from_triangles(&right_points, &triangles);
+        let plan =
+            ExactAabbBroadPhase::new(0).candidate_face_pair_plan(&left.prepare(), &right.prepare());
+
+        assert_eq!(plan.bounded_capacity_hint(2, 2), 1);
+    }
+
+    #[test]
+    fn quadratic_capacity_hint_is_limited_to_small_one_shot_pairs() {
+        assert_eq!(
+            CandidateFacePairPlan::Quadratic.bounded_capacity_hint(8, 8),
+            64
+        );
+        assert_eq!(
+            CandidateFacePairPlan::Quadratic.bounded_capacity_hint(9, 8),
+            0
         );
     }
 

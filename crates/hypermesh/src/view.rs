@@ -326,6 +326,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         }
     }
 
+    /// Return a bounded storage hint for candidate face-pair traversal.
+    pub fn candidate_face_pair_capacity_hint(&self) -> usize {
+        self.as_view().candidate_face_pair_capacity_hint()
+    }
+
     /// Visit replay-validated broad-phase candidate face pairs using the cached pair plan.
     pub fn visit_candidate_face_pairs(&self, visit: &mut impl FnMut([usize; 2])) {
         self.as_view().visit_candidate_face_pairs(visit);
@@ -349,6 +354,12 @@ impl<'pair, 'left, 'right> PreparedMeshPairView<'pair, 'left, 'right> {
     /// Return the right prepared mesh view.
     pub const fn right(&self) -> &'pair PreparedMeshView<'right> {
         self.right
+    }
+
+    /// Return a bounded storage hint for candidate face-pair traversal.
+    pub fn candidate_face_pair_capacity_hint(&self) -> usize {
+        self.plan
+            .bounded_capacity_hint(self.left.view.face_count(), self.right.view.face_count())
     }
 
     /// Visit replay-validated broad-phase candidate face pairs using the cached pair plan.

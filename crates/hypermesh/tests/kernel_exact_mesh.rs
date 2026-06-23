@@ -136,6 +136,7 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
         prepared_pair.right().view().face_count(),
         overlapping.triangle_count()
     );
+    assert!(prepared_pair.candidate_face_pair_capacity_hint() > 0);
 
     let pair_view = prepared_left.pair_with(&prepared_overlapping);
     assert_eq!(pair_view.left().view().face_count(), left.triangle_count());
@@ -155,6 +156,11 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
     }));
 
     let prepared_disjoint = disjoint.view().prepare_broad_phase().unwrap();
+    let disjoint_pair = left
+        .view()
+        .prepare_broad_phase_pair(disjoint.view())
+        .unwrap();
+    assert_eq!(disjoint_pair.candidate_face_pair_capacity_hint(), 0);
     let mut disjoint_candidates = Vec::new();
     prepared_left.visit_candidate_face_pairs(&prepared_disjoint, &mut |pair| {
         disjoint_candidates.push(pair);
