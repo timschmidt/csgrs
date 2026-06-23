@@ -298,16 +298,6 @@ impl ExactMesh {
         policy: ExactMeshValidationPolicy,
         construction_version: u64,
     ) -> Result<Self, ExactMeshError> {
-        let index_blockers = validate_indices(vertices.len(), &triangles);
-        if !index_blockers.is_empty() {
-            return Err(ExactMeshError::new(index_blockers));
-        }
-
-        let bounds = MeshBounds::from_triangle_rows(
-            &vertices,
-            triangles.len(),
-            triangles.iter().map(|tri| tri.0),
-        );
         let report = validate_triangle_rows_with_policy(
             &vertices,
             triangles.len(),
@@ -317,6 +307,11 @@ impl ExactMesh {
         if !report.is_valid() {
             return Err(ExactMeshError::new(report.blockers));
         }
+        let bounds = MeshBounds::from_triangle_rows(
+            &vertices,
+            triangles.len(),
+            triangles.iter().map(|tri| tri.0),
+        );
 
         let mut provenance =
             ConstructionProvenance::with_version(source, construction_version.max(1));
@@ -694,37 +689,6 @@ impl ExactMesh {
     pub fn xor(&self, right: &ExactMesh) -> Result<ExactMesh, ExactMeshError> {
         self.view().xor(right.view())
     }
-}
-
-fn validate_indices(vertex_count: usize, triangles: &[Triangle]) -> Vec<ExactMeshBlocker> {
-    let mut blockers = Vec::new();
-    for (face, triangle) in triangles.iter().enumerate() {
-        let [a, b, c] = triangle.0;
-        for vertex in [a, b, c] {
-            if vertex >= vertex_count {
-                blockers.push(
-                    ExactMeshBlocker::new(
-                        ExactMeshBlockerKind::IndexOutOfBounds,
-                        format!(
-                            "face {face} references vertex {vertex}, but only {vertex_count} vertices exist"
-                        ),
-                    )
-                    .with_face(face)
-                    .with_vertex(vertex),
-                );
-            }
-        }
-        if a == b || b == c || c == a {
-            blockers.push(
-                ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::DegenerateTriangle,
-                    format!("face {face} repeats a vertex"),
-                )
-                .with_face(face),
-            );
-        }
-    }
-    blockers
 }
 
 fn validate_flat_mesh_buffers(position_len: usize, index_len: usize) -> Result<(), ExactMeshError> {
