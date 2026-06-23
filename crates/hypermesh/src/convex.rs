@@ -151,43 +151,62 @@ impl ConvexSolidIntersection {
 pub(crate) fn union_closed_convex_solids(
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Option<ConvexSolidUnion> {
+) -> Result<Option<ConvexSolidUnion>, ExactMeshError> {
     let left_facts = certify_convex_solid(left);
     let right_facts = certify_convex_solid(right);
     if !left_facts.is_certified_convex() || !right_facts.is_certified_convex() {
-        return None;
+        return Ok(None);
     }
 
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
-    append_convex_union_source_faces(left, right, &right_facts, &mut vertices, &mut triangles)?;
-    append_convex_union_source_faces(right, left, &left_facts, &mut vertices, &mut triangles)?;
-    if triangles.is_empty() {
-        return None;
+    if append_convex_union_source_faces(left, right, &right_facts, &mut vertices, &mut triangles)
+        .is_none()
+        || append_convex_union_source_faces(right, left, &left_facts, &mut vertices, &mut triangles)
+            .is_none()
+    {
+        return Ok(None);
     }
-    refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles)?;
+    if triangles.is_empty() {
+        return Ok(None);
+    }
+    if refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles).is_none() {
+        return Ok(None);
+    }
     remove_duplicate_triangle_vertex_sets(&mut triangles);
-    orient_paired_triangle_edges(&mut triangles)?;
-    let mesh = ExactMesh::new_with_policy(
+    if orient_paired_triangle_edges(&mut triangles).is_none() {
+        return Ok(None);
+    }
+    let direct_mesh = ExactMesh::new_with_policy(
         vertices.clone(),
         triangles.clone(),
         SourceProvenance::exact("exact closed-convex solid union"),
         ExactMeshValidationPolicy::CLOSED,
-    )
-    .ok()
-    .or_else(|| close_planar_boundary_loops(vertices.clone(), triangles.clone()))
-    .or_else(|| union_from_difference_and_operand(left, right))
-    .or_else(|| union_from_difference_and_operand(right, left))?;
+    );
+    let mesh = match direct_mesh {
+        Ok(mesh) => mesh,
+        Err(error) => {
+            if let Some(mesh) = close_planar_boundary_loops(vertices.clone(), triangles.clone()) {
+                mesh
+            } else if let Some(mesh) = union_from_difference_and_operand(left, right)? {
+                mesh
+            } else if let Some(mesh) = union_from_difference_and_operand(right, left)? {
+                mesh
+            } else {
+                return Err(error);
+            }
+        }
+    };
     if !mesh_has_nonzero_signed_volume(&mesh)? {
-        return None;
+        return Ok(None);
     }
     let union = ConvexSolidUnion {
         left_facts,
         right_facts,
         mesh,
     };
-    union.validate().ok()?;
-    Some(union)
+    union.validate()?;
+    Ok(Some(union))
 }
 
 /// Certify and materialize `left - right` for two closed convex solids.
@@ -198,44 +217,63 @@ pub(crate) fn union_closed_convex_solids(
 pub(crate) fn subtract_closed_convex_solids(
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Option<ConvexSolidDifference> {
+) -> Result<Option<ConvexSolidDifference>, ExactMeshError> {
     let left_facts = certify_convex_solid(left);
     let right_facts = certify_convex_solid(right);
     if !left_facts.is_certified_convex() || !right_facts.is_certified_convex() {
-        return None;
+        return Ok(None);
     }
 
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
-    append_convex_difference_left_faces(left, right, &right_facts, &mut vertices, &mut triangles)?;
-    append_convex_difference_right_faces(right, left, &left_facts, &mut vertices, &mut triangles)?;
-    if triangles.is_empty() {
-        return None;
+    if append_convex_difference_left_faces(left, right, &right_facts, &mut vertices, &mut triangles)
+        .is_none()
+        || append_convex_difference_right_faces(
+            right,
+            left,
+            &left_facts,
+            &mut vertices,
+            &mut triangles,
+        )
+        .is_none()
+    {
+        return Ok(None);
     }
-    refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles)?;
+    if triangles.is_empty() {
+        return Ok(None);
+    }
+    if refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles).is_none() {
+        return Ok(None);
+    }
     remove_duplicate_triangle_vertex_sets(&mut triangles);
-    orient_paired_triangle_edges(&mut triangles)?;
+    if orient_paired_triangle_edges(&mut triangles).is_none() {
+        return Ok(None);
+    }
     let mesh = ExactMesh::new_with_policy(
         vertices,
         triangles,
         SourceProvenance::exact("exact closed-convex solid difference"),
         ExactMeshValidationPolicy::CLOSED,
-    )
-    .ok()?;
+    )?;
     if !mesh_has_nonzero_signed_volume(&mesh)? {
-        return None;
+        return Ok(None);
     }
     let difference = ConvexSolidDifference {
         left_facts,
         right_facts,
         mesh,
     };
-    difference.validate().ok()?;
-    Some(difference)
+    difference.validate()?;
+    Ok(Some(difference))
 }
 
-fn union_from_difference_and_operand(left: &ExactMesh, right: &ExactMesh) -> Option<ExactMesh> {
-    let difference = subtract_closed_convex_solids(left, right)?;
+fn union_from_difference_and_operand(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<Option<ExactMesh>, ExactMeshError> {
+    let Some(difference) = subtract_closed_convex_solids(left, right)? else {
+        return Ok(None);
+    };
     let mut vertices = difference.mesh.vertices().to_vec();
     let mut triangles = difference.mesh.triangles().to_vec();
     let right_vertex_map = right
@@ -250,16 +288,20 @@ fn union_from_difference_and_operand(left: &ExactMesh, right: &ExactMesh) -> Opt
             right_vertex_map[triangle.0[2]],
         ])
     }));
-    refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles)?;
+    if refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles).is_none() {
+        return Ok(None);
+    }
     remove_duplicate_triangle_vertex_sets(&mut triangles);
-    orient_paired_triangle_edges(&mut triangles)?;
-    ExactMesh::new_with_policy(
+    if orient_paired_triangle_edges(&mut triangles).is_none() {
+        return Ok(None);
+    }
+    let mesh = ExactMesh::new_with_policy(
         vertices,
         triangles,
         SourceProvenance::exact("exact closed-convex solid union from exact difference"),
         ExactMeshValidationPolicy::CLOSED,
-    )
-    .ok()
+    )?;
+    Ok(Some(mesh))
 }
 
 fn close_planar_boundary_loops(
@@ -353,36 +395,43 @@ fn loop_is_planar(vertices: &[Point3], loop_: &[usize]) -> Option<bool> {
 pub(crate) fn intersect_closed_convex_solids(
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Option<ConvexSolidIntersection> {
+) -> Result<Option<ConvexSolidIntersection>, ExactMeshError> {
     let left_facts = certify_convex_solid(left);
     let right_facts = certify_convex_solid(right);
     if !left_facts.is_certified_convex() || !right_facts.is_certified_convex() {
-        return None;
+        return Ok(None);
     }
 
     let mut polygons = Vec::new();
-    clipped_source_faces(left, right, &right_facts, &mut polygons)?;
-    clipped_source_faces(right, left, &left_facts, &mut polygons)?;
+    if clipped_source_faces(left, right, &right_facts, &mut polygons).is_none()
+        || clipped_source_faces(right, left, &left_facts, &mut polygons).is_none()
+    {
+        return Ok(None);
+    }
     if polygons.is_empty() {
-        return None;
+        return Ok(None);
     }
 
-    let hull_polygons = convex_hull_polygons_from_clipped_faces(&polygons)?;
-    let mesh = polygons_to_closed_mesh(
+    let Some(hull_polygons) = convex_hull_polygons_from_clipped_faces(&polygons) else {
+        return Ok(None);
+    };
+    let Some(mesh) = polygons_to_closed_mesh(
         &hull_polygons,
         "exact closed-convex solid intersection",
         ExactMeshValidationPolicy::CLOSED,
-    )?;
+    ) else {
+        return Ok(None);
+    };
     if !mesh_has_nonzero_signed_volume(&mesh)? {
-        return None;
+        return Ok(None);
     }
     let intersection = ConvexSolidIntersection {
         left_facts,
         right_facts,
         mesh,
     };
-    intersection.validate().ok()?;
-    Some(intersection)
+    intersection.validate()?;
+    Ok(Some(intersection))
 }
 
 /// Return whether the retained triangle shell encloses nonzero exact volume.
@@ -390,7 +439,7 @@ pub(crate) fn intersect_closed_convex_solids(
 /// This guard is what keeps closed-convex intersection from promoting
 /// only after an exact predicate, here the signed tetrahedral volume sum,
 /// proves the result is a solid instead of a lower-dimensional boundary.
-fn mesh_has_nonzero_signed_volume(mesh: &ExactMesh) -> Option<bool> {
+fn mesh_has_nonzero_signed_volume(mesh: &ExactMesh) -> Result<bool, ExactMeshError> {
     let signed_volume = mesh
         .triangles()
         .iter()
@@ -404,7 +453,13 @@ fn mesh_has_nonzero_signed_volume(mesh: &ExactMesh) -> Option<bool> {
         })
         .fold(Real::from(0), |sum, det| &sum + &det);
 
-    Some(compare_reals(&signed_volume, &Real::from(0)).value()? != Ordering::Equal)
+    let Some(ordering) = compare_reals(&signed_volume, &Real::from(0)).value() else {
+        return Err(ExactMeshError::one(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::ExactConstructionFailure,
+            "convex output signed-volume comparison was undecidable",
+        )));
+    };
+    Ok(ordering != Ordering::Equal)
 }
 
 fn determinant_from_origin(a: &Point3, b: &Point3, c: &Point3) -> Real {
@@ -1464,7 +1519,7 @@ fn mul(left: &Real, right: &Real) -> Real {
 fn report_error(error: ConvexSolidReportError) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
         ExactMeshBlockerKind::ExactConstructionFailure,
-        format!("invalid convex-solid facts retained by intersection: {error:?}"),
+        format!("invalid convex-solid facts retained by convex boolean: {error:?}"),
     ))
 }
 
@@ -1501,6 +1556,7 @@ mod tests {
         let right = tetrahedron_i64([2, 2, 2], [8, -1, -1], [-1, 8, -1], [3, 2, 0]);
 
         let union = union_closed_convex_solids(&left, &right)
+            .expect("certified convex union should not hit exact construction blockers")
             .expect("certified convex union should close exact planar boundary loop");
         union.validate().unwrap();
         assert!(union.mesh.facts().mesh.closed_manifold);
@@ -1518,6 +1574,7 @@ mod tests {
         );
 
         let difference = subtract_closed_convex_solids(&left, &right)
+            .expect("certified convex difference should not hit exact construction blockers")
             .expect("certified convex difference should orient paired cut faces");
         difference.validate().unwrap();
         assert!(difference.mesh.facts().mesh.closed_manifold);

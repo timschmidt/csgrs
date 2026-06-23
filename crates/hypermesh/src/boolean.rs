@@ -7393,7 +7393,7 @@ fn boolean_convex_meshes_optional(
 ) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let (mesh, shortcut, label) = match operation {
         ExactBooleanOperation::Union => {
-            let Some(union) = union_closed_convex_solids(left, right) else {
+            let Some(union) = union_closed_convex_solids(left, right)? else {
                 return Ok(None);
             };
             (
@@ -7403,7 +7403,7 @@ fn boolean_convex_meshes_optional(
             )
         }
         ExactBooleanOperation::Intersection => {
-            let Some(intersection) = intersect_closed_convex_solids(left, right) else {
+            let Some(intersection) = intersect_closed_convex_solids(left, right)? else {
                 return Ok(None);
             };
             (
@@ -7413,7 +7413,7 @@ fn boolean_convex_meshes_optional(
             )
         }
         ExactBooleanOperation::Difference => {
-            let Some(difference) = subtract_closed_convex_solids(left, right) else {
+            let Some(difference) = subtract_closed_convex_solids(left, right)? else {
                 return Ok(None);
             };
             (
@@ -7615,7 +7615,7 @@ fn boolean_arrangement_convex_regularized_sheet_recovery(
 ) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let (mesh, label) = match operation {
         ExactBooleanOperation::Union => {
-            let Some(union) = union_closed_convex_solids(left, right) else {
+            let Some(union) = union_closed_convex_solids(left, right)? else {
                 return Ok(None);
             };
             (
@@ -7624,7 +7624,7 @@ fn boolean_arrangement_convex_regularized_sheet_recovery(
             )
         }
         ExactBooleanOperation::Intersection => {
-            let Some(intersection) = intersect_closed_convex_solids(left, right) else {
+            let Some(intersection) = intersect_closed_convex_solids(left, right)? else {
                 return Ok(None);
             };
             (
@@ -7633,7 +7633,7 @@ fn boolean_arrangement_convex_regularized_sheet_recovery(
             )
         }
         ExactBooleanOperation::Difference => {
-            let Some(difference) = subtract_closed_convex_solids(left, right) else {
+            let Some(difference) = subtract_closed_convex_solids(left, right)? else {
                 return Ok(None);
             };
             (

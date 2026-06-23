@@ -2140,15 +2140,15 @@ fn convex_operation_output_matches_sources(
         return convex_relation_output_matches_sources(shortcut, operation, mesh, left, right);
     }
     let Some(replay) = (match shortcut {
-        ExactBooleanShortcutKind::ConvexUnion => {
-            union_closed_convex_solids(left, right).map(|result| result.mesh)
-        }
-        ExactBooleanShortcutKind::ConvexIntersection => {
-            intersect_closed_convex_solids(left, right).map(|result| result.mesh)
-        }
-        ExactBooleanShortcutKind::ConvexDifference => {
-            subtract_closed_convex_solids(left, right).map(|result| result.mesh)
-        }
+        ExactBooleanShortcutKind::ConvexUnion => union_closed_convex_solids(left, right)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .map(|result| result.mesh),
+        ExactBooleanShortcutKind::ConvexIntersection => intersect_closed_convex_solids(left, right)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .map(|result| result.mesh),
+        ExactBooleanShortcutKind::ConvexDifference => subtract_closed_convex_solids(left, right)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .map(|result| result.mesh),
         _ => unreachable!("only convex operation shortcuts are replayed here"),
     }) else {
         return Ok(false);
@@ -2632,13 +2632,15 @@ fn convex_shortcut_sources_match(
     right: &ExactMesh,
 ) -> Result<bool, ExactReportValidationError> {
     Ok(match shortcut {
-        ExactBooleanShortcutKind::ConvexUnion => union_closed_convex_solids(left, right).is_some(),
-        ExactBooleanShortcutKind::ConvexIntersection => {
-            intersect_closed_convex_solids(left, right).is_some()
-        }
-        ExactBooleanShortcutKind::ConvexDifference => {
-            subtract_closed_convex_solids(left, right).is_some()
-        }
+        ExactBooleanShortcutKind::ConvexUnion => union_closed_convex_solids(left, right)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .is_some(),
+        ExactBooleanShortcutKind::ConvexIntersection => intersect_closed_convex_solids(left, right)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .is_some(),
+        ExactBooleanShortcutKind::ConvexDifference => subtract_closed_convex_solids(left, right)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .is_some(),
         ExactBooleanShortcutKind::ConvexContainment | ExactBooleanShortcutKind::ConvexSeparated => {
             convex_relation_shortcut_sources_match(shortcut, left, right)?
         }
