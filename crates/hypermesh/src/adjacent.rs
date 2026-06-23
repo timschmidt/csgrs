@@ -25,6 +25,7 @@ use hyperlimit::{
 };
 
 use super::adjacent_polygon::polygon_patch_pairs;
+use super::error::ExactMeshError;
 use super::graph::{
     ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide,
     build_validated_intersection_graph,
@@ -143,18 +144,25 @@ pub(crate) fn materialize_full_face_adjacent_union(
     left: &ExactMesh,
     right: &ExactMesh,
     validation: ExactMeshValidationPolicy,
-) -> Option<FullFaceAdjacentUnion> {
-    let certificate = full_face_adjacent_certificate(left, right)?;
-    materialize_full_face_adjacent_union_from_certificate(left, right, &certificate, validation)
+) -> Result<Option<FullFaceAdjacentUnion>, ExactMeshError> {
+    let Some(certificate) = full_face_adjacent_certificate(left, right)? else {
+        return Ok(None);
+    };
+    Ok(materialize_full_face_adjacent_union_from_certificate(
+        left,
+        right,
+        &certificate,
+        validation,
+    ))
 }
 
 /// Return the retained full-face adjacency certificate for these sources.
 pub(crate) fn full_face_adjacent_certificate(
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Option<FullFaceAdjacentCertificate> {
-    full_face_adjacent_union_certificate(left, right)
-        .map(|inner| FullFaceAdjacentCertificate { inner })
+) -> Result<Option<FullFaceAdjacentCertificate>, ExactMeshError> {
+    Ok(full_face_adjacent_union_certificate(left, right)?
+        .map(|inner| FullFaceAdjacentCertificate { inner }))
 }
 
 /// Return the retained full-face adjacency certificate from a validated graph.
@@ -187,12 +195,14 @@ pub(crate) fn materialize_full_face_adjacent_union_from_certificate(
 fn full_face_adjacent_union_certificate(
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Option<FullFaceAdjacencyCertificate> {
+) -> Result<Option<FullFaceAdjacencyCertificate>, ExactMeshError> {
     if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
-        return None;
+        return Ok(None);
     }
-    let graph = build_validated_intersection_graph(left, right).ok()?;
-    full_face_adjacent_union_certificate_from_graph(left, right, &graph)
+    let graph = build_validated_intersection_graph(left, right)?;
+    Ok(full_face_adjacent_union_certificate_from_graph(
+        left, right, &graph,
+    ))
 }
 
 fn full_face_adjacent_union_certificate_from_graph(

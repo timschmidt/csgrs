@@ -2935,7 +2935,9 @@ fn arrangement_cell_complex_output_matches_sources(
     adjacent_report.validate()?;
     match adjacent_report.status {
         ExactAdjacentUnionCompletionStatus::CertifiedFullFace => {
-            let Some(replay) = materialize_full_face_adjacent_union(left, right, validation) else {
+            let Some(replay) = materialize_full_face_adjacent_union(left, right, validation)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            else {
                 return Ok(retained_mismatch.then_some(false));
             };
             if mesh_output_matches(mesh, &replay.mesh) {
@@ -2945,6 +2947,7 @@ fn arrangement_cell_complex_output_matches_sources(
         }
         ExactAdjacentUnionCompletionStatus::CertifiedContainedFace => {
             let Some(replay) = materialize_contained_face_adjacent_union(left, right, validation)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
             else {
                 return Ok(retained_mismatch.then_some(false));
             };
