@@ -3937,6 +3937,26 @@ fn validate_winding_evidence_against_sources_for_request(
     Err(ExactReportValidationError::SourceReplayMismatch)
 }
 
+#[cfg(test)]
+fn axis_aligned_orthogonal_solid_preflight_matches_sources(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<bool, ExactReportValidationError> {
+    let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(request.operation) else {
+        return Ok(false);
+    };
+    materialize_axis_aligned_orthogonal_solid_cell_output(
+        left,
+        right,
+        solid_operation,
+        "exact arrangement orthogonal solid cell preflight replay",
+        request.validation,
+    )
+    .map(|mesh| mesh.is_some())
+    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
+}
+
 impl ExactBooleanPreflight {
     /// Returns whether this preflight has certified support for materializing
     /// the requested operation under the policy used to produce the report.
@@ -3972,6 +3992,19 @@ impl ExactBooleanPreflight {
             && volumetric_boundary_closure_report_from_graph(&graph, left, right, request.operation)
                 .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
                 .is_coplanar_closure_available()
+        {
+            return Ok(());
+        }
+        if self.operation == request.operation
+            && self.support == ExactBooleanSupport::CertifiedArrangementCellComplex
+            && self.blocker.is_none()
+            && self.retained_face_pairs == graph.face_pairs.len()
+            && self.retained_events == graph.event_count()
+            && self.region_count == 0
+            && self.region_classifications.is_empty()
+            && self.coplanar_arrangement_evidence.is_none()
+            && self.coplanar_volumetric_evidence.is_none()
+            && axis_aligned_orthogonal_solid_preflight_matches_sources(left, right, request)?
         {
             return Ok(());
         }

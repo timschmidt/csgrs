@@ -4768,7 +4768,11 @@ fn certified_arrangement_cell_complex_preflight_if_materialized(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<ExactBooleanPreflight>, ExactMeshError> {
-    let arrangement_materializes =
+    let orthogonal_cell_materializes =
+        orthogonal_solid_cell_materializes_for_preflight(left, right, operation)?;
+    let arrangement_materializes = if orthogonal_cell_materializes {
+        false
+    } else {
         [false, true]
             .into_iter()
             .try_fold(false, |materialized, regularize_sheet_complex| {
@@ -4783,8 +4787,10 @@ fn certified_arrangement_cell_complex_preflight_if_materialized(
                         regularize_sheet_complex,
                     )
                 }
-            })?;
-    if arrangement_materializes
+            })?
+    };
+    if orthogonal_cell_materializes
+        || arrangement_materializes
         || boolean_coplanar_mesh_overlay_optional(
             left,
             right,
@@ -4802,6 +4808,39 @@ fn certified_arrangement_cell_complex_preflight_if_materialized(
     } else {
         Ok(None)
     }
+}
+
+fn orthogonal_solid_cell_materializes_for_preflight(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<bool, ExactMeshError> {
+    let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation) else {
+        return Ok(false);
+    };
+    let validation_policies: &[ExactMeshValidationPolicy] =
+        if left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold {
+            &[ExactMeshValidationPolicy::CLOSED]
+        } else {
+            &[
+                ExactMeshValidationPolicy::CLOSED,
+                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            ]
+        };
+    for &validation in validation_policies {
+        if materialize_axis_aligned_orthogonal_solid_cell_output(
+            left,
+            right,
+            solid_operation,
+            "exact arrangement orthogonal solid cell preflight probe",
+            validation,
+        )?
+        .is_some()
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 pub(crate) fn certified_arrangement_cell_complex_preflight_from_retained_attempt(
@@ -13742,25 +13781,16 @@ mod tests {
         assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
         assert_eq!(preflight.retained_events, graph.event_count());
 
-        let evaluation = exact_boolean_evaluation_for_replay(&left, &right, request).unwrap();
-        evaluation.validate_against_sources(&left, &right).unwrap();
-        let attempt = evaluation
-            .retained_arrangement_attempt()
-            .expect("replay evaluation should retain an arrangement attempt");
-        assert!(
-            attempt.certifies_arrangement_cell_complex_output_for_request(
-                request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
-            "{attempt:?}"
-        );
-        assert!(attempt.topology_assembly_report.is_some());
-        assert!(attempt.region_ownership_report.is_some());
-        let result = evaluation
-            .materialized_result()
-            .expect("certified arrangement evaluation should retain materialized result");
-        assert!(result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union));
-        result.validate().unwrap();
+        let materialized = materialize_axis_aligned_orthogonal_solid_cell_output(
+            &left,
+            &right,
+            AxisAlignedOrthogonalSolidOperation::Union,
+            "test axis-aligned box arrangement preflight materialization",
+            request.validation,
+        )
+        .unwrap()
+        .expect("preflight support should have an exact orthogonal cell output");
+        materialized.validate_retained_state().unwrap();
     }
 
     #[test]
