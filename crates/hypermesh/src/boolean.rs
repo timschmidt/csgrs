@@ -799,17 +799,6 @@ fn exact_boolean_evaluation_for_replay_result(
     let graph = build_validated_intersection_graph(left, right)?;
     let mut regularized_arrangement = None;
     let mut regularized_attempt = None;
-    if !matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
-        let _ = replay_regularized_arrangement_attempt(
-            left,
-            right,
-            request,
-            &graph,
-            &shortcut_facts,
-            &mut regularized_arrangement,
-            &mut regularized_attempt,
-        );
-    }
     let mut preflight = exact_boolean_replay_preflight(
         left,
         right,
@@ -818,7 +807,20 @@ fn exact_boolean_evaluation_for_replay_result(
         &shortcut_facts,
         regularized_attempt.as_ref(),
     )?;
-    if preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex {
+    let should_replay_arrangement = matches!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedArrangementCellComplex
+            | ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
+            | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
+            | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference
+    ) || (!graph.face_pairs.is_empty()
+        && matches!(
+            preflight.support,
+            ExactBooleanSupport::CertifiedConvexUnion
+                | ExactBooleanSupport::CertifiedConvexIntersection
+                | ExactBooleanSupport::CertifiedConvexDifference
+        ));
+    if should_replay_arrangement {
         replay_regularized_arrangement_attempt(
             left,
             right,
@@ -3164,6 +3166,16 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     .map_err(|error| {
         retained_report_validation_error("retained arrangement attempt failed validation", error)
     })?;
+    let mut owned_graph = None;
+    let graph = graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
+    if operation == ExactBooleanOperation::Difference
+        && let Some((result, _evidence)) =
+            materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
+                graph, left, right, operation, validation,
+            )?
+    {
+        return Ok(Some(result));
+    }
     if let Some(attempt) = retained_arrangement_attempt
         && let Some(result) =
             materialize_retained_arrangement_cell_complex_attempt(left, right, request, attempt)?
@@ -3175,8 +3187,6 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     {
         return Ok(Some(result));
     }
-    let mut owned_graph = None;
-    let graph = graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
     if let Some(result) = materialize_arrangement_volumetric_split_cell_result_from_graph(
         graph, left, right, operation, validation,
     )? {
@@ -3601,6 +3611,21 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             certified_arrangement_cell_complex_coplanar_evidence(graph, left, right),
         ));
     }
+    if support.is_certified()
+        && !(support == ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid
+            && operation == ExactBooleanOperation::Intersection)
+        && !matches!(
+            support,
+            ExactBooleanSupport::SelectedRegionPolicy
+                | ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
+                | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
+                | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference
+                | ExactBooleanSupport::CertifiedArrangementCellComplex
+                | ExactBooleanSupport::CertifiedBoundaryPolicyShortcut
+        )
+    {
+        return Ok(certified_preflight(operation, support, Some(graph), None));
+    }
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && graph.face_pairs.is_empty()
         && let Some((left_in_right, right_in_left)) =
@@ -3614,19 +3639,6 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             Some(graph),
             None,
         ));
-    }
-    if support.is_certified()
-        && !matches!(
-            support,
-            ExactBooleanSupport::SelectedRegionPolicy
-                | ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
-                | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
-                | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference
-                | ExactBooleanSupport::CertifiedArrangementCellComplex
-                | ExactBooleanSupport::CertifiedBoundaryPolicyShortcut
-        )
-    {
-        return Ok(certified_preflight(operation, support, Some(graph), None));
     }
 
     if operation == ExactBooleanOperation::Difference
@@ -3685,6 +3697,17 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: None,
         });
+    }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && open_surface_disjoint_report_from_graph(graph, left, right).is_certified()
+    {
+        return Ok(certified_preflight(
+            operation,
+            ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
+            Some(graph),
+            None,
+        ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
@@ -3818,17 +3841,6 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             coplanar_boundary_only_evidence_if_consumed(graph, left, right)?,
         ));
     }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && open_surface_disjoint_report_from_graph(graph, left, right).is_certified()
-    {
-        return Ok(certified_preflight(
-            operation,
-            ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
-            Some(graph),
-            None,
-        ));
-    }
     if operation == ExactBooleanOperation::Intersection
         && certified_arrangement_regularized_boundary_contact_from_graph(
             graph, left, right, operation,
@@ -3904,6 +3916,23 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         // events, so this retained evidence witness is checked before falling
         // through to winding.
         && has_empty_axis_aligned_orthogonal_solid_cell_intersection(left, right)
+    {
+        return Ok(certified_preflight(
+            operation,
+            ExactBooleanSupport::CertifiedArrangementCellComplex,
+            Some(graph),
+            certified_arrangement_cell_complex_coplanar_evidence(graph, left, right),
+        ));
+    }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && operation == ExactBooleanOperation::Intersection
+        && request.validation == ExactMeshValidationPolicy::CLOSED
+        && closed_regularized_operand_kind(left)
+            == Some(ClosedRegularizedOperandKind::LowerDimensional)
+        && closed_regularized_operand_kind(right)
+            == Some(ClosedRegularizedOperandKind::LowerDimensional)
+        && !graph.face_pairs.is_empty()
+        && open_surface_arrangement_plan_from_graph(graph, left, right, operation)?.is_some()
     {
         return Ok(certified_preflight(
             operation,
@@ -4160,6 +4189,8 @@ pub(crate) fn preflight_boolean_exact_request_from_graph_with_retained_attempt(
     let boundary_policy = request.boundary_policy;
     if let Some(support) =
         closed_validation_regularized_solid_support(left, right, operation, validation)
+        && !(support == ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid
+            && operation == ExactBooleanOperation::Intersection)
     {
         return Ok(certified_preflight(operation, support, Some(graph), None));
     }
@@ -5571,6 +5602,11 @@ fn materialize_boolean_exact_request_from_ready_graph(
                 }
             }
             if let Some(result) = boolean_open_surface_disjoint_meshes_from_graph(
+                graph, left, right, operation, validation,
+            )? {
+                return Ok(result);
+            }
+            if let Some(result) = open_surface_arrangement_result_from_graph(
                 graph, left, right, operation, validation,
             )? {
                 return Ok(result);
@@ -10256,8 +10292,13 @@ fn winding_evidence_report_for_request_from_graph_and_attempt(
             ),
         );
     }
+    let closed_regularized_support =
+        closed_validation_regularized_solid_support(left, right, operation, validation);
+    let defer_lower_dimensional_intersection = closed_regularized_support
+        == Some(ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid)
+        && operation == ExactBooleanOperation::Intersection;
     let evidence = if let Some(support) =
-        closed_validation_regularized_solid_support(left, right, operation, validation)
+        closed_regularized_support.filter(|_| !defer_lower_dimensional_intersection)
     {
         let status = match support {
             ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
