@@ -73,6 +73,7 @@ pub struct PreparedMeshPair<'left, 'right> {
     candidate_pair_capacity_hint: usize,
     scratch: RefCell<BroadPhaseScratch>,
     face_pair_classifications: RefCell<Option<Vec<MeshFacePairClassification>>>,
+    face_pair_classification_counts: RefCell<Option<PreparedMeshPairClassificationCounts>>,
     intersection_graph: RefCell<Option<Rc<ExactIntersectionGraph>>>,
     intersection_graph_counts: RefCell<Option<RetainedIntersectionGraphCounts>>,
     intersection_graph_validated: RefCell<bool>,
@@ -678,6 +679,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             candidate_pair_capacity_hint,
             scratch: RefCell::new(BroadPhaseScratch::default()),
             face_pair_classifications: RefCell::new(None),
+            face_pair_classification_counts: RefCell::new(None),
             intersection_graph: RefCell::new(None),
             intersection_graph_counts: RefCell::new(None),
             intersection_graph_validated: RefCell::new(false),
@@ -723,22 +725,16 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     /// Build and retain coarse face-pair classifications, returning retained decision counts.
     pub fn prepare_face_pair_classification_counts(&self) -> PreparedMeshPairClassificationCounts {
         self.ensure_face_pair_classifications();
-        self.face_pair_classifications
+        self.face_pair_classification_counts
             .borrow()
             .as_ref()
-            .map(|classifications| {
-                PreparedMeshPairClassificationCounts::from_classifications(classifications)
-            })
+            .copied()
             .unwrap_or_default()
     }
 
     /// Return a cheap summary of retained facts in this prepared pair session.
     pub fn cache_status(&self) -> PreparedMeshPairCacheStatus {
-        let face_pair_classifications = self.face_pair_classifications.borrow();
-        let face_pair_classification_counts =
-            face_pair_classifications.as_ref().map(|classifications| {
-                PreparedMeshPairClassificationCounts::from_classifications(classifications)
-            });
+        let face_pair_classification_counts = *self.face_pair_classification_counts.borrow();
         let graph_counts = *self.intersection_graph_counts.borrow();
         let graph_retained = self.intersection_graph.borrow().is_some();
         PreparedMeshPairCacheStatus {
@@ -846,7 +842,9 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
                 right_face,
             ));
         });
+        let counts = PreparedMeshPairClassificationCounts::from_classifications(&classifications);
         *self.face_pair_classifications.borrow_mut() = Some(classifications);
+        *self.face_pair_classification_counts.borrow_mut() = Some(counts);
     }
 
     pub(crate) fn cached_intersection_graph(&self) -> Option<Rc<ExactIntersectionGraph>> {

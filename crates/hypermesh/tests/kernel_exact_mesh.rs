@@ -104,6 +104,10 @@ fn prepared_mesh_pair_materializes_named_operations() {
         None
     );
     assert_eq!(
+        initial_status.retained_face_pair_classification_counts(),
+        None
+    );
+    assert_eq!(
         initial_status.intersection_graph(),
         PreparedMeshPairFactState::Missing
     );
@@ -243,11 +247,20 @@ fn prepared_mesh_pair_materializes_named_operations() {
     classified_status
         .require_current_face_pair_classifications()
         .unwrap();
+    let empty_classification_counts = classified_status
+        .current_face_pair_classification_counts()
+        .unwrap();
     assert_eq!(
         classified_status
             .current_face_pair_classification_count()
             .unwrap(),
         0
+    );
+    assert_eq!(empty_classification_counts.face_pair_count(), 0);
+    assert_eq!(empty_classification_counts.graph_required_count(), 0);
+    assert_eq!(
+        classified_status.retained_face_pair_classification_counts(),
+        Some(empty_classification_counts)
     );
     assert_eq!(pair.current_face_pair_classification_count().unwrap(), 0);
     assert_eq!(
@@ -284,6 +297,10 @@ fn prepared_mesh_pair_materializes_named_operations() {
     assert_eq!(
         retained_status.retained_face_pair_classification_count(),
         Some(0)
+    );
+    assert_eq!(
+        retained_status.retained_face_pair_classification_counts(),
+        Some(empty_classification_counts)
     );
     assert_eq!(
         retained_status.intersection_graph(),
