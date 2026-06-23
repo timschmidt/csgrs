@@ -365,7 +365,9 @@ fn prepared_mesh_pair_materializes_named_operations() {
         PreparedMeshPairFactState::Missing
     );
 
-    let union = pair.union().unwrap();
+    let prepared_union_outcome = pair.prepare_union_result().unwrap();
+    assert!(prepared_union_outcome.is_mesh());
+    let union = pair.current_union_result().unwrap();
     union.validate_retained_state().unwrap();
     assert_eq!(union.triangle_count(), solid.triangle_count());
     let retained_status = pair.cache_status();
@@ -418,6 +420,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
         retained_status.current_union_result_outcome().unwrap(),
         union_outcome
     );
+    assert_eq!(prepared_union_outcome, union_outcome);
     assert_eq!(pair.current_union_result_outcome().unwrap(), union_outcome);
     retained_status.require_current_union_result().unwrap();
     assert_eq!(
@@ -444,7 +447,9 @@ fn prepared_mesh_pair_materializes_named_operations() {
     repeated_union.validate_retained_state().unwrap();
     assert_eq!(repeated_union.triangle_count(), union.triangle_count());
 
-    let intersection = pair.intersection().unwrap();
+    let prepared_intersection_outcome = pair.prepare_intersection_result().unwrap();
+    assert!(prepared_intersection_outcome.is_mesh());
+    let intersection = pair.current_intersection_result().unwrap();
     intersection.validate_retained_state().unwrap();
     assert_eq!(intersection.triangle_count(), 0);
     let intersection_status = pair.cache_status();
@@ -458,6 +463,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
     );
     let intersection_outcome = intersection_status.intersection_result_outcome().unwrap();
     assert!(intersection_outcome.is_mesh());
+    assert_eq!(prepared_intersection_outcome, intersection_outcome);
     assert_eq!(
         intersection_outcome.triangle_count(),
         Some(intersection.triangle_count())
@@ -488,7 +494,9 @@ fn prepared_mesh_pair_materializes_named_operations() {
         PreparedMeshPairFactState::Missing
     );
 
-    let difference = pair.difference().unwrap();
+    let prepared_difference_outcome = pair.prepare_difference_result().unwrap();
+    assert!(prepared_difference_outcome.is_mesh());
+    let difference = pair.current_difference_result().unwrap();
     difference.validate_retained_state().unwrap();
     assert_eq!(difference.triangle_count(), 0);
     let difference_status = pair.cache_status();
@@ -498,6 +506,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
     );
     let difference_outcome = difference_status.difference_result_outcome().unwrap();
     assert!(difference_outcome.is_mesh());
+    assert_eq!(prepared_difference_outcome, difference_outcome);
     assert_eq!(
         difference_outcome.triangle_count(),
         Some(difference.triangle_count())
@@ -524,7 +533,9 @@ fn prepared_mesh_pair_materializes_named_operations() {
         PreparedMeshPairFactState::Missing
     );
 
-    let xor = pair.xor().unwrap();
+    let prepared_xor_outcome = pair.prepare_xor_result().unwrap();
+    assert!(prepared_xor_outcome.is_mesh());
+    let xor = pair.current_xor_result().unwrap();
     xor.validate_retained_state().unwrap();
     assert_eq!(xor.triangle_count(), solid.triangle_count());
     assert_eq!(
@@ -533,6 +544,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
     );
     let xor_outcome = pair.cache_status().xor_result_outcome().unwrap();
     assert!(xor_outcome.is_mesh());
+    assert_eq!(prepared_xor_outcome, xor_outcome);
     assert_eq!(xor_outcome.triangle_count(), Some(xor.triangle_count()));
     assert_eq!(
         pair.cache_status().current_xor_result_outcome().unwrap(),

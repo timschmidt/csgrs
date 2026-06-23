@@ -1319,6 +1319,12 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.named_boolean_mesh(ExactBooleanOperation::Union)
     }
 
+    /// Retain the exact closed union result or blocker summary for this pair session.
+    pub fn prepare_union_result(&self) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
+        let _ = self.union();
+        self.current_union_result_outcome()
+    }
+
     /// Return the retained union result or cached error without materializing it.
     pub fn current_union_result(&self) -> Result<ExactMesh, ExactMeshError> {
         self.current_named_boolean_mesh(ExactBooleanOperation::Union)
@@ -1336,6 +1342,14 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.named_boolean_mesh(ExactBooleanOperation::Intersection)
     }
 
+    /// Retain the exact closed intersection result or blocker summary for this pair session.
+    pub fn prepare_intersection_result(
+        &self,
+    ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
+        let _ = self.intersection();
+        self.current_intersection_result_outcome()
+    }
+
     /// Return the retained intersection result or cached error without materializing it.
     pub fn current_intersection_result(&self) -> Result<ExactMesh, ExactMeshError> {
         self.current_named_boolean_mesh(ExactBooleanOperation::Intersection)
@@ -1351,6 +1365,14 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     /// Materialize the exact closed difference of the left mesh minus the right mesh.
     pub fn difference(&self) -> Result<ExactMesh, ExactMeshError> {
         self.named_boolean_mesh(ExactBooleanOperation::Difference)
+    }
+
+    /// Retain the exact closed difference result or blocker summary for this pair session.
+    pub fn prepare_difference_result(
+        &self,
+    ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
+        let _ = self.difference();
+        self.current_difference_result_outcome()
     }
 
     /// Return the retained difference result or cached error without materializing it.
@@ -1385,6 +1407,12 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         })();
         retain_boolean_result(&self.xor_result, &self.xor_result_outcome, &result);
         result
+    }
+
+    /// Retain the exact closed symmetric-difference result or blocker summary.
+    pub fn prepare_xor_result(&self) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
+        let _ = self.xor();
+        self.current_xor_result_outcome()
     }
 
     /// Return the retained symmetric-difference result or cached error without materializing it.
