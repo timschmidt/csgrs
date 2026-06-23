@@ -628,8 +628,11 @@ pub(crate) fn validate_arrangement_regions(
         {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
-        let region_membership =
-            ArrangementRegionComponentMembership::new(&region_faces, face_cell_count);
+        let Some(region_membership) =
+            ArrangementRegionComponentMembership::new(&region_faces, face_cell_count)
+        else {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        };
         for pair in &region.adjacent_face_cells {
             if pair[0] == pair[1]
                 || pair[0] >= face_cell_count
@@ -3466,7 +3469,12 @@ fn arrangement_regions(
             }
         }
         component.sort_unstable();
-        let membership = ArrangementRegionComponentMembership::new(&component, face_cells.len());
+        let Some(membership) =
+            ArrangementRegionComponentMembership::new(&component, face_cells.len())
+        else {
+            push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+            continue;
+        };
         let adjacent_face_cells = adjacent_pairs
             .iter()
             .copied()
@@ -3513,18 +3521,17 @@ struct ArrangementRegionComponentMembership {
 }
 
 impl ArrangementRegionComponentMembership {
-    fn new(component: &[usize], face_cell_count: usize) -> Self {
+    fn new(component: &[usize], face_cell_count: usize) -> Option<Self> {
         let mut members = vec![false; face_cell_count];
         for &cell in component {
-            if let Some(member) = members.get_mut(cell) {
-                *member = true;
-            }
+            let member = members.get_mut(cell)?;
+            *member = true;
         }
-        Self { members }
+        Some(Self { members })
     }
 
     fn contains(&self, face_cell: usize) -> bool {
-        self.members.get(face_cell).copied().unwrap_or(false)
+        self.members.get(face_cell).copied() == Some(true)
     }
 }
 
