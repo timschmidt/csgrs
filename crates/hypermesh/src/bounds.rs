@@ -270,43 +270,6 @@ impl BroadPhaseScratch {
     }
 }
 
-/// Internal broad-phase strategy for exact face-pair scheduling.
-///
-/// A strategy may reject only with replay-validated acceleration facts. Every
-/// retained pair is still a narrow-phase candidate; broad phase never certifies
-/// topology.
-pub(crate) trait ExactBroadPhaseStrategy {
-    fn candidate_face_pair_plan(
-        &self,
-        left: &PreparedMeshBounds<'_>,
-        right: &PreparedMeshBounds<'_>,
-    ) -> CandidateFacePairPlan;
-
-    fn try_visit_candidate_face_pairs_one_shot<E>(
-        &self,
-        left: &MeshBounds,
-        right: &MeshBounds,
-        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E>;
-
-    fn try_visit_candidate_face_pairs_with_plan<E>(
-        &self,
-        left: &PreparedMeshBounds<'_>,
-        right: &PreparedMeshBounds<'_>,
-        plan: CandidateFacePairPlan,
-        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E>;
-
-    fn try_visit_candidate_face_pairs_with_plan_and_scratch<E>(
-        &self,
-        left: &PreparedMeshBounds<'_>,
-        right: &PreparedMeshBounds<'_>,
-        plan: CandidateFacePairPlan,
-        scratch: &mut BroadPhaseScratch,
-        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E>;
-}
-
 /// Exact AABB broad phase with an adaptive one-shot/prepared sweep split.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) struct ExactAabbBroadPhase {
@@ -354,8 +317,8 @@ impl Default for ExactAabbBroadPhase {
     }
 }
 
-impl ExactBroadPhaseStrategy for ExactAabbBroadPhase {
-    fn candidate_face_pair_plan(
+impl ExactAabbBroadPhase {
+    pub(crate) fn candidate_face_pair_plan(
         &self,
         left: &PreparedMeshBounds<'_>,
         right: &PreparedMeshBounds<'_>,
@@ -363,7 +326,7 @@ impl ExactBroadPhaseStrategy for ExactAabbBroadPhase {
         left.candidate_face_pair_plan(right)
     }
 
-    fn try_visit_candidate_face_pairs_one_shot<E>(
+    pub(crate) fn try_visit_candidate_face_pairs_one_shot<E>(
         &self,
         left: &MeshBounds,
         right: &MeshBounds,
@@ -385,7 +348,7 @@ impl ExactBroadPhaseStrategy for ExactAabbBroadPhase {
         self.try_visit_candidate_face_pairs_with_plan(&left, &right, plan, visit)
     }
 
-    fn try_visit_candidate_face_pairs_with_plan<E>(
+    pub(crate) fn try_visit_candidate_face_pairs_with_plan<E>(
         &self,
         left: &PreparedMeshBounds<'_>,
         right: &PreparedMeshBounds<'_>,
@@ -395,7 +358,7 @@ impl ExactBroadPhaseStrategy for ExactAabbBroadPhase {
         left.try_visit_candidate_face_pairs_with_plan(right, plan, visit)
     }
 
-    fn try_visit_candidate_face_pairs_with_plan_and_scratch<E>(
+    pub(crate) fn try_visit_candidate_face_pairs_with_plan_and_scratch<E>(
         &self,
         left: &PreparedMeshBounds<'_>,
         right: &PreparedMeshBounds<'_>,

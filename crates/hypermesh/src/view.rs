@@ -8,8 +8,7 @@ use super::boolean::{
     materialize_boolean_exact_request_with_prepared_pair,
 };
 use super::bounds::{
-    BroadPhaseScratch, CandidateFacePairPlan, ExactAabbBroadPhase, ExactBroadPhaseStrategy,
-    PreparedMeshBounds,
+    BroadPhaseScratch, CandidateFacePairPlan, ExactAabbBroadPhase, PreparedMeshBounds,
 };
 use super::error::ExactMeshError;
 use super::graph::ExactIntersectionGraph;
