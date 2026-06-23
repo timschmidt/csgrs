@@ -970,6 +970,15 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
             .kind(),
         hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
     );
+    let prepared_arrangement_counts = pair.prepare_arrangement().unwrap();
+    assert_eq!(
+        pair.cache_status().arrangement(),
+        PreparedMeshPairFactState::Current
+    );
+    assert_eq!(
+        pair.current_arrangement_counts().unwrap(),
+        prepared_arrangement_counts
+    );
     let prepared_counts = pair
         .with_arrangement_view(|view: ArrangementView<'_>| {
             view.validate_retained_state().unwrap();
@@ -989,6 +998,7 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         PreparedMeshPairFactState::Current
     );
     let retained_arrangement_counts = prepared_status.current_arrangement_counts().unwrap();
+    assert_eq!(retained_arrangement_counts, prepared_arrangement_counts);
     assert_eq!(
         prepared_status.retained_arrangement_counts(),
         Some(retained_arrangement_counts)

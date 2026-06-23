@@ -1135,6 +1135,12 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.cache_status().current_arrangement_counts()
     }
 
+    /// Build and retain the exact arrangement, returning retained topology counts.
+    pub fn prepare_arrangement(&self) -> Result<PreparedMeshPairArrangementCounts, ExactMeshError> {
+        self.retained_arrangement()?;
+        self.current_arrangement_counts()
+    }
+
     /// Build and retain arrangement shortcut facts for this prepared pair.
     pub fn prepare_arrangement_shortcut_facts(&self) -> Result<(), ExactMeshError> {
         self.arrangement_cell_complex_shortcut_facts();
