@@ -399,6 +399,11 @@ impl MeshBounds {
         self.mesh.as_ref()
     }
 
+    /// Return retained bounds for one face.
+    pub(crate) fn face(&self, index: usize) -> Option<&ExactAabb3> {
+        self.faces.get(index)
+    }
+
     /// Return whether retained whole-mesh bounds require face-pair scheduling.
     pub(crate) fn mesh_may_overlap(&self, other: &Self) -> bool {
         match (&self.mesh, &other.mesh) {

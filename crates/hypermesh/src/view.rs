@@ -8,7 +8,7 @@ use super::boolean::{
     materialize_boolean_exact_request_with_prepared_pair,
 };
 use super::bounds::{
-    BroadPhaseScratch, CandidateFacePairPlan, ExactAabbBroadPhase, PreparedMeshBounds,
+    BroadPhaseScratch, CandidateFacePairPlan, ExactAabb3, ExactAabbBroadPhase, PreparedMeshBounds,
 };
 use super::error::ExactMeshError;
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
@@ -313,6 +313,16 @@ impl<'a> ExactMeshRef<'a> {
         self.mesh.vertices()
     }
 
+    /// Borrow retained whole-mesh bounds as exact min/max corners.
+    pub fn mesh_bounds(self) -> Option<(&'a Point3, &'a Point3)> {
+        self.mesh.bounds().mesh().map(bounds_corners)
+    }
+
+    /// Borrow retained bounds for one face as exact min/max corners.
+    pub fn face_bounds(self, index: usize) -> Option<(&'a Point3, &'a Point3)> {
+        self.mesh.bounds().face(index).map(bounds_corners)
+    }
+
     /// Borrow one vertex by index.
     pub fn vertex(self, index: usize) -> Option<VertexRef<'a>> {
         (index < self.mesh.vertices().len()).then_some(VertexRef {
@@ -525,6 +535,11 @@ impl<'a> PreparedMeshView<'a> {
     /// Return the underlying borrowed mesh view.
     pub const fn view(&self) -> ExactMeshRef<'a> {
         self.view
+    }
+
+    /// Borrow retained whole-mesh bounds as exact min/max corners.
+    pub fn mesh_bounds(&self) -> Option<(&'a Point3, &'a Point3)> {
+        self.view.mesh_bounds()
     }
 
     /// Prepare a certificate-validated pair view that reuses its broad-phase plan.
@@ -1083,6 +1098,15 @@ impl<'a> FaceRef<'a> {
         self.mesh.triangles()[self.index].0
     }
 
+    /// Borrow retained face bounds as exact min/max corners.
+    pub fn bounds(self) -> (&'a Point3, &'a Point3) {
+        self.mesh
+            .bounds()
+            .face(self.index)
+            .map(bounds_corners)
+            .expect("face reference index must have retained bounds")
+    }
+
     /// Borrow the face vertices.
     pub fn vertex_refs(self) -> [VertexRef<'a>; 3] {
         vertex_refs(self.mesh, self.vertex_indices())
@@ -1135,6 +1159,15 @@ impl<'a> TriangleRef<'a> {
     /// Triangle vertex indices.
     pub fn vertex_indices(self) -> [usize; 3] {
         self.mesh.triangles()[self.index].0
+    }
+
+    /// Borrow retained triangle bounds as exact min/max corners.
+    pub fn bounds(self) -> (&'a Point3, &'a Point3) {
+        self.mesh
+            .bounds()
+            .face(self.index)
+            .map(bounds_corners)
+            .expect("triangle reference index must have retained bounds")
     }
 
     /// Borrow the triangle vertices.
@@ -1230,4 +1263,8 @@ fn vertex_refs(mesh: &ExactMesh, triangle: [usize; 3]) -> [VertexRef<'_>; 3] {
         VertexRef { mesh, index: b },
         VertexRef { mesh, index: c },
     ]
+}
+
+fn bounds_corners(bounds: &ExactAabb3) -> (&Point3, &Point3) {
+    (&bounds.min, &bounds.max)
 }
