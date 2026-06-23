@@ -37,7 +37,7 @@ use super::arrangement3d::{
     ExactArrangement, ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
 };
 use super::bounds::AabbIntersectionKind;
-use super::box_solid::is_axis_aligned_box;
+use super::box_solid::{is_axis_aligned_box, try_is_axis_aligned_box};
 use super::cell_complex::{
     ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
     arrangement_cell_complex_labeling_policy,
@@ -3690,6 +3690,13 @@ pub(crate) fn certified_axis_aligned_box_pair(left: &ExactMesh, right: &ExactMes
     is_axis_aligned_box(left) && is_axis_aligned_box(right)
 }
 
+pub(crate) fn try_certified_axis_aligned_box_pair(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactMeshError> {
+    Ok(try_is_axis_aligned_box(left)? && try_is_axis_aligned_box(right)?)
+}
+
 fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -6830,7 +6837,7 @@ pub(crate) fn adjacent_union_completion_certification(
             None,
         ));
     }
-    let axis_aligned_box_pair = is_axis_aligned_box(left) && is_axis_aligned_box(right);
+    let axis_aligned_box_pair = try_certified_axis_aligned_box_pair(left, right)?;
     if axis_aligned_box_pair {
         return Ok((
             adjacent_union_completion_report(
@@ -6922,7 +6929,7 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
             None,
         ));
     }
-    let axis_aligned_box_pair = is_axis_aligned_box(left) && is_axis_aligned_box(right);
+    let axis_aligned_box_pair = try_certified_axis_aligned_box_pair(left, right)?;
     if axis_aligned_box_pair {
         return Ok((
             adjacent_union_completion_report(
@@ -7014,7 +7021,7 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
     }
 
     if certified_convex_operation_shortcut_support(left, right, operation).is_some()
-        || (is_axis_aligned_box(left) && is_axis_aligned_box(right))
+        || try_certified_axis_aligned_box_pair(left, right)?
         || match operation {
             ExactBooleanOperation::Union => has_affine_orthogonal_solid_cells(
                 left,

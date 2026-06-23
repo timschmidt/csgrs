@@ -10,6 +10,7 @@ use core::cmp::Ordering;
 
 use hyperlimit::{Point3, compare_reals};
 
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::mesh::ExactMesh;
 use super::solid::certify_convex_solid;
 use hyperreal::Real;
@@ -37,42 +38,50 @@ enum Axis {
 /// structure rule intact across the affine adapter instead of trusting a
 /// coordinate transform alone.
 pub(crate) fn is_axis_aligned_box(mesh: &ExactMesh) -> bool {
-    certify_axis_aligned_box(mesh).is_some()
+    matches!(try_certify_axis_aligned_box(mesh), Ok(Some(_)))
+}
+
+/// Return whether one mesh certifies as a retained exact axis-aligned box,
+/// preserving retained-certificate and exact-predicate blockers.
+pub(crate) fn try_is_axis_aligned_box(mesh: &ExactMesh) -> Result<bool, ExactMeshError> {
+    try_certify_axis_aligned_box(mesh).map(|box_| box_.is_some())
 }
 
 /// Recognize a closed exact mesh as exactly its retained AABB.
-fn certify_axis_aligned_box(mesh: &ExactMesh) -> Option<AxisAlignedBox> {
+fn try_certify_axis_aligned_box(
+    mesh: &ExactMesh,
+) -> Result<Option<AxisAlignedBox>, ExactMeshError> {
     if mesh.vertices().len() != 8 || mesh.triangles().len() != 12 {
-        return None;
+        return Ok(None);
     }
-    mesh.validate_retained_bounds_certificate().ok()?;
-    let bounds = mesh.bounds().mesh()?;
+    mesh.validate_retained_bounds_certificate()?;
+    let Some(bounds) = mesh.bounds().mesh() else {
+        return Ok(None);
+    };
     let box_bounds = AxisAlignedBox {
         min: bounds.min.clone(),
         max: bounds.max.clone(),
     };
-    valid_box(box_bounds.clone())?;
+    let Some(box_bounds) = valid_box(box_bounds)? else {
+        return Ok(None);
+    };
     let corners = box_bounds.corners();
     for vertex in mesh.vertices() {
         let point = vertex.clone();
-        if !corners.iter().any(|corner| points_equal(corner, &point)) {
-            return None;
+        if !points_equal_any(&corners, &point)? {
+            return Ok(None);
         }
     }
     for corner in &corners {
-        if !mesh
-            .vertices()
-            .iter()
-            .any(|vertex| points_equal(corner, &vertex.clone()))
-        {
-            return None;
+        if !mesh_point_equal_any(mesh, corner)? {
+            return Ok(None);
         }
     }
     let convex = certify_convex_solid(mesh);
     if convex.is_certified_convex() && convex.all_proof_producing() {
-        Some(box_bounds)
+        Ok(Some(box_bounds))
     } else {
-        None
+        Ok(None)
     }
 }
 
@@ -93,11 +102,13 @@ impl AxisAlignedBox {
     }
 }
 
-fn valid_box(bounds: AxisAlignedBox) -> Option<AxisAlignedBox> {
-    let valid = [Axis::X, Axis::Y, Axis::Z].into_iter().all(|axis| {
-        cmp(axis_min(&bounds.min, axis), axis_max(&bounds.max, axis)) == Some(Ordering::Less)
-    });
-    valid.then_some(bounds)
+fn valid_box(bounds: AxisAlignedBox) -> Result<Option<AxisAlignedBox>, ExactMeshError> {
+    for axis in [Axis::X, Axis::Y, Axis::Z] {
+        if cmp(axis_min(&bounds.min, axis), axis_max(&bounds.max, axis))? != Ordering::Less {
+            return Ok(None);
+        }
+    }
+    Ok(Some(bounds))
 }
 
 fn axis_min(point: &Point3, axis: Axis) -> &Real {
@@ -112,14 +123,70 @@ fn axis_max(point: &Point3, axis: Axis) -> &Real {
     axis_min(point, axis)
 }
 
-fn cmp(left: &Real, right: &Real) -> Option<Ordering> {
-    compare_reals(left, right).value()
+fn cmp(left: &Real, right: &Real) -> Result<Ordering, ExactMeshError> {
+    compare_reals(left, right).value().ok_or_else(|| {
+        ExactMeshError::one(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::UndecidablePredicate,
+            "exact axis-aligned box certificate comparison was undecidable",
+        ))
+    })
 }
 
-fn real_eq(left: &Real, right: &Real) -> bool {
-    cmp(left, right) == Some(Ordering::Equal)
+fn real_eq(left: &Real, right: &Real) -> Result<bool, ExactMeshError> {
+    Ok(cmp(left, right)? == Ordering::Equal)
 }
 
-fn points_equal(left: &Point3, right: &Point3) -> bool {
-    real_eq(&left.x, &right.x) && real_eq(&left.y, &right.y) && real_eq(&left.z, &right.z)
+fn points_equal(left: &Point3, right: &Point3) -> Result<bool, ExactMeshError> {
+    Ok(real_eq(&left.x, &right.x)? && real_eq(&left.y, &right.y)? && real_eq(&left.z, &right.z)?)
+}
+
+fn points_equal_any(points: &[Point3], point: &Point3) -> Result<bool, ExactMeshError> {
+    for candidate in points {
+        if points_equal(candidate, point)? {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+fn mesh_point_equal_any(mesh: &ExactMesh, point: &Point3) -> Result<bool, ExactMeshError> {
+    for vertex in mesh.vertices() {
+        if points_equal(point, vertex)? {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
+        ExactMesh::from_i64_triangles(
+            &[
+                min[0], min[1], min[2], max[0], min[1], min[2], max[0], max[1], min[2], min[0],
+                max[1], min[2], min[0], min[1], max[2], max[0], min[1], max[2], max[0], max[1],
+                max[2], min[0], max[1], max[2],
+            ],
+            &[
+                0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2,
+                7, 6, 3, 0, 4, 3, 4, 7,
+            ],
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn fallible_axis_aligned_box_predicate_certifies_box_shape() {
+        let box_mesh = axis_aligned_box_i64([0, 0, 0], [1, 1, 1]);
+        assert!(try_is_axis_aligned_box(&box_mesh).unwrap());
+
+        let tetrahedron = ExactMesh::from_i64_triangles(
+            &[0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
+        assert!(!try_is_axis_aligned_box(&tetrahedron).unwrap());
+    }
 }
