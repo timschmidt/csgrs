@@ -2,8 +2,8 @@ use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
     ArrangementView, EdgeRef, ExactMesh, ExactMeshBlocker, ExactMeshError, ExactMeshRef, FaceRef,
     PreparedMeshPair, PreparedMeshPairCacheStatus, PreparedMeshPairFactState,
-    PreparedMeshPairPlanKind, PreparedMeshPairSweepAxis, PreparedMeshPairSweepDirection,
-    PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,
+    PreparedMeshPairPlanKind, PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis,
+    PreparedMeshPairSweepDirection, PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,
 };
 use hyperreal::Real;
 
@@ -760,6 +760,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
                     | PreparedMeshPairSweepDirection::RightDriven
             )
         ));
+        assert!(matches!(
+            broad_phase_summary.sweep_active_set(),
+            Some(PreparedMeshPairSweepActiveSet::Sparse | PreparedMeshPairSweepActiveSet::Marked)
+        ));
     }
     assert_eq!(
         unprepared_status.candidate_face_pairs(),
@@ -957,6 +961,13 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .cache_status()
             .broad_phase_summary()
             .sweep_direction(),
+        None
+    );
+    assert_eq!(
+        disjoint_pair
+            .cache_status()
+            .broad_phase_summary()
+            .sweep_active_set(),
         None
     );
     assert_eq!(disjoint_pair.candidate_face_pair_capacity_hint(), 0);

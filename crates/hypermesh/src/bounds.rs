@@ -234,6 +234,30 @@ impl CandidateFacePairPlan {
         }
     }
 
+    pub(crate) const fn sweep_uses_sparse_active_set(
+        self,
+        left_face_count: usize,
+        right_face_count: usize,
+    ) -> Option<bool> {
+        match self {
+            Self::Sweep {
+                plan,
+                active_face_capacity_hint,
+                ..
+            } => {
+                let target_face_count = match plan.direction {
+                    SweepDirection::LeftDriven => right_face_count,
+                    SweepDirection::RightDriven => left_face_count,
+                };
+                Some(should_use_sparse_sweep(
+                    active_face_capacity_hint,
+                    target_face_count,
+                ))
+            }
+            Self::Empty | Self::Quadratic => None,
+        }
+    }
+
     pub(crate) const fn candidate_pair_upper_bound(
         self,
         left_face_count: usize,

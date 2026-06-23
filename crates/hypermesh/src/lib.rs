@@ -68,6 +68,6 @@ pub use view::{
     PreparedMeshPairBroadPhaseSummary, PreparedMeshPairCacheStatus,
     PreparedMeshPairClassificationCounts, PreparedMeshPairFactState,
     PreparedMeshPairIntersectionGraphCounts, PreparedMeshPairPlanKind,
-    PreparedMeshPairResultOutcome, PreparedMeshPairSweepAxis, PreparedMeshPairSweepDirection,
-    PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,
+    PreparedMeshPairResultOutcome, PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis,
+    PreparedMeshPairSweepDirection, PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,
 };

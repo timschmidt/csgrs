@@ -155,6 +155,7 @@ pub struct PreparedMeshPairBroadPhaseSummary {
     active_face_capacity_hint: Option<usize>,
     sweep_axis: Option<PreparedMeshPairSweepAxis>,
     sweep_direction: Option<PreparedMeshPairSweepDirection>,
+    sweep_active_set: Option<PreparedMeshPairSweepActiveSet>,
 }
 
 impl PreparedMeshPairBroadPhaseSummary {
@@ -203,6 +204,11 @@ impl PreparedMeshPairBroadPhaseSummary {
         self.sweep_direction
     }
 
+    /// Return retained sweep active-set storage strategy, when the plan uses a sweep.
+    pub const fn sweep_active_set(self) -> Option<PreparedMeshPairSweepActiveSet> {
+        self.sweep_active_set
+    }
+
     const fn from_plan(
         plan: CandidateFacePairPlan,
         left_face_count: usize,
@@ -224,6 +230,28 @@ impl PreparedMeshPairBroadPhaseSummary {
             sweep_direction: PreparedMeshPairSweepDirection::from_candidate_direction(
                 plan.sweep_is_left_driven(),
             ),
+            sweep_active_set: PreparedMeshPairSweepActiveSet::from_sparse_flag(
+                plan.sweep_uses_sparse_active_set(left_face_count, right_face_count),
+            ),
+        }
+    }
+}
+
+/// Retained active-set storage strategy for a prepared sweep traversal.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PreparedMeshPairSweepActiveSet {
+    /// Sparse active-face list maintenance is selected for low active occupancy.
+    Sparse,
+    /// Marked active-face storage is selected for denser active occupancy.
+    Marked,
+}
+
+impl PreparedMeshPairSweepActiveSet {
+    const fn from_sparse_flag(sparse: Option<bool>) -> Option<Self> {
+        match sparse {
+            Some(true) => Some(Self::Sparse),
+            Some(false) => Some(Self::Marked),
+            None => None,
         }
     }
 }
