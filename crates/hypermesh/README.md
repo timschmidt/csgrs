@@ -43,9 +43,11 @@ crate rather than in the default public API.
 Borrowed queries start from `ExactMesh::view()`. Mesh, triangle, face, and edge
 views avoid cloning mesh storage; prepared views reuse certificate-validated
 broad-phase facts and stream candidate face pairs with fallible early-stop
-support. `ExactMesh::with_arrangement_view` exposes borrowed arrangement queries
-for algorithms that need retained topology without cloning arrangement storage
-or naming an owned arrangement type.
+support. Prepared mesh pairs expose an aggregate cache status so callers can
+check whether retained facts are missing, stale, certificate-blocked, or current
+before consuming them. `ExactMesh::with_arrangement_view` exposes borrowed
+arrangement queries for algorithms that need retained topology without cloning
+arrangement storage or naming an owned arrangement type.
 
 Retained graph, arrangement, cell-complex, winding, and shortcut evidence remain
 kernel internals unless a borrowed view is needed for exact query reuse.

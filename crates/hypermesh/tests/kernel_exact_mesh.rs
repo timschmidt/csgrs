@@ -4,10 +4,10 @@ use hypermesh::kernel::{
     ArrangementView, EdgeRef, ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshRef,
     FaceRef, MeshView, PreparedMeshPair, PreparedMeshPairArrangementCounts,
     PreparedMeshPairBroadPhaseSummary, PreparedMeshPairBroadPhaseTraversalSummary,
-    PreparedMeshPairClassificationCounts, PreparedMeshPairIntersectionGraphCounts,
-    PreparedMeshPairPlanKind, PreparedMeshPairResultOutcome, PreparedMeshPairSweepActiveSet,
-    PreparedMeshPairSweepAxis, PreparedMeshPairSweepDirection, PreparedMeshPairView,
-    PreparedMeshView, TriangleRef, VertexRef,
+    PreparedMeshPairCacheStatus, PreparedMeshPairClassificationCounts, PreparedMeshPairFactState,
+    PreparedMeshPairIntersectionGraphCounts, PreparedMeshPairPlanKind,
+    PreparedMeshPairResultOutcome, PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis,
+    PreparedMeshPairSweepDirection, PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,
 };
 use hyperreal::Real;
 
@@ -96,6 +96,22 @@ fn prepared_mesh_pair_materializes_named_operations() {
     let pair = empty.view().prepare_broad_phase_pair(solid.view()).unwrap();
     assert!(pair.sources_are_current());
     pair.require_current_sources().unwrap();
+    let initial_status: PreparedMeshPairCacheStatus = pair.cache_status();
+    let _source_state: PreparedMeshPairFactState = initial_status.source_pair();
+    assert!(initial_status.source_pair().is_current());
+    assert!(initial_status.broad_phase_traversal().is_missing());
+    assert!(initial_status.candidate_face_pairs().is_missing());
+    assert!(initial_status.face_pair_classifications().is_missing());
+    assert!(initial_status.intersection_graph().is_missing());
+    assert!(initial_status.union_result().is_missing());
+    assert!(
+        initial_status
+            .union_result()
+            .blocker("union result")
+            .unwrap()
+            .kind()
+            == ExactMeshBlockerKind::MissingRequiredEvidence
+    );
     assert!(pair.candidate_pair_plan().is_empty());
     assert_eq!(pair.candidate_face_pair_capacity_hint(), 0);
     let initial_broad_phase: PreparedMeshPairBroadPhaseSummary = pair.broad_phase_summary();
@@ -282,6 +298,18 @@ fn prepared_mesh_pair_materializes_named_operations() {
 
     assert_eq!(pair.prepare_face_pair_classifications(), 0);
     pair.require_current_face_pair_classifications().unwrap();
+    let classification_status = pair.cache_status();
+    assert!(
+        classification_status
+            .face_pair_classifications()
+            .is_current()
+    );
+    assert!(
+        classification_status
+            .face_pair_classification_counts()
+            .is_current()
+    );
+    assert!(classification_status.intersection_graph().is_missing());
     let empty_classification_counts = pair.current_face_pair_classification_counts().unwrap();
     assert_eq!(pair.current_face_pair_classification_count().unwrap(), 0);
     assert_eq!(empty_classification_counts.face_pair_count(), 0);
@@ -330,6 +358,12 @@ fn prepared_mesh_pair_materializes_named_operations() {
     );
     assert!(pair.arrangement_shortcut_facts_are_current());
     assert!(pair.union_result_is_current());
+    let union_status = pair.cache_status();
+    assert!(union_status.arrangement_shortcut_facts().is_current());
+    assert!(union_status.union_result().is_current());
+    assert!(union_status.intersection_result().is_missing());
+    assert!(union_status.difference_result().is_missing());
+    assert!(union_status.xor_result().is_missing());
     let union_outcome: PreparedMeshPairResultOutcome =
         pair.retained_union_result_outcome().unwrap();
     assert!(union_outcome.is_mesh());

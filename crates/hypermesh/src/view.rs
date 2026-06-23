@@ -111,7 +111,7 @@ pub struct PreparedMeshPairView<'pair, 'left, 'right> {
 
 /// Cheap status for retained facts inside a prepared mesh-pair session.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct PreparedMeshPairCacheStatus {
+pub struct PreparedMeshPairCacheStatus {
     source_pair: PreparedMeshPairFactState,
     broad_phase_traversal: PreparedMeshPairFactState,
     retained_broad_phase_traversal_summary: Option<PreparedMeshPairBroadPhaseTraversalSummary>,
@@ -714,7 +714,7 @@ impl PreparedMeshPairResultOutcome {
 
 /// Certificate state for retained facts inside a prepared mesh-pair session.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum PreparedMeshPairFactState {
+pub enum PreparedMeshPairFactState {
     /// The fact has not been computed for this session.
     Missing,
     /// The retained fact was built for source stamps that no longer match this session.
@@ -797,6 +797,16 @@ impl PreparedMeshPairClassificationCounts {
 }
 
 impl PreparedMeshPairFactState {
+    /// Return whether this fact has not been computed for the session.
+    pub const fn is_missing(self) -> bool {
+        matches!(self, Self::Missing)
+    }
+
+    /// Return whether this fact was retained for stale source stamps.
+    pub const fn is_stale(self) -> bool {
+        matches!(self, Self::Stale)
+    }
+
     /// Return whether a later stage can consume this fact through a cheap certificate check.
     pub const fn is_current(self) -> bool {
         matches!(self, Self::Current)
@@ -838,6 +848,11 @@ impl PreparedMeshPairFactState {
 }
 
 impl PreparedMeshPairCacheStatus {
+    /// Return the certificate state for the retained source-pair stamp.
+    pub const fn source_pair(self) -> PreparedMeshPairFactState {
+        self.source_pair
+    }
+
     /// Require retained pair source stamps to match the current session meshes.
     pub fn require_current_sources(self) -> Result<(), ExactMeshError> {
         self.source_pair.require_current("source-pair stamp")
@@ -926,6 +941,11 @@ impl PreparedMeshPairCacheStatus {
     pub fn require_current_intersection_graph(self) -> Result<(), ExactMeshError> {
         self.intersection_graph
             .require_current("intersection graph")
+    }
+
+    /// Return the certificate state for the retained exact intersection graph.
+    pub const fn intersection_graph(self) -> PreparedMeshPairFactState {
+        self.intersection_graph
     }
 
     /// Return retained exact intersection graph counts after requiring a current certificate.
@@ -1616,7 +1636,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     }
 
     /// Return a cheap summary of retained facts in this prepared pair session.
-    fn cache_status(&self) -> PreparedMeshPairCacheStatus {
+    pub fn cache_status(&self) -> PreparedMeshPairCacheStatus {
         let sources_current = self.sources_are_current();
         let candidate_face_pairs_retained = self.candidate_face_pairs.borrow().is_some();
         let broad_phase_traversal_summary = *self.broad_phase_traversal_summary.borrow();
