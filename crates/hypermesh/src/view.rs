@@ -760,6 +760,22 @@ impl<'a> ExactMeshRef<'a> {
         })
     }
 
+    /// Borrow one vertex by index, returning a typed blocker when absent.
+    pub fn require_vertex(self, index: usize) -> Result<VertexRef<'a>, ExactMeshError> {
+        self.vertex(index).ok_or_else(|| {
+            ExactMeshError::one(
+                ExactMeshBlocker::new(
+                    ExactMeshBlockerKind::IndexOutOfBounds,
+                    format!(
+                        "mesh vertex index {index} is out of bounds for {} retained vertices",
+                        self.vertex_count()
+                    ),
+                )
+                .with_vertex(index),
+            )
+        })
+    }
+
     /// Return copied triangle index rows.
     pub fn triangle_indices(self) -> impl ExactSizeIterator<Item = [usize; 3]> + 'a {
         self.mesh.triangle_indices()
@@ -838,6 +854,22 @@ impl<'a> ExactMeshRef<'a> {
         })
     }
 
+    /// Borrow one face by index, returning a typed blocker when absent.
+    pub fn require_face(self, index: usize) -> Result<FaceRef<'a>, ExactMeshError> {
+        self.face(index).ok_or_else(|| {
+            ExactMeshError::one(
+                ExactMeshBlocker::new(
+                    ExactMeshBlockerKind::IndexOutOfBounds,
+                    format!(
+                        "mesh face index {index} is out of bounds for {} retained faces",
+                        self.face_count()
+                    ),
+                )
+                .with_face(index),
+            )
+        })
+    }
+
     /// Borrow one triangle by index.
     pub fn triangle(self, index: usize) -> Option<TriangleRef<'a>> {
         (index < self.mesh.triangles().len()).then_some(TriangleRef {
@@ -846,11 +878,40 @@ impl<'a> ExactMeshRef<'a> {
         })
     }
 
+    /// Borrow one triangle by index, returning a typed blocker when absent.
+    pub fn require_triangle(self, index: usize) -> Result<TriangleRef<'a>, ExactMeshError> {
+        self.triangle(index).ok_or_else(|| {
+            ExactMeshError::one(
+                ExactMeshBlocker::new(
+                    ExactMeshBlockerKind::IndexOutOfBounds,
+                    format!(
+                        "mesh triangle index {index} is out of bounds for {} retained faces",
+                        self.face_count()
+                    ),
+                )
+                .with_face(index),
+            )
+        })
+    }
+
     /// Borrow one retained edge by index.
     pub fn edge(self, index: usize) -> Option<EdgeRef<'a>> {
         (index < self.mesh.facts().edges.len()).then_some(EdgeRef {
             mesh: self.mesh,
             index,
+        })
+    }
+
+    /// Borrow one retained edge by index, returning a typed blocker when absent.
+    pub fn require_edge(self, index: usize) -> Result<EdgeRef<'a>, ExactMeshError> {
+        self.edge(index).ok_or_else(|| {
+            ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::IndexOutOfBounds,
+                format!(
+                    "mesh edge index {index} is out of bounds for {} retained edges",
+                    self.edge_count()
+                ),
+            ))
         })
     }
 

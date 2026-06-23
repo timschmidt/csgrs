@@ -579,6 +579,17 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(view.triangle_refs().count(), 4);
     assert_eq!(view.edges().count(), view.edge_count());
 
+    assert_eq!(view.require_vertex(0).unwrap().index(), 0);
+    let missing_vertex = view.require_vertex(view.vertex_count()).unwrap_err();
+    assert_eq!(
+        missing_vertex.blockers()[0].kind(),
+        hypermesh::ExactMeshBlockerKind::IndexOutOfBounds
+    );
+    assert_eq!(
+        missing_vertex.blockers()[0].vertex(),
+        Some(view.vertex_count())
+    );
+
     let vertex: VertexRef<'_> = view.vertex(0).unwrap();
     assert_eq!(vertex.index(), 0);
     assert_eq!(vertex.point(), &p(0, 0, 0));
@@ -590,6 +601,14 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert!(!vertex.has_disk_link());
     assert!(!vertex.has_isolated_link());
     assert!(!vertex.has_non_manifold_link());
+
+    assert_eq!(view.require_face(0).unwrap().index(), 0);
+    let missing_face = view.require_face(view.face_count()).unwrap_err();
+    assert_eq!(
+        missing_face.blockers()[0].kind(),
+        hypermesh::ExactMeshBlockerKind::IndexOutOfBounds
+    );
+    assert_eq!(missing_face.blockers()[0].face(), Some(view.face_count()));
 
     let face: FaceRef<'_> = view.face(0).unwrap();
     assert_eq!(face.index(), 0);
@@ -609,6 +628,17 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     );
     assert_eq!(face.vertices().len(), 3);
 
+    assert_eq!(view.require_triangle(1).unwrap().index(), 1);
+    let missing_triangle = view.require_triangle(view.face_count()).unwrap_err();
+    assert_eq!(
+        missing_triangle.blockers()[0].kind(),
+        hypermesh::ExactMeshBlockerKind::IndexOutOfBounds
+    );
+    assert_eq!(
+        missing_triangle.blockers()[0].face(),
+        Some(view.face_count())
+    );
+
     let triangle: TriangleRef<'_> = view.triangle(1).unwrap();
     assert_eq!(triangle.index(), 1);
     assert_eq!(triangle.vertex_indices(), [0, 1, 3]);
@@ -624,6 +654,14 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
         triangle.plane_coefficients(),
         (triangle.plane_normal(), triangle.plane_offset())
     );
+
+    assert_eq!(view.require_edge(0).unwrap().index(), 0);
+    let missing_edge = view.require_edge(view.edge_count()).unwrap_err();
+    assert_eq!(
+        missing_edge.blockers()[0].kind(),
+        hypermesh::ExactMeshBlockerKind::IndexOutOfBounds
+    );
+    assert_eq!(missing_edge.blockers()[0].edge(), None);
 
     let edge: EdgeRef<'_> = view.edge(0).unwrap();
     assert_eq!(edge.index(), 0);
