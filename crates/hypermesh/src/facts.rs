@@ -243,6 +243,11 @@ pub(crate) enum MeshFactsValidationError {
         /// Repeated canonical edge.
         edge: [usize; 2],
     },
+    /// An edge fact is retained for no derived face edge.
+    UnexpectedEdgeFact {
+        /// Canonical edge.
+        edge: [usize; 2],
+    },
     /// A face references an out-of-range vertex.
     FaceVertexOutOfBounds {
         /// Face index.
@@ -403,10 +408,11 @@ impl MeshValidationFacts {
                 });
             }
 
-            let expected_uses = derived_edge_uses
-                .get(&edge.vertices)
-                .copied()
-                .unwrap_or_default();
+            let Some(expected_uses) = derived_edge_uses.get(&edge.vertices).copied() else {
+                return Err(MeshFactsValidationError::UnexpectedEdgeFact {
+                    edge: edge.vertices,
+                });
+            };
             let expected_incident_faces = expected_uses[0] + expected_uses[1];
             if edge.directed_uses != expected_uses || edge.incident_faces != expected_incident_faces
             {

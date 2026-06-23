@@ -209,6 +209,11 @@ pub(crate) enum ExactMeshValidationError {
         /// Repeated canonical edge.
         edge: [usize; 2],
     },
+    /// A retained edge fact is not referenced by any retained face row.
+    RetainedFactsUnexpectedEdgeFact {
+        /// Canonical edge.
+        edge: [usize; 2],
+    },
     /// A retained face references an out-of-range vertex.
     RetainedFactsFaceVertexOutOfBounds {
         /// Face index.
@@ -808,6 +813,9 @@ const fn retained_facts_validation_error(
         MeshFactsValidationError::DuplicateEdgeFact { edge } => {
             ExactMeshValidationError::RetainedFactsDuplicateEdgeFact { edge }
         }
+        MeshFactsValidationError::UnexpectedEdgeFact { edge } => {
+            ExactMeshValidationError::RetainedFactsUnexpectedEdgeFact { edge }
+        }
         MeshFactsValidationError::FaceVertexOutOfBounds {
             face,
             vertex,
@@ -908,4 +916,33 @@ fn real_equals(left: &Real, right: &Real) -> Result<bool, ExactMeshError> {
 fn reverse_triangle(triangle: &Triangle) -> Triangle {
     let [a, b, c] = triangle.0;
     Triangle([a, c, b])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::facts::EdgeFacts;
+
+    #[test]
+    fn retained_facts_reject_unexpected_zero_use_edge() {
+        let mut mesh = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+            &[0, 1, 2],
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        mesh.facts.edges.push(EdgeFacts {
+            vertices: [0, 3],
+            incident_faces: 0,
+            directed_uses: [0, 0],
+        });
+        mesh.facts.mesh.edge_count += 1;
+        mesh.facts.mesh.euler_characteristic -= 1;
+
+        assert_eq!(
+            mesh.validate_retained_state_detail(),
+            Err(ExactMeshValidationError::RetainedFactsUnexpectedEdgeFact { edge: [0, 3] })
+        );
+    }
 }
