@@ -1,4 +1,4 @@
-use hyperlimit::{Point3, SourceProvenance};
+use hyperlimit::{ApproximationPolicy, MeshSource, Point3, SourceProvenance};
 use hypermesh::{
     ArrangementView, EdgeRef, ExactMesh, ExactMeshBlocker, ExactMeshError, ExactMeshRef, FaceRef,
     PreparedMeshPair, PreparedMeshPairCacheStatus, PreparedMeshPairFactState,
@@ -584,6 +584,12 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(view.triangle_indices().len(), 4);
     assert_eq!(view.face_count(), 4);
     assert_eq!(view.edge_count(), 6);
+    let source_stamp = view.source_stamp();
+    assert_eq!(source_stamp.source(), MeshSource::Exact);
+    assert_eq!(source_stamp.approximation(), ApproximationPolicy::ExactOnly);
+    assert_eq!(source_stamp.construction_version(), 1);
+    assert_eq!(source_stamp.vertex_count(), view.vertex_count());
+    assert_eq!(source_stamp.face_count(), view.face_count());
     assert_eq!(view.mesh_bounds(), Some((&p(0, 0, 0), &p(1, 1, 1))));
     assert!(view.is_closed_manifold());
     assert_eq!(view.faces().count(), 4);
@@ -724,6 +730,14 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     assert_eq!(
         broad_phase_summary.plan(),
         unprepared_status.candidate_pair_plan()
+    );
+    assert_eq!(
+        broad_phase_summary.left_source(),
+        left.view().source_stamp()
+    );
+    assert_eq!(
+        broad_phase_summary.right_source(),
+        overlapping.view().source_stamp()
     );
     assert_eq!(broad_phase_summary.left_face_count(), left.triangle_count());
     assert_eq!(
@@ -1294,6 +1308,10 @@ fn exact_mesh_transform_and_inverse_replay_retained_state() {
         .unwrap();
 
     translated.validate_retained_state().unwrap();
+    assert_eq!(
+        translated.view().source_stamp().construction_version(),
+        mesh.view().source_stamp().construction_version() + 1
+    );
     assert_eq!(translated.vertices()[0], p(2, -3, 5));
     assert_eq!(
         translated.triangle_indices().collect::<Vec<_>>(),
@@ -1310,10 +1328,18 @@ fn exact_mesh_transform_and_inverse_replay_retained_state() {
         .unwrap();
 
     reflected.validate_retained_state().unwrap();
+    assert_eq!(
+        reflected.view().source_stamp().construction_version(),
+        mesh.view().source_stamp().construction_version() + 1
+    );
     assert_eq!(reflected.triangle_indices().next(), Some([0, 1, 2]));
 
     let inverted = mesh.inverse().unwrap();
     inverted.validate_retained_state().unwrap();
+    assert_eq!(
+        inverted.view().source_stamp().construction_version(),
+        mesh.view().source_stamp().construction_version() + 1
+    );
     assert_eq!(inverted.vertices(), mesh.vertices());
     assert_eq!(inverted.triangle_indices().next(), Some([0, 1, 2]));
 }

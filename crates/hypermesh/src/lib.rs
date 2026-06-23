@@ -64,9 +64,9 @@ pub use error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 pub use mesh::ExactMesh;
 #[doc(hidden)]
 pub use view::{
-    EdgeRef, ExactMeshRef, FaceRef, PreparedMeshPair, PreparedMeshPairArrangementCounts,
-    PreparedMeshPairBroadPhaseSummary, PreparedMeshPairCacheStatus,
-    PreparedMeshPairClassificationCounts, PreparedMeshPairFactState,
+    EdgeRef, ExactMeshRef, ExactMeshSourceStamp, FaceRef, PreparedMeshPair,
+    PreparedMeshPairArrangementCounts, PreparedMeshPairBroadPhaseSummary,
+    PreparedMeshPairCacheStatus, PreparedMeshPairClassificationCounts, PreparedMeshPairFactState,
     PreparedMeshPairIntersectionGraphCounts, PreparedMeshPairPlanKind,
     PreparedMeshPairResultOutcome, PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis,
     PreparedMeshPairSweepDirection, PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,

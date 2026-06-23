@@ -22,7 +22,7 @@ use super::intersection::{
 };
 use super::regularization::ExactRegularizationPolicy;
 use super::validation::ExactMeshValidationPolicy;
-use hyperlimit::{Point3, PredicateUse};
+use hyperlimit::{ApproximationPolicy, MeshSource, Point3, PredicateUse};
 use hyperreal::Real;
 
 /// Borrowed exact view of an [`ExactMesh`].
@@ -132,6 +132,54 @@ pub struct PreparedMeshPairCacheStatus {
     xor_result_outcome: Option<PreparedMeshPairResultOutcome>,
 }
 
+/// Compact source/freshness stamp for retained exact mesh facts.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ExactMeshSourceStamp {
+    source: MeshSource,
+    approximation: ApproximationPolicy,
+    construction_version: u64,
+    vertex_count: usize,
+    face_count: usize,
+}
+
+impl ExactMeshSourceStamp {
+    /// Return the retained source category.
+    pub const fn source(self) -> MeshSource {
+        self.source
+    }
+
+    /// Return the retained approximation boundary policy.
+    pub const fn approximation(self) -> ApproximationPolicy {
+        self.approximation
+    }
+
+    /// Return the retained construction version for facts derived from this source.
+    pub const fn construction_version(self) -> u64 {
+        self.construction_version
+    }
+
+    /// Return the retained vertex count covered by this stamp.
+    pub const fn vertex_count(self) -> usize {
+        self.vertex_count
+    }
+
+    /// Return the retained face count covered by this stamp.
+    pub const fn face_count(self) -> usize {
+        self.face_count
+    }
+
+    fn from_mesh(mesh: &ExactMesh) -> Self {
+        let provenance = mesh.provenance();
+        Self {
+            source: provenance.source.source,
+            approximation: provenance.source.approximation,
+            construction_version: provenance.construction_version,
+            vertex_count: mesh.facts().mesh.vertex_count,
+            face_count: mesh.facts().mesh.face_count,
+        }
+    }
+}
+
 /// Retained broad-phase plan chosen for a prepared mesh-pair session.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PreparedMeshPairPlanKind {
@@ -146,6 +194,8 @@ pub enum PreparedMeshPairPlanKind {
 /// Retained broad-phase planning provenance for a prepared mesh-pair session.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PreparedMeshPairBroadPhaseSummary {
+    left_source: ExactMeshSourceStamp,
+    right_source: ExactMeshSourceStamp,
     plan: PreparedMeshPairPlanKind,
     left_face_count: usize,
     right_face_count: usize,
@@ -159,6 +209,16 @@ pub struct PreparedMeshPairBroadPhaseSummary {
 }
 
 impl PreparedMeshPairBroadPhaseSummary {
+    /// Return the retained left source/freshness stamp.
+    pub const fn left_source(self) -> ExactMeshSourceStamp {
+        self.left_source
+    }
+
+    /// Return the retained right source/freshness stamp.
+    pub const fn right_source(self) -> ExactMeshSourceStamp {
+        self.right_source
+    }
+
     /// Return the retained broad-phase candidate traversal plan.
     pub const fn plan(self) -> PreparedMeshPairPlanKind {
         self.plan
@@ -210,12 +270,16 @@ impl PreparedMeshPairBroadPhaseSummary {
     }
 
     const fn from_plan(
+        left_source: ExactMeshSourceStamp,
+        right_source: ExactMeshSourceStamp,
         plan: CandidateFacePairPlan,
         left_face_count: usize,
         right_face_count: usize,
         candidate_pair_capacity_hint: usize,
     ) -> Self {
         Self {
+            left_source,
+            right_source,
             plan: PreparedMeshPairPlanKind::from_candidate_plan(plan),
             left_face_count,
             right_face_count,
@@ -918,6 +982,11 @@ impl<'a> ExactMeshRef<'a> {
         self.mesh
     }
 
+    /// Return the retained source/freshness stamp for this exact mesh.
+    pub fn source_stamp(self) -> ExactMeshSourceStamp {
+        ExactMeshSourceStamp::from_mesh(self.mesh)
+    }
+
     /// Return exact vertices.
     pub fn vertices(self) -> &'a [Point3] {
         self.mesh.vertices()
@@ -1223,6 +1292,8 @@ impl<'a> PreparedMeshView<'a> {
         let candidate_pair_capacity_hint =
             plan.bounded_capacity_hint(self.view.face_count(), right.view.face_count());
         let broad_phase_summary = PreparedMeshPairBroadPhaseSummary::from_plan(
+            self.view.source_stamp(),
+            right.view.source_stamp(),
             plan,
             self.view.face_count(),
             right.view.face_count(),
@@ -1263,6 +1334,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         let candidate_pair_capacity_hint =
             plan.bounded_capacity_hint(left.view.face_count(), right.view.face_count());
         let broad_phase_summary = PreparedMeshPairBroadPhaseSummary::from_plan(
+            left.view.source_stamp(),
+            right.view.source_stamp(),
             plan,
             left.view.face_count(),
             right.view.face_count(),

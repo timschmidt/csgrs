@@ -288,6 +288,16 @@ impl ExactMesh {
         source: SourceProvenance,
         policy: ExactMeshValidationPolicy,
     ) -> Result<Self, ExactMeshError> {
+        Self::new_with_policy_and_version(vertices, triangles, source, policy, 1)
+    }
+
+    pub(crate) fn new_with_policy_and_version(
+        vertices: Vec<Point3>,
+        triangles: Vec<Triangle>,
+        source: SourceProvenance,
+        policy: ExactMeshValidationPolicy,
+        construction_version: u64,
+    ) -> Result<Self, ExactMeshError> {
         let index_blockers = validate_indices(vertices.len(), &triangles);
         if !index_blockers.is_empty() {
             return Err(ExactMeshError::new(index_blockers));
@@ -308,7 +318,8 @@ impl ExactMesh {
             return Err(ExactMeshError::new(report.blockers));
         }
 
-        let mut provenance = ConstructionProvenance::new(source);
+        let mut provenance =
+            ConstructionProvenance::with_version(source, construction_version.max(1));
         retain_predicates(&mut provenance, &report);
 
         Ok(Self {
@@ -614,6 +625,13 @@ impl ExactMesh {
         self.transform_affine(&ExactAffineTransform3::from_homogeneous_rows(matrix)?)
     }
 
+    fn next_construction_version(&self) -> u64 {
+        self.provenance
+            .construction_version
+            .saturating_add(1)
+            .max(1)
+    }
+
     fn transform_affine(
         &self,
         transform: &ExactAffineTransform3,
@@ -627,21 +645,23 @@ impl ExactMesh {
             Ordering::Less => self.triangles.iter().map(reverse_triangle).collect(),
             Ordering::Equal | Ordering::Greater => self.triangles.clone(),
         };
-        ExactMesh::new_with_policy(
+        ExactMesh::new_with_policy_and_version(
             vertices,
             triangles,
             SourceProvenance::exact("exact affine mesh transform"),
             self.validation_policy,
+            self.next_construction_version(),
         )
     }
 
     /// Materialize this mesh with every triangle orientation reversed.
     pub fn inverse(&self) -> Result<ExactMesh, ExactMeshError> {
-        ExactMesh::new_with_policy(
+        ExactMesh::new_with_policy_and_version(
             self.vertices.clone(),
             self.triangles.iter().map(reverse_triangle).collect(),
             SourceProvenance::exact("exact inverse mesh orientation"),
             self.validation_policy,
+            self.next_construction_version(),
         )
     }
 
