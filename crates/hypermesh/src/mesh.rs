@@ -4,7 +4,7 @@
 //! `hyperreal::Real`. Primitive-float construction is a named lossy adapter
 //! and validates every coordinate before import.
 
-use super::arrangement3d::{ArrangementView, ExactArrangement};
+use super::arrangement3d::ArrangementView;
 use super::bounds::{BoundsValidationError, MeshBounds};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::facts::{MeshFactsValidationError, MeshValidationFacts};
@@ -601,8 +601,8 @@ impl ExactMesh {
         right: &ExactMesh,
         query: impl for<'a> FnOnce(ArrangementView<'a>) -> R,
     ) -> Result<R, ExactMeshError> {
-        let arrangement = ExactArrangement::from_meshes(self, right)?;
-        Ok(query(arrangement.view()))
+        let pair = self.view().prepare_broad_phase_pair(right.view())?;
+        pair.with_arrangement_view(query)
     }
 
     /// Materialize this mesh after a row-major exact homogeneous affine transform.

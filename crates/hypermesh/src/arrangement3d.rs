@@ -1223,6 +1223,7 @@ impl ExactArrangement3d {
     }
 
     /// Build a retained exact arrangement from two meshes.
+    #[cfg(test)]
     pub(crate) fn from_meshes(left: &ExactMesh, right: &ExactMesh) -> Result<Self, ExactMeshError> {
         Self::from_meshes_with_policy(left, right, ExactRegularizationPolicy::default())
     }
