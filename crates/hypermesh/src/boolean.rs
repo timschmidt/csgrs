@@ -8984,7 +8984,8 @@ fn materialize_simple_coplanar_overlay_arrangement(
         &carrier_points,
         overlay.projection,
         "exact coplanar selected-face overlay arrangement",
-    ) else {
+    )?
+    else {
         return Ok(None);
     };
     let mesh = copy_mesh(
@@ -9026,7 +9027,8 @@ pub(crate) fn boolean_coplanar_mesh_overlay_optional(
         boundary_policy,
         "exact coplanar mesh overlay arrangement",
         allow_empty_overlay,
-    ) else {
+    )?
+    else {
         return Ok(None);
     };
     let mesh = copy_mesh(
@@ -9063,6 +9065,8 @@ fn coplanar_mesh_overlay_candidate_counts(
         "exact coplanar mesh overlay arrangement",
         allow_empty_overlay,
     )
+    .ok()
+    .flatten()
     .map(|mesh| (mesh.vertices().len(), mesh.triangles().len()))
 }
 
@@ -9109,36 +9113,39 @@ pub(crate) fn materialize_coplanar_mesh_overlay_mesh(
     boundary_policy: ExactArrangement2dBoundaryPolicy,
     provenance: &'static str,
     allow_empty: bool,
-) -> Option<ExactMesh> {
-    let (carrier_points, projection) = coplanar_mesh_overlay_carrier(left, right)?;
+) -> Result<Option<ExactMesh>, ExactMeshError> {
+    let Some((carrier_points, projection)) = coplanar_mesh_overlay_carrier(left, right) else {
+        return Ok(None);
+    };
     let mut rings = Vec::with_capacity(left.triangles().len() + right.triangles().len());
-    rings.extend(projected_mesh_boundary_rings(
-        ExactArrangement2dRegion::Left,
-        left,
-        projection,
-    )?);
-    rings.extend(projected_mesh_boundary_rings(
-        ExactArrangement2dRegion::Right,
-        right,
-        projection,
-    )?);
+    let Some(left_rings) =
+        projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, left, projection)
+    else {
+        return Ok(None);
+    };
+    rings.extend(left_rings);
+    let Some(right_rings) =
+        projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, right, projection)
+    else {
+        return Ok(None);
+    };
+    rings.extend(right_rings);
     let overlay =
         build_exact_arrangement2d_overlay_with_boundary_policy(&rings, operation, boundary_policy);
     if !overlay.is_complete() && !overlay_allows_selected_face_materialization(&overlay) {
-        return None;
+        return Ok(None);
     }
     if !overlay.faces.iter().any(|face| face.selected) {
-        return allow_empty
-            .then(|| {
-                ExactMesh::new_with_policy(
-                    Vec::new(),
-                    Vec::new(),
-                    SourceProvenance::exact(provenance),
-                    ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                )
-                .ok()
-            })
-            .flatten();
+        if allow_empty {
+            return ExactMesh::new_with_policy(
+                Vec::new(),
+                Vec::new(),
+                SourceProvenance::exact(provenance),
+                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .map(Some);
+        }
+        return Ok(None);
     }
     mesh_from_selected_projected_overlay_faces(&overlay, &carrier_points, projection, provenance)
 }
@@ -9161,15 +9168,15 @@ fn mesh_from_selected_projected_overlay_faces(
     carrier_points: &[Point3; 3],
     projection: CoplanarProjection,
     provenance: &'static str,
-) -> Option<ExactMesh> {
+) -> Result<Option<ExactMesh>, ExactMeshError> {
     match mesh_from_projected_overlay_output_components(
         overlay,
         carrier_points,
         projection,
         provenance,
-    ) {
-        Some(mesh) => Some(mesh),
-        None if !overlay.output_components.is_empty() => None,
+    )? {
+        Some(mesh) => Ok(Some(mesh)),
+        None if !overlay.output_components.is_empty() => Ok(None),
         None if overlay_allows_selected_face_materialization(overlay) => {
             mesh_from_projected_overlay_selected_faces(
                 overlay,
@@ -9178,7 +9185,7 @@ fn mesh_from_selected_projected_overlay_faces(
                 provenance,
             )
         }
-        None => None,
+        None => Ok(None),
     }
 }
 
@@ -9187,9 +9194,9 @@ fn mesh_from_projected_overlay_output_components(
     carrier_points: &[Point3; 3],
     projection: CoplanarProjection,
     provenance: &'static str,
-) -> Option<ExactMesh> {
+) -> Result<Option<ExactMesh>, ExactMeshError> {
     if overlay.output_components.is_empty() {
-        return None;
+        return Ok(None);
     }
 
     let mut vertices = Vec::new();
@@ -9211,7 +9218,10 @@ fn mesh_from_projected_overlay_output_components(
                     .map(|point| lift_projected_point_to_carrier(point, carrier_points, projection))
                     .collect::<Option<Vec<_>>>()
             })
-            .collect::<Option<Vec<_>>>()?;
+            .collect::<Option<Vec<_>>>();
+        let Some(lifted_loops) = lifted_loops else {
+            return Ok(None);
+        };
 
         let mut component_vertices = Vec::new();
         let mut component_triangles = Vec::new();
@@ -9220,7 +9230,12 @@ fn mesh_from_projected_overlay_output_components(
             &mut component_vertices,
             &mut component_triangles,
         )
-        .ok()?;
+        .map_err(|blocker| {
+            arrangement_blocker_error(
+                "exact coplanar output-component triangulation failed",
+                blocker,
+            )
+        })?;
         let component_offset = vertices.len();
         triangles.extend(component_triangles.into_iter().map(|triangle| {
             Triangle([
@@ -9233,7 +9248,7 @@ fn mesh_from_projected_overlay_output_components(
     }
 
     if triangles.is_empty() {
-        return None;
+        return Ok(None);
     }
     ExactMesh::new_with_policy(
         vertices,
@@ -9241,7 +9256,7 @@ fn mesh_from_projected_overlay_output_components(
         SourceProvenance::exact(provenance),
         ExactMeshValidationPolicy::ALLOW_BOUNDARY,
     )
-    .ok()
+    .map(Some)
 }
 
 fn mesh_from_projected_overlay_selected_faces(
@@ -9249,11 +9264,13 @@ fn mesh_from_projected_overlay_selected_faces(
     carrier_points: &[Point3; 3],
     projection: CoplanarProjection,
     provenance: &'static str,
-) -> Option<ExactMesh> {
+) -> Result<Option<ExactMesh>, ExactMeshError> {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
     for overlay_face in overlay.faces.iter().filter(|face| face.selected) {
-        let face = overlay.arrangement.faces.get(overlay_face.face)?;
+        let Some(face) = overlay.arrangement.faces.get(overlay_face.face) else {
+            return Ok(None);
+        };
         let boundary = face
             .vertices
             .iter()
@@ -9261,10 +9278,19 @@ fn mesh_from_projected_overlay_selected_faces(
                 let point = &overlay.arrangement.vertices.get(*vertex)?.point;
                 lift_projected_point_to_carrier(point, carrier_points, projection)
             })
-            .collect::<Option<Vec<_>>>()?;
+            .collect::<Option<Vec<_>>>();
+        let Some(boundary) = boundary else {
+            return Ok(None);
+        };
         let mut face_vertices = Vec::new();
         let mut face_triangles = Vec::new();
-        triangulate_exact_loop_group(&[boundary], &mut face_vertices, &mut face_triangles).ok()?;
+        triangulate_exact_loop_group(&[boundary], &mut face_vertices, &mut face_triangles)
+            .map_err(|blocker| {
+                arrangement_blocker_error(
+                    "exact coplanar selected-face triangulation failed",
+                    blocker,
+                )
+            })?;
         let face_to_mesh = face_vertices
             .into_iter()
             .map(|point| {
@@ -9276,7 +9302,10 @@ fn mesh_from_projected_overlay_selected_faces(
                     Some(index)
                 }
             })
-            .collect::<Option<Vec<_>>>()?;
+            .collect::<Option<Vec<_>>>();
+        let Some(face_to_mesh) = face_to_mesh else {
+            return Ok(None);
+        };
         triangles.extend(face_triangles.into_iter().map(|triangle| {
             Triangle([
                 face_to_mesh[triangle.0[0]],
@@ -9286,7 +9315,7 @@ fn mesh_from_projected_overlay_selected_faces(
         }));
     }
     if triangles.is_empty() {
-        return None;
+        return Ok(None);
     }
     ExactMesh::new_with_policy(
         vertices,
@@ -9294,7 +9323,7 @@ fn mesh_from_projected_overlay_selected_faces(
         SourceProvenance::exact(provenance),
         ExactMeshValidationPolicy::ALLOW_BOUNDARY,
     )
-    .ok()
+    .map(Some)
 }
 
 fn coplanar_mesh_overlay_should_preempt_surface_paths(
@@ -9544,15 +9573,17 @@ fn coplanar_mesh_overlay_materialized_boundary_policy(
     ]
     .into_iter()
     .find(|&boundary_policy| {
-        materialize_coplanar_mesh_overlay_mesh(
-            left,
-            right,
-            operation,
-            boundary_policy,
-            "exact coplanar mesh overlay arrangement",
-            allow_empty,
+        matches!(
+            materialize_coplanar_mesh_overlay_mesh(
+                left,
+                right,
+                operation,
+                boundary_policy,
+                "exact coplanar mesh overlay arrangement",
+                allow_empty,
+            ),
+            Ok(Some(_))
         )
-        .is_some()
     })
 }
 
@@ -13064,7 +13095,8 @@ mod tests {
             projection,
             "test selected-face coplanar overlay difference",
         )
-        .expect("selected arrangement faces should triangulate directly");
+        .expect("selected arrangement faces should triangulate directly")
+        .expect("selected arrangement faces should produce a mesh");
         let canonical = materialize_coplanar_mesh_overlay_mesh(
             &left,
             &right,
@@ -13073,7 +13105,8 @@ mod tests {
             "test canonical coplanar overlay difference",
             false,
         )
-        .expect("canonical overlay should materialize");
+        .expect("canonical overlay should materialize")
+        .expect("canonical overlay should produce a mesh");
         assert!(exact_meshes_have_same_shape(&selected_faces, &canonical));
         assert_eq!(
             selected_faces.facts().mesh.boundary_edges,
@@ -13217,7 +13250,8 @@ mod tests {
             projection,
             "test selected-face point-touching hole overlay difference",
         )
-        .expect("selected arrangement faces should recover component loops");
+        .expect("selected arrangement faces should recover component loops")
+        .expect("selected arrangement faces should produce a mesh");
         let canonical = materialize_coplanar_mesh_overlay_mesh(
             &left,
             &right,
@@ -13226,7 +13260,8 @@ mod tests {
             "test canonical point-touching hole overlay difference",
             false,
         )
-        .expect("canonical overlay should materialize");
+        .expect("canonical overlay should materialize")
+        .expect("canonical overlay should produce a mesh");
         assert!(exact_meshes_have_same_shape(&selected_faces, &canonical));
     }
 
@@ -13273,7 +13308,8 @@ mod tests {
             projection,
             "test selected-face contained union overlay",
         )
-        .expect("selected arrangement faces should absorb contained components");
+        .expect("selected arrangement faces should absorb contained components")
+        .expect("selected arrangement faces should produce a mesh");
         assert!(exact_meshes_have_same_shape(&selected_faces, &outer_square));
     }
 
@@ -13323,7 +13359,8 @@ mod tests {
             projection,
             "test certified output-component overlay",
         )
-        .expect("certified output components should triangulate without face-walk replay");
+        .expect("certified output components should triangulate without face-walk replay")
+        .expect("certified output components should produce a mesh");
         mesh.validate_retained_state().unwrap();
         assert!(!mesh.triangles().is_empty());
 
@@ -13337,6 +13374,7 @@ mod tests {
                 projection,
                 "test stale certified output-component overlay",
             )
+            .expect("stale certified output components should not fail")
             .is_none()
         );
     }
@@ -13386,7 +13424,8 @@ mod tests {
             projection,
             "test canonical selected-face overlay",
         )
-        .expect("complete overlay should materialize through output components");
+        .expect("complete overlay should materialize through output components")
+        .expect("complete overlay should produce a mesh");
 
         let mut blocked_loop_ownership = overlay;
         blocked_loop_ownership.output_loops.clear();
@@ -13404,7 +13443,8 @@ mod tests {
             projection,
             "test selected-face recovery overlay",
         )
-        .expect("selected faces should recover when only loop ownership is blocked");
+        .expect("selected faces should recover when only loop ownership is blocked")
+        .expect("selected-face recovery should produce a mesh");
         recovered.validate_retained_state().unwrap();
         assert!(exact_meshes_have_same_shape(&recovered, &canonical));
     }
@@ -13440,7 +13480,8 @@ mod tests {
             projection,
             "test canonical selected-boundary topology overlay",
         )
-        .expect("complete overlay should materialize");
+        .expect("complete overlay should materialize")
+        .expect("complete overlay should produce a mesh");
 
         overlay.output_loops.clear();
         overlay.output_components.clear();
@@ -13454,7 +13495,8 @@ mod tests {
             projection,
             "test recovered selected-boundary topology blocker",
         )
-        .expect("selected faces should recover when topology blocker is stale");
+        .expect("selected faces should recover when topology blocker is stale")
+        .expect("selected-face recovery should produce a mesh");
         recovered.validate_retained_state().unwrap();
         assert!(exact_meshes_have_same_shape(&recovered, &canonical));
         assert_eq!(
@@ -13607,7 +13649,8 @@ mod tests {
                 "test coplanar containment union overlay",
                 false,
             )
-            .expect("containment union should materialize through arrangement overlay");
+            .expect("containment union should materialize through arrangement overlay")
+            .expect("containment union should produce a mesh");
             assert!(exact_meshes_have_same_shape(&union, outer));
 
             let intersection = materialize_coplanar_mesh_overlay_mesh(
@@ -13618,7 +13661,8 @@ mod tests {
                 "test coplanar containment intersection overlay",
                 false,
             )
-            .expect("containment intersection should materialize through arrangement overlay");
+            .expect("containment intersection should materialize through arrangement overlay")
+            .expect("containment intersection should produce a mesh");
             assert!(exact_meshes_have_same_shape(&intersection, inner));
         }
     }

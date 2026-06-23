@@ -691,7 +691,10 @@ fn materialize_contained_patch_difference(
             boundary_policy,
             "exact contained-adjacent arrangement patch difference",
             false,
-        ) {
+        )
+        .ok()
+        .flatten()
+        {
             return Some((mesh, projection));
         }
     }
