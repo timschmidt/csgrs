@@ -246,6 +246,40 @@ impl MeshBounds {
         }
     }
 
+    /// Visit candidate face pairs for one-shot callers without preparing sort
+    /// orders when a direct scan is cheaper.
+    pub(crate) fn try_visit_candidate_face_pairs_one_shot<E>(
+        &self,
+        other: &Self,
+        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<(), E> {
+        if !self.mesh_may_overlap(other) {
+            return Ok(());
+        }
+        if should_use_quadratic_one_shot(self.faces.len(), other.faces.len()) {
+            return self.try_visit_candidate_face_pairs_quadratic(other, visit);
+        }
+        let left = self.prepare();
+        let right = other.prepare();
+        let plan = left.candidate_face_pair_plan(&right);
+        left.try_visit_candidate_face_pairs_with_plan(&right, plan, visit)
+    }
+
+    fn try_visit_candidate_face_pairs_quadratic<E>(
+        &self,
+        other: &Self,
+        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<(), E> {
+        for (left, left_box) in self.faces.iter().enumerate() {
+            for (right, right_box) in other.faces.iter().enumerate() {
+                if must_keep_candidate(left_box.classify_intersection(right_box)) {
+                    visit([left, right])?;
+                }
+            }
+        }
+        Ok(())
+    }
+
     /// Prepare exact face orders for repeated broad-phase queries.
     ///
     /// An axis order is retained only when all exact comparisons needed for
@@ -332,14 +366,8 @@ impl<'a> PreparedMeshBounds<'a> {
         other: &PreparedMeshBounds<'_>,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
-        for (left, left_box) in self.bounds.faces.iter().enumerate() {
-            for (right, right_box) in other.bounds.faces.iter().enumerate() {
-                if must_keep_candidate(left_box.classify_intersection(right_box)) {
-                    visit([left, right])?;
-                }
-            }
-        }
-        Ok(())
+        self.bounds
+            .try_visit_candidate_face_pairs_quadratic(other.bounds, visit)
     }
 
     fn sweep_plan(&self, other: &PreparedMeshBounds<'_>) -> Option<SweepPlanEstimate> {
@@ -774,6 +802,10 @@ const fn should_use_sparse_sweep(
     active_face_capacity_hint.saturating_mul(4) < target_face_count
 }
 
+const fn should_use_quadratic_one_shot(left_face_count: usize, right_face_count: usize) -> bool {
+    left_face_count.saturating_mul(right_face_count) <= 64
+}
+
 fn axis_intervals_may_overlap(left: FaceAxisInterval<'_>, right: FaceAxisInterval<'_>) -> bool {
     !matches!(compare(left.max, right.min), Some(Ordering::Less))
         && !matches!(compare(right.max, left.min), Some(Ordering::Less))
@@ -1066,6 +1098,50 @@ mod tests {
         assert!(!should_use_sparse_sweep(3, 12));
         assert!(!should_use_sparse_sweep(8, 12));
         assert!(should_use_sparse_sweep(2, 12));
+    }
+
+    #[test]
+    fn one_shot_uses_quadratic_for_small_face_products() {
+        assert!(should_use_quadratic_one_shot(8, 8));
+        assert!(should_use_quadratic_one_shot(1, 64));
+        assert!(!should_use_quadratic_one_shot(9, 8));
+    }
+
+    #[test]
+    fn one_shot_candidate_pairs_match_prepared_candidates() {
+        let left_points = vec![
+            p(0, 0, 0),
+            p(5, 0, 0),
+            p(0, 5, 0),
+            p(10, 10, 0),
+            p(15, 10, 0),
+            p(10, 15, 0),
+        ];
+        let right_points = vec![
+            p(4, 4, 0),
+            p(9, 4, 0),
+            p(4, 9, 0),
+            p(30, 0, 0),
+            p(35, 0, 0),
+            p(30, 5, 0),
+        ];
+        let triangles = [[0, 1, 2], [3, 4, 5]];
+        let left = MeshBounds::from_triangles(&left_points, &triangles);
+        let right = MeshBounds::from_triangles(&right_points, &triangles);
+        let mut pairs = Vec::new();
+        left.try_visit_candidate_face_pairs_one_shot(&right, &mut |pair| {
+            pairs.push(pair);
+            Ok::<(), ()>(())
+        })
+        .unwrap();
+
+        assert_eq!(
+            sorted_pairs(pairs),
+            sorted_pairs(prepared_candidate_face_pairs(
+                &left.prepare(),
+                &right.prepare()
+            ))
+        );
     }
 
     #[test]

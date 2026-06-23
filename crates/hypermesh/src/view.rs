@@ -46,6 +46,7 @@ impl<'a> ExactMeshRef<'a> {
         Self { mesh }
     }
 
+    #[cfg(test)]
     pub(crate) const fn mesh(self) -> &'a ExactMesh {
         self.mesh
     }
@@ -181,10 +182,6 @@ impl<'a> ExactMeshRef<'a> {
         }
     }
 
-    pub(crate) fn bounds_may_overlap(self, right: ExactMeshRef<'_>) -> bool {
-        self.mesh.bounds().mesh_may_overlap(right.mesh.bounds())
-    }
-
     /// Visit broad-phase candidate face pairs after replay-validating both meshes.
     pub fn visit_candidate_face_pairs<'b>(
         self,
@@ -193,12 +190,14 @@ impl<'a> ExactMeshRef<'a> {
     ) -> Result<(), ExactMeshError> {
         self.validate_retained_bounds()?;
         right.validate_retained_bounds()?;
-        if !self.bounds_may_overlap(right) {
-            return Ok(());
-        }
-        let left = self.prepare_broad_phase_after_replay();
-        let right = right.prepare_broad_phase_after_replay();
-        left.visit_candidate_face_pairs(&right, visit);
+        let result = self.mesh.bounds().try_visit_candidate_face_pairs_one_shot(
+            right.mesh.bounds(),
+            &mut |pair| {
+                visit(pair);
+                Ok::<(), ()>(())
+            },
+        );
+        debug_assert!(result.is_ok());
         Ok(())
     }
 

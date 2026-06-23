@@ -27,6 +27,7 @@ use super::intersection::{
 };
 use super::mesh::ExactMesh;
 use super::topology::{mesh_for_side, triangle_edges};
+#[cfg(test)]
 use super::view::PreparedMeshView;
 use hyperlimit::{CoplanarProjection, CoplanarTriangleClassification};
 use hyperreal::Real;
@@ -1181,12 +1182,8 @@ pub(crate) fn build_unvalidated_intersection_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let Some((left, right)) = prepare_intersection_graph_views(left, right)? else {
-        return Ok(ExactIntersectionGraph {
-            face_pairs: Vec::new(),
-        });
-    };
-    build_unvalidated_intersection_graph_from_prepared_views(&left, &right)
+    validate_intersection_graph_bounds(left, right)?;
+    build_unvalidated_intersection_graph_from_replayed_bounds(left, right)
 }
 
 fn map_retained_broad_phase_error(error: ExactMeshError) -> ExactMeshError {
@@ -1196,28 +1193,41 @@ fn map_retained_broad_phase_error(error: ExactMeshError) -> ExactMeshError {
     ))
 }
 
-fn prepare_intersection_graph_views<'a>(
-    left: &'a ExactMesh,
-    right: &'a ExactMesh,
-) -> Result<Option<(PreparedMeshView<'a>, PreparedMeshView<'a>)>, ExactMeshError> {
-    let left = left.view();
-    let right = right.view();
+fn validate_intersection_graph_bounds(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<(), ExactMeshError> {
     left.validate_retained_bounds()
         .map_err(map_retained_broad_phase_error)?;
     right
         .validate_retained_bounds()
         .map_err(map_retained_broad_phase_error)?;
-    if !left.bounds_may_overlap(right) {
-        return Ok(None);
-    }
-    Ok(Some((
-        left.prepare_broad_phase_after_replay(),
-        right.prepare_broad_phase_after_replay(),
-    )))
+    Ok(())
+}
+
+fn build_unvalidated_intersection_graph_from_replayed_bounds(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<ExactIntersectionGraph, ExactMeshError> {
+    let mut face_pairs = Vec::new();
+    left.bounds()
+        .try_visit_candidate_face_pairs_one_shot(right.bounds(), &mut |[
+            left_face,
+            right_face,
+        ]| {
+            let classification =
+                classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
+            if classification.needs_graph_construction() {
+                face_pairs.push(events_for_face_pair(left, right, &classification));
+            }
+            Ok::<(), ExactMeshError>(())
+        })?;
+    Ok(ExactIntersectionGraph { face_pairs })
 }
 
 /// Build an exact event graph from replay-validated prepared mesh views without
 /// validating the retained event handles against source replay.
+#[cfg(test)]
 pub(crate) fn build_unvalidated_intersection_graph_from_prepared_views(
     left: &PreparedMeshView<'_>,
     right: &PreparedMeshView<'_>,
@@ -1241,15 +1251,20 @@ pub(crate) fn build_validated_intersection_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let Some((left, right)) = prepare_intersection_graph_views(left, right)? else {
-        return Ok(ExactIntersectionGraph {
-            face_pairs: Vec::new(),
-        });
-    };
-    build_validated_intersection_graph_from_prepared_views(&left, &right)
+    let graph = build_unvalidated_intersection_graph(left, right)?;
+    graph
+        .validate_against_meshes(left, right)
+        .map_err(|error| {
+            ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::StaleFactReplay,
+                format!("exact intersection graph failed source replay: {error:?}"),
+            ))
+        })?;
+    Ok(graph)
 }
 
 /// Build an exact event graph from prepared views and validate retained event handles.
+#[cfg(test)]
 pub(crate) fn build_validated_intersection_graph_from_prepared_views(
     left: &PreparedMeshView<'_>,
     right: &PreparedMeshView<'_>,
