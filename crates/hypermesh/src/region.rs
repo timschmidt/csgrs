@@ -1493,12 +1493,8 @@ fn assemble_region_triangulations_with_triangle_retention(
 
         for tri in triangulation.triangles.chunks_exact(3) {
             let region_triangle = [tri[0], tri[1], tri[2]];
-            let retention = retain(triangulation, region_triangle);
-            if retention == ExactRegionRetention::Drop {
-                continue;
-            }
-            let orientation = match retention {
-                ExactRegionRetention::Drop => unreachable!("drop handled above"),
+            let orientation = match retain(triangulation, region_triangle) {
+                ExactRegionRetention::Drop => continue,
                 ExactRegionRetention::Keep => ExactOutputTriangleOrientation::PreserveSource,
                 ExactRegionRetention::KeepReversed => ExactOutputTriangleOrientation::ReverseSource,
             };
@@ -1516,7 +1512,7 @@ fn assemble_region_triangulations_with_triangle_retention(
                     left,
                     right,
                 )?;
-            } else if retention == ExactRegionRetention::KeepReversed {
+            } else if orientation == ExactOutputTriangleOrientation::ReverseSource {
                 output_vertices.swap(1, 2);
             }
             triangles.push(ExactOutputTriangle {

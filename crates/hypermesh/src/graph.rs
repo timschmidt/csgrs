@@ -3560,30 +3560,20 @@ fn validate_coplanar_edge_split(
             // merged by planar-cell extraction, so endpoint/proper relation
             // labels must agree with certified parameter positions before the
             // record can be consumed.
-            match split.overlap.relation {
-                SegmentIntersection::EndpointTouch => {
-                    if parameter_is_endpoint(&point.left_parameter)?
-                        || parameter_is_endpoint(&point.right_parameter)?
-                    {
-                        Ok(())
-                    } else {
-                        Err(
-                            CoplanarOverlapSplitValidationError::EndpointTouchWithoutEndpointParameter,
-                        )
-                    }
+            if split.overlap.relation == SegmentIntersection::EndpointTouch {
+                if parameter_is_endpoint(&point.left_parameter)?
+                    || parameter_is_endpoint(&point.right_parameter)?
+                {
+                    Ok(())
+                } else {
+                    Err(CoplanarOverlapSplitValidationError::EndpointTouchWithoutEndpointParameter)
                 }
-                SegmentIntersection::Proper => {
-                    if parameter_is_strict_interior(&point.left_parameter)?
-                        && parameter_is_strict_interior(&point.right_parameter)?
-                    {
-                        Ok(())
-                    } else {
-                        Err(CoplanarOverlapSplitValidationError::ProperCrossingEndpointParameter)
-                    }
-                }
-                SegmentIntersection::Disjoint
-                | SegmentIntersection::CollinearOverlap
-                | SegmentIntersection::Identical => unreachable!("outer relation arm filtered"),
+            } else if parameter_is_strict_interior(&point.left_parameter)?
+                && parameter_is_strict_interior(&point.right_parameter)?
+            {
+                Ok(())
+            } else {
+                Err(CoplanarOverlapSplitValidationError::ProperCrossingEndpointParameter)
             }
         }
         SegmentIntersection::CollinearOverlap | SegmentIntersection::Identical => {
