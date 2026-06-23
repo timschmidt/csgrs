@@ -152,6 +152,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
         initial_status.union_result(),
         PreparedMeshPairFactState::Missing
     );
+    assert_eq!(initial_status.union_result_outcome(), None);
     assert_eq!(
         initial_status
             .require_current_union_result()
@@ -168,6 +169,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
         initial_status.intersection_result(),
         PreparedMeshPairFactState::Missing
     );
+    assert_eq!(initial_status.intersection_result_outcome(), None);
     assert_eq!(
         initial_status
             .require_current_intersection_result()
@@ -184,6 +186,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
         initial_status.difference_result(),
         PreparedMeshPairFactState::Missing
     );
+    assert_eq!(initial_status.difference_result_outcome(), None);
     assert_eq!(
         initial_status
             .require_current_difference_result()
@@ -200,6 +203,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
         initial_status.xor_result(),
         PreparedMeshPairFactState::Missing
     );
+    assert_eq!(initial_status.xor_result_outcome(), None);
     assert_eq!(
         initial_status
             .require_current_xor_result()
@@ -351,6 +355,11 @@ fn prepared_mesh_pair_materializes_named_operations() {
         retained_status.union_result(),
         PreparedMeshPairFactState::Current
     );
+    let union_outcome = retained_status.union_result_outcome().unwrap();
+    assert!(union_outcome.is_mesh());
+    assert_eq!(union_outcome.vertex_count(), Some(union.vertices().len()));
+    assert_eq!(union_outcome.triangle_count(), Some(union.triangle_count()));
+    assert_eq!(union_outcome.blocker_count(), None);
     retained_status.require_current_union_result().unwrap();
     assert_eq!(
         pair.current_union_result().unwrap().triangle_count(),
@@ -360,14 +369,17 @@ fn prepared_mesh_pair_materializes_named_operations() {
         retained_status.intersection_result(),
         PreparedMeshPairFactState::Missing
     );
+    assert_eq!(retained_status.intersection_result_outcome(), None);
     assert_eq!(
         retained_status.difference_result(),
         PreparedMeshPairFactState::Missing
     );
+    assert_eq!(retained_status.difference_result_outcome(), None);
     assert_eq!(
         retained_status.xor_result(),
         PreparedMeshPairFactState::Missing
     );
+    assert_eq!(retained_status.xor_result_outcome(), None);
 
     let repeated_union = pair.union().unwrap();
     repeated_union.validate_retained_state().unwrap();
@@ -384,6 +396,12 @@ fn prepared_mesh_pair_materializes_named_operations() {
     assert_eq!(
         intersection_status.intersection_result(),
         PreparedMeshPairFactState::Current
+    );
+    let intersection_outcome = intersection_status.intersection_result_outcome().unwrap();
+    assert!(intersection_outcome.is_mesh());
+    assert_eq!(
+        intersection_outcome.triangle_count(),
+        Some(intersection.triangle_count())
     );
     intersection_status
         .require_current_intersection_result()
@@ -409,6 +427,12 @@ fn prepared_mesh_pair_materializes_named_operations() {
         difference_status.difference_result(),
         PreparedMeshPairFactState::Current
     );
+    let difference_outcome = difference_status.difference_result_outcome().unwrap();
+    assert!(difference_outcome.is_mesh());
+    assert_eq!(
+        difference_outcome.triangle_count(),
+        Some(difference.triangle_count())
+    );
     difference_status
         .require_current_difference_result()
         .unwrap();
@@ -428,6 +452,9 @@ fn prepared_mesh_pair_materializes_named_operations() {
         pair.cache_status().xor_result(),
         PreparedMeshPairFactState::Current
     );
+    let xor_outcome = pair.cache_status().xor_result_outcome().unwrap();
+    assert!(xor_outcome.is_mesh());
+    assert_eq!(xor_outcome.triangle_count(), Some(xor.triangle_count()));
     pair.cache_status().require_current_xor_result().unwrap();
     assert_eq!(
         pair.current_xor_result().unwrap().triangle_count(),

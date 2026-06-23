@@ -67,5 +67,5 @@ pub use view::{
     EdgeRef, ExactMeshRef, FaceRef, PreparedMeshPair, PreparedMeshPairArrangementCounts,
     PreparedMeshPairBroadPhaseSummary, PreparedMeshPairCacheStatus,
     PreparedMeshPairClassificationCounts, PreparedMeshPairFactState, PreparedMeshPairPlanKind,
-    PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,
+    PreparedMeshPairResultOutcome, PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,
 };

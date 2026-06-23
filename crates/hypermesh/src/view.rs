@@ -114,9 +114,13 @@ pub struct PreparedMeshPairCacheStatus {
     retained_arrangement_counts: Option<PreparedMeshPairArrangementCounts>,
     arrangement_shortcut_facts: PreparedMeshPairFactState,
     union_result: PreparedMeshPairFactState,
+    union_result_outcome: Option<PreparedMeshPairResultOutcome>,
     intersection_result: PreparedMeshPairFactState,
+    intersection_result_outcome: Option<PreparedMeshPairResultOutcome>,
     difference_result: PreparedMeshPairFactState,
+    difference_result_outcome: Option<PreparedMeshPairResultOutcome>,
     xor_result: PreparedMeshPairFactState,
+    xor_result_outcome: Option<PreparedMeshPairResultOutcome>,
 }
 
 /// Retained broad-phase plan chosen for a prepared mesh-pair session.
@@ -246,6 +250,82 @@ impl PreparedMeshPairArrangementCounts {
             face_cells: arrangement.face_cells.len(),
             lower_dimensional_artifacts: arrangement.lower_dimensional_artifacts.len(),
             blockers: arrangement.blockers.len(),
+        }
+    }
+}
+
+/// Retained outcome summary for a prepared named boolean result.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PreparedMeshPairResultOutcome {
+    /// The retained result is an exact mesh with retained construction facts.
+    Mesh {
+        /// Output vertex count.
+        vertices: usize,
+        /// Output triangle count.
+        triangles: usize,
+    },
+    /// The retained result is a typed exact blocker set.
+    Blocked {
+        /// Number of retained blockers.
+        blockers: usize,
+        /// First retained blocker kind, when the error carried at least one blocker.
+        first_blocker: Option<ExactMeshBlockerKind>,
+    },
+}
+
+impl PreparedMeshPairResultOutcome {
+    /// Return whether the retained result is a mesh.
+    pub const fn is_mesh(self) -> bool {
+        matches!(self, Self::Mesh { .. })
+    }
+
+    /// Return whether the retained result is a typed blocker set.
+    pub const fn is_blocked(self) -> bool {
+        matches!(self, Self::Blocked { .. })
+    }
+
+    /// Return the retained output vertex count, when the result is a mesh.
+    pub const fn vertex_count(self) -> Option<usize> {
+        match self {
+            Self::Mesh { vertices, .. } => Some(vertices),
+            Self::Blocked { .. } => None,
+        }
+    }
+
+    /// Return the retained output triangle count, when the result is a mesh.
+    pub const fn triangle_count(self) -> Option<usize> {
+        match self {
+            Self::Mesh { triangles, .. } => Some(triangles),
+            Self::Blocked { .. } => None,
+        }
+    }
+
+    /// Return the retained blocker count, when the result is blocked.
+    pub const fn blocker_count(self) -> Option<usize> {
+        match self {
+            Self::Mesh { .. } => None,
+            Self::Blocked { blockers, .. } => Some(blockers),
+        }
+    }
+
+    /// Return the first retained blocker kind, when the result is blocked.
+    pub const fn first_blocker_kind(self) -> Option<ExactMeshBlockerKind> {
+        match self {
+            Self::Mesh { .. } => None,
+            Self::Blocked { first_blocker, .. } => first_blocker,
+        }
+    }
+
+    fn from_result(result: &Result<ExactMesh, ExactMeshError>) -> Self {
+        match result {
+            Ok(mesh) => Self::Mesh {
+                vertices: mesh.vertices().len(),
+                triangles: mesh.triangle_count(),
+            },
+            Err(error) => Self::Blocked {
+                blockers: error.blockers().len(),
+                first_blocker: error.blockers().first().map(ExactMeshBlocker::kind),
+            },
         }
     }
 }
@@ -504,6 +584,11 @@ impl PreparedMeshPairCacheStatus {
         self.union_result
     }
 
+    /// Return the retained prepared union outcome, when cached.
+    pub const fn union_result_outcome(self) -> Option<PreparedMeshPairResultOutcome> {
+        self.union_result_outcome
+    }
+
     /// Require a retained prepared union result or error.
     pub fn require_current_union_result(self) -> Result<(), ExactMeshError> {
         self.union_result.require_current("union result")
@@ -512,6 +597,11 @@ impl PreparedMeshPairCacheStatus {
     /// Return the certificate state for the prepared intersection result or error.
     pub const fn intersection_result(self) -> PreparedMeshPairFactState {
         self.intersection_result
+    }
+
+    /// Return the retained prepared intersection outcome, when cached.
+    pub const fn intersection_result_outcome(self) -> Option<PreparedMeshPairResultOutcome> {
+        self.intersection_result_outcome
     }
 
     /// Require a retained prepared intersection result or error.
@@ -525,6 +615,11 @@ impl PreparedMeshPairCacheStatus {
         self.difference_result
     }
 
+    /// Return the retained prepared difference outcome, when cached.
+    pub const fn difference_result_outcome(self) -> Option<PreparedMeshPairResultOutcome> {
+        self.difference_result_outcome
+    }
+
     /// Require a retained prepared difference result or error.
     pub fn require_current_difference_result(self) -> Result<(), ExactMeshError> {
         self.difference_result.require_current("difference result")
@@ -533,6 +628,11 @@ impl PreparedMeshPairCacheStatus {
     /// Return the certificate state for the prepared symmetric-difference result or error.
     pub const fn xor_result(self) -> PreparedMeshPairFactState {
         self.xor_result
+    }
+
+    /// Return the retained prepared symmetric-difference outcome, when cached.
+    pub const fn xor_result_outcome(self) -> Option<PreparedMeshPairResultOutcome> {
+        self.xor_result_outcome
     }
 
     /// Require a retained prepared symmetric-difference result or error.
@@ -907,6 +1007,10 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         let graph_counts = *self.intersection_graph_counts.borrow();
         let graph_retained = self.intersection_graph.borrow().is_some();
         let arrangement_retained = self.arrangement.borrow().is_some();
+        let union_result = self.union_result.borrow();
+        let intersection_result = self.intersection_result.borrow();
+        let difference_result = self.difference_result.borrow();
+        let xor_result = self.xor_result.borrow();
         PreparedMeshPairCacheStatus {
             candidate_pair_plan: PreparedMeshPairPlanKind::from_candidate_plan(self.plan),
             candidate_pair_capacity_hint: self.candidate_face_pair_capacity_hint(),
@@ -930,12 +1034,22 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             arrangement_shortcut_facts: retained_current_state(
                 self.arrangement_shortcut_facts.borrow().is_some(),
             ),
-            union_result: retained_current_state(self.union_result.borrow().is_some()),
-            intersection_result: retained_current_state(
-                self.intersection_result.borrow().is_some(),
-            ),
-            difference_result: retained_current_state(self.difference_result.borrow().is_some()),
-            xor_result: retained_current_state(self.xor_result.borrow().is_some()),
+            union_result: retained_current_state(union_result.is_some()),
+            union_result_outcome: union_result
+                .as_ref()
+                .map(PreparedMeshPairResultOutcome::from_result),
+            intersection_result: retained_current_state(intersection_result.is_some()),
+            intersection_result_outcome: intersection_result
+                .as_ref()
+                .map(PreparedMeshPairResultOutcome::from_result),
+            difference_result: retained_current_state(difference_result.is_some()),
+            difference_result_outcome: difference_result
+                .as_ref()
+                .map(PreparedMeshPairResultOutcome::from_result),
+            xor_result: retained_current_state(xor_result.is_some()),
+            xor_result_outcome: xor_result
+                .as_ref()
+                .map(PreparedMeshPairResultOutcome::from_result),
         }
     }
 
