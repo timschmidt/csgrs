@@ -40,12 +40,12 @@ unsupported exact topology, stale replay, and construction blockers with
 provenance where available. Boundary-allowed input uses named `ExactMesh`
 constructors instead of a public policy object.
 
-Borrowed queries start from `ExactMesh::view()`. `ExactMeshRef`, `TriangleRef`,
-`FaceRef`, and `EdgeRef` avoid cloning mesh storage; `PreparedMeshView` reuses
-replay-validated broad-phase facts and streams candidate face pairs with
-fallible early-stop support. `ExactMesh::with_arrangement_view` exposes borrowed
-`ArrangementView` queries for algorithms that need retained topology without
-cloning arrangement storage or naming an owned arrangement type.
+Borrowed queries start from `ExactMesh::view()`. Mesh, triangle, face, and edge
+views avoid cloning mesh storage; prepared views reuse replay-validated
+broad-phase facts and stream candidate face pairs with fallible early-stop
+support. `ExactMesh::with_arrangement_view` exposes borrowed arrangement queries
+for algorithms that need retained topology without cloning arrangement storage
+or naming an owned arrangement type.
 
 Retained graph, arrangement, cell-complex, winding, and shortcut evidence remain
 kernel internals unless a borrowed view is needed for exact query reuse.

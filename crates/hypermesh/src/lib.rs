@@ -55,9 +55,5 @@ mod volumetric_cells;
 mod winding;
 mod witness;
 
-pub use arrangement3d::{
-    ArrangementEdgeRef, ArrangementFaceCellRef, ArrangementVertexRef, ArrangementView,
-};
 pub use error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 pub use mesh::{ExactAffineTransform3, ExactMesh, ExactMeshValidationError, Triangle};
-pub use view::{EdgeRef, ExactMeshRef, FaceRef, PreparedMeshView, TriangleRef};
