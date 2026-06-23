@@ -424,7 +424,7 @@ impl CoplanarOverlapGraph {
     ) -> Result<(), CoplanarOverlapGraphValidationError> {
         self.validate()?;
         let replay = build_unvalidated_intersection_graph(left, right)
-            .map(|graph| graph.coplanar_overlap_graphs())
+            .map(|graph| graph.coplanar_overlap_graph_iter().collect::<Vec<_>>())
             .map_err(|_| CoplanarOverlapGraphValidationError::SourceReplayMismatch)?;
         if replay.iter().any(|graph| graph == self) {
             Ok(())
@@ -931,15 +931,13 @@ impl ExactIntersectionGraph {
         }
     }
 
-    /// Return grouped coplanar overlap graphs for retained coplanar face pairs.
-    pub fn coplanar_overlap_graphs(&self) -> Vec<CoplanarOverlapGraph> {
-        let mut graphs = Vec::with_capacity(self.coplanar_overlap_graph_count_hint());
-        for pair in &self.face_pairs {
-            if let Some(graph) = pair.coplanar_overlap_graph() {
-                graphs.push(graph);
-            }
-        }
-        graphs
+    /// Iterate grouped coplanar overlap graphs without materializing an intermediate vector.
+    pub(crate) fn coplanar_overlap_graph_iter(
+        &self,
+    ) -> impl Iterator<Item = CoplanarOverlapGraph> + '_ {
+        self.face_pairs
+            .iter()
+            .filter_map(FacePairEvents::coplanar_overlap_graph)
     }
 
     fn coplanar_overlap_graph_count_hint(&self) -> usize {
@@ -961,9 +959,8 @@ impl ExactIntersectionGraph {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<CoplanarOverlapSplitPlan, ExactMeshError> {
-        let overlap_graphs = self.coplanar_overlap_graphs();
-        let mut split_graphs = Vec::with_capacity(overlap_graphs.len());
-        for graph in &overlap_graphs {
+        let mut split_graphs = Vec::with_capacity(self.coplanar_overlap_graph_count_hint());
+        for graph in self.coplanar_overlap_graph_iter() {
             split_graphs.push(graph.split_constructions(left, right)?);
         }
         Ok(CoplanarOverlapSplitPlan {
@@ -994,21 +991,7 @@ impl ExactIntersectionGraph {
                 format!("retained coplanar arrangement graph failed source replay: {error:?}"),
             ))
         })?;
-        let overlap_graphs = self.coplanar_overlap_graphs();
-        if overlap_graphs.is_empty() {
-            return Ok(CoplanarArrangementEvidence {
-                status: CoplanarArrangementEvidenceStatus::NoCoplanarOverlap,
-                graph_count: 0,
-                overlapping_graphs: 0,
-                touching_graphs: 0,
-                edge_overlap_count: 0,
-                vertex_overlap_count: 0,
-                point_split_count: 0,
-                interval_overlap_count: 0,
-                interval_endpoint_count: 0,
-            });
-        }
-
+        let mut graph_count = 0;
         let mut overlapping_graphs = 0;
         let mut touching_graphs = 0;
         let mut edge_overlap_count = 0;
@@ -1017,7 +1000,8 @@ impl ExactIntersectionGraph {
         let mut interval_overlap_count = 0;
         let mut interval_endpoint_count = 0;
 
-        for graph in &overlap_graphs {
+        for graph in self.coplanar_overlap_graph_iter() {
+            graph_count += 1;
             graph.validate().map_err(|_| ExactMeshError {
                 blockers: vec![ExactMeshBlocker::new(
                     ExactMeshBlockerKind::ExactConstructionFailure,
@@ -1056,12 +1040,14 @@ impl ExactIntersectionGraph {
 
         let status = if overlapping_graphs > 0 {
             CoplanarArrangementEvidenceStatus::NeedsPlanarCells
-        } else {
+        } else if graph_count > 0 {
             CoplanarArrangementEvidenceStatus::BoundaryOnly
+        } else {
+            CoplanarArrangementEvidenceStatus::NoCoplanarOverlap
         };
         let report = CoplanarArrangementEvidence {
             status,
-            graph_count: overlap_graphs.len(),
+            graph_count,
             overlapping_graphs,
             touching_graphs,
             edge_overlap_count,
@@ -4423,8 +4409,9 @@ mod tests {
         assert!(retained_pair.projection.is_some());
         assert!(retained_pair.has_constructive_events());
 
-        let overlap = graph.coplanar_overlap_graphs().pop().unwrap();
-        assert!(graph.coplanar_overlap_graph_count_hint() >= graph.coplanar_overlap_graphs().len());
+        let mut overlaps = graph.coplanar_overlap_graph_iter().collect::<Vec<_>>();
+        let overlap = overlaps.pop().unwrap();
+        assert!(graph.coplanar_overlap_graph_count_hint() >= overlaps.len());
         overlap.validate_against_sources(&left, &right).unwrap();
         let mut invalid_overlap = overlap.clone();
         invalid_overlap.edge_overlaps.clear();

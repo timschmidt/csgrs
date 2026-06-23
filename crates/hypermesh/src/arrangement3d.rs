@@ -2599,8 +2599,7 @@ fn lower_dimensional_artifacts(
         right,
     );
     let touching_pairs = graph
-        .coplanar_overlap_graphs()
-        .into_iter()
+        .coplanar_overlap_graph_iter()
         .filter(|overlap| {
             overlap.relation == super::intersection::MeshFacePairRelation::CoplanarTouching
         })
@@ -3228,9 +3227,8 @@ fn carrier_plane_overlays(
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Vec<ArrangementCarrierPlaneOverlay> {
     graph
-        .coplanar_overlap_graphs()
-        .iter()
-        .filter_map(|overlap| carrier_plane_overlay(overlap, left, right, blockers))
+        .coplanar_overlap_graph_iter()
+        .filter_map(|overlap| carrier_plane_overlay(&overlap, left, right, blockers))
         .collect()
 }
 
