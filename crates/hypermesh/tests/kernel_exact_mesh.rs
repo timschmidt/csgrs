@@ -1,10 +1,13 @@
 use hyperlimit::{ApproximationPolicy, MeshSource, Point3, SourceProvenance};
 use hypermesh::ExactMesh;
+use hypermesh::kernel::prepared::{
+    PreparedMeshPairCacheStatus, PreparedMeshPairFactState, PreparedMeshPairPlanKind,
+    PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis, PreparedMeshPairSweepDirection,
+};
 use hypermesh::kernel::{
     ArrangementView, EdgeRef, ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshRef,
-    FaceRef, MeshView, PreparedMeshPair, PreparedMeshPairCacheStatus, PreparedMeshPairFactState,
-    PreparedMeshPairPlanKind, PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis,
-    PreparedMeshPairSweepDirection, PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,
+    FaceRef, MeshView, PreparedMeshPair, PreparedMeshPairView, PreparedMeshView, TriangleRef,
+    VertexRef,
 };
 use hyperreal::Real;
 
