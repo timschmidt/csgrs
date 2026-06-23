@@ -2761,15 +2761,32 @@ fn graph_for_certified_materialization<'a>(
             left, right,
         )?);
     }
-    Ok(owned_graph
-        .as_ref()
-        .expect("certified materialization graph was just built"))
+    owned_graph.as_ref().ok_or_else(|| {
+        exact_boolean_internal_error("certified materialization graph was not retained")
+    })
 }
 
 fn unsupported_certified_materialization_error(support: ExactBooleanSupport) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
         ExactMeshBlockerKind::UnsupportedCellMaterializer,
         format!("certified exact boolean support did not materialize: {support:?}"),
+    ))
+}
+
+fn exact_boolean_internal_error(message: impl Into<String>) -> ExactMeshError {
+    ExactMeshError::one(ExactMeshBlocker::new(
+        ExactMeshBlockerKind::ExactConstructionFailure,
+        message,
+    ))
+}
+
+fn unsupported_boolean_operation_error(
+    operation: ExactBooleanOperation,
+    context: &'static str,
+) -> ExactMeshError {
+    ExactMeshError::one(ExactMeshBlocker::new(
+        ExactMeshBlockerKind::UnsupportedExactOperation,
+        format!("{context}: {operation:?}"),
     ))
 }
 
@@ -3700,7 +3717,9 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             ExactBooleanOperation::Difference => {
                 ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
             }
-            ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
+            ExactBooleanOperation::SelectedRegions(_) => {
+                return Ok(certified_preflight(operation, support, Some(graph), None));
+            }
         };
         return Ok(certified_preflight(
             operation,
@@ -3739,7 +3758,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
                 ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
             }
             ExactBooleanOperation::Union | ExactBooleanOperation::SelectedRegions(_) => {
-                unreachable!("handled by operation guard")
+                return Ok(certified_preflight(operation, support, Some(graph), None));
             }
         };
         return Ok(certified_preflight(
@@ -4992,7 +5011,7 @@ fn boolean_closed_winding_containment_meshes_from_graph(
                 validation,
             )?
         }
-        (ExactBooleanOperation::SelectedRegions(_), _) => unreachable!("handled by caller"),
+        (ExactBooleanOperation::SelectedRegions(_), _) => return Ok(None),
     };
     Ok(Some(certified_shortcut_result(
         mesh,
@@ -5097,7 +5116,7 @@ fn materialize_graph_shortcut_from_graph_for_request(
                         graph, left, right, operation, validation,
                     )?
                 }
-                _ => unreachable!("closed-winding support arm only matches closed-winding support"),
+                _ => return Ok(None),
             }
         }
         _ => return Ok(None),
@@ -5151,7 +5170,7 @@ fn boolean_closed_winding_separated_meshes_from_graph(
             "exact closed-winding separated difference keeps left",
             validation,
         )?,
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by support check"),
+        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
     };
     Ok(Some(certified_shortcut_result(
         mesh,
@@ -5425,7 +5444,10 @@ fn materialize_boolean_exact_request_from_ready_graph(
         return Ok(result);
     }
     match operation {
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
+        ExactBooleanOperation::SelectedRegions(_) => Err(unsupported_boolean_operation_error(
+            operation,
+            "selected-region materialization requires the selected-region request path",
+        )),
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference => {
@@ -5449,7 +5471,12 @@ fn materialize_boolean_exact_request_from_ready_graph(
                         return Ok(result);
                     }
                 }
-                ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
+                ExactBooleanOperation::SelectedRegions(_) => {
+                    return Err(unsupported_boolean_operation_error(
+                        operation,
+                        "selected-region materialization requires the selected-region request path",
+                    ));
+                }
             }
             if let Some(result) = boolean_open_surface_disjoint_meshes_from_graph(
                 graph, left, right, operation, validation,
@@ -5682,17 +5709,20 @@ pub(crate) fn arrangement_cell_complex_shortcut_attempt_with_facts(
         return Ok(None);
     };
     let mut attempt = not_attempted_arrangement_attempt_for_request(request, policy);
-    let ArrangementCellComplexOutcome::Materialized(_, attempt) =
-        materialized_arrangement_attempt_outcome(
-            &mut attempt,
-            result,
-            false,
-            Some(ExactBooleanShortcutKind::ArrangementCellComplex),
-        )
-    else {
-        unreachable!("support-only shortcut materialization cannot decline")
-    };
-    Ok(Some(attempt))
+    match materialized_arrangement_attempt_outcome(
+        &mut attempt,
+        result,
+        false,
+        Some(ExactBooleanShortcutKind::ArrangementCellComplex),
+    ) {
+        ArrangementCellComplexOutcome::Materialized(_, attempt) => Ok(Some(attempt)),
+        ArrangementCellComplexOutcome::Declined(_) => {
+            Err(ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::UnsupportedCellMaterializer,
+                "certified arrangement-cell shortcut declined during support-only materialization",
+            )))
+        }
+    }
 }
 
 pub(crate) fn arrangement_boolean_attempt_report_from_arrangement(
@@ -5892,7 +5922,9 @@ fn boolean_arrangement_regularized_boundary_contact_from_graph(
             "exact arrangement regularized boundary-contact difference keeps left",
             validation,
         )?,
-        ExactBooleanOperation::Union | ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+        ExactBooleanOperation::Union | ExactBooleanOperation::SelectedRegions(_) => {
+            return Ok(None);
+        }
     };
     Ok(Some(certified_shortcut_result(
         mesh,
@@ -6946,7 +6978,7 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
             )?,
             ExactBooleanShortcutKind::ArrangementCellComplex,
         ),
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
+        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
     };
     let result = certified_shortcut_result(mesh, operation, shortcut);
     if result.validate().is_err() {
@@ -7010,7 +7042,7 @@ pub(crate) fn materialize_closed_no_volume_overlap_regularized_boolean_with_evid
                 ExactBooleanShortcutKind::ArrangementCellComplex,
             )
         }
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
+        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
     };
     if result.validate().is_err() {
         return Ok(None);
@@ -7356,7 +7388,7 @@ fn boolean_convex_relation_meshes_optional_from_graph(
                     "exact closed-convex separated difference keeps left",
                     validation,
                 )?,
-                ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
+                ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
             };
             (mesh, ExactBooleanShortcutKind::ConvexSeparated)
         }
@@ -7376,7 +7408,7 @@ fn boolean_convex_relation_meshes_optional_from_graph(
                     "empty exact closed-convex containment difference",
                     validation,
                 )?,
-                ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
+                ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
             };
             (mesh, ExactBooleanShortcutKind::ConvexContainment)
         }
@@ -7402,7 +7434,7 @@ fn boolean_convex_relation_meshes_optional_from_graph(
                     )?
                 }
                 ExactBooleanOperation::Difference => return Ok(None),
-                ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
+                ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
             };
             (mesh, ExactBooleanShortcutKind::ConvexContainment)
         }
@@ -9461,7 +9493,12 @@ fn materialize_open_surface_disjoint_meshes(
             "exact open-surface disjoint difference keeps left",
             validation,
         )?,
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
+        ExactBooleanOperation::SelectedRegions(_) => {
+            return Err(unsupported_boolean_operation_error(
+                operation,
+                "open-surface disjoint materialization requires a named boolean operation",
+            ));
+        }
     };
 
     Ok(certified_shortcut_result(
@@ -9683,9 +9720,7 @@ fn materialize_open_surface_arrangement_plan(
         ExactBooleanOperation::Union => ExactRegionSelection::KeepAll,
         ExactBooleanOperation::Intersection => ExactRegionSelection::KeepNone,
         ExactBooleanOperation::Difference => ExactRegionSelection::KeepLeft,
-        ExactBooleanOperation::SelectedRegions(_) => {
-            unreachable!("open-surface arrangement plan filters unsupported operations")
-        }
+        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
     };
     // Open-surface arrangement is not a closed-volumetric inside/outside
     // split regions are retained by surface operation, and no winding label is
@@ -9817,7 +9852,12 @@ fn boolean_same_surface_meshes(
         ExactBooleanOperation::Difference => {
             empty_mesh("empty exact same-surface difference", validation)?
         }
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
+        ExactBooleanOperation::SelectedRegions(_) => {
+            return Err(unsupported_boolean_operation_error(
+                operation,
+                "same-surface materialization requires a named boolean operation",
+            ));
+        }
     };
 
     Ok(certified_shortcut_result(
@@ -9949,7 +9989,7 @@ pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evid
             )?,
             ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
         ),
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
+        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
     };
     let result = certified_shortcut_result(mesh, operation, shortcut);
     Ok(
@@ -10134,7 +10174,11 @@ fn winding_evidence_report_for_request_from_graph_and_attempt(
             ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
                 ExactWindingEvidenceStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
             }
-            _ => unreachable!("closed validation gate only certifies regularized support"),
+            _ => {
+                return Err(exact_boolean_internal_error(
+                    "closed validation gate returned unsupported winding evidence support",
+                ));
+            }
         };
         winding_evidence_report(
             operation,
@@ -11842,7 +11886,12 @@ fn boolean_disjoint_meshes(
             "exact bounds-disjoint difference keeps left",
             validation,
         )?,
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
+        ExactBooleanOperation::SelectedRegions(_) => {
+            return Err(unsupported_boolean_operation_error(
+                operation,
+                "bounds-disjoint materialization requires a named boolean operation",
+            ));
+        }
     };
     Ok(certified_shortcut_result(
         mesh,
@@ -11901,7 +11950,12 @@ fn boolean_empty_operand(
             hyperlimit::SourceProvenance::exact("exact difference with empty right operand"),
             validation,
         )?,
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
+        ExactBooleanOperation::SelectedRegions(_) => {
+            return Err(unsupported_boolean_operation_error(
+                operation,
+                "empty-operand materialization requires a named boolean operation",
+            ));
+        }
     };
 
     Ok(certified_shortcut_result(
@@ -11931,7 +11985,12 @@ fn boolean_identical_meshes(
             hyperlimit::SourceProvenance::exact("empty exact identical difference"),
             validation,
         )?,
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
+        ExactBooleanOperation::SelectedRegions(_) => {
+            return Err(unsupported_boolean_operation_error(
+                operation,
+                "identical-mesh materialization requires a named boolean operation",
+            ));
+        }
     };
 
     Ok(certified_shortcut_result(
