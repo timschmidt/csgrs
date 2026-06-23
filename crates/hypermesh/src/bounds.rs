@@ -6,6 +6,7 @@
 //! may schedule work, but certified predicates decide combinatorics.
 
 use std::cmp::Ordering;
+use std::sync::OnceLock;
 
 use hyperlimit::{
     Aabb3Intersection, Point3, PredicateOutcome, classify_aabb3_intersection, compare_reals,
@@ -129,8 +130,8 @@ pub(crate) struct MeshBounds {
 #[derive(Debug)]
 pub(crate) struct PreparedMeshBounds<'a> {
     bounds: &'a MeshBounds,
-    min_axis_orders: [Option<Vec<usize>>; 3],
-    max_axis_orders: [Option<Vec<usize>>; 3],
+    min_axis_orders: [OnceLock<Option<Vec<usize>>>; 3],
+    max_axis_orders: [OnceLock<Option<Vec<usize>>>; 3],
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -376,24 +377,16 @@ impl MeshBounds {
 
     /// Prepare exact face orders for repeated broad-phase queries.
     ///
-    /// An axis order is retained only when all exact comparisons needed for
-    /// sorting were decided. Querying two prepared bounds falls back to the
-    /// exact quadratic scheduler when no common sweep axis is usable.
+    /// Axis orders are built lazily. Preparing a view is cheap, and a
+    /// disjoint whole-mesh bounds check never sorts face bounds. An axis order
+    /// is cached only when all exact comparisons needed for sorting were
+    /// decided. Querying two prepared bounds falls back to the exact quadratic
+    /// scheduler when no common sweep axis is usable.
     pub(crate) fn prepare(&self) -> PreparedMeshBounds<'_> {
-        let min_axis_orders = [
-            sorted_face_indices_by_axis_bound(&self.faces, Axis::X, AxisBound::Min),
-            sorted_face_indices_by_axis_bound(&self.faces, Axis::Y, AxisBound::Min),
-            sorted_face_indices_by_axis_bound(&self.faces, Axis::Z, AxisBound::Min),
-        ];
-        let max_axis_orders = [
-            sorted_face_indices_by_axis_bound(&self.faces, Axis::X, AxisBound::Max),
-            sorted_face_indices_by_axis_bound(&self.faces, Axis::Y, AxisBound::Max),
-            sorted_face_indices_by_axis_bound(&self.faces, Axis::Z, AxisBound::Max),
-        ];
         PreparedMeshBounds {
             bounds: self,
-            min_axis_orders,
-            max_axis_orders,
+            min_axis_orders: std::array::from_fn(|_| OnceLock::new()),
+            max_axis_orders: std::array::from_fn(|_| OnceLock::new()),
         }
     }
 }
@@ -739,15 +732,32 @@ impl<'a> PreparedMeshBounds<'a> {
     }
 
     fn min_axis_order(&self, axis: Axis) -> Option<&[usize]> {
-        self.min_axis_orders[axis.index()].as_deref()
+        self.min_axis_orders[axis.index()]
+            .get_or_init(|| {
+                sorted_face_indices_by_axis_bound(&self.bounds.faces, axis, AxisBound::Min)
+            })
+            .as_deref()
     }
 
     fn max_axis_order(&self, axis: Axis) -> Option<&[usize]> {
-        self.max_axis_orders[axis.index()].as_deref()
+        self.max_axis_orders[axis.index()]
+            .get_or_init(|| {
+                sorted_face_indices_by_axis_bound(&self.bounds.faces, axis, AxisBound::Max)
+            })
+            .as_deref()
     }
 
     fn axis_interval(&self, axis: Axis, face: usize) -> FaceAxisInterval<'a> {
         face_axis_interval(&self.bounds.faces[face], axis)
+    }
+
+    #[cfg(test)]
+    fn cached_axis_order_count(&self) -> usize {
+        self.min_axis_orders
+            .iter()
+            .chain(self.max_axis_orders.iter())
+            .filter(|order| order.get().is_some())
+            .count()
     }
 }
 
@@ -1014,6 +1024,41 @@ mod tests {
         let right = MeshBounds::from_triangles(&right_points, &triangles);
 
         assert_eq!(candidate_face_pairs(&left, &right), vec![[0, 0]]);
+    }
+
+    #[test]
+    fn prepare_defers_axis_order_construction() {
+        let points = vec![
+            p(0, 0, 0),
+            p(2, 0, 0),
+            p(0, 2, 0),
+            p(3, 0, 0),
+            p(5, 0, 0),
+            p(3, 2, 0),
+        ];
+        let triangles = [[0, 1, 2], [3, 4, 5]];
+        let bounds = MeshBounds::from_triangles(&points, &triangles);
+        let prepared = bounds.prepare();
+
+        assert_eq!(prepared.cached_axis_order_count(), 0);
+    }
+
+    #[test]
+    fn disjoint_prepared_plan_does_not_sort_faces() {
+        let left_points = vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0)];
+        let right_points = vec![p(10, 0, 0), p(12, 0, 0), p(10, 2, 0)];
+        let triangles = [[0, 1, 2]];
+        let left_bounds = MeshBounds::from_triangles(&left_points, &triangles);
+        let right_bounds = MeshBounds::from_triangles(&right_points, &triangles);
+        let left = left_bounds.prepare();
+        let right = right_bounds.prepare();
+
+        assert_eq!(
+            ExactAabbBroadPhase::default().candidate_face_pair_plan(&left, &right),
+            CandidateFacePairPlan::Empty
+        );
+        assert_eq!(left.cached_axis_order_count(), 0);
+        assert_eq!(right.cached_axis_order_count(), 0);
     }
 
     #[test]
