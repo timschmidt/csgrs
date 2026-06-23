@@ -221,12 +221,6 @@ pub(crate) trait ExactBroadPhaseStrategy {
         right: &PreparedMeshBounds<'_>,
     ) -> CandidateFacePairPlan;
 
-    fn candidate_face_pair_plan_one_shot(
-        &self,
-        left: &MeshBounds,
-        right: &MeshBounds,
-    ) -> CandidateFacePairPlan;
-
     fn try_visit_candidate_face_pairs_one_shot<E>(
         &self,
         left: &MeshBounds,
@@ -257,23 +251,8 @@ impl ExactAabbBroadPhase {
             one_shot_quadratic_face_pair_limit,
         }
     }
-}
 
-impl Default for ExactAabbBroadPhase {
-    fn default() -> Self {
-        Self::new(Self::DEFAULT_ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT)
-    }
-}
-
-impl ExactBroadPhaseStrategy for ExactAabbBroadPhase {
-    fn candidate_face_pair_plan(
-        &self,
-        left: &PreparedMeshBounds<'_>,
-        right: &PreparedMeshBounds<'_>,
-    ) -> CandidateFacePairPlan {
-        left.candidate_face_pair_plan(right)
-    }
-
+    #[cfg(test)]
     fn candidate_face_pair_plan_one_shot(
         &self,
         left: &MeshBounds,
@@ -293,6 +272,22 @@ impl ExactBroadPhaseStrategy for ExactAabbBroadPhase {
         let right = right.prepare();
         self.candidate_face_pair_plan(&left, &right)
     }
+}
+
+impl Default for ExactAabbBroadPhase {
+    fn default() -> Self {
+        Self::new(Self::DEFAULT_ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT)
+    }
+}
+
+impl ExactBroadPhaseStrategy for ExactAabbBroadPhase {
+    fn candidate_face_pair_plan(
+        &self,
+        left: &PreparedMeshBounds<'_>,
+        right: &PreparedMeshBounds<'_>,
+    ) -> CandidateFacePairPlan {
+        left.candidate_face_pair_plan(right)
+    }
 
     fn try_visit_candidate_face_pairs_one_shot<E>(
         &self,
@@ -300,17 +295,20 @@ impl ExactBroadPhaseStrategy for ExactAabbBroadPhase {
         right: &MeshBounds,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
-        match self.candidate_face_pair_plan_one_shot(left, right) {
-            CandidateFacePairPlan::Empty => Ok(()),
-            CandidateFacePairPlan::Quadratic => {
-                left.try_visit_candidate_face_pairs_quadratic(right, visit)
-            }
-            plan @ CandidateFacePairPlan::Sweep { .. } => {
-                let left = left.prepare();
-                let right = right.prepare();
-                self.try_visit_candidate_face_pairs_with_plan(&left, &right, plan, visit)
-            }
+        if !left.mesh_may_overlap(right) {
+            return Ok(());
         }
+        if should_use_quadratic_one_shot(
+            left.faces.len(),
+            right.faces.len(),
+            self.one_shot_quadratic_face_pair_limit,
+        ) {
+            return left.try_visit_candidate_face_pairs_quadratic(right, visit);
+        }
+        let left = left.prepare();
+        let right = right.prepare();
+        let plan = self.candidate_face_pair_plan(&left, &right);
+        self.try_visit_candidate_face_pairs_with_plan(&left, &right, plan, visit)
     }
 
     fn try_visit_candidate_face_pairs_with_plan<E>(
