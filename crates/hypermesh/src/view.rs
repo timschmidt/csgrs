@@ -255,9 +255,20 @@ impl PreparedMeshPairCacheStatus {
         self.union_result
     }
 
+    /// Require a retained prepared union result or error.
+    pub fn require_current_union_result(self) -> Result<(), ExactMeshError> {
+        self.union_result.require_current("union result")
+    }
+
     /// Return the certificate state for the prepared intersection result or error.
     pub const fn intersection_result(self) -> PreparedMeshPairFactState {
         self.intersection_result
+    }
+
+    /// Require a retained prepared intersection result or error.
+    pub fn require_current_intersection_result(self) -> Result<(), ExactMeshError> {
+        self.intersection_result
+            .require_current("intersection result")
     }
 
     /// Return the certificate state for the prepared difference result or error.
@@ -265,9 +276,19 @@ impl PreparedMeshPairCacheStatus {
         self.difference_result
     }
 
+    /// Require a retained prepared difference result or error.
+    pub fn require_current_difference_result(self) -> Result<(), ExactMeshError> {
+        self.difference_result.require_current("difference result")
+    }
+
     /// Return the certificate state for the prepared symmetric-difference result or error.
     pub const fn xor_result(self) -> PreparedMeshPairFactState {
         self.xor_result
+    }
+
+    /// Require a retained prepared symmetric-difference result or error.
+    pub fn require_current_xor_result(self) -> Result<(), ExactMeshError> {
+        self.xor_result.require_current("xor result")
     }
 }
 
@@ -752,14 +773,29 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.named_boolean_mesh(ExactBooleanOperation::Union)
     }
 
+    /// Return the retained union result or cached error without materializing it.
+    pub fn current_union_result(&self) -> Result<ExactMesh, ExactMeshError> {
+        self.current_named_boolean_mesh(ExactBooleanOperation::Union)
+    }
+
     /// Materialize the exact closed intersection using this retained pair session.
     pub fn intersection(&self) -> Result<ExactMesh, ExactMeshError> {
         self.named_boolean_mesh(ExactBooleanOperation::Intersection)
     }
 
+    /// Return the retained intersection result or cached error without materializing it.
+    pub fn current_intersection_result(&self) -> Result<ExactMesh, ExactMeshError> {
+        self.current_named_boolean_mesh(ExactBooleanOperation::Intersection)
+    }
+
     /// Materialize the exact closed difference of the left mesh minus the right mesh.
     pub fn difference(&self) -> Result<ExactMesh, ExactMeshError> {
         self.named_boolean_mesh(ExactBooleanOperation::Difference)
+    }
+
+    /// Return the retained difference result or cached error without materializing it.
+    pub fn current_difference_result(&self) -> Result<ExactMesh, ExactMeshError> {
+        self.current_named_boolean_mesh(ExactBooleanOperation::Difference)
     }
 
     /// Materialize the exact closed symmetric difference of the prepared meshes.
@@ -784,6 +820,14 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         result
     }
 
+    /// Return the retained symmetric-difference result or cached error without materializing it.
+    pub fn current_xor_result(&self) -> Result<ExactMesh, ExactMeshError> {
+        self.xor_result
+            .borrow()
+            .clone()
+            .unwrap_or_else(|| missing_retained_result("xor result"))
+    }
+
     fn named_boolean_mesh(
         &self,
         operation: ExactBooleanOperation,
@@ -797,6 +841,14 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             .map(|result| result.into_mesh());
         self.retain_named_boolean_mesh(operation, &result);
         result
+    }
+
+    fn current_named_boolean_mesh(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> Result<ExactMesh, ExactMeshError> {
+        self.cached_named_boolean_mesh(operation)
+            .unwrap_or_else(|| missing_retained_result(named_boolean_result_name(operation)))
     }
 
     fn cached_named_boolean_mesh(
@@ -858,6 +910,22 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             &mut local_scratch,
             visit,
         )
+    }
+}
+
+fn missing_retained_result(fact: &'static str) -> Result<ExactMesh, ExactMeshError> {
+    Err(ExactMeshError::one(ExactMeshBlocker::new(
+        ExactMeshBlockerKind::MissingRequiredEvidence,
+        format!("prepared mesh-pair session is missing retained {fact} evidence"),
+    )))
+}
+
+const fn named_boolean_result_name(operation: ExactBooleanOperation) -> &'static str {
+    match operation {
+        ExactBooleanOperation::Union => "union result",
+        ExactBooleanOperation::Intersection => "intersection result",
+        ExactBooleanOperation::Difference => "difference result",
+        ExactBooleanOperation::SelectedRegions(_) => "selected-region result",
     }
 }
 

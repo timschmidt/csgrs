@@ -124,16 +124,64 @@ fn prepared_mesh_pair_materializes_named_operations() {
         PreparedMeshPairFactState::Missing
     );
     assert_eq!(
+        initial_status
+            .require_current_union_result()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    assert_eq!(
+        pair.current_union_result().unwrap_err().blockers()[0].kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    assert_eq!(
         initial_status.intersection_result(),
         PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        initial_status
+            .require_current_intersection_result()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    assert_eq!(
+        pair.current_intersection_result().unwrap_err().blockers()[0].kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         initial_status.difference_result(),
         PreparedMeshPairFactState::Missing
     );
     assert_eq!(
+        initial_status
+            .require_current_difference_result()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    assert_eq!(
+        pair.current_difference_result().unwrap_err().blockers()[0].kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    assert_eq!(
         initial_status.xor_result(),
         PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        initial_status
+            .require_current_xor_result()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    assert_eq!(
+        pair.current_xor_result().unwrap_err().blockers()[0].kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         initial_status
@@ -239,6 +287,11 @@ fn prepared_mesh_pair_materializes_named_operations() {
         retained_status.union_result(),
         PreparedMeshPairFactState::Current
     );
+    retained_status.require_current_union_result().unwrap();
+    assert_eq!(
+        pair.current_union_result().unwrap().triangle_count(),
+        union.triangle_count()
+    );
     assert_eq!(
         retained_status.intersection_result(),
         PreparedMeshPairFactState::Missing
@@ -268,6 +321,13 @@ fn prepared_mesh_pair_materializes_named_operations() {
         intersection_status.intersection_result(),
         PreparedMeshPairFactState::Current
     );
+    intersection_status
+        .require_current_intersection_result()
+        .unwrap();
+    assert_eq!(
+        pair.current_intersection_result().unwrap().triangle_count(),
+        intersection.triangle_count()
+    );
     assert_eq!(
         intersection_status.difference_result(),
         PreparedMeshPairFactState::Missing
@@ -285,6 +345,13 @@ fn prepared_mesh_pair_materializes_named_operations() {
         difference_status.difference_result(),
         PreparedMeshPairFactState::Current
     );
+    difference_status
+        .require_current_difference_result()
+        .unwrap();
+    assert_eq!(
+        pair.current_difference_result().unwrap().triangle_count(),
+        difference.triangle_count()
+    );
     assert_eq!(
         difference_status.xor_result(),
         PreparedMeshPairFactState::Missing
@@ -296,6 +363,11 @@ fn prepared_mesh_pair_materializes_named_operations() {
     assert_eq!(
         pair.cache_status().xor_result(),
         PreparedMeshPairFactState::Current
+    );
+    pair.cache_status().require_current_xor_result().unwrap();
+    assert_eq!(
+        pair.current_xor_result().unwrap().triangle_count(),
+        xor.triangle_count()
     );
 
     let repeated_xor = pair.xor().unwrap();
