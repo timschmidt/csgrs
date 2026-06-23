@@ -1522,6 +1522,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     }
 
     /// Visit retained coarse face-pair classifications for this prepared mesh pair.
+    #[cfg(test)]
     pub(crate) fn try_visit_face_pair_classifications<E>(
         &self,
         visit: &mut impl FnMut(&MeshFacePairClassification) -> Result<(), E>,
@@ -1532,6 +1533,22 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             visit(classification)?;
         }
         Ok(())
+    }
+
+    pub(crate) fn with_current_face_pair_classifications<R>(
+        &self,
+        query: impl FnOnce(&[MeshFacePairClassification]) -> R,
+    ) -> Result<R, ExactMeshError> {
+        self.cache_status()
+            .require_current_face_pair_classifications()?;
+        let classifications = self.face_pair_classifications.borrow();
+        let classifications = classifications.as_deref().ok_or_else(|| {
+            ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::MissingRequiredEvidence,
+                "prepared mesh-pair session retained face-pair classification state without classification records",
+            ))
+        })?;
+        Ok(query(classifications))
     }
 
     fn ensure_face_pair_classifications(&self) {

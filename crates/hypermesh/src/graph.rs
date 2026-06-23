@@ -1345,11 +1345,13 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
     let left = pair.left().view().mesh();
     let right = pair.right().view().mesh();
     let mut face_pairs = Vec::with_capacity(pair.candidate_face_pair_capacity_hint());
-    pair.try_visit_face_pair_classifications(&mut |classification| {
-        if classification.needs_graph_construction() {
-            face_pairs.push(events_for_face_pair(left, right, classification));
+    pair.prepare_face_pair_classification_counts();
+    pair.with_current_face_pair_classifications(|classifications| {
+        for classification in classifications {
+            if classification.needs_graph_construction() {
+                face_pairs.push(events_for_face_pair(left, right, classification));
+            }
         }
-        Ok::<(), ExactMeshError>(())
     })?;
     let graph = ExactIntersectionGraph::from_face_pairs(face_pairs);
     Ok(pair.retain_intersection_graph(graph))
