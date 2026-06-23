@@ -116,9 +116,10 @@ pub struct PreparedMeshPairCacheStatus {
     candidate_pair_plan: PreparedMeshPairPlanKind,
     candidate_pair_capacity_hint: usize,
     broad_phase_summary: PreparedMeshPairBroadPhaseSummary,
+    broad_phase_traversal: PreparedMeshPairFactState,
+    retained_broad_phase_traversal_summary: Option<PreparedMeshPairBroadPhaseTraversalSummary>,
     candidate_face_pairs: PreparedMeshPairFactState,
     retained_candidate_face_pair_count: Option<usize>,
-    retained_broad_phase_traversal_summary: Option<PreparedMeshPairBroadPhaseTraversalSummary>,
     face_pair_classifications: PreparedMeshPairFactState,
     retained_face_pair_classification_count: Option<usize>,
     retained_face_pair_classification_counts: Option<PreparedMeshPairClassificationCounts>,
@@ -810,14 +811,9 @@ impl PreparedMeshPairCacheStatus {
         self.broad_phase_summary
     }
 
-    /// Return the certificate state for retained broad-phase candidate pairs.
-    pub const fn candidate_face_pairs(self) -> PreparedMeshPairFactState {
-        self.candidate_face_pairs
-    }
-
-    /// Return the retained broad-phase candidate pair count, when cached.
-    pub const fn retained_candidate_face_pair_count(self) -> Option<usize> {
-        self.retained_candidate_face_pair_count
+    /// Return the certificate state for retained broad-phase traversal counts.
+    pub const fn broad_phase_traversal(self) -> PreparedMeshPairFactState {
+        self.broad_phase_traversal
     }
 
     /// Return retained broad-phase traversal counts, when candidate traversal has run.
@@ -827,24 +823,43 @@ impl PreparedMeshPairCacheStatus {
         self.retained_broad_phase_traversal_summary
     }
 
-    /// Require retained broad-phase candidate pairs with current certificates.
-    pub fn require_current_candidate_face_pairs(self) -> Result<(), ExactMeshError> {
-        self.candidate_face_pairs
-            .require_current("broad-phase candidate face pairs")
+    /// Require retained broad-phase traversal counts with current certificates.
+    pub fn require_current_broad_phase_traversal(self) -> Result<(), ExactMeshError> {
+        self.broad_phase_traversal
+            .require_current("broad-phase traversal summary")
     }
 
     /// Return retained broad-phase traversal counts after requiring current evidence.
     pub fn current_broad_phase_traversal_summary(
         self,
     ) -> Result<PreparedMeshPairBroadPhaseTraversalSummary, ExactMeshError> {
-        self.require_current_candidate_face_pairs()?;
+        self.require_current_broad_phase_traversal()?;
         self.retained_broad_phase_traversal_summary
             .ok_or_else(|| {
                 ExactMeshError::one(ExactMeshBlocker::new(
                     ExactMeshBlockerKind::MissingRequiredEvidence,
-                    "prepared mesh-pair session retained broad-phase candidate pairs without traversal counts",
+                    "prepared mesh-pair session retained broad-phase traversal state without traversal counts",
                 ))
             })
+    }
+
+    /// Return the certificate state for retained broad-phase candidate pairs.
+    pub const fn candidate_face_pairs(self) -> PreparedMeshPairFactState {
+        self.candidate_face_pairs
+    }
+
+    /// Return the retained broad-phase candidate pair count, when cached.
+    pub const fn retained_candidate_face_pair_count(self) -> Option<usize> {
+        match self.retained_broad_phase_traversal_summary {
+            Some(summary) => Some(summary.candidate_pair_count()),
+            None => self.retained_candidate_face_pair_count,
+        }
+    }
+
+    /// Require retained broad-phase candidate pairs with current certificates.
+    pub fn require_current_candidate_face_pairs(self) -> Result<(), ExactMeshError> {
+        self.candidate_face_pairs
+            .require_current("broad-phase candidate face pairs")
     }
 
     /// Return retained broad-phase candidate pair count after requiring current evidence.
@@ -1537,6 +1552,28 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.broad_phase_summary
     }
 
+    /// Execute and retain broad-phase traversal counts without storing candidate records.
+    pub fn prepare_broad_phase_traversal_summary(
+        &self,
+    ) -> PreparedMeshPairBroadPhaseTraversalSummary {
+        if let Some(summary) = *self.broad_phase_traversal_summary.borrow() {
+            return summary;
+        }
+
+        let mut candidate_pair_count = 0usize;
+        let result = self.try_visit_candidate_face_pairs_uncached(&mut |_| {
+            candidate_pair_count = candidate_pair_count.saturating_add(1);
+            Ok::<(), ()>(())
+        });
+        debug_assert!(result.is_ok());
+        let summary = PreparedMeshPairBroadPhaseTraversalSummary::from_broad_phase(
+            self.broad_phase_summary,
+            candidate_pair_count,
+        );
+        *self.broad_phase_traversal_summary.borrow_mut() = Some(summary);
+        summary
+    }
+
     /// Build and retain broad-phase candidate face pairs, returning the retained count.
     pub fn prepare_candidate_face_pairs(&self) -> usize {
         self.ensure_candidate_face_pairs();
@@ -1580,12 +1617,16 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             candidate_pair_plan: PreparedMeshPairPlanKind::from_candidate_plan(self.plan),
             candidate_pair_capacity_hint: self.candidate_face_pair_capacity_hint(),
             broad_phase_summary: self.broad_phase_summary,
+            broad_phase_traversal: retained_current_state(
+                broad_phase_traversal_summary.is_some(),
+                sources_current,
+            ),
+            retained_broad_phase_traversal_summary: broad_phase_traversal_summary,
             candidate_face_pairs: retained_current_state(
                 candidate_face_pair_count.is_some(),
                 sources_current,
             ),
             retained_candidate_face_pair_count: candidate_face_pair_count,
-            retained_broad_phase_traversal_summary: broad_phase_traversal_summary,
             face_pair_classifications: retained_current_state(
                 face_pair_classification_counts.is_some(),
                 sources_current,

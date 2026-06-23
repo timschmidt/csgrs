@@ -831,6 +831,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         unprepared_status.candidate_face_pairs(),
         PreparedMeshPairFactState::Missing
     );
+    assert_eq!(
+        unprepared_status.broad_phase_traversal(),
+        PreparedMeshPairFactState::Missing
+    );
     assert_eq!(unprepared_status.retained_candidate_face_pair_count(), None);
     assert_eq!(
         unprepared_status.retained_broad_phase_traversal_summary(),
@@ -860,7 +864,41 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .kind(),
         hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
     );
+    let count_only_summary = prepared_pair.prepare_broad_phase_traversal_summary();
+    let count_only_status = prepared_pair.cache_status();
+    assert_eq!(
+        count_only_status.broad_phase_traversal(),
+        PreparedMeshPairFactState::Current
+    );
+    assert_eq!(
+        count_only_status.candidate_face_pairs(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        count_only_status.retained_broad_phase_traversal_summary(),
+        Some(count_only_summary)
+    );
+    assert_eq!(
+        count_only_status.retained_candidate_face_pair_count(),
+        Some(count_only_summary.candidate_pair_count())
+    );
+    assert_eq!(
+        prepared_pair.current_candidate_face_pair_count().unwrap(),
+        count_only_summary.candidate_pair_count()
+    );
+    assert_eq!(
+        prepared_pair
+            .with_current_candidate_face_pairs(|pairs| pairs.len())
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
     let retained_candidate_count = prepared_pair.prepare_candidate_face_pairs();
+    assert_eq!(
+        retained_candidate_count,
+        count_only_summary.candidate_pair_count()
+    );
     assert!(retained_candidate_count > 0);
     assert!(retained_candidate_count <= broad_phase_summary.candidate_pair_upper_bound());
     assert_eq!(
