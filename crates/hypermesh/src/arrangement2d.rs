@@ -273,6 +273,11 @@ pub(crate) enum ExactArrangement2dBlocker {
         left_start: usize,
         right_start: usize,
     },
+    /// Nested selected/unselected face ownership could not be decided.
+    UnresolvedParentSelection {
+        child_face: usize,
+        parent_face: usize,
+    },
     /// A selected output loop collapsed during exact simplification.
     DegenerateOutputLoop { loop_index: usize },
     /// A negative output loop was not strictly contained by any positive loop.
@@ -1412,8 +1417,9 @@ fn append_nested_unselected_hole_loops(
     blockers: &mut Vec<ExactArrangement2dBlocker>,
 ) {
     for face in faces.iter().filter(|face| !face.selected) {
-        if !parent_selection_state(arrangement, faces, face, blockers).unwrap_or(false) {
-            continue;
+        match parent_selection_state(arrangement, faces, face, blockers) {
+            Some(true) => {}
+            Some(false) | None => continue,
         }
         let mut vertices = arrangement.faces[face.face].vertices.clone();
         vertices.reverse();
@@ -1465,22 +1471,40 @@ fn parent_selection_state(
             .iter()
             .map(|vertex| arrangement.vertices[*vertex].point.clone())
             .collect::<Vec<_>>();
-        match classify_point_ring_even_odd(&ring, &child.witness).value()? {
-            RingPointLocation::Inside => {
+        match classify_point_ring_even_odd(&ring, &child.witness).value() {
+            Some(RingPointLocation::Inside) => {
                 let area = arrangement.faces[candidate.face].signed_area_twice.clone();
-                let replace = parent.as_ref().is_none_or(|(_, parent_area)| {
-                    compare_reals(&area, parent_area).value() == Some(Ordering::Less)
-                });
+                let replace = match parent.as_ref() {
+                    None => true,
+                    Some((_, parent_area)) => match compare_reals(&area, parent_area).value() {
+                        Some(Ordering::Less) => true,
+                        Some(Ordering::Equal | Ordering::Greater) => false,
+                        None => {
+                            blockers.push(ExactArrangement2dBlocker::UnresolvedParentSelection {
+                                child_face: child.face,
+                                parent_face: candidate.face,
+                            });
+                            return None;
+                        }
+                    },
+                };
                 if replace {
                     parent = Some((candidate, area));
                 }
             }
-            RingPointLocation::Outside => {}
-            RingPointLocation::Boundary => {
+            Some(RingPointLocation::Outside) => {}
+            Some(RingPointLocation::Boundary) => {
                 blockers.push(ExactArrangement2dBlocker::FaceWitnessOnBoundary {
                     face: child.face,
                     region: ExactArrangement2dRegion::Left,
                     ring: candidate.face,
+                });
+                return None;
+            }
+            None => {
+                blockers.push(ExactArrangement2dBlocker::UnresolvedParentSelection {
+                    child_face: child.face,
+                    parent_face: candidate.face,
                 });
                 return None;
             }
