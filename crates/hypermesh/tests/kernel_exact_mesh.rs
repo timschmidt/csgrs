@@ -703,6 +703,13 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         pair_view.right().view().face_count(),
         overlapping.triangle_count()
     );
+    assert_eq!(pair_view.broad_phase_summary(), broad_phase_summary);
+    assert_eq!(
+        pair_view
+            .broad_phase_summary()
+            .candidate_pair_capacity_hint(),
+        pair_view.candidate_face_pair_capacity_hint()
+    );
 
     let mut candidates = Vec::new();
     pair_view.visit_candidate_face_pairs(&mut |pair| {
