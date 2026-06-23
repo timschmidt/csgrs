@@ -1017,7 +1017,14 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     );
     assert_eq!(
         streamed_graph_status.face_pair_classification_counts(),
-        PreparedMeshPairFactState::Missing
+        PreparedMeshPairFactState::Current
+    );
+    let streamed_graph_classification_counts = streamed_graph_status
+        .current_face_pair_classification_counts()
+        .unwrap();
+    assert_eq!(
+        streamed_graph_classification_counts.graph_required_count(),
+        streamed_graph_counts.face_pair_count()
     );
     assert_eq!(
         streamed_graph_status.intersection_graph(),

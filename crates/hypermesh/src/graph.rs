@@ -1380,16 +1380,19 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
         })?;
     } else {
         let mut candidate_pair_count = 0usize;
+        let mut classification_counts = PreparedMeshPairClassificationCounts::default();
         pair.try_visit_unretained_candidate_face_pairs(&mut |[left_face, right_face]| {
             candidate_pair_count = candidate_pair_count.saturating_add(1);
             let classification =
                 classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
+            classification_counts.record(&classification);
             if classification.needs_graph_construction() {
                 face_pairs.push(events_for_face_pair(left, right, &classification));
             }
             Ok::<(), ExactMeshError>(())
         })?;
         pair.retain_broad_phase_traversal_count(candidate_pair_count);
+        pair.retain_face_pair_classification_counts(classification_counts);
     }
     let graph = ExactIntersectionGraph::from_face_pairs(face_pairs);
     Ok(pair.retain_intersection_graph(graph))

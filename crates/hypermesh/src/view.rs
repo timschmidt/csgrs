@@ -732,7 +732,7 @@ impl PreparedMeshPairClassificationCounts {
         counts
     }
 
-    fn record(&mut self, classification: &MeshFacePairClassification) {
+    pub(crate) fn record(&mut self, classification: &MeshFacePairClassification) {
         self.face_pairs = self.face_pairs.saturating_add(1);
         match classification.relation {
             MeshFacePairRelation::PlaneSeparated => self.plane_separated += 1,
@@ -1861,6 +1861,17 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         summary
     }
 
+    pub(crate) fn retain_face_pair_classification_counts(
+        &self,
+        counts: PreparedMeshPairClassificationCounts,
+    ) -> PreparedMeshPairClassificationCounts {
+        if let Some(retained) = *self.face_pair_classification_counts.borrow() {
+            return retained;
+        }
+        *self.face_pair_classification_counts.borrow_mut() = Some(counts);
+        counts
+    }
+
     fn ensure_face_pair_classification_counts(&self) {
         if self.face_pair_classification_counts.borrow().is_some() {
             return;
@@ -1895,7 +1906,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             debug_assert!(result.is_ok());
         }
         self.retain_broad_phase_traversal_count(candidate_pair_count);
-        *self.face_pair_classification_counts.borrow_mut() = Some(counts);
+        self.retain_face_pair_classification_counts(counts);
     }
 
     fn ensure_face_pair_classifications(&self) {
