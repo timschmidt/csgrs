@@ -386,11 +386,11 @@ fn certify_axis_aligned_orthogonal_solid_face_cells(
                     u: midpoint_real(
                         &axis_coords(&x, &y, &z, canonical_face_axes(sample.key.axis).0)[u],
                         &axis_coords(&x, &y, &z, canonical_face_axes(sample.key.axis).0)[u + 1],
-                    ),
+                    )?,
                     v: midpoint_real(
                         &axis_coords(&x, &y, &z, canonical_face_axes(sample.key.axis).1)[v],
                         &axis_coords(&x, &y, &z, canonical_face_axes(sample.key.axis).1)[v + 1],
-                    ),
+                    )?,
                 };
                 if point_in_projected_triangle(&midpoint, &sample.projected)? {
                     accumulator.selected.insert((u, v));
@@ -1503,9 +1503,9 @@ fn projected_face_orientation(
     Some(sub(&mul(&ab_u, &ac_v), &mul(&ab_v, &ac_u)))
 }
 
-fn midpoint_real(left: &Real, right: &Real) -> Real {
-    let half = (Real::from(1) / &Real::from(2)).expect("2 is nonzero");
-    mul(&add(left, right), &half)
+fn midpoint_real(left: &Real, right: &Real) -> Option<Real> {
+    let half = (Real::from(1) / &Real::from(2)).ok()?;
+    Some(mul(&add(left, right), &half))
 }
 
 fn add(left: &Real, right: &Real) -> Real {

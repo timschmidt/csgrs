@@ -83,7 +83,7 @@ impl ExactTriangleInteriorWitness {
     ) -> Result<Point3, ExactTriangleInteriorWitnessError> {
         self.validate()?;
         let inv = (Real::from(1) / &Real::from(self.denominator))
-            .expect("strict interior witness denominator is nonzero");
+            .map_err(|_| ExactTriangleInteriorWitnessError::NotStrictInterior)?;
         Ok(Point3::new(
             weighted_real(&a.x, &b.x, &c.x, self.weights, &inv),
             weighted_real(&a.y, &b.y, &c.y, self.weights, &inv),

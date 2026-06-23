@@ -4799,14 +4799,13 @@ fn face_cell_from_original_triangle(
         &mesh.vertices()[triangle[1]],
         &mesh.vertices()[triangle[2]],
     );
-    let opposite = Some(classify_opposite(
-        side,
-        representative,
-        left,
-        right,
-        policy,
-        blockers,
-    ));
+    let opposite =
+        representative.map(|point| classify_opposite(side, point, left, right, policy, blockers));
+    if opposite.is_none()
+        && policy.unresolved == super::regularization::ExactUnresolvedPolicy::Block
+    {
+        blockers.push(ExactArrangementBlocker::UnresolvedRegionClassification);
+    }
     ArrangementFaceCell {
         carrier: ArrangementFaceCarrier {
             side,
@@ -5040,13 +5039,13 @@ fn representative_from_boundary_nodes(nodes: &[FaceSplitBoundaryNode]) -> Option
     Some(Point3::new(x * &inv, y * &inv, z * &inv))
 }
 
-fn triangle_centroid(a: &Point3, b: &Point3, c: &Point3) -> Point3 {
-    let third = (Real::from(1) / &Real::from(3)).expect("3 is nonzero");
-    Point3::new(
+fn triangle_centroid(a: &Point3, b: &Point3, c: &Point3) -> Option<Point3> {
+    let third = (Real::from(1) / &Real::from(3)).ok()?;
+    Some(Point3::new(
         (a.x.clone() + &b.x + &c.x) * &third,
         (a.y.clone() + &b.y + &c.y) * &third,
         (a.z.clone() + &b.z + &c.z) * &third,
-    )
+    ))
 }
 
 #[cfg(test)]

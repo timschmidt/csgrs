@@ -5368,6 +5368,11 @@ fn materialize_boolean_exact_request_from_ready_graph(
         operation,
         ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
     );
+    if let Some(result) = certified_arrangement_cell_complex_result_from_graph(
+        graph, left, right, operation, validation, true,
+    )? {
+        return Ok(result);
+    }
     if prefer_boundary_or_no_volume
         && let Some(result) = materialize_closed_boundary_or_no_volume_overlap_from_graph(
             graph, left, right, operation, validation,
@@ -15758,9 +15763,12 @@ mod tests {
             );
             result.validate().unwrap();
             result.validate_against_sources(&left, &right).unwrap();
-            let mut relabeled_boundary_shortcut = result.clone();
-            relabeled_boundary_shortcut.topology_assembly_report = None;
-            relabeled_boundary_shortcut.region_ownership_report = None;
+            assert!(
+                result
+                    .validate_against_sources(&left, &separated_right)
+                    .is_err(),
+                "{operation:?}: {result:?}"
+            );
             let shortcut = match operation {
                 ExactBooleanOperation::Union => {
                     ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
@@ -15773,6 +15781,9 @@ mod tests {
                 }
                 ExactBooleanOperation::SelectedRegions(_) => unreachable!("named operations only"),
             };
+            let mut relabeled_boundary_shortcut = result.clone();
+            relabeled_boundary_shortcut.topology_assembly_report = None;
+            relabeled_boundary_shortcut.region_ownership_report = None;
             relabeled_boundary_shortcut.replace_kind(ExactBooleanResultKind::CertifiedShortcut {
                 operation,
                 shortcut,
@@ -15783,27 +15794,24 @@ mod tests {
                 Err(ExactReportValidationError::SourceReplayMismatch),
                 "{operation:?}: arrangement result relabeled as closed-boundary shortcut must not replay"
             );
-            assert!(
-                result
-                    .validate_against_sources(&left, &separated_right)
-                    .is_err(),
-                "{operation:?}: {result:?}"
+            let topology = result
+                .topology_assembly_report
+                .as_ref()
+                .expect("arrangement shortcut should retain topology provenance");
+            assert_eq!(
+                topology.status,
+                ExactTopologyAssemblyStatus::Complete,
+                "{operation:?}: {topology:?}"
             );
-            match operation {
-                ExactBooleanOperation::Union => {
-                    assert_eq!(
-                        result.mesh.triangles().len(),
-                        left.triangles().len() + right.triangles().len()
-                    );
-                }
-                ExactBooleanOperation::Intersection => {
-                    assert!(result.mesh.triangles().is_empty());
-                }
-                ExactBooleanOperation::Difference => {
-                    assert!(exact_meshes_have_same_shape(&result.mesh, &left));
-                }
-                ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
-            }
+            let ownership = result
+                .region_ownership_report
+                .as_ref()
+                .expect("arrangement shortcut should retain ownership provenance");
+            assert_eq!(
+                ownership.status,
+                ExactRegionOwnershipStatus::VolumeResolved,
+                "{operation:?}: {ownership:?}"
+            );
         }
     }
 
