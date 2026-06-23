@@ -802,8 +802,20 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     );
     assert_eq!(unprepared_status.retained_candidate_face_pair_count(), None);
     assert_eq!(
+        unprepared_status.retained_broad_phase_traversal_summary(),
+        None
+    );
+    assert_eq!(
         unprepared_status
             .current_candidate_face_pair_count()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    assert_eq!(
+        unprepared_status
+            .current_broad_phase_traversal_summary()
             .unwrap_err()
             .blockers()[0]
             .kind(),
@@ -844,17 +856,29 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         candidate_status.retained_candidate_face_pair_count(),
         Some(retained_candidate_count)
     );
+    let traversal_summary = candidate_status
+        .current_broad_phase_traversal_summary()
+        .unwrap();
+    assert_eq!(traversal_summary.broad_phase_summary(), broad_phase_summary);
+    assert_eq!(
+        traversal_summary.candidate_pair_count(),
+        retained_candidate_count
+    );
+    assert_eq!(
+        candidate_status.retained_broad_phase_traversal_summary(),
+        Some(traversal_summary)
+    );
     assert_eq!(
         candidate_status.retained_broad_phase_rejection_count(),
-        Some(broad_phase_summary.face_pair_product() - retained_candidate_count)
+        Some(traversal_summary.broad_phase_rejection_count())
     );
     assert_eq!(
         candidate_status.retained_candidate_upper_bound_slack(),
-        Some(broad_phase_summary.candidate_pair_upper_bound() - retained_candidate_count)
+        Some(traversal_summary.candidate_upper_bound_slack())
     );
     assert_eq!(
         candidate_status.retained_candidate_upper_bound_saturated(),
-        Some(broad_phase_summary.candidate_pair_upper_bound() == retained_candidate_count)
+        Some(traversal_summary.candidate_upper_bound_saturated())
     );
     candidate_status
         .require_current_candidate_face_pairs()
