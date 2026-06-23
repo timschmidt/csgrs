@@ -743,7 +743,8 @@ fn map_arrangement2d_blocker(blocker: &ExactArrangement2dBlocker) -> ExactArrang
         | ExactArrangement2dBlocker::UnresolvedAngleOrdering { .. }
         | ExactArrangement2dBlocker::UnresolvedFaceArea { .. }
         | ExactArrangement2dBlocker::UnresolvedRingNormalization { .. }
-        | ExactArrangement2dBlocker::UnresolvedOutputLoopContainment { .. } => {
+        | ExactArrangement2dBlocker::UnresolvedOutputLoopContainment { .. }
+        | ExactArrangement2dBlocker::UnresolvedSelectedBoundaryOrdering { .. } => {
             ExactArrangementBlocker::UndecidableOrdering
         }
         ExactArrangement2dBlocker::DegenerateSegment { .. }

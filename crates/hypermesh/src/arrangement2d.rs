@@ -268,6 +268,11 @@ pub(crate) enum ExactArrangement2dBlocker {
     },
     /// Selected cells do not produce a manifold boundary loop graph.
     NonManifoldSelectedBoundary { vertex: usize },
+    /// Exact selected-boundary fragment ordering could not be decided.
+    UnresolvedSelectedBoundaryOrdering {
+        left_start: usize,
+        right_start: usize,
+    },
     /// A selected output loop collapsed during exact simplification.
     DegenerateOutputLoop { loop_index: usize },
     /// A negative output loop was not strictly contained by any positive loop.
@@ -1508,29 +1513,15 @@ fn stitch_selected_boundary_loops(
 
     let mut loops = Vec::new();
     while used.iter().any(|used| !*used) {
-        let Some(start_fragment) = fragment_records
-            .iter()
-            .filter(|fragment| !used[fragment.id])
-            .min_by(|left, right| {
-                compare_point2_lexicographic(
-                    &arrangement.vertices[left.start].point,
-                    &arrangement.vertices[right.start].point,
-                )
-                .value()
-                .unwrap_or(Ordering::Equal)
-                .then_with(|| {
-                    compare_point2_lexicographic(
-                        &arrangement.vertices[left.end].point,
-                        &arrangement.vertices[right.end].point,
-                    )
-                    .value()
-                    .unwrap_or(Ordering::Equal)
-                })
-            })
-            .copied()
-        else {
-            break;
-        };
+        let start_fragment =
+            match select_start_boundary_fragment(&fragment_records, &used, arrangement) {
+                Ok(Some(fragment)) => fragment,
+                Ok(None) => break,
+                Err(blocker) => {
+                    blockers.push(blocker);
+                    return Vec::new();
+                }
+            };
         let start = start_fragment.start;
         let mut current = start;
         let mut fragment = start_fragment;
@@ -1614,6 +1605,53 @@ struct SelectedBoundaryFragment {
     id: usize,
     start: usize,
     end: usize,
+}
+
+fn select_start_boundary_fragment(
+    fragments: &[SelectedBoundaryFragment],
+    used: &[bool],
+    arrangement: &ExactArrangement2d,
+) -> Result<Option<SelectedBoundaryFragment>, ExactArrangement2dBlocker> {
+    let mut selected = None::<SelectedBoundaryFragment>;
+    for &fragment in fragments {
+        if used[fragment.id] {
+            continue;
+        }
+        let Some(current) = selected else {
+            selected = Some(fragment);
+            continue;
+        };
+        let ordering = compare_boundary_fragment_start(fragment, current, arrangement).ok_or(
+            ExactArrangement2dBlocker::UnresolvedSelectedBoundaryOrdering {
+                left_start: fragment.start,
+                right_start: current.start,
+            },
+        )?;
+        if ordering == Ordering::Less {
+            selected = Some(fragment);
+        }
+    }
+    Ok(selected)
+}
+
+fn compare_boundary_fragment_start(
+    left: SelectedBoundaryFragment,
+    right: SelectedBoundaryFragment,
+    arrangement: &ExactArrangement2d,
+) -> Option<Ordering> {
+    let start_order = compare_point2_lexicographic(
+        &arrangement.vertices[left.start].point,
+        &arrangement.vertices[right.start].point,
+    )
+    .value()?;
+    if start_order != Ordering::Equal {
+        return Some(start_order);
+    }
+    compare_point2_lexicographic(
+        &arrangement.vertices[left.end].point,
+        &arrangement.vertices[right.end].point,
+    )
+    .value()
 }
 
 fn select_next_boundary_fragment(

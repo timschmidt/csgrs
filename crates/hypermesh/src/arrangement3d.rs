@@ -3302,7 +3302,8 @@ fn extend_arrangement2d_blockers(
             | ExactArrangement2dBlocker::UnresolvedAngleOrdering { .. }
             | ExactArrangement2dBlocker::UnresolvedFaceArea { .. }
             | ExactArrangement2dBlocker::UnresolvedRingNormalization { .. }
-            | ExactArrangement2dBlocker::UnresolvedOutputLoopContainment { .. } => {
+            | ExactArrangement2dBlocker::UnresolvedOutputLoopContainment { .. }
+            | ExactArrangement2dBlocker::UnresolvedSelectedBoundaryOrdering { .. } => {
                 blockers.push(ExactArrangementBlocker::UndecidableOrdering)
             }
             ExactArrangement2dBlocker::DegenerateSegment { .. }
