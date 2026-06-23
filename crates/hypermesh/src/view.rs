@@ -107,6 +107,7 @@ pub struct PreparedMeshPairView<'pair, 'left, 'right> {
 /// Cheap status for retained facts inside a prepared mesh-pair session.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PreparedMeshPairCacheStatus {
+    source_pair: PreparedMeshPairFactState,
     candidate_pair_plan: PreparedMeshPairPlanKind,
     candidate_pair_capacity_hint: usize,
     broad_phase_summary: PreparedMeshPairBroadPhaseSummary,
@@ -557,6 +558,8 @@ impl PreparedMeshPairResultOutcome {
 pub enum PreparedMeshPairFactState {
     /// The fact has not been computed for this session.
     Missing,
+    /// The retained fact was built for source stamps that no longer match this session.
+    Stale,
     /// The fact is retained but cannot be consumed by cheap certificate checks yet.
     CertificateBlocked,
     /// The fact is retained and its certificate is current for this session.
@@ -656,6 +659,12 @@ impl PreparedMeshPairFactState {
                     "prepared mesh-pair session retained {fact} evidence without a current certificate"
                 ),
             )),
+            Self::Stale => Some(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::StaleFactReplay,
+                format!(
+                    "prepared mesh-pair session retained {fact} evidence for stale source stamps"
+                ),
+            )),
             Self::Current => None,
         }
     }
@@ -668,6 +677,16 @@ impl PreparedMeshPairFactState {
 }
 
 impl PreparedMeshPairCacheStatus {
+    /// Return whether the retained pair source stamps match the current session meshes.
+    pub const fn source_pair(self) -> PreparedMeshPairFactState {
+        self.source_pair
+    }
+
+    /// Require retained pair source stamps to match the current session meshes.
+    pub fn require_current_sources(self) -> Result<(), ExactMeshError> {
+        self.source_pair.require_current("source-pair stamp")
+    }
+
     /// Return the retained broad-phase candidate traversal plan.
     pub const fn candidate_pair_plan(self) -> PreparedMeshPairPlanKind {
         self.candidate_pair_plan
@@ -1426,6 +1445,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     /// Return a cheap summary of retained facts in this prepared pair session.
     pub fn cache_status(&self) -> PreparedMeshPairCacheStatus {
+        let sources_current = self.sources_are_current();
         let candidate_face_pair_count = self.candidate_face_pairs.borrow().as_ref().map(Vec::len);
         let face_pair_classification_counts = *self.face_pair_classification_counts.borrow();
         let graph_counts = *self.intersection_graph_counts.borrow();
@@ -1436,19 +1456,27 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         let difference_retained = self.difference_result.borrow().is_some();
         let xor_retained = self.xor_result.borrow().is_some();
         PreparedMeshPairCacheStatus {
+            source_pair: source_pair_state(sources_current),
             candidate_pair_plan: PreparedMeshPairPlanKind::from_candidate_plan(self.plan),
             candidate_pair_capacity_hint: self.candidate_face_pair_capacity_hint(),
             broad_phase_summary: self.broad_phase_summary,
-            candidate_face_pairs: retained_current_state(candidate_face_pair_count.is_some()),
+            candidate_face_pairs: retained_current_state(
+                candidate_face_pair_count.is_some(),
+                sources_current,
+            ),
             retained_candidate_face_pair_count: candidate_face_pair_count,
             face_pair_classifications: retained_current_state(
                 face_pair_classification_counts.is_some(),
+                sources_current,
             ),
             retained_face_pair_classification_count: face_pair_classification_counts
                 .map(PreparedMeshPairClassificationCounts::face_pair_count),
             retained_face_pair_classification_counts: face_pair_classification_counts,
             intersection_graph: if graph_retained {
-                retained_certificate_state(*self.intersection_graph_validated.borrow())
+                retained_certificate_state(
+                    *self.intersection_graph_validated.borrow(),
+                    sources_current,
+                )
             } else {
                 PreparedMeshPairFactState::Missing
             },
@@ -1457,18 +1485,19 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             retained_intersection_graph_event_count: graph_counts
                 .map(PreparedMeshPairIntersectionGraphCounts::event_count),
             retained_intersection_graph_counts: graph_counts,
-            arrangement: retained_current_state(arrangement_retained),
+            arrangement: retained_current_state(arrangement_retained, sources_current),
             retained_arrangement_counts: *self.arrangement_counts.borrow(),
             arrangement_shortcut_facts: retained_current_state(
                 self.arrangement_shortcut_facts.borrow().is_some(),
+                sources_current,
             ),
-            union_result: retained_current_state(union_retained),
+            union_result: retained_current_state(union_retained, sources_current),
             union_result_outcome: *self.union_result_outcome.borrow(),
-            intersection_result: retained_current_state(intersection_retained),
+            intersection_result: retained_current_state(intersection_retained, sources_current),
             intersection_result_outcome: *self.intersection_result_outcome.borrow(),
-            difference_result: retained_current_state(difference_retained),
+            difference_result: retained_current_state(difference_retained, sources_current),
             difference_result_outcome: *self.difference_result_outcome.borrow(),
-            xor_result: retained_current_state(xor_retained),
+            xor_result: retained_current_state(xor_retained, sources_current),
             xor_result_outcome: *self.xor_result_outcome.borrow(),
         }
     }
@@ -1477,7 +1506,10 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         if self.intersection_graph.borrow().is_none() {
             PreparedMeshPairFactState::Missing
         } else {
-            retained_certificate_state(*self.intersection_graph_validated.borrow())
+            retained_certificate_state(
+                *self.intersection_graph_validated.borrow(),
+                self.sources_are_current(),
+            )
         }
     }
 
@@ -1698,6 +1730,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     pub(crate) fn certify_intersection_graph_source_replay(&self) {
         *self.intersection_graph_validated.borrow_mut() = true;
+    }
+
+    fn sources_are_current(&self) -> bool {
+        self.broad_phase_summary.left_source() == self.left.view.source_stamp()
+            && self.broad_phase_summary.right_source() == self.right.view.source_stamp()
     }
 
     pub(crate) fn arrangement_cell_complex_shortcut_facts(
@@ -1980,16 +2017,34 @@ const fn named_boolean_result_name(operation: ExactBooleanOperation) -> &'static
     }
 }
 
-const fn retained_current_state(retained: bool) -> PreparedMeshPairFactState {
-    if retained {
+const fn source_pair_state(sources_current: bool) -> PreparedMeshPairFactState {
+    if sources_current {
         PreparedMeshPairFactState::Current
     } else {
-        PreparedMeshPairFactState::Missing
+        PreparedMeshPairFactState::Stale
     }
 }
 
-const fn retained_certificate_state(certificate_current: bool) -> PreparedMeshPairFactState {
-    if certificate_current {
+const fn retained_current_state(
+    retained: bool,
+    sources_current: bool,
+) -> PreparedMeshPairFactState {
+    if !retained {
+        PreparedMeshPairFactState::Missing
+    } else if sources_current {
+        PreparedMeshPairFactState::Current
+    } else {
+        PreparedMeshPairFactState::Stale
+    }
+}
+
+const fn retained_certificate_state(
+    certificate_current: bool,
+    sources_current: bool,
+) -> PreparedMeshPairFactState {
+    if !sources_current {
+        PreparedMeshPairFactState::Stale
+    } else if certificate_current {
         PreparedMeshPairFactState::Current
     } else {
         PreparedMeshPairFactState::CertificateBlocked

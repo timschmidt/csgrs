@@ -92,6 +92,18 @@ fn prepared_mesh_pair_materializes_named_operations() {
     let pair = empty.view().prepare_broad_phase_pair(solid.view()).unwrap();
     let initial_status: PreparedMeshPairCacheStatus = pair.cache_status();
     assert_eq!(
+        initial_status.source_pair(),
+        PreparedMeshPairFactState::Current
+    );
+    initial_status.require_current_sources().unwrap();
+    assert_eq!(
+        PreparedMeshPairFactState::Stale
+            .blocker("broad-phase candidate face pairs")
+            .unwrap()
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::StaleFactReplay
+    );
+    assert_eq!(
         initial_status.candidate_pair_plan(),
         PreparedMeshPairPlanKind::Empty
     );
@@ -727,6 +739,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     assert!(prepared_pair.candidate_face_pair_capacity_hint() > 0);
     let unprepared_status = prepared_pair.cache_status();
     let broad_phase_summary = unprepared_status.broad_phase_summary();
+    assert_eq!(
+        unprepared_status.source_pair(),
+        PreparedMeshPairFactState::Current
+    );
     assert_eq!(
         broad_phase_summary.plan(),
         unprepared_status.candidate_pair_plan()
