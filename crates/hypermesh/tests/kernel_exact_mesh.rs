@@ -1257,6 +1257,40 @@ fn prepared_broad_phase_candidate_visitor_can_stop_early() {
 }
 
 #[test]
+fn prepared_pair_candidate_visitor_streams_without_storing_records() {
+    let left = tetra([0, 0, 0]);
+    let right = tetra([0, 0, 0]);
+    let prepared_pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
+
+    let mut visited = 0usize;
+    prepared_pair.visit_candidate_face_pairs(&mut |_| {
+        visited += 1;
+    });
+
+    let status = prepared_pair.cache_status();
+    assert_eq!(
+        status.broad_phase_traversal(),
+        PreparedMeshPairFactState::Current
+    );
+    assert_eq!(
+        status.candidate_face_pairs(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        prepared_pair.current_candidate_face_pair_count().unwrap(),
+        visited
+    );
+    assert_eq!(
+        prepared_pair
+            .with_current_candidate_face_pairs(|pairs| pairs.len())
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+}
+
+#[test]
 fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);

@@ -2137,11 +2137,21 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
-        self.ensure_candidate_face_pairs();
         let candidate_face_pairs = self.candidate_face_pairs.borrow();
-        for &pair in candidate_face_pairs.as_deref().unwrap_or(&[]) {
-            visit(pair)?;
+        if let Some(candidate_face_pairs) = candidate_face_pairs.as_deref() {
+            for &pair in candidate_face_pairs {
+                visit(pair)?;
+            }
+            return Ok(());
         }
+
+        drop(candidate_face_pairs);
+        let mut candidate_pair_count = 0usize;
+        self.try_visit_candidate_face_pairs_uncached(&mut |pair| {
+            candidate_pair_count = candidate_pair_count.saturating_add(1);
+            visit(pair)
+        })?;
+        self.retain_broad_phase_traversal_count(candidate_pair_count);
         Ok(())
     }
 
