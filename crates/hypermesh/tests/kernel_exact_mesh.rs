@@ -1178,6 +1178,13 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
             .kind(),
         hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
     );
+    assert_eq!(
+        pair.with_current_arrangement_view(|view: ArrangementView<'_>| view.vertex_count())
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
     let prepared_arrangement_counts = pair.prepare_arrangement().unwrap();
     assert!(prepared_arrangement_counts.is_complete());
     assert_eq!(
@@ -1205,6 +1212,21 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         })
         .unwrap();
     assert_eq!(prepared_counts, direct_counts);
+    let current_prepared_counts = pair
+        .with_current_arrangement_view(|view: ArrangementView<'_>| {
+            (
+                view.vertex_count(),
+                view.edge_count(),
+                view.face_cell_count(),
+                view.region_count(),
+                view.volume_region_count(),
+                view.volume_adjacency_count(),
+                view.lower_dimensional_artifact_count(),
+                view.blocker_count(),
+            )
+        })
+        .unwrap();
+    assert_eq!(current_prepared_counts, direct_counts);
     let prepared_status = pair.cache_status();
     assert_eq!(
         prepared_status.arrangement(),

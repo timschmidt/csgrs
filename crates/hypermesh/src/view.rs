@@ -1502,6 +1502,22 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         Ok(query(arrangement.view()))
     }
 
+    /// Query a retained arrangement view without rebuilding missing evidence.
+    pub fn with_current_arrangement_view<R>(
+        &self,
+        query: impl for<'a> FnOnce(ArrangementView<'a>) -> R,
+    ) -> Result<R, ExactMeshError> {
+        self.cache_status().require_current_arrangement()?;
+        let arrangement = self.arrangement.borrow();
+        let arrangement = arrangement.as_ref().ok_or_else(|| {
+            ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::MissingRequiredEvidence,
+                "prepared mesh-pair session retained arrangement state without arrangement records",
+            ))
+        })?;
+        Ok(query(arrangement.view()))
+    }
+
     fn retained_arrangement(&self) -> Result<Rc<ExactArrangement>, ExactMeshError> {
         if let Some(arrangement) = self.arrangement.borrow().clone() {
             return Ok(arrangement);
