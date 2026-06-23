@@ -1386,7 +1386,7 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
     Ok(pair.retain_intersection_graph(graph))
 }
 
-/// Build an exact event graph from a retained prepared pair and validate retained event handles.
+/// Build an exact event graph from a retained prepared pair and validate retained source replay.
 pub(crate) fn build_validated_intersection_graph_from_prepared_pair(
     pair: &PreparedMeshPair<'_, '_>,
 ) -> Result<Rc<ExactIntersectionGraph>, ExactMeshError> {
@@ -1398,7 +1398,7 @@ pub(crate) fn build_validated_intersection_graph_from_prepared_pair(
 
     let graph = build_unvalidated_intersection_graph_from_prepared_pair_rc(pair)?;
     graph
-        .validate_against_meshes(pair.left().view().mesh(), pair.right().view().mesh())
+        .validate_against_sources(pair.left().view().mesh(), pair.right().view().mesh())
         .map_err(|error| {
             ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::StaleFactReplay,
@@ -4638,6 +4638,14 @@ mod tests {
         assert!(!prepared_pair.has_retained_arrangement());
         assert!(!prepared_pair.has_retained_union_result());
         assert_eq!(prepared_pair.retained_union_result_outcome(), None);
+        assert_eq!(
+            build_validated_intersection_graph_from_prepared_pair(&prepared_pair)
+                .unwrap_err()
+                .blockers()[0]
+                .kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+        assert!(prepared_pair.intersection_graph_is_certificate_blocked());
         let retained_pair = graph
             .face_pairs
             .iter()
