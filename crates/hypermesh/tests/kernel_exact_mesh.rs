@@ -1,5 +1,5 @@
 use hyperlimit::{Point3, SourceProvenance};
-use hypermesh::{ExactAffineTransform3, ExactMesh, ExactMeshBlocker, ExactMeshError, Triangle};
+use hypermesh::{ExactMesh, ExactMeshBlocker, ExactMeshError, Triangle};
 use hyperreal::Real;
 
 fn p(x: i64, y: i64, z: i64) -> Point3 {
@@ -213,7 +213,12 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
 fn exact_mesh_transform_and_inverse_replay_retained_state() {
     let mesh = tetra([0, 0, 0]);
     let translated = mesh
-        .transform(&ExactAffineTransform3::translation(p(2, -3, 5)))
+        .transform([
+            [Real::from(1), Real::from(0), Real::from(0), Real::from(2)],
+            [Real::from(0), Real::from(1), Real::from(0), Real::from(-3)],
+            [Real::from(0), Real::from(0), Real::from(1), Real::from(5)],
+            [Real::from(0), Real::from(0), Real::from(0), Real::from(1)],
+        ])
         .unwrap();
 
     translated.validate_retained_state().unwrap();
@@ -221,14 +226,12 @@ fn exact_mesh_transform_and_inverse_replay_retained_state() {
     assert_eq!(translated.triangles(), mesh.triangles());
 
     let reflected = mesh
-        .transform(&ExactAffineTransform3::from_rows(
-            [
-                [Real::from(-1), Real::from(0), Real::from(0)],
-                [Real::from(0), Real::from(1), Real::from(0)],
-                [Real::from(0), Real::from(0), Real::from(1)],
-            ],
-            [Real::from(0), Real::from(0), Real::from(0)],
-        ))
+        .transform([
+            [Real::from(-1), Real::from(0), Real::from(0), Real::from(0)],
+            [Real::from(0), Real::from(1), Real::from(0), Real::from(0)],
+            [Real::from(0), Real::from(0), Real::from(1), Real::from(0)],
+            [Real::from(0), Real::from(0), Real::from(0), Real::from(1)],
+        ])
         .unwrap();
 
     reflected.validate_retained_state().unwrap();
@@ -243,15 +246,22 @@ fn exact_mesh_transform_and_inverse_replay_retained_state() {
 #[test]
 fn exact_mesh_borrowed_view_transform_and_inverse_replay_retained_state() {
     let mesh = tetra([0, 0, 0]);
-    let transform = ExactAffineTransform3::translation(p(2, 3, 5));
 
-    let translated = mesh.view().transform(&transform).unwrap();
+    let translated = mesh
+        .view()
+        .transform([
+            [Real::from(1), Real::from(0), Real::from(0), Real::from(2)],
+            [Real::from(0), Real::from(1), Real::from(0), Real::from(3)],
+            [Real::from(0), Real::from(0), Real::from(1), Real::from(5)],
+            [Real::from(0), Real::from(0), Real::from(0), Real::from(1)],
+        ])
+        .unwrap();
     translated.validate_retained_state().unwrap();
     assert_eq!(translated.vertices()[0], p(2, 3, 5));
 
     let shifted = mesh
         .view()
-        .transform_by([
+        .transform([
             [Real::from(1), Real::from(0), Real::from(0), Real::from(4)],
             [Real::from(0), Real::from(1), Real::from(0), Real::from(0)],
             [Real::from(0), Real::from(0), Real::from(1), Real::from(0)],
@@ -267,10 +277,10 @@ fn exact_mesh_borrowed_view_transform_and_inverse_replay_retained_state() {
 }
 
 #[test]
-fn exact_mesh_transform_by_accepts_homogeneous_affine_rows() {
+fn exact_mesh_transform_accepts_homogeneous_affine_rows() {
     let mesh = tetra([0, 0, 0]);
     let transformed = mesh
-        .transform_by([
+        .transform([
             [Real::from(1), Real::from(0), Real::from(0), Real::from(4)],
             [Real::from(0), Real::from(1), Real::from(0), Real::from(5)],
             [Real::from(0), Real::from(0), Real::from(1), Real::from(6)],
@@ -283,10 +293,10 @@ fn exact_mesh_transform_by_accepts_homogeneous_affine_rows() {
 }
 
 #[test]
-fn exact_mesh_transform_by_rejects_non_affine_homogeneous_rows() {
+fn exact_mesh_transform_rejects_non_affine_homogeneous_rows() {
     let mesh = tetra([0, 0, 0]);
     let error = mesh
-        .transform_by([
+        .transform([
             [Real::from(1), Real::from(0), Real::from(0), Real::from(0)],
             [Real::from(0), Real::from(1), Real::from(0), Real::from(0)],
             [Real::from(0), Real::from(0), Real::from(1), Real::from(0)],

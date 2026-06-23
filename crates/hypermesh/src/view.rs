@@ -2,7 +2,7 @@
 
 use super::bounds::PreparedMeshBounds;
 use super::error::ExactMeshError;
-use super::mesh::{ExactAffineTransform3, Triangle};
+use super::mesh::Triangle;
 use super::{ExactMesh, ExactMeshValidationError};
 use hyperlimit::Point3;
 use hyperreal::Real;
@@ -190,14 +190,9 @@ impl<'a> ExactMeshRef<'a> {
         Ok(())
     }
 
-    /// Materialize this view after an exact affine transform.
-    pub fn transform(self, transform: &ExactAffineTransform3) -> Result<ExactMesh, ExactMeshError> {
-        self.mesh.transform(transform)
-    }
-
     /// Materialize this view after a row-major exact homogeneous affine transform.
-    pub fn transform_by(self, matrix: [[Real; 4]; 4]) -> Result<ExactMesh, ExactMeshError> {
-        self.mesh.transform_by(matrix)
+    pub fn transform(self, matrix: [[Real; 4]; 4]) -> Result<ExactMesh, ExactMeshError> {
+        self.mesh.transform(matrix)
     }
 
     /// Materialize this view with every triangle orientation reversed.

@@ -27,53 +27,14 @@ use std::cmp::Ordering;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Triangle(pub [usize; 3]);
 
-/// Exact row-major affine transform for [`ExactMesh`] vertices.
-///
-/// The transform evaluates
-/// `linear * [x, y, z]^T + translation` with `hyperreal::Real` arithmetic.
-/// A negative linear determinant reverses triangle winding so transformed
-/// closed shells keep their outside orientation.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactAffineTransform3 {
+pub(crate) struct ExactAffineTransform3 {
     linear: [[Real; 3]; 3],
     translation: [Real; 3],
 }
 
 impl ExactAffineTransform3 {
-    /// Identity transform.
-    pub fn identity() -> Self {
-        Self::from_rows(
-            [
-                [Real::one(), Real::zero(), Real::zero()],
-                [Real::zero(), Real::one(), Real::zero()],
-                [Real::zero(), Real::zero(), Real::one()],
-            ],
-            [Real::zero(), Real::zero(), Real::zero()],
-        )
-    }
-
-    /// Exact translation.
-    pub fn translation(offset: Point3) -> Self {
-        Self::from_rows(
-            [
-                [Real::one(), Real::zero(), Real::zero()],
-                [Real::zero(), Real::one(), Real::zero()],
-                [Real::zero(), Real::zero(), Real::one()],
-            ],
-            [offset.x, offset.y, offset.z],
-        )
-    }
-
-    /// Build from row-major linear rows and translation.
-    pub const fn from_rows(linear: [[Real; 3]; 3], translation: [Real; 3]) -> Self {
-        Self {
-            linear,
-            translation,
-        }
-    }
-
-    /// Build from a row-major affine 4x4 homogeneous matrix.
-    pub fn from_homogeneous_rows(matrix: [[Real; 4]; 4]) -> Result<Self, ExactMeshError> {
+    pub(crate) fn from_homogeneous_rows(matrix: [[Real; 4]; 4]) -> Result<Self, ExactMeshError> {
         let [
             [m00, m01, m02, tx],
             [m10, m11, m12, ty],
@@ -86,24 +47,13 @@ impl ExactAffineTransform3 {
                 "homogeneous mesh transform must be affine with final row [0, 0, 0, 1]",
             )));
         }
-        Ok(Self::from_rows(
-            [[m00, m01, m02], [m10, m11, m12], [m20, m21, m22]],
-            [tx, ty, tz],
-        ))
+        Ok(Self {
+            linear: [[m00, m01, m02], [m10, m11, m12], [m20, m21, m22]],
+            translation: [tx, ty, tz],
+        })
     }
 
-    /// Return row-major linear coefficients.
-    pub const fn linear(&self) -> &[[Real; 3]; 3] {
-        &self.linear
-    }
-
-    /// Return translation coefficients.
-    pub const fn translation_terms(&self) -> &[Real; 3] {
-        &self.translation
-    }
-
-    /// Apply this transform to one exact point.
-    pub fn transform_point(&self, point: &Point3) -> Point3 {
+    pub(crate) fn transform_point(&self, point: &Point3) -> Point3 {
         Point3::new(
             transformed_coordinate(&self.linear[0], point, &self.translation[0]),
             transformed_coordinate(&self.linear[1], point, &self.translation[1]),
@@ -645,8 +595,16 @@ impl ExactMesh {
         Ok(query(arrangement.view()))
     }
 
-    /// Materialize this mesh after an exact affine transform.
-    pub fn transform(
+    /// Materialize this mesh after a row-major exact homogeneous affine transform.
+    ///
+    /// The matrix must have final row `[0, 0, 0, 1]`. A negative linear
+    /// determinant reverses triangle winding so transformed closed shells keep
+    /// their outside orientation.
+    pub fn transform(&self, matrix: [[Real; 4]; 4]) -> Result<ExactMesh, ExactMeshError> {
+        self.transform_affine(&ExactAffineTransform3::from_homogeneous_rows(matrix)?)
+    }
+
+    fn transform_affine(
         &self,
         transform: &ExactAffineTransform3,
     ) -> Result<ExactMesh, ExactMeshError> {
@@ -665,11 +623,6 @@ impl ExactMesh {
             SourceProvenance::exact("exact affine mesh transform"),
             self.validation_policy,
         )
-    }
-
-    /// Materialize this mesh after a row-major exact homogeneous affine transform.
-    pub fn transform_by(&self, matrix: [[Real; 4]; 4]) -> Result<ExactMesh, ExactMeshError> {
-        self.transform(&ExactAffineTransform3::from_homogeneous_rows(matrix)?)
     }
 
     /// Materialize this mesh with every triangle orientation reversed.

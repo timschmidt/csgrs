@@ -31,8 +31,7 @@ downstream CSG layers.
 `ExactMesh` is the entry point: it owns exact vertices, triangle topology,
 validation facts, bounds, and construction provenance. It also carries the
 convenience methods downstream CSG layers need: `union`, `intersection`,
-`difference`, `xor`, `transform`, `transform_by`, `inverse`, and
-`with_arrangement_view`.
+`difference`, `xor`, `transform`, `inverse`, and `with_arrangement_view`.
 
 Supporting root exports are deliberately small. `Triangle` is the construction
 index row, while `ExactMeshError`/`ExactMeshBlocker` report invalid input,
