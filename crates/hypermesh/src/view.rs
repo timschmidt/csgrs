@@ -62,6 +62,10 @@ pub struct PreparedMeshPair<'left, 'right> {
     face_pair_classifications: RefCell<Option<Vec<MeshFacePairClassification>>>,
     intersection_graph: RefCell<Option<ExactIntersectionGraph>>,
     arrangement_shortcut_facts: RefCell<Option<ExactArrangementCellComplexShortcutFacts>>,
+    union_result: RefCell<Option<Result<ExactMesh, ExactMeshError>>>,
+    intersection_result: RefCell<Option<Result<ExactMesh, ExactMeshError>>>,
+    difference_result: RefCell<Option<Result<ExactMesh, ExactMeshError>>>,
+    xor_result: RefCell<Option<Result<ExactMesh, ExactMeshError>>>,
 }
 
 /// Borrowed prepared pair view with retained broad-phase pair planning.
@@ -79,6 +83,10 @@ pub struct PreparedMeshPairCacheStatus {
     retains_face_pair_classifications: bool,
     retains_intersection_graph: bool,
     retains_arrangement_shortcut_facts: bool,
+    retains_union_result: bool,
+    retains_intersection_result: bool,
+    retains_difference_result: bool,
+    retains_xor_result: bool,
 }
 
 impl PreparedMeshPairCacheStatus {
@@ -100,6 +108,26 @@ impl PreparedMeshPairCacheStatus {
     /// Return whether arrangement shortcut facts have been retained.
     pub const fn retains_arrangement_shortcut_facts(self) -> bool {
         self.retains_arrangement_shortcut_facts
+    }
+
+    /// Return whether the prepared union result or error has been retained.
+    pub const fn retains_union_result(self) -> bool {
+        self.retains_union_result
+    }
+
+    /// Return whether the prepared intersection result or error has been retained.
+    pub const fn retains_intersection_result(self) -> bool {
+        self.retains_intersection_result
+    }
+
+    /// Return whether the prepared difference result or error has been retained.
+    pub const fn retains_difference_result(self) -> bool {
+        self.retains_difference_result
+    }
+
+    /// Return whether the prepared symmetric-difference result or error has been retained.
+    pub const fn retains_xor_result(self) -> bool {
+        self.retains_xor_result
     }
 }
 
@@ -371,6 +399,10 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             face_pair_classifications: RefCell::new(None),
             intersection_graph: RefCell::new(None),
             arrangement_shortcut_facts: RefCell::new(None),
+            union_result: RefCell::new(None),
+            intersection_result: RefCell::new(None),
+            difference_result: RefCell::new(None),
+            xor_result: RefCell::new(None),
         }
     }
 
@@ -405,6 +437,10 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             retains_face_pair_classifications: self.face_pair_classifications.borrow().is_some(),
             retains_intersection_graph: self.intersection_graph.borrow().is_some(),
             retains_arrangement_shortcut_facts: self.arrangement_shortcut_facts.borrow().is_some(),
+            retains_union_result: self.union_result.borrow().is_some(),
+            retains_intersection_result: self.intersection_result.borrow().is_some(),
+            retains_difference_result: self.difference_result.borrow().is_some(),
+            retains_xor_result: self.xor_result.borrow().is_some(),
         }
     }
 
@@ -487,25 +523,65 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     /// Materialize the exact closed symmetric difference of the prepared meshes.
     pub fn xor(&self) -> Result<ExactMesh, ExactMeshError> {
-        let left_only = self.difference()?;
-        let reverse_pair = self
-            .right
-            .view()
-            .prepare_broad_phase_pair(self.left.view())?;
-        let right_only = reverse_pair.difference()?;
-        let union_pair = left_only
-            .view()
-            .prepare_broad_phase_pair(right_only.view())?;
-        union_pair.union()
+        if let Some(result) = self.xor_result.borrow().clone() {
+            return result;
+        }
+
+        let result = (|| {
+            let left_only = self.difference()?;
+            let reverse_pair = self
+                .right
+                .view()
+                .prepare_broad_phase_pair(self.left.view())?;
+            let right_only = reverse_pair.difference()?;
+            let union_pair = left_only
+                .view()
+                .prepare_broad_phase_pair(right_only.view())?;
+            union_pair.union()
+        })();
+        *self.xor_result.borrow_mut() = Some(result.clone());
+        result
     }
 
     fn named_boolean_mesh(
         &self,
         operation: ExactBooleanOperation,
     ) -> Result<ExactMesh, ExactMeshError> {
+        if let Some(result) = self.cached_named_boolean_mesh(operation) {
+            return result;
+        }
+
         let request = ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::CLOSED);
-        materialize_boolean_exact_request_with_prepared_pair(self, request)
-            .map(|result| result.into_mesh())
+        let result = materialize_boolean_exact_request_with_prepared_pair(self, request)
+            .map(|result| result.into_mesh());
+        self.retain_named_boolean_mesh(operation, &result);
+        result
+    }
+
+    fn cached_named_boolean_mesh(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> Option<Result<ExactMesh, ExactMeshError>> {
+        match operation {
+            ExactBooleanOperation::Union => self.union_result.borrow().clone(),
+            ExactBooleanOperation::Intersection => self.intersection_result.borrow().clone(),
+            ExactBooleanOperation::Difference => self.difference_result.borrow().clone(),
+            ExactBooleanOperation::SelectedRegions(_) => None,
+        }
+    }
+
+    fn retain_named_boolean_mesh(
+        &self,
+        operation: ExactBooleanOperation,
+        result: &Result<ExactMesh, ExactMeshError>,
+    ) {
+        let target = match operation {
+            ExactBooleanOperation::Union => &self.union_result,
+            ExactBooleanOperation::Intersection => &self.intersection_result,
+            ExactBooleanOperation::Difference => &self.difference_result,
+            ExactBooleanOperation::SelectedRegions(_) => return,
+        };
+        *target.borrow_mut() = Some(result.clone());
     }
 
     /// Visit certificate-validated broad-phase candidate face pairs using the cached pair plan.

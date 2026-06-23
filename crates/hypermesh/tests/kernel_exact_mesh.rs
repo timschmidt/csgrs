@@ -94,6 +94,10 @@ fn prepared_mesh_pair_materializes_named_operations() {
     assert!(!initial_status.retains_face_pair_classifications());
     assert!(!initial_status.retains_intersection_graph());
     assert!(!initial_status.retains_arrangement_shortcut_facts());
+    assert!(!initial_status.retains_union_result());
+    assert!(!initial_status.retains_intersection_result());
+    assert!(!initial_status.retains_difference_result());
+    assert!(!initial_status.retains_xor_result());
 
     let union = pair.union().unwrap();
     union.validate_retained_state().unwrap();
@@ -102,6 +106,10 @@ fn prepared_mesh_pair_materializes_named_operations() {
     assert!(retained_status.retains_face_pair_classifications());
     assert!(retained_status.retains_intersection_graph());
     assert!(retained_status.retains_arrangement_shortcut_facts());
+    assert!(retained_status.retains_union_result());
+    assert!(!retained_status.retains_intersection_result());
+    assert!(!retained_status.retains_difference_result());
+    assert!(!retained_status.retains_xor_result());
 
     let repeated_union = pair.union().unwrap();
     repeated_union.validate_retained_state().unwrap();
@@ -110,15 +118,23 @@ fn prepared_mesh_pair_materializes_named_operations() {
     let intersection = pair.intersection().unwrap();
     intersection.validate_retained_state().unwrap();
     assert_eq!(intersection.triangle_count(), 0);
-    assert_eq!(pair.cache_status(), retained_status);
+    let intersection_status = pair.cache_status();
+    assert!(intersection_status.retains_union_result());
+    assert!(intersection_status.retains_intersection_result());
+    assert!(!intersection_status.retains_difference_result());
+    assert!(!intersection_status.retains_xor_result());
 
     let difference = pair.difference().unwrap();
     difference.validate_retained_state().unwrap();
     assert_eq!(difference.triangle_count(), 0);
+    let difference_status = pair.cache_status();
+    assert!(difference_status.retains_difference_result());
+    assert!(!difference_status.retains_xor_result());
 
     let xor = pair.xor().unwrap();
     xor.validate_retained_state().unwrap();
     assert_eq!(xor.triangle_count(), solid.triangle_count());
+    assert!(pair.cache_status().retains_xor_result());
 
     let repeated_xor = pair.xor().unwrap();
     repeated_xor.validate_retained_state().unwrap();
