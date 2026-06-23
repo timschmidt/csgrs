@@ -1224,6 +1224,29 @@ impl<'a> EdgeRef<'a> {
         self.mesh.facts().edges[self.index].vertices
     }
 
+    /// Borrow the edge endpoint vertices.
+    pub fn vertex_refs(self) -> [VertexRef<'a>; 2] {
+        let [a, b] = self.vertex_indices();
+        [
+            VertexRef {
+                mesh: self.mesh,
+                index: a,
+            },
+            VertexRef {
+                mesh: self.mesh,
+                index: b,
+            },
+        ]
+    }
+
+    /// Return exact endpoint bounds as min/max corners.
+    pub fn bounds(self) -> (Point3, Point3) {
+        let [a, b] = self.vertices();
+        let bounds = ExactAabb3::from_points(&[a.clone(), b.clone()])
+            .expect("edge reference must have two endpoint points");
+        (bounds.min, bounds.max)
+    }
+
     /// Retained incident face count.
     pub fn incident_face_count(self) -> usize {
         self.mesh.facts().edges[self.index].incident_faces

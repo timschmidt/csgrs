@@ -469,6 +469,11 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(edge.incident_face_count(), 2);
     assert_eq!(edge.directed_use_counts(), [1, 1]);
     assert!(edge.is_closed_manifold_edge());
+    assert_eq!(
+        edge.vertex_refs().map(VertexRef::index),
+        edge.vertex_indices()
+    );
+    assert_eq!(edge.bounds(), (p(0, 0, 0), p(1, 0, 0)));
     assert_eq!(edge.vertices().len(), 2);
 
     let prepared = view.prepare_broad_phase().unwrap();
