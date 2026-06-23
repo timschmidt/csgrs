@@ -1556,7 +1556,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             .borrow()
             .as_ref()
             .copied()
-            .unwrap_or_default()
+            .expect("prepared mesh-pair session did not retain face-pair classification counts after preparation")
     }
 
     /// Return a cheap summary of retained facts in this prepared pair session.
