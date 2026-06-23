@@ -84,9 +84,13 @@ pub struct PreparedMeshPair<'left, 'right> {
     arrangement_counts: RefCell<Option<PreparedMeshPairArrangementCounts>>,
     arrangement_shortcut_facts: RefCell<Option<ExactArrangementCellComplexShortcutFacts>>,
     union_result: RefCell<Option<Result<ExactMesh, ExactMeshError>>>,
+    union_result_outcome: RefCell<Option<PreparedMeshPairResultOutcome>>,
     intersection_result: RefCell<Option<Result<ExactMesh, ExactMeshError>>>,
+    intersection_result_outcome: RefCell<Option<PreparedMeshPairResultOutcome>>,
     difference_result: RefCell<Option<Result<ExactMesh, ExactMeshError>>>,
+    difference_result_outcome: RefCell<Option<PreparedMeshPairResultOutcome>>,
     xor_result: RefCell<Option<Result<ExactMesh, ExactMeshError>>>,
+    xor_result_outcome: RefCell<Option<PreparedMeshPairResultOutcome>>,
 }
 
 /// Borrowed prepared pair view with retained broad-phase pair planning.
@@ -949,9 +953,13 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             arrangement_counts: RefCell::new(None),
             arrangement_shortcut_facts: RefCell::new(None),
             union_result: RefCell::new(None),
+            union_result_outcome: RefCell::new(None),
             intersection_result: RefCell::new(None),
+            intersection_result_outcome: RefCell::new(None),
             difference_result: RefCell::new(None),
+            difference_result_outcome: RefCell::new(None),
             xor_result: RefCell::new(None),
+            xor_result_outcome: RefCell::new(None),
         }
     }
 
@@ -1007,10 +1015,10 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         let graph_counts = *self.intersection_graph_counts.borrow();
         let graph_retained = self.intersection_graph.borrow().is_some();
         let arrangement_retained = self.arrangement.borrow().is_some();
-        let union_result = self.union_result.borrow();
-        let intersection_result = self.intersection_result.borrow();
-        let difference_result = self.difference_result.borrow();
-        let xor_result = self.xor_result.borrow();
+        let union_retained = self.union_result.borrow().is_some();
+        let intersection_retained = self.intersection_result.borrow().is_some();
+        let difference_retained = self.difference_result.borrow().is_some();
+        let xor_retained = self.xor_result.borrow().is_some();
         PreparedMeshPairCacheStatus {
             candidate_pair_plan: PreparedMeshPairPlanKind::from_candidate_plan(self.plan),
             candidate_pair_capacity_hint: self.candidate_face_pair_capacity_hint(),
@@ -1034,22 +1042,14 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             arrangement_shortcut_facts: retained_current_state(
                 self.arrangement_shortcut_facts.borrow().is_some(),
             ),
-            union_result: retained_current_state(union_result.is_some()),
-            union_result_outcome: union_result
-                .as_ref()
-                .map(PreparedMeshPairResultOutcome::from_result),
-            intersection_result: retained_current_state(intersection_result.is_some()),
-            intersection_result_outcome: intersection_result
-                .as_ref()
-                .map(PreparedMeshPairResultOutcome::from_result),
-            difference_result: retained_current_state(difference_result.is_some()),
-            difference_result_outcome: difference_result
-                .as_ref()
-                .map(PreparedMeshPairResultOutcome::from_result),
-            xor_result: retained_current_state(xor_result.is_some()),
-            xor_result_outcome: xor_result
-                .as_ref()
-                .map(PreparedMeshPairResultOutcome::from_result),
+            union_result: retained_current_state(union_retained),
+            union_result_outcome: *self.union_result_outcome.borrow(),
+            intersection_result: retained_current_state(intersection_retained),
+            intersection_result_outcome: *self.intersection_result_outcome.borrow(),
+            difference_result: retained_current_state(difference_retained),
+            difference_result_outcome: *self.difference_result_outcome.borrow(),
+            xor_result: retained_current_state(xor_retained),
+            xor_result_outcome: *self.xor_result_outcome.borrow(),
         }
     }
 
@@ -1275,7 +1275,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
                 .prepare_broad_phase_pair(right_only.view())?;
             union_pair.union()
         })();
-        *self.xor_result.borrow_mut() = Some(result.clone());
+        retain_boolean_result(&self.xor_result, &self.xor_result_outcome, &result);
         result
     }
 
@@ -1328,12 +1328,16 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         result: &Result<ExactMesh, ExactMeshError>,
     ) {
         let target = match operation {
-            ExactBooleanOperation::Union => &self.union_result,
-            ExactBooleanOperation::Intersection => &self.intersection_result,
-            ExactBooleanOperation::Difference => &self.difference_result,
+            ExactBooleanOperation::Union => (&self.union_result, &self.union_result_outcome),
+            ExactBooleanOperation::Intersection => {
+                (&self.intersection_result, &self.intersection_result_outcome)
+            }
+            ExactBooleanOperation::Difference => {
+                (&self.difference_result, &self.difference_result_outcome)
+            }
             ExactBooleanOperation::SelectedRegions(_) => return,
         };
-        *target.borrow_mut() = Some(result.clone());
+        retain_boolean_result(target.0, target.1, result);
     }
 
     /// Visit certificate-validated broad-phase candidate face pairs using the cached pair plan.
@@ -1377,6 +1381,15 @@ fn missing_retained_result(fact: &'static str) -> Result<ExactMesh, ExactMeshErr
         ExactMeshBlockerKind::MissingRequiredEvidence,
         format!("prepared mesh-pair session is missing retained {fact} evidence"),
     )))
+}
+
+fn retain_boolean_result(
+    result_slot: &RefCell<Option<Result<ExactMesh, ExactMeshError>>>,
+    outcome_slot: &RefCell<Option<PreparedMeshPairResultOutcome>>,
+    result: &Result<ExactMesh, ExactMeshError>,
+) {
+    *outcome_slot.borrow_mut() = Some(PreparedMeshPairResultOutcome::from_result(result));
+    *result_slot.borrow_mut() = Some(result.clone());
 }
 
 const fn named_boolean_result_name(operation: ExactBooleanOperation) -> &'static str {
