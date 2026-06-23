@@ -187,13 +187,41 @@ impl ExactMeshSourceStamp {
         Self {
             source: provenance.source.source,
             approximation: provenance.source.approximation,
-            source_identity: source_provenance_identity(provenance),
+            source_identity: exact_mesh_source_identity(mesh),
             construction_version: provenance.construction_version,
             vertex_count: mesh.facts().mesh.vertex_count,
             edge_count: mesh.facts().mesh.edge_count,
             face_count: mesh.facts().mesh.face_count,
         }
     }
+}
+
+fn exact_mesh_source_identity(mesh: &ExactMesh) -> u64 {
+    let facts = &mesh.facts().mesh;
+    let mut hash = source_provenance_identity(mesh.provenance());
+
+    hash = fnv1a_u64(hash, facts.vertex_count as u64);
+    hash = fnv1a_u64(hash, facts.face_count as u64);
+    hash = fnv1a_u64(hash, facts.edge_count as u64);
+    hash = fnv1a_u64(hash, facts.euler_characteristic as i64 as u64);
+    hash = fnv1a_u64(hash, facts.boundary_edges as u64);
+    hash = fnv1a_u64(hash, facts.non_manifold_edges as u64);
+    hash = fnv1a_u64(hash, facts.duplicate_directed_edges as u64);
+    hash = fnv1a_u64(hash, facts.degenerate_triangles as u64);
+    hash = fnv1a_u64(hash, facts.non_manifold_vertices as u64);
+    hash = fnv1a_u64(hash, facts.closed_manifold as u64);
+    hash = fnv1a_u64(hash, facts.fixed_coordinates_exact_rational as u64);
+
+    for vertex in mesh.vertices() {
+        hash = fnv1a_point3(hash, vertex);
+    }
+    for triangle in mesh.triangles() {
+        hash = fnv1a_u64(hash, triangle.0[0] as u64);
+        hash = fnv1a_u64(hash, triangle.0[1] as u64);
+        hash = fnv1a_u64(hash, triangle.0[2] as u64);
+    }
+
+    hash
 }
 
 fn source_provenance_identity(provenance: &hyperlimit::ConstructionProvenance) -> u64 {
@@ -203,7 +231,28 @@ fn source_provenance_identity(provenance: &hyperlimit::ConstructionProvenance) -
         hash,
         approximation_policy_tag(provenance.source.approximation),
     );
-    for &byte in provenance.source.label.as_bytes() {
+    fnv1a_str(hash, provenance.source.label.as_str())
+}
+
+fn fnv1a_point3(mut hash: u64, point: &Point3) -> u64 {
+    hash = fnv1a_real(hash, &point.x);
+    hash = fnv1a_real(hash, &point.y);
+    fnv1a_real(hash, &point.z)
+}
+
+fn fnv1a_real(hash: u64, value: &Real) -> u64 {
+    if let Some(rational) = value.exact_rational_ref() {
+        let hash = fnv1a_u64(hash, 0x524154);
+        fnv1a_str(hash, &rational.to_string())
+    } else {
+        let hash = fnv1a_u64(hash, 0x5245414c);
+        fnv1a_str(hash, &format!("{value:?}"))
+    }
+}
+
+fn fnv1a_str(mut hash: u64, text: &str) -> u64 {
+    hash = fnv1a_u64(hash, text.len() as u64);
+    for &byte in text.as_bytes() {
         hash = fnv1a_u8(hash, byte);
     }
     hash
