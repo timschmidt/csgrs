@@ -1234,9 +1234,9 @@ fn build_unvalidated_intersection_graph_from_replayed_bounds(
         return Ok(ExactIntersectionGraph { face_pairs });
     }
 
-    let prepared_left = left.view().prepare_broad_phase_after_replay();
-    let prepared_right = right.view().prepare_broad_phase_after_replay();
-    let pair = prepared_left.pair_with(&prepared_right);
+    let pair = left
+        .view()
+        .prepare_broad_phase_pair_after_replay(right.view());
     let mut face_pairs = Vec::with_capacity(pair.candidate_face_pair_capacity_hint());
     pair.try_visit_candidate_face_pairs(&mut |[left_face, right_face]| {
         let classification = classify_mesh_face_pair_unchecked(left, left_face, right, right_face);

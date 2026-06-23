@@ -207,6 +207,16 @@ impl<'a> ExactMeshRef<'a> {
         Ok(PreparedMeshPair::new(left, right))
     }
 
+    pub(crate) fn prepare_broad_phase_pair_after_replay<'b>(
+        self,
+        right: ExactMeshRef<'b>,
+    ) -> PreparedMeshPair<'a, 'b> {
+        PreparedMeshPair::new(
+            self.prepare_broad_phase_after_replay(),
+            right.prepare_broad_phase_after_replay(),
+        )
+    }
+
     pub(crate) fn prepare_broad_phase_after_replay(self) -> PreparedMeshView<'a> {
         PreparedMeshView {
             view: self,
