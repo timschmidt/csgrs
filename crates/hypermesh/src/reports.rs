@@ -2382,7 +2382,9 @@ const fn shortcut_operation_matches(
 }
 
 fn meshes_are_certified_bounds_disjoint(left: &ExactMesh, right: &ExactMesh) -> bool {
-    if left.validate_retained_bounds().is_err() || right.validate_retained_bounds().is_err() {
+    if left.validate_retained_bounds_certificate().is_err()
+        || right.validate_retained_bounds_certificate().is_err()
+    {
         return false;
     }
     let (Some(left_bounds), Some(right_bounds)) = (left.bounds().mesh(), right.bounds().mesh())
