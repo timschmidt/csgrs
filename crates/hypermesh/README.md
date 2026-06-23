@@ -95,18 +95,19 @@ The exact-facing path is the preferred boundary for new code:
 ```rust,ignore
 use hypermesh::ExactMesh;
 
-let mesh = ExactMesh::from_i64_triangles_allow_boundary(
+let mesh = ExactMesh::from_i64_triangles(
     &[
         0, 0, 0,
         1, 0, 0,
         0, 1, 0,
+        0, 0, 1,
     ],
-    &[0, 1, 2],
+    &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
 )?;
 
 let view = mesh.view();
-assert_eq!(view.face_count(), 1);
-assert_eq!(view.boundary_edge_count(), 3);
+assert_eq!(view.face_count(), 4);
+assert!(view.is_closed_manifold());
 mesh.validate_retained_state()?;
 ```
 
