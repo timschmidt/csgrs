@@ -5468,6 +5468,32 @@ fn materialize_boolean_exact_request_with_graph(
     if let Some(graph) = owned_graph.as_ref() {
         return materialize_boolean_exact_request_from_ready_graph(graph, left, right, request);
     }
+    if let Some(pair) = prepared_pair
+        && let Some(arrangement) = pair.cached_arrangement()
+    {
+        let graph = graph_for_certified_materialization_with_prepared(
+            retained_graph,
+            &mut owned_graph,
+            &mut prepared_graph,
+            prepared_pair,
+            left,
+            right,
+        )?;
+        let shortcut_facts = arrangement_shortcut_facts_for_request(prepared_pair, left, right);
+        if let Some(result) =
+            materialize_certified_arrangement_cell_complex_support_with_arrangement(
+                left,
+                right,
+                request,
+                Some(graph),
+                Some(arrangement.as_ref()),
+                None,
+                &shortcut_facts,
+            )?
+        {
+            return Ok(result);
+        }
+    }
     if let Some(graph) = prepared_graph.as_deref() {
         return materialize_boolean_exact_request_from_ready_graph(graph, left, right, request);
     }

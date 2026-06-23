@@ -1886,6 +1886,10 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.intersection_graph.borrow().clone()
     }
 
+    pub(crate) fn cached_arrangement(&self) -> Option<Rc<ExactArrangement>> {
+        self.arrangement.borrow().clone()
+    }
+
     pub(crate) fn retain_intersection_graph(
         &self,
         graph: ExactIntersectionGraph,

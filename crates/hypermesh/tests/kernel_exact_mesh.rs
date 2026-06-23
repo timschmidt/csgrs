@@ -1453,6 +1453,35 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
 }
 
 #[test]
+fn prepared_pair_named_boolean_preserves_retained_arrangement() {
+    let left = tetra([0, 0, 0]);
+    let right = tetra([1, 0, 0]);
+    let pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
+
+    let arrangement_counts = pair.prepare_arrangement().unwrap();
+    assert_eq!(
+        pair.cache_status().arrangement(),
+        PreparedMeshPairFactState::Current
+    );
+
+    let intersection_outcome = pair.prepare_intersection_result().unwrap();
+    let status = pair.cache_status();
+    assert_eq!(status.arrangement(), PreparedMeshPairFactState::Current);
+    assert_eq!(
+        status.current_arrangement_counts().unwrap(),
+        arrangement_counts
+    );
+    assert_eq!(
+        status.intersection_result(),
+        PreparedMeshPairFactState::Current
+    );
+    assert_eq!(
+        status.current_intersection_result_outcome().unwrap(),
+        intersection_outcome
+    );
+}
+
+#[test]
 fn exact_mesh_transform_and_inverse_replay_retained_state() {
     let mesh = tetra([0, 0, 0]);
     let translated = mesh
