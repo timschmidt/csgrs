@@ -1348,6 +1348,17 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
     let left = pair.left().view().mesh();
     let right = pair.right().view().mesh();
     let classification_status = pair.cache_status();
+    if classification_status
+        .face_pair_classification_counts()
+        .is_current()
+        && classification_status
+            .retained_face_pair_classification_counts()
+            .is_some_and(|counts| counts.graph_required_count() == 0)
+    {
+        return Ok(
+            pair.retain_intersection_graph(ExactIntersectionGraph::from_face_pairs(Vec::new()))
+        );
+    }
     let mut face_pairs = Vec::with_capacity(
         classification_status
             .retained_face_pair_classification_counts()

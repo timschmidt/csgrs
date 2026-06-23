@@ -336,6 +336,32 @@ fn prepared_mesh_pair_materializes_named_operations() {
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
 
+    let count_only_pair = empty.view().prepare_broad_phase_pair(solid.view()).unwrap();
+    let count_only_classification_counts =
+        count_only_pair.prepare_face_pair_classification_counts();
+    assert_eq!(count_only_classification_counts.face_pair_count(), 0);
+    assert_eq!(count_only_classification_counts.graph_required_count(), 0);
+    let count_only_graph_counts = count_only_pair.prepare_intersection_graph().unwrap();
+    assert_eq!(count_only_graph_counts.face_pair_count(), 0);
+    assert_eq!(count_only_graph_counts.event_count(), 0);
+    let count_only_status = count_only_pair.cache_status();
+    assert_eq!(
+        count_only_status.face_pair_classifications(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        count_only_status.face_pair_classification_counts(),
+        PreparedMeshPairFactState::Current
+    );
+    assert_eq!(
+        count_only_status.intersection_graph(),
+        PreparedMeshPairFactState::CertificateBlocked
+    );
+    assert_eq!(
+        count_only_status.retained_intersection_graph_counts(),
+        Some(count_only_graph_counts)
+    );
+
     assert_eq!(pair.prepare_face_pair_classifications(), 0);
     let classified_status = pair.cache_status();
     classified_status
