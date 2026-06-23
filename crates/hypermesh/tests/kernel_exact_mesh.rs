@@ -132,6 +132,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
         initial_status.retained_intersection_graph_event_count(),
         None
     );
+    assert_eq!(initial_status.retained_intersection_graph_counts(), None);
     assert_eq!(
         initial_status.arrangement(),
         PreparedMeshPairFactState::Missing
@@ -396,14 +397,24 @@ fn prepared_mesh_pair_materializes_named_operations() {
         retained_status.retained_intersection_graph_event_count(),
         Some(0)
     );
+    let empty_graph_counts = retained_status
+        .retained_intersection_graph_counts()
+        .unwrap();
+    assert_eq!(empty_graph_counts.face_pair_count(), 0);
+    assert_eq!(empty_graph_counts.event_count(), 0);
+    assert_eq!(empty_graph_counts.coplanar_overlap_graph_count(), 0);
+    assert!(!empty_graph_counts.has_unknowns());
     retained_status
         .require_current_intersection_graph()
         .unwrap();
     assert_eq!(
         retained_status.current_intersection_graph_counts().unwrap(),
-        (0, 0)
+        empty_graph_counts
     );
-    assert_eq!(pair.current_intersection_graph_counts().unwrap(), (0, 0));
+    assert_eq!(
+        pair.current_intersection_graph_counts().unwrap(),
+        empty_graph_counts
+    );
     assert_eq!(
         retained_status.arrangement_shortcut_facts(),
         PreparedMeshPairFactState::Current
@@ -857,9 +868,11 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     );
     let retained_graph_counts = prepared_pair.prepare_intersection_graph().unwrap();
     assert_eq!(
-        retained_graph_counts.0,
+        retained_graph_counts.face_pair_count(),
         classification_counts.graph_required_count()
     );
+    assert!(retained_graph_counts.event_count() > 0);
+    assert!(!retained_graph_counts.has_unknowns());
     let graph_retained_status = prepared_pair.cache_status();
     assert_eq!(
         graph_retained_status.intersection_graph(),
@@ -867,11 +880,15 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     );
     assert_eq!(
         graph_retained_status.retained_intersection_graph_face_pair_count(),
-        Some(retained_graph_counts.0)
+        Some(retained_graph_counts.face_pair_count())
     );
     assert_eq!(
         graph_retained_status.retained_intersection_graph_event_count(),
-        Some(retained_graph_counts.1)
+        Some(retained_graph_counts.event_count())
+    );
+    assert_eq!(
+        graph_retained_status.retained_intersection_graph_counts(),
+        Some(retained_graph_counts)
     );
     assert_eq!(
         prepared_pair
@@ -1206,7 +1223,10 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         pair.cache_status().intersection_graph(),
         PreparedMeshPairFactState::Current
     );
-    assert_eq!(pair.current_intersection_graph_counts().unwrap(), (0, 0));
+    let arrangement_graph_counts = pair.current_intersection_graph_counts().unwrap();
+    assert_eq!(arrangement_graph_counts.face_pair_count(), 0);
+    assert_eq!(arrangement_graph_counts.event_count(), 0);
+    assert!(!arrangement_graph_counts.has_unknowns());
 }
 
 #[test]

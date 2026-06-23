@@ -66,7 +66,8 @@ pub use mesh::ExactMesh;
 pub use view::{
     EdgeRef, ExactMeshRef, FaceRef, PreparedMeshPair, PreparedMeshPairArrangementCounts,
     PreparedMeshPairBroadPhaseSummary, PreparedMeshPairCacheStatus,
-    PreparedMeshPairClassificationCounts, PreparedMeshPairFactState, PreparedMeshPairPlanKind,
+    PreparedMeshPairClassificationCounts, PreparedMeshPairFactState,
+    PreparedMeshPairIntersectionGraphCounts, PreparedMeshPairPlanKind,
     PreparedMeshPairResultOutcome, PreparedMeshPairSweepAxis, PreparedMeshPairSweepDirection,
     PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,
 };

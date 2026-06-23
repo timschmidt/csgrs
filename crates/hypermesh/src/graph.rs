@@ -954,6 +954,10 @@ impl ExactIntersectionGraph {
         self.summary.coplanar_overlap_graph_count
     }
 
+    pub(crate) const fn coplanar_overlap_graph_count(&self) -> usize {
+        self.summary.coplanar_overlap_graph_count
+    }
+
     /// Construct exact split-point/interval records for coplanar overlap graphs.
     pub fn coplanar_overlap_split_plan(
         &self,
@@ -4576,7 +4580,16 @@ mod tests {
             PreparedMeshPairFactState::Current
         );
         assert_eq!(
-            prepared_pair.current_intersection_graph_counts().unwrap(),
+            (
+                prepared_pair
+                    .current_intersection_graph_counts()
+                    .unwrap()
+                    .face_pair_count(),
+                prepared_pair
+                    .current_intersection_graph_counts()
+                    .unwrap()
+                    .event_count(),
+            ),
             (graph.face_pairs.len(), graph.event_count())
         );
         assert_eq!(
