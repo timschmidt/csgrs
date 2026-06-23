@@ -956,6 +956,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         PreparedMeshPairFactState::Missing
     );
     assert_eq!(
+        unprepared_status.face_pair_classification_counts(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
         unprepared_status.retained_face_pair_classification_counts(),
         None
     );
@@ -986,6 +990,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         PreparedMeshPairFactState::Missing
     );
     assert_eq!(
+        streamed_graph_status.face_pair_classification_counts(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
         streamed_graph_status.intersection_graph(),
         PreparedMeshPairFactState::CertificateBlocked
     );
@@ -1010,16 +1018,41 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     );
     assert_eq!(
         streamed_classification_status.face_pair_classifications(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        streamed_classification_status.face_pair_classification_counts(),
         PreparedMeshPairFactState::Current
     );
     assert_eq!(
         streamed_classification_status.retained_candidate_face_pair_count(),
         Some(streamed_classification_counts.face_pair_count())
     );
+    assert_eq!(
+        streamed_classification_status
+            .current_face_pair_classification_counts()
+            .unwrap(),
+        streamed_classification_counts
+    );
     let classification_counts = prepared_pair.prepare_face_pair_classification_counts();
     assert_eq!(
         classification_counts.face_pair_count(),
         retained_candidate_count
+    );
+    let count_only_classified_status = prepared_pair.cache_status();
+    assert_eq!(
+        count_only_classified_status.face_pair_classifications(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        count_only_classified_status.face_pair_classification_counts(),
+        PreparedMeshPairFactState::Current
+    );
+    assert_eq!(
+        count_only_classified_status
+            .current_face_pair_classification_counts()
+            .unwrap(),
+        classification_counts
     );
     assert_eq!(
         prepared_pair.prepare_face_pair_classifications(),
@@ -1045,6 +1078,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     let classified_status = prepared_pair.cache_status();
     assert_eq!(
         classified_status.face_pair_classifications(),
+        PreparedMeshPairFactState::Current
+    );
+    assert_eq!(
+        classified_status.face_pair_classification_counts(),
         PreparedMeshPairFactState::Current
     );
     assert_eq!(

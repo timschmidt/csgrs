@@ -121,6 +121,7 @@ pub struct PreparedMeshPairCacheStatus {
     candidate_face_pairs: PreparedMeshPairFactState,
     retained_candidate_face_pair_count: Option<usize>,
     face_pair_classifications: PreparedMeshPairFactState,
+    face_pair_classification_counts: PreparedMeshPairFactState,
     retained_face_pair_classification_count: Option<usize>,
     retained_face_pair_classification_counts: Option<PreparedMeshPairClassificationCounts>,
     intersection_graph: PreparedMeshPairFactState,
@@ -724,23 +725,25 @@ impl PreparedMeshPairClassificationCounts {
     }
 
     fn from_classifications(classifications: &[MeshFacePairClassification]) -> Self {
-        let mut counts = Self {
-            face_pairs: classifications.len(),
-            ..Self::default()
-        };
+        let mut counts = Self::default();
         for classification in classifications {
-            match classification.relation {
-                MeshFacePairRelation::PlaneSeparated => counts.plane_separated += 1,
-                MeshFacePairRelation::CoplanarTouching => counts.coplanar_touching += 1,
-                MeshFacePairRelation::CoplanarOverlapping => counts.coplanar_overlapping += 1,
-                MeshFacePairRelation::Candidate => counts.candidates += 1,
-                MeshFacePairRelation::Unknown => counts.unknown += 1,
-            }
-            if classification.needs_graph_construction() {
-                counts.graph_required += 1;
-            }
+            counts.record(classification);
         }
         counts
+    }
+
+    fn record(&mut self, classification: &MeshFacePairClassification) {
+        self.face_pairs = self.face_pairs.saturating_add(1);
+        match classification.relation {
+            MeshFacePairRelation::PlaneSeparated => self.plane_separated += 1,
+            MeshFacePairRelation::CoplanarTouching => self.coplanar_touching += 1,
+            MeshFacePairRelation::CoplanarOverlapping => self.coplanar_overlapping += 1,
+            MeshFacePairRelation::Candidate => self.candidates += 1,
+            MeshFacePairRelation::Unknown => self.unknown += 1,
+        }
+        if classification.needs_graph_construction() {
+            self.graph_required += 1;
+        }
     }
 }
 
@@ -891,6 +894,11 @@ impl PreparedMeshPairCacheStatus {
         self.face_pair_classifications
     }
 
+    /// Return the certificate state for coarse face-pair classification counts.
+    pub const fn face_pair_classification_counts(self) -> PreparedMeshPairFactState {
+        self.face_pair_classification_counts
+    }
+
     /// Return the retained coarse face-pair classification count, when cached.
     pub const fn retained_face_pair_classification_count(self) -> Option<usize> {
         self.retained_face_pair_classification_count
@@ -919,7 +927,8 @@ impl PreparedMeshPairCacheStatus {
     pub fn current_face_pair_classification_counts(
         self,
     ) -> Result<PreparedMeshPairClassificationCounts, ExactMeshError> {
-        self.require_current_face_pair_classifications()?;
+        self.face_pair_classification_counts
+            .require_current("face-pair classification counts")?;
         self.retained_face_pair_classification_counts
             .ok_or_else(|| {
                 ExactMeshError::one(ExactMeshBlocker::new(
@@ -1578,15 +1587,18 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             .map_or(0, Vec::len)
     }
 
-    /// Build and retain coarse face-pair classifications, returning the retained count.
+    /// Build and retain coarse face-pair classification records, returning the retained count.
     pub fn prepare_face_pair_classifications(&self) -> usize {
-        self.prepare_face_pair_classification_counts()
-            .face_pair_count()
+        self.ensure_face_pair_classifications();
+        self.face_pair_classifications
+            .borrow()
+            .as_ref()
+            .map_or(0, Vec::len)
     }
 
-    /// Build and retain coarse face-pair classifications, returning retained decision counts.
+    /// Build and retain coarse face-pair classification counts without storing records.
     pub fn prepare_face_pair_classification_counts(&self) -> PreparedMeshPairClassificationCounts {
-        self.ensure_face_pair_classifications();
+        self.ensure_face_pair_classification_counts();
         self.face_pair_classification_counts
             .borrow()
             .as_ref()
@@ -1625,6 +1637,10 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             retained_candidate_face_pair_count: candidate_face_pair_count,
             face_pair_classifications: retained_current_state(
                 face_pair_classifications_retained,
+                sources_current,
+            ),
+            face_pair_classification_counts: retained_current_state(
+                face_pair_classification_counts.is_some(),
                 sources_current,
             ),
             retained_face_pair_classification_count: face_pair_classification_counts
@@ -1843,6 +1859,43 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         );
         *self.broad_phase_traversal_summary.borrow_mut() = Some(summary);
         summary
+    }
+
+    fn ensure_face_pair_classification_counts(&self) {
+        if self.face_pair_classification_counts.borrow().is_some() {
+            return;
+        }
+
+        let mut counts = PreparedMeshPairClassificationCounts::default();
+        let mut candidate_pair_count = 0usize;
+        if let Some(candidate_face_pairs) = self.candidate_face_pairs.borrow().as_deref() {
+            candidate_pair_count = candidate_face_pairs.len();
+            for &[left_face, right_face] in candidate_face_pairs {
+                let classification = classify_mesh_face_pair_unchecked(
+                    self.left.view.mesh,
+                    left_face,
+                    self.right.view.mesh,
+                    right_face,
+                );
+                counts.record(&classification);
+            }
+        } else {
+            let result =
+                self.try_visit_candidate_face_pairs_uncached(&mut |[left_face, right_face]| {
+                    candidate_pair_count = candidate_pair_count.saturating_add(1);
+                    let classification = classify_mesh_face_pair_unchecked(
+                        self.left.view.mesh,
+                        left_face,
+                        self.right.view.mesh,
+                        right_face,
+                    );
+                    counts.record(&classification);
+                    Ok::<(), ()>(())
+                });
+            debug_assert!(result.is_ok());
+        }
+        self.retain_broad_phase_traversal_count(candidate_pair_count);
+        *self.face_pair_classification_counts.borrow_mut() = Some(counts);
     }
 
     fn ensure_face_pair_classifications(&self) {
