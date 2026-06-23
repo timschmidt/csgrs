@@ -152,6 +152,18 @@ fn exact_construction_failure(message: impl Into<String>) -> ExactMeshError {
     ))
 }
 
+fn undecidable_shared_face_equality(left_face: usize, right_face: usize) -> ExactMeshError {
+    ExactMeshError::one(
+        ExactMeshBlocker::new(
+            ExactMeshBlockerKind::UndecidablePredicate,
+            format!(
+                "full-face adjacent certificate could not decide whether left face {left_face} and right face {right_face} share the same exact vertices"
+            ),
+        )
+        .with_face(left_face),
+    )
+}
+
 /// Certify and materialize a full-face adjacent closed-solid union.
 pub(crate) fn materialize_full_face_adjacent_union(
     left: &ExactMesh,
@@ -234,7 +246,7 @@ fn full_face_adjacent_union_certificate_from_graph(
         return Ok(None);
     }
     if !graph.face_pairs.is_empty()
-        && !graph_has_only_adjacency_contacts(left, right, &graph.face_pairs, &certificate)
+        && !graph_has_only_adjacency_contacts(left, right, &graph.face_pairs, &certificate)?
     {
         return Ok(None);
     }
@@ -337,10 +349,13 @@ fn graph_has_only_adjacency_contacts(
     right: &ExactMesh,
     pairs: &[FacePairEvents],
     certificate: &FullFaceAdjacencyCertificate,
-) -> bool {
-    pairs
-        .iter()
-        .all(|pair| adjacency_contact_pair(left, right, pair, certificate))
+) -> Result<bool, ExactMeshError> {
+    for pair in pairs {
+        if !adjacency_contact_pair(left, right, pair, certificate)? {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 fn adjacency_contact_pair(
@@ -348,22 +363,22 @@ fn adjacency_contact_pair(
     right: &ExactMesh,
     pair: &FacePairEvents,
     certificate: &FullFaceAdjacencyCertificate,
-) -> bool {
+) -> Result<bool, ExactMeshError> {
     if shared_face_pair(certificate, pair) {
-        return matches!(
+        return Ok(matches!(
             pair.relation,
             MeshFacePairRelation::CoplanarOverlapping | MeshFacePairRelation::CoplanarTouching
-        );
+        ));
     }
     if consumed_by_certificate(certificate, pair) {
         // A bounded source disk may replay partly as exact whole-face pairs and
         // partly as a polygon patch. Cross-record coplanar edge contacts are
         // model requires that we keep this as certificate replay, not as a
         // loose tolerance merge.
-        return matches!(
+        return Ok(matches!(
             pair.relation,
             MeshFacePairRelation::CoplanarOverlapping | MeshFacePairRelation::CoplanarTouching
-        );
+        ));
     }
     if one_face_consumed_by_certificate(certificate, pair)
         && pair.relation == MeshFacePairRelation::Candidate
@@ -373,22 +388,23 @@ fn adjacency_contact_pair(
         // output-volume intersection exists. Exact boundary replay keeps
         // those proper crossings tied to a consumed source face instead of
         // relaxing the general candidate gate.
-        return pair.events.iter().all(consumed_boundary_candidate_event);
+        return Ok(pair.events.iter().all(consumed_boundary_candidate_event));
     }
 
-    match pair.relation {
+    let contact = match pair.relation {
         MeshFacePairRelation::CoplanarTouching => true,
         MeshFacePairRelation::CoplanarOverlapping => {
             // A side face may share only an exact source edge with the other
             // solid after a full-face weld. Positive-area coplanar overlap is
             // different topology and must wait for the general arrangement
             // distinction instead of a tolerance-based merge.
-            !same_whole_face_any_orientation(left, pair.left_face, right, pair.right_face)
+            !same_whole_face_any_orientation(left, pair.left_face, right, pair.right_face)?
                 && !coplanar_pair_has_positive_area_evidence(pair)
         }
         MeshFacePairRelation::Candidate => pair.events.iter().all(boundary_candidate_event),
         MeshFacePairRelation::PlaneSeparated | MeshFacePairRelation::Unknown => false,
-    }
+    };
+    Ok(contact)
 }
 
 fn boundary_candidate_event(event: &IntersectionEvent) -> bool {
@@ -425,14 +441,15 @@ fn same_whole_face_any_orientation(
     left_face: usize,
     right: &ExactMesh,
     right_face: usize,
-) -> bool {
+) -> Result<bool, ExactMeshError> {
     let Some(left_triangle) = left.triangles().get(left_face).map(|triangle| triangle.0) else {
-        return false;
+        return Ok(false);
     };
     let Some(right_triangle) = right.triangles().get(right_face).map(|triangle| triangle.0) else {
-        return false;
+        return Ok(false);
     };
-    same_whole_face_vertices(left, left_triangle, right, right_triangle).unwrap_or(false)
+    same_whole_face_vertices_decided(left, left_triangle, right, right_triangle)
+        .ok_or_else(|| undecidable_shared_face_equality(left_face, right_face))
 }
 
 fn closed_boundary_contact_only(
@@ -1235,7 +1252,7 @@ fn reversed_whole_face_vertex_map(
     ])
 }
 
-fn same_whole_face_vertices(
+fn same_whole_face_vertices_decided(
     left: &ExactMesh,
     left_triangle: [usize; 3],
     right: &ExactMesh,
@@ -1244,10 +1261,22 @@ fn same_whole_face_vertices(
     let left_points = triangle_points(left, left_triangle)?;
     let right_points = triangle_points(right, right_triangle)?;
     for right_point in &right_points {
-        if !left_points
-            .iter()
-            .any(|left_point| points_equal(left_point, right_point) == Some(true))
-        {
+        let mut matched = false;
+        let mut undecided = false;
+        for left_point in &left_points {
+            match points_equal(left_point, right_point) {
+                Some(true) => {
+                    matched = true;
+                    break;
+                }
+                Some(false) => {}
+                None => undecided = true,
+            }
+        }
+        if !matched {
+            if undecided {
+                return None;
+            }
             return Some(false);
         }
     }
