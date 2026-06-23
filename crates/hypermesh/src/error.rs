@@ -46,6 +46,15 @@ pub enum ExactMeshBlockerKind {
     UnsupportedExactOperation,
 }
 
+/// Source operand named by a kernel blocker, when the blocker comes from a mesh pair.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactMeshSourceSide {
+    /// The left/input-first mesh.
+    Left,
+    /// The right/input-second mesh.
+    Right,
+}
+
 /// One fatal validation or import blocker.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactMeshBlocker {
@@ -61,6 +70,8 @@ pub struct ExactMeshBlocker {
     pub(crate) coordinate: Option<usize>,
     /// Optional undirected edge endpoints.
     pub(crate) edge: Option<[usize; 2]>,
+    /// Optional source operand for pair-stage blockers.
+    pub(crate) source_side: Option<ExactMeshSourceSide>,
 }
 
 impl ExactMeshBlocker {
@@ -73,7 +84,14 @@ impl ExactMeshBlocker {
             face: None,
             coordinate: None,
             edge: None,
+            source_side: None,
         }
+    }
+
+    /// Attach a source operand side.
+    pub(crate) const fn with_source_side(mut self, source_side: ExactMeshSourceSide) -> Self {
+        self.source_side = Some(source_side);
+        self
     }
 
     /// Attach a vertex index.
@@ -128,6 +146,11 @@ impl ExactMeshBlocker {
     /// Retained undirected-edge provenance, when the blocker names one edge.
     pub const fn edge(&self) -> Option<[usize; 2]> {
         self.edge
+    }
+
+    /// Source operand provenance, when the blocker came from a mesh-pair stage.
+    pub const fn source_side(&self) -> Option<ExactMeshSourceSide> {
+        self.source_side
     }
 }
 

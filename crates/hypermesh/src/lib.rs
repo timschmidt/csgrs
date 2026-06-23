@@ -62,7 +62,9 @@ pub mod kernel {
     pub use crate::arrangement3d::{
         ArrangementEdgeRef, ArrangementFaceCellRef, ArrangementVertexRef, ArrangementView,
     };
-    pub use crate::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+    pub use crate::error::{
+        ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide,
+    };
     pub use crate::view::{
         EdgeRef, ExactMeshRef, ExactMeshSourceStamp, FaceRef, MeshView, PreparedMeshPair,
         PreparedMeshPairArrangementCounts, PreparedMeshPairBroadPhaseSummary,

@@ -22,7 +22,7 @@ use hyperlimit::{
 };
 
 use super::bounds::{ExactAabbBroadPhase, ExactBroadPhase};
-use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide};
 use super::exact_key::{ExactPoint3Key, exact_point3_key};
 use super::intersection::{
     MeshFacePairClassification, MeshFacePairRelation, classify_mesh_face_pair_unchecked,
@@ -1784,6 +1784,9 @@ fn split_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> ExactMe
                     split_plan_blocker_mesh_kind(blocker.kind),
                     blocker.message,
                 );
+                if let Some(side) = blocker.side {
+                    mesh = mesh.with_source_side(exact_mesh_source_side(side));
+                }
                 if let Some(face) = blocker.face {
                     mesh = mesh.with_face(face);
                 }
@@ -1794,6 +1797,13 @@ fn split_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> ExactMe
             })
             .collect(),
     )
+}
+
+const fn exact_mesh_source_side(side: MeshSide) -> ExactMeshSourceSide {
+    match side {
+        MeshSide::Left => ExactMeshSourceSide::Left,
+        MeshSide::Right => ExactMeshSourceSide::Right,
+    }
 }
 
 fn split_plan_blocker_mesh_kind(kind: SplitPlanBlockerKind) -> ExactMeshBlockerKind {
@@ -4718,6 +4728,15 @@ mod tests {
             "{noncanonical_chain_report:?}"
         );
         assert!(!noncanonical_chain_report.blockers.is_empty());
+        let noncanonical_chain_error =
+            split_plan_report_to_mesh_error(noncanonical_chain_report.clone());
+        assert!(
+            noncanonical_chain_error
+                .blockers()
+                .iter()
+                .any(|blocker| blocker.source_side() == Some(ExactMeshSourceSide::Left)),
+            "{noncanonical_chain_error:?}"
+        );
         let mut duplicate_chain_geometry = geometry.clone();
         let duplicate_chain = duplicate_chain_geometry.faces[0].boundary_chains[0].clone();
         duplicate_chain_geometry.faces[0]
