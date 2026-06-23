@@ -3,6 +3,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use super::ExactMesh;
+use super::arrangement3d::{ArrangementView, ExactArrangement};
 use super::boolean::{
     ExactArrangementCellComplexShortcutFacts, ExactBooleanOperation, ExactBooleanRequest,
     materialize_boolean_exact_request_with_prepared_pair,
@@ -19,6 +20,7 @@ use super::graph::{
 use super::intersection::{
     MeshFacePairClassification, MeshFacePairRelation, classify_mesh_face_pair_unchecked,
 };
+use super::regularization::ExactRegularizationPolicy;
 use super::validation::ExactMeshValidationPolicy;
 use hyperlimit::{Point3, PredicateUse};
 use hyperreal::Real;
@@ -900,6 +902,25 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     pub fn prepare_current_intersection_graph(&self) -> Result<(usize, usize), ExactMeshError> {
         build_validated_intersection_graph_from_prepared_pair(self)?;
         self.current_intersection_graph_counts()
+    }
+
+    /// Build a retained arrangement from this pair session and run `query` on its borrowed view.
+    ///
+    /// The pair's retained intersection graph is source-certified first. The
+    /// arrangement builder then consumes that current graph certificate instead
+    /// of replay-building the graph from the source meshes.
+    pub fn with_arrangement_view<R>(
+        &self,
+        query: impl for<'a> FnOnce(ArrangementView<'a>) -> R,
+    ) -> Result<R, ExactMeshError> {
+        let graph = build_validated_intersection_graph_from_prepared_pair(self)?;
+        let arrangement = ExactArrangement::from_source_certified_intersection_graph_with_policy(
+            graph.as_ref().clone(),
+            self.left.view().mesh(),
+            self.right.view().mesh(),
+            ExactRegularizationPolicy::default(),
+        )?;
+        Ok(query(arrangement.view()))
     }
 
     /// Visit retained coarse face-pair classifications for this prepared mesh pair.

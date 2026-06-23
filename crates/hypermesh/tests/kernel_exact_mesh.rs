@@ -787,35 +787,68 @@ fn prepared_broad_phase_candidate_visitor_can_stop_early() {
 fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);
-    left.with_arrangement_view(&right, |view: ArrangementView<'_>| {
-        view.validate_retained_state().unwrap();
-        assert_eq!(view.vertices().count(), view.vertex_count());
-        assert_eq!(view.edges().count(), view.edge_count());
-        assert_eq!(view.face_cells().count(), view.face_cell_count());
-        assert_eq!(view.blocker_count(), 0);
+    let direct_counts = left
+        .with_arrangement_view(&right, |view: ArrangementView<'_>| {
+            view.validate_retained_state().unwrap();
+            assert_eq!(view.vertices().count(), view.vertex_count());
+            assert_eq!(view.edges().count(), view.edge_count());
+            assert_eq!(view.face_cells().count(), view.face_cell_count());
+            assert_eq!(view.blocker_count(), 0);
 
-        if let Some(vertex) = view.vertex(0) {
-            assert_eq!(vertex.index(), 0);
-            assert!(vertex.provenance_count() > 0);
-            let _ = vertex.point();
-        }
-        if let Some(edge) = view.edge(0) {
-            assert_eq!(edge.index(), 0);
-            assert_eq!(edge.vertices().len(), 2);
-        }
-        if let Some(face_cell) = view.face_cell(0) {
-            assert_eq!(face_cell.index(), 0);
-            assert_eq!(
-                face_cell.boundary_node_count(),
-                face_cell.boundary_point_count()
-            );
-            assert_eq!(
-                face_cell.boundary_points().count(),
-                face_cell.boundary_point_count()
-            );
-        }
-    })
-    .unwrap();
+            if let Some(vertex) = view.vertex(0) {
+                assert_eq!(vertex.index(), 0);
+                assert!(vertex.provenance_count() > 0);
+                let _ = vertex.point();
+            }
+            if let Some(edge) = view.edge(0) {
+                assert_eq!(edge.index(), 0);
+                assert_eq!(edge.vertices().len(), 2);
+            }
+            if let Some(face_cell) = view.face_cell(0) {
+                assert_eq!(face_cell.index(), 0);
+                assert_eq!(
+                    face_cell.boundary_node_count(),
+                    face_cell.boundary_point_count()
+                );
+                assert_eq!(
+                    face_cell.boundary_points().count(),
+                    face_cell.boundary_point_count()
+                );
+            }
+
+            (
+                view.vertex_count(),
+                view.edge_count(),
+                view.face_cell_count(),
+                view.lower_dimensional_artifact_count(),
+                view.blocker_count(),
+            )
+        })
+        .unwrap();
+
+    let pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
+    assert_eq!(
+        pair.cache_status().intersection_graph(),
+        PreparedMeshPairFactState::Missing
+    );
+    let prepared_counts = pair
+        .with_arrangement_view(|view: ArrangementView<'_>| {
+            view.validate_retained_state().unwrap();
+            (
+                view.vertex_count(),
+                view.edge_count(),
+                view.face_cell_count(),
+                view.lower_dimensional_artifact_count(),
+                view.blocker_count(),
+            )
+        })
+        .unwrap();
+    assert_eq!(prepared_counts, direct_counts);
+    assert_eq!(
+        pair.cache_status().intersection_graph(),
+        PreparedMeshPairFactState::Current
+    );
+    assert_eq!(pair.current_intersection_graph_counts().unwrap(), (0, 0));
 }
 
 #[test]

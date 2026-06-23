@@ -1258,6 +1258,20 @@ impl ExactArrangement3d {
                     format!("retained exact intersection graph failed mesh handoff: {error:?}"),
                 ))
             })?;
+        Self::from_source_certified_intersection_graph_with_policy(graph, left, right, policy)
+    }
+
+    /// Build a retained exact arrangement from a source-certified intersection graph.
+    ///
+    /// Callers must only use this after the graph's source handles have already
+    /// been certified against `left` and `right`; the arrangement builder then
+    /// consumes the retained graph evidence without replaying that certificate.
+    pub(crate) fn from_source_certified_intersection_graph_with_policy(
+        graph: ExactIntersectionGraph,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        policy: ExactRegularizationPolicy,
+    ) -> Result<Self, ExactMeshError> {
         let mut blockers = blockers_from_graph_validation(&graph);
         if graph.has_unknowns() {
             blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
