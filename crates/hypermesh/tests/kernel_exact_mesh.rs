@@ -1,7 +1,7 @@
 use hyperlimit::{ApproximationPolicy, MeshSource, Point3, SourceProvenance};
 use hypermesh::{
     ArrangementView, EdgeRef, ExactMesh, ExactMeshBlocker, ExactMeshError, ExactMeshRef, FaceRef,
-    PreparedMeshPair, PreparedMeshPairCacheStatus, PreparedMeshPairFactState,
+    MeshView, PreparedMeshPair, PreparedMeshPairCacheStatus, PreparedMeshPairFactState,
     PreparedMeshPairPlanKind, PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis,
     PreparedMeshPairSweepDirection, PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,
 };
@@ -590,9 +590,10 @@ fn prepared_mesh_pair_materializes_named_operations() {
 fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let mesh = tetra([0, 0, 0]);
     let view: ExactMeshRef<'_> = mesh.view();
+    let mesh_view: MeshView<'_> = view;
 
     view.validate_retained_state().unwrap();
-    assert_eq!(view.vertices().len(), 4);
+    assert_eq!(mesh_view.vertices().len(), 4);
     assert_eq!(view.triangle_indices().len(), 4);
     assert_eq!(view.face_count(), 4);
     assert_eq!(view.edge_count(), 6);
