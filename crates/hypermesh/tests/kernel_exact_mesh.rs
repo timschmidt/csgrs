@@ -120,6 +120,14 @@ fn prepared_mesh_pair_materializes_named_operations() {
         PreparedMeshPairFactState::Missing
     );
     assert_eq!(
+        initial_status
+            .require_current_arrangement_shortcut_facts()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    assert_eq!(
         initial_status.union_result(),
         PreparedMeshPairFactState::Missing
     );
@@ -244,6 +252,24 @@ fn prepared_mesh_pair_materializes_named_operations() {
     assert_eq!(pair.current_face_pair_classification_count().unwrap(), 0);
     assert_eq!(
         classified_status.intersection_graph(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        classified_status.arrangement_shortcut_facts(),
+        PreparedMeshPairFactState::Missing
+    );
+
+    pair.prepare_arrangement_shortcut_facts().unwrap();
+    let shortcut_status = pair.cache_status();
+    assert_eq!(
+        shortcut_status.arrangement_shortcut_facts(),
+        PreparedMeshPairFactState::Current
+    );
+    shortcut_status
+        .require_current_arrangement_shortcut_facts()
+        .unwrap();
+    assert_eq!(
+        shortcut_status.intersection_graph(),
         PreparedMeshPairFactState::Missing
     );
 

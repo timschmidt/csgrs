@@ -250,6 +250,12 @@ impl PreparedMeshPairCacheStatus {
         self.arrangement_shortcut_facts
     }
 
+    /// Require retained arrangement shortcut facts with current certificates.
+    pub fn require_current_arrangement_shortcut_facts(self) -> Result<(), ExactMeshError> {
+        self.arrangement_shortcut_facts
+            .require_current("arrangement shortcut facts")
+    }
+
     /// Return the certificate state for the prepared union result or error.
     pub const fn union_result(self) -> PreparedMeshPairFactState {
         self.union_result
@@ -663,6 +669,13 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     /// Return retained exact intersection graph counts after requiring a current certificate.
     pub fn current_intersection_graph_counts(&self) -> Result<(usize, usize), ExactMeshError> {
         self.cache_status().current_intersection_graph_counts()
+    }
+
+    /// Build and retain arrangement shortcut facts for this prepared pair.
+    pub fn prepare_arrangement_shortcut_facts(&self) -> Result<(), ExactMeshError> {
+        self.arrangement_cell_complex_shortcut_facts();
+        self.cache_status()
+            .require_current_arrangement_shortcut_facts()
     }
 
     /// Return the retained coarse face-pair classification count after requiring current evidence.
