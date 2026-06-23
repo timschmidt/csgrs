@@ -242,7 +242,32 @@ const MAX_CANDIDATE_FACE_PAIR_RESERVE: usize = 4096;
 #[derive(Debug, Default)]
 pub(crate) struct BroadPhaseScratch {
     active_faces: Vec<usize>,
-    active_marks: Vec<u8>,
+    active_marks: Vec<u32>,
+    active_mark_epoch: u32,
+}
+
+impl BroadPhaseScratch {
+    fn prepare_active_faces(&mut self, capacity_hint: usize) {
+        self.active_faces.clear();
+        if self.active_faces.capacity() < capacity_hint {
+            self.active_faces
+                .reserve(capacity_hint - self.active_faces.capacity());
+        }
+    }
+
+    fn next_active_mark_epoch(&mut self, target_face_count: usize) -> u32 {
+        if self.active_marks.len() < target_face_count {
+            self.active_marks.resize(target_face_count, 0);
+        }
+        let next_epoch = self.active_mark_epoch.wrapping_add(1);
+        if next_epoch == 0 {
+            self.active_marks.fill(0);
+            self.active_mark_epoch = 1;
+        } else {
+            self.active_mark_epoch = next_epoch;
+        }
+        self.active_mark_epoch
+    }
 }
 
 /// Internal broad-phase strategy for exact face-pair scheduling.
@@ -681,14 +706,8 @@ impl<'a> PreparedMeshBounds<'a> {
             return Ok(false);
         };
         let active_right_capacity = active_face_capacity_hint.min(other.bounds.faces.len());
-        scratch.active_faces.clear();
-        if scratch.active_faces.capacity() < active_right_capacity {
-            scratch
-                .active_faces
-                .reserve(active_right_capacity - scratch.active_faces.capacity());
-        }
-        scratch.active_marks.clear();
-        scratch.active_marks.resize(other.bounds.faces.len(), 0);
+        scratch.prepare_active_faces(active_right_capacity);
+        let active_mark_epoch = scratch.next_active_mark_epoch(other.bounds.faces.len());
         let active_right = &mut scratch.active_faces;
         let right_active = &mut scratch.active_marks;
         let mut next_right = 0usize;
@@ -706,7 +725,7 @@ impl<'a> PreparedMeshBounds<'a> {
                 if ordering != Ordering::Less {
                     break;
                 }
-                if right_active[right] != 0 {
+                if right_active[right] == active_mark_epoch {
                     right_active[right] = 0;
                     inactive_rights += 1;
                 }
@@ -714,7 +733,7 @@ impl<'a> PreparedMeshBounds<'a> {
             }
 
             if inactive_rights > active_right.len() / 2 {
-                active_right.retain(|&right| right_active[right] != 0);
+                active_right.retain(|&right| right_active[right] == active_mark_epoch);
                 inactive_rights = 0;
             }
 
@@ -731,13 +750,13 @@ impl<'a> PreparedMeshBounds<'a> {
                 };
                 if ordering != Ordering::Less {
                     active_right.push(right);
-                    right_active[right] = 1;
+                    right_active[right] = active_mark_epoch;
                 }
                 next_right += 1;
             }
 
             for &right in active_right.iter() {
-                if right_active[right] == 0 {
+                if right_active[right] != active_mark_epoch {
                     continue;
                 }
                 let right_interval = other.axis_interval(axis, right);
@@ -768,12 +787,7 @@ impl<'a> PreparedMeshBounds<'a> {
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<bool, E> {
         let active_right_capacity = active_face_capacity_hint.min(other.bounds.faces.len());
-        scratch.active_faces.clear();
-        if scratch.active_faces.capacity() < active_right_capacity {
-            scratch
-                .active_faces
-                .reserve(active_right_capacity - scratch.active_faces.capacity());
-        }
+        scratch.prepare_active_faces(active_right_capacity);
         let active_right = &mut scratch.active_faces;
         let mut next_right = 0usize;
 
@@ -1433,6 +1447,24 @@ mod tests {
         assert!(!should_use_sparse_sweep(3, 12));
         assert!(!should_use_sparse_sweep(8, 12));
         assert!(should_use_sparse_sweep(2, 12));
+    }
+
+    #[test]
+    fn broad_phase_scratch_reuses_active_marks_with_epochs() {
+        let mut scratch = BroadPhaseScratch::default();
+
+        assert_eq!(scratch.next_active_mark_epoch(8), 1);
+        assert_eq!(scratch.active_marks.len(), 8);
+        scratch.active_marks[3] = 1;
+
+        assert_eq!(scratch.next_active_mark_epoch(4), 2);
+        assert_eq!(scratch.active_marks.len(), 8);
+        assert_eq!(scratch.active_marks[3], 1);
+        assert_ne!(scratch.active_marks[3], scratch.active_mark_epoch);
+
+        scratch.active_mark_epoch = u32::MAX;
+        assert_eq!(scratch.next_active_mark_epoch(8), 1);
+        assert!(scratch.active_marks.iter().all(|&mark| mark == 0));
     }
 
     #[test]
