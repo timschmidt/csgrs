@@ -561,8 +561,8 @@ fn certify_axis_aligned_orthogonal_solid_from_faces(
 
     let occupied = components
         .iter()
-        .map(|component| component_occupancy[*component].unwrap_or(false))
-        .collect::<Vec<_>>();
+        .map(|component| component_occupancy.get(*component).copied().flatten())
+        .collect::<Option<Vec<_>>>()?;
     if !occupied.iter().any(|occupied| *occupied) {
         return None;
     }
@@ -723,8 +723,8 @@ fn validate_face_set_against_occupancy(
                         u: j,
                         v: k,
                     },
-                    face_side_occupied(Axis::X, i, j, k, false, nx, ny, nz, occupied),
-                    face_side_occupied(Axis::X, i, j, k, true, nx, ny, nz, occupied),
+                    face_side_occupied(Axis::X, i, j, k, false, nx, ny, nz, occupied)?,
+                    face_side_occupied(Axis::X, i, j, k, true, nx, ny, nz, occupied)?,
                     faces,
                 )?;
             }
@@ -740,8 +740,8 @@ fn validate_face_set_against_occupancy(
                         u: i,
                         v: k,
                     },
-                    face_side_occupied(Axis::Y, j, i, k, false, nx, ny, nz, occupied),
-                    face_side_occupied(Axis::Y, j, i, k, true, nx, ny, nz, occupied),
+                    face_side_occupied(Axis::Y, j, i, k, false, nx, ny, nz, occupied)?,
+                    face_side_occupied(Axis::Y, j, i, k, true, nx, ny, nz, occupied)?,
                     faces,
                 )?;
             }
@@ -757,8 +757,8 @@ fn validate_face_set_against_occupancy(
                         u: i,
                         v: j,
                     },
-                    face_side_occupied(Axis::Z, k, i, j, false, nx, ny, nz, occupied),
-                    face_side_occupied(Axis::Z, k, i, j, true, nx, ny, nz, occupied),
+                    face_side_occupied(Axis::Z, k, i, j, false, nx, ny, nz, occupied)?,
+                    face_side_occupied(Axis::Z, k, i, j, true, nx, ny, nz, occupied)?,
                     faces,
                 )?;
             }
@@ -797,15 +797,12 @@ fn face_side_occupied(
     ny: usize,
     nz: usize,
     occupied: &[bool],
-) -> bool {
+) -> Option<bool> {
     let Some((i, j, k)) = face_side_cell(UnitFaceKey { axis, plane, u, v }, plus_side, nx, ny, nz)
     else {
-        return false;
+        return Some(false);
     };
-    occupied
-        .get(cell_index(i, j, k, ny, nz).unwrap_or(usize::MAX))
-        .copied()
-        .unwrap_or(false)
+    occupied.get(cell_index(i, j, k, ny, nz)?).copied()
 }
 
 fn face_side_cell(
