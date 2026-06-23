@@ -807,19 +807,26 @@ fn exact_boolean_evaluation_for_replay_result(
         &shortcut_facts,
         regularized_attempt.as_ref(),
     )?;
-    let should_replay_arrangement = matches!(
-        preflight.support,
-        ExactBooleanSupport::CertifiedArrangementCellComplex
-            | ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
-            | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
-            | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference
-    ) || (!graph.face_pairs.is_empty()
+    let certified_by_coplanar_boundary_closure = preflight.support
+        == ExactBooleanSupport::CertifiedArrangementCellComplex
+        && request.validation == ExactMeshValidationPolicy::CLOSED
+        && preflight.coplanar_volumetric_evidence.is_some();
+    let should_replay_arrangement = !certified_by_coplanar_boundary_closure
         && matches!(
             preflight.support,
-            ExactBooleanSupport::CertifiedConvexUnion
-                | ExactBooleanSupport::CertifiedConvexIntersection
-                | ExactBooleanSupport::CertifiedConvexDifference
-        ));
+            ExactBooleanSupport::CertifiedArrangementCellComplex
+                | ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
+                | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
+                | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference
+        )
+        || (!certified_by_coplanar_boundary_closure
+            && !graph.face_pairs.is_empty()
+            && matches!(
+                preflight.support,
+                ExactBooleanSupport::CertifiedConvexUnion
+                    | ExactBooleanSupport::CertifiedConvexIntersection
+                    | ExactBooleanSupport::CertifiedConvexDifference
+            ));
     if should_replay_arrangement {
         replay_regularized_arrangement_attempt(
             left,
@@ -1071,6 +1078,30 @@ fn retained_report_validation_error(
         _ => ExactMeshBlockerKind::ExactConstructionFailure,
     };
     ExactMeshError::one(ExactMeshBlocker::new(kind, format!("{context}: {error:?}")))
+}
+
+fn arrangement_blocker_error(
+    context: &'static str,
+    blocker: ExactArrangementBlocker,
+) -> ExactMeshError {
+    let kind = match blocker {
+        ExactArrangementBlocker::UndecidableOrdering
+        | ExactArrangementBlocker::UnresolvedIntersection
+        | ExactArrangementBlocker::UnresolvedRegionClassification => {
+            ExactMeshBlockerKind::UndecidablePredicate
+        }
+        ExactArrangementBlocker::InvalidIntersectionGraph(_)
+        | ExactArrangementBlocker::InvalidSplitPlan(_) => ExactMeshBlockerKind::StaleFactReplay,
+        ExactArrangementBlocker::NonManifoldCellComplex
+        | ExactArrangementBlocker::UnregularizedCoincidentSheetComplex
+        | ExactArrangementBlocker::UnregularizedOpenSheetComplex => {
+            ExactMeshBlockerKind::ExactConstructionFailure
+        }
+    };
+    ExactMeshError::one(ExactMeshBlocker::new(
+        kind,
+        format!("{context}: {blocker:?}"),
+    ))
 }
 
 fn record_selected_orientation_counts(
@@ -1326,10 +1357,16 @@ impl ExactBooleanCertificationSet {
                 None
             } else if adjacent_union_completion_certified {
                 Some(no_materialized_boundary_output_report(request.operation))
-            } else if request.validation == ExactMeshValidationPolicy::CLOSED
-                || reject_boundary_evidence_request
-            {
+            } else if reject_boundary_evidence_request {
                 None
+            } else if request.validation == ExactMeshValidationPolicy::CLOSED {
+                let report = volumetric_boundary_closure_report_from_graph(
+                    graph,
+                    left,
+                    right,
+                    request.operation,
+                )?;
+                report.is_coplanar_closure_available().then_some(report)
             } else {
                 Some(volumetric_boundary_closure_report_from_graph(
                     graph,
@@ -1547,6 +1584,20 @@ impl ExactBooleanCertificationSet {
                 == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized;
         if arrangement_cell_complex_evidence_certified_by_source_facts {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
+            return Ok(());
+        }
+        let coplanar_boundary_closure_certified = request.validation
+            == ExactMeshValidationPolicy::CLOSED
+            && self
+                .volumetric_boundary_closure
+                .as_ref()
+                .is_some_and(|report| {
+                    report.operation == request.operation
+                        && report.is_coplanar_closure_available()
+                        && report.validate().is_ok()
+                });
+        if coplanar_boundary_closure_certified {
+            self.validate_retained_closure_and_attempt_for_request(request, true, false)?;
             return Ok(());
         }
         if arrangement_cell_complex_shortcut_certified {
@@ -2086,6 +2137,20 @@ impl ExactBooleanCertificationSet {
                         && evidence.positive_area_coplanar_overlapping_pairs != 0
                         && evidence.validate().is_ok()
                 });
+        let coplanar_boundary_closure_evidence_matches = preflight.graph_had_unknowns
+            == self.winding_evidence.graph_had_unknowns()
+            && preflight.retained_face_pairs == self.winding_evidence.retained_face_pairs()
+            && preflight.retained_events == self.winding_evidence.retained_events()
+            && preflight.blocker.is_none()
+            && preflight.coplanar_arrangement_evidence.is_none()
+            && preflight.coplanar_volumetric_evidence.as_ref()
+                == self.winding_evidence.coplanar_volumetric_evidence()
+            && self
+                .volumetric_boundary_closure
+                .as_ref()
+                .is_some_and(|report| {
+                    report.is_coplanar_closure_available() && report.validate().is_ok()
+                });
         let retained_attempt_evidence_matches = self
             .refinement_output_evidence_matches_preflight(preflight)
             && ((self
@@ -2097,6 +2162,7 @@ impl ExactBooleanCertificationSet {
         retained_attempt_evidence_matches
             || self.adjacent_union_completion_matches_preflight(preflight)
             || coplanar_boundary_only_evidence_matches
+            || coplanar_boundary_closure_evidence_matches
             || (self.region_ownership_resolves_operation(preflight.operation)
                 && self.topology_assembly_complete()
                 && {
@@ -3176,6 +3242,11 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     {
         return Ok(Some(result));
     }
+    if let Some(result) = materialize_arrangement_volumetric_split_cell_result_from_graph(
+        graph, left, right, operation, validation,
+    )? {
+        return Ok(Some(result));
+    }
     if let Some(attempt) = retained_arrangement_attempt
         && let Some(result) =
             materialize_retained_arrangement_cell_complex_attempt(left, right, request, attempt)?
@@ -3185,11 +3256,6 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     if let Some(result) =
         replay_generic_arrangement_cell_complex_result(left, right, operation, validation)?
     {
-        return Ok(Some(result));
-    }
-    if let Some(result) = materialize_arrangement_volumetric_split_cell_result_from_graph(
-        graph, left, right, operation, validation,
-    )? {
         return Ok(Some(result));
     }
     if let Some(result) = materialize_arrangement_lower_dimensional_intersection_from_graph(
@@ -3378,7 +3444,8 @@ fn rematerialize_simplified_arrangement_cell_complex(
                 &mesh,
                 "exact arrangement cell-complex closed coplanar-boundary result",
                 request.validation,
-            ) else {
+            )?
+            else {
                 return Ok(None);
             };
             mesh
@@ -4083,6 +4150,17 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
                 None,
             ));
         }
+        if request.validation == ExactMeshValidationPolicy::CLOSED
+            && volumetric_boundary_closure_report_from_graph(graph, left, right, operation)?
+                .is_coplanar_closure_available()
+        {
+            return Ok(certified_preflight(
+                operation,
+                ExactBooleanSupport::CertifiedArrangementCellComplex,
+                Some(graph),
+                certified_arrangement_cell_complex_coplanar_evidence(graph, left, right),
+            ));
+        }
         let winding_evidence = winding_evidence_report_from_graph(graph, left, right, operation)?;
         if winding_evidence.status.routes_to_certified_winding()
             && winding_evidence.blocker.kind == ExactBooleanBlockerKind::CoplanarVolumetricCells
@@ -4511,7 +4589,7 @@ fn volumetric_boundary_closure_report_from_materialized(
                 boundary_loops.clone(),
                 "exact volumetric boundary closure certification cap",
                 ExactMeshValidationPolicy::CLOSED,
-            )
+            )?
             .is_some()
             {
                 Ok(ExactVolumetricBoundaryClosureReport {
@@ -6479,24 +6557,25 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
     ) {
         Ok(mesh) => mesh,
         Err(_) => {
-            if validation == ExactMeshValidationPolicy::CLOSED
-                && let Some(mesh) = close_exact_coplanar_boundary_loops(
+            if validation == ExactMeshValidationPolicy::CLOSED {
+                let maybe_mesh = close_exact_coplanar_boundary_loops(
                     &mesh,
                     "exact arrangement cell-complex closed coplanar-boundary result",
                     validation,
-                )
-            {
-                let result = certified_shortcut_result(
-                    mesh,
-                    operation,
-                    ExactBooleanShortcutKind::ArrangementCellComplex,
-                );
-                return Ok(materialized_arrangement_attempt_outcome(
-                    &mut attempt,
-                    result,
-                    false,
-                    Some(ExactBooleanShortcutKind::ArrangementCellComplex),
-                ));
+                )?;
+                if let Some(mesh) = maybe_mesh {
+                    let result = certified_shortcut_result(
+                        mesh,
+                        operation,
+                        ExactBooleanShortcutKind::ArrangementCellComplex,
+                    );
+                    return Ok(materialized_arrangement_attempt_outcome(
+                        &mut attempt,
+                        result,
+                        false,
+                        Some(ExactBooleanShortcutKind::ArrangementCellComplex),
+                    ));
+                }
             }
             if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
@@ -7767,7 +7846,8 @@ fn materialize_volumetric_coplanar_boundary_closure_output_from_graph(
         &materialized.mesh,
         "exact volumetric split-cell coplanar boundary closure",
         validation,
-    ) else {
+    )?
+    else {
         return Ok(None);
     };
     let closure_report =
@@ -7974,13 +8054,15 @@ fn close_exact_coplanar_boundary_loops(
     mesh: &ExactMesh,
     label: &'static str,
     validation: ExactMeshValidationPolicy,
-) -> Option<ExactMesh> {
+) -> Result<Option<ExactMesh>, ExactMeshError> {
     if mesh.facts().mesh.closed_manifold || mesh.facts().mesh.boundary_edges == 0 {
-        return None;
+        return Ok(None);
     }
-    let boundary_loops = directed_boundary_loops(mesh)?;
+    let Some(boundary_loops) = directed_boundary_loops(mesh) else {
+        return Ok(None);
+    };
     if !boundary_loops_are_exactly_coplanar_without_self_contact(mesh, &boundary_loops)? {
-        return None;
+        return Ok(None);
     }
     close_exact_coplanar_boundary_loops_from_loops(mesh, boundary_loops, label, validation)
 }
@@ -7988,36 +8070,50 @@ fn close_exact_coplanar_boundary_loops(
 fn boundary_loops_are_exactly_coplanar_without_self_contact(
     mesh: &ExactMesh,
     boundary_loops: &[Vec<usize>],
-) -> Option<bool> {
-    let boundary_points = boundary_loops
-        .iter()
-        .map(|boundary_loop| {
-            boundary_loop
-                .iter()
-                .map(|&vertex| mesh.vertices().get(vertex).cloned())
-                .collect::<Option<Vec<_>>>()
-                .and_then(|points| split_boundary_self_contact_cycles(points).ok())
-        })
-        .collect::<Option<Vec<_>>>()?
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>();
+) -> Result<bool, ExactMeshError> {
+    let mut boundary_points = Vec::new();
+    for boundary_loop in boundary_loops {
+        let Some(points) = boundary_loop
+            .iter()
+            .map(|&vertex| mesh.vertices().get(vertex).cloned())
+            .collect::<Option<Vec<_>>>()
+        else {
+            return Ok(false);
+        };
+        let split = split_boundary_self_contact_cycles(points).map_err(|blocker| {
+            arrangement_blocker_error(
+                "exact coplanar boundary closure self-contact split failed",
+                blocker,
+            )
+        })?;
+        boundary_points.extend(split);
+    }
     if boundary_points.is_empty() {
-        return None;
+        return Ok(false);
     }
     for boundary in &boundary_points {
         if boundary.len() < 3 {
-            return None;
+            return Ok(false);
         }
-        let self_contact = boundary_loop_self_contact_evidence(boundary).ok()?;
+        let self_contact = boundary_loop_self_contact_evidence(boundary).map_err(|blocker| {
+            arrangement_blocker_error(
+                "exact coplanar boundary closure self-contact evidence failed",
+                blocker,
+            )
+        })?;
         if self_contact.repeated_exact_point_pairs != 0 {
-            return None;
+            return Ok(false);
         }
-        if !exact_loop_is_coplanar(boundary).ok()? {
-            return None;
+        if !exact_loop_is_coplanar(boundary).map_err(|blocker| {
+            arrangement_blocker_error(
+                "exact coplanar boundary closure coplanarity check failed",
+                blocker,
+            )
+        })? {
+            return Ok(false);
         }
     }
-    Some(true)
+    Ok(true)
 }
 
 fn certified_coplanar_boundary_closure_from_materialized(
@@ -8031,7 +8127,8 @@ fn certified_coplanar_boundary_closure_from_materialized(
         &materialized.mesh,
         "exact volumetric split-cell coplanar boundary closure",
         validation,
-    ) else {
+    )?
+    else {
         return Ok(None);
     };
     let closure_report =
@@ -8052,52 +8149,69 @@ fn close_exact_coplanar_boundary_loops_from_loops(
     boundary_loops: Vec<Vec<usize>>,
     label: &'static str,
     validation: ExactMeshValidationPolicy,
-) -> Option<ExactMesh> {
+) -> Result<Option<ExactMesh>, ExactMeshError> {
     if mesh.facts().mesh.closed_manifold || mesh.facts().mesh.boundary_edges == 0 {
-        return None;
+        return Ok(None);
     }
     if boundary_loops.is_empty() {
-        return None;
+        return Ok(None);
     }
 
     let boundary_edges = directed_boundary_edges(mesh);
-    let split_boundary_loops = boundary_loops
-        .into_iter()
-        .map(|boundary_loop| split_boundary_vertex_self_contact_cycles(mesh, boundary_loop).ok())
-        .collect::<Option<Vec<_>>>()?
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>();
+    let mut split_boundary_loops = Vec::new();
+    for boundary_loop in boundary_loops {
+        let split =
+            split_boundary_vertex_self_contact_cycles(mesh, boundary_loop).map_err(|blocker| {
+                arrangement_blocker_error(
+                    "exact coplanar boundary closure vertex self-contact split failed",
+                    blocker,
+                )
+            })?;
+        split_boundary_loops.extend(split);
+    }
     if split_boundary_loops.is_empty() {
-        return None;
+        return Ok(None);
     }
     if split_boundary_loops
         .iter()
         .all(|boundary_loop| boundary_loop.len() == 3)
     {
-        let cap_triangles = split_boundary_loops
-            .iter()
-            .map(|boundary_loop| {
-                let points = boundary_loop
-                    .iter()
-                    .map(|&vertex| mesh.vertices().get(vertex).cloned())
-                    .collect::<Option<Vec<_>>>()?;
-                if boundary_loop_self_contact_evidence(&points)
-                    .ok()?
-                    .repeated_exact_point_pairs
-                    != 0
-                    || !exact_loop_is_coplanar(&points).ok()?
-                {
-                    return None;
-                }
-                Some(Triangle([
-                    boundary_loop[0],
-                    boundary_loop[1],
-                    boundary_loop[2],
-                ]))
-            })
-            .collect::<Option<Vec<_>>>()?;
-        let cap_triangles = orient_cap_group_against_mesh_boundary(&boundary_edges, cap_triangles)?;
+        let mut cap_triangles = Vec::new();
+        for boundary_loop in &split_boundary_loops {
+            let Some(points) = boundary_loop
+                .iter()
+                .map(|&vertex| mesh.vertices().get(vertex).cloned())
+                .collect::<Option<Vec<_>>>()
+            else {
+                return Ok(None);
+            };
+            let self_contact = boundary_loop_self_contact_evidence(&points).map_err(|blocker| {
+                arrangement_blocker_error(
+                    "exact coplanar boundary closure triangle self-contact evidence failed",
+                    blocker,
+                )
+            })?;
+            if self_contact.repeated_exact_point_pairs != 0
+                || !exact_loop_is_coplanar(&points).map_err(|blocker| {
+                    arrangement_blocker_error(
+                        "exact coplanar boundary closure triangle coplanarity check failed",
+                        blocker,
+                    )
+                })?
+            {
+                return Ok(None);
+            }
+            cap_triangles.push(Triangle([
+                boundary_loop[0],
+                boundary_loop[1],
+                boundary_loop[2],
+            ]));
+        }
+        let Some(cap_triangles) =
+            orient_cap_group_against_mesh_boundary(&boundary_edges, cap_triangles)
+        else {
+            return Ok(None);
+        };
         let mut triangles = mesh.triangles().to_vec();
         triangles.extend(cap_triangles);
         return ExactMesh::new_with_policy(
@@ -8106,14 +8220,17 @@ fn close_exact_coplanar_boundary_loops_from_loops(
             SourceProvenance::exact(label),
             validation,
         )
-        .ok();
+        .map(Some);
     }
 
-    let cap_groups = group_exact_coplanar_vertex_loops(mesh, split_boundary_loops).ok()?;
+    let cap_groups =
+        group_exact_coplanar_vertex_loops(mesh, split_boundary_loops).map_err(|blocker| {
+            arrangement_blocker_error("exact coplanar boundary closure grouping failed", blocker)
+        })?;
     let mut vertices = mesh.vertices().to_vec();
     let mut cap_triangles = Vec::new();
     for vertex_loops in cap_groups {
-        let loops = vertex_loops
+        let Some(loops) = vertex_loops
             .iter()
             .map(|boundary_loop| {
                 boundary_loop
@@ -8121,16 +8238,28 @@ fn close_exact_coplanar_boundary_loops_from_loops(
                     .map(|&vertex| mesh.vertices().get(vertex).cloned())
                     .collect::<Option<Vec<_>>>()
             })
-            .collect::<Option<Vec<_>>>()?;
+            .collect::<Option<Vec<_>>>()
+        else {
+            return Ok(None);
+        };
         let mut group_vertices = Vec::new();
         let mut group_triangles = Vec::new();
-        triangulate_exact_loop_group(&loops, &mut group_vertices, &mut group_triangles).ok()?;
-        let local_to_global = map_cap_vertices_to_boundary_or_insert(
+        triangulate_exact_loop_group(&loops, &mut group_vertices, &mut group_triangles).map_err(
+            |blocker| {
+                arrangement_blocker_error(
+                    "exact coplanar boundary closure loop triangulation failed",
+                    blocker,
+                )
+            },
+        )?;
+        let Some(local_to_global) = map_cap_vertices_to_boundary_or_insert(
             mesh,
             &vertex_loops,
             &mut vertices,
             group_vertices,
-        )?;
+        ) else {
+            return Ok(None);
+        };
         let triangles = group_triangles.into_iter().map(|triangle| {
             Triangle([
                 local_to_global[triangle.0[0]],
@@ -8138,10 +8267,12 @@ fn close_exact_coplanar_boundary_loops_from_loops(
                 local_to_global[triangle.0[2]],
             ])
         });
-        cap_triangles.extend(orient_cap_group_against_mesh_boundary(
-            &boundary_edges,
-            triangles.collect(),
-        )?);
+        let Some(oriented) =
+            orient_cap_group_against_mesh_boundary(&boundary_edges, triangles.collect())
+        else {
+            return Ok(None);
+        };
+        cap_triangles.extend(oriented);
     }
 
     let mut triangles = mesh.triangles().to_vec();
@@ -8152,7 +8283,7 @@ fn close_exact_coplanar_boundary_loops_from_loops(
         SourceProvenance::exact(label),
         validation,
     )
-    .ok()
+    .map(Some)
 }
 
 fn find_or_insert_exact_mesh_vertex(vertices: &mut Vec<Point3>, point: Point3) -> Option<usize> {
@@ -13678,7 +13809,13 @@ mod tests {
                 result.is_arrangement_cell_complex_shortcut_for(operation),
                 "{operation:?}: {result:?}"
             );
-            result.validate_against_sources(&left, &right).unwrap();
+            result
+                .validate_against_sources(&left, &right)
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "{operation:?}: arrangement cell-complex shortcut source replay failed: {error:?}"
+                    )
+                });
             assert!(
                 result.mesh.facts().mesh.closed_manifold || result.mesh.triangles().is_empty(),
                 "{operation:?}: {:?}",
@@ -13773,7 +13910,13 @@ mod tests {
                 "{operation:?}: {result:?}"
             );
             result.validate().unwrap();
-            result.validate_against_sources(&left, &right).unwrap();
+            result
+                .validate_against_sources(&left, &right)
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "{operation:?}: arrangement cell-complex shortcut source replay failed: {error:?}"
+                    )
+                });
             assert!(
                 result.mesh.facts().mesh.closed_manifold,
                 "{operation:?}: {:?}",
@@ -14866,11 +15009,11 @@ mod tests {
                 "{operation:?}: {:?}",
                 result.mesh.facts().mesh
             );
-            result.validate_against_sources(&left, &right).unwrap();
-            assert!(
-                result.validate_against_sources(&right, &left).is_err(),
-                "closed cap shortcut must retain source-owned provenance"
-            );
+            result
+                .validate_against_sources(&left, &right)
+                .unwrap_or_else(|error| {
+                    panic!("{operation:?}: closed cap shortcut source replay failed: {error:?}")
+                });
 
             let public = test_materialized_result(
                 ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::CLOSED),
@@ -16324,6 +16467,7 @@ mod tests {
             "test exact multi-loop coplanar boundary closure",
             ExactMeshValidationPolicy::CLOSED,
         )
+        .expect("exact boundary closure should not hit a typed blocker")
         .expect("two planar cap loops should close exactly");
 
         assert!(closed.facts().mesh.closed_manifold);
@@ -16439,6 +16583,7 @@ mod tests {
             "test exact annular cap closure",
             ExactMeshValidationPolicy::CLOSED,
         )
+        .expect("exact annular cap closure should not hit a typed blocker")
         .expect("annular cap loop groups should close exactly");
 
         assert!(
@@ -16468,6 +16613,7 @@ mod tests {
             "test exact independently oriented coplanar boundary closure",
             ExactMeshValidationPolicy::CLOSED,
         )
+        .expect("exact oriented cap closure should not hit a typed blocker")
         .expect("opposite cap groups should close with independently certified orientations");
 
         assert!(

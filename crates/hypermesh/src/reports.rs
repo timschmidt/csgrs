@@ -2799,6 +2799,17 @@ fn arrangement_cell_complex_output_matches_sources(
     right: &ExactMesh,
 ) -> Result<Option<bool>, ExactReportValidationError> {
     let mut retained_mismatch = false;
+    if let Some((replay, closure_report)) =
+        materialize_volumetric_coplanar_boundary_closure_output(left, right, operation, validation)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+    {
+        closure_report.validate()?;
+        if mesh_output_matches(mesh, &replay) {
+            return Ok(Some(true));
+        }
+        retained_mismatch = true;
+    }
+
     if let Some(replay) =
         replay_generic_arrangement_cell_complex_result(left, right, operation, validation)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
@@ -2813,17 +2824,6 @@ fn arrangement_cell_complex_output_matches_sources(
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
     {
         if mesh_output_matches(mesh, &replay.mesh) {
-            return Ok(Some(true));
-        }
-        retained_mismatch = true;
-    }
-
-    if let Some((replay, closure_report)) =
-        materialize_volumetric_coplanar_boundary_closure_output(left, right, operation, validation)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-    {
-        closure_report.validate()?;
-        if mesh_output_matches(mesh, &replay) {
             return Ok(Some(true));
         }
         retained_mismatch = true;
