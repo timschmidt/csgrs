@@ -92,7 +92,19 @@ fn prepared_mesh_pair_materializes_named_operations() {
     let initial_status: PreparedMeshPairCacheStatus = pair.cache_status();
     assert_eq!(initial_status.candidate_pair_capacity_hint(), 0);
     assert!(!initial_status.retains_face_pair_classifications());
+    assert_eq!(
+        initial_status.retained_face_pair_classification_count(),
+        None
+    );
     assert!(!initial_status.retains_intersection_graph());
+    assert_eq!(
+        initial_status.retained_intersection_graph_face_pair_count(),
+        None
+    );
+    assert_eq!(
+        initial_status.retained_intersection_graph_event_count(),
+        None
+    );
     assert!(!initial_status.intersection_graph_source_validated());
     assert!(!initial_status.retains_arrangement_shortcut_facts());
     assert!(!initial_status.retains_union_result());
@@ -105,7 +117,19 @@ fn prepared_mesh_pair_materializes_named_operations() {
     assert_eq!(union.triangle_count(), solid.triangle_count());
     let retained_status = pair.cache_status();
     assert!(retained_status.retains_face_pair_classifications());
+    assert_eq!(
+        retained_status.retained_face_pair_classification_count(),
+        Some(0)
+    );
     assert!(retained_status.retains_intersection_graph());
+    assert_eq!(
+        retained_status.retained_intersection_graph_face_pair_count(),
+        Some(0)
+    );
+    assert_eq!(
+        retained_status.retained_intersection_graph_event_count(),
+        Some(0)
+    );
     assert!(retained_status.intersection_graph_source_validated());
     assert!(retained_status.retains_arrangement_shortcut_facts());
     assert!(retained_status.retains_union_result());

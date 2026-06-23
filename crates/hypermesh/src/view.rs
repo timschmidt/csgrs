@@ -60,6 +60,7 @@ pub struct PreparedMeshPair<'left, 'right> {
     scratch: RefCell<BroadPhaseScratch>,
     face_pair_classifications: RefCell<Option<Vec<MeshFacePairClassification>>>,
     intersection_graph: RefCell<Option<Rc<ExactIntersectionGraph>>>,
+    intersection_graph_counts: RefCell<Option<RetainedIntersectionGraphCounts>>,
     intersection_graph_validated: RefCell<bool>,
     arrangement_shortcut_facts: RefCell<Option<ExactArrangementCellComplexShortcutFacts>>,
     union_result: RefCell<Option<Result<ExactMesh, ExactMeshError>>>,
@@ -81,13 +82,22 @@ pub struct PreparedMeshPairView<'pair, 'left, 'right> {
 pub struct PreparedMeshPairCacheStatus {
     candidate_pair_capacity_hint: usize,
     retains_face_pair_classifications: bool,
+    retained_face_pair_classification_count: Option<usize>,
     retains_intersection_graph: bool,
+    retained_intersection_graph_face_pair_count: Option<usize>,
+    retained_intersection_graph_event_count: Option<usize>,
     intersection_graph_source_validated: bool,
     retains_arrangement_shortcut_facts: bool,
     retains_union_result: bool,
     retains_intersection_result: bool,
     retains_difference_result: bool,
     retains_xor_result: bool,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct RetainedIntersectionGraphCounts {
+    face_pairs: usize,
+    events: usize,
 }
 
 impl PreparedMeshPairCacheStatus {
@@ -101,9 +111,24 @@ impl PreparedMeshPairCacheStatus {
         self.retains_face_pair_classifications
     }
 
+    /// Return the retained coarse face-pair classification count, when cached.
+    pub const fn retained_face_pair_classification_count(self) -> Option<usize> {
+        self.retained_face_pair_classification_count
+    }
+
     /// Return whether the exact intersection graph has been retained.
     pub const fn retains_intersection_graph(self) -> bool {
         self.retains_intersection_graph
+    }
+
+    /// Return the retained graph face-pair count, when cached.
+    pub const fn retained_intersection_graph_face_pair_count(self) -> Option<usize> {
+        self.retained_intersection_graph_face_pair_count
+    }
+
+    /// Return the retained graph event count, when cached.
+    pub const fn retained_intersection_graph_event_count(self) -> Option<usize> {
+        self.retained_intersection_graph_event_count
     }
 
     /// Return whether the retained graph has replay-validated against its sources.
@@ -404,6 +429,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             scratch: RefCell::new(BroadPhaseScratch::default()),
             face_pair_classifications: RefCell::new(None),
             intersection_graph: RefCell::new(None),
+            intersection_graph_counts: RefCell::new(None),
             intersection_graph_validated: RefCell::new(false),
             arrangement_shortcut_facts: RefCell::new(None),
             union_result: RefCell::new(None),
@@ -439,10 +465,20 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     /// Return a cheap summary of retained facts in this prepared pair session.
     pub fn cache_status(&self) -> PreparedMeshPairCacheStatus {
+        let face_pair_classification_count = self
+            .face_pair_classifications
+            .borrow()
+            .as_ref()
+            .map(Vec::len);
+        let graph_counts = *self.intersection_graph_counts.borrow();
         PreparedMeshPairCacheStatus {
             candidate_pair_capacity_hint: self.candidate_face_pair_capacity_hint(),
-            retains_face_pair_classifications: self.face_pair_classifications.borrow().is_some(),
+            retains_face_pair_classifications: face_pair_classification_count.is_some(),
+            retained_face_pair_classification_count: face_pair_classification_count,
             retains_intersection_graph: self.intersection_graph.borrow().is_some(),
+            retained_intersection_graph_face_pair_count: graph_counts
+                .map(|counts| counts.face_pairs),
+            retained_intersection_graph_event_count: graph_counts.map(|counts| counts.events),
             intersection_graph_source_validated: *self.intersection_graph_validated.borrow(),
             retains_arrangement_shortcut_facts: self.arrangement_shortcut_facts.borrow().is_some(),
             retains_union_result: self.union_result.borrow().is_some(),
@@ -490,8 +526,13 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         graph: ExactIntersectionGraph,
     ) -> Rc<ExactIntersectionGraph> {
+        let counts = RetainedIntersectionGraphCounts {
+            face_pairs: graph.face_pairs.len(),
+            events: graph.event_count(),
+        };
         let graph = Rc::new(graph);
         *self.intersection_graph.borrow_mut() = Some(Rc::clone(&graph));
+        *self.intersection_graph_counts.borrow_mut() = Some(counts);
         *self.intersection_graph_validated.borrow_mut() = false;
         graph
     }
