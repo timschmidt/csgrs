@@ -111,7 +111,7 @@ pub struct PreparedMeshPairView<'pair, 'left, 'right> {
 
 /// Cheap status for retained facts inside a prepared mesh-pair session.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) struct PreparedMeshPairCacheStatus {
+struct PreparedMeshPairCacheStatus {
     source_pair: PreparedMeshPairFactState,
     broad_phase_traversal: PreparedMeshPairFactState,
     retained_broad_phase_traversal_summary: Option<PreparedMeshPairBroadPhaseTraversalSummary>,
@@ -658,7 +658,7 @@ impl PreparedMeshPairResultOutcome {
 
 /// Certificate state for retained facts inside a prepared mesh-pair session.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum PreparedMeshPairFactState {
+enum PreparedMeshPairFactState {
     /// The fact has not been computed for this session.
     Missing,
     /// The retained fact was built for source stamps that no longer match this session.
@@ -1551,7 +1551,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     }
 
     /// Return a cheap summary of retained facts in this prepared pair session.
-    pub(crate) fn cache_status(&self) -> PreparedMeshPairCacheStatus {
+    fn cache_status(&self) -> PreparedMeshPairCacheStatus {
         let sources_current = self.sources_are_current();
         let candidate_face_pairs_retained = self.candidate_face_pairs.borrow().is_some();
         let broad_phase_traversal_summary = *self.broad_phase_traversal_summary.borrow();
@@ -1615,7 +1615,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.cache_status().require_current_sources()
     }
 
-    pub(crate) fn intersection_graph_state(&self) -> PreparedMeshPairFactState {
+    fn intersection_graph_state(&self) -> PreparedMeshPairFactState {
         if self.intersection_graph.borrow().is_none() {
             PreparedMeshPairFactState::Missing
         } else {
