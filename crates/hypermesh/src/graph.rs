@@ -29,7 +29,7 @@ use super::intersection::{
 };
 use super::mesh::ExactMesh;
 use super::topology::{mesh_for_side, triangle_edges};
-use super::view::{PreparedMeshPair, PreparedMeshView};
+use super::view::{PreparedMeshPair, PreparedMeshPairFactState, PreparedMeshView};
 use hyperlimit::{CoplanarProjection, CoplanarTriangleClassification};
 use hyperreal::Real;
 
@@ -1355,10 +1355,13 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
 pub(crate) fn build_validated_intersection_graph_from_prepared_pair(
     pair: &PreparedMeshPair<'_, '_>,
 ) -> Result<Rc<ExactIntersectionGraph>, ExactMeshError> {
-    let graph = build_unvalidated_intersection_graph_from_prepared_pair_rc(pair)?;
-    if pair.has_validated_intersection_graph() {
-        return Ok(graph);
+    if pair.intersection_graph_state() == PreparedMeshPairFactState::Current {
+        if let Some(graph) = pair.cached_intersection_graph() {
+            return Ok(graph);
+        }
     }
+
+    let graph = build_unvalidated_intersection_graph_from_prepared_pair_rc(pair)?;
     graph
         .validate_against_meshes(pair.left().view().mesh(), pair.right().view().mesh())
         .map_err(|error| {
@@ -4550,12 +4553,20 @@ mod tests {
         assert!(prepared_pair.has_cached_intersection_graph());
         assert!(!prepared_pair.has_validated_intersection_graph());
         assert_eq!(
+            prepared_pair.intersection_graph_state(),
+            PreparedMeshPairFactState::CertificateBlocked
+        );
+        assert_eq!(
             build_validated_intersection_graph_from_prepared_pair(&prepared_pair)
                 .unwrap()
                 .as_ref(),
             &graph
         );
         assert!(prepared_pair.has_validated_intersection_graph());
+        assert_eq!(
+            prepared_pair.intersection_graph_state(),
+            PreparedMeshPairFactState::Current
+        );
         assert_eq!(
             build_validated_intersection_graph_from_prepared_pair(&prepared_pair)
                 .unwrap()

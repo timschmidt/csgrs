@@ -65,5 +65,5 @@ pub use mesh::ExactMesh;
 #[doc(hidden)]
 pub use view::{
     EdgeRef, ExactMeshRef, FaceRef, PreparedMeshPair, PreparedMeshPairCacheStatus,
-    PreparedMeshPairView, PreparedMeshView, TriangleRef,
+    PreparedMeshPairFactState, PreparedMeshPairView, PreparedMeshView, TriangleRef,
 };

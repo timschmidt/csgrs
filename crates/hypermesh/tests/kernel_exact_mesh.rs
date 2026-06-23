@@ -1,8 +1,8 @@
 use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
     ArrangementView, EdgeRef, ExactMesh, ExactMeshBlocker, ExactMeshError, ExactMeshRef, FaceRef,
-    PreparedMeshPair, PreparedMeshPairCacheStatus, PreparedMeshPairView, PreparedMeshView,
-    TriangleRef,
+    PreparedMeshPair, PreparedMeshPairCacheStatus, PreparedMeshPairFactState, PreparedMeshPairView,
+    PreparedMeshView, TriangleRef,
 };
 use hyperreal::Real;
 
@@ -91,12 +91,18 @@ fn prepared_mesh_pair_materializes_named_operations() {
     let pair = empty.view().prepare_broad_phase_pair(solid.view()).unwrap();
     let initial_status: PreparedMeshPairCacheStatus = pair.cache_status();
     assert_eq!(initial_status.candidate_pair_capacity_hint(), 0);
-    assert!(!initial_status.retains_face_pair_classifications());
+    assert_eq!(
+        initial_status.face_pair_classifications(),
+        PreparedMeshPairFactState::Missing
+    );
     assert_eq!(
         initial_status.retained_face_pair_classification_count(),
         None
     );
-    assert!(!initial_status.retains_intersection_graph());
+    assert_eq!(
+        initial_status.intersection_graph(),
+        PreparedMeshPairFactState::Missing
+    );
     assert_eq!(
         initial_status.retained_intersection_graph_face_pair_count(),
         None
@@ -105,23 +111,51 @@ fn prepared_mesh_pair_materializes_named_operations() {
         initial_status.retained_intersection_graph_event_count(),
         None
     );
-    assert!(!initial_status.intersection_graph_source_validated());
-    assert!(!initial_status.retains_arrangement_shortcut_facts());
-    assert!(!initial_status.retains_union_result());
-    assert!(!initial_status.retains_intersection_result());
-    assert!(!initial_status.retains_difference_result());
-    assert!(!initial_status.retains_xor_result());
+    assert_eq!(
+        initial_status.arrangement_shortcut_facts(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        initial_status.union_result(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        initial_status.intersection_result(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        initial_status.difference_result(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        initial_status.xor_result(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        initial_status
+            .require_current_intersection_graph()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
 
     let union = pair.union().unwrap();
     union.validate_retained_state().unwrap();
     assert_eq!(union.triangle_count(), solid.triangle_count());
     let retained_status = pair.cache_status();
-    assert!(retained_status.retains_face_pair_classifications());
+    assert_eq!(
+        retained_status.face_pair_classifications(),
+        PreparedMeshPairFactState::Current
+    );
     assert_eq!(
         retained_status.retained_face_pair_classification_count(),
         Some(0)
     );
-    assert!(retained_status.retains_intersection_graph());
+    assert_eq!(
+        retained_status.intersection_graph(),
+        PreparedMeshPairFactState::Current
+    );
     assert_eq!(
         retained_status.retained_intersection_graph_face_pair_count(),
         Some(0)
@@ -130,12 +164,29 @@ fn prepared_mesh_pair_materializes_named_operations() {
         retained_status.retained_intersection_graph_event_count(),
         Some(0)
     );
-    assert!(retained_status.intersection_graph_source_validated());
-    assert!(retained_status.retains_arrangement_shortcut_facts());
-    assert!(retained_status.retains_union_result());
-    assert!(!retained_status.retains_intersection_result());
-    assert!(!retained_status.retains_difference_result());
-    assert!(!retained_status.retains_xor_result());
+    retained_status
+        .require_current_intersection_graph()
+        .unwrap();
+    assert_eq!(
+        retained_status.arrangement_shortcut_facts(),
+        PreparedMeshPairFactState::Current
+    );
+    assert_eq!(
+        retained_status.union_result(),
+        PreparedMeshPairFactState::Current
+    );
+    assert_eq!(
+        retained_status.intersection_result(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        retained_status.difference_result(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        retained_status.xor_result(),
+        PreparedMeshPairFactState::Missing
+    );
 
     let repeated_union = pair.union().unwrap();
     repeated_union.validate_retained_state().unwrap();
@@ -145,22 +196,43 @@ fn prepared_mesh_pair_materializes_named_operations() {
     intersection.validate_retained_state().unwrap();
     assert_eq!(intersection.triangle_count(), 0);
     let intersection_status = pair.cache_status();
-    assert!(intersection_status.retains_union_result());
-    assert!(intersection_status.retains_intersection_result());
-    assert!(!intersection_status.retains_difference_result());
-    assert!(!intersection_status.retains_xor_result());
+    assert_eq!(
+        intersection_status.union_result(),
+        PreparedMeshPairFactState::Current
+    );
+    assert_eq!(
+        intersection_status.intersection_result(),
+        PreparedMeshPairFactState::Current
+    );
+    assert_eq!(
+        intersection_status.difference_result(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        intersection_status.xor_result(),
+        PreparedMeshPairFactState::Missing
+    );
 
     let difference = pair.difference().unwrap();
     difference.validate_retained_state().unwrap();
     assert_eq!(difference.triangle_count(), 0);
     let difference_status = pair.cache_status();
-    assert!(difference_status.retains_difference_result());
-    assert!(!difference_status.retains_xor_result());
+    assert_eq!(
+        difference_status.difference_result(),
+        PreparedMeshPairFactState::Current
+    );
+    assert_eq!(
+        difference_status.xor_result(),
+        PreparedMeshPairFactState::Missing
+    );
 
     let xor = pair.xor().unwrap();
     xor.validate_retained_state().unwrap();
     assert_eq!(xor.triangle_count(), solid.triangle_count());
-    assert!(pair.cache_status().retains_xor_result());
+    assert_eq!(
+        pair.cache_status().xor_result(),
+        PreparedMeshPairFactState::Current
+    );
 
     let repeated_xor = pair.xor().unwrap();
     repeated_xor.validate_retained_state().unwrap();

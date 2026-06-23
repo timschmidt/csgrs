@@ -11,6 +11,7 @@ use super::bounds::{
     BroadPhaseScratch, CandidateFacePairPlan, ExactAabbBroadPhase, PreparedMeshBounds,
 };
 use super::error::ExactMeshError;
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
 use super::graph::ExactIntersectionGraph;
 use super::intersection::{MeshFacePairClassification, classify_mesh_face_pair_unchecked};
 use super::validation::ExactMeshValidationPolicy;
@@ -83,17 +84,16 @@ pub struct PreparedMeshPairView<'pair, 'left, 'right> {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PreparedMeshPairCacheStatus {
     candidate_pair_capacity_hint: usize,
-    retains_face_pair_classifications: bool,
+    face_pair_classifications: PreparedMeshPairFactState,
     retained_face_pair_classification_count: Option<usize>,
-    retains_intersection_graph: bool,
+    intersection_graph: PreparedMeshPairFactState,
     retained_intersection_graph_face_pair_count: Option<usize>,
     retained_intersection_graph_event_count: Option<usize>,
-    intersection_graph_source_validated: bool,
-    retains_arrangement_shortcut_facts: bool,
-    retains_union_result: bool,
-    retains_intersection_result: bool,
-    retains_difference_result: bool,
-    retains_xor_result: bool,
+    arrangement_shortcut_facts: PreparedMeshPairFactState,
+    union_result: PreparedMeshPairFactState,
+    intersection_result: PreparedMeshPairFactState,
+    difference_result: PreparedMeshPairFactState,
+    xor_result: PreparedMeshPairFactState,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -102,15 +102,61 @@ struct RetainedIntersectionGraphCounts {
     events: usize,
 }
 
+/// Certificate state for retained facts inside a prepared mesh-pair session.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PreparedMeshPairFactState {
+    /// The fact has not been computed for this session.
+    Missing,
+    /// The fact is retained but cannot be consumed by cheap certificate checks yet.
+    CertificateBlocked,
+    /// The fact is retained and its certificate is current for this session.
+    Current,
+}
+
+impl PreparedMeshPairFactState {
+    /// Return whether a later stage can consume this fact through a cheap certificate check.
+    pub const fn is_current(self) -> bool {
+        matches!(self, Self::Current)
+    }
+
+    /// Return whether this session retains the fact in any state.
+    pub const fn is_retained(self) -> bool {
+        !matches!(self, Self::Missing)
+    }
+
+    /// Convert a non-current state into a typed blocker for callers that require a current fact.
+    pub fn blocker(self, fact: &'static str) -> Option<ExactMeshBlocker> {
+        match self {
+            Self::Missing => Some(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::MissingRequiredEvidence,
+                format!("prepared mesh-pair session is missing retained {fact} evidence"),
+            )),
+            Self::CertificateBlocked => Some(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::MissingRequiredEvidence,
+                format!(
+                    "prepared mesh-pair session retained {fact} evidence without a current certificate"
+                ),
+            )),
+            Self::Current => None,
+        }
+    }
+
+    /// Require a current retained fact and return a typed blocker otherwise.
+    pub fn require_current(self, fact: &'static str) -> Result<(), ExactMeshError> {
+        self.blocker(fact)
+            .map_or(Ok(()), |blocker| Err(ExactMeshError::one(blocker)))
+    }
+}
+
 impl PreparedMeshPairCacheStatus {
     /// Return the bounded storage hint for candidate face-pair traversal.
     pub const fn candidate_pair_capacity_hint(self) -> usize {
         self.candidate_pair_capacity_hint
     }
 
-    /// Return whether coarse face-pair classifications have been retained.
-    pub const fn retains_face_pair_classifications(self) -> bool {
-        self.retains_face_pair_classifications
+    /// Return the certificate state for coarse face-pair classifications.
+    pub const fn face_pair_classifications(self) -> PreparedMeshPairFactState {
+        self.face_pair_classifications
     }
 
     /// Return the retained coarse face-pair classification count, when cached.
@@ -118,9 +164,9 @@ impl PreparedMeshPairCacheStatus {
         self.retained_face_pair_classification_count
     }
 
-    /// Return whether the exact intersection graph has been retained.
-    pub const fn retains_intersection_graph(self) -> bool {
-        self.retains_intersection_graph
+    /// Return the certificate state for the exact intersection graph.
+    pub const fn intersection_graph(self) -> PreparedMeshPairFactState {
+        self.intersection_graph
     }
 
     /// Return the retained graph face-pair count, when cached.
@@ -133,34 +179,35 @@ impl PreparedMeshPairCacheStatus {
         self.retained_intersection_graph_event_count
     }
 
-    /// Return whether the retained graph has replay-validated against its sources.
-    pub const fn intersection_graph_source_validated(self) -> bool {
-        self.intersection_graph_source_validated
+    /// Require a retained exact intersection graph with a current replay certificate.
+    pub fn require_current_intersection_graph(self) -> Result<(), ExactMeshError> {
+        self.intersection_graph
+            .require_current("intersection graph")
     }
 
-    /// Return whether arrangement shortcut facts have been retained.
-    pub const fn retains_arrangement_shortcut_facts(self) -> bool {
-        self.retains_arrangement_shortcut_facts
+    /// Return the certificate state for arrangement shortcut facts.
+    pub const fn arrangement_shortcut_facts(self) -> PreparedMeshPairFactState {
+        self.arrangement_shortcut_facts
     }
 
-    /// Return whether the prepared union result or error has been retained.
-    pub const fn retains_union_result(self) -> bool {
-        self.retains_union_result
+    /// Return the certificate state for the prepared union result or error.
+    pub const fn union_result(self) -> PreparedMeshPairFactState {
+        self.union_result
     }
 
-    /// Return whether the prepared intersection result or error has been retained.
-    pub const fn retains_intersection_result(self) -> bool {
-        self.retains_intersection_result
+    /// Return the certificate state for the prepared intersection result or error.
+    pub const fn intersection_result(self) -> PreparedMeshPairFactState {
+        self.intersection_result
     }
 
-    /// Return whether the prepared difference result or error has been retained.
-    pub const fn retains_difference_result(self) -> bool {
-        self.retains_difference_result
+    /// Return the certificate state for the prepared difference result or error.
+    pub const fn difference_result(self) -> PreparedMeshPairFactState {
+        self.difference_result
     }
 
-    /// Return whether the prepared symmetric-difference result or error has been retained.
-    pub const fn retains_xor_result(self) -> bool {
-        self.retains_xor_result
+    /// Return the certificate state for the prepared symmetric-difference result or error.
+    pub const fn xor_result(self) -> PreparedMeshPairFactState {
+        self.xor_result
     }
 }
 
@@ -470,20 +517,38 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             .as_ref()
             .map(Vec::len);
         let graph_counts = *self.intersection_graph_counts.borrow();
+        let graph_retained = self.intersection_graph.borrow().is_some();
         PreparedMeshPairCacheStatus {
             candidate_pair_capacity_hint: self.candidate_face_pair_capacity_hint(),
-            retains_face_pair_classifications: face_pair_classification_count.is_some(),
+            face_pair_classifications: retained_current_state(
+                face_pair_classification_count.is_some(),
+            ),
             retained_face_pair_classification_count: face_pair_classification_count,
-            retains_intersection_graph: self.intersection_graph.borrow().is_some(),
+            intersection_graph: if graph_retained {
+                retained_certificate_state(*self.intersection_graph_validated.borrow())
+            } else {
+                PreparedMeshPairFactState::Missing
+            },
             retained_intersection_graph_face_pair_count: graph_counts
                 .map(|counts| counts.face_pairs),
             retained_intersection_graph_event_count: graph_counts.map(|counts| counts.events),
-            intersection_graph_source_validated: *self.intersection_graph_validated.borrow(),
-            retains_arrangement_shortcut_facts: self.arrangement_shortcut_facts.borrow().is_some(),
-            retains_union_result: self.union_result.borrow().is_some(),
-            retains_intersection_result: self.intersection_result.borrow().is_some(),
-            retains_difference_result: self.difference_result.borrow().is_some(),
-            retains_xor_result: self.xor_result.borrow().is_some(),
+            arrangement_shortcut_facts: retained_current_state(
+                self.arrangement_shortcut_facts.borrow().is_some(),
+            ),
+            union_result: retained_current_state(self.union_result.borrow().is_some()),
+            intersection_result: retained_current_state(
+                self.intersection_result.borrow().is_some(),
+            ),
+            difference_result: retained_current_state(self.difference_result.borrow().is_some()),
+            xor_result: retained_current_state(self.xor_result.borrow().is_some()),
+        }
+    }
+
+    pub(crate) fn intersection_graph_state(&self) -> PreparedMeshPairFactState {
+        if self.intersection_graph.borrow().is_none() {
+            PreparedMeshPairFactState::Missing
+        } else {
+            retained_certificate_state(*self.intersection_graph_validated.borrow())
         }
     }
 
@@ -536,8 +601,9 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         graph
     }
 
+    #[cfg(test)]
     pub(crate) fn has_validated_intersection_graph(&self) -> bool {
-        *self.intersection_graph_validated.borrow()
+        self.intersection_graph_state() == PreparedMeshPairFactState::Current
     }
 
     pub(crate) fn certify_intersection_graph_source_replay(&self) {
@@ -679,6 +745,22 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             &mut local_scratch,
             visit,
         )
+    }
+}
+
+const fn retained_current_state(retained: bool) -> PreparedMeshPairFactState {
+    if retained {
+        PreparedMeshPairFactState::Current
+    } else {
+        PreparedMeshPairFactState::Missing
+    }
+}
+
+const fn retained_certificate_state(certificate_current: bool) -> PreparedMeshPairFactState {
+    if certificate_current {
+        PreparedMeshPairFactState::Current
+    } else {
+        PreparedMeshPairFactState::CertificateBlocked
     }
 }
 
