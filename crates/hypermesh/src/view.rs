@@ -4,7 +4,7 @@ use std::cell::RefCell;
 
 use super::ExactMesh;
 use super::boolean::{
-    ExactBooleanOperation, ExactBooleanRequest,
+    ExactArrangementCellComplexShortcutFacts, ExactBooleanOperation, ExactBooleanRequest,
     materialize_boolean_exact_request_with_prepared_pair,
 };
 use super::bounds::{
@@ -61,6 +61,7 @@ pub struct PreparedMeshPair<'left, 'right> {
     scratch: RefCell<BroadPhaseScratch>,
     face_pair_classifications: RefCell<Option<Vec<MeshFacePairClassification>>>,
     intersection_graph: RefCell<Option<ExactIntersectionGraph>>,
+    arrangement_shortcut_facts: RefCell<Option<ExactArrangementCellComplexShortcutFacts>>,
 }
 
 /// Borrowed prepared pair view with retained broad-phase pair planning.
@@ -338,6 +339,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             scratch: RefCell::new(BroadPhaseScratch::default()),
             face_pair_classifications: RefCell::new(None),
             intersection_graph: RefCell::new(None),
+            arrangement_shortcut_facts: RefCell::new(None),
         }
     }
 
@@ -403,9 +405,28 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         *self.intersection_graph.borrow_mut() = Some(graph);
     }
 
+    pub(crate) fn arrangement_cell_complex_shortcut_facts(
+        &self,
+    ) -> ExactArrangementCellComplexShortcutFacts {
+        if let Some(facts) = self.arrangement_shortcut_facts.borrow().clone() {
+            return facts;
+        }
+        let facts = ExactArrangementCellComplexShortcutFacts::from_sources(
+            self.left.view().mesh(),
+            self.right.view().mesh(),
+        );
+        *self.arrangement_shortcut_facts.borrow_mut() = Some(facts.clone());
+        facts
+    }
+
     #[cfg(test)]
     pub(crate) fn has_cached_intersection_graph(&self) -> bool {
         self.intersection_graph.borrow().is_some()
+    }
+
+    #[cfg(test)]
+    pub(crate) fn has_cached_arrangement_shortcut_facts(&self) -> bool {
+        self.arrangement_shortcut_facts.borrow().is_some()
     }
 
     /// Materialize the exact closed union using this retained pair session.

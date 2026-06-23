@@ -5349,6 +5349,17 @@ pub(crate) fn materialize_boolean_exact_request_with_prepared_pair(
     materialize_boolean_exact_request_with_graph(left, right, request, None, Some(pair))
 }
 
+fn arrangement_shortcut_facts_for_request(
+    prepared_pair: Option<&PreparedMeshPair<'_, '_>>,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> ExactArrangementCellComplexShortcutFacts {
+    prepared_pair.map_or_else(
+        || ExactArrangementCellComplexShortcutFacts::from_sources(left, right),
+        PreparedMeshPair::arrangement_cell_complex_shortcut_facts,
+    )
+}
+
 fn materialize_boolean_exact_request_with_graph(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -5381,7 +5392,7 @@ fn materialize_boolean_exact_request_with_graph(
             left,
             right,
         )?;
-        let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
+        let shortcut_facts = arrangement_shortcut_facts_for_request(prepared_pair, left, right);
         if let Some(result) = materialize_arrangement_lower_dimensional_intersection_from_graph(
             graph,
             left,

@@ -4509,6 +4509,13 @@ mod tests {
             first_classifications,
             vec![classify_mesh_face_pair_unchecked(&left, 0, &right, 0)]
         );
+        assert!(!prepared_pair.has_cached_arrangement_shortcut_facts());
+        let shortcut_facts = prepared_pair.arrangement_cell_complex_shortcut_facts();
+        assert_eq!(
+            shortcut_facts,
+            crate::boolean::ExactArrangementCellComplexShortcutFacts::from_sources(&left, &right)
+        );
+        assert!(prepared_pair.has_cached_arrangement_shortcut_facts());
         assert!(!prepared_pair.has_cached_intersection_graph());
         assert_eq!(
             build_unvalidated_intersection_graph_from_prepared_pair(&prepared_pair).unwrap(),
