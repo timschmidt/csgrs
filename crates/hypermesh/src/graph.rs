@@ -1312,6 +1312,10 @@ pub(crate) fn build_validated_intersection_graph(
 pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair(
     pair: &PreparedMeshPair<'_, '_>,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
+    if let Some(graph) = pair.cached_intersection_graph() {
+        return Ok(graph);
+    }
+
     let left = pair.left().view().mesh();
     let right = pair.right().view().mesh();
     let mut face_pairs = Vec::with_capacity(pair.candidate_face_pair_capacity_hint());
@@ -1321,7 +1325,9 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair(
         }
         Ok::<(), ExactMeshError>(())
     })?;
-    Ok(ExactIntersectionGraph { face_pairs })
+    let graph = ExactIntersectionGraph { face_pairs };
+    pair.retain_intersection_graph(graph.clone());
+    Ok(graph)
 }
 
 /// Build an exact event graph from a retained prepared pair and validate retained event handles.
@@ -4503,10 +4509,12 @@ mod tests {
             first_classifications,
             vec![classify_mesh_face_pair_unchecked(&left, 0, &right, 0)]
         );
+        assert!(!prepared_pair.has_cached_intersection_graph());
         assert_eq!(
             build_unvalidated_intersection_graph_from_prepared_pair(&prepared_pair).unwrap(),
             graph
         );
+        assert!(prepared_pair.has_cached_intersection_graph());
         assert_eq!(
             build_validated_intersection_graph_from_prepared_pair(&prepared_pair).unwrap(),
             graph

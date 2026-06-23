@@ -8,6 +8,7 @@ use super::bounds::{
     PreparedMeshBounds,
 };
 use super::error::ExactMeshError;
+use super::graph::ExactIntersectionGraph;
 use super::intersection::{MeshFacePairClassification, classify_mesh_face_pair_unchecked};
 use hyperlimit::Point3;
 use hyperreal::Real;
@@ -54,6 +55,7 @@ pub struct PreparedMeshPair<'left, 'right> {
     plan: CandidateFacePairPlan,
     scratch: RefCell<BroadPhaseScratch>,
     face_pair_classifications: RefCell<Option<Vec<MeshFacePairClassification>>>,
+    intersection_graph: RefCell<Option<ExactIntersectionGraph>>,
 }
 
 /// Borrowed prepared pair view with retained broad-phase pair planning.
@@ -330,6 +332,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             plan,
             scratch: RefCell::new(BroadPhaseScratch::default()),
             face_pair_classifications: RefCell::new(None),
+            intersection_graph: RefCell::new(None),
         }
     }
 
@@ -385,6 +388,19 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             ));
         });
         *self.face_pair_classifications.borrow_mut() = Some(classifications);
+    }
+
+    pub(crate) fn cached_intersection_graph(&self) -> Option<ExactIntersectionGraph> {
+        self.intersection_graph.borrow().clone()
+    }
+
+    pub(crate) fn retain_intersection_graph(&self, graph: ExactIntersectionGraph) {
+        *self.intersection_graph.borrow_mut() = Some(graph);
+    }
+
+    #[cfg(test)]
+    pub(crate) fn has_cached_intersection_graph(&self) -> bool {
+        self.intersection_graph.borrow().is_some()
     }
 
     /// Visit certificate-validated broad-phase candidate face pairs using the cached pair plan.
