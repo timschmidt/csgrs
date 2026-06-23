@@ -197,6 +197,21 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
     });
     repeated_owned_pair_candidates.sort_unstable();
     assert_eq!(repeated_owned_pair_candidates, candidates);
+
+    let mut outer_visits = 0;
+    let mut inner_visits = 0;
+    prepared_pair
+        .try_visit_candidate_face_pairs(&mut |_| {
+            outer_visits += 1;
+            prepared_pair.try_visit_candidate_face_pairs(&mut |_| {
+                inner_visits += 1;
+                Err("inner stop")
+            })?;
+            Err("outer stop")
+        })
+        .unwrap_err();
+    assert_eq!(outer_visits, 1);
+    assert_eq!(inner_visits, 1);
 }
 
 #[test]

@@ -350,13 +350,23 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
-        let mut scratch = self.scratch.borrow_mut();
         let broad_phase = ExactAabbBroadPhase::default();
+        if let Ok(mut scratch) = self.scratch.try_borrow_mut() {
+            return broad_phase.try_visit_candidate_face_pairs_with_plan_and_scratch(
+                &self.left.bounds,
+                &self.right.bounds,
+                self.plan,
+                &mut scratch,
+                visit,
+            );
+        }
+
+        let mut local_scratch = BroadPhaseScratch::default();
         broad_phase.try_visit_candidate_face_pairs_with_plan_and_scratch(
             &self.left.bounds,
             &self.right.bounds,
             self.plan,
-            &mut scratch,
+            &mut local_scratch,
             visit,
         )
     }
