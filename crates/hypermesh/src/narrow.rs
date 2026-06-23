@@ -69,12 +69,11 @@ pub(crate) struct TriangleTriangleClassification {
 
 /// Classify a mesh triangle against a retained exact face plane.
 ///
-/// This is the cached-object counterpart to
-/// [`classify_triangle_against_face_plane`]. It evaluates the unnormalized
-/// determinant-form plane coefficients retained in [`super::facts::FacePlaneFacts`]
-/// this shape directly: object-level numerical structure should survive so
-/// later topology stages can reuse exact facts instead of reconstructing
-/// normals or representative floats.
+/// This cached-object path evaluates the unnormalized determinant-form plane
+/// coefficients retained in [`super::facts::FacePlaneFacts`] directly:
+/// object-level numerical structure should survive so later topology stages
+/// can reuse exact facts instead of reconstructing normals or representative
+/// floats.
 pub(crate) fn classify_mesh_triangle_against_retained_face_plane_unchecked(
     plane_mesh: &ExactMesh,
     plane_face: usize,

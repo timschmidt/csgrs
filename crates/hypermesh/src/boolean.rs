@@ -2782,8 +2782,8 @@ pub(crate) struct ExactBooleanEvaluation {
     certifications: ExactBooleanCertificationSet,
     /// Materialized exact result, when available under `request`.
     ///
-    /// Borrow through [`Self::materialized_result`] when evaluation
-    /// materialized a certified result.
+    /// Test code borrows this through the retained materialized-result helper
+    /// when evaluation materialized a certified result.
     result: Option<ExactBooleanResult>,
 }
 

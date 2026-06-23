@@ -16,10 +16,9 @@ use hyperreal::Real;
 ///
 /// This cached construction path consumes determinant-form coefficients
 /// retained in [`FacePlaneFacts`] and builds the same segment event as
-/// [`intersect_segment_with_oriented_plane`] without reconstructing a
-/// structure as part of the exact object model: constructions should reuse
-/// certified object facts rather than reintroducing representative primitive
-/// normals.
+/// `hyperlimit` plane intersection without reconstructing a structure as part
+/// of the exact object model: constructions should reuse certified object
+/// facts rather than reintroducing representative primitive normals.
 pub(crate) fn intersect_segment_with_retained_face_plane(
     plane: &FacePlaneFacts,
     p0: &Point3,
