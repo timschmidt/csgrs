@@ -2247,6 +2247,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     /// Return the retained symmetric-difference result or cached error without materializing it.
     pub fn current_xor_result(&self) -> Result<ExactMesh, ExactMeshError> {
+        self.require_current_xor_result()?;
         self.xor_result
             .borrow()
             .clone()
@@ -2299,6 +2300,14 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         operation: ExactBooleanOperation,
     ) -> Result<ExactMesh, ExactMeshError> {
+        match operation {
+            ExactBooleanOperation::Union => self.require_current_union_result()?,
+            ExactBooleanOperation::Intersection => self.require_current_intersection_result()?,
+            ExactBooleanOperation::Difference => self.require_current_difference_result()?,
+            ExactBooleanOperation::SelectedRegions(_) => {
+                return missing_retained_result(named_boolean_result_name(operation));
+            }
+        }
         self.cached_named_boolean_mesh(operation)
             .unwrap_or_else(|| missing_retained_result(named_boolean_result_name(operation)))
     }
