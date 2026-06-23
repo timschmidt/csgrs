@@ -778,11 +778,30 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .kind(),
         hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
     );
+    assert_eq!(
+        prepared_pair
+            .with_current_candidate_face_pairs(|pairs| pairs.len())
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
     let retained_candidate_count = prepared_pair.prepare_candidate_face_pairs();
     assert!(retained_candidate_count > 0);
     assert!(retained_candidate_count <= broad_phase_summary.candidate_pair_upper_bound());
     assert_eq!(
         prepared_pair.current_candidate_face_pair_count().unwrap(),
+        retained_candidate_count
+    );
+    assert_eq!(
+        prepared_pair
+            .with_current_candidate_face_pairs(|pairs| {
+                assert!(pairs.iter().all(|[left_face, right_face]| {
+                    *left_face < left.triangle_count() && *right_face < overlapping.triangle_count()
+                }));
+                pairs.len()
+            })
+            .unwrap(),
         retained_candidate_count
     );
     let candidate_status = prepared_pair.cache_status();

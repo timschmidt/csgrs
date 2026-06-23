@@ -1420,6 +1420,22 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.cache_status().current_candidate_face_pair_count()
     }
 
+    /// Borrow retained broad-phase candidate pairs without rebuilding missing evidence.
+    pub fn with_current_candidate_face_pairs<R>(
+        &self,
+        query: impl FnOnce(&[[usize; 2]]) -> R,
+    ) -> Result<R, ExactMeshError> {
+        self.cache_status().require_current_candidate_face_pairs()?;
+        let candidate_face_pairs = self.candidate_face_pairs.borrow();
+        let pairs = candidate_face_pairs.as_deref().ok_or_else(|| {
+            ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::MissingRequiredEvidence,
+                "prepared mesh-pair session retained broad-phase candidate-pair state without candidate records",
+            ))
+        })?;
+        Ok(query(pairs))
+    }
+
     /// Return retained arrangement topology counts after requiring current evidence.
     pub fn current_arrangement_counts(
         &self,
