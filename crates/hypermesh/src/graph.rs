@@ -1184,13 +1184,13 @@ pub(crate) fn build_unvalidated_intersection_graph(
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
     validate_intersection_graph_bounds(left, right)?;
-    build_unvalidated_intersection_graph_from_replayed_bounds(left, right)
+    build_unvalidated_intersection_graph_from_certified_bounds(left, right)
 }
 
 fn map_retained_broad_phase_error(error: ExactMeshError) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
         ExactMeshBlockerKind::StaleFactReplay,
-        format!("exact mesh retained broad-phase facts failed source replay: {error:?}"),
+        format!("exact mesh retained broad-phase certificate failed: {error:?}"),
     ))
 }
 
@@ -1198,15 +1198,15 @@ fn validate_intersection_graph_bounds(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<(), ExactMeshError> {
-    left.validate_retained_bounds()
+    left.validate_retained_bounds_certificate()
         .map_err(map_retained_broad_phase_error)?;
     right
-        .validate_retained_bounds()
+        .validate_retained_bounds_certificate()
         .map_err(map_retained_broad_phase_error)?;
     Ok(())
 }
 
-fn build_unvalidated_intersection_graph_from_replayed_bounds(
+fn build_unvalidated_intersection_graph_from_certified_bounds(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
@@ -1236,7 +1236,7 @@ fn build_unvalidated_intersection_graph_from_replayed_bounds(
 
     let pair = left
         .view()
-        .prepare_broad_phase_pair_after_replay(right.view());
+        .prepare_broad_phase_pair_after_certificate(right.view());
     let mut face_pairs = Vec::with_capacity(pair.candidate_face_pair_capacity_hint());
     pair.try_visit_candidate_face_pairs(&mut |[left_face, right_face]| {
         let classification = classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
@@ -1248,7 +1248,7 @@ fn build_unvalidated_intersection_graph_from_replayed_bounds(
     Ok(ExactIntersectionGraph { face_pairs })
 }
 
-/// Build an exact event graph from replay-validated prepared mesh views without
+/// Build an exact event graph from certificate-validated prepared mesh views without
 /// validating the retained event handles against source replay.
 #[cfg(test)]
 pub(crate) fn build_unvalidated_intersection_graph_from_prepared_views(

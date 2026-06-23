@@ -33,14 +33,14 @@ validation facts, bounds, and construction provenance. It also carries the
 convenience methods downstream CSG layers need: `union`, `intersection`,
 `difference`, `xor`, `transform`, `inverse`, and `with_arrangement_view`.
 
-Supporting root exports are deliberately small. `ExactMeshError` and
-`ExactMeshBlocker` report invalid input, unsupported exact topology, stale
-replay, and construction blockers with provenance where available.
-Boundary and output policy stay inside kernel algorithms instead of becoming
-default public request objects.
+Supporting root exports are implementation support for `ExactMesh` methods, not
+additional primary entry points. Kernel errors report invalid input,
+unsupported exact topology, stale retained facts, and construction blockers with
+provenance where available. Boundary and output policy stay inside kernel
+algorithms instead of becoming default public request objects.
 
 Borrowed queries start from `ExactMesh::view()`. Mesh, triangle, face, and edge
-views avoid cloning mesh storage; prepared views reuse replay-validated
+views avoid cloning mesh storage; prepared views reuse certificate-validated
 broad-phase facts and stream candidate face pairs with fallible early-stop
 support. `ExactMesh::with_arrangement_view` exposes borrowed arrangement queries
 for algorithms that need retained topology without cloning arrangement storage
@@ -66,7 +66,10 @@ typed blocker rather than patched with a tolerance.
 The performance direction is broad-phase pruning plus exact local decisions.
 Retained bounds, prepared views, streamed face-pair classification, split plans,
 support intervals, coplanar arrangements, and borrowed views narrow work before
-expensive predicates or topology rebuilds.
+expensive predicates or topology rebuilds. Routine algorithms consume retained
+facts through cheap certificate checks; full source replay remains an explicit
+audit path for tests, fuzzing, artifact boundaries, and stale-evidence
+diagnostics.
 
 One-shot booleans should be driven by measured kernel stages: broad phase,
 narrow classification, split planning, local arrangements, winding/ownership,

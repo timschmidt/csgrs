@@ -5326,8 +5326,8 @@ fn materialize_boolean_exact_request_with_graph(
     request: ExactBooleanRequest,
     retained_graph: Option<&ExactIntersectionGraph>,
 ) -> Result<ExactBooleanResult, ExactMeshError> {
-    left.validate_retained_bounds()?;
-    right.validate_retained_bounds()?;
+    left.validate_retained_bounds_certificate()?;
+    right.validate_retained_bounds_certificate()?;
     let operation = request.operation;
     let validation = request.validation;
     let mut owned_graph = None;
@@ -11547,7 +11547,9 @@ fn concatenate_meshes_with_options(
 }
 
 fn meshes_are_certified_bounds_disjoint(left: &ExactMesh, right: &ExactMesh) -> bool {
-    if left.validate_retained_bounds().is_err() || right.validate_retained_bounds().is_err() {
+    if left.validate_retained_bounds_certificate().is_err()
+        || right.validate_retained_bounds_certificate().is_err()
+    {
         return false;
     }
     let (Some(left_bounds), Some(right_bounds)) = (left.bounds().mesh(), right.bounds().mesh())

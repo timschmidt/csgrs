@@ -537,11 +537,36 @@ impl ExactMesh {
         Ok(())
     }
 
+    /// Validate the retained broad-phase bounds certificate without recomputing it.
+    ///
+    /// `ExactMesh` construction computes bounds from the source vertices and
+    /// triangles once. Routine broad-phase consumers use this cheap certificate
+    /// check to ensure the retained bounds object has the expected shape and
+    /// ordered exact intervals before consuming it.
+    pub fn validate_retained_bounds_certificate(&self) -> Result<(), ExactMeshError> {
+        self.validate_retained_bounds_certificate_detail()
+            .map_err(|error| {
+                retained_validation_mesh_error(
+                    "exact mesh retained bounds certificate failed",
+                    error,
+                )
+            })
+    }
+
+    pub(crate) fn validate_retained_bounds_certificate_detail(
+        &self,
+    ) -> Result<(), ExactMeshValidationError> {
+        self.bounds
+            .validate(self.vertices.len(), self.triangles.len())
+            .map_err(retained_bounds_validation_error)
+    }
+
     /// Replay retained exact bounds against this mesh's source vertices and faces.
     ///
-    /// This is the acceleration-structure audit used before broad-phase
-    /// scheduling. It intentionally validates only bounds facts, avoiding the
-    /// full topology/provenance audit required by [`Self::validate_retained_state`].
+    /// This is the explicit acceleration-structure audit for tests, fuzzing,
+    /// and artifact boundaries. Normal broad-phase scheduling uses
+    /// [`Self::validate_retained_bounds_certificate`] so already-retained
+    /// construction facts are not recomputed on every use.
     pub fn validate_retained_bounds(&self) -> Result<(), ExactMeshError> {
         self.validate_retained_bounds_detail().map_err(|error| {
             retained_validation_mesh_error("exact mesh retained bounds replay failed", error)

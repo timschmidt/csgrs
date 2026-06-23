@@ -45,7 +45,7 @@ pub struct PreparedMeshView<'a> {
     bounds: PreparedMeshBounds<'a>,
 }
 
-/// Owned borrowed mesh-pair cache with replay-validated broad-phase facts.
+/// Owned borrowed mesh-pair cache with certificate-validated broad-phase facts.
 #[derive(Debug)]
 pub struct PreparedMeshPair<'left, 'right> {
     left: PreparedMeshView<'left>,
@@ -143,6 +143,11 @@ impl<'a> ExactMeshRef<'a> {
         self.mesh.validate_retained_bounds()
     }
 
+    /// Validate retained exact bounds without recomputing them.
+    pub fn validate_retained_bounds_certificate(self) -> Result<(), ExactMeshError> {
+        self.mesh.validate_retained_bounds_certificate()
+    }
+
     /// Borrow one face by index.
     pub fn face(self, index: usize) -> Option<FaceRef<'a>> {
         (index < self.mesh.triangles().len()).then_some(FaceRef {
@@ -191,13 +196,13 @@ impl<'a> ExactMeshRef<'a> {
         })
     }
 
-    /// Prepare replay-validated broad-phase facts for repeated pair queries.
+    /// Prepare certificate-validated broad-phase facts for repeated pair queries.
     pub fn prepare_broad_phase(self) -> Result<PreparedMeshView<'a>, ExactMeshError> {
-        self.validate_retained_bounds()?;
-        Ok(self.prepare_broad_phase_after_replay())
+        self.validate_retained_bounds_certificate()?;
+        Ok(self.prepare_broad_phase_after_certificate())
     }
 
-    /// Prepare replay-validated broad-phase facts for this mesh pair.
+    /// Prepare certificate-validated broad-phase facts for this mesh pair.
     pub fn prepare_broad_phase_pair<'b>(
         self,
         right: ExactMeshRef<'b>,
@@ -207,31 +212,31 @@ impl<'a> ExactMeshRef<'a> {
         Ok(PreparedMeshPair::new(left, right))
     }
 
-    pub(crate) fn prepare_broad_phase_pair_after_replay<'b>(
+    pub(crate) fn prepare_broad_phase_pair_after_certificate<'b>(
         self,
         right: ExactMeshRef<'b>,
     ) -> PreparedMeshPair<'a, 'b> {
         PreparedMeshPair::new(
-            self.prepare_broad_phase_after_replay(),
-            right.prepare_broad_phase_after_replay(),
+            self.prepare_broad_phase_after_certificate(),
+            right.prepare_broad_phase_after_certificate(),
         )
     }
 
-    pub(crate) fn prepare_broad_phase_after_replay(self) -> PreparedMeshView<'a> {
+    pub(crate) fn prepare_broad_phase_after_certificate(self) -> PreparedMeshView<'a> {
         PreparedMeshView {
             view: self,
             bounds: self.mesh.bounds().prepare(),
         }
     }
 
-    /// Visit broad-phase candidate face pairs after replay-validating both meshes.
+    /// Visit broad-phase candidate face pairs after certificate-validating both meshes.
     pub fn visit_candidate_face_pairs<'b>(
         self,
         right: ExactMeshRef<'b>,
         visit: &mut impl FnMut([usize; 2]),
     ) -> Result<(), ExactMeshError> {
-        self.validate_retained_bounds()?;
-        right.validate_retained_bounds()?;
+        self.validate_retained_bounds_certificate()?;
+        right.validate_retained_bounds_certificate()?;
         let result = ExactAabbBroadPhase::default().try_visit_candidate_face_pairs_one_shot(
             self.mesh.bounds(),
             right.mesh.bounds(),
@@ -281,7 +286,7 @@ impl<'a> PreparedMeshView<'a> {
         self.view
     }
 
-    /// Prepare a replay-validated pair view that reuses its broad-phase plan.
+    /// Prepare a certificate-validated pair view that reuses its broad-phase plan.
     pub fn pair_with<'pair, 'right>(
         &'pair self,
         right: &'pair PreparedMeshView<'right>,
@@ -295,7 +300,7 @@ impl<'a> PreparedMeshView<'a> {
         }
     }
 
-    /// Visit replay-validated broad-phase candidate face pairs.
+    /// Visit certificate-validated broad-phase candidate face pairs.
     pub fn visit_candidate_face_pairs<'b>(
         &self,
         right: &PreparedMeshView<'b>,
@@ -304,7 +309,7 @@ impl<'a> PreparedMeshView<'a> {
         self.pair_with(right).visit_candidate_face_pairs(visit);
     }
 
-    /// Visit replay-validated candidate face pairs and allow the visitor to stop early.
+    /// Visit certificate-validated candidate face pairs and allow the visitor to stop early.
     pub fn try_visit_candidate_face_pairs<'b, E>(
         &self,
         right: &PreparedMeshView<'b>,
@@ -350,7 +355,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.as_view().candidate_face_pair_capacity_hint()
     }
 
-    /// Visit replay-validated broad-phase candidate face pairs using the cached pair plan.
+    /// Visit certificate-validated broad-phase candidate face pairs using the cached pair plan.
     pub fn visit_candidate_face_pairs(&self, visit: &mut impl FnMut([usize; 2])) {
         let result = self.try_visit_candidate_face_pairs(&mut |pair| {
             visit(pair);
@@ -359,7 +364,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         debug_assert!(result.is_ok());
     }
 
-    /// Visit replay-validated candidate face pairs and allow the visitor to stop early.
+    /// Visit certificate-validated candidate face pairs and allow the visitor to stop early.
     pub fn try_visit_candidate_face_pairs<E>(
         &self,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
@@ -403,7 +408,7 @@ impl<'pair, 'left, 'right> PreparedMeshPairView<'pair, 'left, 'right> {
             .bounded_capacity_hint(self.left.view.face_count(), self.right.view.face_count())
     }
 
-    /// Visit replay-validated broad-phase candidate face pairs using the cached pair plan.
+    /// Visit certificate-validated broad-phase candidate face pairs using the cached pair plan.
     pub fn visit_candidate_face_pairs(&self, visit: &mut impl FnMut([usize; 2])) {
         let result = self.try_visit_candidate_face_pairs(&mut |pair| {
             visit(pair);
@@ -412,7 +417,7 @@ impl<'pair, 'left, 'right> PreparedMeshPairView<'pair, 'left, 'right> {
         debug_assert!(result.is_ok());
     }
 
-    /// Visit replay-validated candidate face pairs and allow the visitor to stop early.
+    /// Visit certificate-validated candidate face pairs and allow the visitor to stop early.
     pub fn try_visit_candidate_face_pairs<E>(
         &self,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,

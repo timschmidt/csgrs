@@ -119,12 +119,13 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
 }
 
 #[test]
-fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
+fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     let left = tetra([0, 0, 0]);
     let overlapping = tetra([0, 0, 0]);
     let disjoint = tetra([5, 0, 0]);
 
     left.view().validate_retained_bounds().unwrap();
+    left.view().validate_retained_bounds_certificate().unwrap();
     let prepared_left: PreparedMeshView<'_> = left.view().prepare_broad_phase().unwrap();
     let prepared_overlapping: PreparedMeshView<'_> =
         overlapping.view().prepare_broad_phase().unwrap();

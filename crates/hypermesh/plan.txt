@@ -55,8 +55,12 @@ Performance architecture
 ------------------------
 
 Performance must be designed around Yap-style retained facts from the first API
-shape, not added after the boolean pipeline exists. The kernel should make every
-expensive stage consume a cacheable fact package with source-replay validation.
+shape, not added after the boolean pipeline exists. Exact geometric computation
+should happen once at the earliest sound boundary, preferably during
+`ExactMesh` construction or when a reusable mesh-pair/session cache is first
+built. Later stages should consume retained fact packages through cheap
+freshness and certificate checks; full source replay is an explicit audit or
+fallback for stale, missing, or unsupported retained evidence.
 
 1. Mesh-local fact caches.
    - Store exact vertex facts, edge facts, triangle facts, determinant-form face
@@ -75,7 +79,7 @@ expensive stage consume a cacheable fact package with source-replay validation.
      triangulation products.
    - Invalidate by source identity plus construction version rather than by
      object address alone.
-   - Make cache freshness explicit: current, replay-blocked, stale, or
+   - Make cache freshness explicit: current, certificate-blocked, stale, or
      unsupported with a typed blocker.
 
 3. Stage metrics.
@@ -135,7 +139,7 @@ Refactor phases
 6. Tighten provenance and useful errors.
    - Require every graph event, split point, arrangement vertex/edge/cell, simplified cell, and output triangle to retain source provenance or construction evidence.
    - Make unsupported cases explicit blockers such as `NeedsCoplanarVolumetricCells`, not generic unsupported operation diagnostics.
-   - Validate caches by source replay before they authorize topology decisions.
+   - Consume retained caches through cheap certificate checks before they authorize topology decisions; use full source replay only at explicit audit boundaries or when rebuilding stale/missing evidence.
 
 7. Tests and docs.
    - Split `tests/exact_mesh.rs` into kernel-focused integration tests and csgrs policy tests.
@@ -202,6 +206,6 @@ Definition of done
 - `ExactMesh` is the only primary top-level type documented in hypermesh.
 - The default crate root no longer exports workspace-level boolean policy, handoff packages, readiness, proposal, or broad public report APIs.
 - Borrowed mesh/face/triangle/arrangement views exist and are preferred for queries.
-- Exact facts and acceleration structures replay against source objects before use.
+- Exact facts and acceleration structures are computed once, retained with decision provenance, and consumed by later stages through cheap certificate checks; stale or missing facts return typed blockers or rebuild explicitly instead of silently recomputing or trusting unproven cache state.
 - csgrs can still perform named booleans by ExactMesh.union(ExactMesh); or difference, intersection, xor, transform, inverse, or the borrowed equivalents and all other functions required by the CSG trait.
 - Every exact algorithm returns a decided value or a typed useful blocker with retained provenance.
