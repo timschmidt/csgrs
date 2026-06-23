@@ -171,10 +171,18 @@ impl<'a> ExactMeshRef<'a> {
     /// Prepare replay-validated broad-phase facts for repeated pair queries.
     pub fn prepare_broad_phase(self) -> Result<PreparedMeshView<'a>, ExactMeshError> {
         self.validate_retained_bounds()?;
-        Ok(PreparedMeshView {
+        Ok(self.prepare_broad_phase_after_replay())
+    }
+
+    pub(crate) fn prepare_broad_phase_after_replay(self) -> PreparedMeshView<'a> {
+        PreparedMeshView {
             view: self,
             bounds: self.mesh.bounds().prepare(),
-        })
+        }
+    }
+
+    pub(crate) fn bounds_may_overlap(self, right: ExactMeshRef<'_>) -> bool {
+        self.mesh.bounds().mesh_may_overlap(right.mesh.bounds())
     }
 
     /// Visit broad-phase candidate face pairs after replay-validating both meshes.
@@ -183,8 +191,13 @@ impl<'a> ExactMeshRef<'a> {
         right: ExactMeshRef<'b>,
         visit: &mut impl FnMut([usize; 2]),
     ) -> Result<(), ExactMeshError> {
-        let left = self.prepare_broad_phase()?;
-        let right = right.prepare_broad_phase()?;
+        self.validate_retained_bounds()?;
+        right.validate_retained_bounds()?;
+        if !self.bounds_may_overlap(right) {
+            return Ok(());
+        }
+        let left = self.prepare_broad_phase_after_replay();
+        let right = right.prepare_broad_phase_after_replay();
         left.visit_candidate_face_pairs(&right, visit);
         Ok(())
     }

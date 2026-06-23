@@ -238,6 +238,14 @@ impl MeshBounds {
         self.mesh.as_ref()
     }
 
+    /// Return whether retained whole-mesh bounds require face-pair scheduling.
+    pub(crate) fn mesh_may_overlap(&self, other: &Self) -> bool {
+        match (&self.mesh, &other.mesh) {
+            (Some(left), Some(right)) => must_keep_candidate(left.classify_intersection(right)),
+            _ => false,
+        }
+    }
+
     /// Prepare exact face orders for repeated broad-phase queries.
     ///
     /// An axis order is retained only when all exact comparisons needed for
@@ -316,10 +324,7 @@ impl<'a> PreparedMeshBounds<'a> {
     }
 
     fn mesh_bounds_may_overlap(&self, other: &PreparedMeshBounds<'_>) -> bool {
-        match (&self.bounds.mesh, &other.bounds.mesh) {
-            (Some(left), Some(right)) => must_keep_candidate(left.classify_intersection(right)),
-            _ => false,
-        }
+        self.bounds.mesh_may_overlap(other.bounds)
     }
 
     fn try_visit_candidate_face_pairs_quadratic<E>(

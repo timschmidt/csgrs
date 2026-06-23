@@ -1181,20 +1181,39 @@ pub(crate) fn build_unvalidated_intersection_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let left = prepare_intersection_graph_view(left)?;
-    let right = prepare_intersection_graph_view(right)?;
+    let Some((left, right)) = prepare_intersection_graph_views(left, right)? else {
+        return Ok(ExactIntersectionGraph {
+            face_pairs: Vec::new(),
+        });
+    };
     build_unvalidated_intersection_graph_from_prepared_views(&left, &right)
 }
 
-fn prepare_intersection_graph_view(
-    mesh: &ExactMesh,
-) -> Result<PreparedMeshView<'_>, ExactMeshError> {
-    mesh.view().prepare_broad_phase().map_err(|error| {
-        ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::StaleFactReplay,
-            format!("exact mesh retained broad-phase facts failed source replay: {error:?}"),
-        ))
-    })
+fn map_retained_broad_phase_error(error: ExactMeshError) -> ExactMeshError {
+    ExactMeshError::one(ExactMeshBlocker::new(
+        ExactMeshBlockerKind::StaleFactReplay,
+        format!("exact mesh retained broad-phase facts failed source replay: {error:?}"),
+    ))
+}
+
+fn prepare_intersection_graph_views<'a>(
+    left: &'a ExactMesh,
+    right: &'a ExactMesh,
+) -> Result<Option<(PreparedMeshView<'a>, PreparedMeshView<'a>)>, ExactMeshError> {
+    let left = left.view();
+    let right = right.view();
+    left.validate_retained_bounds()
+        .map_err(map_retained_broad_phase_error)?;
+    right
+        .validate_retained_bounds()
+        .map_err(map_retained_broad_phase_error)?;
+    if !left.bounds_may_overlap(right) {
+        return Ok(None);
+    }
+    Ok(Some((
+        left.prepare_broad_phase_after_replay(),
+        right.prepare_broad_phase_after_replay(),
+    )))
 }
 
 /// Build an exact event graph from replay-validated prepared mesh views without
@@ -1222,8 +1241,11 @@ pub(crate) fn build_validated_intersection_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let left = prepare_intersection_graph_view(left)?;
-    let right = prepare_intersection_graph_view(right)?;
+    let Some((left, right)) = prepare_intersection_graph_views(left, right)? else {
+        return Ok(ExactIntersectionGraph {
+            face_pairs: Vec::new(),
+        });
+    };
     build_validated_intersection_graph_from_prepared_views(&left, &right)
 }
 
@@ -4250,6 +4272,27 @@ mod tests {
                 )
                 .is_err()
         );
+    }
+
+    #[test]
+    fn intersection_graph_skips_face_preparation_for_disjoint_mesh_bounds() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+            &[0, 1, 2],
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[10, 0, 0, 12, 0, 0, 10, 2, 0],
+            &[0, 1, 2],
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
+        assert!(graph.face_pairs.is_empty());
+        let graph = build_validated_intersection_graph(&left, &right).unwrap();
+        assert!(graph.face_pairs.is_empty());
     }
 
     #[test]
