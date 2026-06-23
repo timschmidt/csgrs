@@ -34,11 +34,11 @@ convenience methods downstream CSG layers need: `union`, `intersection`,
 `difference`, `xor`, `transform`, `inverse`, and `with_arrangement_view`.
 
 The default crate root intentionally keeps that shape narrow: `ExactMesh` is the
-normal import. Kernel errors, borrowed views, prepared pair caches, and retained
-fact summaries support `ExactMesh` methods and low-level integrations without
-becoming additional root entry points. Workspace routing, boundary policy,
-output policy, and product-facing reports belong above this crate rather than in
-the default public API.
+normal import. Low-level kernel errors, borrowed views, prepared pair caches,
+and retained fact summaries live under `hypermesh::kernel` for exact integrations
+that need them without becoming additional root entry points. Workspace routing,
+boundary policy, output policy, and product-facing reports belong above this
+crate rather than in the default public API.
 
 Borrowed queries start from `ExactMesh::view()`. Mesh, triangle, face, and edge
 views avoid cloning mesh storage; prepared views reuse certificate-validated

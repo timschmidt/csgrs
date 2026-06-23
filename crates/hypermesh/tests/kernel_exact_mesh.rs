@@ -2,8 +2,12 @@ use hyperlimit::{ApproximationPolicy, MeshSource, Point3, SourceProvenance};
 use hypermesh::ExactMesh;
 use hypermesh::kernel::{
     ArrangementView, EdgeRef, ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshRef,
-    FaceRef, MeshView, PreparedMeshPair, PreparedMeshPairView, PreparedMeshView, TriangleRef,
-    VertexRef,
+    FaceRef, MeshView, PreparedMeshPair, PreparedMeshPairArrangementCounts,
+    PreparedMeshPairBroadPhaseSummary, PreparedMeshPairBroadPhaseTraversalSummary,
+    PreparedMeshPairClassificationCounts, PreparedMeshPairIntersectionGraphCounts,
+    PreparedMeshPairPlanKind, PreparedMeshPairResultOutcome, PreparedMeshPairSweepActiveSet,
+    PreparedMeshPairSweepAxis, PreparedMeshPairSweepDirection, PreparedMeshPairView,
+    PreparedMeshView, TriangleRef, VertexRef,
 };
 use hyperreal::Real;
 
@@ -94,7 +98,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
     pair.require_current_sources().unwrap();
     assert!(pair.candidate_pair_plan().is_empty());
     assert_eq!(pair.candidate_face_pair_capacity_hint(), 0);
-    let initial_broad_phase = pair.broad_phase_summary();
+    let initial_broad_phase: PreparedMeshPairBroadPhaseSummary = pair.broad_phase_summary();
     assert!(initial_broad_phase.plan().is_empty());
     assert_eq!(initial_broad_phase.left_face_count(), 0);
     assert_eq!(
@@ -326,7 +330,8 @@ fn prepared_mesh_pair_materializes_named_operations() {
     );
     assert!(pair.arrangement_shortcut_facts_are_current());
     assert!(pair.union_result_is_current());
-    let union_outcome = pair.retained_union_result_outcome().unwrap();
+    let union_outcome: PreparedMeshPairResultOutcome =
+        pair.retained_union_result_outcome().unwrap();
     assert!(union_outcome.is_mesh());
     assert_eq!(union_outcome.vertex_count(), Some(union.vertices().len()));
     assert_eq!(union_outcome.triangle_count(), Some(union.triangle_count()));
@@ -675,7 +680,14 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         overlapping.triangle_count()
     );
     assert!(prepared_pair.candidate_face_pair_capacity_hint() > 0);
-    let broad_phase_summary = prepared_pair.broad_phase_summary();
+    let broad_phase_summary: PreparedMeshPairBroadPhaseSummary =
+        prepared_pair.broad_phase_summary();
+    let _plan_kind: PreparedMeshPairPlanKind = broad_phase_summary.plan();
+    let _sweep_axis: Option<PreparedMeshPairSweepAxis> = broad_phase_summary.sweep_axis();
+    let _sweep_direction: Option<PreparedMeshPairSweepDirection> =
+        broad_phase_summary.sweep_direction();
+    let _sweep_active_set: Option<PreparedMeshPairSweepActiveSet> =
+        broad_phase_summary.sweep_active_set();
     assert!(prepared_pair.sources_are_current());
     assert_eq!(
         broad_phase_summary.plan(),
@@ -740,7 +752,8 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    let count_only_summary = prepared_pair.prepare_broad_phase_traversal_summary();
+    let count_only_summary: PreparedMeshPairBroadPhaseTraversalSummary =
+        prepared_pair.prepare_broad_phase_traversal_summary();
     assert!(prepared_pair.broad_phase_traversal_summary_is_current());
     assert!(!prepared_pair.has_retained_candidate_face_pairs());
     assert_eq!(
@@ -782,7 +795,7 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         retained_candidate_count
     );
     assert!(prepared_pair.candidate_face_pairs_are_current());
-    let traversal_summary = prepared_pair
+    let traversal_summary: PreparedMeshPairBroadPhaseTraversalSummary = prepared_pair
         .current_broad_phase_traversal_summary()
         .unwrap();
     assert_eq!(traversal_summary.broad_phase_summary(), broad_phase_summary);
@@ -859,7 +872,8 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .unwrap(),
         streamed_classification_counts
     );
-    let classification_counts = prepared_pair.prepare_face_pair_classification_counts();
+    let classification_counts: PreparedMeshPairClassificationCounts =
+        prepared_pair.prepare_face_pair_classification_counts();
     assert_eq!(
         classification_counts.face_pair_count(),
         retained_candidate_count
@@ -909,7 +923,8 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .unwrap(),
         classification_counts
     );
-    let retained_graph_counts = prepared_pair.prepare_intersection_graph().unwrap();
+    let retained_graph_counts: PreparedMeshPairIntersectionGraphCounts =
+        prepared_pair.prepare_intersection_graph().unwrap();
     assert_eq!(
         retained_graph_counts.face_pair_count(),
         classification_counts.graph_required_count()
@@ -1194,7 +1209,8 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    let prepared_arrangement_counts = pair.prepare_arrangement().unwrap();
+    let prepared_arrangement_counts: PreparedMeshPairArrangementCounts =
+        pair.prepare_arrangement().unwrap();
     assert!(prepared_arrangement_counts.is_complete());
     assert!(pair.arrangement_is_current());
     assert_eq!(

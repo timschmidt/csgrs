@@ -65,6 +65,11 @@ pub mod kernel {
     pub use crate::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
     pub use crate::view::{
         EdgeRef, ExactMeshRef, ExactMeshSourceStamp, FaceRef, MeshView, PreparedMeshPair,
-        PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,
+        PreparedMeshPairArrangementCounts, PreparedMeshPairBroadPhaseSummary,
+        PreparedMeshPairBroadPhaseTraversalSummary, PreparedMeshPairClassificationCounts,
+        PreparedMeshPairIntersectionGraphCounts, PreparedMeshPairPlanKind,
+        PreparedMeshPairResultOutcome, PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis,
+        PreparedMeshPairSweepDirection, PreparedMeshPairView, PreparedMeshView, TriangleRef,
+        VertexRef,
     };
 }
