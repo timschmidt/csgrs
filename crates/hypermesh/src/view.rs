@@ -57,6 +57,7 @@ pub struct PreparedMeshPair<'left, 'right> {
     left: PreparedMeshView<'left>,
     right: PreparedMeshView<'right>,
     plan: CandidateFacePairPlan,
+    candidate_pair_capacity_hint: usize,
     scratch: RefCell<BroadPhaseScratch>,
     face_pair_classifications: RefCell<Option<Vec<MeshFacePairClassification>>>,
     intersection_graph: RefCell<Option<Rc<ExactIntersectionGraph>>>,
@@ -75,6 +76,7 @@ pub struct PreparedMeshPairView<'pair, 'left, 'right> {
     left: &'pair PreparedMeshView<'left>,
     right: &'pair PreparedMeshView<'right>,
     plan: CandidateFacePairPlan,
+    candidate_pair_capacity_hint: usize,
 }
 
 /// Cheap status for retained facts inside a prepared mesh-pair session.
@@ -382,10 +384,13 @@ impl<'a> PreparedMeshView<'a> {
     ) -> PreparedMeshPairView<'pair, 'a, 'right> {
         let broad_phase = ExactAabbBroadPhase::default();
         let plan = broad_phase.candidate_face_pair_plan(&self.bounds, &right.bounds);
+        let candidate_pair_capacity_hint =
+            plan.bounded_capacity_hint(self.view.face_count(), right.view.face_count());
         PreparedMeshPairView {
             left: self,
             right,
             plan,
+            candidate_pair_capacity_hint,
         }
     }
 
@@ -412,10 +417,13 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     fn new(left: PreparedMeshView<'left>, right: PreparedMeshView<'right>) -> Self {
         let broad_phase = ExactAabbBroadPhase::default();
         let plan = broad_phase.candidate_face_pair_plan(&left.bounds, &right.bounds);
+        let candidate_pair_capacity_hint =
+            plan.bounded_capacity_hint(left.view.face_count(), right.view.face_count());
         Self {
             left,
             right,
             plan,
+            candidate_pair_capacity_hint,
             scratch: RefCell::new(BroadPhaseScratch::default()),
             face_pair_classifications: RefCell::new(None),
             intersection_graph: RefCell::new(None),
@@ -445,12 +453,13 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             left: &self.left,
             right: &self.right,
             plan: self.plan,
+            candidate_pair_capacity_hint: self.candidate_pair_capacity_hint,
         }
     }
 
     /// Return a bounded storage hint for candidate face-pair traversal.
-    pub fn candidate_face_pair_capacity_hint(&self) -> usize {
-        self.as_view().candidate_face_pair_capacity_hint()
+    pub const fn candidate_face_pair_capacity_hint(&self) -> usize {
+        self.candidate_pair_capacity_hint
     }
 
     /// Return a cheap summary of retained facts in this prepared pair session.
@@ -685,9 +694,8 @@ impl<'pair, 'left, 'right> PreparedMeshPairView<'pair, 'left, 'right> {
     }
 
     /// Return a bounded storage hint for candidate face-pair traversal.
-    pub fn candidate_face_pair_capacity_hint(&self) -> usize {
-        self.plan
-            .bounded_capacity_hint(self.left.view.face_count(), self.right.view.face_count())
+    pub const fn candidate_face_pair_capacity_hint(&self) -> usize {
+        self.candidate_pair_capacity_hint
     }
 
     /// Visit certificate-validated broad-phase candidate face pairs using the cached pair plan.
