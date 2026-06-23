@@ -122,6 +122,8 @@ pub(crate) enum ExactMeshValidationError {
     RetainedBoundsUnexpectedMeshBounds,
     /// The retained face-bound vector length does not match the face count.
     RetainedBoundsFaceCountMismatch,
+    /// The retained edge-bound vector length does not match the edge count.
+    RetainedBoundsEdgeCountMismatch,
     /// Recomputing bounds from the source vertices and triangles did not
     /// reproduce the retained bounds object.
     RetainedBoundsSourceReplayMismatch,
@@ -575,7 +577,11 @@ impl ExactMesh {
         &self,
     ) -> Result<(), ExactMeshValidationError> {
         self.bounds
-            .validate(self.vertices.len(), self.triangles.len())
+            .validate(
+                self.vertices.len(),
+                self.facts.mesh.edge_count,
+                self.triangles.len(),
+            )
             .map_err(retained_bounds_validation_error)
     }
 
@@ -742,6 +748,9 @@ const fn retained_bounds_validation_error(
         }
         BoundsValidationError::FaceBoundsCountMismatch => {
             ExactMeshValidationError::RetainedBoundsFaceCountMismatch
+        }
+        BoundsValidationError::EdgeBoundsCountMismatch => {
+            ExactMeshValidationError::RetainedBoundsEdgeCountMismatch
         }
         BoundsValidationError::SourceReplayMismatch => {
             ExactMeshValidationError::RetainedBoundsSourceReplayMismatch

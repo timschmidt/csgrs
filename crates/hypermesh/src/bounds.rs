@@ -13,6 +13,8 @@ use hyperlimit::{
 };
 use hyperreal::Real;
 
+use super::topology::sorted_edge;
+
 /// Exact broad-phase relation between two 3D boxes.
 pub(crate) type AabbIntersectionKind = Aabb3Intersection;
 
@@ -32,6 +34,8 @@ pub(crate) enum BoundsValidationError {
     UnexpectedMeshBounds,
     /// The retained face-bound vector length does not match the face count.
     FaceBoundsCountMismatch,
+    /// The retained edge-bound vector length does not match the edge count.
+    EdgeBoundsCountMismatch,
     /// Recomputing bounds from the supplied source vertices and triangles did
     /// not reproduce the retained bounds object.
     SourceReplayMismatch,
@@ -70,6 +74,13 @@ impl ExactAabb3 {
         let mut bounds = Self::point(points[0]);
         bounds.include(points[1]);
         bounds.include(points[2]);
+        bounds
+    }
+
+    /// Build an exact box around one edge segment.
+    pub(crate) fn from_segment(points: [&Point3; 2]) -> Self {
+        let mut bounds = Self::point(points[0]);
+        bounds.include(points[1]);
         bounds
     }
 
@@ -118,6 +129,8 @@ impl ExactAabb3 {
 pub(crate) struct MeshBounds {
     /// Whole-mesh bounds, or `None` for an empty mesh.
     mesh: Option<ExactAabb3>,
+    /// Per-edge bounds in retained canonical edge-fact order.
+    edges: Vec<ExactAabb3>,
     /// Per-face bounds in face order.
     faces: Vec<ExactAabb3>,
 }
@@ -487,14 +500,24 @@ impl MeshBounds {
     ) -> Self {
         let mesh = ExactAabb3::from_points(points);
         let mut faces = Vec::with_capacity(triangle_count);
+        let mut edge_keys = Vec::<[usize; 2]>::with_capacity(triangle_count.saturating_mul(3));
         for tri in triangles {
             faces.push(ExactAabb3::from_triangle([
                 &points[tri[0]],
                 &points[tri[1]],
                 &points[tri[2]],
             ]));
+            edge_keys.push(sorted_edge([tri[0], tri[1]]));
+            edge_keys.push(sorted_edge([tri[1], tri[2]]));
+            edge_keys.push(sorted_edge([tri[2], tri[0]]));
         }
-        Self { mesh, faces }
+        edge_keys.sort_unstable();
+        edge_keys.dedup();
+        let edges = edge_keys
+            .into_iter()
+            .map(|edge| ExactAabb3::from_segment([&points[edge[0]], &points[edge[1]]]))
+            .collect();
+        Self { mesh, edges, faces }
     }
 
     /// Return retained whole-mesh bounds, or `None` for an empty mesh.
@@ -505,6 +528,11 @@ impl MeshBounds {
     /// Return retained bounds for one face.
     pub(crate) fn face(&self, index: usize) -> Option<&ExactAabb3> {
         self.faces.get(index)
+    }
+
+    /// Return retained bounds for one canonical edge-fact row.
+    pub(crate) fn edge(&self, index: usize) -> Option<&ExactAabb3> {
+        self.edges.get(index)
     }
 
     /// Return whether retained whole-mesh bounds require face-pair scheduling.
@@ -971,6 +999,7 @@ impl MeshBounds {
     pub(crate) fn validate(
         &self,
         vertex_count: usize,
+        edge_count: usize,
         face_count: usize,
     ) -> Result<(), BoundsValidationError> {
         match (&self.mesh, vertex_count) {
@@ -982,8 +1011,14 @@ impl MeshBounds {
         if self.faces.len() != face_count {
             return Err(BoundsValidationError::FaceBoundsCountMismatch);
         }
+        if self.edges.len() != edge_count {
+            return Err(BoundsValidationError::EdgeBoundsCountMismatch);
+        }
         for face in &self.faces {
             face.validate()?;
+        }
+        for edge in &self.edges {
+            edge.validate()?;
         }
         Ok(())
     }
@@ -993,11 +1028,15 @@ impl MeshBounds {
         triangle_count: usize,
         triangles: impl IntoIterator<Item = [usize; 3]>,
     ) -> Result<(), BoundsValidationError> {
-        self.validate(points.len(), triangle_count)?;
+        let triangles = triangles.into_iter().collect::<Vec<_>>();
+        let edge_count = retained_edge_count(&triangles);
+        self.validate(points.len(), edge_count, triangle_count)?;
         let mut replay = Self {
             mesh: ExactAabb3::from_points(points),
+            edges: Vec::with_capacity(edge_count),
             faces: Vec::with_capacity(triangle_count),
         };
+        let mut edge_keys = Vec::<[usize; 2]>::with_capacity(triangle_count.saturating_mul(3));
         for triangle in triangles {
             if triangle.iter().any(|&vertex| vertex >= points.len()) {
                 return Err(BoundsValidationError::SourceReplayMismatch);
@@ -1007,13 +1046,34 @@ impl MeshBounds {
                 &points[triangle[1]],
                 &points[triangle[2]],
             ]));
+            edge_keys.push(sorted_edge([triangle[0], triangle[1]]));
+            edge_keys.push(sorted_edge([triangle[1], triangle[2]]));
+            edge_keys.push(sorted_edge([triangle[2], triangle[0]]));
         }
+        edge_keys.sort_unstable();
+        edge_keys.dedup();
+        replay.edges = edge_keys
+            .into_iter()
+            .map(|edge| ExactAabb3::from_segment([&points[edge[0]], &points[edge[1]]]))
+            .collect();
         if self == &replay {
             Ok(())
         } else {
             Err(BoundsValidationError::SourceReplayMismatch)
         }
     }
+}
+
+fn retained_edge_count(triangles: &[[usize; 3]]) -> usize {
+    let mut edges = Vec::<[usize; 2]>::with_capacity(triangles.len().saturating_mul(3));
+    for triangle in triangles {
+        edges.push(sorted_edge([triangle[0], triangle[1]]));
+        edges.push(sorted_edge([triangle[1], triangle[2]]));
+        edges.push(sorted_edge([triangle[2], triangle[0]]));
+    }
+    edges.sort_unstable();
+    edges.dedup();
+    edges.len()
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1241,6 +1301,40 @@ mod tests {
         let right = MeshBounds::from_triangles(&right_points, &triangles);
 
         assert_eq!(candidate_face_pairs(&left, &right), vec![[0, 0]]);
+    }
+
+    #[test]
+    fn mesh_bounds_retain_canonical_edge_bounds() {
+        let points = vec![p(0, 0, 0), p(2, 0, 0), p(0, 3, 0), p(2, 3, 0)];
+        let triangles = [[0, 1, 2], [2, 1, 3]];
+        let bounds = MeshBounds::from_triangles(&points, &triangles);
+
+        assert_eq!(
+            bounds.edge(0),
+            Some(&ExactAabb3::from_segment([&points[0], &points[1]]))
+        );
+        assert_eq!(
+            bounds.edge(1),
+            Some(&ExactAabb3::from_segment([&points[0], &points[2]]))
+        );
+        assert_eq!(
+            bounds.edge(2),
+            Some(&ExactAabb3::from_segment([&points[1], &points[2]]))
+        );
+        assert_eq!(
+            bounds.edge(3),
+            Some(&ExactAabb3::from_segment([&points[1], &points[3]]))
+        );
+        assert_eq!(
+            bounds.edge(4),
+            Some(&ExactAabb3::from_segment([&points[2], &points[3]]))
+        );
+        assert_eq!(bounds.edge(5), None);
+        assert_eq!(bounds.validate(points.len(), 5, triangles.len()), Ok(()));
+        assert_eq!(
+            bounds.validate(points.len(), 4, triangles.len()),
+            Err(BoundsValidationError::EdgeBoundsCountMismatch)
+        );
     }
 
     #[test]

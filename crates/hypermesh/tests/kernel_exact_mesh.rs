@@ -563,7 +563,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
         edge.vertex_refs().unwrap().map(VertexRef::index),
         edge.vertex_indices()
     );
-    assert_eq!(edge.bounds().unwrap(), (p(0, 0, 0), p(1, 0, 0)));
+    assert_eq!(edge.bounds().unwrap(), (&p(0, 0, 0), &p(1, 0, 0)));
     assert_eq!(edge.vertices().unwrap().len(), 2);
 
     let prepared = view.prepare_broad_phase().unwrap();

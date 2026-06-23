@@ -2753,19 +2753,21 @@ impl<'a> EdgeRef<'a> {
         ])
     }
 
-    /// Return exact endpoint bounds as min/max corners.
-    pub fn bounds(self) -> Result<(Point3, Point3), ExactMeshError> {
-        let [a, b] = self.vertices()?;
-        let bounds = ExactAabb3::from_points(&[a.clone(), b.clone()]).ok_or_else(|| {
-            ExactMeshError::one(
-                ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::MissingRequiredEvidence,
-                    format!("mesh edge {} has no retained endpoint bounds", self.index),
+    /// Borrow retained edge bounds as exact min/max corners.
+    pub fn bounds(self) -> Result<(&'a Point3, &'a Point3), ExactMeshError> {
+        self.mesh
+            .bounds()
+            .edge(self.index)
+            .map(bounds_corners)
+            .ok_or_else(|| {
+                ExactMeshError::one(
+                    ExactMeshBlocker::new(
+                        ExactMeshBlockerKind::MissingRequiredEvidence,
+                        format!("mesh edge {} has no retained endpoint bounds", self.index),
+                    )
+                    .with_edge(self.vertex_indices()),
                 )
-                .with_edge(self.vertex_indices()),
-            )
-        })?;
-        Ok((bounds.min, bounds.max))
+            })
     }
 
     /// Retained incident face count.
