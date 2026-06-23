@@ -152,11 +152,51 @@ fn prepared_mesh_pair_materializes_named_operations() {
         hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
+        initial_status
+            .require_current_face_pair_classifications()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    assert_eq!(
+        initial_status
+            .current_face_pair_classification_count()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    assert_eq!(
+        pair.current_face_pair_classification_count()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    assert_eq!(
         pair.current_intersection_graph_counts()
             .unwrap_err()
             .blockers()[0]
             .kind(),
         hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+
+    assert_eq!(pair.prepare_face_pair_classifications(), 0);
+    let classified_status = pair.cache_status();
+    classified_status
+        .require_current_face_pair_classifications()
+        .unwrap();
+    assert_eq!(
+        classified_status
+            .current_face_pair_classification_count()
+            .unwrap(),
+        0
+    );
+    assert_eq!(pair.current_face_pair_classification_count().unwrap(), 0);
+    assert_eq!(
+        classified_status.intersection_graph(),
+        PreparedMeshPairFactState::Missing
     );
 
     let union = pair.union().unwrap();

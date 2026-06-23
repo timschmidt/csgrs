@@ -188,6 +188,24 @@ impl PreparedMeshPairCacheStatus {
         self.retained_face_pair_classification_count
     }
 
+    /// Require retained coarse face-pair classifications with current certificates.
+    pub fn require_current_face_pair_classifications(self) -> Result<(), ExactMeshError> {
+        self.face_pair_classifications
+            .require_current("face-pair classification")
+    }
+
+    /// Return the retained coarse face-pair classification count after requiring current evidence.
+    pub fn current_face_pair_classification_count(self) -> Result<usize, ExactMeshError> {
+        self.require_current_face_pair_classifications()?;
+        self.retained_face_pair_classification_count
+            .ok_or_else(|| {
+                ExactMeshError::one(ExactMeshBlocker::new(
+                    ExactMeshBlockerKind::MissingRequiredEvidence,
+                    "prepared mesh-pair session retained face-pair classification evidence without a count",
+                ))
+            })
+    }
+
     /// Return the certificate state for the exact intersection graph.
     pub const fn intersection_graph(self) -> PreparedMeshPairFactState {
         self.intersection_graph
@@ -564,6 +582,16 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.candidate_pair_capacity_hint
     }
 
+    /// Build and retain coarse face-pair classifications, returning the retained count.
+    pub fn prepare_face_pair_classifications(&self) -> usize {
+        self.ensure_face_pair_classifications();
+        self.face_pair_classifications
+            .borrow()
+            .as_ref()
+            .map(Vec::len)
+            .unwrap_or(0)
+    }
+
     /// Return a cheap summary of retained facts in this prepared pair session.
     pub fn cache_status(&self) -> PreparedMeshPairCacheStatus {
         let face_pair_classification_count = self
@@ -611,6 +639,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     /// Return retained exact intersection graph counts after requiring a current certificate.
     pub fn current_intersection_graph_counts(&self) -> Result<(usize, usize), ExactMeshError> {
         self.cache_status().current_intersection_graph_counts()
+    }
+
+    /// Return the retained coarse face-pair classification count after requiring current evidence.
+    pub fn current_face_pair_classification_count(&self) -> Result<usize, ExactMeshError> {
+        self.cache_status().current_face_pair_classification_count()
     }
 
     /// Visit retained coarse face-pair classifications for this prepared mesh pair.
