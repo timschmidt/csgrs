@@ -2609,12 +2609,12 @@ impl<'a> FaceRef<'a> {
     }
 
     /// Borrow retained face bounds as exact min/max corners.
-    pub fn bounds(self) -> (&'a Point3, &'a Point3) {
+    pub fn bounds(self) -> Result<(&'a Point3, &'a Point3), ExactMeshError> {
         self.mesh
             .bounds()
             .face(self.index)
             .map(bounds_corners)
-            .expect("face reference index must have retained bounds")
+            .ok_or_else(|| missing_retained_face_bounds("face", self.index))
     }
 
     /// Borrow the face vertices.
@@ -2672,12 +2672,12 @@ impl<'a> TriangleRef<'a> {
     }
 
     /// Borrow retained triangle bounds as exact min/max corners.
-    pub fn bounds(self) -> (&'a Point3, &'a Point3) {
+    pub fn bounds(self) -> Result<(&'a Point3, &'a Point3), ExactMeshError> {
         self.mesh
             .bounds()
             .face(self.index)
             .map(bounds_corners)
-            .expect("triangle reference index must have retained bounds")
+            .ok_or_else(|| missing_retained_face_bounds("triangle", self.index))
     }
 
     /// Borrow the triangle vertices.
@@ -2800,4 +2800,14 @@ fn vertex_refs(mesh: &ExactMesh, triangle: [usize; 3]) -> [VertexRef<'_>; 3] {
 
 fn bounds_corners(bounds: &ExactAabb3) -> (&Point3, &Point3) {
     (&bounds.min, &bounds.max)
+}
+
+fn missing_retained_face_bounds(kind: &'static str, face: usize) -> ExactMeshError {
+    ExactMeshError::one(
+        ExactMeshBlocker::new(
+            ExactMeshBlockerKind::MissingRequiredEvidence,
+            format!("mesh {kind} {face} has no retained exact bounds"),
+        )
+        .with_face(face),
+    )
 }

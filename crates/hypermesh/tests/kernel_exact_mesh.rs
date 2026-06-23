@@ -491,7 +491,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(face.index(), 0);
     assert_eq!(face.vertex_indices(), [0, 2, 1]);
     assert_eq!(view.face_bounds(0), Some((&p(0, 0, 0), &p(1, 1, 0))));
-    assert_eq!(face.bounds(), (&p(0, 0, 0), &p(1, 1, 0)));
+    assert_eq!(face.bounds().unwrap(), (&p(0, 0, 0), &p(1, 1, 0)));
     assert_eq!(
         face.vertex_refs().map(VertexRef::index),
         face.vertex_indices()
@@ -519,7 +519,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let triangle: TriangleRef<'_> = view.triangle(1).unwrap();
     assert_eq!(triangle.index(), 1);
     assert_eq!(triangle.vertex_indices(), [0, 1, 3]);
-    assert_eq!(triangle.bounds(), (&p(0, 0, 0), &p(1, 0, 1)));
+    assert_eq!(triangle.bounds().unwrap(), (&p(0, 0, 0), &p(1, 0, 1)));
     assert_eq!(
         triangle.vertex_refs().map(VertexRef::index),
         triangle.vertex_indices()
