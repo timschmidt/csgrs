@@ -546,11 +546,11 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(edge.directed_use_counts(), [1, 1]);
     assert!(edge.is_closed_manifold_edge());
     assert_eq!(
-        edge.vertex_refs().map(VertexRef::index),
+        edge.vertex_refs().unwrap().map(VertexRef::index),
         edge.vertex_indices()
     );
-    assert_eq!(edge.bounds(), (p(0, 0, 0), p(1, 0, 0)));
-    assert_eq!(edge.vertices().len(), 2);
+    assert_eq!(edge.bounds().unwrap(), (p(0, 0, 0), p(1, 0, 0)));
+    assert_eq!(edge.vertices().unwrap().len(), 2);
 
     let prepared = view.prepare_broad_phase().unwrap();
     assert_eq!(prepared.mesh_bounds(), view.mesh_bounds());

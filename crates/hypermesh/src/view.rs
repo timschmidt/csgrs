@@ -2735,9 +2735,11 @@ impl<'a> EdgeRef<'a> {
     }
 
     /// Borrow the edge endpoint vertices.
-    pub fn vertex_refs(self) -> [VertexRef<'a>; 2] {
+    pub fn vertex_refs(self) -> Result<[VertexRef<'a>; 2], ExactMeshError> {
         let [a, b] = self.vertex_indices();
-        [
+        require_retained_edge_endpoint(self.mesh, self.index, a)?;
+        require_retained_edge_endpoint(self.mesh, self.index, b)?;
+        Ok([
             VertexRef {
                 mesh: self.mesh,
                 index: a,
@@ -2746,15 +2748,22 @@ impl<'a> EdgeRef<'a> {
                 mesh: self.mesh,
                 index: b,
             },
-        ]
+        ])
     }
 
     /// Return exact endpoint bounds as min/max corners.
-    pub fn bounds(self) -> (Point3, Point3) {
-        let [a, b] = self.vertices();
-        let bounds = ExactAabb3::from_points(&[a.clone(), b.clone()])
-            .expect("edge reference must have two endpoint points");
-        (bounds.min, bounds.max)
+    pub fn bounds(self) -> Result<(Point3, Point3), ExactMeshError> {
+        let [a, b] = self.vertices()?;
+        let bounds = ExactAabb3::from_points(&[a.clone(), b.clone()]).ok_or_else(|| {
+            ExactMeshError::one(
+                ExactMeshBlocker::new(
+                    ExactMeshBlockerKind::MissingRequiredEvidence,
+                    format!("mesh edge {} has no retained endpoint bounds", self.index),
+                )
+                .with_edge(self.vertex_indices()),
+            )
+        })?;
+        Ok((bounds.min, bounds.max))
     }
 
     /// Retained incident face count.
@@ -2774,9 +2783,17 @@ impl<'a> EdgeRef<'a> {
     }
 
     /// Exact edge endpoints.
-    pub fn vertices(self) -> [&'a Point3; 2] {
+    pub fn vertices(self) -> Result<[&'a Point3; 2], ExactMeshError> {
         let [a, b] = self.vertex_indices();
-        [&self.mesh.vertices()[a], &self.mesh.vertices()[b]]
+        let start =
+            self.mesh.vertices().get(a).ok_or_else(|| {
+                retained_edge_endpoint_error(self.index, self.vertex_indices(), a)
+            })?;
+        let end =
+            self.mesh.vertices().get(b).ok_or_else(|| {
+                retained_edge_endpoint_error(self.index, self.vertex_indices(), b)
+            })?;
+        Ok([start, end])
     }
 }
 
@@ -2809,5 +2826,33 @@ fn missing_retained_face_bounds(kind: &'static str, face: usize) -> ExactMeshErr
             format!("mesh {kind} {face} has no retained exact bounds"),
         )
         .with_face(face),
+    )
+}
+
+fn require_retained_edge_endpoint(
+    mesh: &ExactMesh,
+    edge: usize,
+    vertex: usize,
+) -> Result<(), ExactMeshError> {
+    if vertex < mesh.vertices().len() {
+        Ok(())
+    } else {
+        let edge_vertices = mesh.facts().edges[edge].vertices;
+        Err(retained_edge_endpoint_error(edge, edge_vertices, vertex))
+    }
+}
+
+fn retained_edge_endpoint_error(
+    edge: usize,
+    edge_vertices: [usize; 2],
+    vertex: usize,
+) -> ExactMeshError {
+    ExactMeshError::one(
+        ExactMeshBlocker::new(
+            ExactMeshBlockerKind::StaleFactReplay,
+            format!("retained mesh edge {edge} references missing vertex {vertex}"),
+        )
+        .with_edge(edge_vertices)
+        .with_vertex(vertex),
     )
 }
