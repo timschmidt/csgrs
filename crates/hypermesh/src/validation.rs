@@ -95,6 +95,27 @@ pub(crate) fn validate_triangle_rows_with_policy(
     let mut degenerate_triangles = 0_usize;
 
     for (face, tri) in triangles.into_iter().enumerate() {
+        let mut has_out_of_bounds_vertex = false;
+        for vertex in tri {
+            if vertex >= points.len() {
+                has_out_of_bounds_vertex = true;
+                blockers.push(
+                    ExactMeshBlocker::new(
+                        ExactMeshBlockerKind::IndexOutOfBounds,
+                        format!(
+                            "face {face} references vertex {vertex}, but only {} vertices exist",
+                            points.len()
+                        ),
+                    )
+                    .with_face(face)
+                    .with_vertex(vertex),
+                );
+            }
+        }
+        if has_out_of_bounds_vertex {
+            continue;
+        }
+
         let mut sorted_tri = tri;
         sorted_tri.sort_unstable();
         if !seen_triangles.insert(sorted_tri) && duplicate_triangles.insert(sorted_tri) {
@@ -397,4 +418,34 @@ fn sub(left: &Real, right: &Real) -> Real {
 
 fn mul(left: &Real, right: &Real) -> Real {
     left.clone() * right
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn p(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    #[test]
+    fn validator_returns_blocker_for_out_of_bounds_triangle_vertex() {
+        let points = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+        let report = validate_triangle_rows_with_policy(
+            &points,
+            1,
+            [[0, 1, 3]],
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        );
+
+        assert!(!report.is_valid());
+        assert_eq!(report.blockers.len(), 1);
+        assert_eq!(
+            report.blockers[0].kind(),
+            ExactMeshBlockerKind::IndexOutOfBounds
+        );
+        assert_eq!(report.blockers[0].face(), Some(0));
+        assert_eq!(report.blockers[0].vertex(), Some(3));
+        assert_eq!(report.facts.faces.len(), 0);
+    }
 }
