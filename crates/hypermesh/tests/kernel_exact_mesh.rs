@@ -508,7 +508,66 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         overlapping.triangle_count()
     );
     assert!(prepared_pair.candidate_face_pair_capacity_hint() > 0);
+    let unprepared_status = prepared_pair.cache_status();
+    assert_eq!(
+        unprepared_status.face_pair_classifications(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        unprepared_status.retained_face_pair_classification_counts(),
+        None
+    );
+    assert_eq!(
+        unprepared_status
+            .current_face_pair_classification_counts()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    let classification_counts = prepared_pair.prepare_face_pair_classification_counts();
+    assert_eq!(
+        prepared_pair.prepare_face_pair_classifications(),
+        classification_counts.face_pair_count()
+    );
+    assert!(classification_counts.face_pair_count() > 0);
+    assert!(classification_counts.graph_required_count() > 0);
+    assert_eq!(
+        classification_counts.graph_required_count(),
+        classification_counts.coplanar_touching_count()
+            + classification_counts.coplanar_overlapping_count()
+            + classification_counts.candidate_count()
+            + classification_counts.unknown_count()
+    );
+    assert_eq!(
+        classification_counts.face_pair_count(),
+        classification_counts.plane_separated_count()
+            + classification_counts.graph_required_count()
+    );
+    let classified_status = prepared_pair.cache_status();
+    assert_eq!(
+        classified_status.face_pair_classifications(),
+        PreparedMeshPairFactState::Current
+    );
+    assert_eq!(
+        classified_status.retained_face_pair_classification_count(),
+        Some(classification_counts.face_pair_count())
+    );
+    assert_eq!(
+        classified_status.retained_face_pair_classification_counts(),
+        Some(classification_counts)
+    );
+    assert_eq!(
+        prepared_pair
+            .current_face_pair_classification_counts()
+            .unwrap(),
+        classification_counts
+    );
     let retained_graph_counts = prepared_pair.prepare_intersection_graph().unwrap();
+    assert_eq!(
+        retained_graph_counts.0,
+        classification_counts.graph_required_count()
+    );
     let graph_retained_status = prepared_pair.cache_status();
     assert_eq!(
         graph_retained_status.intersection_graph(),

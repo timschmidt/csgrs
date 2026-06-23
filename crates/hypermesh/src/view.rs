@@ -16,7 +16,9 @@ use super::graph::{
     ExactIntersectionGraph, build_unvalidated_intersection_graph_from_prepared_pair_rc,
     build_validated_intersection_graph_from_prepared_pair,
 };
-use super::intersection::{MeshFacePairClassification, classify_mesh_face_pair_unchecked};
+use super::intersection::{
+    MeshFacePairClassification, MeshFacePairRelation, classify_mesh_face_pair_unchecked,
+};
 use super::validation::ExactMeshValidationPolicy;
 use hyperlimit::{Point3, PredicateUse};
 use hyperreal::Real;
@@ -97,6 +99,7 @@ pub struct PreparedMeshPairCacheStatus {
     candidate_pair_capacity_hint: usize,
     face_pair_classifications: PreparedMeshPairFactState,
     retained_face_pair_classification_count: Option<usize>,
+    retained_face_pair_classification_counts: Option<PreparedMeshPairClassificationCounts>,
     intersection_graph: PreparedMeshPairFactState,
     retained_intersection_graph_face_pair_count: Option<usize>,
     retained_intersection_graph_event_count: Option<usize>,
@@ -133,6 +136,75 @@ pub enum PreparedMeshPairFactState {
     CertificateBlocked,
     /// The fact is retained and its certificate is current for this session.
     Current,
+}
+
+/// Retained decision counts for coarse exact face-pair classifications.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct PreparedMeshPairClassificationCounts {
+    face_pairs: usize,
+    plane_separated: usize,
+    coplanar_touching: usize,
+    coplanar_overlapping: usize,
+    candidates: usize,
+    unknown: usize,
+    graph_required: usize,
+}
+
+impl PreparedMeshPairClassificationCounts {
+    /// Return the total number of retained coarse face-pair classifications.
+    pub const fn face_pair_count(self) -> usize {
+        self.face_pairs
+    }
+
+    /// Return the number of pairs rejected by exact plane-side predicates.
+    pub const fn plane_separated_count(self) -> usize {
+        self.plane_separated
+    }
+
+    /// Return the number of coplanar touching pairs retained for graph construction.
+    pub const fn coplanar_touching_count(self) -> usize {
+        self.coplanar_touching
+    }
+
+    /// Return the number of coplanar overlapping pairs retained for graph construction.
+    pub const fn coplanar_overlapping_count(self) -> usize {
+        self.coplanar_overlapping
+    }
+
+    /// Return the number of non-coplanar candidate pairs retained for graph construction.
+    pub const fn candidate_count(self) -> usize {
+        self.candidates
+    }
+
+    /// Return the number of pairs with undecided coarse predicates.
+    pub const fn unknown_count(self) -> usize {
+        self.unknown
+    }
+
+    /// Return the number of retained classifications that require graph construction.
+    pub const fn graph_required_count(self) -> usize {
+        self.graph_required
+    }
+
+    fn from_classifications(classifications: &[MeshFacePairClassification]) -> Self {
+        let mut counts = Self {
+            face_pairs: classifications.len(),
+            ..Self::default()
+        };
+        for classification in classifications {
+            match classification.relation {
+                MeshFacePairRelation::PlaneSeparated => counts.plane_separated += 1,
+                MeshFacePairRelation::CoplanarTouching => counts.coplanar_touching += 1,
+                MeshFacePairRelation::CoplanarOverlapping => counts.coplanar_overlapping += 1,
+                MeshFacePairRelation::Candidate => counts.candidates += 1,
+                MeshFacePairRelation::Unknown => counts.unknown += 1,
+            }
+            if classification.needs_graph_construction() {
+                counts.graph_required += 1;
+            }
+        }
+        counts
+    }
 }
 
 impl PreparedMeshPairFactState {
@@ -191,6 +263,13 @@ impl PreparedMeshPairCacheStatus {
         self.retained_face_pair_classification_count
     }
 
+    /// Return retained coarse face-pair decision counts, when cached.
+    pub const fn retained_face_pair_classification_counts(
+        self,
+    ) -> Option<PreparedMeshPairClassificationCounts> {
+        self.retained_face_pair_classification_counts
+    }
+
     /// Require retained coarse face-pair classifications with current certificates.
     pub fn require_current_face_pair_classifications(self) -> Result<(), ExactMeshError> {
         self.face_pair_classifications
@@ -199,12 +278,20 @@ impl PreparedMeshPairCacheStatus {
 
     /// Return the retained coarse face-pair classification count after requiring current evidence.
     pub fn current_face_pair_classification_count(self) -> Result<usize, ExactMeshError> {
+        self.current_face_pair_classification_counts()
+            .map(PreparedMeshPairClassificationCounts::face_pair_count)
+    }
+
+    /// Return retained coarse face-pair decision counts after requiring current evidence.
+    pub fn current_face_pair_classification_counts(
+        self,
+    ) -> Result<PreparedMeshPairClassificationCounts, ExactMeshError> {
         self.require_current_face_pair_classifications()?;
-        self.retained_face_pair_classification_count
+        self.retained_face_pair_classification_counts
             .ok_or_else(|| {
                 ExactMeshError::one(ExactMeshBlocker::new(
                     ExactMeshBlockerKind::MissingRequiredEvidence,
-                    "prepared mesh-pair session retained face-pair classification evidence without a count",
+                    "prepared mesh-pair session retained face-pair classification evidence without decision counts",
                 ))
             })
     }
@@ -629,30 +716,40 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     /// Build and retain coarse face-pair classifications, returning the retained count.
     pub fn prepare_face_pair_classifications(&self) -> usize {
+        self.prepare_face_pair_classification_counts()
+            .face_pair_count()
+    }
+
+    /// Build and retain coarse face-pair classifications, returning retained decision counts.
+    pub fn prepare_face_pair_classification_counts(&self) -> PreparedMeshPairClassificationCounts {
         self.ensure_face_pair_classifications();
         self.face_pair_classifications
             .borrow()
             .as_ref()
-            .map(Vec::len)
-            .unwrap_or(0)
+            .map(|classifications| {
+                PreparedMeshPairClassificationCounts::from_classifications(classifications)
+            })
+            .unwrap_or_default()
     }
 
     /// Return a cheap summary of retained facts in this prepared pair session.
     pub fn cache_status(&self) -> PreparedMeshPairCacheStatus {
-        let face_pair_classification_count = self
-            .face_pair_classifications
-            .borrow()
-            .as_ref()
-            .map(Vec::len);
+        let face_pair_classifications = self.face_pair_classifications.borrow();
+        let face_pair_classification_counts =
+            face_pair_classifications.as_ref().map(|classifications| {
+                PreparedMeshPairClassificationCounts::from_classifications(classifications)
+            });
         let graph_counts = *self.intersection_graph_counts.borrow();
         let graph_retained = self.intersection_graph.borrow().is_some();
         PreparedMeshPairCacheStatus {
             candidate_pair_plan: PreparedMeshPairPlanKind::from_candidate_plan(self.plan),
             candidate_pair_capacity_hint: self.candidate_face_pair_capacity_hint(),
             face_pair_classifications: retained_current_state(
-                face_pair_classification_count.is_some(),
+                face_pair_classification_counts.is_some(),
             ),
-            retained_face_pair_classification_count: face_pair_classification_count,
+            retained_face_pair_classification_count: face_pair_classification_counts
+                .map(PreparedMeshPairClassificationCounts::face_pair_count),
+            retained_face_pair_classification_counts: face_pair_classification_counts,
             intersection_graph: if graph_retained {
                 retained_certificate_state(*self.intersection_graph_validated.borrow())
             } else {
@@ -696,6 +793,14 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     /// Return the retained coarse face-pair classification count after requiring current evidence.
     pub fn current_face_pair_classification_count(&self) -> Result<usize, ExactMeshError> {
         self.cache_status().current_face_pair_classification_count()
+    }
+
+    /// Return retained coarse face-pair decision counts after requiring current evidence.
+    pub fn current_face_pair_classification_counts(
+        &self,
+    ) -> Result<PreparedMeshPairClassificationCounts, ExactMeshError> {
+        self.cache_status()
+            .current_face_pair_classification_counts()
     }
 
     /// Build and retain the exact intersection graph without certifying source replay.
