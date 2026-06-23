@@ -6837,13 +6837,13 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
         ));
     }
 
-    if let Some(certificate) = full_face_adjacent_certificate_from_graph(left, right, graph)
+    if let Some(certificate) = full_face_adjacent_certificate_from_graph(left, right, graph)?
         && let Some(union) = materialize_full_face_adjacent_union_from_certificate(
             left,
             right,
             &certificate,
             materialization_validation.unwrap_or(ExactMeshValidationPolicy::CLOSED),
-        )
+        )?
     {
         let full_face_shared_faces = union.shared_faces.len();
         let full_face_shared_patches = union.shared_patches.len();
@@ -6915,13 +6915,13 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
         ));
     }
 
-    if let Some(certificate) = contained_face_adjacent_certificate_from_graph(left, right, graph)
+    if let Some(certificate) = contained_face_adjacent_certificate_from_graph(left, right, graph)?
         && let Some(union) = materialize_contained_face_adjacent_union_from_certificate(
             left,
             right,
             &certificate,
             materialization_validation.unwrap_or(ExactMeshValidationPolicy::CLOSED),
-        )
+        )?
     {
         let contained_containing_side = Some(union.containing_side);
         let contained_faces = union.contained_faces.len();

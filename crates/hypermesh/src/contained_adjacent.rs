@@ -23,7 +23,7 @@ use hyperlimit::{
 
 use super::arrangement2d::{ExactArrangement2dBoundaryPolicy, ExactArrangement2dSetOperation};
 use super::boolean::{coplanar_mesh_overlay_carrier, materialize_coplanar_mesh_overlay_mesh};
-use super::error::ExactMeshError;
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::graph::{
     ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide,
     build_validated_intersection_graph,
@@ -125,6 +125,19 @@ impl ContainedFaceAdjacentUnion {
     }
 }
 
+fn contained_face_adjacent_union_error(error: ContainedFaceAdjacentUnionError) -> ExactMeshError {
+    exact_construction_failure(format!(
+        "contained-face adjacent union retained output failed validation: {error:?}"
+    ))
+}
+
+fn exact_construction_failure(message: impl Into<String>) -> ExactMeshError {
+    ExactMeshError::one(ExactMeshBlocker::new(
+        ExactMeshBlockerKind::ExactConstructionFailure,
+        message,
+    ))
+}
+
 /// Certify and materialize a contained-face adjacent closed-solid union.
 pub(crate) fn materialize_contained_face_adjacent_union(
     left: &ExactMesh,
@@ -134,12 +147,12 @@ pub(crate) fn materialize_contained_face_adjacent_union(
     let Some(certificate) = contained_face_adjacent_certificate(left, right)? else {
         return Ok(None);
     };
-    Ok(materialize_contained_face_adjacent_union_from_certificate(
+    materialize_contained_face_adjacent_union_from_certificate(
         left,
         right,
         &certificate,
         validation,
-    ))
+    )
 }
 
 /// Return the retained contained-face adjacency certificate for these sources.
@@ -156,9 +169,11 @@ pub(crate) fn contained_face_adjacent_certificate_from_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     graph: &ExactIntersectionGraph,
-) -> Option<ContainedFaceAdjacentCertificate> {
-    contained_face_adjacent_union_certificate_from_graph(left, right, graph)
-        .map(|inner| ContainedFaceAdjacentCertificate { inner })
+) -> Result<Option<ContainedFaceAdjacentCertificate>, ExactMeshError> {
+    Ok(
+        contained_face_adjacent_union_certificate_from_graph(left, right, graph)?
+            .map(|inner| ContainedFaceAdjacentCertificate { inner }),
+    )
 }
 
 /// Materialize a contained-face adjacent union from an already-retained certificate.
@@ -167,9 +182,11 @@ pub(crate) fn materialize_contained_face_adjacent_union_from_certificate(
     right: &ExactMesh,
     certificate: &ContainedFaceAdjacentCertificate,
     validation: ExactMeshValidationPolicy,
-) -> Option<ContainedFaceAdjacentUnion> {
+) -> Result<Option<ContainedFaceAdjacentUnion>, ExactMeshError> {
     let certificate = &certificate.inner;
-    let mesh = contained_face_union_mesh(left, right, certificate, validation)?;
+    let Some(mesh) = contained_face_union_mesh(left, right, certificate, validation)? else {
+        return Ok(None);
+    };
     let union = ContainedFaceAdjacentUnion {
         containing_side: certificate.containing_side,
         containing_face: certificate.containing_face(),
@@ -178,8 +195,10 @@ pub(crate) fn materialize_contained_face_adjacent_union_from_certificate(
         containing_faces: certificate.containing_faces(),
         mesh,
     };
-    union.validate().ok()?;
-    Some(union)
+    union
+        .validate()
+        .map_err(contained_face_adjacent_union_error)?;
+    Ok(Some(union))
 }
 
 fn contained_face_adjacent_union_certificate(
@@ -193,9 +212,8 @@ fn contained_face_adjacent_union_certificate(
     if graph.has_unknowns() || graph.face_pairs.is_empty() {
         return Ok(None);
     }
-    match closed_boundary_contact_only(left, right) {
-        Some(true) => {}
-        Some(false) | None => return Ok(None),
+    if !closed_boundary_contact_only(left, right)? {
+        return Ok(None);
     }
 
     Ok(contained_face_adjacency_certificate(
@@ -209,18 +227,22 @@ fn contained_face_adjacent_union_certificate_from_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     graph: &ExactIntersectionGraph,
-) -> Option<ContainedFaceAdjacencyCertificate> {
+) -> Result<Option<ContainedFaceAdjacencyCertificate>, ExactMeshError> {
     if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
-        return None;
+        return Ok(None);
     }
     if graph.has_unknowns() || graph.face_pairs.is_empty() {
-        return None;
+        return Ok(None);
     }
     if !closed_boundary_contact_only(left, right)? {
-        return None;
+        return Ok(None);
     }
 
-    contained_face_adjacency_certificate(left, right, &graph.face_pairs)
+    Ok(contained_face_adjacency_certificate(
+        left,
+        right,
+        &graph.face_pairs,
+    ))
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -546,39 +568,51 @@ fn contained_face_union_mesh(
     right: &ExactMesh,
     certificate: &ContainedFaceAdjacencyCertificate,
     validation: ExactMeshValidationPolicy,
-) -> Option<ExactMesh> {
+) -> Result<Option<ExactMesh>, ExactMeshError> {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
-    append_source_mesh_without_face(
+    if append_source_mesh_without_face(
         left,
         skip_faces_for_side(certificate, MeshSide::Left),
         &mut vertices,
         &mut triangles,
-    )?;
-    append_source_mesh_without_face(
+    )
+    .is_none()
+    {
+        return Ok(None);
+    }
+    if append_source_mesh_without_face(
         right,
         skip_faces_for_side(certificate, MeshSide::Right),
         &mut vertices,
         &mut triangles,
-    )?;
+    )
+    .is_none()
+    {
+        return Ok(None);
+    }
     for group in contained_face_patch_groups(certificate) {
-        append_contained_face_patch_group(
+        if append_contained_face_patch_group(
             left,
             right,
             certificate.containing_side,
             &group,
             &mut vertices,
             &mut triangles,
-        )?;
+        )
+        .is_none()
+        {
+            return Ok(None);
+        }
     }
 
-    ExactMesh::new_with_policy(
+    let mesh = ExactMesh::new_with_policy(
         vertices,
         triangles,
         SourceProvenance::exact("exact contained-face adjacent closed-solid union"),
         validation,
-    )
-    .ok()
+    )?;
+    Ok(Some(mesh))
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -1021,17 +1055,26 @@ fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
     )
 }
 
-fn closed_boundary_contact_only(left: &ExactMesh, right: &ExactMesh) -> Option<bool> {
+fn closed_boundary_contact_only(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactMeshError> {
     let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
-    left_in_right.validate().ok()?;
+    left_in_right.validate().map_err(|error| {
+        exact_construction_failure(format!(
+            "contained-face adjacent boundary-contact left-in-right winding report failed validation: {error:?}"
+        ))
+    })?;
     let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
-    right_in_left.validate().ok()?;
-    Some(
-        mesh_vertices_are_boundary_or_outside(&left_in_right)
-            && mesh_vertices_are_boundary_or_outside(&right_in_left)
-            && (mesh_vertices_touch_boundary(&left_in_right)
-                || mesh_vertices_touch_boundary(&right_in_left)),
-    )
+    right_in_left.validate().map_err(|error| {
+        exact_construction_failure(format!(
+            "contained-face adjacent boundary-contact right-in-left winding report failed validation: {error:?}"
+        ))
+    })?;
+    Ok(mesh_vertices_are_boundary_or_outside(&left_in_right)
+        && mesh_vertices_are_boundary_or_outside(&right_in_left)
+        && (mesh_vertices_touch_boundary(&left_in_right)
+            || mesh_vertices_touch_boundary(&right_in_left)))
 }
 
 fn mesh_vertices_are_boundary_or_outside(

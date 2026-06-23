@@ -25,7 +25,7 @@ use hyperlimit::{
 };
 
 use super::adjacent_polygon::polygon_patch_pairs;
-use super::error::ExactMeshError;
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::graph::{
     ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide,
     build_validated_intersection_graph,
@@ -139,6 +139,19 @@ impl FullFaceAdjacentUnion {
     }
 }
 
+fn full_face_adjacent_union_error(error: FullFaceAdjacentUnionError) -> ExactMeshError {
+    exact_construction_failure(format!(
+        "full-face adjacent union retained output failed validation: {error:?}"
+    ))
+}
+
+fn exact_construction_failure(message: impl Into<String>) -> ExactMeshError {
+    ExactMeshError::one(ExactMeshBlocker::new(
+        ExactMeshBlockerKind::ExactConstructionFailure,
+        message,
+    ))
+}
+
 /// Certify and materialize a full-face adjacent closed-solid union.
 pub(crate) fn materialize_full_face_adjacent_union(
     left: &ExactMesh,
@@ -148,12 +161,7 @@ pub(crate) fn materialize_full_face_adjacent_union(
     let Some(certificate) = full_face_adjacent_certificate(left, right)? else {
         return Ok(None);
     };
-    Ok(materialize_full_face_adjacent_union_from_certificate(
-        left,
-        right,
-        &certificate,
-        validation,
-    ))
+    materialize_full_face_adjacent_union_from_certificate(left, right, &certificate, validation)
 }
 
 /// Return the retained full-face adjacency certificate for these sources.
@@ -170,9 +178,11 @@ pub(crate) fn full_face_adjacent_certificate_from_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     graph: &ExactIntersectionGraph,
-) -> Option<FullFaceAdjacentCertificate> {
-    full_face_adjacent_union_certificate_from_graph(left, right, graph)
-        .map(|inner| FullFaceAdjacentCertificate { inner })
+) -> Result<Option<FullFaceAdjacentCertificate>, ExactMeshError> {
+    Ok(
+        full_face_adjacent_union_certificate_from_graph(left, right, graph)?
+            .map(|inner| FullFaceAdjacentCertificate { inner }),
+    )
 }
 
 pub(crate) fn materialize_full_face_adjacent_union_from_certificate(
@@ -180,16 +190,18 @@ pub(crate) fn materialize_full_face_adjacent_union_from_certificate(
     right: &ExactMesh,
     certificate: &FullFaceAdjacentCertificate,
     validation: ExactMeshValidationPolicy,
-) -> Option<FullFaceAdjacentUnion> {
+) -> Result<Option<FullFaceAdjacentUnion>, ExactMeshError> {
     let certificate = &certificate.inner;
-    let mesh = merged_union_mesh(left, right, certificate, validation)?;
+    let Some(mesh) = merged_union_mesh(left, right, certificate, validation)? else {
+        return Ok(None);
+    };
     let union = FullFaceAdjacentUnion {
         shared_faces: certificate.shared_faces.clone(),
         shared_patches: certificate.shared_patches.clone(),
         mesh,
     };
-    union.validate().ok()?;
-    Some(union)
+    union.validate().map_err(full_face_adjacent_union_error)?;
+    Ok(Some(union))
 }
 
 fn full_face_adjacent_union_certificate(
@@ -200,34 +212,34 @@ fn full_face_adjacent_union_certificate(
         return Ok(None);
     }
     let graph = build_validated_intersection_graph(left, right)?;
-    Ok(full_face_adjacent_union_certificate_from_graph(
-        left, right, &graph,
-    ))
+    full_face_adjacent_union_certificate_from_graph(left, right, &graph)
 }
 
 fn full_face_adjacent_union_certificate_from_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     graph: &ExactIntersectionGraph,
-) -> Option<FullFaceAdjacencyCertificate> {
+) -> Result<Option<FullFaceAdjacencyCertificate>, ExactMeshError> {
     if graph.has_unknowns() {
-        return None;
+        return Ok(None);
     }
     if !closed_boundary_contact_only(left, right)? {
-        return None;
+        return Ok(None);
     }
 
-    let certificate = full_face_adjacency_certificate(left, right)?;
+    let Some(certificate) = full_face_adjacency_certificate(left, right) else {
+        return Ok(None);
+    };
     if certificate.is_empty() {
-        return None;
+        return Ok(None);
     }
     if !graph.face_pairs.is_empty()
         && !graph_has_only_adjacency_contacts(left, right, &graph.face_pairs, &certificate)
     {
-        return None;
+        return Ok(None);
     }
 
-    Some(certificate)
+    Ok(Some(certificate))
 }
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
@@ -423,17 +435,26 @@ fn same_whole_face_any_orientation(
     same_whole_face_vertices(left, left_triangle, right, right_triangle).unwrap_or(false)
 }
 
-fn closed_boundary_contact_only(left: &ExactMesh, right: &ExactMesh) -> Option<bool> {
+fn closed_boundary_contact_only(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactMeshError> {
     let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
-    left_in_right.validate().ok()?;
+    left_in_right.validate().map_err(|error| {
+        exact_construction_failure(format!(
+            "full-face adjacent boundary-contact left-in-right winding report failed validation: {error:?}"
+        ))
+    })?;
     let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
-    right_in_left.validate().ok()?;
-    Some(
-        mesh_vertices_are_boundary_or_outside(&left_in_right)
-            && mesh_vertices_are_boundary_or_outside(&right_in_left)
-            && (mesh_vertices_touch_boundary(&left_in_right)
-                || mesh_vertices_touch_boundary(&right_in_left)),
-    )
+    right_in_left.validate().map_err(|error| {
+        exact_construction_failure(format!(
+            "full-face adjacent boundary-contact right-in-left winding report failed validation: {error:?}"
+        ))
+    })?;
+    Ok(mesh_vertices_are_boundary_or_outside(&left_in_right)
+        && mesh_vertices_are_boundary_or_outside(&right_in_left)
+        && (mesh_vertices_touch_boundary(&left_in_right)
+            || mesh_vertices_touch_boundary(&right_in_left)))
 }
 
 fn mesh_vertices_are_boundary_or_outside(
@@ -549,22 +570,42 @@ fn merged_union_mesh(
     right: &ExactMesh,
     certificate: &FullFaceAdjacencyCertificate,
     validation: ExactMeshValidationPolicy,
-) -> Option<ExactMesh> {
+) -> Result<Option<ExactMesh>, ExactMeshError> {
     let mut right_to_left = BTreeMap::<usize, usize>::new();
     let mut skip_left = BTreeSet::new();
     let mut skip_right = BTreeSet::new();
 
     for pair in &certificate.shared_faces {
-        let left_triangle = left.triangles().get(pair.left_face)?.0;
-        let right_triangle = right.triangles().get(pair.right_face)?.0;
-        let seam_map = reversed_whole_face_vertex_map(left, left_triangle, right, right_triangle)?;
-        insert_seam_map(&mut right_to_left, right_triangle.into_iter().zip(seam_map))?;
+        let Some(left_triangle) = left
+            .triangles()
+            .get(pair.left_face)
+            .map(|triangle| triangle.0)
+        else {
+            return Ok(None);
+        };
+        let Some(right_triangle) = right
+            .triangles()
+            .get(pair.right_face)
+            .map(|triangle| triangle.0)
+        else {
+            return Ok(None);
+        };
+        let Some(seam_map) =
+            reversed_whole_face_vertex_map(left, left_triangle, right, right_triangle)
+        else {
+            return Ok(None);
+        };
+        if insert_seam_map(&mut right_to_left, right_triangle.into_iter().zip(seam_map)).is_none() {
+            return Ok(None);
+        }
         skip_left.insert(pair.left_face);
         skip_right.insert(pair.right_face);
     }
 
     for patch in &certificate.shared_patches {
-        insert_patch_seam_map(left, right, patch, &mut right_to_left)?;
+        if insert_patch_seam_map(left, right, patch, &mut right_to_left).is_none() {
+            return Ok(None);
+        }
         skip_left.extend(patch.left_faces.iter().copied());
         skip_right.extend(patch.right_faces.iter().copied());
     }
@@ -580,7 +621,7 @@ fn merged_union_mesh(
         if skip_left.contains(&face) {
             continue;
         }
-        append_left_triangle_with_edge_splits(
+        if append_left_triangle_with_edge_splits(
             left,
             right,
             &right_to_left,
@@ -590,14 +631,18 @@ fn merged_union_mesh(
             &mut triangles,
             triangle.0,
             &right_output_vertices,
-        )?;
+        )
+        .is_none()
+        {
+            return Ok(None);
+        }
     }
 
     for (face, triangle) in right.triangles().iter().enumerate() {
         if skip_right.contains(&face) {
             continue;
         }
-        append_right_triangle_with_edge_splits(
+        if append_right_triangle_with_edge_splits(
             left,
             right,
             &right_to_left,
@@ -607,16 +652,20 @@ fn merged_union_mesh(
             &mut triangles,
             triangle.0,
             &left_output_vertices,
-        )?;
+        )
+        .is_none()
+        {
+            return Ok(None);
+        }
     }
 
-    ExactMesh::new_with_policy(
+    let mesh = ExactMesh::new_with_policy(
         vertices,
         triangles,
         SourceProvenance::exact("exact full-face adjacent closed-solid union"),
         validation,
-    )
-    .ok()
+    )?;
+    Ok(Some(mesh))
 }
 
 fn insert_seam_map<I>(right_to_left: &mut BTreeMap<usize, usize>, pairs: I) -> Option<()>
