@@ -215,6 +215,7 @@ struct RetainedIntersectionGraphCounts {
 /// Retained topology counts for a prepared arrangement.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct PreparedMeshPairArrangementCounts {
+    complete: bool,
     vertices: usize,
     edges: usize,
     face_cells: usize,
@@ -223,6 +224,11 @@ pub struct PreparedMeshPairArrangementCounts {
 }
 
 impl PreparedMeshPairArrangementCounts {
+    /// Return whether the retained arrangement completed without blockers.
+    pub const fn is_complete(self) -> bool {
+        self.complete
+    }
+
     /// Return the retained arrangement vertex count.
     pub const fn vertex_count(self) -> usize {
         self.vertices
@@ -250,6 +256,7 @@ impl PreparedMeshPairArrangementCounts {
 
     fn from_arrangement(arrangement: &ExactArrangement) -> Self {
         Self {
+            complete: arrangement.is_complete(),
             vertices: arrangement.vertices.len(),
             edges: arrangement.edges.len(),
             face_cells: arrangement.face_cells.len(),

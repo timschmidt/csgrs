@@ -917,6 +917,7 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
     let direct_counts = left
         .with_arrangement_view(&right, |view: ArrangementView<'_>| {
             view.validate_retained_state().unwrap();
+            assert!(view.is_complete());
             assert_eq!(view.vertices().count(), view.vertex_count());
             assert_eq!(view.edges().count(), view.edge_count());
             assert_eq!(view.face_cells().count(), view.face_cell_count());
@@ -971,6 +972,7 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
     );
     let prepared_arrangement_counts = pair.prepare_arrangement().unwrap();
+    assert!(prepared_arrangement_counts.is_complete());
     assert_eq!(
         pair.cache_status().arrangement(),
         PreparedMeshPairFactState::Current
@@ -982,6 +984,7 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
     let prepared_counts = pair
         .with_arrangement_view(|view: ArrangementView<'_>| {
             view.validate_retained_state().unwrap();
+            assert!(view.is_complete());
             (
                 view.vertex_count(),
                 view.edge_count(),
@@ -1013,6 +1016,7 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         ),
         direct_counts
     );
+    assert!(retained_arrangement_counts.is_complete());
     let repeated_counts = pair
         .with_arrangement_view(|view: ArrangementView<'_>| {
             (
