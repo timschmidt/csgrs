@@ -93,6 +93,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
     assert_eq!(initial_status.candidate_pair_capacity_hint(), 0);
     assert!(!initial_status.retains_face_pair_classifications());
     assert!(!initial_status.retains_intersection_graph());
+    assert!(!initial_status.intersection_graph_source_validated());
     assert!(!initial_status.retains_arrangement_shortcut_facts());
     assert!(!initial_status.retains_union_result());
     assert!(!initial_status.retains_intersection_result());
@@ -105,6 +106,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
     let retained_status = pair.cache_status();
     assert!(retained_status.retains_face_pair_classifications());
     assert!(retained_status.retains_intersection_graph());
+    assert!(retained_status.intersection_graph_source_validated());
     assert!(retained_status.retains_arrangement_shortcut_facts());
     assert!(retained_status.retains_union_result());
     assert!(!retained_status.retains_intersection_result());

@@ -1335,6 +1335,9 @@ pub(crate) fn build_validated_intersection_graph_from_prepared_pair(
     pair: &PreparedMeshPair<'_, '_>,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
     let graph = build_unvalidated_intersection_graph_from_prepared_pair(pair)?;
+    if pair.has_validated_intersection_graph() {
+        return Ok(graph);
+    }
     graph
         .validate_against_meshes(pair.left().view().mesh(), pair.right().view().mesh())
         .map_err(|error| {
@@ -1343,6 +1346,7 @@ pub(crate) fn build_validated_intersection_graph_from_prepared_pair(
                 format!("exact intersection graph failed source replay: {error:?}"),
             ))
         })?;
+    pair.certify_intersection_graph_source_replay();
     Ok(graph)
 }
 
@@ -4522,6 +4526,12 @@ mod tests {
             graph
         );
         assert!(prepared_pair.has_cached_intersection_graph());
+        assert!(!prepared_pair.has_validated_intersection_graph());
+        assert_eq!(
+            build_validated_intersection_graph_from_prepared_pair(&prepared_pair).unwrap(),
+            graph
+        );
+        assert!(prepared_pair.has_validated_intersection_graph());
         assert_eq!(
             build_validated_intersection_graph_from_prepared_pair(&prepared_pair).unwrap(),
             graph

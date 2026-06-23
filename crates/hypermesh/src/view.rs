@@ -61,6 +61,7 @@ pub struct PreparedMeshPair<'left, 'right> {
     scratch: RefCell<BroadPhaseScratch>,
     face_pair_classifications: RefCell<Option<Vec<MeshFacePairClassification>>>,
     intersection_graph: RefCell<Option<ExactIntersectionGraph>>,
+    intersection_graph_validated: RefCell<bool>,
     arrangement_shortcut_facts: RefCell<Option<ExactArrangementCellComplexShortcutFacts>>,
     union_result: RefCell<Option<Result<ExactMesh, ExactMeshError>>>,
     intersection_result: RefCell<Option<Result<ExactMesh, ExactMeshError>>>,
@@ -82,6 +83,7 @@ pub struct PreparedMeshPairCacheStatus {
     candidate_pair_capacity_hint: usize,
     retains_face_pair_classifications: bool,
     retains_intersection_graph: bool,
+    intersection_graph_source_validated: bool,
     retains_arrangement_shortcut_facts: bool,
     retains_union_result: bool,
     retains_intersection_result: bool,
@@ -103,6 +105,11 @@ impl PreparedMeshPairCacheStatus {
     /// Return whether the exact intersection graph has been retained.
     pub const fn retains_intersection_graph(self) -> bool {
         self.retains_intersection_graph
+    }
+
+    /// Return whether the retained graph has replay-validated against its sources.
+    pub const fn intersection_graph_source_validated(self) -> bool {
+        self.intersection_graph_source_validated
     }
 
     /// Return whether arrangement shortcut facts have been retained.
@@ -398,6 +405,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             scratch: RefCell::new(BroadPhaseScratch::default()),
             face_pair_classifications: RefCell::new(None),
             intersection_graph: RefCell::new(None),
+            intersection_graph_validated: RefCell::new(false),
             arrangement_shortcut_facts: RefCell::new(None),
             union_result: RefCell::new(None),
             intersection_result: RefCell::new(None),
@@ -436,6 +444,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             candidate_pair_capacity_hint: self.candidate_face_pair_capacity_hint(),
             retains_face_pair_classifications: self.face_pair_classifications.borrow().is_some(),
             retains_intersection_graph: self.intersection_graph.borrow().is_some(),
+            intersection_graph_source_validated: *self.intersection_graph_validated.borrow(),
             retains_arrangement_shortcut_facts: self.arrangement_shortcut_facts.borrow().is_some(),
             retains_union_result: self.union_result.borrow().is_some(),
             retains_intersection_result: self.intersection_result.borrow().is_some(),
@@ -480,6 +489,15 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     pub(crate) fn retain_intersection_graph(&self, graph: ExactIntersectionGraph) {
         *self.intersection_graph.borrow_mut() = Some(graph);
+        *self.intersection_graph_validated.borrow_mut() = false;
+    }
+
+    pub(crate) fn has_validated_intersection_graph(&self) -> bool {
+        *self.intersection_graph_validated.borrow()
+    }
+
+    pub(crate) fn certify_intersection_graph_source_replay(&self) {
+        *self.intersection_graph_validated.borrow_mut() = true;
     }
 
     pub(crate) fn arrangement_cell_complex_shortcut_facts(
