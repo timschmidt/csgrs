@@ -1840,16 +1840,36 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         }
 
         let mut classifications = Vec::with_capacity(self.candidate_face_pair_capacity_hint());
-        self.ensure_candidate_face_pairs();
-        let candidate_face_pairs = self.candidate_face_pairs.borrow();
-        for &[left_face, right_face] in candidate_face_pairs.as_deref().unwrap_or(&[]) {
-            classifications.push(classify_mesh_face_pair_unchecked(
-                self.left.view.mesh,
-                left_face,
-                self.right.view.mesh,
-                right_face,
-            ));
+        let mut candidate_pair_count = 0usize;
+        if let Some(candidate_face_pairs) = self.candidate_face_pairs.borrow().as_deref() {
+            candidate_pair_count = candidate_face_pairs.len();
+            for &[left_face, right_face] in candidate_face_pairs {
+                classifications.push(classify_mesh_face_pair_unchecked(
+                    self.left.view.mesh,
+                    left_face,
+                    self.right.view.mesh,
+                    right_face,
+                ));
+            }
+        } else {
+            let result =
+                self.try_visit_candidate_face_pairs_uncached(&mut |[left_face, right_face]| {
+                    candidate_pair_count = candidate_pair_count.saturating_add(1);
+                    classifications.push(classify_mesh_face_pair_unchecked(
+                        self.left.view.mesh,
+                        left_face,
+                        self.right.view.mesh,
+                        right_face,
+                    ));
+                    Ok::<(), ()>(())
+                });
+            debug_assert!(result.is_ok());
         }
+        let traversal_summary = PreparedMeshPairBroadPhaseTraversalSummary::from_broad_phase(
+            self.broad_phase_summary,
+            candidate_pair_count,
+        );
+        *self.broad_phase_traversal_summary.borrow_mut() = Some(traversal_summary);
         let counts = PreparedMeshPairClassificationCounts::from_classifications(&classifications);
         *self.face_pair_classifications.borrow_mut() = Some(classifications);
         *self.face_pair_classification_counts.borrow_mut() = Some(counts);
