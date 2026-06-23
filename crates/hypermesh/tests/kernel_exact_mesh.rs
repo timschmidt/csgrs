@@ -124,8 +124,15 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
     left.view().validate_retained_bounds().unwrap();
     let prepared_left = left.view().prepare_broad_phase().unwrap();
     let prepared_overlapping = overlapping.view().prepare_broad_phase().unwrap();
+    let pair_view = prepared_left.pair_with(&prepared_overlapping);
+    assert_eq!(pair_view.left().view().face_count(), left.triangle_count());
+    assert_eq!(
+        pair_view.right().view().face_count(),
+        overlapping.triangle_count()
+    );
+
     let mut candidates = Vec::new();
-    prepared_left.visit_candidate_face_pairs(&prepared_overlapping, &mut |pair| {
+    pair_view.visit_candidate_face_pairs(&mut |pair| {
         candidates.push(pair);
     });
     candidates.sort_unstable();
@@ -149,6 +156,13 @@ fn exact_mesh_borrowed_view_replays_bounds_before_candidate_pairs() {
         .unwrap();
     direct_pair_candidates.sort_unstable();
     assert_eq!(direct_pair_candidates, candidates);
+
+    let mut prepared_pair_candidates = Vec::new();
+    prepared_left.visit_candidate_face_pairs(&prepared_overlapping, &mut |pair| {
+        prepared_pair_candidates.push(pair);
+    });
+    prepared_pair_candidates.sort_unstable();
+    assert_eq!(prepared_pair_candidates, candidates);
     assert_eq!(direct_pair_candidates.len(), candidates.len());
 }
 
@@ -160,7 +174,8 @@ fn prepared_broad_phase_candidate_visitor_can_stop_early() {
     let prepared_right = right.view().prepare_broad_phase().unwrap();
 
     let mut visited = 0;
-    let result = prepared_left.try_visit_candidate_face_pairs(&prepared_right, &mut |_| {
+    let pair_view = prepared_left.pair_with(&prepared_right);
+    let result = pair_view.try_visit_candidate_face_pairs(&mut |_| {
         visited += 1;
         Err("stop")
     });

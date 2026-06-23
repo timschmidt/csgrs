@@ -1,7 +1,9 @@
 //! Borrowed exact views of retained mesh data.
 
 use super::ExactMesh;
-use super::bounds::{ExactAabbBroadPhase, ExactBroadPhaseStrategy, PreparedMeshBounds};
+use super::bounds::{
+    CandidateFacePairPlan, ExactAabbBroadPhase, ExactBroadPhaseStrategy, PreparedMeshBounds,
+};
 use super::error::ExactMeshError;
 use hyperlimit::Point3;
 use hyperreal::Real;
@@ -38,6 +40,14 @@ pub struct EdgeRef<'a> {
 pub struct PreparedMeshView<'a> {
     view: ExactMeshRef<'a>,
     bounds: PreparedMeshBounds<'a>,
+}
+
+/// Borrowed prepared pair view with retained broad-phase pair planning.
+#[derive(Debug)]
+pub struct PreparedMeshPairView<'pair, 'left, 'right> {
+    left: &'pair PreparedMeshView<'left>,
+    right: &'pair PreparedMeshView<'right>,
+    plan: CandidateFacePairPlan,
 }
 
 impl<'a> ExactMeshRef<'a> {
@@ -239,24 +249,27 @@ impl<'a> PreparedMeshView<'a> {
         self.view
     }
 
-    /// Visit replay-validated broad-phase candidate face pairs without materializing a pair cache.
+    /// Prepare a replay-validated pair view that reuses its broad-phase plan.
+    pub fn pair_with<'pair, 'right>(
+        &'pair self,
+        right: &'pair PreparedMeshView<'right>,
+    ) -> PreparedMeshPairView<'pair, 'a, 'right> {
+        let broad_phase = ExactAabbBroadPhase::default();
+        let plan = broad_phase.candidate_face_pair_plan(&self.bounds, &right.bounds);
+        PreparedMeshPairView {
+            left: self,
+            right,
+            plan,
+        }
+    }
+
+    /// Visit replay-validated broad-phase candidate face pairs.
     pub fn visit_candidate_face_pairs<'b>(
         &self,
         right: &PreparedMeshView<'b>,
         visit: &mut impl FnMut([usize; 2]),
     ) {
-        let broad_phase = ExactAabbBroadPhase::default();
-        let plan = broad_phase.candidate_face_pair_plan(&self.bounds, &right.bounds);
-        let result = broad_phase.try_visit_candidate_face_pairs_with_plan(
-            &self.bounds,
-            &right.bounds,
-            plan,
-            &mut |pair| {
-                visit(pair);
-                Ok::<(), ()>(())
-            },
-        );
-        debug_assert!(result.is_ok());
+        self.pair_with(right).visit_candidate_face_pairs(visit);
     }
 
     /// Visit replay-validated candidate face pairs and allow the visitor to stop early.
@@ -265,12 +278,40 @@ impl<'a> PreparedMeshView<'a> {
         right: &PreparedMeshView<'b>,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
+        self.pair_with(right).try_visit_candidate_face_pairs(visit)
+    }
+}
+
+impl<'pair, 'left, 'right> PreparedMeshPairView<'pair, 'left, 'right> {
+    /// Return the left prepared mesh view.
+    pub const fn left(&self) -> &'pair PreparedMeshView<'left> {
+        self.left
+    }
+
+    /// Return the right prepared mesh view.
+    pub const fn right(&self) -> &'pair PreparedMeshView<'right> {
+        self.right
+    }
+
+    /// Visit replay-validated broad-phase candidate face pairs using the cached pair plan.
+    pub fn visit_candidate_face_pairs(&self, visit: &mut impl FnMut([usize; 2])) {
+        let result = self.try_visit_candidate_face_pairs(&mut |pair| {
+            visit(pair);
+            Ok::<(), ()>(())
+        });
+        debug_assert!(result.is_ok());
+    }
+
+    /// Visit replay-validated candidate face pairs and allow the visitor to stop early.
+    pub fn try_visit_candidate_face_pairs<E>(
+        &self,
+        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<(), E> {
         let broad_phase = ExactAabbBroadPhase::default();
-        let plan = broad_phase.candidate_face_pair_plan(&self.bounds, &right.bounds);
         broad_phase.try_visit_candidate_face_pairs_with_plan(
-            &self.bounds,
-            &right.bounds,
-            plan,
+            &self.left.bounds,
+            &self.right.bounds,
+            self.plan,
             visit,
         )
     }

@@ -1236,14 +1236,15 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_views(
     let left_mesh = left.view().mesh();
     let right_mesh = right.view().mesh();
     let mut face_pairs = Vec::new();
-    left.try_visit_candidate_face_pairs(right, &mut |[left_face, right_face]| {
-        let classification =
-            classify_mesh_face_pair_unchecked(left_mesh, left_face, right_mesh, right_face);
-        if classification.needs_graph_construction() {
-            face_pairs.push(events_for_face_pair(left_mesh, right_mesh, &classification));
-        }
-        Ok::<(), ExactMeshError>(())
-    })?;
+    left.pair_with(right)
+        .try_visit_candidate_face_pairs(&mut |[left_face, right_face]| {
+            let classification =
+                classify_mesh_face_pair_unchecked(left_mesh, left_face, right_mesh, right_face);
+            if classification.needs_graph_construction() {
+                face_pairs.push(events_for_face_pair(left_mesh, right_mesh, &classification));
+            }
+            Ok::<(), ExactMeshError>(())
+        })?;
     Ok(ExactIntersectionGraph { face_pairs })
 }
 
