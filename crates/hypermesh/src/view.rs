@@ -447,8 +447,15 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     /// Materialize the exact closed symmetric difference of the prepared meshes.
     pub fn xor(&self) -> Result<ExactMesh, ExactMeshError> {
         let left_only = self.difference()?;
-        let right_only = self.right.view().difference(self.left.view())?;
-        left_only.union(&right_only)
+        let reverse_pair = self
+            .right
+            .view()
+            .prepare_broad_phase_pair(self.left.view())?;
+        let right_only = reverse_pair.difference()?;
+        let union_pair = left_only
+            .view()
+            .prepare_broad_phase_pair(right_only.view())?;
+        union_pair.union()
     }
 
     fn named_boolean_mesh(

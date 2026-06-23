@@ -108,6 +108,10 @@ fn prepared_mesh_pair_materializes_named_operations() {
     let xor = pair.xor().unwrap();
     xor.validate_retained_state().unwrap();
     assert_eq!(xor.triangle_count(), solid.triangle_count());
+
+    let repeated_xor = pair.xor().unwrap();
+    repeated_xor.validate_retained_state().unwrap();
+    assert_eq!(repeated_xor.triangle_count(), xor.triangle_count());
 }
 
 #[test]
