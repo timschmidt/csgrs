@@ -1691,6 +1691,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         }
     }
 
+    /// Require this pair session's source stamps to match its current mesh views.
+    pub fn require_current_sources(&self) -> Result<(), ExactMeshError> {
+        self.cache_status().require_current_sources()
+    }
+
     pub(crate) fn intersection_graph_state(&self) -> PreparedMeshPairFactState {
         if self.intersection_graph.borrow().is_none() {
             PreparedMeshPairFactState::Missing
@@ -1709,6 +1714,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.cache_status().current_intersection_graph_counts()
     }
 
+    /// Require a retained exact intersection graph with a current source certificate.
+    pub fn require_current_intersection_graph(&self) -> Result<(), ExactMeshError> {
+        self.cache_status().require_current_intersection_graph()
+    }
+
     /// Return the retained broad-phase candidate pair count after requiring current evidence.
     pub fn current_candidate_face_pair_count(&self) -> Result<usize, ExactMeshError> {
         self.cache_status().current_candidate_face_pair_count()
@@ -1719,7 +1729,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         query: impl FnOnce(&[[usize; 2]]) -> R,
     ) -> Result<R, ExactMeshError> {
-        self.cache_status().require_current_candidate_face_pairs()?;
+        self.require_current_candidate_face_pairs()?;
         let candidate_face_pairs = self.candidate_face_pairs.borrow();
         let pairs = candidate_face_pairs.as_deref().ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
@@ -1730,11 +1740,21 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         Ok(query(pairs))
     }
 
+    /// Require retained broad-phase candidate face pairs with current certificates.
+    pub fn require_current_candidate_face_pairs(&self) -> Result<(), ExactMeshError> {
+        self.cache_status().require_current_candidate_face_pairs()
+    }
+
     /// Return retained arrangement topology counts after requiring current evidence.
     pub fn current_arrangement_counts(
         &self,
     ) -> Result<PreparedMeshPairArrangementCounts, ExactMeshError> {
         self.cache_status().current_arrangement_counts()
+    }
+
+    /// Require a retained arrangement with current source certificates.
+    pub fn require_current_arrangement(&self) -> Result<(), ExactMeshError> {
+        self.cache_status().require_current_arrangement()
     }
 
     /// Build and retain the exact arrangement, returning retained topology counts.
@@ -1746,6 +1766,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     /// Build and retain arrangement shortcut facts for this prepared pair.
     pub fn prepare_arrangement_shortcut_facts(&self) -> Result<(), ExactMeshError> {
         self.arrangement_cell_complex_shortcut_facts();
+        self.require_current_arrangement_shortcut_facts()
+    }
+
+    /// Require retained arrangement shortcut facts with current source certificates.
+    pub fn require_current_arrangement_shortcut_facts(&self) -> Result<(), ExactMeshError> {
         self.cache_status()
             .require_current_arrangement_shortcut_facts()
     }
@@ -1761,6 +1786,12 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     ) -> Result<PreparedMeshPairClassificationCounts, ExactMeshError> {
         self.cache_status()
             .current_face_pair_classification_counts()
+    }
+
+    /// Require retained coarse face-pair classifications with current certificates.
+    pub fn require_current_face_pair_classifications(&self) -> Result<(), ExactMeshError> {
+        self.cache_status()
+            .require_current_face_pair_classifications()
     }
 
     /// Build and retain the exact intersection graph without certifying source replay.
@@ -1801,7 +1832,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         query: impl for<'a> FnOnce(ArrangementView<'a>) -> R,
     ) -> Result<R, ExactMeshError> {
-        self.cache_status().require_current_arrangement()?;
+        self.require_current_arrangement()?;
         let arrangement = self.arrangement.borrow();
         let arrangement = arrangement.as_ref().ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
@@ -1849,8 +1880,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         query: impl FnOnce(&[MeshFacePairClassification]) -> R,
     ) -> Result<R, ExactMeshError> {
-        self.cache_status()
-            .require_current_face_pair_classifications()?;
+        self.require_current_face_pair_classifications()?;
         let classifications = self.face_pair_classifications.borrow();
         let classifications = classifications.as_deref().ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
@@ -2056,6 +2086,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.cache_status().current_union_result_outcome()
     }
 
+    /// Require a retained union result or retained union blocker.
+    pub fn require_current_union_result(&self) -> Result<(), ExactMeshError> {
+        self.cache_status().require_current_union_result()
+    }
+
     /// Materialize the exact closed intersection using this retained pair session.
     pub fn intersection(&self) -> Result<ExactMesh, ExactMeshError> {
         self.named_boolean_mesh(ExactBooleanOperation::Intersection)
@@ -2081,6 +2116,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.cache_status().current_intersection_result_outcome()
     }
 
+    /// Require a retained intersection result or retained intersection blocker.
+    pub fn require_current_intersection_result(&self) -> Result<(), ExactMeshError> {
+        self.cache_status().require_current_intersection_result()
+    }
+
     /// Materialize the exact closed difference of the left mesh minus the right mesh.
     pub fn difference(&self) -> Result<ExactMesh, ExactMeshError> {
         self.named_boolean_mesh(ExactBooleanOperation::Difference)
@@ -2104,6 +2144,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
     ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
         self.cache_status().current_difference_result_outcome()
+    }
+
+    /// Require a retained difference result or retained difference blocker.
+    pub fn require_current_difference_result(&self) -> Result<(), ExactMeshError> {
+        self.cache_status().require_current_difference_result()
     }
 
     /// Materialize the exact closed symmetric difference of the prepared meshes.
@@ -2147,6 +2192,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
     ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
         self.cache_status().current_xor_result_outcome()
+    }
+
+    /// Require a retained symmetric-difference result or retained blocker.
+    pub fn require_current_xor_result(&self) -> Result<(), ExactMeshError> {
+        self.cache_status().require_current_xor_result()
     }
 
     fn named_boolean_mesh(
