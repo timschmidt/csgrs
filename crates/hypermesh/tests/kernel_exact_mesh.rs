@@ -470,14 +470,14 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let vertex: VertexRef<'_> = view.vertex(0).unwrap();
     assert_eq!(vertex.index(), 0);
     assert_eq!(vertex.point(), &p(0, 0, 0));
-    assert!(vertex.has_exact_rational_coordinates());
-    assert!(vertex.has_sparse_coordinate_support());
-    assert_eq!(vertex.incident_face_count(), 3);
-    assert_eq!(vertex.incident_edge_count(), 3);
-    assert!(vertex.has_circle_link());
-    assert!(!vertex.has_disk_link());
-    assert!(!vertex.has_isolated_link());
-    assert!(!vertex.has_non_manifold_link());
+    assert!(vertex.has_exact_rational_coordinates().unwrap());
+    assert!(vertex.has_sparse_coordinate_support().unwrap());
+    assert_eq!(vertex.incident_face_count().unwrap(), 3);
+    assert_eq!(vertex.incident_edge_count().unwrap(), 3);
+    assert!(vertex.has_circle_link().unwrap());
+    assert!(!vertex.has_disk_link().unwrap());
+    assert!(!vertex.has_isolated_link().unwrap());
+    assert!(!vertex.has_non_manifold_link().unwrap());
 
     assert_eq!(view.require_face(0).unwrap().index(), 0);
     let missing_face = view.require_face(view.face_count()).unwrap_err();

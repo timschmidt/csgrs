@@ -2545,55 +2545,48 @@ impl<'a> VertexRef<'a> {
     }
 
     /// Whether retained facts certify exact rational coordinates for this vertex.
-    pub fn has_exact_rational_coordinates(self) -> bool {
-        self.mesh.facts().vertices[self.index].fixed_coordinates_exact_rational
+    pub fn has_exact_rational_coordinates(self) -> Result<bool, ExactMeshError> {
+        retained_vertex_facts(self.mesh, self.index)
+            .map(|facts| facts.fixed_coordinates_exact_rational)
     }
 
     /// Whether retained facts record sparse coordinate support for this vertex.
-    pub fn has_sparse_coordinate_support(self) -> bool {
-        self.mesh.facts().vertices[self.index].sparse_support
+    pub fn has_sparse_coordinate_support(self) -> Result<bool, ExactMeshError> {
+        retained_vertex_facts(self.mesh, self.index).map(|facts| facts.sparse_support)
     }
 
     /// Retained incident face count.
-    pub fn incident_face_count(self) -> usize {
-        self.mesh.facts().vertices[self.index].incident_faces
+    pub fn incident_face_count(self) -> Result<usize, ExactMeshError> {
+        retained_vertex_facts(self.mesh, self.index).map(|facts| facts.incident_faces)
     }
 
     /// Retained incident undirected edge count.
-    pub fn incident_edge_count(self) -> usize {
-        self.mesh.facts().vertices[self.index].incident_edges
+    pub fn incident_edge_count(self) -> Result<usize, ExactMeshError> {
+        retained_vertex_facts(self.mesh, self.index).map(|facts| facts.incident_edges)
     }
 
     /// Whether retained facts classify the vertex link as isolated.
-    pub fn has_isolated_link(self) -> bool {
-        matches!(
-            self.mesh.facts().vertices[self.index].link,
-            super::facts::VertexLinkKind::Isolated
-        )
+    pub fn has_isolated_link(self) -> Result<bool, ExactMeshError> {
+        self.has_vertex_link(super::facts::VertexLinkKind::Isolated)
     }
 
     /// Whether retained facts classify the vertex link as a closed-manifold circle.
-    pub fn has_circle_link(self) -> bool {
-        matches!(
-            self.mesh.facts().vertices[self.index].link,
-            super::facts::VertexLinkKind::Circle
-        )
+    pub fn has_circle_link(self) -> Result<bool, ExactMeshError> {
+        self.has_vertex_link(super::facts::VertexLinkKind::Circle)
     }
 
     /// Whether retained facts classify the vertex link as a boundary-manifold disk.
-    pub fn has_disk_link(self) -> bool {
-        matches!(
-            self.mesh.facts().vertices[self.index].link,
-            super::facts::VertexLinkKind::Disk
-        )
+    pub fn has_disk_link(self) -> Result<bool, ExactMeshError> {
+        self.has_vertex_link(super::facts::VertexLinkKind::Disk)
     }
 
     /// Whether retained facts classify the vertex link as non-manifold.
-    pub fn has_non_manifold_link(self) -> bool {
-        matches!(
-            self.mesh.facts().vertices[self.index].link,
-            super::facts::VertexLinkKind::NonManifold
-        )
+    pub fn has_non_manifold_link(self) -> Result<bool, ExactMeshError> {
+        self.has_vertex_link(super::facts::VertexLinkKind::NonManifold)
+    }
+
+    fn has_vertex_link(self, link: super::facts::VertexLinkKind) -> Result<bool, ExactMeshError> {
+        retained_vertex_facts(self.mesh, self.index).map(|facts| facts.link == link)
     }
 }
 
@@ -2846,6 +2839,21 @@ fn missing_retained_face_bounds(kind: &'static str, face: usize) -> ExactMeshErr
         )
         .with_face(face),
     )
+}
+
+fn retained_vertex_facts(
+    mesh: &ExactMesh,
+    vertex: usize,
+) -> Result<&super::facts::VertexFacts, ExactMeshError> {
+    mesh.facts().vertices.get(vertex).ok_or_else(|| {
+        ExactMeshError::one(
+            ExactMeshBlocker::new(
+                ExactMeshBlockerKind::StaleFactReplay,
+                format!("retained mesh vertex {vertex} has no retained vertex fact row"),
+            )
+            .with_vertex(vertex),
+        )
+    })
 }
 
 fn require_retained_edge_endpoint(
