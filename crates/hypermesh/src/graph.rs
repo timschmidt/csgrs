@@ -21,7 +21,7 @@ use hyperlimit::{
     project_point3, projected_line_parameter3, projected_segment_parameter3,
 };
 
-use super::bounds::ExactAabbBroadPhase;
+use super::bounds::{ExactAabbBroadPhase, ExactBroadPhase};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::exact_key::{ExactPoint3Key, exact_point3_key};
 use super::intersection::{
