@@ -1010,7 +1010,10 @@ fn exact_boolean_replay_preflight(
             | ExactBooleanSupport::CertifiedIdentical
             | ExactBooleanSupport::CertifiedSameSurface
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
+            | ExactBooleanSupport::CertifiedClosedWindingSeparated
+            | ExactBooleanSupport::CertifiedClosedWindingContainment
             | ExactBooleanSupport::CertifiedConvexSeparated
+            | ExactBooleanSupport::CertifiedConvexContainment
     ) || (matches!(
         graph_preflight.support,
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
@@ -3555,6 +3558,30 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
 ) -> Result<ExactBooleanPreflight, ExactMeshError> {
     let operation = request.operation;
     let support = initial_reject_boundary_preflight_support(left, right, operation, shortcut_facts);
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && graph.face_pairs.is_empty()
+        && let Some((left_in_right, right_in_left)) =
+            closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
+    {
+        if left_in_right == ClosedMeshWindingMeshRelation::Outside
+            && right_in_left == ClosedMeshWindingMeshRelation::Outside
+        {
+            return Ok(certified_preflight(
+                operation,
+                ExactBooleanSupport::CertifiedClosedWindingSeparated,
+                Some(graph),
+                None,
+            ));
+        }
+        if certified_closed_winding_containment_relation_from_graph(graph, left, right)?.is_some() {
+            return Ok(certified_preflight(
+                operation,
+                ExactBooleanSupport::CertifiedClosedWindingContainment,
+                Some(graph),
+                None,
+            ));
+        }
+    }
     if support.is_certified()
         && !matches!(
             support,
@@ -5387,6 +5414,16 @@ fn materialize_boolean_exact_request_from_ready_graph(
         operation,
         ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
     );
+    if let Some(result) = boolean_closed_winding_separated_meshes_from_graph(
+        graph, left, right, operation, validation,
+    )? {
+        return Ok(result);
+    }
+    if let Some(result) = boolean_closed_winding_containment_meshes_from_graph(
+        graph, left, right, operation, validation,
+    )? {
+        return Ok(result);
+    }
     if let Some(result) = certified_arrangement_cell_complex_result_from_graph(
         graph, left, right, operation, validation, true,
     )? {
@@ -5408,16 +5445,6 @@ fn materialize_boolean_exact_request_from_ready_graph(
         return Ok(result);
     }
 
-    if let Some(result) = boolean_closed_winding_separated_meshes_from_graph(
-        graph, left, right, operation, validation,
-    )? {
-        return Ok(result);
-    }
-    if let Some(result) = boolean_closed_winding_containment_meshes_from_graph(
-        graph, left, right, operation, validation,
-    )? {
-        return Ok(result);
-    }
     if operation == ExactBooleanOperation::Union
         && let Some((result, _report)) =
             materialize_adjacent_union_completion_from_graph_for_request(
@@ -11046,25 +11073,6 @@ fn winding_evidence_report_from_graph_with_facts(
             coplanar_volumetric_evidence_if_required(graph, left, right),
         ));
     }
-    if graph.face_pairs.is_empty()
-        && !meshes_are_certified_bounds_disjoint(left, right)
-        && cached_certified_arrangement_cell_complex_preflight(
-            &mut arrangement_cell_complex_preflight,
-            operation,
-            graph,
-            left,
-            right,
-            None,
-            None,
-        )?
-        .is_some()
-    {
-        return Ok(
-            arrangement_cell_complex_already_materialized_winding_evidence(
-                graph, left, right, operation,
-            ),
-        );
-    }
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && let Some((left_in_right, right_in_left)) =
             closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
@@ -11099,6 +11107,25 @@ fn winding_evidence_report_from_graph_with_facts(
             None,
             None,
         ));
+    }
+    if graph.face_pairs.is_empty()
+        && !meshes_are_certified_bounds_disjoint(left, right)
+        && cached_certified_arrangement_cell_complex_preflight(
+            &mut arrangement_cell_complex_preflight,
+            operation,
+            graph,
+            left,
+            right,
+            None,
+            None,
+        )?
+        .is_some()
+    {
+        return Ok(
+            arrangement_cell_complex_already_materialized_winding_evidence(
+                graph, left, right, operation,
+            ),
+        );
     }
     if graph.face_pairs.is_empty() {
         return Ok(winding_evidence_report(
@@ -14113,7 +14140,7 @@ mod tests {
             let preflight = test_preflight(request, &left, &right);
             assert_eq!(
                 preflight.support,
-                ExactBooleanSupport::CertifiedArrangementCellComplex,
+                ExactBooleanSupport::CertifiedClosedWindingSeparated,
                 "{operation:?}: {preflight:?}"
             );
             assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
@@ -14133,7 +14160,7 @@ mod tests {
             );
             assert_eq!(
                 evidence.status,
-                ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
+                ExactWindingEvidenceStatus::ClosedWindingSeparatedAlreadyMaterialized,
                 "{operation:?}: {evidence:?}"
             );
             assert_eq!(
@@ -14144,7 +14171,7 @@ mod tests {
             assert_eq!(evidence.retained_face_pairs, 0, "{operation:?}");
             assert_eq!(evidence.retained_events, 0, "{operation:?}");
             assert!(evidence.status.is_already_materialized());
-            assert!(evidence.status.materializes_arrangement_cell_complex());
+            assert!(!evidence.status.materializes_arrangement_cell_complex());
             evidence.validate().unwrap();
             evidence.validate_against_sources(&left, &right).unwrap();
 
@@ -14154,24 +14181,23 @@ mod tests {
                 &right,
             );
             assert!(
-                result.is_arrangement_cell_complex_materialized_for(operation)
-                    || result.is_arrangement_cell_complex_shortcut_for(operation),
+                result.is_certified_shortcut_kind_for(
+                    operation,
+                    ExactBooleanShortcutKind::ClosedWindingSeparated,
+                ),
                 "{operation:?}: {result:?}"
             );
             result.validate().unwrap();
             result.validate_against_sources(&left, &right).unwrap();
-            let mut relabeled_closed_winding = result.clone();
-            relabeled_closed_winding.topology_assembly_report = None;
-            relabeled_closed_winding.region_ownership_report = None;
-            relabeled_closed_winding.replace_kind(ExactBooleanResultKind::CertifiedShortcut {
+            let mut relabeled_arrangement = result.clone();
+            relabeled_arrangement.replace_kind(ExactBooleanResultKind::CertifiedShortcut {
                 operation,
-                shortcut: ExactBooleanShortcutKind::ClosedWindingSeparated,
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
             });
-            relabeled_closed_winding.validate().unwrap();
             assert_eq!(
-                relabeled_closed_winding.validate_against_sources(&left, &right),
-                Err(ExactReportValidationError::SourceReplayMismatch),
-                "{operation:?}: arrangement result relabeled as closed-winding separation must not replay"
+                relabeled_arrangement.validate(),
+                Err(ExactReportValidationError::InvalidOutputMeshProvenance),
+                "{operation:?}: closed-winding separation relabeled as arrangement must fail local provenance"
             );
             assert!(
                 result

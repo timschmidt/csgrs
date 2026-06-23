@@ -459,6 +459,9 @@ impl<'a> PreparedMeshBounds<'a> {
             return CandidateFacePairPlan::empty();
         }
         if let Some(sweep) = self.sweep_plan(other) {
+            if sweep.axis_pair_count == 0 {
+                return CandidateFacePairPlan::empty();
+            }
             return CandidateFacePairPlan::Sweep {
                 plan: sweep.plan,
                 active_face_capacity_hint: sweep.active_face_capacity_hint,
@@ -554,6 +557,9 @@ impl<'a> PreparedMeshBounds<'a> {
                 };
                 if best.is_none_or(|best| estimate.is_better_than(best)) {
                     best = Some(estimate);
+                }
+                if estimate.axis_pair_count == 0 {
+                    return best;
                 }
             }
         }
@@ -1216,6 +1222,39 @@ mod tests {
         };
         assert_eq!(sweep_plan.axis, Axis::Y);
         assert_eq!(candidate_face_pairs(&left, &right), vec![[1, 0]]);
+    }
+
+    #[test]
+    fn face_axis_disjoint_pairs_produce_empty_plan() {
+        let left_points = vec![
+            p(0, 0, 0),
+            p(1, 0, 0),
+            p(0, 1, 0),
+            p(10, 10, 0),
+            p(11, 10, 0),
+            p(10, 11, 0),
+        ];
+        let right_points = vec![
+            p(0, 5, 0),
+            p(1, 5, 0),
+            p(0, 6, 0),
+            p(10, 15, 0),
+            p(11, 15, 0),
+            p(10, 16, 0),
+        ];
+        let triangles = [[0, 1, 2], [3, 4, 5]];
+        let left_bounds = MeshBounds::from_triangles(&left_points, &triangles);
+        let right_bounds = MeshBounds::from_triangles(&right_points, &triangles);
+        assert!(left_bounds.mesh_may_overlap(&right_bounds));
+
+        let left = left_bounds.prepare();
+        let right = right_bounds.prepare();
+
+        assert_eq!(
+            ExactAabbBroadPhase::default().candidate_face_pair_plan(&left, &right),
+            CandidateFacePairPlan::Empty
+        );
+        assert!(prepared_candidate_face_pairs(&left, &right).is_empty());
     }
 
     #[test]
