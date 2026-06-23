@@ -2994,9 +2994,18 @@ fn lift_projected_point_to_segment(
 
 fn sort_points_along_segment(points: &mut [Point3], start: &Point3, end: &Point3) -> Option<()> {
     let axis = segment_order_axis(start, end)?;
-    points.sort_by(|left, right| {
-        compare_point3_on_axis(left, right, axis, start, end).unwrap_or(Ordering::Equal)
-    });
+    for index in 1..points.len() {
+        let mut current = index;
+        while current > 0 {
+            let ordering =
+                compare_point3_on_axis(&points[current - 1], &points[current], axis, start, end)?;
+            if ordering != Ordering::Greater {
+                break;
+            }
+            points.swap(current - 1, current);
+            current -= 1;
+        }
+    }
     Some(())
 }
 
