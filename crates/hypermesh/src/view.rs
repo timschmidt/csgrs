@@ -1566,12 +1566,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             Ok::<(), ()>(())
         });
         debug_assert!(result.is_ok());
-        let summary = PreparedMeshPairBroadPhaseTraversalSummary::from_broad_phase(
-            self.broad_phase_summary,
-            candidate_pair_count,
-        );
-        *self.broad_phase_traversal_summary.borrow_mut() = Some(summary);
-        summary
+        self.retain_broad_phase_traversal_count(candidate_pair_count)
     }
 
     /// Build and retain broad-phase candidate face pairs, returning the retained count.
@@ -1604,6 +1599,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         let sources_current = self.sources_are_current();
         let candidate_face_pair_count = self.candidate_face_pairs.borrow().as_ref().map(Vec::len);
         let broad_phase_traversal_summary = *self.broad_phase_traversal_summary.borrow();
+        let face_pair_classifications_retained = self.face_pair_classifications.borrow().is_some();
         let face_pair_classification_counts = *self.face_pair_classification_counts.borrow();
         let graph_counts = *self.intersection_graph_counts.borrow();
         let graph_retained = self.intersection_graph.borrow().is_some();
@@ -1628,7 +1624,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             ),
             retained_candidate_face_pair_count: candidate_face_pair_count,
             face_pair_classifications: retained_current_state(
-                face_pair_classification_counts.is_some(),
+                face_pair_classifications_retained,
                 sources_current,
             ),
             retained_face_pair_classification_count: face_pair_classification_counts
@@ -1834,6 +1830,21 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         Ok(query(classifications))
     }
 
+    pub(crate) fn retain_broad_phase_traversal_count(
+        &self,
+        candidate_pair_count: usize,
+    ) -> PreparedMeshPairBroadPhaseTraversalSummary {
+        if let Some(summary) = *self.broad_phase_traversal_summary.borrow() {
+            return summary;
+        }
+        let summary = PreparedMeshPairBroadPhaseTraversalSummary::from_broad_phase(
+            self.broad_phase_summary,
+            candidate_pair_count,
+        );
+        *self.broad_phase_traversal_summary.borrow_mut() = Some(summary);
+        summary
+    }
+
     fn ensure_face_pair_classifications(&self) {
         if self.face_pair_classifications.borrow().is_some() {
             return;
@@ -1865,11 +1876,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
                 });
             debug_assert!(result.is_ok());
         }
-        let traversal_summary = PreparedMeshPairBroadPhaseTraversalSummary::from_broad_phase(
-            self.broad_phase_summary,
-            candidate_pair_count,
-        );
-        *self.broad_phase_traversal_summary.borrow_mut() = Some(traversal_summary);
+        self.retain_broad_phase_traversal_count(candidate_pair_count);
         let counts = PreparedMeshPairClassificationCounts::from_classifications(&classifications);
         *self.face_pair_classifications.borrow_mut() = Some(classifications);
         *self.face_pair_classification_counts.borrow_mut() = Some(counts);
@@ -2145,11 +2152,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             Ok::<(), ()>(())
         });
         debug_assert!(result.is_ok());
-        let traversal_summary = PreparedMeshPairBroadPhaseTraversalSummary::from_broad_phase(
-            self.broad_phase_summary,
-            candidate_face_pairs.len(),
-        );
-        *self.broad_phase_traversal_summary.borrow_mut() = Some(traversal_summary);
+        self.retain_broad_phase_traversal_count(candidate_face_pairs.len());
         *self.candidate_face_pairs.borrow_mut() = Some(candidate_face_pairs);
     }
 
@@ -2176,6 +2179,13 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             &mut local_scratch,
             visit,
         )
+    }
+
+    pub(crate) fn try_visit_unretained_candidate_face_pairs<E>(
+        &self,
+        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
+    ) -> Result<(), E> {
+        self.try_visit_candidate_face_pairs_uncached(visit)
     }
 }
 

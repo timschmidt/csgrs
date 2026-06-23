@@ -968,6 +968,32 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .kind(),
         hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
     );
+    let streamed_graph_pair = left
+        .view()
+        .prepare_broad_phase_pair(overlapping.view())
+        .unwrap();
+    let streamed_graph_counts = streamed_graph_pair.prepare_intersection_graph().unwrap();
+    let streamed_graph_status = streamed_graph_pair.cache_status();
+    assert_eq!(
+        streamed_graph_status.broad_phase_traversal(),
+        PreparedMeshPairFactState::Current
+    );
+    assert_eq!(
+        streamed_graph_status.candidate_face_pairs(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        streamed_graph_status.face_pair_classifications(),
+        PreparedMeshPairFactState::Missing
+    );
+    assert_eq!(
+        streamed_graph_status.intersection_graph(),
+        PreparedMeshPairFactState::CertificateBlocked
+    );
+    assert_eq!(
+        streamed_graph_status.retained_intersection_graph_counts(),
+        Some(streamed_graph_counts)
+    );
     let streamed_classification_pair = left
         .view()
         .prepare_broad_phase_pair(overlapping.view())
