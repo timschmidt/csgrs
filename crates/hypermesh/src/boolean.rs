@@ -789,6 +789,8 @@ fn exact_boolean_evaluation_for_replay_result(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<ExactBooleanEvaluation, ExactMeshError> {
+    left.validate_retained_bounds()?;
+    right.validate_retained_bounds()?;
     let source_facts = ExactBooleanSourceFacts::from_sources(left, right);
     let shortcut_facts = source_facts.arrangement_cell_complex_shortcuts().clone();
     let graph = build_validated_intersection_graph(left, right)?;
@@ -5278,6 +5280,8 @@ fn materialize_boolean_exact_request_with_graph(
     request: ExactBooleanRequest,
     retained_graph: Option<&ExactIntersectionGraph>,
 ) -> Result<ExactBooleanResult, ExactMeshError> {
+    left.validate_retained_bounds()?;
+    right.validate_retained_bounds()?;
     let operation = request.operation;
     let validation = request.validation;
     let mut owned_graph = None;
@@ -11467,6 +11471,9 @@ fn concatenate_meshes_with_options(
 }
 
 fn meshes_are_certified_bounds_disjoint(left: &ExactMesh, right: &ExactMesh) -> bool {
+    if left.validate_retained_bounds().is_err() || right.validate_retained_bounds().is_err() {
+        return false;
+    }
     let (Some(left_bounds), Some(right_bounds)) = (left.bounds().mesh(), right.bounds().mesh())
     else {
         return left.triangles().is_empty() || right.triangles().is_empty();
