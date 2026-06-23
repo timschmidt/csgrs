@@ -491,6 +491,17 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(face.index(), 0);
     assert_eq!(face.vertex_indices(), [0, 2, 1]);
     assert_eq!(view.face_bounds(0), Some((&p(0, 0, 0), &p(1, 1, 0))));
+    assert_eq!(
+        view.require_face_bounds(0).unwrap(),
+        (&p(0, 0, 0), &p(1, 1, 0))
+    );
+    assert_eq!(
+        view.require_face_bounds(view.face_count())
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        ExactMeshBlockerKind::MissingRequiredEvidence
+    );
     assert_eq!(face.bounds().unwrap(), (&p(0, 0, 0), &p(1, 1, 0)));
     assert_eq!(
         face.vertex_refs().unwrap().map(VertexRef::index),

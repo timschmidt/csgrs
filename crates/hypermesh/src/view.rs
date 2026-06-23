@@ -1044,6 +1044,15 @@ impl<'a> ExactMeshRef<'a> {
         self.mesh.bounds().face(index).map(bounds_corners)
     }
 
+    /// Borrow retained bounds for one face, returning a typed blocker when absent.
+    pub fn require_face_bounds(
+        self,
+        index: usize,
+    ) -> Result<(&'a Point3, &'a Point3), ExactMeshError> {
+        self.face_bounds(index)
+            .ok_or_else(|| missing_retained_face_bounds("face", index))
+    }
+
     /// Borrow one vertex by index.
     pub fn vertex(self, index: usize) -> Option<VertexRef<'a>> {
         (index < self.mesh.vertices().len()).then_some(VertexRef {
