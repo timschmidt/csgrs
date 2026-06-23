@@ -311,16 +311,6 @@ impl<'a> ExactMeshRef<'a> {
         Ok(PreparedMeshPair::new(left, right))
     }
 
-    pub(crate) fn prepare_broad_phase_pair_after_certificate<'b>(
-        self,
-        right: ExactMeshRef<'b>,
-    ) -> PreparedMeshPair<'a, 'b> {
-        PreparedMeshPair::new(
-            self.prepare_broad_phase_after_certificate(),
-            right.prepare_broad_phase_after_certificate(),
-        )
-    }
-
     pub(crate) fn prepare_broad_phase_after_certificate(self) -> PreparedMeshView<'a> {
         PreparedMeshView {
             view: self,
