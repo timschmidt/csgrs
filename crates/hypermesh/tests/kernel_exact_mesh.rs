@@ -399,33 +399,31 @@ fn prepared_mesh_pair_materializes_named_operations() {
     );
     assert_eq!(
         retained_status.intersection_graph(),
-        PreparedMeshPairFactState::Current
+        PreparedMeshPairFactState::Missing
     );
     assert_eq!(
         retained_status.retained_intersection_graph_face_pair_count(),
-        Some(0)
+        None
     );
     assert_eq!(
         retained_status.retained_intersection_graph_event_count(),
-        Some(0)
+        None
     );
-    let empty_graph_counts = retained_status
-        .retained_intersection_graph_counts()
-        .unwrap();
-    assert_eq!(empty_graph_counts.face_pair_count(), 0);
-    assert_eq!(empty_graph_counts.event_count(), 0);
-    assert_eq!(empty_graph_counts.coplanar_overlap_graph_count(), 0);
-    assert!(!empty_graph_counts.has_unknowns());
-    retained_status
-        .require_current_intersection_graph()
-        .unwrap();
+    assert_eq!(retained_status.retained_intersection_graph_counts(), None);
     assert_eq!(
-        retained_status.current_intersection_graph_counts().unwrap(),
-        empty_graph_counts
+        retained_status
+            .current_intersection_graph_counts()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
-        pair.current_intersection_graph_counts().unwrap(),
-        empty_graph_counts
+        pair.current_intersection_graph_counts()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        hypermesh::ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         retained_status.arrangement_shortcut_facts(),

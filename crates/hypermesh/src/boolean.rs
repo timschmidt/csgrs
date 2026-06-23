@@ -5420,6 +5420,12 @@ fn materialize_boolean_exact_request_with_graph(
             graph, left, right, selection, validation,
         );
     }
+    if left.triangles().is_empty() || right.triangles().is_empty() {
+        return boolean_empty_operand(left, right, operation, validation);
+    }
+    if meshes_are_certified_bounds_disjoint(left, right) {
+        return boolean_disjoint_meshes(left, right, operation, validation);
+    }
     if request_uses_arrangement_lower_dimensional_regularized_shortcut(request) {
         let graph = graph_for_certified_materialization_with_prepared(
             retained_graph,
@@ -5440,12 +5446,6 @@ fn materialize_boolean_exact_request_with_graph(
         )? {
             return Ok(result);
         }
-    }
-    if left.triangles().is_empty() || right.triangles().is_empty() {
-        return boolean_empty_operand(left, right, operation, validation);
-    }
-    if meshes_are_certified_bounds_disjoint(left, right) {
-        return boolean_disjoint_meshes(left, right, operation, validation);
     }
     if let Some(result) =
         boolean_closed_regularized_lower_dimensional_optional(left, right, operation, validation)?
