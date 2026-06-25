@@ -14,6 +14,7 @@
 //! union/intersection/difference decision. Topology decisions must be certified
 //! or represented as policy choices or unknowns.
 
+pub(crate) mod affine_solid;
 pub(crate) mod contained_adjacent;
 pub(crate) mod volumetric;
 pub(crate) mod volumetric_cells;
@@ -25,12 +26,6 @@ use hyperlimit::SegmentPlaneRelation;
 use super::adjacent::{
     full_face_adjacent_certificate_from_graph,
     materialize_full_face_adjacent_union_from_certificate,
-};
-use super::affine_solid::{
-    AffineOrthogonalSolidOperation, has_affine_orthogonal_solid_cells,
-    has_empty_affine_orthogonal_solid_cell_intersection,
-    materialize_affine_orthogonal_solid_difference,
-    materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
 };
 use super::arrangement2d::{
     ExactArrangement2dBlocker, ExactArrangement2dBoundaryPolicy, ExactArrangement2dOverlay,
@@ -101,6 +96,12 @@ use super::view::PreparedMeshPair;
 use super::winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
     WindingReportError, classify_mesh_vertices_against_closed_mesh_winding_report,
+};
+use affine_solid::{
+    AffineOrthogonalSolidOperation, has_affine_orthogonal_solid_cells,
+    has_empty_affine_orthogonal_solid_cell_intersection,
+    materialize_affine_orthogonal_solid_difference,
+    materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
 };
 use contained_adjacent::{
     contained_face_adjacent_certificate_from_graph,

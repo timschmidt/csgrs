@@ -14,11 +14,11 @@ use std::cmp::Ordering;
 
 use super::ExactMesh;
 use super::adjacent::materialize_full_face_adjacent_union;
-use super::affine_solid::{
+use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
+use super::boolean::affine_solid::{
     materialize_affine_orthogonal_solid_difference,
     materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
 };
-use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::boolean::contained_adjacent::materialize_contained_face_adjacent_union;
 #[cfg(test)]
 use super::boolean::materialize_boolean_exact_request;

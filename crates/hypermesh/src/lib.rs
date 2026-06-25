@@ -19,7 +19,6 @@
 //! implementation cannot prove a requested operation.
 
 mod adjacent;
-mod affine_solid;
 mod arrangement2d;
 mod arrangement3d;
 mod boolean;
