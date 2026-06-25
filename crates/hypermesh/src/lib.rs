@@ -29,7 +29,6 @@ mod cells;
 mod contained_adjacent;
 mod convex;
 mod error;
-mod exact_key;
 mod facts;
 mod graph;
 mod intersection;

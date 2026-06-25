@@ -17,7 +17,7 @@ use super::cell_complex::{
     ExactRegionOwnershipReport, region_ownership_status,
 };
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::exact_key::{
+use super::graph::key::{
     ExactPoint3Key, ExactUndirectedPoint3EdgeKey, exact_point3_key,
     exact_undirected_point3_edge_key,
 };

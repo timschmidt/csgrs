@@ -1,6 +1,6 @@
 use hyperlimit::Point3;
 
-/// Exact run-local key for points whose coordinates are all retained rationals.
+/// Exact graph-local key for points whose coordinates are all retained rationals.
 ///
 /// This is not a serialized certificate. It is an in-memory bucket key that
 /// narrows exact equality checks before falling back to predicates for unkeyed
