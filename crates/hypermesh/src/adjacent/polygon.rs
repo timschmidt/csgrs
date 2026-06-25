@@ -1,6 +1,6 @@
 //! Source-owned triangulated-disk full-face adjacency certificates.
 //!
-//! This module is the branch-face companion to [`crate::adjacent`].
+//! This module is the branch-face companion to the full-face adjacency shortcut.
 //! It accepts source-owned, coplanar face disks when both solids replay the same
 //! simple projected boundary with opposite signed area. The certificate retains
 //! source face lists, boundary points, and edge incidences while exact
@@ -21,8 +21,8 @@ use hyperlimit::{
     point_on_segment3, project_point3, projected_polygon_area2_value,
 };
 
-use super::mesh::ExactMesh;
-use super::topology::triangle_edges_tuple;
+use super::super::mesh::ExactMesh;
+use super::super::topology::triangle_edges_tuple;
 use hyperreal::Real;
 
 #[derive(Clone, Debug, PartialEq)]

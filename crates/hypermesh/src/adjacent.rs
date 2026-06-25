@@ -15,16 +15,11 @@
 //! boundary-only full-face/fan-patch contact contributes no intersection
 //! volume, and subtracting the adjacent right solid preserves the left solid.
 
+mod polygon;
+
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
-use hyperlimit::{
-    CoplanarProjection, Point3, SegmentIntersection, SegmentPlaneRelation, Sign, TriangleLocation,
-    classify_point_triangle, compare_reals, orient3d_report, point_on_segment3, project_point3,
-    projected_polygon_area2_value, projected_segment_parameter3,
-};
-
-use super::adjacent_polygon::polygon_patch_pairs;
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::graph::{
     ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide,
@@ -37,7 +32,13 @@ use super::winding::{
     ClosedMeshWindingRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
 use hyperlimit::SourceProvenance;
+use hyperlimit::{
+    CoplanarProjection, Point3, SegmentIntersection, SegmentPlaneRelation, Sign, TriangleLocation,
+    classify_point_triangle, compare_reals, orient3d_report, point_on_segment3, project_point3,
+    projected_polygon_area2_value, projected_segment_parameter3,
+};
 use hyperreal::Real;
+use polygon::polygon_patch_pairs;
 
 /// One exact whole-face adjacency consumed by a merged union.
 ///
