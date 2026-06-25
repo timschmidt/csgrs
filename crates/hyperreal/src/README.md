@@ -65,6 +65,8 @@ numeric domain failures:
 - square root of known-negative values
 - logarithm of non-positive values
 - inverse trig / inverse hyperbolic domain failures
+- normal density/CDF inputs outside the supported finite approximation window
+- normal quantile inputs outside the supported probability window
 - invalid primitive float import such as `NaN` or infinity
 
 Internal `expect` calls are reserved for representation invariants that should

@@ -198,14 +198,14 @@ object-level facts rather than asking the scalar layer to infer geometry or topo
 
 ```toml
 [dependencies]
-hyperreal = "0.12.0"
+hyperreal = "0.13.0"
 ```
 
 With the `Simple` parser and calculator binary:
 
 ```toml
 [dependencies]
-hyperreal = { version = "0.12.0", features = ["simple"] }
+hyperreal = { version = "0.13.0", features = ["simple"] }
 ```
 
 Feature flags:
@@ -322,6 +322,18 @@ assert_eq!(value.exact_rational(), Some(Rational::fraction(7, 8).unwrap()));
 `Simple` supports arithmetic, roots, powers, logs, exponentials, trig, inverse trig,
 inverse hyperbolic functions, normal distribution helpers (`erf`, `dnorm`, `pnorm`,
 `qnorm`), integers, decimals, fractions, `pi`, and `e`.
+
+Normal-distribution forms use the same `Real` methods as Rust callers:
+
+| Form | Meaning | Domain |
+| --- | --- | --- |
+| `(erf x)` | error function | all real inputs |
+| `(dnorm x)` | standard normal density | finite values with `abs(x) <= 10` |
+| `(pnorm x)` | standard normal cumulative distribution | finite values with `abs(x) <= 10` |
+| `(qnorm p)` | inverse standard normal CDF | `pnorm(-10) < p < pnorm(10)` |
+
+Inputs outside those supported numeric ranges return `Problem` rather than silently
+falling back to primitive floating point.
 
 ## Conversions
 

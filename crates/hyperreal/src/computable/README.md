@@ -48,6 +48,9 @@ Approximation kernels should:
 - avoid cancellation-prone forms when a stable transform is available
 - reuse shared constants such as `pi`, `tau`, `e`, `sqrt(2)`, `sqrt(3)`, and
   common logarithms
+- provide dedicated kernels for supported statistical functions such as `erf`,
+  standard normal density/CDF, and standard normal quantile rather than routing
+  through primitive floating point
 - keep approximation precision explicit rather than silently falling back to
   primitive floating point
 

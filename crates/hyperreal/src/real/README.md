@@ -62,6 +62,9 @@ shape unless benchmarks show no cost.
 - arithmetic preserves recognizable symbolic structure where benchmarks justify
   it.
 - fallible methods return `Problem` for known domain errors.
+- `erf`, `dnorm`, `pnorm`, and `qnorm` expose computable standard-normal helpers;
+  `dnorm`/`pnorm` are bounded to finite inputs with `abs(x) <= 10`, and `qnorm`
+  is bounded to probabilities strictly between `pnorm(-10)` and `pnorm(10)`.
 - structural queries return conservative facts and should not force expensive
   approximation when representation facts are enough.
 - borrowed arithmetic should avoid unnecessary expression cloning.
