@@ -1212,6 +1212,18 @@ mod tests {
             -90,
             2,
         );
+        assert_close(
+            Computable::one().erfc(),
+            Computable::rational("0.1572992070502851306587793649173907407040".parse().unwrap()),
+            -90,
+            2,
+        );
+        assert_close(
+            Computable::one().erfcx(),
+            Computable::rational("0.4275835761558070044107503444905151808202".parse().unwrap()),
+            -90,
+            2,
+        );
     }
 
     #[test]
@@ -1225,6 +1237,68 @@ mod tests {
         assert_close(
             Computable::one().pnorm(),
             Computable::rational("0.8413447460685429485852325456320379224779".parse().unwrap()),
+            -120,
+            2,
+        );
+        assert_close(
+            Computable::one().normal_sf(),
+            Computable::rational("0.1586552539314570514147674543679620775221".parse().unwrap()),
+            -120,
+            2,
+        );
+        assert_close(
+            Computable::normal_interval(Computable::zero(), Computable::one()),
+            Computable::rational("0.3413447460685429485852325456320379224779".parse().unwrap()),
+            -120,
+            2,
+        );
+        assert_close(
+            Computable::zero().log_pnorm(),
+            Computable::rational("-0.6931471805599453094172321214581765680755".parse().unwrap()),
+            -120,
+            2,
+        );
+        assert_close(
+            Computable::zero().log_normal_sf(),
+            Computable::rational("-0.6931471805599453094172321214581765680755".parse().unwrap()),
+            -120,
+            2,
+        );
+        assert_close(
+            Computable::zero().log_dnorm(),
+            Computable::rational("-0.9189385332046727417803297364056176398614".parse().unwrap()),
+            -120,
+            2,
+        );
+    }
+
+    #[test]
+    fn normal_tail_nodes_have_structural_signs() {
+        let x = Computable::one();
+        assert_eq!(x.clone().erfc().exact_sign(), Some(Sign::Plus));
+        assert_eq!(x.clone().erfcx().exact_sign(), Some(Sign::Plus));
+        assert_eq!(x.clone().normal_sf().exact_sign(), Some(Sign::Plus));
+        assert_eq!(
+            Computable::normal_interval(Computable::zero(), Computable::one()).exact_sign(),
+            Some(Sign::Plus)
+        );
+        assert_eq!(
+            Computable::normal_interval(Computable::one(), Computable::one()).exact_sign(),
+            Some(Sign::NoSign)
+        );
+        assert_eq!(x.clone().log_pnorm().exact_sign(), Some(Sign::Minus));
+        assert_eq!(x.clone().log_normal_sf().exact_sign(), Some(Sign::Minus));
+        assert_eq!(x.log_dnorm().exact_sign(), Some(Sign::Minus));
+    }
+
+    #[test]
+    fn expm1_preserves_small_argument_and_sign() {
+        let tiny = Computable::rational(Rational::fraction(1, 1_000_000).unwrap());
+        assert_eq!(tiny.clone().expm1().exact_sign(), Some(Sign::Plus));
+        assert_eq!(tiny.clone().negate().expm1().exact_sign(), Some(Sign::Minus));
+        assert_close(
+            tiny.expm1(),
+            Computable::rational("0.0000010000005000001666667083333416667".parse().unwrap()),
             -120,
             2,
         );

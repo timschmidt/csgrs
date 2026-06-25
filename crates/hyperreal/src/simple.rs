@@ -36,6 +36,7 @@
 //! ```
 
 use crate::{Problem, Rational, Real};
+use num::ToPrimitive;
 use std::collections::HashMap;
 use std::iter::Peekable;
 use std::str::Chars;
@@ -53,13 +54,49 @@ enum Operator {
     Log10,
     Log2,
     Ln,
+    Ln1p,
+    Expm1,
+    Softplus,
+    Logit,
+    Sigmoid,
     Cos,
     Sin,
     Tan,
     Erf,
+    Erfc,
+    Erfcx,
     Dnorm,
     Pnorm,
+    NormalSf,
+    PnormUpper,
+    NormalInterval,
+    PnormDiff,
+    LogPnorm,
+    LogNormalSf,
+    LogDnorm,
+    Erfinv,
+    Erfcinv,
     Qnorm,
+    QnormUpper,
+    NormalPdf,
+    NormalCdf,
+    NormalSurvival,
+    NormalQuantile,
+    NormalHazard,
+    NormalLogHazard,
+    NormalMills,
+    NormalInverseMills,
+    HermiteProbabilists,
+    DnormDerivative,
+    GaussianDerivative,
+    StandardNormalMoment,
+    NormalIntervalMoment,
+    TruncatedNormalMean,
+    TruncatedNormalVariance,
+    RegularizedGammaP,
+    RegularizedGammaQ,
+    ChiSquareCdf,
+    ChiSquareSf,
     Acos,
     Asin,
     Atan,
@@ -151,6 +188,26 @@ impl Simple {
             "pi" | "tau" | "e" => None,
             _ => names.get(name).and_then(Real::exact_rational),
         }
+    }
+
+    fn exact_usize_operand(&self, index: usize, names: &Symbols) -> Result<usize, Problem> {
+        let Some(exact) = self.operands.get(index).unwrap().exact_value(names)? else {
+            return Err(Problem::NotANumber);
+        };
+        let Some(integer) = exact.to_big_integer() else {
+            return Err(Problem::NotANumber);
+        };
+        integer.to_usize().ok_or(Problem::NotANumber)
+    }
+
+    fn exact_u64_operand(&self, index: usize, names: &Symbols) -> Result<u64, Problem> {
+        let Some(exact) = self.operands.get(index).unwrap().exact_value(names)? else {
+            return Err(Problem::NotANumber);
+        };
+        let Some(integer) = exact.to_big_integer() else {
+            return Err(Problem::NotANumber);
+        };
+        integer.to_u64().ok_or(Problem::NotANumber)
     }
 
     fn evaluate_exact(&self, names: &Symbols) -> Result<Option<Rational>, Problem> {
@@ -435,6 +492,36 @@ impl Simple {
                 let value = operand.value(names)?.ln()?;
                 Ok(value)
             }
+            Ln1p => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.ln_1p()
+            }
+            Expm1 => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                Ok(self.operands.first().unwrap().value(names)?.expm1())
+            }
+            Softplus => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.softplus()
+            }
+            Logit => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.logit()
+            }
+            Sigmoid => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.sigmoid()
+            }
             Sqrt => {
                 if self.operands.len() != 1 {
                     return Err(Problem::ParseError);
@@ -473,6 +560,18 @@ impl Simple {
                 }
                 Ok(self.operands.first().unwrap().value(names)?.erf())
             }
+            Erfc => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                Ok(self.operands.first().unwrap().value(names)?.erfc())
+            }
+            Erfcx => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.erfcx()
+            }
             Dnorm => {
                 if self.operands.len() != 1 {
                     return Err(Problem::ParseError);
@@ -485,11 +584,237 @@ impl Simple {
                 }
                 self.operands.first().unwrap().value(names)?.pnorm()
             }
+            NormalSf => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.normal_sf()
+            }
+            PnormUpper => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.pnorm_upper()
+            }
+            NormalInterval => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let lo = self.operands.first().unwrap().value(names)?;
+                let hi = self.operands.get(1).unwrap().value(names)?;
+                Real::normal_interval(&lo, &hi)
+            }
+            PnormDiff => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let lo = self.operands.first().unwrap().value(names)?;
+                let hi = self.operands.get(1).unwrap().value(names)?;
+                Real::pnorm_diff(&lo, &hi)
+            }
+            LogPnorm => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.log_pnorm()
+            }
+            LogNormalSf => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.log_normal_sf()
+            }
+            LogDnorm => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.log_dnorm()
+            }
+            Erfinv => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.erfinv()
+            }
+            Erfcinv => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.erfcinv()
+            }
             Qnorm => {
                 if self.operands.len() != 1 {
                     return Err(Problem::ParseError);
                 }
                 self.operands.first().unwrap().value(names)?.qnorm()
+            }
+            QnormUpper => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.qnorm_upper()
+            }
+            NormalPdf => {
+                if self.operands.len() != 3 {
+                    return Err(Problem::ParseError);
+                }
+                let x = self.operands.first().unwrap().value(names)?;
+                let mean = self.operands.get(1).unwrap().value(names)?;
+                let sigma = self.operands.get(2).unwrap().value(names)?;
+                x.normal_pdf(&mean, &sigma)
+            }
+            NormalCdf => {
+                if self.operands.len() != 3 {
+                    return Err(Problem::ParseError);
+                }
+                let x = self.operands.first().unwrap().value(names)?;
+                let mean = self.operands.get(1).unwrap().value(names)?;
+                let sigma = self.operands.get(2).unwrap().value(names)?;
+                x.normal_cdf(&mean, &sigma)
+            }
+            NormalSurvival => {
+                if self.operands.len() != 3 {
+                    return Err(Problem::ParseError);
+                }
+                let x = self.operands.first().unwrap().value(names)?;
+                let mean = self.operands.get(1).unwrap().value(names)?;
+                let sigma = self.operands.get(2).unwrap().value(names)?;
+                x.normal_survival(&mean, &sigma)
+            }
+            NormalQuantile => {
+                if self.operands.len() != 3 {
+                    return Err(Problem::ParseError);
+                }
+                let p = self.operands.first().unwrap().value(names)?;
+                let mean = self.operands.get(1).unwrap().value(names)?;
+                let sigma = self.operands.get(2).unwrap().value(names)?;
+                p.normal_quantile(&mean, &sigma)
+            }
+            NormalHazard => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.normal_hazard()
+            }
+            NormalLogHazard => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands
+                    .first()
+                    .unwrap()
+                    .value(names)?
+                    .normal_log_hazard()
+            }
+            NormalMills => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.normal_mills()
+            }
+            NormalInverseMills => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands
+                    .first()
+                    .unwrap()
+                    .value(names)?
+                    .normal_inverse_mills()
+            }
+            HermiteProbabilists => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let n = self.exact_usize_operand(0, names)?;
+                let x = self.operands.get(1).unwrap().value(names)?;
+                Ok(Real::hermite_probabilists(n, &x))
+            }
+            DnormDerivative => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let n = self.exact_usize_operand(0, names)?;
+                self.operands
+                    .get(1)
+                    .unwrap()
+                    .value(names)?
+                    .dnorm_derivative(n)
+            }
+            GaussianDerivative => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let n = self.exact_usize_operand(0, names)?;
+                self.operands
+                    .get(1)
+                    .unwrap()
+                    .value(names)?
+                    .gaussian_derivative(n)
+            }
+            StandardNormalMoment => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                let n = self.exact_usize_operand(0, names)?;
+                Ok(Real::standard_normal_moment(n))
+            }
+            NormalIntervalMoment => {
+                if self.operands.len() != 3 {
+                    return Err(Problem::ParseError);
+                }
+                let lo = self.operands.first().unwrap().value(names)?;
+                let hi = self.operands.get(1).unwrap().value(names)?;
+                let n = self.exact_usize_operand(2, names)?;
+                Real::normal_interval_moment(&lo, &hi, n)
+            }
+            TruncatedNormalMean => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let lo = self.operands.first().unwrap().value(names)?;
+                let hi = self.operands.get(1).unwrap().value(names)?;
+                Real::truncated_normal_mean(&lo, &hi)
+            }
+            TruncatedNormalVariance => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let lo = self.operands.first().unwrap().value(names)?;
+                let hi = self.operands.get(1).unwrap().value(names)?;
+                Real::truncated_normal_variance(&lo, &hi)
+            }
+            RegularizedGammaP => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let a = self.operands.first().unwrap().value(names)?;
+                let x = self.operands.get(1).unwrap().value(names)?;
+                Real::regularized_gamma_p(&a, &x)
+            }
+            RegularizedGammaQ => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let a = self.operands.first().unwrap().value(names)?;
+                let x = self.operands.get(1).unwrap().value(names)?;
+                Real::regularized_gamma_q(&a, &x)
+            }
+            ChiSquareCdf => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let x = self.operands.first().unwrap().value(names)?;
+                let k = self.exact_u64_operand(1, names)?;
+                Real::chi_square_cdf(&x, k)
+            }
+            ChiSquareSf => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let x = self.operands.first().unwrap().value(names)?;
+                let k = self.exact_u64_operand(1, names)?;
+                Real::chi_square_sf(&x, k)
             }
             Acos => {
                 if self.operands.len() != 1 {
@@ -550,7 +875,7 @@ impl Simple {
         let mut token = String::new();
         while let Some(c) = chars.peek() {
             match c {
-                'A'..='Z' | 'a'..='z' | '0'..='9' => token.push(*c),
+                'A'..='Z' | 'a'..='z' | '0'..='9' | '_' => token.push(*c),
                 _ => break,
             }
             chars.next();
@@ -564,16 +889,52 @@ impl Simple {
             "log10" => Ok(Log10),
             "log2" => Ok(Log2),
             "ln" => Ok(Ln),
+            "ln_1p" | "log1p" => Ok(Ln1p),
             "exp" => Ok(Exp),
+            "expm1" => Ok(Expm1),
+            "softplus" => Ok(Softplus),
+            "logit" => Ok(Logit),
+            "sigmoid" => Ok(Sigmoid),
             "sqrt" => Ok(Sqrt),
             "cos" => Ok(Cos),
             "sin" => Ok(Sin),
             "pow" => Ok(Pow),
             "tan" => Ok(Tan),
             "erf" => Ok(Erf),
+            "erfc" => Ok(Erfc),
+            "erfcx" => Ok(Erfcx),
             "dnorm" => Ok(Dnorm),
             "pnorm" => Ok(Pnorm),
+            "normal_sf" => Ok(NormalSf),
+            "pnorm_upper" => Ok(PnormUpper),
+            "normal_interval" => Ok(NormalInterval),
+            "pnorm_diff" => Ok(PnormDiff),
+            "log_pnorm" => Ok(LogPnorm),
+            "log_normal_sf" => Ok(LogNormalSf),
+            "log_dnorm" => Ok(LogDnorm),
+            "erfinv" => Ok(Erfinv),
+            "erfcinv" => Ok(Erfcinv),
             "qnorm" => Ok(Qnorm),
+            "qnorm_upper" => Ok(QnormUpper),
+            "normal_pdf" => Ok(NormalPdf),
+            "normal_cdf" => Ok(NormalCdf),
+            "normal_survival" => Ok(NormalSurvival),
+            "normal_quantile" => Ok(NormalQuantile),
+            "normal_hazard" => Ok(NormalHazard),
+            "normal_log_hazard" => Ok(NormalLogHazard),
+            "normal_mills" => Ok(NormalMills),
+            "normal_inverse_mills" => Ok(NormalInverseMills),
+            "hermite_probabilists" => Ok(HermiteProbabilists),
+            "dnorm_derivative" => Ok(DnormDerivative),
+            "gaussian_derivative" => Ok(GaussianDerivative),
+            "standard_normal_moment" => Ok(StandardNormalMoment),
+            "normal_interval_moment" => Ok(NormalIntervalMoment),
+            "truncated_normal_mean" => Ok(TruncatedNormalMean),
+            "truncated_normal_variance" => Ok(TruncatedNormalVariance),
+            "regularized_gamma_p" => Ok(RegularizedGammaP),
+            "regularized_gamma_q" => Ok(RegularizedGammaQ),
+            "chi_square_cdf" => Ok(ChiSquareCdf),
+            "chi_square_sf" => Ok(ChiSquareSf),
             "acos" => Ok(Acos),
             "asin" => Ok(Asin),
             "atan" => Ok(Atan),
@@ -750,17 +1111,54 @@ mod tests {
     fn parse_named_operators() {
         let cases = [
             "(ln 5)",
+            "(ln_1p 5)",
+            "(log1p 5)",
             "(log10 5)",
             "(log2 5)",
             "(exp 5)",
+            "(expm1 5)",
+            "(softplus 5)",
+            "(logit 1/2)",
+            "(sigmoid 5)",
             "(sqrt 5)",
             "(cos 5)",
             "(sin 5)",
             "(tan 5)",
             "(erf 1)",
+            "(erfc 1)",
+            "(erfcx 1)",
             "(dnorm 0)",
             "(pnorm 1)",
+            "(normal_sf 1)",
+            "(pnorm_upper 1)",
+            "(normal_interval 0 1)",
+            "(pnorm_diff 0 1)",
+            "(log_pnorm 0)",
+            "(log_normal_sf 0)",
+            "(log_dnorm 0)",
+            "(erfinv 0)",
+            "(erfcinv 1)",
             "(qnorm 1/2)",
+            "(qnorm_upper 1/2)",
+            "(normal_pdf 5 2 3)",
+            "(normal_cdf 5 2 3)",
+            "(normal_survival 5 2 3)",
+            "(normal_quantile 975/1000 2 3)",
+            "(normal_hazard 1)",
+            "(normal_log_hazard 1)",
+            "(normal_mills 1)",
+            "(normal_inverse_mills 1)",
+            "(hermite_probabilists 3 2)",
+            "(dnorm_derivative 1 1)",
+            "(gaussian_derivative 3 1)",
+            "(standard_normal_moment 6)",
+            "(normal_interval_moment 0 1 2)",
+            "(truncated_normal_mean 0 1)",
+            "(truncated_normal_variance 0 1)",
+            "(regularized_gamma_p 3/2 1)",
+            "(regularized_gamma_q 3/2 1)",
+            "(chi_square_cdf 2 2)",
+            "(chi_square_sf 1 1)",
             "(acos 1/2)",
             "(asin 1/2)",
             "(atan 1)",
@@ -946,13 +1344,78 @@ mod tests {
         let empty = HashMap::new();
         for (case, expected) in [
             ("(erf 1)", "8.42700792949714869341220635082609e-1"),
+            ("(erfc 1)", "1.57299207050285130658779364917391e-1"),
+            ("(erfcx 1)", "4.27583576155807004410750344490515e-1"),
             ("(dnorm 0)", "3.98942280401432677939946059934382e-1"),
             ("(pnorm 1)", "8.41344746068542948585232545632038e-1"),
+            ("(normal_sf 1)", "1.58655253931457051414767454367962e-1"),
+            ("(pnorm_upper 1)", "1.58655253931457051414767454367962e-1"),
+            (
+                "(normal_interval 0 1)",
+                "3.41344746068542948585232545632038e-1",
+            ),
+            ("(pnorm_diff 0 1)", "3.41344746068542948585232545632038e-1"),
+            ("(log_pnorm 0)", "-6.93147180559945309417232121458177e-1"),
+            (
+                "(log_normal_sf 0)",
+                "-6.93147180559945309417232121458177e-1",
+            ),
+            ("(log_dnorm 0)", "-9.18938533204672741780329736405618e-1"),
             ("(qnorm 975/1000)", "1.95996398454005423552459443052055e0"),
+            (
+                "(qnorm_upper 25/1000)",
+                "1.95996398454005423552459443052055e0",
+            ),
         ] {
             let xpr: Simple = case.parse().unwrap();
             let result = xpr.evaluate(&empty).unwrap();
             assert_eq!(format!("{result:.32e}"), expected, "{case}");
+        }
+
+        for (case, expected, tolerance) in [
+            ("(normal_pdf 5 2 3)", 0.08065690817304778, 1e-15),
+            ("(normal_cdf 5 2 3)", 0.8413447460685429, 1e-15),
+            ("(normal_survival 5 2 3)", 0.15865525393145707, 1e-15),
+            ("(normal_quantile 975/1000 2 3)", 7.879891953620163, 1e-14),
+            ("(normal_mills 1)", 0.6556795424187986, 1e-15),
+            ("(normal_hazard 1)", 1.525135276160981, 1e-15),
+            ("(normal_log_hazard 1)", 0.4220831118045907, 1e-15),
+            ("(normal_inverse_mills 1)", 0.2875999709391784, 1e-15),
+            ("(dnorm_derivative 1 1)", -0.24197072451914337, 1e-15),
+            ("(gaussian_derivative 3 1)", 0.48394144903828673, 1e-15),
+            ("(normal_interval_moment 0 1 1)", 0.15697155588228934, 1e-15),
+            ("(normal_interval_moment 0 1 2)", 0.09937402154939956, 1e-15),
+            ("(regularized_gamma_p 3/2 1)", 0.4275932955291202, 1e-15),
+            ("(regularized_gamma_q 3/2 1)", 0.5724067044708798, 1e-15),
+            ("(chi_square_cdf 2 2)", 0.6321205588285577, 1e-15),
+            ("(chi_square_sf 1 1)", 0.31731050786291404, 1e-15),
+        ] as [(&str, f64, f64); 16]
+        {
+            let xpr: Simple = case.parse().unwrap();
+            let actual: f64 = xpr.evaluate(&empty).unwrap().into();
+            let scale = expected.abs().max(1.0);
+            assert!(
+                (actual - expected).abs() <= tolerance * scale,
+                "actual {actual}, expected {expected}, tolerance {tolerance}, case {case}"
+            );
+        }
+
+        for (case, expected) in [
+            (
+                "(truncated_normal_mean 0 1)",
+                "0.45986222928642650033302670255646",
+            ),
+            (
+                "(truncated_normal_variance 0 1)",
+                "0.07965182484851131233334055314679",
+            ),
+        ] {
+            let xpr: Simple = case.parse().unwrap();
+            assert_eq!(
+                format!("{:#}", xpr.evaluate(&empty).unwrap()),
+                expected,
+                "{case}"
+            );
         }
     }
 
@@ -963,30 +1426,197 @@ mod tests {
         let erf_zero: Simple = "(erf 0)".parse().unwrap();
         assert!(erf_zero.evaluate(&empty).unwrap().definitely_zero());
 
+        let erfc_zero: Simple = "(erfc 0)".parse().unwrap();
+        assert_eq!(erfc_zero.evaluate(&empty).unwrap(), Real::one());
+
+        let erfcx_zero: Simple = "(erfcx 0)".parse().unwrap();
+        assert_eq!(erfcx_zero.evaluate(&empty).unwrap(), Real::one());
+
         let pnorm_zero: Simple = "(pnorm 0)".parse().unwrap();
         assert_eq!(
             pnorm_zero.evaluate(&empty).unwrap(),
             Real::new(Rational::fraction(1, 2).unwrap())
         );
 
+        let normal_sf_zero: Simple = "(normal_sf 0)".parse().unwrap();
+        assert_eq!(
+            normal_sf_zero.evaluate(&empty).unwrap(),
+            Real::new(Rational::fraction(1, 2).unwrap())
+        );
+
+        let normal_interval_zero: Simple = "(normal_interval 1 1)".parse().unwrap();
+        assert!(
+            normal_interval_zero
+                .evaluate(&empty)
+                .unwrap()
+                .definitely_zero()
+        );
+
         let qnorm_half: Simple = "(qnorm 1/2)".parse().unwrap();
         assert!(qnorm_half.evaluate(&empty).unwrap().definitely_zero());
 
-        for case in ["(qnorm 0)", "(qnorm 1)", "(qnorm -1)", "(qnorm 2)"] {
+        let erfinv_zero: Simple = "(erfinv 0)".parse().unwrap();
+        assert!(erfinv_zero.evaluate(&empty).unwrap().definitely_zero());
+
+        let erfcinv_one: Simple = "(erfcinv 1)".parse().unwrap();
+        assert!(erfcinv_one.evaluate(&empty).unwrap().definitely_zero());
+
+        let qnorm_upper_half: Simple = "(qnorm_upper 1/2)".parse().unwrap();
+        assert!(qnorm_upper_half.evaluate(&empty).unwrap().definitely_zero());
+
+        let normal_cdf_mean: Simple = "(normal_cdf 2 2 3)".parse().unwrap();
+        assert_eq!(
+            normal_cdf_mean.evaluate(&empty).unwrap(),
+            Real::new(Rational::fraction(1, 2).unwrap())
+        );
+
+        let normal_survival_mean: Simple = "(normal_survival 2 2 3)".parse().unwrap();
+        assert_eq!(
+            normal_survival_mean.evaluate(&empty).unwrap(),
+            Real::new(Rational::fraction(1, 2).unwrap())
+        );
+
+        let normal_quantile_half: Simple = "(normal_quantile 1/2 2 3)".parse().unwrap();
+        assert_eq!(
+            normal_quantile_half.evaluate(&empty).unwrap(),
+            Real::from(2_i32)
+        );
+
+        let hermite: Simple = "(hermite_probabilists 3 2)".parse().unwrap();
+        assert_eq!(hermite.evaluate(&empty).unwrap(), Real::from(2_i32));
+
+        let standard_moment: Simple = "(standard_normal_moment 6)".parse().unwrap();
+        assert_eq!(
+            standard_moment.evaluate(&empty).unwrap(),
+            Real::from(15_i32)
+        );
+
+        let ln_1p_zero: Simple = "(ln_1p 0)".parse().unwrap();
+        assert!(ln_1p_zero.evaluate(&empty).unwrap().definitely_zero());
+
+        let log1p_zero: Simple = "(log1p 0)".parse().unwrap();
+        assert!(log1p_zero.evaluate(&empty).unwrap().definitely_zero());
+
+        let expm1_zero: Simple = "(expm1 0)".parse().unwrap();
+        assert!(expm1_zero.evaluate(&empty).unwrap().definitely_zero());
+
+        let logit_half: Simple = "(logit 1/2)".parse().unwrap();
+        assert!(logit_half.evaluate(&empty).unwrap().definitely_zero());
+
+        let sigmoid_zero: Simple = "(sigmoid 0)".parse().unwrap();
+        assert_eq!(
+            sigmoid_zero.evaluate(&empty).unwrap(),
+            Real::new(Rational::fraction(1, 2).unwrap())
+        );
+
+        let gamma_zero: Simple = "(regularized_gamma_p 1 0)".parse().unwrap();
+        assert!(gamma_zero.evaluate(&empty).unwrap().definitely_zero());
+
+        let gamma_q_zero: Simple = "(regularized_gamma_q 1 0)".parse().unwrap();
+        assert_eq!(gamma_q_zero.evaluate(&empty).unwrap(), Real::one());
+
+        for case in [
+            "(qnorm 0)",
+            "(qnorm 1)",
+            "(qnorm -1)",
+            "(qnorm 2)",
+            "(erfinv 1)",
+            "(erfinv -1)",
+            "(erfcinv 0)",
+            "(erfcinv 2)",
+            "(qnorm_upper 0)",
+            "(qnorm_upper 1)",
+            "(normal_pdf 5 0 0)",
+            "(normal_cdf 5 0 -1)",
+            "(normal_survival 5 0 -1)",
+            "(normal_quantile 1/2 0 0)",
+            "(hermite_probabilists -1 2)",
+            "(hermite_probabilists 3/2 2)",
+            "(dnorm_derivative -1 1)",
+            "(gaussian_derivative 3/2 1)",
+            "(standard_normal_moment -1)",
+            "(standard_normal_moment 3/2)",
+            "(normal_interval_moment 0 1 -1)",
+            "(normal_interval_moment 0 1 3/2)",
+            "(normal_interval_moment 2 1 1)",
+            "(truncated_normal_mean 1 1)",
+            "(truncated_normal_variance 2 1)",
+            "(ln_1p -1)",
+            "(log1p -2)",
+            "(logit 0)",
+            "(logit 1)",
+            "(regularized_gamma_p 0 1)",
+            "(regularized_gamma_q 1/3 1)",
+            "(regularized_gamma_p 1 -1)",
+            "(chi_square_cdf 1 0)",
+            "(chi_square_sf -1 1)",
+        ] {
             let xpr: Simple = case.parse().unwrap();
             assert_eq!(xpr.evaluate(&empty), Err(Problem::NotANumber), "{case}");
         }
 
-        for case in ["(pnorm 11)", "(dnorm -600)"] {
+        for case in [
+            "(pnorm 11)",
+            "(normal_sf 11)",
+            "(pnorm_upper 11)",
+            "(normal_interval -11 0)",
+            "(log_pnorm 11)",
+            "(log_normal_sf 11)",
+            "(normal_log_hazard 11)",
+            "(normal_inverse_mills 11)",
+            "(dnorm_derivative 1 11)",
+            "(gaussian_derivative 1 11)",
+            "(normal_interval_moment -11 0 1)",
+            "(dnorm -600)",
+        ] {
             let xpr: Simple = case.parse().unwrap();
             assert_eq!(xpr.evaluate(&empty), Err(Problem::Exhausted), "{case}");
         }
+
+        let reversed: Simple = "(normal_interval 2 1)".parse().unwrap();
+        assert_eq!(reversed.evaluate(&empty), Err(Problem::NotANumber));
     }
 
     #[test]
     fn normal_function_wrong_arity_errors() {
         let empty = HashMap::new();
-        for case in ["(erf )", "(dnorm 0 1)", "(pnorm )", "(qnorm 1/2 3/4)"] {
+        for case in [
+            "(erf )",
+            "(erfc 1 2)",
+            "(erfcx )",
+            "(dnorm 0 1)",
+            "(pnorm )",
+            "(normal_sf )",
+            "(pnorm_upper 1 2)",
+            "(normal_interval 0)",
+            "(pnorm_diff 0 1 2)",
+            "(log_pnorm )",
+            "(log_normal_sf 0 1)",
+            "(log_dnorm )",
+            "(erfinv )",
+            "(erfcinv 1 2)",
+            "(qnorm 1/2 3/4)",
+            "(qnorm_upper )",
+            "(normal_pdf 5 2)",
+            "(normal_cdf 5 2 3 4)",
+            "(normal_survival 5)",
+            "(normal_quantile 1/2 2)",
+            "(normal_hazard )",
+            "(normal_log_hazard 1 2)",
+            "(normal_mills )",
+            "(normal_inverse_mills 1 2)",
+            "(hermite_probabilists 3)",
+            "(dnorm_derivative 1)",
+            "(gaussian_derivative 1 1 1)",
+            "(standard_normal_moment )",
+            "(normal_interval_moment 0 1)",
+            "(truncated_normal_mean 0)",
+            "(truncated_normal_variance 0 1 2)",
+            "(regularized_gamma_p 1)",
+            "(regularized_gamma_q 1 2 3)",
+            "(chi_square_cdf 1)",
+            "(chi_square_sf 1 2 3)",
+        ] {
             let xpr: Simple = case.parse().unwrap();
             assert_eq!(xpr.evaluate(&empty), Err(Problem::ParseError), "{case}");
         }

@@ -64,6 +64,7 @@ pub(super) enum Approximation {
     // The remaining Prescaled* variants are approximation kernels whose callers
     // have already reduced the argument into the range required by the series.
     PrescaledExp(Computable),
+    Expm1(Computable),
     Sqrt(Computable),
     PrescaledLn(Computable),
     PrescaledLnRational(Rational),
@@ -144,6 +145,12 @@ pub(super) enum Approximation {
     PrescaledTanRational(Rational),
     PrescaledCot(Computable),
     ErfSeries(Computable),
+    Erfc(Computable),
+    NormalSf(Computable),
+    NormalInterval { lo: Computable, hi: Computable },
+    LogPnorm(Computable),
+    LogNormalSf(Computable),
+    LogDnorm(Computable),
     NormalQuantile {
         p: Computable,
         seed: BigInt,

@@ -319,21 +319,90 @@ let value = expr.evaluate(&Default::default()).unwrap();
 assert_eq!(value.exact_rational(), Some(Rational::fraction(7, 8).unwrap()));
 ```
 
-`Simple` supports arithmetic, roots, powers, logs, exponentials, trig, inverse trig,
-inverse hyperbolic functions, normal distribution helpers (`erf`, `dnorm`, `pnorm`,
-`qnorm`), integers, decimals, fractions, `pi`, and `e`.
+`Simple` supports arithmetic, roots, powers, logs, exponentials, stable scalar
+helpers (`ln_1p`/`log1p`, `expm1`, `softplus`, `logit`, `sigmoid`), trig, inverse trig,
+inverse hyperbolic functions, normal distribution helpers (`erf`, `erfc`, `erfcx`,
+`dnorm`, `pnorm`, `normal_sf`, `pnorm_upper`, `normal_interval`, `pnorm_diff`,
+`log_pnorm`, `log_normal_sf`, `log_dnorm`, `erfinv`, `erfcinv`, `qnorm`,
+`qnorm_upper`, `normal_pdf`, `normal_cdf`, `normal_survival`,
+`normal_quantile`, `normal_mills`, `normal_hazard`, `normal_log_hazard`,
+`normal_inverse_mills`, `hermite_probabilists`, `dnorm_derivative`,
+`gaussian_derivative`, `standard_normal_moment`, `normal_interval_moment`,
+`truncated_normal_mean`, `truncated_normal_variance`, `regularized_gamma_p`,
+`regularized_gamma_q`, `chi_square_cdf`, `chi_square_sf`), integers, decimals,
+fractions, `pi`, and `e`.
+
+Stability-oriented scalar forms keep common statistical expressions from being
+assembled out of cancellation-prone generic arithmetic:
+
+| Form | Meaning | Domain |
+| --- | --- | --- |
+| `(ln_1p x)` / `(log1p x)` | natural log of `1 + x` | `x > -1` |
+| `(expm1 x)` | `exp(x) - 1` with a small-argument kernel | all real inputs |
+| `(softplus x)` | `ln(1 + exp(x))` | all real inputs |
+| `(logit p)` | `ln(p / (1 - p))` | `0 < p < 1` |
+| `(sigmoid x)` | `1 / (1 + exp(-x))` | all real inputs |
 
 Normal-distribution forms use the same `Real` methods as Rust callers:
 
 | Form | Meaning | Domain |
 | --- | --- | --- |
 | `(erf x)` | error function | all real inputs |
+| `(erfc x)` | complementary error function | all real inputs |
+| `(erfcx x)` | scaled complementary error function, `exp(x^2) * erfc(x)` | all real inputs |
 | `(dnorm x)` | standard normal density | finite values with `abs(x) <= 10` |
 | `(pnorm x)` | standard normal cumulative distribution | finite values with `abs(x) <= 10` |
+| `(normal_sf x)` | standard normal upper-tail probability, `1 - pnorm(x)` | finite values with `abs(x) <= 10` |
+| `(pnorm_upper x)` | alias for `normal_sf` | finite values with `abs(x) <= 10` |
+| `(normal_interval lo hi)` | standard normal probability mass over `[lo, hi]` | finite bounds with `abs(bound) <= 10` and `lo <= hi` |
+| `(pnorm_diff lo hi)` | alias for `normal_interval` | finite bounds with `abs(bound) <= 10` and `lo <= hi` |
+| `(log_pnorm x)` | natural log of the standard normal CDF | finite values with `abs(x) <= 10` |
+| `(log_normal_sf x)` | natural log of the standard normal upper tail | finite values with `abs(x) <= 10` |
+| `(log_dnorm x)` | natural log of the standard normal density | all real inputs |
+| `(erfinv y)` | inverse error function | `-1 < y < 1` |
+| `(erfcinv y)` | inverse complementary error function | `0 < y < 2` |
 | `(qnorm p)` | inverse standard normal CDF | `pnorm(-10) < p < pnorm(10)` |
+| `(qnorm_upper p)` | inverse standard normal upper-tail probability | `pnorm(-10) < 1 - p < pnorm(10)` |
+| `(normal_pdf x mean sigma)` | normal density with mean and standard deviation | `sigma > 0`, standardized `x` within the density window |
+| `(normal_cdf x mean sigma)` | normal CDF with mean and standard deviation | `sigma > 0`, standardized `x` within the CDF window |
+| `(normal_survival x mean sigma)` | normal upper-tail probability with mean and standard deviation | `sigma > 0`, standardized `x` within the survival window |
+| `(normal_quantile p mean sigma)` | normal quantile with mean and standard deviation | `sigma > 0`, and `p` in the supported quantile window |
+| `(normal_mills x)` | upper-tail Mills ratio, `normal_sf(x) / dnorm(x)` | all real inputs |
+| `(normal_hazard x)` | standard normal hazard rate, `dnorm(x) / normal_sf(x)` | all real inputs |
+| `(normal_log_hazard x)` | natural log of the standard normal hazard rate | finite values with `abs(x) <= 10` |
+| `(normal_inverse_mills x)` | lower-tail inverse Mills ratio, `dnorm(x) / pnorm(x)` | finite values with `abs(x) <= 10` |
+| `(hermite_probabilists n x)` | probabilists' Hermite polynomial `He_n(x)` | exact non-negative integer `n` |
+| `(dnorm_derivative n x)` | nth derivative of the standard normal density | exact non-negative integer `n`, finite `x` with `abs(x) <= 10` |
+| `(gaussian_derivative n x)` | alias for `dnorm_derivative` | exact non-negative integer `n`, finite `x` with `abs(x) <= 10` |
+| `(standard_normal_moment n)` | raw standard normal moment `E[X^n]` | exact non-negative integer `n` |
+| `(normal_interval_moment lo hi n)` | unnormalized raw moment over `[lo, hi]` | exact non-negative integer `n`, finite bounds with `abs(bound) <= 10` and `lo <= hi` |
+| `(truncated_normal_mean lo hi)` | mean of a standard normal truncated to `[lo, hi]` | finite bounds with `abs(bound) <= 10` and `lo < hi` |
+| `(truncated_normal_variance lo hi)` | variance of a standard normal truncated to `[lo, hi]` | finite bounds with `abs(bound) <= 10` and `lo < hi` |
+| `(regularized_gamma_p a x)` | regularized lower incomplete gamma `P(a, x)` | exact positive integer or half-integer `a`, `x >= 0` |
+| `(regularized_gamma_q a x)` | regularized upper incomplete gamma `Q(a, x)` | exact positive integer or half-integer `a`, `x >= 0` |
+| `(chi_square_cdf x k)` | chi-square CDF with `k` degrees of freedom | `x >= 0`, exact positive integer `k` |
+| `(chi_square_sf x k)` | chi-square upper-tail probability | `x >= 0`, exact positive integer `k` |
 
 Inputs outside those supported numeric ranges return `Problem` rather than silently
 falling back to primitive floating point.
+`ln_1p`/`log1p` and `logit` return `Problem::NotANumber` outside their open
+domains.
+Reversed normal-interval bounds return `Problem::NotANumber`; equal bounds return exact
+zero.
+Parametric normal forms standardize exactly as `(x - mean) / sigma`, or
+`mean + sigma * qnorm(p)` for quantiles.
+`normal_mills` uses the stable `sqrt(pi/2) * erfcx(x / sqrt(2))` form.
+Gaussian derivatives keep the Hermite polynomial part exact and multiply by
+the shared standard normal density.
+Standard moments use exact double-factorial closed forms; interval and truncated
+moments use boundary-density recurrences over `normal_interval`.
+Regularized gamma supports the integer and half-integer cases that reduce to
+finite recurrences over `erf`/`erfc`, `exp(-x)`, `sqrt(x)`, and exact factorial
+coefficients; chi-square helpers are thin wrappers through `P(k/2, x/2)` and
+`Q(k/2, x/2)`.
+`softplus`, `logit`, and `sigmoid` use sign-stable forms so callers do not need to
+spell them through `ln(1 + exp(x))`, `ln(p) - ln(1 - p)`, or
+`1 / (1 + exp(-x))`.
 
 ## Conversions
 

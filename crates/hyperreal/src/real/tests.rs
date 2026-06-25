@@ -1429,11 +1429,57 @@ mod tests {
     }
 
     #[test]
+    fn stable_substrate_functions() {
+        assert!(Real::zero().ln_1p().unwrap().definitely_zero());
+        assert!(Real::zero().log1p().unwrap().definitely_zero());
+        assert!(Real::zero().expm1().definitely_zero());
+        assert_eq!(
+            Real::zero().sigmoid().unwrap(),
+            Real::new(Rational::fraction(1, 2).unwrap())
+        );
+        assert!(
+            Real::new(Rational::fraction(1, 2).unwrap())
+                .logit()
+                .unwrap()
+                .definitely_zero()
+        );
+
+        let tiny = Real::new(Rational::fraction(1, 1_000_000).unwrap());
+        assert_close(tiny.clone().ln_1p().unwrap(), 0.000001_f64.ln_1p(), 1e-18);
+        assert_close(tiny.clone().expm1(), 0.000001_f64.exp_m1(), 1e-18);
+        assert_close(
+            Real::from(2_i32).sigmoid().unwrap(),
+            1.0 / (1.0 + (-2.0_f64).exp()),
+            1e-14,
+        );
+        assert_close(
+            Real::from(2_i32).softplus().unwrap(),
+            (1.0 + 2.0_f64.exp()).ln(),
+            1e-14,
+        );
+
+        assert_eq!(Real::from(-1_i32).ln_1p(), Err(Problem::NotANumber));
+        assert_eq!(Real::zero().logit(), Err(Problem::NotANumber));
+        assert_eq!(Real::one().logit(), Err(Problem::NotANumber));
+    }
+
+    #[test]
     fn normal_exact_cases() {
         assert!(Real::zero().erf().definitely_zero());
+        assert_eq!(Real::zero().erfc(), Real::one());
+        assert_eq!(Real::zero().erfcx().unwrap(), Real::one());
         assert_eq!(
             Real::zero().pnorm().unwrap(),
             Real::new(Rational::fraction(1, 2).unwrap())
+        );
+        assert_eq!(
+            Real::zero().normal_sf().unwrap(),
+            Real::new(Rational::fraction(1, 2).unwrap())
+        );
+        assert!(
+            Real::normal_interval(&Real::one(), &Real::one())
+                .unwrap()
+                .definitely_zero()
         );
         assert!(
             Real::new(Rational::fraction(1, 2).unwrap())
@@ -1441,21 +1487,255 @@ mod tests {
                 .unwrap()
                 .definitely_zero()
         );
+        assert!(Real::zero().erfinv().unwrap().definitely_zero());
+        assert!(Real::one().erfcinv().unwrap().definitely_zero());
+        assert!(
+            Real::new(Rational::fraction(1, 2).unwrap())
+                .qnorm_upper()
+                .unwrap()
+                .definitely_zero()
+        );
+        assert_eq!(
+            Real::from(2_i32)
+                .normal_cdf(&Real::from(2_i32), &Real::from(3_i32))
+                .unwrap(),
+            Real::new(Rational::fraction(1, 2).unwrap())
+        );
+        assert_eq!(
+            Real::from(2_i32)
+                .normal_survival(&Real::from(2_i32), &Real::from(3_i32))
+                .unwrap(),
+            Real::new(Rational::fraction(1, 2).unwrap())
+        );
+        assert_eq!(
+            Real::new(Rational::fraction(1, 2).unwrap())
+                .normal_quantile(&Real::from(2_i32), &Real::from(3_i32))
+                .unwrap(),
+            Real::from(2_i32)
+        );
     }
 
     #[test]
     fn normal_known_values() {
         assert_close(Real::one().erf(), 0.8427007929497149, 1e-15);
+        assert_close(Real::one().erfc(), 0.15729920705028513, 1e-15);
+        assert_close(Real::one().erfcx().unwrap(), 0.427583576155807, 1e-15);
         assert_close(Real::from(-1_i32).erf(), -0.8427007929497149, 1e-15);
         assert_close(Real::zero().dnorm().unwrap(), 0.3989422804014327, 1e-15);
         assert_close(Real::one().dnorm().unwrap(), 0.24197072451914337, 1e-15);
         assert_close(Real::one().pnorm().unwrap(), 0.8413447460685429, 1e-15);
+        assert_close(Real::one().normal_sf().unwrap(), 0.15865525393145707, 1e-15);
+        assert_close(
+            Real::one().pnorm_upper().unwrap(),
+            0.15865525393145707,
+            1e-15,
+        );
+        assert_close(
+            Real::normal_interval(&Real::zero(), &Real::one()).unwrap(),
+            0.3413447460685429,
+            1e-15,
+        );
+        assert_close(
+            Real::pnorm_diff(&Real::zero(), &Real::one()).unwrap(),
+            0.3413447460685429,
+            1e-15,
+        );
+        assert_close(
+            Real::zero().log_pnorm().unwrap(),
+            -std::f64::consts::LN_2,
+            1e-15,
+        );
+        assert_close(
+            Real::zero().log_normal_sf().unwrap(),
+            -std::f64::consts::LN_2,
+            1e-15,
+        );
+        assert_close(
+            Real::zero().log_dnorm().unwrap(),
+            -0.9189385332046727,
+            1e-15,
+        );
+        assert_close(
+            Real::from(2_i32).log_dnorm().unwrap(),
+            -2.9189385332046727,
+            1e-15,
+        );
         assert_close(
             Real::new(Rational::fraction(975, 1000).unwrap())
                 .qnorm()
                 .unwrap(),
             1.959963984540054,
             1e-14,
+        );
+        assert_close(Real::one().erf().erfinv().unwrap(), 1.0, 1e-12);
+        assert_close(Real::one().erfc().erfcinv().unwrap(), 1.0, 1e-12);
+        assert_close(
+            Real::new(Rational::fraction(25, 1000).unwrap())
+                .qnorm_upper()
+                .unwrap(),
+            1.959963984540054,
+            1e-14,
+        );
+        assert_close(
+            Real::from(5_i32)
+                .normal_pdf(&Real::from(2_i32), &Real::from(3_i32))
+                .unwrap(),
+            0.08065690817304778,
+            1e-15,
+        );
+        assert_close(
+            Real::from(5_i32)
+                .normal_cdf(&Real::from(2_i32), &Real::from(3_i32))
+                .unwrap(),
+            0.8413447460685429,
+            1e-15,
+        );
+        assert_close(
+            Real::from(5_i32)
+                .normal_survival(&Real::from(2_i32), &Real::from(3_i32))
+                .unwrap(),
+            0.15865525393145707,
+            1e-15,
+        );
+        assert_close(
+            Real::new(Rational::fraction(975, 1000).unwrap())
+                .normal_quantile(&Real::from(2_i32), &Real::from(3_i32))
+                .unwrap(),
+            7.879891953620163,
+            1e-14,
+        );
+        assert_close(
+            Real::zero().normal_mills().unwrap(),
+            1.2533141373155001,
+            1e-15,
+        );
+        assert_close(
+            Real::zero().normal_hazard().unwrap(),
+            0.7978845608028654,
+            1e-15,
+        );
+        assert_close(
+            Real::zero().normal_log_hazard().unwrap(),
+            -0.22579135264472738,
+            1e-15,
+        );
+        assert_close(
+            Real::zero().normal_inverse_mills().unwrap(),
+            0.7978845608028654,
+            1e-15,
+        );
+        assert_close(
+            Real::one().normal_mills().unwrap(),
+            0.6556795424187986,
+            1e-15,
+        );
+        assert_close(
+            Real::one().normal_hazard().unwrap(),
+            1.525135276160981,
+            1e-15,
+        );
+        assert_close(
+            Real::one().normal_log_hazard().unwrap(),
+            0.4220831118045907,
+            1e-15,
+        );
+        assert_close(
+            Real::one().normal_inverse_mills().unwrap(),
+            0.2875999709391784,
+            1e-15,
+        );
+        assert_eq!(
+            Real::hermite_probabilists(0, &Real::from(2_i32)),
+            Real::one()
+        );
+        assert_eq!(
+            Real::hermite_probabilists(1, &Real::from(2_i32)),
+            Real::from(2_i32)
+        );
+        assert_eq!(
+            Real::hermite_probabilists(2, &Real::from(2_i32)),
+            Real::from(3_i32)
+        );
+        assert_eq!(
+            Real::hermite_probabilists(3, &Real::from(2_i32)),
+            Real::from(2_i32)
+        );
+        assert_close(
+            Real::one().dnorm_derivative(1).unwrap(),
+            -0.24197072451914337,
+            1e-15,
+        );
+        assert_close(Real::one().dnorm_derivative(2).unwrap(), 0.0, 1e-15);
+        assert_close(
+            Real::one().gaussian_derivative(3).unwrap(),
+            0.48394144903828673,
+            1e-15,
+        );
+        assert_eq!(Real::standard_normal_moment(0), Real::one());
+        assert!(Real::standard_normal_moment(1).definitely_zero());
+        assert_eq!(Real::standard_normal_moment(2), Real::one());
+        assert_eq!(Real::standard_normal_moment(4), Real::from(3_i32));
+        assert_eq!(Real::standard_normal_moment(6), Real::from(15_i32));
+        assert_close(
+            Real::normal_interval_moment(&Real::zero(), &Real::one(), 0).unwrap(),
+            0.3413447460685429,
+            1e-15,
+        );
+        assert_close(
+            Real::normal_interval_moment(&Real::zero(), &Real::one(), 1).unwrap(),
+            0.15697155588228934,
+            1e-15,
+        );
+        assert_close(
+            Real::normal_interval_moment(&Real::zero(), &Real::one(), 2).unwrap(),
+            0.09937402154939956,
+            1e-15,
+        );
+        assert_eq!(
+            format!(
+                "{:#}",
+                Real::truncated_normal_mean(&Real::zero(), &Real::one()).unwrap()
+            ),
+            "0.45986222928642650033302670255646"
+        );
+        assert_eq!(
+            format!(
+                "{:#}",
+                Real::truncated_normal_variance(&Real::zero(), &Real::one()).unwrap()
+            ),
+            "0.07965182484851131233334055314679"
+        );
+        assert_close(
+            Real::regularized_gamma_p(&Real::new(Rational::fraction(3, 2).unwrap()), &Real::one())
+                .unwrap(),
+            0.4275932955291202,
+            1e-15,
+        );
+        assert_close(
+            Real::regularized_gamma_q(&Real::new(Rational::fraction(3, 2).unwrap()), &Real::one())
+                .unwrap(),
+            0.5724067044708798,
+            1e-15,
+        );
+        assert_close(
+            Real::regularized_gamma_p(&Real::from(2_i32), &Real::from(3_i32)).unwrap(),
+            0.8008517265285442,
+            1e-15,
+        );
+        assert_close(
+            Real::regularized_gamma_q(&Real::from(2_i32), &Real::from(3_i32)).unwrap(),
+            0.19914827347145578,
+            1e-15,
+        );
+        assert_close(
+            Real::chi_square_cdf(&Real::from(2_i32), 2).unwrap(),
+            0.6321205588285577,
+            1e-15,
+        );
+        assert_close(
+            Real::chi_square_sf(&Real::one(), 1).unwrap(),
+            0.31731050786291404,
+            1e-15,
         );
     }
 
@@ -1470,8 +1750,11 @@ mod tests {
             let round_trip = p.qnorm().unwrap();
             assert_close(round_trip, x.clone().into(), 1e-12);
 
-            let symmetry = x.clone().pnorm().unwrap() + (-x).pnorm().unwrap();
+            let symmetry = x.clone().pnorm().unwrap() + (-x.clone()).pnorm().unwrap();
             assert_close(symmetry, 1.0, 1e-12);
+
+            let complement = x.clone().pnorm().unwrap() + x.normal_sf().unwrap();
+            assert_close(complement, 1.0, 1e-12);
         }
     }
 
@@ -1481,8 +1764,134 @@ mod tests {
         assert_eq!(Real::one().qnorm().unwrap_err(), Problem::NotANumber);
         assert_eq!(Real::from(2_i32).qnorm().unwrap_err(), Problem::NotANumber);
         assert_eq!(Real::from(-1_i32).qnorm().unwrap_err(), Problem::NotANumber);
+        assert_eq!(Real::one().erfinv().unwrap_err(), Problem::NotANumber);
+        assert_eq!(
+            Real::from(-1_i32).erfinv().unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(Real::from(2_i32).erfinv().unwrap_err(), Problem::NotANumber);
+        assert_eq!(Real::zero().erfcinv().unwrap_err(), Problem::NotANumber);
+        assert_eq!(
+            Real::from(2_i32).erfcinv().unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::from(-1_i32).erfcinv().unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::from(3_i32).erfcinv().unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(Real::zero().qnorm_upper().unwrap_err(), Problem::NotANumber);
+        assert_eq!(Real::one().qnorm_upper().unwrap_err(), Problem::NotANumber);
+        assert_eq!(
+            Real::from(-1_i32).qnorm_upper().unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::from(2_i32).qnorm_upper().unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::from(5_i32)
+                .normal_pdf(&Real::zero(), &Real::zero())
+                .unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::from(5_i32)
+                .normal_cdf(&Real::zero(), &Real::from(-1_i32))
+                .unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::from(5_i32)
+                .normal_survival(&Real::zero(), &Real::from(-1_i32))
+                .unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::new(Rational::fraction(1, 2).unwrap())
+                .normal_quantile(&Real::zero(), &Real::zero())
+                .unwrap_err(),
+            Problem::NotANumber
+        );
 
         assert_eq!(Real::from(11_i32).pnorm().unwrap_err(), Problem::Exhausted);
+        assert_eq!(
+            Real::from(11_i32).normal_sf().unwrap_err(),
+            Problem::Exhausted
+        );
+        assert_eq!(
+            Real::normal_interval(&Real::from(2_i32), &Real::from(1_i32)).unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::normal_interval(&Real::from(-11_i32), &Real::zero()).unwrap_err(),
+            Problem::Exhausted
+        );
+        assert_eq!(
+            Real::from(11_i32).log_pnorm().unwrap_err(),
+            Problem::Exhausted
+        );
+        assert_eq!(
+            Real::from(11_i32).log_normal_sf().unwrap_err(),
+            Problem::Exhausted
+        );
+        assert_eq!(
+            Real::from(11_i32).normal_log_hazard().unwrap_err(),
+            Problem::Exhausted
+        );
+        assert_eq!(
+            Real::from(11_i32).normal_inverse_mills().unwrap_err(),
+            Problem::Exhausted
+        );
+        assert_eq!(
+            Real::from(11_i32).dnorm_derivative(1).unwrap_err(),
+            Problem::Exhausted
+        );
+        assert_eq!(
+            Real::from(11_i32).gaussian_derivative(1).unwrap_err(),
+            Problem::Exhausted
+        );
+        assert_eq!(
+            Real::normal_interval_moment(&Real::from(2_i32), &Real::from(1_i32), 1).unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::normal_interval_moment(&Real::from(-11_i32), &Real::zero(), 1).unwrap_err(),
+            Problem::Exhausted
+        );
+        assert_eq!(
+            Real::truncated_normal_mean(&Real::one(), &Real::one()).unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::truncated_normal_variance(&Real::from(2_i32), &Real::from(1_i32)).unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::regularized_gamma_p(&Real::zero(), &Real::one()).unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::regularized_gamma_p(&Real::new(Rational::fraction(1, 3).unwrap()), &Real::one())
+                .unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::regularized_gamma_q(&Real::one(), &Real::from(-1_i32)).unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::chi_square_cdf(&Real::one(), 0).unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::chi_square_sf(&Real::from(-1_i32), 1).unwrap_err(),
+            Problem::NotANumber
+        );
         assert_eq!(
             Real::from(-600_i32).dnorm().unwrap_err(),
             Problem::Exhausted

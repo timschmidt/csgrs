@@ -51,6 +51,39 @@ fn erf_series(signal: &Option<Signal>, op: &Computable, p: Precision) -> BigInt 
     scale(current_sum, calc_precision - p)
 }
 
+fn erfc(signal: &Option<Signal>, op: &Computable, p: Precision) -> BigInt {
+    Computable::one()
+        .add(op.clone().erf().negate())
+        .approx_signal(signal, p)
+}
+
+fn normal_sf(signal: &Option<Signal>, op: &Computable, p: Precision) -> BigInt {
+    op.clone().negate().pnorm().approx_signal(signal, p)
+}
+
+fn normal_interval(signal: &Option<Signal>, lo: &Computable, hi: &Computable, p: Precision) -> BigInt {
+    hi.clone()
+        .pnorm()
+        .add(lo.clone().pnorm().negate())
+        .approx_signal(signal, p)
+}
+
+fn log_pnorm(signal: &Option<Signal>, op: &Computable, p: Precision) -> BigInt {
+    op.clone().pnorm().ln().approx_signal(signal, p)
+}
+
+fn log_normal_sf(signal: &Option<Signal>, op: &Computable, p: Precision) -> BigInt {
+    op.clone().normal_sf().ln().approx_signal(signal, p)
+}
+
+fn log_dnorm(signal: &Option<Signal>, op: &Computable, p: Precision) -> BigInt {
+    let neg_half_x_sq = op.clone().square().shift_left(-1).negate();
+    let log_sqrt_2pi = Computable::pi().shift_left(1).ln().shift_left(-1);
+    neg_half_x_sq
+        .add(log_sqrt_2pi.negate())
+        .approx_signal(signal, p)
+}
+
 const NORMAL_QUANTILE_RESULT_MSD_BOUND: Precision = 5;
 
 fn normal_quantile(

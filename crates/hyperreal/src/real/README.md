@@ -62,9 +62,39 @@ shape unless benchmarks show no cost.
 - arithmetic preserves recognizable symbolic structure where benchmarks justify
   it.
 - fallible methods return `Problem` for known domain errors.
-- `erf`, `dnorm`, `pnorm`, and `qnorm` expose computable standard-normal helpers;
-  `dnorm`/`pnorm` are bounded to finite inputs with `abs(x) <= 10`, and `qnorm`
-  is bounded to probabilities strictly between `pnorm(-10)` and `pnorm(10)`.
+- `ln_1p`/`log1p` and `expm1` preserve small-residual intent instead of forcing
+  users to spell `ln(1+x)` or `exp(x)-1` as cancellation-prone generic
+  arithmetic; `softplus`, `logit`, and `sigmoid` are stable public compositions
+  built on those primitives.
+- `erf`, `erfc`, `erfcx`, `dnorm`, `pnorm`, `normal_sf`, `pnorm_upper`,
+  `normal_interval`, `pnorm_diff`, `log_pnorm`, `log_normal_sf`, `log_dnorm`,
+  `erfinv`, `erfcinv`, `qnorm`, and `qnorm_upper` expose computable Gaussian
+  helpers; `dnorm`/`pnorm`/`normal_sf`, log tails, and interval bounds are
+  bounded to finite inputs with `abs(x) <= 10`, normal intervals require
+  `lo <= hi`, `log_dnorm` uses the analytic `-x^2/2 - ln(2*pi)/2` form,
+  `erfinv`/`erfcinv` use open domains, and quantiles are bounded to
+  probabilities strictly between `pnorm(-10)` and `pnorm(10)`.
+- parametric normal helpers (`normal_pdf`, `normal_cdf`, `normal_survival`,
+  `normal_quantile`) require `sigma > 0`, standardize exactly before entering
+  the standard-normal helper, and inherit the same standard-normal resource
+  windows.
+- Mills and hazard helpers use the standard upper-tail convention for
+  `normal_mills = normal_sf / dnorm` and `normal_hazard = dnorm / normal_sf`;
+  `normal_mills` is built through the stable `sqrt(pi/2) * erfcx(x/sqrt(2))`
+  identity, while `normal_inverse_mills` is the lower-tail `dnorm / pnorm`
+  convention and inherits the normal CDF window.
+- `hermite_probabilists`, `dnorm_derivative`, and `gaussian_derivative` keep the
+  probabilists' Hermite polynomial recurrence exact; only the shared normal
+  density factor enters the computable approximation layer.
+- `standard_normal_moment` uses exact double-factorial closed forms, while
+  `normal_interval_moment`, `truncated_normal_mean`, and
+  `truncated_normal_variance` reuse `normal_interval` plus boundary density
+  recurrence terms.
+- `regularized_gamma_p` and `regularized_gamma_q` support exact positive
+  integer and half-integer shape parameters with `x >= 0`, using finite
+  recurrences over existing `erf`/`erfc`, `exp`, `sqrt`, and exact factorial
+  coefficients; `chi_square_cdf` and `chi_square_sf` wrap those forms as
+  `P(k/2, x/2)` and `Q(k/2, x/2)` for positive integer degrees of freedom.
 - structural queries return conservative facts and should not force expensive
   approximation when representation facts are enough.
 - borrowed arithmetic should avoid unnecessary expression cloning.

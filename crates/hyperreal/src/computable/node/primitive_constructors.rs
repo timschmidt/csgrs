@@ -44,6 +44,9 @@ impl Computable {
                 (Approximation::PrescaledExp(left), Approximation::PrescaledExp(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }
+                (Approximation::Expm1(left), Approximation::Expm1(right)) => {
+                    Computable::internal_structural_eq(left, right)
+                }
                 (Approximation::Sqrt(left), Approximation::Sqrt(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }
@@ -166,6 +169,28 @@ impl Computable {
                     Computable::internal_structural_eq(left, right)
                 }
                 (Approximation::ErfSeries(left), Approximation::ErfSeries(right)) => {
+                    Computable::internal_structural_eq(left, right)
+                }
+                (Approximation::Erfc(left), Approximation::Erfc(right))
+                | (Approximation::NormalSf(left), Approximation::NormalSf(right)) => {
+                    Computable::internal_structural_eq(left, right)
+                }
+                (
+                    Approximation::NormalInterval {
+                        lo: left_lo,
+                        hi: left_hi,
+                    },
+                    Approximation::NormalInterval {
+                        lo: right_lo,
+                        hi: right_hi,
+                    },
+                ) => {
+                    Computable::internal_structural_eq(left_lo, right_lo)
+                        && Computable::internal_structural_eq(left_hi, right_hi)
+                }
+                (Approximation::LogPnorm(left), Approximation::LogPnorm(right))
+                | (Approximation::LogNormalSf(left), Approximation::LogNormalSf(right))
+                | (Approximation::LogDnorm(left), Approximation::LogDnorm(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }
                 (

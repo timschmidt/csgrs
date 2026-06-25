@@ -151,6 +151,27 @@ impl Computable {
         self.prescaled_exp()
     }
 
+    /// `exp(x) - 1`, retaining the small-argument intent until approximation.
+    pub fn expm1(self) -> Computable {
+        if self
+            .exact_rational()
+            .is_some_and(|r| r.sign() == Sign::NoSign)
+        {
+            return Self::zero();
+        }
+        let exact_sign = match self.exact_sign() {
+            Some(sign) => ExactSignCache::Valid(sign),
+            None => ExactSignCache::Invalid,
+        };
+        Self {
+            internal: Box::new(Approximation::Expm1(self)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(exact_sign),
+            signal: None,
+        }
+    }
+
     /// Calculate nearby multiple of pi.
     fn pi_multiple(&self) -> BigInt {
         // Use one low-precision quotient and a cheap correction instead of a full

@@ -46,6 +46,43 @@ fn exp(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     scale(sum, calc_precision - p)
 }
 
+fn expm1(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    if p >= 1 {
+        return Zero::zero();
+    }
+
+    let low_prec = -4;
+    let rough = c.approx_signal(signal, low_prec);
+    if rough > *signed::EIGHT || rough < -signed::EIGHT.clone() {
+        return c
+            .clone()
+            .exp()
+            .add(Computable::one().negate())
+            .approx_signal(signal, p);
+    }
+
+    let iterations_needed = -p / 2 + 2;
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 4;
+    let op_prec = p - 3;
+    let op_appr = c.approx_signal(signal, op_prec);
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
+    let mut n: i32 = 1;
+    let mut current_term = scale(op_appr.clone(), op_prec - calc_precision);
+    let mut sum = current_term.clone();
+
+    while current_term.magnitude() > &max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        n += 1;
+        current_term = scale(current_term * &op_appr, op_prec) / n;
+        sum += &current_term;
+    }
+
+    scale(sum, calc_precision - p)
+}
+
 fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Sqrt uses a fixed-size integer sqrt for moderate precision and recursive
     // Newton refinement for deeper requests. This avoids pulling in floating

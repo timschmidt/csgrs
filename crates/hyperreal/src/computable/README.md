@@ -46,11 +46,16 @@ Approximation kernels should:
 - reduce arguments before entering expensive series or transcendental kernels
 - use exact/symbolic endpoints where possible
 - avoid cancellation-prone forms when a stable transform is available
+- preserve stable substrate forms such as `ln(1+x)` and `exp(x)-1` as dedicated
+  graph shapes when callers expose that intent
 - reuse shared constants such as `pi`, `tau`, `e`, `sqrt(2)`, `sqrt(3)`, and
   common logarithms
 - provide dedicated kernels for supported statistical functions such as `erf`,
-  standard normal density/CDF, and standard normal quantile rather than routing
-  through primitive floating point
+  `erfc`, standard normal density/CDF/survival, normal interval mass, and
+  log-tail/quantile helpers rather than routing through primitive floating point
+- keep finite recurrence statistical forms, such as half-integer incomplete
+  gamma and chi-square wrappers, in exact `Real` structure until they reach
+  existing computable primitives
 - keep approximation precision explicit rather than silently falling back to
   primitive floating point
 

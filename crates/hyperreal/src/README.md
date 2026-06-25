@@ -64,9 +64,29 @@ numeric domain failures:
 - divide by zero
 - square root of known-negative values
 - logarithm of non-positive values
+- `ln_1p`/`log1p` inputs with `x <= -1`
+- `logit` inputs outside `0 < p < 1`
 - inverse trig / inverse hyperbolic domain failures
 - normal density/CDF inputs outside the supported finite approximation window
+- normal upper-tail inputs outside the supported finite approximation window
+- normal interval bounds outside the supported finite approximation window, or
+  reversed interval bounds
+- normal log-CDF and log-upper-tail inputs outside the supported finite
+  approximation window
+- inverse error-function inputs outside their open probability domains
 - normal quantile inputs outside the supported probability window
+- parametric normal forms with non-positive standard deviation, or whose
+  standardized value/probability is outside the supported standard-normal window
+- normal log-hazard and lower-tail inverse Mills inputs outside the supported
+  finite approximation window
+- Gaussian derivative forms with a non-integer or negative derivative order, or
+  whose density input is outside the supported finite approximation window
+- normal moment forms with a non-integer or negative order, reversed interval
+  bounds, degenerate truncated intervals, or interval bounds outside the
+  supported finite approximation window
+- regularized gamma forms with non-positive or non-integer/half-integer shape
+  parameters, or negative `x`
+- chi-square forms with non-positive degrees of freedom or negative `x`
 - invalid primitive float import such as `NaN` or infinity
 
 Internal `expect` calls are reserved for representation invariants that should

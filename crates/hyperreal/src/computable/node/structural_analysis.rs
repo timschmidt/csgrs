@@ -571,7 +571,13 @@ impl Computable {
                 | Approximation::AcosPositiveRational(_)
                 | Approximation::AcosNegativeRational(_)
                 | Approximation::AcoshNearOne(_)
-                | Approximation::AcoshDirect(_) => Some(Some(Sign::Plus)),
+                | Approximation::AcoshDirect(_)
+                | Approximation::Erfc(_)
+                | Approximation::NormalSf(_)
+                | Approximation::NormalInterval { .. } => Some(Some(Sign::Plus)),
+                Approximation::LogPnorm(_)
+                | Approximation::LogNormalSf(_)
+                | Approximation::LogDnorm(_) => Some(Some(Sign::Minus)),
                 Approximation::PrescaledAtan(child)
                 | Approximation::PrescaledAsin(child)
                 | Approximation::AsinDeferred(child)
@@ -579,7 +585,8 @@ impl Computable {
                 | Approximation::AsinhDirect(child)
                 | Approximation::PrescaledAsinh(child)
                 | Approximation::AtanhDirect(child)
-                | Approximation::PrescaledAtanh(child) => Some(child.exact_sign()),
+                | Approximation::PrescaledAtanh(child)
+                | Approximation::Expm1(child) => Some(child.exact_sign()),
                 Approximation::PrescaledExp(_) => Some(Some(Sign::Plus)),
                 Approximation::Negate(_)
                 | Approximation::Offset(_, _)

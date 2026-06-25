@@ -502,6 +502,32 @@ impl Computable {
         two_over_sqrt_pi.multiply(gaussian).multiply(series)
     }
 
+    /// Complementary error function, erfc(x) = 1 - erf(x).
+    pub fn erfc(self) -> Computable {
+        if let Some(rational) = self.exact_rational()
+            && rational.sign() == Sign::NoSign
+        {
+            return Self::one();
+        }
+        Self {
+            internal: Box::new(Approximation::Erfc(self)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            signal: None,
+        }
+    }
+
+    /// Scaled complementary error function, erfcx(x) = exp(x^2) * erfc(x).
+    pub fn erfcx(self) -> Computable {
+        if let Some(rational) = self.exact_rational()
+            && rational.sign() == Sign::NoSign
+        {
+            return Self::one();
+        }
+        self.clone().square().exp().multiply(self.erfc())
+    }
+
     /// Standard normal CDF.
     pub fn pnorm(self) -> Computable {
         if let Some(rational) = self.exact_rational()
@@ -519,6 +545,69 @@ impl Computable {
         let neg_half_x_sq = self.square().shift_right(1).negate();
         let sqrt_2pi = Self::pi().shift_left(1).sqrt();
         neg_half_x_sq.exp().multiply(sqrt_2pi.inverse())
+    }
+
+    /// Standard normal upper-tail probability, 1 - pnorm(x).
+    pub fn normal_sf(self) -> Computable {
+        if let Some(rational) = self.exact_rational()
+            && rational.sign() == Sign::NoSign
+        {
+            return Self::rational(HALF_RATIONAL.clone());
+        }
+        Self {
+            internal: Box::new(Approximation::NormalSf(self)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            signal: None,
+        }
+    }
+
+    /// Standard normal probability mass over [lo, hi].
+    pub fn normal_interval(lo: Computable, hi: Computable) -> Computable {
+        if Computable::internal_structural_eq(&lo, &hi) {
+            return Self::zero();
+        }
+        Self {
+            internal: Box::new(Approximation::NormalInterval { lo, hi }),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            signal: None,
+        }
+    }
+
+    /// Natural logarithm of the standard normal CDF.
+    pub fn log_pnorm(self) -> Computable {
+        Self {
+            internal: Box::new(Approximation::LogPnorm(self)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Minus)),
+            signal: None,
+        }
+    }
+
+    /// Natural logarithm of the standard normal upper-tail probability.
+    pub fn log_normal_sf(self) -> Computable {
+        Self {
+            internal: Box::new(Approximation::LogNormalSf(self)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Minus)),
+            signal: None,
+        }
+    }
+
+    /// Natural logarithm of the standard normal density.
+    pub fn log_dnorm(self) -> Computable {
+        Self {
+            internal: Box::new(Approximation::LogDnorm(self)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Minus)),
+            signal: None,
+        }
     }
 
     /// Standard normal quantile by Newton iteration with the analytic density.
