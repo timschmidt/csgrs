@@ -19,7 +19,7 @@
 //! implementation cannot prove a requested operation.
 
 mod adjacent;
-pub(crate) mod adjacent_polygon;
+mod adjacent_polygon;
 mod affine_solid;
 mod arrangement2d;
 mod arrangement3d;
@@ -34,7 +34,7 @@ mod exact_key;
 mod facts;
 mod graph;
 mod intersection;
-pub(crate) mod loop_triangulation;
+mod loop_triangulation;
 mod mesh;
 mod orthogonal_solid;
 mod region;
