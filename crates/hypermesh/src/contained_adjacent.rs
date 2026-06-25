@@ -29,8 +29,7 @@ use super::graph::{
     build_validated_intersection_graph,
 };
 use super::intersection::MeshFacePairRelation;
-use super::mesh::{ExactMesh, ExactMeshValidationError, Triangle};
-use super::topology::{mesh_for_side, triangle_tuple_edges};
+use super::mesh::{ExactMesh, ExactMeshValidationError, Triangle, triangle_tuple_edges};
 use super::validation::ExactMeshValidationPolicy;
 use super::winding::{
     ClosedMeshWindingRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
@@ -546,8 +545,7 @@ fn retained_plane_crossing_is_not_inside_plane_face(
     // finite triangle, or exactly on its boundary. That construction is exact
     // evidence for splitting, not for volume overlap; preserving the
     // shortcut consumes. Strict interior crossings remain blockers.
-    let Some(triangle) = triangle_points(mesh_for_side(*plane_side, left, right), *plane_face)
-    else {
+    let Some(triangle) = triangle_points(plane_side.mesh(left, right), *plane_face) else {
         return false;
     };
     let Some(projection) = choose_triangle_projection(&triangle) else {
@@ -665,12 +663,12 @@ fn append_contained_face_patch_group(
     triangles: &mut Vec<Triangle>,
 ) -> Option<()> {
     let containing_mesh = faces_mesh(
-        mesh_for_side(containing_side, left, right),
+        containing_side.mesh(left, right),
         &group.containing_faces,
         "exact contained-face adjacency containing faces",
     )?;
     let contained_mesh = faces_mesh(
-        mesh_for_side(opposite_side(containing_side), left, right),
+        opposite_side(containing_side).mesh(left, right),
         &group.contained_faces,
         "exact contained-face adjacency contained faces",
     )?;

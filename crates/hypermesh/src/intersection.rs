@@ -26,7 +26,7 @@ use hyperreal::Real;
 
 use super::facts::FacePlaneFacts;
 use super::mesh::ExactMesh;
-use super::topology::triangle_edges;
+use super::mesh::triangle_edges;
 
 /// Certified coarse relation between two exact triangles.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

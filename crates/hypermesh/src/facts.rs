@@ -6,7 +6,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use super::topology::sorted_edge;
+use super::mesh::sorted_edge;
 use super::validation::{ExactMeshValidationPolicy, validate_triangle_rows_with_policy};
 use hyperlimit::Point3;
 use hyperlimit::PredicateUse;

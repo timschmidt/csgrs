@@ -40,7 +40,6 @@ mod regularization;
 mod reports;
 mod simplify;
 mod solid;
-mod topology;
 mod validation;
 mod view;
 mod volumetric;

@@ -28,8 +28,7 @@ use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, Exact
 use super::intersection::{
     MeshFacePairClassification, MeshFacePairRelation, classify_mesh_face_pair_unchecked,
 };
-use super::mesh::ExactMesh;
-use super::topology::{mesh_for_side, triangle_edges};
+use super::mesh::{ExactMesh, triangle_edges};
 use super::view::{PreparedMeshPair, PreparedMeshPairClassificationCounts, PreparedMeshView};
 use hyperlimit::{CoplanarProjection, CoplanarTriangleClassification};
 use hyperreal::Real;
@@ -42,6 +41,15 @@ pub(crate) enum MeshSide {
     Left,
     /// The second mesh passed to graph construction.
     Right,
+}
+
+impl MeshSide {
+    pub(crate) fn mesh<'a>(self, left: &'a ExactMesh, right: &'a ExactMesh) -> &'a ExactMesh {
+        match self {
+            Self::Left => left,
+            Self::Right => right,
+        }
+    }
 }
 
 /// Exact intersection event extracted from a retained face pair.
@@ -3055,7 +3063,7 @@ fn face_split_geometry_plan(
 
     let mut faces = Vec::with_capacity(face_plan.faces.len());
     for face in &face_plan.faces {
-        let mesh = mesh_for_side(face.side, left, right);
+        let mesh = face.side.mesh(left, right);
         let triangle = mesh.triangles()[face.face].0;
         let mut boundary_chains = Vec::with_capacity(face.edges.len());
         for edge in &face.edges {
@@ -3093,7 +3101,7 @@ fn first_face_geometry_error(
         .collect::<BTreeMap<_, _>>();
 
     for face in &face_plan.faces {
-        let mesh = mesh_for_side(face.side, left, right);
+        let mesh = face.side.mesh(left, right);
         if face.face >= mesh.triangles().len() {
             return Some(
                 ExactMeshBlocker::new(
@@ -3144,7 +3152,7 @@ fn face_boundary_node(
             side: vertex_side,
             vertex,
         } if *vertex_side == side => {
-            let mesh = mesh_for_side(side, left, right);
+            let mesh = side.mesh(left, right);
             let point = mesh.vertices().get(*vertex).ok_or_else(|| {
                 ExactMeshError::one(
                     ExactMeshBlocker::new(
@@ -3192,7 +3200,7 @@ fn validate_face_split_geometry_incidence(
     let mut blockers = Vec::new();
 
     for face in &geometry.faces {
-        let mesh = mesh_for_side(face.side, left, right);
+        let mesh = face.side.mesh(left, right);
         if face.face >= mesh.triangles().len() {
             blockers.push(
                 SplitPlanBlocker::new(
@@ -3421,7 +3429,7 @@ fn face_region_plan(
 ) -> ExactFaceRegionPlan {
     let mut regions = Vec::with_capacity(geometry.faces.len());
     for face in &geometry.faces {
-        let mesh = mesh_for_side(face.side, left, right);
+        let mesh = face.side.mesh(left, right);
         let triangle = face.triangle;
         let mut chains = face
             .boundary_chains
@@ -3508,7 +3516,7 @@ fn validate_face_region_plan(
             );
         }
 
-        let mesh = mesh_for_side(region.side, left, right);
+        let mesh = region.side.mesh(left, right);
         if region.face >= mesh.triangles().len() {
             blockers.push(
                 SplitPlanBlocker::new(

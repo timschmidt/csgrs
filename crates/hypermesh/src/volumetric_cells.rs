@@ -27,8 +27,8 @@ use super::graph::{
 };
 use super::intersection::MeshFacePairRelation;
 use super::mesh::ExactMesh;
+use super::mesh::sorted_edge;
 use super::solid::{ClosedMeshOrientation, exact_mesh_orientation};
-use super::topology::{mesh_for_side, sorted_edge};
 use hyperreal::Real;
 
 /// Most specific retained obstacle for volumetric coplanar source-face cells.
@@ -665,8 +665,7 @@ fn proper_crossing_event(event: &IntersectionEvent, left: &ExactMesh, right: &Ex
             }
         );
     };
-    let Some(triangle) = triangle_points(mesh_for_side(*plane_side, left, right), *plane_face)
-    else {
+    let Some(triangle) = triangle_points(plane_side.mesh(left, right), *plane_face) else {
         return true;
     };
     let Some(projection) = choose_triangle_projection(&triangle) else {

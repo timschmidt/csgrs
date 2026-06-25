@@ -13,7 +13,7 @@ use hyperlimit::{
 };
 use hyperreal::Real;
 
-use super::topology::sorted_edge;
+use super::mesh::sorted_edge;
 
 /// Exact broad-phase relation between two 3D boxes.
 pub(crate) type AabbIntersectionKind = Aabb3Intersection;

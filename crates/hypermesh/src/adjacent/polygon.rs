@@ -22,7 +22,7 @@ use hyperlimit::{
 };
 
 use super::super::mesh::ExactMesh;
-use super::super::topology::triangle_edges_tuple;
+use super::super::mesh::triangle_edges_tuple;
 use hyperreal::Real;
 
 #[derive(Clone, Debug, PartialEq)]

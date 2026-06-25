@@ -29,11 +29,11 @@ use super::graph::{
 };
 use super::intersection::MeshFacePairRelation;
 use super::mesh::ExactMesh;
+use super::mesh::triangle_edges;
 use super::region::{
     FaceRegionTriangulation, boundary_node_point, choose_region_projection, project_for_hypertri,
     project_for_predicate,
 };
-use super::topology::triangle_edges;
 use hyperlimit::CoplanarProjection;
 use hyperreal::Real;
 

@@ -27,11 +27,11 @@ use super::arrangement2d::{
     build_exact_arrangement2d_overlay_with_boundary_policy,
 };
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::mesh::triangle_edges;
 use super::mesh::{ExactMesh, Triangle};
 use super::solid::{
     ClosedMeshOrientation, ConvexSolidFacts, ConvexSolidReportError, certify_convex_solid,
 };
-use super::topology::triangle_edges;
 use super::validation::ExactMeshValidationPolicy;
 use hyperlimit::SourceProvenance;
 use hyperlimit::{CoplanarProjection, project_point3, projected_polygon_area2_value};

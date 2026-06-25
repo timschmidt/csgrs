@@ -13,7 +13,7 @@ use super::facts::{
     EdgeFacts, FaceFacts, FacePlaneFacts, MeshFacts, MeshValidationFacts, OrientedFaceFacts,
     TriangleFacts, VertexFacts, VertexLinkKind,
 };
-use super::topology::sorted_edge;
+use super::mesh::sorted_edge;
 use hyperlimit::{
     TriangleDegeneracy, classify_triangle3_degeneracy as classify_triangle_degeneracy,
 };

@@ -62,6 +62,8 @@ use super::graph::{
 };
 use super::intersection::MeshFacePairRelation;
 use super::loop_triangulation::{group_exact_coplanar_loops, triangulate_exact_loop_group};
+#[cfg(test)]
+use super::mesh::triangle_edges as topology_triangle_edges;
 use super::mesh::{ExactMesh, Triangle};
 use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, axis_aligned_orthogonal_solid_cell_selected_count,
@@ -94,9 +96,6 @@ use super::solid::{
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
     certify_convex_solid, classify_mesh_vertices_against_convex_solid_report,
 };
-use super::topology::mesh_for_side;
-#[cfg(test)]
-use super::topology::triangle_edges as topology_triangle_edges;
 use super::validation::ExactMeshValidationPolicy;
 use super::view::PreparedMeshPair;
 use super::volumetric::{
@@ -5377,7 +5376,7 @@ fn graph_has_only_boundary_contact_pairs(
                         ..
                     } => {
                         let Some(triangle) =
-                            triangle_points(mesh_for_side(*plane_side, left, right), *plane_face)
+                            triangle_points(plane_side.mesh(left, right), *plane_face)
                         else {
                             return false;
                         };
