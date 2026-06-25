@@ -14,6 +14,8 @@
 //! union/intersection/difference decision. Topology decisions must be certified
 //! or represented as policy choices or unknowns.
 
+pub(crate) mod contained_adjacent;
+
 use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::SegmentPlaneRelation;
@@ -43,10 +45,6 @@ use super::cell_complex::{
     arrangement_region_classification_blockers_resolve_operation, select_arrangement_for_replay,
 };
 use super::cells::triangulate_all_face_cells_with_cdt;
-use super::contained_adjacent::{
-    contained_face_adjacent_certificate_from_graph,
-    materialize_contained_face_adjacent_union_from_certificate,
-};
 use super::convex::{
     intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
 };
@@ -108,6 +106,10 @@ use super::volumetric_cells::{
 use super::winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
     WindingReportError, classify_mesh_vertices_against_closed_mesh_winding_report,
+};
+use contained_adjacent::{
+    contained_face_adjacent_certificate_from_graph,
+    materialize_contained_face_adjacent_union_from_certificate,
 };
 use hyperlimit::{
     CoplanarProjection, Point2, Point3, SegmentIntersection, Sign, TriangleLocation,

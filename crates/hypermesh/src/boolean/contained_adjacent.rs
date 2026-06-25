@@ -21,19 +21,22 @@ use hyperlimit::{
     projected_polygon_area2_value,
 };
 
-use super::arrangement2d::{ExactArrangement2dBoundaryPolicy, ExactArrangement2dSetOperation};
-use super::boolean::{coplanar_mesh_overlay_carrier, materialize_coplanar_mesh_overlay_mesh};
-use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::graph::{
+use super::super::arrangement2d::{
+    ExactArrangement2dBoundaryPolicy, ExactArrangement2dSetOperation,
+};
+use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::graph::{
     ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide,
     build_validated_intersection_graph,
 };
-use super::intersection::MeshFacePairRelation;
-use super::mesh::{ExactMesh, ExactMeshValidationError, Triangle, triangle_tuple_edges};
-use super::validation::ExactMeshValidationPolicy;
-use super::winding::{
-    ClosedMeshWindingRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
+use super::super::intersection::MeshFacePairRelation;
+use super::super::mesh::{ExactMesh, ExactMeshValidationError, Triangle, triangle_tuple_edges};
+use super::super::validation::ExactMeshValidationPolicy;
+use super::super::winding::{
+    ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
+    classify_mesh_vertices_against_closed_mesh_winding_report,
 };
+use super::{coplanar_mesh_overlay_carrier, materialize_coplanar_mesh_overlay_mesh};
 use hyperlimit::SourceProvenance;
 use hyperreal::Real;
 
@@ -1088,9 +1091,7 @@ fn closed_boundary_contact_only(
             || mesh_vertices_touch_boundary(&right_in_left)))
 }
 
-fn mesh_vertices_are_boundary_or_outside(
-    report: &super::winding::ClosedMeshWindingMeshReport,
-) -> bool {
+fn mesh_vertices_are_boundary_or_outside(report: &ClosedMeshWindingMeshReport) -> bool {
     report.target_closed
         && report.vertices.iter().all(|vertex| {
             matches!(
@@ -1100,7 +1101,7 @@ fn mesh_vertices_are_boundary_or_outside(
         })
 }
 
-fn mesh_vertices_touch_boundary(report: &super::winding::ClosedMeshWindingMeshReport) -> bool {
+fn mesh_vertices_touch_boundary(report: &ClosedMeshWindingMeshReport) -> bool {
     report
         .vertices
         .iter()

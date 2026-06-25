@@ -19,6 +19,7 @@ use super::affine_solid::{
     materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
 };
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
+use super::boolean::contained_adjacent::materialize_contained_face_adjacent_union;
 #[cfg(test)]
 use super::boolean::materialize_boolean_exact_request;
 use super::boolean::{
@@ -48,7 +49,6 @@ use super::cell_complex::{
     ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy,
     validate_selected_gate_reports,
 };
-use super::contained_adjacent::materialize_contained_face_adjacent_union;
 use super::convex::{
     intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
 };

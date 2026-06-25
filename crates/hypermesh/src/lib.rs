@@ -26,7 +26,6 @@ mod boolean;
 mod bounds;
 mod cell_complex;
 mod cells;
-mod contained_adjacent;
 mod convex;
 mod error;
 mod facts;
