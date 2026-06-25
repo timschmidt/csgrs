@@ -1193,6 +1193,53 @@ mod tests {
     }
 
     #[test]
+    fn erf_known_values() {
+        assert_close(
+            Computable::zero().erf(),
+            Computable::zero(),
+            -160,
+            2,
+        );
+        assert_close(
+            Computable::rational(Rational::fraction(1, 2).unwrap()).erf(),
+            Computable::rational("0.5204998778130465376827466538919645287364".parse().unwrap()),
+            -90,
+            2,
+        );
+        assert_close(
+            Computable::one().erf(),
+            Computable::rational("0.8427007929497148693412206350826092592960".parse().unwrap()),
+            -90,
+            2,
+        );
+    }
+
+    #[test]
+    fn normal_density_and_cdf_known_values() {
+        assert_close(
+            Computable::zero().dnorm(),
+            Computable::rational("0.39894228040143267793994605993438186847585863".parse().unwrap()),
+            -120,
+            2,
+        );
+        assert_close(
+            Computable::one().pnorm(),
+            Computable::rational("0.8413447460685429485852325456320379224779".parse().unwrap()),
+            -120,
+            2,
+        );
+    }
+
+    #[test]
+    fn normal_quantile_inverts_cdf() {
+        let two = Computable::rational(Rational::new(2));
+        let p = two.clone().pnorm();
+        let seed = BigInt::from((1.9999_f64 * f64::from(1_u32 << 13)).round() as i64);
+        let q = Computable::normal_quantile(p, seed, -13);
+        assert_close(q, two, -120, 2);
+    }
+
+    #[test]
     fn add() {
         let three: BigInt = "3".parse().unwrap();
         let five: BigInt = "5".parse().unwrap();

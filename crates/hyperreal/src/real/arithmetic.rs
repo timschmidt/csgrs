@@ -1,3 +1,4 @@
+use crate::computable::Precision;
 use crate::{
     CertifiedRealEquality, CertifiedRealOrdering, CertifiedRealSign, Computable, DomainFacts,
     DomainStatus, ExpressionDegree, IdentityFacts, MagnitudeBits, OrderingFacts, PrimitiveFacts,

@@ -79,6 +79,12 @@ impl Approximation {
             PrescaledTan(c) => tan(signal, c, p),
             PrescaledTanRational(r) => tan_rational(signal, r, p),
             PrescaledCot(c) => cot(signal, c, p),
+            ErfSeries(c) => erf_series(signal, c, p),
+            NormalQuantile {
+                p: prob,
+                seed,
+                seed_prec,
+            } => normal_quantile(signal, prob, seed, *seed_prec, p),
         }
     }
 }
@@ -122,4 +128,3 @@ fn raw(kind: Approximation) -> Computable {
         signal: None,
     }
 }
-

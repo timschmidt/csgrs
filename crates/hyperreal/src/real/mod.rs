@@ -13,6 +13,8 @@ mod convert;
 mod exact_set;
 mod facts;
 mod linear_combination;
+#[cfg(test)]
+mod normal_reference;
 mod tests;
 
 pub use arithmetic::*;

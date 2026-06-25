@@ -320,7 +320,8 @@ assert_eq!(value.exact_rational(), Some(Rational::fraction(7, 8).unwrap()));
 ```
 
 `Simple` supports arithmetic, roots, powers, logs, exponentials, trig, inverse trig,
-inverse hyperbolic functions, integers, decimals, fractions, `pi`, and `e`.
+inverse hyperbolic functions, normal distribution helpers (`erf`, `dnorm`, `pnorm`,
+`qnorm`), integers, decimals, fractions, `pi`, and `e`.
 
 ## Conversions
 

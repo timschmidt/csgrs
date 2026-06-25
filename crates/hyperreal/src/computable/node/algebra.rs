@@ -483,6 +483,55 @@ impl Computable {
         }
     }
 
+    /// Error function, erf(x).
+    pub fn erf(self) -> Computable {
+        if let Some(rational) = self.exact_rational()
+            && rational.sign() == Sign::NoSign
+        {
+            return Self::zero();
+        }
+        let series = Self {
+            internal: Box::new(Approximation::ErfSeries(self.clone())),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            signal: None,
+        };
+        let gaussian = self.square().negate().exp();
+        let two_over_sqrt_pi = Self::pi().sqrt().inverse().shift_left(1);
+        two_over_sqrt_pi.multiply(gaussian).multiply(series)
+    }
+
+    /// Standard normal CDF.
+    pub fn pnorm(self) -> Computable {
+        if let Some(rational) = self.exact_rational()
+            && rational.sign() == Sign::NoSign
+        {
+            return Self::rational(HALF_RATIONAL.clone());
+        }
+        let sqrt2 = Self::sqrt_constant(2).unwrap_or_else(|| Self::integer(BigInt::from(2)).sqrt());
+        let z = self.multiply(sqrt2.inverse());
+        Self::one().add(z.erf()).shift_right(1)
+    }
+
+    /// Standard normal density.
+    pub fn dnorm(self) -> Computable {
+        let neg_half_x_sq = self.square().shift_right(1).negate();
+        let sqrt_2pi = Self::pi().shift_left(1).sqrt();
+        neg_half_x_sq.exp().multiply(sqrt_2pi.inverse())
+    }
+
+    /// Standard normal quantile by Newton iteration with the analytic density.
+    pub fn normal_quantile(p: Computable, seed: BigInt, seed_prec: Precision) -> Computable {
+        Self {
+            internal: Box::new(Approximation::NormalQuantile { p, seed, seed_prec }),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            signal: None,
+        }
+    }
+
     /// Attach an abort signal checked by long-running approximation routines.
     pub fn abort(&mut self, s: Signal) {
         self.signal = Some(s);

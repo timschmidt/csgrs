@@ -18,3 +18,4 @@ include!("approximation/trig.rs");
 include!("approximation/logarithms.rs");
 include!("approximation/inverse_trig.rs");
 include!("approximation/inverse_hyperbolic.rs");
+include!("approximation/statistics.rs");

@@ -56,6 +56,10 @@ enum Operator {
     Cos,
     Sin,
     Tan,
+    Erf,
+    Dnorm,
+    Pnorm,
+    Qnorm,
     Acos,
     Asin,
     Atan,
@@ -463,6 +467,30 @@ impl Simple {
                 let value = operand.value(names)?.tan()?;
                 Ok(value)
             }
+            Erf => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                Ok(self.operands.first().unwrap().value(names)?.erf())
+            }
+            Dnorm => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.dnorm()
+            }
+            Pnorm => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.pnorm()
+            }
+            Qnorm => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.qnorm()
+            }
             Acos => {
                 if self.operands.len() != 1 {
                     return Err(Problem::ParseError);
@@ -542,6 +570,10 @@ impl Simple {
             "sin" => Ok(Sin),
             "pow" => Ok(Pow),
             "tan" => Ok(Tan),
+            "erf" => Ok(Erf),
+            "dnorm" => Ok(Dnorm),
+            "pnorm" => Ok(Pnorm),
+            "qnorm" => Ok(Qnorm),
             "acos" => Ok(Acos),
             "asin" => Ok(Asin),
             "atan" => Ok(Atan),
@@ -725,6 +757,10 @@ mod tests {
             "(cos 5)",
             "(sin 5)",
             "(tan 5)",
+            "(erf 1)",
+            "(dnorm 0)",
+            "(pnorm 1)",
+            "(qnorm 1/2)",
             "(acos 1/2)",
             "(asin 1/2)",
             "(atan 1)",
@@ -903,6 +939,57 @@ mod tests {
         let result = xpr.evaluate(&empty).unwrap();
         let m79: Real = "-7.9".parse().unwrap();
         assert_eq!(result, m79);
+    }
+
+    #[test]
+    fn normal_functions_evaluate() {
+        let empty = HashMap::new();
+        for (case, expected) in [
+            ("(erf 1)", "8.42700792949714869341220635082609e-1"),
+            ("(dnorm 0)", "3.98942280401432677939946059934382e-1"),
+            ("(pnorm 1)", "8.41344746068542948585232545632038e-1"),
+            ("(qnorm 975/1000)", "1.95996398454005423552459443052055e0"),
+        ] {
+            let xpr: Simple = case.parse().unwrap();
+            let result = xpr.evaluate(&empty).unwrap();
+            assert_eq!(format!("{result:.32e}"), expected, "{case}");
+        }
+    }
+
+    #[test]
+    fn normal_functions_exact_cases_and_domains() {
+        let empty = HashMap::new();
+
+        let erf_zero: Simple = "(erf 0)".parse().unwrap();
+        assert!(erf_zero.evaluate(&empty).unwrap().definitely_zero());
+
+        let pnorm_zero: Simple = "(pnorm 0)".parse().unwrap();
+        assert_eq!(
+            pnorm_zero.evaluate(&empty).unwrap(),
+            Real::new(Rational::fraction(1, 2).unwrap())
+        );
+
+        let qnorm_half: Simple = "(qnorm 1/2)".parse().unwrap();
+        assert!(qnorm_half.evaluate(&empty).unwrap().definitely_zero());
+
+        for case in ["(qnorm 0)", "(qnorm 1)", "(qnorm -1)", "(qnorm 2)"] {
+            let xpr: Simple = case.parse().unwrap();
+            assert_eq!(xpr.evaluate(&empty), Err(Problem::NotANumber), "{case}");
+        }
+
+        for case in ["(pnorm 11)", "(dnorm -600)"] {
+            let xpr: Simple = case.parse().unwrap();
+            assert_eq!(xpr.evaluate(&empty), Err(Problem::Exhausted), "{case}");
+        }
+    }
+
+    #[test]
+    fn normal_function_wrong_arity_errors() {
+        let empty = HashMap::new();
+        for case in ["(erf )", "(dnorm 0 1)", "(pnorm )", "(qnorm 1/2 3/4)"] {
+            let xpr: Simple = case.parse().unwrap();
+            assert_eq!(xpr.evaluate(&empty), Err(Problem::ParseError), "{case}");
+        }
     }
 
     #[test]

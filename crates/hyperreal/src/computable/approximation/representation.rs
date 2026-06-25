@@ -143,6 +143,12 @@ pub(super) enum Approximation {
     // the same local quotient kernel once digits are requested.
     PrescaledTanRational(Rational),
     PrescaledCot(Computable),
+    ErfSeries(Computable),
+    NormalQuantile {
+        p: Computable,
+        seed: BigInt,
+        seed_prec: Precision,
+    },
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -165,4 +171,3 @@ pub(super) enum SharedConstant {
     AtanInv2,
     AtanInv5,
 }
-

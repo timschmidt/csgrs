@@ -165,6 +165,25 @@ impl Computable {
                 (Approximation::PrescaledCot(left), Approximation::PrescaledCot(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }
+                (Approximation::ErfSeries(left), Approximation::ErfSeries(right)) => {
+                    Computable::internal_structural_eq(left, right)
+                }
+                (
+                    Approximation::NormalQuantile {
+                        p: left_p,
+                        seed: left_seed,
+                        seed_prec: left_seed_prec,
+                    },
+                    Approximation::NormalQuantile {
+                        p: right_p,
+                        seed: right_seed,
+                        seed_prec: right_seed_prec,
+                    },
+                ) => {
+                    left_seed == right_seed
+                        && left_seed_prec == right_seed_prec
+                        && Computable::internal_structural_eq(left_p, right_p)
+                }
                 _ => false,
             }
         }
@@ -749,4 +768,3 @@ impl Computable {
         }
     }
 }
-

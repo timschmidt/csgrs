@@ -1,4 +1,67 @@
 impl Real {
+    const NORMAL_MAX_ABS: f64 = 10.0;
+    const NORMAL_COMPARE_TOLERANCE: Precision = -1000;
+
+    fn pnorm_cap_hi() -> Computable {
+        Computable::integer(BigInt::from(10)).pnorm()
+    }
+
+    fn pnorm_cap_lo() -> Computable {
+        Computable::one().add(Self::pnorm_cap_hi().negate())
+    }
+
+    #[allow(clippy::excessive_precision)]
+    fn qnorm_seed_approx(p: f64) -> f64 {
+        const A: [f64; 6] = [
+            -3.969683028665376e+01,
+            2.209460984245205e+02,
+            -2.759285104469687e+02,
+            1.383577518672690e+02,
+            -3.066479806614716e+01,
+            2.506628277459239e+00,
+        ];
+        const B: [f64; 5] = [
+            -5.447609879822406e+01,
+            1.615858368580409e+02,
+            -1.556989798598866e+02,
+            6.680131188771972e+01,
+            -1.328068155288572e+01,
+        ];
+        const C: [f64; 6] = [
+            -7.784894002430293e-03,
+            -3.223964580411365e-01,
+            -2.400758277161838e+00,
+            -2.549732539343734e+00,
+            4.374664141464968e+00,
+            2.938163982698783e+00,
+        ];
+        const D: [f64; 4] = [
+            7.784695709041462e-03,
+            3.224671290700398e-01,
+            2.445134137142996e+00,
+            3.754408661907416e+00,
+        ];
+        const P_LOW: f64 = 0.02425;
+
+        if p < P_LOW {
+            let q = (-2.0 * p.ln()).sqrt();
+            (((((C[0] * q + C[1]) * q + C[2]) * q + C[3]) * q + C[4]) * q + C[5])
+                / ((((D[0] * q + D[1]) * q + D[2]) * q + D[3]) * q + 1.0)
+        } else if p <= 1.0 - P_LOW {
+            let q = p - 0.5;
+            let r = q * q;
+            (((((A[0] * r + A[1]) * r + A[2]) * r + A[3]) * r + A[4]) * r + A[5])
+                * q
+                / (((((B[0] * r + B[1]) * r + B[2]) * r + B[3]) * r + B[4]) * r
+                    + 1.0)
+        } else {
+            let q = (-2.0 * (1.0 - p).ln()).sqrt();
+            -(((((C[0] * q + C[1]) * q + C[2]) * q + C[3]) * q + C[4]) * q
+                + C[5])
+                / ((((D[0] * q + D[1]) * q + D[2]) * q + D[3]) * q + 1.0)
+        }
+    }
+
     /// The square root of this Real, or a [`Problem`] if that's impossible,
     /// in particular Problem::SqrtNegative if this Real is negative.
     pub fn sqrt(self) -> Result<Real, Problem> {
@@ -441,6 +504,101 @@ impl Real {
 
         crate::trace_dispatch!("real", "ln", "generic-computable");
         Ok(self.make_computable(Computable::ln))
+    }
+
+    /// The error function, erf(x).
+    pub fn erf(self) -> Real {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "erf", "exact-zero");
+            return Self::zero();
+        }
+
+        crate::trace_dispatch!("real", "erf", "generic-computable");
+        self.make_computable(Computable::erf)
+    }
+
+    /// Standard normal density.
+    pub fn dnorm(self) -> Result<Real, Problem> {
+        let x: f64 = self.clone().into();
+        if !x.is_finite() || x.abs() > Self::NORMAL_MAX_ABS {
+            crate::trace_dispatch!("real", "dnorm", "domain-exhausted");
+            return Err(Problem::Exhausted);
+        }
+
+        crate::trace_dispatch!("real", "dnorm", "generic-computable");
+        Ok(self.make_computable(Computable::dnorm))
+    }
+
+    /// Standard normal cumulative distribution function.
+    pub fn pnorm(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "pnorm", "exact-zero-half");
+            return Ok(constants::half());
+        }
+        let x: f64 = self.clone().into();
+        if !x.is_finite() || x.abs() > Self::NORMAL_MAX_ABS {
+            crate::trace_dispatch!("real", "pnorm", "domain-exhausted");
+            return Err(Problem::Exhausted);
+        }
+
+        crate::trace_dispatch!("real", "pnorm", "generic-computable");
+        Ok(self.make_computable(Computable::pnorm))
+    }
+
+    /// Standard normal quantile, the inverse of [`Real::pnorm`].
+    pub fn qnorm(self) -> Result<Real, Problem> {
+        if self.best_sign() != Sign::Plus {
+            crate::trace_dispatch!("real", "qnorm", "domain-not-positive");
+            return Err(Problem::NotANumber);
+        }
+        if self.class == One && self.rational == *rationals::HALF {
+            crate::trace_dispatch!("real", "qnorm", "exact-half-zero");
+            return Ok(Self::zero());
+        }
+        if self.class == One && self.rational >= *rationals::ONE {
+            crate::trace_dispatch!("real", "qnorm", "domain-one-or-more");
+            return Err(Problem::NotANumber);
+        }
+
+        let folded = self.clone().fold();
+        if folded.compare_absolute(&Computable::one(), Self::NORMAL_COMPARE_TOLERANCE)
+            != Ordering::Less
+        {
+            crate::trace_dispatch!("real", "qnorm", "domain-computable-one-or-more");
+            return Err(Problem::NotANumber);
+        }
+        if folded.compare_absolute(&Self::pnorm_cap_lo(), Self::NORMAL_COMPARE_TOLERANCE)
+            != Ordering::Greater
+        {
+            crate::trace_dispatch!("real", "qnorm", "domain-low-tail-exhausted");
+            return Err(Problem::Exhausted);
+        }
+        if folded.compare_absolute(&Self::pnorm_cap_hi(), Self::NORMAL_COMPARE_TOLERANCE)
+            != Ordering::Less
+        {
+            crate::trace_dispatch!("real", "qnorm", "domain-high-tail-exhausted");
+            return Err(Problem::Exhausted);
+        }
+
+        let p_f64: f64 = self.clone().into();
+        let upper_half = p_f64 > 0.5;
+        let p_small = if upper_half {
+            let one_minus = Self::one() - self;
+            let v: f64 = one_minus.into();
+            v.max(1e-300)
+        } else {
+            p_f64.max(1e-300)
+        };
+        let y = Self::qnorm_seed_approx(p_small);
+        let seed = if upper_half { -y } else { y };
+        let seed = seed.clamp(-Self::NORMAL_MAX_ABS, Self::NORMAL_MAX_ABS);
+        let seed_prec: Precision = -24;
+        let seed_int = BigInt::from((seed * f64::from(1u32 << 24)).round() as i64);
+
+        crate::trace_dispatch!("real", "qnorm", "normal-quantile-computable");
+        Ok(Self::irrational_from_computable(Computable::normal_quantile(
+            folded, seed_int, seed_prec,
+        )))
     }
 
     /// The sine of this Real.
@@ -1578,4 +1736,3 @@ impl Real {
         self.class == One && self.rational.prefer_fraction()
     }
 }
-

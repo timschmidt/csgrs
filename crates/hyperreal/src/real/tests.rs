@@ -1407,6 +1407,115 @@ mod tests {
         );
     }
 
+    fn normal_case_real(num: &str, den: &str) -> Real {
+        let n: num::BigInt = num.parse().unwrap();
+        let d: num::BigUint = den.parse().unwrap();
+        Real::new(Rational::from_bigint_fraction(n, d).unwrap())
+    }
+
+    fn trunc_str(real: &Real, n: usize) -> String {
+        let neg = real.best_sign() == num::bigint::Sign::Minus;
+        let c = real.fold_ref();
+        let bits = -((n as i32) * 3322 / 1000 + 64);
+        let appr = c.approx(bits).magnitude().clone();
+        let ten_n: num::BigInt = num::pow::Pow::pow(num::BigInt::from(10), n as u32);
+        let scaled = (num::BigInt::from(appr) * ten_n) >> ((-bits) as usize);
+        let mut s = scaled.to_string();
+        if s.len() <= n {
+            s = format!("{}{}", "0".repeat(n - s.len() + 1), s);
+        }
+        let (int_part, frac_part) = s.split_at(s.len() - n);
+        format!("{}{}.{}", if neg { "-" } else { "" }, int_part, frac_part)
+    }
+
+    #[test]
+    fn normal_exact_cases() {
+        assert!(Real::zero().erf().definitely_zero());
+        assert_eq!(
+            Real::zero().pnorm().unwrap(),
+            Real::new(Rational::fraction(1, 2).unwrap())
+        );
+        assert!(
+            Real::new(Rational::fraction(1, 2).unwrap())
+                .qnorm()
+                .unwrap()
+                .definitely_zero()
+        );
+    }
+
+    #[test]
+    fn normal_known_values() {
+        assert_close(Real::one().erf(), 0.8427007929497149, 1e-15);
+        assert_close(Real::from(-1_i32).erf(), -0.8427007929497149, 1e-15);
+        assert_close(Real::zero().dnorm().unwrap(), 0.3989422804014327, 1e-15);
+        assert_close(Real::one().dnorm().unwrap(), 0.24197072451914337, 1e-15);
+        assert_close(Real::one().pnorm().unwrap(), 0.8413447460685429, 1e-15);
+        assert_close(
+            Real::new(Rational::fraction(975, 1000).unwrap())
+                .qnorm()
+                .unwrap(),
+            1.959963984540054,
+            1e-14,
+        );
+    }
+
+    #[test]
+    fn normal_round_trips_and_symmetry() {
+        for x in [
+            Real::from(2_i32),
+            Real::from(-1_i32),
+            Real::new(Rational::fraction(3, 2).unwrap()),
+        ] {
+            let p = x.clone().pnorm().unwrap();
+            let round_trip = p.qnorm().unwrap();
+            assert_close(round_trip, x.clone().into(), 1e-12);
+
+            let symmetry = x.clone().pnorm().unwrap() + (-x).pnorm().unwrap();
+            assert_close(symmetry, 1.0, 1e-12);
+        }
+    }
+
+    #[test]
+    fn normal_domain_errors() {
+        assert_eq!(Real::zero().qnorm().unwrap_err(), Problem::NotANumber);
+        assert_eq!(Real::one().qnorm().unwrap_err(), Problem::NotANumber);
+        assert_eq!(Real::from(2_i32).qnorm().unwrap_err(), Problem::NotANumber);
+        assert_eq!(Real::from(-1_i32).qnorm().unwrap_err(), Problem::NotANumber);
+
+        assert_eq!(Real::from(11_i32).pnorm().unwrap_err(), Problem::Exhausted);
+        assert_eq!(
+            Real::from(-600_i32).dnorm().unwrap_err(),
+            Problem::Exhausted
+        );
+
+        let tiny = Real::new(
+            Rational::from_bigint_fraction(
+                num::BigInt::from(1_u8),
+                num::BigUint::from(10_u8).pow(30),
+            )
+            .unwrap(),
+        );
+        assert_eq!(tiny.clone().qnorm().unwrap_err(), Problem::Exhausted);
+        assert_eq!(
+            (Real::one() - tiny).qnorm().unwrap_err(),
+            Problem::Exhausted
+        );
+    }
+
+    #[test]
+    fn normal_against_mpmath_references() {
+        for &(kind, num, den, expected) in crate::real::normal_reference::CASES {
+            let arg = normal_case_real(num, den);
+            let value = if kind == "pnorm" {
+                arg.pnorm().unwrap()
+            } else {
+                arg.qnorm().unwrap()
+            };
+            let got = trunc_str(&value, 1000);
+            assert_eq!(got, expected, "{kind}({num}/{den}) disagrees with mpmath");
+        }
+    }
+
     fn adversarial_tiny() -> Real {
         Real::new(Rational::fraction(1, 1_000_000_000_000).unwrap())
     }
