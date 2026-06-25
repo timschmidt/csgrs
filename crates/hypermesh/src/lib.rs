@@ -25,7 +25,6 @@ mod arrangement2d;
 mod arrangement3d;
 mod boolean;
 mod bounds;
-mod box_solid;
 mod cell_complex;
 mod cells;
 mod contained_adjacent;
