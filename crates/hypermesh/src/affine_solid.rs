@@ -1,21 +1,19 @@
 //! Exact affine-frame orthogonal solid cell complexes.
 //!
-//! [`crate::affine_box`] normalizes two parallelepiped boxes into one
-//! exact `(u, v, w)` frame before reusing orthogonal box materializers. This
-//! module extends that retained evidence route to the bounded cell-complex case:
-//! if a shared frame is recovered from a retained affine box or exact
-//! cell-complex edge structure, and both operands replay as axis-aligned
-//! orthogonal solid cell complexes in that frame, a named boolean is
-//! materialized on the normalized grid and lifted back exactly.
+//! This module normalizes two parallelepiped or affine orthogonal-cell meshes
+//! into one exact `(u, v, w)` frame before reusing orthogonal box/cell
+//! materializers. If a shared frame is recovered from exact cell-complex edge
+//! structure, and both operands replay as axis-aligned orthogonal solid cell
+//! complexes in that frame, a named boolean is materialized on the normalized
+//! grid and lifted back exactly.
 //! The affine basis, normalized source meshes, selected cells, and lifted
 //! output are retained computation history, not an approximate fit. The
 //! normalized rectangular subdivision is the same grid-arrangement idea
 
 use hyperlimit::{Point3, compare_reals};
 
-use super::affine_box::{AffineBoxBasis, mesh_from_uvw, mesh_to_uvw};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::mesh::ExactMesh;
+use super::mesh::{ExactMesh, Triangle};
 use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, OrthogonalCellPlan,
     axis_aligned_orthogonal_solid_cell_plan, axis_aligned_orthogonal_solid_cell_selected_count,
@@ -23,7 +21,26 @@ use super::orthogonal_solid::{
 };
 use super::validation::ExactMeshValidationPolicy;
 use core::cmp::Ordering;
+use hyperlimit::SourceProvenance;
 use hyperreal::Real;
+
+/// Exact 3D affine frame for normalized box coordinates.
+///
+/// A normalized point `(u, v, w)` is interpreted as
+/// `origin + u * basis_u + v * basis_v + w * basis_w`. The frame is part of
+/// the certificate: every source and output vertex must replay through it
+/// exactly before a copied boolean artifact is accepted.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct AffineBoxBasis {
+    /// Exact 3D affine origin.
+    pub(crate) origin: Point3,
+    /// Exact vector for the normalized `u` axis.
+    pub(crate) basis_u: Point3,
+    /// Exact vector for the normalized `v` axis.
+    pub(crate) basis_v: Point3,
+    /// Exact vector for the normalized `w` axis.
+    pub(crate) basis_w: Point3,
+}
 
 /// Named operation retained by an affine orthogonal-solid materialization.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -280,6 +297,140 @@ fn find_affine_orthogonal_solid_basis<T>(
     find_affine_cell_basis(right, &mut accept_basis)
 }
 
+fn mesh_to_uvw(
+    mesh: &ExactMesh,
+    basis: &AffineBoxBasis,
+    validation: ExactMeshValidationPolicy,
+) -> Option<ExactMesh> {
+    let vertices = mesh
+        .vertices()
+        .iter()
+        .map(|point| {
+            point_to_uvw_checked(&point.clone(), basis).map(|uvw| Point3::new(uvw.x, uvw.y, uvw.z))
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let triangles = triangles_for_affine_orientation(mesh, basis)?;
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("exact affine-normalized box solid"),
+        validation,
+    )
+    .ok()
+}
+
+fn mesh_from_uvw(
+    mesh: &ExactMesh,
+    basis: &AffineBoxBasis,
+    label: &'static str,
+    validation: ExactMeshValidationPolicy,
+) -> Result<ExactMesh, ExactMeshError> {
+    let vertices = mesh
+        .vertices()
+        .iter()
+        .map(|point| {
+            let point = point.clone();
+            let lifted = point_from_uvw(&point.x, &point.y, &point.z, basis);
+            Point3::new(lifted.x, lifted.y, lifted.z)
+        })
+        .collect::<Vec<_>>();
+    let triangles =
+        if compare_reals(&basis.determinant(), &Real::from(0)).value() == Some(Ordering::Less) {
+            mesh.triangles().iter().map(reverse_triangle).collect()
+        } else {
+            mesh.triangles().to_vec()
+        };
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact(label),
+        validation,
+    )
+}
+
+fn point_to_uvw_checked(point: &Point3, basis: &AffineBoxBasis) -> Option<Point3> {
+    let uvw = point_to_uvw(point, basis)?;
+    let replay = point_from_uvw(&uvw.x, &uvw.y, &uvw.z, basis);
+    if points_equal(&replay, point) {
+        Some(uvw)
+    } else {
+        None
+    }
+}
+
+fn point_to_uvw(point: &Point3, basis: &AffineBoxBasis) -> Option<Point3> {
+    let delta = sub3(point, &basis.origin);
+    let denominator = basis.determinant();
+    if compare_reals(&denominator, &Real::from(0)).value()? == Ordering::Equal {
+        return None;
+    }
+    let u = (det3(&delta, &basis.basis_v, &basis.basis_w) / &denominator).ok()?;
+    let v = (det3(&basis.basis_u, &delta, &basis.basis_w) / &denominator).ok()?;
+    let w = (det3(&basis.basis_u, &basis.basis_v, &delta) / &denominator).ok()?;
+    Some(Point3::new(u, v, w))
+}
+
+fn triangles_for_affine_orientation(
+    mesh: &ExactMesh,
+    basis: &AffineBoxBasis,
+) -> Option<Vec<Triangle>> {
+    // A negative determinant reverses orientation under the exact affine
+    // coordinate map. Reversing triangle order keeps the normalized shell
+    // compatible with the orthogonal solid materializer.
+    if compare_reals(&basis.determinant(), &Real::from(0)).value()? == Ordering::Less {
+        Some(mesh.triangles().iter().map(reverse_triangle).collect())
+    } else {
+        Some(mesh.triangles().to_vec())
+    }
+}
+
+fn reverse_triangle(triangle: &Triangle) -> Triangle {
+    let [a, b, c] = triangle.0;
+    Triangle([a, c, b])
+}
+
+fn point_from_uvw(u: &Real, v: &Real, w: &Real, basis: &AffineBoxBasis) -> Point3 {
+    Point3::new(
+        add(
+            &basis.origin.x,
+            &add(
+                &mul(u, &basis.basis_u.x),
+                &add(&mul(v, &basis.basis_v.x), &mul(w, &basis.basis_w.x)),
+            ),
+        ),
+        add(
+            &basis.origin.y,
+            &add(
+                &mul(u, &basis.basis_u.y),
+                &add(&mul(v, &basis.basis_v.y), &mul(w, &basis.basis_w.y)),
+            ),
+        ),
+        add(
+            &basis.origin.z,
+            &add(
+                &mul(u, &basis.basis_u.z),
+                &add(&mul(v, &basis.basis_v.z), &mul(w, &basis.basis_w.z)),
+            ),
+        ),
+    )
+}
+
+impl AffineBoxBasis {
+    fn determinant(&self) -> Real {
+        det3(&self.basis_u, &self.basis_v, &self.basis_w)
+    }
+}
+
+fn det3(a: &Point3, b: &Point3, c: &Point3) -> Real {
+    let x_minor = sub(&mul(&b.y, &c.z), &mul(&b.z, &c.y));
+    let y_minor = sub(&mul(&b.x, &c.z), &mul(&b.z, &c.x));
+    let z_minor = sub(&mul(&b.x, &c.y), &mul(&b.y, &c.x));
+    add(
+        &sub(&mul(&a.x, &x_minor), &mul(&a.y, &y_minor)),
+        &mul(&a.z, &z_minor),
+    )
+}
+
 /// Search exact affine bases from a single orthogonal-solid cell complex.
 ///
 /// The search uses the complete retained triangle-edge graph to propose three
@@ -443,6 +594,18 @@ fn points_equal_or_opposite(left: &Point3, right: &Point3) -> bool {
         || (compare_reals(&left.x, &(-right.x.clone())).value() == Some(Ordering::Equal)
             && compare_reals(&left.y, &(-right.y.clone())).value() == Some(Ordering::Equal)
             && compare_reals(&left.z, &(-right.z.clone())).value() == Some(Ordering::Equal))
+}
+
+fn add(left: &Real, right: &Real) -> Real {
+    left.clone() + right
+}
+
+fn sub(left: &Real, right: &Real) -> Real {
+    left.clone() - right
+}
+
+fn mul(left: &Real, right: &Real) -> Real {
+    left.clone() * right
 }
 
 impl AffineOrthogonalSolidOperation {

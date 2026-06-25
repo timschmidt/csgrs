@@ -8,7 +8,6 @@ use super::arrangement3d::ArrangementView;
 use super::bounds::{BoundsValidationError, MeshBounds};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::facts::{MeshFactsValidationError, MeshValidationFacts};
-use super::scalar::LossyF64Import;
 use super::validation::{
     ExactMeshValidationPolicy, ValidationReport, validate_triangle_rows_with_policy,
 };
@@ -85,10 +84,28 @@ fn point_from_f64_lossy(
     values: [f64; 3],
     first_coordinate: usize,
 ) -> Result<Point3, ExactMeshError> {
-    let x = LossyF64Import::new(values[0], first_coordinate).map_err(ExactMeshError::one)?;
-    let y = LossyF64Import::new(values[1], first_coordinate + 1).map_err(ExactMeshError::one)?;
-    let z = LossyF64Import::new(values[2], first_coordinate + 2).map_err(ExactMeshError::one)?;
-    Ok(Point3::new(x.value, y.value, z.value))
+    let x = import_lossy_f64_real(values[0], first_coordinate).map_err(ExactMeshError::one)?;
+    let y = import_lossy_f64_real(values[1], first_coordinate + 1).map_err(ExactMeshError::one)?;
+    let z = import_lossy_f64_real(values[2], first_coordinate + 2).map_err(ExactMeshError::one)?;
+    Ok(Point3::new(x, y, z))
+}
+
+fn import_lossy_f64_real(value: f64, coordinate_index: usize) -> Result<Real, ExactMeshBlocker> {
+    if !value.is_finite() {
+        return Err(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::NonFiniteCoordinate,
+            format!("coordinate {coordinate_index} is not finite"),
+        )
+        .with_coordinate(coordinate_index));
+    }
+
+    Real::try_from(value).map_err(|problem| {
+        ExactMeshBlocker::new(
+            ExactMeshBlockerKind::CoordinateImportFailed,
+            format!("coordinate {coordinate_index} could not be imported: {problem}"),
+        )
+        .with_coordinate(coordinate_index)
+    })
 }
 
 /// Error returned when an [`ExactMesh`] retained-state audit fails.

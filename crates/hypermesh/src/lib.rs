@@ -20,7 +20,6 @@
 
 mod adjacent;
 pub(crate) mod adjacent_polygon;
-mod affine_box;
 mod affine_solid;
 mod arrangement2d;
 mod arrangement3d;
@@ -42,7 +41,6 @@ mod orthogonal_solid;
 mod region;
 mod regularization;
 mod reports;
-mod scalar;
 mod simplify;
 mod solid;
 mod topology;
