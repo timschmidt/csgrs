@@ -47,7 +47,6 @@ mod view;
 mod volumetric;
 mod volumetric_cells;
 mod winding;
-mod witness;
 
 pub use mesh::ExactMesh;
 

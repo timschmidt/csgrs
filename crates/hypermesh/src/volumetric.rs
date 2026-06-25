@@ -10,6 +10,8 @@
 //! boundary. Output orientation is changed only from replayable exact
 //! evidence, never from a primitive-float sample or tolerance nudge.
 
+mod witness;
+
 use hyperlimit::Point3;
 
 use super::graph::MeshSide;
@@ -19,7 +21,7 @@ use super::winding::{
     ClosedMeshWindingRelation, PointMeshWindingReport, WindingReportError,
     classify_point_against_closed_mesh_winding_report,
 };
-use super::witness::{
+use witness::{
     EXACT_TRIANGLE_INTERIOR_WITNESSES, ExactTriangleInteriorWitness,
     ExactTriangleInteriorWitnessError,
 };

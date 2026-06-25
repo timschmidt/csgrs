@@ -2,7 +2,7 @@
 //!
 //! Volumetric winding materialization needs a point that is strictly inside a
 //! retained source-face cell but still replayable from exact source geometry.
-//! This module keeps that policy as data: each witness is an exact positive
+//! This submodule keeps that policy as data: each witness is an exact positive
 //! barycentric combination of the cell triangle vertices. The classifier tries
 //! the centroid first, then a fixed lattice of rational interior points before
 //! declaring the cell undecided.
