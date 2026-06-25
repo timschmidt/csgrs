@@ -167,7 +167,7 @@ control. `hyperreal` uses several small performance strategies together:
 
 ## Current Status
 
-Version `0.13.0` is active and benchmark-driven. Current implementation work includes:
+Version `0.13.1` is active and benchmark-driven. Current implementation work includes:
 
 - exact rational and dyadic fast paths;
 - dedicated constructors and cached constants for common zeros, ones, `pi`, `tau`, `e`,
@@ -198,14 +198,14 @@ object-level facts rather than asking the scalar layer to infer geometry or topo
 
 ```toml
 [dependencies]
-hyperreal = "0.13.0"
+hyperreal = "0.13.1"
 ```
 
 With the `Simple` parser and calculator binary:
 
 ```toml
 [dependencies]
-hyperreal = { version = "0.13.0", features = ["simple"] }
+hyperreal = { version = "0.13.1", features = ["simple"] }
 ```
 
 Feature flags:
