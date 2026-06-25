@@ -42,7 +42,6 @@ mod solid;
 mod validation;
 mod view;
 mod volumetric;
-mod volumetric_cells;
 mod winding;
 
 pub use mesh::ExactMesh;

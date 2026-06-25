@@ -21,14 +21,14 @@ use hyperlimit::{
     TriangleLocation, classify_point_triangle, compare_reals, project_point3,
 };
 
-use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::graph::{
+use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::facts::FacePlaneFacts;
+use super::super::graph::{
     ExactIntersectionGraph, IntersectionEvent, MeshSide, build_validated_intersection_graph,
 };
-use super::intersection::MeshFacePairRelation;
-use super::mesh::ExactMesh;
-use super::mesh::sorted_edge;
-use super::solid::{ClosedMeshOrientation, exact_mesh_orientation};
+use super::super::intersection::MeshFacePairRelation;
+use super::super::mesh::{ExactMesh, sorted_edge};
+use super::super::solid::{ClosedMeshOrientation, exact_mesh_orientation};
 use hyperreal::Real;
 
 /// Most specific retained obstacle for volumetric coplanar source-face cells.
@@ -450,7 +450,7 @@ fn classify_coplanar_overlap_sides(
 fn mesh_local_off_plane_side(
     mesh: &ExactMesh,
     face: usize,
-    plane: &super::facts::FacePlaneFacts,
+    plane: &FacePlaneFacts,
 ) -> Option<PlaneSide> {
     if mesh.triangles().get(face).is_none() || !mesh_face_is_coplanar_with_plane(mesh, face, plane)
     {
@@ -534,11 +534,7 @@ fn mesh_face_edges(mesh: &ExactMesh, face: usize) -> Option<[[usize; 2]; 3]> {
     ])
 }
 
-fn mesh_face_is_coplanar_with_plane(
-    mesh: &ExactMesh,
-    face: usize,
-    plane: &super::facts::FacePlaneFacts,
-) -> bool {
+fn mesh_face_is_coplanar_with_plane(mesh: &ExactMesh, face: usize, plane: &FacePlaneFacts) -> bool {
     mesh.triangles().get(face).is_some_and(|triangle| {
         triangle.0.iter().all(|&vertex| {
             mesh.vertices()
@@ -586,10 +582,7 @@ fn coplanar_pair_has_positive_area_overlap(events: &[IntersectionEvent]) -> bool
     identical_edges >= 3 || left_vertices_in_right.len() >= 3 || right_vertices_in_left.len() >= 3
 }
 
-fn mesh_off_plane_side(
-    mesh: &ExactMesh,
-    plane: &super::facts::FacePlaneFacts,
-) -> Option<PlaneSide> {
+fn mesh_off_plane_side(mesh: &ExactMesh, plane: &FacePlaneFacts) -> Option<PlaneSide> {
     let mut side = None;
     for vertex in mesh.vertices() {
         match retained_plane_side(plane, vertex)? {
@@ -611,7 +604,7 @@ fn mesh_off_plane_side(
 fn mesh_oriented_face_interior_side(
     mesh: &ExactMesh,
     face: usize,
-    reference_plane: &super::facts::FacePlaneFacts,
+    reference_plane: &FacePlaneFacts,
 ) -> Option<PlaneSide> {
     if !mesh.facts().mesh.closed_manifold {
         return None;
@@ -633,10 +626,7 @@ fn mesh_oriented_face_interior_side(
     }
 }
 
-fn retained_plane_side(
-    plane: &super::facts::FacePlaneFacts,
-    point: &hyperlimit::Point3,
-) -> Option<PlaneSide> {
+fn retained_plane_side(plane: &FacePlaneFacts, point: &hyperlimit::Point3) -> Option<PlaneSide> {
     let x_term = &plane.normal[0] * &point.x;
     let y_term = &plane.normal[1] * &point.y;
     let z_term = &plane.normal[2] * &point.z;

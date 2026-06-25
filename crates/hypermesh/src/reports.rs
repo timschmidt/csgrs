@@ -22,6 +22,9 @@ use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::boolean::contained_adjacent::materialize_contained_face_adjacent_union;
 #[cfg(test)]
 use super::boolean::materialize_boolean_exact_request;
+use super::boolean::volumetric_cells::{
+    CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle,
+};
 use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanOperation, ExactBooleanRequest,
     ExactBoundaryBooleanPolicy, adjacent_union_completion_certification,
@@ -74,9 +77,6 @@ use super::solid::{
 };
 use super::validation::ExactMeshValidationPolicy;
 use super::volumetric::{ExactVolumetricRegionClassification, ExactVolumetricRegionError};
-use super::volumetric_cells::{
-    CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle,
-};
 use super::winding::{
     ClosedMeshWindingMeshRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };

@@ -15,6 +15,7 @@
 //! or represented as policy choices or unknowns.
 
 pub(crate) mod contained_adjacent;
+pub(crate) mod volumetric_cells;
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -100,9 +101,6 @@ use super::volumetric::{
     ExactVolumetricRegionClassification, ExactVolumetricRegionRelation,
     classify_triangulated_regions_against_opposite_meshes,
 };
-use super::volumetric_cells::{
-    CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle,
-};
 use super::winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
     WindingReportError, classify_mesh_vertices_against_closed_mesh_winding_report,
@@ -120,6 +118,7 @@ use hyperlimit::{PredicateUse, SourceProvenance};
 use hyperreal::Real;
 use std::cmp::Ordering;
 use std::rc::Rc;
+use volumetric_cells::{CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle};
 
 /// Exact selected-region boolean policy.
 ///
