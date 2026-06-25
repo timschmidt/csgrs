@@ -41,7 +41,6 @@ mod simplify;
 mod solid;
 mod validation;
 mod view;
-mod volumetric;
 mod winding;
 
 pub use mesh::ExactMesh;

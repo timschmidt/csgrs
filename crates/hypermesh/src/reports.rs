@@ -22,6 +22,9 @@ use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::boolean::contained_adjacent::materialize_contained_face_adjacent_union;
 #[cfg(test)]
 use super::boolean::materialize_boolean_exact_request;
+use super::boolean::volumetric::{
+    ExactVolumetricRegionClassification, ExactVolumetricRegionError, ExactVolumetricRegionRelation,
+};
 use super::boolean::volumetric_cells::{
     CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle,
 };
@@ -76,7 +79,6 @@ use super::solid::{
     classify_mesh_vertices_against_convex_solid_report,
 };
 use super::validation::ExactMeshValidationPolicy;
-use super::volumetric::{ExactVolumetricRegionClassification, ExactVolumetricRegionError};
 use super::winding::{
     ClosedMeshWindingMeshRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
@@ -3345,35 +3347,23 @@ fn volumetric_cell_retention_for_operation(
     // copy, while difference drops coincident boundary cells. This preserves
     // explicit in retained report validation.
     match (operation, triangulation.side, classification.relation) {
-        (
-            ExactBooleanOperation::Union,
-            _,
-            super::volumetric::ExactVolumetricRegionRelation::Outside,
-        )
-        | (
-            ExactBooleanOperation::Union,
-            MeshSide::Left,
-            super::volumetric::ExactVolumetricRegionRelation::Boundary,
-        )
-        | (
-            ExactBooleanOperation::Intersection,
-            _,
-            super::volumetric::ExactVolumetricRegionRelation::Inside,
-        )
+        (ExactBooleanOperation::Union, _, ExactVolumetricRegionRelation::Outside)
+        | (ExactBooleanOperation::Union, MeshSide::Left, ExactVolumetricRegionRelation::Boundary)
+        | (ExactBooleanOperation::Intersection, _, ExactVolumetricRegionRelation::Inside)
         | (
             ExactBooleanOperation::Intersection,
             MeshSide::Left,
-            super::volumetric::ExactVolumetricRegionRelation::Boundary,
+            ExactVolumetricRegionRelation::Boundary,
         )
         | (
             ExactBooleanOperation::Difference,
             MeshSide::Left,
-            super::volumetric::ExactVolumetricRegionRelation::Outside,
+            ExactVolumetricRegionRelation::Outside,
         ) => VolumetricCellRetention::Keep,
         (
             ExactBooleanOperation::Difference,
             MeshSide::Right,
-            super::volumetric::ExactVolumetricRegionRelation::Inside,
+            ExactVolumetricRegionRelation::Inside,
         ) => VolumetricCellRetention::KeepReversed,
         _ => VolumetricCellRetention::Drop,
     }

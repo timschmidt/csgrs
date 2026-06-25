@@ -14,10 +14,10 @@ mod witness;
 
 use hyperlimit::Point3;
 
-use super::graph::MeshSide;
-use super::mesh::ExactMesh;
-use super::region::{FaceRegionTriangulation, boundary_node_point};
-use super::winding::{
+use super::super::graph::MeshSide;
+use super::super::mesh::ExactMesh;
+use super::super::region::{FaceRegionTriangulation, boundary_node_point};
+use super::super::winding::{
     ClosedMeshWindingRelation, PointMeshWindingReport, WindingReportError,
     classify_point_against_closed_mesh_winding_report,
 };
