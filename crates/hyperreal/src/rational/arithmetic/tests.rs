@@ -190,6 +190,25 @@ mod tests {
     }
 
     #[test]
+    fn perfect_nth_root_detects_exact_rational_roots() {
+        assert_eq!(
+            Rational::new(27).perfect_nth_root(3),
+            Some(Rational::new(3))
+        );
+        assert_eq!(
+            Rational::new(-27).perfect_nth_root(3),
+            Some(Rational::new(-3))
+        );
+        assert_eq!(
+            Rational::fraction(8, 27).unwrap().perfect_nth_root(3),
+            Some(Rational::fraction(2, 3).unwrap())
+        );
+        assert_eq!(Rational::new(2).perfect_nth_root(3), None);
+        assert_eq!(Rational::new(-16).perfect_nth_root(4), None);
+        assert_eq!(Rational::new(16).perfect_nth_root(0), None);
+    }
+
+    #[test]
     fn decimal() {
         let decimal: Rational = "7.125".parse().unwrap();
         assert!(!decimal.prefer_fraction());

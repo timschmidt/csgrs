@@ -483,531 +483,530 @@ Latest run sampled 20000 deterministic cases. The table below intentionally merg
 | 473 | 14.519 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[4672] 227/547` |
 | 474 | 14.519 us | `computable` | `generated_tan_p96` | `generated[2046] 7 13/60` |
 | 475 | 14.509 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[4642] 9/157` |
-| 476 | 14.499 us | `computable` | `generated_atan_p96` | `generated[744] -1 5/7` |
-| 477 | 14.499 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[67] -53/259` |
-| 478 | 14.499 us | `computable` | `generated_tan_p96` | `generated[2901] 3 147/244` |
-| 479 | 14.489 us | `computable` | `generated_tan_p96` | `generated[5121] -4 51/232` |
-| 480 | 14.489 us | `computable` | `generated_tan_p96` | `generated[7596] -7 2/15` |
-| 481 | 14.479 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10837] 1 145/352` |
-| 482 | 14.469 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11782] -1 190/293` |
-| 483 | 14.469 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18202] 411/905` |
-| 484 | 14.449 us | `computable` | `generated_atan_p96` | `generated[2214] 1 299/404` |
-| 485 | 14.449 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7477] -2 3/451` |
-| 486 | 14.439 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[727] 49/365` |
-| 487 | 14.439 us | `computable` | `generated_tan_p96` | `generated[9561] -3 73/208` |
-| 488 | 14.429 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[637] -475/973` |
-| 489 | 14.429 us | `computable` | `generated_sin_p96` | `generated[1399] -7 37/112` |
-| 490 | 14.429 us | `computable` | `generated_tan_p96` | `generated[6291] 7 25/64` |
-| 491 | 14.419 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5137] 189/787` |
-| 492 | 14.409 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5467] 291/893` |
-| 493 | 14.409 us | `computable` | `generated_sin_p96` | `generated[12079] -4 5/27` |
-| 494 | 14.399 us | `computable` | `generated_atan_p96` | `generated[15444] 1 401/575` |
-| 495 | 14.399 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15217] 397/490` |
-| 496 | 14.399 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5002] 329/653` |
-| 497 | 14.399 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[562] 47/677` |
-| 498 | 14.399 us | `computable` | `generated_tan_p96` | `generated[11811] -3 4/23` |
-| 499 | 14.389 us | `computable` | `generated_cos_p96` | `generated[680] 4 29/159` |
-| 500 | 14.389 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17647] -31/227` |
-| 501 | 14.389 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[427] 187/543` |
-| 502 | 14.379 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12787] 12 3/4` |
-| 503 | 14.379 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[157] 1 192/275` |
-| 504 | 14.379 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17422] -27 17/20` |
-| 505 | 14.379 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[37] -297/599` |
-| 506 | 14.369 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2752] -3/746` |
-| 507 | 14.369 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3697] -1 296/687` |
-| 508 | 14.369 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[97] 85/437` |
-| 509 | 14.369 us | `computable` | `generated_tan_p96` | `generated[516] 3 78/203` |
-| 510 | 14.359 us | `computable` | `generated_atan_p96` | `generated[9099] -1 181/259` |
-| 511 | 14.349 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7507] -1 172/185` |
-| 512 | 14.349 us | `computable` | `generated_tan_p96` | `generated[5286] -3 73/285` |
-| 513 | 14.339 us | `computable` | `generated_cos_p96` | `generated[11750] -4 5/9` |
-| 514 | 14.339 us | `computable` | `generated_cos_p96` | `generated[14750] 5 9/56` |
-| 515 | 14.339 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1087] 391/755` |
-| 516 | 14.339 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17707] 129/373` |
-| 517 | 14.339 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18127] 1 108/203` |
-| 518 | 14.339 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[232] -55/571` |
-| 519 | 14.339 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[4402] 1 76/93` |
-| 520 | 14.339 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[4807] 29/227` |
-| 521 | 14.329 us | `computable` | `generated_atan_p96` | `generated[2904] -1 366/535` |
-| 522 | 14.319 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17677] 67/827` |
-| 523 | 14.319 us | `computable` | `generated_tan_p96` | `generated[4596] 4 30/77` |
-| 524 | 14.309 us | `computable` | `generated_atan_p96` | `generated[8154] 1 37/53` |
-| 525 | 14.309 us | `computable` | `generated_tan_p96` | `generated[546] 7 12/61` |
-| 526 | 14.299 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17617] -315/989` |
-| 527 | 14.279 us | `computable` | `generated_cos_p96` | `generated[16025] -5 74/103` |
-| 528 | 14.279 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1222] 251/889` |
-| 529 | 14.269 us | `computable` | `generated_sin_p96` | `generated[18349] -4 16/209` |
-| 530 | 14.259 us | `computable` | `generated_atan_p96` | `generated[13479] -1 143/397` |
-| 531 | 14.249 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14047] 1 143/329` |
-| 532 | 14.249 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[667] -71/223` |
-| 533 | 14.239 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17872] 309/799` |
-| 534 | 14.239 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[337] -193/393` |
-| 535 | 14.239 us | `computable` | `generated_sin_p96` | `generated[1009] 4 11/84` |
-| 536 | 14.229 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13957] 7/17` |
-| 537 | 14.229 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17542] 23/77` |
-| 538 | 14.229 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[502] -335/839` |
-| 539 | 14.229 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7927] -39/233` |
-| 540 | 14.229 us | `computable` | `generated_sin_p96` | `generated[12109] -5 5/9` |
-| 541 | 14.229 us | `computable` | `generated_sin_p96` | `generated[3229] 5 55/156` |
-| 542 | 14.219 us | `computable` | `generated_cos_p96` | `generated[155] 3 26/27` |
-| 543 | 14.219 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3562] -1 290/553` |
-| 544 | 14.209 us | `computable` | `generated_cos_p96` | `generated[11030] 4 73/130` |
-| 545 | 14.199 us | `real` | `generated_sin_build` | `generated[15193] 4 5/39` |
-| 546 | 14.179 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7537] -1 234/289` |
-| 547 | 14.159 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11632] 561/698` |
-| 548 | 14.159 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15877] 601/702` |
-| 549 | 14.159 us | `computable` | `generated_sin_p96` | `generated[10084] -5 39/92` |
-| 550 | 14.159 us | `computable` | `generated_sin_p96` | `generated[3394] 4 50/209` |
-| 551 | 14.159 us | `computable` | `generated_tan_p96` | `generated[5931] 4 8/13` |
-| 552 | 14.149 us | `computable` | `generated_cos_p96` | `generated[5675] -3 11/12` |
-| 553 | 14.149 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17782] -5 13/15` |
-| 554 | 14.139 us | `computable` | `generated_cos_p96` | `generated[5480] -4 119/160` |
-| 555 | 14.139 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[4882] -435/977` |
-| 556 | 14.139 us | `computable` | `generated_tan_p96` | `generated[13671] -6 49/78` |
-| 557 | 14.139 us | `computable` | `generated_tan_p96` | `generated[5541] -3 1/5` |
-| 558 | 14.130 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[4417] -397/737` |
-| 559 | 14.129 us | `computable` | `atanh_p128` | `near_minus_one` |
-| 560 | 14.129 us | `computable` | `generated_sin_p96` | `generated[7114] 4 14/45` |
-| 561 | 14.129 us | `computable` | `generated_tan_p96` | `generated[7536] -3 5/48` |
-| 562 | 14.119 us | `computable` | `generated_cos_p96` | `generated[3260] -5 10/43` |
-| 563 | 14.119 us | `computable` | `generated_cos_p96` | `generated[7670] -3 122/229` |
-| 564 | 14.119 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11917] -1 28/61` |
-| 565 | 14.119 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8077] 1 91/825` |
-| 566 | 14.109 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16837] 6 23/26` |
-| 567 | 14.109 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6547] -829/968` |
-| 568 | 14.100 us | `computable` | `ln_abs_plus_one_p96` | `near_half_pi_minus_2^-40` |
-| 569 | 14.099 us | `computable` | `generated_cos_p96` | `generated[1400] -3 11/19` |
-| 570 | 14.099 us | `computable` | `generated_tan_p96` | `generated[2211] 4 32/113` |
-| 571 | 14.089 us | `computable` | `generated_atan_p96` | `generated[15774] -1 80/227` |
-| 572 | 14.089 us | `computable` | `generated_cos_p96` | `generated[1040] 5 19/92` |
-| 573 | 14.089 us | `computable` | `generated_cos_p96` | `generated[10865] 7 3/77` |
-| 574 | 14.089 us | `computable` | `generated_cos_p96` | `generated[17825] 3 16/19` |
-| 575 | 14.089 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11992] 1 131/723` |
-| 576 | 14.089 us | `computable` | `generated_sin_p96` | `generated[18574] -4 19/100` |
-| 577 | 14.079 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8797] -71/125` |
-| 578 | 14.079 us | `computable` | `generated_sin_p96` | `generated[16549] -3 11/14` |
-| 579 | 14.079 us | `computable` | `generated_tan_p96` | `generated[3096] -4 7/108` |
-| 580 | 14.069 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15742] 1 173/568` |
-| 581 | 14.059 us | `computable` | `generated_atan_p96` | `generated[17454] -1 87/133` |
-| 582 | 14.059 us | `computable` | `generated_cos_p96` | `generated[1205] -4 14/79` |
-| 583 | 14.059 us | `computable` | `generated_cos_p96` | `generated[7700] -4 13/74` |
-| 584 | 14.059 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14887] 295/384` |
-| 585 | 14.059 us | `computable` | `generated_tan_p96` | `generated[6456] 4 56/117` |
-| 586 | 14.040 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8977] 1 260/389` |
-| 587 | 14.039 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5587] -1 375/569` |
-| 588 | 14.039 us | `computable` | `generated_sin_p96` | `generated[8059] -5 9/38` |
-| 589 | 14.029 us | `computable` | `generated_cos_p96` | `generated[4925] 4 53/163` |
-| 590 | 14.019 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7672] -1 80/141` |
-| 591 | 14.009 us | `computable` | `generated_atan_p96` | `generated[864] 1 43/61` |
-| 592 | 14.009 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15352] 257/624` |
-| 593 | 14.009 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5062] 1 220/491` |
-| 594 | 13.999 us | `computable` | `generated_cos_p96` | `generated[1430] -4 45/128` |
-| 595 | 13.999 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13942] -1 281/443` |
-| 596 | 13.989 us | `computable` | `generated_cos_p96` | `generated[1235] -5 19/156` |
-| 597 | 13.989 us | `computable` | `generated_sin_p96` | `generated[1369] 5 22/193` |
-| 598 | 13.979 us | `computable` | `generated_cos_p96` | `generated[2540] 4 25/122` |
-| 599 | 13.979 us | `computable` | `generated_cos_p96` | `generated[5120] 7 2/135` |
-| 600 | 13.969 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11227] 3 93/296` |
-| 601 | 13.969 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[757] 289/649` |
-| 602 | 13.959 us | `computable` | `asin_p96` | `mid` |
-| 603 | 13.959 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12832] 205/449` |
-| 604 | 13.959 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8047] 725/906` |
-| 605 | 13.959 us | `computable` | `generated_sin_p96` | `generated[2869] 4 18/131` |
-| 606 | 13.949 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3352] -1 58/123` |
-| 607 | 13.939 us | `computable` | `generated_atan_p96` | `generated[13419] -1 363/559` |
-| 608 | 13.939 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16567] 1 163/833` |
-| 609 | 13.939 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[487] 1 188/381` |
-| 610 | 13.929 us | `computable` | `generated_sin_p96` | `generated[16939] 5 13/14` |
-| 611 | 13.929 us | `computable` | `generated_sin_p96` | `generated[7639] 4 74/213` |
-| 612 | 13.919 us | `computable` | `generated_sin_p96` | `generated[18154] 3 194/237` |
-| 613 | 13.919 us | `computable` | `generated_tan_p96` | `generated[4071] 4 7/19` |
-| 614 | 13.909 us | `computable` | `generated_cos_p96` | `generated[5285] 5 29/94` |
-| 615 | 13.909 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15412] 1 59/154` |
-| 616 | 13.899 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6997] 37/750` |
-| 617 | 13.889 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14917] 1 61/101` |
-| 618 | 13.889 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6427] 1 111/295` |
-| 619 | 13.889 us | `computable` | `generated_sin_p96` | `generated[15439] 6 71/90` |
-| 620 | 13.869 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15562] -7 2/19` |
-| 621 | 13.869 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6652] 4 95/186` |
-| 622 | 13.859 us | `computable` | `generated_atan_p96` | `generated[4884] -1 115/174` |
-| 623 | 13.859 us | `computable` | `generated_cos_p96` | `generated[8120] 5 2/11` |
-| 624 | 13.859 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[4732] 1 32/55` |
-| 625 | 13.859 us | `computable` | `generated_sin_p96` | `generated[12304] -4 19/40` |
-| 626 | 13.849 us | `computable` | `generated_cos_p96` | `generated[18020] -4 81/200` |
-| 627 | 13.849 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10957] -26 5/14` |
-| 628 | 13.849 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13012] -27/40` |
-| 629 | 13.849 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9637] 1 252/601` |
-| 630 | 13.840 us | `computable` | `generated_cos_p96` | `generated[15800] 4 129/212` |
-| 631 | 13.829 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[367] -13/47` |
-| 632 | 13.829 us | `computable` | `generated_sin_p96` | `generated[17629] 3 28/53` |
-| 633 | 13.819 us | `computable` | `generated_atan_p96` | `generated[11259] -1 272/409` |
-| 634 | 13.819 us | `computable` | `generated_cos_p96` | `generated[4400] 4 21/85` |
-| 635 | 13.819 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14422] 2 5/16` |
-| 636 | 13.819 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14812] 9 25/88` |
-| 637 | 13.809 us | `computable` | `generated_atan_p96` | `generated[2379] 1 297/457` |
-| 638 | 13.799 us | `computable` | `generated_atan_p96` | `generated[7044] -1 103/162` |
-| 639 | 13.799 us | `computable` | `generated_tan_p96` | `generated[11556] -3 74/305` |
-| 640 | 13.789 us | `computable` | `generated_sin_p96` | `generated[6034] -4 19/20` |
-| 641 | 13.789 us | `computable` | `generated_tan_p96` | `generated[8481] 3 24/133` |
-| 642 | 13.779 us | `computable` | `generated_cos_p96` | `generated[13415] 4 101/171` |
-| 643 | 13.769 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15247] 1 179/409` |
-| 644 | 13.769 us | `real` | `generated_sin_build` | `generated[14668] 3 11/13` |
-| 645 | 13.760 us | `computable` | `generated_sin_p96` | `generated[9694] -6 95/148` |
-| 646 | 13.759 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11332] 1 139/511` |
-| 647 | 13.749 us | `computable` | `generated_cos_p96` | `generated[3455] -4 41/72` |
-| 648 | 13.740 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16732] -1 33/443` |
-| 649 | 13.739 us | `computable` | `generated_atan_p96` | `generated[16974] 1 145/216` |
-| 650 | 13.739 us | `computable` | `generated_cos_p96` | `generated[7340] -7 50/123` |
-| 651 | 13.739 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12982] -19 3/44` |
-| 652 | 13.739 us | `computable` | `generated_sin_p96` | `generated[5809] -4 54/169` |
-| 653 | 13.729 us | `computable` | `generated_cos_p96` | `generated[3485] -7 26/63` |
-| 654 | 13.729 us | `computable` | `generated_cos_p96` | `generated[5510] -7 15/79` |
-| 655 | 13.729 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14032] -151/200` |
-| 656 | 13.729 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18967] 284/335` |
-| 657 | 13.729 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9202] -3 11/40` |
-| 658 | 13.729 us | `computable` | `generated_sin_p96` | `generated[13939] -6 31/152` |
-| 659 | 13.719 us | `computable` | `generated_cos_p96` | `generated[15605] 3 1/16` |
-| 660 | 13.719 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16042] 652/755` |
-| 661 | 13.710 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14542] -1 85/817` |
-| 662 | 13.709 us | `computable` | `generated_tan_p96` | `generated[17661] 3 41/136` |
-| 663 | 13.689 us | `computable` | `generated_cos_p96` | `generated[13970] -4 1/24` |
-| 664 | 13.689 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11857] 1 405/589` |
-| 665 | 13.689 us | `computable` | `ln_abs_plus_one_p96` | `rational[6]=-7/10` |
-| 666 | 13.680 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11797] 612/751` |
-| 667 | 13.679 us | `computable` | `generated_atan_p96` | `generated[6789] 1 331/514` |
-| 668 | 13.679 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13987] 281/410` |
-| 669 | 13.670 us | `computable` | `generated_cos_p96` | `generated[13580] 3 41/56` |
-| 670 | 13.669 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18457] -1 249/715` |
-| 671 | 13.660 us | `computable` | `generated_atan_p96` | `generated[11199] 1 365/571` |
-| 672 | 13.660 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11002] 1 143/405` |
-| 673 | 13.659 us | `computable` | `generated_tan_p96` | `generated[351] 4 6/25` |
-| 674 | 13.649 us | `computable` | `generated_cos_p96` | `generated[3065] 4 57/200` |
-| 675 | 13.649 us | `computable` | `generated_tan_p96` | `generated[17721] -6 59/110` |
-| 676 | 13.639 us | `computable` | `generated_cos_p96` | `generated[6785] 4 7/18` |
-| 677 | 13.639 us | `computable` | `generated_cos_p96` | `generated[7505] -4 39/44` |
-| 678 | 13.639 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13312] -4 137/150` |
-| 679 | 13.639 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18472] 131/176` |
-| 680 | 13.630 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3037] 1 337/475` |
-| 681 | 13.599 us | `computable` | `generated_cos_p96` | `generated[9170] 4 77/167` |
-| 682 | 13.599 us | `computable` | `generated_tan_p96` | `generated[186] 6 3/97` |
-| 683 | 13.589 us | `computable` | `generated_atan_p96` | `generated[5274] 1 77/118` |
-| 684 | 13.589 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3217] -41/986` |
-| 685 | 13.580 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6982] 3 65/292` |
-| 686 | 13.579 us | `computable` | `generated_atan_p96` | `generated[14754] 1 137/444` |
-| 687 | 13.579 us | `computable` | `generated_atan_p96` | `generated[9204] -1 99/158` |
-| 688 | 13.579 us | `computable` | `generated_cos_p96` | `generated[2015] 3 37/44` |
-| 689 | 13.570 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2347] 1 73/344` |
-| 690 | 13.569 us | `computable` | `ln_abs_plus_one_p96` | `huge_pi_plus_offset` |
-| 691 | 13.559 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1267] -1 193/269` |
-| 692 | 13.559 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18292] 1 161/331` |
-| 693 | 13.559 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18532] 36 9/14` |
-| 694 | 13.539 us | `computable` | `generated_sin_p96` | `generated[11524] 3 97/192` |
-| 695 | 13.539 us | `computable` | `generated_sin_p96` | `generated[7834] -4 91/185` |
-| 696 | 13.529 us | `computable` | `generated_cos_p96` | `generated[7535] -7 4/95` |
-| 697 | 13.529 us | `computable` | `generated_sin_p96` | `generated[14134] -5 81/124` |
-| 698 | 13.509 us | `computable` | `generated_cos_p96` | `generated[13805] -6 8/23` |
-| 699 | 13.509 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14902] -609/842` |
-| 700 | 13.509 us | `computable` | `generated_tan_p96` | `generated[15276] 3 13/231` |
-| 701 | 13.499 us | `computable` | `generated_cos_p96` | `generated[5315] -7 61/107` |
-| 702 | 13.490 us | `computable` | `generated_sin_p96` | `generated[4009] -4 5/11` |
-| 703 | 13.489 us | `computable` | `generated_sin_p96` | `generated[16129] -4 109/221` |
-| 704 | 13.489 us | `computable` | `generated_sin_p96` | `generated[5614] -4 184/197` |
-| 705 | 13.479 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15577] 1 35/103` |
-| 706 | 13.479 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5347] -2 3/20` |
-| 707 | 13.479 us | `computable` | `generated_sin_p96` | `generated[3424] -7 13/64` |
-| 708 | 13.469 us | `computable` | `generated_cos_p96` | `generated[18245] -4 12/13` |
-| 709 | 13.469 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12232] 5 8/75` |
-| 710 | 13.469 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13867] -1 55/147` |
-| 711 | 13.469 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15052] 346/437` |
-| 712 | 13.469 us | `computable` | `generated_sin_p96` | `generated[11719] 5 95/164` |
-| 713 | 13.459 us | `computable` | `generated_cos_p96` | `generated[11555] 4 105/208` |
-| 714 | 13.459 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9832] -1 331/573` |
-| 715 | 13.459 us | `computable` | `generated_sin_p96` | `generated[3064] 7 63/103` |
-| 716 | 13.450 us | `computable` | `generated_cos_p96` | `generated[5450] -3 227/241` |
-| 717 | 13.449 us | `computable` | `generated_tan_p96` | `generated[2376] 3 37/166` |
-| 718 | 13.449 us | `computable` | `generated_tan_p96` | `generated[7311] 3 67/301` |
-| 719 | 13.439 us | `computable` | `generated_sin_p96` | `generated[1534] -3 223/246` |
-| 720 | 13.429 us | `computable` | `generated_cos_p96` | `generated[13745] 3 56/277` |
-| 721 | 13.429 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10132] -1 233/760` |
-| 722 | 13.429 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11767] 421/832` |
-| 723 | 13.429 us | `computable` | `generated_tan_p96` | `generated[9171] 3 13/132` |
-| 724 | 13.419 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18187] -1 79/149` |
-| 725 | 13.419 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2767] -4 79/207` |
-| 726 | 13.419 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5512] -1 149/273` |
-| 727 | 13.410 us | `computable` | `generated_atan_p96` | `generated[15744] 1 125/762` |
-| 728 | 13.399 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18322] -1 243/581` |
-| 729 | 13.399 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18562] 352/465` |
-| 730 | 13.389 us | `computable` | `generated_atan_p96` | `generated[18504] 1 179/289` |
-| 731 | 13.389 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12487] -1 55/441` |
-| 732 | 13.389 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15037] -749/976` |
-| 733 | 13.389 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1537] -1 205/537` |
-| 734 | 13.389 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5917] -1 167/675` |
-| 735 | 13.389 us | `real` | `generated_sin_build` | `generated[2293] 5 18/91` |
-| 736 | 13.379 us | `computable` | `generated_cos_p96` | `generated[7310] 4 27/68` |
-| 737 | 13.379 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6097] 1 115/189` |
-| 738 | 13.379 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6607] -447/806` |
-| 739 | 13.379 us | `computable` | `generated_sin_p96` | `generated[7309] 7 75/107` |
-| 740 | 13.369 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1852] 1 79/185` |
-| 741 | 13.359 us | `computable` | `generated_cos_p96` | `generated[15635] 5 131/159` |
-| 742 | 13.359 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13387] 1 147/223` |
-| 743 | 13.349 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14077] -1 287/577` |
-| 744 | 13.349 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14272] -1 73/549` |
-| 745 | 13.349 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3367] 1 333/581` |
-| 746 | 13.349 us | `computable` | `generated_tan_p96` | `generated[7671] -2 42/163` |
-| 747 | 13.339 us | `computable` | `generated_atan_p96` | `generated[9684] 1 111/175` |
-| 748 | 13.339 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10972] 119/162` |
-| 749 | 13.339 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16237] 1 167/727` |
-| 750 | 13.339 us | `computable` | `generated_sin_p96` | `generated[10024] -3 119/254` |
-| 751 | 13.329 us | `computable` | `generated_cos_p96` | `generated[3095] -7 118/119` |
-| 752 | 13.329 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1672] -1 211/671` |
-| 753 | 13.319 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14002] -1 61/281` |
-| 754 | 13.309 us | `computable` | `generated_tan_p96` | `generated[1686] 4` |
-| 755 | 13.300 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16792] -285/362` |
-| 756 | 13.289 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10297] -1 43/271` |
-| 757 | 13.279 us | `computable` | `generated_cos_p96` | `generated[8645] 4 45/89` |
-| 758 | 13.270 us | `computable` | `generated_cos_p96` | `generated[6620] 6 64/73` |
-| 759 | 13.269 us | `computable` | `generated_cos_p96` | `generated[12890] 4 23/31` |
-| 760 | 13.269 us | `computable` | `generated_cos_p96` | `generated[13610] -6 114/143` |
-| 761 | 13.269 us | `computable` | `generated_cos_p96` | `generated[9560] -6 104/111` |
-| 762 | 13.269 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11302] 459/592` |
-| 763 | 13.269 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12322] 1 127/829` |
-| 764 | 13.269 us | `computable` | `generated_sin_p96` | `generated[9889] -6 7/40` |
-| 765 | 13.269 us | `real` | `generated_sin_build` | `generated[10948] 3 37/38` |
-| 766 | 13.250 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14617] 4 111/116` |
-| 767 | 13.250 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15712] 50/59` |
-| 768 | 13.249 us | `computable` | `generated_cos_p96` | `generated[11390] 5 111/155` |
-| 769 | 13.249 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7612] 1 41/65` |
-| 770 | 13.239 us | `computable` | `asinh_p128` | `large_negative` |
-| 771 | 13.239 us | `computable` | `generated_cos_p96` | `generated[17660] 4 5/7` |
-| 772 | 13.239 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10522] -509/704` |
-| 773 | 13.229 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10672] 1 147/299` |
-| 774 | 13.229 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14242] -1 61/210` |
-| 775 | 13.229 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8377] 55 2/15` |
-| 776 | 13.220 us | `computable` | `generated_cos_p96` | `generated[10505] 4 41/52` |
-| 777 | 13.209 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15922] -1 15/41` |
-| 778 | 13.209 us | `computable` | `generated_sin_p96` | `generated[9859] -4 128/201` |
-| 779 | 13.209 us | `computable` | `tan_p96` | `rational[8]=-3 16/113` |
-| 780 | 13.199 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6922] 1 105/454` |
-| 781 | 13.199 us | `computable` | `tan_p96` | `rational[7]=3 16/113` |
-| 782 | 13.189 us | `computable` | `acos_p96` | `mid` |
-| 783 | 13.189 us | `computable` | `generated_tan_p96` | `generated[17166] 6 67/113` |
-| 784 | 13.180 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2467] -40 9/10` |
-| 785 | 13.179 us | `computable` | `generated_sin_p96` | `generated[484] 3 8/9` |
-| 786 | 13.179 us | `computable` | `ln_abs_plus_one_p96` | `rational[5]=7/10` |
-| 787 | 13.169 us | `computable` | `generated_atan_p96` | `generated[15669] -1 62/233` |
-| 788 | 13.169 us | `computable` | `generated_cos_p96` | `generated[1460] -7 37/47` |
-| 789 | 13.169 us | `computable` | `generated_cos_p96` | `generated[7145] 5 91/151` |
-| 790 | 13.169 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6397] 215/376` |
-| 791 | 13.159 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11137] 408/539` |
-| 792 | 13.159 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7702] -1 65/171` |
-| 793 | 13.159 us | `computable` | `generated_tan_p96` | `generated[14586] 3 11/100` |
-| 794 | 13.150 us | `computable` | `generated_cos_p96` | `generated[875] 6 121/131` |
-| 795 | 13.149 us | `computable` | `generated_cos_p96` | `generated[515] 5 42/53` |
-| 796 | 13.149 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14137] -1 67/415` |
-| 797 | 13.139 us | `computable` | `generated_cos_p96` | `generated[9920] -3 69/136` |
-| 798 | 13.129 us | `computable` | `generated_atan_p96` | `generated[159] 1 144/469` |
-| 799 | 13.129 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6577] -638/887` |
-| 800 | 13.129 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9652] -51/62` |
-| 801 | 13.120 us | `computable` | `generated_atan_p96` | `generated[2829] -1 140/239` |
-| 802 | 13.119 us | `computable` | `acosh_p128` | `large` |
-| 803 | 13.110 us | `computable` | `generated_sin_p96` | `generated[11554] 7 29/37` |
-| 804 | 13.109 us | `computable` | `generated_atan_p96` | `generated[4989] -1 231/389` |
-| 805 | 13.109 us | `computable` | `generated_tan_p96` | `generated[12921] 6 51/109` |
-| 806 | 13.099 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9142] 1 129/221` |
-| 807 | 13.089 us | `computable` | `generated_atan_p96` | `generated[8319] 1 220/371` |
-| 808 | 13.089 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16672] 13 2/51` |
-| 809 | 13.089 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3727] -1 31/101` |
-| 810 | 13.080 us | `computable` | `generated_sin_p96` | `generated[3589] -4 147/181` |
-| 811 | 13.080 us | `real` | `generated_sin_build` | `generated[17053] 4 16/119` |
-| 812 | 13.079 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14872] -800/923` |
-| 813 | 13.079 us | `computable` | `generated_sin_p96` | `generated[844] 5 68/115` |
-| 814 | 13.070 us | `computable` | `generated_sin_p96` | `generated[3784] -4 1/9` |
-| 815 | 13.069 us | `computable` | `generated_atan_p96` | `generated[12729] 1 127/214` |
-| 816 | 13.069 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6052] -1 173/809` |
-| 817 | 13.069 us | `computable` | `generated_tan_p96` | `generated[13416] 3 27/134` |
-| 818 | 13.059 us | `computable` | `generated_cos_p96` | `generated[2900] 5 71/147` |
-| 819 | 13.059 us | `computable` | `generated_sin_p96` | `generated[5644] -6 85/116` |
-| 820 | 13.050 us | `computable` | `generated_atan_p96` | `generated[14919] 1 135/497` |
-| 821 | 13.049 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10762] -17 1/2` |
-| 822 | 13.049 us | `computable` | `generated_tan_p96` | `generated[18081] -3 7/45` |
-| 823 | 13.039 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18787] -1 41/821` |
-| 824 | 13.039 us | `computable` | `generated_sin_p96` | `generated[11194] 6 55/86` |
-| 825 | 13.029 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11947] -1 43/173` |
-| 826 | 13.029 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2737] 3 37/288` |
-| 827 | 13.019 us | `computable` | `generated_atan_p96` | `generated[17139] 1 288/485` |
-| 828 | 13.019 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3457] -1 87/169` |
-| 829 | 13.019 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5782] -1 161/541` |
-| 830 | 13.019 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6727] 317/482` |
-| 831 | 13.019 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9802] 1 125/327` |
-| 832 | 13.019 us | `computable` | `generated_sin_p96` | `generated[1564] -4 2/3` |
-| 833 | 13.010 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12757] 4 115/153` |
-| 834 | 13.009 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10627] -840/919` |
-| 835 | 13.009 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11962] 221/268` |
-| 836 | 13.009 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16207] 703/808` |
-| 837 | 13.009 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5557] 1 107/325` |
-| 838 | 13.009 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6382] -176/183` |
-| 839 | 12.999 us | `computable` | `generated_atan_p96` | `generated[2934] -1 128/227` |
-| 840 | 12.999 us | `computable` | `generated_atan_p96` | `generated[7149] -1 46/77` |
-| 841 | 12.999 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13447] -3 25/284` |
-| 842 | 12.999 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16537] 805/914` |
-| 843 | 12.989 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14407] -1 79/683` |
-| 844 | 12.989 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17362] -5 29/182` |
-| 845 | 12.989 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[4897] 1 37/73` |
-| 846 | 12.989 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7417] 1 99/613` |
-| 847 | 12.989 us | `computable` | `generated_sin_p96` | `generated[5779] -3 171/250` |
-| 848 | 12.979 us | `computable` | `generated_cos_p96` | `generated[2375] 6 16/23` |
-| 849 | 12.979 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16372] 754/861` |
-| 850 | 12.979 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18382] -1 23/419` |
-| 851 | 12.970 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11662] 1 135/617` |
-| 852 | 12.969 us | `computable` | `generated_cos_p96` | `generated[15830] -6 45/131` |
-| 853 | 12.969 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12217] -1 49/307` |
-| 854 | 12.969 us | `computable` | `generated_sin_p96` | `generated[15769] 3 125/196` |
-| 855 | 12.960 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16912] 97/200` |
-| 856 | 12.959 us | `computable` | `generated_atan_p96` | `generated[17559] -1 7/12` |
-| 857 | 12.959 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16867] 39 10/23` |
-| 858 | 12.959 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9757] -1 105/277` |
-| 859 | 12.949 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8542] 12 31/34` |
-| 860 | 12.940 us | `computable` | `generated_cos_p96` | `generated[11720] 3 205/261` |
-| 861 | 12.939 us | `computable` | `generated_atan_p96` | `generated[6954] 1 47/81` |
-| 862 | 12.939 us | `computable` | `generated_atan_p96` | `generated[879] -1 281/519` |
-| 863 | 12.939 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6712] -32 5/12` |
-| 864 | 12.939 us | `computable` | `generated_sin_p96` | `generated[15934] 3 17/249` |
-| 865 | 12.929 us | `computable` | `generated_atan_p96` | `generated[17664] -1 319/563` |
-| 866 | 12.929 us | `computable` | `generated_atan_p96` | `generated[2544] 1 59/102` |
-| 867 | 12.929 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15907] 1 19/69` |
-| 868 | 12.929 us | `computable` | `generated_sin_p96` | `generated[15799] 7 99/115` |
-| 869 | 12.919 us | `computable` | `generated_cos_p96` | `generated[13055] 3 27/73` |
-| 870 | 12.919 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11032] 2 91/324` |
-| 871 | 12.919 us | `computable` | `generated_sin_p96` | `generated[14269] -3 67/258` |
-| 872 | 12.909 us | `computable` | `generated_cos_p96` | `generated[12170] -3 16/43` |
-| 873 | 12.909 us | `computable` | `generated_cos_p96` | `generated[3620] -3 16/197` |
-| 874 | 12.899 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14107] -1 177/496` |
-| 875 | 12.899 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5647] -1 155/407` |
-| 876 | 12.890 us | `computable` | `generated_sin_p96` | `generated[5089] 5 88/119` |
-| 877 | 12.879 us | `computable` | `generated_cos_p96` | `generated[11585] -6 109/127` |
-| 878 | 12.879 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12427] 13 14/47` |
-| 879 | 12.869 us | `computable` | `cos_p96` | `rational[7]=3 16/113` |
-| 880 | 12.869 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9742] 87/136` |
-| 881 | 12.869 us | `computable` | `sin_p96` | `rational[7]=3 16/113` |
-| 882 | 12.859 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18247] -1 17/285` |
-| 883 | 12.859 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6757] 1 107/401` |
-| 884 | 12.849 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1312] 1 89/323` |
-| 885 | 12.849 us | `computable` | `generated_sin_p96` | `generated[7474] 5 15/32` |
-| 886 | 12.839 us | `computable` | `generated_atan_p96` | `generated[15399] -1 56/99` |
-| 887 | 12.839 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14722] 244/331` |
-| 888 | 12.839 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15682] 359/730` |
-| 889 | 12.839 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17977] -1 5/17` |
-| 890 | 12.839 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2182] 1 25/97` |
-| 891 | 12.829 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10372] 4 87/112` |
-| 892 | 12.829 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15337] -5 4/83` |
-| 893 | 12.829 us | `computable` | `ln_abs_plus_one_p96` | `rational[3]=1/1000000000000` |
-| 894 | 12.829 us | `computable` | `ln_abs_plus_one_p96` | `rational[4]=-1/1000000000000` |
-| 895 | 12.819 us | `computable` | `generated_atan_p96` | `generated[3909] 1 93/157` |
-| 896 | 12.819 us | `computable` | `generated_atan_p96` | `generated[774] -1 165/304` |
-| 897 | 12.819 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12397] 3 25/64` |
-| 898 | 12.819 us | `computable` | `generated_sin_p96` | `generated[18514] -3 15/262` |
-| 899 | 12.809 us | `computable` | `generated_cos_p96` | `generated[12365] 6 7/15` |
-| 900 | 12.809 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17377] 39/160` |
-| 901 | 12.809 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18652] -1 35/687` |
-| 902 | 12.809 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9892] -1 37/137` |
-| 903 | 12.799 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10162] -1 123/679` |
-| 904 | 12.799 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1432] -1 89/322` |
-| 905 | 12.799 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3502] 1 59/715` |
-| 906 | 12.799 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6472] -307/672` |
-| 907 | 12.799 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7972] -1 71/305` |
-| 908 | 12.799 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8032] -185/224` |
-| 909 | 12.789 us | `computable` | `generated_atan_p96` | `generated[13344] -1 137/263` |
-| 910 | 12.789 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12292] 153/182` |
-| 911 | 12.789 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15547] 499/596` |
-| 912 | 12.780 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13177] -37 5/16` |
-| 913 | 12.779 us | `computable` | `asinh_p128` | `mid` |
-| 914 | 12.779 us | `computable` | `generated_cos_p96` | `generated[11945] -3 61/76` |
-| 915 | 12.779 us | `computable` | `generated_cos_p96` | `generated[18050] -5 95/119` |
-| 916 | 12.779 us | `computable` | `ln_abs_plus_one_p96` | `rational[8]=-3 16/113` |
-| 917 | 12.769 us | `computable` | `generated_atan_p96` | `generated[4599] 2 1/89` |
-| 918 | 12.769 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11167] 1 141/458` |
-| 919 | 12.759 us | `computable` | `generated_cos_p96` | `generated[11885] -3 9/157` |
-| 920 | 12.749 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12157] 1 129/776` |
-| 921 | 12.749 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2137] -1 9/911` |
-| 922 | 12.740 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18112] -1 11/151` |
-| 923 | 12.739 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15952] 79` |
-| 924 | 12.729 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15817] 73/288` |
-| 925 | 12.729 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8767] -172/239` |
-| 926 | 12.719 us | `computable` | `generated_atan_p96` | `generated[11694] -1 18/73` |
-| 927 | 12.719 us | `computable` | `generated_cos_p96` | `generated[6950] 3 67/179` |
-| 928 | 12.710 us | `computable` | `generated_cos_p96` | `generated[3290] -7 72/91` |
-| 929 | 12.709 us | `computable` | `generated_cos_p96` | `generated[15965] -3 176/265` |
-| 930 | 12.709 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15727] -3 12/55` |
-| 931 | 12.699 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2497] -209/312` |
-| 932 | 12.699 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6517] 18 43/52` |
-| 933 | 12.689 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1042] -2 139/378` |
-| 934 | 12.689 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10567] 9 1/4` |
-| 935 | 12.689 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12097] 523/938` |
-| 936 | 12.689 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7717] 623/800` |
-| 937 | 12.680 us | `computable` | `generated_tan_p96` | `generated[1431] -2 34/225` |
-| 938 | 12.679 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10222] -420/517` |
-| 939 | 12.679 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15382] 448/543` |
-| 940 | 12.679 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17332] 3 80/263` |
-| 941 | 12.679 us | `real` | `generated_sin_build` | `generated[18913] 4 6/41` |
-| 942 | 12.669 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6112] -600/647` |
-| 943 | 12.660 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18517] -1 29/553` |
-| 944 | 12.659 us | `computable` | `generated_sin_p96` | `generated[14074] 3 29/143` |
-| 945 | 12.649 us | `computable` | `generated_atan_p96` | `generated[15789] 1 16/71` |
-| 946 | 12.639 us | `computable` | `generated_atan_p96` | `generated[11364] 1 121/208` |
-| 947 | 12.639 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2512] 1 71/397` |
-| 948 | 12.639 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[4162] 1 17/309` |
-| 949 | 12.629 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11467] 34/43` |
-| 950 | 12.629 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18802] 233/282` |
-| 951 | 12.629 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8932] -53 1/12` |
-| 952 | 12.629 us | `computable` | `generated_tan_p96` | `generated[18111] -4 19/54` |
-| 953 | 12.620 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[652] 1 3/7` |
-| 954 | 12.619 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7747] 1 95/719` |
-| 955 | 12.619 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8182] 13 26/43` |
-| 956 | 12.609 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10357] -80/93` |
-| 957 | 12.609 us | `computable` | `generated_sin_p96` | `generated[13579] 6 1/127` |
-| 958 | 12.600 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2842] 1 67/503` |
-| 959 | 12.600 us | `computable` | `generated_sin_p96` | `generated[5449] 6 7/9` |
-| 960 | 12.599 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13327] 179/304` |
-| 961 | 12.599 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5227] 1 109/272` |
-| 962 | 12.590 us | `computable` | `generated_atan_p96` | `generated[669] -1 49/89` |
-| 963 | 12.589 us | `computable` | `generated_cos_p96` | `generated[15440] 3 123/187` |
-| 964 | 12.589 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10027] -1 117/545` |
-| 965 | 12.589 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16702] 856/967` |
-| 966 | 12.589 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1732] -500/509` |
-| 967 | 12.589 us | `computable` | `generated_sin_p96` | `generated[2344] 3 39/53` |
-| 968 | 12.579 us | `computable` | `generated_atan_p96` | `generated[9309] 1 16/53` |
-| 969 | 12.570 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16012] 461/836` |
-| 970 | 12.560 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14467] -380/521` |
-| 971 | 12.559 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13522] 1 1/29` |
-| 972 | 12.559 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14842] -141 4/7` |
-| 973 | 12.559 us | `real` | `generated_sin_build` | `generated[13333] 4 24/193` |
-| 974 | 12.549 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1462] -220/241` |
-| 975 | 12.549 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18982] -620/793` |
-| 976 | 12.539 us | `computable` | `generated_sin_p96` | `generated[16159] -5 51/70` |
-| 977 | 12.529 us | `computable` | `generated_cos_p96` | `generated[17495] 6 21/61` |
-| 978 | 12.529 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16192] -1 3/25` |
-| 979 | 12.529 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17002] 4 139/157` |
-| 980 | 12.529 us | `real` | `generated_sin_build` | `generated[15718] 4 2/9` |
-| 981 | 12.520 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17767] 1 7/73` |
-| 982 | 12.520 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9262] -4 63/118` |
-| 983 | 12.519 us | `computable` | `generated_sin_p96` | `generated[1204] 6 24/35` |
-| 984 | 12.519 us | `computable` | `generated_sin_p96` | `generated[9334] 5 36/41` |
-| 985 | 12.509 us | `computable` | `generated_sin_p96` | `generated[3619] -6 4/5` |
-| 986 | 12.500 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10492] -140/157` |
-| 987 | 12.499 us | `computable` | `generated_atan_p96` | `generated[11394] -1 278/543` |
-| 988 | 12.499 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2032] -589/696` |
-| 989 | 12.499 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6412] -689/834` |
-| 990 | 12.490 us | `computable` | `generated_sin_p96` | `generated[18184] -5 41/52` |
-| 991 | 12.489 us | `computable` | `generated_atan_p96` | `generated[15939] -1 68/367` |
-| 992 | 12.489 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1867] -640/643` |
-| 993 | 12.489 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3832] 1 55/821` |
-| 994 | 12.489 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8842] 3 8/85` |
-| 995 | 12.479 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2002] -1 1/259` |
-| 996 | 12.470 us | `computable` | `generated_cos_p96` | `generated[4760] 5 52/55` |
-| 997 | 12.470 us | `computable` | `generated_sin_p96` | `generated[5584] 3 1/139` |
-| 998 | 12.459 us | `computable` | `generated_atan_p96` | `generated[9234] -1 187/393` |
-| 999 | 12.459 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14737] -220/263` |
-| 1000 | 12.459 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16342] 563/942` |
+| 476 | 14.509 us | `real` | `normal_interval_moment_build` | `zero_one_third` |
+| 477 | 14.499 us | `computable` | `generated_atan_p96` | `generated[744] -1 5/7` |
+| 478 | 14.499 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[67] -53/259` |
+| 479 | 14.499 us | `computable` | `generated_tan_p96` | `generated[2901] 3 147/244` |
+| 480 | 14.489 us | `computable` | `generated_tan_p96` | `generated[5121] -4 51/232` |
+| 481 | 14.489 us | `computable` | `generated_tan_p96` | `generated[7596] -7 2/15` |
+| 482 | 14.479 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10837] 1 145/352` |
+| 483 | 14.469 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11782] -1 190/293` |
+| 484 | 14.469 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18202] 411/905` |
+| 485 | 14.449 us | `computable` | `generated_atan_p96` | `generated[2214] 1 299/404` |
+| 486 | 14.449 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7477] -2 3/451` |
+| 487 | 14.439 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[727] 49/365` |
+| 488 | 14.439 us | `computable` | `generated_tan_p96` | `generated[9561] -3 73/208` |
+| 489 | 14.429 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[637] -475/973` |
+| 490 | 14.429 us | `computable` | `generated_sin_p96` | `generated[1399] -7 37/112` |
+| 491 | 14.429 us | `computable` | `generated_tan_p96` | `generated[6291] 7 25/64` |
+| 492 | 14.419 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5137] 189/787` |
+| 493 | 14.409 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5467] 291/893` |
+| 494 | 14.409 us | `computable` | `generated_sin_p96` | `generated[12079] -4 5/27` |
+| 495 | 14.399 us | `computable` | `generated_atan_p96` | `generated[15444] 1 401/575` |
+| 496 | 14.399 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15217] 397/490` |
+| 497 | 14.399 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5002] 329/653` |
+| 498 | 14.399 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[562] 47/677` |
+| 499 | 14.399 us | `computable` | `generated_tan_p96` | `generated[11811] -3 4/23` |
+| 500 | 14.389 us | `computable` | `generated_cos_p96` | `generated[680] 4 29/159` |
+| 501 | 14.389 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17647] -31/227` |
+| 502 | 14.389 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[427] 187/543` |
+| 503 | 14.379 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12787] 12 3/4` |
+| 504 | 14.379 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[157] 1 192/275` |
+| 505 | 14.379 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17422] -27 17/20` |
+| 506 | 14.379 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[37] -297/599` |
+| 507 | 14.369 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2752] -3/746` |
+| 508 | 14.369 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3697] -1 296/687` |
+| 509 | 14.369 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[97] 85/437` |
+| 510 | 14.369 us | `computable` | `generated_tan_p96` | `generated[516] 3 78/203` |
+| 511 | 14.359 us | `computable` | `generated_atan_p96` | `generated[9099] -1 181/259` |
+| 512 | 14.349 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7507] -1 172/185` |
+| 513 | 14.349 us | `computable` | `generated_tan_p96` | `generated[5286] -3 73/285` |
+| 514 | 14.339 us | `computable` | `generated_cos_p96` | `generated[11750] -4 5/9` |
+| 515 | 14.339 us | `computable` | `generated_cos_p96` | `generated[14750] 5 9/56` |
+| 516 | 14.339 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1087] 391/755` |
+| 517 | 14.339 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17707] 129/373` |
+| 518 | 14.339 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18127] 1 108/203` |
+| 519 | 14.339 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[232] -55/571` |
+| 520 | 14.339 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[4402] 1 76/93` |
+| 521 | 14.339 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[4807] 29/227` |
+| 522 | 14.329 us | `computable` | `generated_atan_p96` | `generated[2904] -1 366/535` |
+| 523 | 14.319 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17677] 67/827` |
+| 524 | 14.319 us | `computable` | `generated_tan_p96` | `generated[4596] 4 30/77` |
+| 525 | 14.309 us | `computable` | `generated_atan_p96` | `generated[8154] 1 37/53` |
+| 526 | 14.309 us | `computable` | `generated_tan_p96` | `generated[546] 7 12/61` |
+| 527 | 14.299 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17617] -315/989` |
+| 528 | 14.279 us | `computable` | `generated_cos_p96` | `generated[16025] -5 74/103` |
+| 529 | 14.279 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1222] 251/889` |
+| 530 | 14.269 us | `computable` | `generated_sin_p96` | `generated[18349] -4 16/209` |
+| 531 | 14.259 us | `computable` | `generated_atan_p96` | `generated[13479] -1 143/397` |
+| 532 | 14.249 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14047] 1 143/329` |
+| 533 | 14.249 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[667] -71/223` |
+| 534 | 14.239 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17872] 309/799` |
+| 535 | 14.239 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[337] -193/393` |
+| 536 | 14.239 us | `computable` | `generated_sin_p96` | `generated[1009] 4 11/84` |
+| 537 | 14.229 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13957] 7/17` |
+| 538 | 14.229 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17542] 23/77` |
+| 539 | 14.229 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[502] -335/839` |
+| 540 | 14.229 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7927] -39/233` |
+| 541 | 14.229 us | `computable` | `generated_sin_p96` | `generated[12109] -5 5/9` |
+| 542 | 14.229 us | `computable` | `generated_sin_p96` | `generated[3229] 5 55/156` |
+| 543 | 14.219 us | `computable` | `generated_cos_p96` | `generated[155] 3 26/27` |
+| 544 | 14.219 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3562] -1 290/553` |
+| 545 | 14.209 us | `computable` | `generated_cos_p96` | `generated[11030] 4 73/130` |
+| 546 | 14.199 us | `real` | `generated_sin_build` | `generated[15193] 4 5/39` |
+| 547 | 14.179 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7537] -1 234/289` |
+| 548 | 14.159 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11632] 561/698` |
+| 549 | 14.159 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15877] 601/702` |
+| 550 | 14.159 us | `computable` | `generated_sin_p96` | `generated[10084] -5 39/92` |
+| 551 | 14.159 us | `computable` | `generated_sin_p96` | `generated[3394] 4 50/209` |
+| 552 | 14.159 us | `computable` | `generated_tan_p96` | `generated[5931] 4 8/13` |
+| 553 | 14.149 us | `computable` | `generated_cos_p96` | `generated[5675] -3 11/12` |
+| 554 | 14.149 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17782] -5 13/15` |
+| 555 | 14.139 us | `computable` | `generated_cos_p96` | `generated[5480] -4 119/160` |
+| 556 | 14.139 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[4882] -435/977` |
+| 557 | 14.139 us | `computable` | `generated_tan_p96` | `generated[13671] -6 49/78` |
+| 558 | 14.139 us | `computable` | `generated_tan_p96` | `generated[5541] -3 1/5` |
+| 559 | 14.130 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[4417] -397/737` |
+| 560 | 14.129 us | `computable` | `atanh_p128` | `near_minus_one` |
+| 561 | 14.129 us | `computable` | `generated_sin_p96` | `generated[7114] 4 14/45` |
+| 562 | 14.129 us | `computable` | `generated_tan_p96` | `generated[7536] -3 5/48` |
+| 563 | 14.119 us | `computable` | `generated_cos_p96` | `generated[3260] -5 10/43` |
+| 564 | 14.119 us | `computable` | `generated_cos_p96` | `generated[7670] -3 122/229` |
+| 565 | 14.119 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11917] -1 28/61` |
+| 566 | 14.119 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8077] 1 91/825` |
+| 567 | 14.109 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16837] 6 23/26` |
+| 568 | 14.109 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6547] -829/968` |
+| 569 | 14.100 us | `computable` | `ln_abs_plus_one_p96` | `near_half_pi_minus_2^-40` |
+| 570 | 14.099 us | `computable` | `generated_cos_p96` | `generated[1400] -3 11/19` |
+| 571 | 14.099 us | `computable` | `generated_tan_p96` | `generated[2211] 4 32/113` |
+| 572 | 14.089 us | `computable` | `generated_atan_p96` | `generated[15774] -1 80/227` |
+| 573 | 14.089 us | `computable` | `generated_cos_p96` | `generated[1040] 5 19/92` |
+| 574 | 14.089 us | `computable` | `generated_cos_p96` | `generated[10865] 7 3/77` |
+| 575 | 14.089 us | `computable` | `generated_cos_p96` | `generated[17825] 3 16/19` |
+| 576 | 14.089 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11992] 1 131/723` |
+| 577 | 14.089 us | `computable` | `generated_sin_p96` | `generated[18574] -4 19/100` |
+| 578 | 14.079 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8797] -71/125` |
+| 579 | 14.079 us | `computable` | `generated_sin_p96` | `generated[16549] -3 11/14` |
+| 580 | 14.079 us | `computable` | `generated_tan_p96` | `generated[3096] -4 7/108` |
+| 581 | 14.069 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15742] 1 173/568` |
+| 582 | 14.059 us | `computable` | `generated_atan_p96` | `generated[17454] -1 87/133` |
+| 583 | 14.059 us | `computable` | `generated_cos_p96` | `generated[1205] -4 14/79` |
+| 584 | 14.059 us | `computable` | `generated_cos_p96` | `generated[7700] -4 13/74` |
+| 585 | 14.059 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14887] 295/384` |
+| 586 | 14.059 us | `computable` | `generated_tan_p96` | `generated[6456] 4 56/117` |
+| 587 | 14.040 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8977] 1 260/389` |
+| 588 | 14.039 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5587] -1 375/569` |
+| 589 | 14.039 us | `computable` | `generated_sin_p96` | `generated[8059] -5 9/38` |
+| 590 | 14.029 us | `computable` | `generated_cos_p96` | `generated[4925] 4 53/163` |
+| 591 | 14.019 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7672] -1 80/141` |
+| 592 | 14.009 us | `computable` | `generated_atan_p96` | `generated[864] 1 43/61` |
+| 593 | 14.009 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15352] 257/624` |
+| 594 | 14.009 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5062] 1 220/491` |
+| 595 | 13.999 us | `computable` | `generated_cos_p96` | `generated[1430] -4 45/128` |
+| 596 | 13.999 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13942] -1 281/443` |
+| 597 | 13.989 us | `computable` | `generated_cos_p96` | `generated[1235] -5 19/156` |
+| 598 | 13.989 us | `computable` | `generated_sin_p96` | `generated[1369] 5 22/193` |
+| 599 | 13.979 us | `computable` | `generated_cos_p96` | `generated[2540] 4 25/122` |
+| 600 | 13.979 us | `computable` | `generated_cos_p96` | `generated[5120] 7 2/135` |
+| 601 | 13.969 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11227] 3 93/296` |
+| 602 | 13.969 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[757] 289/649` |
+| 603 | 13.959 us | `computable` | `asin_p96` | `mid` |
+| 604 | 13.959 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12832] 205/449` |
+| 605 | 13.959 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8047] 725/906` |
+| 606 | 13.959 us | `computable` | `generated_sin_p96` | `generated[2869] 4 18/131` |
+| 607 | 13.949 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3352] -1 58/123` |
+| 608 | 13.939 us | `computable` | `generated_atan_p96` | `generated[13419] -1 363/559` |
+| 609 | 13.939 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16567] 1 163/833` |
+| 610 | 13.939 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[487] 1 188/381` |
+| 611 | 13.929 us | `computable` | `generated_sin_p96` | `generated[16939] 5 13/14` |
+| 612 | 13.929 us | `computable` | `generated_sin_p96` | `generated[7639] 4 74/213` |
+| 613 | 13.919 us | `computable` | `generated_sin_p96` | `generated[18154] 3 194/237` |
+| 614 | 13.919 us | `computable` | `generated_tan_p96` | `generated[4071] 4 7/19` |
+| 615 | 13.909 us | `computable` | `generated_cos_p96` | `generated[5285] 5 29/94` |
+| 616 | 13.909 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15412] 1 59/154` |
+| 617 | 13.899 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6997] 37/750` |
+| 618 | 13.889 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14917] 1 61/101` |
+| 619 | 13.889 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6427] 1 111/295` |
+| 620 | 13.889 us | `computable` | `generated_sin_p96` | `generated[15439] 6 71/90` |
+| 621 | 13.869 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15562] -7 2/19` |
+| 622 | 13.869 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6652] 4 95/186` |
+| 623 | 13.859 us | `computable` | `generated_atan_p96` | `generated[4884] -1 115/174` |
+| 624 | 13.859 us | `computable` | `generated_cos_p96` | `generated[8120] 5 2/11` |
+| 625 | 13.859 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[4732] 1 32/55` |
+| 626 | 13.859 us | `computable` | `generated_sin_p96` | `generated[12304] -4 19/40` |
+| 627 | 13.849 us | `computable` | `generated_cos_p96` | `generated[18020] -4 81/200` |
+| 628 | 13.849 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10957] -26 5/14` |
+| 629 | 13.849 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13012] -27/40` |
+| 630 | 13.849 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9637] 1 252/601` |
+| 631 | 13.840 us | `computable` | `generated_cos_p96` | `generated[15800] 4 129/212` |
+| 632 | 13.829 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[367] -13/47` |
+| 633 | 13.829 us | `computable` | `generated_sin_p96` | `generated[17629] 3 28/53` |
+| 634 | 13.819 us | `computable` | `generated_atan_p96` | `generated[11259] -1 272/409` |
+| 635 | 13.819 us | `computable` | `generated_cos_p96` | `generated[4400] 4 21/85` |
+| 636 | 13.819 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14422] 2 5/16` |
+| 637 | 13.819 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14812] 9 25/88` |
+| 638 | 13.809 us | `computable` | `generated_atan_p96` | `generated[2379] 1 297/457` |
+| 639 | 13.799 us | `computable` | `generated_atan_p96` | `generated[7044] -1 103/162` |
+| 640 | 13.799 us | `computable` | `generated_tan_p96` | `generated[11556] -3 74/305` |
+| 641 | 13.789 us | `computable` | `generated_sin_p96` | `generated[6034] -4 19/20` |
+| 642 | 13.789 us | `computable` | `generated_tan_p96` | `generated[8481] 3 24/133` |
+| 643 | 13.779 us | `computable` | `generated_cos_p96` | `generated[13415] 4 101/171` |
+| 644 | 13.769 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15247] 1 179/409` |
+| 645 | 13.769 us | `real` | `generated_sin_build` | `generated[14668] 3 11/13` |
+| 646 | 13.760 us | `computable` | `generated_sin_p96` | `generated[9694] -6 95/148` |
+| 647 | 13.759 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11332] 1 139/511` |
+| 648 | 13.749 us | `computable` | `generated_cos_p96` | `generated[3455] -4 41/72` |
+| 649 | 13.740 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16732] -1 33/443` |
+| 650 | 13.739 us | `computable` | `generated_atan_p96` | `generated[16974] 1 145/216` |
+| 651 | 13.739 us | `computable` | `generated_cos_p96` | `generated[7340] -7 50/123` |
+| 652 | 13.739 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12982] -19 3/44` |
+| 653 | 13.739 us | `computable` | `generated_sin_p96` | `generated[5809] -4 54/169` |
+| 654 | 13.729 us | `computable` | `generated_cos_p96` | `generated[3485] -7 26/63` |
+| 655 | 13.729 us | `computable` | `generated_cos_p96` | `generated[5510] -7 15/79` |
+| 656 | 13.729 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14032] -151/200` |
+| 657 | 13.729 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18967] 284/335` |
+| 658 | 13.729 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9202] -3 11/40` |
+| 659 | 13.729 us | `computable` | `generated_sin_p96` | `generated[13939] -6 31/152` |
+| 660 | 13.719 us | `computable` | `generated_cos_p96` | `generated[15605] 3 1/16` |
+| 661 | 13.719 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16042] 652/755` |
+| 662 | 13.710 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14542] -1 85/817` |
+| 663 | 13.709 us | `computable` | `generated_tan_p96` | `generated[17661] 3 41/136` |
+| 664 | 13.689 us | `computable` | `generated_cos_p96` | `generated[13970] -4 1/24` |
+| 665 | 13.689 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11857] 1 405/589` |
+| 666 | 13.689 us | `computable` | `ln_abs_plus_one_p96` | `rational[6]=-7/10` |
+| 667 | 13.680 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11797] 612/751` |
+| 668 | 13.679 us | `computable` | `generated_atan_p96` | `generated[6789] 1 331/514` |
+| 669 | 13.679 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13987] 281/410` |
+| 670 | 13.670 us | `computable` | `generated_cos_p96` | `generated[13580] 3 41/56` |
+| 671 | 13.669 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18457] -1 249/715` |
+| 672 | 13.660 us | `computable` | `generated_atan_p96` | `generated[11199] 1 365/571` |
+| 673 | 13.660 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11002] 1 143/405` |
+| 674 | 13.659 us | `computable` | `generated_tan_p96` | `generated[351] 4 6/25` |
+| 675 | 13.649 us | `computable` | `generated_cos_p96` | `generated[3065] 4 57/200` |
+| 676 | 13.649 us | `computable` | `generated_tan_p96` | `generated[17721] -6 59/110` |
+| 677 | 13.639 us | `computable` | `generated_cos_p96` | `generated[6785] 4 7/18` |
+| 678 | 13.639 us | `computable` | `generated_cos_p96` | `generated[7505] -4 39/44` |
+| 679 | 13.639 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13312] -4 137/150` |
+| 680 | 13.639 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18472] 131/176` |
+| 681 | 13.630 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3037] 1 337/475` |
+| 682 | 13.609 us | `real` | `logaddexp_build` | `dominant_large_vs_tiny` |
+| 683 | 13.599 us | `computable` | `generated_cos_p96` | `generated[9170] 4 77/167` |
+| 684 | 13.599 us | `computable` | `generated_tan_p96` | `generated[186] 6 3/97` |
+| 685 | 13.589 us | `computable` | `generated_atan_p96` | `generated[5274] 1 77/118` |
+| 686 | 13.589 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3217] -41/986` |
+| 687 | 13.580 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6982] 3 65/292` |
+| 688 | 13.579 us | `computable` | `generated_atan_p96` | `generated[14754] 1 137/444` |
+| 689 | 13.579 us | `computable` | `generated_atan_p96` | `generated[9204] -1 99/158` |
+| 690 | 13.579 us | `computable` | `generated_cos_p96` | `generated[2015] 3 37/44` |
+| 691 | 13.570 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2347] 1 73/344` |
+| 692 | 13.569 us | `computable` | `ln_abs_plus_one_p96` | `huge_pi_plus_offset` |
+| 693 | 13.559 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1267] -1 193/269` |
+| 694 | 13.559 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18292] 1 161/331` |
+| 695 | 13.559 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18532] 36 9/14` |
+| 696 | 13.539 us | `computable` | `generated_sin_p96` | `generated[11524] 3 97/192` |
+| 697 | 13.539 us | `computable` | `generated_sin_p96` | `generated[7834] -4 91/185` |
+| 698 | 13.529 us | `computable` | `generated_cos_p96` | `generated[7535] -7 4/95` |
+| 699 | 13.529 us | `computable` | `generated_sin_p96` | `generated[14134] -5 81/124` |
+| 700 | 13.509 us | `computable` | `generated_cos_p96` | `generated[13805] -6 8/23` |
+| 701 | 13.509 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14902] -609/842` |
+| 702 | 13.509 us | `computable` | `generated_tan_p96` | `generated[15276] 3 13/231` |
+| 703 | 13.499 us | `computable` | `generated_cos_p96` | `generated[5315] -7 61/107` |
+| 704 | 13.490 us | `computable` | `generated_sin_p96` | `generated[4009] -4 5/11` |
+| 705 | 13.489 us | `computable` | `generated_sin_p96` | `generated[16129] -4 109/221` |
+| 706 | 13.489 us | `computable` | `generated_sin_p96` | `generated[5614] -4 184/197` |
+| 707 | 13.479 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15577] 1 35/103` |
+| 708 | 13.479 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5347] -2 3/20` |
+| 709 | 13.479 us | `computable` | `generated_sin_p96` | `generated[3424] -7 13/64` |
+| 710 | 13.469 us | `computable` | `generated_cos_p96` | `generated[18245] -4 12/13` |
+| 711 | 13.469 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12232] 5 8/75` |
+| 712 | 13.469 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13867] -1 55/147` |
+| 713 | 13.469 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15052] 346/437` |
+| 714 | 13.469 us | `computable` | `generated_sin_p96` | `generated[11719] 5 95/164` |
+| 715 | 13.459 us | `computable` | `generated_cos_p96` | `generated[11555] 4 105/208` |
+| 716 | 13.459 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9832] -1 331/573` |
+| 717 | 13.459 us | `computable` | `generated_sin_p96` | `generated[3064] 7 63/103` |
+| 718 | 13.450 us | `computable` | `generated_cos_p96` | `generated[5450] -3 227/241` |
+| 719 | 13.449 us | `computable` | `generated_tan_p96` | `generated[2376] 3 37/166` |
+| 720 | 13.449 us | `computable` | `generated_tan_p96` | `generated[7311] 3 67/301` |
+| 721 | 13.439 us | `computable` | `generated_sin_p96` | `generated[1534] -3 223/246` |
+| 722 | 13.429 us | `computable` | `generated_cos_p96` | `generated[13745] 3 56/277` |
+| 723 | 13.429 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10132] -1 233/760` |
+| 724 | 13.429 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11767] 421/832` |
+| 725 | 13.429 us | `computable` | `generated_tan_p96` | `generated[9171] 3 13/132` |
+| 726 | 13.419 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18187] -1 79/149` |
+| 727 | 13.419 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2767] -4 79/207` |
+| 728 | 13.419 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5512] -1 149/273` |
+| 729 | 13.410 us | `computable` | `generated_atan_p96` | `generated[15744] 1 125/762` |
+| 730 | 13.399 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18322] -1 243/581` |
+| 731 | 13.399 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18562] 352/465` |
+| 732 | 13.389 us | `computable` | `generated_atan_p96` | `generated[18504] 1 179/289` |
+| 733 | 13.389 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12487] -1 55/441` |
+| 734 | 13.389 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15037] -749/976` |
+| 735 | 13.389 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1537] -1 205/537` |
+| 736 | 13.389 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5917] -1 167/675` |
+| 737 | 13.389 us | `real` | `generated_sin_build` | `generated[2293] 5 18/91` |
+| 738 | 13.379 us | `computable` | `generated_cos_p96` | `generated[7310] 4 27/68` |
+| 739 | 13.379 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6097] 1 115/189` |
+| 740 | 13.379 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6607] -447/806` |
+| 741 | 13.379 us | `computable` | `generated_sin_p96` | `generated[7309] 7 75/107` |
+| 742 | 13.369 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1852] 1 79/185` |
+| 743 | 13.359 us | `computable` | `generated_cos_p96` | `generated[15635] 5 131/159` |
+| 744 | 13.359 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13387] 1 147/223` |
+| 745 | 13.349 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14077] -1 287/577` |
+| 746 | 13.349 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14272] -1 73/549` |
+| 747 | 13.349 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3367] 1 333/581` |
+| 748 | 13.349 us | `computable` | `generated_tan_p96` | `generated[7671] -2 42/163` |
+| 749 | 13.339 us | `computable` | `generated_atan_p96` | `generated[9684] 1 111/175` |
+| 750 | 13.339 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10972] 119/162` |
+| 751 | 13.339 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16237] 1 167/727` |
+| 752 | 13.339 us | `computable` | `generated_sin_p96` | `generated[10024] -3 119/254` |
+| 753 | 13.329 us | `computable` | `generated_cos_p96` | `generated[3095] -7 118/119` |
+| 754 | 13.329 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1672] -1 211/671` |
+| 755 | 13.319 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14002] -1 61/281` |
+| 756 | 13.309 us | `computable` | `generated_tan_p96` | `generated[1686] 4` |
+| 757 | 13.300 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16792] -285/362` |
+| 758 | 13.289 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10297] -1 43/271` |
+| 759 | 13.279 us | `computable` | `generated_cos_p96` | `generated[8645] 4 45/89` |
+| 760 | 13.270 us | `computable` | `generated_cos_p96` | `generated[6620] 6 64/73` |
+| 761 | 13.269 us | `computable` | `generated_cos_p96` | `generated[12890] 4 23/31` |
+| 762 | 13.269 us | `computable` | `generated_cos_p96` | `generated[13610] -6 114/143` |
+| 763 | 13.269 us | `computable` | `generated_cos_p96` | `generated[9560] -6 104/111` |
+| 764 | 13.269 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11302] 459/592` |
+| 765 | 13.269 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12322] 1 127/829` |
+| 766 | 13.269 us | `computable` | `generated_sin_p96` | `generated[9889] -6 7/40` |
+| 767 | 13.269 us | `real` | `generated_sin_build` | `generated[10948] 3 37/38` |
+| 768 | 13.250 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14617] 4 111/116` |
+| 769 | 13.250 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15712] 50/59` |
+| 770 | 13.249 us | `computable` | `generated_cos_p96` | `generated[11390] 5 111/155` |
+| 771 | 13.249 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7612] 1 41/65` |
+| 772 | 13.239 us | `computable` | `asinh_p128` | `large_negative` |
+| 773 | 13.239 us | `computable` | `generated_cos_p96` | `generated[17660] 4 5/7` |
+| 774 | 13.239 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10522] -509/704` |
+| 775 | 13.229 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10672] 1 147/299` |
+| 776 | 13.229 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14242] -1 61/210` |
+| 777 | 13.229 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8377] 55 2/15` |
+| 778 | 13.220 us | `computable` | `generated_cos_p96` | `generated[10505] 4 41/52` |
+| 779 | 13.209 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15922] -1 15/41` |
+| 780 | 13.209 us | `computable` | `generated_sin_p96` | `generated[9859] -4 128/201` |
+| 781 | 13.209 us | `computable` | `tan_p96` | `rational[8]=-3 16/113` |
+| 782 | 13.199 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6922] 1 105/454` |
+| 783 | 13.199 us | `computable` | `tan_p96` | `rational[7]=3 16/113` |
+| 784 | 13.189 us | `computable` | `acos_p96` | `mid` |
+| 785 | 13.189 us | `computable` | `generated_tan_p96` | `generated[17166] 6 67/113` |
+| 786 | 13.180 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2467] -40 9/10` |
+| 787 | 13.179 us | `computable` | `generated_sin_p96` | `generated[484] 3 8/9` |
+| 788 | 13.179 us | `computable` | `ln_abs_plus_one_p96` | `rational[5]=7/10` |
+| 789 | 13.169 us | `computable` | `generated_atan_p96` | `generated[15669] -1 62/233` |
+| 790 | 13.169 us | `computable` | `generated_cos_p96` | `generated[1460] -7 37/47` |
+| 791 | 13.169 us | `computable` | `generated_cos_p96` | `generated[7145] 5 91/151` |
+| 792 | 13.169 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6397] 215/376` |
+| 793 | 13.159 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11137] 408/539` |
+| 794 | 13.159 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7702] -1 65/171` |
+| 795 | 13.159 us | `computable` | `generated_tan_p96` | `generated[14586] 3 11/100` |
+| 796 | 13.150 us | `computable` | `generated_cos_p96` | `generated[875] 6 121/131` |
+| 797 | 13.149 us | `computable` | `generated_cos_p96` | `generated[515] 5 42/53` |
+| 798 | 13.149 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14137] -1 67/415` |
+| 799 | 13.139 us | `computable` | `generated_cos_p96` | `generated[9920] -3 69/136` |
+| 800 | 13.129 us | `computable` | `generated_atan_p96` | `generated[159] 1 144/469` |
+| 801 | 13.129 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6577] -638/887` |
+| 802 | 13.129 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9652] -51/62` |
+| 803 | 13.120 us | `computable` | `generated_atan_p96` | `generated[2829] -1 140/239` |
+| 804 | 13.119 us | `computable` | `acosh_p128` | `large` |
+| 805 | 13.110 us | `computable` | `generated_sin_p96` | `generated[11554] 7 29/37` |
+| 806 | 13.109 us | `computable` | `generated_atan_p96` | `generated[4989] -1 231/389` |
+| 807 | 13.109 us | `computable` | `generated_tan_p96` | `generated[12921] 6 51/109` |
+| 808 | 13.099 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9142] 1 129/221` |
+| 809 | 13.089 us | `computable` | `generated_atan_p96` | `generated[8319] 1 220/371` |
+| 810 | 13.089 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16672] 13 2/51` |
+| 811 | 13.089 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3727] -1 31/101` |
+| 812 | 13.080 us | `computable` | `generated_sin_p96` | `generated[3589] -4 147/181` |
+| 813 | 13.080 us | `real` | `generated_sin_build` | `generated[17053] 4 16/119` |
+| 814 | 13.079 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14872] -800/923` |
+| 815 | 13.079 us | `computable` | `generated_sin_p96` | `generated[844] 5 68/115` |
+| 816 | 13.070 us | `computable` | `generated_sin_p96` | `generated[3784] -4 1/9` |
+| 817 | 13.069 us | `computable` | `generated_atan_p96` | `generated[12729] 1 127/214` |
+| 818 | 13.069 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6052] -1 173/809` |
+| 819 | 13.069 us | `computable` | `generated_tan_p96` | `generated[13416] 3 27/134` |
+| 820 | 13.059 us | `computable` | `generated_cos_p96` | `generated[2900] 5 71/147` |
+| 821 | 13.059 us | `computable` | `generated_sin_p96` | `generated[5644] -6 85/116` |
+| 822 | 13.050 us | `computable` | `generated_atan_p96` | `generated[14919] 1 135/497` |
+| 823 | 13.049 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10762] -17 1/2` |
+| 824 | 13.049 us | `computable` | `generated_tan_p96` | `generated[18081] -3 7/45` |
+| 825 | 13.039 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18787] -1 41/821` |
+| 826 | 13.039 us | `computable` | `generated_sin_p96` | `generated[11194] 6 55/86` |
+| 827 | 13.029 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11947] -1 43/173` |
+| 828 | 13.029 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2737] 3 37/288` |
+| 829 | 13.019 us | `computable` | `generated_atan_p96` | `generated[17139] 1 288/485` |
+| 830 | 13.019 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3457] -1 87/169` |
+| 831 | 13.019 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5782] -1 161/541` |
+| 832 | 13.019 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6727] 317/482` |
+| 833 | 13.019 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9802] 1 125/327` |
+| 834 | 13.019 us | `computable` | `generated_sin_p96` | `generated[1564] -4 2/3` |
+| 835 | 13.010 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12757] 4 115/153` |
+| 836 | 13.009 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10627] -840/919` |
+| 837 | 13.009 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11962] 221/268` |
+| 838 | 13.009 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16207] 703/808` |
+| 839 | 13.009 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5557] 1 107/325` |
+| 840 | 13.009 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6382] -176/183` |
+| 841 | 12.999 us | `computable` | `generated_atan_p96` | `generated[2934] -1 128/227` |
+| 842 | 12.999 us | `computable` | `generated_atan_p96` | `generated[7149] -1 46/77` |
+| 843 | 12.999 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13447] -3 25/284` |
+| 844 | 12.999 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16537] 805/914` |
+| 845 | 12.989 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14407] -1 79/683` |
+| 846 | 12.989 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17362] -5 29/182` |
+| 847 | 12.989 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[4897] 1 37/73` |
+| 848 | 12.989 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7417] 1 99/613` |
+| 849 | 12.989 us | `computable` | `generated_sin_p96` | `generated[5779] -3 171/250` |
+| 850 | 12.979 us | `computable` | `generated_cos_p96` | `generated[2375] 6 16/23` |
+| 851 | 12.979 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16372] 754/861` |
+| 852 | 12.979 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18382] -1 23/419` |
+| 853 | 12.970 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11662] 1 135/617` |
+| 854 | 12.969 us | `computable` | `generated_cos_p96` | `generated[15830] -6 45/131` |
+| 855 | 12.969 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12217] -1 49/307` |
+| 856 | 12.969 us | `computable` | `generated_sin_p96` | `generated[15769] 3 125/196` |
+| 857 | 12.960 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16912] 97/200` |
+| 858 | 12.959 us | `computable` | `generated_atan_p96` | `generated[17559] -1 7/12` |
+| 859 | 12.959 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16867] 39 10/23` |
+| 860 | 12.959 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9757] -1 105/277` |
+| 861 | 12.949 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8542] 12 31/34` |
+| 862 | 12.940 us | `computable` | `generated_cos_p96` | `generated[11720] 3 205/261` |
+| 863 | 12.939 us | `computable` | `generated_atan_p96` | `generated[6954] 1 47/81` |
+| 864 | 12.939 us | `computable` | `generated_atan_p96` | `generated[879] -1 281/519` |
+| 865 | 12.939 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6712] -32 5/12` |
+| 866 | 12.939 us | `computable` | `generated_sin_p96` | `generated[15934] 3 17/249` |
+| 867 | 12.929 us | `computable` | `generated_atan_p96` | `generated[17664] -1 319/563` |
+| 868 | 12.929 us | `computable` | `generated_atan_p96` | `generated[2544] 1 59/102` |
+| 869 | 12.929 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15907] 1 19/69` |
+| 870 | 12.929 us | `computable` | `generated_sin_p96` | `generated[15799] 7 99/115` |
+| 871 | 12.919 us | `computable` | `generated_cos_p96` | `generated[13055] 3 27/73` |
+| 872 | 12.919 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11032] 2 91/324` |
+| 873 | 12.919 us | `computable` | `generated_sin_p96` | `generated[14269] -3 67/258` |
+| 874 | 12.909 us | `computable` | `generated_cos_p96` | `generated[12170] -3 16/43` |
+| 875 | 12.909 us | `computable` | `generated_cos_p96` | `generated[3620] -3 16/197` |
+| 876 | 12.899 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14107] -1 177/496` |
+| 877 | 12.899 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5647] -1 155/407` |
+| 878 | 12.890 us | `computable` | `generated_sin_p96` | `generated[5089] 5 88/119` |
+| 879 | 12.879 us | `computable` | `generated_cos_p96` | `generated[11585] -6 109/127` |
+| 880 | 12.879 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12427] 13 14/47` |
+| 881 | 12.869 us | `computable` | `cos_p96` | `rational[7]=3 16/113` |
+| 882 | 12.869 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9742] 87/136` |
+| 883 | 12.869 us | `computable` | `sin_p96` | `rational[7]=3 16/113` |
+| 884 | 12.859 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18247] -1 17/285` |
+| 885 | 12.859 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6757] 1 107/401` |
+| 886 | 12.849 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1312] 1 89/323` |
+| 887 | 12.849 us | `computable` | `generated_sin_p96` | `generated[7474] 5 15/32` |
+| 888 | 12.839 us | `computable` | `generated_atan_p96` | `generated[15399] -1 56/99` |
+| 889 | 12.839 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14722] 244/331` |
+| 890 | 12.839 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15682] 359/730` |
+| 891 | 12.839 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17977] -1 5/17` |
+| 892 | 12.839 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2182] 1 25/97` |
+| 893 | 12.829 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10372] 4 87/112` |
+| 894 | 12.829 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15337] -5 4/83` |
+| 895 | 12.829 us | `computable` | `ln_abs_plus_one_p96` | `rational[3]=1/1000000000000` |
+| 896 | 12.829 us | `computable` | `ln_abs_plus_one_p96` | `rational[4]=-1/1000000000000` |
+| 897 | 12.819 us | `computable` | `generated_atan_p96` | `generated[3909] 1 93/157` |
+| 898 | 12.819 us | `computable` | `generated_atan_p96` | `generated[774] -1 165/304` |
+| 899 | 12.819 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12397] 3 25/64` |
+| 900 | 12.819 us | `computable` | `generated_sin_p96` | `generated[18514] -3 15/262` |
+| 901 | 12.809 us | `computable` | `generated_cos_p96` | `generated[12365] 6 7/15` |
+| 902 | 12.809 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17377] 39/160` |
+| 903 | 12.809 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18652] -1 35/687` |
+| 904 | 12.809 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9892] -1 37/137` |
+| 905 | 12.799 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10162] -1 123/679` |
+| 906 | 12.799 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1432] -1 89/322` |
+| 907 | 12.799 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3502] 1 59/715` |
+| 908 | 12.799 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6472] -307/672` |
+| 909 | 12.799 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7972] -1 71/305` |
+| 910 | 12.799 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8032] -185/224` |
+| 911 | 12.789 us | `computable` | `generated_atan_p96` | `generated[13344] -1 137/263` |
+| 912 | 12.789 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12292] 153/182` |
+| 913 | 12.789 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15547] 499/596` |
+| 914 | 12.780 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13177] -37 5/16` |
+| 915 | 12.779 us | `computable` | `asinh_p128` | `mid` |
+| 916 | 12.779 us | `computable` | `generated_cos_p96` | `generated[11945] -3 61/76` |
+| 917 | 12.779 us | `computable` | `generated_cos_p96` | `generated[18050] -5 95/119` |
+| 918 | 12.779 us | `computable` | `ln_abs_plus_one_p96` | `rational[8]=-3 16/113` |
+| 919 | 12.769 us | `computable` | `generated_atan_p96` | `generated[4599] 2 1/89` |
+| 920 | 12.769 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11167] 1 141/458` |
+| 921 | 12.759 us | `computable` | `generated_cos_p96` | `generated[11885] -3 9/157` |
+| 922 | 12.749 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12157] 1 129/776` |
+| 923 | 12.749 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2137] -1 9/911` |
+| 924 | 12.740 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18112] -1 11/151` |
+| 925 | 12.739 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15952] 79` |
+| 926 | 12.729 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15817] 73/288` |
+| 927 | 12.729 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8767] -172/239` |
+| 928 | 12.719 us | `computable` | `generated_atan_p96` | `generated[11694] -1 18/73` |
+| 929 | 12.719 us | `computable` | `generated_cos_p96` | `generated[6950] 3 67/179` |
+| 930 | 12.710 us | `computable` | `generated_cos_p96` | `generated[3290] -7 72/91` |
+| 931 | 12.709 us | `computable` | `generated_cos_p96` | `generated[15965] -3 176/265` |
+| 932 | 12.709 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15727] -3 12/55` |
+| 933 | 12.699 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2497] -209/312` |
+| 934 | 12.699 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6517] 18 43/52` |
+| 935 | 12.689 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1042] -2 139/378` |
+| 936 | 12.689 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10567] 9 1/4` |
+| 937 | 12.689 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[12097] 523/938` |
+| 938 | 12.689 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7717] 623/800` |
+| 939 | 12.680 us | `computable` | `generated_tan_p96` | `generated[1431] -2 34/225` |
+| 940 | 12.679 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10222] -420/517` |
+| 941 | 12.679 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[15382] 448/543` |
+| 942 | 12.679 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17332] 3 80/263` |
+| 943 | 12.679 us | `real` | `generated_sin_build` | `generated[18913] 4 6/41` |
+| 944 | 12.669 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6112] -600/647` |
+| 945 | 12.660 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18517] -1 29/553` |
+| 946 | 12.659 us | `computable` | `generated_sin_p96` | `generated[14074] 3 29/143` |
+| 947 | 12.649 us | `computable` | `generated_atan_p96` | `generated[15789] 1 16/71` |
+| 948 | 12.639 us | `computable` | `generated_atan_p96` | `generated[11364] 1 121/208` |
+| 949 | 12.639 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2512] 1 71/397` |
+| 950 | 12.639 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[4162] 1 17/309` |
+| 951 | 12.629 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11467] 34/43` |
+| 952 | 12.629 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18802] 233/282` |
+| 953 | 12.629 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8932] -53 1/12` |
+| 954 | 12.629 us | `computable` | `generated_tan_p96` | `generated[18111] -4 19/54` |
+| 955 | 12.620 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[652] 1 3/7` |
+| 956 | 12.619 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[7747] 1 95/719` |
+| 957 | 12.619 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8182] 13 26/43` |
+| 958 | 12.609 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10357] -80/93` |
+| 959 | 12.609 us | `computable` | `generated_sin_p96` | `generated[13579] 6 1/127` |
+| 960 | 12.600 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2842] 1 67/503` |
+| 961 | 12.600 us | `computable` | `generated_sin_p96` | `generated[5449] 6 7/9` |
+| 962 | 12.599 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13327] 179/304` |
+| 963 | 12.599 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[5227] 1 109/272` |
+| 964 | 12.590 us | `computable` | `generated_atan_p96` | `generated[669] -1 49/89` |
+| 965 | 12.589 us | `computable` | `generated_cos_p96` | `generated[15440] 3 123/187` |
+| 966 | 12.589 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10027] -1 117/545` |
+| 967 | 12.589 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16702] 856/967` |
+| 968 | 12.589 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1732] -500/509` |
+| 969 | 12.589 us | `computable` | `generated_sin_p96` | `generated[2344] 3 39/53` |
+| 970 | 12.579 us | `computable` | `generated_atan_p96` | `generated[9309] 1 16/53` |
+| 971 | 12.570 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16012] 461/836` |
+| 972 | 12.560 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14467] -380/521` |
+| 973 | 12.559 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[13522] 1 1/29` |
+| 974 | 12.559 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[14842] -141 4/7` |
+| 975 | 12.559 us | `real` | `generated_sin_build` | `generated[13333] 4 24/193` |
+| 976 | 12.549 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1462] -220/241` |
+| 977 | 12.549 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[18982] -620/793` |
+| 978 | 12.539 us | `computable` | `generated_sin_p96` | `generated[16159] -5 51/70` |
+| 979 | 12.529 us | `computable` | `generated_cos_p96` | `generated[17495] 6 21/61` |
+| 980 | 12.529 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16192] -1 3/25` |
+| 981 | 12.529 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17002] 4 139/157` |
+| 982 | 12.529 us | `real` | `generated_sin_build` | `generated[15718] 4 2/9` |
+| 983 | 12.520 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17767] 1 7/73` |
+| 984 | 12.520 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9262] -4 63/118` |
+| 985 | 12.519 us | `computable` | `generated_sin_p96` | `generated[1204] 6 24/35` |
+| 986 | 12.519 us | `computable` | `generated_sin_p96` | `generated[9334] 5 36/41` |
+| 987 | 12.509 us | `computable` | `generated_sin_p96` | `generated[3619] -6 4/5` |
+| 988 | 12.500 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[10492] -140/157` |
+| 989 | 12.499 us | `computable` | `generated_atan_p96` | `generated[11394] -1 278/543` |
+| 990 | 12.499 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2032] -589/696` |
+| 991 | 12.499 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[6412] -689/834` |
+| 992 | 12.490 us | `computable` | `generated_sin_p96` | `generated[18184] -5 41/52` |
+| 993 | 12.489 us | `computable` | `generated_atan_p96` | `generated[15939] -1 68/367` |
+| 994 | 12.489 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[1867] -640/643` |
+| 995 | 12.489 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[3832] 1 55/821` |
+| 996 | 12.489 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[8842] 3 8/85` |
+| 997 | 12.479 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[2002] -1 1/259` |
+| 998 | 12.470 us | `computable` | `generated_cos_p96` | `generated[4760] 5 52/55` |
+| 999 | 12.470 us | `computable` | `generated_sin_p96` | `generated[5584] 3 1/139` |
 
 ## Query Hints
 

@@ -307,6 +307,140 @@ fn collect_rows(filters: &[String]) -> BTreeMap<String, hyperreal::dispatch_trac
         black_box(pi_minus_three.zero_status());
         black_box(pi_minus_three.structural_facts());
     });
+    trace_row(&mut rows, filters, "real/stable_scalar_substrate", || {
+        let tiny = Real::new(tiny());
+        let near_one = Real::new(near_one());
+        black_box(tiny.clone().ln_1p().unwrap());
+        black_box(tiny.clone().ln_1m().unwrap());
+        black_box(tiny.clone().expm1());
+        black_box(Real::from(64_i32).softplus().unwrap());
+        black_box(Real::from(-64_i32).softplus().unwrap());
+        black_box(Real::logaddexp(&Real::from(64_i32), &tiny).unwrap());
+        black_box(Real::logsubexp(&Real::one(), &near_one).unwrap());
+        black_box(Real::from(64_i32).sigmoid().unwrap());
+        black_box(near_one.logit().unwrap());
+        black_box(tiny.clone().sqrt1pm1().unwrap());
+        black_box(tiny.sqrt1m1().unwrap());
+        black_box(Real::from(-27_i32).cbrt().unwrap());
+        black_box(Real::from(81_i32).root_n(4).unwrap());
+        black_box(
+            Real::from(-8_i32)
+                .pow_rational(Rational::fraction(1, 3).unwrap())
+                .unwrap(),
+        );
+        black_box(Real::new(rational(7, 3)).floor_certified().unwrap());
+        black_box(
+            Real::new(rational(-17, 5))
+                .rem_euclid_certified(&Real::from(3_i32))
+                .unwrap(),
+        );
+    });
+    trace_row(
+        &mut rows,
+        filters,
+        "real/geometry_polynomial_substrate",
+        || {
+            let tiny = Real::new(tiny());
+            let half = Real::new(rational(1, 2));
+            black_box(Real::new(rational(1, 6)).sin_pi());
+            black_box(Real::new(rational(1, 4)).cos_pi());
+            black_box(Real::new(rational(1, 3)).tan_pi().unwrap());
+            black_box(Real::zero().sinc().unwrap());
+            black_box(tiny.clone().sinc().unwrap());
+            black_box(half.clone().sinc_pi().unwrap());
+            black_box(tiny.clone().cosc().unwrap());
+            black_box(Real::zero().atan2(-Real::one()));
+            black_box(Real::one().atan2(-Real::one()));
+            black_box(Real::hypot2(&Real::from(3_i32), &Real::from(4_i32)).unwrap());
+            black_box(
+                Real::hypot3(&Real::from(2_i32), &Real::from(3_i32), &Real::from(6_i32)).unwrap(),
+            );
+            black_box(Real::hypot_minus(&Real::from(1_000_000_i32), &tiny).unwrap());
+            black_box(Real::mul_add(&Real::zero(), &Real::pi(), &Real::e()));
+            let left = vec![Real::pi(), Real::e(), Real::from(7_i32), Real::from(11_i32)];
+            let right = vec![Real::from(2_i32), Real::pi(), Real::e(), Real::from(13_i32)];
+            black_box(Real::sum_products(&left, &right).unwrap());
+            black_box(Real::diff_of_products(
+                &Real::new(rational(10_000_001, 10_000_000)),
+                &Real::new(rational(9_999_999, 10_000_000)),
+                &Real::one(),
+                &Real::one(),
+            ));
+            let coeffs = vec![
+                Real::from(5_i32),
+                Real::new(rational(-7, 3)),
+                Real::pi(),
+                Real::from(11_i32),
+                Real::new(rational(13, 17)),
+            ];
+            let den = vec![
+                Real::one(),
+                Real::new(rational(1, 5)),
+                Real::new(rational(1, 7)),
+            ];
+            black_box(Real::eval_poly(&coeffs, &half));
+            black_box(Real::eval_rational_poly(&coeffs, &den, &half).unwrap());
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "real/normal_scientific_substrate",
+        || {
+            let zero = Real::zero();
+            let one = Real::one();
+            let half = Real::new(rational(1, 2));
+            let two = Real::from(2_i32);
+            let three = Real::from(3_i32);
+            let tail = Real::from(6_i32);
+            let gamma_half = Real::new(rational(1, 2));
+            let gamma_three_half = Real::new(rational(3, 2));
+            black_box(zero.clone().erfc());
+            black_box(tail.clone().erfcx().unwrap());
+            black_box(tail.clone().normal_sf().unwrap());
+            black_box(tail.clone().pnorm_upper().unwrap());
+            black_box((-tail.clone()).log_pnorm().unwrap());
+            black_box(tail.clone().log_normal_sf().unwrap());
+            black_box(tail.clone().log_dnorm().unwrap());
+            black_box(
+                Real::normal_interval(
+                    &Real::new(rational(1, 10)),
+                    &Real::new(rational(100_000_001, 1_000_000_000)),
+                )
+                .unwrap(),
+            );
+            black_box(half.clone().erfinv().unwrap());
+            black_box(Real::new(rational(1, 1_000_000)).erfcinv().unwrap());
+            black_box(Real::new(rational(1, 1_000_000)).qnorm_upper().unwrap());
+            black_box(
+                tail.clone()
+                    .normal_pdf(&Real::from(2_i32), &Real::new(rational(3, 2)))
+                    .unwrap(),
+            );
+            black_box(
+                tail.clone()
+                    .normal_survival(&Real::from(2_i32), &Real::new(rational(3, 2)))
+                    .unwrap(),
+            );
+            black_box(tail.clone().normal_mills().unwrap());
+            black_box(tail.normal_hazard().unwrap());
+            black_box(Real::hermite_probabilists(8, &two));
+            black_box(two.clone().dnorm_derivative(4).unwrap());
+            black_box(Real::standard_normal_moment(12));
+            black_box(Real::normal_interval_moment(&zero, &one, 3).unwrap());
+            black_box(Real::truncated_normal_mean(&zero, &one).unwrap());
+            black_box(Real::from(8_i32).gamma().unwrap());
+            black_box(gamma_half.clone().gamma().unwrap());
+            black_box(gamma_three_half.clone().lgamma().unwrap());
+            black_box(Real::beta(&two, &three).unwrap());
+            black_box(Real::ln_beta(&gamma_half, &gamma_three_half).unwrap());
+            black_box(Real::regularized_beta(&two, &three, &half).unwrap());
+            black_box(Real::regularized_beta_q(&two, &three, &half).unwrap());
+            black_box(Real::regularized_gamma_p(&gamma_three_half, &one).unwrap());
+            black_box(Real::regularized_gamma_q(&three, &one).unwrap());
+            black_box(Real::chi_square_sf(&two, 5).unwrap());
+        },
+    );
     trace_row(
         &mut rows,
         filters,

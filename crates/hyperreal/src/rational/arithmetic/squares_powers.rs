@@ -103,6 +103,36 @@ impl Rational {
             && self.denominator.bits() < Self::EXTRACT_SQUARE_MAX_LEN
     }
 
+    /// Return the exact nth root when both numerator and denominator are
+    /// perfect nth powers. Negative values are supported for odd `n`.
+    pub fn perfect_nth_root(&self, n: u32) -> Option<Self> {
+        if n == 0 {
+            return None;
+        }
+        if self.sign == NoSign {
+            return Some(Self::zero());
+        }
+        if self.sign == Minus && n.is_multiple_of(2) {
+            return None;
+        }
+
+        let numerator = self.numerator.nth_root(n);
+        if numerator.pow(n) != self.numerator {
+            return None;
+        }
+
+        let denominator = self.denominator.nth_root(n);
+        if denominator.pow(n) != self.denominator {
+            return None;
+        }
+
+        Some(Self {
+            sign: self.sign,
+            numerator,
+            denominator,
+        })
+    }
+
     // This could grow unreasonably in terms of object size
     // so only call this for modest exp values
     fn pow_up(&self, exp: &BigUint) -> Self {
@@ -162,4 +192,3 @@ impl Rational {
         }
     }
 }
-

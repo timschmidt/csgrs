@@ -353,6 +353,217 @@ fn collect_real_cases(out: &mut Vec<TimedCase>) {
         out.push(time_case("real", "mul", input.clone(), || &left * &right));
         out.push(time_case("real", "div", input, || &left / &right));
     }
+
+    let zero = Real::zero();
+    let one = Real::one();
+    let tiny_real = real(tiny());
+    let near_one_real = real(near_one());
+    let minus_tiny_real = real(-tiny());
+    let large = real(Rational::new(64));
+    let negative_large = real(Rational::new(-64));
+    let tail = real(Rational::new(6));
+    let normal_lo = real(rational(1, 10));
+    let normal_hi = real(rational(100_000_001, 1_000_000_000));
+    let half = real(rational(1, 2));
+    let two = real(Rational::new(2));
+    let three = real(Rational::new(3));
+    let gamma_half = real(rational(1, 2));
+    let gamma_three_half = real(rational(3, 2));
+    let coeffs = vec![
+        real(Rational::new(5)),
+        real(rational(-7, 3)),
+        Real::pi(),
+        real(Rational::new(11)),
+        real(rational(13, 17)),
+    ];
+    let den_coeffs = vec![Real::one(), real(rational(1, 5)), real(rational(1, 7))];
+
+    for (operation, input, case) in [
+        ("ln_1p_build", "tiny", tiny_real.clone()),
+        ("ln_1p_build", "minus_tiny", minus_tiny_real.clone()),
+        ("ln_1m_build", "tiny", tiny_real.clone()),
+        ("expm1_build", "tiny", tiny_real.clone()),
+        ("softplus_build", "large_positive", large.clone()),
+        ("softplus_build", "large_negative", negative_large.clone()),
+        ("sigmoid_build", "large_positive", large.clone()),
+        ("logit_build", "near_one", near_one_real.clone()),
+        ("sqrt1pm1_build", "tiny", tiny_real.clone()),
+        ("sqrt1m1_build", "tiny", tiny_real.clone()),
+        ("cbrt_build", "negative_perfect", real(Rational::new(-27))),
+        ("root_n_build", "perfect_fourth", real(Rational::new(81))),
+        (
+            "pow_rational_build",
+            "negative_odd_denominator",
+            real(Rational::new(-8)),
+        ),
+        ("sin_pi_build", "one_sixth", real(rational(1, 6))),
+        ("cos_pi_build", "one_fourth", real(rational(1, 4))),
+        ("tan_pi_build", "one_third", real(rational(1, 3))),
+        ("sinc_build", "zero", zero.clone()),
+        ("sinc_build", "tiny", tiny_real.clone()),
+        ("sinc_pi_build", "half", half.clone()),
+        ("cosc_build", "tiny", tiny_real.clone()),
+        ("erfc_build", "tail", tail.clone()),
+        ("erfcx_build", "tail", tail.clone()),
+        ("normal_sf_build", "tail", tail.clone()),
+        ("log_normal_sf_build", "tail", tail.clone()),
+        ("gamma_build", "half", gamma_half.clone()),
+        ("lgamma_build", "three_half", gamma_three_half.clone()),
+    ] {
+        let name = input.to_owned();
+        match operation {
+            "ln_1p_build" => out.push(time_case("real", operation, name, || case.clone().ln_1p())),
+            "ln_1m_build" => out.push(time_case("real", operation, name, || case.clone().ln_1m())),
+            "expm1_build" => out.push(time_case("real", operation, name, || case.clone().expm1())),
+            "softplus_build" => out.push(time_case("real", operation, name, || {
+                case.clone().softplus()
+            })),
+            "sigmoid_build" => out.push(time_case("real", operation, name, || {
+                case.clone().sigmoid()
+            })),
+            "logit_build" => out.push(time_case("real", operation, name, || case.clone().logit())),
+            "sqrt1pm1_build" => out.push(time_case("real", operation, name, || {
+                case.clone().sqrt1pm1()
+            })),
+            "sqrt1m1_build" => out.push(time_case("real", operation, name, || {
+                case.clone().sqrt1m1()
+            })),
+            "cbrt_build" => out.push(time_case("real", operation, name, || case.clone().cbrt())),
+            "root_n_build" => out.push(time_case("real", operation, name, || {
+                case.clone().root_n(4)
+            })),
+            "pow_rational_build" => out.push(time_case("real", operation, name, || {
+                case.clone().pow_rational(rational(1, 3))
+            })),
+            "sin_pi_build" => {
+                out.push(time_case("real", operation, name, || case.clone().sin_pi()))
+            }
+            "cos_pi_build" => {
+                out.push(time_case("real", operation, name, || case.clone().cos_pi()))
+            }
+            "tan_pi_build" => {
+                out.push(time_case("real", operation, name, || case.clone().tan_pi()))
+            }
+            "sinc_build" => out.push(time_case("real", operation, name, || case.clone().sinc())),
+            "sinc_pi_build" => out.push(time_case("real", operation, name, || {
+                case.clone().sinc_pi()
+            })),
+            "cosc_build" => out.push(time_case("real", operation, name, || case.clone().cosc())),
+            "erfc_build" => out.push(time_case("real", operation, name, || case.clone().erfc())),
+            "erfcx_build" => out.push(time_case("real", operation, name, || case.clone().erfcx())),
+            "normal_sf_build" => out.push(time_case("real", operation, name, || {
+                case.clone().normal_sf()
+            })),
+            "log_normal_sf_build" => out.push(time_case("real", operation, name, || {
+                case.clone().log_normal_sf()
+            })),
+            "gamma_build" => out.push(time_case("real", operation, name, || case.clone().gamma())),
+            "lgamma_build" => {
+                out.push(time_case("real", operation, name, || case.clone().lgamma()))
+            }
+            _ => unreachable!("all operations handled above"),
+        }
+    }
+
+    out.push(time_case(
+        "real",
+        "logaddexp_build",
+        "dominant_large_vs_tiny".to_owned(),
+        || Real::logaddexp(&large, &tiny_real),
+    ));
+    out.push(time_case(
+        "real",
+        "logsubexp_build",
+        "one_vs_near_one".to_owned(),
+        || Real::logsubexp(&one, &near_one_real),
+    ));
+    out.push(time_case(
+        "real",
+        "atan2_axis_build",
+        "zero_negative_x".to_owned(),
+        || zero.clone().atan2(-one.clone()),
+    ));
+    out.push(time_case(
+        "real",
+        "atan2_quadrant_build",
+        "positive_y_negative_x".to_owned(),
+        || one.clone().atan2(-one.clone()),
+    ));
+    out.push(time_case("real", "hypot2_build", "3_4".to_owned(), || {
+        Real::hypot2(&real(Rational::new(3)), &real(Rational::new(4)))
+    }));
+    out.push(time_case(
+        "real",
+        "hypot3_build",
+        "2_3_6".to_owned(),
+        || {
+            Real::hypot3(
+                &real(Rational::new(2)),
+                &real(Rational::new(3)),
+                &real(Rational::new(6)),
+            )
+        },
+    ));
+    out.push(time_case(
+        "real",
+        "hypot_minus_build",
+        "large_tiny".to_owned(),
+        || Real::hypot_minus(&real(Rational::new(1_000_000)), &tiny_real),
+    ));
+    out.push(time_case(
+        "real",
+        "rem_euclid_certified_build",
+        "negative_rational_mod_positive".to_owned(),
+        || real(rational(-17, 5)).rem_euclid_certified(&real(Rational::new(3))),
+    ));
+    out.push(time_case(
+        "real",
+        "normal_interval_build",
+        "narrow".to_owned(),
+        || Real::normal_interval(&normal_lo, &normal_hi),
+    ));
+    out.push(time_case(
+        "real",
+        "normal_interval_moment_build",
+        "zero_one_third".to_owned(),
+        || Real::normal_interval_moment(&zero, &one, 3),
+    ));
+    out.push(time_case(
+        "real",
+        "truncated_normal_mean_build",
+        "zero_one".to_owned(),
+        || Real::truncated_normal_mean(&zero, &one),
+    ));
+    out.push(time_case(
+        "real",
+        "regularized_beta_build",
+        "2_3_half".to_owned(),
+        || Real::regularized_beta(&two, &three, &half),
+    ));
+    out.push(time_case(
+        "real",
+        "regularized_gamma_p_build",
+        "3_half_1".to_owned(),
+        || Real::regularized_gamma_p(&gamma_three_half, &one),
+    ));
+    out.push(time_case(
+        "real",
+        "chi_square_sf_build",
+        "x2_k5".to_owned(),
+        || Real::chi_square_sf(&two, 5),
+    ));
+    out.push(time_case(
+        "real",
+        "eval_poly_build",
+        "mixed_coeffs".to_owned(),
+        || Real::eval_poly(&coeffs, &half),
+    ));
+    out.push(time_case(
+        "real",
+        "eval_rational_poly_build",
+        "mixed_coeffs".to_owned(),
+        || Real::eval_rational_poly(&coeffs, &den_coeffs, &half),
+    ));
 }
 
 fn collect_generated_fuzz_cases(out: &mut Vec<TimedCase>) {

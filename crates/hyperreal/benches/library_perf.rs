@@ -394,7 +394,311 @@ const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
             },
         ],
     },
+    BenchGroupDoc {
+        name: "real_stable_scalar_substrate",
+        description: "Stable scalar constructors that preserve small residuals, dominance, roots, rational powers, and certified integer decisions.",
+        benches: &[
+            BenchDoc {
+                name: "ln_1p_tiny",
+                description: "Builds ln(1 + tiny) without first adding one generically.",
+            },
+            BenchDoc {
+                name: "ln_1m_tiny",
+                description: "Builds ln(1 - tiny) through the log1p companion path.",
+            },
+            BenchDoc {
+                name: "expm1_tiny",
+                description: "Builds exp(tiny) - 1 through the dedicated expm1 node.",
+            },
+            BenchDoc {
+                name: "softplus_large_positive",
+                description: "Builds softplus for a dominant positive input.",
+            },
+            BenchDoc {
+                name: "softplus_large_negative",
+                description: "Builds softplus for a dominant negative input.",
+            },
+            BenchDoc {
+                name: "logaddexp_dominant",
+                description: "Builds logaddexp when one side is certifiably dominant.",
+            },
+            BenchDoc {
+                name: "logsubexp_near",
+                description: "Builds logsubexp for a certifiably positive but small log-space difference.",
+            },
+            BenchDoc {
+                name: "sigmoid_large_positive",
+                description: "Builds a large positive sigmoid through the stable tail path.",
+            },
+            BenchDoc {
+                name: "logit_near_one",
+                description: "Builds logit close to the upper probability boundary.",
+            },
+            BenchDoc {
+                name: "sqrt1pm1_tiny",
+                description: "Builds sqrt(1 + tiny) - 1 through the stable helper.",
+            },
+            BenchDoc {
+                name: "sqrt1m1_tiny",
+                description: "Builds sqrt(1 - tiny) - 1 through the stable helper.",
+            },
+            BenchDoc {
+                name: "cbrt_negative_perfect",
+                description: "Collapses a negative perfect cube.",
+            },
+            BenchDoc {
+                name: "root_n_perfect_fourth",
+                description: "Collapses an exact fourth root.",
+            },
+            BenchDoc {
+                name: "pow_rational_negative_odd_denominator",
+                description: "Routes a negative rational base through odd-root symmetry.",
+            },
+            BenchDoc {
+                name: "floor_certified_rational",
+                description: "Certifies rational floor structurally.",
+            },
+            BenchDoc {
+                name: "rem_euclid_certified_rational",
+                description: "Computes rational Euclidean remainder through certified quotient floor.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "real_geometry_polynomial_substrate",
+        description: "Geometry-facing scalar helpers for rational-turn trig, removable small-angle limits, vectors, product sums, and polynomial forms.",
+        benches: &[
+            BenchDoc {
+                name: "sin_pi_one_sixth",
+                description: "Uses exact rational-turn sine.",
+            },
+            BenchDoc {
+                name: "cos_pi_one_fourth",
+                description: "Uses exact rational-turn cosine.",
+            },
+            BenchDoc {
+                name: "tan_pi_one_third",
+                description: "Uses exact rational-turn tangent.",
+            },
+            BenchDoc {
+                name: "sinc_zero",
+                description: "Returns the removable sinc limit at zero.",
+            },
+            BenchDoc {
+                name: "sinc_tiny",
+                description: "Builds sinc for a tiny exact input.",
+            },
+            BenchDoc {
+                name: "sinc_pi_half",
+                description: "Builds normalized sinc for an exact half turn.",
+            },
+            BenchDoc {
+                name: "cosc_tiny",
+                description: "Builds the small-angle (1 - cos x) / x^2 helper.",
+            },
+            BenchDoc {
+                name: "atan2_axis",
+                description: "Classifies an axis-aligned atan2 input exactly.",
+            },
+            BenchDoc {
+                name: "atan2_quadrant",
+                description: "Builds a quadrant-correct atan2 expression.",
+            },
+            BenchDoc {
+                name: "hypot2_3_4",
+                description: "Collapses a 3-4-5 norm through exact dot products.",
+            },
+            BenchDoc {
+                name: "hypot3_2_3_6",
+                description: "Collapses a 2-3-6 norm through exact dot products.",
+            },
+            BenchDoc {
+                name: "hypot_minus_tiny",
+                description: "Uses rationalized hypot-minus for cancellation resistance.",
+            },
+            BenchDoc {
+                name: "mul_add_zero_product",
+                description: "Skips a known-zero product lane.",
+            },
+            BenchDoc {
+                name: "sum_products_dense",
+                description: "Builds a dense product sum.",
+            },
+            BenchDoc {
+                name: "diff_of_products_near_cancel",
+                description: "Preserves determinant-like product difference structure.",
+            },
+            BenchDoc {
+                name: "eval_poly_horner",
+                description: "Evaluates a polynomial through Horner form.",
+            },
+            BenchDoc {
+                name: "eval_rational_poly",
+                description: "Evaluates numerator and denominator polynomial forms before division.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "real_normal_scientific_substrate",
+        description: "Gaussian tail helpers and exact/finite scientific special-function forms added for higher numerical workloads.",
+        benches: &[
+            BenchDoc {
+                name: "erfc_zero",
+                description: "Takes the exact erfc(0) exit.",
+            },
+            BenchDoc {
+                name: "erfcx_tail",
+                description: "Builds scaled erfc in a positive tail.",
+            },
+            BenchDoc {
+                name: "normal_sf_tail",
+                description: "Builds standard-normal upper-tail probability.",
+            },
+            BenchDoc {
+                name: "pnorm_upper_tail",
+                description: "Builds the upper-tail alias.",
+            },
+            BenchDoc {
+                name: "log_pnorm_tail",
+                description: "Builds lower log-CDF tail form.",
+            },
+            BenchDoc {
+                name: "log_normal_sf_tail",
+                description: "Builds upper log-survival tail form.",
+            },
+            BenchDoc {
+                name: "log_dnorm_large",
+                description: "Builds analytic log-density at a large input.",
+            },
+            BenchDoc {
+                name: "normal_interval_narrow",
+                description: "Builds a narrow interval mass without spelling pnorm subtraction.",
+            },
+            BenchDoc {
+                name: "erfinv_mid",
+                description: "Builds inverse error function through qnorm transform.",
+            },
+            BenchDoc {
+                name: "erfcinv_tail",
+                description: "Builds inverse complementary error function through tail qnorm transform.",
+            },
+            BenchDoc {
+                name: "qnorm_upper_tail",
+                description: "Builds inverse survival quantile.",
+            },
+            BenchDoc {
+                name: "normal_pdf_parametric",
+                description: "Standardizes exactly before density construction.",
+            },
+            BenchDoc {
+                name: "normal_survival_parametric",
+                description: "Standardizes exactly before upper-tail construction.",
+            },
+            BenchDoc {
+                name: "normal_mills_tail",
+                description: "Builds Mills ratio through erfcx identity.",
+            },
+            BenchDoc {
+                name: "normal_hazard_tail",
+                description: "Builds reciprocal Mills hazard.",
+            },
+            BenchDoc {
+                name: "hermite_8",
+                description: "Builds an exact probabilists' Hermite polynomial.",
+            },
+            BenchDoc {
+                name: "dnorm_derivative_4",
+                description: "Combines exact Hermite polynomial with normal density.",
+            },
+            BenchDoc {
+                name: "standard_normal_moment_12",
+                description: "Uses double-factorial closed form.",
+            },
+            BenchDoc {
+                name: "normal_interval_moment_3",
+                description: "Uses interval mass and density-boundary recurrence.",
+            },
+            BenchDoc {
+                name: "truncated_normal_mean",
+                description: "Builds truncated-normal mean from stable interval mass.",
+            },
+            BenchDoc {
+                name: "gamma_integer",
+                description: "Uses exact integer gamma closed form.",
+            },
+            BenchDoc {
+                name: "gamma_half_integer",
+                description: "Uses exact half-integer gamma closed form.",
+            },
+            BenchDoc {
+                name: "lgamma_half_integer",
+                description: "Logs the absolute half-integer gamma value.",
+            },
+            BenchDoc {
+                name: "beta_integer",
+                description: "Builds beta through exact gamma ratio.",
+            },
+            BenchDoc {
+                name: "ln_beta_half_integer",
+                description: "Builds log beta through lgamma sum.",
+            },
+            BenchDoc {
+                name: "regularized_beta_mid",
+                description: "Uses finite positive-integer beta binomial tail.",
+            },
+            BenchDoc {
+                name: "regularized_beta_q_mid",
+                description: "Uses finite positive-integer beta upper-tail form.",
+            },
+            BenchDoc {
+                name: "regularized_gamma_p_half",
+                description: "Uses half-integer incomplete-gamma recurrence.",
+            },
+            BenchDoc {
+                name: "regularized_gamma_q_integer",
+                description: "Uses integer incomplete-gamma recurrence.",
+            },
+            BenchDoc {
+                name: "chi_square_sf",
+                description: "Wraps regularized upper gamma for chi-square upper tail.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "simple_new_function_surface",
+        description: "Parser and evaluator coverage for the newly exposed stable scalar, geometry, normal, and scientific functions.",
+        benches: &[
+            BenchDoc {
+                name: "stable_log_exp_bundle",
+                description: "Evaluates log1p/log1m/expm1/softplus/logaddexp/logsubexp/sigmoid/logit together.",
+            },
+            BenchDoc {
+                name: "geometry_bundle",
+                description: "Evaluates rational-turn trig, small-angle helpers, vector norms, product sums, and polynomials together.",
+            },
+            BenchDoc {
+                name: "normal_bundle",
+                description: "Evaluates normal tails, log tails, interval mass, inverse tails, and moments together.",
+            },
+            BenchDoc {
+                name: "scientific_bundle",
+                description: "Evaluates gamma, beta, regularized gamma/beta, and chi-square forms together.",
+            },
+            BenchDoc {
+                name: "error_bundle",
+                description: "Exercises fast domain failures for new public functions.",
+            },
+        ],
+    },
 ];
+
+fn rational(n: i64, d: u64) -> Rational {
+    Rational::fraction(n, d).unwrap()
+}
+
+fn real(n: i64, d: u64) -> Real {
+    Real::new(rational(n, d))
+}
 
 fn bench_real_format(c: &mut Criterion) {
     bench_docs::write_benchmark_docs(
@@ -983,6 +1287,568 @@ fn bench_real_exact_exp_log10(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_real_stable_scalar_substrate(c: &mut Criterion) {
+    let mut group = c.benchmark_group("real_stable_scalar_substrate");
+    let tiny = real(1, 1_000_000_000_000);
+    let near_one = real(999_999, 1_000_000);
+    let large = Real::from(64_i32);
+    let negative_large = Real::from(-64_i32);
+    let root_base = Real::from(-27_i32);
+    let perfect_fourth = Real::from(81_i32);
+    let negative_pow = Real::from(-8_i32);
+    let odd_third = rational(1, 3);
+    let rational_floor = real(7, 3);
+    let rational_rem = real(-17, 5);
+    let modulus = Real::from(3_i32);
+
+    group.bench_function("ln_1p_tiny", |b| {
+        b.iter_batched(
+            || tiny.clone(),
+            |value| black_box(value.ln_1p().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("ln_1m_tiny", |b| {
+        b.iter_batched(
+            || tiny.clone(),
+            |value| black_box(value.ln_1m().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("expm1_tiny", |b| {
+        b.iter_batched(
+            || tiny.clone(),
+            |value| black_box(value.expm1()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("softplus_large_positive", |b| {
+        b.iter_batched(
+            || large.clone(),
+            |value| black_box(value.softplus().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("softplus_large_negative", |b| {
+        b.iter_batched(
+            || negative_large.clone(),
+            |value| black_box(value.softplus().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("logaddexp_dominant", |b| {
+        b.iter_batched(
+            || (large.clone(), tiny.clone()),
+            |(a, b)| black_box(Real::logaddexp(&a, &b).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("logsubexp_near", |b| {
+        b.iter_batched(
+            || (Real::one(), near_one.clone()),
+            |(a, b)| black_box(Real::logsubexp(&a, &b).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("sigmoid_large_positive", |b| {
+        b.iter_batched(
+            || large.clone(),
+            |value| black_box(value.sigmoid().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("logit_near_one", |b| {
+        b.iter_batched(
+            || near_one.clone(),
+            |value| black_box(value.logit().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("sqrt1pm1_tiny", |b| {
+        b.iter_batched(
+            || tiny.clone(),
+            |value| black_box(value.sqrt1pm1().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("sqrt1m1_tiny", |b| {
+        b.iter_batched(
+            || tiny.clone(),
+            |value| black_box(value.sqrt1m1().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("cbrt_negative_perfect", |b| {
+        b.iter_batched(
+            || root_base.clone(),
+            |value| black_box(value.cbrt().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("root_n_perfect_fourth", |b| {
+        b.iter_batched(
+            || perfect_fourth.clone(),
+            |value| black_box(value.root_n(4).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("pow_rational_negative_odd_denominator", |b| {
+        b.iter_batched(
+            || (negative_pow.clone(), odd_third.clone()),
+            |(value, exponent)| black_box(value.pow_rational(exponent).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("floor_certified_rational", |b| {
+        b.iter_batched(
+            || rational_floor.clone(),
+            |value| black_box(value.floor_certified().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("rem_euclid_certified_rational", |b| {
+        b.iter_batched(
+            || (rational_rem.clone(), modulus.clone()),
+            |(value, modulus)| black_box(value.rem_euclid_certified(&modulus).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+
+    group.finish();
+}
+
+fn bench_real_geometry_polynomial_substrate(c: &mut Criterion) {
+    let mut group = c.benchmark_group("real_geometry_polynomial_substrate");
+    let tiny = real(1, 1_000_000_000_000);
+    let half = real(1, 2);
+    let one_sixth = real(1, 6);
+    let one_fourth = real(1, 4);
+    let one_third = real(1, 3);
+    let zero = Real::zero();
+    let one = Real::one();
+    let minus_one = -Real::one();
+    let three = Real::from(3_i32);
+    let four = Real::from(4_i32);
+    let six = Real::from(6_i32);
+    let coeffs = vec![
+        Real::from(5_i32),
+        real(-7, 3),
+        Real::pi(),
+        Real::from(11_i32),
+        real(13, 17),
+    ];
+    let den_coeffs = vec![Real::one(), real(1, 5), real(1, 7)];
+    let dense_left = vec![Real::pi(), Real::e(), Real::from(7_i32), Real::from(11_i32)];
+    let dense_right = vec![Real::from(2_i32), Real::pi(), Real::e(), Real::from(13_i32)];
+
+    group.bench_function("sin_pi_one_sixth", |b| {
+        b.iter_batched(
+            || one_sixth.clone(),
+            |value| black_box(value.sin_pi()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("cos_pi_one_fourth", |b| {
+        b.iter_batched(
+            || one_fourth.clone(),
+            |value| black_box(value.cos_pi()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("tan_pi_one_third", |b| {
+        b.iter_batched(
+            || one_third.clone(),
+            |value| black_box(value.tan_pi().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("sinc_zero", |b| {
+        b.iter_batched(
+            Real::zero,
+            |value| black_box(value.sinc().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("sinc_tiny", |b| {
+        b.iter_batched(
+            || tiny.clone(),
+            |value| black_box(value.sinc().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("sinc_pi_half", |b| {
+        b.iter_batched(
+            || half.clone(),
+            |value| black_box(value.sinc_pi().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("cosc_tiny", |b| {
+        b.iter_batched(
+            || tiny.clone(),
+            |value| black_box(value.cosc().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atan2_axis", |b| {
+        b.iter_batched(
+            || (zero.clone(), minus_one.clone()),
+            |(y, x)| black_box(y.atan2(x)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atan2_quadrant", |b| {
+        b.iter_batched(
+            || (one.clone(), minus_one.clone()),
+            |(y, x)| black_box(y.atan2(x)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("hypot2_3_4", |b| {
+        b.iter_batched(
+            || (three.clone(), four.clone()),
+            |(x, y)| black_box(Real::hypot2(&x, &y).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("hypot3_2_3_6", |b| {
+        b.iter_batched(
+            || (Real::from(2_i32), three.clone(), six.clone()),
+            |(x, y, z)| black_box(Real::hypot3(&x, &y, &z).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("hypot_minus_tiny", |b| {
+        b.iter_batched(
+            || (Real::from(1_000_000_i32), tiny.clone()),
+            |(x, y)| black_box(Real::hypot_minus(&x, &y).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("mul_add_zero_product", |b| {
+        b.iter_batched(
+            || (Real::zero(), Real::pi(), Real::e()),
+            |(a, b, c)| black_box(Real::mul_add(&a, &b, &c)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("sum_products_dense", |b| {
+        b.iter_batched(
+            || (dense_left.clone(), dense_right.clone()),
+            |(left, right)| black_box(Real::sum_products(&left, &right).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("diff_of_products_near_cancel", |b| {
+        b.iter(|| {
+            black_box(Real::diff_of_products(
+                &real(10_000_001, 10_000_000),
+                &real(9_999_999, 10_000_000),
+                &Real::one(),
+                &Real::one(),
+            ))
+        })
+    });
+    group.bench_function("eval_poly_horner", |b| {
+        b.iter_batched(
+            || (coeffs.clone(), half.clone()),
+            |(coeffs, x)| black_box(Real::eval_poly(&coeffs, &x)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("eval_rational_poly", |b| {
+        b.iter_batched(
+            || (coeffs.clone(), den_coeffs.clone(), half.clone()),
+            |(num, den, x)| black_box(Real::eval_rational_poly(&num, &den, &x).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.finish();
+}
+
+fn bench_real_normal_scientific_substrate(c: &mut Criterion) {
+    let mut group = c.benchmark_group("real_normal_scientific_substrate");
+    let zero = Real::zero();
+    let half = real(1, 2);
+    let one = Real::one();
+    let two = Real::from(2_i32);
+    let three = Real::from(3_i32);
+    let tail = Real::from(6_i32);
+    let lo = real(1, 10);
+    let hi = real(100_000_001, 1_000_000_000);
+    let mean = Real::from(2_i32);
+    let sigma = real(3, 2);
+    let gamma_half = real(1, 2);
+    let gamma_three_half = real(3, 2);
+
+    group.bench_function("erfc_zero", |b| {
+        b.iter_batched(
+            Real::zero,
+            |value| black_box(value.erfc()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("erfcx_tail", |b| {
+        b.iter_batched(
+            || tail.clone(),
+            |value| black_box(value.erfcx().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("normal_sf_tail", |b| {
+        b.iter_batched(
+            || tail.clone(),
+            |value| black_box(value.normal_sf().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("pnorm_upper_tail", |b| {
+        b.iter_batched(
+            || tail.clone(),
+            |value| black_box(value.pnorm_upper().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("log_pnorm_tail", |b| {
+        b.iter_batched(
+            || -tail.clone(),
+            |value| black_box(value.log_pnorm().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("log_normal_sf_tail", |b| {
+        b.iter_batched(
+            || tail.clone(),
+            |value| black_box(value.log_normal_sf().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("log_dnorm_large", |b| {
+        b.iter_batched(
+            || tail.clone(),
+            |value| black_box(value.log_dnorm().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("normal_interval_narrow", |b| {
+        b.iter_batched(
+            || (lo.clone(), hi.clone()),
+            |(lo, hi)| black_box(Real::normal_interval(&lo, &hi).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("erfinv_mid", |b| {
+        b.iter_batched(
+            || half.clone(),
+            |value| black_box(value.erfinv().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("erfcinv_tail", |b| {
+        b.iter_batched(
+            || real(1, 1_000_000),
+            |value| black_box(value.erfcinv().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("qnorm_upper_tail", |b| {
+        b.iter_batched(
+            || real(1, 1_000_000),
+            |value| black_box(value.qnorm_upper().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("normal_pdf_parametric", |b| {
+        b.iter_batched(
+            || (tail.clone(), mean.clone(), sigma.clone()),
+            |(x, mean, sigma)| black_box(x.normal_pdf(&mean, &sigma).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("normal_survival_parametric", |b| {
+        b.iter_batched(
+            || (tail.clone(), mean.clone(), sigma.clone()),
+            |(x, mean, sigma)| black_box(x.normal_survival(&mean, &sigma).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("normal_mills_tail", |b| {
+        b.iter_batched(
+            || tail.clone(),
+            |value| black_box(value.normal_mills().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("normal_hazard_tail", |b| {
+        b.iter_batched(
+            || tail.clone(),
+            |value| black_box(value.normal_hazard().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("hermite_8", |b| {
+        b.iter_batched(
+            || two.clone(),
+            |value| black_box(Real::hermite_probabilists(8, &value)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("dnorm_derivative_4", |b| {
+        b.iter_batched(
+            || two.clone(),
+            |value| black_box(value.dnorm_derivative(4).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("standard_normal_moment_12", |b| {
+        b.iter(|| black_box(Real::standard_normal_moment(12)))
+    });
+    group.bench_function("normal_interval_moment_3", |b| {
+        b.iter_batched(
+            || (zero.clone(), one.clone()),
+            |(lo, hi)| black_box(Real::normal_interval_moment(&lo, &hi, 3).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("truncated_normal_mean", |b| {
+        b.iter_batched(
+            || (zero.clone(), one.clone()),
+            |(lo, hi)| black_box(Real::truncated_normal_mean(&lo, &hi).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("gamma_integer", |b| {
+        b.iter_batched(
+            || Real::from(8_i32),
+            |value| black_box(value.gamma().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("gamma_half_integer", |b| {
+        b.iter_batched(
+            || gamma_half.clone(),
+            |value| black_box(value.gamma().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("lgamma_half_integer", |b| {
+        b.iter_batched(
+            || gamma_three_half.clone(),
+            |value| black_box(value.lgamma().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("beta_integer", |b| {
+        b.iter_batched(
+            || (two.clone(), three.clone()),
+            |(a, b)| black_box(Real::beta(&a, &b).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("ln_beta_half_integer", |b| {
+        b.iter_batched(
+            || (gamma_half.clone(), gamma_three_half.clone()),
+            |(a, b)| black_box(Real::ln_beta(&a, &b).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("regularized_beta_mid", |b| {
+        b.iter_batched(
+            || (two.clone(), three.clone(), half.clone()),
+            |(a, b, x)| black_box(Real::regularized_beta(&a, &b, &x).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("regularized_beta_q_mid", |b| {
+        b.iter_batched(
+            || (two.clone(), three.clone(), half.clone()),
+            |(a, b, x)| black_box(Real::regularized_beta_q(&a, &b, &x).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("regularized_gamma_p_half", |b| {
+        b.iter_batched(
+            || (gamma_three_half.clone(), one.clone()),
+            |(a, x)| black_box(Real::regularized_gamma_p(&a, &x).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("regularized_gamma_q_integer", |b| {
+        b.iter_batched(
+            || (three.clone(), one.clone()),
+            |(a, x)| black_box(Real::regularized_gamma_q(&a, &x).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("chi_square_sf", |b| {
+        b.iter_batched(
+            || two.clone(),
+            |x| black_box(Real::chi_square_sf(&x, 5).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+
+    group.finish();
+}
+
+fn bench_simple_new_function_surface(c: &mut Criterion) {
+    let mut group = c.benchmark_group("simple_new_function_surface");
+    let expressions: [(&str, Simple); 5] = [
+        (
+            "stable_log_exp_bundle",
+            "(+ (ln_1p 1/1000000000000) (ln_1m 1/1000000000000) (expm1 1/1000000000000) (softplus 64) (logaddexp 64 0) (logsubexp 1 999999/1000000) (sigmoid 64) (logit 999999/1000000))"
+                .parse()
+                .unwrap(),
+        ),
+        (
+            "geometry_bundle",
+            "(+ (sin_pi 1/6) (cos_pi 1/4) (tan_pi 1/3) (sinc 1/1000000000000) (sinc_pi 1/2) (cosc 1/1000000000000) (hypot2 3 4) (hypot3 2 3 6) (hypot_minus 1000000 1/1000000) (mul_add 0 pi e) (sum_products pi 2 e pi 7 e) (diff_of_products 10000001/10000000 9999999/10000000 1 1) (eval_poly 1/2 5 -7/3 pi 11) (eval_rational_poly 1/2 3 5 -7/3 pi 1 1/5 1/7))"
+                .parse()
+                .unwrap(),
+        ),
+        (
+            "normal_bundle",
+            "(+ (erfc 0) (erfcx 6) (normal_sf 6) (pnorm_upper 6) (log_pnorm -6) (log_normal_sf 6) (log_dnorm 6) (normal_interval 1/10 100000001/1000000000) (erfinv 1/2) (erfcinv 1/1000000) (qnorm_upper 1/1000000) (normal_pdf 6 2 3/2) (normal_survival 6 2 3/2) (normal_mills 6) (normal_hazard 6) (hermite_probabilists 8 2) (dnorm_derivative 4 2) (standard_normal_moment 12) (normal_interval_moment 0 1 3) (truncated_normal_mean 0 1))"
+                .parse()
+                .unwrap(),
+        ),
+        (
+            "scientific_bundle",
+            "(+ (gamma 8) (gamma 1/2) (lgamma 3/2) (beta 2 3) (ln_beta 1/2 3/2) (regularized_beta 2 3 1/2) (regularized_beta_q 2 3 1/2) (regularized_gamma_p 3/2 1) (regularized_gamma_q 3 1) (chi_square_sf 2 5))"
+                .parse()
+                .unwrap(),
+        ),
+        (
+            "error_bundle",
+            "(+ (ln_1p -1) (logsubexp 1 2) (root_n -16 2) (normal_sf 11) (gamma 0) (regularized_beta 0 1 1/2) (regularized_gamma_p 1 -1))"
+                .parse()
+                .unwrap(),
+        ),
+    ];
+
+    for (name, expr) in expressions {
+        if name == "error_bundle" {
+            group.bench_function(name, |b| {
+                b.iter_batched(
+                    || expr.clone(),
+                    |expr| black_box(expr.evaluate(&Default::default()).unwrap_err()),
+                    BatchSize::SmallInput,
+                )
+            });
+        } else {
+            group.bench_function(name, |b| {
+                b.iter_batched(
+                    || expr.clone(),
+                    |expr| black_box(expr.evaluate(&Default::default()).unwrap()),
+                    BatchSize::SmallInput,
+                )
+            });
+        }
+    }
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_real_format,
@@ -998,6 +1864,10 @@ criterion_group!(
     bench_simple_inverse_functions,
     bench_simple_inverse_error_functions,
     bench_real_exact_ln,
-    bench_real_exact_exp_log10
+    bench_real_exact_exp_log10,
+    bench_real_stable_scalar_substrate,
+    bench_real_geometry_polynomial_substrate,
+    bench_real_normal_scientific_substrate,
+    bench_simple_new_function_surface
 );
 criterion_main!(benches);

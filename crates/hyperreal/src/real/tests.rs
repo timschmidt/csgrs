@@ -884,6 +884,35 @@ mod tests {
         assert_eq!(sqrt.class, Sqrt(two));
     }
 
+    #[test]
+    fn nth_roots_and_rational_powers_preserve_exact_cases() {
+        assert_eq!(Real::from(27_i32).cbrt().unwrap(), Real::from(3_i32));
+        assert_eq!(Real::from(-27_i32).cbrt().unwrap(), Real::from(-3_i32));
+        assert_eq!(
+            Real::new(Rational::fraction(8, 27).unwrap())
+                .root_n(3)
+                .unwrap(),
+            Real::new(Rational::fraction(2, 3).unwrap())
+        );
+        assert_eq!(Real::from(81_i32).root_n(4).unwrap(), Real::from(3_i32));
+        assert_eq!(Real::from(5_i32).root_n(1).unwrap(), Real::from(5_i32));
+        assert_eq!(Real::zero().root_n(7).unwrap(), Real::zero());
+        assert_eq!(Real::from(16_i32).root_n(0), Err(Problem::NotANumber));
+        assert_eq!(Real::from(-16_i32).root_n(4), Err(Problem::SqrtNegative));
+
+        let two_thirds = Rational::fraction(2, 3).unwrap();
+        assert_eq!(
+            Real::from(-8_i32).pow_rational(two_thirds).unwrap(),
+            Real::from(4_i32)
+        );
+        assert_eq!(
+            Real::from(16_i32)
+                .pow_rational(Rational::fraction(3, 2).unwrap())
+                .unwrap(),
+            Real::from(64_i32)
+        );
+    }
+
     fn closest_f64(r: Real, f: f64) -> bool {
         let left = f64::from_bits(f.to_bits() - 1);
         let right = f64::from_bits(f.to_bits() + 1);
@@ -1527,11 +1556,72 @@ mod tests {
             (1.0 + 2.0_f64.exp()).ln(),
             1e-14,
         );
+        assert_eq!(
+            Real::from(2_i32).ln().unwrap().softplus().unwrap(),
+            Real::from(3_i32).ln().unwrap()
+        );
+        assert_eq!(
+            Real::from(3_i32).ln().unwrap().sigmoid().unwrap(),
+            Real::new(Rational::fraction(3, 4).unwrap())
+        );
+        assert_eq!(Real::from(2_i32).ln().unwrap().expm1(), Real::one());
+        assert_eq!(
+            Real::logaddexp(&Real::zero(), &Real::zero()).unwrap(),
+            Real::from(2_i32).ln().unwrap()
+        );
+        assert_eq!(
+            Real::logaddexp(
+                &Real::from(2_i32).ln().unwrap(),
+                &Real::from(3_i32).ln().unwrap()
+            )
+            .unwrap(),
+            Real::from(5_i32).ln().unwrap()
+        );
+        assert_close(
+            Real::logsubexp(&Real::from(2_i32).ln().unwrap(), &Real::zero()).unwrap(),
+            0.0,
+            1e-14,
+        );
+        assert_close(
+            Real::logaddexp(&Real::from(2_i32), &Real::zero()).unwrap(),
+            (2.0_f64.exp() + 1.0).ln(),
+            1e-14,
+        );
+        assert_close(
+            Real::logsubexp(&Real::from(2_i32), &Real::zero()).unwrap(),
+            (2.0_f64.exp() - 1.0).ln(),
+            1e-14,
+        );
 
         assert_eq!(Real::from(-1_i32).ln_1p(), Err(Problem::NotANumber));
         assert_eq!(Real::one().ln_1m(), Err(Problem::NotANumber));
         assert_eq!(Real::zero().logit(), Err(Problem::NotANumber));
         assert_eq!(Real::one().logit(), Err(Problem::NotANumber));
+        assert_eq!(
+            Real::logsubexp(&Real::zero(), &Real::zero()),
+            Err(Problem::NotANumber)
+        );
+        assert_eq!(
+            Real::logsubexp(&Real::zero(), &Real::one()),
+            Err(Problem::NotANumber)
+        );
+
+        assert!(Real::zero().sqrt1pm1().unwrap().definitely_zero());
+        assert!(Real::zero().sqrt1m1().unwrap().definitely_zero());
+        assert_eq!(Real::from(-1_i32).sqrt1pm1().unwrap(), Real::from(-1_i32));
+        assert_eq!(Real::one().sqrt1m1().unwrap(), Real::from(-1_i32));
+        assert_close(
+            tiny.clone().sqrt1pm1().unwrap(),
+            (1.0 + 0.000001_f64).sqrt() - 1.0,
+            1e-16,
+        );
+        assert_close(
+            tiny.sqrt1m1().unwrap(),
+            (1.0 - 0.000001_f64).sqrt() - 1.0,
+            1e-16,
+        );
+        assert_eq!(Real::from(-2_i32).sqrt1pm1(), Err(Problem::SqrtNegative));
+        assert_eq!(Real::from(2_i32).sqrt1m1(), Err(Problem::SqrtNegative));
     }
 
     #[test]
@@ -1776,6 +1866,57 @@ mod tests {
             ),
             "0.07965182484851131233334055314679"
         );
+        assert_eq!(Real::from(5_i32).gamma().unwrap(), Real::from(24_i32));
+        assert_close(
+            Real::new(Rational::fraction(1, 2).unwrap())
+                .gamma()
+                .unwrap(),
+            std::f64::consts::PI.sqrt(),
+            1e-15,
+        );
+        assert_close(
+            Real::new(Rational::fraction(-1, 2).unwrap())
+                .gamma()
+                .unwrap(),
+            -2.0 * std::f64::consts::PI.sqrt(),
+            1e-15,
+        );
+        assert_eq!(
+            Real::beta(&Real::from(2_i32), &Real::from(3_i32)).unwrap(),
+            Real::new(Rational::fraction(1, 12).unwrap())
+        );
+        assert_close(
+            Real::beta(
+                &Real::new(Rational::fraction(1, 2).unwrap()),
+                &Real::new(Rational::fraction(1, 2).unwrap()),
+            )
+            .unwrap(),
+            std::f64::consts::PI,
+            1e-15,
+        );
+        assert_close(
+            Real::ln_beta(&Real::from(2_i32), &Real::from(3_i32)).unwrap(),
+            (1.0_f64 / 12.0).ln(),
+            1e-15,
+        );
+        assert_eq!(
+            Real::regularized_beta(
+                &Real::from(2_i32),
+                &Real::from(3_i32),
+                &Real::new(Rational::fraction(1, 2).unwrap())
+            )
+            .unwrap(),
+            Real::new(Rational::fraction(11, 16).unwrap())
+        );
+        assert_eq!(
+            Real::regularized_beta_q(
+                &Real::from(2_i32),
+                &Real::from(3_i32),
+                &Real::new(Rational::fraction(1, 2).unwrap())
+            )
+            .unwrap(),
+            Real::new(Rational::fraction(5, 16).unwrap())
+        );
         assert_close(
             Real::regularized_gamma_p(&Real::new(Rational::fraction(3, 2).unwrap()), &Real::one())
                 .unwrap(),
@@ -1940,6 +2081,46 @@ mod tests {
         );
         assert_eq!(
             Real::truncated_normal_variance(&Real::from(2_i32), &Real::from(1_i32)).unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(Real::zero().gamma().unwrap_err(), Problem::NotANumber);
+        assert_eq!(
+            Real::new(Rational::fraction(1, 3).unwrap())
+                .gamma()
+                .unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::from(-2_i32).lgamma().unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::beta(&Real::zero(), &Real::one()).unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::beta(&Real::new(Rational::fraction(1, 3).unwrap()), &Real::one()).unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::regularized_beta(&Real::zero(), &Real::one(), &Real::one()).unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::regularized_beta(
+                &Real::one(),
+                &Real::new(Rational::fraction(1, 3).unwrap()),
+                &Real::one()
+            )
+            .unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::regularized_beta(&Real::one(), &Real::one(), &Real::from(-1_i32)).unwrap_err(),
+            Problem::NotANumber
+        );
+        assert_eq!(
+            Real::regularized_beta_q(&Real::one(), &Real::one(), &Real::from(2_i32)).unwrap_err(),
             Problem::NotANumber
         );
         assert_eq!(

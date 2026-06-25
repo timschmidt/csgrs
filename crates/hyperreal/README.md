@@ -320,19 +320,28 @@ assert_eq!(value.exact_rational(), Some(Rational::fraction(7, 8).unwrap()));
 ```
 
 `Simple` supports arithmetic, roots, powers, logs, exponentials, stable scalar
-helpers (`ln_1p`/`log1p`, `ln_1m`/`log1m`, `expm1`, `softplus`, `logit`,
-`sigmoid`), trig and pi-scaled trig (`sin_pi`, `cos_pi`, `tan_pi`), small-angle
-helpers (`sinc`, `sinc_pi`, `cosc`), inverse trig, inverse hyperbolic functions,
-normal distribution helpers (`erf`, `erfc`, `erfcx`, `dnorm`, `pnorm`,
-`normal_sf`, `pnorm_upper`, `normal_interval`, `pnorm_diff`, `log_pnorm`,
-`log_normal_sf`, `log_dnorm`, `erfinv`, `erfcinv`, `qnorm`, `qnorm_upper`,
-`normal_pdf`, `normal_cdf`, `normal_survival`, `normal_quantile`,
-`normal_mills`, `normal_hazard`, `normal_log_hazard`, `normal_inverse_mills`,
-`hermite_probabilists`, `dnorm_derivative`, `gaussian_derivative`,
-`standard_normal_moment`, `normal_interval_moment`, `truncated_normal_mean`,
-`truncated_normal_variance`, `regularized_gamma_p`, `regularized_gamma_q`,
-`chi_square_cdf`, `chi_square_sf`), integers, decimals, fractions, `pi`, and
-`e`.
+helpers (`ln_1p`/`log1p`, `ln_1m`/`log1m`, `expm1`, `softplus`,
+`logaddexp`, `logsubexp`, `logit`, `sigmoid`), trig and pi-scaled trig
+(`sin_pi`, `cos_pi`, `tan_pi`), small-angle helpers (`sinc`, `sinc_pi`,
+`cosc`), cancellation helpers (`sqrt1pm1`, `sqrt1m1`, `hypot_minus`),
+product-sum helpers (`mul_add`, `sum_products`, `diff_of_products`),
+polynomial helpers (`eval_poly`, `eval_rational_poly`), vector length helpers
+(`hypot2`, `hypot3`),
+exact-root/rational-power helpers (`cbrt`, `root_n`, `pow_rational`),
+certified integer helpers (`floor_certified`,
+`ceil_certified`, `round_certified`, `trunc_certified`, `fract_certified`,
+`rem_euclid_certified`), inverse trig, inverse hyperbolic functions, normal
+distribution helpers (`erf`, `erfc`, `erfcx`, `dnorm`,
+`pnorm`, `normal_sf`, `pnorm_upper`, `normal_interval`, `pnorm_diff`,
+`log_pnorm`, `log_normal_sf`, `log_dnorm`, `erfinv`, `erfcinv`, `qnorm`,
+`qnorm_upper`, `normal_pdf`, `normal_cdf`, `normal_survival`,
+`normal_quantile`, `normal_mills`, `normal_hazard`, `normal_log_hazard`,
+`normal_inverse_mills`, `hermite_probabilists`, `dnorm_derivative`,
+`gaussian_derivative`, `standard_normal_moment`, `normal_interval_moment`,
+`truncated_normal_mean`, `truncated_normal_variance`, `gamma`, `lgamma`,
+`beta`, `ln_beta`/`lbeta`, `regularized_beta`, `regularized_beta_q`,
+`regularized_gamma_p`, `regularized_gamma_q`, `chi_square_cdf`,
+`chi_square_sf`), integers, decimals, fractions, `pi`, and `e`.
 
 Stability-oriented scalar forms keep common statistical expressions from being
 assembled out of cancellation-prone generic arithmetic:
@@ -343,6 +352,8 @@ assembled out of cancellation-prone generic arithmetic:
 | `(ln_1m x)` / `(log1m x)` | natural log of `1 - x` | `x < 1` |
 | `(expm1 x)` | `exp(x) - 1` with a small-argument kernel | all real inputs |
 | `(softplus x)` | `ln(1 + exp(x))` | all real inputs |
+| `(logaddexp a b)` | `ln(exp(a) + exp(b))` | all real inputs |
+| `(logsubexp a b)` | `ln(exp(a) - exp(b))` | certifiable `a > b` |
 | `(logit p)` | `ln(p / (1 - p))` | `0 < p < 1` |
 | `(sigmoid x)` | `1 / (1 + exp(-x))` | all real inputs |
 
@@ -363,6 +374,65 @@ division-by-zero at the origin:
 | `(sinc x)` | `sin(x) / x`, with `sinc(0) = 1` | all real inputs |
 | `(sinc_pi x)` | `sin(pi * x) / (pi * x)`, with `sinc_pi(0) = 1` | all real inputs |
 | `(cosc x)` | `(1 - cos(x)) / x^2`, with `cosc(0) = 1/2` | all real inputs |
+
+Cancellation helper forms preserve common square-root differences instead of
+forcing users to spell them as near-equal subtraction:
+
+| Form | Meaning | Domain |
+| --- | --- | --- |
+| `(sqrt1pm1 x)` | `sqrt(1 + x) - 1` | `x >= -1` |
+| `(sqrt1m1 x)` | `sqrt(1 - x) - 1` | `x <= 1` |
+| `(hypot_minus x y)` | `sqrt(x^2 + y^2) - x` | all real inputs |
+
+Product-sum forms preserve common fused arithmetic shapes before expanding into
+generic arithmetic. `sum_products` takes flat product pairs:
+
+| Form | Meaning | Domain |
+| --- | --- | --- |
+| `(mul_add a b c)` | `a*b + c` | all real inputs |
+| `(sum_products x0 y0 x1 y1 ...)` | `x0*y0 + x1*y1 + ...` | even number of operands |
+| `(diff_of_products a b c d)` | `a*b - c*d` | all real inputs |
+
+Polynomial forms preserve Horner and rational-polynomial evaluation structure.
+Simple has flat operands, so rational polynomials use a numerator coefficient
+count after `x`; polynomial coefficients are constant-first. Bernstein and
+de Casteljau operations carry curve-basis semantics and belong in curve-level
+crates such as `hypercurve`.
+
+| Form | Meaning | Domain |
+| --- | --- | --- |
+| `(eval_poly x c0 c1 c2 ...)` | `c0 + c1*x + c2*x^2 + ...` in Horner form | at least one coefficient |
+| `(eval_rational_poly x n c0 ... d0 ...)` | numerator polynomial divided by denominator polynomial; `n` is numerator coefficient count | exact non-negative integer `n`, at least one denominator coefficient, non-zero denominator value |
+
+Scalar vector-length forms route through the exact dot-product reducers before
+taking square roots, so rational Pythagorean cases can stay exact:
+
+| Form | Meaning | Domain |
+| --- | --- | --- |
+| `(hypot2 x y)` | `sqrt(x^2 + y^2)` | all real inputs |
+| `(hypot3 x y z)` | `sqrt(x^2 + y^2 + z^2)` | all real inputs |
+
+Root and exact rational-power forms preserve perfect rational roots before
+falling back to exact-real rational exponents:
+
+| Form | Meaning | Domain |
+| --- | --- | --- |
+| `(cbrt x)` | cube root of `x` | all real inputs |
+| `(root_n x n)` | nth root of `x` | exact positive integer `n`; negative `x` requires odd `n` |
+| `(pow_rational x q)` | `x^q` with exact rational exponent `q` | all positive `x`; negative `x` requires an odd denominator |
+
+Certified integer forms make discontinuous decisions through exact rational
+shortcuts or bounded exact-real comparison. If a boundary cannot be certified,
+they return `Problem::Exhausted` rather than rounding through a primitive float:
+
+| Form | Meaning | Domain |
+| --- | --- | --- |
+| `(floor_certified x)` | greatest integer `<= x` | certifiable integer boundary |
+| `(ceil_certified x)` | least integer `>= x` | certifiable integer boundary |
+| `(round_certified x)` | nearest integer, ties away from zero | certifiable half-integer boundary |
+| `(trunc_certified x)` | integer part toward zero | certifiable sign and integer boundary |
+| `(fract_certified x)` | `x - trunc_certified(x)` | certifiable truncation |
+| `(rem_euclid_certified x m)` | Euclidean remainder for positive modulus | certifiable `m > 0` and quotient floor |
 
 Normal-distribution forms use the same `Real` methods as Rust callers:
 
@@ -399,6 +469,12 @@ Normal-distribution forms use the same `Real` methods as Rust callers:
 | `(normal_interval_moment lo hi n)` | unnormalized raw moment over `[lo, hi]` | exact non-negative integer `n`, finite bounds with `abs(bound) <= 10` and `lo <= hi` |
 | `(truncated_normal_mean lo hi)` | mean of a standard normal truncated to `[lo, hi]` | finite bounds with `abs(bound) <= 10` and `lo < hi` |
 | `(truncated_normal_variance lo hi)` | variance of a standard normal truncated to `[lo, hi]` | finite bounds with `abs(bound) <= 10` and `lo < hi` |
+| `(gamma x)` | gamma function `Gamma(x)` | exact integer or half-integer `x`, excluding non-positive integer poles |
+| `(lgamma x)` | natural log of `abs(Gamma(x))` | exact integer or half-integer `x`, excluding non-positive integer poles |
+| `(beta a b)` | beta function `B(a, b)` through gamma closed forms | exact integer or half-integer arguments whose gamma ratio is defined |
+| `(ln_beta a b)` / `(lbeta a b)` | natural log of `abs(B(a, b))` | exact integer or half-integer arguments whose gamma ratio is defined |
+| `(regularized_beta a b x)` | regularized incomplete beta `I_x(a, b)` | exact positive integer `a` and `b`, `0 <= x <= 1` |
+| `(regularized_beta_q a b x)` | complement `1 - I_x(a, b)` | exact positive integer `a` and `b`, `0 <= x <= 1` |
 | `(regularized_gamma_p a x)` | regularized lower incomplete gamma `P(a, x)` | exact positive integer or half-integer `a`, `x >= 0` |
 | `(regularized_gamma_q a x)` | regularized upper incomplete gamma `Q(a, x)` | exact positive integer or half-integer `a`, `x >= 0` |
 | `(chi_square_cdf x k)` | chi-square CDF with `k` degrees of freedom | `x >= 0`, exact positive integer `k` |
@@ -406,8 +482,12 @@ Normal-distribution forms use the same `Real` methods as Rust callers:
 
 Inputs outside those supported numeric ranges return `Problem` rather than silently
 falling back to primitive floating point.
-`ln_1p`/`log1p`, `ln_1m`/`log1m`, `logit`, and `tan_pi` return
+`ln_1p`/`log1p`, `ln_1m`/`log1m`, `logsubexp`, `logit`, and `tan_pi` return
 `Problem::NotANumber` outside their open domains.
+`sqrt1pm1` and `sqrt1m1` return `Problem::SqrtNegative` when their radicand is
+known negative.
+`root_n` rejects degree zero and even roots of negative values; `pow_rational`
+inherits the existing negative-base rational exponent policy.
 Reversed normal-interval bounds return `Problem::NotANumber`; equal bounds return exact
 zero.
 Parametric normal forms standardize exactly as `(x - mean) / sigma`, or
@@ -421,9 +501,9 @@ Regularized gamma supports the integer and half-integer cases that reduce to
 finite recurrences over `erf`/`erfc`, `exp(-x)`, `sqrt(x)`, and exact factorial
 coefficients; chi-square helpers are thin wrappers through `P(k/2, x/2)` and
 `Q(k/2, x/2)`.
-`softplus`, `logit`, and `sigmoid` use sign-stable forms so callers do not need to
-spell them through `ln(1 + exp(x))`, `ln(p) - ln(1 - p)`, or
-`1 / (1 + exp(-x))`.
+`softplus`, `logaddexp`, `logsubexp`, `logit`, and `sigmoid` use sign-stable
+forms so callers do not need to spell them through `ln(1 + exp(x))`,
+`ln(exp(a) +/- exp(b))`, `ln(p) - ln(1 - p)`, or `1 / (1 + exp(-x))`.
 
 ## Conversions
 
@@ -453,6 +533,7 @@ cargo bench --bench float_convert
 cargo bench --bench scalar_micro
 cargo bench --bench library_perf --features simple
 cargo bench --bench adversarial_transcendentals
+cargo bench --bench adversarial_library
 ```
 
 Run dispatch tracing separately:
@@ -465,6 +546,21 @@ The generated benchmark summary is in [`benchmarks.md`](./benchmarks.md). Profil
 anchors and regression goals for `Rational`, `Real`, and `Computable` are in
 [`PERFORMANCE.md`](./PERFORMANCE.md). Dispatch summaries are written to
 [`dispatch_trace.md`](./dispatch_trace.md) when tracing is enabled.
+
+For a full post-change performance pass, run:
+
+```sh
+cargo bench --all-features
+```
+
+The `library_perf` benchmark now has focused groups for the newer stable scalar
+substrate, geometry/polynomial helpers, Gaussian/scientific helpers, and `Simple`
+parser exposure. The adversarial library run includes tiny residuals, near-domain
+boundaries, root and rational-power cases, normal tails, finite gamma/beta
+recurrences, and polynomial/vector helper shapes. Dispatch tracing has matching
+rows (`real/stable_scalar_substrate`, `real/geometry_polynomial_substrate`, and
+`real/normal_scientific_substrate`) so benchmark findings can be connected back
+to the representation branch that was taken.
 
 When adding a shortcut, add a focused correctness test and a benchmark row for the
 smallest affected surface. Keep the shortcut only if it improves the target without

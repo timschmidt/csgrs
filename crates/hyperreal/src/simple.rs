@@ -50,6 +50,16 @@ enum Operator {
     Star,
     Slash,
     Sqrt,
+    Sqrt1pm1,
+    Sqrt1m1,
+    FloorCertified,
+    CeilCertified,
+    RoundCertified,
+    TruncCertified,
+    FractCertified,
+    RemEuclidCertified,
+    Cbrt,
+    RootN,
     Exp,
     Log10,
     Log2,
@@ -58,6 +68,8 @@ enum Operator {
     Ln1m,
     Expm1,
     Softplus,
+    Logaddexp,
+    Logsubexp,
     Logit,
     Sigmoid,
     Cos,
@@ -69,6 +81,14 @@ enum Operator {
     Sinc,
     SincPi,
     Cosc,
+    MulAdd,
+    SumProducts,
+    DiffOfProducts,
+    EvalPoly,
+    EvalRationalPoly,
+    HypotMinus,
+    Hypot2,
+    Hypot3,
     Erf,
     Erfc,
     Erfcx,
@@ -100,6 +120,12 @@ enum Operator {
     NormalIntervalMoment,
     TruncatedNormalMean,
     TruncatedNormalVariance,
+    Gamma,
+    Lgamma,
+    Beta,
+    LnBeta,
+    RegularizedBeta,
+    RegularizedBetaQ,
     RegularizedGammaP,
     RegularizedGammaQ,
     ChiSquareCdf,
@@ -111,6 +137,7 @@ enum Operator {
     Asinh,
     Atanh,
     Pow,
+    PowRational,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -523,6 +550,22 @@ impl Simple {
                 }
                 self.operands.first().unwrap().value(names)?.softplus()
             }
+            Logaddexp => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let a = self.operands.first().unwrap().value(names)?;
+                let b = self.operands.get(1).unwrap().value(names)?;
+                Real::logaddexp(&a, &b)
+            }
+            Logsubexp => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let a = self.operands.first().unwrap().value(names)?;
+                let b = self.operands.get(1).unwrap().value(names)?;
+                Real::logsubexp(&a, &b)
+            }
             Logit => {
                 if self.operands.len() != 1 {
                     return Err(Problem::ParseError);
@@ -542,6 +585,99 @@ impl Simple {
                 let operand = self.operands.first().unwrap();
                 let value = operand.value(names)?.sqrt()?;
                 Ok(value)
+            }
+            Sqrt1pm1 => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.sqrt1pm1()
+            }
+            Sqrt1m1 => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.sqrt1m1()
+            }
+            FloorCertified => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                Ok(Real::integer(
+                    self.operands
+                        .first()
+                        .unwrap()
+                        .value(names)?
+                        .floor_certified()?,
+                ))
+            }
+            CeilCertified => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                Ok(Real::integer(
+                    self.operands
+                        .first()
+                        .unwrap()
+                        .value(names)?
+                        .ceil_certified()?,
+                ))
+            }
+            RoundCertified => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                Ok(Real::integer(
+                    self.operands
+                        .first()
+                        .unwrap()
+                        .value(names)?
+                        .round_certified()?,
+                ))
+            }
+            TruncCertified => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                Ok(Real::integer(
+                    self.operands
+                        .first()
+                        .unwrap()
+                        .value(names)?
+                        .trunc_certified()?,
+                ))
+            }
+            FractCertified => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands
+                    .first()
+                    .unwrap()
+                    .value(names)?
+                    .fract_certified()
+            }
+            RemEuclidCertified => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let value = self.operands.first().unwrap().value(names)?;
+                let modulus = self.operands.get(1).unwrap().value(names)?;
+                value.rem_euclid_certified(&modulus)
+            }
+            Cbrt => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.cbrt()
+            }
+            RootN => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let value = self.operands.first().unwrap().value(names)?;
+                let n = self.exact_u64_operand(1, names)?;
+                let n = u32::try_from(n).map_err(|_| Problem::OutOfRange)?;
+                value.root_n(n)
             }
             Cos => {
                 if self.operands.len() != 1 {
@@ -602,6 +738,98 @@ impl Simple {
                     return Err(Problem::ParseError);
                 }
                 self.operands.first().unwrap().value(names)?.cosc()
+            }
+            MulAdd => {
+                if self.operands.len() != 3 {
+                    return Err(Problem::ParseError);
+                }
+                let a = self.operands.first().unwrap().value(names)?;
+                let b = self.operands.get(1).unwrap().value(names)?;
+                let c = self.operands.get(2).unwrap().value(names)?;
+                Ok(Real::mul_add(&a, &b, &c))
+            }
+            SumProducts => {
+                if !self.operands.len().is_multiple_of(2) {
+                    return Err(Problem::ParseError);
+                }
+                let mut left = Vec::with_capacity(self.operands.len() / 2);
+                let mut right = Vec::with_capacity(self.operands.len() / 2);
+                for pair in self.operands.chunks_exact(2) {
+                    left.push(pair[0].value(names)?);
+                    right.push(pair[1].value(names)?);
+                }
+                Real::sum_products(&left, &right)
+            }
+            DiffOfProducts => {
+                if self.operands.len() != 4 {
+                    return Err(Problem::ParseError);
+                }
+                let a = self.operands.first().unwrap().value(names)?;
+                let b = self.operands.get(1).unwrap().value(names)?;
+                let c = self.operands.get(2).unwrap().value(names)?;
+                let d = self.operands.get(3).unwrap().value(names)?;
+                Ok(Real::diff_of_products(&a, &b, &c, &d))
+            }
+            EvalPoly => {
+                if self.operands.len() < 2 {
+                    return Err(Problem::ParseError);
+                }
+                let x = self.operands.first().unwrap().value(names)?;
+                let coeffs = self
+                    .operands
+                    .iter()
+                    .skip(1)
+                    .map(|operand| operand.value(names))
+                    .collect::<Result<Vec<_>, _>>()?;
+                Ok(Real::eval_poly(&coeffs, &x))
+            }
+            EvalRationalPoly => {
+                if self.operands.len() < 4 {
+                    return Err(Problem::ParseError);
+                }
+                let x = self.operands.first().unwrap().value(names)?;
+                let numerator_len = self.exact_usize_operand(1, names)?;
+                if numerator_len > self.operands.len() - 2 {
+                    return Err(Problem::ParseError);
+                }
+                let denominator_start = 2 + numerator_len;
+                if denominator_start == self.operands.len() {
+                    return Err(Problem::ParseError);
+                }
+                let numerator = self.operands[2..denominator_start]
+                    .iter()
+                    .map(|operand| operand.value(names))
+                    .collect::<Result<Vec<_>, _>>()?;
+                let denominator = self.operands[denominator_start..]
+                    .iter()
+                    .map(|operand| operand.value(names))
+                    .collect::<Result<Vec<_>, _>>()?;
+                Real::eval_rational_poly(&numerator, &denominator, &x)
+            }
+            HypotMinus => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let x = self.operands.first().unwrap().value(names)?;
+                let y = self.operands.get(1).unwrap().value(names)?;
+                Real::hypot_minus(&x, &y)
+            }
+            Hypot2 => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let x = self.operands.first().unwrap().value(names)?;
+                let y = self.operands.get(1).unwrap().value(names)?;
+                Real::hypot2(&x, &y)
+            }
+            Hypot3 => {
+                if self.operands.len() != 3 {
+                    return Err(Problem::ParseError);
+                }
+                let x = self.operands.first().unwrap().value(names)?;
+                let y = self.operands.get(1).unwrap().value(names)?;
+                let z = self.operands.get(2).unwrap().value(names)?;
+                Real::hypot3(&x, &y, &z)
             }
             Erf => {
                 if self.operands.len() != 1 {
@@ -833,6 +1061,43 @@ impl Simple {
                 let hi = self.operands.get(1).unwrap().value(names)?;
                 Real::truncated_normal_variance(&lo, &hi)
             }
+            Gamma => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.gamma()
+            }
+            Lgamma => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.lgamma()
+            }
+            Beta | LnBeta => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let a = self.operands.first().unwrap().value(names)?;
+                let b = self.operands.get(1).unwrap().value(names)?;
+                match self.op {
+                    Beta => Real::beta(&a, &b),
+                    LnBeta => Real::ln_beta(&a, &b),
+                    _ => unreachable!("beta operator handled above"),
+                }
+            }
+            RegularizedBeta | RegularizedBetaQ => {
+                if self.operands.len() != 3 {
+                    return Err(Problem::ParseError);
+                }
+                let a = self.operands.first().unwrap().value(names)?;
+                let b = self.operands.get(1).unwrap().value(names)?;
+                let x = self.operands.get(2).unwrap().value(names)?;
+                match self.op {
+                    RegularizedBeta => Real::regularized_beta(&a, &b, &x),
+                    RegularizedBetaQ => Real::regularized_beta_q(&a, &b, &x),
+                    _ => unreachable!("regularized beta operator handled above"),
+                }
+            }
             RegularizedGammaP => {
                 if self.operands.len() != 2 {
                     return Err(Problem::ParseError);
@@ -917,6 +1182,19 @@ impl Simple {
                 let value = v1.pow(v2)?;
                 Ok(value)
             }
+            PowRational => {
+                if self.operands.len() != 2 {
+                    return Err(Problem::ParseError);
+                }
+                let Some(exponent) = self.operands.get(1).unwrap().exact_value(names)? else {
+                    return Err(Problem::NotANumber);
+                };
+                self.operands
+                    .first()
+                    .unwrap()
+                    .value(names)?
+                    .pow_rational(exponent)
+            }
         }
     }
 
@@ -943,9 +1221,21 @@ impl Simple {
             "exp" => Ok(Exp),
             "expm1" => Ok(Expm1),
             "softplus" => Ok(Softplus),
+            "logaddexp" => Ok(Logaddexp),
+            "logsubexp" => Ok(Logsubexp),
             "logit" => Ok(Logit),
             "sigmoid" => Ok(Sigmoid),
             "sqrt" => Ok(Sqrt),
+            "sqrt1pm1" => Ok(Sqrt1pm1),
+            "sqrt1m1" => Ok(Sqrt1m1),
+            "floor_certified" => Ok(FloorCertified),
+            "ceil_certified" => Ok(CeilCertified),
+            "round_certified" => Ok(RoundCertified),
+            "trunc_certified" => Ok(TruncCertified),
+            "fract_certified" => Ok(FractCertified),
+            "rem_euclid_certified" => Ok(RemEuclidCertified),
+            "cbrt" => Ok(Cbrt),
+            "root_n" => Ok(RootN),
             "cos" => Ok(Cos),
             "sin" => Ok(Sin),
             "pow" => Ok(Pow),
@@ -956,6 +1246,14 @@ impl Simple {
             "sinc" => Ok(Sinc),
             "sinc_pi" => Ok(SincPi),
             "cosc" => Ok(Cosc),
+            "mul_add" => Ok(MulAdd),
+            "sum_products" => Ok(SumProducts),
+            "diff_of_products" => Ok(DiffOfProducts),
+            "eval_poly" => Ok(EvalPoly),
+            "eval_rational_poly" => Ok(EvalRationalPoly),
+            "hypot_minus" => Ok(HypotMinus),
+            "hypot2" => Ok(Hypot2),
+            "hypot3" => Ok(Hypot3),
             "erf" => Ok(Erf),
             "erfc" => Ok(Erfc),
             "erfcx" => Ok(Erfcx),
@@ -987,6 +1285,12 @@ impl Simple {
             "normal_interval_moment" => Ok(NormalIntervalMoment),
             "truncated_normal_mean" => Ok(TruncatedNormalMean),
             "truncated_normal_variance" => Ok(TruncatedNormalVariance),
+            "gamma" => Ok(Gamma),
+            "lgamma" => Ok(Lgamma),
+            "beta" => Ok(Beta),
+            "ln_beta" | "lbeta" => Ok(LnBeta),
+            "regularized_beta" => Ok(RegularizedBeta),
+            "regularized_beta_q" => Ok(RegularizedBetaQ),
             "regularized_gamma_p" => Ok(RegularizedGammaP),
             "regularized_gamma_q" => Ok(RegularizedGammaQ),
             "chi_square_cdf" => Ok(ChiSquareCdf),
@@ -997,6 +1301,7 @@ impl Simple {
             "acosh" => Ok(Acosh),
             "asinh" => Ok(Asinh),
             "atanh" => Ok(Atanh),
+            "pow_rational" => Ok(PowRational),
             _ => Err("No such operator"),
         }
     }
@@ -1176,9 +1481,21 @@ mod tests {
             "(exp 5)",
             "(expm1 5)",
             "(softplus 5)",
+            "(logaddexp 5 6)",
+            "(logsubexp 6 5)",
             "(logit 1/2)",
             "(sigmoid 5)",
             "(sqrt 5)",
+            "(sqrt1pm1 5)",
+            "(sqrt1m1 1/2)",
+            "(floor_certified 7/3)",
+            "(ceil_certified 7/3)",
+            "(round_certified 1/2)",
+            "(trunc_certified -7/3)",
+            "(fract_certified 7/3)",
+            "(rem_euclid_certified -7 3)",
+            "(cbrt 27)",
+            "(root_n 81 4)",
             "(cos 5)",
             "(sin 5)",
             "(tan 5)",
@@ -1188,6 +1505,13 @@ mod tests {
             "(sinc 0)",
             "(sinc_pi 1/2)",
             "(cosc 0)",
+            "(hypot2 3 4)",
+            "(hypot3 2 3 6)",
+            "(mul_add 2 3 4)",
+            "(sum_products 1 2 3 4)",
+            "(diff_of_products 2 5 3 4)",
+            "(eval_poly 2 1 2 3)",
+            "(eval_rational_poly 2 2 1 1 1 -1)",
             "(erf 1)",
             "(erfc 1)",
             "(erfcx 1)",
@@ -1219,6 +1543,13 @@ mod tests {
             "(normal_interval_moment 0 1 2)",
             "(truncated_normal_mean 0 1)",
             "(truncated_normal_variance 0 1)",
+            "(gamma 5)",
+            "(lgamma 5)",
+            "(beta 2 3)",
+            "(ln_beta 2 3)",
+            "(lbeta 2 3)",
+            "(regularized_beta 2 3 1/2)",
+            "(regularized_beta_q 2 3 1/2)",
             "(regularized_gamma_p 3/2 1)",
             "(regularized_gamma_q 3/2 1)",
             "(chi_square_cdf 2 2)",
@@ -1230,6 +1561,7 @@ mod tests {
             "(asinh 0)",
             "(atanh 0)",
             "(pow 5 2)",
+            "(pow_rational 16 3/2)",
         ];
         for case in cases {
             let parsed: Result<Simple, &str> = case.parse();
@@ -1570,6 +1902,16 @@ mod tests {
         let expm1_zero: Simple = "(expm1 0)".parse().unwrap();
         assert!(expm1_zero.evaluate(&empty).unwrap().definitely_zero());
 
+        let logaddexp_zeroes: Simple = "(logaddexp 0 0)".parse().unwrap();
+        assert_eq!(
+            logaddexp_zeroes.evaluate(&empty).unwrap(),
+            Real::from(2_i32).ln().unwrap()
+        );
+
+        let logsubexp_ln2: Simple = "(logsubexp (ln 2) 0)".parse().unwrap();
+        let logsubexp_ln2: f64 = logsubexp_ln2.evaluate(&empty).unwrap().into();
+        assert!(logsubexp_ln2.abs() < 1e-14);
+
         let logit_half: Simple = "(logit 1/2)".parse().unwrap();
         assert!(logit_half.evaluate(&empty).unwrap().definitely_zero());
 
@@ -1577,6 +1919,42 @@ mod tests {
         assert_eq!(
             sigmoid_zero.evaluate(&empty).unwrap(),
             Real::new(Rational::fraction(1, 2).unwrap())
+        );
+
+        let sqrt1pm1_zero: Simple = "(sqrt1pm1 0)".parse().unwrap();
+        assert!(sqrt1pm1_zero.evaluate(&empty).unwrap().definitely_zero());
+
+        let sqrt1m1_zero: Simple = "(sqrt1m1 0)".parse().unwrap();
+        assert!(sqrt1m1_zero.evaluate(&empty).unwrap().definitely_zero());
+
+        let floor_certified: Simple = "(floor_certified 7/3)".parse().unwrap();
+        assert_eq!(floor_certified.evaluate(&empty).unwrap(), Real::from(2_i32));
+
+        let ceil_certified: Simple = "(ceil_certified 7/3)".parse().unwrap();
+        assert_eq!(ceil_certified.evaluate(&empty).unwrap(), Real::from(3_i32));
+
+        let round_certified: Simple = "(round_certified -1/2)".parse().unwrap();
+        assert_eq!(
+            round_certified.evaluate(&empty).unwrap(),
+            Real::from(-1_i32)
+        );
+
+        let trunc_certified: Simple = "(trunc_certified -7/3)".parse().unwrap();
+        assert_eq!(
+            trunc_certified.evaluate(&empty).unwrap(),
+            Real::from(-2_i32)
+        );
+
+        let fract_certified: Simple = "(fract_certified 7/3)".parse().unwrap();
+        assert_eq!(
+            fract_certified.evaluate(&empty).unwrap(),
+            Real::new(Rational::fraction(1, 3).unwrap())
+        );
+
+        let rem_euclid_certified: Simple = "(rem_euclid_certified -7 3)".parse().unwrap();
+        assert_eq!(
+            rem_euclid_certified.evaluate(&empty).unwrap(),
+            Real::from(2_i32)
         );
 
         let sin_pi_sixth: Simple = "(sin_pi 1/6)".parse().unwrap();
@@ -1610,6 +1988,66 @@ mod tests {
         assert_eq!(
             cosc_zero.evaluate(&empty).unwrap(),
             Real::new(Rational::fraction(1, 2).unwrap())
+        );
+
+        let hypot2: Simple = "(hypot2 3 4)".parse().unwrap();
+        assert_eq!(hypot2.evaluate(&empty).unwrap(), Real::from(5_i32));
+
+        let hypot3: Simple = "(hypot3 2 3 6)".parse().unwrap();
+        assert_eq!(hypot3.evaluate(&empty).unwrap(), Real::from(7_i32));
+
+        let hypot_minus: Simple = "(hypot_minus 3 4)".parse().unwrap();
+        assert_eq!(hypot_minus.evaluate(&empty).unwrap(), Real::from(2_i32));
+
+        let mul_add: Simple = "(mul_add 2 3 4)".parse().unwrap();
+        assert_eq!(mul_add.evaluate(&empty).unwrap(), Real::from(10_i32));
+
+        let sum_products: Simple = "(sum_products 1 2 3 4 5 6)".parse().unwrap();
+        assert_eq!(sum_products.evaluate(&empty).unwrap(), Real::from(44_i32));
+
+        let diff_of_products: Simple = "(diff_of_products 2 5 3 4)".parse().unwrap();
+        assert_eq!(
+            diff_of_products.evaluate(&empty).unwrap(),
+            Real::from(-2_i32)
+        );
+
+        let eval_poly: Simple = "(eval_poly 2 1 2 3)".parse().unwrap();
+        assert_eq!(eval_poly.evaluate(&empty).unwrap(), Real::from(17_i32));
+
+        let eval_rational_poly: Simple = "(eval_rational_poly 2 2 1 1 1 -1)".parse().unwrap();
+        assert_eq!(
+            eval_rational_poly.evaluate(&empty).unwrap(),
+            Real::from(-3_i32)
+        );
+
+        let cbrt: Simple = "(cbrt -27)".parse().unwrap();
+        assert_eq!(cbrt.evaluate(&empty).unwrap(), Real::from(-3_i32));
+
+        let root_n: Simple = "(root_n 81 4)".parse().unwrap();
+        assert_eq!(root_n.evaluate(&empty).unwrap(), Real::from(3_i32));
+
+        let pow_rational: Simple = "(pow_rational -8 2/3)".parse().unwrap();
+        assert_eq!(pow_rational.evaluate(&empty).unwrap(), Real::from(4_i32));
+
+        let gamma_integer: Simple = "(gamma 5)".parse().unwrap();
+        assert_eq!(gamma_integer.evaluate(&empty).unwrap(), Real::from(24_i32));
+
+        let beta_integer: Simple = "(beta 2 3)".parse().unwrap();
+        assert_eq!(
+            beta_integer.evaluate(&empty).unwrap(),
+            Real::new(Rational::fraction(1, 12).unwrap())
+        );
+
+        let regularized_beta: Simple = "(regularized_beta 2 3 1/2)".parse().unwrap();
+        assert_eq!(
+            regularized_beta.evaluate(&empty).unwrap(),
+            Real::new(Rational::fraction(11, 16).unwrap())
+        );
+
+        let regularized_beta_q: Simple = "(regularized_beta_q 2 3 1/2)".parse().unwrap();
+        assert_eq!(
+            regularized_beta_q.evaluate(&empty).unwrap(),
+            Real::new(Rational::fraction(5, 16).unwrap())
         );
 
         let gamma_zero: Simple = "(regularized_gamma_p 1 0)".parse().unwrap();
@@ -1648,17 +2086,48 @@ mod tests {
             "(log1p -2)",
             "(ln_1m 1)",
             "(log1m 2)",
+            "(logsubexp 0 0)",
+            "(logsubexp 0 1)",
             "(logit 0)",
             "(logit 1)",
             "(tan_pi 1/2)",
+            "(rem_euclid_certified 7 0)",
+            "(rem_euclid_certified 7 -3)",
+            "(gamma 0)",
+            "(gamma 1/3)",
+            "(lgamma 0)",
+            "(beta 0 1)",
+            "(beta 1/3 1)",
+            "(regularized_beta 0 1 1/2)",
+            "(regularized_beta 1 1/3 1/2)",
+            "(regularized_beta 1 1 -1)",
+            "(regularized_beta_q 1 1 2)",
             "(regularized_gamma_p 0 1)",
             "(regularized_gamma_q 1/3 1)",
             "(regularized_gamma_p 1 -1)",
             "(chi_square_cdf 1 0)",
             "(chi_square_sf -1 1)",
+            "(root_n 16 0)",
         ] {
             let xpr: Simple = case.parse().unwrap();
             assert_eq!(xpr.evaluate(&empty), Err(Problem::NotANumber), "{case}");
+        }
+
+        let negative_even_denominator_power: Simple = "(pow_rational -16 1/4)".parse().unwrap();
+        assert_eq!(
+            negative_even_denominator_power.evaluate(&empty),
+            Err(Problem::NotAnInteger)
+        );
+
+        let even_negative_root: Simple = "(root_n -16 4)".parse().unwrap();
+        assert_eq!(
+            even_negative_root.evaluate(&empty),
+            Err(Problem::SqrtNegative)
+        );
+
+        for case in ["(sqrt1pm1 -2)", "(sqrt1m1 2)"] {
+            let xpr: Simple = case.parse().unwrap();
+            assert_eq!(xpr.evaluate(&empty), Err(Problem::SqrtNegative), "{case}");
         }
 
         for case in [
@@ -1681,6 +2150,13 @@ mod tests {
 
         let reversed: Simple = "(normal_interval 2 1)".parse().unwrap();
         assert_eq!(reversed.evaluate(&empty), Err(Problem::NotANumber));
+
+        let rational_poly_zero_denominator: Simple =
+            "(eval_rational_poly 2 1 1 -2 1)".parse().unwrap();
+        assert_eq!(
+            rational_poly_zero_denominator.evaluate(&empty),
+            Err(Problem::DivideByZero)
+        );
     }
 
     #[test]
@@ -1700,12 +2176,36 @@ mod tests {
             "(log_normal_sf 0 1)",
             "(log_dnorm )",
             "(ln_1m )",
+            "(logaddexp 1)",
+            "(logsubexp 1)",
             "(sin_pi )",
             "(cos_pi 0 1)",
             "(tan_pi )",
             "(sinc )",
             "(sinc_pi 0 1)",
             "(cosc )",
+            "(sqrt1pm1 )",
+            "(sqrt1m1 0 1)",
+            "(floor_certified )",
+            "(ceil_certified 1 2)",
+            "(round_certified )",
+            "(trunc_certified 1 2)",
+            "(fract_certified )",
+            "(rem_euclid_certified 1)",
+            "(hypot_minus 3)",
+            "(hypot2 3)",
+            "(hypot3 1 2)",
+            "(mul_add 1 2)",
+            "(sum_products 1 2 3)",
+            "(diff_of_products 1 2 3)",
+            "(eval_poly )",
+            "(eval_poly 2)",
+            "(eval_rational_poly )",
+            "(eval_rational_poly 2 3 1)",
+            "(eval_rational_poly 2 2 1 1)",
+            "(cbrt )",
+            "(root_n 16)",
+            "(pow_rational 16)",
             "(erfinv )",
             "(erfcinv 1 2)",
             "(qnorm 1/2 3/4)",
@@ -1725,6 +2225,15 @@ mod tests {
             "(normal_interval_moment 0 1)",
             "(truncated_normal_mean 0)",
             "(truncated_normal_variance 0 1 2)",
+            "(gamma )",
+            "(gamma 1 2)",
+            "(lgamma )",
+            "(lgamma 1 2)",
+            "(beta 1)",
+            "(beta 1 2 3)",
+            "(ln_beta 1)",
+            "(regularized_beta 1 1)",
+            "(regularized_beta_q 1 1 1/2 1/3)",
             "(regularized_gamma_p 1)",
             "(regularized_gamma_q 1 2 3)",
             "(chi_square_cdf 1)",

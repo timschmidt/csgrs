@@ -1,4 +1,179 @@
 impl Real {
+    /// Return `a * b + c`, preserving zero products before building the sum.
+    pub fn mul_add(a: &Real, b: &Real, c: &Real) -> Real {
+        let Some(product) = Self::product_term([a, b]) else {
+            crate::trace_dispatch!("real", "product_sum", "mul-add-zero-product");
+            return c.clone();
+        };
+
+        if c.definitely_zero() {
+            crate::trace_dispatch!("real", "product_sum", "mul-add-zero-offset");
+            return product;
+        }
+
+        crate::trace_dispatch!("real", "product_sum", "mul-add");
+        &product + c
+    }
+
+    /// Return the pairwise product sum `sum(left[i] * right[i])`.
+    pub fn sum_products(left: &[Real], right: &[Real]) -> Result<Real, Problem> {
+        if left.len() != right.len() {
+            return Err(Problem::ParseError);
+        }
+
+        match left.len() {
+            0 => Ok(Real::zero()),
+            1 => Ok(Self::product_term([&left[0], &right[0]]).unwrap_or_else(Real::zero)),
+            2 => Ok(Self::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]])),
+            3 => Ok(Self::dot3_refs(
+                [&left[0], &left[1], &left[2]],
+                [&right[0], &right[1], &right[2]],
+            )),
+            4 => Ok(Self::dot4_refs(
+                [&left[0], &left[1], &left[2], &left[3]],
+                [&right[0], &right[1], &right[2], &right[3]],
+            )),
+            _ => {
+                crate::trace_dispatch!("real", "product_sum", "sum-products-generic");
+                let mut total = None;
+                for (l, r) in left.iter().zip(right) {
+                    let Some(term) = Self::product_term([l, r]) else {
+                        continue;
+                    };
+                    total = Some(match total.take() {
+                        Some(total) => &total + &term,
+                        None => term,
+                    });
+                }
+                Ok(total.unwrap_or_else(Real::zero))
+            }
+        }
+    }
+
+    /// Return `a * b - c * d`.
+    pub fn diff_of_products(a: &Real, b: &Real, c: &Real, d: &Real) -> Real {
+        if let (Some(a), Some(b), Some(c), Some(d)) = (
+            a.exact_rational_ref(),
+            b.exact_rational_ref(),
+            c.exact_rational_ref(),
+            d.exact_rational_ref(),
+        ) {
+            crate::trace_dispatch!("real", "product_sum", "diff-of-products-exact-rational");
+            return Real::new(Rational::signed_product_sum(
+                [true, false],
+                [[a, b], [c, d]],
+            ));
+        }
+
+        crate::trace_dispatch!("real", "product_sum", "diff-of-products");
+        Self::signed_product_sum2([true, false], [[a, b], [c, d]])
+    }
+
+    /// Evaluate a polynomial in constant-first coefficient order using Horner form.
+    ///
+    /// `coeffs = [c0, c1, c2]` evaluates as `c0 + c1*x + c2*x^2`.
+    pub fn eval_poly(coeffs: &[Real], x: &Real) -> Real {
+        let Some((last, rest)) = coeffs.split_last() else {
+            crate::trace_dispatch!("real", "polynomial", "eval-poly-empty");
+            return Real::zero();
+        };
+
+        if let Some(x) = x.exact_rational_ref()
+            && coeffs.iter().all(|coeff| coeff.exact_rational_ref().is_some())
+        {
+            let mut value = last
+                .exact_rational_ref()
+                .expect("checked exact rational coefficients")
+                .clone();
+            for coeff in rest.iter().rev() {
+                let coeff = coeff
+                    .exact_rational_ref()
+                    .expect("checked exact rational coefficients");
+                value = (&value * x) + coeff;
+            }
+            crate::trace_dispatch!("real", "polynomial", "eval-poly-exact-rational");
+            return Real::new(value);
+        }
+
+        crate::trace_dispatch!("real", "polynomial", "eval-poly-horner");
+        rest.iter()
+            .rev()
+            .fold(last.clone(), |acc, coeff| Self::mul_add(&acc, x, coeff))
+    }
+
+    /// Evaluate a rational polynomial `num(x) / den(x)`.
+    pub fn eval_rational_poly(
+        num_coeffs: &[Real],
+        den_coeffs: &[Real],
+        x: &Real,
+    ) -> Result<Real, Problem> {
+        crate::trace_dispatch!("real", "polynomial", "eval-rational-poly");
+        Self::eval_poly(num_coeffs, x) / Self::eval_poly(den_coeffs, x)
+    }
+
+    /// Return `sqrt(x*x + y*y) - x`, using the rationalized form when `x > 0`.
+    pub fn hypot_minus(x: &Real, y: &Real) -> Result<Real, Problem> {
+        if x.rational.is_zero() {
+            crate::trace_dispatch!("real", "hypot", "hypot-minus-zero-x");
+            return Ok(y.abs());
+        }
+        if y.rational.is_zero() {
+            return match x.best_sign() {
+                Sign::Plus | Sign::NoSign => {
+                    crate::trace_dispatch!("real", "hypot", "hypot-minus-zero-y-nonnegative-x");
+                    Ok(Real::zero())
+                }
+                Sign::Minus => {
+                    crate::trace_dispatch!("real", "hypot", "hypot-minus-zero-y-negative-x");
+                    Ok(-x - x)
+                }
+            };
+        }
+
+        let hypot = Self::hypot2(x, y)?;
+        if x.best_sign() == Sign::Plus {
+            crate::trace_dispatch!("real", "hypot", "hypot-minus-rationalized");
+            let y_squared = y.clone().powi(BigInt::from(2_u8))?;
+            return y_squared / (&hypot + x);
+        }
+
+        crate::trace_dispatch!("real", "hypot", "hypot-minus-generic");
+        Ok(hypot - x)
+    }
+
+    /// Euclidean norm of a 2D vector, `sqrt(x*x + y*y)`.
+    pub fn hypot2(x: &Real, y: &Real) -> Result<Real, Problem> {
+        if x.definitely_zero() {
+            crate::trace_dispatch!("real", "hypot", "hypot2-zero-x");
+            return Ok(y.abs());
+        }
+        if y.definitely_zero() {
+            crate::trace_dispatch!("real", "hypot", "hypot2-zero-y");
+            return Ok(x.abs());
+        }
+
+        crate::trace_dispatch!("real", "hypot", "hypot2-dot-sqrt");
+        Self::dot2_refs([x, y], [x, y]).sqrt()
+    }
+
+    /// Euclidean norm of a 3D vector, `sqrt(x*x + y*y + z*z)`.
+    pub fn hypot3(x: &Real, y: &Real, z: &Real) -> Result<Real, Problem> {
+        if x.definitely_zero() && y.definitely_zero() {
+            crate::trace_dispatch!("real", "hypot", "hypot3-zero-xy");
+            return Ok(z.abs());
+        }
+        if x.definitely_zero() && z.definitely_zero() {
+            crate::trace_dispatch!("real", "hypot", "hypot3-zero-xz");
+            return Ok(y.abs());
+        }
+        if y.definitely_zero() && z.definitely_zero() {
+            crate::trace_dispatch!("real", "hypot", "hypot3-zero-yz");
+            return Ok(x.abs());
+        }
+
+        crate::trace_dispatch!("real", "hypot", "hypot3-dot-sqrt");
+        Self::dot3_refs([x, y, z], [x, y, z]).sqrt()
+    }
 
     /// Return the two-lane dot product of borrowed reals.
     ///
@@ -492,6 +667,13 @@ impl Real {
         }
 
         product
+    }
+
+    #[inline]
+    fn signed_product_sum2(signs: [bool; 2], terms: [[&Real; 2]; 2]) -> Real {
+        let first = Self::product_term(terms[0]).map(|term| if signs[0] { term } else { -term });
+        let second = Self::product_term(terms[1]).map(|term| if signs[1] { term } else { -term });
+        Self::sum_dot2_terms(first, second)
     }
 
     #[inline]

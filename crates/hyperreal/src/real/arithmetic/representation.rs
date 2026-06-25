@@ -94,6 +94,7 @@ impl Real {
     /// return an approximate result, but generic callers get substantially more
     /// than structural facts before `partial_cmp` reports `None`.
     pub const PARTIAL_CMP_MIN_PRECISION: i32 = -2048;
+    const CERTIFIED_INTEGER_COMPARE_TOLERANCE: i32 = -1024;
 
     fn exact_rational_unchecked(rational: Rational) -> Real {
         Self {
@@ -151,6 +152,15 @@ impl Real {
         Self::exact_rational_unchecked(rational)
     }
 
+    /// The specified integer as a Real.
+    pub fn integer(integer: BigInt) -> Real {
+        crate::trace_dispatch!("real", "constructor", "bigint");
+        Self::exact_rational_unchecked(
+            Rational::from_bigint_fraction(integer, BigUint::from(1_u8))
+                .expect("integer denominator is nonzero"),
+        )
+    }
+
     /// Returns the exact sum of owned Real values.
     pub fn sum_owned(values: impl IntoIterator<Item = Real>) -> Real {
         crate::trace_dispatch!("real", "aggregate", "sum-owned");
@@ -198,6 +208,167 @@ impl Real {
                 Self::irrational_from_computable(self.fold_ref().square().sqrt())
             }
         }
+    }
+
+    fn exact_rational_floor(rational: &Rational) -> BigInt {
+        let mut value = rational
+            .trunc()
+            .to_big_integer()
+            .expect("truncated rational is an integer");
+        if rational.sign() == Sign::Minus && !rational.fract().is_zero() {
+            value -= 1;
+        }
+        value
+    }
+
+    fn exact_rational_ceil(rational: &Rational) -> BigInt {
+        let mut value = rational
+            .trunc()
+            .to_big_integer()
+            .expect("truncated rational is an integer");
+        if rational.sign() == Sign::Plus && !rational.fract().is_zero() {
+            value += 1;
+        }
+        value
+    }
+
+    fn certified_floor_candidate(&self, candidate: &BigInt) -> Option<BigInt> {
+        let lower = Self::integer(candidate.clone());
+        let upper = Self::integer(candidate + BigInt::from(1_u8));
+
+        let lower_ok = matches!(
+            self.certified_cmp_until(&lower, Self::CERTIFIED_INTEGER_COMPARE_TOLERANCE),
+            CertifiedRealOrdering::Known {
+                ordering: Ordering::Equal | Ordering::Greater,
+                ..
+            }
+        );
+        if !lower_ok {
+            return None;
+        }
+
+        let upper_ok = matches!(
+            self.certified_cmp_until(&upper, Self::CERTIFIED_INTEGER_COMPARE_TOLERANCE),
+            CertifiedRealOrdering::Known {
+                ordering: Ordering::Less,
+                ..
+            }
+        );
+        upper_ok.then(|| candidate.clone())
+    }
+
+    /// Certified floor as an integer.
+    ///
+    /// Returns [`Problem::Exhausted`] when bounded exact-real refinement cannot
+    /// certify the integer boundary.
+    pub fn floor_certified(&self) -> Result<BigInt, Problem> {
+        if let Some(rational) = self.exact_rational_ref() {
+            crate::trace_dispatch!("real", "integer-rounding", "floor-exact-rational");
+            return Ok(Self::exact_rational_floor(rational));
+        }
+
+        crate::trace_dispatch!("real", "integer-rounding", "floor-certified");
+        let estimate = self.fold_ref().approx(0);
+        for offset in -4_i8..=4 {
+            let candidate = &estimate + BigInt::from(offset);
+            if let Some(floor) = self.certified_floor_candidate(&candidate) {
+                return Ok(floor);
+            }
+        }
+        Err(Problem::Exhausted)
+    }
+
+    /// Certified ceiling as an integer.
+    pub fn ceil_certified(&self) -> Result<BigInt, Problem> {
+        if let Some(rational) = self.exact_rational_ref() {
+            crate::trace_dispatch!("real", "integer-rounding", "ceil-exact-rational");
+            return Ok(Self::exact_rational_ceil(rational));
+        }
+
+        crate::trace_dispatch!("real", "integer-rounding", "ceil-certified");
+        let floor = self.floor_certified()?;
+        let floor_real = Self::integer(floor.clone());
+        match self.certified_eq_until(&floor_real, Self::CERTIFIED_INTEGER_COMPARE_TOLERANCE) {
+            CertifiedRealEquality::Equal { .. } => Ok(floor),
+            CertifiedRealEquality::NotEqual { .. } => Ok(floor + 1),
+            CertifiedRealEquality::Unknown { .. } => Err(Problem::Exhausted),
+        }
+    }
+
+    /// Certified truncation toward zero as an integer.
+    pub fn trunc_certified(&self) -> Result<BigInt, Problem> {
+        if let Some(rational) = self.exact_rational_ref() {
+            crate::trace_dispatch!("real", "integer-rounding", "trunc-exact-rational");
+            return Ok(rational
+                .trunc()
+                .to_big_integer()
+                .expect("truncated rational is an integer"));
+        }
+
+        crate::trace_dispatch!("real", "integer-rounding", "trunc-certified");
+        match self.certified_sign_until(Self::CERTIFIED_INTEGER_COMPARE_TOLERANCE) {
+            CertifiedRealSign::Known {
+                sign: RealSign::Negative,
+                ..
+            } => self.ceil_certified(),
+            CertifiedRealSign::Known {
+                sign: RealSign::Zero,
+                ..
+            } => Ok(BigInt::from(0_u8)),
+            CertifiedRealSign::Known {
+                sign: RealSign::Positive,
+                ..
+            } => self.floor_certified(),
+            CertifiedRealSign::Unknown { .. } => Err(Problem::Exhausted),
+        }
+    }
+
+    /// Certified nearest integer, with ties rounded away from zero.
+    pub fn round_certified(&self) -> Result<BigInt, Problem> {
+        crate::trace_dispatch!("real", "integer-rounding", "round-certified");
+        let half = Self::new(Rational::fraction(1, 2).expect("2 is nonzero"));
+        match self.certified_sign_until(Self::CERTIFIED_INTEGER_COMPARE_TOLERANCE) {
+            CertifiedRealSign::Known {
+                sign: RealSign::Negative,
+                ..
+            } => (self - &half).ceil_certified(),
+            CertifiedRealSign::Known {
+                sign: RealSign::Zero,
+                ..
+            } => Ok(BigInt::from(0_u8)),
+            CertifiedRealSign::Known {
+                sign: RealSign::Positive,
+                ..
+            } => (self + &half).floor_certified(),
+            CertifiedRealSign::Unknown { .. } => Err(Problem::Exhausted),
+        }
+    }
+
+    /// Certified fractional part after truncation toward zero.
+    pub fn fract_certified(&self) -> Result<Real, Problem> {
+        crate::trace_dispatch!("real", "integer-rounding", "fract-certified");
+        let trunc = Self::integer(self.trunc_certified()?);
+        Ok(self - &trunc)
+    }
+
+    /// Certified Euclidean remainder for positive modulus.
+    pub fn rem_euclid_certified(&self, modulus: &Real) -> Result<Real, Problem> {
+        crate::trace_dispatch!("real", "integer-rounding", "rem-euclid-certified");
+        match modulus.certified_cmp_until(
+            &Self::zero(),
+            Self::CERTIFIED_INTEGER_COMPARE_TOLERANCE,
+        ) {
+            CertifiedRealOrdering::Known {
+                ordering: Ordering::Greater,
+                ..
+            } => {}
+            CertifiedRealOrdering::Known { .. } => return Err(Problem::NotANumber),
+            CertifiedRealOrdering::Unknown { .. } => return Err(Problem::Exhausted),
+        }
+
+        let quotient = (self / modulus)?;
+        let quotient_floor = Self::integer(quotient.floor_certified()?);
+        Ok(self - &(&quotient_floor * modulus))
     }
 
     /// Converts degrees to radians exactly as `degrees * pi / 180`.
@@ -344,4 +515,3 @@ fn sin_pi_neg(r: Rational) -> bool {
     }
     r.shifted_big_integer(0).bit(0)
 }
-

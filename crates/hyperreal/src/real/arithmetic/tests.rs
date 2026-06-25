@@ -30,6 +30,183 @@ mod tests {
     }
 
     #[test]
+    fn product_sum_helpers_preserve_exact_geometry_kernels() {
+        assert_eq!(
+            Real::mul_add(&Real::from(2_i32), &Real::from(3_i32), &Real::from(4_i32)),
+            Real::from(10_i32)
+        );
+        assert_eq!(
+            Real::mul_add(&Real::zero(), &Real::pi(), &Real::from(4_i32)),
+            Real::from(4_i32)
+        );
+        assert_eq!(
+            Real::diff_of_products(
+                &Real::from(2_i32),
+                &Real::from(5_i32),
+                &Real::from(3_i32),
+                &Real::from(4_i32),
+            ),
+            Real::from(-2_i32)
+        );
+        let left = [
+            Real::new(Rational::fraction(1, 2).unwrap()),
+            Real::new(Rational::fraction(1, 3).unwrap()),
+            Real::new(Rational::fraction(1, 5).unwrap()),
+            Real::new(Rational::fraction(1, 7).unwrap()),
+            Real::new(Rational::fraction(1, 11).unwrap()),
+        ];
+        let right = [
+            Real::new(Rational::fraction(2, 3).unwrap()),
+            Real::new(Rational::fraction(3, 5).unwrap()),
+            Real::new(Rational::fraction(5, 7).unwrap()),
+            Real::new(Rational::fraction(7, 11).unwrap()),
+            Real::new(Rational::fraction(11, 13).unwrap()),
+        ];
+        let expected = left
+            .iter()
+            .zip(&right)
+            .map(|(l, r)| l * r)
+            .fold(Real::zero(), |sum, term| &sum + &term);
+        assert_eq!(Real::sum_products(&left, &right).unwrap(), expected);
+        assert_eq!(
+            Real::sum_products(&left[..2], &right[..3]),
+            Err(Problem::ParseError)
+        );
+    }
+
+    #[test]
+    fn polynomial_helpers_preserve_evaluation_forms() {
+        let coeffs = [Real::from(1_i32), Real::from(2_i32), Real::from(3_i32)];
+        assert_eq!(Real::eval_poly(&coeffs, &Real::from(2_i32)), Real::from(17_i32));
+        assert_eq!(Real::eval_poly(&[], &Real::from(2_i32)), Real::zero());
+
+        let numerator = [Real::one(), Real::one()];
+        let denominator = [Real::one(), Real::from(-1_i32)];
+        assert_eq!(
+            Real::eval_rational_poly(&numerator, &denominator, &Real::from(2_i32)),
+            Ok(Real::from(-3_i32))
+        );
+        assert_eq!(
+            Real::eval_rational_poly(&[Real::one()], &[Real::from(-2_i32), Real::one()], &Real::from(2_i32)),
+            Err(Problem::DivideByZero)
+        );
+    }
+
+    #[test]
+    fn certified_integer_helpers_make_discontinuous_decisions() {
+        let seven_thirds = Real::new(Rational::fraction(7, 3).unwrap());
+        assert_eq!(seven_thirds.floor_certified(), Ok(BigInt::from(2_i32)));
+        assert_eq!(seven_thirds.ceil_certified(), Ok(BigInt::from(3_i32)));
+        assert_eq!(seven_thirds.trunc_certified(), Ok(BigInt::from(2_i32)));
+        assert_eq!(seven_thirds.round_certified(), Ok(BigInt::from(2_i32)));
+        assert_eq!(
+            seven_thirds.fract_certified().unwrap(),
+            Real::new(Rational::fraction(1, 3).unwrap())
+        );
+
+        let negative_seven_thirds = Real::new(Rational::fraction(-7, 3).unwrap());
+        assert_eq!(
+            negative_seven_thirds.floor_certified(),
+            Ok(BigInt::from(-3_i32))
+        );
+        assert_eq!(
+            negative_seven_thirds.ceil_certified(),
+            Ok(BigInt::from(-2_i32))
+        );
+        assert_eq!(
+            negative_seven_thirds.trunc_certified(),
+            Ok(BigInt::from(-2_i32))
+        );
+        assert_eq!(
+            negative_seven_thirds.round_certified(),
+            Ok(BigInt::from(-2_i32))
+        );
+        assert_eq!(
+            negative_seven_thirds.fract_certified().unwrap(),
+            Real::new(Rational::fraction(-1, 3).unwrap())
+        );
+
+        assert_eq!(
+            Real::new(Rational::fraction(1, 2).unwrap()).round_certified(),
+            Ok(BigInt::from(1_i32))
+        );
+        assert_eq!(
+            Real::new(Rational::fraction(-1, 2).unwrap()).round_certified(),
+            Ok(BigInt::from(-1_i32))
+        );
+
+        assert_eq!(Real::pi().floor_certified(), Ok(BigInt::from(3_i32)));
+        assert_eq!(Real::pi().ceil_certified(), Ok(BigInt::from(4_i32)));
+        assert_eq!(Real::pi().trunc_certified(), Ok(BigInt::from(3_i32)));
+        assert_eq!(Real::pi().round_certified(), Ok(BigInt::from(3_i32)));
+        assert_eq!(
+            Real::pi().fract_certified().unwrap(),
+            Real::pi() - Real::from(3_i32)
+        );
+
+        assert_eq!(
+            Real::from(-7_i32)
+                .rem_euclid_certified(&Real::from(3_i32))
+                .unwrap(),
+            Real::from(2_i32)
+        );
+        assert_eq!(
+            Real::pi()
+                .rem_euclid_certified(&Real::from(2_i32))
+                .unwrap(),
+            Real::pi() - Real::from(2_i32)
+        );
+        assert_eq!(
+            Real::from(7_i32).rem_euclid_certified(&Real::zero()),
+            Err(Problem::NotANumber)
+        );
+        assert_eq!(
+            Real::from(7_i32).rem_euclid_certified(&Real::from(-3_i32)),
+            Err(Problem::NotANumber)
+        );
+    }
+
+    #[test]
+    fn hypot_helpers_preserve_exact_lengths() {
+        assert_eq!(
+            Real::hypot2(&Real::from(3_i32), &Real::from(4_i32)).unwrap(),
+            Real::from(5_i32)
+        );
+        assert_eq!(
+            Real::hypot3(&Real::from(2_i32), &Real::from(3_i32), &Real::from(6_i32)).unwrap(),
+            Real::from(7_i32)
+        );
+
+        assert_eq!(
+            Real::hypot2(&Real::zero(), &Real::from(-11_i32)).unwrap(),
+            Real::from(11_i32)
+        );
+        assert_eq!(
+            Real::hypot3(&Real::zero(), &Real::zero(), &(-Real::pi())).unwrap(),
+            Real::pi()
+        );
+        assert_eq!(
+            Real::hypot_minus(&Real::from(3_i32), &Real::from(4_i32)).unwrap(),
+            Real::from(2_i32)
+        );
+        assert_eq!(
+            Real::hypot_minus(&Real::from(-3_i32), &Real::from(4_i32)).unwrap(),
+            Real::from(8_i32)
+        );
+        assert_eq!(
+            Real::hypot_minus(&Real::zero(), &Real::from(-7_i32)).unwrap(),
+            Real::from(7_i32)
+        );
+        assert!(Real::hypot_minus(&Real::from(7_i32), &Real::zero())
+            .unwrap()
+            .definitely_zero());
+        assert_eq!(
+            Real::hypot_minus(&Real::from(-7_i32), &Real::zero()).unwrap(),
+            Real::from(14_i32)
+        );
+    }
+
+    #[test]
     fn abs_and_angle_conversions_preserve_exact_real_structure() {
         assert_eq!(Real::from(-7_i32).abs(), Real::from(7_i32));
         assert_eq!((-Real::pi()).abs(), Real::pi());

@@ -64,14 +64,35 @@ shape unless benchmarks show no cost.
 - fallible methods return `Problem` for known domain errors.
 - `ln_1p`/`log1p`, `ln_1m`/`log1m`, and `expm1` preserve small-residual intent
   instead of forcing users to spell `ln(1+x)`, `ln(1-x)`, or `exp(x)-1` as
-  cancellation-prone generic arithmetic; `softplus`, `logit`, and `sigmoid`
-  are stable public compositions built on those primitives.
+  cancellation-prone generic arithmetic; `softplus`, `logaddexp`,
+  `logsubexp`, `logit`, and `sigmoid` are stable public compositions built on
+  those primitives.
 - `sin_pi`, `cos_pi`, and `tan_pi` expose rational-turn trig directly; exact
   rational inputs reuse the same `SinPi`/`TanPi` certificates and exact
   small-denominator tables that ordinary trig reaches through `pi` products.
 - `sinc`, `sinc_pi`, and `cosc` preserve removable small-angle limits at zero
   instead of requiring users to spell them as division-heavy generic
   arithmetic.
+- `sqrt1pm1`, `sqrt1m1`, and `hypot_minus` preserve common square-root
+  cancellation patterns used by offsets, normalized vectors, and curvature
+  calculations.
+- `mul_add`, `sum_products`, and `diff_of_products` expose common product-sum
+  forms directly, reusing exact-rational product reducers and omitting
+  known-zero product lanes.
+- `eval_poly` and `eval_rational_poly` preserve Horner and
+  rational-polynomial evaluation structure instead of requiring callers to
+  expand polynomial arithmetic by hand. Bernstein and de Casteljau operations
+  carry curve-basis semantics and live in higher geometry crates.
+- `hypot2` and `hypot3` reuse the exact dot-product reducers before square
+  roots, so rational lengths such as 3-4-5 stay exact and symbolic zero axes
+  reduce through `abs`.
+- `cbrt`, `root_n`, and `pow_rational` preserve exact rational perfect roots;
+  non-perfect positive roots fall back to rational-exponent computable forms,
+  and negative odd roots are handled by symmetry.
+- `floor_certified`, `ceil_certified`, `round_certified`, `trunc_certified`,
+  `fract_certified`, and `rem_euclid_certified` expose discontinuous integer
+  decisions only when exact rational shortcuts or bounded exact-real comparison
+  can certify the relevant boundary.
 - `erf`, `erfc`, `erfcx`, `dnorm`, `pnorm`, `normal_sf`, `pnorm_upper`,
   `normal_interval`, `pnorm_diff`, `log_pnorm`, `log_normal_sf`, `log_dnorm`,
   `erfinv`, `erfcinv`, `qnorm`, and `qnorm_upper` expose computable Gaussian
@@ -96,11 +117,20 @@ shape unless benchmarks show no cost.
   `normal_interval_moment`, `truncated_normal_mean`, and
   `truncated_normal_variance` reuse `normal_interval` plus boundary density
   recurrence terms.
+- `gamma`, `lgamma`, `beta`, `ln_beta`/`lbeta`, `regularized_beta`, and
+  `regularized_beta_q` provide exact integer/half-integer gamma and finite
+  positive-integer beta forms for scientific scalar workloads without moving
+  root-solving policy into the scalar layer.
 - `regularized_gamma_p` and `regularized_gamma_q` support exact positive
   integer and half-integer shape parameters with `x >= 0`, using finite
   recurrences over existing `erf`/`erfc`, `exp`, `sqrt`, and exact factorial
   coefficients; `chi_square_cdf` and `chi_square_sf` wrap those forms as
   `P(k/2, x/2)` and `Q(k/2, x/2)` for positive integer degrees of freedom.
+- benchmark coverage for these public helpers lives in `library_perf` under
+  stable scalar, geometry/polynomial, normal/scientific, and `Simple` surface
+  groups; adversarial and dispatch-trace rows cover tiny residuals, domain
+  boundaries, normal tails, finite gamma/beta recurrences, and exact
+  product/polynomial shapes.
 - structural queries return conservative facts and should not force expensive
   approximation when representation facts are enough.
 - borrowed arithmetic should avoid unnecessary expression cloning.

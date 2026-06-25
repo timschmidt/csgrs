@@ -1,13 +1,86 @@
+thread_local! {
+    static PNORM_CAP_HI_CACHE: Computable = Computable::integer(BigInt::from(10)).pnorm();
+    static PNORM_CAP_LO_CACHE: Computable =
+        Computable::one().add(Computable::integer(BigInt::from(10)).pnorm().negate());
+    static SQRT_PI_OVER_TWO_CACHE: Real = (Real::pi() / Real::from(2_i32)).unwrap().sqrt().unwrap();
+    static SQRT_TWO_OVER_PI_CACHE: Real = (Real::from(2_i32) / Real::pi()).unwrap().sqrt().unwrap();
+    static INV_SQRT_PI_CACHE: Real = Real::pi().sqrt().unwrap().inverse().unwrap();
+}
+
+static NORMAL_QUANTILE_SAFE_LO: std::sync::LazyLock<Rational> =
+    std::sync::LazyLock::new(|| {
+        Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(10_u8).pow(20)).unwrap()
+    });
+static NORMAL_QUANTILE_SAFE_HI: std::sync::LazyLock<Rational> =
+    std::sync::LazyLock::new(|| Rational::one() - NORMAL_QUANTILE_SAFE_LO.clone());
+
+struct NormalIntervalComponents {
+    mass: Real,
+    phi_lo: Real,
+    phi_hi: Real,
+}
+
 impl Real {
     const NORMAL_MAX_ABS: f64 = 10.0;
     const NORMAL_COMPARE_TOLERANCE: Precision = -1000;
+    const NORMAL_QUANTILE_SEED_PRECISION: Precision = -24;
+    const STABLE_LOG_COMPARE_TOLERANCE: Precision = -1000;
 
     fn pnorm_cap_hi() -> Computable {
-        Computable::integer(BigInt::from(10)).pnorm()
+        PNORM_CAP_HI_CACHE.with(Clone::clone)
     }
 
     fn pnorm_cap_lo() -> Computable {
-        Computable::one().add(Self::pnorm_cap_hi().negate())
+        PNORM_CAP_LO_CACHE.with(Clone::clone)
+    }
+
+    fn normal_quantile_inside_safe_subwindow(cdf: &Self) -> bool {
+        cdf.exact_rational_ref().is_some_and(|p| {
+            p >= &*NORMAL_QUANTILE_SAFE_LO && p <= &*NORMAL_QUANTILE_SAFE_HI
+        })
+    }
+
+    fn normal_quantile_from_seeded_cdf(
+        cdf: Self,
+        seed: f64,
+        trace_name: &'static str,
+    ) -> Result<Self, Problem> {
+        let _ = trace_name;
+        let known_safe_subwindow = Self::normal_quantile_inside_safe_subwindow(&cdf);
+        let folded = cdf.fold();
+        if !known_safe_subwindow {
+            if folded.compare_absolute(&Computable::one(), Self::NORMAL_COMPARE_TOLERANCE)
+                != Ordering::Less
+            {
+                crate::trace_dispatch!("real", trace_name, "domain-computable-one-or-more");
+                return Err(Problem::NotANumber);
+            }
+            if folded.compare_absolute(&Self::pnorm_cap_lo(), Self::NORMAL_COMPARE_TOLERANCE)
+                != Ordering::Greater
+            {
+                crate::trace_dispatch!("real", trace_name, "domain-low-tail-exhausted");
+                return Err(Problem::Exhausted);
+            }
+            if folded.compare_absolute(&Self::pnorm_cap_hi(), Self::NORMAL_COMPARE_TOLERANCE)
+                != Ordering::Less
+            {
+                crate::trace_dispatch!("real", trace_name, "domain-high-tail-exhausted");
+                return Err(Problem::Exhausted);
+            }
+        } else {
+            crate::trace_dispatch!("real", trace_name, "exact-rational-safe-subwindow");
+        }
+
+        let seed = seed.clamp(-Self::NORMAL_MAX_ABS, Self::NORMAL_MAX_ABS);
+        let seed_scale = 2_f64.powi((-Self::NORMAL_QUANTILE_SEED_PRECISION) as i32);
+        let seed_int = BigInt::from((seed * seed_scale).round() as i64);
+
+        crate::trace_dispatch!("real", trace_name, "normal-quantile-computable");
+        Ok(Self::irrational_from_computable(Computable::normal_quantile(
+            folded,
+            seed_int,
+            Self::NORMAL_QUANTILE_SEED_PRECISION,
+        )))
     }
 
     #[allow(clippy::excessive_precision)]
@@ -153,6 +226,70 @@ impl Real {
         }
         crate::trace_dispatch!("real", "sqrt", "generic-computable");
         Ok(self.make_computable(Computable::sqrt))
+    }
+
+    /// `sqrt(1 + x) - 1`, preserving the removable cancellation near zero.
+    pub fn sqrt1pm1(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "sqrt1pm1", "exact-zero");
+            return Ok(Self::zero());
+        }
+
+        let root = (Self::one() + self.clone()).sqrt()?;
+        crate::trace_dispatch!("real", "sqrt1pm1", "rationalized");
+        self / (root + Self::one())
+    }
+
+    /// `sqrt(1 - x) - 1`, preserving the removable cancellation near zero.
+    pub fn sqrt1m1(self) -> Result<Real, Problem> {
+        (-self).sqrt1pm1()
+    }
+
+    /// Cube root of this Real.
+    pub fn cbrt(self) -> Result<Real, Problem> {
+        self.root_n(3)
+    }
+
+    /// nth root of this Real.
+    ///
+    /// Odd roots support negative inputs by symmetry. Even roots of negative
+    /// values return [`Problem::SqrtNegative`].
+    pub fn root_n(self, n: u32) -> Result<Real, Problem> {
+        if n == 0 {
+            crate::trace_dispatch!("real", "root_n", "zero-degree-domain-error");
+            return Err(Problem::NotANumber);
+        }
+        if n == 1 {
+            crate::trace_dispatch!("real", "root_n", "degree-one");
+            return Ok(self);
+        }
+        if let One = &self.class
+            && let Some(root) = self.rational.perfect_nth_root(n)
+        {
+            crate::trace_dispatch!("real", "root_n", "rational-perfect-root");
+            return Ok(Self::new(root));
+        }
+
+        match self.best_sign() {
+            Sign::NoSign => {
+                crate::trace_dispatch!("real", "root_n", "exact-zero");
+                Ok(Self::zero())
+            }
+            Sign::Minus if n.is_multiple_of(2) => {
+                crate::trace_dispatch!("real", "root_n", "domain-negative-even-root");
+                Err(Problem::SqrtNegative)
+            }
+            Sign::Minus => {
+                crate::trace_dispatch!("real", "root_n", "negative-odd-root");
+                Ok(-(-self).root_n(n)?)
+            }
+            Sign::Plus => {
+                crate::trace_dispatch!("real", "root_n", "positive-rational-exponent");
+                let exponent =
+                    Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(n)).unwrap();
+                self.pow_fraction(exponent)
+            }
+        }
     }
 
     /// Apply the exponential function to this Real parameter.
@@ -508,14 +645,19 @@ impl Real {
 
     /// Natural logarithm of `1 + x`, preserving the small-residual shape.
     pub fn ln_1p(self) -> Result<Real, Problem> {
-        let one_plus = Self::one() + self.clone();
-        if one_plus.best_sign() != Sign::Plus {
-            crate::trace_dispatch!("real", "ln_1p", "domain-one-plus-not-positive");
-            return Err(Problem::NotANumber);
-        }
         if self.definitely_zero() {
             crate::trace_dispatch!("real", "ln_1p", "exact-zero");
             return Ok(Self::zero());
+        }
+        match self.best_sign() {
+            Sign::Plus => {}
+            Sign::Minus | Sign::NoSign => {
+                let one_plus = Self::one() + self.clone();
+                if one_plus.best_sign() != Sign::Plus {
+                    crate::trace_dispatch!("real", "ln_1p", "domain-one-plus-not-positive");
+                    return Err(Problem::NotANumber);
+                }
+            }
         }
 
         crate::trace_dispatch!("real", "ln_1p", "generic-computable");
@@ -543,17 +685,50 @@ impl Real {
             crate::trace_dispatch!("real", "expm1", "exact-zero");
             return Self::zero();
         }
+        if let Some(exp_value) = Self::exact_exp_of_ln_term(&self) {
+            crate::trace_dispatch!("real", "expm1", "exact-ln-term");
+            return exp_value - Self::one();
+        }
 
         crate::trace_dispatch!("real", "expm1", "generic-computable");
         self.make_computable(Computable::expm1)
     }
 
+    fn exact_exp_of_ln_term(value: &Self) -> Option<Self> {
+        let Ln(base) = &value.class else {
+            return None;
+        };
+        let exp = value.rational.to_big_integer()?;
+        base.clone().powi(exp).ok().map(Self::new)
+    }
+
+    fn exact_rational_order(a: &Self, b: &Self) -> Option<Ordering> {
+        if matches!(a.class, One) && matches!(b.class, One) {
+            a.rational.partial_cmp(&b.rational)
+        } else {
+            None
+        }
+    }
+
     /// `ln(1 + exp(x))`, using the smaller exponential side when the sign is known.
     pub fn softplus(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "softplus", "exact-zero-ln2");
+            return constants::scaled_ln(2, 1).ok_or(Problem::Exhausted);
+        }
+        if let Some(exp_value) = Self::exact_exp_of_ln_term(&self) {
+            crate::trace_dispatch!("real", "softplus", "exact-ln-term");
+            return (Self::one() + exp_value).ln();
+        }
+
         match self.best_sign() {
             Sign::NoSign => constants::scaled_ln(2, 1).ok_or(Problem::Exhausted),
-            Sign::Minus => self.exp()?.ln_1p(),
+            Sign::Minus => {
+                crate::trace_dispatch!("real", "softplus", "negative-ln1p-exp");
+                self.exp()?.ln_1p()
+            }
             Sign::Plus => {
+                crate::trace_dispatch!("real", "softplus", "positive-max-plus-ln1p-tail");
                 let correction = (-self.clone()).exp()?.ln_1p()?;
                 Ok(self + correction)
             }
@@ -582,15 +757,116 @@ impl Real {
 
     /// Logistic sigmoid, `1 / (1 + exp(-x))`.
     pub fn sigmoid(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "sigmoid", "exact-zero-half");
+            return Ok(constants::half());
+        }
+        if let Some(exp_value) = Self::exact_exp_of_ln_term(&self) {
+            crate::trace_dispatch!("real", "sigmoid", "exact-ln-term");
+            return exp_value.clone() / (Self::one() + exp_value);
+        }
+
         match self.best_sign() {
             Sign::NoSign => Ok(constants::half()),
             Sign::Plus => {
+                crate::trace_dispatch!("real", "sigmoid", "positive-tail");
                 let tail = (-self).exp()?;
                 Self::one() / (Self::one() + tail)
             }
             Sign::Minus => {
+                crate::trace_dispatch!("real", "sigmoid", "negative-tail");
                 let tail = self.exp()?;
                 tail.clone() / (Self::one() + tail)
+            }
+        }
+    }
+
+    /// `ln(exp(a) + exp(b))`, preserving the dominant log-space term when known.
+    pub fn logaddexp(a: &Real, b: &Real) -> Result<Real, Problem> {
+        if a == b {
+            crate::trace_dispatch!("real", "logaddexp", "structural-equal-ln2");
+            return Ok(a + constants::scaled_ln(2, 1).ok_or(Problem::Exhausted)?);
+        }
+        if let (Some(exp_a), Some(exp_b)) =
+            (Self::exact_exp_of_ln_term(a), Self::exact_exp_of_ln_term(b))
+        {
+            crate::trace_dispatch!("real", "logaddexp", "exact-ln-terms");
+            return (exp_a + exp_b).ln();
+        }
+
+        let ordering = if let Some(ordering) = Self::exact_rational_order(a, b) {
+            CertifiedRealOrdering::Known {
+                ordering,
+                certificate: RealOrderingCertificate::ExactRationalComparison,
+            }
+        } else {
+            a.certified_cmp_until(b, Self::STABLE_LOG_COMPARE_TOLERANCE)
+        };
+
+        match ordering {
+            CertifiedRealOrdering::Known {
+                ordering: Ordering::Equal,
+                ..
+            } => {
+                crate::trace_dispatch!("real", "logaddexp", "equal-ln2");
+                Ok(a + constants::scaled_ln(2, 1).ok_or(Problem::Exhausted)?)
+            }
+            CertifiedRealOrdering::Known {
+                ordering: Ordering::Greater,
+                ..
+            } => {
+                crate::trace_dispatch!("real", "logaddexp", "left-dominant");
+                let correction = (b - a).exp()?.ln_1p()?;
+                Ok(a + correction)
+            }
+            CertifiedRealOrdering::Known {
+                ordering: Ordering::Less,
+                ..
+            } => {
+                crate::trace_dispatch!("real", "logaddexp", "right-dominant");
+                let correction = (a - b).exp()?.ln_1p()?;
+                Ok(b + correction)
+            }
+            CertifiedRealOrdering::Unknown { .. } => {
+                crate::trace_dispatch!("real", "logaddexp", "unknown-order-fallback");
+                let left = a.clone().exp()?;
+                let right = b.clone().exp()?;
+                (left + right).ln()
+            }
+        }
+    }
+
+    /// `ln(exp(a) - exp(b))`, defined for `a > b`.
+    pub fn logsubexp(a: &Real, b: &Real) -> Result<Real, Problem> {
+        if let (Some(exp_a), Some(exp_b)) =
+            (Self::exact_exp_of_ln_term(a), Self::exact_exp_of_ln_term(b))
+        {
+            crate::trace_dispatch!("real", "logsubexp", "exact-ln-terms");
+            return (exp_a - exp_b).ln();
+        }
+
+        let ordering = if let Some(ordering) = Self::exact_rational_order(a, b) {
+            CertifiedRealOrdering::Known {
+                ordering,
+                certificate: RealOrderingCertificate::ExactRationalComparison,
+            }
+        } else {
+            a.certified_cmp_until(b, Self::STABLE_LOG_COMPARE_TOLERANCE)
+        };
+
+        match ordering {
+            CertifiedRealOrdering::Known {
+                ordering: Ordering::Greater,
+                ..
+            } => {
+                crate::trace_dispatch!("real", "logsubexp", "left-dominant");
+                let tail = (b - a).exp()?;
+                let correction = (-tail).make_computable(Computable::ln_1p);
+                Ok(a + correction)
+            }
+            CertifiedRealOrdering::Known { .. } | CertifiedRealOrdering::Unknown { .. } => {
+                crate::trace_dispatch!("real", "logsubexp", "domain-not-left-greater");
+                Err(Problem::NotANumber)
             }
         }
     }
@@ -764,6 +1040,10 @@ impl Real {
             crate::trace_dispatch!("real", "erfinv", "exact-zero");
             return Ok(Self::zero());
         }
+        if self.best_sign() == Sign::Minus {
+            crate::trace_dispatch!("real", "erfinv", "odd-symmetry");
+            return Ok(-(-self).erfinv()?);
+        }
         if self
             .clone()
             .fold()
@@ -772,6 +1052,12 @@ impl Real {
         {
             crate::trace_dispatch!("real", "erfinv", "domain-outside-open-unit");
             return Err(Problem::NotANumber);
+        }
+
+        if self.exact_rational().is_some() {
+            crate::trace_dispatch!("real", "erfinv", "exact-rational-upper-tail-transform");
+            let upper_tail = (Self::one() - self) * constants::half();
+            return upper_tail.qnorm_upper()? / Self::sqrt_two();
         }
 
         crate::trace_dispatch!("real", "erfinv", "qnorm-transform");
@@ -804,15 +1090,55 @@ impl Real {
             }
         }
 
-        crate::trace_dispatch!("real", "erfcinv", "qnorm-transform");
+        match self.certified_cmp_until(&Self::one(), Self::NORMAL_COMPARE_TOLERANCE) {
+            CertifiedRealOrdering::Known {
+                ordering: Ordering::Greater,
+                ..
+            } if self.exact_rational().is_some() => {
+                crate::trace_dispatch!("real", "erfcinv", "complement-symmetry");
+                return Ok(-(Self::from(2_i32) - self).erfcinv()?);
+            }
+            CertifiedRealOrdering::Known {
+                ordering: Ordering::Less,
+                ..
+            } if self.exact_rational().is_some() => {
+                crate::trace_dispatch!("real", "erfcinv", "upper-tail-transform");
+                let upper_tail = self * constants::half();
+                return upper_tail.qnorm_upper()? / Self::sqrt_two();
+            }
+            CertifiedRealOrdering::Known {
+                ordering: Ordering::Equal,
+                ..
+            } => {
+                crate::trace_dispatch!("real", "erfcinv", "exact-one-zero");
+                return Ok(Self::zero());
+            }
+            CertifiedRealOrdering::Known { .. } => {}
+            CertifiedRealOrdering::Unknown { .. } => {}
+        }
+
+        crate::trace_dispatch!("real", "erfcinv", "fallback-qnorm-transform");
         let p = self * constants::half();
         (-p.qnorm()?) / Self::sqrt_two()
     }
 
     /// Inverse standard normal upper-tail probability.
     pub fn qnorm_upper(self) -> Result<Real, Problem> {
-        crate::trace_dispatch!("real", "qnorm_upper", "one-minus-qnorm");
-        (Self::one() - self).qnorm()
+        if self.class == One && self.rational <= *rationals::ZERO {
+            crate::trace_dispatch!("real", "qnorm_upper", "domain-not-positive");
+            return Err(Problem::NotANumber);
+        }
+        if self.class == One && self.rational == *rationals::HALF {
+            crate::trace_dispatch!("real", "qnorm_upper", "exact-half-zero");
+            return Ok(Self::zero());
+        }
+        if self.class == One && self.rational >= *rationals::ONE {
+            crate::trace_dispatch!("real", "qnorm_upper", "domain-one-or-more");
+            return Err(Problem::NotANumber);
+        }
+
+        let cdf = Self::one() - self;
+        cdf.qnorm()
     }
 
     fn check_normal_sigma(sigma: &Self, _name: &'static str) -> Result<(), Problem> {
@@ -858,7 +1184,15 @@ impl Real {
     }
 
     fn sqrt_pi_over_two() -> Result<Real, Problem> {
-        (Self::pi() / Self::from(2_i32))?.sqrt()
+        Ok(SQRT_PI_OVER_TWO_CACHE.with(Clone::clone))
+    }
+
+    fn sqrt_two_over_pi() -> Result<Real, Problem> {
+        Ok(SQRT_TWO_OVER_PI_CACHE.with(Clone::clone))
+    }
+
+    fn inv_sqrt_pi() -> Result<Real, Problem> {
+        Ok(INV_SQRT_PI_CACHE.with(Clone::clone))
     }
 
     /// Upper-tail Mills ratio, normal_sf(x) / dnorm(x).
@@ -869,7 +1203,8 @@ impl Real {
 
     /// Standard normal hazard rate, dnorm(x) / normal_sf(x).
     pub fn normal_hazard(self) -> Result<Real, Problem> {
-        self.normal_mills()?.inverse()
+        let z = (self / Self::sqrt_two())?;
+        Self::sqrt_two_over_pi()? / z.erfcx()?
     }
 
     /// Natural logarithm of the standard normal hazard rate.
@@ -941,13 +1276,27 @@ impl Real {
             return Ok(Self::zero());
         }
 
-        let phi_lo = lo.clone().dnorm()?;
-        let phi_hi = hi.clone().dnorm()?;
+        let components = Self::normal_interval_components_from_mass(lo, hi, i0)?;
+        let phi_lo = components.phi_lo;
+        let phi_hi = components.phi_hi;
         if n == 1 {
             return Ok(phi_lo - phi_hi);
         }
+        let first = phi_lo.clone() - phi_hi.clone();
+        if n == 2 {
+            crate::trace_dispatch!("real", "normal_interval_moment", "closed-form-second");
+            let lo_boundary = Self::normal_boundary_power_density(lo, &phi_lo, 1)?;
+            let hi_boundary = Self::normal_boundary_power_density(hi, &phi_hi, 1)?;
+            return Ok(lo_boundary - hi_boundary + components.mass);
+        }
+        if n == 3 {
+            crate::trace_dispatch!("real", "normal_interval_moment", "closed-form-third");
+            let lo_boundary = Self::normal_boundary_power_density(lo, &phi_lo, 2)?;
+            let hi_boundary = Self::normal_boundary_power_density(hi, &phi_hi, 2)?;
+            return Ok(lo_boundary - hi_boundary + Self::from(2_i32) * first);
+        }
 
-        let mut moments = vec![i0, phi_lo.clone() - phi_hi.clone()];
+        let mut moments = vec![components.mass, first];
         for k in 2..=n {
             let exp = BigInt::from(k - 1);
             let coefficient = Self::new(Rational::from_bigint(BigInt::from(k - 1)));
@@ -958,44 +1307,103 @@ impl Real {
         Ok(moments[n].clone())
     }
 
-    fn nondegenerate_normal_interval_mass(lo: &Self, hi: &Self) -> Result<Real, Problem> {
+    fn normal_boundary_power_density(
+        point: &Self,
+        density: &Self,
+        power: usize,
+    ) -> Result<Self, Problem> {
+        if power == 0 {
+            return Ok(density.clone());
+        }
+        if matches!(point.class, One) {
+            if point.rational.is_zero() {
+                return Ok(Self::zero());
+            }
+            if point.rational.is_one() {
+                return Ok(density.clone());
+            }
+        }
+        if power == 1 {
+            return Ok(point * density);
+        }
+        Ok(point.clone().powi(BigInt::from(power))? * density)
+    }
+
+    fn normal_interval_components_from_mass(
+        lo: &Self,
+        hi: &Self,
+        mass: Self,
+    ) -> Result<NormalIntervalComponents, Problem> {
+        Ok(NormalIntervalComponents {
+            mass,
+            phi_lo: lo.clone().dnorm()?,
+            phi_hi: hi.clone().dnorm()?,
+        })
+    }
+
+    fn normal_interval_components(lo: &Self, hi: &Self) -> Result<NormalIntervalComponents, Problem> {
         let mass = Self::normal_interval(lo, hi)?;
-        if mass.definitely_zero() {
+        Self::normal_interval_components_from_mass(lo, hi, mass)
+    }
+
+    fn nondegenerate_normal_interval_components(
+        lo: &Self,
+        hi: &Self,
+    ) -> Result<NormalIntervalComponents, Problem> {
+        let components = Self::normal_interval_components(lo, hi)?;
+        if components.mass.definitely_zero() {
             return Err(Problem::NotANumber);
         }
-        Ok(mass)
+        Ok(components)
     }
 
     /// Mean of a standard normal truncated to [lo, hi].
     pub fn truncated_normal_mean(lo: &Self, hi: &Self) -> Result<Real, Problem> {
-        let mass = Self::nondegenerate_normal_interval_mass(lo, hi)?;
-        let numerator = Self::normal_interval_moment(lo, hi, 1)?;
+        let components = Self::nondegenerate_normal_interval_components(lo, hi)?;
+        let numerator = components.phi_lo - components.phi_hi;
         Ok(Self::irrational_from_computable(
-            numerator.fold().multiply(mass.fold().inverse()),
+            numerator.fold().multiply(components.mass.fold().inverse()),
         ))
     }
 
     /// Variance of a standard normal truncated to [lo, hi].
     pub fn truncated_normal_variance(lo: &Self, hi: &Self) -> Result<Real, Problem> {
-        let mass = Self::nondegenerate_normal_interval_mass(lo, hi)?;
-        let inv_mass = mass.fold().inverse();
-        let mean = Self::normal_interval_moment(lo, hi, 1)?
-            .fold()
-            .multiply(inv_mass.clone());
-        let second = Self::normal_interval_moment(lo, hi, 2)?
-            .fold()
-            .multiply(inv_mass);
+        let components = Self::nondegenerate_normal_interval_components(lo, hi)?;
+        let inv_mass = components.mass.clone().fold().inverse();
+        let mean_numerator = components.phi_lo.clone() - components.phi_hi.clone();
+        let second_numerator =
+            lo.clone() * components.phi_lo - hi.clone() * components.phi_hi + components.mass;
+        let mean = mean_numerator.fold().multiply(inv_mass.clone());
+        let second = second_numerator.fold().multiply(inv_mass);
         Ok(Self::irrational_from_computable(
             second.add(mean.square().negate()),
         ))
     }
 
-    fn exact_positive_half_integer_twice(value: &Self) -> Result<u64, Problem> {
+    fn exact_half_integer_twice(value: &Self) -> Result<i64, Problem> {
         let Some(rational) = value.exact_rational() else {
             return Err(Problem::NotANumber);
         };
         let twice = rational * Rational::new(2);
         let Some(integer) = twice.to_big_integer() else {
+            return Err(Problem::NotANumber);
+        };
+        integer.to_i64().ok_or(Problem::NotANumber)
+    }
+
+    fn exact_positive_half_integer_twice(value: &Self) -> Result<u64, Problem> {
+        let integer = Self::exact_half_integer_twice(value)?;
+        if integer <= 0 {
+            return Err(Problem::NotANumber);
+        }
+        integer.to_u64().ok_or(Problem::NotANumber)
+    }
+
+    fn exact_positive_integer(value: &Self) -> Result<u64, Problem> {
+        let Some(rational) = value.exact_rational() else {
+            return Err(Problem::NotANumber);
+        };
+        let Some(integer) = rational.to_big_integer() else {
             return Err(Problem::NotANumber);
         };
         if integer.sign() != Sign::Plus {
@@ -1010,6 +1418,234 @@ impl Real {
             result *= BigUint::from(k);
         }
         result
+    }
+
+    fn binomial_biguint(n: u64, k: u64) -> BigUint {
+        if k > n {
+            return BigUint::from(0_u8);
+        }
+        let k = k.min(n - k);
+        let mut result = BigUint::from(1_u8);
+        for i in 1..=k {
+            result *= BigUint::from(n - k + i);
+            result /= BigUint::from(i);
+        }
+        result
+    }
+
+    fn rational_from_biguint(value: BigUint) -> Rational {
+        Rational::from_bigint_fraction(BigInt::from_biguint(Sign::Plus, value), BigUint::from(1_u8))
+            .unwrap()
+    }
+
+    fn gamma_half_integer(twice: i64) -> Result<Real, Problem> {
+        if twice <= 0 && twice % 2 == 0 {
+            return Err(Problem::NotANumber);
+        }
+
+        if twice > 0 && twice % 2 == 0 {
+            let n = u64::try_from(twice / 2).map_err(|_| Problem::OutOfRange)?;
+            return Ok(Self::new(Self::rational_from_biguint(
+                Self::factorial_biguint(n - 1),
+            )));
+        }
+
+        let sqrt_pi = Self::pi().sqrt()?;
+        if twice > 0 {
+            let k = u64::try_from((twice - 1) / 2).map_err(|_| Problem::OutOfRange)?;
+            let numerator = Self::factorial_biguint(2 * k);
+            let denominator = (BigUint::from(1_u8) << (2 * k)) * Self::factorial_biguint(k);
+            let scale = Rational::from_bigint_fraction(
+                BigInt::from_biguint(Sign::Plus, numerator),
+                denominator,
+            )
+            .unwrap();
+            return Ok(Self::new(scale) * sqrt_pi);
+        }
+
+        let m = u64::try_from((1 - twice) / 2).map_err(|_| Problem::OutOfRange)?;
+        let numerator = (BigUint::from(1_u8) << (2 * m)) * Self::factorial_biguint(m);
+        let denominator = Self::factorial_biguint(2 * m);
+        let scale = Rational::from_bigint_fraction(
+            BigInt::from_biguint(
+                if m.is_multiple_of(2) {
+                    Sign::Plus
+                } else {
+                    Sign::Minus
+                },
+                numerator,
+            ),
+            denominator,
+        )
+        .unwrap();
+        Ok(Self::new(scale) * sqrt_pi)
+    }
+
+    fn gamma_half_integer_abs_scale(twice: i64) -> Result<(Rational, bool), Problem> {
+        if twice <= 0 && twice % 2 == 0 {
+            return Err(Problem::NotANumber);
+        }
+
+        if twice > 0 && twice % 2 == 0 {
+            let n = u64::try_from(twice / 2).map_err(|_| Problem::OutOfRange)?;
+            return Ok((
+                Self::rational_from_biguint(Self::factorial_biguint(n - 1)),
+                false,
+            ));
+        }
+
+        if twice > 0 {
+            let k = u64::try_from((twice - 1) / 2).map_err(|_| Problem::OutOfRange)?;
+            let numerator = Self::factorial_biguint(2 * k);
+            let denominator = (BigUint::from(1_u8) << (2 * k)) * Self::factorial_biguint(k);
+            return Ok((
+                Rational::from_bigint_fraction(
+                    BigInt::from_biguint(Sign::Plus, numerator),
+                    denominator,
+                )
+                .unwrap(),
+                true,
+            ));
+        }
+
+        let m = u64::try_from((1 - twice) / 2).map_err(|_| Problem::OutOfRange)?;
+        let numerator = (BigUint::from(1_u8) << (2 * m)) * Self::factorial_biguint(m);
+        let denominator = Self::factorial_biguint(2 * m);
+        Ok((
+            Rational::from_bigint_fraction(
+                BigInt::from_biguint(Sign::Plus, numerator),
+                denominator,
+            )
+            .unwrap(),
+            true,
+        ))
+    }
+
+    /// Gamma function for exact integer and half-integer real arguments.
+    ///
+    /// Poles at non-positive integers return [`Problem::NotANumber`]. Other
+    /// shapes are left to a future approximation kernel.
+    pub fn gamma(self) -> Result<Real, Problem> {
+        let twice = Self::exact_half_integer_twice(&self)?;
+        crate::trace_dispatch!("real", "gamma", "half-integer-closed-form");
+        Self::gamma_half_integer(twice)
+    }
+
+    /// Natural logarithm of the absolute gamma function.
+    ///
+    /// This follows the common real `lgamma` convention: negative half-integer
+    /// values are accepted and the sign of `gamma(x)` is discarded before `ln`.
+    pub fn lgamma(self) -> Result<Real, Problem> {
+        crate::trace_dispatch!("real", "lgamma", "log-abs-gamma");
+        self.gamma()?.abs().ln()
+    }
+
+    /// Beta function `B(a, b) = gamma(a) * gamma(b) / gamma(a + b)`.
+    pub fn beta(a: &Self, b: &Self) -> Result<Real, Problem> {
+        crate::trace_dispatch!("real", "beta", "gamma-ratio");
+        let numerator = a.clone().gamma()? * b.clone().gamma()?;
+        numerator / (a + b).gamma()?
+    }
+
+    /// Natural logarithm of the absolute beta function.
+    pub fn ln_beta(a: &Self, b: &Self) -> Result<Real, Problem> {
+        let twice_a = Self::exact_half_integer_twice(a)?;
+        let twice_b = Self::exact_half_integer_twice(b)?;
+        let twice_sum = twice_a.checked_add(twice_b).ok_or(Problem::OutOfRange)?;
+        let (scale_a, sqrt_a) = Self::gamma_half_integer_abs_scale(twice_a)?;
+        let (scale_b, sqrt_b) = Self::gamma_half_integer_abs_scale(twice_b)?;
+        let (scale_sum, sqrt_sum) = Self::gamma_half_integer_abs_scale(twice_sum)?;
+
+        crate::trace_dispatch!("real", "ln_beta", "half-integer-scale-log");
+        let scale = (&scale_a * &scale_b) / &scale_sum;
+        let mut result = if scale.is_one() {
+            Self::zero()
+        } else {
+            Self::new(scale).ln()?
+        };
+
+        let sqrt_pi_count = i32::from(sqrt_a) + i32::from(sqrt_b) - i32::from(sqrt_sum);
+        if sqrt_pi_count != 0 {
+            let scale = Rational::from_bigint_fraction(
+                BigInt::from(sqrt_pi_count),
+                BigUint::from(2_u8),
+            )
+            .unwrap();
+            result += Self::new(scale) * Self::pi().ln()?;
+        }
+        Ok(result)
+    }
+
+    /// Alias for [`Real::ln_beta`].
+    pub fn lbeta(a: &Self, b: &Self) -> Result<Real, Problem> {
+        Self::ln_beta(a, b)
+    }
+
+    /// Regularized incomplete beta `I_x(a, b)`.
+    ///
+    /// Currently supports exact positive integer `a` and `b`, with `0 <= x <=
+    /// 1`, through the finite binomial-tail identity.
+    pub fn regularized_beta(a: &Self, b: &Self, x: &Self) -> Result<Real, Problem> {
+        let a = Self::exact_positive_integer(a)?;
+        let b = Self::exact_positive_integer(b)?;
+        match x.best_sign() {
+            Sign::Minus => return Err(Problem::NotANumber),
+            Sign::NoSign => return Ok(Self::zero()),
+            Sign::Plus => {}
+        }
+        let one_minus_x = Self::one() - x.clone();
+        match one_minus_x.best_sign() {
+            Sign::Minus => return Err(Problem::NotANumber),
+            Sign::NoSign => return Ok(Self::one()),
+            Sign::Plus => {}
+        }
+
+        let n = a.checked_add(b).and_then(|sum| sum.checked_sub(1));
+        let Some(n) = n else {
+            return Err(Problem::OutOfRange);
+        };
+
+        crate::trace_dispatch!("real", "regularized_beta", "integer-binomial-tail");
+        let mut total = Self::zero();
+        for j in a..=n {
+            let coeff = Self::new(Self::rational_from_biguint(Self::binomial_biguint(n, j)));
+            let x_power = x.clone().powi(BigInt::from(j))?;
+            let one_minus_power = one_minus_x.clone().powi(BigInt::from(n - j))?;
+            total += coeff * x_power * one_minus_power;
+        }
+        Ok(total)
+    }
+
+    /// Complement of [`Real::regularized_beta`].
+    pub fn regularized_beta_q(a: &Self, b: &Self, x: &Self) -> Result<Real, Problem> {
+        let a = Self::exact_positive_integer(a)?;
+        let b = Self::exact_positive_integer(b)?;
+        match x.best_sign() {
+            Sign::Minus => return Err(Problem::NotANumber),
+            Sign::NoSign => return Ok(Self::one()),
+            Sign::Plus => {}
+        }
+        let one_minus_x = Self::one() - x.clone();
+        match one_minus_x.best_sign() {
+            Sign::Minus => return Err(Problem::NotANumber),
+            Sign::NoSign => return Ok(Self::zero()),
+            Sign::Plus => {}
+        }
+
+        let n = a.checked_add(b).and_then(|sum| sum.checked_sub(1));
+        let Some(n) = n else {
+            return Err(Problem::OutOfRange);
+        };
+
+        crate::trace_dispatch!("real", "regularized_beta_q", "integer-binomial-tail");
+        let mut total = Self::zero();
+        for j in 0..a {
+            let coeff = Self::new(Self::rational_from_biguint(Self::binomial_biguint(n, j)));
+            let x_power = x.clone().powi(BigInt::from(j))?;
+            let one_minus_power = one_minus_x.clone().powi(BigInt::from(n - j))?;
+            total += coeff * x_power * one_minus_power;
+        }
+        Ok(total)
     }
 
     fn nonnegative_half_power(x: &Self, twice_power: u64) -> Result<Real, Problem> {
@@ -1043,12 +1679,15 @@ impl Real {
         let rational =
             Rational::from_bigint_fraction(BigInt::from_biguint(Sign::Plus, numerator), denominator)
                 .unwrap();
-        Ok(Self::new(rational) * Self::pi().sqrt()?.inverse()?)
+        Ok(Self::new(rational) * Self::inv_sqrt_pi()?)
     }
 
-    fn regularized_gamma_recurrence_term(current_twice: u64, x: &Self) -> Result<Real, Problem> {
+    fn regularized_gamma_recurrence_term(
+        current_twice: u64,
+        x: &Self,
+        decay: &Self,
+    ) -> Result<Real, Problem> {
         let power = Self::nonnegative_half_power(x, current_twice)?;
-        let decay = (-x.clone()).exp()?;
         Ok(power * decay * Self::gamma_recurrence_inverse(current_twice)?)
     }
 
@@ -1060,8 +1699,9 @@ impl Real {
             Sign::Plus => {}
         }
 
+        let decay = (-x.clone()).exp()?;
         let (mut p, mut q, mut current_twice) = if target_twice % 2 == 0 {
-            let q = (-x.clone()).exp()?;
+            let q = decay.clone();
             (Self::one() - q.clone(), q, 2)
         } else {
             let sqrt_x = x.clone().sqrt()?;
@@ -1069,7 +1709,7 @@ impl Real {
         };
 
         while current_twice < target_twice {
-            let term = Self::regularized_gamma_recurrence_term(current_twice, x)?;
+            let term = Self::regularized_gamma_recurrence_term(current_twice, x, &decay)?;
             p -= term.clone();
             q += term;
             current_twice += 2;
@@ -1133,45 +1773,15 @@ impl Real {
             return Err(Problem::NotANumber);
         }
 
-        let folded = self.clone().fold();
-        if folded.compare_absolute(&Computable::one(), Self::NORMAL_COMPARE_TOLERANCE)
-            != Ordering::Less
-        {
-            crate::trace_dispatch!("real", "qnorm", "domain-computable-one-or-more");
-            return Err(Problem::NotANumber);
-        }
-        if folded.compare_absolute(&Self::pnorm_cap_lo(), Self::NORMAL_COMPARE_TOLERANCE)
-            != Ordering::Greater
-        {
-            crate::trace_dispatch!("real", "qnorm", "domain-low-tail-exhausted");
-            return Err(Problem::Exhausted);
-        }
-        if folded.compare_absolute(&Self::pnorm_cap_hi(), Self::NORMAL_COMPARE_TOLERANCE)
-            != Ordering::Less
-        {
-            crate::trace_dispatch!("real", "qnorm", "domain-high-tail-exhausted");
-            return Err(Problem::Exhausted);
-        }
-
         let p_f64: f64 = self.clone().into();
-        let upper_half = p_f64 > 0.5;
-        let p_small = if upper_half {
-            let one_minus = Self::one() - self;
-            let v: f64 = one_minus.into();
-            v.max(1e-300)
+        let seed = if p_f64 > 0.5 {
+            let upper_tail = Self::one() - self.clone();
+            let tail_f64: f64 = upper_tail.into();
+            -Self::qnorm_seed_approx(tail_f64.max(1e-300))
         } else {
-            p_f64.max(1e-300)
+            Self::qnorm_seed_approx(p_f64.max(1e-300))
         };
-        let y = Self::qnorm_seed_approx(p_small);
-        let seed = if upper_half { -y } else { y };
-        let seed = seed.clamp(-Self::NORMAL_MAX_ABS, Self::NORMAL_MAX_ABS);
-        let seed_prec: Precision = -24;
-        let seed_int = BigInt::from((seed * f64::from(1u32 << 24)).round() as i64);
-
-        crate::trace_dispatch!("real", "qnorm", "normal-quantile-computable");
-        Ok(Self::irrational_from_computable(Computable::normal_quantile(
-            folded, seed_int, seed_prec,
-        )))
+        Self::normal_quantile_from_seeded_cdf(self, seed, "qnorm")
     }
 
     /// The sine of this Real.
@@ -2302,6 +2912,27 @@ impl Real {
                 })
             }
         }
+    }
+
+    /// Raise this Real to an exact rational exponent.
+    pub fn pow_rational(self, exponent: Rational) -> Result<Self, Problem> {
+        if let Some(integer) = exponent.to_big_integer() {
+            crate::trace_dispatch!("real", "pow_rational", "integer-exponent");
+            return self.powi(integer);
+        }
+
+        if self.best_sign() == Sign::Minus && exponent.denominator().bit(0) {
+            let Some(denominator) = exponent.denominator().to_u32() else {
+                crate::trace_dispatch!("real", "pow_rational", "odd-denominator-exhausted");
+                return Err(Problem::Exhausted);
+            };
+            let numerator = BigInt::from_biguint(exponent.sign(), exponent.numerator().clone());
+            crate::trace_dispatch!("real", "pow_rational", "negative-odd-denominator-root");
+            return self.root_n(denominator)?.powi(numerator);
+        }
+
+        crate::trace_dispatch!("real", "pow_rational", "generic-rational-exponent");
+        self.pow(Real::new(exponent))
     }
 
     /// Raise this Real to some Real exponent.
