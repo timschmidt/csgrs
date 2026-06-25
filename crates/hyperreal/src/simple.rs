@@ -55,6 +55,7 @@ enum Operator {
     Log2,
     Ln,
     Ln1p,
+    Ln1m,
     Expm1,
     Softplus,
     Logit,
@@ -62,6 +63,12 @@ enum Operator {
     Cos,
     Sin,
     Tan,
+    SinPi,
+    CosPi,
+    TanPi,
+    Sinc,
+    SincPi,
+    Cosc,
     Erf,
     Erfc,
     Erfcx,
@@ -498,6 +505,12 @@ impl Simple {
                 }
                 self.operands.first().unwrap().value(names)?.ln_1p()
             }
+            Ln1m => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.ln_1m()
+            }
             Expm1 => {
                 if self.operands.len() != 1 {
                     return Err(Problem::ParseError);
@@ -553,6 +566,42 @@ impl Simple {
                 let operand = self.operands.first().unwrap();
                 let value = operand.value(names)?.tan()?;
                 Ok(value)
+            }
+            SinPi => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                Ok(self.operands.first().unwrap().value(names)?.sin_pi())
+            }
+            CosPi => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                Ok(self.operands.first().unwrap().value(names)?.cos_pi())
+            }
+            TanPi => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.tan_pi()
+            }
+            Sinc => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.sinc()
+            }
+            SincPi => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.sinc_pi()
+            }
+            Cosc => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.cosc()
             }
             Erf => {
                 if self.operands.len() != 1 {
@@ -890,6 +939,7 @@ impl Simple {
             "log2" => Ok(Log2),
             "ln" => Ok(Ln),
             "ln_1p" | "log1p" => Ok(Ln1p),
+            "ln_1m" | "log1m" => Ok(Ln1m),
             "exp" => Ok(Exp),
             "expm1" => Ok(Expm1),
             "softplus" => Ok(Softplus),
@@ -900,6 +950,12 @@ impl Simple {
             "sin" => Ok(Sin),
             "pow" => Ok(Pow),
             "tan" => Ok(Tan),
+            "sin_pi" => Ok(SinPi),
+            "cos_pi" => Ok(CosPi),
+            "tan_pi" => Ok(TanPi),
+            "sinc" => Ok(Sinc),
+            "sinc_pi" => Ok(SincPi),
+            "cosc" => Ok(Cosc),
             "erf" => Ok(Erf),
             "erfc" => Ok(Erfc),
             "erfcx" => Ok(Erfcx),
@@ -1113,6 +1169,8 @@ mod tests {
             "(ln 5)",
             "(ln_1p 5)",
             "(log1p 5)",
+            "(ln_1m 1/2)",
+            "(log1m 1/2)",
             "(log10 5)",
             "(log2 5)",
             "(exp 5)",
@@ -1124,6 +1182,12 @@ mod tests {
             "(cos 5)",
             "(sin 5)",
             "(tan 5)",
+            "(sin_pi 1/6)",
+            "(cos_pi 1/3)",
+            "(tan_pi 1/4)",
+            "(sinc 0)",
+            "(sinc_pi 1/2)",
+            "(cosc 0)",
             "(erf 1)",
             "(erfc 1)",
             "(erfcx 1)",
@@ -1497,6 +1561,12 @@ mod tests {
         let log1p_zero: Simple = "(log1p 0)".parse().unwrap();
         assert!(log1p_zero.evaluate(&empty).unwrap().definitely_zero());
 
+        let ln_1m_zero: Simple = "(ln_1m 0)".parse().unwrap();
+        assert!(ln_1m_zero.evaluate(&empty).unwrap().definitely_zero());
+
+        let log1m_zero: Simple = "(log1m 0)".parse().unwrap();
+        assert!(log1m_zero.evaluate(&empty).unwrap().definitely_zero());
+
         let expm1_zero: Simple = "(expm1 0)".parse().unwrap();
         assert!(expm1_zero.evaluate(&empty).unwrap().definitely_zero());
 
@@ -1506,6 +1576,39 @@ mod tests {
         let sigmoid_zero: Simple = "(sigmoid 0)".parse().unwrap();
         assert_eq!(
             sigmoid_zero.evaluate(&empty).unwrap(),
+            Real::new(Rational::fraction(1, 2).unwrap())
+        );
+
+        let sin_pi_sixth: Simple = "(sin_pi 1/6)".parse().unwrap();
+        assert_eq!(
+            sin_pi_sixth.evaluate(&empty).unwrap(),
+            Real::new(Rational::fraction(1, 2).unwrap())
+        );
+
+        let cos_pi_third: Simple = "(cos_pi 1/3)".parse().unwrap();
+        assert_eq!(
+            cos_pi_third.evaluate(&empty).unwrap(),
+            Real::new(Rational::fraction(1, 2).unwrap())
+        );
+
+        let tan_pi_quarter: Simple = "(tan_pi 1/4)".parse().unwrap();
+        assert_eq!(tan_pi_quarter.evaluate(&empty).unwrap(), Real::one());
+
+        let sinc_zero: Simple = "(sinc 0)".parse().unwrap();
+        assert_eq!(sinc_zero.evaluate(&empty).unwrap(), Real::one());
+
+        let sinc_pi_zero: Simple = "(sinc_pi 0)".parse().unwrap();
+        assert_eq!(sinc_pi_zero.evaluate(&empty).unwrap(), Real::one());
+
+        let sinc_pi_half: Simple = "(sinc_pi 1/2)".parse().unwrap();
+        assert_eq!(
+            sinc_pi_half.evaluate(&empty).unwrap(),
+            (Real::from(2_i32) / Real::pi()).unwrap()
+        );
+
+        let cosc_zero: Simple = "(cosc 0)".parse().unwrap();
+        assert_eq!(
+            cosc_zero.evaluate(&empty).unwrap(),
             Real::new(Rational::fraction(1, 2).unwrap())
         );
 
@@ -1543,8 +1646,11 @@ mod tests {
             "(truncated_normal_variance 2 1)",
             "(ln_1p -1)",
             "(log1p -2)",
+            "(ln_1m 1)",
+            "(log1m 2)",
             "(logit 0)",
             "(logit 1)",
+            "(tan_pi 1/2)",
             "(regularized_gamma_p 0 1)",
             "(regularized_gamma_q 1/3 1)",
             "(regularized_gamma_p 1 -1)",
@@ -1593,6 +1699,13 @@ mod tests {
             "(log_pnorm )",
             "(log_normal_sf 0 1)",
             "(log_dnorm )",
+            "(ln_1m )",
+            "(sin_pi )",
+            "(cos_pi 0 1)",
+            "(tan_pi )",
+            "(sinc )",
+            "(sinc_pi 0 1)",
+            "(cosc )",
             "(erfinv )",
             "(erfcinv 1 2)",
             "(qnorm 1/2 3/4)",

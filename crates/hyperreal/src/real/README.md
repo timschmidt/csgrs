@@ -62,10 +62,16 @@ shape unless benchmarks show no cost.
 - arithmetic preserves recognizable symbolic structure where benchmarks justify
   it.
 - fallible methods return `Problem` for known domain errors.
-- `ln_1p`/`log1p` and `expm1` preserve small-residual intent instead of forcing
-  users to spell `ln(1+x)` or `exp(x)-1` as cancellation-prone generic
-  arithmetic; `softplus`, `logit`, and `sigmoid` are stable public compositions
-  built on those primitives.
+- `ln_1p`/`log1p`, `ln_1m`/`log1m`, and `expm1` preserve small-residual intent
+  instead of forcing users to spell `ln(1+x)`, `ln(1-x)`, or `exp(x)-1` as
+  cancellation-prone generic arithmetic; `softplus`, `logit`, and `sigmoid`
+  are stable public compositions built on those primitives.
+- `sin_pi`, `cos_pi`, and `tan_pi` expose rational-turn trig directly; exact
+  rational inputs reuse the same `SinPi`/`TanPi` certificates and exact
+  small-denominator tables that ordinary trig reaches through `pi` products.
+- `sinc`, `sinc_pi`, and `cosc` preserve removable small-angle limits at zero
+  instead of requiring users to spell them as division-heavy generic
+  arithmetic.
 - `erf`, `erfc`, `erfcx`, `dnorm`, `pnorm`, `normal_sf`, `pnorm_upper`,
   `normal_interval`, `pnorm_diff`, `log_pnorm`, `log_normal_sf`, `log_dnorm`,
   `erfinv`, `erfcinv`, `qnorm`, and `qnorm_upper` expose computable Gaussian

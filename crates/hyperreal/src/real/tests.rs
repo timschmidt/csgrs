@@ -306,6 +306,69 @@ mod tests {
     }
 
     #[test]
+    fn public_pi_scaled_trig_uses_exact_rational_turns() {
+        let half = Real::new(Rational::fraction(1, 2).unwrap());
+        let sqrt_two_over_two = Real::new(Rational::fraction(1, 2).unwrap())
+            * Real::new(Rational::new(2)).sqrt().unwrap();
+        let sqrt_three = Real::new(Rational::new(3)).sqrt().unwrap();
+        let sqrt_three_over_three =
+            Real::new(Rational::fraction(1, 3).unwrap()) * sqrt_three.clone();
+
+        assert_eq!(Real::new(Rational::fraction(1, 6).unwrap()).sin_pi(), half);
+        assert_eq!(
+            Real::new(Rational::fraction(1, 4).unwrap()).cos_pi(),
+            sqrt_two_over_two
+        );
+        assert_eq!(
+            Real::new(Rational::fraction(1, 4).unwrap())
+                .tan_pi()
+                .unwrap(),
+            Real::one()
+        );
+        assert_eq!(
+            Real::new(Rational::fraction(1, 6).unwrap())
+                .tan_pi()
+                .unwrap(),
+            sqrt_three_over_three
+        );
+        assert_eq!(
+            Real::new(Rational::fraction(1, 3).unwrap())
+                .tan_pi()
+                .unwrap(),
+            sqrt_three
+        );
+        assert_eq!(
+            Real::new(Rational::fraction(1, 2).unwrap())
+                .tan_pi()
+                .unwrap_err(),
+            Problem::NotANumber
+        );
+    }
+
+    #[test]
+    fn small_angle_helpers_remove_zero_singularities() {
+        assert_eq!(Real::zero().sinc().unwrap(), Real::one());
+        assert_eq!(Real::zero().sinc_pi().unwrap(), Real::one());
+        assert_eq!(
+            Real::zero().cosc().unwrap(),
+            Real::new(Rational::fraction(1, 2).unwrap())
+        );
+
+        assert_eq!(
+            Real::new(Rational::fraction(1, 2).unwrap())
+                .sinc_pi()
+                .unwrap(),
+            (Real::from(2_i32) / Real::pi()).unwrap()
+        );
+        assert!(
+            Real::new(Rational::new(1))
+                .sinc_pi()
+                .unwrap()
+                .definitely_zero()
+        );
+    }
+
+    #[test]
     fn trig_integer_pi_offsets_reduce_to_residual() {
         use crate::real::Class::ConstOffset;
 
@@ -1432,6 +1495,8 @@ mod tests {
     fn stable_substrate_functions() {
         assert!(Real::zero().ln_1p().unwrap().definitely_zero());
         assert!(Real::zero().log1p().unwrap().definitely_zero());
+        assert!(Real::zero().ln_1m().unwrap().definitely_zero());
+        assert!(Real::zero().log1m().unwrap().definitely_zero());
         assert!(Real::zero().expm1().definitely_zero());
         assert_eq!(
             Real::zero().sigmoid().unwrap(),
@@ -1446,6 +1511,11 @@ mod tests {
 
         let tiny = Real::new(Rational::fraction(1, 1_000_000).unwrap());
         assert_close(tiny.clone().ln_1p().unwrap(), 0.000001_f64.ln_1p(), 1e-18);
+        assert_close(
+            tiny.clone().ln_1m().unwrap(),
+            (-0.000001_f64).ln_1p(),
+            1e-18,
+        );
         assert_close(tiny.clone().expm1(), 0.000001_f64.exp_m1(), 1e-18);
         assert_close(
             Real::from(2_i32).sigmoid().unwrap(),
@@ -1459,6 +1529,7 @@ mod tests {
         );
 
         assert_eq!(Real::from(-1_i32).ln_1p(), Err(Problem::NotANumber));
+        assert_eq!(Real::one().ln_1m(), Err(Problem::NotANumber));
         assert_eq!(Real::zero().logit(), Err(Problem::NotANumber));
         assert_eq!(Real::one().logit(), Err(Problem::NotANumber));
     }

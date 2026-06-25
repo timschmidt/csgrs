@@ -47,8 +47,9 @@ information:
   zeros, and gives reducers shared-denominator/product-sum paths so repeated
   GCD work is not forced into every term.
 - `Real` keeps exact rational parts and symbolic classes separate, preserving
-  `pi`, `e`, roots, logarithms, and recognized trig endpoints until they can
-  simplify, cancel, or provide structural facts.
+  `pi`, `e`, roots, logarithms, recognized trig endpoints, and removable
+  small-angle limits until they can simplify, cancel, or provide structural
+  facts.
 - `Computable` is the fallback for values that need refinement, not the default
   container for every expression. Kernels reduce arguments, use stable forms
   near cancellation points, and cache precision-indexed approximations without
@@ -65,7 +66,9 @@ numeric domain failures:
 - square root of known-negative values
 - logarithm of non-positive values
 - `ln_1p`/`log1p` inputs with `x <= -1`
+- `ln_1m`/`log1m` inputs with `x >= 1`
 - `logit` inputs outside `0 < p < 1`
+- `tan_pi` inputs at tangent poles
 - inverse trig / inverse hyperbolic domain failures
 - normal density/CDF inputs outside the supported finite approximation window
 - normal upper-tail inputs outside the supported finite approximation window

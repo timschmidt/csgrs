@@ -93,8 +93,8 @@ fallback.
   parsing, and exact finite IEEE-754 import.
 - [`Real`](src/real/README.md) is the public scalar for the stack. It combines an exact
   rational scale with a compact symbolic/computable class so common values such as
-  exact ones, powers/products of `pi` and `e`, selected roots, logarithms, and trig forms
-  can expose facts before approximation.
+  exact ones, powers/products of `pi` and `e`, selected roots, logarithms, trig forms,
+  and removable small-angle limits can expose facts before approximation.
 - [`Computable`](src/computable/README.md) is the lazy approximation layer. It stores an
   exact-real expression graph and computes scaled integer approximations only at a
   requested binary precision.
@@ -320,17 +320,19 @@ assert_eq!(value.exact_rational(), Some(Rational::fraction(7, 8).unwrap()));
 ```
 
 `Simple` supports arithmetic, roots, powers, logs, exponentials, stable scalar
-helpers (`ln_1p`/`log1p`, `expm1`, `softplus`, `logit`, `sigmoid`), trig, inverse trig,
-inverse hyperbolic functions, normal distribution helpers (`erf`, `erfc`, `erfcx`,
-`dnorm`, `pnorm`, `normal_sf`, `pnorm_upper`, `normal_interval`, `pnorm_diff`,
-`log_pnorm`, `log_normal_sf`, `log_dnorm`, `erfinv`, `erfcinv`, `qnorm`,
-`qnorm_upper`, `normal_pdf`, `normal_cdf`, `normal_survival`,
-`normal_quantile`, `normal_mills`, `normal_hazard`, `normal_log_hazard`,
-`normal_inverse_mills`, `hermite_probabilists`, `dnorm_derivative`,
-`gaussian_derivative`, `standard_normal_moment`, `normal_interval_moment`,
-`truncated_normal_mean`, `truncated_normal_variance`, `regularized_gamma_p`,
-`regularized_gamma_q`, `chi_square_cdf`, `chi_square_sf`), integers, decimals,
-fractions, `pi`, and `e`.
+helpers (`ln_1p`/`log1p`, `ln_1m`/`log1m`, `expm1`, `softplus`, `logit`,
+`sigmoid`), trig and pi-scaled trig (`sin_pi`, `cos_pi`, `tan_pi`), small-angle
+helpers (`sinc`, `sinc_pi`, `cosc`), inverse trig, inverse hyperbolic functions,
+normal distribution helpers (`erf`, `erfc`, `erfcx`, `dnorm`, `pnorm`,
+`normal_sf`, `pnorm_upper`, `normal_interval`, `pnorm_diff`, `log_pnorm`,
+`log_normal_sf`, `log_dnorm`, `erfinv`, `erfcinv`, `qnorm`, `qnorm_upper`,
+`normal_pdf`, `normal_cdf`, `normal_survival`, `normal_quantile`,
+`normal_mills`, `normal_hazard`, `normal_log_hazard`, `normal_inverse_mills`,
+`hermite_probabilists`, `dnorm_derivative`, `gaussian_derivative`,
+`standard_normal_moment`, `normal_interval_moment`, `truncated_normal_mean`,
+`truncated_normal_variance`, `regularized_gamma_p`, `regularized_gamma_q`,
+`chi_square_cdf`, `chi_square_sf`), integers, decimals, fractions, `pi`, and
+`e`.
 
 Stability-oriented scalar forms keep common statistical expressions from being
 assembled out of cancellation-prone generic arithmetic:
@@ -338,10 +340,29 @@ assembled out of cancellation-prone generic arithmetic:
 | Form | Meaning | Domain |
 | --- | --- | --- |
 | `(ln_1p x)` / `(log1p x)` | natural log of `1 + x` | `x > -1` |
+| `(ln_1m x)` / `(log1m x)` | natural log of `1 - x` | `x < 1` |
 | `(expm1 x)` | `exp(x) - 1` with a small-argument kernel | all real inputs |
 | `(softplus x)` | `ln(1 + exp(x))` | all real inputs |
 | `(logit p)` | `ln(p / (1 - p))` | `0 < p < 1` |
 | `(sigmoid x)` | `1 / (1 + exp(-x))` | all real inputs |
+
+Pi-scaled trig forms preserve rational-turn intent before falling back to
+generic radian multiplication:
+
+| Form | Meaning | Domain |
+| --- | --- | --- |
+| `(sin_pi x)` | `sin(pi * x)` with exact rational-turn cases | all real inputs |
+| `(cos_pi x)` | `cos(pi * x)` with exact rational-turn cases | all real inputs |
+| `(tan_pi x)` | `tan(pi * x)` with exact rational-turn cases | all non-pole inputs |
+
+Small-angle forms preserve removable limits instead of exposing a false
+division-by-zero at the origin:
+
+| Form | Meaning | Domain |
+| --- | --- | --- |
+| `(sinc x)` | `sin(x) / x`, with `sinc(0) = 1` | all real inputs |
+| `(sinc_pi x)` | `sin(pi * x) / (pi * x)`, with `sinc_pi(0) = 1` | all real inputs |
+| `(cosc x)` | `(1 - cos(x)) / x^2`, with `cosc(0) = 1/2` | all real inputs |
 
 Normal-distribution forms use the same `Real` methods as Rust callers:
 
@@ -385,8 +406,8 @@ Normal-distribution forms use the same `Real` methods as Rust callers:
 
 Inputs outside those supported numeric ranges return `Problem` rather than silently
 falling back to primitive floating point.
-`ln_1p`/`log1p` and `logit` return `Problem::NotANumber` outside their open
-domains.
+`ln_1p`/`log1p`, `ln_1m`/`log1m`, `logit`, and `tan_pi` return
+`Problem::NotANumber` outside their open domains.
 Reversed normal-interval bounds return `Problem::NotANumber`; equal bounds return exact
 zero.
 Parametric normal forms standardize exactly as `(x - mean) / sigma`, or

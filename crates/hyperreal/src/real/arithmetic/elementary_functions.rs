@@ -527,6 +527,16 @@ impl Real {
         self.ln_1p()
     }
 
+    /// Natural logarithm of `1 - x`, preserving the small-residual shape.
+    pub fn ln_1m(self) -> Result<Real, Problem> {
+        (-self).ln_1p()
+    }
+
+    /// Alias for [`Real::ln_1m`].
+    pub fn log1m(self) -> Result<Real, Problem> {
+        self.ln_1m()
+    }
+
     /// `exp(x) - 1`, preserving the small-argument shape.
     pub fn expm1(self) -> Real {
         if self.definitely_zero() {
@@ -1205,6 +1215,15 @@ impl Real {
         self.make_computable(Computable::sin)
     }
 
+    /// Sine of `pi * x`, with exact rational-turn special cases.
+    pub fn sin_pi(self) -> Real {
+        if self.class == One {
+            crate::trace_dispatch!("real", "sin_pi", "rational-special-form");
+            return Self::sin_pi_rational(self.rational);
+        }
+        (self * Self::pi()).sin()
+    }
+
     /// The cosine of this Real.
     pub fn cos(self) -> Real {
         if self.definitely_zero() {
@@ -1240,6 +1259,15 @@ impl Real {
 
         crate::trace_dispatch!("real", "cos", "generic-computable");
         self.make_computable(Computable::cos)
+    }
+
+    /// Cosine of `pi * x`, with exact rational-turn special cases.
+    pub fn cos_pi(self) -> Real {
+        if self.class == One {
+            crate::trace_dispatch!("real", "cos_pi", "rational-sinpi-rewrite");
+            return Self::sin_pi_rational(self.rational + rationals::HALF.clone());
+        }
+        (self * Self::pi()).cos()
     }
 
     /// The tangent of this Real.
@@ -1324,6 +1352,46 @@ impl Real {
 
         crate::trace_dispatch!("real", "tan", "generic-computable");
         Ok(self.make_computable(Computable::tan))
+    }
+
+    /// Tangent of `pi * x`, with exact rational-turn special cases.
+    pub fn tan_pi(self) -> Result<Real, Problem> {
+        (self * Self::pi()).tan()
+    }
+
+    /// `sin(x) / x`, with the removable singularity `sinc(0) = 1`.
+    pub fn sinc(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "sinc", "exact-zero-one");
+            return Ok(Self::one());
+        }
+
+        crate::trace_dispatch!("real", "sinc", "sin-over-x");
+        self.clone().sin() / self
+    }
+
+    /// `sin(pi * x) / (pi * x)`, with the removable singularity `sinc_pi(0) = 1`.
+    pub fn sinc_pi(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "sinc_pi", "exact-zero-one");
+            return Ok(Self::one());
+        }
+
+        crate::trace_dispatch!("real", "sinc_pi", "sinpi-over-pi-x");
+        let denominator = self.clone() * Self::pi();
+        self.sin_pi() / denominator
+    }
+
+    /// `(1 - cos(x)) / x^2`, with the removable singularity `cosc(0) = 1/2`.
+    pub fn cosc(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "cosc", "exact-zero-half");
+            return Ok(constants::half());
+        }
+
+        crate::trace_dispatch!("real", "cosc", "one-minus-cos-over-square");
+        let numerator = Self::one() - self.clone().cos();
+        numerator / (self.clone() * self)
     }
 
     fn pi_fraction(n: i64, d: u64) -> Real {
