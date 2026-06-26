@@ -84,7 +84,6 @@ pub struct PreparedMeshPair<'left, 'right> {
     face_pair_classifications: RefCell<Option<Vec<MeshFacePairClassification>>>,
     face_pair_classification_counts: RefCell<Option<PreparedMeshPairClassificationCounts>>,
     intersection_graph: RefCell<Option<Rc<ExactIntersectionGraph>>>,
-    intersection_graph_counts: RefCell<Option<PreparedMeshPairIntersectionGraphCounts>>,
     intersection_graph_validated: RefCell<bool>,
     arrangement: RefCell<Option<Rc<ExactArrangement>>>,
     arrangement_counts: RefCell<Option<PreparedMeshPairArrangementCounts>>,
@@ -168,7 +167,6 @@ pub struct PreparedMeshPairCacheStatus {
     face_pair_classification_counts: PreparedMeshPairFactState,
     retained_face_pair_classification_counts: Option<PreparedMeshPairClassificationCounts>,
     intersection_graph: PreparedMeshPairFactState,
-    retained_intersection_graph_counts: Option<PreparedMeshPairIntersectionGraphCounts>,
     arrangement: PreparedMeshPairFactState,
     retained_arrangement_counts: Option<PreparedMeshPairArrangementCounts>,
     arrangement_shortcut_facts: PreparedMeshPairFactState,
@@ -569,32 +567,6 @@ impl PreparedMeshPairSweepDirection {
     }
 }
 
-/// Retained summary counts for a prepared intersection graph.
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-pub struct PreparedMeshPairIntersectionGraphCounts {
-    face_pairs: usize,
-    events: usize,
-}
-
-impl PreparedMeshPairIntersectionGraphCounts {
-    /// Return retained graph face-pair record count.
-    pub const fn face_pair_count(self) -> usize {
-        self.face_pairs
-    }
-
-    /// Return retained graph event count.
-    pub const fn event_count(self) -> usize {
-        self.events
-    }
-
-    fn from_graph(graph: &ExactIntersectionGraph) -> Self {
-        Self {
-            face_pairs: graph.face_pairs.len(),
-            events: graph.event_count(),
-        }
-    }
-}
-
 /// Retained topology counts for a prepared arrangement.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct PreparedMeshPairArrangementCounts {
@@ -910,20 +882,6 @@ impl PreparedMeshPairCacheStatus {
     /// Return the certificate state for the retained exact intersection graph.
     pub const fn intersection_graph(self) -> PreparedMeshPairFactState {
         self.intersection_graph
-    }
-
-    /// Return retained exact intersection graph counts after requiring a current certificate.
-    pub fn current_intersection_graph_counts(
-        self,
-    ) -> Result<PreparedMeshPairIntersectionGraphCounts, ExactMeshError> {
-        self.intersection_graph
-            .require_current("intersection graph")?;
-        self.retained_intersection_graph_counts.ok_or_else(|| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::MissingRequiredEvidence,
-                "prepared mesh-pair session retained an intersection graph certificate without graph counts",
-            ))
-        })
     }
 
     /// Return the certificate state for the retained prepared arrangement.
@@ -1357,7 +1315,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             face_pair_classifications: RefCell::new(None),
             face_pair_classification_counts: RefCell::new(None),
             intersection_graph: RefCell::new(None),
-            intersection_graph_counts: RefCell::new(None),
             intersection_graph_validated: RefCell::new(false),
             arrangement: RefCell::new(None),
             arrangement_counts: RefCell::new(None),
@@ -1438,7 +1395,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         let broad_phase_traversal_summary = *self.broad_phase_traversal_summary.borrow();
         let face_pair_classifications_retained = self.face_pair_classifications.borrow().is_some();
         let face_pair_classification_counts = *self.face_pair_classification_counts.borrow();
-        let graph_counts = *self.intersection_graph_counts.borrow();
         let graph_retained = self.intersection_graph.borrow().is_some();
         let arrangement_retained = self.arrangement.borrow().is_some();
         PreparedMeshPairCacheStatus {
@@ -1473,7 +1429,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             } else {
                 PreparedMeshPairFactState::Missing
             },
-            retained_intersection_graph_counts: graph_counts,
             arrangement: retained_current_state(arrangement_retained, sources_current),
             retained_arrangement_counts: *self.arrangement_counts.borrow(),
             arrangement_shortcut_facts: retained_current_state(
@@ -1517,22 +1472,18 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     /// Build and retain the exact intersection graph without certifying source replay.
     ///
-    /// The returned counts are retained for later status checks, but the graph
-    /// remains certificate-blocked until [`Self::prepare_current_intersection_graph`]
-    /// validates its retained source handles.
-    pub fn prepare_intersection_graph(
-        &self,
-    ) -> Result<PreparedMeshPairIntersectionGraphCounts, ExactMeshError> {
-        let graph = build_unvalidated_intersection_graph_from_prepared_pair_rc(self)?;
-        Ok(PreparedMeshPairIntersectionGraphCounts::from_graph(&graph))
+    /// The graph remains certificate-blocked until
+    /// [`Self::prepare_current_intersection_graph`] validates its retained
+    /// source handles.
+    pub fn prepare_intersection_graph(&self) -> Result<(), ExactMeshError> {
+        build_unvalidated_intersection_graph_from_prepared_pair_rc(self)?;
+        Ok(())
     }
 
     /// Build, retain, and source-certify the exact intersection graph.
-    pub fn prepare_current_intersection_graph(
-        &self,
-    ) -> Result<PreparedMeshPairIntersectionGraphCounts, ExactMeshError> {
+    pub fn prepare_current_intersection_graph(&self) -> Result<(), ExactMeshError> {
         build_validated_intersection_graph_from_prepared_pair(self)?;
-        self.cache_status().current_intersection_graph_counts()
+        Ok(())
     }
 
     /// Build a retained arrangement from this pair session and run `query` on its borrowed view.
@@ -1715,10 +1666,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         graph: ExactIntersectionGraph,
     ) -> Rc<ExactIntersectionGraph> {
-        let counts = PreparedMeshPairIntersectionGraphCounts::from_graph(&graph);
         let graph = Rc::new(graph);
         *self.intersection_graph.borrow_mut() = Some(Rc::clone(&graph));
-        *self.intersection_graph_counts.borrow_mut() = Some(counts);
         *self.intersection_graph_validated.borrow_mut() = false;
         self.clear_graph_dependent_retained_facts();
         graph

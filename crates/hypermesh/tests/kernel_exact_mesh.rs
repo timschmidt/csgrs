@@ -5,8 +5,7 @@ use hypermesh::kernel::{
     FaceRef, MeshView, PreparedMeshPair, PreparedMeshPairArrangementCounts,
     PreparedMeshPairBoolean, PreparedMeshPairBroadPhaseSummary,
     PreparedMeshPairBroadPhaseTraversalSummary, PreparedMeshPairCacheStatus,
-    PreparedMeshPairClassificationCounts, PreparedMeshPairFactState,
-    PreparedMeshPairIntersectionGraphCounts, PreparedMeshPairPlanKind,
+    PreparedMeshPairClassificationCounts, PreparedMeshPairFactState, PreparedMeshPairPlanKind,
     PreparedMeshPairResultOutcome, PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis,
     PreparedMeshPairSweepDirection, PreparedMeshView, TriangleRef, VertexRef,
 };
@@ -339,14 +338,6 @@ fn prepared_mesh_pair_materializes_named_operations() {
     );
     assert_eq!(
         pair.cache_status()
-            .current_intersection_graph_counts()
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
-    assert_eq!(
-        pair.cache_status()
             .face_pair_classifications()
             .require_current("face-pair classification")
             .unwrap_err()
@@ -357,14 +348,6 @@ fn prepared_mesh_pair_materializes_named_operations() {
     assert_eq!(
         pair.cache_status()
             .current_face_pair_classification_counts()
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
-    assert_eq!(
-        pair.cache_status()
-            .current_intersection_graph_counts()
             .unwrap_err()
             .blockers()[0]
             .kind(),
@@ -384,9 +367,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
         count_only_pair.prepare_face_pair_classification_counts();
     assert_eq!(count_only_classification_counts.face_pair_count(), 0);
     assert_eq!(count_only_classification_counts.graph_required_count(), 0);
-    let count_only_graph_counts = count_only_pair.prepare_intersection_graph().unwrap();
-    assert_eq!(count_only_graph_counts.face_pair_count(), 0);
-    assert_eq!(count_only_graph_counts.event_count(), 0);
+    count_only_pair.prepare_intersection_graph().unwrap();
     assert!(matches!(
         count_only_pair.cache_status().face_pair_classifications(),
         PreparedMeshPairFactState::Missing
@@ -463,22 +444,6 @@ fn prepared_mesh_pair_materializes_named_operations() {
         pair.cache_status().intersection_graph(),
         PreparedMeshPairFactState::Missing
     ));
-    assert_eq!(
-        pair.cache_status()
-            .current_intersection_graph_counts()
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
-    assert_eq!(
-        pair.cache_status()
-            .current_intersection_graph_counts()
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
     assert!(matches!(
         pair.cache_status().arrangement_shortcut_facts(),
         PreparedMeshPairFactState::Missing
@@ -1181,7 +1146,7 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         .view()
         .prepare_broad_phase_pair(overlapping.view())
         .unwrap();
-    let streamed_graph_counts = streamed_graph_pair.prepare_intersection_graph().unwrap();
+    streamed_graph_pair.prepare_intersection_graph().unwrap();
     assert!(matches!(
         streamed_graph_pair.cache_status().broad_phase_traversal(),
         PreparedMeshPairFactState::Current
@@ -1202,14 +1167,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .face_pair_classification_counts(),
         PreparedMeshPairFactState::Current
     ));
-    let streamed_graph_classification_counts = streamed_graph_pair
+    streamed_graph_pair
         .cache_status()
         .current_face_pair_classification_counts()
         .unwrap();
-    assert_eq!(
-        streamed_graph_classification_counts.graph_required_count(),
-        streamed_graph_counts.face_pair_count()
-    );
     assert!(matches!(
         streamed_graph_pair.cache_status().intersection_graph(),
         PreparedMeshPairFactState::CertificateBlocked
@@ -1347,41 +1308,21 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .unwrap(),
         classification_counts
     );
-    let retained_graph_counts: PreparedMeshPairIntersectionGraphCounts =
-        prepared_pair.prepare_intersection_graph().unwrap();
-    assert_eq!(
-        retained_graph_counts.face_pair_count(),
-        classification_counts.graph_required_count()
-    );
-    assert!(retained_graph_counts.event_count() > 0);
+    prepared_pair.prepare_intersection_graph().unwrap();
     assert!(matches!(
         prepared_pair.cache_status().intersection_graph(),
         PreparedMeshPairFactState::CertificateBlocked
     ));
-    assert_eq!(
-        prepared_pair
-            .cache_status()
-            .current_intersection_graph_counts()
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
-    assert_eq!(
-        prepared_pair.prepare_current_intersection_graph().unwrap(),
-        retained_graph_counts
-    );
+    prepared_pair
+        .cache_status()
+        .intersection_graph()
+        .require_current("intersection graph")
+        .unwrap_err();
+    prepared_pair.prepare_current_intersection_graph().unwrap();
     assert!(matches!(
         prepared_pair.cache_status().intersection_graph(),
         PreparedMeshPairFactState::Current
     ));
-    assert_eq!(
-        prepared_pair
-            .cache_status()
-            .current_intersection_graph_counts()
-            .unwrap(),
-        retained_graph_counts
-    );
 
     assert_eq!(prepared_left.view().face_count(), left.triangle_count());
     assert_eq!(
@@ -1762,12 +1703,6 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         pair.cache_status().intersection_graph(),
         PreparedMeshPairFactState::Current
     ));
-    let arrangement_graph_counts = pair
-        .cache_status()
-        .current_intersection_graph_counts()
-        .unwrap();
-    assert_eq!(arrangement_graph_counts.face_pair_count(), 0);
-    assert_eq!(arrangement_graph_counts.event_count(), 0);
 }
 
 #[test]

@@ -35,9 +35,8 @@ pub mod kernel {
         PreparedMeshPairArrangementCounts, PreparedMeshPairBoolean,
         PreparedMeshPairBroadPhaseSummary, PreparedMeshPairBroadPhaseTraversalSummary,
         PreparedMeshPairCacheStatus, PreparedMeshPairClassificationCounts,
-        PreparedMeshPairFactState, PreparedMeshPairIntersectionGraphCounts,
-        PreparedMeshPairPlanKind, PreparedMeshPairResultOutcome, PreparedMeshPairSweepActiveSet,
-        PreparedMeshPairSweepAxis, PreparedMeshPairSweepDirection, PreparedMeshView, TriangleRef,
-        VertexRef,
+        PreparedMeshPairFactState, PreparedMeshPairPlanKind, PreparedMeshPairResultOutcome,
+        PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis, PreparedMeshPairSweepDirection,
+        PreparedMeshView, TriangleRef, VertexRef,
     };
 }

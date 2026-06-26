@@ -312,15 +312,11 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
         prepared_pair.cache_status().intersection_graph(),
         PreparedMeshPairFactState::CertificateBlocked
     ));
-    assert_eq!(
-        prepared_pair
-            .cache_status()
-            .current_intersection_graph_counts()
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
+    prepared_pair
+        .cache_status()
+        .intersection_graph()
+        .require_current("intersection graph")
+        .unwrap_err();
     assert_eq!(
         build_validated_intersection_graph_from_prepared_pair(&prepared_pair)
             .unwrap()
@@ -331,21 +327,6 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
         prepared_pair.cache_status().intersection_graph(),
         PreparedMeshPairFactState::Current
     ));
-    assert_eq!(
-        (
-            prepared_pair
-                .cache_status()
-                .current_intersection_graph_counts()
-                .unwrap()
-                .face_pair_count(),
-            prepared_pair
-                .cache_status()
-                .current_intersection_graph_counts()
-                .unwrap()
-                .event_count(),
-        ),
-        (graph.face_pairs.len(), graph.event_count())
-    );
     assert_eq!(
         build_validated_intersection_graph_from_prepared_pair(&prepared_pair)
             .unwrap()
