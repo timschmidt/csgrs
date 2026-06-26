@@ -3822,7 +3822,7 @@ fn materialize_boolean_exact_request_with_graph(
         return materialize_boolean_exact_request_from_ready_graph(graph, left, right, request);
     }
     if let Some(pair) = prepared_pair {
-        if let Some(result) = pair.with_retained_arrangement(|arrangement| {
+        if let Some(arrangement) = pair.retained_arrangement_for_reuse() {
             let graph = graph_for_certified_materialization_with_prepared(
                 retained_graph,
                 &mut owned_graph,
@@ -3832,17 +3832,16 @@ fn materialize_boolean_exact_request_with_graph(
                 right,
             )?;
             let shortcut_facts = arrangement_shortcut_facts_for_request(prepared_pair, left, right);
-            materialize_certified_arrangement_cell_complex_support_with_arrangement(
+            let result = materialize_certified_arrangement_cell_complex_support_with_arrangement(
                 left,
                 right,
                 request,
                 Some(graph),
-                Some(arrangement),
+                Some(arrangement.as_ref()),
                 None,
                 &shortcut_facts,
-            )
-        }) {
-            if let Some(result) = result? {
+            )?;
+            if let Some(result) = result {
                 return Ok(result);
             }
         }

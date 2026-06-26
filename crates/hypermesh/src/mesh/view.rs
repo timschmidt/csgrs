@@ -675,14 +675,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         Ok(self.intersection_graph.borrow().clone())
     }
 
-    pub(crate) fn with_retained_arrangement<R>(
-        &self,
-        query: impl FnOnce(&ExactArrangement) -> R,
-    ) -> Option<R> {
-        let arrangement = self.arrangement.borrow();
-        arrangement
-            .as_ref()
-            .map(|arrangement| query(arrangement.as_ref()))
+    pub(crate) fn retained_arrangement_for_reuse(&self) -> Option<Rc<ExactArrangement>> {
+        self.arrangement.borrow().clone()
     }
 
     pub(crate) fn retain_intersection_graph(
