@@ -158,7 +158,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     }
 
     fn from_hypermesh_exact(mesh: &::hypermesh::ExactMesh, metadata: M) -> Self {
-        let mut polygons = Vec::with_capacity(mesh.triangle_count());
+        let mut polygons = Vec::with_capacity(mesh.view().face_count());
 
         mesh.visit_triangles(|[a, b, c]| {
             polygons.push(Polygon::new(vec![a, b, c], metadata.clone()));
@@ -173,7 +173,8 @@ impl Triangulated3D for ::hypermesh::ExactMesh {
     where
         F: FnMut([Vertex; 3]),
     {
-        for triangle in self.triangle_indices() {
+        let view = self.view();
+        for triangle in view.triangle_indices() {
             let Some(a) = exact_vertex_position(self, triangle[0]) else {
                 continue;
             };
@@ -195,15 +196,16 @@ impl Triangulated3D for ::hypermesh::ExactMesh {
 
 impl IndexedTriangulated3D for ::hypermesh::ExactMesh {
     fn indexed_triangles(&self) -> IndexedTriangleMesh3D {
-        let positions = self
+        let view = self.view();
+        let positions = view
             .vertices()
             .iter()
             .map(|point| Point3::new(point.x.clone(), point.y.clone(), point.z.clone()))
             .collect::<Vec<_>>();
-        let mut normals = Vec::with_capacity(self.triangle_count());
-        let mut faces = Vec::with_capacity(self.triangle_count());
+        let mut normals = Vec::with_capacity(view.face_count());
+        let mut faces = Vec::with_capacity(view.face_count());
 
-        for (normal_index, triangle) in self.triangle_indices().enumerate() {
+        for (normal_index, triangle) in view.triangle_indices().enumerate() {
             if triangle.iter().any(|&index| index >= positions.len()) {
                 continue;
             }
@@ -240,7 +242,8 @@ fn canonical_coordinate_key(value: &Real) -> String {
 }
 
 fn exact_vertex_position(mesh: &::hypermesh::ExactMesh, vertex: usize) -> Option<Point3> {
-    mesh.vertices()
+    mesh.view()
+        .vertices()
         .get(vertex)
         .map(|point| Point3::new(point.x.clone(), point.y.clone(), point.z.clone()))
 }
