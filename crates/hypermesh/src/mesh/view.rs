@@ -7,8 +7,9 @@ use super::arrangement3d::regularization::ExactRegularizationPolicy;
 use super::arrangement3d::{ArrangementView, ExactArrangement};
 use super::boolean::evidence::ExactArrangementCellComplexShortcutFacts;
 use super::boolean::{
-    ExactBooleanOperation, ExactBooleanRequest,
-    materialize_boolean_exact_request_with_prepared_pair,
+    materialize_closed_difference_with_prepared_pair,
+    materialize_closed_intersection_with_prepared_pair,
+    materialize_closed_union_with_prepared_pair,
 };
 use super::bounds::{
     BroadPhaseScratch, CandidateFacePairPlan, ExactAabb3, ExactAabbBroadPhase, ExactBroadPhase,
@@ -17,7 +18,6 @@ use super::bounds::{
 use super::error::ExactMeshError;
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
 use super::graph::{ExactIntersectionGraph, build_validated_intersection_graph_from_prepared_pair};
-use super::validation::ExactMeshValidationPolicy;
 use hyperlimit::{ApproximationPolicy, MeshSource, Point3, PredicateUse};
 use hyperreal::Real;
 
@@ -501,19 +501,19 @@ impl<'a> MeshView<'a> {
     /// Materialize the exact closed union of this view and `right`.
     pub fn union(self, right: MeshView<'_>) -> Result<ExactMesh, ExactMeshError> {
         let pair = self.prepare_broad_phase_pair(right)?;
-        materialize_prepared_closed_boolean(&pair, ExactBooleanOperation::Union)
+        materialize_closed_union_with_prepared_pair(&pair)
     }
 
     /// Materialize the exact closed intersection of this view and `right`.
     pub fn intersection(self, right: MeshView<'_>) -> Result<ExactMesh, ExactMeshError> {
         let pair = self.prepare_broad_phase_pair(right)?;
-        materialize_prepared_closed_boolean(&pair, ExactBooleanOperation::Intersection)
+        materialize_closed_intersection_with_prepared_pair(&pair)
     }
 
     /// Materialize the exact closed difference of this view minus `right`.
     pub fn difference(self, right: MeshView<'_>) -> Result<ExactMesh, ExactMeshError> {
         let pair = self.prepare_broad_phase_pair(right)?;
-        materialize_prepared_closed_boolean(&pair, ExactBooleanOperation::Difference)
+        materialize_closed_difference_with_prepared_pair(&pair)
     }
 
     /// Materialize the exact closed symmetric difference of this view and `right`.
@@ -522,15 +522,6 @@ impl<'a> MeshView<'a> {
         let right_only = right.difference(self)?;
         left_only.view().union(right_only.view())
     }
-}
-
-fn materialize_prepared_closed_boolean(
-    pair: &PreparedMeshPair<'_, '_>,
-    operation: ExactBooleanOperation,
-) -> Result<ExactMesh, ExactMeshError> {
-    let request = ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::CLOSED);
-    materialize_boolean_exact_request_with_prepared_pair(pair, request)
-        .map(|result| result.into_mesh())
 }
 
 impl<'a> PreparedMeshView<'a> {

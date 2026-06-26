@@ -3709,6 +3709,33 @@ pub(crate) fn materialize_boolean_exact_request_with_prepared_pair(
     materialize_boolean_exact_request_with_graph(left, right, request, None, Some(pair))
 }
 
+pub(crate) fn materialize_closed_union_with_prepared_pair(
+    pair: &PreparedMeshPair<'_, '_>,
+) -> Result<ExactMesh, ExactMeshError> {
+    materialize_closed_named_boolean_with_prepared_pair(pair, ExactBooleanOperation::Union)
+}
+
+pub(crate) fn materialize_closed_intersection_with_prepared_pair(
+    pair: &PreparedMeshPair<'_, '_>,
+) -> Result<ExactMesh, ExactMeshError> {
+    materialize_closed_named_boolean_with_prepared_pair(pair, ExactBooleanOperation::Intersection)
+}
+
+pub(crate) fn materialize_closed_difference_with_prepared_pair(
+    pair: &PreparedMeshPair<'_, '_>,
+) -> Result<ExactMesh, ExactMeshError> {
+    materialize_closed_named_boolean_with_prepared_pair(pair, ExactBooleanOperation::Difference)
+}
+
+fn materialize_closed_named_boolean_with_prepared_pair(
+    pair: &PreparedMeshPair<'_, '_>,
+    operation: ExactBooleanOperation,
+) -> Result<ExactMesh, ExactMeshError> {
+    let request = ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::CLOSED);
+    materialize_boolean_exact_request_with_prepared_pair(pair, request)
+        .map(ExactBooleanResult::into_mesh)
+}
+
 fn arrangement_shortcut_facts_for_request(
     prepared_pair: Option<&PreparedMeshPair<'_, '_>>,
     left: &ExactMesh,
