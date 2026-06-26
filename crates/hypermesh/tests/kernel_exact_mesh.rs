@@ -157,14 +157,16 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .is_missing()
     );
     assert_eq!(
-        pair.require_current_result(PreparedMeshPairBoolean::Union)
+        pair.cache_status()
+            .require_current_result(PreparedMeshPairBoolean::Union)
             .unwrap_err()
             .blockers()[0]
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
-        pair.current_result_outcome(PreparedMeshPairBoolean::Union)
+        pair.cache_status()
+            .current_result_outcome(PreparedMeshPairBoolean::Union)
             .unwrap_err()
             .blockers()[0]
             .kind(),
@@ -178,7 +180,8 @@ fn prepared_mesh_pair_materializes_named_operations() {
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
-        pair.current_result_outcome(PreparedMeshPairBoolean::Union)
+        pair.cache_status()
+            .current_result_outcome(PreparedMeshPairBoolean::Union)
             .unwrap_err()
             .blockers()[0]
             .kind(),
@@ -190,14 +193,16 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .is_missing()
     );
     assert_eq!(
-        pair.require_current_result(PreparedMeshPairBoolean::Intersection)
+        pair.cache_status()
+            .require_current_result(PreparedMeshPairBoolean::Intersection)
             .unwrap_err()
             .blockers()[0]
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
-        pair.current_result_outcome(PreparedMeshPairBoolean::Intersection)
+        pair.cache_status()
+            .current_result_outcome(PreparedMeshPairBoolean::Intersection)
             .unwrap_err()
             .blockers()[0]
             .kind(),
@@ -211,7 +216,8 @@ fn prepared_mesh_pair_materializes_named_operations() {
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
-        pair.current_result_outcome(PreparedMeshPairBoolean::Intersection)
+        pair.cache_status()
+            .current_result_outcome(PreparedMeshPairBoolean::Intersection)
             .unwrap_err()
             .blockers()[0]
             .kind(),
@@ -223,14 +229,16 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .is_missing()
     );
     assert_eq!(
-        pair.require_current_result(PreparedMeshPairBoolean::Difference)
+        pair.cache_status()
+            .require_current_result(PreparedMeshPairBoolean::Difference)
             .unwrap_err()
             .blockers()[0]
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
-        pair.current_result_outcome(PreparedMeshPairBoolean::Difference)
+        pair.cache_status()
+            .current_result_outcome(PreparedMeshPairBoolean::Difference)
             .unwrap_err()
             .blockers()[0]
             .kind(),
@@ -244,7 +252,8 @@ fn prepared_mesh_pair_materializes_named_operations() {
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
-        pair.current_result_outcome(PreparedMeshPairBoolean::Difference)
+        pair.cache_status()
+            .current_result_outcome(PreparedMeshPairBoolean::Difference)
             .unwrap_err()
             .blockers()[0]
             .kind(),
@@ -256,14 +265,16 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .is_missing()
     );
     assert_eq!(
-        pair.require_current_result(PreparedMeshPairBoolean::Xor)
+        pair.cache_status()
+            .require_current_result(PreparedMeshPairBoolean::Xor)
             .unwrap_err()
             .blockers()[0]
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
-        pair.current_result_outcome(PreparedMeshPairBoolean::Xor)
+        pair.cache_status()
+            .current_result_outcome(PreparedMeshPairBoolean::Xor)
             .unwrap_err()
             .blockers()[0]
             .kind(),
@@ -277,7 +288,8 @@ fn prepared_mesh_pair_materializes_named_operations() {
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
-        pair.current_result_outcome(PreparedMeshPairBoolean::Xor)
+        pair.cache_status()
+            .current_result_outcome(PreparedMeshPairBoolean::Xor)
             .unwrap_err()
             .blockers()[0]
             .kind(),
@@ -493,6 +505,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .is_missing()
     );
     let union_outcome: PreparedMeshPairResultOutcome = pair
+        .cache_status()
         .current_result_outcome(PreparedMeshPairBoolean::Union)
         .unwrap();
     assert!(union_outcome.is_mesh());
@@ -500,17 +513,20 @@ fn prepared_mesh_pair_materializes_named_operations() {
     assert_eq!(union_outcome.triangle_count(), Some(union.triangle_count()));
     assert_eq!(union_outcome.blocker_count(), None);
     assert_eq!(
-        pair.current_result_outcome(PreparedMeshPairBoolean::Union)
+        pair.cache_status()
+            .current_result_outcome(PreparedMeshPairBoolean::Union)
             .unwrap(),
         union_outcome
     );
     assert_eq!(prepared_union_outcome, union_outcome);
     assert_eq!(
-        pair.current_result_outcome(PreparedMeshPairBoolean::Union)
+        pair.cache_status()
+            .current_result_outcome(PreparedMeshPairBoolean::Union)
             .unwrap(),
         union_outcome
     );
-    pair.require_current_result(PreparedMeshPairBoolean::Union)
+    pair.cache_status()
+        .require_current_result(PreparedMeshPairBoolean::Union)
         .unwrap();
     assert_eq!(
         pair.current_result(PreparedMeshPairBoolean::Union)
@@ -558,6 +574,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .is_current()
     );
     let intersection_outcome = pair
+        .cache_status()
         .current_result_outcome(PreparedMeshPairBoolean::Intersection)
         .unwrap();
     assert!(intersection_outcome.is_mesh());
@@ -567,16 +584,19 @@ fn prepared_mesh_pair_materializes_named_operations() {
         Some(intersection.triangle_count())
     );
     assert_eq!(
-        pair.current_result_outcome(PreparedMeshPairBoolean::Intersection)
+        pair.cache_status()
+            .current_result_outcome(PreparedMeshPairBoolean::Intersection)
             .unwrap(),
         intersection_outcome
     );
     assert_eq!(
-        pair.current_result_outcome(PreparedMeshPairBoolean::Intersection)
+        pair.cache_status()
+            .current_result_outcome(PreparedMeshPairBoolean::Intersection)
             .unwrap(),
         intersection_outcome
     );
-    pair.require_current_result(PreparedMeshPairBoolean::Intersection)
+    pair.cache_status()
+        .require_current_result(PreparedMeshPairBoolean::Intersection)
         .unwrap();
     assert_eq!(
         pair.current_result(PreparedMeshPairBoolean::Intersection)
@@ -610,6 +630,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .is_current()
     );
     let difference_outcome = pair
+        .cache_status()
         .current_result_outcome(PreparedMeshPairBoolean::Difference)
         .unwrap();
     assert!(difference_outcome.is_mesh());
@@ -619,16 +640,19 @@ fn prepared_mesh_pair_materializes_named_operations() {
         Some(difference.triangle_count())
     );
     assert_eq!(
-        pair.current_result_outcome(PreparedMeshPairBoolean::Difference)
+        pair.cache_status()
+            .current_result_outcome(PreparedMeshPairBoolean::Difference)
             .unwrap(),
         difference_outcome
     );
     assert_eq!(
-        pair.current_result_outcome(PreparedMeshPairBoolean::Difference)
+        pair.cache_status()
+            .current_result_outcome(PreparedMeshPairBoolean::Difference)
             .unwrap(),
         difference_outcome
     );
-    pair.require_current_result(PreparedMeshPairBoolean::Difference)
+    pair.cache_status()
+        .require_current_result(PreparedMeshPairBoolean::Difference)
         .unwrap();
     assert_eq!(
         pair.current_result(PreparedMeshPairBoolean::Difference)
@@ -653,22 +677,26 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .is_current()
     );
     let xor_outcome = pair
+        .cache_status()
         .current_result_outcome(PreparedMeshPairBoolean::Xor)
         .unwrap();
     assert!(xor_outcome.is_mesh());
     assert_eq!(prepared_xor_outcome, xor_outcome);
     assert_eq!(xor_outcome.triangle_count(), Some(xor.triangle_count()));
     assert_eq!(
-        pair.current_result_outcome(PreparedMeshPairBoolean::Xor)
+        pair.cache_status()
+            .current_result_outcome(PreparedMeshPairBoolean::Xor)
             .unwrap(),
         xor_outcome
     );
     assert_eq!(
-        pair.current_result_outcome(PreparedMeshPairBoolean::Xor)
+        pair.cache_status()
+            .current_result_outcome(PreparedMeshPairBoolean::Xor)
             .unwrap(),
         xor_outcome
     );
-    pair.require_current_result(PreparedMeshPairBoolean::Xor)
+    pair.cache_status()
+        .require_current_result(PreparedMeshPairBoolean::Xor)
         .unwrap();
     assert_eq!(
         pair.current_result(PreparedMeshPairBoolean::Xor)
@@ -1746,7 +1774,8 @@ fn prepared_pair_named_boolean_preserves_retained_arrangement() {
             .is_current()
     );
     assert_eq!(
-        pair.current_result_outcome(PreparedMeshPairBoolean::Intersection)
+        pair.cache_status()
+            .current_result_outcome(PreparedMeshPairBoolean::Intersection)
             .unwrap(),
         intersection_outcome
     );

@@ -1979,7 +1979,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         operation: PreparedMeshPairBoolean,
     ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
         let _ = self.boolean(operation);
-        self.current_result_outcome(operation)
+        self.cache_status().current_result_outcome(operation)
     }
 
     /// Return a retained boolean result or cached error without materializing it.
@@ -1987,7 +1987,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         operation: PreparedMeshPairBoolean,
     ) -> Result<ExactMesh, ExactMeshError> {
-        self.require_current_result(operation)?;
+        self.cache_status().require_current_result(operation)?;
         self.cached_named_boolean_mesh(operation).ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::MissingRequiredEvidence,
@@ -1997,22 +1997,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
                 ),
             ))
         })?
-    }
-
-    /// Return a retained boolean outcome without materializing the mesh.
-    pub fn current_result_outcome(
-        &self,
-        operation: PreparedMeshPairBoolean,
-    ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
-        self.cache_status().current_result_outcome(operation)
-    }
-
-    /// Require a retained boolean result or retained blocker.
-    pub fn require_current_result(
-        &self,
-        operation: PreparedMeshPairBoolean,
-    ) -> Result<(), ExactMeshError> {
-        self.cache_status().require_current_result(operation)
     }
 
     fn named_boolean_mesh(
