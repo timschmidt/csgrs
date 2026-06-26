@@ -63,8 +63,9 @@ use super::winding::{
 use super::{
     ExactArrangementBooleanAttempt, ExactBooleanOperation, ExactBooleanRequest,
     ExactBoundaryBooleanPolicy, adjacent_union_completion_certification,
-    boolean_coplanar_mesh_overlay_optional, boundary_policy_shortcut_result_matches_sources,
-    boundary_touching_report_from_graph, exact_boolean_evaluation_for_replay,
+    boolean_convex_meshes_optional, boolean_coplanar_mesh_overlay_optional,
+    boundary_policy_shortcut_result_matches_sources, boundary_touching_report_from_graph,
+    exact_boolean_evaluation_for_replay,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
     materialize_volumetric_coplanar_boundary_closure_output,
@@ -1914,6 +1915,55 @@ impl ExactRegularizedSolidBooleanFacts {
     }
 }
 
+/// Replayable source facts for closed-convex boolean shortcuts.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct ExactConvexBooleanCapabilityFacts {
+    /// Exact closed-convex union can be certified by the shortcut.
+    pub(crate) can_union: bool,
+    /// Exact closed-convex intersection can be certified by the shortcut.
+    pub(crate) can_intersection: bool,
+    /// Exact closed-convex difference can be certified by the shortcut.
+    pub(crate) can_difference: bool,
+}
+
+impl ExactConvexBooleanCapabilityFacts {
+    pub(crate) fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
+        Self {
+            can_union: certified_convex_operation_shortcut_support(
+                left,
+                right,
+                ExactBooleanOperation::Union,
+            )
+            .is_some(),
+            can_intersection: certified_convex_operation_shortcut_support(
+                left,
+                right,
+                ExactBooleanOperation::Intersection,
+            )
+            .is_some(),
+            can_difference: certified_convex_operation_shortcut_support(
+                left,
+                right,
+                ExactBooleanOperation::Difference,
+            )
+            .is_some(),
+        }
+    }
+
+    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+        Ok(())
+    }
+
+    pub(crate) fn resolves_operation(&self, operation: ExactBooleanOperation) -> bool {
+        match operation {
+            ExactBooleanOperation::Union => self.can_union,
+            ExactBooleanOperation::Intersection => self.can_intersection,
+            ExactBooleanOperation::Difference => self.can_difference,
+            ExactBooleanOperation::SelectedRegions(_) => false,
+        }
+    }
+}
+
 fn certified_shortcut_sources_match(
     shortcut: ExactBooleanShortcutKind,
     operation: ExactBooleanOperation,
@@ -2538,6 +2588,33 @@ pub(crate) fn meshes_are_certified_bounds_disjoint(left: &ExactMesh, right: &Exa
         return left.triangles().is_empty() || right.triangles().is_empty();
     };
     left_bounds.classify_intersection(right_bounds).value() == Some(AabbIntersectionKind::Disjoint)
+}
+
+pub(crate) fn certified_convex_operation_shortcut_support(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Option<ExactBooleanSupport> {
+    let materializes =
+        boolean_convex_meshes_optional(left, right, operation, ExactMeshValidationPolicy::CLOSED)
+            .ok()
+            .flatten()
+            .is_some();
+    match operation {
+        ExactBooleanOperation::Union if materializes => {
+            Some(ExactBooleanSupport::CertifiedConvexUnion)
+        }
+        ExactBooleanOperation::Intersection if materializes => {
+            Some(ExactBooleanSupport::CertifiedConvexIntersection)
+        }
+        ExactBooleanOperation::Difference if materializes => {
+            Some(ExactBooleanSupport::CertifiedConvexDifference)
+        }
+        ExactBooleanOperation::SelectedRegions(_)
+        | ExactBooleanOperation::Union
+        | ExactBooleanOperation::Intersection
+        | ExactBooleanOperation::Difference => None,
+    }
 }
 
 fn mixed_dimensional_regularized_sources(left: &ExactMesh, right: &ExactMesh) -> bool {

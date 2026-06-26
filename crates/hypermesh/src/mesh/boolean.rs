@@ -85,12 +85,13 @@ use evidence::{
     ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus, ExactBooleanBlocker,
     ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind,
     ExactBooleanShortcutKind, ExactBooleanSupport, ExactBoundaryTouchingReport,
-    ExactBoundaryTouchingStatus, ExactIdenticalMeshReport, ExactOpenSurfaceDisjointReport,
-    ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport, ExactPlanarArrangementStatus,
-    ExactRefinementReport, ExactRefinementStatus, ExactRegularizedSolidBooleanFacts,
-    ExactReportValidationError, ExactSameSurfaceReport, ExactTrivialBooleanFacts,
-    ExactVolumetricBoundaryClosureReport, ExactVolumetricBoundaryClosureStatus,
-    ExactWindingEvidenceReport, ExactWindingEvidenceStatus, meshes_are_certified_bounds_disjoint,
+    ExactBoundaryTouchingStatus, ExactConvexBooleanCapabilityFacts, ExactIdenticalMeshReport,
+    ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport,
+    ExactPlanarArrangementStatus, ExactRefinementReport, ExactRefinementStatus,
+    ExactRegularizedSolidBooleanFacts, ExactReportValidationError, ExactSameSurfaceReport,
+    ExactTrivialBooleanFacts, ExactVolumetricBoundaryClosureReport,
+    ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
+    certified_convex_operation_shortcut_support, meshes_are_certified_bounds_disjoint,
 };
 use hyperlimit::SourceProvenance;
 use hyperlimit::{
@@ -2445,55 +2446,6 @@ impl ExactBooleanCertificationSet {
             None => {}
         }
         Ok(())
-    }
-}
-
-/// Replayable source facts for closed-convex boolean shortcuts.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) struct ExactConvexBooleanCapabilityFacts {
-    /// Exact closed-convex union can be certified by the shortcut.
-    pub(crate) can_union: bool,
-    /// Exact closed-convex intersection can be certified by the shortcut.
-    pub(crate) can_intersection: bool,
-    /// Exact closed-convex difference can be certified by the shortcut.
-    pub(crate) can_difference: bool,
-}
-
-impl ExactConvexBooleanCapabilityFacts {
-    fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
-        Self {
-            can_union: certified_convex_operation_shortcut_support(
-                left,
-                right,
-                ExactBooleanOperation::Union,
-            )
-            .is_some(),
-            can_intersection: certified_convex_operation_shortcut_support(
-                left,
-                right,
-                ExactBooleanOperation::Intersection,
-            )
-            .is_some(),
-            can_difference: certified_convex_operation_shortcut_support(
-                left,
-                right,
-                ExactBooleanOperation::Difference,
-            )
-            .is_some(),
-        }
-    }
-
-    fn validate(&self) -> Result<(), ExactReportValidationError> {
-        Ok(())
-    }
-
-    fn resolves_operation(&self, operation: ExactBooleanOperation) -> bool {
-        match operation {
-            ExactBooleanOperation::Union => self.can_union,
-            ExactBooleanOperation::Intersection => self.can_intersection,
-            ExactBooleanOperation::Difference => self.can_difference,
-            ExactBooleanOperation::SelectedRegions(_) => false,
-        }
     }
 }
 
@@ -11799,33 +11751,6 @@ fn volumetric_retention_for_operation(
             ExactVolumetricRegionRelation::Inside,
         ) => ExactRegionRetention::KeepReversed,
         _ => ExactRegionRetention::Drop,
-    }
-}
-
-fn certified_convex_operation_shortcut_support(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Option<ExactBooleanSupport> {
-    let materializes =
-        boolean_convex_meshes_optional(left, right, operation, ExactMeshValidationPolicy::CLOSED)
-            .ok()
-            .flatten()
-            .is_some();
-    match operation {
-        ExactBooleanOperation::Union if materializes => {
-            Some(ExactBooleanSupport::CertifiedConvexUnion)
-        }
-        ExactBooleanOperation::Intersection if materializes => {
-            Some(ExactBooleanSupport::CertifiedConvexIntersection)
-        }
-        ExactBooleanOperation::Difference if materializes => {
-            Some(ExactBooleanSupport::CertifiedConvexDifference)
-        }
-        ExactBooleanOperation::SelectedRegions(_)
-        | ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference => None,
     }
 }
 
