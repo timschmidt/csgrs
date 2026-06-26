@@ -705,18 +705,12 @@ impl ExactArrangementBooleanAttempt {
         Ok(())
     }
 
-    pub(crate) fn validate_regularized_for_request(
-        &self,
-        request: ExactBooleanRequest,
-    ) -> Result<(), ExactReportValidationError> {
-        self.validate_for_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
-    }
-
     pub(crate) fn certifies_regularized_arrangement_cell_complex_output_for_request(
         &self,
         request: ExactBooleanRequest,
     ) -> bool {
-        self.validate_regularized_for_request(request).is_ok()
+        self.validate_for_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .is_ok()
             && self.materialized_arrangement_cell_complex_output()
     }
 
@@ -733,7 +727,8 @@ impl ExactArrangementBooleanAttempt {
         &self,
         request: ExactBooleanRequest,
     ) -> bool {
-        self.validate_regularized_for_request(request).is_ok()
+        self.validate_for_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .is_ok()
             && self.materialized_arrangement_cell_complex_shortcut()
     }
 

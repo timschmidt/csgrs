@@ -658,7 +658,7 @@ fn certification_set_from_graph_and_regularized_arrangement(
     validate_graph_source_replay(graph, left, right)?;
     if let Some(attempt) = retained_arrangement_attempt {
         attempt
-            .validate_regularized_for_request(request)
+            .validate_for_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .map_err(|error| {
                 retained_report_validation_error(
                     "retained arrangement attempt failed validation",
