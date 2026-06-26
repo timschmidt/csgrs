@@ -34,7 +34,6 @@ pub mod kernel {
         EdgeRef, ExactMeshRef, ExactMeshSourceStamp, FaceRef, MeshView, PreparedMeshPair,
         PreparedMeshPairBoolean, PreparedMeshPairBroadPhaseSummary, PreparedMeshPairCacheStatus,
         PreparedMeshPairClassificationCounts, PreparedMeshPairFactState, PreparedMeshPairPlanKind,
-        PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis, PreparedMeshPairSweepDirection,
         PreparedMeshView, TriangleRef, VertexRef,
     };
 }

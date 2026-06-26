@@ -342,10 +342,6 @@ pub struct PreparedMeshPairBroadPhaseSummary {
     face_pair_product: usize,
     candidate_pair_upper_bound: usize,
     candidate_pair_capacity_hint: usize,
-    active_face_capacity_hint: Option<usize>,
-    sweep_axis: Option<PreparedMeshPairSweepAxis>,
-    sweep_direction: Option<PreparedMeshPairSweepDirection>,
-    sweep_active_set: Option<PreparedMeshPairSweepActiveSet>,
 }
 
 impl PreparedMeshPairBroadPhaseSummary {
@@ -389,26 +385,6 @@ impl PreparedMeshPairBroadPhaseSummary {
         self.candidate_pair_capacity_hint
     }
 
-    /// Return the retained sweep active-set capacity hint, when the plan uses a sweep.
-    pub const fn active_face_capacity_hint(self) -> Option<usize> {
-        self.active_face_capacity_hint
-    }
-
-    /// Return the retained sweep axis, when the plan uses a sweep.
-    pub const fn sweep_axis(self) -> Option<PreparedMeshPairSweepAxis> {
-        self.sweep_axis
-    }
-
-    /// Return the retained sweep driver direction, when the plan uses a sweep.
-    pub const fn sweep_direction(self) -> Option<PreparedMeshPairSweepDirection> {
-        self.sweep_direction
-    }
-
-    /// Return retained sweep active-set storage strategy, when the plan uses a sweep.
-    pub const fn sweep_active_set(self) -> Option<PreparedMeshPairSweepActiveSet> {
-        self.sweep_active_set
-    }
-
     const fn from_plan(
         left_source: ExactMeshSourceStamp,
         right_source: ExactMeshSourceStamp,
@@ -427,76 +403,6 @@ impl PreparedMeshPairBroadPhaseSummary {
             candidate_pair_upper_bound: plan
                 .candidate_pair_upper_bound(left_face_count, right_face_count),
             candidate_pair_capacity_hint,
-            active_face_capacity_hint: plan.active_face_capacity_hint(),
-            sweep_axis: PreparedMeshPairSweepAxis::from_candidate_axis_index(
-                plan.sweep_axis_index(),
-            ),
-            sweep_direction: PreparedMeshPairSweepDirection::from_candidate_direction(
-                plan.sweep_is_left_driven(),
-            ),
-            sweep_active_set: PreparedMeshPairSweepActiveSet::from_sparse_flag(
-                plan.sweep_uses_sparse_active_set(left_face_count, right_face_count),
-            ),
-        }
-    }
-}
-
-/// Retained active-set storage strategy for a prepared sweep traversal.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum PreparedMeshPairSweepActiveSet {
-    /// Sparse active-face list maintenance is selected for low active occupancy.
-    Sparse,
-    /// Marked active-face storage is selected for denser active occupancy.
-    Marked,
-}
-
-impl PreparedMeshPairSweepActiveSet {
-    const fn from_sparse_flag(sparse: Option<bool>) -> Option<Self> {
-        match sparse {
-            Some(true) => Some(Self::Sparse),
-            Some(false) => Some(Self::Marked),
-            None => None,
-        }
-    }
-}
-
-/// Retained broad-phase sweep axis for a prepared mesh-pair session.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum PreparedMeshPairSweepAxis {
-    /// Sweep along the X axis.
-    X,
-    /// Sweep along the Y axis.
-    Y,
-    /// Sweep along the Z axis.
-    Z,
-}
-
-impl PreparedMeshPairSweepAxis {
-    const fn from_candidate_axis_index(axis: Option<usize>) -> Option<Self> {
-        match axis {
-            Some(0) => Some(Self::X),
-            Some(1) => Some(Self::Y),
-            Some(2) => Some(Self::Z),
-            _ => None,
-        }
-    }
-}
-
-/// Retained broad-phase sweep driver direction for a prepared mesh-pair session.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum PreparedMeshPairSweepDirection {
-    /// Left mesh faces drive the sweep active set.
-    LeftDriven,
-    /// Right mesh faces drive the sweep active set.
-    RightDriven,
-}
-
-impl PreparedMeshPairSweepDirection {
-    const fn from_candidate_direction(left_driven: Option<bool>) -> Option<Self> {
-        match left_driven {
-            Some(true) => Some(Self::LeftDriven),
-            Some(false) => Some(Self::RightDriven),
-            None => None,
         }
     }
 }

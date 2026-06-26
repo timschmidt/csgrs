@@ -223,54 +223,6 @@ impl CandidateFacePairPlan {
         Self::Empty
     }
 
-    pub(crate) const fn active_face_capacity_hint(self) -> Option<usize> {
-        match self {
-            Self::Sweep {
-                active_face_capacity_hint,
-                ..
-            } => Some(active_face_capacity_hint),
-            Self::Empty | Self::Quadratic => None,
-        }
-    }
-
-    pub(crate) const fn sweep_axis_index(self) -> Option<usize> {
-        match self {
-            Self::Sweep { plan, .. } => Some(plan.axis.index()),
-            Self::Empty | Self::Quadratic => None,
-        }
-    }
-
-    pub(crate) const fn sweep_is_left_driven(self) -> Option<bool> {
-        match self {
-            Self::Sweep { plan, .. } => Some(matches!(plan.direction, SweepDirection::LeftDriven)),
-            Self::Empty | Self::Quadratic => None,
-        }
-    }
-
-    pub(crate) const fn sweep_uses_sparse_active_set(
-        self,
-        left_face_count: usize,
-        right_face_count: usize,
-    ) -> Option<bool> {
-        match self {
-            Self::Sweep {
-                plan,
-                active_face_capacity_hint,
-                ..
-            } => {
-                let target_face_count = match plan.direction {
-                    SweepDirection::LeftDriven => right_face_count,
-                    SweepDirection::RightDriven => left_face_count,
-                };
-                Some(should_use_sparse_sweep(
-                    active_face_capacity_hint,
-                    target_face_count,
-                ))
-            }
-            Self::Empty | Self::Quadratic => None,
-        }
-    }
-
     pub(crate) const fn candidate_pair_upper_bound(
         self,
         left_face_count: usize,

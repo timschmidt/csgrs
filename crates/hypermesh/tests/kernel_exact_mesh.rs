@@ -5,7 +5,6 @@ use hypermesh::kernel::{
     FaceRef, MeshView, PreparedMeshPair, PreparedMeshPairBoolean,
     PreparedMeshPairBroadPhaseSummary, PreparedMeshPairCacheStatus,
     PreparedMeshPairClassificationCounts, PreparedMeshPairFactState, PreparedMeshPairPlanKind,
-    PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis, PreparedMeshPairSweepDirection,
     PreparedMeshView, TriangleRef, VertexRef,
 };
 use hyperreal::Real;
@@ -149,7 +148,6 @@ fn prepared_mesh_pair_materializes_named_operations() {
     assert_eq!(initial_broad_phase.face_pair_product(), 0);
     assert_eq!(initial_broad_phase.candidate_pair_upper_bound(), 0);
     assert_eq!(initial_broad_phase.candidate_pair_capacity_hint(), 0);
-    assert_eq!(initial_broad_phase.active_face_capacity_hint(), None);
     assert_eq!(pair.broad_phase_summary(), initial_broad_phase);
     assert!(matches!(
         pair.cache_status().face_pair_classifications(),
@@ -778,11 +776,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     let broad_phase_summary: PreparedMeshPairBroadPhaseSummary =
         prepared_pair.broad_phase_summary();
     let _plan_kind: PreparedMeshPairPlanKind = broad_phase_summary.plan();
-    let _sweep_axis: Option<PreparedMeshPairSweepAxis> = broad_phase_summary.sweep_axis();
-    let _sweep_direction: Option<PreparedMeshPairSweepDirection> =
-        broad_phase_summary.sweep_direction();
-    let _sweep_active_set: Option<PreparedMeshPairSweepActiveSet> =
-        broad_phase_summary.sweep_active_set();
     assert!(matches!(
         prepared_pair.cache_status().source_pair(),
         PreparedMeshPairFactState::Current
@@ -809,12 +802,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     assert!(
         broad_phase_summary.candidate_pair_upper_bound() <= broad_phase_summary.face_pair_product()
     );
-    if matches!(broad_phase_summary.plan(), PreparedMeshPairPlanKind::Sweep) {
-        assert!(broad_phase_summary.active_face_capacity_hint().is_some());
-        assert!(broad_phase_summary.sweep_axis().is_some());
-        assert!(broad_phase_summary.sweep_direction().is_some());
-        assert!(broad_phase_summary.sweep_active_set().is_some());
-    }
     assert!(matches!(
         prepared_pair.cache_status().candidate_face_pairs(),
         PreparedMeshPairFactState::Missing
@@ -1109,9 +1096,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         disjoint_pair.broad_phase_summary().plan(),
         PreparedMeshPairPlanKind::Empty
     ));
-    assert_eq!(disjoint_pair.broad_phase_summary().sweep_axis(), None);
-    assert_eq!(disjoint_pair.broad_phase_summary().sweep_direction(), None);
-    assert_eq!(disjoint_pair.broad_phase_summary().sweep_active_set(), None);
     assert_eq!(
         disjoint_pair
             .broad_phase_summary()
