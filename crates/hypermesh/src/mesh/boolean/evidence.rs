@@ -3396,51 +3396,19 @@ impl ExactBooleanCertificationSet {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
-        if self.winding_evidence.status()
-            == ExactWindingEvidenceStatus::OpenSurfaceArrangementAlreadyMaterialized
-        {
+        if self.open_surface_arrangement_materialized() {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
-        let boundary_policy_shortcut_certified = self.boundary_touching.is_certified()
-            && matches!(
-                self.winding_evidence.status(),
-                ExactWindingEvidenceStatus::BoundaryPolicyShortcutAlreadyMaterialized
-                    | ExactWindingEvidenceStatus::BoundaryPolicyRequired
-            );
-        if boundary_policy_shortcut_certified {
+        if self.boundary_policy_shortcut_certified() {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
-        let arrangement_cell_complex_shortcut_certified = self
-            .arrangement_cell_complex_shortcuts
-            .certified_support(request.operation)
-            == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-            && self.arrangement_attempt.as_ref().is_some_and(|attempt| {
-                attempt.certifies_regularized_arrangement_cell_complex_shortcut_for_request(request)
-            });
-        let arrangement_cell_complex_shortcut_certified_by_source_facts = request.validation
-            == ExactMeshValidationPolicy::CLOSED
-            && self
-                .arrangement_cell_complex_shortcuts
-                .certified_support(request.operation)
-                == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-            && matches!(
-                self.winding_evidence.status(),
-                ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
-                    | ExactWindingEvidenceStatus::CoplanarVolumetricCellsAlreadyMaterialized
-                    | ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized
-            );
-        if arrangement_cell_complex_shortcut_certified_by_source_facts {
+        if self.arrangement_cell_complex_shortcut_certified_by_source_facts(request) {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
-        let arrangement_cell_complex_evidence_certified_by_source_facts = request.validation
-            == ExactMeshValidationPolicy::ALLOW_BOUNDARY
-            && request.boundary_policy == ExactBoundaryBooleanPolicy::Reject
-            && self.winding_evidence.status()
-                == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized;
-        if arrangement_cell_complex_evidence_certified_by_source_facts {
+        if self.arrangement_cell_complex_evidence_certified_by_source_facts(request) {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
@@ -3448,27 +3416,15 @@ impl ExactBooleanCertificationSet {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
-        let coplanar_boundary_closure_certified = request.validation
-            == ExactMeshValidationPolicy::CLOSED
-            && self
-                .volumetric_boundary_closure
-                .as_ref()
-                .is_some_and(|report| {
-                    report.operation == request.operation
-                        && report.is_coplanar_closure_available()
-                        && report.validate().is_ok()
-                });
-        if coplanar_boundary_closure_certified {
+        if self.coplanar_boundary_closure_certified_for_request(request) {
             self.validate_retained_closure_and_attempt_for_request(request, true, false)?;
             return Ok(());
         }
-        if arrangement_cell_complex_shortcut_certified {
+        if self.arrangement_cell_complex_shortcut_certified_for_request(request) {
             self.validate_retained_closure_and_attempt_for_request(request, true, true)?;
             return Ok(());
         }
-        if self.arrangement_attempt.as_ref().is_some_and(|attempt| {
-            attempt.certifies_regularized_arrangement_cell_complex_output_for_request(request)
-        }) {
+        if self.retained_attempt_certifies_regularized_output_for_request(request) {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
@@ -3536,12 +3492,87 @@ impl ExactBooleanCertificationSet {
         }
     }
 
-    fn topology_assembly_complete(&self) -> bool {
+    fn open_surface_arrangement_materialized(&self) -> bool {
+        self.winding_evidence.status()
+            == ExactWindingEvidenceStatus::OpenSurfaceArrangementAlreadyMaterialized
+    }
+
+    fn boundary_policy_shortcut_certified(&self) -> bool {
+        self.boundary_touching.is_certified()
+            && matches!(
+                self.winding_evidence.status(),
+                ExactWindingEvidenceStatus::BoundaryPolicyShortcutAlreadyMaterialized
+                    | ExactWindingEvidenceStatus::BoundaryPolicyRequired
+            )
+    }
+
+    fn arrangement_cell_complex_shortcut_certified_for_request(
+        &self,
+        request: ExactBooleanRequest,
+    ) -> bool {
+        self.arrangement_cell_complex_shortcuts
+            .certified_support(request.operation)
+            == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+            && self.arrangement_attempt.as_ref().is_some_and(|attempt| {
+                attempt.certifies_regularized_arrangement_cell_complex_shortcut_for_request(request)
+            })
+    }
+
+    fn arrangement_cell_complex_shortcut_certified_by_source_facts(
+        &self,
+        request: ExactBooleanRequest,
+    ) -> bool {
+        request.validation == ExactMeshValidationPolicy::CLOSED
+            && self
+                .arrangement_cell_complex_shortcuts
+                .certified_support(request.operation)
+                == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+            && matches!(
+                self.winding_evidence.status(),
+                ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
+                    | ExactWindingEvidenceStatus::CoplanarVolumetricCellsAlreadyMaterialized
+                    | ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized
+            )
+    }
+
+    fn arrangement_cell_complex_evidence_certified_by_source_facts(
+        &self,
+        request: ExactBooleanRequest,
+    ) -> bool {
+        request.validation == ExactMeshValidationPolicy::ALLOW_BOUNDARY
+            && request.boundary_policy == ExactBoundaryBooleanPolicy::Reject
+            && self.winding_evidence.status()
+                == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
+    }
+
+    fn coplanar_boundary_closure_certified_for_request(
+        &self,
+        request: ExactBooleanRequest,
+    ) -> bool {
+        request.validation == ExactMeshValidationPolicy::CLOSED
+            && self
+                .volumetric_boundary_closure
+                .as_ref()
+                .is_some_and(|report| {
+                    report.operation == request.operation
+                        && report.is_coplanar_closure_available()
+                        && report.validate().is_ok()
+                })
+    }
+
+    fn retained_attempt_certifies_regularized_output_for_request(
+        &self,
+        request: ExactBooleanRequest,
+    ) -> bool {
         self.arrangement_attempt.as_ref().is_some_and(|attempt| {
-            attempt
-                .retained_gate_reports()
-                .is_some_and(|(topology, _)| topology.validate().is_ok() && topology.is_complete())
+            attempt.certifies_regularized_arrangement_cell_complex_output_for_request(request)
         })
+    }
+
+    fn topology_assembly_complete(&self) -> bool {
+        self.arrangement_attempt
+            .as_ref()
+            .is_some_and(ExactArrangementBooleanAttempt::retains_complete_gate_reports)
     }
 
     fn region_ownership_resolves_operation(&self, operation: ExactBooleanOperation) -> bool {
