@@ -1532,17 +1532,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self.right
     }
 
-    /// Borrow this pair cache as a lightweight pair view.
-    pub const fn as_view(&self) -> PreparedMeshPairView<'_, 'left, 'right> {
-        PreparedMeshPairView {
-            left: &self.left,
-            right: &self.right,
-            plan: self.plan,
-            broad_phase_summary: self.broad_phase_summary,
-            candidate_pair_capacity_hint: self.candidate_pair_capacity_hint,
-        }
-    }
-
     /// Return a bounded storage hint for candidate face-pair traversal.
     pub const fn candidate_face_pair_capacity_hint(&self) -> usize {
         self.candidate_pair_capacity_hint
