@@ -967,14 +967,6 @@ impl ExactSelectedCellComplex {
         }
     }
 
-    /// Run exact canonicalization on selected cells.
-    #[cfg(test)]
-    pub(crate) fn simplify_exact(
-        self,
-    ) -> Result<ExactSimplifiedCellComplex, ExactArrangementBlocker> {
-        self.simplify_exact_with_policy(ExactRegularizationPolicy::default())
-    }
-
     /// Run exact canonicalization on selected cells with explicit policy.
     pub(crate) fn simplify_exact_with_policy(
         self,

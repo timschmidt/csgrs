@@ -1114,7 +1114,9 @@ fn coincident_closed_shell_builds_mixed_source_volume_region() {
         .unwrap();
     assert_eq!(union.selected_volume_regions, vec![1]);
     assert_eq!(union.selected_faces.len(), 4);
-    let simplified_union = union.simplify_exact().unwrap();
+    let simplified_union = union
+        .simplify_exact_with_policy(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .unwrap();
     assert_eq!(simplified_union.faces.len(), 4);
     assert_eq!(simplified_union.duplicate_cells_removed, 0);
     assert_eq!(simplified_union.triangulate().unwrap().triangles().len(), 4);
@@ -1127,7 +1129,9 @@ fn coincident_closed_shell_builds_mixed_source_volume_region() {
         .unwrap();
     assert_eq!(intersection.selected_volume_regions, vec![1]);
     assert_eq!(intersection.selected_faces.len(), 4);
-    let simplified_intersection = intersection.simplify_exact().unwrap();
+    let simplified_intersection = intersection
+        .simplify_exact_with_policy(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .unwrap();
     assert_eq!(simplified_intersection.faces.len(), 4);
     assert_eq!(simplified_intersection.duplicate_cells_removed, 0);
     assert_eq!(
@@ -1322,7 +1326,9 @@ fn arrangement_pipeline_labels_selects_and_simplifies() {
         .unwrap();
     assert_eq!(difference.selected_volume_regions, vec![1]);
 
-    let simplified = selected.simplify_exact().unwrap();
+    let simplified = selected
+        .simplify_exact_with_policy(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .unwrap();
     assert_eq!(simplified.faces.len(), 8);
     assert_eq!(simplified.duplicate_cells_removed, 0);
     assert!(
@@ -1486,7 +1492,9 @@ fn selected_regions_materialize_open_coplanar_overlap_without_winding_blocker() 
             .all(|face| selected.faces[*face].cell.carrier.side == MeshSide::Left)
     );
 
-    let simplified = selected.simplify_exact().unwrap();
+    let simplified = selected
+        .simplify_exact_with_policy(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .unwrap();
     assert!(simplified.blockers.is_empty(), "{:?}", simplified.blockers);
     let mesh = simplified.triangulate().unwrap();
     assert!(!mesh.triangles().is_empty());
