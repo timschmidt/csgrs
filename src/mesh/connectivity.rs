@@ -125,13 +125,14 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         if mesh.validate_retained_state().is_err() {
             return (vertex_map, adjacency);
         }
-        for (index, point) in mesh.vertices().iter().enumerate() {
+        let view = mesh.view();
+        for (index, point) in view.vertices().iter().enumerate() {
             let position = Point3::new(point.x.clone(), point.y.clone(), point.z.clone());
             vertex_map.position_to_index.push((position.clone(), index));
             vertex_map.index_to_position.insert(index, position);
         }
 
-        for edge in mesh.view().edges() {
+        for edge in view.edges() {
             let [a, b] = edge.vertex_indices();
             add_adjacency_edge(&mut adjacency, a, b);
         }
