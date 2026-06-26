@@ -7401,22 +7401,43 @@ pub(crate) enum ExactOpenSurfaceDisjointStatus {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ExactOpenSurfaceDisjointReport {
     /// Coarse certification status.
-    pub(crate) status: ExactOpenSurfaceDisjointStatus,
+    status: ExactOpenSurfaceDisjointStatus,
     /// Whether the left mesh satisfies the exact open-surface precondition.
-    pub(crate) left_open_surface: bool,
+    left_open_surface: bool,
     /// Whether the right mesh satisfies the exact open-surface precondition.
-    pub(crate) right_open_surface: bool,
+    right_open_surface: bool,
     /// Whether graph extraction retained unknown events.
-    pub(crate) graph_had_unknowns: bool,
+    graph_had_unknowns: bool,
     /// Retained face-pair records after exact scheduling.
-    pub(crate) retained_face_pairs: usize,
+    retained_face_pairs: usize,
     /// Total retained event records.
-    pub(crate) retained_events: usize,
+    retained_events: usize,
     /// Relation counts for retained face pairs.
-    pub(crate) blocker: ExactBooleanBlocker,
+    blocker: ExactBooleanBlocker,
 }
 
 impl ExactOpenSurfaceDisjointReport {
+    /// Build an open-surface disjoint report from retained exact graph evidence.
+    pub(crate) const fn new(
+        status: ExactOpenSurfaceDisjointStatus,
+        left_open_surface: bool,
+        right_open_surface: bool,
+        graph_had_unknowns: bool,
+        retained_face_pairs: usize,
+        retained_events: usize,
+        blocker: ExactBooleanBlocker,
+    ) -> Self {
+        Self {
+            status,
+            left_open_surface,
+            right_open_surface,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            blocker,
+        }
+    }
+
     /// Return whether open-surface disjointness was certified.
     pub(crate) const fn is_certified(&self) -> bool {
         matches!(self.status, ExactOpenSurfaceDisjointStatus::Certified)

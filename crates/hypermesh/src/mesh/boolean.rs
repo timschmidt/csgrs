@@ -8025,23 +8025,23 @@ pub(crate) fn open_surface_disjoint_report_from_graph(
         ExactOpenSurfaceDisjointStatus::GraphHasFacePairs
     };
     let blocker_kind = counts.inferred_kind();
-    ExactOpenSurfaceDisjointReport {
+    ExactOpenSurfaceDisjointReport::new(
         status,
         left_open_surface,
         right_open_surface,
         graph_had_unknowns,
-        retained_face_pairs: if left_open_surface && right_open_surface {
+        if left_open_surface && right_open_surface {
             graph.face_pairs.len()
         } else {
             0
         },
-        retained_events: if left_open_surface && right_open_surface {
+        if left_open_surface && right_open_surface {
             graph.event_count()
         } else {
             0
         },
-        blocker: counts.into_blocker(blocker_kind),
-    }
+        counts.into_blocker(blocker_kind),
+    )
 }
 
 fn mesh_is_open_surface(mesh: &ExactMesh) -> bool {
