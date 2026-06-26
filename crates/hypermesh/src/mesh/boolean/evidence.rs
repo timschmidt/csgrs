@@ -3308,11 +3308,26 @@ impl ExactBooleanCertificationSet {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
-        if self.arrangement_cell_complex_shortcut_certified_by_source_facts(request) {
+        if request.validation == ExactMeshValidationPolicy::CLOSED
+            && self
+                .arrangement_cell_complex_shortcuts
+                .certified_support(request.operation)
+                == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+            && matches!(
+                self.winding_evidence.status(),
+                ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
+                    | ExactWindingEvidenceStatus::CoplanarVolumetricCellsAlreadyMaterialized
+                    | ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized
+            )
+        {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
-        if self.arrangement_cell_complex_evidence_certified_by_source_facts(request) {
+        if request.validation == ExactMeshValidationPolicy::ALLOW_BOUNDARY
+            && request.boundary_policy == ExactBoundaryBooleanPolicy::Reject
+            && self.winding_evidence.status()
+                == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
+        {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
@@ -3474,33 +3489,6 @@ impl ExactBooleanCertificationSet {
             })
     }
 
-    fn arrangement_cell_complex_shortcut_certified_by_source_facts(
-        &self,
-        request: ExactBooleanRequest,
-    ) -> bool {
-        request.validation == ExactMeshValidationPolicy::CLOSED
-            && self
-                .arrangement_cell_complex_shortcuts
-                .certified_support(request.operation)
-                == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-            && matches!(
-                self.winding_evidence.status(),
-                ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
-                    | ExactWindingEvidenceStatus::CoplanarVolumetricCellsAlreadyMaterialized
-                    | ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized
-            )
-    }
-
-    fn arrangement_cell_complex_evidence_certified_by_source_facts(
-        &self,
-        request: ExactBooleanRequest,
-    ) -> bool {
-        request.validation == ExactMeshValidationPolicy::ALLOW_BOUNDARY
-            && request.boundary_policy == ExactBoundaryBooleanPolicy::Reject
-            && self.winding_evidence.status()
-                == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
-    }
-
     fn coplanar_boundary_closure_certified_for_request(
         &self,
         request: ExactBooleanRequest,
@@ -3609,28 +3597,6 @@ impl ExactBooleanCertificationSet {
                 .winding_evidence
                 .coplanar_volumetric_evidence()
                 .is_none()
-    }
-
-    fn boundary_policy_requirement_matches_preflight(
-        &self,
-        preflight: &ExactBooleanPreflight,
-    ) -> bool {
-        self.boundary_touching.is_certified()
-            && self.winding_evidence.status() == ExactWindingEvidenceStatus::BoundaryPolicyRequired
-            && self.boundary_report_matches_preflight(preflight, true)
-    }
-
-    fn boundary_policy_shortcut_matches_preflight(
-        &self,
-        preflight: &ExactBooleanPreflight,
-    ) -> bool {
-        self.boundary_touching.is_certified()
-            && (matches!(
-                self.winding_evidence.status(),
-                ExactWindingEvidenceStatus::BoundaryPolicyShortcutAlreadyMaterialized
-                    | ExactWindingEvidenceStatus::BoundaryPolicyRequired
-            ) || self.materialized_shortcut_certified_for_operation(preflight.operation))
-            && self.boundary_report_matches_preflight(preflight, false)
     }
 
     fn boundary_report_matches_preflight(
@@ -3758,27 +3724,6 @@ impl ExactBooleanCertificationSet {
         }
     }
 
-    fn certified_winding_requirement_matches_preflight(
-        &self,
-        preflight: &ExactBooleanPreflight,
-    ) -> bool {
-        self.winding_evidence.status().routes_to_certified_winding()
-            && self.winding_evidence_matches_preflight(preflight)
-    }
-
-    fn refinement_output_evidence_matches_preflight(
-        &self,
-        preflight: &ExactBooleanPreflight,
-    ) -> bool {
-        preflight.graph_had_unknowns == self.refinement.graph_had_unknowns
-            && preflight.retained_face_pairs == self.refinement.retained_face_pairs
-            && preflight.retained_events == self.refinement.retained_events
-            && preflight.region_count == 0
-            && preflight.region_classifications.is_empty()
-            && preflight.blocker.is_none()
-            && preflight.coplanar_arrangement_evidence.is_none()
-    }
-
     fn winding_evidence_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
         preflight.graph_had_unknowns == self.winding_evidence.graph_had_unknowns()
             && preflight.retained_face_pairs == self.winding_evidence.retained_face_pairs()
@@ -3822,30 +3767,6 @@ impl ExactBooleanCertificationSet {
             == ExactWindingEvidenceStatus::ClosedWindingContainmentAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.closed_winding_reports_match_containment()
-    }
-
-    fn mixed_dimensional_regularized_solid_matches_preflight(
-        &self,
-        preflight: &ExactBooleanPreflight,
-    ) -> bool {
-        (self.winding_evidence.status()
-            == ExactWindingEvidenceStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
-            || self.arrangement_attempt_matches_certified_preflight(preflight))
-            && ((self.regularized_solid.left_closed_solid
-                && self.regularized_solid.right_open_surface)
-                || (self.regularized_solid.left_open_surface
-                    && self.regularized_solid.right_closed_solid))
-    }
-
-    fn lower_dimensional_regularized_solid_matches_preflight(
-        &self,
-        preflight: &ExactBooleanPreflight,
-    ) -> bool {
-        (self.winding_evidence.status()
-            == ExactWindingEvidenceStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
-            || self.arrangement_attempt_matches_certified_preflight(preflight))
-            && self.regularized_solid.left_open_surface
-            && self.regularized_solid.right_open_surface
     }
 
     fn convex_reports_match_preflight_support(&self, preflight: &ExactBooleanPreflight) -> bool {
@@ -3968,8 +3889,14 @@ impl ExactBooleanCertificationSet {
             && preflight.blocker.is_none()
             && (source_fact_materialization_retains_preflight_evidence
                 || source_fact_materialization_collapsed_winding_evidence);
-        let retained_attempt_evidence_matches = self
-            .refinement_output_evidence_matches_preflight(preflight)
+        let retained_attempt_evidence_matches = preflight.graph_had_unknowns
+            == self.refinement.graph_had_unknowns
+            && preflight.retained_face_pairs == self.refinement.retained_face_pairs
+            && preflight.retained_events == self.refinement.retained_events
+            && preflight.region_count == 0
+            && preflight.region_classifications.is_empty()
+            && preflight.blocker.is_none()
+            && preflight.coplanar_arrangement_evidence.is_none()
             && ((self
                 .arrangement_cell_complex_shortcuts
                 .certified_support(preflight.operation)
@@ -4013,7 +3940,14 @@ impl ExactBooleanCertificationSet {
                 self.selected_region_policy_matches_preflight(preflight)
             }
             ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
-                self.boundary_policy_shortcut_matches_preflight(preflight)
+                self.boundary_touching.is_certified()
+                    && (matches!(
+                        self.winding_evidence.status(),
+                        ExactWindingEvidenceStatus::BoundaryPolicyShortcutAlreadyMaterialized
+                            | ExactWindingEvidenceStatus::BoundaryPolicyRequired
+                    ) || self
+                        .materialized_shortcut_certified_for_operation(preflight.operation))
+                    && self.boundary_report_matches_preflight(preflight, false)
             }
             ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
             | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
@@ -4065,12 +3999,22 @@ impl ExactBooleanCertificationSet {
             ExactBooleanSupport::CertifiedClosedWindingContainment => {
                 self.closed_winding_containment_matches_preflight(preflight)
             }
-            ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
-                self.mixed_dimensional_regularized_solid_matches_preflight(preflight)
-            }
-            ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
-                self.lower_dimensional_regularized_solid_matches_preflight(preflight)
-            }
+            ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => (self
+                .winding_evidence
+                .status()
+                == ExactWindingEvidenceStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
+                || self.arrangement_attempt_matches_certified_preflight(preflight))
+                && ((self.regularized_solid.left_closed_solid
+                    && self.regularized_solid.right_open_surface)
+                    || (self.regularized_solid.left_open_surface
+                        && self.regularized_solid.right_closed_solid)),
+            ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => (self
+                .winding_evidence
+                .status()
+                == ExactWindingEvidenceStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
+                || self.arrangement_attempt_matches_certified_preflight(preflight))
+                && self.regularized_solid.left_open_surface
+                && self.regularized_solid.right_open_surface,
             ExactBooleanSupport::CertifiedConvexUnion
             | ExactBooleanSupport::CertifiedConvexIntersection
             | ExactBooleanSupport::CertifiedConvexDifference => {
@@ -4083,7 +4027,10 @@ impl ExactBooleanCertificationSet {
                 self.convex_containment_matches_preflight(preflight)
             }
             ExactBooleanSupport::RequiresBoundaryPolicy => {
-                self.boundary_policy_requirement_matches_preflight(preflight)
+                self.boundary_touching.is_certified()
+                    && self.winding_evidence.status()
+                        == ExactWindingEvidenceStatus::BoundaryPolicyRequired
+                    && self.boundary_report_matches_preflight(preflight, true)
             }
             ExactBooleanSupport::RequiresPlanarArrangement => {
                 self.planar_arrangement_matches_preflight(preflight)
@@ -4098,7 +4045,8 @@ impl ExactBooleanCertificationSet {
                     && self.winding_evidence_matches_preflight(preflight)
             }
             ExactBooleanSupport::RequiresCertifiedWinding => {
-                self.certified_winding_requirement_matches_preflight(preflight)
+                self.winding_evidence.status().routes_to_certified_winding()
+                    && self.winding_evidence_matches_preflight(preflight)
             }
         }
     }
