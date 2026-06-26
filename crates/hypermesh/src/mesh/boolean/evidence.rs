@@ -5774,45 +5774,83 @@ pub(crate) enum ExactVolumetricBoundaryClosureStatus {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ExactVolumetricBoundaryClosureReport {
     /// Requested named operation.
-    pub(crate) operation: ExactBooleanOperation,
+    operation: ExactBooleanOperation,
     /// Certified closure status.
-    pub(crate) status: ExactVolumetricBoundaryClosureStatus,
+    status: ExactVolumetricBoundaryClosureStatus,
     /// Number of output triangles in the retained boundary materialization.
-    pub(crate) output_triangles: usize,
+    output_triangles: usize,
     /// Number of boundary edges retained by the materialized output mesh.
-    pub(crate) boundary_edges: usize,
+    boundary_edges: usize,
     /// Number of directed boundary loops, when loop extraction succeeded.
-    pub(crate) boundary_loops: usize,
+    boundary_loops: usize,
     /// Number of boundary vertices whose outgoing directed boundary-edge count
     /// is not exactly one.
-    pub(crate) boundary_vertices_with_invalid_outgoing_degree: usize,
+    boundary_vertices_with_invalid_outgoing_degree: usize,
     /// Number of boundary vertices whose incoming directed boundary-edge count
     /// is not exactly one.
-    pub(crate) boundary_vertices_with_invalid_incoming_degree: usize,
+    boundary_vertices_with_invalid_incoming_degree: usize,
     /// Number of undirected mesh edges used more than twice by output
     /// triangles, proving non-manifold topology before boundary-loop walking.
-    pub(crate) overused_boundary_edges: usize,
+    overused_boundary_edges: usize,
     /// Number of boundary loops proven not exactly coplanar.
-    pub(crate) noncoplanar_boundary_loops: usize,
+    noncoplanar_boundary_loops: usize,
     /// Number of repeated exact point pairs found inside directed boundary loops.
-    pub(crate) repeated_exact_boundary_points: usize,
+    repeated_exact_boundary_points: usize,
     /// Number of exact point classes that appear at multiple topological
     /// vertices inside directed boundary loops.
-    pub(crate) self_contact_exact_points: usize,
+    self_contact_exact_points: usize,
     /// Number of topological boundary vertices participating in exact
     /// self-contact point classes.
-    pub(crate) self_contact_topological_vertices: usize,
+    self_contact_topological_vertices: usize,
     /// Number of split cycles around exact self-contact points with fewer than
     /// three distinct exact points.
-    pub(crate) self_contact_degenerate_cycles: usize,
+    self_contact_degenerate_cycles: usize,
     /// Number of split cycles around exact self-contact points with at least
     /// three distinct exact points.
-    pub(crate) self_contact_nondegenerate_cycles: usize,
+    self_contact_nondegenerate_cycles: usize,
     /// Number of coplanar loop groups produced by exact loop grouping.
-    pub(crate) coplanar_loop_groups: usize,
+    coplanar_loop_groups: usize,
 }
 
 impl ExactVolumetricBoundaryClosureReport {
+    /// Build a volumetric boundary-closure report from retained exact evidence.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) const fn new(
+        operation: ExactBooleanOperation,
+        status: ExactVolumetricBoundaryClosureStatus,
+        output_triangles: usize,
+        boundary_edges: usize,
+        boundary_loops: usize,
+        boundary_vertices_with_invalid_outgoing_degree: usize,
+        boundary_vertices_with_invalid_incoming_degree: usize,
+        overused_boundary_edges: usize,
+        noncoplanar_boundary_loops: usize,
+        repeated_exact_boundary_points: usize,
+        self_contact_exact_points: usize,
+        self_contact_topological_vertices: usize,
+        self_contact_degenerate_cycles: usize,
+        self_contact_nondegenerate_cycles: usize,
+        coplanar_loop_groups: usize,
+    ) -> Self {
+        Self {
+            operation,
+            status,
+            output_triangles,
+            boundary_edges,
+            boundary_loops,
+            boundary_vertices_with_invalid_outgoing_degree,
+            boundary_vertices_with_invalid_incoming_degree,
+            overused_boundary_edges,
+            noncoplanar_boundary_loops,
+            repeated_exact_boundary_points,
+            self_contact_exact_points,
+            self_contact_topological_vertices,
+            self_contact_degenerate_cycles,
+            self_contact_nondegenerate_cycles,
+            coplanar_loop_groups,
+        }
+    }
+
     /// Return the certified closure status.
     pub(crate) const fn status(&self) -> &ExactVolumetricBoundaryClosureStatus {
         &self.status

@@ -2520,23 +2520,23 @@ pub(crate) fn volumetric_boundary_closure_report_from_graph(
 pub(crate) fn no_materialized_boundary_output_report(
     operation: ExactBooleanOperation,
 ) -> ExactVolumetricBoundaryClosureReport {
-    ExactVolumetricBoundaryClosureReport {
+    ExactVolumetricBoundaryClosureReport::new(
         operation,
-        status: ExactVolumetricBoundaryClosureStatus::NoMaterializedBoundaryOutput,
-        output_triangles: 0,
-        boundary_edges: 0,
-        boundary_loops: 0,
-        boundary_vertices_with_invalid_outgoing_degree: 0,
-        boundary_vertices_with_invalid_incoming_degree: 0,
-        overused_boundary_edges: 0,
-        noncoplanar_boundary_loops: 0,
-        repeated_exact_boundary_points: 0,
-        self_contact_exact_points: 0,
-        self_contact_topological_vertices: 0,
-        self_contact_degenerate_cycles: 0,
-        self_contact_nondegenerate_cycles: 0,
-        coplanar_loop_groups: 0,
-    }
+        ExactVolumetricBoundaryClosureStatus::NoMaterializedBoundaryOutput,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+    )
 }
 
 fn volumetric_boundary_closure_report_from_materialized(
@@ -2567,45 +2567,43 @@ fn volumetric_boundary_closure_report_from_materialized_with_prevalidated_closur
     let output_triangles = materialized.mesh.triangles().len();
     let boundary_edges = materialized.mesh.facts().mesh.boundary_edges;
     if materialized.mesh.facts().mesh.closed_manifold || boundary_edges == 0 {
-        return Ok(ExactVolumetricBoundaryClosureReport {
+        return Ok(ExactVolumetricBoundaryClosureReport::new(
             operation,
-            status: ExactVolumetricBoundaryClosureStatus::AlreadyClosed,
+            ExactVolumetricBoundaryClosureStatus::AlreadyClosed,
             output_triangles,
-            boundary_edges: 0,
-            boundary_loops: 0,
-            boundary_vertices_with_invalid_outgoing_degree: 0,
-            boundary_vertices_with_invalid_incoming_degree: 0,
-            overused_boundary_edges: 0,
-            noncoplanar_boundary_loops: 0,
-            repeated_exact_boundary_points: 0,
-            self_contact_exact_points: 0,
-            self_contact_topological_vertices: 0,
-            self_contact_degenerate_cycles: 0,
-            self_contact_nondegenerate_cycles: 0,
-            coplanar_loop_groups: 0,
-        });
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        ));
     }
     let boundary_topology = boundary_topology_evidence(&materialized.mesh);
     let Some(boundary_loops) = directed_boundary_loops(&materialized.mesh) else {
-        return Ok(ExactVolumetricBoundaryClosureReport {
+        return Ok(ExactVolumetricBoundaryClosureReport::new(
             operation,
-            status: ExactVolumetricBoundaryClosureStatus::BoundaryTopologyNotLoop,
+            ExactVolumetricBoundaryClosureStatus::BoundaryTopologyNotLoop,
             output_triangles,
             boundary_edges,
-            boundary_loops: 0,
-            boundary_vertices_with_invalid_outgoing_degree: boundary_topology
-                .invalid_outgoing_degree_vertices,
-            boundary_vertices_with_invalid_incoming_degree: boundary_topology
-                .invalid_incoming_degree_vertices,
-            overused_boundary_edges: boundary_topology.overused_edges,
-            noncoplanar_boundary_loops: 0,
-            repeated_exact_boundary_points: 0,
-            self_contact_exact_points: 0,
-            self_contact_topological_vertices: 0,
-            self_contact_degenerate_cycles: 0,
-            self_contact_nondegenerate_cycles: 0,
-            coplanar_loop_groups: 0,
-        });
+            0,
+            boundary_topology.invalid_outgoing_degree_vertices,
+            boundary_topology.invalid_incoming_degree_vertices,
+            boundary_topology.overused_edges,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        ));
     };
     let boundary_points = boundary_loops
         .iter()
@@ -2640,44 +2638,44 @@ fn volumetric_boundary_closure_report_from_materialized_with_prevalidated_closur
         match boundary_loop_self_contact_evidence(boundary) {
             Ok(evidence) => self_contact.add(evidence),
             Err(blocker) => {
-                return Ok(ExactVolumetricBoundaryClosureReport {
+                return Ok(ExactVolumetricBoundaryClosureReport::new(
                     operation,
-                    status: ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(blocker),
+                    ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(blocker),
                     output_triangles,
                     boundary_edges,
-                    boundary_loops: boundary_loops.len(),
-                    boundary_vertices_with_invalid_outgoing_degree: 0,
-                    boundary_vertices_with_invalid_incoming_degree: 0,
-                    overused_boundary_edges: 0,
-                    noncoplanar_boundary_loops: 0,
-                    repeated_exact_boundary_points: self_contact.repeated_exact_point_pairs,
-                    self_contact_exact_points: self_contact.exact_points,
-                    self_contact_topological_vertices: self_contact.topological_vertices,
-                    self_contact_degenerate_cycles: self_contact.degenerate_cycles,
-                    self_contact_nondegenerate_cycles: self_contact.nondegenerate_cycles,
-                    coplanar_loop_groups: 0,
-                });
+                    boundary_loops.len(),
+                    0,
+                    0,
+                    0,
+                    0,
+                    self_contact.repeated_exact_point_pairs,
+                    self_contact.exact_points,
+                    self_contact.topological_vertices,
+                    self_contact.degenerate_cycles,
+                    self_contact.nondegenerate_cycles,
+                    0,
+                ));
             }
         }
     }
     if self_contact.repeated_exact_point_pairs != 0 {
-        return Ok(ExactVolumetricBoundaryClosureReport {
+        return Ok(ExactVolumetricBoundaryClosureReport::new(
             operation,
-            status: ExactVolumetricBoundaryClosureStatus::BoundaryLoopExactSelfContact,
+            ExactVolumetricBoundaryClosureStatus::BoundaryLoopExactSelfContact,
             output_triangles,
             boundary_edges,
-            boundary_loops: boundary_loops.len(),
-            boundary_vertices_with_invalid_outgoing_degree: 0,
-            boundary_vertices_with_invalid_incoming_degree: 0,
-            overused_boundary_edges: 0,
-            noncoplanar_boundary_loops: 0,
-            repeated_exact_boundary_points: self_contact.repeated_exact_point_pairs,
-            self_contact_exact_points: self_contact.exact_points,
-            self_contact_topological_vertices: self_contact.topological_vertices,
-            self_contact_degenerate_cycles: self_contact.degenerate_cycles,
-            self_contact_nondegenerate_cycles: self_contact.nondegenerate_cycles,
-            coplanar_loop_groups: 0,
-        });
+            boundary_loops.len(),
+            0,
+            0,
+            0,
+            0,
+            self_contact.repeated_exact_point_pairs,
+            self_contact.exact_points,
+            self_contact.topological_vertices,
+            self_contact.degenerate_cycles,
+            self_contact.nondegenerate_cycles,
+            0,
+        ));
     }
     let repeated_exact_boundary_points = self_contact.repeated_exact_point_pairs;
     let mut noncoplanar_boundary_loops = 0;
@@ -2686,44 +2684,44 @@ fn volumetric_boundary_closure_report_from_materialized_with_prevalidated_closur
             Ok(true) => {}
             Ok(false) => noncoplanar_boundary_loops += 1,
             Err(blocker) => {
-                return Ok(ExactVolumetricBoundaryClosureReport {
+                return Ok(ExactVolumetricBoundaryClosureReport::new(
                     operation,
-                    status: ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(blocker),
+                    ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(blocker),
                     output_triangles,
                     boundary_edges,
-                    boundary_loops: boundary_loops.len(),
-                    boundary_vertices_with_invalid_outgoing_degree: 0,
-                    boundary_vertices_with_invalid_incoming_degree: 0,
-                    overused_boundary_edges: 0,
+                    boundary_loops.len(),
+                    0,
+                    0,
+                    0,
                     noncoplanar_boundary_loops,
                     repeated_exact_boundary_points,
-                    self_contact_exact_points: self_contact.exact_points,
-                    self_contact_topological_vertices: self_contact.topological_vertices,
-                    self_contact_degenerate_cycles: self_contact.degenerate_cycles,
-                    self_contact_nondegenerate_cycles: self_contact.nondegenerate_cycles,
-                    coplanar_loop_groups: 0,
-                });
+                    self_contact.exact_points,
+                    self_contact.topological_vertices,
+                    self_contact.degenerate_cycles,
+                    self_contact.nondegenerate_cycles,
+                    0,
+                ));
             }
         }
     }
     if noncoplanar_boundary_loops != 0 {
-        return Ok(ExactVolumetricBoundaryClosureReport {
+        return Ok(ExactVolumetricBoundaryClosureReport::new(
             operation,
-            status: ExactVolumetricBoundaryClosureStatus::NonCoplanarBoundaryClosureRequired,
+            ExactVolumetricBoundaryClosureStatus::NonCoplanarBoundaryClosureRequired,
             output_triangles,
             boundary_edges,
-            boundary_loops: boundary_loops.len(),
-            boundary_vertices_with_invalid_outgoing_degree: 0,
-            boundary_vertices_with_invalid_incoming_degree: 0,
-            overused_boundary_edges: 0,
+            boundary_loops.len(),
+            0,
+            0,
+            0,
             noncoplanar_boundary_loops,
             repeated_exact_boundary_points,
-            self_contact_exact_points: self_contact.exact_points,
-            self_contact_topological_vertices: self_contact.topological_vertices,
-            self_contact_degenerate_cycles: self_contact.degenerate_cycles,
-            self_contact_nondegenerate_cycles: self_contact.nondegenerate_cycles,
-            coplanar_loop_groups: 0,
-        });
+            self_contact.exact_points,
+            self_contact.topological_vertices,
+            self_contact.degenerate_cycles,
+            self_contact.nondegenerate_cycles,
+            0,
+        ));
     }
     match group_exact_coplanar_loops(boundary_points) {
         Ok(groups) => {
@@ -2739,62 +2737,62 @@ fn volumetric_boundary_closure_report_from_materialized_with_prevalidated_closur
                 .is_some(),
             };
             if coplanar_closure_available {
-                Ok(ExactVolumetricBoundaryClosureReport {
+                Ok(ExactVolumetricBoundaryClosureReport::new(
                     operation,
-                    status: ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
+                    ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
                     output_triangles,
                     boundary_edges,
-                    boundary_loops: boundary_loops.len(),
-                    boundary_vertices_with_invalid_outgoing_degree: 0,
-                    boundary_vertices_with_invalid_incoming_degree: 0,
-                    overused_boundary_edges: 0,
-                    noncoplanar_boundary_loops: 0,
-                    repeated_exact_boundary_points: 0,
-                    self_contact_exact_points: 0,
-                    self_contact_topological_vertices: 0,
-                    self_contact_degenerate_cycles: 0,
-                    self_contact_nondegenerate_cycles: 0,
+                    boundary_loops.len(),
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
                     coplanar_loop_groups,
-                })
+                ))
             } else {
-                Ok(ExactVolumetricBoundaryClosureReport {
+                Ok(ExactVolumetricBoundaryClosureReport::new(
                     operation,
-                    status: ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(
+                    ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(
                         ExactArrangementBlocker::NonManifoldCellComplex,
                     ),
                     output_triangles,
                     boundary_edges,
-                    boundary_loops: boundary_loops.len(),
-                    boundary_vertices_with_invalid_outgoing_degree: 0,
-                    boundary_vertices_with_invalid_incoming_degree: 0,
-                    overused_boundary_edges: 0,
-                    noncoplanar_boundary_loops: 0,
-                    repeated_exact_boundary_points: 0,
-                    self_contact_exact_points: 0,
-                    self_contact_topological_vertices: 0,
-                    self_contact_degenerate_cycles: 0,
-                    self_contact_nondegenerate_cycles: 0,
+                    boundary_loops.len(),
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
                     coplanar_loop_groups,
-                })
+                ))
             }
         }
-        Err(blocker) => Ok(ExactVolumetricBoundaryClosureReport {
+        Err(blocker) => Ok(ExactVolumetricBoundaryClosureReport::new(
             operation,
-            status: ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(blocker),
+            ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(blocker),
             output_triangles,
             boundary_edges,
-            boundary_loops: boundary_loops.len(),
-            boundary_vertices_with_invalid_outgoing_degree: 0,
-            boundary_vertices_with_invalid_incoming_degree: 0,
-            overused_boundary_edges: 0,
-            noncoplanar_boundary_loops: 0,
-            repeated_exact_boundary_points: 0,
-            self_contact_exact_points: 0,
-            self_contact_topological_vertices: 0,
-            self_contact_degenerate_cycles: 0,
-            self_contact_nondegenerate_cycles: 0,
-            coplanar_loop_groups: 0,
-        }),
+            boundary_loops.len(),
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        )),
     }
 }
 
