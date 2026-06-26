@@ -8,7 +8,7 @@ use hypermesh::kernel::{
     PreparedMeshPairClassificationCounts, PreparedMeshPairFactState,
     PreparedMeshPairIntersectionGraphCounts, PreparedMeshPairPlanKind,
     PreparedMeshPairResultOutcome, PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis,
-    PreparedMeshPairSweepDirection, PreparedMeshPairView, PreparedMeshView, TriangleRef, VertexRef,
+    PreparedMeshPairSweepDirection, PreparedMeshView, TriangleRef, VertexRef,
 };
 use hyperreal::Real;
 
@@ -1342,17 +1342,14 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         retained_graph_counts
     );
 
-    let pair_view: PreparedMeshPairView<'_, '_, '_> =
-        prepared_left.pair_with(&prepared_overlapping);
-    assert_eq!(pair_view.left().view().face_count(), left.triangle_count());
+    assert_eq!(prepared_left.view().face_count(), left.triangle_count());
     assert_eq!(
-        pair_view.right().view().face_count(),
+        prepared_overlapping.view().face_count(),
         overlapping.triangle_count()
     );
-    assert_eq!(pair_view.broad_phase_summary(), broad_phase_summary);
     let mut candidates = Vec::new();
-    pair_view
-        .try_visit_candidate_face_pairs(&mut |pair| {
+    prepared_left
+        .try_visit_candidate_face_pairs(&prepared_overlapping, &mut |pair| {
             candidates.push(pair);
             Ok::<(), ()>(())
         })
@@ -1486,8 +1483,7 @@ fn prepared_broad_phase_candidate_visitor_can_stop_early() {
     assert_eq!(visited, 1);
 
     visited = 0;
-    let pair_view = prepared_left.pair_with(&prepared_right);
-    let result = pair_view.try_visit_candidate_face_pairs(&mut |_| {
+    let result = prepared_left.try_visit_candidate_face_pairs(&prepared_right, &mut |_| {
         visited += 1;
         Err("stop")
     });

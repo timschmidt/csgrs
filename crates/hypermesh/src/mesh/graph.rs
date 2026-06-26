@@ -1306,10 +1306,9 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_views(
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
     let left_mesh = left.view().mesh();
     let right_mesh = right.view().mesh();
-    let pair = left.pair_with(right);
-    let mut face_pairs =
-        Vec::with_capacity(pair.broad_phase_summary().candidate_pair_capacity_hint());
-    pair.try_visit_candidate_face_pairs(&mut |[left_face, right_face]| {
+    let (_, broad_phase_summary) = left.retained_pair_plan(right);
+    let mut face_pairs = Vec::with_capacity(broad_phase_summary.candidate_pair_capacity_hint());
+    left.try_visit_candidate_face_pairs(right, &mut |[left_face, right_face]| {
         let classification =
             classify_mesh_face_pair_unchecked(left_mesh, left_face, right_mesh, right_face);
         if classification.needs_graph_construction() {

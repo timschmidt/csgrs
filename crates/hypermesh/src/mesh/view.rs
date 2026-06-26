@@ -157,15 +157,6 @@ impl PreparedMeshPairBoolean {
     }
 }
 
-/// Borrowed prepared pair view with retained broad-phase pair planning.
-#[derive(Debug)]
-pub struct PreparedMeshPairView<'pair, 'left, 'right> {
-    left: &'pair PreparedMeshView<'left>,
-    right: &'pair PreparedMeshView<'right>,
-    plan: CandidateFacePairPlan,
-    broad_phase_summary: PreparedMeshPairBroadPhaseSummary,
-}
-
 /// Cheap status for retained facts inside a prepared mesh-pair session.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PreparedMeshPairCacheStatus {
@@ -1405,29 +1396,25 @@ impl<'a> PreparedMeshView<'a> {
         self.view.mesh_bounds()
     }
 
-    /// Prepare a certificate-validated pair view that reuses its broad-phase plan.
-    pub fn pair_with<'pair, 'right>(
-        &'pair self,
-        right: &'pair PreparedMeshView<'right>,
-    ) -> PreparedMeshPairView<'pair, 'a, 'right> {
+    pub(crate) fn retained_pair_plan<'right>(
+        &self,
+        right: &PreparedMeshView<'right>,
+    ) -> (CandidateFacePairPlan, PreparedMeshPairBroadPhaseSummary) {
         let broad_phase = ExactAabbBroadPhase::default();
         let plan = broad_phase.candidate_face_pair_plan(&self.bounds, &right.bounds);
         let candidate_pair_capacity_hint =
             plan.bounded_capacity_hint(self.view.face_count(), right.view.face_count());
-        let broad_phase_summary = PreparedMeshPairBroadPhaseSummary::from_plan(
-            self.view.source_stamp(),
-            right.view.source_stamp(),
+        (
             plan,
-            self.view.face_count(),
-            right.view.face_count(),
-            candidate_pair_capacity_hint,
-        );
-        PreparedMeshPairView {
-            left: self,
-            right,
-            plan,
-            broad_phase_summary,
-        }
+            PreparedMeshPairBroadPhaseSummary::from_plan(
+                self.view.source_stamp(),
+                right.view.source_stamp(),
+                plan,
+                self.view.face_count(),
+                right.view.face_count(),
+                candidate_pair_capacity_hint,
+            ),
+        )
     }
 
     /// Visit certificate-validated candidate face pairs and allow the visitor to stop early.
@@ -1436,24 +1423,20 @@ impl<'a> PreparedMeshView<'a> {
         right: &PreparedMeshView<'b>,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
-        self.pair_with(right).try_visit_candidate_face_pairs(visit)
+        let broad_phase = ExactAabbBroadPhase::default();
+        let (plan, _) = self.retained_pair_plan(right);
+        broad_phase.try_visit_candidate_face_pairs_with_plan(
+            &self.bounds,
+            &right.bounds,
+            plan,
+            visit,
+        )
     }
 }
 
 impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     fn new(left: PreparedMeshView<'left>, right: PreparedMeshView<'right>) -> Self {
-        let broad_phase = ExactAabbBroadPhase::default();
-        let plan = broad_phase.candidate_face_pair_plan(&left.bounds, &right.bounds);
-        let candidate_pair_capacity_hint =
-            plan.bounded_capacity_hint(left.view.face_count(), right.view.face_count());
-        let broad_phase_summary = PreparedMeshPairBroadPhaseSummary::from_plan(
-            left.view.source_stamp(),
-            right.view.source_stamp(),
-            plan,
-            left.view.face_count(),
-            right.view.face_count(),
-            candidate_pair_capacity_hint,
-        );
+        let (plan, broad_phase_summary) = left.retained_pair_plan(&right);
         Self {
             left,
             right,
@@ -2104,37 +2087,6 @@ impl PreparedMeshPairPlanKind {
             CandidateFacePairPlan::Sweep { .. } => Self::Sweep,
             CandidateFacePairPlan::Quadratic => Self::Quadratic,
         }
-    }
-}
-
-impl<'pair, 'left, 'right> PreparedMeshPairView<'pair, 'left, 'right> {
-    /// Return the left prepared mesh view.
-    pub const fn left(&self) -> &'pair PreparedMeshView<'left> {
-        self.left
-    }
-
-    /// Return the right prepared mesh view.
-    pub const fn right(&self) -> &'pair PreparedMeshView<'right> {
-        self.right
-    }
-
-    /// Return retained broad-phase planning provenance for this borrowed pair view.
-    pub const fn broad_phase_summary(&self) -> PreparedMeshPairBroadPhaseSummary {
-        self.broad_phase_summary
-    }
-
-    /// Visit certificate-validated candidate face pairs and allow the visitor to stop early.
-    pub fn try_visit_candidate_face_pairs<E>(
-        &self,
-        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E> {
-        let broad_phase = ExactAabbBroadPhase::default();
-        broad_phase.try_visit_candidate_face_pairs_with_plan(
-            &self.left.bounds,
-            &self.right.bounds,
-            self.plan,
-            visit,
-        )
     }
 }
 
