@@ -9149,41 +9149,16 @@ fn winding_evidence_report_from_graph_with_facts(
             None,
         ));
     }
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && closed_zero_area_boundary_contact_evidence_from_graph(graph, left, right)?.is_some()
-    {
-        return Ok(winding_evidence_report(
-            operation,
-            ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
-            0,
-            Vec::new(),
-            counts.into_blocker(ExactBooleanBlockerKind::BoundaryPolicy),
-            None,
-            None,
-        ));
-    }
-    if !arrangement_cell_complex_shortcut_materializes
-        && matches!(
-            operation,
-            ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
-        )
-        && certified_closed_boundary_only_contact_from_graph(graph, left, right)?
-    {
-        return Ok(winding_evidence_report(
-            operation,
-            ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
-            0,
-            Vec::new(),
-            counts.into_blocker(ExactBooleanBlockerKind::BoundaryPolicy),
-            None,
-            coplanar_boundary_only_evidence_if_consumed(graph, left, right)?,
-        ));
+    if let Some(report) = closed_boundary_touching_winding_evidence_from_graph(
+        graph,
+        left,
+        right,
+        operation,
+        graph_had_unknowns,
+        counts,
+        arrangement_cell_complex_shortcut_materializes,
+    )? {
+        return Ok(report);
     }
     if let Some(report) = boundary_policy_or_planar_arrangement_winding_evidence(
         graph,
@@ -9207,79 +9182,15 @@ fn winding_evidence_report_from_graph_with_facts(
             ),
         );
     }
-    if let Some((region_classifications, triangulations, volumetric_classifications)) =
-        volumetric_winding_region_plan_from_graph(graph, left, right)?
-    {
-        let needs_coplanar_volumetric =
-            graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right);
-        let blocker_kind = if needs_coplanar_volumetric {
-            ExactBooleanBlockerKind::CoplanarVolumetricCells
-        } else {
-            ExactBooleanBlockerKind::Winding
-        };
-        if let Some(materialized) = materialize_volumetric_winding_region_plan(
-            region_classifications.clone(),
-            triangulations.clone(),
-            volumetric_classifications.clone(),
-            left,
-            right,
-            operation,
-            ExactMeshValidationPolicy::CLOSED,
-        )? {
-            return Ok(winding_evidence_report(
-                operation,
-                ExactWindingEvidenceStatus::Ready,
-                graph_had_unknowns,
-                graph.face_pairs.len(),
-                graph.event_count(),
-                materialized.triangulations.len(),
-                materialized.region_classifications,
-                counts.into_blocker(blocker_kind),
-                None,
-                coplanar_volumetric_evidence_if_required(graph, left, right),
-            ));
-        }
-        if let Some(materialized) = materialize_volumetric_winding_region_plan(
-            region_classifications.clone(),
-            triangulations.clone(),
-            volumetric_classifications.clone(),
-            left,
-            right,
-            operation,
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-        )? && certified_coplanar_boundary_closure_from_materialized(
-            &materialized,
-            left,
-            right,
-            operation,
-            ExactMeshValidationPolicy::CLOSED,
-        )?
-        .is_some()
-        {
-            return Ok(
-                arrangement_cell_complex_already_materialized_winding_evidence(
-                    graph, left, right, operation,
-                ),
-            );
-        }
-        if volumetric_classifications
-            .iter()
-            .all(|classification| classification.is_materialization_decided())
-        {
-            let region_count = unique_classified_region_count(&region_classifications);
-            return Ok(winding_evidence_report(
-                operation,
-                ExactWindingEvidenceStatus::VolumetricAssemblyRequired,
-                graph_had_unknowns,
-                graph.face_pairs.len(),
-                graph.event_count(),
-                region_count,
-                region_classifications,
-                counts.into_blocker(blocker_kind),
-                None,
-                coplanar_volumetric_evidence_if_required(graph, left, right),
-            ));
-        }
+    if let Some(report) = volumetric_winding_region_plan_evidence_from_graph(
+        graph,
+        left,
+        right,
+        operation,
+        graph_had_unknowns,
+        counts,
+    )? {
+        return Ok(report);
     }
     if graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right) {
         if cached_certified_arrangement_cell_complex_preflight(
@@ -9404,6 +9315,142 @@ fn winding_evidence_report_from_graph_with_facts(
         None,
         None,
     ))
+}
+
+fn closed_boundary_touching_winding_evidence_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    graph_had_unknowns: bool,
+    counts: ExactBooleanBlocker,
+    arrangement_cell_complex_shortcut_materializes: bool,
+) -> Result<Option<ExactWindingEvidenceReport>, ExactMeshError> {
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && closed_zero_area_boundary_contact_evidence_from_graph(graph, left, right)?.is_some()
+    {
+        return Ok(Some(winding_evidence_report(
+            operation,
+            ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+            graph_had_unknowns,
+            graph.face_pairs.len(),
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::BoundaryPolicy),
+            None,
+            None,
+        )));
+    }
+    if !arrangement_cell_complex_shortcut_materializes
+        && matches!(
+            operation,
+            ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
+        )
+        && certified_closed_boundary_only_contact_from_graph(graph, left, right)?
+    {
+        return Ok(Some(winding_evidence_report(
+            operation,
+            ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+            graph_had_unknowns,
+            graph.face_pairs.len(),
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::BoundaryPolicy),
+            None,
+            coplanar_boundary_only_evidence_if_consumed(graph, left, right)?,
+        )));
+    }
+    Ok(None)
+}
+
+fn volumetric_winding_region_plan_evidence_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    graph_had_unknowns: bool,
+    counts: ExactBooleanBlocker,
+) -> Result<Option<ExactWindingEvidenceReport>, ExactMeshError> {
+    let Some((region_classifications, triangulations, volumetric_classifications)) =
+        volumetric_winding_region_plan_from_graph(graph, left, right)?
+    else {
+        return Ok(None);
+    };
+
+    let needs_coplanar_volumetric =
+        graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right);
+    let blocker_kind = if needs_coplanar_volumetric {
+        ExactBooleanBlockerKind::CoplanarVolumetricCells
+    } else {
+        ExactBooleanBlockerKind::Winding
+    };
+    if let Some(materialized) = materialize_volumetric_winding_region_plan(
+        region_classifications.clone(),
+        triangulations.clone(),
+        volumetric_classifications.clone(),
+        left,
+        right,
+        operation,
+        ExactMeshValidationPolicy::CLOSED,
+    )? {
+        return Ok(Some(winding_evidence_report(
+            operation,
+            ExactWindingEvidenceStatus::Ready,
+            graph_had_unknowns,
+            graph.face_pairs.len(),
+            graph.event_count(),
+            materialized.triangulations.len(),
+            materialized.region_classifications,
+            counts.into_blocker(blocker_kind),
+            None,
+            coplanar_volumetric_evidence_if_required(graph, left, right),
+        )));
+    }
+    if let Some(materialized) = materialize_volumetric_winding_region_plan(
+        region_classifications.clone(),
+        triangulations.clone(),
+        volumetric_classifications.clone(),
+        left,
+        right,
+        operation,
+        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+    )? && certified_coplanar_boundary_closure_from_materialized(
+        &materialized,
+        left,
+        right,
+        operation,
+        ExactMeshValidationPolicy::CLOSED,
+    )?
+    .is_some()
+    {
+        return Ok(Some(
+            arrangement_cell_complex_already_materialized_winding_evidence(
+                graph, left, right, operation,
+            ),
+        ));
+    }
+    if volumetric_classifications
+        .iter()
+        .all(|classification| classification.is_materialization_decided())
+    {
+        let region_count = unique_classified_region_count(&region_classifications);
+        return Ok(Some(winding_evidence_report(
+            operation,
+            ExactWindingEvidenceStatus::VolumetricAssemblyRequired,
+            graph_had_unknowns,
+            graph.face_pairs.len(),
+            graph.event_count(),
+            region_count,
+            region_classifications,
+            counts.into_blocker(blocker_kind),
+            None,
+            coplanar_volumetric_evidence_if_required(graph, left, right),
+        )));
+    }
+
+    Ok(None)
 }
 
 fn boundary_policy_or_planar_arrangement_winding_evidence(
