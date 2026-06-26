@@ -1,4 +1,6 @@
 use super::*;
+use crate::mesh::arrangement3d::ExactTopologyAssemblyStatus;
+use crate::mesh::arrangement3d::cell_complex::ExactRegionOwnershipStatus;
 use crate::mesh::boolean::evidence::{
     meshes_are_certified_identical, meshes_are_certified_same_surface,
 };

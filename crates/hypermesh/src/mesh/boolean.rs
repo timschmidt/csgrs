@@ -38,17 +38,14 @@ use super::arrangement3d::arrangement2d::{
 };
 use super::arrangement3d::cell_complex::simplify::ExactSimplifiedCellComplex;
 use super::arrangement3d::cell_complex::{
-    ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
-    arrangement_cell_complex_labeling_policy,
+    ExactRegionOwnershipReport, ExactSelectedCellComplex, arrangement_cell_complex_labeling_policy,
     arrangement_region_classification_blockers_resolve_operation, select_arrangement_for_replay,
 };
 use super::arrangement3d::loop_triangulation::{
     group_exact_coplanar_loops, triangulate_exact_loop_group,
 };
 use super::arrangement3d::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
-use super::arrangement3d::{
-    ExactArrangement, ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
-};
+use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::facts::MeshFacts;
 #[cfg(test)]
@@ -83,15 +80,16 @@ use convex::{
 };
 use evidence::{
     ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus,
-    ExactArrangementBooleanDecline, ExactArrangementBooleanShortcutReason,
-    ExactArrangementBooleanStage, ExactArrangementCellComplexShortcutFacts, ExactBooleanBlocker,
-    ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind,
-    ExactBooleanShortcutKind, ExactBooleanSourceFacts, ExactBooleanSupport,
-    ExactBoundaryTouchingReport, ExactBoundaryTouchingStatus, ExactConvexBooleanCapabilityFacts,
-    ExactIdenticalMeshReport, ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus,
-    ExactPlanarArrangementReport, ExactPlanarArrangementStatus, ExactRefinementReport,
-    ExactRefinementStatus, ExactRegularizedSolidBooleanFacts, ExactReportValidationError,
-    ExactSameSurfaceReport, ExactTrivialBooleanFacts, ExactVolumetricBoundaryClosureReport,
+    ExactArrangementBooleanAttempt, ExactArrangementBooleanDecline,
+    ExactArrangementBooleanShortcutReason, ExactArrangementBooleanStage,
+    ExactArrangementCellComplexShortcutFacts, ExactBooleanBlocker, ExactBooleanBlockerKind,
+    ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind, ExactBooleanShortcutKind,
+    ExactBooleanSourceFacts, ExactBooleanSupport, ExactBoundaryTouchingReport,
+    ExactBoundaryTouchingStatus, ExactConvexBooleanCapabilityFacts, ExactIdenticalMeshReport,
+    ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport,
+    ExactPlanarArrangementStatus, ExactRefinementReport, ExactRefinementStatus,
+    ExactRegularizedSolidBooleanFacts, ExactReportValidationError, ExactSameSurfaceReport,
+    ExactTrivialBooleanFacts, ExactVolumetricBoundaryClosureReport,
     ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
     arrangement_attempt_stage_rank, certified_convex_operation_shortcut_support,
     meshes_are_certified_bounds_disjoint,
@@ -133,74 +131,6 @@ use winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
     WindingReportError, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
-
-/// Auditable result of trying the arrangement/cell-complex Boolean pipeline.
-#[derive(Clone, Debug, PartialEq)]
-pub(crate) struct ExactArrangementBooleanAttempt {
-    /// Operation attempted.
-    pub(crate) operation: ExactBooleanOperation,
-    /// Regularization policy used by the arrangement pipeline.
-    pub(crate) policy: ExactRegularizationPolicy,
-    /// Output validation policy used by shortcut recovery and final mesh copy.
-    pub(crate) output_validation: ExactMeshValidationPolicy,
-    /// Boundary-only projection policy from the exact Boolean request.
-    pub(crate) boundary_policy: ExactBoundaryBooleanPolicy,
-    /// Furthest stage reached.
-    pub(crate) stage: ExactArrangementBooleanStage,
-    /// Reason no output was produced, when the attempt declined.
-    pub(crate) decline: Option<ExactArrangementBooleanDecline>,
-    /// Certified shortcut/recovery path that materialized output, when one did.
-    ///
-    /// A `None` value on a materialized attempt means the generic arrangement
-    /// cell-complex path produced the output from retained topology and
-    /// ownership evidence.
-    pub(crate) materialized_shortcut: Option<ExactBooleanShortcutKind>,
-    /// Reason a retained shortcut/recovery was used instead of the generic
-    /// arrangement/cell-complex output.
-    pub(crate) shortcut_reason: Option<ExactArrangementBooleanShortcutReason>,
-    /// Arrangement blocker count observed after construction.
-    pub(crate) arrangement_blockers: usize,
-    /// Arrangement face-cell count, when construction succeeded.
-    pub(crate) face_cells: usize,
-    /// Connected shell/region count, when construction succeeded.
-    pub(crate) regions: usize,
-    /// Volume-region count, when closed shell topology produced a volume graph.
-    pub(crate) volume_regions: usize,
-    /// Volume adjacency count, when closed shell topology produced a volume graph.
-    pub(crate) volume_adjacencies: usize,
-    /// Retained lower-dimensional artifact count.
-    pub(crate) lower_dimensional_artifacts: usize,
-    /// Topology assembly status observed before consuming labeled cells.
-    pub(crate) topology_assembly: Option<ExactTopologyAssemblyStatus>,
-    /// Full topology assembly report consumed before labeled-cell output.
-    pub(crate) topology_assembly_report: Option<ExactTopologyAssemblyReport>,
-    /// Region ownership status observed before named cell selection.
-    pub(crate) region_ownership: Option<ExactRegionOwnershipStatus>,
-    /// Full region ownership report consumed before named cell selection.
-    pub(crate) region_ownership_report: Option<ExactRegionOwnershipReport>,
-    /// Selected face-cell count, when selection succeeded.
-    pub(crate) selected_faces: usize,
-    /// Selected faces whose output orientation is reversed.
-    pub(crate) reversed_selected_faces: usize,
-    /// Selected faces oriented by explicit volume adjacency evidence.
-    pub(crate) volume_oriented_selected_faces: usize,
-    /// Selected faces oriented by source-label operation rules.
-    pub(crate) label_oriented_selected_faces: usize,
-    /// Selected volume-region count, when selection succeeded.
-    pub(crate) selected_volume_regions: usize,
-    /// Retained selected cell complex consumed by simplification, when the
-    /// generic arrangement path reached selection.
-    pub(crate) selected_cell_complex: Option<ExactSelectedCellComplex>,
-    /// Retained simplified cell complex consumed by triangulation, when the
-    /// generic arrangement path reached simplification.
-    pub(crate) simplified_cell_complex: Option<ExactSimplifiedCellComplex>,
-    /// Output vertex count, when triangulation succeeded.
-    pub(crate) output_vertices: usize,
-    /// Output triangle count, when triangulation succeeded.
-    pub(crate) output_triangles: usize,
-    /// Retained output mesh facts, when a concrete triangulated mesh was built.
-    pub(crate) output_facts: Option<MeshFacts>,
-}
 
 impl ExactArrangementBooleanAttempt {
     /// Return retained topology assembly gate evidence, when present.
