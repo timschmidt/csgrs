@@ -28,7 +28,7 @@ use super::super::graph::{
 };
 use super::super::intersection::MeshFacePairRelation;
 use super::super::mesh::{ExactMesh, sorted_edge};
-use super::super::solid::{ClosedMeshOrientation, exact_mesh_orientation};
+use super::solid::{ClosedMeshOrientation, exact_mesh_orientation};
 use hyperreal::Real;
 
 /// Most specific retained obstacle for volumetric coplanar source-face cells.

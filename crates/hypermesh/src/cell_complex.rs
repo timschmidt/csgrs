@@ -12,13 +12,13 @@ use super::arrangement3d::{
     sorted_unique_usize_set, validate_arrangement_face_cell, validate_lower_dimensional_artifacts,
 };
 use super::boolean::ExactBooleanOperation;
+use super::boolean::solid::ConvexSolidPointRelation;
 use super::graph::MeshSide;
 use super::regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
     ExactUnresolvedPolicy,
 };
 use super::simplify::{ExactSimplifiedCellComplex, simplify_selected_cell_complex};
-use super::solid::ConvexSolidPointRelation;
 
 /// Region label for one arrangement face-cell.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1782,9 +1782,9 @@ mod tests {
         ArrangementFaceCarrier, ArrangementFaceCell, ArrangementFaceCellNode,
         ArrangementOppositeClassification, ArrangementVolumeFaceSide, ExactTopologyAssemblyStatus,
     };
+    use crate::boolean::solid::ConvexSolidPointClassification;
     use crate::mesh::ExactMesh;
     use crate::region::ExactRegionSelection;
-    use crate::solid::ConvexSolidPointClassification;
     use crate::winding::{ClosedMeshWindingRelation, PointMeshWindingReport};
     use hyperlimit::Point3;
     use hyperreal::Real;

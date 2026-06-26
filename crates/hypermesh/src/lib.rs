@@ -32,7 +32,6 @@ mod mesh;
 mod region;
 mod regularization;
 mod simplify;
-mod solid;
 mod validation;
 mod view;
 mod winding;

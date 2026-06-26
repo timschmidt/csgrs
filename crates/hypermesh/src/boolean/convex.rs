@@ -29,10 +29,10 @@ use super::super::arrangement2d::{
 use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::super::mesh::triangle_edges;
 use super::super::mesh::{ExactMesh, Triangle};
-use super::super::solid::{
+use super::super::validation::ExactMeshValidationPolicy;
+use super::solid::{
     ClosedMeshOrientation, ConvexSolidFacts, ConvexSolidReportError, certify_convex_solid,
 };
-use super::super::validation::ExactMeshValidationPolicy;
 use hyperlimit::SourceProvenance;
 use hyperlimit::{CoplanarProjection, project_point3, projected_polygon_area2_value};
 use hyperreal::Real;

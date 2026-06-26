@@ -12,6 +12,10 @@ use super::arrangement2d::{
     ExactArrangement2dSegmentSource, ExactArrangement2dSetOperation, build_exact_arrangement2d,
     build_exact_arrangement2d_overlay, exact_arrangement2d_face_witness,
 };
+use super::boolean::solid::{
+    ClosedMeshOrientation, ConvexSolidPointClassification, ConvexSolidPointRelation,
+    classify_point_against_convex_solid_report, exact_mesh_orientation,
+};
 use super::cell_complex::{
     ExactCellComplex, ExactLabeledCellComplex, ExactLabeledCellComplexFreshness,
     ExactRegionOwnershipReport, region_ownership_status,
@@ -33,10 +37,6 @@ use super::mesh::ExactMesh;
 use super::regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
     ExactUnresolvedPolicy,
-};
-use super::solid::{
-    ClosedMeshOrientation, ConvexSolidPointClassification, ConvexSolidPointRelation,
-    classify_point_against_convex_solid_report, exact_mesh_orientation,
 };
 use super::validation::ExactMeshValidationPolicy;
 use super::winding::{

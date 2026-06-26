@@ -32,10 +32,6 @@ use super::super::region::{
 };
 use super::super::regularization::ExactArrangementBlocker;
 use super::super::regularization::ExactRegularizationPolicy;
-use super::super::solid::{
-    ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
-    classify_mesh_vertices_against_convex_solid_report,
-};
 use super::super::validation::ExactMeshValidationPolicy;
 use super::super::winding::{
     ClosedMeshWindingMeshRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
@@ -53,6 +49,10 @@ use super::convex::{
 use super::materialize_boolean_exact_request;
 use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, materialize_axis_aligned_orthogonal_solid_cell_output,
+};
+use super::solid::{
+    ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
+    classify_mesh_vertices_against_convex_solid_report,
 };
 use super::volumetric::{
     ExactVolumetricRegionClassification, ExactVolumetricRegionError, ExactVolumetricRegionRelation,

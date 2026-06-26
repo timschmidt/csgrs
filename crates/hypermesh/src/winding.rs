@@ -1,7 +1,7 @@
 //! Exact ray-parity winding classification for closed triangle meshes.
 //!
 //! This module is the general, nonconvex counterpart to the convex halfspace
-//! classifier in [`crate::solid`]. It uses a deterministic set of exact rays
+//! classifier in the boolean solid facts module. It uses a deterministic set of exact rays
 //! over `Real` arithmetic, then treats ray/edge and ray/vertex degeneracies as
 //! explicit blockers so a selected parity result was obtained without hidden
 //! tolerance choices. The parity query is the standard ray-crossing point

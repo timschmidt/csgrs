@@ -21,6 +21,7 @@ pub(crate) mod contained_adjacent;
 pub(crate) mod convex;
 pub(crate) mod orthogonal_solid;
 pub(crate) mod reports;
+pub(crate) mod solid;
 pub(crate) mod volumetric;
 pub(crate) mod volumetric_cells;
 
@@ -65,10 +66,6 @@ use super::region::{
 };
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::simplify::ExactSimplifiedCellComplex;
-use super::solid::{
-    ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
-    certify_convex_solid, classify_mesh_vertices_against_convex_solid_report,
-};
 use super::validation::ExactMeshValidationPolicy;
 use super::view::PreparedMeshPair;
 use super::winding::{
@@ -118,6 +115,10 @@ use reports::{
     ExactRefinementStatus, ExactReportValidationError, ExactSameSurfaceReport,
     ExactSameSurfaceStatus, ExactVolumetricBoundaryClosureReport,
     ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
+};
+use solid::{
+    ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
+    certify_convex_solid, classify_mesh_vertices_against_convex_solid_report,
 };
 use std::cmp::Ordering;
 use std::rc::Rc;
