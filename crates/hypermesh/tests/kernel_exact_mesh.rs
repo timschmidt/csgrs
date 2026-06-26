@@ -25,6 +25,18 @@ fn tetra(offset: [i64; 3]) -> ExactMesh {
     .unwrap()
 }
 
+fn vertices(mesh: &ExactMesh) -> &[Point3] {
+    mesh.view().vertices()
+}
+
+fn triangle_count(mesh: &ExactMesh) -> usize {
+    mesh.view().face_count()
+}
+
+fn triangle_indices(mesh: &ExactMesh) -> impl ExactSizeIterator<Item = [usize; 3]> + '_ {
+    mesh.view().triangle_indices()
+}
+
 #[test]
 fn exact_mesh_named_boolean_methods_materialize_meshes() {
     let empty = ExactMesh::new(
@@ -37,19 +49,19 @@ fn exact_mesh_named_boolean_methods_materialize_meshes() {
 
     let union = empty.union(&solid).unwrap();
     union.validate_retained_state().unwrap();
-    assert_eq!(union.triangle_count(), solid.triangle_count());
+    assert_eq!(triangle_count(&union), triangle_count(&solid));
 
     let intersection = empty.intersection(&solid).unwrap();
     intersection.validate_retained_state().unwrap();
-    assert_eq!(intersection.triangle_count(), 0);
+    assert_eq!(triangle_count(&intersection), 0);
 
     let difference = solid.difference(&empty).unwrap();
     difference.validate_retained_state().unwrap();
-    assert_eq!(difference.triangle_count(), solid.triangle_count());
+    assert_eq!(triangle_count(&difference), triangle_count(&solid));
 
     let xor = empty.xor(&solid).unwrap();
     xor.validate_retained_state().unwrap();
-    assert_eq!(xor.triangle_count(), solid.triangle_count());
+    assert_eq!(triangle_count(&xor), triangle_count(&solid));
 }
 
 #[test]
@@ -64,19 +76,19 @@ fn exact_mesh_borrowed_view_materializes_named_operations() {
 
     let union = empty.view().union(solid.view()).unwrap();
     union.validate_retained_state().unwrap();
-    assert_eq!(union.triangle_count(), solid.triangle_count());
+    assert_eq!(triangle_count(&union), triangle_count(&solid));
 
     let intersection = empty.view().intersection(solid.view()).unwrap();
     intersection.validate_retained_state().unwrap();
-    assert_eq!(intersection.triangle_count(), 0);
+    assert_eq!(triangle_count(&intersection), 0);
 
     let difference = solid.view().difference(empty.view()).unwrap();
     difference.validate_retained_state().unwrap();
-    assert_eq!(difference.triangle_count(), solid.triangle_count());
+    assert_eq!(triangle_count(&difference), triangle_count(&solid));
 
     let xor = empty.view().xor(solid.view()).unwrap();
     xor.validate_retained_state().unwrap();
-    assert_eq!(xor.triangle_count(), solid.triangle_count());
+    assert_eq!(triangle_count(&xor), triangle_count(&solid));
 }
 
 #[test]
@@ -296,7 +308,7 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         prepared_pair
             .with_current_candidate_face_pairs(|pairs| {
                 assert!(pairs.iter().all(|[left_face, right_face]| {
-                    *left_face < left.triangle_count() && *right_face < overlapping.triangle_count()
+                    *left_face < triangle_count(&left) && *right_face < triangle_count(&overlapping)
                 }));
                 pairs.len()
             })
@@ -318,15 +330,15 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         })
         .unwrap();
 
-    assert_eq!(left.view().face_count(), left.triangle_count());
+    assert_eq!(left.view().face_count(), triangle_count(&left));
     assert_eq!(
         overlapping.view().face_count(),
-        overlapping.triangle_count()
+        triangle_count(&overlapping)
     );
     let candidates = classification_first_candidates.clone();
     assert!(!candidates.is_empty());
     assert!(candidates.iter().all(|[left_face, right_face]| {
-        *left_face < left.triangle_count() && *right_face < overlapping.triangle_count()
+        *left_face < triangle_count(&left) && *right_face < triangle_count(&overlapping)
     }));
     assert_eq!(classification_first_candidates, candidates);
 
@@ -615,10 +627,10 @@ fn exact_mesh_transform_and_inverse_replay_retained_state() {
         .unwrap();
 
     translated.validate_retained_state().unwrap();
-    assert_eq!(translated.vertices()[0], p(2, -3, 5));
+    assert_eq!(vertices(&translated)[0], p(2, -3, 5));
     assert_eq!(
-        translated.triangle_indices().collect::<Vec<_>>(),
-        mesh.triangle_indices().collect::<Vec<_>>()
+        triangle_indices(&translated).collect::<Vec<_>>(),
+        triangle_indices(&mesh).collect::<Vec<_>>()
     );
 
     let reflected = mesh
@@ -631,12 +643,12 @@ fn exact_mesh_transform_and_inverse_replay_retained_state() {
         .unwrap();
 
     reflected.validate_retained_state().unwrap();
-    assert_eq!(reflected.triangle_indices().next(), Some([0, 1, 2]));
+    assert_eq!(triangle_indices(&reflected).next(), Some([0, 1, 2]));
 
     let inverted = mesh.inverse().unwrap();
     inverted.validate_retained_state().unwrap();
-    assert_eq!(inverted.vertices(), mesh.vertices());
-    assert_eq!(inverted.triangle_indices().next(), Some([0, 1, 2]));
+    assert_eq!(vertices(&inverted), vertices(&mesh));
+    assert_eq!(triangle_indices(&inverted).next(), Some([0, 1, 2]));
 }
 
 #[test]
@@ -653,7 +665,7 @@ fn exact_mesh_borrowed_view_transform_and_inverse_replay_retained_state() {
         ])
         .unwrap();
     translated.validate_retained_state().unwrap();
-    assert_eq!(translated.vertices()[0], p(2, 3, 5));
+    assert_eq!(vertices(&translated)[0], p(2, 3, 5));
 
     let shifted = mesh
         .view()
@@ -665,11 +677,11 @@ fn exact_mesh_borrowed_view_transform_and_inverse_replay_retained_state() {
         ])
         .unwrap();
     shifted.validate_retained_state().unwrap();
-    assert_eq!(shifted.vertices()[0], p(4, 0, 0));
+    assert_eq!(vertices(&shifted)[0], p(4, 0, 0));
 
     let inverse = mesh.view().inverse().unwrap();
     inverse.validate_retained_state().unwrap();
-    assert_eq!(inverse.triangle_indices().next(), Some([0, 1, 2]));
+    assert_eq!(triangle_indices(&inverse).next(), Some([0, 1, 2]));
 }
 
 #[test]
@@ -685,7 +697,7 @@ fn exact_mesh_transform_accepts_homogeneous_affine_rows() {
         .unwrap();
 
     transformed.validate_retained_state().unwrap();
-    assert_eq!(transformed.vertices()[0], p(4, 5, 6));
+    assert_eq!(vertices(&transformed)[0], p(4, 5, 6));
 }
 
 #[test]
