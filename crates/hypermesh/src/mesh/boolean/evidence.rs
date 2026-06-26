@@ -499,6 +499,21 @@ impl ExactArrangementBooleanAttempt {
             && report.resolves_operation_selection(self.operation)
     }
 
+    /// Return whether this attempt was produced for a regularized named operation.
+    pub(crate) fn is_regularized_operation(&self, operation: ExactBooleanOperation) -> bool {
+        self.operation == operation && self.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+    }
+
+    /// Return whether retained ownership gate evidence resolves the supplied operation.
+    pub(crate) fn retained_ownership_resolves_operation(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> bool {
+        self.retained_gate_reports().is_some()
+            && self.is_regularized_operation(operation)
+            && self.resolves_requested_volume_ownership()
+    }
+
     /// Return whether another attempt carries the same retained output mesh
     /// certificate.
     pub(crate) fn output_certificate_matches(&self, other: &Self) -> bool {
@@ -687,8 +702,7 @@ impl ExactArrangementBooleanAttempt {
         &self,
         operation: ExactBooleanOperation,
     ) -> bool {
-        self.operation == operation
-            && self.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+        self.is_regularized_operation(operation)
             && self.validate().is_ok()
             && self.materialized_arrangement_cell_complex_output()
     }
@@ -706,8 +720,7 @@ impl ExactArrangementBooleanAttempt {
         &self,
         operation: ExactBooleanOperation,
     ) -> bool {
-        self.operation == operation
-            && self.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+        self.is_regularized_operation(operation)
             && self.validate().is_ok()
             && self.materialized_arrangement_cell_complex_shortcut()
     }
@@ -3511,11 +3524,9 @@ impl ExactBooleanCertificationSet {
     }
 
     fn region_ownership_resolves_operation(&self, operation: ExactBooleanOperation) -> bool {
-        self.arrangement_attempt.as_ref().is_some_and(|attempt| {
-            attempt.retained_gate_reports().is_some()
-                && attempt.operation == operation
-                && attempt.resolves_requested_volume_ownership()
-        })
+        self.arrangement_attempt
+            .as_ref()
+            .is_some_and(|attempt| attempt.retained_ownership_resolves_operation(operation))
     }
 
     fn arrangement_attempt_certifies_output_for_operation(
