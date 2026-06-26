@@ -56,6 +56,7 @@ pub struct EdgeRef<'a> {
 pub(crate) struct PreparedMeshView<'a> {
     view: MeshView<'a>,
     bounds: PreparedMeshBounds<'a>,
+    source_stamp: ExactMeshSourceStamp,
 }
 
 /// Owned borrowed mesh-pair cache with certificate-validated broad-phase facts.
@@ -95,23 +96,6 @@ impl PreparedMeshPairResultCache {
 
     fn clear(&self) {
         *self.result.borrow_mut() = None;
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum PreparedMeshPairNamedBoolean {
-    Union,
-    Intersection,
-    Difference,
-}
-
-impl PreparedMeshPairNamedBoolean {
-    const fn exact_operation(self) -> ExactBooleanOperation {
-        match self {
-            Self::Union => ExactBooleanOperation::Union,
-            Self::Intersection => ExactBooleanOperation::Intersection,
-            Self::Difference => ExactBooleanOperation::Difference,
-        }
     }
 }
 
@@ -513,6 +497,7 @@ impl<'a> MeshView<'a> {
         Ok(PreparedMeshView {
             view: self,
             bounds: self.mesh.bounds().prepare(),
+            source_stamp: self.source_stamp(),
         })
     }
 
@@ -563,6 +548,10 @@ impl<'a> PreparedMeshView<'a> {
         self.view
     }
 
+    const fn source_stamp(&self) -> ExactMeshSourceStamp {
+        self.source_stamp
+    }
+
     pub(crate) fn retained_pair_plan<'right>(
         &self,
         right: &PreparedMeshView<'right>,
@@ -577,8 +566,8 @@ impl<'a> PreparedMeshView<'a> {
 
 impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     fn new(left: PreparedMeshView<'left>, right: PreparedMeshView<'right>) -> Self {
-        let left_source = left.view.source_stamp();
-        let right_source = right.view.source_stamp();
+        let left_source = left.source_stamp();
+        let right_source = right.source_stamp();
         let (plan, candidate_pair_capacity_hint) = left.retained_pair_plan(&right);
         Self {
             left,
@@ -613,8 +602,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     }
 
     fn sources_current(&self) -> bool {
-        self.left_source == self.left.view.source_stamp()
-            && self.right_source == self.right.view.source_stamp()
+        self.left_source == self.left.source_stamp()
+            && self.right_source == self.right.source_stamp()
     }
 
     fn require_current_retained(
@@ -764,17 +753,17 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     /// Materialize the exact closed union using this retained pair session.
     pub fn union(&self) -> Result<ExactMesh, ExactMeshError> {
-        self.named_boolean_mesh(PreparedMeshPairNamedBoolean::Union)
+        self.named_boolean_mesh(ExactBooleanOperation::Union)
     }
 
     /// Materialize the exact closed intersection using this retained pair session.
     pub fn intersection(&self) -> Result<ExactMesh, ExactMeshError> {
-        self.named_boolean_mesh(PreparedMeshPairNamedBoolean::Intersection)
+        self.named_boolean_mesh(ExactBooleanOperation::Intersection)
     }
 
     /// Materialize the exact closed difference of the left mesh minus the right mesh.
     pub fn difference(&self) -> Result<ExactMesh, ExactMeshError> {
-        self.named_boolean_mesh(PreparedMeshPairNamedBoolean::Difference)
+        self.named_boolean_mesh(ExactBooleanOperation::Difference)
     }
 
     /// Materialize the exact closed symmetric difference of the prepared meshes.
@@ -801,16 +790,13 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     fn named_boolean_mesh(
         &self,
-        operation: PreparedMeshPairNamedBoolean,
+        operation: ExactBooleanOperation,
     ) -> Result<ExactMesh, ExactMeshError> {
         if let Some(result) = self.cached_named_boolean_mesh(operation) {
             return result;
         }
 
-        let request = ExactBooleanRequest::new(
-            operation.exact_operation(),
-            ExactMeshValidationPolicy::CLOSED,
-        );
+        let request = ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::CLOSED);
         let result = materialize_boolean_exact_request_with_prepared_pair(self, request)
             .map(|result| result.into_mesh());
         self.retain_named_boolean_mesh(operation, &result);
@@ -819,14 +805,14 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     fn cached_named_boolean_mesh(
         &self,
-        operation: PreparedMeshPairNamedBoolean,
+        operation: ExactBooleanOperation,
     ) -> Option<Result<ExactMesh, ExactMeshError>> {
         self.named_boolean_cache(operation).cached()
     }
 
     fn retain_named_boolean_mesh(
         &self,
-        operation: PreparedMeshPairNamedBoolean,
+        operation: ExactBooleanOperation,
         result: &Result<ExactMesh, ExactMeshError>,
     ) {
         self.named_boolean_cache(operation).retain(result);
@@ -834,12 +820,15 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     fn named_boolean_cache(
         &self,
-        operation: PreparedMeshPairNamedBoolean,
+        operation: ExactBooleanOperation,
     ) -> &PreparedMeshPairResultCache {
         match operation {
-            PreparedMeshPairNamedBoolean::Union => &self.union_result,
-            PreparedMeshPairNamedBoolean::Intersection => &self.intersection_result,
-            PreparedMeshPairNamedBoolean::Difference => &self.difference_result,
+            ExactBooleanOperation::Union => &self.union_result,
+            ExactBooleanOperation::Intersection => &self.intersection_result,
+            ExactBooleanOperation::Difference => &self.difference_result,
+            ExactBooleanOperation::SelectedRegions(_) => unreachable!(
+                "selected-region requests are arrangement internals, not prepared named booleans"
+            ),
         }
     }
 
