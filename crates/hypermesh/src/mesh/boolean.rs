@@ -1929,40 +1929,15 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         ));
     }
     if requires_certified_winding
-        && operation == ExactBooleanOperation::Intersection
-        && request.validation == ExactMeshValidationPolicy::CLOSED
-        && closed_regularized_operand_kind(left)
-            == Some(ClosedRegularizedOperandKind::LowerDimensional)
-        && closed_regularized_operand_kind(right)
-            == Some(ClosedRegularizedOperandKind::LowerDimensional)
-        && !graph.face_pairs.is_empty()
-        && open_surface_arrangement_plan_from_graph(graph, left, right, operation)
-            .ok()
-            .flatten()
-            .is_some()
+        && let Some(preflight) =
+            lower_dimensional_intersection_arrangement_preflight(graph, left, right, request)
     {
-        return Ok(certified_arrangement_cell_complex_preflight(
-            operation, graph, left, right,
-        ));
+        return Ok(preflight);
     }
-    if let Some((support, region_classifications, _triangulations)) =
-        open_surface_arrangement_plan_from_graph(graph, left, right, operation)
-            .ok()
-            .flatten()
+    if let Some(preflight) =
+        open_surface_arrangement_preflight_from_graph(graph, left, right, operation)
     {
-        let region_count = unique_classified_region_count(&region_classifications);
-        return Ok(ExactBooleanPreflight::new(
-            operation,
-            support,
-            graph_had_unknowns,
-            retained_face_pairs,
-            retained_events,
-            region_count,
-            region_classifications,
-            None,
-            None,
-            None,
-        ));
+        return Ok(preflight);
     }
     let boundary_report = boundary_touching_report_from_graph(graph, left, right).ok();
     if let Some(boundary_report) = boundary_report
@@ -2595,6 +2570,59 @@ fn region_plan_preflight_from_graph(
         blocker,
         None,
         coplanar_volumetric_evidence,
+    ))
+}
+
+fn open_surface_arrangement_preflight_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Option<ExactBooleanPreflight> {
+    let (support, region_classifications, _triangulations) =
+        open_surface_arrangement_plan_from_graph(graph, left, right, operation)
+            .ok()
+            .flatten()?;
+    let region_count = unique_classified_region_count(&region_classifications);
+    Some(ExactBooleanPreflight::new(
+        operation,
+        support,
+        graph.has_unknowns(),
+        graph.face_pairs.len(),
+        graph.event_count(),
+        region_count,
+        region_classifications,
+        None,
+        None,
+        None,
+    ))
+}
+
+fn lower_dimensional_intersection_arrangement_preflight(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Option<ExactBooleanPreflight> {
+    if request.operation != ExactBooleanOperation::Intersection
+        || request.validation != ExactMeshValidationPolicy::CLOSED
+        || closed_regularized_operand_kind(left)
+            != Some(ClosedRegularizedOperandKind::LowerDimensional)
+        || closed_regularized_operand_kind(right)
+            != Some(ClosedRegularizedOperandKind::LowerDimensional)
+        || graph.face_pairs.is_empty()
+        || open_surface_arrangement_plan_from_graph(graph, left, right, request.operation)
+            .ok()
+            .flatten()
+            .is_none()
+    {
+        return None;
+    }
+    Some(certified_arrangement_cell_complex_preflight(
+        request.operation,
+        graph,
+        left,
+        right,
     ))
 }
 
