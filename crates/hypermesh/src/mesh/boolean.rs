@@ -31,7 +31,6 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::SegmentPlaneRelation;
 
-use super::arrangement3d::ExactArrangement;
 use super::arrangement3d::arrangement2d::{
     ExactArrangement2dBlocker, ExactArrangement2dBoundaryPolicy, ExactArrangement2dOverlay,
     ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
@@ -47,6 +46,7 @@ use super::arrangement3d::loop_triangulation::{
     group_exact_coplanar_loops, triangulate_exact_loop_group,
 };
 use super::arrangement3d::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
+use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 #[cfg(test)]
 use super::graph::FacePairEvents;
@@ -4622,7 +4622,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
 ) -> Result<ArrangementCellComplexOutcome, ExactMeshError> {
     let operation = request.operation;
     let validation = request.validation;
-    let mut attempt = arrangement_cell_complex_started_attempt(arrangement, request, policy);
+    let attempt = arrangement_cell_complex_started_attempt(arrangement, request, policy);
     let regularized_sheet_recovery_surface = left.facts().mesh.closed_manifold
         && right.facts().mesh.closed_manifold
         && arrangement
@@ -4664,47 +4664,23 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         );
     }
 
-    let topology_report = arrangement.topology_assembly_report_with_policy(left, right, policy);
-    attempt.retain_topology_assembly_report(topology_report.clone());
-    if topology_report.validate().is_err() || !topology_report.is_complete() {
-        return arrangement_cell_complex_decline_after_recovery(
-            &recovery,
-            attempt,
-            ExactArrangementBooleanDecline::TopologyAssembly(topology_report.status),
-        );
-    }
-
-    let labeling_policy =
-        arrangement_cell_complex_labeling_policy(arrangement, Some(operation), policy);
-    let labeled = match arrangement.label_regions(labeling_policy) {
-        Ok(labeled) => labeled,
-        Err(blocker) => {
-            return arrangement_cell_complex_decline_after_recovery(
-                &recovery,
-                attempt,
-                ExactArrangementBooleanDecline::Labeling(blocker),
-            );
-        }
+    let ArrangementCellComplexGateEvidence {
+        mut attempt,
+        labeled,
+        topology_report,
+        ownership_report,
+    } = match arrangement_cell_complex_gate_evidence_from_arrangement(
+        arrangement,
+        left,
+        right,
+        operation,
+        policy,
+        &recovery,
+        attempt,
+    )? {
+        ArrangementCellComplexGateOutcome::Ready(evidence) => evidence,
+        ArrangementCellComplexGateOutcome::Declined(outcome) => return Ok(outcome),
     };
-    attempt.mark_labeled();
-    let ownership_report = labeled.region_ownership_report(left, right, labeling_policy);
-    attempt.retain_region_ownership_report(ownership_report.clone());
-    if ownership_report.validate().is_err() {
-        attempt.record_decline(ExactArrangementBooleanDecline::RegionOwnership(
-            ownership_report.status,
-        ));
-        return Ok(ArrangementCellComplexOutcome::Declined(attempt));
-    }
-    let ownership_resolves_named_selection = ownership_report
-        .resolves_operation_selection(operation)
-        || matches!(operation, ExactBooleanOperation::SelectedRegions(_));
-    if !ownership_resolves_named_selection {
-        return arrangement_cell_complex_decline_after_recovery(
-            &recovery,
-            attempt,
-            ExactArrangementBooleanDecline::RegionOwnership(ownership_report.status),
-        );
-    }
     let selected = match select_arrangement_cell_complex_with_ownership_report(
         labeled,
         &ownership_report,
@@ -4767,6 +4743,88 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         validation,
         volume_resolves_region_classification,
     )
+}
+
+struct ArrangementCellComplexGateEvidence {
+    attempt: ExactArrangementBooleanAttempt,
+    labeled: ExactLabeledCellComplex,
+    topology_report: ExactTopologyAssemblyReport,
+    ownership_report: ExactRegionOwnershipReport,
+}
+
+enum ArrangementCellComplexGateOutcome {
+    Ready(ArrangementCellComplexGateEvidence),
+    Declined(ArrangementCellComplexOutcome),
+}
+
+fn arrangement_cell_complex_gate_evidence_from_arrangement(
+    arrangement: &ExactArrangement,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    policy: ExactRegularizationPolicy,
+    recovery: &ArrangementCellComplexRecoveryContext<'_>,
+    mut attempt: ExactArrangementBooleanAttempt,
+) -> Result<ArrangementCellComplexGateOutcome, ExactMeshError> {
+    let topology_report = arrangement.topology_assembly_report_with_policy(left, right, policy);
+    attempt.retain_topology_assembly_report(topology_report.clone());
+    if topology_report.validate().is_err() || !topology_report.is_complete() {
+        return Ok(ArrangementCellComplexGateOutcome::Declined(
+            arrangement_cell_complex_decline_after_recovery(
+                recovery,
+                attempt,
+                ExactArrangementBooleanDecline::TopologyAssembly(topology_report.status),
+            )?,
+        ));
+    }
+
+    let labeling_policy =
+        arrangement_cell_complex_labeling_policy(arrangement, Some(operation), policy);
+    let labeled = match arrangement.label_regions(labeling_policy) {
+        Ok(labeled) => labeled,
+        Err(blocker) => {
+            return Ok(ArrangementCellComplexGateOutcome::Declined(
+                arrangement_cell_complex_decline_after_recovery(
+                    recovery,
+                    attempt,
+                    ExactArrangementBooleanDecline::Labeling(blocker),
+                )?,
+            ));
+        }
+    };
+    attempt.mark_labeled();
+
+    let ownership_report = labeled.region_ownership_report(left, right, labeling_policy);
+    attempt.retain_region_ownership_report(ownership_report.clone());
+    if ownership_report.validate().is_err() {
+        attempt.record_decline(ExactArrangementBooleanDecline::RegionOwnership(
+            ownership_report.status,
+        ));
+        return Ok(ArrangementCellComplexGateOutcome::Declined(
+            ArrangementCellComplexOutcome::Declined(attempt),
+        ));
+    }
+    let ownership_resolves_named_selection = ownership_report
+        .resolves_operation_selection(operation)
+        || matches!(operation, ExactBooleanOperation::SelectedRegions(_));
+    if !ownership_resolves_named_selection {
+        return Ok(ArrangementCellComplexGateOutcome::Declined(
+            arrangement_cell_complex_decline_after_recovery(
+                recovery,
+                attempt,
+                ExactArrangementBooleanDecline::RegionOwnership(ownership_report.status),
+            )?,
+        ));
+    }
+
+    Ok(ArrangementCellComplexGateOutcome::Ready(
+        ArrangementCellComplexGateEvidence {
+            attempt,
+            labeled,
+            topology_report,
+            ownership_report,
+        },
+    ))
 }
 
 enum ArrangementCellComplexSelectionDecline {
