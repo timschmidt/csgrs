@@ -7077,20 +7077,38 @@ pub(crate) enum ExactSameSurfaceStatus {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ExactSameSurfaceReport {
     /// Coarse same-surface certification status.
-    pub(crate) status: ExactSameSurfaceStatus,
+    status: ExactSameSurfaceStatus,
     /// Mapping from each left vertex index to the matched right vertex index.
-    pub(crate) left_to_right: Vec<usize>,
+    left_to_right: Vec<usize>,
     /// Mapping from each right vertex index to the matched left vertex index.
-    pub(crate) right_to_left: Vec<usize>,
+    right_to_left: Vec<usize>,
     /// Sorted left triangle vertex sets.
-    pub(crate) left_triangles: Vec<[usize; 3]>,
+    left_triangles: Vec<[usize; 3]>,
     /// Sorted right triangle vertex sets remapped into left vertex indices.
-    pub(crate) right_triangles: Vec<[usize; 3]>,
+    right_triangles: Vec<[usize; 3]>,
     /// Predicate certificates used by exact coordinate equality checks.
-    pub(crate) predicates: Vec<PredicateUse>,
+    predicates: Vec<PredicateUse>,
 }
 
 impl ExactSameSurfaceReport {
+    pub(crate) fn new(
+        status: ExactSameSurfaceStatus,
+        left_to_right: Vec<usize>,
+        right_to_left: Vec<usize>,
+        left_triangles: Vec<[usize; 3]>,
+        right_triangles: Vec<[usize; 3]>,
+        predicates: Vec<PredicateUse>,
+    ) -> Self {
+        Self {
+            status,
+            left_to_right,
+            right_to_left,
+            left_triangles,
+            right_triangles,
+            predicates,
+        }
+    }
+
     /// Return whether same-surface equivalence was certified.
     pub(crate) const fn is_certified(&self) -> bool {
         matches!(self.status, ExactSameSurfaceStatus::Certified)
@@ -7225,14 +7243,14 @@ pub(crate) fn same_surface_report_from_sources(
         ExactSameSurfaceStatus::TriangleSetMismatch
     };
 
-    ExactSameSurfaceReport {
+    ExactSameSurfaceReport::new(
         status,
         left_to_right,
         right_to_left,
         left_triangles,
         right_triangles,
         predicates,
-    }
+    )
 }
 
 /// Certify whether two meshes are exactly identical in source vertex and
@@ -7322,14 +7340,14 @@ fn same_surface_report(
     right_to_left: Vec<usize>,
     predicates: Vec<PredicateUse>,
 ) -> ExactSameSurfaceReport {
-    ExactSameSurfaceReport {
+    ExactSameSurfaceReport::new(
         status,
         left_to_right,
         right_to_left,
-        left_triangles: Vec::new(),
-        right_triangles: Vec::new(),
+        Vec::new(),
+        Vec::new(),
         predicates,
-    }
+    )
 }
 
 fn certified_vertex_permutation_report(
