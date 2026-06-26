@@ -36,18 +36,18 @@ use super::arrangement3d::arrangement2d::{
     ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
     build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
 };
+use super::arrangement3d::cell_complex::simplify::ExactSimplifiedCellComplex;
+use super::arrangement3d::cell_complex::{
+    ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
+    arrangement_cell_complex_labeling_policy,
+    arrangement_region_classification_blockers_resolve_operation, select_arrangement_for_replay,
+};
 use super::arrangement3d::loop_triangulation::{
     group_exact_coplanar_loops, triangulate_exact_loop_group,
 };
 use super::arrangement3d::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::arrangement3d::{
     ExactArrangement, ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
-};
-use super::cell_complex::simplify::ExactSimplifiedCellComplex;
-use super::cell_complex::{
-    ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
-    arrangement_cell_complex_labeling_policy,
-    arrangement_region_classification_blockers_resolve_operation, select_arrangement_for_replay,
 };
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 #[cfg(test)]
@@ -15767,7 +15767,8 @@ mod tests {
     fn arrangement_certification_accepts_requested_volume_ownership() {
         let ownership = ExactRegionOwnershipReport {
             status: ExactRegionOwnershipStatus::RequiresWinding,
-            freshness: crate::cell_complex::ExactLabeledCellComplexFreshness::Current,
+            freshness:
+                crate::arrangement3d::cell_complex::ExactLabeledCellComplexFreshness::Current,
             blockers: vec![ExactArrangementBlocker::UnresolvedRegionClassification],
             face_cells: 1,
             face_cell_boundary_nodes: 3,

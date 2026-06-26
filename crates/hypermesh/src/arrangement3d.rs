@@ -7,6 +7,7 @@
 //! simplification stages.
 
 pub(crate) mod arrangement2d;
+pub(crate) mod cell_complex;
 pub(crate) mod loop_triangulation;
 pub(crate) mod regularization;
 
@@ -16,6 +17,10 @@ use self::arrangement2d::{
     ExactArrangement2dSegmentSource, ExactArrangement2dSetOperation, build_exact_arrangement2d,
     build_exact_arrangement2d_overlay, exact_arrangement2d_face_witness,
 };
+use self::cell_complex::{
+    ExactCellComplex, ExactLabeledCellComplex, ExactLabeledCellComplexFreshness,
+    ExactRegionOwnershipReport, region_ownership_status,
+};
 use super::boolean::solid::{
     ClosedMeshOrientation, ConvexSolidPointClassification, ConvexSolidPointRelation,
     classify_point_against_convex_solid_report, exact_mesh_orientation,
@@ -23,10 +28,6 @@ use super::boolean::solid::{
 use super::boolean::winding::{
     ClosedMeshWindingRelation, PointMeshWindingReport,
     classify_point_against_closed_mesh_winding_report,
-};
-use super::cell_complex::{
-    ExactCellComplex, ExactLabeledCellComplex, ExactLabeledCellComplexFreshness,
-    ExactRegionOwnershipReport, region_ownership_status,
 };
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::graph::key::{
@@ -1826,7 +1827,7 @@ impl ExactArrangement3d {
     fn select(
         &self,
         operation: super::boolean::ExactBooleanOperation,
-    ) -> Result<super::cell_complex::ExactSelectedCellComplex, ExactArrangementBlocker> {
+    ) -> Result<self::cell_complex::ExactSelectedCellComplex, ExactArrangementBlocker> {
         self.select_with_policy(operation, ExactRegularizationPolicy::default())
     }
 
@@ -1835,8 +1836,8 @@ impl ExactArrangement3d {
         &self,
         operation: super::boolean::ExactBooleanOperation,
         policy: ExactRegularizationPolicy,
-    ) -> Result<super::cell_complex::ExactSelectedCellComplex, ExactArrangementBlocker> {
-        let labeling_policy = super::cell_complex::arrangement_cell_complex_labeling_policy(
+    ) -> Result<self::cell_complex::ExactSelectedCellComplex, ExactArrangementBlocker> {
+        let labeling_policy = self::cell_complex::arrangement_cell_complex_labeling_policy(
             self,
             Some(operation),
             policy,
@@ -5193,9 +5194,9 @@ fn triangle_centroid(a: &Point3, b: &Point3, c: &Point3) -> Option<Point3> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::arrangement3d::cell_complex::ExactRegionOwnershipStatus;
     use crate::arrangement3d::loop_triangulation::projected_loop_orientation;
     use crate::boolean::ExactBooleanOperation;
-    use crate::cell_complex::ExactRegionOwnershipStatus;
     use crate::mesh::validation::ExactMeshValidationPolicy;
     use hyperlimit::{
         RingPointLocation, classify_point_ring_even_odd, projected_polygon_area2_value,

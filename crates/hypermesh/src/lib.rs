@@ -20,7 +20,6 @@
 
 mod arrangement3d;
 mod boolean;
-mod cell_complex;
 mod error;
 mod graph;
 mod mesh;

@@ -7,19 +7,19 @@
 
 pub(crate) mod simplify;
 
-use super::arrangement3d::regularization::{
+use super::super::boolean::ExactBooleanOperation;
+use super::super::boolean::solid::ConvexSolidPointRelation;
+use super::super::graph::MeshSide;
+use super::regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
     ExactUnresolvedPolicy,
 };
-use super::arrangement3d::{
+use super::{
     ArrangementFaceCell, ArrangementLowerDimensionalArtifact, ArrangementOppositeClassification,
     ArrangementVolumeAdjacency, ArrangementVolumeRegion, ExactArrangement, ExactArrangement3d,
     ExactTopologyAssemblyReport, exact_node_loops_equivalent, lower_dimensional_artifact_counts,
     sorted_unique_usize_set, validate_arrangement_face_cell, validate_lower_dimensional_artifacts,
 };
-use super::boolean::ExactBooleanOperation;
-use super::boolean::solid::ConvexSolidPointRelation;
-use super::graph::MeshSide;
 use simplify::{ExactSimplifiedCellComplex, simplify_selected_cell_complex};
 
 /// Region label for one arrangement face-cell.
@@ -480,8 +480,7 @@ impl ExactCellComplex {
             }
         };
         if !blockers.is_empty()
-            && policy.unresolved
-                == super::arrangement3d::regularization::ExactUnresolvedPolicy::Block
+            && policy.unresolved == super::regularization::ExactUnresolvedPolicy::Block
         {
             return Err(blockers[0].clone());
         }
@@ -507,8 +506,8 @@ impl ExactLabeledCellComplex {
     #[cfg(test)]
     pub(crate) fn validate_against_sources(
         &self,
-        left: &super::mesh::ExactMesh,
-        right: &super::mesh::ExactMesh,
+        left: &super::super::mesh::ExactMesh,
+        right: &super::super::mesh::ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> Result<(), ExactArrangementBlocker> {
         self.validate()?;
@@ -525,8 +524,8 @@ impl ExactLabeledCellComplex {
     /// Classify whether this retained labeled complex is fresh for the source operands.
     pub(crate) fn freshness_against_sources(
         &self,
-        left: &super::mesh::ExactMesh,
-        right: &super::mesh::ExactMesh,
+        left: &super::super::mesh::ExactMesh,
+        right: &super::super::mesh::ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> ExactLabeledCellComplexFreshness {
         if self.validate().is_err() {
@@ -546,8 +545,8 @@ impl ExactLabeledCellComplex {
     /// Report whether retained exact evidence resolves region ownership.
     pub(crate) fn region_ownership_report(
         &self,
-        left: &super::mesh::ExactMesh,
-        right: &super::mesh::ExactMesh,
+        left: &super::super::mesh::ExactMesh,
+        right: &super::super::mesh::ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> ExactRegionOwnershipReport {
         let freshness = self.freshness_against_sources(left, right, policy);
@@ -722,8 +721,7 @@ impl ExactLabeledCellComplex {
             (selected_faces, selected_face_orientations)
         };
         if !blockers.is_empty()
-            && policy.unresolved
-                == super::arrangement3d::regularization::ExactUnresolvedPolicy::Block
+            && policy.unresolved == super::regularization::ExactUnresolvedPolicy::Block
         {
             return Err(blockers[0].clone());
         }
@@ -911,8 +909,8 @@ impl ExactSelectedCellComplex {
     #[cfg(test)]
     pub(crate) fn validate_against_sources(
         &self,
-        left: &super::mesh::ExactMesh,
-        right: &super::mesh::ExactMesh,
+        left: &super::super::mesh::ExactMesh,
+        right: &super::super::mesh::ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> Result<(), ExactArrangementBlocker> {
         self.validate()?;
@@ -946,8 +944,8 @@ impl ExactSelectedCellComplex {
 
 pub(crate) fn select_arrangement_for_replay(
     arrangement: ExactArrangement3d,
-    left: &super::mesh::ExactMesh,
-    right: &super::mesh::ExactMesh,
+    left: &super::super::mesh::ExactMesh,
+    right: &super::super::mesh::ExactMesh,
     operation: ExactBooleanOperation,
     policy: ExactRegularizationPolicy,
 ) -> Result<ExactSelectedCellComplex, ExactArrangementBlocker> {
@@ -1442,17 +1440,17 @@ fn opposite_region_label(opposite: &ArrangementOppositeClassification) -> ExactO
         | None => {}
     }
     match opposite.winding.relation {
-        super::boolean::winding::ClosedMeshWindingRelation::Inside => {
+        super::super::boolean::winding::ClosedMeshWindingRelation::Inside => {
             ExactOppositeRegionLabel::Inside
         }
-        super::boolean::winding::ClosedMeshWindingRelation::Outside => {
+        super::super::boolean::winding::ClosedMeshWindingRelation::Outside => {
             ExactOppositeRegionLabel::Outside
         }
-        super::boolean::winding::ClosedMeshWindingRelation::Boundary => {
+        super::super::boolean::winding::ClosedMeshWindingRelation::Boundary => {
             ExactOppositeRegionLabel::Boundary
         }
-        super::boolean::winding::ClosedMeshWindingRelation::Unknown
-        | super::boolean::winding::ClosedMeshWindingRelation::NotClosed => {
+        super::super::boolean::winding::ClosedMeshWindingRelation::Unknown
+        | super::super::boolean::winding::ClosedMeshWindingRelation::NotClosed => {
             ExactOppositeRegionLabel::Unknown
         }
     }

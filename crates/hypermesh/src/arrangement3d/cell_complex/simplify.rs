@@ -7,21 +7,19 @@
 
 use std::cmp::Ordering;
 
+use super::super::super::boolean::ExactBooleanOperation;
+use super::super::super::mesh::validation::ExactMeshValidationPolicy;
+use super::super::super::mesh::{ExactMesh, Triangle};
 #[cfg(test)]
-use super::super::arrangement3d::ExactArrangement;
-use super::super::arrangement3d::loop_triangulation::{
+use super::super::ExactArrangement;
+use super::super::loop_triangulation::{
     choose_polygon_projection, group_exact_coplanar_loops, triangulate_exact_loop_group,
 };
-use super::super::arrangement3d::regularization::{
-    ExactArrangementBlocker, ExactRegularizationPolicy,
-};
-use super::super::arrangement3d::{
+use super::super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
+use super::super::{
     ArrangementFaceCellNode, ArrangementLowerDimensionalArtifact, ExactTopologyAssemblyReport,
     validate_lower_dimensional_artifacts,
 };
-use super::super::boolean::ExactBooleanOperation;
-use super::super::mesh::validation::ExactMeshValidationPolicy;
-use super::super::mesh::{ExactMesh, Triangle};
 #[cfg(test)]
 use super::select_arrangement_for_replay;
 use super::{
@@ -429,8 +427,7 @@ pub(crate) fn simplify_selected_cell_complex(
     faces.sort_by_key(simplified_sort_key);
 
     if !blockers.is_empty()
-        && policy.unresolved
-            == super::super::arrangement3d::regularization::ExactUnresolvedPolicy::Block
+        && policy.unresolved == super::super::regularization::ExactUnresolvedPolicy::Block
     {
         return Err(blockers[0].clone());
     }
@@ -1054,7 +1051,7 @@ fn selected_face_reverse_orientation(
 
 fn volume_adjacency_face_membership(
     faces: &[ExactCellComplexFace],
-    volume_adjacencies: &[super::super::arrangement3d::ArrangementVolumeAdjacency],
+    volume_adjacencies: &[super::super::ArrangementVolumeAdjacency],
     enabled: bool,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Vec<bool> {
@@ -1114,10 +1111,10 @@ fn validate_selected_face_orientations(
     }
 }
 
-const fn side_key(side: super::super::graph::MeshSide) -> usize {
+const fn side_key(side: super::super::super::graph::MeshSide) -> usize {
     match side {
-        super::super::graph::MeshSide::Left => 0,
-        super::super::graph::MeshSide::Right => 1,
+        super::super::super::graph::MeshSide::Left => 0,
+        super::super::super::graph::MeshSide::Right => 1,
     }
 }
 
@@ -1705,16 +1702,16 @@ fn replace_triangle_vertex(triangle: &mut Triangle, old: usize, new: usize) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::arrangement3d::cell_complex::{
+        ExactCellComplexFace, ExactCellRegionLabel, ExactOppositeRegionLabel,
+        ExactSelectedCellComplex, ExactSelectedFaceOrientation,
+    };
     use crate::arrangement3d::loop_triangulation::{
         emitted_triangle_orientation, projected_loop_interior_witness,
     };
     use crate::arrangement3d::{
         ArrangementFaceCarrier, ArrangementFaceCell, ArrangementFaceCellNode,
         ArrangementVolumeAdjacency, ArrangementVolumeFaceSide,
-    };
-    use crate::cell_complex::{
-        ExactCellComplexFace, ExactCellRegionLabel, ExactOppositeRegionLabel,
-        ExactSelectedCellComplex, ExactSelectedFaceOrientation,
     };
     use crate::graph::MeshSide;
     use hyperlimit::{Point2, RingPointLocation, classify_point_ring_even_odd};

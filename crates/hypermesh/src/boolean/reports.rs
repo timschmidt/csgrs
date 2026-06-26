@@ -13,13 +13,13 @@ use hyperreal::Real;
 use std::cmp::Ordering;
 
 use super::super::ExactMesh;
-use super::super::arrangement3d::regularization::ExactArrangementBlocker;
-use super::super::arrangement3d::regularization::ExactRegularizationPolicy;
-use super::super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
-use super::super::cell_complex::{
+use super::super::arrangement3d::cell_complex::{
     ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy,
     validate_selected_gate_reports,
 };
+use super::super::arrangement3d::regularization::ExactArrangementBlocker;
+use super::super::arrangement3d::regularization::ExactRegularizationPolicy;
+use super::super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::super::graph::MeshSide;
 use super::super::graph::intersection::MeshFacePairRelation;
 use super::super::graph::{
