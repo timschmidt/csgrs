@@ -19,11 +19,11 @@ use hyperlimit::{
 use hyperlimit::{Point2 as PredicatePoint2, Sign, compare_reals, orient2d_report, project_point3};
 
 use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::super::graph::SplitPlanBlockerKind;
-use super::super::graph::SplitPlanValidationReport;
-use super::super::graph::{ExactFaceRegionPlan, FaceSplitBoundaryNode, MeshSide};
 use super::super::mesh::ExactMesh;
 use super::super::mesh::Triangle;
+use super::super::mesh::graph::SplitPlanBlockerKind;
+use super::super::mesh::graph::SplitPlanValidationReport;
+use super::super::mesh::graph::{ExactFaceRegionPlan, FaceSplitBoundaryNode, MeshSide};
 use super::super::mesh::validation::ExactMeshValidationPolicy;
 use hyperlimit::CoplanarProjection;
 use hyperlimit::PredicateUse;
@@ -381,7 +381,7 @@ fn replay_region_plan(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactFaceRegionPlan, super::super::error::ExactMeshError> {
-    let graph = super::super::graph::build_validated_intersection_graph(left, right)?;
+    let graph = super::super::mesh::graph::build_validated_intersection_graph(left, right)?;
     let geometry = graph.face_split_geometry_plan(left, right)?;
     Ok(geometry.region_plan(left, right))
 }
@@ -1988,7 +1988,7 @@ fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::super::graph::build_unvalidated_intersection_graph;
+    use super::super::super::mesh::graph::build_unvalidated_intersection_graph;
     use super::*;
     use hyperreal::Real;
 

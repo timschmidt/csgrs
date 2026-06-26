@@ -21,8 +21,8 @@ use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
 use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::super::graph::intersection::MeshFacePairRelation;
-use super::super::graph::{
+use super::super::mesh::graph::intersection::MeshFacePairRelation;
+use super::super::mesh::graph::{
     ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide,
     build_validated_intersection_graph,
 };

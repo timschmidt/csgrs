@@ -1111,10 +1111,10 @@ fn validate_selected_face_orientations(
     }
 }
 
-const fn side_key(side: super::super::super::graph::MeshSide) -> usize {
+const fn side_key(side: super::super::super::mesh::graph::MeshSide) -> usize {
     match side {
-        super::super::super::graph::MeshSide::Left => 0,
-        super::super::super::graph::MeshSide::Right => 1,
+        super::super::super::mesh::graph::MeshSide::Left => 0,
+        super::super::super::mesh::graph::MeshSide::Right => 1,
     }
 }
 
@@ -1713,7 +1713,7 @@ mod tests {
         ArrangementFaceCarrier, ArrangementFaceCell, ArrangementFaceCellNode,
         ArrangementVolumeAdjacency, ArrangementVolumeFaceSide,
     };
-    use crate::graph::MeshSide;
+    use crate::mesh::graph::MeshSide;
     use hyperlimit::{Point2, RingPointLocation, classify_point_ring_even_odd};
 
     fn p(x: i64, y: i64, z: i64) -> Point3 {

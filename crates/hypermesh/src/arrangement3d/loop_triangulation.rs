@@ -15,8 +15,8 @@ use hyperlimit::{
 };
 use hyperreal::Real;
 
-use super::super::graph::key::{ExactPoint3Key, exact_point3_key};
 use super::super::mesh::Triangle;
+use super::super::mesh::graph::key::{ExactPoint3Key, exact_point3_key};
 use super::arrangement2d::{
     ExactArrangement2dBlocker, ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion,
     ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,

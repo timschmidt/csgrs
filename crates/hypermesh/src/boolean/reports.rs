@@ -20,13 +20,13 @@ use super::super::arrangement3d::cell_complex::{
 use super::super::arrangement3d::regularization::ExactArrangementBlocker;
 use super::super::arrangement3d::regularization::ExactRegularizationPolicy;
 use super::super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
-use super::super::graph::MeshSide;
-use super::super::graph::intersection::MeshFacePairRelation;
-use super::super::graph::{
+use super::super::mesh::bounds::AabbIntersectionKind;
+use super::super::mesh::graph::MeshSide;
+use super::super::mesh::graph::intersection::MeshFacePairRelation;
+use super::super::mesh::graph::{
     CoplanarArrangementEvidence, CoplanarArrangementEvidenceStatus, ExactIntersectionGraph,
     IntersectionEvent, build_validated_intersection_graph,
 };
-use super::super::mesh::bounds::AabbIntersectionKind;
 use super::super::mesh::validation::ExactMeshValidationPolicy;
 use super::adjacent::materialize_full_face_adjacent_union;
 use super::affine_solid::{
@@ -2903,7 +2903,7 @@ fn arrangement_cell_complex_output_matches_sources(
         retained_mismatch = true;
     }
 
-    let graph = super::super::graph::build_unvalidated_intersection_graph(left, right)
+    let graph = super::super::mesh::graph::build_unvalidated_intersection_graph(left, right)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
 
     if let Some((replay, evidence)) =
@@ -6483,7 +6483,7 @@ mod tests {
     use super::*;
     use crate::boolean::ExactBooleanRequest;
     use crate::boolean::region::{ExactOutputVertex, FaceRegionPlaneRelation};
-    use crate::graph::FaceSplitBoundaryNode;
+    use crate::mesh::graph::FaceSplitBoundaryNode;
 
     #[test]
     fn selected_region_preflight_accepts_empty_region_plan_with_boundary_face_pairs() {
@@ -7846,24 +7846,25 @@ mod tests {
 
     #[test]
     fn blocker_source_counts_include_unknown_segment_plane_events() {
-        let graph = ExactIntersectionGraph::from_face_pairs(vec![crate::graph::FacePairEvents {
-            left_face: 0,
-            right_face: 0,
-            relation: MeshFacePairRelation::Candidate,
-            projection: None,
-            events: vec![IntersectionEvent::SegmentPlane {
-                segment_side: MeshSide::Left,
-                edge: [0, 1],
-                plane_side: MeshSide::Right,
-                plane_face: 0,
-                relation: hyperlimit::SegmentPlaneRelation::Unknown,
-                point: None,
-                parameter: None,
-                parameter_ratio: None,
-                construction_failure: None,
-                endpoint_sides: [None, Some(hyperlimit::PlaneSide::Above)],
-            }],
-        }]);
+        let graph =
+            ExactIntersectionGraph::from_face_pairs(vec![crate::mesh::graph::FacePairEvents {
+                left_face: 0,
+                right_face: 0,
+                relation: MeshFacePairRelation::Candidate,
+                projection: None,
+                events: vec![IntersectionEvent::SegmentPlane {
+                    segment_side: MeshSide::Left,
+                    edge: [0, 1],
+                    plane_side: MeshSide::Right,
+                    plane_face: 0,
+                    relation: hyperlimit::SegmentPlaneRelation::Unknown,
+                    point: None,
+                    parameter: None,
+                    parameter_ratio: None,
+                    construction_failure: None,
+                    endpoint_sides: [None, Some(hyperlimit::PlaneSide::Above)],
+                }],
+            }]);
 
         let blocker = ExactBooleanBlocker::from_graph(&graph, ExactBooleanBlockerKind::Refinement);
         assert_eq!(blocker.candidate_pairs, 1);

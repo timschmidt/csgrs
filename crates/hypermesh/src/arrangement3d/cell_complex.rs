@@ -9,7 +9,7 @@ pub(crate) mod simplify;
 
 use super::super::boolean::ExactBooleanOperation;
 use super::super::boolean::solid::ConvexSolidPointRelation;
-use super::super::graph::MeshSide;
+use super::super::mesh::graph::MeshSide;
 use super::regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
     ExactUnresolvedPolicy,

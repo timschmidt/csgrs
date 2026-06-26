@@ -24,10 +24,12 @@ use hyperlimit::{
     project_point3, projected_line_parameter3, projected_segment_parameter3,
 };
 
-use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide};
-use super::mesh::bounds::{ExactAabbBroadPhase, ExactBroadPhase};
-use super::mesh::view::{PreparedMeshPair, PreparedMeshPairClassificationCounts, PreparedMeshView};
-use super::mesh::{ExactMesh, triangle_edges};
+use super::super::error::{
+    ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide,
+};
+use super::bounds::{ExactAabbBroadPhase, ExactBroadPhase};
+use super::view::{PreparedMeshPair, PreparedMeshPairClassificationCounts, PreparedMeshView};
+use super::{ExactMesh, triangle_edges};
 use hyperlimit::{CoplanarProjection, CoplanarTriangleClassification};
 use hyperreal::Real;
 use intersection::{

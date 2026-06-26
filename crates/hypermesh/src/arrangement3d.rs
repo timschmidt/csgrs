@@ -30,16 +30,16 @@ use super::boolean::winding::{
     classify_point_against_closed_mesh_winding_report,
 };
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::graph::key::{
+use super::mesh::ExactMesh;
+use super::mesh::graph::key::{
     ExactPoint3Key, ExactUndirectedPoint3EdgeKey, exact_point3_key,
     exact_undirected_point3_edge_key,
 };
-use super::graph::{
+use super::mesh::graph::{
     CoplanarEdgeSplitConstruction, CoplanarOverlapGraph, ExactFaceRegionPlan,
     ExactIntersectionGraph, ExactSplitTopologyPlan, FaceRegionBoundary, FaceSplitBoundaryNode,
     MeshSide, SplitEdgeNode, SplitPlanValidationReport, build_validated_intersection_graph,
 };
-use super::mesh::ExactMesh;
 use super::mesh::validation::ExactMeshValidationPolicy;
 use core::cmp::Ordering;
 use hyperlimit::CoplanarProjection;
@@ -353,8 +353,8 @@ fn validate_lower_dimensional_artifact_graph_pairs(
         };
         if !matches!(
             relation,
-            super::graph::intersection::MeshFacePairRelation::Candidate
-                | super::graph::intersection::MeshFacePairRelation::CoplanarTouching
+            super::mesh::graph::intersection::MeshFacePairRelation::Candidate
+                | super::mesh::graph::intersection::MeshFacePairRelation::CoplanarTouching
         ) {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
@@ -1872,12 +1872,12 @@ fn extend_split_plan_blockers(
             blocker.kind.into(),
         ));
         match blocker.kind {
-            super::graph::SplitPlanBlockerKind::UnknownOrdering => {
+            super::mesh::graph::SplitPlanBlockerKind::UnknownOrdering => {
                 blockers.push(ExactArrangementBlocker::UndecidableOrdering)
             }
-            super::graph::SplitPlanBlockerKind::UnresolvedEquality
-            | super::graph::SplitPlanBlockerKind::UnresolvedVertexLookup
-            | super::graph::SplitPlanBlockerKind::UnknownBoundaryIncidence => {
+            super::mesh::graph::SplitPlanBlockerKind::UnresolvedEquality
+            | super::mesh::graph::SplitPlanBlockerKind::UnresolvedVertexLookup
+            | super::mesh::graph::SplitPlanBlockerKind::UnknownBoundaryIncidence => {
                 blockers.push(ExactArrangementBlocker::UnresolvedIntersection)
             }
             _ => {}
@@ -2733,7 +2733,8 @@ fn lower_dimensional_artifacts(
     let touching_pairs = graph
         .coplanar_overlap_graph_iter()
         .filter(|overlap| {
-            overlap.relation == super::graph::intersection::MeshFacePairRelation::CoplanarTouching
+            overlap.relation
+                == super::mesh::graph::intersection::MeshFacePairRelation::CoplanarTouching
         })
         .map(|overlap| ((overlap.left_face, overlap.right_face), overlap))
         .collect::<BTreeMap<_, _>>();
@@ -2788,13 +2789,13 @@ fn append_non_coplanar_lower_dimensional_artifacts(
     right: &ExactMesh,
 ) {
     for pair in &graph.face_pairs {
-        if pair.relation != super::graph::intersection::MeshFacePairRelation::Candidate {
+        if pair.relation != super::mesh::graph::intersection::MeshFacePairRelation::Candidate {
             continue;
         }
         if pair.events.iter().any(|event| {
             matches!(
                 event,
-                super::graph::IntersectionEvent::SegmentPlane {
+                super::mesh::graph::IntersectionEvent::SegmentPlane {
                     relation: hyperlimit::SegmentPlaneRelation::ProperCrossing,
                     ..
                 }
@@ -2829,11 +2830,11 @@ fn append_non_coplanar_lower_dimensional_artifacts(
 fn non_coplanar_point_contact_artifact(
     left_face: usize,
     right_face: usize,
-    event: &super::graph::IntersectionEvent,
+    event: &super::mesh::graph::IntersectionEvent,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<ArrangementLowerDimensionalArtifact> {
-    let super::graph::IntersectionEvent::SegmentPlane {
+    let super::mesh::graph::IntersectionEvent::SegmentPlane {
         plane_side,
         plane_face,
         relation: hyperlimit::SegmentPlaneRelation::EndpointOnPlane,
@@ -2867,11 +2868,11 @@ fn non_coplanar_point_contact_artifact(
 fn non_coplanar_edge_contact_artifact(
     left_face: usize,
     right_face: usize,
-    event: &super::graph::IntersectionEvent,
+    event: &super::mesh::graph::IntersectionEvent,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<ArrangementLowerDimensionalArtifact> {
-    let super::graph::IntersectionEvent::SegmentPlane {
+    let super::mesh::graph::IntersectionEvent::SegmentPlane {
         segment_side,
         edge,
         plane_side,
@@ -5394,7 +5395,8 @@ mod tests {
     fn arrangement_from_retained_graph_matches_mesh_construction() {
         let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
         let right = tetrahedron_i64([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]);
-        let graph = crate::graph::build_unvalidated_intersection_graph(&left, &right).unwrap();
+        let graph =
+            crate::mesh::graph::build_unvalidated_intersection_graph(&left, &right).unwrap();
 
         let from_meshes = ExactArrangement::from_meshes_with_policy(
             &left,
@@ -6994,7 +6996,8 @@ mod tests {
         let right = open_triangle_i64([0, 0, 0], [0, 4, 0], [0, 0, 4]);
         let outside_endpoint = p3(0, 3, 3);
 
-        let graph = crate::graph::build_unvalidated_intersection_graph(&left, &right).unwrap();
+        let graph =
+            crate::mesh::graph::build_unvalidated_intersection_graph(&left, &right).unwrap();
         assert!(
             graph
                 .face_pairs
@@ -7002,7 +7005,7 @@ mod tests {
                 .flat_map(|pair| pair.events.iter())
                 .any(|event| matches!(
                     event,
-                    crate::graph::IntersectionEvent::SegmentPlane {
+                    crate::mesh::graph::IntersectionEvent::SegmentPlane {
                         relation: hyperlimit::SegmentPlaneRelation::EndpointOnPlane,
                         point: Some(point),
                         ..

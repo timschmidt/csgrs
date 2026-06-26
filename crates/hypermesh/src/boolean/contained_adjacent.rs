@@ -25,8 +25,8 @@ use super::super::arrangement3d::arrangement2d::{
     ExactArrangement2dBoundaryPolicy, ExactArrangement2dSetOperation,
 };
 use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::super::graph::intersection::MeshFacePairRelation;
-use super::super::graph::{
+use super::super::mesh::graph::intersection::MeshFacePairRelation;
+use super::super::mesh::graph::{
     ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide,
     build_validated_intersection_graph,
 };

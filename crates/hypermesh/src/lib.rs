@@ -21,7 +21,6 @@
 mod arrangement3d;
 mod boolean;
 mod error;
-mod graph;
 mod mesh;
 
 pub use mesh::ExactMesh;

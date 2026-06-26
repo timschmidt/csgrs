@@ -10,17 +10,17 @@ use super::super::boolean::{
 };
 use super::super::error::ExactMeshError;
 use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
-use super::super::graph::intersection::{
-    MeshFacePairClassification, MeshFacePairRelation, classify_mesh_face_pair_unchecked,
-};
-use super::super::graph::{
-    ExactIntersectionGraph, build_unvalidated_intersection_graph_from_prepared_pair_rc,
-    build_validated_intersection_graph_from_prepared_pair,
-};
 use super::ExactMesh;
 use super::bounds::{
     BroadPhaseScratch, CandidateFacePairPlan, ExactAabb3, ExactAabbBroadPhase, ExactBroadPhase,
     PreparedMeshBounds,
+};
+use super::graph::intersection::{
+    MeshFacePairClassification, MeshFacePairRelation, classify_mesh_face_pair_unchecked,
+};
+use super::graph::{
+    ExactIntersectionGraph, build_unvalidated_intersection_graph_from_prepared_pair_rc,
+    build_validated_intersection_graph_from_prepared_pair,
 };
 use super::validation::ExactMeshValidationPolicy;
 use hyperlimit::{ApproximationPolicy, MeshSource, Point3, PredicateUse};

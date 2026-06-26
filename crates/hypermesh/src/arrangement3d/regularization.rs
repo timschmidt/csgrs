@@ -5,7 +5,7 @@
 //! unsupported primitive families are retained as explicit blockers or
 //! artifacts according to caller policy.
 
-use super::super::graph::{IntersectionGraphValidationError, SplitPlanBlockerKind};
+use super::super::mesh::graph::{IntersectionGraphValidationError, SplitPlanBlockerKind};
 
 /// Policy for lower-dimensional arrangement remnants.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

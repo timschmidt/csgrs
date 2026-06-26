@@ -21,6 +21,7 @@ use std::cmp::Ordering;
 
 pub(crate) mod bounds;
 pub(crate) mod facts;
+pub(crate) mod graph;
 pub(crate) mod validation;
 pub(crate) mod view;
 
