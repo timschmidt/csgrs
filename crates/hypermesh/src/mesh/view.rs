@@ -714,12 +714,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.with_current_candidate_face_pairs(query)
     }
 
-    /// Build and retain the exact arrangement.
-    pub fn prepare_arrangement(&self) -> Result<(), ExactMeshError> {
-        self.retained_arrangement()?;
-        Ok(())
-    }
-
     /// Build a retained arrangement from this pair session and run `query` on its borrowed view.
     ///
     /// The pair's retained intersection graph is source-certified first. The

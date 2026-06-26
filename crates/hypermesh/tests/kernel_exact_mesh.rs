@@ -592,7 +592,6 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    pair.prepare_arrangement().unwrap();
     let prepared_counts = pair
         .with_arrangement_view(|view: ArrangementView<'_>| {
             view.validate_retained_state().unwrap();
@@ -648,8 +647,7 @@ fn prepared_pair_named_boolean_preserves_retained_arrangement() {
     let right = tetra([1, 0, 0]);
     let pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
 
-    pair.prepare_arrangement().unwrap();
-    pair.with_current_arrangement_view(|view| {
+    pair.with_arrangement_view(|view| {
         view.validate_retained_state().unwrap();
     })
     .unwrap();
