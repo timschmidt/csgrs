@@ -25,11 +25,13 @@ use super::super::arrangement3d::{
 };
 use super::super::bounds::AabbIntersectionKind;
 use super::super::facts::MeshFacts;
+#[cfg(test)]
+use super::super::graph::CoplanarArrangementEvidenceStatus;
 use super::super::graph::MeshSide;
 use super::super::graph::intersection::MeshFacePairRelation;
 use super::super::graph::{
-    CoplanarArrangementEvidence, CoplanarArrangementEvidenceStatus, ExactIntersectionGraph,
-    IntersectionEvent, build_validated_intersection_graph,
+    CoplanarArrangementEvidence, ExactIntersectionGraph, IntersectionEvent,
+    build_validated_intersection_graph,
 };
 use super::super::validation::ExactMeshValidationPolicy;
 use super::adjacent::materialize_full_face_adjacent_union;
@@ -53,30 +55,30 @@ use super::region::{
     ExactRegionSelection, FaceRegionPlaneClassification, FaceRegionPlaneValidationError,
     FaceRegionTriangulation, boundary_node_point,
 };
-use super::solid::{
-    ConvexSolidMeshClassification, ConvexSolidMeshRelation,
-    classify_mesh_vertices_against_convex_solid_report,
-};
+#[cfg(test)]
+use super::solid::ConvexSolidMeshClassification;
+use super::solid::{ConvexSolidMeshRelation, classify_mesh_vertices_against_convex_solid_report};
 use super::volumetric::{
     ExactVolumetricRegionClassification, ExactVolumetricRegionError, ExactVolumetricRegionRelation,
 };
 use super::volumetric_cells::CoplanarVolumetricCellEvidenceReport;
 #[cfg(test)]
 use super::volumetric_cells::CoplanarVolumetricCellEvidenceTestCounts;
+#[cfg(test)]
+use super::winding::ClosedMeshWindingMeshReport;
 use super::winding::{
-    ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport,
-    classify_mesh_vertices_against_closed_mesh_winding_report,
+    ClosedMeshWindingMeshRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
 use super::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
     adjacent_union_completion_certification, boolean_convex_meshes_optional,
     boolean_coplanar_mesh_overlay_optional, boundary_policy_shortcut_result_matches_sources,
-    boundary_touching_report_from_graph, exact_boolean_evaluation_for_replay,
+    boundary_touching_report_from_graph,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
     materialize_volumetric_coplanar_boundary_closure_output,
     no_materialized_boundary_output_report, open_surface_disjoint_report_from_graph,
-    open_surface_disjoint_result_matches_sources,
+    open_surface_disjoint_result_matches_sources, preflight_report_for_request_from_graph,
     rematerialize_retained_arrangement_cell_complex_attempt,
     replay_boolean_exact_request_for_result_validation,
     replay_closed_same_surface_boolean_result_if_certified,
@@ -85,8 +87,9 @@ use super::{
 };
 #[cfg(test)]
 use super::{
+    exact_boolean_evaluation_for_replay,
     exact_boolean_evaluation_for_replay_result_with_materialization,
-    preflight_report_for_request_from_graph, winding_evidence_report_for_request_from_graph,
+    winding_evidence_report_for_request_from_graph,
 };
 use hyperlimit::PredicateUse;
 
@@ -407,6 +410,7 @@ impl ExactArrangementBooleanAttempt {
         }
     }
 
+    #[cfg(test)]
     pub(crate) fn retains_complete_gate_reports(&self) -> bool {
         self.retained_gate_reports().is_some()
     }
@@ -487,6 +491,7 @@ impl ExactArrangementBooleanAttempt {
     }
 
     /// Return whether retained ownership gate evidence resolves the supplied operation.
+    #[cfg(test)]
     pub(crate) fn retained_ownership_resolves_operation(
         &self,
         operation: ExactBooleanOperation,
@@ -701,6 +706,7 @@ impl ExactArrangementBooleanAttempt {
             && self.materialized_arrangement_cell_complex_output()
     }
 
+    #[cfg(test)]
     pub(crate) fn certifies_regularized_arrangement_cell_complex_shortcut_for_request(
         &self,
         request: ExactBooleanRequest,
@@ -710,6 +716,7 @@ impl ExactArrangementBooleanAttempt {
             && self.materialized_arrangement_cell_complex_shortcut()
     }
 
+    #[cfg(test)]
     pub(crate) fn certifies_arrangement_cell_complex_shortcut_for_operation(
         &self,
         operation: ExactBooleanOperation,
@@ -1331,6 +1338,7 @@ impl ExactBooleanResult {
     }
 
     /// Return whether graph extraction contained unknown events before policy checks.
+    #[cfg(test)]
     pub(crate) fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns
     }
@@ -1570,6 +1578,7 @@ impl ExactBooleanResult {
 
     /// Returns whether this result kind is a valid materialized witness for
     /// the retained preflight support that produced it.
+    #[cfg(test)]
     pub(crate) fn matches_preflight_support(&self, support: ExactBooleanSupport) -> bool {
         let expected_shortcut = match support {
             ExactBooleanSupport::SelectedRegionPolicy => {
@@ -2520,6 +2529,7 @@ impl ExactBooleanResult {
 /// lower-level bounds helper: an empty operand is certified as empty, not as a
 /// bounds-disjoint non-empty pair even when it has no mesh bounds.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg(test)]
 pub(crate) struct ExactTrivialBooleanFacts {
     /// The left source has no input triangles.
     left_empty: bool,
@@ -2529,6 +2539,7 @@ pub(crate) struct ExactTrivialBooleanFacts {
     bounds_disjoint: bool,
 }
 
+#[cfg(test)]
 impl ExactTrivialBooleanFacts {
     pub(crate) fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
         let left_empty = left.triangles().is_empty();
@@ -2563,6 +2574,7 @@ impl ExactTrivialBooleanFacts {
 /// represented as lower-dimensional here because the public dispatcher gives
 /// them distinct empty-operand provenance before regularized-solid shortcuts.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg(test)]
 pub(crate) struct ExactRegularizedSolidBooleanFacts {
     /// The left source is a non-empty closed manifold solid.
     left_closed_solid: bool,
@@ -2574,6 +2586,7 @@ pub(crate) struct ExactRegularizedSolidBooleanFacts {
     right_open_surface: bool,
 }
 
+#[cfg(test)]
 impl ExactRegularizedSolidBooleanFacts {
     pub(crate) fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
         Self {
@@ -2597,6 +2610,7 @@ impl ExactRegularizedSolidBooleanFacts {
 
 /// Replayable source facts for closed-convex boolean shortcuts.
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg(test)]
 pub(crate) struct ExactConvexBooleanCapabilityFacts {
     /// Exact closed-convex union can be certified by the shortcut.
     can_union: bool,
@@ -2606,6 +2620,7 @@ pub(crate) struct ExactConvexBooleanCapabilityFacts {
     can_difference: bool,
 }
 
+#[cfg(test)]
 impl ExactConvexBooleanCapabilityFacts {
     pub(crate) fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
         Self {
@@ -2720,6 +2735,7 @@ impl ExactArrangementCellComplexShortcutFacts {
         )
     }
 
+    #[cfg(test)]
     pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         let has_axis_aligned_support = self.axis_aligned_union
             || self.axis_aligned_intersection
@@ -2766,6 +2782,7 @@ impl ExactArrangementCellComplexShortcutFacts {
 
 /// Replayable source-scoped boolean facts retained for one evaluation replay.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg(test)]
 pub(crate) struct ExactBooleanSourceFacts {
     /// Trivial non-topological shortcut facts.
     trivial: ExactTrivialBooleanFacts,
@@ -2789,6 +2806,7 @@ pub(crate) struct ExactBooleanSourceFacts {
     convex_right_in_left: ConvexSolidMeshClassification,
 }
 
+#[cfg(test)]
 impl ExactBooleanSourceFacts {
     pub(crate) fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
         Self {
@@ -3152,6 +3170,7 @@ fn retained_output_mesh_matches(left: &ExactMesh, right: &ExactMesh) -> bool {
 /// exact facts that explain which stage certified, blocked, or declined the
 /// requested operation.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg(test)]
 pub(crate) struct ExactBooleanCertificationSet {
     /// Source-shape facts used by trivial shortcut supports.
     trivial: ExactTrivialBooleanFacts,
@@ -3192,6 +3211,7 @@ pub(crate) struct ExactBooleanCertificationSet {
     arrangement_attempt: Option<ExactArrangementBooleanAttempt>,
 }
 
+#[cfg(test)]
 impl ExactBooleanCertificationSet {
     pub(crate) fn from_reports(
         trivial: ExactTrivialBooleanFacts,
@@ -4024,6 +4044,7 @@ impl ExactBooleanCertificationSet {
 /// blocker/provenance facts instead of collapsing the request to an
 /// approximate or prose-only error.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg(test)]
 pub(crate) struct ExactBooleanEvaluation {
     /// Request policy evaluated.
     request: ExactBooleanRequest,
@@ -4038,6 +4059,7 @@ pub(crate) struct ExactBooleanEvaluation {
     result: Option<ExactBooleanResult>,
 }
 
+#[cfg(test)]
 impl ExactBooleanEvaluation {
     pub(crate) fn from_parts_with_missing_result_policy(
         request: ExactBooleanRequest,
@@ -4864,12 +4886,13 @@ fn arrangement_cell_complex_sources_match(
             return Ok(true);
         }
     }
-    let evaluation = exact_boolean_evaluation_for_replay(
+    let preflight = preflight_report_for_request_from_graph(
+        &graph,
         left,
         right,
         ExactBooleanRequest::new(operation, validation),
-    )?;
-    let preflight = evaluation.preflight();
+    )
+    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
     preflight.validate()?;
     Ok(preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex)
 }
@@ -6211,6 +6234,7 @@ impl ExactBooleanPreflight {
     }
 
     /// Return retained coplanar volumetric-cell evidence, if present.
+    #[cfg(test)]
     pub(crate) fn coplanar_volumetric_evidence(
         &self,
     ) -> Option<&CoplanarVolumetricCellEvidenceReport> {
@@ -6241,6 +6265,7 @@ impl ExactBooleanPreflight {
 
     /// Returns whether this preflight has certified support for materializing
     /// the requested operation under the policy used to produce the report.
+    #[cfg(test)]
     pub(crate) fn is_certified(&self) -> bool {
         self.support.is_certified() && self.blocker.is_none()
     }
@@ -6915,6 +6940,7 @@ pub(crate) enum ExactBooleanBlockerKind {
 /// whose endpoint predicates certified an event but whose exact point/parameter
 /// from winding or planar-arrangement policy, so it has a separate report.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[cfg(test)]
 pub(crate) enum ExactRefinementStatus {
     /// The graph contains no retained unknowns or construction failures.
     NotRequired,
@@ -6930,6 +6956,7 @@ pub(crate) enum ExactRefinementStatus {
 /// answer. Later boundary, planar-arrangement, or winding reports should only
 /// run as policy once this report is not required.
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg(test)]
 pub(crate) struct ExactRefinementReport {
     /// Named operation whose graph was inspected.
     operation: ExactBooleanOperation,
@@ -6945,6 +6972,7 @@ pub(crate) struct ExactRefinementReport {
     blocker: Option<ExactBooleanBlocker>,
 }
 
+#[cfg(test)]
 impl ExactRefinementReport {
     /// Build a refinement report from retained exact graph evidence.
     pub(crate) const fn new(
@@ -6966,16 +6994,19 @@ impl ExactRefinementReport {
     }
 
     /// Return whether graph extraction retained unknown predicate outcomes.
+    #[cfg(test)]
     pub(crate) const fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns
     }
 
     /// Return the retained face-pair record count.
+    #[cfg(test)]
     pub(crate) const fn retained_face_pairs(&self) -> usize {
         self.retained_face_pairs
     }
 
     /// Return the retained event record count.
+    #[cfg(test)]
     pub(crate) const fn retained_events(&self) -> usize {
         self.retained_events
     }
@@ -7066,6 +7097,7 @@ impl ExactIdenticalMeshReport {
         matches!(self.status, ExactIdenticalMeshStatus::Certified)
     }
 
+    #[cfg(test)]
     pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         if self.predicates.len() > self.left_vertices.saturating_mul(3) {
             return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
@@ -7769,6 +7801,7 @@ impl ExactAdjacentUnionCompletionReport {
     }
 
     /// Return the requested named operation.
+    #[cfg(test)]
     pub(crate) const fn operation(&self) -> ExactBooleanOperation {
         self.operation
     }
@@ -7779,16 +7812,19 @@ impl ExactAdjacentUnionCompletionReport {
     }
 
     /// Return whether graph extraction retained unknown events.
+    #[cfg(test)]
     pub(crate) const fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns
     }
 
     /// Return the retained face-pair record count.
+    #[cfg(test)]
     pub(crate) const fn retained_face_pairs(&self) -> usize {
         self.retained_face_pairs
     }
 
     /// Return the retained event record count.
+    #[cfg(test)]
     pub(crate) const fn retained_events(&self) -> usize {
         self.retained_events
     }
@@ -8199,6 +8235,7 @@ impl ExactPlanarArrangementReport {
     }
 
     /// Return the requested named operation.
+    #[cfg(test)]
     pub(crate) const fn operation(&self) -> ExactBooleanOperation {
         self.operation
     }
@@ -8243,6 +8280,7 @@ impl ExactPlanarArrangementReport {
     }
 
     /// Validate status, retained relation counts, and blocker consistency.
+    #[cfg(test)]
     pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
         if matches!(self.status, ExactPlanarArrangementStatus::GraphUnknowns)
@@ -8608,6 +8646,7 @@ impl ExactWindingEvidenceReport {
     }
 
     /// Return the requested named operation.
+    #[cfg(test)]
     pub(crate) const fn operation(&self) -> ExactBooleanOperation {
         self.operation
     }
@@ -8618,26 +8657,31 @@ impl ExactWindingEvidenceReport {
     }
 
     /// Return whether graph extraction retained unknown events.
+    #[cfg(test)]
     pub(crate) const fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns
     }
 
     /// Return the retained face-pair record count.
+    #[cfg(test)]
     pub(crate) const fn retained_face_pairs(&self) -> usize {
         self.retained_face_pairs
     }
 
     /// Return the retained event record count.
+    #[cfg(test)]
     pub(crate) const fn retained_events(&self) -> usize {
         self.retained_events
     }
 
     /// Return the checked split-region count.
+    #[cfg(test)]
     pub(crate) const fn region_count(&self) -> usize {
         self.region_count
     }
 
     /// Return the retained split-region classifications.
+    #[cfg(test)]
     pub(crate) fn region_classifications(&self) -> &[FaceRegionPlaneClassification] {
         &self.region_classifications
     }
@@ -8648,11 +8692,13 @@ impl ExactWindingEvidenceReport {
     }
 
     /// Return the retained coplanar arrangement evidence summary.
+    #[cfg(test)]
     pub(crate) fn coplanar_arrangement_evidence(&self) -> Option<&CoplanarArrangementEvidence> {
         self.coplanar_arrangement_evidence.as_ref()
     }
 
     /// Return the retained coplanar volumetric-cell evidence.
+    #[cfg(test)]
     pub(crate) fn coplanar_volumetric_evidence(
         &self,
     ) -> Option<&CoplanarVolumetricCellEvidenceReport> {

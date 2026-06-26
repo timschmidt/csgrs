@@ -82,14 +82,18 @@ use evidence::{
     ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus,
     ExactArrangementBooleanAttempt, ExactArrangementBooleanDecline, ExactArrangementBooleanStage,
     ExactArrangementCellComplexShortcutFacts, ExactBooleanBlocker, ExactBooleanBlockerKind,
-    ExactBooleanCertificationSet, ExactBooleanEvaluation, ExactBooleanPreflight,
-    ExactBooleanResult, ExactBooleanResultKind, ExactBooleanShortcutKind, ExactBooleanSourceFacts,
+    ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind, ExactBooleanShortcutKind,
     ExactBooleanSupport, ExactBoundaryTouchingReport, ExactBoundaryTouchingStatus,
     ExactEvidenceValidationError, ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus,
-    ExactPlanarArrangementReport, ExactPlanarArrangementStatus, ExactRefinementReport,
-    ExactRefinementStatus, ExactVolumetricBoundaryClosureReport,
-    ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
+    ExactPlanarArrangementReport, ExactPlanarArrangementStatus,
+    ExactVolumetricBoundaryClosureReport, ExactVolumetricBoundaryClosureStatus,
+    ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
     certified_convex_operation_shortcut_support, meshes_are_certified_bounds_disjoint,
+};
+#[cfg(test)]
+use evidence::{
+    ExactBooleanCertificationSet, ExactBooleanEvaluation, ExactBooleanSourceFacts,
+    ExactRefinementReport, ExactRefinementStatus,
 };
 use hyperlimit::SourceProvenance;
 use hyperlimit::{
@@ -186,6 +190,7 @@ impl ExactArrangementBooleanAttempt {
     }
 }
 
+#[cfg(test)]
 pub(crate) fn exact_boolean_evaluation_for_replay(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -195,6 +200,7 @@ pub(crate) fn exact_boolean_evaluation_for_replay(
         .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)
 }
 
+#[cfg(test)]
 fn exact_boolean_evaluation_for_replay_result(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -203,6 +209,7 @@ fn exact_boolean_evaluation_for_replay_result(
     exact_boolean_evaluation_for_replay_result_with_materialization(left, right, request, true)
 }
 
+#[cfg(test)]
 fn exact_boolean_evaluation_for_replay_result_with_materialization(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -327,6 +334,7 @@ fn exact_boolean_evaluation_for_replay_result_with_materialization(
     })
 }
 
+#[cfg(test)]
 fn replay_regularized_arrangement_attempt(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -517,7 +525,6 @@ fn exact_boolean_replay_preflight(
     Ok(graph_preflight)
 }
 
-#[cfg(test)]
 pub(crate) fn preflight_report_for_request_from_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
@@ -671,6 +678,7 @@ impl ExactBooleanRequest {
     }
 }
 
+#[cfg(test)]
 fn certification_set_from_graph_and_regularized_arrangement(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
@@ -795,6 +803,7 @@ fn certification_set_from_graph_and_regularized_arrangement(
     ))
 }
 
+#[cfg(test)]
 fn arrangement_attempt_for_certification_set(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
@@ -869,6 +878,7 @@ fn arrangement_attempt_for_certification_set(
     .map(Some)
 }
 
+#[cfg(test)]
 fn planar_arrangement_certification_report_from_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
@@ -904,6 +914,7 @@ fn planar_arrangement_certification_report_from_graph(
     })
 }
 
+#[cfg(test)]
 fn volumetric_boundary_closure_certification_report_from_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
@@ -983,6 +994,7 @@ fn graph_for_certified_materialization_with_prepared<'a>(
     })
 }
 
+#[cfg(test)]
 fn unsupported_certified_materialization_error(support: ExactBooleanSupport) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
         ExactMeshBlockerKind::UnsupportedCellMaterializer,
@@ -1007,6 +1019,7 @@ fn unsupported_boolean_operation_error(
     ))
 }
 
+#[cfg(test)]
 pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3413,6 +3426,7 @@ fn boolean_closed_winding_containment_meshes_from_graph(
     )))
 }
 
+#[cfg(test)]
 fn materialize_graph_shortcut_from_graph_for_request(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -8887,6 +8901,7 @@ pub(crate) fn boundary_touching_report_from_graph(
     ))
 }
 
+#[cfg(test)]
 fn not_boundary_only_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
 ) -> ExactBoundaryTouchingReport {
@@ -8901,6 +8916,7 @@ fn not_boundary_only_report_from_graph(
     )
 }
 
+#[cfg(test)]
 pub(crate) fn refinement_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     operation: ExactBooleanOperation,
