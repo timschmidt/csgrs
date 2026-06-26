@@ -255,13 +255,6 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
     .unwrap();
 
     let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
-    let prepared_left = left.view().prepare_broad_phase().unwrap();
-    let prepared_right = right.view().prepare_broad_phase().unwrap();
-    assert_eq!(
-        build_unvalidated_intersection_graph_from_prepared_views(&prepared_left, &prepared_right)
-            .unwrap(),
-        graph
-    );
     graph.validate_against_meshes(&left, &right).unwrap();
     let prepared_pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
     let shortcut_facts = prepared_pair.arrangement_cell_complex_shortcut_facts();

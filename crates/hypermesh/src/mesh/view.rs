@@ -602,22 +602,6 @@ impl<'a> PreparedMeshView<'a> {
             plan.bounded_capacity_hint(self.view.face_count(), right.view.face_count());
         (plan, candidate_pair_capacity_hint)
     }
-
-    /// Visit certificate-validated candidate face pairs and allow the visitor to stop early.
-    pub fn try_visit_candidate_face_pairs<'b, E>(
-        &self,
-        right: &PreparedMeshView<'b>,
-        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E> {
-        let broad_phase = ExactAabbBroadPhase::default();
-        let (plan, _) = self.retained_pair_plan(right);
-        broad_phase.try_visit_candidate_face_pairs_with_plan(
-            &self.bounds,
-            &right.bounds,
-            plan,
-            visit,
-        )
-    }
 }
 
 impl<'left, 'right> PreparedMeshPair<'left, 'right> {

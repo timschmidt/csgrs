@@ -348,24 +348,18 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         prepared_overlapping.view().face_count(),
         overlapping.triangle_count()
     );
-    let mut candidates = Vec::new();
-    prepared_left
-        .try_visit_candidate_face_pairs(&prepared_overlapping, &mut |pair| {
-            candidates.push(pair);
-            Ok::<(), ()>(())
-        })
-        .unwrap();
-    candidates.sort_unstable();
+    let candidates = classification_first_candidates.clone();
     assert!(!candidates.is_empty());
     assert!(candidates.iter().all(|[left_face, right_face]| {
         *left_face < left.triangle_count() && *right_face < overlapping.triangle_count()
     }));
     assert_eq!(classification_first_candidates, candidates);
 
-    let prepared_disjoint = disjoint.view().prepare_broad_phase().unwrap();
     let mut disjoint_candidates = Vec::new();
-    prepared_left
-        .try_visit_candidate_face_pairs(&prepared_disjoint, &mut |pair| {
+    left.view()
+        .prepare_broad_phase_pair(disjoint.view())
+        .unwrap()
+        .try_visit_candidate_face_pairs(&mut |pair| {
             disjoint_candidates.push(pair);
             Ok::<(), ()>(())
         })
@@ -384,15 +378,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     direct_pair_candidates.sort_unstable();
     assert_eq!(direct_pair_candidates, candidates);
 
-    let mut prepared_pair_candidates = Vec::new();
-    prepared_left
-        .try_visit_candidate_face_pairs(&prepared_overlapping, &mut |pair| {
-            prepared_pair_candidates.push(pair);
-            Ok::<(), ()>(())
-        })
-        .unwrap();
-    prepared_pair_candidates.sort_unstable();
-    assert_eq!(prepared_pair_candidates, candidates);
     assert_eq!(direct_pair_candidates.len(), candidates.len());
 
     let mut owned_pair_candidates = Vec::new();
@@ -452,21 +437,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
 fn prepared_broad_phase_candidate_visitor_can_stop_early() {
     let left = tetra([0, 0, 0]);
     let right = tetra([0, 0, 0]);
-    let prepared_left = left.view().prepare_broad_phase().unwrap();
-    let prepared_right = right.view().prepare_broad_phase().unwrap();
     let prepared_pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
 
     let mut visited = 0;
     let result = prepared_pair.try_visit_candidate_face_pairs(&mut |_| {
-        visited += 1;
-        Err("stop")
-    });
-
-    assert_eq!(result, Err("stop"));
-    assert_eq!(visited, 1);
-
-    visited = 0;
-    let result = prepared_left.try_visit_candidate_face_pairs(&prepared_right, &mut |_| {
         visited += 1;
         Err("stop")
     });

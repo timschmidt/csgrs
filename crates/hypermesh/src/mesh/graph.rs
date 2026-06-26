@@ -26,7 +26,7 @@ use hyperlimit::{
 
 use super::bounds::{ExactAabbBroadPhase, ExactBroadPhase};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide};
-use super::view::{PreparedMeshPair, PreparedMeshView};
+use super::view::PreparedMeshPair;
 use super::{ExactMesh, triangle_edges};
 use hyperlimit::{CoplanarProjection, CoplanarTriangleClassification};
 use hyperreal::Real;
@@ -1289,30 +1289,9 @@ fn build_unvalidated_intersection_graph_from_certified_bounds(
         return Ok(ExactIntersectionGraph::from_face_pairs(face_pairs));
     }
 
-    let left = left.view().prepare_broad_phase_after_certificate();
-    let right = right.view().prepare_broad_phase_after_certificate();
-    build_unvalidated_intersection_graph_from_prepared_views(&left, &right)
-}
-
-/// Build an exact event graph from certificate-validated prepared mesh views without
-/// validating the retained event handles against source replay.
-pub(crate) fn build_unvalidated_intersection_graph_from_prepared_views(
-    left: &PreparedMeshView<'_>,
-    right: &PreparedMeshView<'_>,
-) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let left_mesh = left.view().mesh();
-    let right_mesh = right.view().mesh();
-    let (_, candidate_pair_capacity_hint) = left.retained_pair_plan(right);
-    let mut face_pairs = Vec::with_capacity(candidate_pair_capacity_hint);
-    left.try_visit_candidate_face_pairs(right, &mut |[left_face, right_face]| {
-        let classification =
-            classify_mesh_face_pair_unchecked(left_mesh, left_face, right_mesh, right_face);
-        if classification.needs_graph_construction() {
-            face_pairs.push(events_for_face_pair(left_mesh, right_mesh, &classification));
-        }
-        Ok::<(), ExactMeshError>(())
-    })?;
-    Ok(ExactIntersectionGraph::from_face_pairs(face_pairs))
+    let pair = left.view().prepare_broad_phase_pair(right.view())?;
+    let graph = build_unvalidated_intersection_graph_from_prepared_pair_rc(&pair)?;
+    Ok(graph.as_ref().clone())
 }
 
 /// Build an exact event graph and replay it against the source meshes before use.
