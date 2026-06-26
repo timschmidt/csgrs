@@ -379,6 +379,181 @@ pub(crate) struct ExactArrangementBooleanAttempt {
     pub(crate) output_facts: Option<MeshFacts>,
 }
 
+impl ExactArrangementBooleanAttempt {
+    /// Return retained topology assembly gate evidence, when present.
+    #[cfg(test)]
+    pub(crate) fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {
+        self.topology_assembly_report.as_ref()
+    }
+
+    /// Return retained region ownership gate evidence, when present.
+    #[cfg(test)]
+    pub(crate) fn region_ownership_report(&self) -> Option<&ExactRegionOwnershipReport> {
+        self.region_ownership_report.as_ref()
+    }
+
+    pub(crate) fn retain_topology_assembly_report(&mut self, report: ExactTopologyAssemblyReport) {
+        self.topology_assembly = Some(report.status);
+        self.topology_assembly_report = Some(report);
+    }
+
+    pub(crate) fn retain_region_ownership_report(&mut self, report: ExactRegionOwnershipReport) {
+        self.region_ownership = Some(report.status);
+        self.region_ownership_report = Some(report);
+    }
+
+    pub(crate) fn retained_gate_reports(
+        &self,
+    ) -> Option<(&ExactTopologyAssemblyReport, &ExactRegionOwnershipReport)> {
+        let topology = self.topology_assembly_report.as_ref()?;
+        let ownership = self.region_ownership_report.as_ref()?;
+        if topology.validate().is_ok()
+            && topology.is_complete()
+            && ownership.validate().is_ok()
+            && self.topology_assembly == Some(topology.status)
+            && self.region_ownership == Some(ownership.status)
+        {
+            Some((topology, ownership))
+        } else {
+            None
+        }
+    }
+
+    fn cell_complex_gate_reports_match(
+        &self,
+        topology_report: Option<&ExactTopologyAssemblyReport>,
+        ownership_report: Option<&ExactRegionOwnershipReport>,
+    ) -> bool {
+        let Some((topology, ownership)) = self.retained_gate_reports() else {
+            return false;
+        };
+        topology_report == Some(topology) && ownership_report == Some(ownership)
+    }
+
+    pub(crate) fn selected_cell_complex_retains_gate_reports(
+        &self,
+        selected: &ExactSelectedCellComplex,
+    ) -> bool {
+        self.cell_complex_gate_reports_match(
+            selected.topology_assembly_report.as_ref(),
+            selected.region_ownership_report.as_ref(),
+        )
+    }
+
+    pub(crate) fn simplified_cell_complex_with_retained_gate_reports(
+        &self,
+    ) -> Option<&ExactSimplifiedCellComplex> {
+        let simplified = self.simplified_cell_complex.as_ref()?;
+        if self.cell_complex_gate_reports_match(
+            simplified.topology_assembly_report.as_ref(),
+            simplified.region_ownership_report.as_ref(),
+        ) {
+            Some(simplified)
+        } else {
+            None
+        }
+    }
+
+    /// Return whether this attempt reached the materialized arrangement
+    /// cell-complex shortcut state.
+    pub(crate) fn materialized_arrangement_cell_complex_shortcut(&self) -> bool {
+        self.stage == ExactArrangementBooleanStage::Materialized
+            && self.decline.is_none()
+            && self.materialized_shortcut == Some(ExactBooleanShortcutKind::ArrangementCellComplex)
+    }
+
+    /// Return whether this attempt materialized through the generic
+    /// arrangement/cell-complex path without a certified shortcut.
+    pub(crate) fn materialized_without_shortcut(&self) -> bool {
+        self.stage == ExactArrangementBooleanStage::Materialized
+            && self.decline.is_none()
+            && self.materialized_shortcut.is_none()
+    }
+
+    /// Return whether this attempt materialized an arrangement cell-complex
+    /// output, either through the generic path or through a certified
+    /// arrangement shortcut/recovery path.
+    pub(crate) fn materialized_arrangement_cell_complex_output(&self) -> bool {
+        if self.stage != ExactArrangementBooleanStage::Materialized || self.decline.is_some() {
+            return false;
+        }
+        match self.materialized_shortcut {
+            Some(ExactBooleanShortcutKind::ArrangementCellComplex) => true,
+            Some(_) => false,
+            None => {
+                self.retained_gate_reports().is_some() && self.resolves_requested_volume_ownership()
+            }
+        }
+    }
+
+    /// Return whether the retained region ownership evidence resolves this
+    /// attempt's requested named operation.
+    pub(crate) fn resolves_requested_volume_ownership(&self) -> bool {
+        let (Some(status), Some(report)) =
+            (self.region_ownership, self.region_ownership_report.as_ref())
+        else {
+            return false;
+        };
+        report.status == status
+            && report.validate().is_ok()
+            && report.resolves_operation_selection(self.operation)
+    }
+
+    pub(crate) fn validate_for_request_policy(
+        &self,
+        request: ExactBooleanRequest,
+        policy: ExactRegularizationPolicy,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate()?;
+        if self.operation != request.operation
+            || self.policy != policy
+            || self.output_validation != request.validation
+            || self.boundary_policy != request.boundary_policy
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        Ok(())
+    }
+
+    pub(crate) fn certifies_arrangement_cell_complex_output_for_request(
+        &self,
+        request: ExactBooleanRequest,
+        policy: ExactRegularizationPolicy,
+    ) -> bool {
+        self.validate_for_request_policy(request, policy).is_ok()
+            && self.materialized_arrangement_cell_complex_output()
+    }
+
+    pub(crate) fn certifies_arrangement_cell_complex_output_for_operation(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> bool {
+        self.operation == operation
+            && self.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+            && self.validate().is_ok()
+            && self.materialized_arrangement_cell_complex_output()
+    }
+
+    pub(crate) fn certifies_arrangement_cell_complex_shortcut_for_request(
+        &self,
+        request: ExactBooleanRequest,
+        policy: ExactRegularizationPolicy,
+    ) -> bool {
+        self.validate_for_request_policy(request, policy).is_ok()
+            && self.materialized_arrangement_cell_complex_shortcut()
+    }
+
+    pub(crate) fn certifies_arrangement_cell_complex_shortcut_for_operation(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> bool {
+        self.operation == operation
+            && self.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+            && self.validate().is_ok()
+            && self.materialized_arrangement_cell_complex_shortcut()
+    }
+}
+
 fn validated_report_intersection_graph(
     left: &ExactMesh,
     right: &ExactMesh,
