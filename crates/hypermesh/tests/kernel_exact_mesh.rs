@@ -3,11 +3,10 @@ use hypermesh::ExactMesh;
 use hypermesh::kernel::{
     ArrangementView, EdgeRef, ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshRef,
     FaceRef, MeshView, PreparedMeshPair, PreparedMeshPairBoolean,
-    PreparedMeshPairBroadPhaseSummary, PreparedMeshPairBroadPhaseTraversalSummary,
-    PreparedMeshPairCacheStatus, PreparedMeshPairClassificationCounts, PreparedMeshPairFactState,
-    PreparedMeshPairPlanKind, PreparedMeshPairResultOutcome, PreparedMeshPairSweepActiveSet,
-    PreparedMeshPairSweepAxis, PreparedMeshPairSweepDirection, PreparedMeshView, TriangleRef,
-    VertexRef,
+    PreparedMeshPairBroadPhaseSummary, PreparedMeshPairCacheStatus,
+    PreparedMeshPairClassificationCounts, PreparedMeshPairFactState, PreparedMeshPairPlanKind,
+    PreparedMeshPairResultOutcome, PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis,
+    PreparedMeshPairSweepDirection, PreparedMeshView, TriangleRef, VertexRef,
 };
 use hyperreal::Real;
 
@@ -1002,15 +1001,11 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         prepared_pair.cache_status().broad_phase_traversal(),
         PreparedMeshPairFactState::Missing
     ));
-    assert_eq!(
-        prepared_pair
-            .cache_status()
-            .current_broad_phase_traversal_summary()
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
+    prepared_pair
+        .cache_status()
+        .broad_phase_traversal()
+        .require_current("broad-phase traversal")
+        .unwrap_err();
     assert_eq!(
         prepared_pair
             .with_current_candidate_face_pairs(|pairs| pairs.len())
@@ -1019,8 +1014,7 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    let count_only_summary: PreparedMeshPairBroadPhaseTraversalSummary =
-        prepared_pair.prepare_broad_phase_traversal_summary();
+    prepared_pair.prepare_broad_phase_traversal();
     assert!(matches!(
         prepared_pair.cache_status().broad_phase_traversal(),
         PreparedMeshPairFactState::Current
@@ -1031,21 +1025,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     ));
     assert_eq!(
         prepared_pair
-            .cache_status()
-            .current_broad_phase_traversal_summary()
-            .unwrap(),
-        count_only_summary
-    );
-    assert_eq!(
-        prepared_pair
-            .cache_status()
-            .current_broad_phase_traversal_summary()
-            .unwrap()
-            .candidate_pair_count(),
-        count_only_summary.candidate_pair_count()
-    );
-    assert_eq!(
-        prepared_pair
             .with_current_candidate_face_pairs(|pairs| pairs.len())
             .unwrap_err()
             .blockers()[0]
@@ -1053,20 +1032,8 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
     let retained_candidate_count = prepared_pair.prepare_candidate_face_pairs();
-    assert_eq!(
-        retained_candidate_count,
-        count_only_summary.candidate_pair_count()
-    );
     assert!(retained_candidate_count > 0);
     assert!(retained_candidate_count <= broad_phase_summary.candidate_pair_upper_bound());
-    assert_eq!(
-        prepared_pair
-            .cache_status()
-            .current_broad_phase_traversal_summary()
-            .unwrap()
-            .candidate_pair_count(),
-        retained_candidate_count
-    );
     assert_eq!(
         prepared_pair
             .with_current_candidate_face_pairs(|pairs| {
@@ -1082,34 +1049,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         prepared_pair.cache_status().candidate_face_pairs(),
         PreparedMeshPairFactState::Current
     ));
-    let traversal_summary: PreparedMeshPairBroadPhaseTraversalSummary = prepared_pair
-        .cache_status()
-        .current_broad_phase_traversal_summary()
-        .unwrap();
-    assert_eq!(traversal_summary.broad_phase_summary(), broad_phase_summary);
-    assert_eq!(
-        traversal_summary.candidate_pair_count(),
-        retained_candidate_count
-    );
-    assert_eq!(
-        prepared_pair
-            .cache_status()
-            .current_broad_phase_traversal_summary()
-            .unwrap(),
-        traversal_summary
-    );
-    assert_eq!(
-        traversal_summary.broad_phase_rejection_count(),
-        broad_phase_summary.face_pair_product() - traversal_summary.candidate_pair_count()
-    );
-    assert_eq!(
-        traversal_summary.candidate_upper_bound_slack(),
-        broad_phase_summary.candidate_pair_upper_bound() - traversal_summary.candidate_pair_count()
-    );
-    assert_eq!(
-        traversal_summary.candidate_upper_bound_saturated(),
-        traversal_summary.candidate_upper_bound_slack() == 0
-    );
     prepared_pair
         .cache_status()
         .candidate_face_pairs()
@@ -1491,14 +1430,7 @@ fn prepared_pair_candidate_visitor_streams_without_storing_records() {
         prepared_pair.cache_status().candidate_face_pairs(),
         PreparedMeshPairFactState::Missing
     ));
-    assert_eq!(
-        prepared_pair
-            .cache_status()
-            .current_broad_phase_traversal_summary()
-            .unwrap()
-            .candidate_pair_count(),
-        visited
-    );
+    assert!(visited > 0);
     assert_eq!(
         prepared_pair
             .with_current_candidate_face_pairs(|pairs| pairs.len())
