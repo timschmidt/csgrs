@@ -380,18 +380,6 @@ pub(crate) struct ExactArrangementBooleanAttempt {
 }
 
 impl ExactArrangementBooleanAttempt {
-    /// Return retained topology assembly gate evidence, when present.
-    #[cfg(test)]
-    pub(crate) fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {
-        self.topology_assembly_report.as_ref()
-    }
-
-    /// Return retained region ownership gate evidence, when present.
-    #[cfg(test)]
-    pub(crate) fn region_ownership_report(&self) -> Option<&ExactRegionOwnershipReport> {
-        self.region_ownership_report.as_ref()
-    }
-
     pub(crate) fn retain_topology_assembly_report(&mut self, report: ExactTopologyAssemblyReport) {
         self.topology_assembly = Some(report.status);
         self.topology_assembly_report = Some(report);

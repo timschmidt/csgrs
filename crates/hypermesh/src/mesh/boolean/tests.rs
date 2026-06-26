@@ -231,16 +231,11 @@ fn assert_result_retains_attempt_gate_reports(
     attempt: &ExactArrangementBooleanAttempt,
 ) {
     result.validate().unwrap();
-    assert!(result.topology_assembly_report().is_some(), "{result:?}");
-    assert!(result.region_ownership_report().is_some(), "{result:?}");
-    assert_eq!(
-        result.topology_assembly_report(),
-        attempt.topology_assembly_report()
-    );
-    assert_eq!(
-        result.region_ownership_report(),
-        attempt.region_ownership_report()
-    );
+    let (attempt_topology, attempt_ownership) = attempt
+        .retained_gate_reports()
+        .expect("attempt should retain complete gate reports");
+    assert_eq!(result.topology_assembly_report(), Some(attempt_topology));
+    assert_eq!(result.region_ownership_report(), Some(attempt_ownership));
 }
 
 fn synthetic_arrangement_attempt(
