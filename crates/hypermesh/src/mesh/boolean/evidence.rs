@@ -4280,13 +4280,6 @@ impl ExactBooleanEvaluation {
         Ok(evaluation)
     }
 
-    /// Return the retained arrangement/cell-complex attempt for this request,
-    /// when evaluation reached that canonical pipeline.
-    #[cfg(test)]
-    pub(crate) fn retained_arrangement_attempt(&self) -> Option<&ExactArrangementBooleanAttempt> {
-        self.certifications.arrangement_attempt.as_ref()
-    }
-
     /// Return the exact preflight/scheduling report retained by this evaluation.
     pub(crate) fn preflight(&self) -> &ExactBooleanPreflight {
         &self.preflight
@@ -4359,7 +4352,7 @@ impl ExactBooleanEvaluation {
                 || result.topology_assembly_report().is_some()
                 || result.region_ownership_report().is_some()
             {
-                self.retained_arrangement_attempt()
+                self.certifications.arrangement_attempt.as_ref()
             } else {
                 None
             };
