@@ -2215,8 +2215,15 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         operation: PreparedMeshPairBoolean,
     ) -> Result<ExactMesh, ExactMeshError> {
         self.require_current_result(operation)?;
-        self.cached_named_boolean_mesh(operation)
-            .unwrap_or_else(|| missing_retained_result(operation.result_name()))
+        self.cached_named_boolean_mesh(operation).ok_or_else(|| {
+            ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::MissingRequiredEvidence,
+                format!(
+                    "prepared mesh-pair session is missing retained {} evidence",
+                    operation.result_name()
+                ),
+            ))
+        })?
     }
 
     /// Return a retained boolean outcome without materializing the mesh.
@@ -2225,24 +2232,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         operation: PreparedMeshPairBoolean,
     ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
         self.cache_status().current_result_outcome(operation)
-    }
-
-    /// Return whether a current retained boolean result or blocker exists.
-    pub fn result_is_current(&self, operation: PreparedMeshPairBoolean) -> bool {
-        self.cache_status().result(operation).is_current()
-    }
-
-    /// Return the retained boolean outcome summary, if present.
-    pub fn retained_result_outcome(
-        &self,
-        operation: PreparedMeshPairBoolean,
-    ) -> Option<PreparedMeshPairResultOutcome> {
-        self.named_boolean_cache(operation).retained_outcome()
-    }
-
-    /// Return whether a boolean result or blocker has been retained.
-    pub fn has_retained_result(&self, operation: PreparedMeshPairBoolean) -> bool {
-        self.named_boolean_cache(operation).has_retained()
     }
 
     /// Require a retained boolean result or retained blocker.
@@ -2388,13 +2377,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     ) -> Result<(), E> {
         self.try_visit_candidate_face_pairs_uncached(visit)
     }
-}
-
-fn missing_retained_result(fact: &'static str) -> Result<ExactMesh, ExactMeshError> {
-    Err(ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::MissingRequiredEvidence,
-        format!("prepared mesh-pair session is missing retained {fact} evidence"),
-    )))
 }
 
 const fn retained_current_state(
