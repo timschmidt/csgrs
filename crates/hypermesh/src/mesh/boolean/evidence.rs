@@ -14,12 +14,14 @@ use std::cmp::Ordering;
 
 use super::super::ExactMesh;
 use super::super::arrangement3d::cell_complex::{
-    ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy,
-    validate_selected_gate_reports,
+    ExactRegionOwnershipReport, ExactRegionOwnershipStatus,
+    arrangement_cell_complex_labeling_policy, validate_selected_gate_reports,
 };
 use super::super::arrangement3d::regularization::ExactArrangementBlocker;
 use super::super::arrangement3d::regularization::ExactRegularizationPolicy;
-use super::super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
+use super::super::arrangement3d::{
+    ExactArrangement, ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
+};
 use super::super::bounds::AabbIntersectionKind;
 use super::super::graph::MeshSide;
 use super::super::graph::intersection::MeshFacePairRelation;
@@ -230,6 +232,82 @@ pub(crate) enum ExactReportValidationError {
     /// A retained report no longer matches facts recomputed from the supplied
     /// source meshes.
     SourceReplayMismatch,
+}
+
+/// Stage reached by an arrangement/cell-complex Boolean attempt.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum ExactArrangementBooleanStage {
+    /// Arrangement construction was not attempted by the selected dispatch path.
+    NotAttempted,
+    /// The 3D arrangement was built.
+    ArrangementBuilt,
+    /// Arrangement face-cells were labeled.
+    Labeled,
+    /// Boolean selection completed.
+    Selected,
+    /// Exact simplification completed.
+    Simplified,
+    /// Exact triangulation completed.
+    Triangulated,
+    /// The triangulated mesh copied through the requested validation policy.
+    Materialized,
+}
+
+/// Why an arrangement/cell-complex Boolean attempt declined to produce output.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) enum ExactArrangementBooleanDecline {
+    /// Arrangement construction completed with blockers.
+    ArrangementBlockers(Vec<ExactArrangementBlocker>),
+    /// Cell labeling failed.
+    Labeling(ExactArrangementBlocker),
+    /// Exact topology assembly was not complete enough for cell output.
+    TopologyAssembly(ExactTopologyAssemblyStatus),
+    /// Region ownership was not resolved enough for named boolean selection.
+    RegionOwnership(ExactRegionOwnershipStatus),
+    /// Boolean cell selection failed.
+    Selection(ExactArrangementBlocker),
+    /// Exact simplification failed.
+    Simplification(ExactArrangementBlocker),
+    /// Exact triangulation failed.
+    Triangulation(ExactArrangementBlocker),
+    /// The triangulated mesh did not satisfy the requested validation policy.
+    OutputValidation,
+}
+
+/// Why a retained arrangement/cell-complex attempt used a certified shortcut
+/// or recovery output instead of the generic selected-cell triangulation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum ExactArrangementBooleanShortcutReason {
+    /// The shortcut was certified without constructing a generic arrangement.
+    ShortcutSupportOnly,
+    /// Arrangement construction had retained blockers.
+    ArrangementConstructionBlocked,
+    /// Topology assembly was not complete enough for generic output.
+    TopologyAssemblyBlocked,
+    /// Region ownership did not resolve the requested named operation.
+    RegionOwnershipBlocked,
+    /// Cell selection was blocked.
+    SelectionBlocked,
+    /// Exact simplification was blocked.
+    SimplificationBlocked,
+    /// Exact triangulation was blocked.
+    TriangulationBlocked,
+    /// The generic triangulated output did not satisfy the requested validation.
+    OutputValidationBlocked,
+    /// The generic path reached no more specific retained blocker.
+    GenericMaterializationUnavailable,
+}
+
+pub(crate) const fn arrangement_attempt_stage_rank(stage: ExactArrangementBooleanStage) -> u8 {
+    match stage {
+        ExactArrangementBooleanStage::NotAttempted => 0,
+        ExactArrangementBooleanStage::ArrangementBuilt => 1,
+        ExactArrangementBooleanStage::Labeled => 2,
+        ExactArrangementBooleanStage::Selected => 3,
+        ExactArrangementBooleanStage::Simplified => 4,
+        ExactArrangementBooleanStage::Triangulated => 5,
+        ExactArrangementBooleanStage::Materialized => 6,
+    }
 }
 
 fn validated_report_intersection_graph(

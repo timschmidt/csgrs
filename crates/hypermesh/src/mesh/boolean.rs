@@ -83,16 +83,18 @@ use convex::{
 };
 use evidence::{
     ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus,
-    ExactArrangementCellComplexShortcutFacts, ExactBooleanBlocker, ExactBooleanBlockerKind,
-    ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind, ExactBooleanShortcutKind,
-    ExactBooleanSourceFacts, ExactBooleanSupport, ExactBoundaryTouchingReport,
-    ExactBoundaryTouchingStatus, ExactConvexBooleanCapabilityFacts, ExactIdenticalMeshReport,
-    ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport,
-    ExactPlanarArrangementStatus, ExactRefinementReport, ExactRefinementStatus,
-    ExactRegularizedSolidBooleanFacts, ExactReportValidationError, ExactSameSurfaceReport,
-    ExactTrivialBooleanFacts, ExactVolumetricBoundaryClosureReport,
+    ExactArrangementBooleanDecline, ExactArrangementBooleanShortcutReason,
+    ExactArrangementBooleanStage, ExactArrangementCellComplexShortcutFacts, ExactBooleanBlocker,
+    ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind,
+    ExactBooleanShortcutKind, ExactBooleanSourceFacts, ExactBooleanSupport,
+    ExactBoundaryTouchingReport, ExactBoundaryTouchingStatus, ExactConvexBooleanCapabilityFacts,
+    ExactIdenticalMeshReport, ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus,
+    ExactPlanarArrangementReport, ExactPlanarArrangementStatus, ExactRefinementReport,
+    ExactRefinementStatus, ExactRegularizedSolidBooleanFacts, ExactReportValidationError,
+    ExactSameSurfaceReport, ExactTrivialBooleanFacts, ExactVolumetricBoundaryClosureReport,
     ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
-    certified_convex_operation_shortcut_support, meshes_are_certified_bounds_disjoint,
+    arrangement_attempt_stage_rank, certified_convex_operation_shortcut_support,
+    meshes_are_certified_bounds_disjoint,
 };
 use hyperlimit::SourceProvenance;
 use hyperlimit::{
@@ -131,76 +133,6 @@ use winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
     WindingReportError, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
-
-/// Exact selected-region boolean policy.
-///
-/// This policy is intentionally narrower than a named boolean operation. It
-/// records the currently certified operation semantics: retain selected split
-/// regions, optionally reject unresolved graph events, then validate the
-/// materialized exact output mesh.
-/// Stage reached by an arrangement/cell-complex Boolean attempt.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum ExactArrangementBooleanStage {
-    /// Arrangement construction was not attempted by the selected dispatch path.
-    NotAttempted,
-    /// The 3D arrangement was built.
-    ArrangementBuilt,
-    /// Arrangement face-cells were labeled.
-    Labeled,
-    /// Boolean selection completed.
-    Selected,
-    /// Exact simplification completed.
-    Simplified,
-    /// Exact triangulation completed.
-    Triangulated,
-    /// The triangulated mesh copied through the requested validation policy.
-    Materialized,
-}
-
-/// Why an arrangement/cell-complex Boolean attempt declined to produce output.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) enum ExactArrangementBooleanDecline {
-    /// Arrangement construction completed with blockers.
-    ArrangementBlockers(Vec<ExactArrangementBlocker>),
-    /// Cell labeling failed.
-    Labeling(ExactArrangementBlocker),
-    /// Exact topology assembly was not complete enough for cell output.
-    TopologyAssembly(ExactTopologyAssemblyStatus),
-    /// Region ownership was not resolved enough for named boolean selection.
-    RegionOwnership(ExactRegionOwnershipStatus),
-    /// Boolean cell selection failed.
-    Selection(ExactArrangementBlocker),
-    /// Exact simplification failed.
-    Simplification(ExactArrangementBlocker),
-    /// Exact triangulation failed.
-    Triangulation(ExactArrangementBlocker),
-    /// The triangulated mesh did not satisfy the requested validation policy.
-    OutputValidation,
-}
-
-/// Why a retained arrangement/cell-complex attempt used a certified shortcut
-/// or recovery output instead of the generic selected-cell triangulation.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum ExactArrangementBooleanShortcutReason {
-    /// The shortcut was certified without constructing a generic arrangement.
-    ShortcutSupportOnly,
-    /// Arrangement construction had retained blockers.
-    ArrangementConstructionBlocked,
-    /// Topology assembly was not complete enough for generic output.
-    TopologyAssemblyBlocked,
-    /// Region ownership did not resolve the requested named operation.
-    RegionOwnershipBlocked,
-    /// Cell selection was blocked.
-    SelectionBlocked,
-    /// Exact simplification was blocked.
-    SimplificationBlocked,
-    /// Exact triangulation was blocked.
-    TriangulationBlocked,
-    /// The generic triangulated output did not satisfy the requested validation.
-    OutputValidationBlocked,
-    /// The generic path reached no more specific retained blocker.
-    GenericMaterializationUnavailable,
-}
 
 /// Auditable result of trying the arrangement/cell-complex Boolean pipeline.
 #[derive(Clone, Debug, PartialEq)]
@@ -1188,18 +1120,6 @@ fn record_selected_orientation_counts(
     attempt.reversed_selected_faces = counts.reversed_selected_faces;
     attempt.volume_oriented_selected_faces = counts.volume_oriented_selected_faces;
     attempt.label_oriented_selected_faces = counts.label_oriented_selected_faces;
-}
-
-const fn arrangement_attempt_stage_rank(stage: ExactArrangementBooleanStage) -> u8 {
-    match stage {
-        ExactArrangementBooleanStage::NotAttempted => 0,
-        ExactArrangementBooleanStage::ArrangementBuilt => 1,
-        ExactArrangementBooleanStage::Labeled => 2,
-        ExactArrangementBooleanStage::Selected => 3,
-        ExactArrangementBooleanStage::Simplified => 4,
-        ExactArrangementBooleanStage::Triangulated => 5,
-        ExactArrangementBooleanStage::Materialized => 6,
-    }
 }
 
 fn retained_arrangement_attempt_for_request<'a>(
