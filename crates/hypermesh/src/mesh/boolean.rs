@@ -4713,6 +4713,49 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
             );
         }
     };
+    materialize_triangulated_arrangement_cell_complex_attempt(
+        &recovery,
+        attempt,
+        mesh,
+        operation,
+        validation,
+        volume_resolves_region_classification,
+    )
+}
+
+enum ArrangementCellComplexSelectionDecline {
+    Blocked(ExactArrangementBlocker),
+    SelectedWithBlockers(ExactSelectedCellComplex),
+}
+
+fn select_arrangement_cell_complex_with_ownership_report(
+    labeled: ExactLabeledCellComplex,
+    ownership_report: &ExactRegionOwnershipReport,
+    operation: ExactBooleanOperation,
+    policy: ExactRegularizationPolicy,
+) -> Result<ExactSelectedCellComplex, ArrangementCellComplexSelectionDecline> {
+    let selected = if ownership_report.volume_selection_resolves_operation(operation) {
+        labeled.select_volume_resolved(operation)
+    } else {
+        labeled.select_with_policy(operation, policy)
+    }
+    .map_err(ArrangementCellComplexSelectionDecline::Blocked)?;
+
+    if selected.blockers.is_empty() {
+        Ok(selected)
+    } else {
+        Err(ArrangementCellComplexSelectionDecline::SelectedWithBlockers(selected))
+    }
+}
+
+fn materialize_triangulated_arrangement_cell_complex_attempt(
+    recovery: &ArrangementCellComplexRecoveryContext<'_>,
+    mut attempt: ExactArrangementBooleanAttempt,
+    mesh: ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ExactMeshValidationPolicy,
+    volume_resolves_region_classification: bool,
+) -> Result<ArrangementCellComplexOutcome, ExactMeshError> {
     attempt.mark_triangulated();
     attempt.retain_output_mesh(&mesh);
     let mesh = match copy_mesh(
@@ -4745,7 +4788,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
                 }
             }
             return arrangement_cell_complex_decline_after_recovery(
-                &recovery,
+                recovery,
                 attempt,
                 ExactArrangementBooleanDecline::OutputValidation,
             );
@@ -4762,31 +4805,6 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         volume_resolves_region_classification,
         None,
     ))
-}
-
-enum ArrangementCellComplexSelectionDecline {
-    Blocked(ExactArrangementBlocker),
-    SelectedWithBlockers(ExactSelectedCellComplex),
-}
-
-fn select_arrangement_cell_complex_with_ownership_report(
-    labeled: ExactLabeledCellComplex,
-    ownership_report: &ExactRegionOwnershipReport,
-    operation: ExactBooleanOperation,
-    policy: ExactRegularizationPolicy,
-) -> Result<ExactSelectedCellComplex, ArrangementCellComplexSelectionDecline> {
-    let selected = if ownership_report.volume_selection_resolves_operation(operation) {
-        labeled.select_volume_resolved(operation)
-    } else {
-        labeled.select_with_policy(operation, policy)
-    }
-    .map_err(ArrangementCellComplexSelectionDecline::Blocked)?;
-
-    if selected.blockers.is_empty() {
-        Ok(selected)
-    } else {
-        Err(ArrangementCellComplexSelectionDecline::SelectedWithBlockers(selected))
-    }
 }
 
 fn arrangement_open_surface_recovery_outcome(
