@@ -499,6 +499,24 @@ impl ExactArrangementBooleanAttempt {
             && report.resolves_operation_selection(self.operation)
     }
 
+    /// Return whether another attempt carries the same retained output mesh
+    /// certificate.
+    pub(crate) fn output_certificate_matches(&self, other: &Self) -> bool {
+        self.output_vertices == other.output_vertices
+            && self.output_triangles == other.output_triangles
+            && self.output_facts == other.output_facts
+    }
+
+    /// Return whether this attempt certifies the supplied output mesh.
+    pub(crate) fn certifies_output_mesh(&self, mesh: &ExactMesh) -> bool {
+        let Some(output_facts) = self.output_facts.as_ref() else {
+            return false;
+        };
+        mesh.vertices().len() == self.output_vertices
+            && mesh.triangles().len() == self.output_triangles
+            && &mesh.facts().mesh == output_facts
+    }
+
     pub(crate) fn validate_for_request_policy(
         &self,
         request: ExactBooleanRequest,
@@ -2385,13 +2403,7 @@ impl ExactBooleanResult {
         } else {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
-        let Some(output_facts) = attempt.output_facts.as_ref() else {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        };
-        if self.mesh.vertices().len() != attempt.output_vertices
-            || self.mesh.triangles().len() != attempt.output_triangles
-            || &self.mesh.facts().mesh != output_facts
-        {
+        if !attempt.certifies_output_mesh(&self.mesh) {
             return Ok(false);
         }
         Ok(true)

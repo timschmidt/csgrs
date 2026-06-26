@@ -47,7 +47,6 @@ use super::arrangement3d::loop_triangulation::{
 };
 use super::arrangement3d::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::facts::MeshFacts;
 #[cfg(test)]
 use super::graph::FacePairEvents;
 #[cfg(test)]
@@ -199,9 +198,7 @@ fn arrangement_attempt_materialized_outputs_match(
         && retained.policy == replay.policy
         && retained.materialized_arrangement_cell_complex_output()
         && replay.materialized_arrangement_cell_complex_output()
-        && retained.output_vertices == replay.output_vertices
-        && retained.output_triangles == replay.output_triangles
-        && retained_arrangement_output_facts_match(&retained.output_facts, &replay.output_facts);
+        && retained.output_certificate_matches(replay);
     if !same_source_output {
         return false;
     }
@@ -214,13 +211,6 @@ fn arrangement_attempt_materialized_outputs_match(
         && retained.retained_gate_reports().is_some()
         && replay.materialized_arrangement_cell_complex_shortcut()
         && replay.retained_gate_reports().is_none()
-}
-
-fn retained_arrangement_output_facts_match(
-    retained: &Option<MeshFacts>,
-    replay: &Option<MeshFacts>,
-) -> bool {
-    retained == replay
 }
 
 pub(crate) fn exact_boolean_evaluation_for_replay(
@@ -4167,12 +4157,7 @@ fn arrangement_cell_complex_result_is_certified_for_preflight(
     {
         return false;
     }
-    let Some(output_facts) = attempt.output_facts.as_ref() else {
-        return false;
-    };
-    result.mesh.vertices().len() == attempt.output_vertices
-        && result.mesh.triangles().len() == attempt.output_triangles
-        && &result.mesh.facts().mesh == output_facts
+    attempt.certifies_output_mesh(&result.mesh)
 }
 
 fn arrangement_cell_complex_result_matches_retained_attempt(
@@ -4202,12 +4187,7 @@ fn arrangement_cell_complex_result_matches_retained_attempt(
     {
         return false;
     }
-    let Some(output_facts) = attempt.output_facts.as_ref() else {
-        return false;
-    };
-    result.mesh.vertices().len() == attempt.output_vertices
-        && result.mesh.triangles().len() == attempt.output_triangles
-        && &result.mesh.facts().mesh == output_facts
+    attempt.certifies_output_mesh(&result.mesh)
 }
 
 fn arrangement_cell_complex_materializes_for_preflight_from_graph(
