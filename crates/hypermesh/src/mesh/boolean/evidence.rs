@@ -8826,11 +8826,6 @@ impl ExactWindingEvidenceReport {
         self.coplanar_volumetric_evidence.as_ref()
     }
 
-    /// Return whether the report reached the winding-evidence handoff.
-    pub(crate) const fn is_ready(&self) -> bool {
-        matches!(self.status, ExactWindingEvidenceStatus::Ready)
-    }
-
     /// Validate this winding-evidence report against the source meshes.
     ///
     /// Winding evidence retains exact split-region and opposite-plane facts.

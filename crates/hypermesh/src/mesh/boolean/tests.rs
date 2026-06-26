@@ -1759,7 +1759,7 @@ fn winding_evidence_status_partition_identifies_materialized_handoffs() {
         None,
         None,
     );
-    assert!(ready_report.is_ready());
+    assert_eq!(ready_report.status(), ExactWindingEvidenceStatus::Ready);
 
     for status in [
         ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized,

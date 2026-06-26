@@ -2020,7 +2020,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     if winding_report
         .status()
         .materializes_arrangement_cell_complex()
-        || (winding_report.is_ready()
+        || (winding_report.status() == ExactWindingEvidenceStatus::Ready
             && materialize_volumetric_winding_region_plan_from_graph(
                 graph,
                 left,
