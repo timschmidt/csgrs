@@ -1382,10 +1382,7 @@ fn certifications_reuse_regularized_arrangement_attempt_reports() {
         .retained_arrangement_attempt()
         .expect("nested tetrahedra should retain an arrangement attempt");
     assert!(
-        attempt.certifies_arrangement_cell_complex_output_for_request(
-            request,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-        ),
+        attempt.certifies_regularized_arrangement_cell_complex_output_for_request(request),
         "{attempt:?}"
     );
     assert!(attempt.materialized_without_shortcut(), "{attempt:?}");
@@ -1485,9 +1482,8 @@ fn axis_aligned_orthogonal_cell_booleans_materialize_from_shortcut_support() {
             "{operation:?}: {attempt:?}"
         );
         assert!(
-            attempt.certifies_arrangement_cell_complex_shortcut_for_request(
+            attempt.certifies_regularized_arrangement_cell_complex_shortcut_for_request(
                 ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::CLOSED),
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
             ),
             "{operation:?}: {attempt:?}"
         );
@@ -2843,10 +2839,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
     };
     assert!(retained_attempt.materialized_without_shortcut());
     assert!(
-        retained_attempt.certifies_arrangement_cell_complex_output_for_request(
-            request,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-        )
+        retained_attempt.certifies_regularized_arrangement_cell_complex_output_for_request(request)
     );
     assert_result_retains_attempt_gate_reports(&result, &retained_attempt);
 
@@ -2880,12 +2873,11 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
     let replayable_result = (*result).clone();
     replayable_result.validate().unwrap();
     assert!(
-        report_attempt.certifies_arrangement_cell_complex_output_for_request(
+        report_attempt.certifies_regularized_arrangement_cell_complex_output_for_request(
             ExactBooleanRequest::new(
                 ExactBooleanOperation::Union,
                 ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-            ),
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
         )
     );
     assert!(
@@ -2901,13 +2893,13 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
     let mut wrong_validation_attempt = report_attempt.clone();
     wrong_validation_attempt.output_validation = ExactMeshValidationPolicy::CLOSED;
     assert!(
-        !wrong_validation_attempt.certifies_arrangement_cell_complex_output_for_request(
-            ExactBooleanRequest::new(
-                ExactBooleanOperation::Union,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-            ),
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-        )
+        !wrong_validation_attempt
+            .certifies_regularized_arrangement_cell_complex_output_for_request(
+                ExactBooleanRequest::new(
+                    ExactBooleanOperation::Union,
+                    ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                )
+            )
     );
     assert_eq!(
         retained_arrangement_attempt_for_request(
@@ -3044,10 +3036,7 @@ fn arrangement_attempt_accepts_requested_volume_ownership() {
         panic!("materialized helper should return a result");
     };
     assert!(
-        retained_attempt.certifies_arrangement_cell_complex_output_for_request(
-            request,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-        )
+        retained_attempt.certifies_regularized_arrangement_cell_complex_output_for_request(request)
     );
     assert_eq!(retained_attempt.shortcut_reason, None);
 
@@ -3075,10 +3064,7 @@ fn arrangement_attempt_accepts_requested_volume_ownership() {
 
     assert!(retained_attempt.resolves_requested_volume_ownership());
     assert!(
-        retained_attempt.certifies_arrangement_cell_complex_output_for_request(
-            request,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-        )
+        retained_attempt.certifies_regularized_arrangement_cell_complex_output_for_request(request)
     );
     retained_attempt.validate().unwrap();
 
@@ -3087,10 +3073,8 @@ fn arrangement_attempt_accepts_requested_volume_ownership() {
     unresolved_for_difference.validate().unwrap();
     assert!(!retained_attempt.resolves_requested_volume_ownership());
     assert!(
-        !retained_attempt.certifies_arrangement_cell_complex_output_for_request(
-            request,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-        )
+        !retained_attempt
+            .certifies_regularized_arrangement_cell_complex_output_for_request(request)
     );
     assert_eq!(
         retained_attempt.validate(),
@@ -3598,9 +3582,8 @@ fn nested_closed_shell_booleans_materialize_through_arrangement_pipeline() {
             "{operation:?}: {attempt:?}"
         );
         assert!(
-            attempt.certifies_arrangement_cell_complex_output_for_request(
+            attempt.certifies_regularized_arrangement_cell_complex_output_for_request(
                 ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY),
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
             )
         );
         assert!(attempt.decline.is_none(), "{operation:?}: {attempt:?}");

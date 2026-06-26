@@ -667,7 +667,7 @@ fn certification_set_from_graph_and_regularized_arrangement(
     validate_graph_source_replay(graph, left, right)?;
     if let Some(attempt) = retained_arrangement_attempt {
         attempt
-            .validate_for_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .validate_regularized_for_request(request)
             .map_err(|error| {
                 retained_report_validation_error(
                     "retained arrangement attempt failed validation",
@@ -749,25 +749,20 @@ fn certification_set_from_graph_and_regularized_arrangement(
         };
     let retained_arrangement_attempt_materializes_output = retained_arrangement_attempt
         .is_some_and(|attempt| {
-            attempt.certifies_arrangement_cell_complex_output_for_request(
-                request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            )
+            attempt.certifies_regularized_arrangement_cell_complex_output_for_request(request)
         });
     let retained_arrangement_cell_complex_shortcut_attempt =
         retained_arrangement_attempt.filter(|attempt| {
             !retained_arrangement_attempt_materializes_output
-                && attempt.certifies_arrangement_cell_complex_shortcut_for_request(
-                    request,
-                    ExactRegularizationPolicy::REGULARIZED_SOLID,
-                )
+                && attempt
+                    .certifies_regularized_arrangement_cell_complex_shortcut_for_request(request)
         });
     let arrangement_cell_complex_shortcut_certified = arrangement_cell_complex_shortcut_support
         == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
         && !retained_arrangement_attempt_materializes_output
         && retained_arrangement_cell_complex_shortcut_attempt.is_some();
-    let retained_attempt_has_regularized_reports = retained_arrangement_attempt
-        .is_some_and(|attempt| attempt.retained_gate_reports().is_some());
+    let retained_attempt_has_regularized_reports =
+        retained_arrangement_attempt.is_some_and(|attempt| attempt.retains_complete_gate_reports());
     let owned_regularized_arrangement;
     let regularized_arrangement =
         if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_))
@@ -8391,10 +8386,7 @@ fn winding_evidence_report_for_request_from_graph_and_attempt(
     let validation = request.validation;
     let boundary_policy = request.boundary_policy;
     if retained_arrangement_attempt.is_some_and(|attempt| {
-        attempt.certifies_arrangement_cell_complex_output_for_request(
-            request,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-        )
+        attempt.certifies_regularized_arrangement_cell_complex_output_for_request(request)
     }) {
         return Ok(
             arrangement_cell_complex_already_materialized_winding_evidence(

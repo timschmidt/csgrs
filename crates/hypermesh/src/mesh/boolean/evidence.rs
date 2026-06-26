@@ -419,6 +419,10 @@ impl ExactArrangementBooleanAttempt {
         }
     }
 
+    pub(crate) fn retains_complete_gate_reports(&self) -> bool {
+        self.retained_gate_reports().is_some()
+    }
+
     fn cell_complex_gate_reports_match(
         &self,
         topology_report: Option<&ExactTopologyAssemblyReport>,
@@ -713,12 +717,18 @@ impl ExactArrangementBooleanAttempt {
         Ok(())
     }
 
-    pub(crate) fn certifies_arrangement_cell_complex_output_for_request(
+    pub(crate) fn validate_regularized_for_request(
         &self,
         request: ExactBooleanRequest,
-        policy: ExactRegularizationPolicy,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate_for_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+    }
+
+    pub(crate) fn certifies_regularized_arrangement_cell_complex_output_for_request(
+        &self,
+        request: ExactBooleanRequest,
     ) -> bool {
-        self.validate_for_request_policy(request, policy).is_ok()
+        self.validate_regularized_for_request(request).is_ok()
             && self.materialized_arrangement_cell_complex_output()
     }
 
@@ -731,12 +741,11 @@ impl ExactArrangementBooleanAttempt {
             && self.materialized_arrangement_cell_complex_output()
     }
 
-    pub(crate) fn certifies_arrangement_cell_complex_shortcut_for_request(
+    pub(crate) fn certifies_regularized_arrangement_cell_complex_shortcut_for_request(
         &self,
         request: ExactBooleanRequest,
-        policy: ExactRegularizationPolicy,
     ) -> bool {
-        self.validate_for_request_policy(request, policy).is_ok()
+        self.validate_regularized_for_request(request).is_ok()
             && self.materialized_arrangement_cell_complex_shortcut()
     }
 
@@ -2466,10 +2475,7 @@ impl ExactBooleanResult {
         self.validate()?;
         if self.can_use_retained_arrangement_attempt_for_request(request)
             && let Some(attempt) = retained_arrangement_attempt
-            && attempt.certifies_arrangement_cell_complex_output_for_request(
-                request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            )
+            && attempt.certifies_regularized_arrangement_cell_complex_output_for_request(request)
         {
             let matches_attempt = self
                 .retained_arrangement_attempt_matches_output_for_request(request, Some(attempt))?;
@@ -2547,10 +2553,7 @@ impl ExactBooleanResult {
         let Some(attempt) = retained_arrangement_attempt else {
             return Ok(false);
         };
-        if !attempt.certifies_arrangement_cell_complex_output_for_request(
-            request,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-        ) {
+        if !attempt.certifies_regularized_arrangement_cell_complex_output_for_request(request) {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         if attempt.materialized_without_shortcut() {
@@ -3414,10 +3417,7 @@ impl ExactBooleanCertificationSet {
             .certified_support(request.operation)
             == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
             && self.arrangement_attempt.as_ref().is_some_and(|attempt| {
-                attempt.certifies_arrangement_cell_complex_shortcut_for_request(
-                    request,
-                    ExactRegularizationPolicy::REGULARIZED_SOLID,
-                )
+                attempt.certifies_regularized_arrangement_cell_complex_shortcut_for_request(request)
             });
         let arrangement_cell_complex_shortcut_certified_by_source_facts = request.validation
             == ExactMeshValidationPolicy::CLOSED
@@ -3467,10 +3467,7 @@ impl ExactBooleanCertificationSet {
             return Ok(());
         }
         if self.arrangement_attempt.as_ref().is_some_and(|attempt| {
-            attempt.certifies_arrangement_cell_complex_output_for_request(
-                request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            )
+            attempt.certifies_regularized_arrangement_cell_complex_output_for_request(request)
         }) {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
