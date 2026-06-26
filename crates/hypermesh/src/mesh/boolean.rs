@@ -2180,13 +2180,13 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         return Ok(ExactBooleanPreflight {
             operation,
             support: ExactBooleanSupport::RequiresPlanarArrangement,
-            graph_had_unknowns: planar_report.graph_had_unknowns,
-            retained_face_pairs: planar_report.retained_face_pairs,
-            retained_events: planar_report.retained_events,
+            graph_had_unknowns: planar_report.graph_had_unknowns(),
+            retained_face_pairs: planar_report.retained_face_pairs(),
+            retained_events: planar_report.retained_events(),
             region_count: 0,
             region_classifications: Vec::new(),
-            blocker: Some(planar_report.blocker),
-            coplanar_arrangement_evidence: planar_report.coplanar_arrangement_evidence.clone(),
+            blocker: Some(*planar_report.blocker()),
+            coplanar_arrangement_evidence: planar_report.coplanar_arrangement_evidence().cloned(),
             coplanar_volumetric_evidence: None,
         });
     }
@@ -8967,15 +8967,15 @@ fn planar_arrangement_report(
         | ExactPlanarArrangementStatus::AlreadyMaterialized
         | ExactPlanarArrangementStatus::NoPositiveOverlap => counts.inferred_kind(),
     };
-    ExactPlanarArrangementReport {
+    ExactPlanarArrangementReport::new(
         operation,
         status,
         graph_had_unknowns,
         retained_face_pairs,
         retained_events,
-        blocker: counts.into_blocker(blocker_kind),
+        counts.into_blocker(blocker_kind),
         coplanar_arrangement_evidence,
-    }
+    )
 }
 
 fn winding_evidence_report_from_graph(
@@ -9382,7 +9382,7 @@ fn winding_evidence_report_from_graph_with_facts(
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::PlanarArrangement),
-            planar_report.coplanar_arrangement_evidence,
+            planar_report.coplanar_arrangement_evidence().cloned(),
             None,
         ));
     }
@@ -9396,7 +9396,7 @@ fn winding_evidence_report_from_graph_with_facts(
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::PlanarArrangement),
-            planar_report.coplanar_arrangement_evidence,
+            planar_report.coplanar_arrangement_evidence().cloned(),
             None,
         ));
     }

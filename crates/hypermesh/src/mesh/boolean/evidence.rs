@@ -8050,23 +8050,44 @@ pub(crate) enum ExactPlanarArrangementStatus {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ExactPlanarArrangementReport {
     /// Requested named operation.
-    pub(crate) operation: ExactBooleanOperation,
+    operation: ExactBooleanOperation,
     /// Coarse planar-arrangement certification status.
-    pub(crate) status: ExactPlanarArrangementStatus,
+    status: ExactPlanarArrangementStatus,
     /// Whether graph extraction retained unknown events.
-    pub(crate) graph_had_unknowns: bool,
+    graph_had_unknowns: bool,
     /// Retained face-pair records after exact scheduling.
-    pub(crate) retained_face_pairs: usize,
+    retained_face_pairs: usize,
     /// Total retained event records.
-    pub(crate) retained_events: usize,
+    retained_events: usize,
     /// Relation counts for retained face pairs.
-    pub(crate) blocker: ExactBooleanBlocker,
+    blocker: ExactBooleanBlocker,
     /// Checked coplanar-overlap evidence summary retained from the graph
     /// layer.
-    pub(crate) coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
+    coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
 }
 
 impl ExactPlanarArrangementReport {
+    /// Build a planar-arrangement report from retained exact graph evidence.
+    pub(crate) const fn new(
+        operation: ExactBooleanOperation,
+        status: ExactPlanarArrangementStatus,
+        graph_had_unknowns: bool,
+        retained_face_pairs: usize,
+        retained_events: usize,
+        blocker: ExactBooleanBlocker,
+        coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
+    ) -> Self {
+        Self {
+            operation,
+            status,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            blocker,
+            coplanar_arrangement_evidence,
+        }
+    }
+
     /// Return the requested named operation.
     pub(crate) const fn operation(&self) -> ExactBooleanOperation {
         self.operation
