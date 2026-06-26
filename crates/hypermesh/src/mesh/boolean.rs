@@ -3863,6 +3863,124 @@ fn declined_output_validation_attempt_outcome_with_counts(
     ArrangementCellComplexOutcome::Declined(attempt.clone())
 }
 
+struct ArrangementCellComplexRecoveryContext<'a> {
+    enabled: bool,
+    regularized_sheet_recovery_surface: bool,
+    validation: ExactMeshValidationPolicy,
+    graph: &'a super::graph::ExactIntersectionGraph,
+    left: &'a ExactMesh,
+    right: &'a ExactMesh,
+    operation: ExactBooleanOperation,
+}
+
+impl ArrangementCellComplexRecoveryContext<'_> {
+    fn outcome_if_available(
+        &self,
+        attempt: &mut ExactArrangementBooleanAttempt,
+    ) -> Result<Option<ArrangementCellComplexOutcome>, ExactMeshError> {
+        if self.enabled && self.regularized_sheet_recovery_surface {
+            if let Some(result) = boolean_arrangement_regularized_sheet_complex_from_graph(
+                self.graph,
+                self.left,
+                self.right,
+                self.operation,
+                self.validation,
+            )? {
+                return Ok(Some(materialized_arrangement_attempt_outcome(
+                    attempt,
+                    result,
+                    true,
+                    Some(ExactBooleanShortcutKind::ArrangementCellComplex),
+                )));
+            }
+            if let Some(result) = boolean_arrangement_convex_regularized_sheet_recovery(
+                self.left,
+                self.right,
+                self.operation,
+                self.validation,
+            )? {
+                return Ok(Some(materialized_arrangement_attempt_outcome(
+                    attempt,
+                    result,
+                    true,
+                    Some(ExactBooleanShortcutKind::ArrangementCellComplex),
+                )));
+            }
+        }
+        if self.enabled
+            && let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome(
+                attempt,
+                self.graph,
+                self.left,
+                self.right,
+                self.operation,
+                self.validation,
+            )?
+        {
+            return Ok(Some(outcome));
+        }
+        if !matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
+            && !open_surface_disjoint_report_from_graph(self.graph, self.left, self.right)
+                .is_certified()
+        {
+            match boolean_coplanar_mesh_overlay_optional(
+                self.left,
+                self.right,
+                self.operation,
+                self.validation,
+            ) {
+                Ok(Some(result)) => {
+                    return Ok(Some(materialized_arrangement_attempt_outcome(
+                        attempt,
+                        result,
+                        false,
+                        Some(ExactBooleanShortcutKind::ArrangementCellComplex),
+                    )));
+                }
+                Ok(None) => {}
+                Err(_) => {
+                    let output_counts = coplanar_mesh_overlay_candidate_counts(
+                        self.left,
+                        self.right,
+                        self.operation,
+                    );
+                    return Ok(Some(
+                        declined_output_validation_attempt_outcome_with_counts(
+                            attempt,
+                            output_counts,
+                        ),
+                    ));
+                }
+            }
+        }
+        if let Some(outcome) = arrangement_open_surface_recovery_outcome(
+            attempt,
+            self.graph,
+            self.left,
+            self.right,
+            self.operation,
+            self.validation,
+        )? {
+            return Ok(Some(outcome));
+        }
+        let Some(result) = boolean_arrangement_cell_complex_recovery(
+            self.left,
+            self.right,
+            self.operation,
+            self.validation,
+        )?
+        else {
+            return Ok(None);
+        };
+        Ok(Some(materialized_arrangement_attempt_outcome(
+            attempt,
+            result,
+            true,
+            Some(ExactBooleanShortcutKind::ArrangementCellComplex),
+        )))
+    }
+}
+
 pub(crate) fn arrangement_cell_complex_shortcut_attempt(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -4240,6 +4358,15 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
                 .blockers
                 .iter()
                 .all(|blocker| *blocker == ExactArrangementBlocker::UnresolvedRegionClassification);
+    let recovery = ArrangementCellComplexRecoveryContext {
+        enabled: regularize_unregularized_sheet_complex,
+        regularized_sheet_recovery_surface,
+        validation,
+        graph: &arrangement.graph,
+        left,
+        right,
+        operation,
+    };
 
     if !arrangement.is_complete()
         && !volume_resolves_region_classification
@@ -4296,16 +4423,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
                 Some(ExactBooleanShortcutKind::ArrangementCellComplex),
             ));
         }
-        if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
-            regularize_unregularized_sheet_complex,
-            regularized_sheet_recovery_surface,
-            validation,
-            &mut attempt,
-            &arrangement.graph,
-            left,
-            right,
-            operation,
-        )? {
+        if let Some(outcome) = recovery.outcome_if_available(&mut attempt)? {
             return Ok(outcome);
         }
         if unregularized_sheet_complex
@@ -4329,16 +4447,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
     let topology_report = arrangement.topology_assembly_report_with_policy(left, right, policy);
     attempt.retain_topology_assembly_report(topology_report.clone());
     if topology_report.validate().is_err() || !topology_report.is_complete() {
-        if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
-            regularize_unregularized_sheet_complex,
-            regularized_sheet_recovery_surface,
-            validation,
-            &mut attempt,
-            &arrangement.graph,
-            left,
-            right,
-            operation,
-        )? {
+        if let Some(outcome) = recovery.outcome_if_available(&mut attempt)? {
             return Ok(outcome);
         }
         attempt.record_decline(ExactArrangementBooleanDecline::TopologyAssembly(
@@ -4352,16 +4461,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
     let labeled = match arrangement.label_regions(labeling_policy) {
         Ok(labeled) => labeled,
         Err(blocker) => {
-            if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
-                regularize_unregularized_sheet_complex,
-                regularized_sheet_recovery_surface,
-                validation,
-                &mut attempt,
-                &arrangement.graph,
-                left,
-                right,
-                operation,
-            )? {
+            if let Some(outcome) = recovery.outcome_if_available(&mut attempt)? {
                 return Ok(outcome);
             }
             attempt.record_decline(ExactArrangementBooleanDecline::Labeling(blocker));
@@ -4381,16 +4481,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         .resolves_operation_selection(operation)
         || matches!(operation, ExactBooleanOperation::SelectedRegions(_));
     if !ownership_resolves_named_selection {
-        if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
-            regularize_unregularized_sheet_complex,
-            regularized_sheet_recovery_surface,
-            validation,
-            &mut attempt,
-            &arrangement.graph,
-            left,
-            right,
-            operation,
-        )? {
+        if let Some(outcome) = recovery.outcome_if_available(&mut attempt)? {
             return Ok(outcome);
         }
         attempt.record_decline(ExactArrangementBooleanDecline::RegionOwnership(
@@ -4407,16 +4498,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         Ok(selected) if selected.blockers.is_empty() => selected,
         Ok(selected) => {
             attempt.record_selected_counts(&selected);
-            if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
-                regularize_unregularized_sheet_complex,
-                regularized_sheet_recovery_surface,
-                validation,
-                &mut attempt,
-                &arrangement.graph,
-                left,
-                right,
-                operation,
-            )? {
+            if let Some(outcome) = recovery.outcome_if_available(&mut attempt)? {
                 return Ok(outcome);
             }
             attempt.record_decline(ExactArrangementBooleanDecline::Selection(
@@ -4425,16 +4507,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
         Err(blocker) => {
-            if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
-                regularize_unregularized_sheet_complex,
-                regularized_sheet_recovery_surface,
-                validation,
-                &mut attempt,
-                &arrangement.graph,
-                left,
-                right,
-                operation,
-            )? {
+            if let Some(outcome) = recovery.outcome_if_available(&mut attempt)? {
                 return Ok(outcome);
             }
             attempt.record_decline(ExactArrangementBooleanDecline::Selection(blocker));
@@ -4446,16 +4519,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
     let simplified = match selected.simplify_exact_with_policy(policy) {
         Ok(simplified) if simplified.blockers.is_empty() => simplified,
         Ok(simplified) => {
-            if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
-                regularize_unregularized_sheet_complex,
-                regularized_sheet_recovery_surface,
-                validation,
-                &mut attempt,
-                &arrangement.graph,
-                left,
-                right,
-                operation,
-            )? {
+            if let Some(outcome) = recovery.outcome_if_available(&mut attempt)? {
                 return Ok(outcome);
             }
             attempt.record_decline(ExactArrangementBooleanDecline::Simplification(
@@ -4464,16 +4528,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
         Err(blocker) => {
-            if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
-                regularize_unregularized_sheet_complex,
-                regularized_sheet_recovery_surface,
-                validation,
-                &mut attempt,
-                &arrangement.graph,
-                left,
-                right,
-                operation,
-            )? {
+            if let Some(outcome) = recovery.outcome_if_available(&mut attempt)? {
                 return Ok(outcome);
             }
             attempt.record_decline(ExactArrangementBooleanDecline::Simplification(blocker));
@@ -4484,16 +4539,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
     let mesh = match simplified.triangulate() {
         Ok(mesh) => mesh,
         Err(blocker) => {
-            if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
-                regularize_unregularized_sheet_complex,
-                regularized_sheet_recovery_surface,
-                validation,
-                &mut attempt,
-                &arrangement.graph,
-                left,
-                right,
-                operation,
-            )? {
+            if let Some(outcome) = recovery.outcome_if_available(&mut attempt)? {
                 return Ok(outcome);
             }
             attempt.record_decline(ExactArrangementBooleanDecline::Triangulation(blocker));
@@ -4531,16 +4577,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
                     ));
                 }
             }
-            if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
-                regularize_unregularized_sheet_complex,
-                regularized_sheet_recovery_surface,
-                validation,
-                &mut attempt,
-                &arrangement.graph,
-                left,
-                right,
-                operation,
-            )? {
+            if let Some(outcome) = recovery.outcome_if_available(&mut attempt)? {
                 return Ok(outcome);
             }
             attempt.record_decline(ExactArrangementBooleanDecline::OutputValidation);
@@ -5327,84 +5364,6 @@ fn arrangement_volumetric_split_cell_recovery_outcome(
                 ),
             ));
         }
-        return Ok(None);
-    };
-    Ok(Some(materialized_arrangement_attempt_outcome(
-        attempt,
-        result,
-        true,
-        Some(ExactBooleanShortcutKind::ArrangementCellComplex),
-    )))
-}
-
-fn arrangement_cell_complex_recovery_outcome_if_available(
-    enabled: bool,
-    regularized_sheet_recovery_surface: bool,
-    validation: ExactMeshValidationPolicy,
-    attempt: &mut ExactArrangementBooleanAttempt,
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<Option<ArrangementCellComplexOutcome>, ExactMeshError> {
-    if enabled && regularized_sheet_recovery_surface {
-        if let Some(result) = boolean_arrangement_regularized_sheet_complex_from_graph(
-            graph, left, right, operation, validation,
-        )? {
-            return Ok(Some(materialized_arrangement_attempt_outcome(
-                attempt,
-                result,
-                true,
-                Some(ExactBooleanShortcutKind::ArrangementCellComplex),
-            )));
-        }
-        if let Some(result) = boolean_arrangement_convex_regularized_sheet_recovery(
-            left, right, operation, validation,
-        )? {
-            return Ok(Some(materialized_arrangement_attempt_outcome(
-                attempt,
-                result,
-                true,
-                Some(ExactBooleanShortcutKind::ArrangementCellComplex),
-            )));
-        }
-    }
-    if enabled
-        && let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome(
-            attempt, graph, left, right, operation, validation,
-        )?
-    {
-        return Ok(Some(outcome));
-    }
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && !open_surface_disjoint_report_from_graph(graph, left, right).is_certified()
-    {
-        match boolean_coplanar_mesh_overlay_optional(left, right, operation, validation) {
-            Ok(Some(result)) => {
-                return Ok(Some(materialized_arrangement_attempt_outcome(
-                    attempt,
-                    result,
-                    false,
-                    Some(ExactBooleanShortcutKind::ArrangementCellComplex),
-                )));
-            }
-            Ok(None) => {}
-            Err(_) => {
-                let output_counts = coplanar_mesh_overlay_candidate_counts(left, right, operation);
-                return Ok(Some(
-                    declined_output_validation_attempt_outcome_with_counts(attempt, output_counts),
-                ));
-            }
-        }
-    }
-    if let Some(outcome) = arrangement_open_surface_recovery_outcome(
-        attempt, graph, left, right, operation, validation,
-    )? {
-        return Ok(Some(outcome));
-    }
-    let Some(result) =
-        boolean_arrangement_cell_complex_recovery(left, right, operation, validation)?
-    else {
         return Ok(None);
     };
     Ok(Some(materialized_arrangement_attempt_outcome(
