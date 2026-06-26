@@ -120,6 +120,14 @@ serde = { version = "1.0.228", optional = true }
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 uuid = { version = "1.18", features = ["js"] }
 
+# Keep transitive sibling crates unified while using local path development mode.
+[patch.crates-io]
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit" }
+hyperreal = { path = "../hyperreal" }
+hypertri = { path = "../hypertri" }
+hypersolve = { path = "../hypersolve" }
+
 [features]
 default = ["mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "gerber-io", "chull-io", "image-io", "metaballs", "sdf", "truetype-text", "hershey-text"]
 parallel = [

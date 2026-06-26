@@ -28,6 +28,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let Ok(mesh) = self.to_hypermesh_exact() else {
             return false;
         };
-        mesh.validate_retained_state().is_ok() && mesh.facts().mesh.closed_manifold
+        let view = mesh.view();
+        view.validate_retained_state().is_ok() && view.is_closed_manifold()
     }
 }
