@@ -50,11 +50,11 @@ use super::facts::MeshFacts;
 use super::graph::FacePairEvents;
 #[cfg(test)]
 use super::graph::build_unvalidated_intersection_graph;
+use super::graph::intersection::MeshFacePairRelation;
 use super::graph::{
     ExactIntersectionGraph, IntersectionEvent, MeshSide, build_validated_intersection_graph,
     build_validated_intersection_graph_from_prepared_pair,
 };
-use super::intersection::MeshFacePairRelation;
 use super::loop_triangulation::{group_exact_coplanar_loops, triangulate_exact_loop_group};
 #[cfg(test)]
 use super::mesh::triangle_edges as topology_triangle_edges;

@@ -23,10 +23,10 @@ use hyperlimit::{
 
 use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::super::facts::FacePlaneFacts;
+use super::super::graph::intersection::MeshFacePairRelation;
 use super::super::graph::{
     ExactIntersectionGraph, IntersectionEvent, MeshSide, build_validated_intersection_graph,
 };
-use super::super::intersection::MeshFacePairRelation;
 use super::super::mesh::{ExactMesh, sorted_edge};
 use super::solid::{ClosedMeshOrientation, exact_mesh_orientation};
 use hyperreal::Real;

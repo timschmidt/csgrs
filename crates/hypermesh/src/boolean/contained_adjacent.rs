@@ -25,11 +25,11 @@ use super::super::arrangement2d::{
     ExactArrangement2dBoundaryPolicy, ExactArrangement2dSetOperation,
 };
 use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::graph::intersection::MeshFacePairRelation;
 use super::super::graph::{
     ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide,
     build_validated_intersection_graph,
 };
-use super::super::intersection::MeshFacePairRelation;
 use super::super::mesh::{ExactMesh, ExactMeshValidationError, Triangle, triangle_tuple_edges};
 use super::super::validation::ExactMeshValidationPolicy;
 use super::winding::{

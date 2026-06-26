@@ -20,11 +20,11 @@ use super::super::cell_complex::{
     validate_selected_gate_reports,
 };
 use super::super::graph::MeshSide;
+use super::super::graph::intersection::MeshFacePairRelation;
 use super::super::graph::{
     CoplanarArrangementEvidence, CoplanarArrangementEvidenceStatus, ExactIntersectionGraph,
     IntersectionEvent, build_validated_intersection_graph,
 };
-use super::super::intersection::MeshFacePairRelation;
 use super::super::region::{
     ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputTriangleOrientation,
     ExactRegionSelection, FaceRegionPlaneClassification, FaceRegionPlaneValidationError,

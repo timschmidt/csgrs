@@ -26,7 +26,6 @@ mod cell_complex;
 mod error;
 mod facts;
 mod graph;
-mod intersection;
 mod loop_triangulation;
 mod mesh;
 mod region;

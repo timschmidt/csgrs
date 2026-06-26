@@ -24,9 +24,9 @@ use hyperlimit::{
 };
 use hyperreal::Real;
 
-use super::facts::FacePlaneFacts;
-use super::mesh::ExactMesh;
-use super::mesh::triangle_edges;
+use super::super::facts::FacePlaneFacts;
+use super::super::mesh::ExactMesh;
+use super::super::mesh::triangle_edges;
 
 /// Certified coarse relation between two exact triangles.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

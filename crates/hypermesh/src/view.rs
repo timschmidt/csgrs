@@ -14,12 +14,12 @@ use super::bounds::{
 };
 use super::error::ExactMeshError;
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
+use super::graph::intersection::{
+    MeshFacePairClassification, MeshFacePairRelation, classify_mesh_face_pair_unchecked,
+};
 use super::graph::{
     ExactIntersectionGraph, build_unvalidated_intersection_graph_from_prepared_pair_rc,
     build_validated_intersection_graph_from_prepared_pair,
-};
-use super::intersection::{
-    MeshFacePairClassification, MeshFacePairRelation, classify_mesh_face_pair_unchecked,
 };
 use super::regularization::ExactRegularizationPolicy;
 use super::validation::ExactMeshValidationPolicy;

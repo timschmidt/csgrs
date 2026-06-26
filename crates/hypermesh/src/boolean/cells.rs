@@ -23,11 +23,11 @@ use hyperlimit::{
 };
 use hypertri::Constraint;
 
+use super::super::graph::intersection::MeshFacePairRelation;
 use super::super::graph::{
     CoplanarOverlapSplitPlan, ExactFaceRegionPlan, ExactIntersectionGraph, ExactSplitTopologyPlan,
     FacePairEvents, FaceRegionBoundary, FaceSplitBoundaryNode, IntersectionEvent, MeshSide,
 };
-use super::super::intersection::MeshFacePairRelation;
 use super::super::mesh::ExactMesh;
 use super::super::mesh::triangle_edges;
 use super::super::region::{

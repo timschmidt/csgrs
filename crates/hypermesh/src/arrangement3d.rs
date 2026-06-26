@@ -348,8 +348,8 @@ fn validate_lower_dimensional_artifact_graph_pairs(
         };
         if !matches!(
             relation,
-            super::intersection::MeshFacePairRelation::Candidate
-                | super::intersection::MeshFacePairRelation::CoplanarTouching
+            super::graph::intersection::MeshFacePairRelation::Candidate
+                | super::graph::intersection::MeshFacePairRelation::CoplanarTouching
         ) {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
@@ -2728,7 +2728,7 @@ fn lower_dimensional_artifacts(
     let touching_pairs = graph
         .coplanar_overlap_graph_iter()
         .filter(|overlap| {
-            overlap.relation == super::intersection::MeshFacePairRelation::CoplanarTouching
+            overlap.relation == super::graph::intersection::MeshFacePairRelation::CoplanarTouching
         })
         .map(|overlap| ((overlap.left_face, overlap.right_face), overlap))
         .collect::<BTreeMap<_, _>>();
@@ -2783,7 +2783,7 @@ fn append_non_coplanar_lower_dimensional_artifacts(
     right: &ExactMesh,
 ) {
     for pair in &graph.face_pairs {
-        if pair.relation != super::intersection::MeshFacePairRelation::Candidate {
+        if pair.relation != super::graph::intersection::MeshFacePairRelation::Candidate {
             continue;
         }
         if pair.events.iter().any(|event| {

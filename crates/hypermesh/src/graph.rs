@@ -10,6 +10,7 @@
 //! segment/plane crossings, and coplanar overlap through projected segment and
 //! containment predicates.
 
+pub(crate) mod intersection;
 pub(crate) mod key;
 
 use std::cmp::Ordering;
@@ -25,13 +26,13 @@ use hyperlimit::{
 
 use super::bounds::{ExactAabbBroadPhase, ExactBroadPhase};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide};
-use super::intersection::{
-    MeshFacePairClassification, MeshFacePairRelation, classify_mesh_face_pair_unchecked,
-};
 use super::mesh::{ExactMesh, triangle_edges};
 use super::view::{PreparedMeshPair, PreparedMeshPairClassificationCounts, PreparedMeshView};
 use hyperlimit::{CoplanarProjection, CoplanarTriangleClassification};
 use hyperreal::Real;
+use intersection::{
+    MeshFacePairClassification, MeshFacePairRelation, classify_mesh_face_pair_unchecked,
+};
 use key::{ExactPoint3Key, exact_point3_key};
 
 /// Side of a two-mesh graph event.
