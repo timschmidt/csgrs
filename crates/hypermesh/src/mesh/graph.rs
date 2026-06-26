@@ -26,10 +26,7 @@ use hyperlimit::{
 
 use super::bounds::{ExactAabbBroadPhase, ExactBroadPhase};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide};
-use super::view::{
-    PreparedMeshPair, PreparedMeshPairClassificationCounts, PreparedMeshPairFactState,
-    PreparedMeshView,
-};
+use super::view::{PreparedMeshPair, PreparedMeshPairFactState, PreparedMeshView};
 use super::{ExactMesh, triangle_edges};
 use hyperlimit::{CoplanarProjection, CoplanarTriangleClassification};
 use hyperreal::Real;
@@ -1345,19 +1342,15 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
 
     let left = pair.left().view().mesh();
     let right = pair.right().view().mesh();
-    let retained_classification_counts = pair
-        .cache_status()
-        .current_face_pair_classification_counts()
-        .ok();
-    if retained_classification_counts.is_some_and(|counts| counts.graph_required_count() == 0) {
+    let retained_graph_required_count = pair.current_face_pair_graph_required_count().ok();
+    if retained_graph_required_count == Some(0) {
         return Ok(
             pair.retain_intersection_graph(ExactIntersectionGraph::from_face_pairs(Vec::new()))
         );
     }
-    let mut face_pairs = Vec::with_capacity(retained_classification_counts.map_or_else(
-        || pair.candidate_pair_capacity_hint(),
-        PreparedMeshPairClassificationCounts::graph_required_count,
-    ));
+    let mut face_pairs = Vec::with_capacity(
+        retained_graph_required_count.unwrap_or_else(|| pair.candidate_pair_capacity_hint()),
+    );
     if matches!(
         pair.cache_status().face_pair_classifications(),
         PreparedMeshPairFactState::Current
@@ -1370,18 +1363,18 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
             }
         })?;
     } else {
-        let mut classification_counts = PreparedMeshPairClassificationCounts::default();
+        let mut graph_required_count = 0usize;
         pair.try_visit_unretained_candidate_face_pairs(&mut |[left_face, right_face]| {
             let classification =
                 classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
-            classification_counts.record(&classification);
             if classification.needs_graph_construction() {
+                graph_required_count += 1;
                 face_pairs.push(events_for_face_pair(left, right, &classification));
             }
             Ok::<(), ExactMeshError>(())
         })?;
         pair.retain_broad_phase_traversal();
-        pair.retain_face_pair_classification_counts(classification_counts);
+        pair.retain_face_pair_graph_required_count(graph_required_count);
     }
     let graph = ExactIntersectionGraph::from_face_pairs(face_pairs);
     Ok(pair.retain_intersection_graph(graph))
