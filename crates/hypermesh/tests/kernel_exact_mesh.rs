@@ -134,10 +134,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
     assert!(!pair.has_retained_face_pair_classifications());
     assert_eq!(pair.retained_face_pair_classification_count(), None);
     assert_eq!(pair.retained_face_pair_classification_counts(), None);
-    assert!(!pair.has_retained_intersection_graph());
-    assert_eq!(pair.retained_intersection_graph_face_pair_count(), None);
-    assert_eq!(pair.retained_intersection_graph_event_count(), None);
-    assert_eq!(pair.retained_intersection_graph_counts(), None);
+    assert!(pair.cache_status().intersection_graph().is_missing());
     assert!(!pair.has_retained_arrangement());
     assert_eq!(pair.retained_arrangement_counts(), None);
     assert!(!pair.has_retained_arrangement_shortcut_facts());
@@ -337,10 +334,11 @@ fn prepared_mesh_pair_materializes_named_operations() {
     assert_eq!(count_only_graph_counts.event_count(), 0);
     assert!(!count_only_pair.has_retained_face_pair_classifications());
     assert!(count_only_pair.face_pair_classification_counts_are_current());
-    assert!(count_only_pair.intersection_graph_is_certificate_blocked());
-    assert_eq!(
-        count_only_pair.retained_intersection_graph_counts(),
-        Some(count_only_graph_counts)
+    assert!(
+        count_only_pair
+            .cache_status()
+            .intersection_graph()
+            .is_certificate_blocked()
     );
 
     assert_eq!(pair.prepare_face_pair_classifications(), 0);
@@ -366,13 +364,13 @@ fn prepared_mesh_pair_materializes_named_operations() {
         Some(empty_classification_counts)
     );
     assert_eq!(pair.current_face_pair_classification_count().unwrap(), 0);
-    assert!(!pair.has_retained_intersection_graph());
+    assert!(pair.cache_status().intersection_graph().is_missing());
     assert!(!pair.has_retained_arrangement_shortcut_facts());
 
     pair.prepare_arrangement_shortcut_facts().unwrap();
     assert!(pair.arrangement_shortcut_facts_are_current());
     pair.require_current_arrangement_shortcut_facts().unwrap();
-    assert!(!pair.has_retained_intersection_graph());
+    assert!(pair.cache_status().intersection_graph().is_missing());
 
     let prepared_union_outcome = pair.prepare_result(PreparedMeshPairBoolean::Union).unwrap();
     assert!(prepared_union_outcome.is_mesh());
@@ -385,10 +383,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
         pair.retained_face_pair_classification_counts(),
         Some(empty_classification_counts)
     );
-    assert!(!pair.has_retained_intersection_graph());
-    assert_eq!(pair.retained_intersection_graph_face_pair_count(), None);
-    assert_eq!(pair.retained_intersection_graph_event_count(), None);
-    assert_eq!(pair.retained_intersection_graph_counts(), None);
+    assert!(pair.cache_status().intersection_graph().is_missing());
     assert_eq!(
         pair.current_intersection_graph_counts()
             .unwrap_err()
@@ -1047,10 +1042,11 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         streamed_graph_classification_counts.graph_required_count(),
         streamed_graph_counts.face_pair_count()
     );
-    assert!(streamed_graph_pair.intersection_graph_is_certificate_blocked());
-    assert_eq!(
-        streamed_graph_pair.retained_intersection_graph_counts(),
-        Some(streamed_graph_counts)
+    assert!(
+        streamed_graph_pair
+            .cache_status()
+            .intersection_graph()
+            .is_certificate_blocked()
     );
     let streamed_classification_pair = left
         .view()
@@ -1140,18 +1136,11 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     );
     assert!(retained_graph_counts.event_count() > 0);
     assert!(!retained_graph_counts.has_unknowns());
-    assert!(prepared_pair.intersection_graph_is_certificate_blocked());
-    assert_eq!(
-        prepared_pair.retained_intersection_graph_face_pair_count(),
-        Some(retained_graph_counts.face_pair_count())
-    );
-    assert_eq!(
-        prepared_pair.retained_intersection_graph_event_count(),
-        Some(retained_graph_counts.event_count())
-    );
-    assert_eq!(
-        prepared_pair.retained_intersection_graph_counts(),
-        Some(retained_graph_counts)
+    assert!(
+        prepared_pair
+            .cache_status()
+            .intersection_graph()
+            .is_certificate_blocked()
     );
     assert_eq!(
         prepared_pair
@@ -1165,7 +1154,12 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         prepared_pair.prepare_current_intersection_graph().unwrap(),
         retained_graph_counts
     );
-    assert!(prepared_pair.intersection_graph_is_current());
+    assert!(
+        prepared_pair
+            .cache_status()
+            .intersection_graph()
+            .is_current()
+    );
     assert_eq!(
         prepared_pair.current_intersection_graph_counts().unwrap(),
         retained_graph_counts
@@ -1410,7 +1404,7 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         .unwrap();
 
     let pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
-    assert!(!pair.has_retained_intersection_graph());
+    assert!(pair.cache_status().intersection_graph().is_missing());
     assert!(!pair.has_retained_arrangement());
     assert_eq!(
         pair.current_arrangement_counts().unwrap_err().blockers()[0].kind(),
@@ -1503,7 +1497,7 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         pair.current_arrangement_counts().unwrap(),
         retained_arrangement_counts
     );
-    assert!(pair.intersection_graph_is_current());
+    assert!(pair.cache_status().intersection_graph().is_current());
     let arrangement_graph_counts = pair.current_intersection_graph_counts().unwrap();
     assert_eq!(arrangement_graph_counts.face_pair_count(), 0);
     assert_eq!(arrangement_graph_counts.event_count(), 0);

@@ -1726,17 +1726,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.cache_status().require_current_sources()
     }
 
-    fn intersection_graph_state(&self) -> PreparedMeshPairFactState {
-        if self.intersection_graph.borrow().is_none() {
-            PreparedMeshPairFactState::Missing
-        } else {
-            retained_certificate_state(
-                *self.intersection_graph_validated.borrow(),
-                self.sources_are_current(),
-            )
-        }
-    }
-
     /// Return retained exact intersection graph counts after requiring a current certificate.
     pub fn current_intersection_graph_counts(
         &self,
@@ -1886,40 +1875,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     pub fn require_current_face_pair_classifications(&self) -> Result<(), ExactMeshError> {
         self.cache_status()
             .require_current_face_pair_classifications()
-    }
-
-    /// Return retained intersection graph counts, if present.
-    pub fn retained_intersection_graph_counts(
-        &self,
-    ) -> Option<PreparedMeshPairIntersectionGraphCounts> {
-        *self.intersection_graph_counts.borrow()
-    }
-
-    /// Return whether an intersection graph is retained.
-    pub fn has_retained_intersection_graph(&self) -> bool {
-        self.intersection_graph.borrow().is_some()
-    }
-
-    /// Return retained intersection graph face-pair count, if present.
-    pub fn retained_intersection_graph_face_pair_count(&self) -> Option<usize> {
-        self.retained_intersection_graph_counts()
-            .map(|counts| counts.face_pair_count())
-    }
-
-    /// Return retained intersection graph event count, if present.
-    pub fn retained_intersection_graph_event_count(&self) -> Option<usize> {
-        self.retained_intersection_graph_counts()
-            .map(|counts| counts.event_count())
-    }
-
-    /// Return whether the retained intersection graph is source-current.
-    pub fn intersection_graph_is_current(&self) -> bool {
-        self.intersection_graph_state().is_current()
-    }
-
-    /// Return whether retained intersection graph source certification is blocked.
-    pub fn intersection_graph_is_certificate_blocked(&self) -> bool {
-        self.intersection_graph_state().is_certificate_blocked()
     }
 
     /// Build and retain the exact intersection graph without certifying source replay.

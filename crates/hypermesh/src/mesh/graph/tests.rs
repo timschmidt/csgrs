@@ -292,16 +292,24 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
         )
     );
     assert!(prepared_pair.has_retained_arrangement_shortcut_facts());
-    assert!(!prepared_pair.has_retained_intersection_graph());
+    assert!(
+        prepared_pair
+            .cache_status()
+            .intersection_graph()
+            .is_missing()
+    );
     assert_eq!(
         build_unvalidated_intersection_graph_from_prepared_pair_rc(&prepared_pair)
             .unwrap()
             .as_ref(),
         &graph
     );
-    assert!(prepared_pair.has_retained_intersection_graph());
-    assert!(!prepared_pair.intersection_graph_is_current());
-    assert!(prepared_pair.intersection_graph_is_certificate_blocked());
+    assert!(
+        prepared_pair
+            .cache_status()
+            .intersection_graph()
+            .is_certificate_blocked()
+    );
     assert_eq!(
         prepared_pair
             .current_intersection_graph_counts()
@@ -316,7 +324,12 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
             .as_ref(),
         &graph
     );
-    assert!(prepared_pair.intersection_graph_is_current());
+    assert!(
+        prepared_pair
+            .cache_status()
+            .intersection_graph()
+            .is_current()
+    );
     assert_eq!(
         (
             prepared_pair
@@ -351,7 +364,12 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
         .unwrap();
     assert!(prepared_pair.arrangement_is_current());
     prepared_pair.retain_intersection_graph(ExactIntersectionGraph::from_face_pairs(Vec::new()));
-    assert!(prepared_pair.intersection_graph_is_certificate_blocked());
+    assert!(
+        prepared_pair
+            .cache_status()
+            .intersection_graph()
+            .is_certificate_blocked()
+    );
     assert!(!prepared_pair.has_retained_arrangement());
     assert!(
         prepared_pair
@@ -366,7 +384,12 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
             .kind(),
         ExactMeshBlockerKind::StaleFactReplay
     );
-    assert!(prepared_pair.intersection_graph_is_certificate_blocked());
+    assert!(
+        prepared_pair
+            .cache_status()
+            .intersection_graph()
+            .is_certificate_blocked()
+    );
     let retained_pair = graph
         .face_pairs
         .iter()
