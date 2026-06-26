@@ -175,8 +175,9 @@ fn test_arrangement_attempt(
 ) -> ExactArrangementBooleanAttempt {
     assert_eq!(policy, ExactRegularizationPolicy::REGULARIZED_SOLID);
     let graph = build_validated_intersection_graph(left, right).unwrap();
-    let shortcut_facts =
-        ExactBooleanSourceFacts::from_sources(left, right).arrangement_cell_complex_shortcuts;
+    let shortcut_facts = ExactBooleanSourceFacts::from_sources(left, right)
+        .arrangement_cell_complex_shortcuts()
+        .clone();
     let mut retained_arrangement = None;
     let mut retained_attempt = None;
     replay_regularized_arrangement_attempt(

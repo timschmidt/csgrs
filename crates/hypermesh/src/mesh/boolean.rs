@@ -725,8 +725,8 @@ fn certification_set_from_graph_and_regularized_arrangement(
                 )
             })?;
     }
-    let trivial = source_facts.trivial.clone();
-    let regularized_solid = source_facts.regularized_solid.clone();
+    let trivial = source_facts.trivial().clone();
+    let regularized_solid = source_facts.regularized_solid().clone();
     let refinement = refinement_report_from_graph(graph, request.operation);
     let boundary_touching = boundary_touching_report_from_graph(graph, left, right)
         .unwrap_or_else(|_| not_boundary_only_report_from_graph(graph));
@@ -740,13 +740,13 @@ fn certification_set_from_graph_and_regularized_arrangement(
     )?
     .0;
     let adjacent_union_completion_certified = adjacent_union_completion.is_certified();
-    let identical = source_facts.identical.clone();
-    let same_surface = source_facts.same_surface.clone();
-    let closed_winding_left_in_right = source_facts.closed_winding_left_in_right.clone();
-    let closed_winding_right_in_left = source_facts.closed_winding_right_in_left.clone();
-    let convex_left_in_right = source_facts.convex_left_in_right.clone();
-    let convex_right_in_left = source_facts.convex_right_in_left.clone();
-    let convex_capabilities = source_facts.convex_capabilities.clone();
+    let identical = source_facts.identical().clone();
+    let same_surface = source_facts.same_surface().clone();
+    let closed_winding_left_in_right = source_facts.closed_winding_left_in_right().clone();
+    let closed_winding_right_in_left = source_facts.closed_winding_right_in_left().clone();
+    let convex_left_in_right = source_facts.convex_left_in_right().clone();
+    let convex_right_in_left = source_facts.convex_right_in_left().clone();
+    let convex_capabilities = source_facts.convex_capabilities().clone();
     let arrangement_cell_complex_shortcuts = source_facts.arrangement_cell_complex_shortcuts();
     let arrangement_cell_complex_shortcut_support =
         arrangement_cell_complex_shortcuts.certified_support(request.operation);
