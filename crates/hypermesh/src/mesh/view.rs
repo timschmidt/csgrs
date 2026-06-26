@@ -77,7 +77,9 @@ pub struct PreparedMeshPair<'left, 'right> {
     left: PreparedMeshView<'left>,
     right: PreparedMeshView<'right>,
     plan: CandidateFacePairPlan,
-    broad_phase_summary: PreparedMeshPairBroadPhaseSummary,
+    left_source: ExactMeshSourceStamp,
+    right_source: ExactMeshSourceStamp,
+    candidate_pair_capacity_hint: usize,
     scratch: RefCell<BroadPhaseScratch>,
     candidate_face_pairs: RefCell<Option<Vec<[usize; 2]>>>,
     broad_phase_traversed: RefCell<bool>,
@@ -318,43 +320,6 @@ const fn fnv1a_u64(mut hash: u64, value: u64) -> u64 {
 
 const fn fnv1a_u8(hash: u64, byte: u8) -> u64 {
     (hash ^ byte as u64).wrapping_mul(0x100000001b3)
-}
-
-/// Retained broad-phase planning provenance for a prepared mesh-pair session.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct PreparedMeshPairBroadPhaseSummary {
-    left_source: ExactMeshSourceStamp,
-    right_source: ExactMeshSourceStamp,
-    candidate_pair_capacity_hint: usize,
-}
-
-impl PreparedMeshPairBroadPhaseSummary {
-    /// Return the retained left source/freshness stamp.
-    pub const fn left_source(self) -> ExactMeshSourceStamp {
-        self.left_source
-    }
-
-    /// Return the retained right source/freshness stamp.
-    pub const fn right_source(self) -> ExactMeshSourceStamp {
-        self.right_source
-    }
-
-    /// Return the bounded vector reserve hint used by retained pair stages.
-    pub const fn candidate_pair_capacity_hint(self) -> usize {
-        self.candidate_pair_capacity_hint
-    }
-
-    const fn from_plan(
-        left_source: ExactMeshSourceStamp,
-        right_source: ExactMeshSourceStamp,
-        candidate_pair_capacity_hint: usize,
-    ) -> Self {
-        Self {
-            left_source,
-            right_source,
-            candidate_pair_capacity_hint,
-        }
-    }
 }
 
 /// Certificate state for retained facts inside a prepared mesh-pair session.
@@ -855,19 +820,12 @@ impl<'a> PreparedMeshView<'a> {
     pub(crate) fn retained_pair_plan<'right>(
         &self,
         right: &PreparedMeshView<'right>,
-    ) -> (CandidateFacePairPlan, PreparedMeshPairBroadPhaseSummary) {
+    ) -> (CandidateFacePairPlan, usize) {
         let broad_phase = ExactAabbBroadPhase::default();
         let plan = broad_phase.candidate_face_pair_plan(&self.bounds, &right.bounds);
         let candidate_pair_capacity_hint =
             plan.bounded_capacity_hint(self.view.face_count(), right.view.face_count());
-        (
-            plan,
-            PreparedMeshPairBroadPhaseSummary::from_plan(
-                self.view.source_stamp(),
-                right.view.source_stamp(),
-                candidate_pair_capacity_hint,
-            ),
-        )
+        (plan, candidate_pair_capacity_hint)
     }
 
     /// Visit certificate-validated candidate face pairs and allow the visitor to stop early.
@@ -889,12 +847,16 @@ impl<'a> PreparedMeshView<'a> {
 
 impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     fn new(left: PreparedMeshView<'left>, right: PreparedMeshView<'right>) -> Self {
-        let (plan, broad_phase_summary) = left.retained_pair_plan(&right);
+        let left_source = left.view.source_stamp();
+        let right_source = right.view.source_stamp();
+        let (plan, candidate_pair_capacity_hint) = left.retained_pair_plan(&right);
         Self {
             left,
             right,
             plan,
-            broad_phase_summary,
+            left_source,
+            right_source,
+            candidate_pair_capacity_hint,
             scratch: RefCell::new(BroadPhaseScratch::default()),
             candidate_face_pairs: RefCell::new(None),
             broad_phase_traversed: RefCell::new(false),
@@ -921,9 +883,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self.right
     }
 
-    /// Return retained broad-phase planning provenance for this pair session.
-    pub const fn broad_phase_summary(&self) -> PreparedMeshPairBroadPhaseSummary {
-        self.broad_phase_summary
+    pub(crate) const fn candidate_pair_capacity_hint(&self) -> usize {
+        self.candidate_pair_capacity_hint
     }
 
     /// Execute and retain broad-phase traversal without storing candidate records.
@@ -967,9 +928,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     /// Return a cheap summary of retained facts in this prepared pair session.
     pub fn cache_status(&self) -> PreparedMeshPairCacheStatus {
-        let sources_current = self.broad_phase_summary.left_source()
-            == self.left.view.source_stamp()
-            && self.broad_phase_summary.right_source() == self.right.view.source_stamp();
+        let sources_current = self.left_source == self.left.view.source_stamp()
+            && self.right_source == self.right.view.source_stamp();
         let candidate_face_pairs_retained = self.candidate_face_pairs.borrow().is_some();
         let broad_phase_traversed = *self.broad_phase_traversed.borrow();
         let face_pair_classifications_retained = self.face_pair_classifications.borrow().is_some();
@@ -1175,8 +1135,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             return;
         }
 
-        let mut classifications =
-            Vec::with_capacity(self.broad_phase_summary.candidate_pair_capacity_hint());
+        let mut classifications = Vec::with_capacity(self.candidate_pair_capacity_hint);
         if let Some(candidate_face_pairs) = self.candidate_face_pairs.borrow().as_deref() {
             for &[left_face, right_face] in candidate_face_pairs {
                 classifications.push(classify_mesh_face_pair_unchecked(
@@ -1402,8 +1361,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             return;
         }
 
-        let mut candidate_face_pairs =
-            Vec::with_capacity(self.broad_phase_summary.candidate_pair_capacity_hint());
+        let mut candidate_face_pairs = Vec::with_capacity(self.candidate_pair_capacity_hint);
         let result = self.try_visit_candidate_face_pairs_uncached(&mut |pair| {
             candidate_face_pairs.push(pair);
             Ok::<(), ()>(())

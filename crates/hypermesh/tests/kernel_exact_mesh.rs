@@ -2,8 +2,7 @@ use hyperlimit::{ApproximationPolicy, MeshSource, Point3, SourceProvenance};
 use hypermesh::ExactMesh;
 use hypermesh::kernel::{
     ArrangementView, EdgeRef, ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshRef,
-    FaceRef, MeshView, PreparedMeshPair, PreparedMeshPairBoolean,
-    PreparedMeshPairBroadPhaseSummary, PreparedMeshPairCacheStatus,
+    FaceRef, MeshView, PreparedMeshPair, PreparedMeshPairBoolean, PreparedMeshPairCacheStatus,
     PreparedMeshPairClassificationCounts, PreparedMeshPairFactState, PreparedMeshView, TriangleRef,
     VertexRef,
 };
@@ -130,10 +129,6 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .kind()
             == ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    assert_eq!(pair.broad_phase_summary().candidate_pair_capacity_hint(), 0);
-    let initial_broad_phase: PreparedMeshPairBroadPhaseSummary = pair.broad_phase_summary();
-    assert_eq!(initial_broad_phase.candidate_pair_capacity_hint(), 0);
-    assert_eq!(pair.broad_phase_summary(), initial_broad_phase);
     assert!(matches!(
         pair.cache_status().face_pair_classifications(),
         PreparedMeshPairFactState::Missing
@@ -748,27 +743,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         prepared_pair.right().view().face_count(),
         overlapping.triangle_count()
     );
-    assert!(
-        prepared_pair
-            .broad_phase_summary()
-            .candidate_pair_capacity_hint()
-            > 0
-    );
-    let broad_phase_summary: PreparedMeshPairBroadPhaseSummary =
-        prepared_pair.broad_phase_summary();
     assert!(matches!(
         prepared_pair.cache_status().source_pair(),
         PreparedMeshPairFactState::Current
     ));
-    assert_eq!(
-        broad_phase_summary.left_source(),
-        left.view().source_stamp()
-    );
-    assert_eq!(
-        broad_phase_summary.right_source(),
-        overlapping.view().source_stamp()
-    );
-    assert_eq!(prepared_pair.broad_phase_summary(), broad_phase_summary);
     assert!(matches!(
         prepared_pair.cache_status().candidate_face_pairs(),
         PreparedMeshPairFactState::Missing
@@ -1051,16 +1029,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     assert_eq!(classification_first_candidates, candidates);
 
     let prepared_disjoint = disjoint.view().prepare_broad_phase().unwrap();
-    let disjoint_pair = left
-        .view()
-        .prepare_broad_phase_pair(disjoint.view())
-        .unwrap();
-    assert_eq!(
-        disjoint_pair
-            .broad_phase_summary()
-            .candidate_pair_capacity_hint(),
-        0
-    );
     let mut disjoint_candidates = Vec::new();
     prepared_left
         .try_visit_candidate_face_pairs(&prepared_disjoint, &mut |pair| {
