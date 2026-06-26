@@ -588,7 +588,7 @@ impl ExactMesh {
     /// want to audit that its retained bounds, topology facts, and provenance
     /// still agree before consuming them. The bounds and topology facts are
     /// replayed from the exact vertices and triangle rows before acceptance.
-    pub fn validate_retained_state(&self) -> Result<(), ExactMeshError> {
+    pub(crate) fn validate_retained_state(&self) -> Result<(), ExactMeshError> {
         self.validate_retained_state_detail().map_err(|error| {
             retained_validation_mesh_error("exact mesh retained state replay failed", error)
         })
@@ -649,7 +649,7 @@ impl ExactMesh {
     /// triangles once. Routine broad-phase consumers use this cheap certificate
     /// check to ensure the retained bounds object has the expected shape and
     /// ordered exact intervals before consuming it.
-    pub fn validate_retained_bounds_certificate(&self) -> Result<(), ExactMeshError> {
+    pub(crate) fn validate_retained_bounds_certificate(&self) -> Result<(), ExactMeshError> {
         self.validate_retained_bounds_certificate_detail()
             .map_err(|error| {
                 retained_validation_mesh_error(
@@ -677,7 +677,7 @@ impl ExactMesh {
     /// and artifact boundaries. Normal broad-phase scheduling uses
     /// [`Self::validate_retained_bounds_certificate`] so already-retained
     /// construction facts are not recomputed on every use.
-    pub fn validate_retained_bounds(&self) -> Result<(), ExactMeshError> {
+    pub(crate) fn validate_retained_bounds(&self) -> Result<(), ExactMeshError> {
         self.validate_retained_bounds_detail().map_err(|error| {
             retained_validation_mesh_error("exact mesh retained bounds replay failed", error)
         })

@@ -114,7 +114,7 @@ let mesh = ExactMesh::from_i64_triangles(
 let view = mesh.view();
 assert_eq!(view.face_count(), 4);
 assert!(view.is_closed_manifold());
-mesh.validate_retained_state()?;
+view.validate_retained_state()?;
 ```
 
 Named booleans are mesh methods:
@@ -126,7 +126,7 @@ let difference = left.difference(&right)?;
 let xor = left.xor(&right)?;
 let inverse = left.inverse()?;
 
-union.validate_retained_state()?;
+union.view().validate_retained_state()?;
 ```
 
 ## References
