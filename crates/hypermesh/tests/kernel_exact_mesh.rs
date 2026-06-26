@@ -2,8 +2,7 @@ use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::ExactMesh;
 use hypermesh::kernel::{
     ArrangementView, EdgeRef, ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshRef,
-    FaceRef, MeshView, PreparedMeshPair, PreparedMeshPairBoolean, PreparedMeshView, TriangleRef,
-    VertexRef,
+    FaceRef, MeshView, PreparedMeshPair, PreparedMeshView, TriangleRef, VertexRef,
 };
 use hyperreal::Real;
 
@@ -97,34 +96,6 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    assert_eq!(
-        pair.current_result(PreparedMeshPairBoolean::Union)
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
-    assert_eq!(
-        pair.current_result(PreparedMeshPairBoolean::Intersection)
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
-    assert_eq!(
-        pair.current_result(PreparedMeshPairBoolean::Difference)
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
-    assert_eq!(
-        pair.current_result(PreparedMeshPairBoolean::Xor)
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
     let count_only_pair = empty.view().prepare_broad_phase_pair(solid.view()).unwrap();
     count_only_pair.prepare_intersection_graph().unwrap();
     count_only_pair
@@ -133,59 +104,33 @@ fn prepared_mesh_pair_materializes_named_operations() {
 
     assert_eq!(pair.prepare_face_pair_classifications(), 0);
 
-    pair.prepare_result(PreparedMeshPairBoolean::Union).unwrap();
-    let union = pair.current_result(PreparedMeshPairBoolean::Union).unwrap();
+    let union = pair.union().unwrap();
     union.validate_retained_state().unwrap();
     assert_eq!(union.triangle_count(), solid.triangle_count());
-    assert_eq!(
-        pair.current_result(PreparedMeshPairBoolean::Union)
-            .unwrap()
-            .triangle_count(),
-        union.triangle_count()
-    );
 
     let repeated_union = pair.union().unwrap();
     repeated_union.validate_retained_state().unwrap();
     assert_eq!(repeated_union.triangle_count(), union.triangle_count());
 
-    pair.prepare_result(PreparedMeshPairBoolean::Intersection)
-        .unwrap();
-    let intersection = pair
-        .current_result(PreparedMeshPairBoolean::Intersection)
-        .unwrap();
+    let intersection = pair.intersection().unwrap();
     intersection.validate_retained_state().unwrap();
     assert_eq!(intersection.triangle_count(), 0);
     assert_eq!(
-        pair.current_result(PreparedMeshPairBoolean::Intersection)
-            .unwrap()
-            .triangle_count(),
+        pair.intersection().unwrap().triangle_count(),
         intersection.triangle_count()
     );
 
-    pair.prepare_result(PreparedMeshPairBoolean::Difference)
-        .unwrap();
-    let difference = pair
-        .current_result(PreparedMeshPairBoolean::Difference)
-        .unwrap();
+    let difference = pair.difference().unwrap();
     difference.validate_retained_state().unwrap();
     assert_eq!(difference.triangle_count(), 0);
     assert_eq!(
-        pair.current_result(PreparedMeshPairBoolean::Difference)
-            .unwrap()
-            .triangle_count(),
+        pair.difference().unwrap().triangle_count(),
         difference.triangle_count()
     );
 
-    pair.prepare_result(PreparedMeshPairBoolean::Xor).unwrap();
-    let xor = pair.current_result(PreparedMeshPairBoolean::Xor).unwrap();
+    let xor = pair.xor().unwrap();
     xor.validate_retained_state().unwrap();
     assert_eq!(xor.triangle_count(), solid.triangle_count());
-    assert_eq!(
-        pair.current_result(PreparedMeshPairBoolean::Xor)
-            .unwrap()
-            .triangle_count(),
-        xor.triangle_count()
-    );
 
     let repeated_xor = pair.xor().unwrap();
     repeated_xor.validate_retained_state().unwrap();
@@ -739,16 +684,12 @@ fn prepared_pair_named_boolean_preserves_retained_arrangement() {
     })
     .unwrap();
 
-    pair.prepare_result(PreparedMeshPairBoolean::Intersection)
-        .unwrap();
+    let intersection = pair.intersection().unwrap();
     pair.with_current_arrangement_view(|view| {
         view.validate_retained_state().unwrap();
     })
     .unwrap();
-    pair.current_result(PreparedMeshPairBoolean::Intersection)
-        .unwrap()
-        .validate_retained_state()
-        .unwrap();
+    intersection.validate_retained_state().unwrap();
 }
 
 #[test]

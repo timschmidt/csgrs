@@ -2,7 +2,6 @@ use super::*;
 use crate::mesh::ExactMesh;
 use crate::mesh::boolean::region::FaceRegionPlaneRelation;
 use crate::mesh::validation::ExactMeshValidationPolicy;
-use crate::mesh::view::PreparedMeshPairBoolean;
 
 fn q(numerator: i64, denominator: i64) -> Real {
     (Real::from(numerator) / &Real::from(denominator)).expect("nonzero denominator")
@@ -319,14 +318,6 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
     assert_eq!(
         prepared_pair
             .with_current_arrangement_view(|view| view.vertex_count())
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
-    assert_eq!(
-        prepared_pair
-            .current_result(PreparedMeshPairBoolean::Union)
             .unwrap_err()
             .blockers()[0]
             .kind(),
