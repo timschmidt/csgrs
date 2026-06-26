@@ -90,14 +90,14 @@ use super::{
 };
 use hyperlimit::PredicateUse;
 
-/// Validation failure for an exact report object.
+/// Validation failure for a retained exact evidence object.
 ///
-/// Report validation checks the evidence object itself, not the original
-/// geometry. It lets tests, fuzzing, and downstream policy code assert that
-/// status, blocker kind, graph counts, and retained artifacts agree before a
-/// report is trusted as certified evidence.
+/// Evidence validation checks the retained certificate object itself, not the
+/// original geometry. It lets tests, fuzzing, and downstream policy code assert
+/// that status, blocker kind, graph counts, and retained artifacts agree before
+/// a result is trusted as certified evidence.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) enum ExactReportValidationError {
+pub(crate) enum ExactEvidenceValidationError {
     /// A certified shortcut report unexpectedly carried a blocker.
     CertifiedReportHasBlocker,
     /// A blocked or unresolved report did not carry the required blocker.
@@ -671,14 +671,14 @@ impl ExactArrangementBooleanAttempt {
         &self,
         request: ExactBooleanRequest,
         policy: ExactRegularizationPolicy,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         if self.operation != request.operation
             || self.policy != policy
             || self.output_validation != request.validation
             || self.boundary_policy != request.boundary_policy
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         Ok(())
     }
@@ -726,12 +726,12 @@ impl ExactArrangementBooleanAttempt {
     /// construction. Its stage, decline reason, shortcut materialization, and
     /// retained counts must describe one path through that state machine rather
     /// than an arbitrary mix of successful output and blockers.
-    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         let Some(oriented_selected_faces) = self
             .volume_oriented_selected_faces
             .checked_add(self.label_oriented_selected_faces)
         else {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         };
         if self.selected_faces > self.face_cells
             || self.selected_volume_regions > self.volume_regions
@@ -743,11 +743,11 @@ impl ExactArrangementBooleanAttempt {
             || self.label_oriented_selected_faces > self.selected_faces
             || oriented_selected_faces != self.selected_faces
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
 
         if self.materialized_shortcut.is_some() != self.shortcut_reason.is_some() {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
 
         match &self.decline {
@@ -755,12 +755,12 @@ impl ExactArrangementBooleanAttempt {
                 if self.materialized_shortcut.is_some()
                     || self.stage == ExactArrangementBooleanStage::Materialized
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 if let ExactArrangementBooleanDecline::ArrangementBlockers(blockers) = decline
                     && (blockers.is_empty() || blockers.len() != self.arrangement_blockers)
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 if !matches!(
                     (decline, self.stage),
@@ -784,12 +784,12 @@ impl ExactArrangementBooleanAttempt {
                         ExactArrangementBooleanStage::Triangulated
                     )
                 ) {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             None => {
                 if !self.materialized_arrangement_cell_complex_output() {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
         }
@@ -816,7 +816,7 @@ impl ExactArrangementBooleanAttempt {
                 || counts.volume_oriented_selected_faces != self.volume_oriented_selected_faces
                 || counts.label_oriented_selected_faces != self.label_oriented_selected_faces
             {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
             }
         }
         if let Some(simplified) = &self.simplified_cell_complex
@@ -835,7 +835,7 @@ impl ExactArrangementBooleanAttempt {
                 || simplified.label_oriented_selected_faces_before_simplification
                     != self.label_oriented_selected_faces)
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if self.stage == ExactArrangementBooleanStage::NotAttempted {
             if self.topology_assembly.is_some()
@@ -843,10 +843,10 @@ impl ExactArrangementBooleanAttempt {
                 || self.selected_cell_complex.is_some()
                 || self.simplified_cell_complex.is_some()
             {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
             }
         } else if self.region_ownership.is_some() && self.topology_assembly.is_none() {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if !matches!(
             (&self.topology_assembly, &self.topology_assembly_report),
@@ -855,7 +855,7 @@ impl ExactArrangementBooleanAttempt {
             (&self.topology_assembly, &self.topology_assembly_report),
             (None, None)
         ) {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if !matches!(
             (&self.region_ownership, &self.region_ownership_report),
@@ -864,38 +864,38 @@ impl ExactArrangementBooleanAttempt {
             (&self.region_ownership, &self.region_ownership_report),
             (None, None)
         ) {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if self.region_ownership_report.is_some() && self.topology_assembly_report.is_none() {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         match self.decline.as_ref() {
             Some(ExactArrangementBooleanDecline::TopologyAssembly(status))
                 if self.topology_assembly != Some(*status) || self.region_ownership.is_some() =>
             {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
             }
             Some(ExactArrangementBooleanDecline::Labeling(_))
                 if self.topology_assembly.is_none() || self.region_ownership.is_some() =>
             {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
             }
             Some(ExactArrangementBooleanDecline::RegionOwnership(status))
                 if self.region_ownership != Some(*status) =>
             {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
             }
             Some(
                 ExactArrangementBooleanDecline::Selection(_)
                 | ExactArrangementBooleanDecline::Simplification(_)
                 | ExactArrangementBooleanDecline::Triangulation(_),
             ) if self.region_ownership.is_none() => {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
             }
             Some(ExactArrangementBooleanDecline::OutputValidation)
                 if !pre_gate_output_validation && self.region_ownership.is_none() =>
             {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
             }
             _ => {}
         }
@@ -905,7 +905,7 @@ impl ExactArrangementBooleanAttempt {
             && !self.materialized_arrangement_cell_complex_shortcut()
             && !self.resolves_requested_volume_ownership()
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if (self.stage == ExactArrangementBooleanStage::Selected
             || self.stage == ExactArrangementBooleanStage::Simplified
@@ -918,34 +918,34 @@ impl ExactArrangementBooleanAttempt {
             && self.region_ownership.is_none()
             && !pre_gate_output_validation
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if self.output_triangles != 0 && self.output_vertices == 0 {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if let Some(output_facts) = &self.output_facts {
             if output_facts.vertex_count != self.output_vertices
                 || output_facts.face_count != self.output_triangles
             {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
             }
             if arrangement_attempt_stage_rank(self.stage)
                 < arrangement_attempt_stage_rank(ExactArrangementBooleanStage::Triangulated)
             {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
             }
         }
         if self.decline.is_none()
             && self.operation == ExactBooleanOperation::Union
             && self.output_triangles == 0
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if self.decline.is_none()
             && self.stage == ExactArrangementBooleanStage::Materialized
             && self.output_facts.is_none()
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if self.stage == ExactArrangementBooleanStage::NotAttempted
             && (self.arrangement_blockers != 0
@@ -965,7 +965,7 @@ impl ExactArrangementBooleanAttempt {
                 || self.selected_cell_complex.is_some()
                 || self.simplified_cell_complex.is_some())
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if arrangement_attempt_stage_rank(self.stage)
             < arrangement_attempt_stage_rank(ExactArrangementBooleanStage::Labeled)
@@ -976,13 +976,13 @@ impl ExactArrangementBooleanAttempt {
                 || self.selected_volume_regions != 0
                 || self.selected_cell_complex.is_some())
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if arrangement_attempt_stage_rank(self.stage)
             < arrangement_attempt_stage_rank(ExactArrangementBooleanStage::Simplified)
             && self.simplified_cell_complex.is_some()
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if arrangement_attempt_stage_rank(self.stage)
             < arrangement_attempt_stage_rank(ExactArrangementBooleanStage::Triangulated)
@@ -990,7 +990,7 @@ impl ExactArrangementBooleanAttempt {
                 || self.output_triangles != 0
                 || self.output_facts.is_some())
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         Ok(())
     }
@@ -999,30 +999,30 @@ impl ExactArrangementBooleanAttempt {
 fn validated_report_intersection_graph(
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<ExactIntersectionGraph, ExactReportValidationError> {
+) -> Result<ExactIntersectionGraph, ExactEvidenceValidationError> {
     build_validated_intersection_graph(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)
 }
 
 fn blocker_kind(
     blocker: Option<&ExactBooleanBlocker>,
     expected: ExactBooleanBlockerKind,
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     match blocker {
         Some(blocker) if blocker.kind == expected => Ok(()),
-        Some(_) => Err(ExactReportValidationError::WrongBlockerKind),
-        None => Err(ExactReportValidationError::MissingBlocker),
+        Some(_) => Err(ExactEvidenceValidationError::WrongBlockerKind),
+        None => Err(ExactEvidenceValidationError::MissingBlocker),
     }
 }
 
 fn no_region_facts(
     region_count: usize,
     classifications: &[FaceRegionPlaneClassification],
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     if region_count == 0 && classifications.is_empty() {
         Ok(())
     } else {
-        Err(ExactReportValidationError::UnexpectedRegionFacts)
+        Err(ExactEvidenceValidationError::UnexpectedRegionFacts)
     }
 }
 
@@ -1030,20 +1030,20 @@ fn validate_blocker_count_bounds(
     blocker: &ExactBooleanBlocker,
     retained_face_pairs: usize,
     retained_events: usize,
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     let Some(classified_relation_pairs) = blocker
         .candidate_pairs
         .checked_add(blocker.coplanar_overlapping_pairs)
         .and_then(|count| count.checked_add(blocker.coplanar_touching_pairs))
     else {
-        return Err(ExactReportValidationError::InvalidBlockerCounts);
+        return Err(ExactEvidenceValidationError::InvalidBlockerCounts);
     };
     // `unknown_pairs` can overlap a classified relation when a candidate pair
     // carries an unknown event, but every retained graph pair must still be
     // covered by either a classified relation counter or unknown evidence.
     let Some(covered_relation_pairs) = classified_relation_pairs.checked_add(blocker.unknown_pairs)
     else {
-        return Err(ExactReportValidationError::InvalidBlockerCounts);
+        return Err(ExactEvidenceValidationError::InvalidBlockerCounts);
     };
     let retained_graph_is_partial = (retained_face_pairs == 0) != (retained_events == 0);
     let retained_pairs_without_evidence =
@@ -1055,7 +1055,7 @@ fn validate_blocker_count_bounds(
         || covered_relation_pairs < retained_face_pairs
         || blocker.construction_failed_events > retained_events
     {
-        Err(ExactReportValidationError::InvalidBlockerCounts)
+        Err(ExactEvidenceValidationError::InvalidBlockerCounts)
     } else {
         Ok(())
     }
@@ -1064,12 +1064,12 @@ fn validate_blocker_count_bounds(
 fn validate_retained_graph_count_shape(
     retained_face_pairs: usize,
     retained_events: usize,
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     if (retained_face_pairs == 0 && retained_events != 0)
         || (retained_face_pairs != 0 && retained_events == 0)
         || retained_events < retained_face_pairs
     {
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     } else {
         Ok(())
     }
@@ -1078,7 +1078,7 @@ fn validate_retained_graph_count_shape(
 fn validate_coplanar_arrangement_evidence_matches_blocker(
     evidence: &CoplanarArrangementEvidence,
     blocker: &ExactBooleanBlocker,
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     // The compact evidence report and blocker are two projections of the same
     // exact graph state; downstream planar-cell or winding checks must not
     // consume a summary with relabeled graph counts.
@@ -1088,9 +1088,9 @@ fn validate_coplanar_arrangement_evidence_matches_blocker(
             != blocker
                 .coplanar_overlapping_pairs
                 .checked_add(blocker.coplanar_touching_pairs)
-                .ok_or(ExactReportValidationError::CoplanarArrangementEvidenceMismatch)?
+                .ok_or(ExactEvidenceValidationError::CoplanarArrangementEvidenceMismatch)?
     {
-        Err(ExactReportValidationError::CoplanarArrangementEvidenceMismatch)
+        Err(ExactEvidenceValidationError::CoplanarArrangementEvidenceMismatch)
     } else {
         Ok(())
     }
@@ -1112,11 +1112,11 @@ fn validate_adjacent_certified_boundary_blocker(
     blocker: &ExactBooleanBlocker,
     retained_face_pairs: usize,
     retained_events: usize,
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     if retained_face_pairs == 0 && retained_events == 0 && !blocker_has_any_evidence(blocker) {
         return (blocker.kind == ExactBooleanBlockerKind::BoundaryPolicy)
             .then_some(())
-            .ok_or(ExactReportValidationError::WrongBlockerKind);
+            .ok_or(ExactEvidenceValidationError::WrongBlockerKind);
     }
     blocker.validate_for_kind(ExactBooleanBlockerKind::BoundaryPolicy)
 }
@@ -1124,7 +1124,7 @@ fn validate_adjacent_certified_boundary_blocker(
 fn validate_refinement_partition(
     graph_unknown_status: bool,
     blocker: &ExactBooleanBlocker,
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     // Unknown predicate outcomes and failed exact constructions are both
     // boundary, planar-cell, and winding reports must not consume unresolved
     // construction state under a resolved status label.
@@ -1132,10 +1132,10 @@ fn validate_refinement_partition(
         if blocker_has_refinement_evidence(blocker) {
             Ok(())
         } else {
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         }
     } else if blocker_has_refinement_evidence(blocker) {
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     } else {
         Ok(())
     }
@@ -1182,16 +1182,16 @@ const fn certified_preflight_support_matches_operation(
 fn checked_region_facts(
     region_count: usize,
     classifications: &[FaceRegionPlaneClassification],
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     if region_count == 0 || classifications.is_empty() {
-        return Err(ExactReportValidationError::MissingRegionFacts);
+        return Err(ExactEvidenceValidationError::MissingRegionFacts);
     }
     let mut unique_regions = Vec::new();
     let mut unique_classifications = Vec::new();
     for classification in classifications {
         classification
             .validate()
-            .map_err(ExactReportValidationError::InvalidRegionClassification)?;
+            .map_err(ExactEvidenceValidationError::InvalidRegionClassification)?;
         let key = (classification.region_side, classification.region_face);
         if !unique_regions.contains(&key) {
             unique_regions.push(key);
@@ -1206,21 +1206,21 @@ fn checked_region_facts(
         // duplicate certificates would let later winding code over-count or
         // relabel already-consumed side evidence.
         if unique_classifications.contains(&classification_key) {
-            return Err(ExactReportValidationError::DuplicateRegionClassification);
+            return Err(ExactEvidenceValidationError::DuplicateRegionClassification);
         }
         unique_classifications.push(classification_key);
         // Winding-ready evidence must carry decided side facts, not an
         // "unknown" region/plane relation. Undecided predicates remain
         // explicit blockers instead of being mislabeled as classified regions.
         if !classification.is_decided_and_proof_producing() {
-            return Err(ExactReportValidationError::RegionClassificationNotProofProducing);
+            return Err(ExactEvidenceValidationError::RegionClassificationNotProofProducing);
         }
     }
     // `region_count` is a retained combinatorial fact, not a display counter.
     // It must match the unique region handles covered by plane classifications
     // so a later winding policy cannot silently consume stale or relabeled
     if unique_regions.len() != region_count {
-        return Err(ExactReportValidationError::RegionCountMismatch);
+        return Err(ExactEvidenceValidationError::RegionCountMismatch);
     }
     Ok(())
 }
@@ -1230,7 +1230,7 @@ fn validate_coplanar_volumetric_evidence_matches_blocker(
     blocker: &ExactBooleanBlocker,
     retained_face_pairs: usize,
     retained_events: usize,
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     validate_coplanar_volumetric_evidence_counts(evidence, retained_face_pairs, retained_events)?;
     if evidence.candidate_pairs() != blocker.candidate_pairs
         || evidence.coplanar_touching_pairs() != blocker.coplanar_touching_pairs
@@ -1238,7 +1238,7 @@ fn validate_coplanar_volumetric_evidence_matches_blocker(
         || evidence.unknown_pairs() != blocker.unknown_pairs
         || evidence.construction_failed_events() != blocker.construction_failed_events
     {
-        return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+        return Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch);
     }
     Ok(())
 }
@@ -1247,17 +1247,17 @@ fn validate_coplanar_volumetric_evidence_counts(
     evidence: &CoplanarVolumetricCellEvidenceReport,
     retained_face_pairs: usize,
     retained_events: usize,
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     evidence
         .validate()
-        .map_err(|_| ExactReportValidationError::InvalidCoplanarVolumetricEvidence)?;
+        .map_err(|_| ExactEvidenceValidationError::InvalidCoplanarVolumetricEvidence)?;
     let Some(retained_evidence_events) = evidence.retained_event_count() else {
-        return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+        return Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch);
     };
     if evidence.retained_face_pair_count() != retained_face_pairs
         || retained_evidence_events != retained_events
     {
-        return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+        return Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch);
     }
     Ok(())
 }
@@ -1266,10 +1266,10 @@ fn validate_coplanar_volumetric_evidence_shape(
     evidence: &CoplanarVolumetricCellEvidenceReport,
     retained_face_pairs: usize,
     retained_events: usize,
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     validate_coplanar_volumetric_evidence_counts(evidence, retained_face_pairs, retained_events)?;
     if !evidence.requires_coplanar_volumetric_cells() {
-        return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+        return Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch);
     }
     Ok(())
 }
@@ -1278,10 +1278,10 @@ fn validate_coplanar_boundary_only_evidence_shape(
     evidence: &CoplanarVolumetricCellEvidenceReport,
     retained_face_pairs: usize,
     retained_events: usize,
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     validate_coplanar_volumetric_evidence_counts(evidence, retained_face_pairs, retained_events)?;
     if !evidence.is_boundary_only_positive_area_contact() {
-        return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+        return Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch);
     }
     Ok(())
 }
@@ -1290,10 +1290,10 @@ fn validate_arrangement_materialized_coplanar_evidence(
     evidence: &CoplanarVolumetricCellEvidenceReport,
     retained_face_pairs: usize,
     retained_events: usize,
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     validate_coplanar_volumetric_evidence_counts(evidence, retained_face_pairs, retained_events)?;
     if !evidence.is_arrangement_materializable() {
-        return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+        return Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch);
     }
     Ok(())
 }
@@ -1700,7 +1700,7 @@ impl ExactBooleanResult {
     /// boundary. The retained assembly must also avoid dead vertices so the
     /// topology handoff is the exact set consumed by mesh materialization. That
     /// rather than an opaque output mesh.
-    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         let retains_region_artifacts = matches!(
             self.kind,
             ExactBooleanResultKind::SelectedRegions { .. }
@@ -1717,16 +1717,16 @@ impl ExactBooleanResult {
                 || !self.assembly.vertices.is_empty()
                 || !self.assembly.triangles.is_empty())
         {
-            return Err(ExactReportValidationError::ShortcutResultHasAssemblyArtifacts);
+            return Err(ExactEvidenceValidationError::ShortcutResultHasAssemblyArtifacts);
         }
         if retains_volumetric_artifacts && self.volumetric_classifications.is_empty() {
-            return Err(ExactReportValidationError::MissingVolumetricClassifications);
+            return Err(ExactEvidenceValidationError::MissingVolumetricClassifications);
         }
         if !retains_volumetric_artifacts && !self.volumetric_classifications.is_empty() {
-            return Err(ExactReportValidationError::UnexpectedVolumetricClassifications);
+            return Err(ExactEvidenceValidationError::UnexpectedVolumetricClassifications);
         }
         if !retains_region_artifacts && self.graph_had_unknowns {
-            return Err(ExactReportValidationError::ShortcutResultHasUnknownGraph);
+            return Err(ExactEvidenceValidationError::ShortcutResultHasUnknownGraph);
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
@@ -1734,7 +1734,7 @@ impl ExactBooleanResult {
         } = self.kind
             && !shortcut_operation_matches(shortcut, operation)
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
@@ -1748,16 +1748,16 @@ impl ExactBooleanResult {
         | ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } = self.kind
             && matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         self.validate_arrangement_cell_complex_gate_reports()?;
         if retains_region_artifacts && self.graph_had_unknowns {
-            return Err(ExactReportValidationError::SelectedRegionResultHasUnknownGraph);
+            return Err(ExactEvidenceValidationError::SelectedRegionResultHasUnknownGraph);
         }
         if retains_region_artifacts
             && (self.region_classifications.is_empty() || self.triangulations.is_empty())
         {
-            return Err(ExactReportValidationError::MissingRegionFacts);
+            return Err(ExactEvidenceValidationError::MissingRegionFacts);
         }
 
         self.validate_retained_region_and_volumetric_facts(
@@ -1772,7 +1772,7 @@ impl ExactBooleanResult {
                 })
             })
         {
-            return Err(ExactReportValidationError::UntriangulatedAssemblyRegion);
+            return Err(ExactEvidenceValidationError::UntriangulatedAssemblyRegion);
         }
         if retains_region_artifacts {
             for triangle in &self.assembly.triangles {
@@ -1780,11 +1780,11 @@ impl ExactBooleanResult {
                     triangulation.side == triangle.source_side
                         && triangulation.face == triangle.source_face
                 }) else {
-                    return Err(ExactReportValidationError::UntriangulatedAssemblyRegion);
+                    return Err(ExactEvidenceValidationError::UntriangulatedAssemblyRegion);
                 };
                 for &vertex in &triangle.vertices {
                     let Some(assembly_vertex) = self.assembly.vertices.get(vertex) else {
-                        return Err(ExactReportValidationError::InvalidAssembly);
+                        return Err(ExactEvidenceValidationError::InvalidAssembly);
                     };
                     if !retains_volumetric_artifacts
                         && !triangulation.boundary.iter().any(|source| {
@@ -1792,7 +1792,9 @@ impl ExactBooleanResult {
                                 || points_equal(&assembly_vertex.point, boundary_node_point(source))
                         })
                     {
-                        return Err(ExactReportValidationError::AssemblyVertexOutsideTriangulation);
+                        return Err(
+                            ExactEvidenceValidationError::AssemblyVertexOutsideTriangulation,
+                        );
                     }
                 }
             }
@@ -1809,26 +1811,26 @@ impl ExactBooleanResult {
                         .any(|triangle| triangle.vertices.contains(&vertex))
                 })
             {
-                return Err(ExactReportValidationError::UnreferencedAssemblyVertex);
+                return Err(ExactEvidenceValidationError::UnreferencedAssemblyVertex);
             }
         }
         self.assembly
             .validate()
-            .map_err(|_| ExactReportValidationError::InvalidAssembly)?;
+            .map_err(|_| ExactEvidenceValidationError::InvalidAssembly)?;
         if retains_region_artifacts {
             let mut seen_triangle_vertex_sets = Vec::<[usize; 3]>::new();
             for triangle in &self.assembly.triangles {
                 let mut vertices = triangle.vertices;
                 vertices.sort_unstable();
                 if seen_triangle_vertex_sets.contains(&vertices) {
-                    return Err(ExactReportValidationError::DuplicateAssemblyTriangle);
+                    return Err(ExactEvidenceValidationError::DuplicateAssemblyTriangle);
                 }
                 seen_triangle_vertex_sets.push(vertices);
             }
         }
         self.mesh
             .validate_retained_state()
-            .map_err(|_| ExactReportValidationError::InvalidOutputMesh)?;
+            .map_err(|_| ExactEvidenceValidationError::InvalidOutputMesh)?;
         let output_source = &self.mesh.provenance().source;
         let has_exact_boolean_label = output_source.label.starts_with("exact ")
             || output_source.label.starts_with("empty exact ");
@@ -1851,7 +1853,7 @@ impl ExactBooleanResult {
             || output_source.approximation != ApproximationPolicy::ExactOnly
             || !label_matches_kind
         {
-            return Err(ExactReportValidationError::InvalidOutputMeshProvenance);
+            return Err(ExactEvidenceValidationError::InvalidOutputMeshProvenance);
         }
 
         if retains_region_artifacts {
@@ -1875,7 +1877,7 @@ impl ExactBooleanResult {
                 ExactBooleanOperation::Union => ExactRegionSelection::KeepAll,
                 ExactBooleanOperation::Difference => ExactRegionSelection::KeepLeft,
                 ExactBooleanOperation::SelectedRegions(_) => {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }),
             _ => None,
@@ -1890,7 +1892,7 @@ impl ExactBooleanResult {
             .iter()
             .any(|triangle| !selection_keeps(selection, triangle.source_side))
         {
-            return Err(ExactReportValidationError::SelectedRegionAssemblyViolatesSelection);
+            return Err(ExactEvidenceValidationError::SelectedRegionAssemblyViolatesSelection);
         }
         validate_selected_region_assembly_covers_selection(
             selection,
@@ -1905,12 +1907,12 @@ impl ExactBooleanResult {
         &self,
         retains_region_artifacts: bool,
         retains_volumetric_artifacts: bool,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         let mut unique_classifications = Vec::new();
         for classification in &self.region_classifications {
             classification
                 .validate()
-                .map_err(ExactReportValidationError::InvalidRegionClassification)?;
+                .map_err(ExactEvidenceValidationError::InvalidRegionClassification)?;
             let classification_key = (
                 classification.region_side,
                 classification.region_face,
@@ -1920,24 +1922,24 @@ impl ExactBooleanResult {
             // The exact state cannot retain the same region/plane side fact
             // twice and still be a coherent winding handoff.
             if unique_classifications.contains(&classification_key) {
-                return Err(ExactReportValidationError::DuplicateRegionClassification);
+                return Err(ExactEvidenceValidationError::DuplicateRegionClassification);
             }
             unique_classifications.push(classification_key);
             if retains_region_artifacts && !classification.is_decided_and_proof_producing() {
-                return Err(ExactReportValidationError::RegionClassificationNotProofProducing);
+                return Err(ExactEvidenceValidationError::RegionClassificationNotProofProducing);
             }
         }
         let mut unique_triangulations = Vec::new();
         for triangulation in &self.triangulations {
             triangulation
                 .validate()
-                .map_err(|_| ExactReportValidationError::InvalidTriangulation)?;
+                .map_err(|_| ExactEvidenceValidationError::InvalidTriangulation)?;
             let triangulation_key = (triangulation.side, triangulation.face);
             // Each triangulation is the exact image of one retained
             // auditable object; duplicating it would make output assembly
             // provenance ambiguous even if the triangle soup still validates.
             if unique_triangulations.contains(&triangulation_key) {
-                return Err(ExactReportValidationError::DuplicateRegionTriangulation);
+                return Err(ExactEvidenceValidationError::DuplicateRegionTriangulation);
             }
             unique_triangulations.push(triangulation_key);
         }
@@ -1945,14 +1947,14 @@ impl ExactBooleanResult {
         for classification in &self.volumetric_classifications {
             classification
                 .validate()
-                .map_err(ExactReportValidationError::InvalidVolumetricClassification)?;
+                .map_err(ExactEvidenceValidationError::InvalidVolumetricClassification)?;
             let classification_key = classification.cell_key();
             if unique_volumetric_classifications.contains(&classification_key) {
-                return Err(ExactReportValidationError::DuplicateRegionClassification);
+                return Err(ExactEvidenceValidationError::DuplicateRegionClassification);
             }
             unique_volumetric_classifications.push(classification_key);
             if retains_volumetric_artifacts && !classification.is_materialization_decided() {
-                return Err(ExactReportValidationError::VolumetricClassificationNotDecided);
+                return Err(ExactEvidenceValidationError::VolumetricClassificationNotDecided);
             }
         }
         if retains_region_artifacts
@@ -1963,7 +1965,7 @@ impl ExactBooleanResult {
                 })
             })
         {
-            return Err(ExactReportValidationError::UnclassifiedRegionTriangulation);
+            return Err(ExactEvidenceValidationError::UnclassifiedRegionTriangulation);
         }
         if retains_region_artifacts
             && self.region_classifications.iter().any(|classification| {
@@ -1973,7 +1975,7 @@ impl ExactBooleanResult {
                 })
             })
         {
-            return Err(ExactReportValidationError::OrphanedRegionClassification);
+            return Err(ExactEvidenceValidationError::OrphanedRegionClassification);
         }
         if retains_volumetric_artifacts
             && self.triangulations.iter().any(|triangulation| {
@@ -1990,7 +1992,7 @@ impl ExactBooleanResult {
                 })
             })
         {
-            return Err(ExactReportValidationError::UnclassifiedVolumetricTriangulation);
+            return Err(ExactEvidenceValidationError::UnclassifiedVolumetricTriangulation);
         }
         if retains_volumetric_artifacts
             && self
@@ -2005,7 +2007,7 @@ impl ExactBooleanResult {
                     })
                 })
         {
-            return Err(ExactReportValidationError::OrphanedVolumetricClassification);
+            return Err(ExactEvidenceValidationError::OrphanedVolumetricClassification);
         }
         if retains_volumetric_artifacts {
             let expected_volumetric_classifications = self
@@ -2027,7 +2029,7 @@ impl ExactBooleanResult {
                             == (side, face, [triangle[0], triangle[1], triangle[2]])
                     })
             {
-                return Err(ExactReportValidationError::VolumetricClassificationOrderMismatch);
+                return Err(ExactEvidenceValidationError::VolumetricClassificationOrderMismatch);
             }
             for classification in &self.volumetric_classifications {
                 let Some(triangulation) = self.triangulations.iter().find(|triangulation| {
@@ -2036,11 +2038,11 @@ impl ExactBooleanResult {
                             classification.triangle() == [triangle[0], triangle[1], triangle[2]]
                         })
                 }) else {
-                    return Err(ExactReportValidationError::OrphanedVolumetricClassification);
+                    return Err(ExactEvidenceValidationError::OrphanedVolumetricClassification);
                 };
                 classification
                     .validate_representatives_against_triangulation(triangulation)
-                    .map_err(ExactReportValidationError::InvalidVolumetricClassification)?;
+                    .map_err(ExactEvidenceValidationError::InvalidVolumetricClassification)?;
             }
         }
         Ok(())
@@ -2048,27 +2050,27 @@ impl ExactBooleanResult {
 
     fn validate_arrangement_cell_complex_gate_reports(
         &self,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         if !self.has_arrangement_cell_complex_gate_reports() {
             return Ok(());
         }
         let operation = self
             .arrangement_cell_complex_operation()
-            .ok_or(ExactReportValidationError::StatusEvidenceMismatch)?;
+            .ok_or(ExactEvidenceValidationError::StatusEvidenceMismatch)?;
         let topology = self
             .topology_assembly_report
             .as_ref()
-            .ok_or(ExactReportValidationError::StatusEvidenceMismatch)?;
+            .ok_or(ExactEvidenceValidationError::StatusEvidenceMismatch)?;
         let ownership = self
             .region_ownership_report
             .as_ref()
-            .ok_or(ExactReportValidationError::StatusEvidenceMismatch)?;
+            .ok_or(ExactEvidenceValidationError::StatusEvidenceMismatch)?;
         validate_selected_gate_reports(Some(topology), Some(ownership), operation)
-            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+            .map_err(|_| ExactEvidenceValidationError::StatusEvidenceMismatch)?;
         if !ownership.matches_topology_gate_report(topology)
             || self.triangulations.len() > topology.arrangement_face_cells
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         Ok(())
     }
@@ -2085,7 +2087,7 @@ impl ExactBooleanResult {
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         self.validate_arrangement_cell_complex_gate_reports_against_sources(left, right)?;
         if matches!(
@@ -2106,9 +2108,9 @@ impl ExactBooleanResult {
                 selection,
                 self.mesh.validation_policy(),
             )
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
             if !retained_split_region_result_matches(self, &replay) {
-                return Err(ExactReportValidationError::SourceReplayMismatch);
+                return Err(ExactEvidenceValidationError::SourceReplayMismatch);
             }
         }
         if let ExactBooleanResultKind::OpenSurfaceArrangement { operation } = self.kind {
@@ -2118,10 +2120,10 @@ impl ExactBooleanResult {
                 operation,
                 self.mesh.validation_policy(),
             )
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-            .ok_or(ExactReportValidationError::SourceReplayMismatch)?;
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+            .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?;
             if !retained_split_region_result_matches(self, &replay) {
-                return Err(ExactReportValidationError::SourceReplayMismatch);
+                return Err(ExactEvidenceValidationError::SourceReplayMismatch);
             }
         }
         if let ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } = self.kind
@@ -2132,11 +2134,11 @@ impl ExactBooleanResult {
                 operation,
                 self.mesh.validation_policy(),
             )
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-            .ok_or(ExactReportValidationError::SourceReplayMismatch)?;
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+            .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?;
             replay.kind = self.kind;
             if !retained_split_region_result_matches(self, &replay) {
-                return Err(ExactReportValidationError::SourceReplayMismatch);
+                return Err(ExactEvidenceValidationError::SourceReplayMismatch);
             }
         }
         if matches!(
@@ -2147,7 +2149,7 @@ impl ExactBooleanResult {
         ) {
             self.assembly
                 .validate_source_face_incidence(left, right)
-                .map_err(|_| ExactReportValidationError::OutputSourceReplayMismatch)?;
+                .map_err(|_| ExactEvidenceValidationError::OutputSourceReplayMismatch)?;
         }
         if matches!(
             self.kind,
@@ -2160,7 +2162,7 @@ impl ExactBooleanResult {
                             classification.triangle() == [triangle[0], triangle[1], triangle[2]]
                         })
                 }) else {
-                    return Err(ExactReportValidationError::OrphanedVolumetricClassification);
+                    return Err(ExactEvidenceValidationError::OrphanedVolumetricClassification);
                 };
                 let target = match classification.region_side() {
                     MeshSide::Left => right,
@@ -2168,7 +2170,7 @@ impl ExactBooleanResult {
                 };
                 classification
                     .validate_against_sources(triangulation, target)
-                    .map_err(ExactReportValidationError::InvalidVolumetricClassification)?;
+                    .map_err(ExactEvidenceValidationError::InvalidVolumetricClassification)?;
             }
         }
         if let ExactBooleanResultKind::BoundaryPolicyShortcut { operation } = self.kind
@@ -2181,7 +2183,7 @@ impl ExactBooleanResult {
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             )
         {
-            return Err(ExactReportValidationError::SourceReplayMismatch);
+            return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
@@ -2202,7 +2204,7 @@ impl ExactBooleanResult {
                 right,
             )?
         {
-            return Err(ExactReportValidationError::SourceReplayMismatch);
+            return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
@@ -2216,7 +2218,7 @@ impl ExactBooleanResult {
                 self.mesh.validation_policy(),
             )
         {
-            return Err(ExactReportValidationError::SourceReplayMismatch);
+            return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
@@ -2232,7 +2234,7 @@ impl ExactBooleanResult {
             .unwrap_or(None)
         {
             if !matches_output {
-                return Err(ExactReportValidationError::SourceReplayMismatch);
+                return Err(ExactEvidenceValidationError::SourceReplayMismatch);
             }
             arrangement_cell_complex_output_replayed = true;
         }
@@ -2266,7 +2268,7 @@ impl ExactBooleanResult {
                 shortcut, operation, &self.mesh, left, right,
             )?
         {
-            return Err(ExactReportValidationError::SourceReplayMismatch);
+            return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
@@ -2283,7 +2285,7 @@ impl ExactBooleanResult {
                 right,
             )?
         {
-            return Err(ExactReportValidationError::SourceReplayMismatch);
+            return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
@@ -2301,7 +2303,7 @@ impl ExactBooleanResult {
                 right,
             )?
         {
-            return Err(ExactReportValidationError::SourceReplayMismatch);
+            return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
@@ -2316,7 +2318,7 @@ impl ExactBooleanResult {
                 right,
             )?
         {
-            return Err(ExactReportValidationError::SourceReplayMismatch);
+            return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
@@ -2324,7 +2326,7 @@ impl ExactBooleanResult {
         } = self.kind
             && !arrangement_cell_complex_output_replayed
         {
-            return Err(ExactReportValidationError::SourceReplayMismatch);
+            return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
         Ok(())
     }
@@ -2333,7 +2335,7 @@ impl ExactBooleanResult {
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         if !self.has_arrangement_cell_complex_gate_reports() {
             return Ok(());
         }
@@ -2342,7 +2344,7 @@ impl ExactBooleanResult {
             right,
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         )
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         self.validate_arrangement_cell_complex_gate_reports_against_arrangement(
             &arrangement,
             left,
@@ -2357,7 +2359,7 @@ impl ExactBooleanResult {
         left: &ExactMesh,
         right: &ExactMesh,
         operation: Option<ExactBooleanOperation>,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         if !self.has_arrangement_cell_complex_gate_reports() {
             return Ok(());
         }
@@ -2367,7 +2369,7 @@ impl ExactBooleanResult {
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         );
         if self.topology_assembly_report.as_ref() != Some(&replay_topology) {
-            return Err(ExactReportValidationError::SourceReplayMismatch);
+            return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
         let ownership_policy = arrangement_cell_complex_labeling_policy(
             arrangement,
@@ -2376,9 +2378,9 @@ impl ExactBooleanResult {
         );
         let replay_ownership = arrangement
             .region_ownership_report_with_policy(left, right, ownership_policy)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         if self.region_ownership_report.as_ref() != Some(&replay_ownership) {
-            return Err(ExactReportValidationError::SourceReplayMismatch);
+            return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
         Ok(())
     }
@@ -2417,9 +2419,9 @@ impl ExactBooleanResult {
         right: &ExactMesh,
         request: ExactBooleanRequest,
         retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         if !self.matches_request(request) {
-            return Err(ExactReportValidationError::SourceReplayMismatch);
+            return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
         self.validate()?;
         if matches!(
@@ -2440,13 +2442,13 @@ impl ExactBooleanResult {
                 {
                     let replay =
                         rematerialize_retained_arrangement_cell_complex_attempt(request, attempt)
-                            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-                            .ok_or(ExactReportValidationError::SourceReplayMismatch)?;
+                            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+                            .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?;
                     if !retained_output_mesh_matches(&self.mesh, &replay.mesh)
                         || self.topology_assembly_report != replay.topology_assembly_report
                         || self.region_ownership_report != replay.region_ownership_report
                     {
-                        return Err(ExactReportValidationError::SourceReplayMismatch);
+                        return Err(ExactEvidenceValidationError::SourceReplayMismatch);
                     }
                 }
             } else if attempt.materialized_arrangement_cell_complex_shortcut() {
@@ -2454,19 +2456,19 @@ impl ExactBooleanResult {
                     if self.topology_assembly_report.as_ref() != Some(topology)
                         || self.region_ownership_report.as_ref() != Some(ownership)
                     {
-                        return Err(ExactReportValidationError::SourceReplayMismatch);
+                        return Err(ExactEvidenceValidationError::SourceReplayMismatch);
                     }
                 } else if self.has_arrangement_cell_complex_gate_reports() {
-                    return Err(ExactReportValidationError::SourceReplayMismatch);
+                    return Err(ExactEvidenceValidationError::SourceReplayMismatch);
                 }
             } else {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
             }
             if attempt.certifies_output_mesh(&self.mesh) {
                 attempt.validate_against_sources_for_request(left, right, request)?;
                 return Ok(());
             }
-            return Err(ExactReportValidationError::SourceReplayMismatch);
+            return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
         if matches!(
             self.kind,
@@ -2494,19 +2496,19 @@ impl ExactBooleanResult {
             && self.mesh.validation_policy().satisfies(request.validation)
         {
             let replay = replay_boolean_exact_request_for_result_validation(left, right, request)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
             return if self.matches_retained_replay(&replay) {
                 Ok(())
             } else {
-                Err(ExactReportValidationError::SourceReplayMismatch)
+                Err(ExactEvidenceValidationError::SourceReplayMismatch)
             };
         }
         let replay = replay_boolean_exact_request_for_result_validation(left, right, request)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         if self.matches_retained_replay(&replay) {
             Ok(())
         } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
+            Err(ExactEvidenceValidationError::SourceReplayMismatch)
         }
     }
 }
@@ -2540,9 +2542,9 @@ impl ExactTrivialBooleanFacts {
         }
     }
 
-    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         if self.bounds_disjoint && (self.left_empty || self.right_empty) {
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         } else {
             Ok(())
         }
@@ -2582,11 +2584,11 @@ impl ExactRegularizedSolidBooleanFacts {
         }
     }
 
-    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         if (self.left_closed_solid && self.left_open_surface)
             || (self.right_closed_solid && self.right_open_surface)
         {
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         } else {
             Ok(())
         }
@@ -2628,7 +2630,7 @@ impl ExactConvexBooleanCapabilityFacts {
         }
     }
 
-    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         Ok(())
     }
 
@@ -2718,14 +2720,14 @@ impl ExactArrangementCellComplexShortcutFacts {
         )
     }
 
-    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         let has_axis_aligned_support = self.axis_aligned_union
             || self.axis_aligned_intersection
             || self.axis_aligned_difference;
         let has_affine_support =
             self.affine_union || self.affine_intersection || self.affine_difference;
         if has_axis_aligned_support && has_affine_support {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         Ok(())
     }
@@ -2857,7 +2859,7 @@ fn certified_shortcut_sources_match(
     validation: ExactMeshValidationPolicy,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<bool, ExactReportValidationError> {
+) -> Result<bool, ExactEvidenceValidationError> {
     if !shortcut_operation_matches(shortcut, operation) {
         return Ok(false);
     }
@@ -2915,7 +2917,7 @@ fn certified_shortcut_output_matches_sources(
     mesh: &ExactMesh,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<bool, ExactReportValidationError> {
+) -> Result<bool, ExactEvidenceValidationError> {
     if !certified_shortcut_sources_match(shortcut, operation, validation, left, right)? {
         return Ok(false);
     }
@@ -3251,7 +3253,7 @@ impl ExactBooleanCertificationSet {
     pub(crate) fn validate_for_request(
         &self,
         request: ExactBooleanRequest,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         if self.validate_base_reports_for_request(request)? {
             return Ok(());
         }
@@ -3261,11 +3263,11 @@ impl ExactBooleanCertificationSet {
         if self.planar_arrangement.operation() != request.operation
             || self.winding_evidence.operation() != request.operation
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
             if self.volumetric_boundary_closure.is_some() || self.arrangement_attempt.is_some() {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
             }
             return Ok(());
         }
@@ -3357,21 +3359,21 @@ impl ExactBooleanCertificationSet {
             .as_ref()
             .is_some_and(|attempt| attempt.retained_ownership_resolves_operation(request.operation))
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if !self
             .arrangement_attempt
             .as_ref()
             .is_some_and(ExactArrangementBooleanAttempt::retains_complete_gate_reports)
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if self.refinement.graph_had_unknowns() != self.planar_arrangement.graph_had_unknowns()
             || self.refinement.retained_face_pairs()
                 != self.planar_arrangement.retained_face_pairs()
             || self.refinement.retained_events() != self.planar_arrangement.retained_events()
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         self.validate_retained_closure_and_attempt_for_request(request, true, true)?;
         Ok(())
@@ -3380,7 +3382,7 @@ impl ExactBooleanCertificationSet {
     fn validate_base_reports_for_request(
         &self,
         request: ExactBooleanRequest,
-    ) -> Result<bool, ExactReportValidationError> {
+    ) -> Result<bool, ExactEvidenceValidationError> {
         self.trivial.validate()?;
         self.regularized_solid.validate()?;
         self.refinement.validate()?;
@@ -3388,7 +3390,7 @@ impl ExactBooleanCertificationSet {
         if self.refinement.operation != request.operation
             || self.adjacent_union_completion.operation() != request.operation
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         let adjacent_union_completion_certified = self.adjacent_union_completion.is_certified()
             && self.adjacent_union_completion.operation() == request.operation
@@ -3403,30 +3405,30 @@ impl ExactBooleanCertificationSet {
 
     fn validate_named_operation_materialization_reports(
         &self,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         self.boundary_touching.validate()?;
         self.open_surface_disjoint.validate()?;
         self.identical.validate()?;
         self.same_surface.validate()?;
         self.closed_winding_left_in_right
             .validate()
-            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+            .map_err(|_| ExactEvidenceValidationError::StatusEvidenceMismatch)?;
         self.closed_winding_right_in_left
             .validate()
-            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+            .map_err(|_| ExactEvidenceValidationError::StatusEvidenceMismatch)?;
         self.convex_left_in_right
             .validate()
-            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+            .map_err(|_| ExactEvidenceValidationError::StatusEvidenceMismatch)?;
         self.convex_right_in_left
             .validate()
-            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+            .map_err(|_| ExactEvidenceValidationError::StatusEvidenceMismatch)?;
         self.convex_capabilities.validate()?;
         self.arrangement_cell_complex_shortcuts.validate()?;
         if self.refinement.graph_had_unknowns() != self.boundary_touching.graph_had_unknowns()
             || self.refinement.retained_face_pairs() != self.boundary_touching.retained_face_pairs()
             || self.refinement.retained_events() != self.boundary_touching.retained_events()
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         Ok(())
     }
@@ -3986,16 +3988,16 @@ impl ExactBooleanCertificationSet {
         request: ExactBooleanRequest,
         require_closure: bool,
         require_attempt: bool,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         match self.volumetric_boundary_closure.as_ref() {
             Some(report) => {
                 report.validate()?;
                 if report.operation != request.operation {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             None if require_closure => {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
             }
             None => {}
         }
@@ -4007,7 +4009,7 @@ impl ExactBooleanCertificationSet {
                 )?;
             }
             None if require_attempt => {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
             }
             None => {}
         }
@@ -4043,7 +4045,7 @@ impl ExactBooleanEvaluation {
         certifications: ExactBooleanCertificationSet,
         result: Option<ExactBooleanResult>,
         allow_missing_materialized_result: bool,
-    ) -> Result<Self, ExactReportValidationError> {
+    ) -> Result<Self, ExactEvidenceValidationError> {
         let evaluation = Self {
             request,
             preflight,
@@ -4075,18 +4077,18 @@ impl ExactBooleanEvaluation {
     pub(crate) fn validate_with_missing_result_policy(
         &self,
         allow_missing_materialized_result: bool,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         if self.preflight.operation != self.request.operation {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         self.preflight.validate()?;
         self.certifications.validate_for_request(self.request)?;
         if !self.certifications.matches_preflight(&self.preflight) {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if let Some(result) = self.result.as_ref() {
             if !self.preflight.is_certified() {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
             }
             self.validate_materialized_result(result)?;
         } else if !allow_missing_materialized_result
@@ -4097,7 +4099,7 @@ impl ExactBooleanEvaluation {
                     | ExactBooleanSupport::CertifiedArrangementCellComplex
             )
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         Ok(())
     }
@@ -4109,17 +4111,17 @@ impl ExactBooleanEvaluation {
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         self.validate_with_missing_result_policy(false)?;
         let replay = exact_boolean_evaluation_for_replay(left, right, self.request)?;
         if &self.preflight != replay.preflight() {
-            return Err(ExactReportValidationError::SourceReplayMismatch);
+            return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
         if self.certifications != replay.certifications
             && (!self.certifications.matches_preflight(&self.preflight)
                 || !replay.certifications.matches_preflight(replay.preflight()))
         {
-            return Err(ExactReportValidationError::SourceReplayMismatch);
+            return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
         if let Some(result) = self.result.as_ref() {
             let retained_attempt = if result
@@ -4144,7 +4146,7 @@ impl ExactBooleanEvaluation {
                     | ExactBooleanSupport::CertifiedArrangementCellComplex
             )
         {
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         } else {
             Ok(())
         }
@@ -4153,7 +4155,7 @@ impl ExactBooleanEvaluation {
     fn validate_materialized_result(
         &self,
         result: &ExactBooleanResult,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         result.validate()?;
         if !result.matches_request(self.request)
             || !result
@@ -4161,7 +4163,7 @@ impl ExactBooleanEvaluation {
                 .validation_policy()
                 .satisfies(self.request.validation)
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if match result.kind() {
             ExactBooleanResultKind::SelectedRegions { .. }
@@ -4173,16 +4175,16 @@ impl ExactBooleanEvaluation {
             | ExactBooleanResultKind::BoundaryPolicyShortcut { .. }
             | ExactBooleanResultKind::CertifiedShortcut { .. } => false,
         } {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if !self
             .certifications
             .result_matches_request(result, self.request)
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if !result.matches_preflight_support(self.preflight.support) {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         Ok(())
     }
@@ -4192,7 +4194,7 @@ fn validate_shortcut_output_shape(
     shortcut: ExactBooleanShortcutKind,
     operation: ExactBooleanOperation,
     mesh: &ExactMesh,
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     let requires_empty_output = matches!(
         (shortcut, operation),
         (
@@ -4234,19 +4236,19 @@ fn validate_shortcut_output_shape(
     );
 
     if requires_empty_output && !mesh_output_is_empty(mesh) {
-        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
     }
     if requires_closed_solid_output && !mesh_is_closed_solid(mesh) {
-        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
     }
     if requires_empty_or_closed_solid_output
         && !mesh.triangles().is_empty()
         && !mesh_is_closed_solid(mesh)
     {
-        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
     }
     if requires_lower_dimensional_output && !mesh_is_lower_dimensional(mesh) {
-        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
     }
     Ok(())
 }
@@ -4257,7 +4259,7 @@ fn convex_operation_output_matches_sources(
     mesh: &ExactMesh,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<bool, ExactReportValidationError> {
+) -> Result<bool, ExactEvidenceValidationError> {
     if !shortcut_operation_matches(shortcut, operation) {
         return Ok(false);
     }
@@ -4269,13 +4271,13 @@ fn convex_operation_output_matches_sources(
     }
     let Some(replay) = (match shortcut {
         ExactBooleanShortcutKind::ConvexUnion => union_closed_convex_solids(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             .map(|result| result.mesh),
         ExactBooleanShortcutKind::ConvexIntersection => intersect_closed_convex_solids(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             .map(|result| result.mesh),
         ExactBooleanShortcutKind::ConvexDifference => subtract_closed_convex_solids(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             .map(|result| result.mesh),
         _ => unreachable!("only convex operation shortcuts are replayed here"),
     }) else {
@@ -4283,7 +4285,7 @@ fn convex_operation_output_matches_sources(
     };
     replay
         .validate_retained_state()
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
     Ok(mesh_output_matches(mesh, &replay))
 }
 
@@ -4293,7 +4295,7 @@ fn convex_relation_output_matches_sources(
     mesh: &ExactMesh,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<bool, ExactReportValidationError> {
+) -> Result<bool, ExactEvidenceValidationError> {
     let Some(relation) = certified_convex_relation_from_sources(operation, left, right)? else {
         return Ok(false);
     };
@@ -4351,7 +4353,7 @@ fn certified_convex_relation_from_sources(
     operation: ExactBooleanOperation,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<Option<ReportConvexRelation>, ExactReportValidationError> {
+) -> Result<Option<ReportConvexRelation>, ExactEvidenceValidationError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
@@ -4363,11 +4365,11 @@ fn certified_convex_relation_from_sources(
     let left_in_right = classify_mesh_vertices_against_convex_solid_report(left, right);
     left_in_right
         .validate_against_sources(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
     let right_in_left = classify_mesh_vertices_against_convex_solid_report(right, left);
     right_in_left
         .validate_against_sources(right, left)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
 
     if graph.face_pairs.is_empty() {
         return Ok(match (left_in_right.relation(), right_in_left.relation()) {
@@ -4565,13 +4567,13 @@ fn closed_boundary_touching_sources_match(
     shortcut: ExactBooleanShortcutKind,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<bool, ExactReportValidationError> {
+) -> Result<bool, ExactEvidenceValidationError> {
     if !mesh_is_closed_solid(left) || !mesh_is_closed_solid(right) {
         return Ok(false);
     }
     let graph = validated_report_intersection_graph(left, right)?;
     let report = boundary_touching_report_from_graph(&graph, left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
     report.validate()?;
     if !report.is_certified() {
         if matches!(
@@ -4583,7 +4585,7 @@ fn closed_boundary_touching_sources_match(
             let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
             evidence
                 .validate()
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
             return Ok(evidence.is_boundary_only_positive_area_contact());
         }
         return Ok(false);
@@ -4595,7 +4597,7 @@ fn closed_boundary_touching_sources_match(
         let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
         evidence
             .validate()
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         if evidence.positive_area_coplanar_overlapping_pairs() != 0 {
             return Ok(false);
         }
@@ -4610,7 +4612,7 @@ fn closed_boundary_touching_output_matches_sources(
     mesh: &ExactMesh,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<bool, ExactReportValidationError> {
+) -> Result<bool, ExactEvidenceValidationError> {
     if let Some(true) =
         arrangement_cell_complex_output_matches_sources(operation, validation, mesh, left, right)?
     {
@@ -4639,7 +4641,7 @@ fn closed_winding_sources_match(
     shortcut: ExactBooleanShortcutKind,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<bool, ExactReportValidationError> {
+) -> Result<bool, ExactEvidenceValidationError> {
     if !mesh_is_closed_solid(left) || !mesh_is_closed_solid(right) {
         return Ok(false);
     }
@@ -4651,11 +4653,11 @@ fn closed_winding_sources_match(
     let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
     left_in_right
         .validate_against_sources(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
     let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
     right_in_left
         .validate_against_sources(right, left)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
 
     Ok(match shortcut {
         ExactBooleanShortcutKind::ClosedWindingSeparated => {
@@ -4677,7 +4679,7 @@ fn closed_winding_output_matches_sources(
     mesh: &ExactMesh,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<bool, ExactReportValidationError> {
+) -> Result<bool, ExactEvidenceValidationError> {
     let Some(relation) = certified_closed_winding_relation_from_sources(left, right)? else {
         return Ok(false);
     };
@@ -4732,7 +4734,7 @@ enum ReportClosedWindingRelation {
 fn certified_closed_winding_relation_from_sources(
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<Option<ReportClosedWindingRelation>, ExactReportValidationError> {
+) -> Result<Option<ReportClosedWindingRelation>, ExactEvidenceValidationError> {
     if !mesh_is_closed_solid(left) || !mesh_is_closed_solid(right) {
         return Ok(None);
     }
@@ -4748,11 +4750,11 @@ fn certified_closed_winding_relation_from_sources(
     let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
     left_in_right
         .validate_against_sources(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
     let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
     right_in_left
         .validate_against_sources(right, left)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
 
     Ok(match (left_in_right.relation(), right_in_left.relation()) {
         (ClosedMeshWindingMeshRelation::Outside, ClosedMeshWindingMeshRelation::Outside) => {
@@ -4772,16 +4774,16 @@ fn convex_shortcut_sources_match(
     shortcut: ExactBooleanShortcutKind,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<bool, ExactReportValidationError> {
+) -> Result<bool, ExactEvidenceValidationError> {
     Ok(match shortcut {
         ExactBooleanShortcutKind::ConvexUnion => union_closed_convex_solids(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             .is_some(),
         ExactBooleanShortcutKind::ConvexIntersection => intersect_closed_convex_solids(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             .is_some(),
         ExactBooleanShortcutKind::ConvexDifference => subtract_closed_convex_solids(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             .is_some(),
         ExactBooleanShortcutKind::ConvexContainment | ExactBooleanShortcutKind::ConvexSeparated => {
             convex_relation_shortcut_sources_match(shortcut, left, right)?
@@ -4794,7 +4796,7 @@ fn convex_relation_shortcut_sources_match(
     shortcut: ExactBooleanShortcutKind,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<bool, ExactReportValidationError> {
+) -> Result<bool, ExactEvidenceValidationError> {
     let graph = validated_report_intersection_graph(left, right)?;
     if graph.has_unknowns() {
         return Ok(false);
@@ -4802,11 +4804,11 @@ fn convex_relation_shortcut_sources_match(
     let left_in_right = classify_mesh_vertices_against_convex_solid_report(left, right);
     left_in_right
         .validate_against_sources(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
     let right_in_left = classify_mesh_vertices_against_convex_solid_report(right, left);
     right_in_left
         .validate_against_sources(right, left)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
 
     Ok(match shortcut {
         ExactBooleanShortcutKind::ConvexContainment if graph.face_pairs.is_empty() => {
@@ -4831,7 +4833,7 @@ fn arrangement_cell_complex_sources_match(
     validation: ExactMeshValidationPolicy,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<bool, ExactReportValidationError> {
+) -> Result<bool, ExactEvidenceValidationError> {
     if validation == ExactMeshValidationPolicy::CLOSED
         && lower_dimensional_regularized_sources(left, right)
     {
@@ -4839,7 +4841,7 @@ fn arrangement_cell_complex_sources_match(
     }
     if operation == ExactBooleanOperation::Union {
         let (report, _) = adjacent_union_completion_certification(left, right, operation, None)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         report.validate()?;
         if matches!(
             report.status,
@@ -4857,7 +4859,7 @@ fn arrangement_cell_complex_sources_match(
         let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
         evidence
             .validate()
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         if evidence.is_boundary_only_positive_area_contact() {
             return Ok(true);
         }
@@ -4891,7 +4893,7 @@ fn axis_aligned_orthogonal_solid_output_matches_sources(
     mesh: &ExactMesh,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<Option<bool>, ExactReportValidationError> {
+) -> Result<Option<bool>, ExactEvidenceValidationError> {
     let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation) else {
         return Ok(None);
     };
@@ -4902,7 +4904,7 @@ fn axis_aligned_orthogonal_solid_output_matches_sources(
         "exact arrangement orthogonal solid cell replay",
         validation,
     )
-    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
     else {
         return Ok(None);
     };
@@ -4915,7 +4917,7 @@ fn arrangement_cell_complex_output_matches_sources(
     mesh: &ExactMesh,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<Option<bool>, ExactReportValidationError> {
+) -> Result<Option<bool>, ExactEvidenceValidationError> {
     let mut retained_mismatch = false;
     if let Some(matches_output) = axis_aligned_orthogonal_solid_output_matches_sources(
         operation, validation, mesh, left, right,
@@ -4928,7 +4930,7 @@ fn arrangement_cell_complex_output_matches_sources(
 
     if let Some((replay, closure_report)) =
         materialize_volumetric_coplanar_boundary_closure_output(left, right, operation, validation)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
     {
         closure_report.validate()?;
         if mesh_output_matches(mesh, &replay) {
@@ -4939,7 +4941,7 @@ fn arrangement_cell_complex_output_matches_sources(
 
     if let Some(replay) =
         replay_generic_arrangement_cell_complex_result(left, right, operation, validation)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
     {
         if mesh_output_matches(mesh, &replay.mesh) {
             return Ok(Some(true));
@@ -4948,7 +4950,7 @@ fn arrangement_cell_complex_output_matches_sources(
     }
 
     if let Some(replay) = boolean_coplanar_mesh_overlay_optional(left, right, operation, validation)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
     {
         if mesh_output_matches(mesh, &replay.mesh) {
             return Ok(Some(true));
@@ -4957,17 +4959,17 @@ fn arrangement_cell_complex_output_matches_sources(
     }
 
     let graph = super::super::graph::build_unvalidated_intersection_graph(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
 
     if let Some((replay, evidence)) =
         materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
             &graph, left, right, operation, validation,
         )
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
     {
         evidence
             .validate()
-            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+            .map_err(|_| ExactEvidenceValidationError::StatusEvidenceMismatch)?;
         if mesh_output_matches(mesh, &replay.mesh) {
             return Ok(Some(true));
         }
@@ -4978,11 +4980,11 @@ fn arrangement_cell_complex_output_matches_sources(
         materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
             &graph, left, right, operation, validation,
         )
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
     {
         evidence
             .validate()
-            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+            .map_err(|_| ExactEvidenceValidationError::StatusEvidenceMismatch)?;
         if mesh_output_matches(mesh, &replay.mesh) {
             return Ok(Some(true));
         }
@@ -5002,7 +5004,7 @@ fn arrangement_cell_complex_output_matches_sources(
     match operation {
         ExactBooleanOperation::Union => {
             if let Some(replay) = materialize_affine_orthogonal_solid_union(left, right, validation)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             {
                 if mesh_output_matches(mesh, &replay.mesh) {
                     return Ok(Some(true));
@@ -5013,7 +5015,7 @@ fn arrangement_cell_complex_output_matches_sources(
         ExactBooleanOperation::Intersection => {
             if let Some(replay) =
                 materialize_affine_orthogonal_solid_intersection(left, right, validation)
-                    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+                    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             {
                 if mesh_output_matches(mesh, &replay.mesh) {
                     return Ok(Some(true));
@@ -5024,7 +5026,7 @@ fn arrangement_cell_complex_output_matches_sources(
         ExactBooleanOperation::Difference => {
             if let Some(replay) =
                 materialize_affine_orthogonal_solid_difference(left, right, validation)
-                    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+                    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             {
                 if mesh_output_matches(mesh, &replay.mesh) {
                     return Ok(Some(true));
@@ -5037,7 +5039,7 @@ fn arrangement_cell_complex_output_matches_sources(
 
     if let Some(replay) =
         replay_closed_same_surface_boolean_result_if_certified(left, right, operation, validation)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
     {
         if mesh_output_matches(mesh, &replay.mesh) {
             return Ok(Some(true));
@@ -5051,12 +5053,12 @@ fn arrangement_cell_complex_output_matches_sources(
 
     let (adjacent_report, _) =
         adjacent_union_completion_certification(left, right, operation, None)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
     adjacent_report.validate()?;
     match adjacent_report.status {
         ExactAdjacentUnionCompletionStatus::CertifiedFullFace => {
             let Some(replay) = materialize_full_face_adjacent_union(left, right, validation)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             else {
                 return Ok(retained_mismatch.then_some(false));
             };
@@ -5067,7 +5069,7 @@ fn arrangement_cell_complex_output_matches_sources(
         }
         ExactAdjacentUnionCompletionStatus::CertifiedContainedFace => {
             let Some(replay) = materialize_contained_face_adjacent_union(left, right, validation)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             else {
                 return Ok(retained_mismatch.then_some(false));
             };
@@ -5091,7 +5093,7 @@ fn arrangement_cell_complex_output_matches_sources(
     let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
     evidence
         .validate()
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
     if evidence.is_boundary_only_positive_area_contact() {
         if concatenated_mesh_output_matches(mesh, left, right, false) {
             return Ok(Some(true));
@@ -5135,7 +5137,7 @@ fn validate_volumetric_materialized_assembly_matches_operation(
     triangulations: &[FaceRegionTriangulation],
     classifications: &[ExactVolumetricRegionClassification],
     assembly: &ExactBooleanAssemblyPlan,
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     for triangulation in triangulations {
         for triangle in triangulation.triangles.chunks_exact(3) {
             let triangle = [triangle[0], triangle[1], triangle[2]];
@@ -5210,7 +5212,7 @@ fn validate_volumetric_materialized_assembly_matches_operation(
                 })
             {
                 return Err(
-                    ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation,
+                    ExactEvidenceValidationError::VolumetricMaterializedAssemblyViolatesOperation,
                 );
             }
             let retained_source_subcells_cover_cell =
@@ -5237,14 +5239,14 @@ fn validate_volumetric_materialized_assembly_matches_operation(
                     if retained_source_cells != 0 || retained_source_subcells != 0 =>
                 {
                     return Err(
-                        ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation,
+                        ExactEvidenceValidationError::VolumetricMaterializedAssemblyViolatesOperation,
                     );
                 }
                 VolumetricCellRetention::Keep | VolumetricCellRetention::KeepReversed
                     if !retained_source_subcells_cover_cell && retained_duplicate_cells == 0 =>
                 {
                     return Err(
-                        ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation,
+                        ExactEvidenceValidationError::VolumetricMaterializedAssemblyViolatesOperation,
                     );
                 }
                 VolumetricCellRetention::Keep
@@ -5353,7 +5355,7 @@ fn validate_selected_region_assembly_covers_selection(
     selection: ExactRegionSelection,
     triangulations: &[FaceRegionTriangulation],
     assembly: &ExactBooleanAssemblyPlan,
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     for triangulation in triangulations {
         if !selection_keeps(selection, triangulation.side) || triangulation.triangles.is_empty() {
             continue;
@@ -5371,7 +5373,7 @@ fn validate_selected_region_assembly_covers_selection(
             })
         });
         if !selected_cells_retained {
-            return Err(ExactReportValidationError::SelectedRegionAssemblyMissingSelectedRegion);
+            return Err(ExactEvidenceValidationError::SelectedRegionAssemblyMissingSelectedRegion);
         }
     }
 
@@ -5395,7 +5397,7 @@ fn volumetric_cell_retention_for_operation(
     // documented in `boolean::volumetric_retention_for_operation`: union and
     // intersection keep the left boundary copy and drop the coincident right
     // copy, while difference drops coincident boundary cells. This preserves
-    // explicit in retained report validation.
+    // the explicit boundary policy checked by retained evidence validation.
     match (operation, triangulation.side, classification.relation()) {
         (ExactBooleanOperation::Union, _, ExactVolumetricRegionRelation::Outside)
         | (ExactBooleanOperation::Union, MeshSide::Left, ExactVolumetricRegionRelation::Boundary)
@@ -5462,11 +5464,11 @@ fn exact_point_sets_equal(left: &[&Point3], right: &[&Point3]) -> bool {
 fn validate_output_mesh_matches_assembly(
     assembly: &ExactBooleanAssemblyPlan,
     mesh: &ExactMesh,
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     if assembly.vertices.len() != mesh.vertices().len()
         || assembly.triangles.len() != mesh.triangles().len()
     {
-        return Err(ExactReportValidationError::OutputMeshAssemblyMismatch);
+        return Err(ExactEvidenceValidationError::OutputMeshAssemblyMismatch);
     }
     // The materialized mesh is an edge artifact of the retained assembly, not
     // combinatorial chain as part of the exact object state, so the triangle
@@ -5475,12 +5477,12 @@ fn validate_output_mesh_matches_assembly(
     for (assembly_vertex, mesh_vertex) in assembly.vertices.iter().zip(mesh.vertices()) {
         let mesh_point = mesh_vertex.clone();
         if !points_equal(&assembly_vertex.point, &mesh_point) {
-            return Err(ExactReportValidationError::OutputMeshAssemblyMismatch);
+            return Err(ExactEvidenceValidationError::OutputMeshAssemblyMismatch);
         }
     }
     for (assembly_triangle, mesh_triangle) in assembly.triangles.iter().zip(mesh.triangles()) {
         if assembly_triangle.vertices != mesh_triangle.0 {
-            return Err(ExactReportValidationError::OutputMeshAssemblyMismatch);
+            return Err(ExactEvidenceValidationError::OutputMeshAssemblyMismatch);
         }
     }
     Ok(())
@@ -5815,26 +5817,26 @@ impl ExactVolumetricBoundaryClosureReport {
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         let replay = if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
             no_materialized_boundary_output_report(self.operation)
         } else {
             let graph = validated_report_intersection_graph(left, right)?;
             volumetric_boundary_closure_report_from_graph(&graph, left, right, self.operation)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
         };
         if self == &replay {
             Ok(())
         } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
+            Err(ExactEvidenceValidationError::SourceReplayMismatch)
         }
     }
 
     /// Validate status and retained closure counts.
-    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         if self.has_impossible_boundary_count_bounds() {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         match &self.status {
             ExactVolumetricBoundaryClosureStatus::NoMaterializedBoundaryOutput => {
@@ -5850,7 +5852,7 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.self_contact_nondegenerate_cycles != 0
                     || self.coplanar_loop_groups != 0
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactVolumetricBoundaryClosureStatus::AlreadyClosed => {
@@ -5865,7 +5867,7 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.self_contact_nondegenerate_cycles != 0
                     || self.coplanar_loop_groups != 0
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable => {
@@ -5881,7 +5883,7 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.self_contact_nondegenerate_cycles != 0
                     || self.coplanar_loop_groups == 0
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactVolumetricBoundaryClosureStatus::NonCoplanarBoundaryClosureRequired => {
@@ -5897,7 +5899,7 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.self_contact_nondegenerate_cycles != 0
                     || self.coplanar_loop_groups != 0
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactVolumetricBoundaryClosureStatus::BoundaryLoopExactSelfContact => {
@@ -5909,7 +5911,7 @@ impl ExactVolumetricBoundaryClosureReport {
                     || !self.has_valid_self_contact_evidence()
                     || self.coplanar_loop_groups != 0
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactVolumetricBoundaryClosureStatus::BoundaryTopologyNotLoop => {
@@ -5925,7 +5927,7 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.self_contact_nondegenerate_cycles != 0
                     || self.coplanar_loop_groups != 0
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(blocker) => {
@@ -5940,7 +5942,7 @@ impl ExactVolumetricBoundaryClosureReport {
                             | ExactArrangementBlocker::NonManifoldCellComplex
                     )
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 if self.coplanar_loop_groups != 0
                     && (*blocker != ExactArrangementBlocker::NonManifoldCellComplex
@@ -5951,7 +5953,7 @@ impl ExactVolumetricBoundaryClosureReport {
                         || self.self_contact_degenerate_cycles != 0
                         || self.self_contact_nondegenerate_cycles != 0)
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
         }
@@ -6038,7 +6040,7 @@ fn validate_winding_evidence_against_sources_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     let graph = validated_report_intersection_graph(left, right)?;
     if report.operation == request.operation
         && report.status == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
@@ -6052,7 +6054,7 @@ fn validate_winding_evidence_against_sources_for_request(
         && let Some(evidence) = report.coplanar_volumetric_evidence.as_ref()
         && evidence == &CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right)
         && volumetric_boundary_closure_report_from_graph(&graph, left, right, report.operation)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             .is_coplanar_closure_available()
     {
         return Ok(());
@@ -6077,7 +6079,7 @@ fn validate_winding_evidence_against_sources_for_request(
     // lower-dimensional shortcut reports, are still exact even when the
     // canonical evaluation cannot yet return them or supersedes them with an
     // arrangement/cell-complex materialization status.
-    Err(ExactReportValidationError::SourceReplayMismatch)
+    Err(ExactEvidenceValidationError::SourceReplayMismatch)
 }
 
 #[cfg(test)]
@@ -6086,7 +6088,7 @@ fn axis_aligned_orthogonal_solid_winding_evidence_matches_sources(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
-) -> Result<bool, ExactReportValidationError> {
+) -> Result<bool, ExactEvidenceValidationError> {
     if report.operation != request.operation
         || report.status != ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
         || matches!(report.operation, ExactBooleanOperation::SelectedRegions(_))
@@ -6124,7 +6126,7 @@ fn axis_aligned_orthogonal_solid_preflight_matches_sources(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
-) -> Result<bool, ExactReportValidationError> {
+) -> Result<bool, ExactEvidenceValidationError> {
     let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(request.operation) else {
         return Ok(false);
     };
@@ -6136,7 +6138,7 @@ fn axis_aligned_orthogonal_solid_preflight_matches_sources(
         request.validation,
     )
     .map(|mesh| mesh.is_some())
-    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
+    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)
 }
 
 impl ExactBooleanPreflight {
@@ -6255,7 +6257,7 @@ impl ExactBooleanPreflight {
         left: &ExactMesh,
         right: &ExactMesh,
         request: ExactBooleanRequest,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         let graph = validated_report_intersection_graph(left, right)?;
         if self.operation == request.operation
@@ -6269,7 +6271,7 @@ impl ExactBooleanPreflight {
             && let Some(evidence) = self.coplanar_volumetric_evidence.as_ref()
             && evidence == &CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right)
             && volumetric_boundary_closure_report_from_graph(&graph, left, right, request.operation)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
                 .is_coplanar_closure_available()
         {
             return Ok(());
@@ -6298,12 +6300,12 @@ impl ExactBooleanPreflight {
         if self == &replay {
             Ok(())
         } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
+            Err(ExactEvidenceValidationError::SourceReplayMismatch)
         }
     }
 
     /// Validate support, blocker, and retained artifact consistency.
-    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         // Preflight connects exact graph construction to later selection and
         // keeps contradictions visible as structured state rather than hiding
         // them behind a boolean success/failure bit.
@@ -6320,7 +6322,7 @@ impl ExactBooleanPreflight {
                     | ExactBooleanSupport::RequiresCertifiedWinding
             )
         {
-            return Err(ExactReportValidationError::UnexpectedCoplanarVolumetricEvidence);
+            return Err(ExactEvidenceValidationError::UnexpectedCoplanarVolumetricEvidence);
         }
         match self.support {
             ExactBooleanSupport::CertifiedEmptyOperand
@@ -6333,16 +6335,18 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
             | ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
                 if self.blocker.is_some() {
-                    return Err(ExactReportValidationError::CertifiedReportHasBlocker);
+                    return Err(ExactEvidenceValidationError::CertifiedReportHasBlocker);
                 }
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                     || !certified_preflight_support_matches_operation(self.support, self.operation)
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 if let Some(evidence) = self.coplanar_volumetric_evidence.as_ref() {
                     if !matches!(
@@ -6351,7 +6355,7 @@ impl ExactBooleanPreflight {
                             | ExactBooleanSupport::CertifiedSameSurface
                     ) {
                         return Err(
-                            ExactReportValidationError::UnexpectedCoplanarVolumetricEvidence,
+                            ExactEvidenceValidationError::UnexpectedCoplanarVolumetricEvidence,
                         );
                     }
                     validate_coplanar_volumetric_evidence_counts(
@@ -6366,16 +6370,18 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedConvexIntersection
             | ExactBooleanSupport::CertifiedConvexDifference => {
                 if self.blocker.is_some() {
-                    return Err(ExactReportValidationError::CertifiedReportHasBlocker);
+                    return Err(ExactEvidenceValidationError::CertifiedReportHasBlocker);
                 }
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                     || !certified_preflight_support_matches_operation(self.support, self.operation)
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
@@ -6385,16 +6391,18 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedConvexContainment
             | ExactBooleanSupport::CertifiedConvexSeparated => {
                 if self.blocker.is_some() {
-                    return Err(ExactReportValidationError::CertifiedReportHasBlocker);
+                    return Err(ExactEvidenceValidationError::CertifiedReportHasBlocker);
                 }
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                     || !certified_preflight_support_matches_operation(self.support, self.operation)
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 if let Some(evidence) = self.coplanar_volumetric_evidence.as_ref() {
                     if !matches!(
@@ -6403,7 +6411,7 @@ impl ExactBooleanPreflight {
                             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
                     ) {
                         return Err(
-                            ExactReportValidationError::UnexpectedCoplanarVolumetricEvidence,
+                            ExactEvidenceValidationError::UnexpectedCoplanarVolumetricEvidence,
                         );
                     }
                     validate_coplanar_boundary_only_evidence_shape(
@@ -6422,7 +6430,7 @@ impl ExactBooleanPreflight {
                     || self.coplanar_arrangement_evidence.is_some()
                     || !certified_preflight_support_matches_operation(self.support, self.operation)
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
@@ -6431,10 +6439,12 @@ impl ExactBooleanPreflight {
                     || self.graph_had_unknowns
                     || self.blocker.is_some()
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
                 if let Some(evidence) = self.coplanar_volumetric_evidence.as_ref() {
                     validate_arrangement_materialized_coplanar_evidence(
@@ -6466,10 +6476,12 @@ impl ExactBooleanPreflight {
                     || self.blocker.is_some()
                     || self.retained_face_pairs == 0
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
                 checked_region_facts(self.region_count, &self.region_classifications)
             }
@@ -6477,7 +6489,7 @@ impl ExactBooleanPreflight {
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(
                     self.blocker.as_ref(),
@@ -6493,7 +6505,9 @@ impl ExactBooleanPreflight {
                     self.retained_events,
                 )?;
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
@@ -6501,7 +6515,7 @@ impl ExactBooleanPreflight {
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(
                     self.blocker.as_ref(),
@@ -6519,10 +6533,10 @@ impl ExactBooleanPreflight {
                 let evidence = self
                     .coplanar_arrangement_evidence
                     .as_ref()
-                    .ok_or(ExactReportValidationError::MissingCoplanarArrangementEvidence)?;
-                evidence
-                    .validate()
-                    .map_err(|_| ExactReportValidationError::InvalidCoplanarArrangementEvidence)?;
+                    .ok_or(ExactEvidenceValidationError::MissingCoplanarArrangementEvidence)?;
+                evidence.validate().map_err(|_| {
+                    ExactEvidenceValidationError::InvalidCoplanarArrangementEvidence
+                })?;
                 validate_coplanar_arrangement_evidence_matches_blocker(
                     evidence,
                     self.blocker.as_ref().unwrap(),
@@ -6530,7 +6544,7 @@ impl ExactBooleanPreflight {
                 if !evidence.needs_planar_cells()
                     || self.blocker.as_ref().unwrap().coplanar_touching_pairs != 0
                 {
-                    return Err(ExactReportValidationError::CoplanarArrangementEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::CoplanarArrangementEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
@@ -6538,7 +6552,7 @@ impl ExactBooleanPreflight {
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(
                     self.blocker.as_ref(),
@@ -6554,12 +6568,14 @@ impl ExactBooleanPreflight {
                     self.retained_events,
                 )?;
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
                 let evidence = self
                     .coplanar_volumetric_evidence
                     .as_ref()
-                    .ok_or(ExactReportValidationError::MissingCoplanarVolumetricEvidence)?;
+                    .ok_or(ExactEvidenceValidationError::MissingCoplanarVolumetricEvidence)?;
                 validate_coplanar_volumetric_evidence_matches_blocker(
                     evidence,
                     self.blocker.as_ref().unwrap(),
@@ -6567,7 +6583,7 @@ impl ExactBooleanPreflight {
                     self.retained_events,
                 )?;
                 if !evidence.requires_coplanar_volumetric_cells() {
-                    return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
@@ -6576,7 +6592,7 @@ impl ExactBooleanPreflight {
                     || self.graph_had_unknowns
                     || self.retained_face_pairs == 0
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 let blocker = self.blocker.as_ref().unwrap();
                 let expected = match blocker.kind {
@@ -6593,7 +6609,9 @@ impl ExactBooleanPreflight {
                     self.retained_events,
                 )?;
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
                 match (expected, self.coplanar_volumetric_evidence.as_ref()) {
                     (ExactBooleanBlockerKind::CoplanarVolumetricCells, Some(evidence)) => {
@@ -6605,12 +6623,14 @@ impl ExactBooleanPreflight {
                         )?;
                         if !evidence.requires_coplanar_volumetric_cells() {
                             return Err(
-                                ExactReportValidationError::CoplanarVolumetricEvidenceMismatch,
+                                ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch,
                             );
                         }
                     }
                     (ExactBooleanBlockerKind::CoplanarVolumetricCells, None) => {
-                        return Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence);
+                        return Err(
+                            ExactEvidenceValidationError::MissingCoplanarVolumetricEvidence,
+                        );
                     }
                     (_, Some(evidence)) => {
                         validate_coplanar_volumetric_evidence_shape(
@@ -6630,7 +6650,7 @@ impl ExactBooleanPreflight {
                         .as_ref()
                         .is_some_and(blocker_has_refinement_evidence)
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(self.blocker.as_ref(), ExactBooleanBlockerKind::Refinement)?;
                 self.blocker
@@ -6643,19 +6663,23 @@ impl ExactBooleanPreflight {
                     self.retained_events,
                 )?;
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::SelectedRegionPolicy => {
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
                 if !matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                     || self.blocker.is_some()
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 if self.region_count == 0 {
                     no_region_facts(self.region_count, &self.region_classifications)
@@ -6827,9 +6851,9 @@ impl ExactBooleanBlocker {
     pub(crate) fn validate_for_kind(
         &self,
         expected: ExactBooleanBlockerKind,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         if self.kind != expected {
-            return Err(ExactReportValidationError::WrongBlockerKind);
+            return Err(ExactEvidenceValidationError::WrongBlockerKind);
         }
         let valid = match expected {
             ExactBooleanBlockerKind::Refinement => {
@@ -6863,7 +6887,7 @@ impl ExactBooleanBlocker {
         if valid {
             Ok(())
         } else {
-            Err(ExactReportValidationError::InvalidBlockerCounts)
+            Err(ExactEvidenceValidationError::InvalidBlockerCounts)
         }
     }
 }
@@ -6957,9 +6981,9 @@ impl ExactRefinementReport {
     }
 
     /// Validate status, retained counts, and refinement blocker consistency.
-    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)
-            .map_err(|_| ExactReportValidationError::InvalidBlockerCounts)?;
+            .map_err(|_| ExactEvidenceValidationError::InvalidBlockerCounts)?;
         match self.status {
             ExactRefinementStatus::Required => {
                 blocker_kind(self.blocker.as_ref(), ExactBooleanBlockerKind::Refinement)?;
@@ -6971,15 +6995,15 @@ impl ExactRefinementReport {
                     self.retained_events,
                 )?;
                 if self.graph_had_unknowns != (blocker.unknown_pairs > 0) {
-                    return Err(ExactReportValidationError::InvalidBlockerCounts);
+                    return Err(ExactEvidenceValidationError::InvalidBlockerCounts);
                 }
             }
             ExactRefinementStatus::NotRequired => {
                 if self.blocker.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedGraphEvents);
+                    return Err(ExactEvidenceValidationError::UnexpectedGraphEvents);
                 }
                 if self.graph_had_unknowns {
-                    return Err(ExactReportValidationError::InvalidBlockerCounts);
+                    return Err(ExactEvidenceValidationError::InvalidBlockerCounts);
                 }
             }
         }
@@ -7042,27 +7066,27 @@ impl ExactIdenticalMeshReport {
         matches!(self.status, ExactIdenticalMeshStatus::Certified)
     }
 
-    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         if self.predicates.len() > self.left_vertices.saturating_mul(3) {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         match self.status {
             ExactIdenticalMeshStatus::VertexCountMismatch => {
                 if self.left_vertices == self.right_vertices || !self.predicates.is_empty() {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactIdenticalMeshStatus::VertexCoordinateUndecided
             | ExactIdenticalMeshStatus::VertexCoordinateMismatch => {
                 if self.left_vertices != self.right_vertices || self.predicates.is_empty() {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactIdenticalMeshStatus::TriangleSequenceMismatch => {
                 if self.left_vertices != self.right_vertices
                     || self.predicates.len() != self.left_vertices.saturating_mul(3)
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactIdenticalMeshStatus::Certified => {
@@ -7070,7 +7094,7 @@ impl ExactIdenticalMeshReport {
                     || self.left_triangles != self.right_triangles
                     || self.predicates.len() != self.left_vertices.saturating_mul(3)
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
         }
@@ -7158,7 +7182,7 @@ impl ExactSameSurfaceReport {
     /// retain coordinate predicates, vertex-matching failures may keep only the
     /// partial left-to-right matches and predicate trail, and triangle-set
     /// mismatches must retain a valid full vertex permutation.
-    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         match self.status {
             ExactSameSurfaceStatus::VertexCountMismatch
             | ExactSameSurfaceStatus::TriangleCountMismatch => {
@@ -7168,7 +7192,7 @@ impl ExactSameSurfaceReport {
                     || !self.right_triangles.is_empty()
                     || !self.predicates.is_empty()
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactSameSurfaceStatus::VertexMatchingUndecided
@@ -7187,14 +7211,14 @@ impl ExactSameSurfaceReport {
                         }
                     })
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 if matches!(
                     self.status,
                     ExactSameSurfaceStatus::VertexCoordinateMismatch
                 ) && !self.all_proof_producing()
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactSameSurfaceStatus::TriangleSetMismatch => {
@@ -7203,16 +7227,16 @@ impl ExactSameSurfaceReport {
                     || self.right_triangles.is_empty()
                     || self.left_triangles == self.right_triangles
                 {
-                    return Err(ExactReportValidationError::MismatchedTriangleSets);
+                    return Err(ExactEvidenceValidationError::MismatchedTriangleSets);
                 }
             }
             ExactSameSurfaceStatus::Certified => {
                 validate_full_permutation(&self.left_to_right, &self.right_to_left)?;
                 if self.left_triangles != self.right_triangles {
-                    return Err(ExactReportValidationError::MismatchedTriangleSets);
+                    return Err(ExactEvidenceValidationError::MismatchedTriangleSets);
                 }
                 if !self.all_proof_producing() {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
         }
@@ -7455,13 +7479,13 @@ fn sorted_triangle_sets(mesh: &ExactMesh, right_to_left: Option<&[usize]>) -> Ve
 fn validate_full_permutation(
     left_to_right: &[usize],
     right_to_left: &[usize],
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     if left_to_right.len() != right_to_left.len() {
-        return Err(ExactReportValidationError::InvalidPermutation);
+        return Err(ExactEvidenceValidationError::InvalidPermutation);
     }
     for (left, &right) in left_to_right.iter().enumerate() {
         if right >= right_to_left.len() || right_to_left[right] != left {
-            return Err(ExactReportValidationError::InvalidPermutation);
+            return Err(ExactEvidenceValidationError::InvalidPermutation);
         }
     }
     Ok(())
@@ -7537,24 +7561,24 @@ impl ExactOpenSurfaceDisjointReport {
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         let graph = validated_report_intersection_graph(left, right)?;
         let replay = open_surface_disjoint_report_from_graph(&graph, left, right);
         if self == &replay {
             Ok(())
         } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
+            Err(ExactEvidenceValidationError::SourceReplayMismatch)
         }
     }
 
     /// Validate status, graph counts, and blocker consistency.
-    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
         if matches!(self.status, ExactOpenSurfaceDisjointStatus::GraphUnknowns)
             != self.graph_had_unknowns
         {
-            return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
+            return Err(ExactEvidenceValidationError::GraphUnknownStatusMismatch);
         }
         let expected_kind = match self.status {
             ExactOpenSurfaceDisjointStatus::GraphUnknowns => ExactBooleanBlockerKind::Refinement,
@@ -7582,18 +7606,18 @@ impl ExactOpenSurfaceDisjointReport {
                 || self.retained_events != 0
                 || blocker_has_any_evidence(&self.blocker)
             {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
             }
         } else if !self.left_open_surface || !self.right_open_surface {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if self.is_certified() && (self.retained_face_pairs != 0 || self.retained_events != 0) {
-            return Err(ExactReportValidationError::UnexpectedGraphEvents);
+            return Err(ExactEvidenceValidationError::UnexpectedGraphEvents);
         }
         if self.status == ExactOpenSurfaceDisjointStatus::GraphHasFacePairs
             && self.retained_face_pairs == 0
         {
-            return Err(ExactReportValidationError::MissingRelationCount);
+            return Err(ExactEvidenceValidationError::MissingRelationCount);
         }
         Ok(())
     }
@@ -7779,7 +7803,7 @@ impl ExactAdjacentUnionCompletionReport {
     }
 
     /// Validate status, graph counts, and consumed topology counts.
-    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
         if matches!(
             self.status,
@@ -7787,14 +7811,14 @@ impl ExactAdjacentUnionCompletionReport {
         ) && !self.graph_had_unknowns
             && self.blocker.construction_failed_events == 0
         {
-            return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
+            return Err(ExactEvidenceValidationError::GraphUnknownStatusMismatch);
         }
         if !matches!(
             self.status,
             ExactAdjacentUnionCompletionStatus::GraphUnresolved
         ) && (self.graph_had_unknowns || self.blocker.construction_failed_events != 0)
         {
-            return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
+            return Err(ExactEvidenceValidationError::GraphUnknownStatusMismatch);
         }
         let expected_kind = match self.status {
             ExactAdjacentUnionCompletionStatus::GraphUnresolved => {
@@ -7837,16 +7861,16 @@ impl ExactAdjacentUnionCompletionReport {
             .full_face_shared_faces
             .checked_add(self.full_face_shared_patches)
         else {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         };
         let Some(contained_counts) = self.contained_faces.checked_add(self.containing_faces) else {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         };
         if (self.retained_face_pairs != 0 && full_face_counts > self.retained_face_pairs)
             || self.contained_faces > self.retained_face_pairs
             || self.containing_faces > self.retained_face_pairs
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if matches!(
             self.status,
@@ -7860,19 +7884,19 @@ impl ExactAdjacentUnionCompletionReport {
             || self.blocker.coplanar_touching_pairs != 0
             || self.blocker.unknown_pairs != 0)
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         match self.status {
             ExactAdjacentUnionCompletionStatus::NotUnion => {
                 if matches!(self.operation, ExactBooleanOperation::Union) {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactAdjacentUnionCompletionStatus::NotClosedSolid => {
                 if self.operation != ExactBooleanOperation::Union
                     || (self.left_closed && self.right_closed)
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactAdjacentUnionCompletionStatus::AxisAlignedBoxPair => {
@@ -7881,7 +7905,7 @@ impl ExactAdjacentUnionCompletionReport {
                     || !self.right_closed
                     || !self.axis_aligned_box_pair
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactAdjacentUnionCompletionStatus::StrongerKernelAvailable => {
@@ -7891,7 +7915,7 @@ impl ExactAdjacentUnionCompletionReport {
                     || self.axis_aligned_box_pair
                     || !self.stronger_kernel_available
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactAdjacentUnionCompletionStatus::GraphUnresolved => {
@@ -7901,7 +7925,7 @@ impl ExactAdjacentUnionCompletionReport {
                     || self.axis_aligned_box_pair
                     || self.stronger_kernel_available
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactAdjacentUnionCompletionStatus::NoAdjacencyCertificate => {
@@ -7911,7 +7935,7 @@ impl ExactAdjacentUnionCompletionReport {
                     || self.axis_aligned_box_pair
                     || self.stronger_kernel_available
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactAdjacentUnionCompletionStatus::CertifiedFullFace => {
@@ -7924,7 +7948,7 @@ impl ExactAdjacentUnionCompletionReport {
                     || contained_counts != 0
                     || self.contained_containing_side.is_some()
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 validate_adjacent_certified_boundary_blocker(
                     &self.blocker,
@@ -7943,7 +7967,7 @@ impl ExactAdjacentUnionCompletionReport {
                     || self.containing_faces == 0
                     || self.contained_containing_side.is_none()
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 validate_adjacent_certified_boundary_blocker(
                     &self.blocker,
@@ -7957,7 +7981,7 @@ impl ExactAdjacentUnionCompletionReport {
                 || contained_counts != 0
                 || self.contained_containing_side.is_some())
         {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         Ok(())
     }
@@ -7968,15 +7992,15 @@ impl ExactAdjacentUnionCompletionReport {
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         let (replay, _) =
             adjacent_union_completion_certification(left, right, self.operation, None)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
         } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
+            Err(ExactEvidenceValidationError::SourceReplayMismatch)
         }
     }
 }
@@ -8025,12 +8049,12 @@ impl ExactBoundaryTouchingReport {
     }
 
     /// Validate status, retained relation counts, and blocker consistency.
-    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
         if matches!(self.status, ExactBoundaryTouchingStatus::GraphUnknowns)
             != self.graph_had_unknowns
         {
-            return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
+            return Err(ExactEvidenceValidationError::GraphUnknownStatusMismatch);
         }
         let expected_kind = match self.status {
             ExactBoundaryTouchingStatus::GraphUnknowns => ExactBooleanBlockerKind::Refinement,
@@ -8045,7 +8069,7 @@ impl ExactBoundaryTouchingReport {
                 } else if self.blocker.candidate_pairs == 0
                     && self.blocker.coplanar_overlapping_pairs == 0
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 } else if coplanar_pairs {
                     if self.blocker.candidate_pairs == 0
                         && self.blocker.coplanar_overlapping_pairs > 0
@@ -8075,7 +8099,7 @@ impl ExactBoundaryTouchingReport {
             && self.blocker.coplanar_touching_pairs == 0
             && self.blocker.coplanar_overlapping_pairs == 0
         {
-            return Err(ExactReportValidationError::MissingRelationCount);
+            return Err(ExactEvidenceValidationError::MissingRelationCount);
         }
         if self.is_certified() {
             self.blocker
@@ -8092,15 +8116,15 @@ impl ExactBoundaryTouchingReport {
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         let graph = validated_report_intersection_graph(left, right)?;
         let replay = boundary_touching_report_from_graph(&graph, left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
         } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
+            Err(ExactEvidenceValidationError::SourceReplayMismatch)
         }
     }
 }
@@ -8219,12 +8243,12 @@ impl ExactPlanarArrangementReport {
     }
 
     /// Validate status, retained relation counts, and blocker consistency.
-    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
         if matches!(self.status, ExactPlanarArrangementStatus::GraphUnknowns)
             != self.graph_had_unknowns
         {
-            return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
+            return Err(ExactEvidenceValidationError::GraphUnknownStatusMismatch);
         }
         // A graph-unknown arrangement report has not reached planar-cell
         // policy. It is still blocked on predicate/construction refinement, a
@@ -8261,7 +8285,7 @@ impl ExactPlanarArrangementReport {
                     || self.retained_events != 0
                     || blocker_has_any_evidence(&self.blocker)
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactPlanarArrangementStatus::GraphUnknowns => {}
@@ -8269,39 +8293,39 @@ impl ExactPlanarArrangementReport {
             | ExactPlanarArrangementStatus::NoPositiveOverlap
             | ExactPlanarArrangementStatus::BoundaryPolicyRequired => {
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 if matches!(self.status, ExactPlanarArrangementStatus::NoPositiveOverlap)
                     && self.blocker.candidate_pairs == 0
                     && self.blocker.coplanar_overlapping_pairs != 0
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
             ExactPlanarArrangementStatus::Required => {
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
         }
         if self.is_required() && self.blocker.coplanar_overlapping_pairs == 0 {
-            return Err(ExactReportValidationError::MissingRelationCount);
+            return Err(ExactEvidenceValidationError::MissingRelationCount);
         }
         match self.status {
             ExactPlanarArrangementStatus::Required => {
                 let evidence = self
                     .coplanar_arrangement_evidence
                     .as_ref()
-                    .ok_or(ExactReportValidationError::MissingCoplanarArrangementEvidence)?;
-                evidence
-                    .validate()
-                    .map_err(|_| ExactReportValidationError::InvalidCoplanarArrangementEvidence)?;
+                    .ok_or(ExactEvidenceValidationError::MissingCoplanarArrangementEvidence)?;
+                evidence.validate().map_err(|_| {
+                    ExactEvidenceValidationError::InvalidCoplanarArrangementEvidence
+                })?;
                 validate_coplanar_arrangement_evidence_matches_blocker(evidence, &self.blocker)?;
                 if !evidence.needs_planar_cells()
                     || self.blocker.coplanar_touching_pairs != 0
                     || evidence.graph_count != self.blocker.coplanar_overlapping_pairs
                 {
-                    return Err(ExactReportValidationError::CoplanarArrangementEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::CoplanarArrangementEvidenceMismatch);
                 }
             }
             ExactPlanarArrangementStatus::AlreadyMaterialized
@@ -8310,22 +8334,24 @@ impl ExactPlanarArrangementReport {
                 let evidence = self
                     .coplanar_arrangement_evidence
                     .as_ref()
-                    .ok_or(ExactReportValidationError::MissingCoplanarArrangementEvidence)?;
-                evidence
-                    .validate()
-                    .map_err(|_| ExactReportValidationError::InvalidCoplanarArrangementEvidence)?;
+                    .ok_or(ExactEvidenceValidationError::MissingCoplanarArrangementEvidence)?;
+                evidence.validate().map_err(|_| {
+                    ExactEvidenceValidationError::InvalidCoplanarArrangementEvidence
+                })?;
                 validate_coplanar_arrangement_evidence_matches_blocker(evidence, &self.blocker)?;
                 if evidence.status == CoplanarArrangementEvidenceStatus::NoCoplanarOverlap
                     && (self.blocker.coplanar_overlapping_pairs != 0
                         || self.blocker.coplanar_touching_pairs != 0)
                 {
-                    return Err(ExactReportValidationError::CoplanarArrangementEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::CoplanarArrangementEvidenceMismatch);
                 }
             }
             ExactPlanarArrangementStatus::NotNamedOperation
             | ExactPlanarArrangementStatus::GraphUnknowns => {
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
             }
         }
@@ -8353,7 +8379,7 @@ impl ExactPlanarArrangementReport {
         left: &ExactMesh,
         right: &ExactMesh,
         request: ExactBooleanRequest,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         if let Ok(evaluation) = exact_boolean_evaluation_for_replay_result_with_materialization(
             left, right, request, false,
@@ -8361,7 +8387,7 @@ impl ExactPlanarArrangementReport {
         {
             return Ok(());
         }
-        Err(ExactReportValidationError::SourceReplayMismatch)
+        Err(ExactEvidenceValidationError::SourceReplayMismatch)
     }
 }
 
@@ -8643,7 +8669,7 @@ impl ExactWindingEvidenceReport {
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         let request = ExactBooleanRequest::with_boundary_policy(
             self.operation,
@@ -8654,13 +8680,13 @@ impl ExactWindingEvidenceReport {
     }
 
     /// Validate status, blocker, and checked-region artifact consistency.
-    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
         if matches!(self.status, ExactWindingEvidenceStatus::GraphUnknowns)
             != self.graph_had_unknowns
             && !matches!(self.status, ExactWindingEvidenceStatus::NotNamedOperation)
         {
-            return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
+            return Err(ExactEvidenceValidationError::GraphUnknownStatusMismatch);
         }
         validate_refinement_partition(
             matches!(self.status, ExactWindingEvidenceStatus::GraphUnknowns)
@@ -8679,12 +8705,14 @@ impl ExactWindingEvidenceReport {
             )
             && !self.status.materializes_arrangement_cell_complex()
         {
-            return Err(ExactReportValidationError::UnexpectedCoplanarVolumetricEvidence);
+            return Err(ExactEvidenceValidationError::UnexpectedCoplanarVolumetricEvidence);
         }
         match self.status {
             ExactWindingEvidenceStatus::GraphUnknowns => {
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
                 blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::Refinement)?;
                 self.blocker
@@ -8698,10 +8726,12 @@ impl ExactWindingEvidenceReport {
             }
             ExactWindingEvidenceStatus::BoundaryPolicyRequired => {
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::BoundaryPolicy)?;
                 self.blocker
@@ -8715,7 +8745,7 @@ impl ExactWindingEvidenceReport {
             }
             ExactWindingEvidenceStatus::PlanarArrangementRequired => {
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(
                     Some(&self.blocker),
@@ -8731,19 +8761,19 @@ impl ExactWindingEvidenceReport {
                 let evidence = self
                     .coplanar_arrangement_evidence
                     .as_ref()
-                    .ok_or(ExactReportValidationError::MissingCoplanarArrangementEvidence)?;
-                evidence
-                    .validate()
-                    .map_err(|_| ExactReportValidationError::InvalidCoplanarArrangementEvidence)?;
+                    .ok_or(ExactEvidenceValidationError::MissingCoplanarArrangementEvidence)?;
+                evidence.validate().map_err(|_| {
+                    ExactEvidenceValidationError::InvalidCoplanarArrangementEvidence
+                })?;
                 validate_coplanar_arrangement_evidence_matches_blocker(evidence, &self.blocker)?;
                 if !evidence.needs_planar_cells() || self.blocker.coplanar_touching_pairs != 0 {
-                    return Err(ExactReportValidationError::CoplanarArrangementEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::CoplanarArrangementEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized => {
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(
                     Some(&self.blocker),
@@ -8759,22 +8789,24 @@ impl ExactWindingEvidenceReport {
                 let evidence = self
                     .coplanar_arrangement_evidence
                     .as_ref()
-                    .ok_or(ExactReportValidationError::MissingCoplanarArrangementEvidence)?;
-                evidence
-                    .validate()
-                    .map_err(|_| ExactReportValidationError::InvalidCoplanarArrangementEvidence)?;
+                    .ok_or(ExactEvidenceValidationError::MissingCoplanarArrangementEvidence)?;
+                evidence.validate().map_err(|_| {
+                    ExactEvidenceValidationError::InvalidCoplanarArrangementEvidence
+                })?;
                 validate_coplanar_arrangement_evidence_matches_blocker(evidence, &self.blocker)?;
                 if !evidence.needs_planar_cells() {
-                    return Err(ExactReportValidationError::CoplanarArrangementEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::CoplanarArrangementEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingEvidenceStatus::CoplanarVolumetricCellsRequired => {
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(
                     Some(&self.blocker),
@@ -8790,7 +8822,7 @@ impl ExactWindingEvidenceReport {
                 let evidence = self
                     .coplanar_volumetric_evidence
                     .as_ref()
-                    .ok_or(ExactReportValidationError::MissingCoplanarVolumetricEvidence)?;
+                    .ok_or(ExactEvidenceValidationError::MissingCoplanarVolumetricEvidence)?;
                 validate_coplanar_volumetric_evidence_matches_blocker(
                     evidence,
                     &self.blocker,
@@ -8798,16 +8830,18 @@ impl ExactWindingEvidenceReport {
                     self.retained_events,
                 )?;
                 if !evidence.requires_coplanar_volumetric_cells() {
-                    return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingEvidenceStatus::CoplanarVolumetricCellsAlreadyMaterialized => {
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(
                     Some(&self.blocker),
@@ -8823,7 +8857,7 @@ impl ExactWindingEvidenceReport {
                 let evidence = self
                     .coplanar_volumetric_evidence
                     .as_ref()
-                    .ok_or(ExactReportValidationError::MissingCoplanarVolumetricEvidence)?;
+                    .ok_or(ExactEvidenceValidationError::MissingCoplanarVolumetricEvidence)?;
                 validate_coplanar_volumetric_evidence_matches_blocker(
                     evidence,
                     &self.blocker,
@@ -8831,18 +8865,20 @@ impl ExactWindingEvidenceReport {
                     self.retained_events,
                 )?;
                 if !evidence.requires_coplanar_volumetric_cells() {
-                    return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingEvidenceStatus::VolumetricAssemblyRequired => {
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.retained_face_pairs == 0
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 let expected = match self.blocker.kind {
                     ExactBooleanBlockerKind::CoplanarVolumetricCells => {
@@ -8870,12 +8906,14 @@ impl ExactWindingEvidenceReport {
                         )?;
                         if !evidence.requires_coplanar_volumetric_cells() {
                             return Err(
-                                ExactReportValidationError::CoplanarVolumetricEvidenceMismatch,
+                                ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch,
                             );
                         }
                     }
                     (ExactBooleanBlockerKind::CoplanarVolumetricCells, None) => {
-                        return Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence);
+                        return Err(
+                            ExactEvidenceValidationError::MissingCoplanarVolumetricEvidence,
+                        );
                     }
                     (_, Some(evidence)) => {
                         validate_coplanar_volumetric_evidence_shape(
@@ -8890,10 +8928,12 @@ impl ExactWindingEvidenceReport {
             }
             ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized => {
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 let expected = match self.blocker.kind {
                     ExactBooleanBlockerKind::BoundaryPolicy => {
@@ -8916,12 +8956,14 @@ impl ExactWindingEvidenceReport {
                         )?;
                         if !evidence.requires_coplanar_volumetric_cells() {
                             return Err(
-                                ExactReportValidationError::CoplanarVolumetricEvidenceMismatch,
+                                ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch,
                             );
                         }
                     }
                     (ExactBooleanBlockerKind::CoplanarVolumetricCells, None) => {
-                        return Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence);
+                        return Err(
+                            ExactEvidenceValidationError::MissingCoplanarVolumetricEvidence,
+                        );
                     }
                     (ExactBooleanBlockerKind::BoundaryPolicy, Some(evidence)) => {
                         validate_coplanar_volumetric_evidence_matches_blocker(
@@ -8949,11 +8991,11 @@ impl ExactWindingEvidenceReport {
                         | ExactBooleanBlockerKind::PlanarArrangement,
                         None,
                     ) => {
-                        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                        return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                     }
                     (_, Some(_)) => {
                         return Err(
-                            ExactReportValidationError::UnexpectedCoplanarVolumetricEvidence,
+                            ExactEvidenceValidationError::UnexpectedCoplanarVolumetricEvidence,
                         );
                     }
                 }
@@ -8968,7 +9010,7 @@ impl ExactWindingEvidenceReport {
                     || self.retained_face_pairs != 0
                     || self.retained_events != 0
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::Winding)?;
                 self.blocker
@@ -8981,7 +9023,7 @@ impl ExactWindingEvidenceReport {
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::Winding)?;
                 self.blocker
@@ -9000,7 +9042,7 @@ impl ExactWindingEvidenceReport {
                     || self.graph_had_unknowns
                     || self.retained_face_pairs == 0
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::Winding)?;
                 self.blocker
@@ -9020,7 +9062,7 @@ impl ExactWindingEvidenceReport {
                     || (!has_coplanar_evidence
                         && (self.retained_face_pairs != 0 || self.retained_events != 0))
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::Winding)?;
                 self.blocker
@@ -9045,7 +9087,7 @@ impl ExactWindingEvidenceReport {
                     || self.graph_had_unknowns
                     || self.retained_face_pairs == 0
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::BoundaryPolicy)?;
                 self.blocker
@@ -9070,7 +9112,9 @@ impl ExactWindingEvidenceReport {
                         )?;
                     }
                     None if self.blocker.coplanar_overlapping_pairs != 0 => {
-                        return Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence);
+                        return Err(
+                            ExactEvidenceValidationError::MissingCoplanarVolumetricEvidence,
+                        );
                     }
                     None => {}
                 }
@@ -9083,7 +9127,7 @@ impl ExactWindingEvidenceReport {
                     || self.graph_had_unknowns
                     || self.retained_face_pairs == 0
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::BoundaryPolicy)?;
                 self.blocker
@@ -9107,7 +9151,7 @@ impl ExactWindingEvidenceReport {
                     || self.retained_face_pairs != 0
                     || self.retained_events != 0
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::Winding)?;
                 self.blocker
@@ -9116,12 +9160,14 @@ impl ExactWindingEvidenceReport {
             }
             ExactWindingEvidenceStatus::Ready => {
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.retained_face_pairs == 0
                 {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 let expected = match self.blocker.kind {
                     ExactBooleanBlockerKind::CoplanarVolumetricCells => {
@@ -9149,12 +9195,14 @@ impl ExactWindingEvidenceReport {
                         )?;
                         if !evidence.requires_coplanar_volumetric_cells() {
                             return Err(
-                                ExactReportValidationError::CoplanarVolumetricEvidenceMismatch,
+                                ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch,
                             );
                         }
                     }
                     (ExactBooleanBlockerKind::CoplanarVolumetricCells, None) => {
-                        return Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence);
+                        return Err(
+                            ExactEvidenceValidationError::MissingCoplanarVolumetricEvidence,
+                        );
                     }
                     (_, Some(evidence)) => {
                         validate_coplanar_volumetric_evidence_shape(
@@ -9170,19 +9218,21 @@ impl ExactWindingEvidenceReport {
             ExactWindingEvidenceStatus::NotNamedOperation
             | ExactWindingEvidenceStatus::NoNontrivialOverlap => {
                 if self.coplanar_arrangement_evidence.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedCoplanarArrangementEvidence);
+                    return Err(
+                        ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
+                    );
                 }
                 match self.status {
                     ExactWindingEvidenceStatus::NotNamedOperation
                         if !matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) =>
                     {
-                        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                        return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                     }
                     ExactWindingEvidenceStatus::NoNontrivialOverlap
                         if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                             || self.retained_face_pairs != 0 =>
                     {
-                        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                        return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                     }
                     _ => {}
                 }
@@ -9233,7 +9283,7 @@ mod tests {
         preflight.region_count = 1;
         assert_eq!(
             preflight.validate(),
-            Err(ExactReportValidationError::MissingRegionFacts)
+            Err(ExactEvidenceValidationError::MissingRegionFacts)
         );
     }
 
@@ -9277,7 +9327,7 @@ mod tests {
 
         assert_eq!(
             result.validate(),
-            Err(ExactReportValidationError::DuplicateAssemblyTriangle)
+            Err(ExactEvidenceValidationError::DuplicateAssemblyTriangle)
         );
     }
 
@@ -9359,7 +9409,7 @@ mod tests {
 
         assert_eq!(
             result.validate(),
-            Err(ExactReportValidationError::SelectedRegionAssemblyMissingSelectedRegion)
+            Err(ExactEvidenceValidationError::SelectedRegionAssemblyMissingSelectedRegion)
         );
     }
 
@@ -9488,7 +9538,7 @@ mod tests {
 
         assert_eq!(
             result.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
     }
 
@@ -9627,7 +9677,7 @@ mod tests {
         stale.boundary_edges = 1;
         assert_eq!(
             stale.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
     }
 
@@ -9639,14 +9689,14 @@ mod tests {
         report.noncoplanar_boundary_loops = 1;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let mut report = valid_self_contact_closure_report();
         report.coplanar_loop_groups = 1;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
     }
 
@@ -9656,21 +9706,21 @@ mod tests {
         report.self_contact_topological_vertices = 1;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let mut report = valid_self_contact_closure_report();
         report.repeated_exact_boundary_points = 0;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let mut report = valid_self_contact_closure_report();
         report.self_contact_degenerate_cycles = 1;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
     }
 
@@ -9687,21 +9737,21 @@ mod tests {
         report.boundary_loops = 2;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let mut report = valid_noncoplanar_closure_report();
         report.noncoplanar_boundary_loops = 2;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let mut report = valid_noncoplanar_closure_report();
         report.boundary_edges = 4;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let mut report = valid_noncoplanar_closure_report();
@@ -9709,21 +9759,21 @@ mod tests {
         report.boundary_edges = usize::MAX;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let mut report = valid_topology_not_loop_closure_report();
         report.boundary_vertices_with_invalid_outgoing_degree = 3;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let mut report = valid_self_contact_closure_report();
         report.repeated_exact_boundary_points = 2;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let mut report = valid_self_contact_closure_report();
@@ -9732,7 +9782,7 @@ mod tests {
         report.self_contact_degenerate_cycles = 4;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let mut report = valid_self_contact_closure_report();
@@ -9743,7 +9793,7 @@ mod tests {
         report.self_contact_degenerate_cycles = usize::MAX;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let mut report = valid_noncoplanar_closure_report();
@@ -9752,7 +9802,7 @@ mod tests {
         report.coplanar_loop_groups = 2;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
     }
 
@@ -9764,7 +9814,7 @@ mod tests {
         report.coplanar_loop_groups = 1;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let mut report = valid_blocked_closure_report();
@@ -9779,14 +9829,14 @@ mod tests {
         report.self_contact_degenerate_cycles = 2;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let mut report = valid_blocked_closure_report();
         report.self_contact_exact_points = 1;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let mut report = valid_blocked_closure_report();
@@ -9808,7 +9858,7 @@ mod tests {
         );
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
     }
 
@@ -9821,21 +9871,21 @@ mod tests {
         report.boundary_vertices_with_invalid_incoming_degree = 0;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let mut report = valid_topology_not_loop_closure_report();
         report.boundary_loops = 1;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let mut report = valid_topology_not_loop_closure_report();
         report.noncoplanar_boundary_loops = 1;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
     }
 
@@ -9847,7 +9897,7 @@ mod tests {
         report.coplanar_loop_groups = 1;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
     }
 
@@ -9857,14 +9907,14 @@ mod tests {
         report.boundary_vertices_with_invalid_outgoing_degree = 1;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let mut report = valid_blocked_closure_report();
         report.overused_boundary_edges = 1;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
     }
 
@@ -9904,7 +9954,7 @@ mod tests {
         report.operation = ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll);
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let mut preflight = ExactBooleanPreflight {
@@ -9927,7 +9977,7 @@ mod tests {
         preflight.operation = ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll);
         assert_eq!(
             preflight.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
     }
 
@@ -9961,7 +10011,7 @@ mod tests {
         };
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         report.retained_face_pairs = 2;
@@ -9990,7 +10040,7 @@ mod tests {
         };
         assert_eq!(
             refinement.validate(),
-            Err(ExactReportValidationError::InvalidBlockerCounts)
+            Err(ExactEvidenceValidationError::InvalidBlockerCounts)
         );
 
         let overflowing_blocker = ExactRefinementReport {
@@ -10010,7 +10060,7 @@ mod tests {
         };
         assert_eq!(
             overflowing_blocker.validate(),
-            Err(ExactReportValidationError::InvalidBlockerCounts)
+            Err(ExactEvidenceValidationError::InvalidBlockerCounts)
         );
 
         let open_disjoint = ExactOpenSurfaceDisjointReport {
@@ -10031,7 +10081,7 @@ mod tests {
         };
         assert_eq!(
             open_disjoint.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let adjacent = ExactAdjacentUnionCompletionReport {
@@ -10060,7 +10110,7 @@ mod tests {
         };
         assert_eq!(
             adjacent.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let certified_full_face = ExactAdjacentUnionCompletionReport {
@@ -10089,7 +10139,7 @@ mod tests {
         };
         assert_eq!(
             certified_full_face.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let certified_contained_face = ExactAdjacentUnionCompletionReport {
@@ -10118,7 +10168,7 @@ mod tests {
         };
         assert_eq!(
             certified_contained_face.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let boundary = ExactBoundaryTouchingReport {
@@ -10137,7 +10187,7 @@ mod tests {
         };
         assert_eq!(
             boundary.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let planar = ExactPlanarArrangementReport {
@@ -10168,7 +10218,7 @@ mod tests {
         };
         assert_eq!(
             planar.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let preflight = ExactBooleanPreflight {
@@ -10185,7 +10235,7 @@ mod tests {
         };
         assert_eq!(
             preflight.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
         let evidence = ExactWindingEvidenceReport {
@@ -10209,7 +10259,7 @@ mod tests {
         };
         assert_eq!(
             evidence.validate(),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
     }
 
@@ -10232,7 +10282,7 @@ mod tests {
         };
         assert_eq!(
             refinement.validate(),
-            Err(ExactReportValidationError::InvalidBlockerCounts)
+            Err(ExactEvidenceValidationError::InvalidBlockerCounts)
         );
 
         let blocker = refinement.blocker.as_mut().unwrap();
@@ -10263,7 +10313,7 @@ mod tests {
         };
         assert_eq!(
             evidence.validate(),
-            Err(ExactReportValidationError::InvalidBlockerCounts)
+            Err(ExactEvidenceValidationError::InvalidBlockerCounts)
         );
     }
 
@@ -10301,7 +10351,7 @@ mod tests {
         already_materialized.coplanar_arrangement_evidence = None;
         assert_eq!(
             already_materialized.validate(),
-            Err(ExactReportValidationError::MissingCoplanarArrangementEvidence)
+            Err(ExactEvidenceValidationError::MissingCoplanarArrangementEvidence)
         );
 
         let mut no_positive_overlap = ExactPlanarArrangementReport {
@@ -10336,7 +10386,7 @@ mod tests {
         no_positive_overlap.coplanar_arrangement_evidence = None;
         assert_eq!(
             no_positive_overlap.validate(),
-            Err(ExactReportValidationError::MissingCoplanarArrangementEvidence)
+            Err(ExactEvidenceValidationError::MissingCoplanarArrangementEvidence)
         );
 
         let mut boundary_policy = ExactPlanarArrangementReport {
@@ -10369,7 +10419,7 @@ mod tests {
         boundary_policy.coplanar_arrangement_evidence = None;
         assert_eq!(
             boundary_policy.validate(),
-            Err(ExactReportValidationError::MissingCoplanarArrangementEvidence)
+            Err(ExactEvidenceValidationError::MissingCoplanarArrangementEvidence)
         );
     }
 
@@ -10410,7 +10460,7 @@ mod tests {
         report.coplanar_arrangement_evidence = None;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::MissingCoplanarArrangementEvidence)
+            Err(ExactEvidenceValidationError::MissingCoplanarArrangementEvidence)
         );
     }
 
@@ -10465,7 +10515,7 @@ mod tests {
         report.coplanar_volumetric_evidence = None;
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence)
+            Err(ExactEvidenceValidationError::MissingCoplanarVolumetricEvidence)
         );
 
         let relabeled_evidence = CoplanarVolumetricCellEvidenceReport::from_test_counts(
@@ -10481,7 +10531,7 @@ mod tests {
         report.coplanar_volumetric_evidence = Some(relabeled_evidence);
         assert_eq!(
             report.validate(),
-            Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch)
+            Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch)
         );
     }
 
@@ -10537,7 +10587,7 @@ mod tests {
         preflight.retained_events = 5;
         assert_eq!(
             preflight.validate(),
-            Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch)
+            Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch)
         );
 
         let mut evidence = ExactWindingEvidenceReport {
@@ -10557,7 +10607,7 @@ mod tests {
         evidence.retained_events = 5;
         assert_eq!(
             evidence.validate(),
-            Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch)
+            Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch)
         );
 
         let overflowing_evidence = CoplanarVolumetricCellEvidenceReport::from_test_counts(
@@ -10572,7 +10622,7 @@ mod tests {
         evidence.coplanar_volumetric_evidence = Some(overflowing_evidence);
         assert_eq!(
             evidence.validate(),
-            Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch)
+            Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch)
         );
     }
 

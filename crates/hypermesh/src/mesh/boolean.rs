@@ -85,9 +85,9 @@ use evidence::{
     ExactBooleanCertificationSet, ExactBooleanEvaluation, ExactBooleanPreflight,
     ExactBooleanResult, ExactBooleanResultKind, ExactBooleanShortcutKind, ExactBooleanSourceFacts,
     ExactBooleanSupport, ExactBoundaryTouchingReport, ExactBoundaryTouchingStatus,
-    ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport,
-    ExactPlanarArrangementStatus, ExactRefinementReport, ExactRefinementStatus,
-    ExactReportValidationError, ExactVolumetricBoundaryClosureReport,
+    ExactEvidenceValidationError, ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus,
+    ExactPlanarArrangementReport, ExactPlanarArrangementStatus, ExactRefinementReport,
+    ExactRefinementStatus, ExactVolumetricBoundaryClosureReport,
     ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
     certified_convex_operation_shortcut_support, meshes_are_certified_bounds_disjoint,
 };
@@ -133,20 +133,20 @@ impl ExactArrangementBooleanAttempt {
         left: &ExactMesh,
         right: &ExactMesh,
         request: ExactBooleanRequest,
-    ) -> Result<(), ExactReportValidationError> {
+    ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         if self.materialized_arrangement_cell_complex_shortcut()
             && orthogonal_solid_cell_materializes_for_preflight(left, right, request.operation)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             && let Some(replay) =
                 arrangement_cell_complex_shortcut_attempt(left, right, request, self.policy)
-                    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+                    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
         {
             replay.validate_for_request_policy(request, self.policy)?;
             return if self == &replay || self.materialized_output_matches_replay(&replay) {
                 Ok(())
             } else {
-                Err(ExactReportValidationError::SourceReplayMismatch)
+                Err(ExactEvidenceValidationError::SourceReplayMismatch)
             };
         }
         let replay = match ExactArrangement::from_meshes_with_policy(left, right, self.policy) {
@@ -161,27 +161,27 @@ impl ExactArrangementBooleanAttempt {
                     Ok(attempt) => attempt,
                     Err(_) => {
                         arrangement_cell_complex_shortcut_attempt(left, right, request, self.policy)
-                            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-                            .ok_or(ExactReportValidationError::SourceReplayMismatch)?
+                            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+                            .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?
                     }
                 };
                 if attempt.materialized_arrangement_cell_complex_output() {
                     attempt
                 } else {
                     arrangement_cell_complex_shortcut_attempt(left, right, request, self.policy)
-                        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+                        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
                         .unwrap_or(attempt)
                 }
             }
             Err(_) => arrangement_cell_complex_shortcut_attempt(left, right, request, self.policy)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-                .ok_or(ExactReportValidationError::SourceReplayMismatch)?,
+                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+                .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?,
         };
         replay.validate_for_request_policy(request, self.policy)?;
         if self == &replay || self.materialized_output_matches_replay(&replay) {
             Ok(())
         } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
+            Err(ExactEvidenceValidationError::SourceReplayMismatch)
         }
     }
 }
@@ -190,9 +190,9 @@ pub(crate) fn exact_boolean_evaluation_for_replay(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
-) -> Result<ExactBooleanEvaluation, ExactReportValidationError> {
+) -> Result<ExactBooleanEvaluation, ExactEvidenceValidationError> {
     exact_boolean_evaluation_for_replay_result(left, right, request)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)
 }
 
 fn exact_boolean_evaluation_for_replay_result(
@@ -318,7 +318,13 @@ fn exact_boolean_evaluation_for_replay_result_with_materialization(
         result,
         !materialize_result,
     )
-    .map_err(exact_boolean_replay_report_error)
+    .map_err(|error| {
+        retained_evidence_validation_error(
+            RETAINED_EVIDENCE_REPLAY_CONTEXT,
+            error,
+            ExactMeshBlockerKind::StaleFactReplay,
+        )
+    })
 }
 
 fn replay_regularized_arrangement_attempt(
@@ -335,7 +341,13 @@ fn replay_regularized_arrangement_attempt(
         attempt
             .validate_for_request_policy(request, policy)
             .and_then(|()| attempt.validate_against_sources_for_request(left, right, request))
-            .map_err(exact_boolean_replay_report_error)?;
+            .map_err(|error| {
+                retained_evidence_validation_error(
+                    RETAINED_EVIDENCE_REPLAY_CONTEXT,
+                    error,
+                    ExactMeshBlockerKind::StaleFactReplay,
+                )
+            })?;
         return Ok(());
     }
     let attempt = match retained_arrangement {
@@ -411,7 +423,13 @@ fn replay_regularized_arrangement_attempt(
     };
     attempt
         .validate_for_request_policy(request, policy)
-        .map_err(exact_boolean_replay_report_error)?;
+        .map_err(|error| {
+            retained_evidence_validation_error(
+                RETAINED_EVIDENCE_REPLAY_CONTEXT,
+                error,
+                ExactMeshBlockerKind::StaleFactReplay,
+            )
+        })?;
     *retained_attempt = Some(attempt);
     Ok(())
 }
@@ -438,13 +456,19 @@ fn exact_boolean_replay_preflight(
         shortcut_facts,
     )?;
     if graph_preflight.operation() != request.operation {
-        return Err(exact_boolean_replay_report_error(
-            ExactReportValidationError::StatusEvidenceMismatch,
+        return Err(retained_evidence_validation_error(
+            RETAINED_EVIDENCE_REPLAY_CONTEXT,
+            ExactEvidenceValidationError::StatusEvidenceMismatch,
+            ExactMeshBlockerKind::StaleFactReplay,
         ));
     }
-    graph_preflight
-        .validate()
-        .map_err(exact_boolean_replay_report_error)?;
+    graph_preflight.validate().map_err(|error| {
+        retained_evidence_validation_error(
+            RETAINED_EVIDENCE_REPLAY_CONTEXT,
+            error,
+            ExactMeshBlockerKind::StaleFactReplay,
+        )
+    })?;
     if matches!(
         graph_preflight.support(),
         ExactBooleanSupport::CertifiedEmptyOperand
@@ -481,9 +505,13 @@ fn exact_boolean_replay_preflight(
                 attempt,
             )
     {
-        preflight
-            .validate()
-            .map_err(exact_boolean_replay_report_error)?;
+        preflight.validate().map_err(|error| {
+            retained_evidence_validation_error(
+                RETAINED_EVIDENCE_REPLAY_CONTEXT,
+                error,
+                ExactMeshBlockerKind::StaleFactReplay,
+            )
+        })?;
         return Ok(preflight);
     }
     Ok(graph_preflight)
@@ -500,23 +528,20 @@ pub(crate) fn preflight_report_for_request_from_graph(
     exact_boolean_replay_preflight(left, right, request, graph, &shortcut_facts, None)
 }
 
-fn exact_boolean_replay_report_error(error: ExactReportValidationError) -> ExactMeshError {
-    ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::StaleFactReplay,
-        format!("exact boolean retained report failed replay validation: {error:?}"),
-    ))
-}
+const RETAINED_EVIDENCE_REPLAY_CONTEXT: &str =
+    "exact boolean retained evidence failed replay validation";
 
-fn retained_report_validation_error(
+fn retained_evidence_validation_error(
     context: &'static str,
-    error: ExactReportValidationError,
+    error: ExactEvidenceValidationError,
+    fallback_kind: ExactMeshBlockerKind,
 ) -> ExactMeshError {
     let kind = match error {
-        ExactReportValidationError::SourceReplayMismatch
-        | ExactReportValidationError::OutputSourceReplayMismatch => {
+        ExactEvidenceValidationError::SourceReplayMismatch
+        | ExactEvidenceValidationError::OutputSourceReplayMismatch => {
             ExactMeshBlockerKind::StaleFactReplay
         }
-        _ => ExactMeshBlockerKind::ExactConstructionFailure,
+        _ => fallback_kind,
     };
     ExactMeshError::one(ExactMeshBlocker::new(kind, format!("{context}: {error:?}")))
 }
@@ -551,7 +576,7 @@ fn retained_arrangement_attempt_for_request<'a>(
     right: &ExactMesh,
     request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
-) -> Result<Option<&'a ExactArrangementBooleanAttempt>, ExactReportValidationError> {
+) -> Result<Option<&'a ExactArrangementBooleanAttempt>, ExactEvidenceValidationError> {
     let Some(attempt) = retained else {
         return Ok(None);
     };
@@ -660,9 +685,10 @@ fn certification_set_from_graph_and_regularized_arrangement(
         attempt
             .validate_for_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .map_err(|error| {
-                retained_report_validation_error(
+                retained_evidence_validation_error(
                     "retained arrangement attempt failed validation",
                     error,
+                    ExactMeshBlockerKind::ExactConstructionFailure,
                 )
             })?;
     }
@@ -1315,7 +1341,11 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
         ExactRegularizationPolicy::REGULARIZED_SOLID,
     )
     .map_err(|error| {
-        retained_report_validation_error("retained arrangement attempt failed validation", error)
+        retained_evidence_validation_error(
+            "retained arrangement attempt failed validation",
+            error,
+            ExactMeshBlockerKind::ExactConstructionFailure,
+        )
     })?;
     if shortcut_facts.certified_support(operation)
         == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
@@ -2978,9 +3008,10 @@ pub(crate) fn certified_arrangement_cell_complex_preflight_from_retained_attempt
         .validate_for_request_policy(request, policy)
         .and_then(|()| attempt.validate_against_sources_for_request(left, right, request))
         .map_err(|error| {
-            retained_report_validation_error(
+            retained_evidence_validation_error(
                 "retained arrangement attempt failed validation",
                 error,
+                ExactMeshBlockerKind::ExactConstructionFailure,
             )
         })?;
     if materialize_retained_arrangement_cell_complex_attempt(left, right, request, attempt)?
@@ -6170,7 +6201,7 @@ fn validate_volumetric_arrangement_result_against_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ExactMeshValidationPolicy,
-) -> Result<(), ExactReportValidationError> {
+) -> Result<(), ExactEvidenceValidationError> {
     result.validate()?;
     if let Some(arrangement) = retained_regularized_arrangement {
         result.validate_arrangement_cell_complex_gate_reports_against_arrangement(
@@ -6183,14 +6214,14 @@ fn validate_volumetric_arrangement_result_against_graph(
         result.validate_arrangement_cell_complex_gate_reports_against_sources(left, right)?;
     }
     if result.mesh.validation_policy() != validation {
-        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
     }
     let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
         graph, left, right, operation, validation,
     )
-    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
     else {
-        return Err(ExactReportValidationError::SourceReplayMismatch);
+        return Err(ExactEvidenceValidationError::SourceReplayMismatch);
     };
     let replay = volumetric_arrangement_cell_complex_result(operation, materialized)
         .with_gate_reports(
@@ -6201,7 +6232,7 @@ fn validate_volumetric_arrangement_result_against_graph(
     if result == &replay {
         Ok(())
     } else {
-        Err(ExactReportValidationError::SourceReplayMismatch)
+        Err(ExactEvidenceValidationError::SourceReplayMismatch)
     }
 }
 

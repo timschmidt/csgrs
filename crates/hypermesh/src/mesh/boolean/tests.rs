@@ -392,7 +392,7 @@ fn boundary_policy_shortcut_rejects_selected_region_operation_relabel() {
     };
     assert_eq!(
         projected.validate(),
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     );
 }
 
@@ -812,7 +812,7 @@ fn selected_region_winding_evidence_classifies_retained_graph_blocker() {
     let stale = evidence.clone().with_blocker(stale_blocker);
     assert_eq!(
         stale.validate(),
-        Err(ExactReportValidationError::WrongBlockerKind)
+        Err(ExactEvidenceValidationError::WrongBlockerKind)
     );
 
     let disjoint_right = ExactMesh::from_i64_triangles_with_policy(
@@ -842,7 +842,7 @@ fn selected_region_winding_evidence_classifies_retained_graph_blocker() {
     let relabeled_empty = disjoint_evidence.with_blocker(relabeled_blocker);
     assert_eq!(
         relabeled_empty.validate(),
-        Err(ExactReportValidationError::WrongBlockerKind)
+        Err(ExactEvidenceValidationError::WrongBlockerKind)
     );
 }
 
@@ -1570,7 +1570,7 @@ fn arrangement_cell_complex_shortcut_facts_reject_mixed_axis_and_affine_families
     );
     assert_eq!(
         facts.validate(),
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     );
 }
 
@@ -2047,7 +2047,7 @@ fn graph_empty_containment_routes_named_booleans_through_arrangement_pipeline() 
             if let Err(error) = relabeled_closed_winding.validate_against_sources(left, right) {
                 assert_eq!(
                     error,
-                    ExactReportValidationError::SourceReplayMismatch,
+                    ExactEvidenceValidationError::SourceReplayMismatch,
                     "{right_inside_left:?} {operation:?}: relabeled arrangement result should only fail source replay"
                 );
             }
@@ -2170,7 +2170,7 @@ fn graph_empty_closed_winding_separation_materializes_without_bounds_disjointnes
         };
         assert_eq!(
             relabeled_arrangement.validate(),
-            Err(ExactReportValidationError::InvalidOutputMeshProvenance),
+            Err(ExactEvidenceValidationError::InvalidOutputMeshProvenance),
             "{operation:?}: closed-winding separation relabeled as arrangement must fail local provenance"
         );
         assert!(
@@ -2362,7 +2362,7 @@ fn lower_dimensional_regularized_solid_reports_materialized_evidence() {
                 relabeled_lower_dimensional.validate().unwrap();
                 assert_eq!(
                     relabeled_lower_dimensional.validate_against_sources(&left, &right),
-                    Err(ExactReportValidationError::SourceReplayMismatch),
+                    Err(ExactEvidenceValidationError::SourceReplayMismatch),
                     "{operation:?}: arrangement lower-dimensional result relabeled as regularized shortcut must not replay"
                 );
             }
@@ -2848,7 +2848,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
     missing_generic_evidence.topology_assembly_report = None;
     assert_eq!(
         missing_generic_evidence.validate(),
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     );
 
     let mut stale_result = (*result).clone();
@@ -2859,7 +2859,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
         .status = ExactRegionOwnershipStatus::RequiresWinding;
     assert_eq!(
         stale_result.validate(),
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     );
 
     let report_attempt = test_arrangement_attempt(
@@ -2913,7 +2913,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
             ),
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         ),
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     );
     let mut stale_gate_count = replayable_result.clone();
     stale_gate_count
@@ -2923,7 +2923,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
         .arrangement_face_cells += 1;
     assert_eq!(
         stale_gate_count.validate(),
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     );
     let mut stale_ownership_shape = replayable_result.clone();
     let ownership = stale_ownership_shape
@@ -2934,7 +2934,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
     ownership.lower_dimensional_point_contacts += 1;
     assert_eq!(
         stale_ownership_shape.validate(),
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     );
     let graph = build_validated_intersection_graph(&left, &right).unwrap();
     let mut stale_replay_report = replayable_result.clone();
@@ -2946,7 +2946,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
     stale_replay_report.validate().unwrap();
     assert_eq!(
         stale_replay_report.validate_against_sources(&left, &right),
-        Err(ExactReportValidationError::SourceReplayMismatch)
+        Err(ExactEvidenceValidationError::SourceReplayMismatch)
     );
     assert_eq!(
         validate_volumetric_arrangement_result_against_graph(
@@ -2958,7 +2958,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
             ExactBooleanOperation::Union,
             ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         ),
-        Err(ExactReportValidationError::SourceReplayMismatch)
+        Err(ExactEvidenceValidationError::SourceReplayMismatch)
     );
 }
 
@@ -3079,7 +3079,7 @@ fn arrangement_attempt_accepts_requested_volume_ownership() {
     );
     assert_eq!(
         retained_attempt.validate(),
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     );
 }
 
@@ -3182,7 +3182,7 @@ fn retained_result_validation_rejects_stale_supplied_attempt() {
 
     assert_eq!(
         stale_attempt.validate_against_sources_for_request(&left, &right, request),
-        Err(ExactReportValidationError::SourceReplayMismatch)
+        Err(ExactEvidenceValidationError::SourceReplayMismatch)
     );
     assert_eq!(
         result.validate_request_against_sources_with_retained_attempt(
@@ -3191,7 +3191,7 @@ fn retained_result_validation_rejects_stale_supplied_attempt() {
             request,
             Some(&stale_attempt),
         ),
-        Err(ExactReportValidationError::SourceReplayMismatch)
+        Err(ExactEvidenceValidationError::SourceReplayMismatch)
     );
 }
 
@@ -3239,7 +3239,7 @@ fn non_arrangement_result_validation_ignores_unrelated_stale_attempt() {
     stale_attempt.validate().unwrap();
     assert_eq!(
         stale_attempt.validate_against_sources_for_request(&left, &right, request),
-        Err(ExactReportValidationError::SourceReplayMismatch)
+        Err(ExactEvidenceValidationError::SourceReplayMismatch)
     );
 
     result
@@ -3848,7 +3848,7 @@ fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
         relabeled_boundary_shortcut.validate().unwrap();
         assert_eq!(
             relabeled_boundary_shortcut.validate_against_sources(&left, &right),
-            Err(ExactReportValidationError::SourceReplayMismatch),
+            Err(ExactEvidenceValidationError::SourceReplayMismatch),
             "{operation:?}: arrangement result relabeled as closed-boundary shortcut must not replay"
         );
         let topology = result
@@ -3931,7 +3931,7 @@ fn boundary_attached_contained_tetrahedron_difference_materializes() {
     };
     assert_eq!(
         relabeled.validate(),
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     );
     difference
         .validate_request_against_sources_with_retained_attempt(
@@ -4503,51 +4503,51 @@ fn closed_same_surface_reversed_orientation_routes_through_arrangement_pipeline(
     stale_selected_faces.selected_faces = stale_selected_faces.face_cells + 1;
     assert_eq!(
         stale_selected_faces.validate(),
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     );
     let mut stale_selected_volumes = union_attempt.clone();
     stale_selected_volumes.selected_volume_regions = stale_selected_volumes.volume_regions + 1;
     assert_eq!(
         stale_selected_volumes.validate(),
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     );
     let mut stale_orientation_split = union_attempt.clone();
     stale_orientation_split.label_oriented_selected_faces += 1;
     assert_eq!(
         stale_orientation_split.validate(),
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     );
     let mut stale_reversed_faces = union_attempt.clone();
     stale_reversed_faces.reversed_selected_faces = stale_reversed_faces.selected_faces + 1;
     assert_eq!(
         stale_reversed_faces.validate(),
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     );
     let mut stale_volume_regions = union_attempt.clone();
     stale_volume_regions.regions = 0;
     assert_eq!(
         stale_volume_regions.validate(),
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     );
     let mut stale_volume_adjacencies = union_attempt.clone();
     stale_volume_adjacencies.volume_regions = 1;
     stale_volume_adjacencies.volume_adjacencies = 1;
     assert_eq!(
         stale_volume_adjacencies.validate(),
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     );
     let mut stale_union_counts = union_attempt.clone();
     stale_union_counts.output_vertices = 0;
     stale_union_counts.output_triangles = 0;
     assert_eq!(
         stale_union_counts.validate(),
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     );
     let mut impossible_output_counts = union_attempt.clone();
     impossible_output_counts.output_vertices = 0;
     assert_eq!(
         impossible_output_counts.validate(),
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     );
 
     let difference_attempt = test_arrangement_attempt(
