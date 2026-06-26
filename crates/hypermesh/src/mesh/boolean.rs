@@ -1846,83 +1846,18 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         );
     }
     if requires_certified_winding
-        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && open_surface_disjoint_report_from_graph(graph, left, right).is_certified()
-    {
-        return Ok(certified_preflight(
-            operation,
-            ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
-            Some(graph),
-            None,
-        ));
-    }
-    if requires_certified_winding
-        && requires_coplanar_volumetric_cells
-        && let Some(preflight) =
-            certified_coplanar_boundary_closure_preflight(graph, left, right, operation)
-    {
-        return Ok(preflight);
-    }
-    if requires_certified_winding
-        && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
-            &mut certified_arrangement_preflight,
-            operation,
+        && let Some(preflight) = certified_winding_shortcut_preflight_from_graph(
             graph,
             left,
             right,
-            Some(request),
+            request,
             retained_attempt,
+            support,
+            requires_coplanar_volumetric_cells,
+            &mut certified_arrangement_preflight,
         )?
     {
         return Ok(preflight);
-    }
-    if requires_certified_winding
-        && let Some(convex_support) = certified_convex_relation_shortcut_from_graph(
-            graph, left, right, operation,
-        )?
-        .map(|relation| match relation {
-            ConvexRelationShortcut::Separated => ExactBooleanSupport::CertifiedConvexSeparated,
-            ConvexRelationShortcut::LeftInsideRight | ConvexRelationShortcut::RightInsideLeft => {
-                ExactBooleanSupport::CertifiedConvexContainment
-            }
-        })
-    {
-        return Ok(certified_preflight(
-            operation,
-            convex_support,
-            Some(graph),
-            None,
-        ));
-    }
-    if requires_certified_winding
-        && let Some(preflight) = certified_convex_operation_preflight(left, right, operation, graph)
-    {
-        return Ok(preflight);
-    }
-    if requires_certified_winding
-        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && certified_closed_winding_containment_relation_from_graph(graph, left, right)?.is_some()
-    {
-        return Ok(certified_preflight(
-            operation,
-            ExactBooleanSupport::CertifiedClosedWindingContainment,
-            Some(graph),
-            None,
-        ));
-    }
-    if requires_certified_winding
-        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && closed_zero_area_boundary_contact_evidence_from_graph(graph, left, right)?.is_some()
-    {
-        let Some(boundary_support) = certified_closed_boundary_touching_support(operation) else {
-            return Ok(certified_preflight(operation, support, Some(graph), None));
-        };
-        return Ok(certified_preflight(
-            operation,
-            boundary_support,
-            Some(graph),
-            None,
-        ));
     }
     if requires_certified_winding
         && matches!(
@@ -2119,6 +2054,94 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     }
 
     Ok(winding_report.into_preflight(support, false))
+}
+
+fn certified_winding_shortcut_preflight_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    retained_attempt: Option<&ExactArrangementBooleanAttempt>,
+    fallback_support: ExactBooleanSupport,
+    requires_coplanar_volumetric_cells: bool,
+    certified_arrangement_preflight: &mut CertifiedArrangementCellComplexPreflightCache,
+) -> Result<Option<ExactBooleanPreflight>, ExactMeshError> {
+    let operation = request.operation;
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && open_surface_disjoint_report_from_graph(graph, left, right).is_certified()
+    {
+        return Ok(Some(certified_preflight(
+            operation,
+            ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
+            Some(graph),
+            None,
+        )));
+    }
+    if requires_coplanar_volumetric_cells
+        && let Some(preflight) =
+            certified_coplanar_boundary_closure_preflight(graph, left, right, operation)
+    {
+        return Ok(Some(preflight));
+    }
+    if let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
+        certified_arrangement_preflight,
+        operation,
+        graph,
+        left,
+        right,
+        Some(request),
+        retained_attempt,
+    )? {
+        return Ok(Some(preflight));
+    }
+    if let Some(convex_support) = certified_convex_relation_shortcut_from_graph(
+        graph, left, right, operation,
+    )?
+    .map(|relation| match relation {
+        ConvexRelationShortcut::Separated => ExactBooleanSupport::CertifiedConvexSeparated,
+        ConvexRelationShortcut::LeftInsideRight | ConvexRelationShortcut::RightInsideLeft => {
+            ExactBooleanSupport::CertifiedConvexContainment
+        }
+    }) {
+        return Ok(Some(certified_preflight(
+            operation,
+            convex_support,
+            Some(graph),
+            None,
+        )));
+    }
+    if let Some(preflight) = certified_convex_operation_preflight(left, right, operation, graph) {
+        return Ok(Some(preflight));
+    }
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && certified_closed_winding_containment_relation_from_graph(graph, left, right)?.is_some()
+    {
+        return Ok(Some(certified_preflight(
+            operation,
+            ExactBooleanSupport::CertifiedClosedWindingContainment,
+            Some(graph),
+            None,
+        )));
+    }
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && closed_zero_area_boundary_contact_evidence_from_graph(graph, left, right)?.is_some()
+    {
+        let Some(boundary_support) = certified_closed_boundary_touching_support(operation) else {
+            return Ok(Some(certified_preflight(
+                operation,
+                fallback_support,
+                Some(graph),
+                None,
+            )));
+        };
+        return Ok(Some(certified_preflight(
+            operation,
+            boundary_support,
+            Some(graph),
+            None,
+        )));
+    }
+    Ok(None)
 }
 
 fn boundary_or_planar_report_preflight_from_graph(
