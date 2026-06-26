@@ -2208,16 +2208,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         facts
     }
 
-    #[cfg(test)]
-    pub(crate) fn has_cached_intersection_graph(&self) -> bool {
-        self.intersection_graph.borrow().is_some()
-    }
-
-    #[cfg(test)]
-    pub(crate) fn has_cached_arrangement_shortcut_facts(&self) -> bool {
-        self.arrangement_shortcut_facts.borrow().is_some()
-    }
-
     /// Materialize the exact closed union using this retained pair session.
     pub fn union(&self) -> Result<ExactMesh, ExactMeshError> {
         self.named_boolean_mesh(PreparedNamedBoolean::Union)

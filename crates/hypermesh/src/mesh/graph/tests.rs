@@ -262,11 +262,7 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
             .unwrap(),
         graph
     );
-    assert_eq!(
-        build_validated_intersection_graph_from_prepared_views(&prepared_left, &prepared_right)
-            .unwrap(),
-        graph
-    );
+    graph.validate_against_meshes(&left, &right).unwrap();
     let prepared_pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
     let mut first_classifications = Vec::new();
     prepared_pair
@@ -287,7 +283,7 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
         first_classifications,
         vec![classify_mesh_face_pair_unchecked(&left, 0, &right, 0)]
     );
-    assert!(!prepared_pair.has_cached_arrangement_shortcut_facts());
+    assert!(!prepared_pair.has_retained_arrangement_shortcut_facts());
     let shortcut_facts = prepared_pair.arrangement_cell_complex_shortcut_facts();
     assert_eq!(
         shortcut_facts,
@@ -295,13 +291,15 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
             &left, &right
         )
     );
-    assert!(prepared_pair.has_cached_arrangement_shortcut_facts());
-    assert!(!prepared_pair.has_cached_intersection_graph());
+    assert!(prepared_pair.has_retained_arrangement_shortcut_facts());
+    assert!(!prepared_pair.has_retained_intersection_graph());
     assert_eq!(
-        build_unvalidated_intersection_graph_from_prepared_pair(&prepared_pair).unwrap(),
-        graph
+        build_unvalidated_intersection_graph_from_prepared_pair_rc(&prepared_pair)
+            .unwrap()
+            .as_ref(),
+        &graph
     );
-    assert!(prepared_pair.has_cached_intersection_graph());
+    assert!(prepared_pair.has_retained_intersection_graph());
     assert!(!prepared_pair.has_validated_intersection_graph());
     assert!(prepared_pair.intersection_graph_is_certificate_blocked());
     assert_eq!(

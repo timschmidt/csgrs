@@ -1336,15 +1336,6 @@ pub(crate) fn build_validated_intersection_graph(
     Ok(graph)
 }
 
-/// Build an exact event graph from a retained prepared pair session.
-#[cfg(test)]
-pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair(
-    pair: &PreparedMeshPair<'_, '_>,
-) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    build_unvalidated_intersection_graph_from_prepared_pair_rc(pair)
-        .map(|graph| graph.as_ref().clone())
-}
-
 /// Build a shared exact event graph from a retained prepared pair session.
 pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
     pair: &PreparedMeshPair<'_, '_>,
@@ -1417,24 +1408,6 @@ pub(crate) fn build_validated_intersection_graph_from_prepared_pair(
             ))
         })?;
     pair.certify_intersection_graph_source_replay();
-    Ok(graph)
-}
-
-/// Build an exact event graph from prepared views and validate retained event handles.
-#[cfg(test)]
-pub(crate) fn build_validated_intersection_graph_from_prepared_views(
-    left: &PreparedMeshView<'_>,
-    right: &PreparedMeshView<'_>,
-) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let graph = build_unvalidated_intersection_graph_from_prepared_views(left, right)?;
-    graph
-        .validate_against_meshes(left.view().mesh(), right.view().mesh())
-        .map_err(|error| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::StaleFactReplay,
-                format!("exact intersection graph failed source replay: {error:?}"),
-            ))
-        })?;
     Ok(graph)
 }
 
