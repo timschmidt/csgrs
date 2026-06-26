@@ -39,6 +39,7 @@ use super::arrangement3d::arrangement2d::{
 };
 use super::arrangement3d::cell_complex::simplify::ExactSimplifiedCellComplex;
 use super::arrangement3d::cell_complex::{
+    ExactLabeledCellComplex, ExactRegionOwnershipReport, ExactSelectedCellComplex,
     arrangement_cell_complex_labeling_policy,
     arrangement_region_classification_blockers_resolve_operation, select_arrangement_for_replay,
 };
@@ -4635,14 +4636,23 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
             ExactArrangementBooleanDecline::RegionOwnership(ownership_report.status),
         );
     }
-    let selected_result = if ownership_report.volume_selection_resolves_operation(operation) {
-        labeled.select_volume_resolved(operation)
-    } else {
-        labeled.select_with_policy(operation, policy)
-    };
-    let mut selected = match selected_result {
-        Ok(selected) if selected.blockers.is_empty() => selected,
+    let selected = match select_arrangement_cell_complex_with_ownership_report(
+        labeled,
+        &ownership_report,
+        operation,
+        policy,
+    ) {
         Ok(selected) => {
+            selected.with_gate_reports(topology_report.clone(), ownership_report.clone())
+        }
+        Err(ArrangementCellComplexSelectionDecline::Blocked(blocker)) => {
+            return arrangement_cell_complex_decline_after_recovery(
+                &recovery,
+                attempt,
+                ExactArrangementBooleanDecline::Selection(blocker),
+            );
+        }
+        Err(ArrangementCellComplexSelectionDecline::SelectedWithBlockers(selected)) => {
             attempt.record_selected_counts(&selected);
             return arrangement_cell_complex_decline_after_recovery(
                 &recovery,
@@ -4650,15 +4660,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
                 ExactArrangementBooleanDecline::Selection(selected.blockers[0].clone()),
             );
         }
-        Err(blocker) => {
-            return arrangement_cell_complex_decline_after_recovery(
-                &recovery,
-                attempt,
-                ExactArrangementBooleanDecline::Selection(blocker),
-            );
-        }
     };
-    selected = selected.with_gate_reports(topology_report.clone(), ownership_report.clone());
     attempt.retain_selected_cell_complex(selected.clone());
     let simplified = match selected.simplify_exact_with_policy(policy) {
         Ok(simplified) if simplified.blockers.is_empty() => simplified,
@@ -4737,6 +4739,31 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         volume_resolves_region_classification,
         None,
     ))
+}
+
+enum ArrangementCellComplexSelectionDecline {
+    Blocked(ExactArrangementBlocker),
+    SelectedWithBlockers(ExactSelectedCellComplex),
+}
+
+fn select_arrangement_cell_complex_with_ownership_report(
+    labeled: ExactLabeledCellComplex,
+    ownership_report: &ExactRegionOwnershipReport,
+    operation: ExactBooleanOperation,
+    policy: ExactRegularizationPolicy,
+) -> Result<ExactSelectedCellComplex, ArrangementCellComplexSelectionDecline> {
+    let selected = if ownership_report.volume_selection_resolves_operation(operation) {
+        labeled.select_volume_resolved(operation)
+    } else {
+        labeled.select_with_policy(operation, policy)
+    }
+    .map_err(ArrangementCellComplexSelectionDecline::Blocked)?;
+
+    if selected.blockers.is_empty() {
+        Ok(selected)
+    } else {
+        Err(ArrangementCellComplexSelectionDecline::SelectedWithBlockers(selected))
+    }
 }
 
 fn arrangement_open_surface_recovery_outcome(
