@@ -1687,13 +1687,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.cache_status().current_arrangement_counts()
     }
 
-    /// Build and retain arrangement shortcut facts for this prepared pair.
-    pub fn prepare_arrangement_shortcut_facts(&self) -> Result<(), ExactMeshError> {
-        self.arrangement_cell_complex_shortcut_facts();
-        self.cache_status()
-            .require_current_arrangement_shortcut_facts()
-    }
-
     /// Build and retain the exact intersection graph without certifying source replay.
     ///
     /// The returned counts are retained for later status checks, but the graph

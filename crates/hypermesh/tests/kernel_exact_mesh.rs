@@ -426,17 +426,6 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .is_missing()
     );
 
-    pair.prepare_arrangement_shortcut_facts().unwrap();
-    assert!(
-        pair.cache_status()
-            .arrangement_shortcut_facts()
-            .is_current()
-    );
-    pair.cache_status()
-        .require_current_arrangement_shortcut_facts()
-        .unwrap();
-    assert!(pair.cache_status().intersection_graph().is_missing());
-
     let prepared_union_outcome = pair.prepare_result(PreparedMeshPairBoolean::Union).unwrap();
     assert!(prepared_union_outcome.is_mesh());
     let union = pair.current_result(PreparedMeshPairBoolean::Union).unwrap();
@@ -475,7 +464,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
     assert!(
         pair.cache_status()
             .arrangement_shortcut_facts()
-            .is_current()
+            .is_missing()
     );
     assert!(
         pair.cache_status()
@@ -483,7 +472,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .is_current()
     );
     let union_status = pair.cache_status();
-    assert!(union_status.arrangement_shortcut_facts().is_current());
+    assert!(union_status.arrangement_shortcut_facts().is_missing());
     assert!(
         union_status
             .result(PreparedMeshPairBoolean::Union)
