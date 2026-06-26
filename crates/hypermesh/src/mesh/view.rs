@@ -5,8 +5,9 @@ use std::{cell::RefCell, rc::Rc};
 use super::ExactMesh;
 use super::arrangement3d::regularization::ExactRegularizationPolicy;
 use super::arrangement3d::{ArrangementView, ExactArrangement};
+use super::boolean::evidence::ExactArrangementCellComplexShortcutFacts;
 use super::boolean::{
-    ExactArrangementCellComplexShortcutFacts, ExactBooleanOperation, ExactBooleanRequest,
+    ExactBooleanOperation, ExactBooleanRequest,
     materialize_boolean_exact_request_with_prepared_pair,
 };
 use super::bounds::{

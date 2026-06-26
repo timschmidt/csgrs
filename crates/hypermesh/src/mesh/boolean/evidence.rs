@@ -30,6 +30,7 @@ use super::super::graph::{
 use super::super::validation::ExactMeshValidationPolicy;
 use super::adjacent::materialize_full_face_adjacent_union;
 use super::affine_solid::{
+    AffineOrthogonalSolidOperation, has_affine_orthogonal_solid_cells,
     materialize_affine_orthogonal_solid_difference,
     materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
 };
@@ -40,7 +41,8 @@ use super::convex::{
 #[cfg(test)]
 use super::materialize_boolean_exact_request;
 use super::orthogonal_solid::{
-    AxisAlignedOrthogonalSolidOperation, materialize_axis_aligned_orthogonal_solid_cell_output,
+    AxisAlignedOrthogonalSolidOperation, axis_aligned_orthogonal_solid_cell_selected_count,
+    certified_axis_aligned_box_pair, materialize_axis_aligned_orthogonal_solid_cell_output,
 };
 use super::region::{
     ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputTriangleOrientation,
@@ -1960,6 +1962,110 @@ impl ExactConvexBooleanCapabilityFacts {
             ExactBooleanOperation::Intersection => self.can_intersection,
             ExactBooleanOperation::Difference => self.can_difference,
             ExactBooleanOperation::SelectedRegions(_) => false,
+        }
+    }
+}
+
+/// Replayable source facts for arrangement-cell-complex shortcut materializers
+/// that cover cases the general arrangement attempt does not consume yet.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct ExactArrangementCellComplexShortcutFacts {
+    /// Both operands certify as exact retained axis-aligned boxes.
+    pub(crate) axis_aligned_box_pair: bool,
+    /// Axis-aligned orthogonal cell decomposition supports union.
+    pub(crate) axis_aligned_union: bool,
+    /// Axis-aligned orthogonal cell decomposition supports intersection.
+    pub(crate) axis_aligned_intersection: bool,
+    /// Axis-aligned orthogonal cell decomposition supports difference.
+    pub(crate) axis_aligned_difference: bool,
+    /// Affine orthogonal cell decomposition supports union.
+    pub(crate) affine_union: bool,
+    /// Affine orthogonal cell decomposition supports intersection.
+    pub(crate) affine_intersection: bool,
+    /// Affine orthogonal cell decomposition supports difference.
+    pub(crate) affine_difference: bool,
+}
+
+impl ExactArrangementCellComplexShortcutFacts {
+    pub(crate) fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
+        Self {
+            axis_aligned_box_pair: certified_axis_aligned_box_pair(left, right),
+            axis_aligned_union: axis_aligned_orthogonal_solid_cell_selected_count(
+                left,
+                right,
+                AxisAlignedOrthogonalSolidOperation::Union,
+            )
+            .is_some(),
+            axis_aligned_intersection: axis_aligned_orthogonal_solid_cell_selected_count(
+                left,
+                right,
+                AxisAlignedOrthogonalSolidOperation::Intersection,
+            )
+            .is_some(),
+            axis_aligned_difference: axis_aligned_orthogonal_solid_cell_selected_count(
+                left,
+                right,
+                AxisAlignedOrthogonalSolidOperation::Difference,
+            )
+            .is_some(),
+            affine_union: has_affine_orthogonal_solid_cells(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Union,
+            ),
+            affine_intersection: has_affine_orthogonal_solid_cells(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Intersection,
+            ),
+            affine_difference: has_affine_orthogonal_solid_cells(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Difference,
+            ),
+        }
+    }
+
+    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+        let has_axis_aligned_support = self.axis_aligned_union
+            || self.axis_aligned_intersection
+            || self.axis_aligned_difference;
+        let has_affine_support =
+            self.affine_union || self.affine_intersection || self.affine_difference;
+        if has_axis_aligned_support && has_affine_support {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        Ok(())
+    }
+
+    /// Return whether source facts certify both operands as exact AABB boxes.
+    pub(crate) const fn certifies_axis_aligned_box_pair(&self) -> bool {
+        self.axis_aligned_box_pair
+    }
+
+    /// Return the certified support proven by these retained shortcut facts.
+    pub(crate) fn certified_support(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> Option<ExactBooleanSupport> {
+        match operation {
+            ExactBooleanOperation::Union if self.axis_aligned_union || self.affine_union => {
+                Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+            }
+            ExactBooleanOperation::Intersection
+                if self.axis_aligned_intersection || self.affine_intersection =>
+            {
+                Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+            }
+            ExactBooleanOperation::Difference
+                if self.axis_aligned_difference || self.affine_difference =>
+            {
+                Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+            }
+            ExactBooleanOperation::Union
+            | ExactBooleanOperation::Intersection
+            | ExactBooleanOperation::Difference
+            | ExactBooleanOperation::SelectedRegions(_) => None,
         }
     }
 }
