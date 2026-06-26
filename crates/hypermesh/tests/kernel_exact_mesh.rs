@@ -287,7 +287,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(edge.vertices().unwrap().len(), 2);
 
     let prepared = view.prepare_broad_phase().unwrap();
-    assert_eq!(prepared.mesh_bounds(), view.mesh_bounds());
+    assert_eq!(prepared.view().mesh_bounds(), view.mesh_bounds());
 }
 
 #[test]

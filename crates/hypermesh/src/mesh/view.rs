@@ -592,11 +592,6 @@ impl<'a> PreparedMeshView<'a> {
         self.view
     }
 
-    /// Borrow retained whole-mesh bounds as exact min/max corners.
-    pub fn mesh_bounds(&self) -> Option<(&'a Point3, &'a Point3)> {
-        self.view.mesh_bounds()
-    }
-
     pub(crate) fn retained_pair_plan<'right>(
         &self,
         right: &PreparedMeshView<'right>,
