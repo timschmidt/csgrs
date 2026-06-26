@@ -1307,7 +1307,8 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_views(
     let left_mesh = left.view().mesh();
     let right_mesh = right.view().mesh();
     let pair = left.pair_with(right);
-    let mut face_pairs = Vec::with_capacity(pair.candidate_face_pair_capacity_hint());
+    let mut face_pairs =
+        Vec::with_capacity(pair.broad_phase_summary().candidate_pair_capacity_hint());
     pair.try_visit_candidate_face_pairs(&mut |[left_face, right_face]| {
         let classification =
             classify_mesh_face_pair_unchecked(left_mesh, left_face, right_mesh, right_face);
@@ -1356,7 +1357,7 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
         );
     }
     let mut face_pairs = Vec::with_capacity(retained_classification_counts.map_or_else(
-        || pair.candidate_face_pair_capacity_hint(),
+        || pair.broad_phase_summary().candidate_pair_capacity_hint(),
         PreparedMeshPairClassificationCounts::graph_required_count,
     ));
     if pair.cache_status().face_pair_classifications().is_current() {

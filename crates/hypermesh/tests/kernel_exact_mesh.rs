@@ -116,8 +116,8 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .kind()
             == ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    assert!(pair.candidate_pair_plan().is_empty());
-    assert_eq!(pair.candidate_face_pair_capacity_hint(), 0);
+    assert!(pair.broad_phase_summary().plan().is_empty());
+    assert_eq!(pair.broad_phase_summary().candidate_pair_capacity_hint(), 0);
     let initial_broad_phase: PreparedMeshPairBroadPhaseSummary = pair.broad_phase_summary();
     assert!(initial_broad_phase.plan().is_empty());
     assert_eq!(initial_broad_phase.left_face_count(), 0);
@@ -944,7 +944,7 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         .view()
         .prepare_broad_phase_pair(overlapping.view())
         .unwrap();
-    assert!(prepared_pair.candidate_pair_plan().is_sweep());
+    assert!(prepared_pair.broad_phase_summary().plan().is_sweep());
     assert_eq!(
         prepared_pair.left().view().face_count(),
         left.triangle_count()
@@ -953,7 +953,12 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         prepared_pair.right().view().face_count(),
         overlapping.triangle_count()
     );
-    assert!(prepared_pair.candidate_face_pair_capacity_hint() > 0);
+    assert!(
+        prepared_pair
+            .broad_phase_summary()
+            .candidate_pair_capacity_hint()
+            > 0
+    );
     let broad_phase_summary: PreparedMeshPairBroadPhaseSummary =
         prepared_pair.broad_phase_summary();
     let _plan_kind: PreparedMeshPairPlanKind = broad_phase_summary.plan();
@@ -963,10 +968,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     let _sweep_active_set: Option<PreparedMeshPairSweepActiveSet> =
         broad_phase_summary.sweep_active_set();
     assert!(prepared_pair.cache_status().source_pair().is_current());
-    assert_eq!(
-        broad_phase_summary.plan(),
-        prepared_pair.candidate_pair_plan()
-    );
     assert_eq!(
         broad_phase_summary.left_source(),
         left.view().source_stamp()
@@ -983,10 +984,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     assert_eq!(
         broad_phase_summary.face_pair_product(),
         left.triangle_count() * overlapping.triangle_count()
-    );
-    assert_eq!(
-        broad_phase_summary.candidate_pair_capacity_hint(),
-        prepared_pair.candidate_face_pair_capacity_hint()
     );
     assert_eq!(prepared_pair.broad_phase_summary(), broad_phase_summary);
     assert!(broad_phase_summary.candidate_pair_upper_bound() > 0);
@@ -1393,13 +1390,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         overlapping.triangle_count()
     );
     assert_eq!(pair_view.broad_phase_summary(), broad_phase_summary);
-    assert_eq!(
-        pair_view
-            .broad_phase_summary()
-            .candidate_pair_capacity_hint(),
-        pair_view.candidate_face_pair_capacity_hint()
-    );
-
     let mut candidates = Vec::new();
     pair_view.visit_candidate_face_pairs(&mut |pair| {
         candidates.push(pair);
@@ -1420,11 +1410,16 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         .view()
         .prepare_broad_phase_pair(disjoint.view())
         .unwrap();
-    assert!(disjoint_pair.candidate_pair_plan().is_empty());
+    assert!(disjoint_pair.broad_phase_summary().plan().is_empty());
     assert_eq!(disjoint_pair.broad_phase_summary().sweep_axis(), None);
     assert_eq!(disjoint_pair.broad_phase_summary().sweep_direction(), None);
     assert_eq!(disjoint_pair.broad_phase_summary().sweep_active_set(), None);
-    assert_eq!(disjoint_pair.candidate_face_pair_capacity_hint(), 0);
+    assert_eq!(
+        disjoint_pair
+            .broad_phase_summary()
+            .candidate_pair_capacity_hint(),
+        0
+    );
     let mut disjoint_candidates = Vec::new();
     prepared_left.visit_candidate_face_pairs(&prepared_disjoint, &mut |pair| {
         disjoint_candidates.push(pair);
