@@ -8828,18 +8828,18 @@ pub(crate) fn refinement_report_from_graph(
     let counts = retained_graph_counts(graph);
     let graph_had_unknowns = graph.has_unknowns();
     let needs_refinement = graph_had_unknowns || counts.construction_failed_events() > 0;
-    ExactRefinementReport {
+    ExactRefinementReport::new(
         operation,
-        status: if needs_refinement {
+        if needs_refinement {
             ExactRefinementStatus::Required
         } else {
             ExactRefinementStatus::NotRequired
         },
         graph_had_unknowns,
-        retained_face_pairs: graph.face_pairs.len(),
-        retained_events: graph.event_count(),
-        blocker: needs_refinement.then(|| counts.into_blocker(ExactBooleanBlockerKind::Refinement)),
-    }
+        graph.face_pairs.len(),
+        graph.event_count(),
+        needs_refinement.then(|| counts.into_blocker(ExactBooleanBlockerKind::Refinement)),
+    )
 }
 
 pub(crate) fn planar_arrangement_report_from_graph(

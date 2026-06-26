@@ -6840,20 +6840,39 @@ pub(crate) enum ExactRefinementStatus {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ExactRefinementReport {
     /// Named operation whose graph was inspected.
-    pub(crate) operation: ExactBooleanOperation,
+    operation: ExactBooleanOperation,
     /// Coarse refinement status.
-    pub(crate) status: ExactRefinementStatus,
+    status: ExactRefinementStatus,
     /// Whether graph extraction retained unknown predicate outcomes.
-    pub(crate) graph_had_unknowns: bool,
+    graph_had_unknowns: bool,
     /// Retained face-pair records after exact scheduling.
-    pub(crate) retained_face_pairs: usize,
+    retained_face_pairs: usize,
     /// Total retained event records.
-    pub(crate) retained_events: usize,
+    retained_events: usize,
     /// Refinement blocker counts, present only when refinement is required.
-    pub(crate) blocker: Option<ExactBooleanBlocker>,
+    blocker: Option<ExactBooleanBlocker>,
 }
 
 impl ExactRefinementReport {
+    /// Build a refinement report from retained exact graph evidence.
+    pub(crate) const fn new(
+        operation: ExactBooleanOperation,
+        status: ExactRefinementStatus,
+        graph_had_unknowns: bool,
+        retained_face_pairs: usize,
+        retained_events: usize,
+        blocker: Option<ExactBooleanBlocker>,
+    ) -> Self {
+        Self {
+            operation,
+            status,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            blocker,
+        }
+    }
+
     /// Return whether graph extraction retained unknown predicate outcomes.
     pub(crate) const fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns
