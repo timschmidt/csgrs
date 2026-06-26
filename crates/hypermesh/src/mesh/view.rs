@@ -86,7 +86,6 @@ pub struct PreparedMeshPair<'left, 'right> {
     intersection_graph: RefCell<Option<Rc<ExactIntersectionGraph>>>,
     intersection_graph_validated: RefCell<bool>,
     arrangement: RefCell<Option<Rc<ExactArrangement>>>,
-    arrangement_counts: RefCell<Option<PreparedMeshPairArrangementCounts>>,
     arrangement_shortcut_facts: RefCell<Option<ExactArrangementCellComplexShortcutFacts>>,
     union_result: PreparedMeshPairResultCache,
     intersection_result: PreparedMeshPairResultCache,
@@ -168,7 +167,6 @@ pub struct PreparedMeshPairCacheStatus {
     retained_face_pair_classification_counts: Option<PreparedMeshPairClassificationCounts>,
     intersection_graph: PreparedMeshPairFactState,
     arrangement: PreparedMeshPairFactState,
-    retained_arrangement_counts: Option<PreparedMeshPairArrangementCounts>,
     arrangement_shortcut_facts: PreparedMeshPairFactState,
     union_result: PreparedMeshPairFactState,
     union_result_outcome: Option<PreparedMeshPairResultOutcome>,
@@ -567,81 +565,6 @@ impl PreparedMeshPairSweepDirection {
     }
 }
 
-/// Retained topology counts for a prepared arrangement.
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-pub struct PreparedMeshPairArrangementCounts {
-    complete: bool,
-    vertices: usize,
-    edges: usize,
-    face_cells: usize,
-    regions: usize,
-    volume_regions: usize,
-    volume_adjacencies: usize,
-    lower_dimensional_artifacts: usize,
-    blockers: usize,
-}
-
-impl PreparedMeshPairArrangementCounts {
-    /// Return whether the retained arrangement completed without blockers.
-    pub const fn is_complete(self) -> bool {
-        self.complete
-    }
-
-    /// Return the retained arrangement vertex count.
-    pub const fn vertex_count(self) -> usize {
-        self.vertices
-    }
-
-    /// Return the retained arrangement edge count.
-    pub const fn edge_count(self) -> usize {
-        self.edges
-    }
-
-    /// Return the retained arrangement face-cell count.
-    pub const fn face_cell_count(self) -> usize {
-        self.face_cells
-    }
-
-    /// Return the retained connected face-cell region count.
-    pub const fn region_count(self) -> usize {
-        self.regions
-    }
-
-    /// Return the retained volume-region count.
-    pub const fn volume_region_count(self) -> usize {
-        self.volume_regions
-    }
-
-    /// Return the retained volume-adjacency count.
-    pub const fn volume_adjacency_count(self) -> usize {
-        self.volume_adjacencies
-    }
-
-    /// Return the retained lower-dimensional artifact count.
-    pub const fn lower_dimensional_artifact_count(self) -> usize {
-        self.lower_dimensional_artifacts
-    }
-
-    /// Return the retained arrangement blocker count.
-    pub const fn blocker_count(self) -> usize {
-        self.blockers
-    }
-
-    fn from_arrangement(arrangement: &ExactArrangement) -> Self {
-        Self {
-            complete: arrangement.is_complete(),
-            vertices: arrangement.vertices.len(),
-            edges: arrangement.edges.len(),
-            face_cells: arrangement.face_cells.len(),
-            regions: arrangement.shells_or_regions.as_ref().map_or(0, Vec::len),
-            volume_regions: arrangement.volume_regions.as_ref().map_or(0, Vec::len),
-            volume_adjacencies: arrangement.volume_adjacencies.as_ref().map_or(0, Vec::len),
-            lower_dimensional_artifacts: arrangement.lower_dimensional_artifacts.len(),
-            blockers: arrangement.blockers.len(),
-        }
-    }
-}
-
 /// Retained outcome summary for a prepared named boolean result.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PreparedMeshPairResultOutcome {
@@ -887,19 +810,6 @@ impl PreparedMeshPairCacheStatus {
     /// Return the certificate state for the retained prepared arrangement.
     pub const fn arrangement(self) -> PreparedMeshPairFactState {
         self.arrangement
-    }
-
-    /// Return retained arrangement topology counts after requiring current evidence.
-    pub fn current_arrangement_counts(
-        self,
-    ) -> Result<PreparedMeshPairArrangementCounts, ExactMeshError> {
-        self.arrangement.require_current("arrangement")?;
-        self.retained_arrangement_counts.ok_or_else(|| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::MissingRequiredEvidence,
-                "prepared mesh-pair session retained arrangement evidence without topology counts",
-            ))
-        })
     }
 
     /// Return the certificate state for arrangement shortcut facts.
@@ -1317,7 +1227,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             intersection_graph: RefCell::new(None),
             intersection_graph_validated: RefCell::new(false),
             arrangement: RefCell::new(None),
-            arrangement_counts: RefCell::new(None),
             arrangement_shortcut_facts: RefCell::new(None),
             union_result: PreparedMeshPairResultCache::default(),
             intersection_result: PreparedMeshPairResultCache::default(),
@@ -1430,7 +1339,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
                 PreparedMeshPairFactState::Missing
             },
             arrangement: retained_current_state(arrangement_retained, sources_current),
-            retained_arrangement_counts: *self.arrangement_counts.borrow(),
             arrangement_shortcut_facts: retained_current_state(
                 self.arrangement_shortcut_facts.borrow().is_some(),
                 sources_current,
@@ -1464,10 +1372,10 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         Ok(query(pairs))
     }
 
-    /// Build and retain the exact arrangement, returning retained topology counts.
-    pub fn prepare_arrangement(&self) -> Result<PreparedMeshPairArrangementCounts, ExactMeshError> {
+    /// Build and retain the exact arrangement.
+    pub fn prepare_arrangement(&self) -> Result<(), ExactMeshError> {
         self.retained_arrangement()?;
-        self.cache_status().current_arrangement_counts()
+        Ok(())
     }
 
     /// Build and retain the exact intersection graph without certifying source replay.
@@ -1529,10 +1437,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             self.right.view().mesh(),
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         )?;
-        let counts = PreparedMeshPairArrangementCounts::from_arrangement(&arrangement);
         let arrangement = Rc::new(arrangement);
         *self.arrangement.borrow_mut() = Some(Rc::clone(&arrangement));
-        *self.arrangement_counts.borrow_mut() = Some(counts);
         Ok(arrangement)
     }
 
@@ -1675,7 +1581,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     fn clear_graph_dependent_retained_facts(&self) {
         *self.arrangement.borrow_mut() = None;
-        *self.arrangement_counts.borrow_mut() = None;
         self.union_result.clear();
         self.intersection_result.clear();
         self.difference_result.clear();

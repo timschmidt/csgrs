@@ -2,12 +2,12 @@ use hyperlimit::{ApproximationPolicy, MeshSource, Point3, SourceProvenance};
 use hypermesh::ExactMesh;
 use hypermesh::kernel::{
     ArrangementView, EdgeRef, ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshRef,
-    FaceRef, MeshView, PreparedMeshPair, PreparedMeshPairArrangementCounts,
-    PreparedMeshPairBoolean, PreparedMeshPairBroadPhaseSummary,
-    PreparedMeshPairBroadPhaseTraversalSummary, PreparedMeshPairCacheStatus,
-    PreparedMeshPairClassificationCounts, PreparedMeshPairFactState, PreparedMeshPairPlanKind,
-    PreparedMeshPairResultOutcome, PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis,
-    PreparedMeshPairSweepDirection, PreparedMeshView, TriangleRef, VertexRef,
+    FaceRef, MeshView, PreparedMeshPair, PreparedMeshPairBoolean,
+    PreparedMeshPairBroadPhaseSummary, PreparedMeshPairBroadPhaseTraversalSummary,
+    PreparedMeshPairCacheStatus, PreparedMeshPairClassificationCounts, PreparedMeshPairFactState,
+    PreparedMeshPairPlanKind, PreparedMeshPairResultOutcome, PreparedMeshPairSweepActiveSet,
+    PreparedMeshPairSweepAxis, PreparedMeshPairSweepDirection, PreparedMeshView, TriangleRef,
+    VertexRef,
 };
 use hyperreal::Real;
 
@@ -348,14 +348,6 @@ fn prepared_mesh_pair_materializes_named_operations() {
     assert_eq!(
         pair.cache_status()
             .current_face_pair_classification_counts()
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
-    assert_eq!(
-        pair.cache_status()
-            .current_arrangement_counts()
             .unwrap_err()
             .blockers()[0]
             .kind(),
@@ -1603,31 +1595,17 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         PreparedMeshPairFactState::Missing
     ));
     assert_eq!(
-        pair.cache_status()
-            .current_arrangement_counts()
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
-    assert_eq!(
         pair.with_current_arrangement_view(|view: ArrangementView<'_>| view.vertex_count())
             .unwrap_err()
             .blockers()[0]
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    let prepared_arrangement_counts: PreparedMeshPairArrangementCounts =
-        pair.prepare_arrangement().unwrap();
-    assert!(prepared_arrangement_counts.is_complete());
+    pair.prepare_arrangement().unwrap();
     assert!(matches!(
         pair.cache_status().arrangement(),
         PreparedMeshPairFactState::Current
     ));
-    assert_eq!(
-        pair.cache_status().current_arrangement_counts().unwrap(),
-        prepared_arrangement_counts
-    );
     let prepared_counts = pair
         .with_arrangement_view(|view: ArrangementView<'_>| {
             view.validate_retained_state().unwrap();
@@ -1664,22 +1642,6 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         pair.cache_status().arrangement(),
         PreparedMeshPairFactState::Current
     ));
-    let retained_arrangement_counts = pair.cache_status().current_arrangement_counts().unwrap();
-    assert_eq!(retained_arrangement_counts, prepared_arrangement_counts);
-    assert_eq!(
-        (
-            retained_arrangement_counts.vertex_count(),
-            retained_arrangement_counts.edge_count(),
-            retained_arrangement_counts.face_cell_count(),
-            retained_arrangement_counts.region_count(),
-            retained_arrangement_counts.volume_region_count(),
-            retained_arrangement_counts.volume_adjacency_count(),
-            retained_arrangement_counts.lower_dimensional_artifact_count(),
-            retained_arrangement_counts.blocker_count(),
-        ),
-        direct_counts
-    );
-    assert!(retained_arrangement_counts.is_complete());
     let repeated_counts = pair
         .with_arrangement_view(|view: ArrangementView<'_>| {
             (
@@ -1695,10 +1657,6 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         })
         .unwrap();
     assert_eq!(repeated_counts, direct_counts);
-    assert_eq!(
-        pair.cache_status().current_arrangement_counts().unwrap(),
-        retained_arrangement_counts
-    );
     assert!(matches!(
         pair.cache_status().intersection_graph(),
         PreparedMeshPairFactState::Current
@@ -1711,7 +1669,7 @@ fn prepared_pair_named_boolean_preserves_retained_arrangement() {
     let right = tetra([1, 0, 0]);
     let pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
 
-    let arrangement_counts = pair.prepare_arrangement().unwrap();
+    pair.prepare_arrangement().unwrap();
     assert!(matches!(
         pair.cache_status().arrangement(),
         PreparedMeshPairFactState::Current
@@ -1724,10 +1682,6 @@ fn prepared_pair_named_boolean_preserves_retained_arrangement() {
         pair.cache_status().arrangement(),
         PreparedMeshPairFactState::Current
     ));
-    assert_eq!(
-        pair.cache_status().current_arrangement_counts().unwrap(),
-        arrangement_counts
-    );
     assert!(matches!(
         pair.cache_status()
             .result(PreparedMeshPairBoolean::Intersection),
