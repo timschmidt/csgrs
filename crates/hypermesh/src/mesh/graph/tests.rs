@@ -299,6 +299,14 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
+        prepared_pair
+            .current_intersection_graph()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    assert_eq!(
         build_validated_intersection_graph_from_prepared_pair(&prepared_pair)
             .unwrap_err()
             .blockers()[0]

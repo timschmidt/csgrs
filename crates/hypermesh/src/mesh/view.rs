@@ -688,20 +688,31 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         Ok(arrangement)
     }
 
-    pub(crate) fn retained_intersection_graph(
+    pub(crate) fn current_intersection_graph(
         &self,
-        require_current_certificate: bool,
-    ) -> Option<Rc<ExactIntersectionGraph>> {
-        let graph = self.intersection_graph.borrow().clone()?;
-        if require_current_certificate
-            && retained_certificate_state(
-                *self.intersection_graph_validated.borrow(),
-                self.sources_current(),
-            ) != PreparedMeshPairFactState::Current
-        {
-            return None;
+    ) -> Result<Rc<ExactIntersectionGraph>, ExactMeshError> {
+        let state = retained_certificate_state(
+            self.intersection_graph.borrow().is_some(),
+            *self.intersection_graph_validated.borrow(),
+            self.sources_current(),
+        );
+        state.require_current("intersection graph")?;
+        self.intersection_graph.borrow().clone().ok_or_else(|| {
+            ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::MissingRequiredEvidence,
+                "prepared mesh-pair session retained intersection graph state without graph records",
+            ))
+        })
+    }
+
+    pub(crate) fn retained_intersection_graph_for_validation(
+        &self,
+    ) -> Result<Option<Rc<ExactIntersectionGraph>>, ExactMeshError> {
+        if !self.sources_current() {
+            retained_current_state(self.intersection_graph.borrow().is_some(), false)
+                .require_current("intersection graph")?;
         }
-        Some(graph)
+        Ok(self.intersection_graph.borrow().clone())
     }
 
     pub(crate) fn with_retained_arrangement<R>(
@@ -911,10 +922,13 @@ const fn retained_current_state(
 }
 
 const fn retained_certificate_state(
+    retained: bool,
     certificate_current: bool,
     sources_current: bool,
 ) -> PreparedMeshPairFactState {
-    if !sources_current {
+    if !retained {
+        PreparedMeshPairFactState::Missing
+    } else if !sources_current {
         PreparedMeshPairFactState::Stale
     } else if certificate_current {
         PreparedMeshPairFactState::Current
