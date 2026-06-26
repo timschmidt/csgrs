@@ -6608,34 +6608,70 @@ impl ExactBooleanPreflight {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) struct ExactBooleanBlocker {
     /// Missing policy or refinement class.
-    pub(crate) kind: ExactBooleanBlockerKind,
+    kind: ExactBooleanBlockerKind,
     /// Number of retained non-coplanar candidate face pairs.
-    pub(crate) candidate_pairs: usize,
+    candidate_pairs: usize,
     /// Number of retained coplanar positive-overlap face pairs.
-    pub(crate) coplanar_overlapping_pairs: usize,
+    coplanar_overlapping_pairs: usize,
     /// Number of retained coplanar touching face pairs.
-    pub(crate) coplanar_touching_pairs: usize,
+    coplanar_touching_pairs: usize,
     /// Number of retained unknown face pairs.
-    pub(crate) unknown_pairs: usize,
+    unknown_pairs: usize,
     /// Number of retained segment/plane events whose endpoint predicates
     /// certified a crossing but whose exact construction failed.
-    pub(crate) construction_failed_events: usize,
+    construction_failed_events: usize,
 }
 
 impl Default for ExactBooleanBlocker {
     fn default() -> Self {
-        Self {
-            kind: ExactBooleanBlockerKind::Winding,
-            candidate_pairs: 0,
-            coplanar_overlapping_pairs: 0,
-            coplanar_touching_pairs: 0,
-            unknown_pairs: 0,
-            construction_failed_events: 0,
-        }
+        Self::new(ExactBooleanBlockerKind::Winding, 0, 0, 0, 0, 0)
     }
 }
 
 impl ExactBooleanBlocker {
+    /// Build a blocker from retained exact graph count evidence.
+    pub(crate) const fn new(
+        kind: ExactBooleanBlockerKind,
+        candidate_pairs: usize,
+        coplanar_overlapping_pairs: usize,
+        coplanar_touching_pairs: usize,
+        unknown_pairs: usize,
+        construction_failed_events: usize,
+    ) -> Self {
+        Self {
+            kind,
+            candidate_pairs,
+            coplanar_overlapping_pairs,
+            coplanar_touching_pairs,
+            unknown_pairs,
+            construction_failed_events,
+        }
+    }
+
+    pub(crate) const fn kind(&self) -> ExactBooleanBlockerKind {
+        self.kind
+    }
+
+    pub(crate) const fn candidate_pairs(&self) -> usize {
+        self.candidate_pairs
+    }
+
+    pub(crate) const fn coplanar_overlapping_pairs(&self) -> usize {
+        self.coplanar_overlapping_pairs
+    }
+
+    pub(crate) const fn coplanar_touching_pairs(&self) -> usize {
+        self.coplanar_touching_pairs
+    }
+
+    pub(crate) const fn unknown_pairs(&self) -> usize {
+        self.unknown_pairs
+    }
+
+    pub(crate) const fn construction_failed_events(&self) -> usize {
+        self.construction_failed_events
+    }
+
     /// Return this exact graph-count blocker with a different semantic kind.
     pub(crate) fn into_blocker(mut self, kind: ExactBooleanBlockerKind) -> Self {
         self.kind = kind;
@@ -6653,14 +6689,7 @@ impl ExactBooleanBlocker {
         graph: &ExactIntersectionGraph,
         kind: ExactBooleanBlockerKind,
     ) -> Self {
-        let mut blocker = Self {
-            kind,
-            candidate_pairs: 0,
-            coplanar_overlapping_pairs: 0,
-            coplanar_touching_pairs: 0,
-            unknown_pairs: 0,
-            construction_failed_events: 0,
-        };
+        let mut blocker = Self::new(kind, 0, 0, 0, 0, 0);
         for pair in &graph.face_pairs {
             let pair_has_unknown_event = pair
                 .events
@@ -6708,9 +6737,9 @@ impl ExactBooleanBlocker {
         if blocker_has_refinement_evidence(self) {
             ExactBooleanBlockerKind::Refinement
         } else if self.coplanar_overlapping_pairs != 0 || self.coplanar_touching_pairs != 0 {
-            if self.candidate_pairs == 0 && self.coplanar_overlapping_pairs > 0 {
+            if self.candidate_pairs() == 0 && self.coplanar_overlapping_pairs > 0 {
                 ExactBooleanBlockerKind::PlanarArrangement
-            } else if self.candidate_pairs == 0 {
+            } else if self.candidate_pairs() == 0 {
                 ExactBooleanBlockerKind::BoundaryPolicy
             } else {
                 ExactBooleanBlockerKind::CoplanarVolumetricCells

@@ -688,18 +688,11 @@ fn exact_boolean_blocker_counts_include_unknown_segment_plane_events() {
         }]);
 
     let counts = retained_graph_counts(&graph);
-    assert_eq!(counts.candidate_pairs, 1);
-    assert_eq!(counts.unknown_pairs, 1);
+    assert_eq!(counts.candidate_pairs(), 1);
+    assert_eq!(counts.unknown_pairs(), 1);
     assert_eq!(
         counts.into_blocker(ExactBooleanBlockerKind::Refinement),
-        ExactBooleanBlocker {
-            kind: ExactBooleanBlockerKind::Refinement,
-            candidate_pairs: 1,
-            coplanar_overlapping_pairs: 0,
-            coplanar_touching_pairs: 0,
-            unknown_pairs: 1,
-            construction_failed_events: 0,
-        }
+        ExactBooleanBlocker::new(ExactBooleanBlockerKind::Refinement, 1, 0, 0, 1, 0)
     );
 }
 
@@ -774,7 +767,7 @@ fn selected_overlay_faces_triangulate_simple_coplanar_difference_cells() {
         ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
         "{evidence:?}"
     );
-    assert_eq!(evidence.blocker.kind, ExactBooleanBlockerKind::Winding);
+    assert_eq!(evidence.blocker.kind(), ExactBooleanBlockerKind::Winding);
     evidence.validate_against_sources(&left, &right).unwrap();
 }
 
@@ -809,15 +802,15 @@ fn selected_region_winding_evidence_classifies_retained_graph_blocker() {
         ExactWindingEvidenceStatus::NotNamedOperation
     );
     assert_eq!(
-        evidence.blocker.kind,
+        evidence.blocker.kind(),
         ExactBooleanBlockerKind::PlanarArrangement
     );
-    assert_eq!(evidence.blocker.coplanar_overlapping_pairs, 1);
-    assert_eq!(evidence.blocker.coplanar_touching_pairs, 2);
+    assert_eq!(evidence.blocker.coplanar_overlapping_pairs(), 1);
+    assert_eq!(evidence.blocker.coplanar_touching_pairs(), 2);
     evidence.validate_against_sources(&left, &right).unwrap();
 
     let mut stale = evidence.clone();
-    stale.blocker.kind = ExactBooleanBlockerKind::Winding;
+    stale.blocker = stale.blocker.into_blocker(ExactBooleanBlockerKind::Winding);
     assert_eq!(
         stale.validate(),
         Err(ExactReportValidationError::WrongBlockerKind)
@@ -835,7 +828,7 @@ fn selected_region_winding_evidence_classifies_retained_graph_blocker() {
         ExactWindingEvidenceStatus::NotNamedOperation
     );
     assert_eq!(
-        disjoint_evidence.blocker.kind,
+        disjoint_evidence.blocker.kind(),
         ExactBooleanBlockerKind::Winding
     );
     assert_eq!(disjoint_evidence.retained_face_pairs, 0);
@@ -845,7 +838,9 @@ fn selected_region_winding_evidence_classifies_retained_graph_blocker() {
         .unwrap();
 
     let mut relabeled_empty = disjoint_evidence;
-    relabeled_empty.blocker.kind = ExactBooleanBlockerKind::BoundaryPolicy;
+    relabeled_empty.blocker = relabeled_empty
+        .blocker
+        .into_blocker(ExactBooleanBlockerKind::BoundaryPolicy);
     assert_eq!(
         relabeled_empty.validate(),
         Err(ExactReportValidationError::WrongBlockerKind)
@@ -1458,7 +1453,7 @@ fn axis_aligned_orthogonal_cell_booleans_materialize_from_shortcut_support() {
         );
         assert!(evidence.status.is_already_materialized());
         assert_eq!(
-            evidence.blocker.kind,
+            evidence.blocker.kind(),
             ExactBooleanBlockerKind::Winding,
             "{operation:?}: {evidence:?}"
         );
@@ -1704,7 +1699,7 @@ fn affine_shortcut_winding_report_retains_already_materialized_status() {
         );
         assert!(evidence.status.is_already_materialized());
         assert_eq!(
-            evidence.blocker.kind,
+            evidence.blocker.kind(),
             ExactBooleanBlockerKind::Winding,
             "{operation:?}: {evidence:?}"
         );
@@ -1763,14 +1758,7 @@ fn winding_evidence_status_partition_identifies_materialized_handoffs() {
         retained_events: 1,
         region_count: 1,
         region_classifications: Vec::new(),
-        blocker: ExactBooleanBlocker {
-            kind: ExactBooleanBlockerKind::Winding,
-            candidate_pairs: 1,
-            coplanar_overlapping_pairs: 0,
-            coplanar_touching_pairs: 0,
-            unknown_pairs: 0,
-            construction_failed_events: 0,
-        },
+        blocker: ExactBooleanBlocker::new(ExactBooleanBlockerKind::Winding, 1, 0, 0, 0, 0),
         coplanar_arrangement_evidence: None,
         coplanar_volumetric_evidence: None,
     };
@@ -1938,7 +1926,7 @@ fn trivial_shortcuts_report_materialized_evidence() {
             );
             assert_eq!(evidence.status, status, "{operation:?}: {evidence:?}");
             assert_eq!(
-                evidence.blocker.kind,
+                evidence.blocker.kind(),
                 ExactBooleanBlockerKind::Winding,
                 "{operation:?}: {evidence:?}"
             );
@@ -2022,7 +2010,7 @@ fn graph_empty_containment_routes_named_booleans_through_arrangement_pipeline() 
                 "{right_inside_left:?} {operation:?}: {evidence:?}"
             );
             assert_eq!(
-                evidence.blocker.kind,
+                evidence.blocker.kind(),
                 ExactBooleanBlockerKind::Winding,
                 "{operation:?}: {evidence:?}"
             );
@@ -2144,7 +2132,7 @@ fn graph_empty_closed_winding_separation_materializes_without_bounds_disjointnes
             "{operation:?}: {evidence:?}"
         );
         assert_eq!(
-            evidence.blocker.kind,
+            evidence.blocker.kind(),
             ExactBooleanBlockerKind::Winding,
             "{operation:?}: {evidence:?}"
         );
@@ -2246,7 +2234,7 @@ fn mixed_dimensional_regularized_solid_reports_materialized_evidence() {
                 "{operation:?}: {evidence:?}"
             );
             assert_eq!(
-                evidence.blocker.kind,
+                evidence.blocker.kind(),
                 ExactBooleanBlockerKind::Winding,
                 "{operation:?}: {evidence:?}"
             );
@@ -2325,7 +2313,7 @@ fn lower_dimensional_regularized_solid_reports_materialized_evidence() {
                 "{operation:?}: {evidence:?}"
             );
             assert_eq!(
-                evidence.blocker.kind,
+                evidence.blocker.kind(),
                 ExactBooleanBlockerKind::Winding,
                 "{operation:?}: {evidence:?}"
             );
@@ -2517,7 +2505,7 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
             "{boundary_evidence:?}"
         );
         assert_eq!(
-            boundary_evidence.blocker.kind,
+            boundary_evidence.blocker.kind(),
             ExactBooleanBlockerKind::Winding,
             "{boundary_evidence:?}"
         );
@@ -3326,7 +3314,7 @@ fn crossing_open_surface_boolean_materializes_inside_arrangement_attempt() {
             "{operation:?}: {evidence:?}"
         );
         assert_eq!(
-            evidence.blocker.kind,
+            evidence.blocker.kind(),
             ExactBooleanBlockerKind::Winding,
             "{operation:?}: {evidence:?}"
         );
@@ -3567,7 +3555,7 @@ fn nested_closed_shell_booleans_materialize_through_arrangement_pipeline() {
             "{operation:?}: {evidence:?}"
         );
         assert_eq!(
-            evidence.blocker.kind,
+            evidence.blocker.kind(),
             ExactBooleanBlockerKind::Winding,
             "{operation:?}: {evidence:?}"
         );
@@ -3708,7 +3696,7 @@ fn boundary_touching_orthogonal_shortcuts_report_materialized_evidence() {
             "{operation:?}: {evidence:?}"
         );
         assert_eq!(
-            evidence.blocker.kind,
+            evidence.blocker.kind(),
             ExactBooleanBlockerKind::Winding,
             "{operation:?}: {evidence:?}"
         );
@@ -3801,7 +3789,7 @@ fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
             "{operation:?}: {evidence:?}"
         );
         assert_eq!(
-            evidence.blocker.kind,
+            evidence.blocker.kind(),
             ExactBooleanBlockerKind::Winding,
             "{operation:?}: {evidence:?}"
         );
@@ -4003,8 +3991,8 @@ fn noncoplanar_convex_report_cases_retain_graph_counts() {
         );
         assert_eq!(evidence.retained_face_pairs, graph.face_pairs.len());
         assert_eq!(evidence.retained_events, graph.event_count());
-        assert_eq!(evidence.blocker.kind, ExactBooleanBlockerKind::Winding);
-        assert_eq!(evidence.blocker.candidate_pairs, graph.face_pairs.len());
+        assert_eq!(evidence.blocker.kind(), ExactBooleanBlockerKind::Winding);
+        assert_eq!(evidence.blocker.candidate_pairs(), graph.face_pairs.len());
         evidence.validate().unwrap();
         evidence.validate_against_sources(&left, &right).unwrap();
     }
@@ -4793,7 +4781,7 @@ fn arrangement_materialized_evidence_retains_boundary_only_evidence() {
         ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
     );
     assert_eq!(
-        evidence.blocker.kind,
+        evidence.blocker.kind(),
         ExactBooleanBlockerKind::BoundaryPolicy
     );
     let volumetric_evidence = evidence
