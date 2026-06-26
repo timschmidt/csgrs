@@ -85,13 +85,13 @@ use evidence::{
     ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus,
     ExactArrangementCellComplexShortcutFacts, ExactBooleanBlocker, ExactBooleanBlockerKind,
     ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind, ExactBooleanShortcutKind,
-    ExactBooleanSupport, ExactBoundaryTouchingReport, ExactBoundaryTouchingStatus,
-    ExactConvexBooleanCapabilityFacts, ExactIdenticalMeshReport, ExactOpenSurfaceDisjointReport,
-    ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport, ExactPlanarArrangementStatus,
-    ExactRefinementReport, ExactRefinementStatus, ExactRegularizedSolidBooleanFacts,
-    ExactReportValidationError, ExactSameSurfaceReport, ExactTrivialBooleanFacts,
-    ExactVolumetricBoundaryClosureReport, ExactVolumetricBoundaryClosureStatus,
-    ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
+    ExactBooleanSourceFacts, ExactBooleanSupport, ExactBoundaryTouchingReport,
+    ExactBoundaryTouchingStatus, ExactConvexBooleanCapabilityFacts, ExactIdenticalMeshReport,
+    ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport,
+    ExactPlanarArrangementStatus, ExactRefinementReport, ExactRefinementStatus,
+    ExactRegularizedSolidBooleanFacts, ExactReportValidationError, ExactSameSurfaceReport,
+    ExactTrivialBooleanFacts, ExactVolumetricBoundaryClosureReport,
+    ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
     certified_convex_operation_shortcut_support, meshes_are_certified_bounds_disjoint,
 };
 use hyperlimit::SourceProvenance;
@@ -2446,59 +2446,6 @@ impl ExactBooleanCertificationSet {
             None => {}
         }
         Ok(())
-    }
-}
-
-/// Replayable source-scoped boolean facts retained for one evaluation replay.
-#[derive(Clone, Debug, PartialEq)]
-pub(crate) struct ExactBooleanSourceFacts {
-    /// Trivial non-topological shortcut facts.
-    pub(crate) trivial: ExactTrivialBooleanFacts,
-    /// Regularized-solid dimensionality facts.
-    pub(crate) regularized_solid: ExactRegularizedSolidBooleanFacts,
-    /// Closed-convex shortcut capabilities.
-    pub(crate) convex_capabilities: ExactConvexBooleanCapabilityFacts,
-    /// Arrangement/cell-complex shortcut capabilities.
-    pub(crate) arrangement_cell_complex_shortcuts: ExactArrangementCellComplexShortcutFacts,
-    /// Exact identical-mesh shortcut report.
-    pub(crate) identical: ExactIdenticalMeshReport,
-    /// Exact same-surface shortcut report.
-    pub(crate) same_surface: ExactSameSurfaceReport,
-    /// Left vertices classified against the right closed mesh.
-    pub(crate) closed_winding_left_in_right: ClosedMeshWindingMeshReport,
-    /// Right vertices classified against the left closed mesh.
-    pub(crate) closed_winding_right_in_left: ClosedMeshWindingMeshReport,
-    /// Left vertices classified against the right convex solid.
-    pub(crate) convex_left_in_right: ConvexSolidMeshClassification,
-    /// Right vertices classified against the left convex solid.
-    pub(crate) convex_right_in_left: ConvexSolidMeshClassification,
-}
-
-impl ExactBooleanSourceFacts {
-    pub(crate) fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
-        Self {
-            trivial: ExactTrivialBooleanFacts::from_sources(left, right),
-            regularized_solid: ExactRegularizedSolidBooleanFacts::from_sources(left, right),
-            convex_capabilities: ExactConvexBooleanCapabilityFacts::from_sources(left, right),
-            arrangement_cell_complex_shortcuts:
-                ExactArrangementCellComplexShortcutFacts::from_sources(left, right),
-            identical: evidence::identical_mesh_report_from_sources(left, right),
-            same_surface: evidence::same_surface_report_from_sources(left, right),
-            closed_winding_left_in_right: classify_mesh_vertices_against_closed_mesh_winding_report(
-                left, right,
-            ),
-            closed_winding_right_in_left: classify_mesh_vertices_against_closed_mesh_winding_report(
-                right, left,
-            ),
-            convex_left_in_right: classify_mesh_vertices_against_convex_solid_report(left, right),
-            convex_right_in_left: classify_mesh_vertices_against_convex_solid_report(right, left),
-        }
-    }
-
-    pub(crate) const fn arrangement_cell_complex_shortcuts(
-        &self,
-    ) -> &ExactArrangementCellComplexShortcutFacts {
-        &self.arrangement_cell_complex_shortcuts
     }
 }
 
