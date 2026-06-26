@@ -53,7 +53,7 @@ fn test_winding_evidence(
     evaluation
         .validate_with_missing_result_policy(true)
         .unwrap();
-    evaluation.certifications().winding_evidence.clone()
+    evaluation.certifications().winding_evidence().clone()
 }
 
 fn test_volumetric_boundary_closure(
@@ -1388,8 +1388,7 @@ fn certifications_reuse_regularized_arrangement_attempt_reports() {
     let certifications = evaluation.certifications().clone();
     certifications.validate_for_request(request).unwrap();
     let attempt = certifications
-        .arrangement_attempt
-        .as_ref()
+        .retained_arrangement_attempt()
         .expect("nested tetrahedra should retain an arrangement attempt");
     assert!(
         attempt.certifies_arrangement_cell_complex_output_for_request(

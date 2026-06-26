@@ -3020,45 +3020,87 @@ fn retained_output_mesh_matches(left: &ExactMesh, right: &ExactMesh) -> bool {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ExactBooleanCertificationSet {
     /// Source-shape facts used by trivial shortcut supports.
-    pub(crate) trivial: ExactTrivialBooleanFacts,
+    trivial: ExactTrivialBooleanFacts,
     /// Source-shape facts used by closed regularized-solid shortcut supports.
-    pub(crate) regularized_solid: ExactRegularizedSolidBooleanFacts,
+    regularized_solid: ExactRegularizedSolidBooleanFacts,
     /// Exact graph refinement status.
-    pub(crate) refinement: ExactRefinementReport,
+    refinement: ExactRefinementReport,
     /// Boundary-contact policy status.
-    pub(crate) boundary_touching: ExactBoundaryTouchingReport,
+    boundary_touching: ExactBoundaryTouchingReport,
     /// Open-surface disjointness shortcut status.
-    pub(crate) open_surface_disjoint: ExactOpenSurfaceDisjointReport,
+    open_surface_disjoint: ExactOpenSurfaceDisjointReport,
     /// Adjacent closed-solid union completion shortcut status.
-    pub(crate) adjacent_union_completion: ExactAdjacentUnionCompletionReport,
+    adjacent_union_completion: ExactAdjacentUnionCompletionReport,
     /// Identical-mesh shortcut status.
-    pub(crate) identical: ExactIdenticalMeshReport,
+    identical: ExactIdenticalMeshReport,
     /// Same-surface shortcut status.
-    pub(crate) same_surface: ExactSameSurfaceReport,
+    same_surface: ExactSameSurfaceReport,
     /// Left vertices classified against the right closed mesh.
-    pub(crate) closed_winding_left_in_right: ClosedMeshWindingMeshReport,
+    closed_winding_left_in_right: ClosedMeshWindingMeshReport,
     /// Right vertices classified against the left closed mesh.
-    pub(crate) closed_winding_right_in_left: ClosedMeshWindingMeshReport,
+    closed_winding_right_in_left: ClosedMeshWindingMeshReport,
     /// Left vertices classified against the right convex solid.
-    pub(crate) convex_left_in_right: ConvexSolidMeshClassification,
+    convex_left_in_right: ConvexSolidMeshClassification,
     /// Right vertices classified against the left convex solid.
-    pub(crate) convex_right_in_left: ConvexSolidMeshClassification,
+    convex_right_in_left: ConvexSolidMeshClassification,
     /// Closed-convex shortcut capabilities.
-    pub(crate) convex_capabilities: ExactConvexBooleanCapabilityFacts,
+    convex_capabilities: ExactConvexBooleanCapabilityFacts,
     /// Arrangement-cell shortcut capabilities that cover cases not yet
     /// consumed by the full arrangement attempt report.
-    pub(crate) arrangement_cell_complex_shortcuts: ExactArrangementCellComplexShortcutFacts,
+    arrangement_cell_complex_shortcuts: ExactArrangementCellComplexShortcutFacts,
     /// Planar-arrangement evidence for coplanar surface output.
-    pub(crate) planar_arrangement: ExactPlanarArrangementReport,
+    planar_arrangement: ExactPlanarArrangementReport,
     /// Winding/inside-outside evidence for named volumetric output.
-    pub(crate) winding_evidence: ExactWindingEvidenceReport,
+    winding_evidence: ExactWindingEvidenceReport,
     /// Volumetric boundary closure evidence, when meaningful for the request.
-    pub(crate) volumetric_boundary_closure: Option<ExactVolumetricBoundaryClosureReport>,
+    volumetric_boundary_closure: Option<ExactVolumetricBoundaryClosureReport>,
     /// Arrangement/cell-complex materialization attempt.
-    pub(crate) arrangement_attempt: Option<ExactArrangementBooleanAttempt>,
+    arrangement_attempt: Option<ExactArrangementBooleanAttempt>,
 }
 
 impl ExactBooleanCertificationSet {
+    pub(crate) fn from_reports(
+        trivial: ExactTrivialBooleanFacts,
+        regularized_solid: ExactRegularizedSolidBooleanFacts,
+        refinement: ExactRefinementReport,
+        boundary_touching: ExactBoundaryTouchingReport,
+        open_surface_disjoint: ExactOpenSurfaceDisjointReport,
+        adjacent_union_completion: ExactAdjacentUnionCompletionReport,
+        identical: ExactIdenticalMeshReport,
+        same_surface: ExactSameSurfaceReport,
+        closed_winding_left_in_right: ClosedMeshWindingMeshReport,
+        closed_winding_right_in_left: ClosedMeshWindingMeshReport,
+        convex_left_in_right: ConvexSolidMeshClassification,
+        convex_right_in_left: ConvexSolidMeshClassification,
+        convex_capabilities: ExactConvexBooleanCapabilityFacts,
+        arrangement_cell_complex_shortcuts: ExactArrangementCellComplexShortcutFacts,
+        planar_arrangement: ExactPlanarArrangementReport,
+        winding_evidence: ExactWindingEvidenceReport,
+        volumetric_boundary_closure: Option<ExactVolumetricBoundaryClosureReport>,
+        arrangement_attempt: Option<ExactArrangementBooleanAttempt>,
+    ) -> Self {
+        Self {
+            trivial,
+            regularized_solid,
+            refinement,
+            boundary_touching,
+            open_surface_disjoint,
+            adjacent_union_completion,
+            identical,
+            same_surface,
+            closed_winding_left_in_right,
+            closed_winding_right_in_left,
+            convex_left_in_right,
+            convex_right_in_left,
+            convex_capabilities,
+            arrangement_cell_complex_shortcuts,
+            planar_arrangement,
+            winding_evidence,
+            volumetric_boundary_closure,
+            arrangement_attempt,
+        }
+    }
+
     /// Return the planar-arrangement evidence certification report.
     #[cfg(test)]
     pub(crate) fn planar_arrangement(&self) -> &ExactPlanarArrangementReport {
@@ -3069,6 +3111,13 @@ impl ExactBooleanCertificationSet {
     #[cfg(test)]
     pub(crate) fn winding_evidence(&self) -> &ExactWindingEvidenceReport {
         &self.winding_evidence
+    }
+
+    /// Return the retained arrangement/cell-complex attempt for this request,
+    /// when evaluation reached that canonical pipeline.
+    #[cfg(test)]
+    pub(crate) fn retained_arrangement_attempt(&self) -> Option<&ExactArrangementBooleanAttempt> {
+        self.arrangement_attempt.as_ref()
     }
 
     /// Validate this certification bundle against the request it claims to

@@ -891,7 +891,7 @@ fn certification_set_from_graph_and_regularized_arrangement(
             )
         }
     };
-    Ok(ExactBooleanCertificationSet {
+    Ok(ExactBooleanCertificationSet::from_reports(
         trivial,
         regularized_solid,
         refinement,
@@ -905,12 +905,12 @@ fn certification_set_from_graph_and_regularized_arrangement(
         convex_left_in_right,
         convex_right_in_left,
         convex_capabilities,
-        arrangement_cell_complex_shortcuts: arrangement_cell_complex_shortcuts.clone(),
+        arrangement_cell_complex_shortcuts.clone(),
         planar_arrangement,
         winding_evidence,
         volumetric_boundary_closure,
         arrangement_attempt,
-    })
+    ))
 }
 
 fn graph_for_certified_materialization<'a>(
