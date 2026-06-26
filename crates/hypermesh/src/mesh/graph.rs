@@ -1342,37 +1342,14 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
 
     let left = pair.left().view().mesh();
     let right = pair.right().view().mesh();
-    let retained_graph_required_count = pair.current_face_pair_graph_required_count().ok();
-    if retained_graph_required_count == Some(0) {
-        return Ok(
-            pair.retain_intersection_graph(ExactIntersectionGraph::from_face_pairs(Vec::new()))
-        );
-    }
-    let mut face_pairs = Vec::with_capacity(
-        retained_graph_required_count.unwrap_or_else(|| pair.candidate_pair_capacity_hint()),
-    );
-    if pair.has_current_face_pair_classifications() {
-        pair.with_current_face_pair_classifications(|classifications| {
-            for classification in classifications {
-                if classification.needs_graph_construction() {
-                    face_pairs.push(events_for_face_pair(left, right, classification));
-                }
-            }
-        })?;
-    } else {
-        let mut graph_required_count = 0usize;
-        pair.try_visit_unretained_candidate_face_pairs(&mut |[left_face, right_face]| {
-            let classification =
-                classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
-            if classification.needs_graph_construction() {
-                graph_required_count += 1;
-                face_pairs.push(events_for_face_pair(left, right, &classification));
-            }
-            Ok::<(), ExactMeshError>(())
-        })?;
-        pair.retain_broad_phase_traversal();
-        pair.retain_face_pair_graph_required_count(graph_required_count);
-    }
+    let mut face_pairs = Vec::with_capacity(pair.candidate_pair_capacity_hint());
+    pair.try_visit_unretained_candidate_face_pairs(&mut |[left_face, right_face]| {
+        let classification = classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
+        if classification.needs_graph_construction() {
+            face_pairs.push(events_for_face_pair(left, right, &classification));
+        }
+        Ok::<(), ExactMeshError>(())
+    })?;
     let graph = ExactIntersectionGraph::from_face_pairs(face_pairs);
     Ok(pair.retain_intersection_graph(graph))
 }

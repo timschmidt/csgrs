@@ -102,8 +102,6 @@ fn prepared_mesh_pair_materializes_named_operations() {
         .prepare_current_intersection_graph()
         .unwrap();
 
-    assert_eq!(pair.prepare_face_pair_classifications(), 0);
-
     let union = pair.union().unwrap();
     union.validate_retained_state().unwrap();
     assert_eq!(union.triangle_count(), solid.triangle_count());
@@ -329,16 +327,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    prepared_pair.prepare_broad_phase_traversal();
-    assert_eq!(
-        prepared_pair
-            .with_current_candidate_face_pairs(|pairs| pairs.len())
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
-    let retained_candidate_count = prepared_pair.prepare_candidate_face_pairs();
+    prepared_pair.prepare_candidate_face_pairs();
+    let retained_candidate_count = prepared_pair
+        .with_current_candidate_face_pairs(|pairs| pairs.len())
+        .unwrap();
     assert!(retained_candidate_count > 0);
     assert_eq!(
         prepared_pair
@@ -363,16 +355,11 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         .view()
         .prepare_broad_phase_pair(overlapping.view())
         .unwrap();
-    let classification_record_count =
-        classification_records_first_pair.prepare_face_pair_classifications();
-    assert_eq!(
-        classification_records_first_pair.prepare_candidate_face_pairs(),
-        classification_record_count
-    );
-    assert_eq!(
-        prepared_pair.prepare_face_pair_classifications(),
-        retained_candidate_count
-    );
+    classification_records_first_pair.prepare_candidate_face_pairs();
+    let mut classification_first_candidates = classification_records_first_pair
+        .with_current_candidate_face_pairs(|pairs| pairs.to_vec())
+        .unwrap();
+    classification_first_candidates.sort_unstable();
     assert!(retained_candidate_count > 0);
     prepared_pair.prepare_intersection_graph().unwrap();
     prepared_pair.prepare_current_intersection_graph().unwrap();
@@ -394,10 +381,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     assert!(candidates.iter().all(|[left_face, right_face]| {
         *left_face < left.triangle_count() && *right_face < overlapping.triangle_count()
     }));
-    let mut classification_first_candidates = classification_records_first_pair
-        .with_current_candidate_face_pairs(|pairs| pairs.to_vec())
-        .unwrap();
-    classification_first_candidates.sort_unstable();
     assert_eq!(classification_first_candidates, candidates);
 
     let prepared_disjoint = disjoint.view().prepare_broad_phase().unwrap();

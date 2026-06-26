@@ -16,7 +16,6 @@ use super::bounds::{
 };
 use super::error::ExactMeshError;
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
-use super::graph::intersection::{MeshFacePairClassification, classify_mesh_face_pair_unchecked};
 use super::graph::{
     ExactIntersectionGraph, build_unvalidated_intersection_graph_from_prepared_pair_rc,
     build_validated_intersection_graph_from_prepared_pair,
@@ -80,9 +79,6 @@ pub struct PreparedMeshPair<'left, 'right> {
     candidate_pair_capacity_hint: usize,
     scratch: RefCell<BroadPhaseScratch>,
     candidate_face_pairs: RefCell<Option<Vec<[usize; 2]>>>,
-    broad_phase_traversed: RefCell<bool>,
-    face_pair_classifications: RefCell<Option<Vec<MeshFacePairClassification>>>,
-    face_pair_graph_required_count: RefCell<Option<usize>>,
     intersection_graph: RefCell<Option<Rc<ExactIntersectionGraph>>>,
     intersection_graph_validated: RefCell<bool>,
     arrangement: RefCell<Option<Rc<ExactArrangement>>>,
@@ -646,9 +642,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             candidate_pair_capacity_hint,
             scratch: RefCell::new(BroadPhaseScratch::default()),
             candidate_face_pairs: RefCell::new(None),
-            broad_phase_traversed: RefCell::new(false),
-            face_pair_classifications: RefCell::new(None),
-            face_pair_graph_required_count: RefCell::new(None),
             intersection_graph: RefCell::new(None),
             intersection_graph_validated: RefCell::new(false),
             arrangement: RefCell::new(None),
@@ -674,33 +667,9 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.candidate_pair_capacity_hint
     }
 
-    /// Execute and retain broad-phase traversal without storing candidate records.
-    pub fn prepare_broad_phase_traversal(&self) {
-        if *self.broad_phase_traversed.borrow() {
-            return;
-        }
-
-        let result = self.try_visit_candidate_face_pairs_uncached(&mut |_| Ok::<(), ()>(()));
-        debug_assert!(result.is_ok());
-        self.retain_broad_phase_traversal();
-    }
-
-    /// Build and retain broad-phase candidate face pairs, returning the retained count.
-    pub fn prepare_candidate_face_pairs(&self) -> usize {
+    /// Build and retain broad-phase candidate face pairs.
+    pub fn prepare_candidate_face_pairs(&self) {
         self.ensure_candidate_face_pairs();
-        self.candidate_face_pairs
-            .borrow()
-            .as_ref()
-            .map_or(0, Vec::len)
-    }
-
-    /// Build and retain coarse face-pair classification records, returning the retained count.
-    pub fn prepare_face_pair_classifications(&self) -> usize {
-        self.ensure_face_pair_classifications();
-        self.face_pair_classifications
-            .borrow()
-            .as_ref()
-            .map_or(0, Vec::len)
     }
 
     fn sources_current(&self) -> bool {
@@ -714,13 +683,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         fact: &'static str,
     ) -> Result<(), ExactMeshError> {
         retained_current_state(retained, self.sources_current()).require_current(fact)
-    }
-
-    pub(crate) fn has_current_face_pair_classifications(&self) -> bool {
-        retained_current_state(
-            self.face_pair_classifications.borrow().is_some(),
-            self.sources_current(),
-        ) == PreparedMeshPairFactState::Current
     }
 
     pub(crate) fn has_current_intersection_graph(&self) -> bool {
@@ -817,93 +779,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         let arrangement = Rc::new(arrangement);
         *self.arrangement.borrow_mut() = Some(Rc::clone(&arrangement));
         Ok(arrangement)
-    }
-
-    pub(crate) fn with_current_face_pair_classifications<R>(
-        &self,
-        query: impl FnOnce(&[MeshFacePairClassification]) -> R,
-    ) -> Result<R, ExactMeshError> {
-        self.require_current_retained(
-            self.face_pair_classifications.borrow().is_some(),
-            "face-pair classification",
-        )?;
-        let classifications = self.face_pair_classifications.borrow();
-        let classifications = classifications.as_deref().ok_or_else(|| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::MissingRequiredEvidence,
-                "prepared mesh-pair session retained face-pair classification state without classification records",
-            ))
-        })?;
-        Ok(query(classifications))
-    }
-
-    pub(crate) fn retain_broad_phase_traversal(&self) {
-        *self.broad_phase_traversed.borrow_mut() = true;
-    }
-
-    pub(crate) fn current_face_pair_graph_required_count(&self) -> Result<usize, ExactMeshError> {
-        let sources_current = self.left_source == self.left.view.source_stamp()
-            && self.right_source == self.right.view.source_stamp();
-        retained_current_state(
-            self.face_pair_graph_required_count.borrow().is_some(),
-            sources_current,
-        )
-        .require_current("face-pair graph-required count")?;
-        self.face_pair_graph_required_count
-            .borrow()
-            .as_ref()
-            .copied()
-            .ok_or_else(|| {
-                ExactMeshError::one(ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::MissingRequiredEvidence,
-                    "prepared mesh-pair session retained face-pair classification evidence without a graph-required count",
-                ))
-            })
-    }
-
-    pub(crate) fn retain_face_pair_graph_required_count(&self, count: usize) -> usize {
-        if let Some(retained) = *self.face_pair_graph_required_count.borrow() {
-            return retained;
-        }
-        *self.face_pair_graph_required_count.borrow_mut() = Some(count);
-        count
-    }
-
-    fn ensure_face_pair_classifications(&self) {
-        if self.face_pair_classifications.borrow().is_some() {
-            return;
-        }
-
-        let mut classifications = Vec::with_capacity(self.candidate_pair_capacity_hint);
-        if let Some(candidate_face_pairs) = self.candidate_face_pairs.borrow().as_deref() {
-            for &[left_face, right_face] in candidate_face_pairs {
-                classifications.push(classify_mesh_face_pair_unchecked(
-                    self.left.view.mesh,
-                    left_face,
-                    self.right.view.mesh,
-                    right_face,
-                ));
-            }
-        } else {
-            let result =
-                self.try_visit_candidate_face_pairs_uncached(&mut |[left_face, right_face]| {
-                    classifications.push(classify_mesh_face_pair_unchecked(
-                        self.left.view.mesh,
-                        left_face,
-                        self.right.view.mesh,
-                        right_face,
-                    ));
-                    Ok::<(), ()>(())
-                });
-            debug_assert!(result.is_ok());
-        }
-        self.retain_broad_phase_traversal();
-        let graph_required_count = classifications
-            .iter()
-            .filter(|classification| classification.needs_graph_construction())
-            .count();
-        *self.face_pair_classifications.borrow_mut() = Some(classifications);
-        *self.face_pair_graph_required_count.borrow_mut() = Some(graph_required_count);
     }
 
     pub(crate) fn cached_intersection_graph(&self) -> Option<Rc<ExactIntersectionGraph>> {
@@ -1047,22 +922,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
         drop(candidate_face_pairs);
         self.try_visit_candidate_face_pairs_uncached(&mut |pair| visit(pair))?;
-        self.retain_broad_phase_traversal();
         Ok(())
     }
 
     fn ensure_candidate_face_pairs(&self) {
         if self.candidate_face_pairs.borrow().is_some() {
-            return;
-        }
-
-        if let Some(classifications) = self.face_pair_classifications.borrow().as_deref() {
-            let candidate_face_pairs = classifications
-                .iter()
-                .map(|classification| [classification.left_face, classification.right_face])
-                .collect::<Vec<_>>();
-            self.retain_broad_phase_traversal();
-            *self.candidate_face_pairs.borrow_mut() = Some(candidate_face_pairs);
             return;
         }
 
@@ -1072,7 +936,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             Ok::<(), ()>(())
         });
         debug_assert!(result.is_ok());
-        self.retain_broad_phase_traversal();
         *self.candidate_face_pairs.borrow_mut() = Some(candidate_face_pairs);
     }
 

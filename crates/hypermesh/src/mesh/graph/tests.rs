@@ -264,24 +264,6 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
     );
     graph.validate_against_meshes(&left, &right).unwrap();
     let prepared_pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
-    assert_eq!(prepared_pair.prepare_face_pair_classifications(), 1);
-    let mut first_classifications = Vec::new();
-    prepared_pair
-        .with_current_face_pair_classifications(|classifications| {
-            first_classifications.extend_from_slice(classifications);
-        })
-        .unwrap();
-    let mut repeated_classifications = Vec::new();
-    prepared_pair
-        .with_current_face_pair_classifications(|classifications| {
-            repeated_classifications.extend_from_slice(classifications);
-        })
-        .unwrap();
-    assert_eq!(first_classifications, repeated_classifications);
-    assert_eq!(
-        first_classifications,
-        vec![classify_mesh_face_pair_unchecked(&left, 0, &right, 0)]
-    );
     let shortcut_facts = prepared_pair.arrangement_cell_complex_shortcut_facts();
     assert_eq!(
         shortcut_facts,
