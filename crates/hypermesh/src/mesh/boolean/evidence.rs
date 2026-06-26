@@ -54,7 +54,7 @@ use super::region::{
     FaceRegionTriangulation, boundary_node_point,
 };
 use super::solid::{
-    ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
+    ConvexSolidMeshClassification, ConvexSolidMeshRelation,
     classify_mesh_vertices_against_convex_solid_report,
 };
 use super::volumetric::{
@@ -3783,8 +3783,8 @@ impl ExactBooleanCertificationSet {
     }
 
     fn convex_reports_match_preflight_support(&self, preflight: &ExactBooleanPreflight) -> bool {
-        if !self.convex_left_in_right.solid_facts.is_certified_convex()
-            || !self.convex_right_in_left.solid_facts.is_certified_convex()
+        if !self.convex_left_in_right.solid_is_certified_convex()
+            || !self.convex_right_in_left.solid_is_certified_convex()
         {
             return false;
         }
@@ -4409,7 +4409,7 @@ fn certified_convex_relation_from_sources(
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
 
     if graph.face_pairs.is_empty() {
-        return Ok(match (left_in_right.relation, right_in_left.relation) {
+        return Ok(match (left_in_right.relation(), right_in_left.relation()) {
             (ConvexSolidMeshRelation::StrictlyInside, _) => {
                 Some(ReportConvexRelation::LeftInsideRight)
             }
@@ -4424,9 +4424,9 @@ fn certified_convex_relation_from_sources(
     }
 
     let left_boundary_inside_right =
-        convex_boundary_containment_sources_match(&left_in_right, &right_in_left);
+        left_in_right.supports_boundary_containment_against(&right_in_left);
     let right_boundary_inside_left =
-        convex_boundary_containment_sources_match(&right_in_left, &left_in_right);
+        right_in_left.supports_boundary_containment_against(&left_in_right);
     Ok(match operation {
         ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
             if left_boundary_inside_right =>
@@ -4852,42 +4852,20 @@ fn convex_relation_shortcut_sources_match(
 
     Ok(match shortcut {
         ExactBooleanShortcutKind::ConvexContainment if graph.face_pairs.is_empty() => {
-            left_in_right.relation == ConvexSolidMeshRelation::StrictlyInside
-                || right_in_left.relation == ConvexSolidMeshRelation::StrictlyInside
+            left_in_right.relation() == ConvexSolidMeshRelation::StrictlyInside
+                || right_in_left.relation() == ConvexSolidMeshRelation::StrictlyInside
         }
         ExactBooleanShortcutKind::ConvexContainment => {
-            convex_boundary_containment_sources_match(&left_in_right, &right_in_left)
-                || convex_boundary_containment_sources_match(&right_in_left, &left_in_right)
+            left_in_right.supports_boundary_containment_against(&right_in_left)
+                || right_in_left.supports_boundary_containment_against(&left_in_right)
         }
         ExactBooleanShortcutKind::ConvexSeparated => {
             graph.face_pairs.is_empty()
-                && left_in_right.relation == ConvexSolidMeshRelation::Outside
-                && right_in_left.relation == ConvexSolidMeshRelation::Outside
+                && left_in_right.relation() == ConvexSolidMeshRelation::Outside
+                && right_in_left.relation() == ConvexSolidMeshRelation::Outside
         }
         _ => unreachable!("only convex relation shortcuts are replayed here"),
     })
-}
-
-fn convex_boundary_containment_sources_match(
-    subject_in_container: &ConvexSolidMeshClassification,
-    container_in_subject: &ConvexSolidMeshClassification,
-) -> bool {
-    subject_in_container.solid_facts.is_certified_convex()
-        && container_in_subject.solid_facts.is_certified_convex()
-        && subject_in_container.vertices.iter().all(|vertex| {
-            matches!(
-                vertex.relation,
-                ConvexSolidPointRelation::Inside | ConvexSolidPointRelation::Boundary
-            )
-        })
-        && subject_in_container
-            .vertices
-            .iter()
-            .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Boundary))
-        && container_in_subject
-            .vertices
-            .iter()
-            .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Outside))
 }
 
 fn arrangement_cell_complex_sources_match(

@@ -192,16 +192,68 @@ pub(crate) enum ConvexSolidMeshRelation {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ConvexSolidMeshClassification {
     /// Exact relation between the subject vertices and the convex solid.
-    pub(crate) relation: ConvexSolidMeshRelation,
+    relation: ConvexSolidMeshRelation,
     /// Convexity facts certified for the containing solid.
-    pub(crate) solid_facts: ConvexSolidFacts,
+    solid_facts: ConvexSolidFacts,
     /// Number of subject vertices covered by this summary.
-    pub(crate) subject_vertex_count: usize,
+    subject_vertex_count: usize,
     /// Per-subject-vertex classifications.
-    pub(crate) vertices: Vec<ConvexSolidPointClassification>,
+    vertices: Vec<ConvexSolidPointClassification>,
 }
 
 impl ConvexSolidMeshClassification {
+    /// Return the retained mesh/solid relation.
+    pub(crate) const fn relation(&self) -> ConvexSolidMeshRelation {
+        self.relation
+    }
+
+    /// Return whether the containing solid was certified as convex.
+    pub(crate) const fn solid_is_certified_convex(&self) -> bool {
+        self.solid_facts.is_certified_convex()
+    }
+
+    /// Return whether every retained subject vertex is inside or on the container.
+    pub(crate) fn vertices_are_inside_or_boundary(&self) -> bool {
+        self.vertices.iter().all(|vertex| {
+            matches!(
+                vertex.relation,
+                ConvexSolidPointRelation::Inside | ConvexSolidPointRelation::Boundary
+            )
+        })
+    }
+
+    /// Return whether at least one retained subject vertex is on the container boundary.
+    pub(crate) fn vertices_touch_boundary(&self) -> bool {
+        self.vertices
+            .iter()
+            .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Boundary))
+    }
+
+    /// Return whether at least one retained subject vertex is outside the container.
+    pub(crate) fn vertices_include_outside(&self) -> bool {
+        self.vertices
+            .iter()
+            .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Outside))
+    }
+
+    /// Return whether these two convex-solid reports certify boundary containment.
+    ///
+    /// This is retained exact predicate evidence: every subject vertex is
+    /// certified inside or on the container, at least one subject vertex is
+    /// exactly on the boundary, the container has at least one vertex outside
+    /// the subject so the relation is not relabeled equality, and both meshes
+    /// were certified as convex solids by the two retained reports.
+    pub(crate) fn supports_boundary_containment_against(
+        &self,
+        container_in_subject: &Self,
+    ) -> bool {
+        self.solid_is_certified_convex()
+            && container_in_subject.solid_is_certified_convex()
+            && self.vertices_are_inside_or_boundary()
+            && self.vertices_touch_boundary()
+            && container_in_subject.vertices_include_outside()
+    }
+
     /// Validate mesh/solid vertex-classification report invariants.
     ///
     /// The mesh summary must be derivable from the retained per-vertex point

@@ -114,10 +114,7 @@ use region::{
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, choose_region_projection,
 };
-use solid::{
-    ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
-    classify_mesh_vertices_against_convex_solid_report,
-};
+use solid::{ConvexSolidMeshRelation, classify_mesh_vertices_against_convex_solid_report};
 use std::cmp::Ordering;
 use std::rc::Rc;
 use volumetric::{
@@ -5726,7 +5723,7 @@ fn certified_convex_relation_shortcut_from_graph(
         })?;
 
     if graph.face_pairs.is_empty() {
-        return Ok(match (left_in_right.relation, right_in_left.relation) {
+        return Ok(match (left_in_right.relation(), right_in_left.relation()) {
             (ConvexSolidMeshRelation::StrictlyInside, _) => {
                 Some(ConvexRelationShortcut::LeftInsideRight)
             }
@@ -5741,9 +5738,9 @@ fn certified_convex_relation_shortcut_from_graph(
     }
 
     let left_boundary_inside_right =
-        convex_boundary_containment_is_supported(&left_in_right, &right_in_left);
+        left_in_right.supports_boundary_containment_against(&right_in_left);
     let right_boundary_inside_left =
-        convex_boundary_containment_is_supported(&right_in_left, &left_in_right);
+        right_in_left.supports_boundary_containment_against(&left_in_right);
     Ok(match operation {
         ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
             if left_boundary_inside_right =>
@@ -9839,41 +9836,6 @@ fn volumetric_retention_for_operation(
         ) => ExactRegionRetention::KeepReversed,
         _ => ExactRegionRetention::Drop,
     }
-}
-
-/// Return whether one certified convex solid is contained in another while
-/// touching its boundary.
-///
-/// Exact geometric computation argues that such topology decisions must be
-/// retained as exact predicate
-/// facts: every subject vertex is certified inside or on the container, at
-/// least one vertex is exactly on the boundary, the container has at least one
-/// vertex outside the subject so the relation is not relabeled equality, and
-/// both meshes have been certified as convex solids by the two retained
-/// reports. Convexity is the key promotion gate: once every vertex of one
-/// convex solid is inside or on the other convex solid, a separate sampled
-/// graph traversal is not allowed to veto the containment with a stale
-/// tolerance-style crossing interpretation.
-fn convex_boundary_containment_is_supported(
-    subject_in_container: &ConvexSolidMeshClassification,
-    container_in_subject: &ConvexSolidMeshClassification,
-) -> bool {
-    subject_in_container.solid_facts.is_certified_convex()
-        && container_in_subject.solid_facts.is_certified_convex()
-        && subject_in_container.vertices.iter().all(|vertex| {
-            matches!(
-                vertex.relation,
-                ConvexSolidPointRelation::Inside | ConvexSolidPointRelation::Boundary
-            )
-        })
-        && subject_in_container
-            .vertices
-            .iter()
-            .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Boundary))
-        && container_in_subject
-            .vertices
-            .iter()
-            .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Outside))
 }
 
 fn winding_error(error: WindingReportError) -> ExactMeshError {
