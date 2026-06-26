@@ -1576,15 +1576,9 @@ fn axis_aligned_orthogonal_union_reaches_generic_arrangement_triangulation() {
 
 #[test]
 fn arrangement_cell_complex_shortcut_facts_reject_mixed_axis_and_affine_families() {
-    let facts = ExactArrangementCellComplexShortcutFacts {
-        axis_aligned_box_pair: false,
-        axis_aligned_union: true,
-        axis_aligned_intersection: true,
-        axis_aligned_difference: true,
-        affine_union: true,
-        affine_intersection: false,
-        affine_difference: false,
-    };
+    let facts = ExactArrangementCellComplexShortcutFacts::from_supports(
+        false, true, true, true, true, false, false,
+    );
     assert_eq!(
         facts.validate(),
         Err(ExactReportValidationError::StatusEvidenceMismatch)

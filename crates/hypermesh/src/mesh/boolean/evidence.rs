@@ -2567,59 +2567,75 @@ impl ExactConvexBooleanCapabilityFacts {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ExactArrangementCellComplexShortcutFacts {
     /// Both operands certify as exact retained axis-aligned boxes.
-    pub(crate) axis_aligned_box_pair: bool,
+    axis_aligned_box_pair: bool,
     /// Axis-aligned orthogonal cell decomposition supports union.
-    pub(crate) axis_aligned_union: bool,
+    axis_aligned_union: bool,
     /// Axis-aligned orthogonal cell decomposition supports intersection.
-    pub(crate) axis_aligned_intersection: bool,
+    axis_aligned_intersection: bool,
     /// Axis-aligned orthogonal cell decomposition supports difference.
-    pub(crate) axis_aligned_difference: bool,
+    axis_aligned_difference: bool,
     /// Affine orthogonal cell decomposition supports union.
-    pub(crate) affine_union: bool,
+    affine_union: bool,
     /// Affine orthogonal cell decomposition supports intersection.
-    pub(crate) affine_intersection: bool,
+    affine_intersection: bool,
     /// Affine orthogonal cell decomposition supports difference.
-    pub(crate) affine_difference: bool,
+    affine_difference: bool,
 }
 
 impl ExactArrangementCellComplexShortcutFacts {
-    pub(crate) fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
+    pub(crate) const fn from_supports(
+        axis_aligned_box_pair: bool,
+        axis_aligned_union: bool,
+        axis_aligned_intersection: bool,
+        axis_aligned_difference: bool,
+        affine_union: bool,
+        affine_intersection: bool,
+        affine_difference: bool,
+    ) -> Self {
         Self {
-            axis_aligned_box_pair: certified_axis_aligned_box_pair(left, right),
-            axis_aligned_union: axis_aligned_orthogonal_solid_cell_selected_count(
+            axis_aligned_box_pair,
+            axis_aligned_union,
+            axis_aligned_intersection,
+            axis_aligned_difference,
+            affine_union,
+            affine_intersection,
+            affine_difference,
+        }
+    }
+
+    pub(crate) fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
+        Self::from_supports(
+            certified_axis_aligned_box_pair(left, right),
+            axis_aligned_orthogonal_solid_cell_selected_count(
                 left,
                 right,
                 AxisAlignedOrthogonalSolidOperation::Union,
             )
             .is_some(),
-            axis_aligned_intersection: axis_aligned_orthogonal_solid_cell_selected_count(
+            axis_aligned_orthogonal_solid_cell_selected_count(
                 left,
                 right,
                 AxisAlignedOrthogonalSolidOperation::Intersection,
             )
             .is_some(),
-            axis_aligned_difference: axis_aligned_orthogonal_solid_cell_selected_count(
+            axis_aligned_orthogonal_solid_cell_selected_count(
                 left,
                 right,
                 AxisAlignedOrthogonalSolidOperation::Difference,
             )
             .is_some(),
-            affine_union: has_affine_orthogonal_solid_cells(
-                left,
-                right,
-                AffineOrthogonalSolidOperation::Union,
-            ),
-            affine_intersection: has_affine_orthogonal_solid_cells(
+            has_affine_orthogonal_solid_cells(left, right, AffineOrthogonalSolidOperation::Union),
+            has_affine_orthogonal_solid_cells(
                 left,
                 right,
                 AffineOrthogonalSolidOperation::Intersection,
             ),
-            affine_difference: has_affine_orthogonal_solid_cells(
+            has_affine_orthogonal_solid_cells(
                 left,
                 right,
                 AffineOrthogonalSolidOperation::Difference,
             ),
-        }
+        )
     }
 
     pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
