@@ -223,21 +223,6 @@ impl CandidateFacePairPlan {
         Self::Empty
     }
 
-    pub(crate) const fn candidate_pair_upper_bound(
-        self,
-        left_face_count: usize,
-        right_face_count: usize,
-    ) -> usize {
-        match self {
-            Self::Empty => 0,
-            Self::Sweep {
-                candidate_pair_capacity_hint,
-                ..
-            } => candidate_pair_capacity_hint,
-            Self::Quadratic => left_face_count.saturating_mul(right_face_count),
-        }
-    }
-
     pub(crate) fn bounded_capacity_hint(
         self,
         left_face_count: usize,

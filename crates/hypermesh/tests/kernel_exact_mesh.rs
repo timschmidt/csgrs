@@ -140,13 +140,6 @@ fn prepared_mesh_pair_materializes_named_operations() {
         initial_broad_phase.plan(),
         PreparedMeshPairPlanKind::Empty
     ));
-    assert_eq!(initial_broad_phase.left_face_count(), 0);
-    assert_eq!(
-        initial_broad_phase.right_face_count(),
-        solid.triangle_count()
-    );
-    assert_eq!(initial_broad_phase.face_pair_product(), 0);
-    assert_eq!(initial_broad_phase.candidate_pair_upper_bound(), 0);
     assert_eq!(initial_broad_phase.candidate_pair_capacity_hint(), 0);
     assert_eq!(pair.broad_phase_summary(), initial_broad_phase);
     assert!(matches!(
@@ -788,20 +781,7 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         broad_phase_summary.right_source(),
         overlapping.view().source_stamp()
     );
-    assert_eq!(broad_phase_summary.left_face_count(), left.triangle_count());
-    assert_eq!(
-        broad_phase_summary.right_face_count(),
-        overlapping.triangle_count()
-    );
-    assert_eq!(
-        broad_phase_summary.face_pair_product(),
-        left.triangle_count() * overlapping.triangle_count()
-    );
     assert_eq!(prepared_pair.broad_phase_summary(), broad_phase_summary);
-    assert!(broad_phase_summary.candidate_pair_upper_bound() > 0);
-    assert!(
-        broad_phase_summary.candidate_pair_upper_bound() <= broad_phase_summary.face_pair_product()
-    );
     assert!(matches!(
         prepared_pair.cache_status().candidate_face_pairs(),
         PreparedMeshPairFactState::Missing
@@ -842,7 +822,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     );
     let retained_candidate_count = prepared_pair.prepare_candidate_face_pairs();
     assert!(retained_candidate_count > 0);
-    assert!(retained_candidate_count <= broad_phase_summary.candidate_pair_upper_bound());
     assert_eq!(
         prepared_pair
             .with_current_candidate_face_pairs(|pairs| {
@@ -1008,9 +987,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         classification_counts.face_pair_count()
     );
     assert!(classification_counts.face_pair_count() > 0);
-    assert!(
-        classification_counts.face_pair_count() <= broad_phase_summary.candidate_pair_upper_bound()
-    );
     assert!(classification_counts.graph_required_count() > 0);
     assert_eq!(
         classification_counts.graph_required_count(),

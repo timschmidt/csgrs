@@ -337,10 +337,6 @@ pub struct PreparedMeshPairBroadPhaseSummary {
     left_source: ExactMeshSourceStamp,
     right_source: ExactMeshSourceStamp,
     plan: PreparedMeshPairPlanKind,
-    left_face_count: usize,
-    right_face_count: usize,
-    face_pair_product: usize,
-    candidate_pair_upper_bound: usize,
     candidate_pair_capacity_hint: usize,
 }
 
@@ -360,26 +356,6 @@ impl PreparedMeshPairBroadPhaseSummary {
         self.plan
     }
 
-    /// Return the left face count used when this pair plan was selected.
-    pub const fn left_face_count(self) -> usize {
-        self.left_face_count
-    }
-
-    /// Return the right face count used when this pair plan was selected.
-    pub const fn right_face_count(self) -> usize {
-        self.right_face_count
-    }
-
-    /// Return the exact Cartesian face-pair product before broad-phase rejection.
-    pub const fn face_pair_product(self) -> usize {
-        self.face_pair_product
-    }
-
-    /// Return the retained upper bound on pairs the broad phase may inspect.
-    pub const fn candidate_pair_upper_bound(self) -> usize {
-        self.candidate_pair_upper_bound
-    }
-
     /// Return the bounded vector reserve hint used by retained pair stages.
     pub const fn candidate_pair_capacity_hint(self) -> usize {
         self.candidate_pair_capacity_hint
@@ -389,19 +365,12 @@ impl PreparedMeshPairBroadPhaseSummary {
         left_source: ExactMeshSourceStamp,
         right_source: ExactMeshSourceStamp,
         plan: CandidateFacePairPlan,
-        left_face_count: usize,
-        right_face_count: usize,
         candidate_pair_capacity_hint: usize,
     ) -> Self {
         Self {
             left_source,
             right_source,
             plan: PreparedMeshPairPlanKind::from_candidate_plan(plan),
-            left_face_count,
-            right_face_count,
-            face_pair_product: left_face_count.saturating_mul(right_face_count),
-            candidate_pair_upper_bound: plan
-                .candidate_pair_upper_bound(left_face_count, right_face_count),
             candidate_pair_capacity_hint,
         }
     }
@@ -916,8 +885,6 @@ impl<'a> PreparedMeshView<'a> {
                 self.view.source_stamp(),
                 right.view.source_stamp(),
                 plan,
-                self.view.face_count(),
-                right.view.face_count(),
                 candidate_pair_capacity_hint,
             ),
         )
