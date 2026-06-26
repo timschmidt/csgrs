@@ -3347,47 +3347,10 @@ impl ExactBooleanCertificationSet {
         &self,
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
-        self.trivial.validate()?;
-        self.regularized_solid.validate()?;
-        self.refinement.validate()?;
-        self.adjacent_union_completion.validate()?;
-        if self.refinement.operation != request.operation
-            || self.adjacent_union_completion.operation() != request.operation
-        {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
-        let adjacent_union_completion_certified = self.adjacent_union_completion.is_certified()
-            && self.adjacent_union_completion.operation() == request.operation
-            && request.operation == ExactBooleanOperation::Union
-            && self.arrangement_attempt.is_none();
-        if adjacent_union_completion_certified {
-            self.validate_retained_closure_and_attempt_for_request(request, true, false)?;
+        if self.validate_base_reports_for_request(request)? {
             return Ok(());
         }
-        self.boundary_touching.validate()?;
-        self.open_surface_disjoint.validate()?;
-        self.identical.validate()?;
-        self.same_surface.validate()?;
-        self.closed_winding_left_in_right
-            .validate()
-            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
-        self.closed_winding_right_in_left
-            .validate()
-            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
-        self.convex_left_in_right
-            .validate()
-            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
-        self.convex_right_in_left
-            .validate()
-            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
-        self.convex_capabilities.validate()?;
-        self.arrangement_cell_complex_shortcuts.validate()?;
-        if self.refinement.graph_had_unknowns() != self.boundary_touching.graph_had_unknowns()
-            || self.refinement.retained_face_pairs() != self.boundary_touching.retained_face_pairs()
-            || self.refinement.retained_events() != self.boundary_touching.retained_events()
-        {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
+        self.validate_named_operation_materialization_reports()?;
         self.planar_arrangement.validate()?;
         self.winding_evidence.validate()?;
         if self.planar_arrangement.operation() != request.operation
@@ -3455,6 +3418,60 @@ impl ExactBooleanCertificationSet {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         self.validate_retained_closure_and_attempt_for_request(request, true, true)?;
+        Ok(())
+    }
+
+    fn validate_base_reports_for_request(
+        &self,
+        request: ExactBooleanRequest,
+    ) -> Result<bool, ExactReportValidationError> {
+        self.trivial.validate()?;
+        self.regularized_solid.validate()?;
+        self.refinement.validate()?;
+        self.adjacent_union_completion.validate()?;
+        if self.refinement.operation != request.operation
+            || self.adjacent_union_completion.operation() != request.operation
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        let adjacent_union_completion_certified = self.adjacent_union_completion.is_certified()
+            && self.adjacent_union_completion.operation() == request.operation
+            && request.operation == ExactBooleanOperation::Union
+            && self.arrangement_attempt.is_none();
+        if adjacent_union_completion_certified {
+            self.validate_retained_closure_and_attempt_for_request(request, true, false)?;
+            return Ok(true);
+        }
+        Ok(false)
+    }
+
+    fn validate_named_operation_materialization_reports(
+        &self,
+    ) -> Result<(), ExactReportValidationError> {
+        self.boundary_touching.validate()?;
+        self.open_surface_disjoint.validate()?;
+        self.identical.validate()?;
+        self.same_surface.validate()?;
+        self.closed_winding_left_in_right
+            .validate()
+            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+        self.closed_winding_right_in_left
+            .validate()
+            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+        self.convex_left_in_right
+            .validate()
+            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+        self.convex_right_in_left
+            .validate()
+            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+        self.convex_capabilities.validate()?;
+        self.arrangement_cell_complex_shortcuts.validate()?;
+        if self.refinement.graph_had_unknowns() != self.boundary_touching.graph_had_unknowns()
+            || self.refinement.retained_face_pairs() != self.boundary_touching.retained_face_pairs()
+            || self.refinement.retained_events() != self.boundary_touching.retained_events()
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
         Ok(())
     }
 
