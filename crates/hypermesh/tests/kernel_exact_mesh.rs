@@ -95,7 +95,6 @@ fn prepared_mesh_pair_materializes_named_operations() {
     .unwrap();
     let solid = tetra([0, 0, 0]);
     let pair = empty.view().prepare_broad_phase_pair(solid.view()).unwrap();
-    assert!(pair.sources_are_current());
     pair.require_current_sources().unwrap();
     let initial_status: PreparedMeshPairCacheStatus = pair.cache_status();
     let _source_state: PreparedMeshPairFactState = initial_status.source_pair();
@@ -139,9 +138,14 @@ fn prepared_mesh_pair_materializes_named_operations() {
     );
     assert!(pair.cache_status().intersection_graph().is_missing());
     assert!(pair.cache_status().arrangement().is_missing());
-    assert!(!pair.has_retained_arrangement_shortcut_facts());
+    assert!(
+        pair.cache_status()
+            .arrangement_shortcut_facts()
+            .is_missing()
+    );
     assert_eq!(
-        pair.require_current_arrangement_shortcut_facts()
+        pair.cache_status()
+            .require_current_arrangement_shortcut_facts()
             .unwrap_err()
             .blockers()[0]
             .kind(),
@@ -377,11 +381,21 @@ fn prepared_mesh_pair_materializes_named_operations() {
     );
     assert_eq!(pair.current_face_pair_classification_count().unwrap(), 0);
     assert!(pair.cache_status().intersection_graph().is_missing());
-    assert!(!pair.has_retained_arrangement_shortcut_facts());
+    assert!(
+        pair.cache_status()
+            .arrangement_shortcut_facts()
+            .is_missing()
+    );
 
     pair.prepare_arrangement_shortcut_facts().unwrap();
-    assert!(pair.arrangement_shortcut_facts_are_current());
-    pair.require_current_arrangement_shortcut_facts().unwrap();
+    assert!(
+        pair.cache_status()
+            .arrangement_shortcut_facts()
+            .is_current()
+    );
+    pair.cache_status()
+        .require_current_arrangement_shortcut_facts()
+        .unwrap();
     assert!(pair.cache_status().intersection_graph().is_missing());
 
     let prepared_union_outcome = pair.prepare_result(PreparedMeshPairBoolean::Union).unwrap();
@@ -410,7 +424,11 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    assert!(pair.arrangement_shortcut_facts_are_current());
+    assert!(
+        pair.cache_status()
+            .arrangement_shortcut_facts()
+            .is_current()
+    );
     assert!(
         pair.cache_status()
             .result(PreparedMeshPairBoolean::Union)
@@ -891,7 +909,7 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         broad_phase_summary.sweep_direction();
     let _sweep_active_set: Option<PreparedMeshPairSweepActiveSet> =
         broad_phase_summary.sweep_active_set();
-    assert!(prepared_pair.sources_are_current());
+    assert!(prepared_pair.cache_status().source_pair().is_current());
     assert_eq!(
         broad_phase_summary.plan(),
         prepared_pair.candidate_pair_plan()
@@ -1019,7 +1037,12 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .unwrap(),
         retained_candidate_count
     );
-    assert!(prepared_pair.candidate_face_pairs_are_current());
+    assert!(
+        prepared_pair
+            .cache_status()
+            .candidate_face_pairs()
+            .is_current()
+    );
     let traversal_summary: PreparedMeshPairBroadPhaseTraversalSummary = prepared_pair
         .current_broad_phase_traversal_summary()
         .unwrap();
@@ -1170,7 +1193,12 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         classification_records_first_pair.prepare_candidate_face_pairs(),
         classification_record_count
     );
-    assert!(classification_records_first_pair.candidate_face_pairs_are_current());
+    assert!(
+        classification_records_first_pair
+            .cache_status()
+            .candidate_face_pairs()
+            .is_current()
+    );
     let classification_counts: PreparedMeshPairClassificationCounts =
         prepared_pair.prepare_face_pair_classification_counts();
     assert_eq!(

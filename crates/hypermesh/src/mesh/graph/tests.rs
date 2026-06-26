@@ -283,7 +283,12 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
         first_classifications,
         vec![classify_mesh_face_pair_unchecked(&left, 0, &right, 0)]
     );
-    assert!(!prepared_pair.has_retained_arrangement_shortcut_facts());
+    assert!(
+        prepared_pair
+            .cache_status()
+            .arrangement_shortcut_facts()
+            .is_missing()
+    );
     let shortcut_facts = prepared_pair.arrangement_cell_complex_shortcut_facts();
     assert_eq!(
         shortcut_facts,
@@ -291,7 +296,12 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
             &left, &right
         )
     );
-    assert!(prepared_pair.has_retained_arrangement_shortcut_facts());
+    assert!(
+        prepared_pair
+            .cache_status()
+            .arrangement_shortcut_facts()
+            .is_current()
+    );
     assert!(
         prepared_pair
             .cache_status()

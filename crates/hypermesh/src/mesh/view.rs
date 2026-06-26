@@ -1558,22 +1558,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         PreparedMeshPairPlanKind::from_candidate_plan(self.plan)
     }
 
-    /// Return whether retained pair-source stamps still match the borrowed meshes.
-    pub fn sources_are_current(&self) -> bool {
-        self.broad_phase_summary.left_source() == self.left.view.source_stamp()
-            && self.broad_phase_summary.right_source() == self.right.view.source_stamp()
-    }
-
     /// Require retained broad-phase traversal counts with current source certificates.
     pub fn current_broad_phase_traversal_summary(
         &self,
     ) -> Result<PreparedMeshPairBroadPhaseTraversalSummary, ExactMeshError> {
         self.cache_status().current_broad_phase_traversal_summary()
-    }
-
-    /// Return whether candidate face-pair records are retained and source-current.
-    pub fn candidate_face_pairs_are_current(&self) -> bool {
-        self.cache_status().candidate_face_pairs().is_current()
     }
 
     /// Execute and retain broad-phase traversal counts without storing candidate records.
@@ -1623,7 +1612,9 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     /// Return a cheap summary of retained facts in this prepared pair session.
     pub fn cache_status(&self) -> PreparedMeshPairCacheStatus {
-        let sources_current = self.sources_are_current();
+        let sources_current = self.broad_phase_summary.left_source()
+            == self.left.view.source_stamp()
+            && self.broad_phase_summary.right_source() == self.right.view.source_stamp();
         let candidate_face_pairs_retained = self.candidate_face_pairs.borrow().is_some();
         let broad_phase_traversal_summary = *self.broad_phase_traversal_summary.borrow();
         let face_pair_classifications_retained = self.face_pair_classifications.borrow().is_some();
@@ -1731,18 +1722,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.cache_status().current_arrangement_counts()
     }
 
-    /// Return whether arrangement shortcut facts are retained and source-current.
-    pub fn arrangement_shortcut_facts_are_current(&self) -> bool {
-        self.cache_status()
-            .arrangement_shortcut_facts()
-            .is_current()
-    }
-
-    /// Return whether arrangement shortcut facts are present.
-    pub fn has_retained_arrangement_shortcut_facts(&self) -> bool {
-        self.arrangement_shortcut_facts.borrow().is_some()
-    }
-
     /// Require a retained arrangement with current source certificates.
     pub fn require_current_arrangement(&self) -> Result<(), ExactMeshError> {
         self.cache_status().require_current_arrangement()
@@ -1757,11 +1736,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     /// Build and retain arrangement shortcut facts for this prepared pair.
     pub fn prepare_arrangement_shortcut_facts(&self) -> Result<(), ExactMeshError> {
         self.arrangement_cell_complex_shortcut_facts();
-        self.require_current_arrangement_shortcut_facts()
-    }
-
-    /// Require retained arrangement shortcut facts with current source certificates.
-    pub fn require_current_arrangement_shortcut_facts(&self) -> Result<(), ExactMeshError> {
         self.cache_status()
             .require_current_arrangement_shortcut_facts()
     }
