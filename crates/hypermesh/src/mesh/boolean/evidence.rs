@@ -4246,7 +4246,14 @@ impl ExactBooleanEvaluation {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
             self.validate_materialized_result(result)?;
-        } else if !allow_missing_materialized_result && self.requires_materialized_result() {
+        } else if !allow_missing_materialized_result
+            && self.preflight.is_certified()
+            && !matches!(
+                self.preflight.support,
+                ExactBooleanSupport::SelectedRegionPolicy
+                    | ExactBooleanSupport::CertifiedArrangementCellComplex
+            )
+        {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         Ok(())
@@ -4287,20 +4294,17 @@ impl ExactBooleanEvaluation {
                 self.request,
                 retained_attempt,
             )
-        } else if self.requires_materialized_result() {
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
-        } else {
-            Ok(())
-        }
-    }
-
-    fn requires_materialized_result(&self) -> bool {
-        self.preflight.is_certified()
+        } else if self.preflight.is_certified()
             && !matches!(
                 self.preflight.support,
                 ExactBooleanSupport::SelectedRegionPolicy
                     | ExactBooleanSupport::CertifiedArrangementCellComplex
             )
+        {
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        } else {
+            Ok(())
+        }
     }
 
     fn validate_materialized_result(
