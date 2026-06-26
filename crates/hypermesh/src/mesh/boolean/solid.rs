@@ -135,12 +135,26 @@ impl ConvexSolidFacts {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ConvexSolidPointClassification {
     /// Exact point/solid relation.
-    pub(crate) relation: ConvexSolidPointRelation,
+    relation: ConvexSolidPointRelation,
     /// Predicate certificates used by the halfspace tests for this point.
-    pub(crate) predicates: Vec<PredicateUse>,
+    predicates: Vec<PredicateUse>,
 }
 
 impl ConvexSolidPointClassification {
+    /// Build a point/solid classification from retained predicate evidence.
+    #[cfg(test)]
+    pub(crate) fn new(relation: ConvexSolidPointRelation, predicates: Vec<PredicateUse>) -> Self {
+        Self {
+            relation,
+            predicates,
+        }
+    }
+
+    /// Return the retained point/solid relation.
+    pub(crate) const fn relation(&self) -> ConvexSolidPointRelation {
+        self.relation
+    }
+
     /// Validate point/solid classification report invariants.
     ///
     /// Non-certified point reports are produced before any face halfspace

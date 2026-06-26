@@ -1832,10 +1832,7 @@ mod tests {
     }
 
     fn convex_classification(relation: ConvexSolidPointRelation) -> ConvexSolidPointClassification {
-        ConvexSolidPointClassification {
-            relation,
-            predicates: Vec::new(),
-        }
+        ConvexSolidPointClassification::new(relation, Vec::new())
     }
 
     fn face_with_opposite(
