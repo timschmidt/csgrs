@@ -1733,19 +1733,10 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     {
         return Ok(certified_preflight(operation, support, Some(graph), None));
     }
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && graph.face_pairs.is_empty()
-        && let Some((left_in_right, right_in_left)) =
-            closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
-        && left_in_right == ClosedMeshWindingMeshRelation::Outside
-        && right_in_left == ClosedMeshWindingMeshRelation::Outside
-    {
-        return Ok(certified_preflight(
-            operation,
-            ExactBooleanSupport::CertifiedClosedWindingSeparated,
-            Some(graph),
-            None,
-        ));
+    if let Some(preflight) = certified_closed_winding_separated_preflight_from_empty_graph(
+        graph, left, right, operation,
+    )? {
+        return Ok(preflight);
     }
 
     if operation == ExactBooleanOperation::Difference
@@ -1860,20 +1851,6 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     }
     if requires_certified_winding
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && let Some((left_in_right, right_in_left)) =
-            closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
-        && left_in_right == ClosedMeshWindingMeshRelation::Outside
-        && right_in_left == ClosedMeshWindingMeshRelation::Outside
-    {
-        return Ok(certified_preflight(
-            operation,
-            ExactBooleanSupport::CertifiedClosedWindingSeparated,
-            Some(graph),
-            None,
-        ));
-    }
-    if requires_certified_winding
-        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && certified_closed_winding_containment_relation_from_graph(graph, left, right)?.is_some()
     {
         return Ok(certified_preflight(
@@ -1902,32 +1879,10 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             operation,
             ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
         )
-        && certified_closed_boundary_only_contact_from_graph(graph, left, right).unwrap_or(false)
+        && let Some(preflight) =
+            certified_closed_boundary_only_contact_preflight(graph, left, right, operation)?
     {
-        let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
-        evidence.validate().map_err(|error| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::ExactConstructionFailure,
-                format!("exact no-volume-overlap evidence validation failed: {error:?}"),
-            ))
-        })?;
-        if evidence.positive_area_coplanar_overlapping_pairs() != 0 {
-            return Ok(certified_preflight(
-                operation,
-                ExactBooleanSupport::CertifiedArrangementCellComplex,
-                Some(graph),
-                Some(evidence),
-            ));
-        }
-        let Some(boundary_support) = certified_closed_boundary_touching_support(operation) else {
-            return Ok(certified_preflight(operation, support, Some(graph), None));
-        };
-        return Ok(certified_preflight(
-            operation,
-            boundary_support,
-            Some(graph),
-            coplanar_boundary_only_evidence_if_consumed(graph, left, right)?,
-        ));
+        return Ok(preflight);
     }
     if operation == ExactBooleanOperation::Intersection
         && certified_arrangement_regularized_boundary_contact_from_graph(
@@ -1940,30 +1895,10 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     }
     if requires_certified_winding
         && operation == ExactBooleanOperation::Union
-        && certified_closed_boundary_only_contact_from_graph(graph, left, right).unwrap_or(false)
+        && let Some(preflight) =
+            certified_closed_boundary_only_contact_preflight(graph, left, right, operation)?
     {
-        let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
-        evidence.validate().map_err(|error| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::ExactConstructionFailure,
-                format!("exact no-volume-overlap union evidence validation failed: {error:?}"),
-            ))
-        })?;
-        if evidence.positive_area_coplanar_overlapping_pairs() != 0 {
-            return Ok(certified_preflight(
-                operation,
-                ExactBooleanSupport::CertifiedArrangementCellComplex,
-                Some(graph),
-                Some(evidence),
-            ));
-        }
-        let boundary_support = ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion;
-        return Ok(certified_preflight(
-            operation,
-            boundary_support,
-            Some(graph),
-            None,
-        ));
+        return Ok(preflight);
     }
     if requires_certified_winding
         && coplanar_boundary_only_evidence_if_consumed(graph, left, right)
@@ -2681,6 +2616,84 @@ fn certified_closed_boundary_touching_support(
         }
         ExactBooleanOperation::SelectedRegions(_) => None,
     }
+}
+
+fn certified_closed_winding_separated_preflight_from_empty_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<Option<ExactBooleanPreflight>, ExactMeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || !graph.face_pairs.is_empty()
+    {
+        return Ok(None);
+    }
+    let Some((left_in_right, right_in_left)) =
+        closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
+    else {
+        return Ok(None);
+    };
+    if left_in_right != ClosedMeshWindingMeshRelation::Outside
+        || right_in_left != ClosedMeshWindingMeshRelation::Outside
+    {
+        return Ok(None);
+    }
+    Ok(Some(certified_preflight(
+        operation,
+        ExactBooleanSupport::CertifiedClosedWindingSeparated,
+        Some(graph),
+        None,
+    )))
+}
+
+fn certified_closed_boundary_only_contact_preflight(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<Option<ExactBooleanPreflight>, ExactMeshError> {
+    let Some(boundary_support) = certified_closed_boundary_touching_support(operation) else {
+        return Ok(None);
+    };
+    if !certified_closed_boundary_only_contact_from_graph(graph, left, right).unwrap_or(false) {
+        return Ok(None);
+    }
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
+    let validation_label = match operation {
+        ExactBooleanOperation::Union => "exact no-volume-overlap union evidence validation failed",
+        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference => {
+            "exact no-volume-overlap evidence validation failed"
+        }
+        ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+    };
+    evidence.validate().map_err(|error| {
+        ExactMeshError::one(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::ExactConstructionFailure,
+            format!("{validation_label}: {error:?}"),
+        ))
+    })?;
+    if evidence.positive_area_coplanar_overlapping_pairs() != 0 {
+        return Ok(Some(certified_preflight(
+            operation,
+            ExactBooleanSupport::CertifiedArrangementCellComplex,
+            Some(graph),
+            Some(evidence),
+        )));
+    }
+    let consumed_evidence = match operation {
+        ExactBooleanOperation::Union => None,
+        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference => {
+            coplanar_boundary_only_evidence_if_consumed(graph, left, right)?
+        }
+        ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+    };
+    Ok(Some(certified_preflight(
+        operation,
+        boundary_support,
+        Some(graph),
+        consumed_evidence,
+    )))
 }
 
 fn certified_convex_operation_preflight(
