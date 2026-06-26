@@ -3704,8 +3704,8 @@ pub(crate) fn materialize_boolean_exact_request_with_prepared_pair(
     pair: &PreparedMeshPair<'_, '_>,
     request: ExactBooleanRequest,
 ) -> Result<ExactBooleanResult, ExactMeshError> {
-    let left = pair.left().view().mesh();
-    let right = pair.right().view().mesh();
+    let left = pair.left_mesh();
+    let right = pair.right_mesh();
     materialize_boolean_exact_request_with_graph(left, right, request, None, Some(pair))
 }
 

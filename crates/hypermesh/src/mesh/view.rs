@@ -50,19 +50,13 @@ pub struct EdgeRef<'a> {
     index: usize,
 }
 
-/// Borrowed exact mesh view with prepared broad-phase acceleration facts.
-#[derive(Debug)]
-pub(crate) struct PreparedMeshView<'a> {
-    view: MeshView<'a>,
-    bounds: PreparedMeshBounds<'a>,
-    source_stamp: ExactMeshSourceStamp,
-}
-
 /// Owned borrowed mesh-pair cache with certificate-validated broad-phase facts.
 #[derive(Debug)]
 pub struct PreparedMeshPair<'left, 'right> {
-    left: PreparedMeshView<'left>,
-    right: PreparedMeshView<'right>,
+    left_view: MeshView<'left>,
+    right_view: MeshView<'right>,
+    left_bounds: PreparedMeshBounds<'left>,
+    right_bounds: PreparedMeshBounds<'right>,
     plan: CandidateFacePairPlan,
     left_source: ExactMeshSourceStamp,
     right_source: ExactMeshSourceStamp,
@@ -468,13 +462,9 @@ impl<'a> MeshView<'a> {
         })
     }
 
-    fn prepare_broad_phase(self) -> Result<PreparedMeshView<'a>, ExactMeshError> {
+    fn prepare_broad_phase_bounds(self) -> Result<PreparedMeshBounds<'a>, ExactMeshError> {
         self.validate_retained_bounds_certificate()?;
-        Ok(PreparedMeshView {
-            view: self,
-            bounds: self.mesh.bounds().prepare(),
-            source_stamp: self.source_stamp(),
-        })
+        Ok(self.mesh.bounds().prepare())
     }
 
     /// Prepare certificate-validated broad-phase facts for this mesh pair.
@@ -482,9 +472,14 @@ impl<'a> MeshView<'a> {
         self,
         right: MeshView<'b>,
     ) -> Result<PreparedMeshPair<'a, 'b>, ExactMeshError> {
-        let left = self.prepare_broad_phase()?;
-        let right = right.prepare_broad_phase()?;
-        Ok(PreparedMeshPair::new(left, right))
+        let left_bounds = self.prepare_broad_phase_bounds()?;
+        let right_bounds = right.prepare_broad_phase_bounds()?;
+        Ok(PreparedMeshPair::new(
+            self,
+            right,
+            left_bounds,
+            right_bounds,
+        ))
     }
 
     /// Materialize this view after a row-major exact homogeneous affine transform.
@@ -523,36 +518,24 @@ impl<'a> MeshView<'a> {
     }
 }
 
-impl<'a> PreparedMeshView<'a> {
-    /// Return the underlying borrowed mesh view.
-    pub(crate) const fn view(&self) -> MeshView<'a> {
-        self.view
-    }
-
-    const fn source_stamp(&self) -> ExactMeshSourceStamp {
-        self.source_stamp
-    }
-
-    pub(crate) fn retained_pair_plan<'right>(
-        &self,
-        right: &PreparedMeshView<'right>,
-    ) -> (CandidateFacePairPlan, usize) {
-        let broad_phase = ExactAabbBroadPhase::default();
-        let plan = broad_phase.candidate_face_pair_plan(&self.bounds, &right.bounds);
-        let candidate_pair_capacity_hint =
-            plan.bounded_capacity_hint(self.view.face_count(), right.view.face_count());
-        (plan, candidate_pair_capacity_hint)
-    }
-}
-
 impl<'left, 'right> PreparedMeshPair<'left, 'right> {
-    fn new(left: PreparedMeshView<'left>, right: PreparedMeshView<'right>) -> Self {
-        let left_source = left.source_stamp();
-        let right_source = right.source_stamp();
-        let (plan, candidate_pair_capacity_hint) = left.retained_pair_plan(&right);
+    fn new(
+        left_view: MeshView<'left>,
+        right_view: MeshView<'right>,
+        left_bounds: PreparedMeshBounds<'left>,
+        right_bounds: PreparedMeshBounds<'right>,
+    ) -> Self {
+        let left_source = left_view.source_stamp();
+        let right_source = right_view.source_stamp();
+        let broad_phase = ExactAabbBroadPhase::default();
+        let plan = broad_phase.candidate_face_pair_plan(&left_bounds, &right_bounds);
+        let candidate_pair_capacity_hint =
+            plan.bounded_capacity_hint(left_view.face_count(), right_view.face_count());
         Self {
-            left,
-            right,
+            left_view,
+            right_view,
+            left_bounds,
+            right_bounds,
             plan,
             left_source,
             right_source,
@@ -566,12 +549,12 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         }
     }
 
-    pub(crate) const fn left(&self) -> &PreparedMeshView<'left> {
-        &self.left
+    pub(crate) const fn left_mesh(&self) -> &'left ExactMesh {
+        self.left_view.mesh()
     }
 
-    pub(crate) const fn right(&self) -> &PreparedMeshView<'right> {
-        &self.right
+    pub(crate) const fn right_mesh(&self) -> &'right ExactMesh {
+        self.right_view.mesh()
     }
 
     pub(crate) const fn candidate_pair_capacity_hint(&self) -> usize {
@@ -579,8 +562,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     }
 
     fn sources_current(&self) -> bool {
-        self.left_source == self.left.source_stamp()
-            && self.right_source == self.right.source_stamp()
+        self.left_source == self.left_view.source_stamp()
+            && self.right_source == self.right_view.source_stamp()
     }
 
     fn require_current_retained(
@@ -656,8 +639,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         let graph = build_validated_intersection_graph_from_prepared_pair(self)?;
         let arrangement = ExactArrangement::from_source_certified_intersection_graph_with_policy(
             graph.as_ref().clone(),
-            self.left.view().mesh(),
-            self.right.view().mesh(),
+            self.left_mesh(),
+            self.right_mesh(),
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         )?;
         let arrangement = Rc::new(arrangement);
@@ -728,8 +711,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             return facts;
         }
         let facts = ExactArrangementCellComplexShortcutFacts::from_sources(
-            self.left.view().mesh(),
-            self.right.view().mesh(),
+            self.left_mesh(),
+            self.right_mesh(),
         );
         *self.arrangement_shortcut_facts.borrow_mut() = Some(facts.clone());
         facts
@@ -774,8 +757,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         let broad_phase = ExactAabbBroadPhase::default();
         if let Ok(mut scratch) = self.scratch.try_borrow_mut() {
             return broad_phase.try_visit_candidate_face_pairs_with_plan_and_scratch(
-                &self.left.bounds,
-                &self.right.bounds,
+                &self.left_bounds,
+                &self.right_bounds,
                 self.plan,
                 &mut scratch,
                 visit,
@@ -784,8 +767,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
         let mut local_scratch = BroadPhaseScratch::default();
         broad_phase.try_visit_candidate_face_pairs_with_plan_and_scratch(
-            &self.left.bounds,
-            &self.right.bounds,
+            &self.left_bounds,
+            &self.right_bounds,
             self.plan,
             &mut local_scratch,
             visit,
