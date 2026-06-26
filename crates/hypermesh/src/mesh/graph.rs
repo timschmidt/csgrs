@@ -1315,7 +1315,7 @@ pub(crate) fn build_validated_intersection_graph(
 pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
     pair: &PreparedMeshPair<'_, '_>,
 ) -> Result<Rc<ExactIntersectionGraph>, ExactMeshError> {
-    if let Some(graph) = pair.cached_intersection_graph() {
+    if let Some(graph) = pair.retained_intersection_graph(false) {
         return Ok(graph);
     }
 
@@ -1337,10 +1337,8 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
 pub(crate) fn build_validated_intersection_graph_from_prepared_pair(
     pair: &PreparedMeshPair<'_, '_>,
 ) -> Result<Rc<ExactIntersectionGraph>, ExactMeshError> {
-    if pair.has_current_intersection_graph() {
-        if let Some(graph) = pair.cached_intersection_graph() {
-            return Ok(graph);
-        }
+    if let Some(graph) = pair.retained_intersection_graph(true) {
+        return Ok(graph);
     }
 
     let graph = build_unvalidated_intersection_graph_from_prepared_pair_rc(pair)?;

@@ -625,15 +625,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         retained_current_state(retained, self.sources_current()).require_current(fact)
     }
 
-    pub(crate) fn has_current_intersection_graph(&self) -> bool {
-        let graph_retained = self.intersection_graph.borrow().is_some();
-        graph_retained
-            && retained_certificate_state(
-                *self.intersection_graph_validated.borrow(),
-                self.sources_current(),
-            ) == PreparedMeshPairFactState::Current
-    }
-
     /// Borrow retained broad-phase candidate pairs without rebuilding missing evidence.
     pub fn with_current_candidate_face_pairs<R>(
         &self,
@@ -708,8 +699,20 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         Ok(arrangement)
     }
 
-    pub(crate) fn cached_intersection_graph(&self) -> Option<Rc<ExactIntersectionGraph>> {
-        self.intersection_graph.borrow().clone()
+    pub(crate) fn retained_intersection_graph(
+        &self,
+        require_current_certificate: bool,
+    ) -> Option<Rc<ExactIntersectionGraph>> {
+        let graph = self.intersection_graph.borrow().clone()?;
+        if require_current_certificate
+            && retained_certificate_state(
+                *self.intersection_graph_validated.borrow(),
+                self.sources_current(),
+            ) != PreparedMeshPairFactState::Current
+        {
+            return None;
+        }
+        Some(graph)
     }
 
     pub(crate) fn with_retained_arrangement<R>(
