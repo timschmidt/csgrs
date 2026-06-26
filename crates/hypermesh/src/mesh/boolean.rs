@@ -108,7 +108,8 @@ use orthogonal_solid::{
 };
 #[cfg(test)]
 use orthogonal_solid::{
-    axis_aligned_orthogonal_solid_cell_plan, materialize_axis_aligned_orthogonal_solid_cell_plan,
+    axis_aligned_orthogonal_solid_cell_plan, is_axis_aligned_box,
+    materialize_axis_aligned_orthogonal_solid_cell_plan, try_is_axis_aligned_box,
 };
 use region::{
     ExactBooleanAssemblyPlan, ExactRegionRetention, ExactRegionSelection,
@@ -118,7 +119,7 @@ use region::{
 };
 use solid::{
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
-    certify_convex_solid, classify_mesh_vertices_against_convex_solid_report,
+    classify_mesh_vertices_against_convex_solid_report,
 };
 use std::cmp::Ordering;
 use std::rc::Rc;
@@ -2577,7 +2578,7 @@ pub(crate) struct ExactArrangementCellComplexShortcutFacts {
 impl ExactArrangementCellComplexShortcutFacts {
     pub(crate) fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
         Self {
-            axis_aligned_box_pair: certified_axis_aligned_box_pair(left, right),
+            axis_aligned_box_pair: orthogonal_solid::certified_axis_aligned_box_pair(left, right),
             axis_aligned_union: axis_aligned_orthogonal_solid_cell_selected_count(
                 left,
                 right,
@@ -3829,161 +3830,6 @@ fn initial_reject_boundary_preflight_support(
             .or_else(|| certified_mixed_dimensional_regularized_solid_support(left, right))
             .unwrap_or(ExactBooleanSupport::RequiresCertifiedWinding),
     }
-}
-
-pub(crate) fn certified_axis_aligned_box_pair(left: &ExactMesh, right: &ExactMesh) -> bool {
-    is_axis_aligned_box(left) && is_axis_aligned_box(right)
-}
-
-pub(crate) fn try_certified_axis_aligned_box_pair(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<bool, ExactMeshError> {
-    Ok(try_is_axis_aligned_box(left)? && try_is_axis_aligned_box(right)?)
-}
-
-/// Certified exact AABB box bounds retained by the shortcut.
-#[derive(Clone, Debug, PartialEq)]
-struct AxisAlignedBox {
-    min: Point3,
-    max: Point3,
-}
-
-/// Coordinate axis used for exact retained AABB validation.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum Axis {
-    X,
-    Y,
-    Z,
-}
-
-/// Return whether one mesh certifies as a retained exact axis-aligned box.
-///
-/// Affine-normalized solid shortcuts use this as their local replay boundary:
-/// a transformed mesh may enter the existing orthogonal cell materializer only
-/// after its exact vertices, closed topology, and convexity certify as one
-/// structure rule intact across the affine adapter instead of trusting a
-/// coordinate transform alone.
-fn is_axis_aligned_box(mesh: &ExactMesh) -> bool {
-    matches!(try_certify_axis_aligned_box(mesh), Ok(Some(_)))
-}
-
-/// Return whether one mesh certifies as a retained exact axis-aligned box,
-/// preserving retained-certificate and exact-predicate blockers.
-fn try_is_axis_aligned_box(mesh: &ExactMesh) -> Result<bool, ExactMeshError> {
-    try_certify_axis_aligned_box(mesh).map(|box_| box_.is_some())
-}
-
-/// Recognize a closed exact mesh as exactly its retained AABB.
-fn try_certify_axis_aligned_box(
-    mesh: &ExactMesh,
-) -> Result<Option<AxisAlignedBox>, ExactMeshError> {
-    if mesh.vertices().len() != 8 || mesh.triangles().len() != 12 {
-        return Ok(None);
-    }
-    mesh.validate_retained_bounds_certificate()?;
-    let Some(bounds) = mesh.bounds().mesh() else {
-        return Ok(None);
-    };
-    let box_bounds = AxisAlignedBox {
-        min: bounds.min.clone(),
-        max: bounds.max.clone(),
-    };
-    let Some(box_bounds) = valid_box(box_bounds)? else {
-        return Ok(None);
-    };
-    let corners = box_bounds.corners();
-    for vertex in mesh.vertices() {
-        let point = vertex.clone();
-        if !points_equal_any(&corners, &point)? {
-            return Ok(None);
-        }
-    }
-    for corner in &corners {
-        if !mesh_point_equal_any(mesh, corner)? {
-            return Ok(None);
-        }
-    }
-    let convex = certify_convex_solid(mesh);
-    if convex.is_certified_convex() && convex.all_proof_producing() {
-        Ok(Some(box_bounds))
-    } else {
-        Ok(None)
-    }
-}
-
-impl AxisAlignedBox {
-    fn corners(&self) -> [Point3; 8] {
-        let min = &self.min;
-        let max = &self.max;
-        [
-            Point3::new(min.x.clone(), min.y.clone(), min.z.clone()),
-            Point3::new(max.x.clone(), min.y.clone(), min.z.clone()),
-            Point3::new(max.x.clone(), max.y.clone(), min.z.clone()),
-            Point3::new(min.x.clone(), max.y.clone(), min.z.clone()),
-            Point3::new(min.x.clone(), min.y.clone(), max.z.clone()),
-            Point3::new(max.x.clone(), min.y.clone(), max.z.clone()),
-            Point3::new(max.x.clone(), max.y.clone(), max.z.clone()),
-            Point3::new(min.x.clone(), max.y.clone(), max.z.clone()),
-        ]
-    }
-}
-
-fn valid_box(bounds: AxisAlignedBox) -> Result<Option<AxisAlignedBox>, ExactMeshError> {
-    for axis in [Axis::X, Axis::Y, Axis::Z] {
-        if compare_axis(axis_min(&bounds.min, axis), axis_max(&bounds.max, axis))? != Ordering::Less
-        {
-            return Ok(None);
-        }
-    }
-    Ok(Some(bounds))
-}
-
-fn axis_min(point: &Point3, axis: Axis) -> &Real {
-    match axis {
-        Axis::X => &point.x,
-        Axis::Y => &point.y,
-        Axis::Z => &point.z,
-    }
-}
-
-fn axis_max(point: &Point3, axis: Axis) -> &Real {
-    axis_min(point, axis)
-}
-
-fn compare_axis(left: &Real, right: &Real) -> Result<Ordering, ExactMeshError> {
-    compare_reals(left, right).value().ok_or_else(|| {
-        ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::UndecidablePredicate,
-            "exact axis-aligned box certificate comparison was undecidable",
-        ))
-    })
-}
-
-fn real_eq(left: &Real, right: &Real) -> Result<bool, ExactMeshError> {
-    Ok(compare_axis(left, right)? == Ordering::Equal)
-}
-
-fn points_equal(left: &Point3, right: &Point3) -> Result<bool, ExactMeshError> {
-    Ok(real_eq(&left.x, &right.x)? && real_eq(&left.y, &right.y)? && real_eq(&left.z, &right.z)?)
-}
-
-fn points_equal_any(points: &[Point3], point: &Point3) -> Result<bool, ExactMeshError> {
-    for candidate in points {
-        if points_equal(candidate, point)? {
-            return Ok(true);
-        }
-    }
-    Ok(false)
-}
-
-fn mesh_point_equal_any(mesh: &ExactMesh, point: &Point3) -> Result<bool, ExactMeshError> {
-    for vertex in mesh.vertices() {
-        if points_equal(point, vertex)? {
-            return Ok(true);
-        }
-    }
-    Ok(false)
 }
 
 fn preflight_boolean_exact_reject_boundary_policy_from_graph(
@@ -7219,7 +7065,7 @@ pub(crate) fn adjacent_union_completion_certification(
             None,
         ));
     }
-    let axis_aligned_box_pair = try_certified_axis_aligned_box_pair(left, right)?;
+    let axis_aligned_box_pair = orthogonal_solid::try_certified_axis_aligned_box_pair(left, right)?;
     if axis_aligned_box_pair {
         return Ok((
             adjacent_union_completion_report(
@@ -7311,7 +7157,7 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
             None,
         ));
     }
-    let axis_aligned_box_pair = try_certified_axis_aligned_box_pair(left, right)?;
+    let axis_aligned_box_pair = orthogonal_solid::try_certified_axis_aligned_box_pair(left, right)?;
     if axis_aligned_box_pair {
         return Ok((
             adjacent_union_completion_report(
@@ -7403,7 +7249,7 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
     }
 
     if certified_convex_operation_shortcut_support(left, right, operation).is_some()
-        || try_certified_axis_aligned_box_pair(left, right)?
+        || orthogonal_solid::try_certified_axis_aligned_box_pair(left, right)?
         || match operation {
             ExactBooleanOperation::Union => has_affine_orthogonal_solid_cells(
                 left,

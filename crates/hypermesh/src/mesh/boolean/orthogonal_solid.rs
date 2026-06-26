@@ -19,6 +19,7 @@ use hyperlimit::{Point3, compare_reals};
 use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::super::validation::ExactMeshValidationPolicy;
 use super::super::{ExactMesh, Triangle};
+use super::solid::certify_convex_solid;
 use hyperlimit::SourceProvenance;
 use hyperreal::Real;
 
@@ -110,6 +111,13 @@ struct OrthogonalCellInputs {
     nz: usize,
 }
 
+/// Certified exact AABB box bounds retained by the shortcut.
+#[derive(Clone, Debug, PartialEq)]
+struct AxisAlignedBox {
+    min: Point3,
+    max: Point3,
+}
+
 /// Boolean result occupancy over a merged exact grid.
 #[derive(Clone, Debug)]
 pub(crate) struct OrthogonalCellPlan {
@@ -184,6 +192,34 @@ pub(crate) fn is_axis_aligned_orthogonal_solid(mesh: &ExactMesh) -> bool {
     certify_axis_aligned_orthogonal_solid(mesh).is_some()
 }
 
+pub(crate) fn certified_axis_aligned_box_pair(left: &ExactMesh, right: &ExactMesh) -> bool {
+    is_axis_aligned_box(left) && is_axis_aligned_box(right)
+}
+
+pub(crate) fn try_certified_axis_aligned_box_pair(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactMeshError> {
+    Ok(try_is_axis_aligned_box(left)? && try_is_axis_aligned_box(right)?)
+}
+
+/// Return whether one mesh certifies as a retained exact axis-aligned box.
+///
+/// Affine-normalized solid shortcuts use this as their local replay boundary:
+/// a transformed mesh may enter the existing orthogonal cell materializer only
+/// after its exact vertices, closed topology, and convexity certify as one
+/// structure rule intact across the affine adapter instead of trusting a
+/// coordinate transform alone.
+pub(crate) fn is_axis_aligned_box(mesh: &ExactMesh) -> bool {
+    matches!(try_certify_axis_aligned_box(mesh), Ok(Some(_)))
+}
+
+/// Return whether one mesh certifies as a retained exact axis-aligned box,
+/// preserving retained-certificate and exact-predicate blockers.
+pub(crate) fn try_is_axis_aligned_box(mesh: &ExactMesh) -> Result<bool, ExactMeshError> {
+    try_certify_axis_aligned_box(mesh).map(|box_| box_.is_some())
+}
+
 pub(crate) fn axis_aligned_orthogonal_solid_cell_plan(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -212,6 +248,44 @@ pub(crate) fn materialize_axis_aligned_orthogonal_solid_cell_output(
         return Ok(None);
     };
     materialize_axis_aligned_orthogonal_solid_cell_plan(plan, label, validation).map(Some)
+}
+
+/// Recognize a closed exact mesh as exactly its retained AABB.
+fn try_certify_axis_aligned_box(
+    mesh: &ExactMesh,
+) -> Result<Option<AxisAlignedBox>, ExactMeshError> {
+    if mesh.vertices().len() != 8 || mesh.triangles().len() != 12 {
+        return Ok(None);
+    }
+    mesh.validate_retained_bounds_certificate()?;
+    let Some(bounds) = mesh.bounds().mesh() else {
+        return Ok(None);
+    };
+    let box_bounds = AxisAlignedBox {
+        min: bounds.min.clone(),
+        max: bounds.max.clone(),
+    };
+    let Some(box_bounds) = valid_box(box_bounds)? else {
+        return Ok(None);
+    };
+    let corners = box_bounds.corners();
+    for vertex in mesh.vertices() {
+        let point = vertex.clone();
+        if !points_equal_any(&corners, &point)? {
+            return Ok(None);
+        }
+    }
+    for corner in &corners {
+        if !mesh_point_equal_any(mesh, corner)? {
+            return Ok(None);
+        }
+    }
+    let convex = certify_convex_solid(mesh);
+    if convex.is_certified_convex() && convex.all_proof_producing() {
+        Ok(Some(box_bounds))
+    } else {
+        Ok(None)
+    }
 }
 
 fn certify_orthogonal_cell_inputs(
@@ -1485,6 +1559,71 @@ fn axis_coord(point: &Point3, axis: Axis) -> &Real {
         Axis::Y => &point.y,
         Axis::Z => &point.z,
     }
+}
+
+impl AxisAlignedBox {
+    fn corners(&self) -> [Point3; 8] {
+        let min = &self.min;
+        let max = &self.max;
+        [
+            Point3::new(min.x.clone(), min.y.clone(), min.z.clone()),
+            Point3::new(max.x.clone(), min.y.clone(), min.z.clone()),
+            Point3::new(max.x.clone(), max.y.clone(), min.z.clone()),
+            Point3::new(min.x.clone(), max.y.clone(), min.z.clone()),
+            Point3::new(min.x.clone(), min.y.clone(), max.z.clone()),
+            Point3::new(max.x.clone(), min.y.clone(), max.z.clone()),
+            Point3::new(max.x.clone(), max.y.clone(), max.z.clone()),
+            Point3::new(min.x.clone(), max.y.clone(), max.z.clone()),
+        ]
+    }
+}
+
+fn valid_box(bounds: AxisAlignedBox) -> Result<Option<AxisAlignedBox>, ExactMeshError> {
+    for axis in [Axis::X, Axis::Y, Axis::Z] {
+        if exact_compare_axis(axis_coord(&bounds.min, axis), axis_coord(&bounds.max, axis))?
+            != Ordering::Less
+        {
+            return Ok(None);
+        }
+    }
+    Ok(Some(bounds))
+}
+
+fn exact_compare_axis(left: &Real, right: &Real) -> Result<Ordering, ExactMeshError> {
+    compare_reals(left, right).value().ok_or_else(|| {
+        ExactMeshError::one(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::UndecidablePredicate,
+            "exact axis-aligned box certificate comparison was undecidable",
+        ))
+    })
+}
+
+fn exact_real_eq(left: &Real, right: &Real) -> Result<bool, ExactMeshError> {
+    Ok(exact_compare_axis(left, right)? == Ordering::Equal)
+}
+
+fn exact_points_equal(left: &Point3, right: &Point3) -> Result<bool, ExactMeshError> {
+    Ok(exact_real_eq(&left.x, &right.x)?
+        && exact_real_eq(&left.y, &right.y)?
+        && exact_real_eq(&left.z, &right.z)?)
+}
+
+fn points_equal_any(points: &[Point3], point: &Point3) -> Result<bool, ExactMeshError> {
+    for candidate in points {
+        if exact_points_equal(candidate, point)? {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+fn mesh_point_equal_any(mesh: &ExactMesh, point: &Point3) -> Result<bool, ExactMeshError> {
+    for vertex in mesh.vertices() {
+        if exact_points_equal(point, vertex)? {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 fn cmp(left: &Real, right: &Real) -> Option<Ordering> {
