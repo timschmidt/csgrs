@@ -26,7 +26,7 @@ use hyperlimit::{
 
 use super::bounds::{ExactAabbBroadPhase, ExactBroadPhase};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide};
-use super::view::{PreparedMeshPair, PreparedMeshPairFactState, PreparedMeshView};
+use super::view::{PreparedMeshPair, PreparedMeshView};
 use super::{ExactMesh, triangle_edges};
 use hyperlimit::{CoplanarProjection, CoplanarTriangleClassification};
 use hyperreal::Real;
@@ -1351,10 +1351,7 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
     let mut face_pairs = Vec::with_capacity(
         retained_graph_required_count.unwrap_or_else(|| pair.candidate_pair_capacity_hint()),
     );
-    if matches!(
-        pair.cache_status().face_pair_classifications(),
-        PreparedMeshPairFactState::Current
-    ) {
+    if pair.has_current_face_pair_classifications() {
         pair.with_current_face_pair_classifications(|classifications| {
             for classification in classifications {
                 if classification.needs_graph_construction() {
@@ -1384,10 +1381,7 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
 pub(crate) fn build_validated_intersection_graph_from_prepared_pair(
     pair: &PreparedMeshPair<'_, '_>,
 ) -> Result<Rc<ExactIntersectionGraph>, ExactMeshError> {
-    if matches!(
-        pair.cache_status().intersection_graph(),
-        PreparedMeshPairFactState::Current
-    ) {
+    if pair.has_current_intersection_graph() {
         if let Some(graph) = pair.cached_intersection_graph() {
             return Ok(graph);
         }

@@ -148,22 +148,6 @@ impl PreparedMeshPairBoolean {
     }
 }
 
-/// Cheap status for retained facts inside a prepared mesh-pair session.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct PreparedMeshPairCacheStatus {
-    source_pair: PreparedMeshPairFactState,
-    broad_phase_traversal: PreparedMeshPairFactState,
-    candidate_face_pairs: PreparedMeshPairFactState,
-    face_pair_classifications: PreparedMeshPairFactState,
-    intersection_graph: PreparedMeshPairFactState,
-    arrangement: PreparedMeshPairFactState,
-    arrangement_shortcut_facts: PreparedMeshPairFactState,
-    union_result: PreparedMeshPairFactState,
-    intersection_result: PreparedMeshPairFactState,
-    difference_result: PreparedMeshPairFactState,
-    xor_result: PreparedMeshPairFactState,
-}
-
 /// Compact source/freshness stamp for retained exact mesh facts.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct ExactMeshSourceStamp {
@@ -285,7 +269,7 @@ const fn fnv1a_u8(hash: u64, byte: u8) -> u64 {
 
 /// Certificate state for retained facts inside a prepared mesh-pair session.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum PreparedMeshPairFactState {
+enum PreparedMeshPairFactState {
     /// The fact has not been computed for this session.
     Missing,
     /// The retained fact was built for source stamps that no longer match this session.
@@ -324,53 +308,6 @@ impl PreparedMeshPairFactState {
     pub fn require_current(self, fact: &'static str) -> Result<(), ExactMeshError> {
         self.blocker(fact)
             .map_or(Ok(()), |blocker| Err(ExactMeshError::one(blocker)))
-    }
-}
-
-impl PreparedMeshPairCacheStatus {
-    /// Return the certificate state for the retained source-pair stamp.
-    pub const fn source_pair(self) -> PreparedMeshPairFactState {
-        self.source_pair
-    }
-
-    /// Return the certificate state for retained broad-phase traversal counts.
-    pub const fn broad_phase_traversal(self) -> PreparedMeshPairFactState {
-        self.broad_phase_traversal
-    }
-
-    /// Return the certificate state for retained broad-phase candidate pairs.
-    pub const fn candidate_face_pairs(self) -> PreparedMeshPairFactState {
-        self.candidate_face_pairs
-    }
-
-    /// Return the certificate state for coarse face-pair classifications.
-    pub const fn face_pair_classifications(self) -> PreparedMeshPairFactState {
-        self.face_pair_classifications
-    }
-
-    /// Return the certificate state for the retained exact intersection graph.
-    pub const fn intersection_graph(self) -> PreparedMeshPairFactState {
-        self.intersection_graph
-    }
-
-    /// Return the certificate state for the retained prepared arrangement.
-    pub const fn arrangement(self) -> PreparedMeshPairFactState {
-        self.arrangement
-    }
-
-    /// Return the certificate state for arrangement shortcut facts.
-    pub const fn arrangement_shortcut_facts(self) -> PreparedMeshPairFactState {
-        self.arrangement_shortcut_facts
-    }
-
-    /// Return the certificate state for a prepared boolean result or error.
-    pub const fn result(self, operation: PreparedMeshPairBoolean) -> PreparedMeshPairFactState {
-        match operation {
-            PreparedMeshPairBoolean::Union => self.union_result,
-            PreparedMeshPairBoolean::Intersection => self.intersection_result,
-            PreparedMeshPairBoolean::Difference => self.difference_result,
-            PreparedMeshPairBoolean::Xor => self.xor_result,
-        }
     }
 }
 
@@ -785,48 +722,51 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             .map_or(0, Vec::len)
     }
 
-    /// Return a cheap summary of retained facts in this prepared pair session.
-    pub fn cache_status(&self) -> PreparedMeshPairCacheStatus {
-        let sources_current = self.left_source == self.left.view.source_stamp()
-            && self.right_source == self.right.view.source_stamp();
-        let candidate_face_pairs_retained = self.candidate_face_pairs.borrow().is_some();
-        let broad_phase_traversed = *self.broad_phase_traversed.borrow();
-        let face_pair_classifications_retained = self.face_pair_classifications.borrow().is_some();
-        let graph_retained = self.intersection_graph.borrow().is_some();
-        let arrangement_retained = self.arrangement.borrow().is_some();
-        PreparedMeshPairCacheStatus {
-            source_pair: if sources_current {
-                PreparedMeshPairFactState::Current
-            } else {
-                PreparedMeshPairFactState::Stale
-            },
-            broad_phase_traversal: retained_current_state(broad_phase_traversed, sources_current),
-            candidate_face_pairs: retained_current_state(
-                candidate_face_pairs_retained,
-                sources_current,
-            ),
-            face_pair_classifications: retained_current_state(
-                face_pair_classifications_retained,
-                sources_current,
-            ),
-            intersection_graph: if graph_retained {
-                retained_certificate_state(
-                    *self.intersection_graph_validated.borrow(),
-                    sources_current,
-                )
-            } else {
-                PreparedMeshPairFactState::Missing
-            },
-            arrangement: retained_current_state(arrangement_retained, sources_current),
-            arrangement_shortcut_facts: retained_current_state(
-                self.arrangement_shortcut_facts.borrow().is_some(),
-                sources_current,
-            ),
-            union_result: self.union_result.state(sources_current),
-            intersection_result: self.intersection_result.state(sources_current),
-            difference_result: self.difference_result.state(sources_current),
-            xor_result: self.xor_result.state(sources_current),
+    fn sources_current(&self) -> bool {
+        self.left_source == self.left.view.source_stamp()
+            && self.right_source == self.right.view.source_stamp()
+    }
+
+    fn require_current_retained(
+        &self,
+        retained: bool,
+        fact: &'static str,
+    ) -> Result<(), ExactMeshError> {
+        retained_current_state(retained, self.sources_current()).require_current(fact)
+    }
+
+    fn result_cache(&self, operation: PreparedMeshPairBoolean) -> &PreparedMeshPairResultCache {
+        match operation {
+            PreparedMeshPairBoolean::Union => &self.union_result,
+            PreparedMeshPairBoolean::Intersection => &self.intersection_result,
+            PreparedMeshPairBoolean::Difference => &self.difference_result,
+            PreparedMeshPairBoolean::Xor => &self.xor_result,
         }
+    }
+
+    fn require_current_result(
+        &self,
+        operation: PreparedMeshPairBoolean,
+    ) -> Result<(), ExactMeshError> {
+        self.result_cache(operation)
+            .state(self.sources_current())
+            .require_current(operation.result_name())
+    }
+
+    pub(crate) fn has_current_face_pair_classifications(&self) -> bool {
+        retained_current_state(
+            self.face_pair_classifications.borrow().is_some(),
+            self.sources_current(),
+        ) == PreparedMeshPairFactState::Current
+    }
+
+    pub(crate) fn has_current_intersection_graph(&self) -> bool {
+        let graph_retained = self.intersection_graph.borrow().is_some();
+        graph_retained
+            && retained_certificate_state(
+                *self.intersection_graph_validated.borrow(),
+                self.sources_current(),
+            ) == PreparedMeshPairFactState::Current
     }
 
     /// Borrow retained broad-phase candidate pairs without rebuilding missing evidence.
@@ -834,9 +774,10 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         query: impl FnOnce(&[[usize; 2]]) -> R,
     ) -> Result<R, ExactMeshError> {
-        self.cache_status()
-            .candidate_face_pairs()
-            .require_current("broad-phase candidate face pairs")?;
+        self.require_current_retained(
+            self.candidate_face_pairs.borrow().is_some(),
+            "broad-phase candidate face pairs",
+        )?;
         let candidate_face_pairs = self.candidate_face_pairs.borrow();
         let pairs = candidate_face_pairs.as_deref().ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
@@ -887,9 +828,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         query: impl for<'a> FnOnce(ArrangementView<'a>) -> R,
     ) -> Result<R, ExactMeshError> {
-        self.cache_status()
-            .arrangement()
-            .require_current("arrangement")?;
+        self.require_current_retained(self.arrangement.borrow().is_some(), "arrangement")?;
         let arrangement = self.arrangement.borrow();
         let arrangement = arrangement.as_ref().ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
@@ -921,9 +860,10 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         query: impl FnOnce(&[MeshFacePairClassification]) -> R,
     ) -> Result<R, ExactMeshError> {
-        self.cache_status()
-            .face_pair_classifications()
-            .require_current("face-pair classification")?;
+        self.require_current_retained(
+            self.face_pair_classifications.borrow().is_some(),
+            "face-pair classification",
+        )?;
         let classifications = self.face_pair_classifications.borrow();
         let classifications = classifications.as_deref().ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
@@ -1105,9 +1045,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         operation: PreparedMeshPairBoolean,
     ) -> Result<ExactMesh, ExactMeshError> {
-        self.cache_status()
-            .result(operation)
-            .require_current(operation.result_name())?;
+        self.require_current_result(operation)?;
         self.cached_named_boolean_mesh(operation).ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::MissingRequiredEvidence,

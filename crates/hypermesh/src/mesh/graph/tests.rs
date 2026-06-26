@@ -283,10 +283,6 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
         first_classifications,
         vec![classify_mesh_face_pair_unchecked(&left, 0, &right, 0)]
     );
-    assert!(matches!(
-        prepared_pair.cache_status().arrangement_shortcut_facts(),
-        PreparedMeshPairFactState::Missing
-    ));
     let shortcut_facts = prepared_pair.arrangement_cell_complex_shortcut_facts();
     assert_eq!(
         shortcut_facts,
@@ -294,39 +290,18 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
             &left, &right
         )
     );
-    assert!(matches!(
-        prepared_pair.cache_status().arrangement_shortcut_facts(),
-        PreparedMeshPairFactState::Current
-    ));
-    assert!(matches!(
-        prepared_pair.cache_status().intersection_graph(),
-        PreparedMeshPairFactState::Missing
-    ));
     assert_eq!(
         build_unvalidated_intersection_graph_from_prepared_pair_rc(&prepared_pair)
             .unwrap()
             .as_ref(),
         &graph
     );
-    assert!(matches!(
-        prepared_pair.cache_status().intersection_graph(),
-        PreparedMeshPairFactState::CertificateBlocked
-    ));
-    prepared_pair
-        .cache_status()
-        .intersection_graph()
-        .require_current("intersection graph")
-        .unwrap_err();
     assert_eq!(
         build_validated_intersection_graph_from_prepared_pair(&prepared_pair)
             .unwrap()
             .as_ref(),
         &graph
     );
-    assert!(matches!(
-        prepared_pair.cache_status().intersection_graph(),
-        PreparedMeshPairFactState::Current
-    ));
     assert_eq!(
         build_validated_intersection_graph_from_prepared_pair(&prepared_pair)
             .unwrap()
@@ -335,36 +310,28 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
     );
     let cached_union = prepared_pair.union().unwrap();
     cached_union.validate_retained_state().unwrap();
-    assert!(matches!(
-        prepared_pair
-            .cache_status()
-            .result(PreparedMeshPairBoolean::Union),
-        PreparedMeshPairFactState::Current
-    ));
     prepared_pair
         .with_arrangement_view(|view| {
             view.validate_retained_state().unwrap();
         })
         .unwrap();
-    assert!(matches!(
-        prepared_pair.cache_status().arrangement(),
-        PreparedMeshPairFactState::Current
-    ));
     prepared_pair.retain_intersection_graph(ExactIntersectionGraph::from_face_pairs(Vec::new()));
-    assert!(matches!(
-        prepared_pair.cache_status().intersection_graph(),
-        PreparedMeshPairFactState::CertificateBlocked
-    ));
-    assert!(matches!(
-        prepared_pair.cache_status().arrangement(),
-        PreparedMeshPairFactState::Missing
-    ));
-    assert!(matches!(
+    assert_eq!(
         prepared_pair
-            .cache_status()
-            .result(PreparedMeshPairBoolean::Union),
-        PreparedMeshPairFactState::Missing
-    ));
+            .with_current_arrangement_view(|view| view.vertex_count())
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        ExactMeshBlockerKind::MissingRequiredEvidence
+    );
+    assert_eq!(
+        prepared_pair
+            .current_result(PreparedMeshPairBoolean::Union)
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        ExactMeshBlockerKind::MissingRequiredEvidence
+    );
     assert_eq!(
         build_validated_intersection_graph_from_prepared_pair(&prepared_pair)
             .unwrap_err()
@@ -372,10 +339,6 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
             .kind(),
         ExactMeshBlockerKind::StaleFactReplay
     );
-    assert!(matches!(
-        prepared_pair.cache_status().intersection_graph(),
-        PreparedMeshPairFactState::CertificateBlocked
-    ));
     let retained_pair = graph
         .face_pairs
         .iter()
