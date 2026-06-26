@@ -62,7 +62,7 @@ use super::volumetric::{
 };
 use super::volumetric_cells::CoplanarVolumetricCellEvidenceReport;
 #[cfg(test)]
-use super::volumetric_cells::CoplanarVolumetricCellObstacle;
+use super::volumetric_cells::CoplanarVolumetricCellEvidenceTestCounts;
 use super::winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport,
     classify_mesh_vertices_against_closed_mesh_winding_report,
@@ -6236,10 +6236,12 @@ impl ExactBooleanPreflight {
         mut self,
         retained_face_pair_count: usize,
     ) -> Self {
-        self.coplanar_volumetric_evidence
-            .as_mut()
+        let evidence = self
+            .coplanar_volumetric_evidence
+            .take()
             .expect("preflight should retain coplanar volumetric evidence")
-            .retained_face_pair_count = retained_face_pair_count;
+            .with_test_retained_face_pair_count(retained_face_pair_count);
+        self.coplanar_volumetric_evidence = Some(evidence);
         self
     }
 
@@ -10426,7 +10428,7 @@ mod tests {
 
     #[test]
     fn winding_closed_boundary_touching_materialized_requires_positive_area_evidence() {
-        let evidence = CoplanarVolumetricCellEvidenceReport {
+        let evidence_counts = CoplanarVolumetricCellEvidenceTestCounts {
             left_closed_manifold: true,
             right_closed_manifold: true,
             retained_face_pair_count: 1,
@@ -10447,8 +10449,8 @@ mod tests {
             unknown_events: 0,
             coplanar_edge_events: 1,
             coplanar_vertex_events: 0,
-            obstacle: CoplanarVolumetricCellObstacle::BoundaryOnlyContact,
         };
+        let evidence = CoplanarVolumetricCellEvidenceReport::from_test_counts(evidence_counts);
         evidence.validate().unwrap();
 
         let mut report = ExactWindingEvidenceReport {
@@ -10478,11 +10480,15 @@ mod tests {
             Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence)
         );
 
-        let mut relabeled_evidence = evidence;
-        relabeled_evidence.coplanar_overlapping_pairs = 0;
-        relabeled_evidence.coplanar_touching_pairs = 1;
-        relabeled_evidence.positive_area_coplanar_overlapping_pairs = 0;
-        relabeled_evidence.opposite_side_coplanar_overlapping_pairs = 0;
+        let relabeled_evidence = CoplanarVolumetricCellEvidenceReport::from_test_counts(
+            CoplanarVolumetricCellEvidenceTestCounts {
+                coplanar_overlapping_pairs: 0,
+                coplanar_touching_pairs: 1,
+                positive_area_coplanar_overlapping_pairs: 0,
+                opposite_side_coplanar_overlapping_pairs: 0,
+                ..evidence_counts
+            },
+        );
         relabeled_evidence.validate().unwrap();
         report.coplanar_volumetric_evidence = Some(relabeled_evidence);
         assert_eq!(
@@ -10493,7 +10499,7 @@ mod tests {
 
     #[test]
     fn coplanar_volumetric_evidence_must_match_retained_graph_totals() {
-        let evidence = CoplanarVolumetricCellEvidenceReport {
+        let evidence_counts = CoplanarVolumetricCellEvidenceTestCounts {
             left_closed_manifold: true,
             right_closed_manifold: true,
             retained_face_pair_count: 2,
@@ -10514,8 +10520,8 @@ mod tests {
             unknown_events: 0,
             coplanar_edge_events: 3,
             coplanar_vertex_events: 0,
-            obstacle: CoplanarVolumetricCellObstacle::MixedCoplanarAndCrossingCells,
         };
+        let evidence = CoplanarVolumetricCellEvidenceReport::from_test_counts(evidence_counts);
         evidence.validate().unwrap();
 
         let blocker = ExactBooleanBlocker {
@@ -10566,13 +10572,13 @@ mod tests {
             Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch)
         );
 
-        let mut overflowing_evidence = evidence
-            .coplanar_volumetric_evidence
-            .as_ref()
-            .unwrap()
-            .clone();
-        overflowing_evidence.segment_plane_events = usize::MAX;
-        overflowing_evidence.proper_crossing_events = usize::MAX;
+        let overflowing_evidence = CoplanarVolumetricCellEvidenceReport::from_test_counts(
+            CoplanarVolumetricCellEvidenceTestCounts {
+                segment_plane_events: usize::MAX,
+                proper_crossing_events: usize::MAX,
+                ..evidence_counts
+            },
+        );
         overflowing_evidence.validate().unwrap();
         evidence.retained_events = usize::MAX;
         evidence.coplanar_volumetric_evidence = Some(overflowing_evidence);

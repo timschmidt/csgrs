@@ -1992,7 +1992,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
                 format!("exact no-volume-overlap evidence validation failed: {error:?}"),
             ))
         })?;
-        if evidence.positive_area_coplanar_overlapping_pairs != 0 {
+        if evidence.positive_area_coplanar_overlapping_pairs() != 0 {
             return Ok(certified_preflight(
                 operation,
                 ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -2041,7 +2041,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
                 format!("exact no-volume-overlap union evidence validation failed: {error:?}"),
             ))
         })?;
-        if evidence.positive_area_coplanar_overlapping_pairs != 0 {
+        if evidence.positive_area_coplanar_overlapping_pairs() != 0 {
             return Ok(certified_preflight(
                 operation,
                 ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -2831,10 +2831,7 @@ fn certified_arrangement_cell_complex_coplanar_evidence(
     if validate_graph_source_replay(graph, left, right).is_err() || evidence.validate().is_err() {
         return None;
     }
-    (evidence.obstacle.requires_coplanar_volumetric_cells()
-        || (evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-            && evidence.positive_area_coplanar_overlapping_pairs != 0))
-        .then_some(evidence)
+    evidence.is_arrangement_materializable().then_some(evidence)
 }
 
 fn certified_arrangement_cell_complex_preflight_if_materialized(
@@ -3054,7 +3051,6 @@ fn graph_requires_coplanar_volumetric_cells_for_sources(
     // coplanar volumetric-cell materializer. Keeping the decision in
     // consume replayable exact object evidence, not aggregate counters.
     CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)
-        .obstacle
         .requires_coplanar_volumetric_cells()
 }
 
@@ -3075,7 +3071,6 @@ fn coplanar_volumetric_evidence_if_required(
         return None;
     }
     evidence
-        .obstacle
         .requires_coplanar_volumetric_cells()
         .then_some(evidence)
 }
@@ -3093,11 +3088,9 @@ fn coplanar_boundary_only_evidence_if_consumed(
             format!("exact boundary-only coplanar evidence validation failed: {error:?}"),
         ))
     })?;
-    Ok(
-        (evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-            && evidence.positive_area_coplanar_overlapping_pairs != 0)
-            .then_some(evidence),
-    )
+    Ok(evidence
+        .is_boundary_only_positive_area_contact()
+        .then_some(evidence))
 }
 
 fn graph_has_only_boundary_contact_pairs(
@@ -5303,8 +5296,7 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
         ))
     })?;
     if evidence.validate_against_sources(left, right).is_err()
-        || evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-        || evidence.positive_area_coplanar_overlapping_pairs == 0
+        || !evidence.is_boundary_only_positive_area_contact()
     {
         return Ok(None);
     }
@@ -5408,9 +5400,7 @@ pub(crate) fn materialize_closed_no_volume_overlap_regularized_boolean_with_evid
             format!("exact no-volume-overlap evidence validation failed: {error:?}"),
         ))
     })?;
-    if evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-        || evidence.positive_area_coplanar_overlapping_pairs == 0
-    {
+    if !evidence.is_boundary_only_positive_area_contact() {
         return Ok(None);
     }
     let result = match operation {
@@ -8315,7 +8305,7 @@ fn certified_closed_boundary_only_contact_from_graph(
             format!("exact boundary-only coplanar evidence validation failed: {error:?}"),
         ))
     })?;
-    Ok(evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact)
+    Ok(evidence.is_boundary_only_contact())
 }
 
 fn closed_zero_area_boundary_contact_evidence_from_graph(
@@ -8334,11 +8324,9 @@ fn closed_zero_area_boundary_contact_evidence_from_graph(
             format!("exact zero-area boundary contact evidence validation failed: {error:?}"),
         ))
     })?;
-    Ok(
-        (evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-            && evidence.positive_area_coplanar_overlapping_pairs == 0)
-            .then_some(evidence),
-    )
+    Ok(evidence
+        .is_zero_area_boundary_only_contact()
+        .then_some(evidence))
 }
 
 pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
@@ -8353,8 +8341,7 @@ pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evid
         return Ok(None);
     };
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-        || evidence.positive_area_coplanar_overlapping_pairs != 0
+        || !evidence.is_zero_area_boundary_only_contact()
     {
         return Ok(None);
     }
@@ -8688,7 +8675,10 @@ fn arrangement_materialized_evidence_blocker_kind_and_evidence(
 ) {
     let coplanar_evidence =
         certified_arrangement_cell_complex_coplanar_evidence(graph, left, right);
-    let blocker_kind = match coplanar_evidence.as_ref().map(|evidence| evidence.obstacle) {
+    let blocker_kind = match coplanar_evidence
+        .as_ref()
+        .map(|evidence| evidence.obstacle())
+    {
         Some(CoplanarVolumetricCellObstacle::BoundaryOnlyContact) => {
             ExactBooleanBlockerKind::BoundaryPolicy
         }
