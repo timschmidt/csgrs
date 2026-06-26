@@ -1,8 +1,8 @@
 use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::ExactMesh;
 use hypermesh::kernel::{
-    ArrangementView, EdgeRef, ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, FaceRef,
-    MeshView, TriangleRef, VertexRef,
+    EdgeRef, ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, FaceRef, MeshView,
+    TriangleRef, VertexRef,
 };
 use hyperreal::Real;
 
@@ -467,7 +467,7 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
     let right = tetra([3, 0, 0]);
     let direct_pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
     let direct_counts = direct_pair
-        .with_arrangement_view(|view: ArrangementView<'_>| {
+        .with_arrangement_view(|view| {
             view.validate_retained_state().unwrap();
             assert!(view.is_complete());
             assert_eq!(view.vertices().count(), view.vertex_count());
@@ -540,14 +540,14 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
 
     let pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
     assert_eq!(
-        pair.with_current_arrangement_view(|view: ArrangementView<'_>| view.vertex_count())
+        pair.with_current_arrangement_view(|view| view.vertex_count())
             .unwrap_err()
             .blockers()[0]
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
     let prepared_counts = pair
-        .with_arrangement_view(|view: ArrangementView<'_>| {
+        .with_arrangement_view(|view| {
             view.validate_retained_state().unwrap();
             assert!(view.is_complete());
             (
@@ -564,7 +564,7 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         .unwrap();
     assert_eq!(prepared_counts, direct_counts);
     let current_prepared_counts = pair
-        .with_current_arrangement_view(|view: ArrangementView<'_>| {
+        .with_current_arrangement_view(|view| {
             (
                 view.vertex_count(),
                 view.edge_count(),
@@ -579,7 +579,7 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         .unwrap();
     assert_eq!(current_prepared_counts, direct_counts);
     let repeated_counts = pair
-        .with_arrangement_view(|view: ArrangementView<'_>| {
+        .with_arrangement_view(|view| {
             (
                 view.vertex_count(),
                 view.edge_count(),
