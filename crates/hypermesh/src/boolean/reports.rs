@@ -12,29 +12,55 @@ use hyperlimit::{
 use hyperreal::Real;
 use std::cmp::Ordering;
 
-use super::ExactMesh;
-use super::adjacent::materialize_full_face_adjacent_union;
-use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
-use super::boolean::affine_solid::{
+use super::super::ExactMesh;
+use super::super::adjacent::materialize_full_face_adjacent_union;
+use super::super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
+use super::super::bounds::AabbIntersectionKind;
+use super::super::cell_complex::{
+    ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy,
+    validate_selected_gate_reports,
+};
+use super::super::graph::MeshSide;
+use super::super::graph::{
+    CoplanarArrangementEvidence, CoplanarArrangementEvidenceStatus, ExactIntersectionGraph,
+    IntersectionEvent, build_validated_intersection_graph,
+};
+use super::super::intersection::MeshFacePairRelation;
+use super::super::region::{
+    ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputTriangleOrientation,
+    ExactRegionSelection, FaceRegionPlaneClassification, FaceRegionPlaneValidationError,
+    FaceRegionTriangulation, boundary_node_point,
+};
+use super::super::regularization::ExactArrangementBlocker;
+use super::super::regularization::ExactRegularizationPolicy;
+use super::super::solid::{
+    ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
+    classify_mesh_vertices_against_convex_solid_report,
+};
+use super::super::validation::ExactMeshValidationPolicy;
+use super::super::winding::{
+    ClosedMeshWindingMeshRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
+};
+use super::affine_solid::{
     materialize_affine_orthogonal_solid_difference,
     materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
 };
-use super::boolean::contained_adjacent::materialize_contained_face_adjacent_union;
-use super::boolean::convex::{
+use super::contained_adjacent::materialize_contained_face_adjacent_union;
+use super::convex::{
     intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
 };
 #[cfg(test)]
-use super::boolean::materialize_boolean_exact_request;
-use super::boolean::orthogonal_solid::{
+use super::materialize_boolean_exact_request;
+use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, materialize_axis_aligned_orthogonal_solid_cell_output,
 };
-use super::boolean::volumetric::{
+use super::volumetric::{
     ExactVolumetricRegionClassification, ExactVolumetricRegionError, ExactVolumetricRegionRelation,
 };
-use super::boolean::volumetric_cells::{
+use super::volumetric_cells::{
     CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle,
 };
-use super::boolean::{
+use super::{
     ExactArrangementBooleanAttempt, ExactBooleanOperation, ExactBooleanRequest,
     ExactBoundaryBooleanPolicy, adjacent_union_completion_certification,
     boolean_coplanar_mesh_overlay_optional, boundary_policy_shortcut_result_matches_sources,
@@ -52,35 +78,9 @@ use super::boolean::{
     volumetric_boundary_closure_report_from_graph,
 };
 #[cfg(test)]
-use super::boolean::{
+use super::{
     exact_boolean_report_evaluation_for_replay, preflight_report_for_request_from_graph,
     winding_evidence_report_for_request_from_graph,
-};
-use super::bounds::AabbIntersectionKind;
-use super::cell_complex::{
-    ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy,
-    validate_selected_gate_reports,
-};
-use super::graph::MeshSide;
-use super::graph::{
-    CoplanarArrangementEvidence, CoplanarArrangementEvidenceStatus, ExactIntersectionGraph,
-    IntersectionEvent, build_validated_intersection_graph,
-};
-use super::intersection::MeshFacePairRelation;
-use super::region::{
-    ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputTriangleOrientation,
-    ExactRegionSelection, FaceRegionPlaneClassification, FaceRegionPlaneValidationError,
-    FaceRegionTriangulation, boundary_node_point,
-};
-use super::regularization::ExactArrangementBlocker;
-use super::regularization::ExactRegularizationPolicy;
-use super::solid::{
-    ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
-    classify_mesh_vertices_against_convex_solid_report,
-};
-use super::validation::ExactMeshValidationPolicy;
-use super::winding::{
-    ClosedMeshWindingMeshRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
 use hyperlimit::PredicateUse;
 
@@ -2903,7 +2903,7 @@ fn arrangement_cell_complex_output_matches_sources(
         retained_mismatch = true;
     }
 
-    let graph = super::graph::build_unvalidated_intersection_graph(left, right)
+    let graph = super::super::graph::build_unvalidated_intersection_graph(left, right)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
 
     if let Some((replay, evidence)) =

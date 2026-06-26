@@ -19,6 +19,7 @@ pub(crate) mod cells;
 pub(crate) mod contained_adjacent;
 pub(crate) mod convex;
 pub(crate) mod orthogonal_solid;
+pub(crate) mod reports;
 pub(crate) mod volumetric;
 pub(crate) mod volumetric_cells;
 
@@ -66,16 +67,6 @@ use super::region::{
     checked_triangulate_face_regions_with_earcut, choose_region_projection,
 };
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
-use super::reports::{
-    ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus, ExactBooleanBlocker,
-    ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind,
-    ExactBooleanShortcutKind, ExactBooleanSupport, ExactBoundaryTouchingReport,
-    ExactBoundaryTouchingStatus, ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus,
-    ExactPlanarArrangementReport, ExactPlanarArrangementStatus, ExactRefinementReport,
-    ExactRefinementStatus, ExactReportValidationError, ExactSameSurfaceReport,
-    ExactSameSurfaceStatus, ExactVolumetricBoundaryClosureReport,
-    ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
-};
 use super::simplify::ExactSimplifiedCellComplex;
 use super::solid::{
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
@@ -116,6 +107,16 @@ use orthogonal_solid::{
 #[cfg(test)]
 use orthogonal_solid::{
     axis_aligned_orthogonal_solid_cell_plan, materialize_axis_aligned_orthogonal_solid_cell_plan,
+};
+use reports::{
+    ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus, ExactBooleanBlocker,
+    ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind,
+    ExactBooleanShortcutKind, ExactBooleanSupport, ExactBoundaryTouchingReport,
+    ExactBoundaryTouchingStatus, ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus,
+    ExactPlanarArrangementReport, ExactPlanarArrangementStatus, ExactRefinementReport,
+    ExactRefinementStatus, ExactReportValidationError, ExactSameSurfaceReport,
+    ExactSameSurfaceStatus, ExactVolumetricBoundaryClosureReport,
+    ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
 };
 use std::cmp::Ordering;
 use std::rc::Rc;

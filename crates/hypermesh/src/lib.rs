@@ -32,7 +32,6 @@ mod loop_triangulation;
 mod mesh;
 mod region;
 mod regularization;
-mod reports;
 mod simplify;
 mod solid;
 mod validation;
