@@ -704,16 +704,6 @@ pub enum PreparedMeshPairResultOutcome {
 }
 
 impl PreparedMeshPairResultOutcome {
-    /// Return whether the retained result is a mesh.
-    pub const fn is_mesh(self) -> bool {
-        matches!(self, Self::Mesh { .. })
-    }
-
-    /// Return whether the retained result is a typed blocker set.
-    pub const fn is_blocked(self) -> bool {
-        matches!(self, Self::Blocked { .. })
-    }
-
     /// Return the retained output vertex count, when the result is a mesh.
     pub const fn vertex_count(self) -> Option<usize> {
         match self {
