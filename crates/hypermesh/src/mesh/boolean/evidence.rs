@@ -1511,18 +1511,6 @@ pub(crate) enum ExactBooleanShortcutKind {
 }
 
 impl ExactBooleanResult {
-    /// Return whether this result is a certified shortcut for `operation`.
-    #[cfg(test)]
-    pub(crate) fn is_certified_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: result_operation,
-                ..
-            } if result_operation == operation
-        )
-    }
-
     /// Return whether this result is the requested certified shortcut class.
     pub(crate) fn is_certified_shortcut_kind_for(
         &self,

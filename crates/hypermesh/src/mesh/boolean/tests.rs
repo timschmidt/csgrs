@@ -4634,7 +4634,13 @@ fn open_same_surface_sheets_remain_certified() {
             &right,
         );
         assert!(
-            result.is_certified_shortcut_for(operation),
+            matches!(
+                result.kind(),
+                ExactBooleanResultKind::CertifiedShortcut {
+                    operation: result_operation,
+                    ..
+                } if result_operation == operation
+            ),
             "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
@@ -4703,7 +4709,13 @@ fn open_identical_sheets_keep_identity_shortcut() {
         &left,
         &right,
     );
-    assert!(union.is_certified_shortcut_for(ExactBooleanOperation::Union));
+    assert!(matches!(
+        union.kind(),
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Union,
+            ..
+        }
+    ));
     union
         .validate_request_against_sources_with_retained_attempt(
             &left,
