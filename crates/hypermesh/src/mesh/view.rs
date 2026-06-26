@@ -574,8 +574,6 @@ impl PreparedMeshPairSweepDirection {
 pub struct PreparedMeshPairIntersectionGraphCounts {
     face_pairs: usize,
     events: usize,
-    has_unknowns: bool,
-    coplanar_overlap_graphs: usize,
 }
 
 impl PreparedMeshPairIntersectionGraphCounts {
@@ -589,22 +587,10 @@ impl PreparedMeshPairIntersectionGraphCounts {
         self.events
     }
 
-    /// Return whether retained graph evidence contains an undecided relation.
-    pub const fn has_unknowns(self) -> bool {
-        self.has_unknowns
-    }
-
-    /// Return retained coplanar overlap graph count.
-    pub const fn coplanar_overlap_graph_count(self) -> usize {
-        self.coplanar_overlap_graphs
-    }
-
     fn from_graph(graph: &ExactIntersectionGraph) -> Self {
         Self {
             face_pairs: graph.face_pairs.len(),
             events: graph.event_count(),
-            has_unknowns: graph.has_unknowns(),
-            coplanar_overlap_graphs: graph.coplanar_overlap_graph_count(),
         }
     }
 }

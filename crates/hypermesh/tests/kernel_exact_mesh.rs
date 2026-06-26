@@ -1354,7 +1354,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         classification_counts.graph_required_count()
     );
     assert!(retained_graph_counts.event_count() > 0);
-    assert!(!retained_graph_counts.has_unknowns());
     assert!(matches!(
         prepared_pair.cache_status().intersection_graph(),
         PreparedMeshPairFactState::CertificateBlocked
@@ -1769,7 +1768,6 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         .unwrap();
     assert_eq!(arrangement_graph_counts.face_pair_count(), 0);
     assert_eq!(arrangement_graph_counts.event_count(), 0);
-    assert!(!arrangement_graph_counts.has_unknowns());
 }
 
 #[test]

@@ -968,10 +968,6 @@ impl ExactIntersectionGraph {
         self.summary.coplanar_overlap_graph_count
     }
 
-    pub(crate) const fn coplanar_overlap_graph_count(&self) -> usize {
-        self.summary.coplanar_overlap_graph_count
-    }
-
     /// Construct exact split-point/interval records for coplanar overlap graphs.
     pub fn coplanar_overlap_split_plan(
         &self,
