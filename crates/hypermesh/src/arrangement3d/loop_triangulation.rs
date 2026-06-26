@@ -15,14 +15,14 @@ use hyperlimit::{
 };
 use hyperreal::Real;
 
-use super::super::arrangement2d::{
+use super::super::graph::key::{ExactPoint3Key, exact_point3_key};
+use super::super::mesh::Triangle;
+use super::arrangement2d::{
     ExactArrangement2dBlocker, ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion,
     ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
     build_exact_arrangement2d_overlay_with_boundary_policy,
     build_exact_arrangement2d_ring_union_overlay_with_boundary_policy,
 };
-use super::super::graph::key::{ExactPoint3Key, exact_point3_key};
-use super::super::mesh::Triangle;
 use super::regularization::ExactArrangementBlocker;
 use hyperlimit::CoplanarProjection;
 
@@ -683,7 +683,7 @@ fn triangulate_projected_loop_indices_via_arrangement(
 }
 
 fn triangulate_selected_overlay_faces(
-    overlay: &super::super::arrangement2d::ExactArrangement2dOverlay,
+    overlay: &super::arrangement2d::ExactArrangement2dOverlay,
     carrier: &[Point3; 3],
     projection: CoplanarProjection,
     output_orientation: Ordering,

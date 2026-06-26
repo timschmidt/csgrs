@@ -21,7 +21,7 @@ use hyperlimit::{
     projected_polygon_area2_value,
 };
 
-use super::super::arrangement2d::{
+use super::super::arrangement3d::arrangement2d::{
     ExactArrangement2dBoundaryPolicy, ExactArrangement2dSetOperation,
 };
 use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};

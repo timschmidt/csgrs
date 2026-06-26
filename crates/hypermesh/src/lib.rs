@@ -18,7 +18,6 @@
 //! predicate evidence, certified outputs, or explicit blockers when the
 //! implementation cannot prove a requested operation.
 
-mod arrangement2d;
 mod arrangement3d;
 mod boolean;
 mod cell_complex;

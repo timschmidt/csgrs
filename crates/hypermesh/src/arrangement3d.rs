@@ -6,10 +6,11 @@
 //! carrier-face provenance, and winding labels needed by later selection and
 //! simplification stages.
 
+pub(crate) mod arrangement2d;
 pub(crate) mod loop_triangulation;
 pub(crate) mod regularization;
 
-use super::arrangement2d::{
+use self::arrangement2d::{
     ExactArrangement2d, ExactArrangement2dBlocker, ExactArrangement2dInputSegment,
     ExactArrangement2dOverlay, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
     ExactArrangement2dSegmentSource, ExactArrangement2dSetOperation, build_exact_arrangement2d,
