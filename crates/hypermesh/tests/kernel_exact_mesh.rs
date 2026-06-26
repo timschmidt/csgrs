@@ -1,8 +1,8 @@
 use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::ExactMesh;
 use hypermesh::kernel::{
-    ArrangementView, EdgeRef, ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshRef,
-    FaceRef, MeshView, PreparedMeshPair, TriangleRef, VertexRef,
+    ArrangementView, EdgeRef, ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, FaceRef,
+    MeshView, PreparedMeshPair, TriangleRef, VertexRef,
 };
 use hyperreal::Real;
 
@@ -132,7 +132,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
 #[test]
 fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let mesh = tetra([0, 0, 0]);
-    let view: ExactMeshRef<'_> = mesh.view();
+    let view: MeshView<'_> = mesh.view();
     let mesh_view: MeshView<'_> = view;
 
     view.validate_retained_state().unwrap();

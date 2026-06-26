@@ -10,7 +10,7 @@ use self::facts::{MeshFactsValidationError, MeshValidationFacts};
 use self::validation::{
     ExactMeshValidationPolicy, ValidationReport, validate_triangle_rows_with_policy,
 };
-use self::view::ExactMeshRef;
+use self::view::MeshView;
 use hyperlimit::{
     ConstructionProvenance, ConstructionProvenanceValidationError, Point3, PredicateUse,
     SourceProvenance, compare_reals,
@@ -573,8 +573,8 @@ impl ExactMesh {
     }
 
     /// Borrow this exact mesh through the lightweight query view API.
-    pub const fn view(&self) -> ExactMeshRef<'_> {
-        ExactMeshRef::new(self)
+    pub const fn view(&self) -> MeshView<'_> {
+        MeshView::new(self)
     }
 
     /// Validate all retained state stored on this exact mesh.

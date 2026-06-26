@@ -23,12 +23,9 @@ use hyperreal::Real;
 
 /// Borrowed exact view of an [`ExactMesh`].
 #[derive(Clone, Copy, Debug)]
-pub struct ExactMeshRef<'a> {
+pub struct MeshView<'a> {
     mesh: &'a ExactMesh,
 }
-
-/// Alias for the borrowed exact mesh view.
-pub type MeshView<'a> = ExactMeshRef<'a>;
 
 /// Borrowed face/triangle view.
 #[derive(Clone, Copy, Debug)]
@@ -57,7 +54,7 @@ pub struct EdgeRef<'a> {
 /// Borrowed exact mesh view with prepared broad-phase acceleration facts.
 #[derive(Debug)]
 pub(crate) struct PreparedMeshView<'a> {
-    view: ExactMeshRef<'a>,
+    view: MeshView<'a>,
     bounds: PreparedMeshBounds<'a>,
 }
 
@@ -281,7 +278,7 @@ impl PreparedMeshPairFactState {
     }
 }
 
-impl<'a> ExactMeshRef<'a> {
+impl<'a> MeshView<'a> {
     /// Borrow an exact mesh as a replayable view.
     pub(crate) const fn new(mesh: &'a ExactMesh) -> Self {
         Self { mesh }
@@ -522,7 +519,7 @@ impl<'a> ExactMeshRef<'a> {
     /// Prepare certificate-validated broad-phase facts for this mesh pair.
     pub fn prepare_broad_phase_pair<'b>(
         self,
-        right: ExactMeshRef<'b>,
+        right: MeshView<'b>,
     ) -> Result<PreparedMeshPair<'a, 'b>, ExactMeshError> {
         let left = self.prepare_broad_phase()?;
         let right = right.prepare_broad_phase()?;
@@ -540,29 +537,29 @@ impl<'a> ExactMeshRef<'a> {
     }
 
     /// Materialize the exact closed union of this view and `right`.
-    pub fn union(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, ExactMeshError> {
+    pub fn union(self, right: MeshView<'_>) -> Result<ExactMesh, ExactMeshError> {
         self.prepare_broad_phase_pair(right)?.union()
     }
 
     /// Materialize the exact closed intersection of this view and `right`.
-    pub fn intersection(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, ExactMeshError> {
+    pub fn intersection(self, right: MeshView<'_>) -> Result<ExactMesh, ExactMeshError> {
         self.prepare_broad_phase_pair(right)?.intersection()
     }
 
     /// Materialize the exact closed difference of this view minus `right`.
-    pub fn difference(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, ExactMeshError> {
+    pub fn difference(self, right: MeshView<'_>) -> Result<ExactMesh, ExactMeshError> {
         self.prepare_broad_phase_pair(right)?.difference()
     }
 
     /// Materialize the exact closed symmetric difference of this view and `right`.
-    pub fn xor(self, right: ExactMeshRef<'_>) -> Result<ExactMesh, ExactMeshError> {
+    pub fn xor(self, right: MeshView<'_>) -> Result<ExactMesh, ExactMeshError> {
         self.prepare_broad_phase_pair(right)?.xor()
     }
 }
 
 impl<'a> PreparedMeshView<'a> {
     /// Return the underlying borrowed mesh view.
-    pub(crate) const fn view(&self) -> ExactMeshRef<'a> {
+    pub(crate) const fn view(&self) -> MeshView<'a> {
         self.view
     }
 
