@@ -99,10 +99,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ///
     /// ## **Vertex Matching Algorithm**
     /// 1. **Exact Import**: `hypermesh` validates the current triangle stream
-    ///    with a boundary-allowed surface policy
+    ///    as a boundary-allowed surface adapter
     /// 2. **Global Indexing**: Each exact hypermesh vertex keeps its global index
-    /// 3. **Edge Facts**: Retained `MeshValidationFacts::edges` supply
-    ///    bidirectional connectivity
+    /// 3. **Edge Facts**: Borrowed `MeshView` edge references expose
+    ///    bidirectional connectivity without cloning retained facts
     /// 4. **Manifold Validation**: Closed-manifold decisions are delegated to
     ///    `hypermesh` rather than repeated here
     ///
@@ -119,9 +119,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let mut vertex_map = VertexIndexMap::new();
         let mut adjacency: HashMap<usize, Vec<usize>> = HashMap::new();
 
-        let Ok(mesh) =
-            self.to_hypermesh_exact_with_policy(::hypermesh::ValidationPolicy::ALLOW_BOUNDARY)
-        else {
+        let Ok(mesh) = self.to_hypermesh_surface_exact() else {
             return (vertex_map, adjacency);
         };
         if mesh.validate_retained_state().is_err() {
@@ -133,8 +131,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             vertex_map.index_to_position.insert(index, position);
         }
 
-        for edge in &mesh.facts().edges {
-            let [a, b] = edge.vertices;
+        for edge in mesh.view().edges() {
+            let [a, b] = edge.vertex_indices();
             add_adjacency_edge(&mut adjacency, a, b);
         }
 

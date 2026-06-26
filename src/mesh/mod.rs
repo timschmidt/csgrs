@@ -1101,7 +1101,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
         if other.polygons.is_empty() {
             return self.clone();
         }
-        self.boolean_via_hypermesh(other, ::hypermesh::ExactBooleanOperation::Union)
+        self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Union)
             .ok()
             .filter(|mesh| !mesh.polygons.is_empty())
             .unwrap_or_else(|| self.compatibility_union(other))
@@ -1127,7 +1127,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
         if other.polygons.is_empty() {
             return self.clone();
         }
-        self.boolean_via_hypermesh(other, ::hypermesh::ExactBooleanOperation::Difference)
+        self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Difference)
             .ok()
             .unwrap_or_else(|| self.compatibility_difference(other))
     }
@@ -1149,7 +1149,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
         if self.polygons.is_empty() || other.polygons.is_empty() {
             return Mesh::empty(self.metadata.clone());
         }
-        self.boolean_via_hypermesh(other, ::hypermesh::ExactBooleanOperation::Intersection)
+        self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Intersection)
             .ok()
             .filter(|mesh| {
                 !mesh.polygons.is_empty()
