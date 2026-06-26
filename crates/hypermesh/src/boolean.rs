@@ -16,6 +16,7 @@
 
 pub(crate) mod affine_solid;
 pub(crate) mod contained_adjacent;
+pub(crate) mod orthogonal_solid;
 pub(crate) mod volumetric;
 pub(crate) mod volumetric_cells;
 
@@ -60,15 +61,6 @@ use super::loop_triangulation::{group_exact_coplanar_loops, triangulate_exact_lo
 #[cfg(test)]
 use super::mesh::triangle_edges as topology_triangle_edges;
 use super::mesh::{ExactMesh, Triangle};
-use super::orthogonal_solid::{
-    AxisAlignedOrthogonalSolidOperation, axis_aligned_orthogonal_solid_cell_selected_count,
-    has_empty_axis_aligned_orthogonal_solid_cell_intersection,
-    materialize_axis_aligned_orthogonal_solid_cell_output,
-};
-#[cfg(test)]
-use super::orthogonal_solid::{
-    axis_aligned_orthogonal_solid_cell_plan, materialize_axis_aligned_orthogonal_solid_cell_plan,
-};
 use super::region::{
     ExactBooleanAssemblyPlan, ExactRegionRetention, ExactRegionSelection,
     FaceRegionPlaneClassification, FaceRegionTriangulation,
@@ -114,6 +106,15 @@ use hyperlimit::{
 };
 use hyperlimit::{PredicateUse, SourceProvenance};
 use hyperreal::Real;
+use orthogonal_solid::{
+    AxisAlignedOrthogonalSolidOperation, axis_aligned_orthogonal_solid_cell_selected_count,
+    has_empty_axis_aligned_orthogonal_solid_cell_intersection,
+    materialize_axis_aligned_orthogonal_solid_cell_output,
+};
+#[cfg(test)]
+use orthogonal_solid::{
+    axis_aligned_orthogonal_solid_cell_plan, materialize_axis_aligned_orthogonal_solid_cell_plan,
+};
 use std::cmp::Ordering;
 use std::rc::Rc;
 use volumetric::{

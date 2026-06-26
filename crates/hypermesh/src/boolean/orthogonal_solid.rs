@@ -16,9 +16,9 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use hyperlimit::{Point3, compare_reals};
 
-use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::mesh::{ExactMesh, Triangle};
-use super::validation::ExactMeshValidationPolicy;
+use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::mesh::{ExactMesh, Triangle};
+use super::super::validation::ExactMeshValidationPolicy;
 use hyperlimit::SourceProvenance;
 use hyperreal::Real;
 

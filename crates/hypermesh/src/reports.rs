@@ -22,6 +22,9 @@ use super::boolean::affine_solid::{
 use super::boolean::contained_adjacent::materialize_contained_face_adjacent_union;
 #[cfg(test)]
 use super::boolean::materialize_boolean_exact_request;
+use super::boolean::orthogonal_solid::{
+    AxisAlignedOrthogonalSolidOperation, materialize_axis_aligned_orthogonal_solid_cell_output,
+};
 use super::boolean::volumetric::{
     ExactVolumetricRegionClassification, ExactVolumetricRegionError, ExactVolumetricRegionRelation,
 };
@@ -64,9 +67,6 @@ use super::graph::{
     IntersectionEvent, build_validated_intersection_graph,
 };
 use super::intersection::MeshFacePairRelation;
-use super::orthogonal_solid::{
-    AxisAlignedOrthogonalSolidOperation, materialize_axis_aligned_orthogonal_solid_cell_output,
-};
 use super::region::{
     ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputTriangleOrientation,
     ExactRegionSelection, FaceRegionPlaneClassification, FaceRegionPlaneValidationError,

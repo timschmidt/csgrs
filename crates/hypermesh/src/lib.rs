@@ -32,7 +32,6 @@ mod graph;
 mod intersection;
 mod loop_triangulation;
 mod mesh;
-mod orthogonal_solid;
 mod region;
 mod regularization;
 mod reports;
