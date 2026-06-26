@@ -8,7 +8,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::Point3;
 
-use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
 use super::facts::{
     EdgeFacts, FaceFacts, FacePlaneFacts, MeshFacts, MeshValidationFacts, OrientedFaceFacts,
     TriangleFacts, VertexFacts, VertexLinkKind,

@@ -49,8 +49,8 @@ use super::arrangement3d::regularization::{ExactArrangementBlocker, ExactRegular
 use super::arrangement3d::{
     ExactArrangement, ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
 };
-use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::mesh::bounds::AabbIntersectionKind;
+use super::mesh::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::mesh::facts::MeshFacts;
 #[cfg(test)]
 use super::mesh::graph::FacePairEvents;

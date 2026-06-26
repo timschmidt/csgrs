@@ -20,7 +20,6 @@
 
 mod arrangement3d;
 mod boolean;
-mod error;
 mod mesh;
 
 pub use mesh::ExactMesh;
@@ -30,7 +29,7 @@ pub mod kernel {
     pub use crate::arrangement3d::{
         ArrangementEdgeRef, ArrangementFaceCellRef, ArrangementVertexRef, ArrangementView,
     };
-    pub use crate::error::{
+    pub use crate::mesh::error::{
         ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide,
     };
     pub use crate::mesh::view::{

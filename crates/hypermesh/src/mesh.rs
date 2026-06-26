@@ -5,13 +5,13 @@
 //! and validates every coordinate before import.
 
 use self::bounds::{BoundsValidationError, MeshBounds};
+use self::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use self::facts::{MeshFactsValidationError, MeshValidationFacts};
 use self::validation::{
     ExactMeshValidationPolicy, ValidationReport, validate_triangle_rows_with_policy,
 };
 use self::view::ExactMeshRef;
 use super::arrangement3d::ArrangementView;
-use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use hyperlimit::{
     ConstructionProvenance, ConstructionProvenanceValidationError, Point3, PredicateUse,
     SourceProvenance, compare_reals,
@@ -20,6 +20,7 @@ use hyperreal::Real;
 use std::cmp::Ordering;
 
 pub(crate) mod bounds;
+pub(crate) mod error;
 pub(crate) mod facts;
 pub(crate) mod graph;
 pub(crate) mod validation;

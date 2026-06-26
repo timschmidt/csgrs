@@ -21,7 +21,7 @@ use hyperlimit::{
     TriangleLocation, classify_point_triangle, compare_reals, project_point3,
 };
 
-use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::mesh::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::super::mesh::facts::FacePlaneFacts;
 use super::super::mesh::graph::intersection::MeshFacePairRelation;
 use super::super::mesh::graph::{

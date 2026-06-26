@@ -20,7 +20,7 @@ mod polygon;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
-use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::mesh::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::super::mesh::graph::intersection::MeshFacePairRelation;
 use super::super::mesh::graph::{
     ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide,

@@ -8,13 +8,13 @@ use super::super::boolean::{
     ExactArrangementCellComplexShortcutFacts, ExactBooleanOperation, ExactBooleanRequest,
     materialize_boolean_exact_request_with_prepared_pair,
 };
-use super::super::error::ExactMeshError;
-use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
 use super::ExactMesh;
 use super::bounds::{
     BroadPhaseScratch, CandidateFacePairPlan, ExactAabb3, ExactAabbBroadPhase, ExactBroadPhase,
     PreparedMeshBounds,
 };
+use super::error::ExactMeshError;
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
 use super::graph::intersection::{
     MeshFacePairClassification, MeshFacePairRelation, classify_mesh_face_pair_unchecked,
 };

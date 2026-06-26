@@ -12,7 +12,7 @@
 
 use hyperlimit::{Point3, compare_reals};
 
-use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::mesh::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::super::mesh::validation::ExactMeshValidationPolicy;
 use super::super::mesh::{ExactMesh, Triangle};
 use super::orthogonal_solid::{

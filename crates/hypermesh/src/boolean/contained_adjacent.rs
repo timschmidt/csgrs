@@ -24,7 +24,7 @@ use hyperlimit::{
 use super::super::arrangement3d::arrangement2d::{
     ExactArrangement2dBoundaryPolicy, ExactArrangement2dSetOperation,
 };
-use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::mesh::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::super::mesh::graph::intersection::MeshFacePairRelation;
 use super::super::mesh::graph::{
     ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide,
