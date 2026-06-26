@@ -30,23 +30,19 @@ pub struct ExactMeshRef<'a> {
 /// Alias for the borrowed exact mesh view.
 pub type MeshView<'a> = ExactMeshRef<'a>;
 
-/// Borrowed face view.
+/// Borrowed face/triangle view.
 #[derive(Clone, Copy, Debug)]
 pub struct FaceRef<'a> {
     mesh: &'a ExactMesh,
     index: usize,
 }
 
+/// Alias for the borrowed triangle view.
+pub type TriangleRef<'a> = FaceRef<'a>;
+
 /// Borrowed vertex view.
 #[derive(Clone, Copy, Debug)]
 pub struct VertexRef<'a> {
-    mesh: &'a ExactMesh,
-    index: usize,
-}
-
-/// Borrowed triangle view.
-#[derive(Clone, Copy, Debug)]
-pub struct TriangleRef<'a> {
     mesh: &'a ExactMesh,
     index: usize,
 }
@@ -457,7 +453,7 @@ impl<'a> ExactMeshRef<'a> {
 
     /// Borrow one triangle by index.
     pub fn triangle(self, index: usize) -> Option<TriangleRef<'a>> {
-        (index < self.mesh.triangles().len()).then_some(TriangleRef {
+        (index < self.mesh.triangles().len()).then_some(FaceRef {
             mesh: self.mesh,
             index,
         })
@@ -518,7 +514,7 @@ impl<'a> ExactMeshRef<'a> {
 
     /// Iterate borrowed triangles.
     pub fn triangle_refs(self) -> impl Iterator<Item = TriangleRef<'a>> + 'a {
-        (0..self.mesh.triangles().len()).map(move |index| TriangleRef {
+        (0..self.mesh.triangles().len()).map(move |index| FaceRef {
             mesh: self.mesh,
             index,
         })
@@ -1108,69 +1104,6 @@ impl<'a> FaceRef<'a> {
     }
 
     /// Exact face vertices.
-    pub fn vertices(self) -> Result<[&'a Point3; 3], ExactMeshError> {
-        triangle_vertices(self.mesh, self.index, self.vertex_indices())
-    }
-}
-
-impl<'a> TriangleRef<'a> {
-    /// Triangle index in the source mesh.
-    pub const fn index(self) -> usize {
-        self.index
-    }
-
-    /// Triangle vertex indices.
-    pub fn vertex_indices(self) -> [usize; 3] {
-        self.mesh.triangles()[self.index].0
-    }
-
-    /// Borrow retained triangle bounds as exact min/max corners.
-    pub fn bounds(self) -> Result<(&'a Point3, &'a Point3), ExactMeshError> {
-        self.mesh
-            .bounds()
-            .face(self.index)
-            .map(bounds_corners)
-            .ok_or_else(|| missing_retained_face_bounds("triangle", self.index))
-    }
-
-    /// Borrow the triangle vertices.
-    pub fn vertex_refs(self) -> Result<[VertexRef<'a>; 3], ExactMeshError> {
-        vertex_refs(self.mesh, self.index, self.vertex_indices())
-    }
-
-    /// Retained directed edge rows in triangle winding order.
-    pub fn directed_edges(self) -> Result<[[usize; 2]; 3], ExactMeshError> {
-        retained_face_facts(self.mesh, self.index).map(|facts| facts.oriented.directed_edges)
-    }
-
-    /// Whether retained predicate evidence certified a non-degenerate triangle.
-    pub fn is_non_degenerate(self) -> Result<bool, ExactMeshError> {
-        retained_face_facts(self.mesh, self.index).map(|facts| facts.triangle.non_degenerate)
-    }
-
-    /// Predicate evidence retained while certifying triangle degeneracy.
-    pub fn degeneracy_predicates(self) -> Result<&'a [PredicateUse], ExactMeshError> {
-        retained_face_facts(self.mesh, self.index)
-            .map(|facts| facts.triangle.degeneracy_predicates.as_slice())
-    }
-
-    /// Retained exact oriented plane normal.
-    pub fn plane_normal(self) -> Result<&'a [Real; 3], ExactMeshError> {
-        retained_face_facts(self.mesh, self.index).map(|facts| &facts.plane.normal)
-    }
-
-    /// Retained exact oriented plane offset.
-    pub fn plane_offset(self) -> Result<&'a Real, ExactMeshError> {
-        retained_face_facts(self.mesh, self.index).map(|facts| &facts.plane.offset)
-    }
-
-    /// Retained exact oriented plane coefficients.
-    pub fn plane_coefficients(self) -> Result<(&'a [Real; 3], &'a Real), ExactMeshError> {
-        let facts = retained_face_facts(self.mesh, self.index)?;
-        Ok((&facts.plane.normal, &facts.plane.offset))
-    }
-
-    /// Exact triangle vertices.
     pub fn vertices(self) -> Result<[&'a Point3; 3], ExactMeshError> {
         triangle_vertices(self.mesh, self.index, self.vertex_indices())
     }
