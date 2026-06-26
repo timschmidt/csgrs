@@ -197,64 +197,19 @@ fn triangulate_one_face_cell_graph(
     let mut interior_constraints = Vec::new();
     let mut unique_interior_constraints = BTreeSet::new();
 
-    for &vertex in &source_triangle {
-        push_cell_node(
-            &mut boundary,
-            FaceSplitBoundaryNode::OriginalVertex {
-                vertex,
-                point: mesh.vertices()[vertex].clone(),
-            },
-        )?;
-    }
-
-    for pair in graph
-        .face_pairs
-        .iter()
-        .filter(|pair| pair_involves_face(pair, side, face))
-    {
-        if pair.relation != MeshFacePairRelation::Candidate || !pair_has_proper_crossing(pair) {
-            continue;
-        }
-        let mut endpoints = Vec::new();
-        for (graph_vertex, vertex) in topology.graph_vertices.iter().enumerate() {
-            if !graph_vertex_in_face_pair(vertex, pair, side, face) {
-                continue;
-            }
-            if !point_lies_in_face_pair_overlap(&vertex.point, pair, left, right)? {
-                continue;
-            }
-            let node = FaceSplitBoundaryNode::GraphVertex {
-                graph_vertex,
-                point: vertex.point.clone(),
-            };
-            let index = push_cell_node(&mut boundary, node)?;
-            if !endpoints.contains(&index) {
-                endpoints.push(index);
-            }
-        }
-        match endpoints.as_slice() {
-            [a, b] if a != b => {
-                push_constraint(
-                    &mut interior_constraints,
-                    &mut unique_interior_constraints,
-                    *a,
-                    *b,
-                );
-            }
-            [] => {}
-            [_] => {
-                // A triangle/triangle candidate can contain proper
-                // segment-plane constructions while the closed overlap of the
-                // two finite triangles is only a point. That point is valid
-                // graph evidence, but it does not cut a positive-area
-                // discard it here only because the retained overlap incidence
-                // was checked exactly; it remains available in the graph for
-                // boundary-policy reports.
-            }
-            _ => {
-                return Ok(None);
-            }
-        }
+    seed_source_triangle_face_cell_boundary(mesh, source_triangle, &mut boundary)?;
+    if !append_non_coplanar_face_cell_constraints(
+        graph,
+        topology,
+        side,
+        face,
+        left,
+        right,
+        &mut boundary,
+        &mut interior_constraints,
+        &mut unique_interior_constraints,
+    )? {
+        return Ok(None);
     }
     append_coplanar_face_cell_constraints(
         coplanar_splits,
@@ -368,6 +323,82 @@ fn triangulate_one_face_cell_graph(
         },
         triangulation,
     )))
+}
+
+fn seed_source_triangle_face_cell_boundary(
+    mesh: &ExactMesh,
+    source_triangle: [usize; 3],
+    boundary: &mut Vec<FaceSplitBoundaryNode>,
+) -> hypertri::Result<()> {
+    for vertex in source_triangle {
+        push_cell_node(
+            boundary,
+            FaceSplitBoundaryNode::OriginalVertex {
+                vertex,
+                point: mesh.vertices()[vertex].clone(),
+            },
+        )?;
+    }
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn append_non_coplanar_face_cell_constraints(
+    graph: &ExactIntersectionGraph,
+    topology: &ExactSplitTopologyPlan,
+    side: MeshSide,
+    face: usize,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    boundary: &mut Vec<FaceSplitBoundaryNode>,
+    interior_constraints: &mut Vec<Constraint>,
+    unique_interior_constraints: &mut BTreeSet<(usize, usize)>,
+) -> hypertri::Result<bool> {
+    for pair in graph
+        .face_pairs
+        .iter()
+        .filter(|pair| pair_involves_face(pair, side, face))
+    {
+        if pair.relation != MeshFacePairRelation::Candidate || !pair_has_proper_crossing(pair) {
+            continue;
+        }
+        let mut endpoints = Vec::new();
+        for (graph_vertex, vertex) in topology.graph_vertices.iter().enumerate() {
+            if !graph_vertex_in_face_pair(vertex, pair, side, face) {
+                continue;
+            }
+            if !point_lies_in_face_pair_overlap(&vertex.point, pair, left, right)? {
+                continue;
+            }
+            let node = FaceSplitBoundaryNode::GraphVertex {
+                graph_vertex,
+                point: vertex.point.clone(),
+            };
+            let index = push_cell_node(boundary, node)?;
+            if !endpoints.contains(&index) {
+                endpoints.push(index);
+            }
+        }
+        match endpoints.as_slice() {
+            [a, b] if a != b => {
+                push_constraint(interior_constraints, unique_interior_constraints, *a, *b);
+            }
+            [] => {}
+            [_] => {
+                // A triangle/triangle candidate can contain proper
+                // segment-plane constructions while the closed overlap of the
+                // two finite triangles is only a point. That point is valid
+                // graph evidence, but it does not cut a positive-area cell;
+                // discard it here only because the retained overlap incidence
+                // was checked exactly; it remains available in the graph for
+                // boundary-policy reports.
+            }
+            _ => {
+                return Ok(false);
+            }
+        }
+    }
+    Ok(true)
 }
 
 #[allow(clippy::too_many_arguments)]
