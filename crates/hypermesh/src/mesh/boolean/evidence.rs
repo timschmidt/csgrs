@@ -68,10 +68,11 @@ use super::winding::{
     classify_mesh_vertices_against_closed_mesh_winding_report,
 };
 use super::{
-    ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
-    adjacent_union_completion_certification, boolean_convex_meshes_optional,
-    boolean_coplanar_mesh_overlay_optional, boundary_policy_shortcut_result_matches_sources,
-    boundary_touching_report_from_graph, exact_boolean_evaluation_for_replay,
+    ExactBooleanCertificationSet, ExactBooleanOperation, ExactBooleanRequest,
+    ExactBoundaryBooleanPolicy, adjacent_union_completion_certification,
+    boolean_convex_meshes_optional, boolean_coplanar_mesh_overlay_optional,
+    boundary_policy_shortcut_result_matches_sources, boundary_touching_report_from_graph,
+    exact_boolean_evaluation_for_replay,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
     materialize_volumetric_coplanar_boundary_closure_output,
@@ -3009,6 +3010,183 @@ fn retained_output_mesh_matches(left: &ExactMesh, right: &ExactMesh) -> bool {
         && left.facts().mesh == right.facts().mesh
         && left.validation_policy() == right.validation_policy()
         && left.provenance() == right.provenance()
+}
+
+/// Complete exact boolean evaluation outcome.
+///
+/// `result` is present only when the request materialized under retained exact
+/// evidence. When it is absent, `preflight` and `certifications` retain the
+/// blocker/provenance facts instead of collapsing the request to an
+/// approximate or prose-only error.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct ExactBooleanEvaluation {
+    /// Request policy evaluated.
+    request: ExactBooleanRequest,
+    /// Exact preflight/scheduling result.
+    preflight: ExactBooleanPreflight,
+    /// Replayable exact certification reports for the request.
+    certifications: ExactBooleanCertificationSet,
+    /// Materialized exact result, when available under `request`.
+    ///
+    /// Test code borrows this through the retained materialized-result helper
+    /// when evaluation materialized a certified result.
+    result: Option<ExactBooleanResult>,
+}
+
+impl ExactBooleanEvaluation {
+    pub(crate) fn from_parts_with_missing_result_policy(
+        request: ExactBooleanRequest,
+        preflight: ExactBooleanPreflight,
+        certifications: ExactBooleanCertificationSet,
+        result: Option<ExactBooleanResult>,
+        allow_missing_materialized_result: bool,
+    ) -> Result<Self, ExactReportValidationError> {
+        let evaluation = Self {
+            request,
+            preflight,
+            certifications,
+            result,
+        };
+        evaluation.validate_with_missing_result_policy(allow_missing_materialized_result)?;
+        Ok(evaluation)
+    }
+
+    /// Return the retained arrangement/cell-complex attempt for this request,
+    /// when evaluation reached that canonical pipeline.
+    #[cfg(test)]
+    pub(crate) fn retained_arrangement_attempt(&self) -> Option<&ExactArrangementBooleanAttempt> {
+        self.certifications.arrangement_attempt.as_ref()
+    }
+
+    /// Return the exact preflight/scheduling report retained by this evaluation.
+    pub(crate) fn preflight(&self) -> &ExactBooleanPreflight {
+        &self.preflight
+    }
+
+    /// Return the replayable certification bundle retained by this evaluation.
+    #[cfg(test)]
+    pub(crate) fn certifications(&self) -> &ExactBooleanCertificationSet {
+        &self.certifications
+    }
+
+    /// Return the materialized result retained by this evaluation, when the
+    /// request reached a certified output.
+    #[cfg(test)]
+    pub(crate) fn materialized_result(&self) -> Option<&ExactBooleanResult> {
+        self.result.as_ref()
+    }
+
+    /// Validate the retained evaluation shape without replaying sources.
+    #[cfg(test)]
+    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+        self.validate_with_missing_result_policy(false)
+    }
+
+    pub(crate) fn validate_with_missing_result_policy(
+        &self,
+        allow_missing_materialized_result: bool,
+    ) -> Result<(), ExactReportValidationError> {
+        if self.preflight.operation != self.request.operation {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        self.preflight.validate()?;
+        self.certifications.validate_for_request(self.request)?;
+        if !self.certifications.matches_preflight(&self.preflight) {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if let Some(result) = self.result.as_ref() {
+            if !self.preflight.is_certified() {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            }
+            self.validate_materialized_result(result)?;
+        } else if !allow_missing_materialized_result && self.requires_materialized_result() {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        Ok(())
+    }
+
+    /// Validate the retained evaluation by replaying all source-bound reports
+    /// and the materialized result under the original request policy.
+    #[cfg(test)]
+    pub(crate) fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate()?;
+        let replay = exact_boolean_evaluation_for_replay(left, right, self.request)?;
+        if &self.preflight != replay.preflight() {
+            return Err(ExactReportValidationError::SourceReplayMismatch);
+        }
+        if self.certifications != replay.certifications
+            && (!self.certifications.matches_preflight(&self.preflight)
+                || !replay.certifications.matches_preflight(replay.preflight()))
+        {
+            return Err(ExactReportValidationError::SourceReplayMismatch);
+        }
+        if let Some(result) = self.result.as_ref() {
+            let retained_attempt = if result
+                .is_arrangement_cell_complex_shortcut_for(self.request.operation)
+                || result.topology_assembly_report().is_some()
+                || result.region_ownership_report().is_some()
+            {
+                self.retained_arrangement_attempt()
+            } else {
+                None
+            };
+            result.validate_request_against_sources_with_retained_attempt(
+                left,
+                right,
+                self.request,
+                retained_attempt,
+            )
+        } else if self.requires_materialized_result() {
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        } else {
+            Ok(())
+        }
+    }
+
+    fn requires_materialized_result(&self) -> bool {
+        self.preflight.is_certified()
+            && !matches!(
+                self.preflight.support,
+                ExactBooleanSupport::SelectedRegionPolicy
+                    | ExactBooleanSupport::CertifiedArrangementCellComplex
+            )
+    }
+
+    fn validate_materialized_result(
+        &self,
+        result: &ExactBooleanResult,
+    ) -> Result<(), ExactReportValidationError> {
+        result.validate()?;
+        if !result.satisfies_request_shape(self.request) {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if match result.kind() {
+            ExactBooleanResultKind::SelectedRegions { .. }
+            | ExactBooleanResultKind::OpenSurfaceArrangement { .. } => {
+                result.graph_had_unknowns() != self.preflight.graph_had_unknowns
+                    || result.region_classifications != self.preflight.region_classifications
+            }
+            ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
+            | ExactBooleanResultKind::BoundaryPolicyShortcut { .. }
+            | ExactBooleanResultKind::CertifiedShortcut { .. } => false,
+        } {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if !self
+            .certifications
+            .result_matches_request(result, self.request)
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if !result.matches_preflight_support(self.preflight.support) {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        Ok(())
+    }
 }
 
 fn validate_shortcut_output_shape(

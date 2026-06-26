@@ -53,7 +53,7 @@ fn test_winding_evidence(
     evaluation
         .validate_with_missing_result_policy(true)
         .unwrap();
-    evaluation.certifications.winding_evidence.clone()
+    evaluation.certifications().winding_evidence.clone()
 }
 
 fn test_volumetric_boundary_closure(
