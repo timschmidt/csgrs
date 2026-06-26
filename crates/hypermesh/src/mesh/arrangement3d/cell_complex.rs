@@ -185,12 +185,6 @@ impl ExactRegionOwnershipStatus {
     pub(crate) const fn is_resolved(self) -> bool {
         matches!(self, Self::VolumeResolved | Self::FaceResolved)
     }
-
-    /// Return whether retained volume-region ownership resolves selection.
-    #[cfg(test)]
-    pub(crate) const fn is_volume_resolved(self) -> bool {
-        matches!(self, Self::VolumeResolved)
-    }
 }
 
 /// Compact exact ownership report for arrangement regions.
@@ -2109,7 +2103,7 @@ mod tests {
         };
         report.validate().unwrap();
         assert!(report.status.is_resolved());
-        assert!(!report.status.is_volume_resolved());
+        assert_ne!(report.status, ExactRegionOwnershipStatus::VolumeResolved);
 
         let mut overflowing_boundary_partition = report.clone();
         overflowing_boundary_partition.left_boundary_faces = usize::MAX;
