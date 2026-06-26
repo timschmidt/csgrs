@@ -582,11 +582,7 @@ fn arrangement_coplanar_evidence_retains_source_handoff() {
         &boundary_right,
     )
     .expect("fresh boundary-only graph should retain coplanar arrangement evidence");
-    assert_eq!(
-        evidence.obstacle,
-        CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-    );
-    assert!(evidence.positive_area_coplanar_overlapping_pairs > 0);
+    assert!(evidence.is_boundary_only_positive_area_contact());
 
     let stale_right = axis_aligned_box_i64([4, 0, 0], [6, 2, 2]);
     assert!(
@@ -4831,12 +4827,9 @@ fn arrangement_materialized_evidence_retains_boundary_only_evidence() {
     let volumetric_evidence = evidence
         .coplanar_volumetric_evidence()
         .expect("arrangement evidence should retain boundary-only evidence");
+    assert!(volumetric_evidence.is_boundary_only_positive_area_contact());
     assert_eq!(
-        volumetric_evidence.obstacle,
-        CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-    );
-    assert_eq!(
-        volumetric_evidence.retained_face_pair_count,
+        volumetric_evidence.retained_face_pair_count(),
         evidence.retained_face_pairs()
     );
     volumetric_evidence.validate().unwrap();

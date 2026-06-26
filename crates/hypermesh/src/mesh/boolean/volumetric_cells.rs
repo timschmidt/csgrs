@@ -276,6 +276,70 @@ impl CoplanarVolumetricCellEvidenceReport {
             .saturating_add(self.coplanar_overlapping_pairs)
     }
 
+    /// Return retained constructive face-pair count.
+    pub(crate) const fn retained_face_pair_count(&self) -> usize {
+        self.retained_face_pair_count
+    }
+
+    /// Return retained candidate face pairs.
+    pub(crate) const fn candidate_pairs(&self) -> usize {
+        self.candidate_pairs
+    }
+
+    /// Return retained coplanar-overlap face pairs.
+    pub(crate) const fn coplanar_overlapping_pairs(&self) -> usize {
+        self.coplanar_overlapping_pairs
+    }
+
+    /// Return retained coplanar-touching face pairs.
+    pub(crate) const fn coplanar_touching_pairs(&self) -> usize {
+        self.coplanar_touching_pairs
+    }
+
+    /// Return retained unknown face pairs.
+    pub(crate) const fn unknown_pairs(&self) -> usize {
+        self.unknown_pairs
+    }
+
+    /// Return retained construction-failed segment/plane events.
+    pub(crate) const fn construction_failed_events(&self) -> usize {
+        self.construction_failed_events
+    }
+
+    /// Return retained positive-area coplanar-overlap face pairs.
+    pub(crate) const fn positive_area_coplanar_overlapping_pairs(&self) -> usize {
+        self.positive_area_coplanar_overlapping_pairs
+    }
+
+    /// Return whether retained evidence requires coplanar volumetric cells.
+    pub(crate) const fn requires_coplanar_volumetric_cells(&self) -> bool {
+        self.obstacle.requires_coplanar_volumetric_cells()
+    }
+
+    /// Return whether retained evidence proves boundary-only positive-area contact.
+    pub(crate) const fn is_boundary_only_positive_area_contact(&self) -> bool {
+        matches!(
+            self.obstacle,
+            CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+        ) && self.positive_area_coplanar_overlapping_pairs != 0
+    }
+
+    /// Return whether retained evidence can be consumed by arrangement materialization.
+    pub(crate) const fn is_arrangement_materializable(&self) -> bool {
+        self.requires_coplanar_volumetric_cells() || self.is_boundary_only_positive_area_contact()
+    }
+
+    /// Return retained event count represented by this compact evidence.
+    pub(crate) fn retained_event_count(&self) -> Option<usize> {
+        let explicit_unknown_events = self
+            .unknown_events
+            .checked_sub(self.unknown_segment_plane_events)?;
+        self.segment_plane_events
+            .checked_add(self.coplanar_edge_events)
+            .and_then(|count| count.checked_add(self.coplanar_vertex_events))
+            .and_then(|count| count.checked_add(explicit_unknown_events))
+    }
+
     /// Validate the compact report without source meshes.
     ///
     /// This is an integrity check for copied report data. Source replay is

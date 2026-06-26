@@ -60,9 +60,9 @@ use super::solid::{
 use super::volumetric::{
     ExactVolumetricRegionClassification, ExactVolumetricRegionError, ExactVolumetricRegionRelation,
 };
-use super::volumetric_cells::{
-    CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle,
-};
+use super::volumetric_cells::CoplanarVolumetricCellEvidenceReport;
+#[cfg(test)]
+use super::volumetric_cells::CoplanarVolumetricCellObstacle;
 use super::winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport,
     classify_mesh_vertices_against_closed_mesh_winding_report,
@@ -1063,11 +1063,11 @@ fn validate_coplanar_volumetric_evidence_matches_blocker(
     retained_events: usize,
 ) -> Result<(), ExactReportValidationError> {
     validate_coplanar_volumetric_evidence_counts(evidence, retained_face_pairs, retained_events)?;
-    if evidence.candidate_pairs != blocker.candidate_pairs
-        || evidence.coplanar_touching_pairs != blocker.coplanar_touching_pairs
-        || evidence.coplanar_overlapping_pairs != blocker.coplanar_overlapping_pairs
-        || evidence.unknown_pairs != blocker.unknown_pairs
-        || evidence.construction_failed_events != blocker.construction_failed_events
+    if evidence.candidate_pairs() != blocker.candidate_pairs
+        || evidence.coplanar_touching_pairs() != blocker.coplanar_touching_pairs
+        || evidence.coplanar_overlapping_pairs() != blocker.coplanar_overlapping_pairs
+        || evidence.unknown_pairs() != blocker.unknown_pairs
+        || evidence.construction_failed_events() != blocker.construction_failed_events
     {
         return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
     }
@@ -1082,21 +1082,10 @@ fn validate_coplanar_volumetric_evidence_counts(
     evidence
         .validate()
         .map_err(|_| ExactReportValidationError::InvalidCoplanarVolumetricEvidence)?;
-    let Some(explicit_unknown_events) = evidence
-        .unknown_events
-        .checked_sub(evidence.unknown_segment_plane_events)
-    else {
+    let Some(retained_evidence_events) = evidence.retained_event_count() else {
         return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
     };
-    let Some(retained_evidence_events) = evidence
-        .segment_plane_events
-        .checked_add(evidence.coplanar_edge_events)
-        .and_then(|count| count.checked_add(evidence.coplanar_vertex_events))
-        .and_then(|count| count.checked_add(explicit_unknown_events))
-    else {
-        return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
-    };
-    if evidence.retained_face_pair_count != retained_face_pairs
+    if evidence.retained_face_pair_count() != retained_face_pairs
         || retained_evidence_events != retained_events
     {
         return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
@@ -1110,7 +1099,7 @@ fn validate_coplanar_volumetric_evidence_shape(
     retained_events: usize,
 ) -> Result<(), ExactReportValidationError> {
     validate_coplanar_volumetric_evidence_counts(evidence, retained_face_pairs, retained_events)?;
-    if !evidence.obstacle.requires_coplanar_volumetric_cells() {
+    if !evidence.requires_coplanar_volumetric_cells() {
         return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
     }
     Ok(())
@@ -1122,9 +1111,7 @@ fn validate_coplanar_boundary_only_evidence_shape(
     retained_events: usize,
 ) -> Result<(), ExactReportValidationError> {
     validate_coplanar_volumetric_evidence_counts(evidence, retained_face_pairs, retained_events)?;
-    if evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-        || evidence.positive_area_coplanar_overlapping_pairs == 0
-    {
+    if !evidence.is_boundary_only_positive_area_contact() {
         return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
     }
     Ok(())
@@ -1136,10 +1123,7 @@ fn validate_arrangement_materialized_coplanar_evidence(
     retained_events: usize,
 ) -> Result<(), ExactReportValidationError> {
     validate_coplanar_volumetric_evidence_counts(evidence, retained_face_pairs, retained_events)?;
-    if !evidence.obstacle.requires_coplanar_volumetric_cells()
-        && (evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-            || evidence.positive_area_coplanar_overlapping_pairs == 0)
-    {
+    if !evidence.is_arrangement_materializable() {
         return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
     }
     Ok(())
@@ -3569,9 +3553,7 @@ impl ExactBooleanCertificationSet {
                 .winding_evidence
                 .coplanar_volumetric_evidence()
                 .is_some_and(|evidence| {
-                    evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-                        && evidence.positive_area_coplanar_overlapping_pairs != 0
-                        && evidence.validate().is_ok()
+                    evidence.is_boundary_only_positive_area_contact() && evidence.validate().is_ok()
                 })
     }
 
@@ -3632,9 +3614,7 @@ impl ExactBooleanCertificationSet {
                             .winding_evidence
                             .coplanar_volumetric_evidence()
                             .is_some_and(|evidence| {
-                                evidence.obstacle
-                                    == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-                                    && evidence.positive_area_coplanar_overlapping_pairs != 0
+                                evidence.is_boundary_only_positive_area_contact()
                                     && evidence.validate().is_ok()
                             })
                         || matches!(
@@ -3845,9 +3825,7 @@ impl ExactBooleanCertificationSet {
                 .winding_evidence
                 .coplanar_volumetric_evidence()
                 .is_some_and(|evidence| {
-                    evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-                        && evidence.positive_area_coplanar_overlapping_pairs != 0
-                        && evidence.validate().is_ok()
+                    evidence.is_boundary_only_positive_area_contact() && evidence.validate().is_ok()
                 });
         let coplanar_boundary_closure_evidence_matches = preflight.graph_had_unknowns
             == self.winding_evidence.graph_had_unknowns()
@@ -4623,10 +4601,7 @@ fn closed_boundary_touching_sources_match(
             evidence
                 .validate()
                 .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-            return Ok(
-                evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-                    && evidence.positive_area_coplanar_overlapping_pairs != 0,
-            );
+            return Ok(evidence.is_boundary_only_positive_area_contact());
         }
         return Ok(false);
     }
@@ -4638,7 +4613,7 @@ fn closed_boundary_touching_sources_match(
         evidence
             .validate()
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        if evidence.positive_area_coplanar_overlapping_pairs != 0 {
+        if evidence.positive_area_coplanar_overlapping_pairs() != 0 {
             return Ok(false);
         }
     }
@@ -4900,9 +4875,7 @@ fn arrangement_cell_complex_sources_match(
         evidence
             .validate()
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        if evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-            && evidence.positive_area_coplanar_overlapping_pairs > 0
-        {
+        if evidence.is_boundary_only_positive_area_contact() {
             return Ok(true);
         }
     }
@@ -5136,9 +5109,7 @@ fn arrangement_cell_complex_output_matches_sources(
     evidence
         .validate()
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-    if evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-        && evidence.positive_area_coplanar_overlapping_pairs > 0
-    {
+    if evidence.is_boundary_only_positive_area_contact() {
         if concatenated_mesh_output_matches(mesh, left, right, false) {
             return Ok(Some(true));
         }
@@ -6611,7 +6582,7 @@ impl ExactBooleanPreflight {
                     self.retained_face_pairs,
                     self.retained_events,
                 )?;
-                if !evidence.obstacle.requires_coplanar_volumetric_cells() {
+                if !evidence.requires_coplanar_volumetric_cells() {
                     return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
@@ -6648,7 +6619,7 @@ impl ExactBooleanPreflight {
                             self.retained_face_pairs,
                             self.retained_events,
                         )?;
-                        if !evidence.obstacle.requires_coplanar_volumetric_cells() {
+                        if !evidence.requires_coplanar_volumetric_cells() {
                             return Err(
                                 ExactReportValidationError::CoplanarVolumetricEvidenceMismatch,
                             );
@@ -8846,7 +8817,7 @@ impl ExactWindingEvidenceReport {
                     self.retained_face_pairs,
                     self.retained_events,
                 )?;
-                if !evidence.obstacle.requires_coplanar_volumetric_cells() {
+                if !evidence.requires_coplanar_volumetric_cells() {
                     return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
@@ -8879,7 +8850,7 @@ impl ExactWindingEvidenceReport {
                     self.retained_face_pairs,
                     self.retained_events,
                 )?;
-                if !evidence.obstacle.requires_coplanar_volumetric_cells() {
+                if !evidence.requires_coplanar_volumetric_cells() {
                     return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
@@ -8917,7 +8888,7 @@ impl ExactWindingEvidenceReport {
                             self.retained_face_pairs,
                             self.retained_events,
                         )?;
-                        if !evidence.obstacle.requires_coplanar_volumetric_cells() {
+                        if !evidence.requires_coplanar_volumetric_cells() {
                             return Err(
                                 ExactReportValidationError::CoplanarVolumetricEvidenceMismatch,
                             );
@@ -8963,7 +8934,7 @@ impl ExactWindingEvidenceReport {
                             self.retained_face_pairs,
                             self.retained_events,
                         )?;
-                        if !evidence.obstacle.requires_coplanar_volumetric_cells() {
+                        if !evidence.requires_coplanar_volumetric_cells() {
                             return Err(
                                 ExactReportValidationError::CoplanarVolumetricEvidenceMismatch,
                             );
@@ -9196,7 +9167,7 @@ impl ExactWindingEvidenceReport {
                             self.retained_face_pairs,
                             self.retained_events,
                         )?;
-                        if !evidence.obstacle.requires_coplanar_volumetric_cells() {
+                        if !evidence.requires_coplanar_volumetric_cells() {
                             return Err(
                                 ExactReportValidationError::CoplanarVolumetricEvidenceMismatch,
                             );
