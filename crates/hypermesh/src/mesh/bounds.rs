@@ -958,15 +958,6 @@ impl<'a> PreparedMeshBounds<'a> {
     fn axis_interval(&self, axis: Axis, face: usize) -> FaceAxisInterval<'a> {
         face_axis_interval(&self.bounds.faces[face], axis)
     }
-
-    #[cfg(test)]
-    fn cached_axis_order_count(&self) -> usize {
-        self.min_axis_orders
-            .iter()
-            .chain(self.max_axis_orders.iter())
-            .filter(|order| order.get().is_some())
-            .count()
-    }
 }
 
 impl MeshBounds {
@@ -1330,7 +1321,13 @@ mod tests {
         let bounds = MeshBounds::from_triangles(&points, &triangles);
         let prepared = bounds.prepare();
 
-        assert_eq!(prepared.cached_axis_order_count(), 0);
+        assert!(
+            prepared
+                .min_axis_orders
+                .iter()
+                .chain(prepared.max_axis_orders.iter())
+                .all(|order| order.get().is_none())
+        );
     }
 
     #[test]
@@ -1347,8 +1344,19 @@ mod tests {
             ExactAabbBroadPhase::default().candidate_face_pair_plan(&left, &right),
             CandidateFacePairPlan::Empty
         );
-        assert_eq!(left.cached_axis_order_count(), 0);
-        assert_eq!(right.cached_axis_order_count(), 0);
+        assert!(
+            left.min_axis_orders
+                .iter()
+                .chain(left.max_axis_orders.iter())
+                .all(|order| order.get().is_none())
+        );
+        assert!(
+            right
+                .min_axis_orders
+                .iter()
+                .chain(right.max_axis_orders.iter())
+                .all(|order| order.get().is_none())
+        );
     }
 
     #[test]
