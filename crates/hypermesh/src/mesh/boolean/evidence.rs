@@ -422,16 +422,6 @@ impl ExactArrangementBooleanAttempt {
         topology_report == Some(topology) && ownership_report == Some(ownership)
     }
 
-    pub(crate) fn selected_cell_complex_retains_gate_reports(
-        &self,
-        selected: &ExactSelectedCellComplex,
-    ) -> bool {
-        self.cell_complex_gate_reports_match(
-            selected.topology_assembly_report.as_ref(),
-            selected.region_ownership_report.as_ref(),
-        )
-    }
-
     pub(crate) fn simplified_cell_complex_with_retained_gate_reports(
         &self,
     ) -> Option<&ExactSimplifiedCellComplex> {
@@ -506,14 +496,6 @@ impl ExactArrangementBooleanAttempt {
             && self.resolves_requested_volume_ownership()
     }
 
-    /// Return whether another attempt carries the same retained output mesh
-    /// certificate.
-    pub(crate) fn output_certificate_matches(&self, other: &Self) -> bool {
-        self.output_vertices == other.output_vertices
-            && self.output_triangles == other.output_triangles
-            && self.output_facts == other.output_facts
-    }
-
     /// Return whether another replay attempt certifies the same materialized
     /// arrangement/cell-complex output.
     pub(crate) fn materialized_output_matches_replay(&self, replay: &Self) -> bool {
@@ -523,7 +505,9 @@ impl ExactArrangementBooleanAttempt {
             && self.policy == replay.policy
             && self.materialized_arrangement_cell_complex_output()
             && replay.materialized_arrangement_cell_complex_output()
-            && self.output_certificate_matches(replay);
+            && self.output_vertices == replay.output_vertices
+            && self.output_triangles == replay.output_triangles
+            && self.output_facts == replay.output_facts;
         if !same_source_output {
             return false;
         }
@@ -607,21 +591,15 @@ impl ExactArrangementBooleanAttempt {
         }
     }
 
-    /// Record selected-cell orientation counts without retaining the selected
-    /// cell complex itself.
-    pub(crate) fn record_selected_counts(&mut self, selected: &ExactSelectedCellComplex) {
+    /// Retain the selected cell complex and advance the attempt stage.
+    pub(crate) fn retain_selected_cell_complex(&mut self, selected: ExactSelectedCellComplex) {
+        self.stage = ExactArrangementBooleanStage::Selected;
         let counts = selected.counts();
         self.selected_faces = counts.selected_faces;
         self.selected_volume_regions = counts.selected_volume_regions;
         self.reversed_selected_faces = counts.reversed_selected_faces;
         self.volume_oriented_selected_faces = counts.volume_oriented_selected_faces;
         self.label_oriented_selected_faces = counts.label_oriented_selected_faces;
-    }
-
-    /// Retain the selected cell complex and advance the attempt stage.
-    pub(crate) fn retain_selected_cell_complex(&mut self, selected: ExactSelectedCellComplex) {
-        self.stage = ExactArrangementBooleanStage::Selected;
-        self.record_selected_counts(&selected);
         self.selected_cell_complex = Some(selected);
     }
 
@@ -828,7 +806,10 @@ impl ExactArrangementBooleanAttempt {
                 < arrangement_attempt_stage_rank(ExactArrangementBooleanStage::Selected)
                 || selected.operation != self.operation
                 || selected.validate().is_err()
-                || !self.selected_cell_complex_retains_gate_reports(selected)
+                || !self.cell_complex_gate_reports_match(
+                    selected.topology_assembly_report.as_ref(),
+                    selected.region_ownership_report.as_ref(),
+                )
                 || counts.selected_faces != self.selected_faces
                 || counts.selected_volume_regions != self.selected_volume_regions
                 || counts.reversed_selected_faces != self.reversed_selected_faces

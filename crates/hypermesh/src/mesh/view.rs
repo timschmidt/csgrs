@@ -1712,7 +1712,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         let graph_retained = self.intersection_graph.borrow().is_some();
         let arrangement_retained = self.arrangement.borrow().is_some();
         PreparedMeshPairCacheStatus {
-            source_pair: source_pair_state(sources_current),
+            source_pair: if sources_current {
+                PreparedMeshPairFactState::Current
+            } else {
+                PreparedMeshPairFactState::Stale
+            },
             broad_phase_traversal: retained_current_state(
                 broad_phase_traversal_summary.is_some(),
                 sources_current,
@@ -2532,14 +2536,6 @@ fn missing_retained_result(fact: &'static str) -> Result<ExactMesh, ExactMeshErr
         ExactMeshBlockerKind::MissingRequiredEvidence,
         format!("prepared mesh-pair session is missing retained {fact} evidence"),
     )))
-}
-
-const fn source_pair_state(sources_current: bool) -> PreparedMeshPairFactState {
-    if sources_current {
-        PreparedMeshPairFactState::Current
-    } else {
-        PreparedMeshPairFactState::Stale
-    }
 }
 
 const fn retained_current_state(

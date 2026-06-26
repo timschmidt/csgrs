@@ -4688,7 +4688,12 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
             );
         }
         Err(ArrangementCellComplexSelectionDecline::SelectedWithBlockers(selected)) => {
-            attempt.record_selected_counts(&selected);
+            let counts = selected.counts();
+            attempt.selected_faces = counts.selected_faces;
+            attempt.selected_volume_regions = counts.selected_volume_regions;
+            attempt.reversed_selected_faces = counts.reversed_selected_faces;
+            attempt.volume_oriented_selected_faces = counts.volume_oriented_selected_faces;
+            attempt.label_oriented_selected_faces = counts.label_oriented_selected_faces;
             return arrangement_cell_complex_decline_after_recovery(
                 &recovery,
                 attempt,
