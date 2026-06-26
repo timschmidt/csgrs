@@ -60,7 +60,7 @@ pub struct EdgeRef<'a> {
 
 /// Borrowed exact mesh view with prepared broad-phase acceleration facts.
 #[derive(Debug)]
-pub struct PreparedMeshView<'a> {
+pub(crate) struct PreparedMeshView<'a> {
     view: ExactMeshRef<'a>,
     bounds: PreparedMeshBounds<'a>,
 }
@@ -532,10 +532,12 @@ impl<'a> ExactMeshRef<'a> {
         })
     }
 
-    /// Prepare certificate-validated broad-phase facts for repeated pair queries.
-    pub fn prepare_broad_phase(self) -> Result<PreparedMeshView<'a>, ExactMeshError> {
+    fn prepare_broad_phase(self) -> Result<PreparedMeshView<'a>, ExactMeshError> {
         self.validate_retained_bounds_certificate()?;
-        Ok(self.prepare_broad_phase_after_certificate())
+        Ok(PreparedMeshView {
+            view: self,
+            bounds: self.mesh.bounds().prepare(),
+        })
     }
 
     /// Prepare certificate-validated broad-phase facts for this mesh pair.
@@ -546,13 +548,6 @@ impl<'a> ExactMeshRef<'a> {
         let left = self.prepare_broad_phase()?;
         let right = right.prepare_broad_phase()?;
         Ok(PreparedMeshPair::new(left, right))
-    }
-
-    pub(crate) fn prepare_broad_phase_after_certificate(self) -> PreparedMeshView<'a> {
-        PreparedMeshView {
-            view: self,
-            bounds: self.mesh.bounds().prepare(),
-        }
     }
 
     /// Materialize this view after a row-major exact homogeneous affine transform.
@@ -588,7 +583,7 @@ impl<'a> ExactMeshRef<'a> {
 
 impl<'a> PreparedMeshView<'a> {
     /// Return the underlying borrowed mesh view.
-    pub const fn view(&self) -> ExactMeshRef<'a> {
+    pub(crate) const fn view(&self) -> ExactMeshRef<'a> {
         self.view
     }
 

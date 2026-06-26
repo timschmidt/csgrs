@@ -31,7 +31,6 @@ pub mod kernel {
         ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide,
     };
     pub use crate::mesh::view::{
-        EdgeRef, ExactMeshRef, FaceRef, MeshView, PreparedMeshPair, PreparedMeshView, TriangleRef,
-        VertexRef,
+        EdgeRef, ExactMeshRef, FaceRef, MeshView, PreparedMeshPair, TriangleRef, VertexRef,
     };
 }

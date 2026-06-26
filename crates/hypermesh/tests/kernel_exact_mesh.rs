@@ -2,7 +2,7 @@ use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::ExactMesh;
 use hypermesh::kernel::{
     ArrangementView, EdgeRef, ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshRef,
-    FaceRef, MeshView, PreparedMeshPair, PreparedMeshView, TriangleRef, VertexRef,
+    FaceRef, MeshView, PreparedMeshPair, TriangleRef, VertexRef,
 };
 use hyperreal::Real;
 
@@ -286,8 +286,8 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(edge.bounds().unwrap(), (&p(0, 0, 0), &p(1, 0, 0)));
     assert_eq!(edge.vertices().unwrap().len(), 2);
 
-    let prepared = view.prepare_broad_phase().unwrap();
-    assert_eq!(prepared.view().mesh_bounds(), view.mesh_bounds());
+    view.validate_retained_bounds_certificate().unwrap();
+    assert_eq!(view.mesh_bounds(), Some((&p(0, 0, 0), &p(1, 1, 1))));
 }
 
 #[test]
@@ -298,9 +298,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
 
     left.view().validate_retained_bounds().unwrap();
     left.view().validate_retained_bounds_certificate().unwrap();
-    let prepared_left: PreparedMeshView<'_> = left.view().prepare_broad_phase().unwrap();
-    let prepared_overlapping: PreparedMeshView<'_> =
-        overlapping.view().prepare_broad_phase().unwrap();
     let prepared_pair: PreparedMeshPair<'_, '_> = left
         .view()
         .prepare_broad_phase_pair(overlapping.view())
@@ -343,9 +340,9 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         })
         .unwrap();
 
-    assert_eq!(prepared_left.view().face_count(), left.triangle_count());
+    assert_eq!(left.view().face_count(), left.triangle_count());
     assert_eq!(
-        prepared_overlapping.view().face_count(),
+        overlapping.view().face_count(),
         overlapping.triangle_count()
     );
     let candidates = classification_first_candidates.clone();

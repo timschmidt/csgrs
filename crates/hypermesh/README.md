@@ -41,9 +41,9 @@ and product-facing reports belong above this crate rather than in the default
 public API.
 
 Borrowed queries start from `ExactMesh::view()`. Mesh, triangle, face, and edge
-views avoid cloning mesh storage; prepared views reuse certificate-validated
-broad-phase facts and stream candidate face pairs with fallible early-stop
-support. Prepared mesh pairs expose query-shaped cache access: callers can build
+views avoid cloning mesh storage. Prepared mesh pairs reuse certificate-validated
+broad-phase facts, stream candidate face pairs with fallible early-stop support,
+and expose query-shaped cache access: callers can build
 candidate-pair or arrangement evidence and inspect it through borrowed closures,
 or ask for already-current retained evidence and receive typed blockers when it
 is missing or stale. `PreparedMeshPair::with_arrangement_view` exposes borrowed
@@ -68,11 +68,11 @@ typed blocker rather than patched with a tolerance.
 ## Performance Model
 
 The performance direction is broad-phase pruning plus exact local decisions.
-Retained bounds, prepared views, streamed candidate-pair traversal, split plans,
-support intervals, coplanar arrangements, and borrowed views narrow work before
-expensive predicates or topology rebuilds. Routine algorithms consume retained
-facts through cheap certificate checks; full source replay remains an explicit
-audit path for tests, fuzzing, artifact boundaries, and stale-evidence
+Retained bounds, prepared mesh pairs, streamed candidate-pair traversal, split
+plans, support intervals, coplanar arrangements, and borrowed views narrow work
+before expensive predicates or topology rebuilds. Routine algorithms consume
+retained facts through cheap certificate checks; full source replay remains an
+explicit audit path for tests, fuzzing, artifact boundaries, and stale-evidence
 diagnostics.
 
 One-shot booleans should be driven by measured kernel stages: broad phase,
