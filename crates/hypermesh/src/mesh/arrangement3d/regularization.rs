@@ -50,12 +50,6 @@ impl ExactRegularizationPolicy {
     };
 }
 
-impl Default for ExactRegularizationPolicy {
-    fn default() -> Self {
-        Self::REGULARIZED_SOLID
-    }
-}
-
 /// Blocker emitted by exact arrangement and cell-complex stages.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) enum ExactArrangementBlocker {

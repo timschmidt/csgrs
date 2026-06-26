@@ -2017,7 +2017,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             graph.as_ref().clone(),
             self.left.view().mesh(),
             self.right.view().mesh(),
-            ExactRegularizationPolicy::default(),
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
         )?;
         let counts = PreparedMeshPairArrangementCounts::from_arrangement(&arrangement);
         let arrangement = Rc::new(arrangement);

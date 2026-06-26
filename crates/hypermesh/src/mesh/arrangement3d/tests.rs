@@ -371,7 +371,12 @@ fn disjoint_tetrahedra_build_complete_arrangement_cells() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
 
-    let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+    let arrangement = ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
 
     assert!(
         arrangement.blockers.is_empty(),
@@ -425,7 +430,7 @@ fn disjoint_tetrahedra_build_complete_arrangement_cells() {
     let topology_report = arrangement.topology_assembly_report_with_policy(
         &left,
         &right,
-        ExactRegularizationPolicy::default(),
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
     );
     topology_report.validate().unwrap();
     assert_eq!(topology_report.arrangement_regions, 2);
@@ -479,7 +484,7 @@ fn disjoint_tetrahedra_build_complete_arrangement_cells() {
         arrangement.freshness_against_sources_with_policy(
             &left,
             &right,
-            ExactRegularizationPolicy::default()
+            ExactRegularizationPolicy::REGULARIZED_SOLID
         ),
         ExactArrangementFreshness::Current
     );
@@ -489,7 +494,12 @@ fn disjoint_tetrahedra_build_complete_arrangement_cells() {
 fn volume_graph_validation_rejects_missing_shell_adjacency() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+    let arrangement = ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
     let shell_regions = arrangement.shells_or_regions.as_ref().unwrap();
     let volume_regions = arrangement.volume_regions.as_ref().unwrap();
     let mut stale_adjacencies = arrangement.volume_adjacencies.clone().unwrap();
@@ -514,7 +524,12 @@ fn volume_graph_validation_rejects_missing_shell_adjacency() {
 fn arrangement_validate_rejects_missing_volume_adjacency() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let mut arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+    let mut arrangement = ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
     arrangement.validate().unwrap();
     arrangement.volume_adjacencies.as_mut().unwrap().pop();
 
@@ -526,7 +541,7 @@ fn arrangement_validate_rejects_missing_volume_adjacency() {
         arrangement.freshness_against_sources_with_policy(
             &left,
             &right,
-            ExactRegularizationPolicy::default()
+            ExactRegularizationPolicy::REGULARIZED_SOLID
         ),
         ExactArrangementFreshness::StaleArrangement
     );
@@ -536,7 +551,12 @@ fn arrangement_validate_rejects_missing_volume_adjacency() {
 fn arrangement_validate_rejects_missing_unblocked_topology() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let mut arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+    let mut arrangement = ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
     arrangement.validate().unwrap();
     arrangement.topology = None;
     arrangement.blockers.clear();
@@ -551,7 +571,12 @@ fn arrangement_validate_rejects_missing_unblocked_topology() {
 fn volume_graph_validation_rejects_relabelled_source_sides() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+    let arrangement = ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
     let shell_regions = arrangement.shells_or_regions.as_ref().unwrap();
     let mut stale_volume_regions = arrangement.volume_regions.clone().unwrap();
     stale_volume_regions[1].source_sides = vec![MeshSide::Right];
@@ -576,7 +601,12 @@ fn volume_graph_validation_rejects_relabelled_source_sides() {
 fn volume_graph_validation_rejects_extra_boundary_shell() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+    let arrangement = ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
     let shell_regions = arrangement.shells_or_regions.as_ref().unwrap();
     let mut stale_volume_regions = arrangement.volume_regions.clone().unwrap();
     stale_volume_regions[1].boundary_shells.push(1);
@@ -601,7 +631,12 @@ fn volume_graph_validation_rejects_extra_boundary_shell() {
 fn volume_graph_validation_rejects_duplicate_separating_face() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+    let arrangement = ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
     let shell_regions = arrangement.shells_or_regions.as_ref().unwrap();
     let volume_regions = arrangement.volume_regions.as_ref().unwrap();
     let mut stale_adjacencies = arrangement.volume_adjacencies.clone().unwrap();
@@ -627,7 +662,12 @@ fn volume_graph_validation_rejects_duplicate_separating_face() {
 fn volume_graph_validation_rejects_duplicate_boundary_shell() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+    let arrangement = ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
     let shell_regions = arrangement.shells_or_regions.as_ref().unwrap();
     let mut stale_volume_regions = arrangement.volume_regions.clone().unwrap();
     stale_volume_regions[1].boundary_shells.push(0);
@@ -652,7 +692,12 @@ fn volume_graph_validation_rejects_duplicate_boundary_shell() {
 fn label_regions_rejects_relabelled_volume_source_sides() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let mut arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+    let mut arrangement = ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
     arrangement.volume_regions.as_mut().unwrap()[1].source_sides = vec![MeshSide::Right];
 
     assert_eq!(
@@ -667,7 +712,12 @@ fn label_regions_rejects_relabelled_volume_source_sides() {
 fn label_regions_rejects_stale_volume_boundary_shells() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let mut arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+    let mut arrangement = ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
     arrangement.volume_regions.as_mut().unwrap()[1]
         .boundary_shells
         .push(1);
@@ -820,7 +870,12 @@ fn shell_containment_classifier_requires_convex_certified_container() {
 fn shell_region_witnesses_include_exact_face_interior_points() {
     let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
     let right = tetrahedron_i64([10, 0, 0], [16, 0, 0], [10, 6, 0], [10, 0, 6]);
-    let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+    let arrangement = ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
     let shell = &arrangement.shells_or_regions.as_ref().unwrap()[0];
     let witnesses = shell_region_witnesses(shell, &arrangement.face_cells, &left, &right);
     let boundary_points = shell
@@ -892,7 +947,12 @@ fn nested_tetrahedra_build_nested_volume_regions() {
     let left = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
     let right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
 
-    let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+    let arrangement = ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
 
     assert!(
         arrangement.blockers.is_empty(),
@@ -1178,7 +1238,12 @@ fn nested_tetrahedron_with_two_inner_shells_builds_volume_tree() {
         [[5, 1, 1], [6, 1, 1], [5, 2, 1], [5, 1, 2]],
     ]);
 
-    let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+    let arrangement = ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
 
     assert!(
         arrangement.blockers.is_empty(),
@@ -1236,7 +1301,12 @@ fn same_source_reversed_nested_shell_builds_cavity_volume() {
     );
     let right = tetrahedron_i64([30, 0, 0], [31, 0, 0], [30, 1, 0], [30, 0, 1]);
 
-    let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+    let arrangement = ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
 
     assert!(
         arrangement.blockers.is_empty(),
@@ -1295,7 +1365,12 @@ fn same_source_same_orientation_nested_shell_reports_nonmanifold_volume() {
     ]);
     let right = tetrahedron_i64([30, 0, 0], [31, 0, 0], [30, 1, 0], [30, 0, 1]);
 
-    let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+    let arrangement = ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
 
     assert!(
         arrangement
@@ -1320,7 +1395,12 @@ fn same_source_same_orientation_nested_shell_reports_nonmanifold_volume() {
 fn arrangement_pipeline_labels_selects_and_simplifies() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+    let arrangement = ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
 
     let labeled = arrangement
         .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)

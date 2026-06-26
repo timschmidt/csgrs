@@ -1883,7 +1883,12 @@ mod tests {
     ) -> (ExactArrangement, ExactMesh, ExactMesh) {
         let left = tetrahedron_i64([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
         let right = tetrahedron_i64([1, 0, 0], [3, 0, 0], [1, 2, 0], [1, 0, 2]);
-        let mut arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+        let mut arrangement = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
         arrangement.blockers = vec![blocker];
         (arrangement, left, right)
     }
@@ -2185,7 +2190,12 @@ mod tests {
     fn arrangement_volume_resolution_requires_selectable_adjacency_provenance() {
         let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
         let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-        let mut arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+        let mut arrangement = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
         arrangement.blockers = vec![ExactArrangementBlocker::UnresolvedRegionClassification];
 
         assert!(arrangement_region_classification_blockers_are_volume_resolved(&arrangement));
