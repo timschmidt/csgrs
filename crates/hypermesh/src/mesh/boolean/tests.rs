@@ -4156,7 +4156,13 @@ fn straddling_coplanar_crossing_tetrahedron_boundary_attempt_materializes() {
             )
             .unwrap()
             .expect("certified support should materialize");
-            assert!(dispatched_result.satisfies_request_shape(request));
+            assert!(dispatched_result.matches_request(request));
+            assert!(
+                dispatched_result
+                    .mesh
+                    .validation_policy()
+                    .satisfies(request.validation)
+            );
             dispatched_result.validate().unwrap();
         }
     }
