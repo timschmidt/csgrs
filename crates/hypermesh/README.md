@@ -31,7 +31,7 @@ downstream CSG layers.
 `ExactMesh` is the entry point: it owns exact vertices, triangle topology,
 validation facts, bounds, and construction provenance. It also carries the
 convenience methods downstream CSG layers need: `union`, `intersection`,
-`difference`, `xor`, `transform`, `inverse`, and `with_arrangement_view`.
+`difference`, `xor`, `transform`, and `inverse`.
 
 The default crate root intentionally keeps that shape narrow: `ExactMesh` is the
 normal import. Low-level kernel errors and borrowed views live under
@@ -46,7 +46,7 @@ broad-phase facts and stream candidate face pairs with fallible early-stop
 support. Prepared mesh pairs expose query-shaped cache access: callers can build
 candidate-pair or arrangement evidence and inspect it through borrowed closures,
 or ask for already-current retained evidence and receive typed blockers when it
-is missing or stale. `ExactMesh::with_arrangement_view` exposes borrowed
+is missing or stale. `PreparedMeshPair::with_arrangement_view` exposes borrowed
 arrangement queries for algorithms that need retained topology without cloning
 arrangement storage or naming an owned arrangement type.
 

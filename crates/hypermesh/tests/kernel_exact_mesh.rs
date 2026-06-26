@@ -504,8 +504,9 @@ fn prepared_pair_candidate_visitor_streams_without_storing_records() {
 fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);
-    let direct_counts = left
-        .with_arrangement_view(&right, |view: ArrangementView<'_>| {
+    let direct_pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
+    let direct_counts = direct_pair
+        .with_arrangement_view(|view: ArrangementView<'_>| {
             view.validate_retained_state().unwrap();
             assert!(view.is_complete());
             assert_eq!(view.vertices().count(), view.vertex_count());

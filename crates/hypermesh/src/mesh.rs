@@ -4,7 +4,6 @@
 //! `hyperreal::Real`. Primitive-float construction is a named lossy adapter
 //! and validates every coordinate before import.
 
-use self::arrangement3d::ArrangementView;
 use self::bounds::{BoundsValidationError, MeshBounds};
 use self::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use self::facts::{MeshFactsValidationError, MeshValidationFacts};
@@ -689,21 +688,6 @@ impl ExactMesh {
                 self.triangles.iter().map(|triangle| triangle.0),
             )
             .map_err(retained_bounds_validation_error)
-    }
-
-    /// Build a retained arrangement against `right` and run `query` on its
-    /// borrowed view.
-    ///
-    /// The owned arrangement stays local to this call; callers that only need
-    /// counts or topology references can query it without adding another owned
-    /// top-level type to their API surface.
-    pub fn with_arrangement_view<R>(
-        &self,
-        right: &ExactMesh,
-        query: impl for<'a> FnOnce(ArrangementView<'a>) -> R,
-    ) -> Result<R, ExactMeshError> {
-        let pair = self.view().prepare_broad_phase_pair(right.view())?;
-        pair.with_arrangement_view(query)
     }
 
     /// Materialize this mesh after a row-major exact homogeneous affine transform.
