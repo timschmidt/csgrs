@@ -285,6 +285,48 @@ impl ExactRegionOwnershipReport {
         self.is_resolved() || self.volume_selection_resolves_operation(operation)
     }
 
+    /// Return whether this ownership report matches selected-cell gate counts.
+    pub(crate) fn matches_selected_gate_counts(
+        &self,
+        counts: &SelectedCellComplexGateCounts,
+    ) -> bool {
+        self.face_cells == counts.face_cells
+            && self.face_cell_boundary_nodes == counts.face_cell_boundary_nodes
+            && self.face_cell_boundary_points == counts.face_cell_boundary_points
+            && self.volume_regions == counts.volume_regions
+            && self.exterior_volume_regions == counts.exterior_volume_regions
+            && self.left_owned_volumes == counts.left_owned_volumes
+            && self.right_owned_volumes == counts.right_owned_volumes
+            && self.shared_owned_volumes == counts.shared_owned_volumes
+            && self.unowned_bounded_volumes == counts.unowned_bounded_volumes
+            && self.volume_adjacencies == counts.volume_adjacencies
+            && self.volume_adjacency_face_sides == counts.volume_adjacency_face_sides
+            && self.volume_adjacency_separating_faces == counts.volume_adjacency_separating_faces
+            && self.lower_dimensional_artifacts == counts.lower_dimensional_artifacts
+            && self.lower_dimensional_point_contacts == counts.lower_dimensional_point_contacts
+            && self.lower_dimensional_edge_contacts == counts.lower_dimensional_edge_contacts
+            && self.lower_dimensional_edge_endpoints == counts.lower_dimensional_edge_endpoints
+    }
+
+    /// Return whether this ownership report matches the topology gate report
+    /// it was consumed with.
+    pub(crate) fn matches_topology_gate_report(
+        &self,
+        topology: &ExactTopologyAssemblyReport,
+    ) -> bool {
+        topology.arrangement_face_cells == self.face_cells
+            && topology.arrangement_face_cell_boundary_nodes == self.face_cell_boundary_nodes
+            && topology.arrangement_face_cell_boundary_points == self.face_cell_boundary_points
+            && topology.volume_regions == self.volume_regions
+            && topology.volume_adjacencies == self.volume_adjacencies
+            && topology.volume_adjacency_face_sides == self.volume_adjacency_face_sides
+            && topology.volume_adjacency_separating_faces == self.volume_adjacency_separating_faces
+            && topology.lower_dimensional_artifacts == self.lower_dimensional_artifacts
+            && topology.lower_dimensional_point_contacts == self.lower_dimensional_point_contacts
+            && topology.lower_dimensional_edge_contacts == self.lower_dimensional_edge_contacts
+            && topology.lower_dimensional_edge_endpoints == self.lower_dimensional_edge_endpoints
+    }
+
     /// Validate local ownership report shape without source replay.
     pub(crate) fn validate(&self) -> Result<(), ExactArrangementBlocker> {
         let expected_status = region_ownership_status(
@@ -1031,8 +1073,7 @@ pub(crate) fn validate_selected_gate_reports_against_counts(
     {
         return Err(ExactArrangementBlocker::NonManifoldCellComplex);
     }
-    if region_ownership_report.is_some_and(|report| !ownership_report_counts_match(report, counts))
-    {
+    if region_ownership_report.is_some_and(|report| !report.matches_selected_gate_counts(counts)) {
         return Err(ExactArrangementBlocker::NonManifoldCellComplex);
     }
     Ok(())
@@ -1046,28 +1087,6 @@ fn topology_report_counts_match(
         && report.arrangement_face_cell_boundary_nodes == counts.face_cell_boundary_nodes
         && report.arrangement_face_cell_boundary_points == counts.face_cell_boundary_points
         && report.volume_regions == counts.volume_regions
-        && report.volume_adjacencies == counts.volume_adjacencies
-        && report.volume_adjacency_face_sides == counts.volume_adjacency_face_sides
-        && report.volume_adjacency_separating_faces == counts.volume_adjacency_separating_faces
-        && report.lower_dimensional_artifacts == counts.lower_dimensional_artifacts
-        && report.lower_dimensional_point_contacts == counts.lower_dimensional_point_contacts
-        && report.lower_dimensional_edge_contacts == counts.lower_dimensional_edge_contacts
-        && report.lower_dimensional_edge_endpoints == counts.lower_dimensional_edge_endpoints
-}
-
-fn ownership_report_counts_match(
-    report: &ExactRegionOwnershipReport,
-    counts: &SelectedCellComplexGateCounts,
-) -> bool {
-    report.face_cells == counts.face_cells
-        && report.face_cell_boundary_nodes == counts.face_cell_boundary_nodes
-        && report.face_cell_boundary_points == counts.face_cell_boundary_points
-        && report.volume_regions == counts.volume_regions
-        && report.exterior_volume_regions == counts.exterior_volume_regions
-        && report.left_owned_volumes == counts.left_owned_volumes
-        && report.right_owned_volumes == counts.right_owned_volumes
-        && report.shared_owned_volumes == counts.shared_owned_volumes
-        && report.unowned_bounded_volumes == counts.unowned_bounded_volumes
         && report.volume_adjacencies == counts.volume_adjacencies
         && report.volume_adjacency_face_sides == counts.volume_adjacency_face_sides
         && report.volume_adjacency_separating_faces == counts.volume_adjacency_separating_faces

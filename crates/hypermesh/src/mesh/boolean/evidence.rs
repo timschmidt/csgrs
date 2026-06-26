@@ -1911,15 +1911,7 @@ impl ExactBooleanResult {
             .ok_or(ExactReportValidationError::StatusEvidenceMismatch)?;
         validate_selected_gate_reports(Some(topology), Some(ownership), operation)
             .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
-        if topology.arrangement_face_cells != ownership.face_cells
-            || topology.arrangement_face_cell_boundary_nodes != ownership.face_cell_boundary_nodes
-            || topology.arrangement_face_cell_boundary_points != ownership.face_cell_boundary_points
-            || topology.lower_dimensional_artifacts != ownership.lower_dimensional_artifacts
-            || topology.lower_dimensional_point_contacts
-                != ownership.lower_dimensional_point_contacts
-            || topology.lower_dimensional_edge_contacts != ownership.lower_dimensional_edge_contacts
-            || topology.lower_dimensional_edge_endpoints
-                != ownership.lower_dimensional_edge_endpoints
+        if !ownership.matches_topology_gate_report(topology)
             || self.triangulations.len() > topology.arrangement_face_cells
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
