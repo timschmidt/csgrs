@@ -85,8 +85,8 @@ use super::{
 };
 #[cfg(test)]
 use super::{
-    exact_boolean_report_evaluation_for_replay, preflight_report_for_request_from_graph,
-    winding_evidence_report_for_request_from_graph,
+    exact_boolean_evaluation_for_replay_result_with_materialization,
+    preflight_report_for_request_from_graph, winding_evidence_report_for_request_from_graph,
 };
 use hyperlimit::PredicateUse;
 
@@ -8554,8 +8554,9 @@ impl ExactPlanarArrangementReport {
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        if let Ok(evaluation) = exact_boolean_report_evaluation_for_replay(left, right, request)
-            && self == evaluation.certifications().planar_arrangement()
+        if let Ok(evaluation) = exact_boolean_evaluation_for_replay_result_with_materialization(
+            left, right, request, false,
+        ) && self == evaluation.certifications().planar_arrangement()
         {
             return Ok(());
         }

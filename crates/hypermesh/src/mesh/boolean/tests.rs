@@ -13,7 +13,7 @@ fn test_preflight(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> ExactBooleanPreflight {
-    exact_boolean_report_evaluation_for_replay(left, right, request)
+    exact_boolean_evaluation_for_replay_result_with_materialization(left, right, request, false)
         .unwrap()
         .preflight()
         .clone()
@@ -54,7 +54,10 @@ fn test_winding_evidence(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> ExactWindingEvidenceReport {
-    let evaluation = exact_boolean_report_evaluation_for_replay(left, right, request).unwrap();
+    let evaluation = exact_boolean_evaluation_for_replay_result_with_materialization(
+        left, right, request, false,
+    )
+    .unwrap();
     evaluation
         .validate_with_missing_result_policy(true)
         .unwrap();

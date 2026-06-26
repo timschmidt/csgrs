@@ -195,16 +195,6 @@ pub(crate) fn exact_boolean_evaluation_for_replay(
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
 }
 
-#[cfg(test)]
-pub(crate) fn exact_boolean_report_evaluation_for_replay(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactBooleanEvaluation, ExactReportValidationError> {
-    exact_boolean_evaluation_for_replay_result_with_materialization(left, right, request, false)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
-}
-
 fn exact_boolean_evaluation_for_replay_result(
     left: &ExactMesh,
     right: &ExactMesh,
