@@ -46,9 +46,10 @@ broad-phase facts, stream candidate face pairs with fallible early-stop support,
 and expose query-shaped cache access: callers can build
 candidate-pair or arrangement evidence and inspect it through borrowed closures,
 or ask for already-current retained evidence and receive typed blockers when it
-is missing or stale. `PreparedMeshPair::with_arrangement_view` exposes borrowed
-arrangement queries for algorithms that need retained topology without cloning
-arrangement storage or naming an owned arrangement type.
+is missing or stale. The prepared pair returned by
+`MeshView::prepare_broad_phase_pair` exposes borrowed arrangement queries for
+algorithms that need retained topology without cloning arrangement storage or
+naming an owned arrangement type.
 
 Retained graph, arrangement, cell-complex, winding, and shortcut evidence remain
 kernel internals unless a borrowed view is needed for exact query reuse.

@@ -2,7 +2,7 @@ use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::ExactMesh;
 use hypermesh::kernel::{
     ArrangementView, EdgeRef, ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, FaceRef,
-    MeshView, PreparedMeshPair, TriangleRef, VertexRef,
+    MeshView, TriangleRef, VertexRef,
 };
 use hyperreal::Real;
 
@@ -288,7 +288,7 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
 
     left.view().validate_retained_bounds().unwrap();
     left.view().validate_retained_bounds_certificate().unwrap();
-    let prepared_pair: PreparedMeshPair<'_, '_> = left
+    let prepared_pair = left
         .view()
         .prepare_broad_phase_pair(overlapping.view())
         .unwrap();
