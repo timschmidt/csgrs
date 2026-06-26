@@ -7585,41 +7585,79 @@ pub(crate) enum ExactAdjacentUnionCompletionStatus {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ExactAdjacentUnionCompletionReport {
     /// Requested named operation.
-    pub(crate) operation: ExactBooleanOperation,
+    operation: ExactBooleanOperation,
     /// Coarse certification status.
-    pub(crate) status: ExactAdjacentUnionCompletionStatus,
+    status: ExactAdjacentUnionCompletionStatus,
     /// Whether the left source mesh was a closed manifold.
-    pub(crate) left_closed: bool,
+    left_closed: bool,
     /// Whether the right source mesh was a closed manifold.
-    pub(crate) right_closed: bool,
+    right_closed: bool,
     /// Whether the stronger axis-aligned box path owns this pair.
-    pub(crate) axis_aligned_box_pair: bool,
+    axis_aligned_box_pair: bool,
     /// Whether another exact kernel should materialize this union first.
-    pub(crate) stronger_kernel_available: bool,
+    stronger_kernel_available: bool,
     /// Whether graph extraction retained unknown events.
-    pub(crate) graph_had_unknowns: bool,
+    graph_had_unknowns: bool,
     /// Retained face-pair records after exact scheduling.
-    pub(crate) retained_face_pairs: usize,
+    retained_face_pairs: usize,
     /// Total retained event records.
-    pub(crate) retained_events: usize,
+    retained_events: usize,
     /// Relation counts for retained face pairs.
-    pub(crate) blocker: ExactBooleanBlocker,
+    blocker: ExactBooleanBlocker,
     /// Count of exact whole-face pairs consumed by full-face completion.
-    pub(crate) full_face_shared_faces: usize,
+    full_face_shared_faces: usize,
     /// Count of exact source-owned full patches consumed by full-face
     /// completion.
-    pub(crate) full_face_shared_patches: usize,
+    full_face_shared_patches: usize,
     /// Source side whose faces contain the opposite caps for contained-face
     /// completion.
-    pub(crate) contained_containing_side: Option<MeshSide>,
+    contained_containing_side: Option<MeshSide>,
     /// Count of opposite-source faces removed by contained-face completion.
-    pub(crate) contained_faces: usize,
+    contained_faces: usize,
     /// Count of source faces replaced by holed remnants in contained-face
     /// completion.
-    pub(crate) containing_faces: usize,
+    containing_faces: usize,
 }
 
 impl ExactAdjacentUnionCompletionReport {
+    /// Build an adjacent-union completion report from retained exact evidence.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) const fn new(
+        operation: ExactBooleanOperation,
+        status: ExactAdjacentUnionCompletionStatus,
+        left_closed: bool,
+        right_closed: bool,
+        axis_aligned_box_pair: bool,
+        stronger_kernel_available: bool,
+        graph_had_unknowns: bool,
+        retained_face_pairs: usize,
+        retained_events: usize,
+        blocker: ExactBooleanBlocker,
+        full_face_shared_faces: usize,
+        full_face_shared_patches: usize,
+        contained_containing_side: Option<MeshSide>,
+        contained_faces: usize,
+        containing_faces: usize,
+    ) -> Self {
+        Self {
+            operation,
+            status,
+            left_closed,
+            right_closed,
+            axis_aligned_box_pair,
+            stronger_kernel_available,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            blocker,
+            full_face_shared_faces,
+            full_face_shared_patches,
+            contained_containing_side,
+            contained_faces,
+            containing_faces,
+        }
+    }
+
     /// Return the requested named operation.
     pub(crate) const fn operation(&self) -> ExactBooleanOperation {
         self.operation

@@ -4915,7 +4915,7 @@ fn adjacent_union_completion_report(
         }
         _ => counts.inferred_kind(),
     };
-    ExactAdjacentUnionCompletionReport {
+    ExactAdjacentUnionCompletionReport::new(
         operation,
         status,
         left_closed,
@@ -4925,13 +4925,13 @@ fn adjacent_union_completion_report(
         graph_had_unknowns,
         retained_face_pairs,
         retained_events,
-        blocker: counts.into_blocker(blocker_kind),
+        counts.into_blocker(blocker_kind),
         full_face_shared_faces,
         full_face_shared_patches,
         contained_containing_side,
         contained_faces,
         containing_faces,
-    }
+    )
 }
 
 pub(crate) fn adjacent_union_completion_certification(
