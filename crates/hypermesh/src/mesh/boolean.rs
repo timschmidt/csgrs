@@ -1968,17 +1968,9 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     if let Some(boundary_report) = boundary_report
         && boundary_report.is_certified()
     {
-        return Ok(ExactBooleanPreflight::new(
+        return Ok(boundary_policy_required_preflight_from_report(
             operation,
-            ExactBooleanSupport::RequiresBoundaryPolicy,
-            boundary_report.graph_had_unknowns(),
-            boundary_report.retained_face_pairs(),
-            boundary_report.retained_events(),
-            0,
-            Vec::new(),
-            Some(*boundary_report.blocker()),
-            None,
-            None,
+            &boundary_report,
         ));
     }
     let planar_report = planar_arrangement_report_from_graph(graph, left, right, operation).ok();
@@ -1996,17 +1988,9 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         )? {
             return Ok(preflight);
         }
-        return Ok(ExactBooleanPreflight::new(
+        return Ok(planar_arrangement_required_preflight_from_report(
             operation,
-            ExactBooleanSupport::RequiresPlanarArrangement,
-            planar_report.graph_had_unknowns(),
-            planar_report.retained_face_pairs(),
-            planar_report.retained_events(),
-            0,
-            Vec::new(),
-            Some(*planar_report.blocker()),
-            planar_report.coplanar_arrangement_evidence().cloned(),
-            None,
+            planar_report,
         ));
     }
     if planar_report
@@ -2612,6 +2596,42 @@ fn region_plan_preflight_from_graph(
         None,
         coplanar_volumetric_evidence,
     ))
+}
+
+fn boundary_policy_required_preflight_from_report(
+    operation: ExactBooleanOperation,
+    report: &ExactBoundaryTouchingReport,
+) -> ExactBooleanPreflight {
+    ExactBooleanPreflight::new(
+        operation,
+        ExactBooleanSupport::RequiresBoundaryPolicy,
+        report.graph_had_unknowns(),
+        report.retained_face_pairs(),
+        report.retained_events(),
+        0,
+        Vec::new(),
+        Some(*report.blocker()),
+        None,
+        None,
+    )
+}
+
+fn planar_arrangement_required_preflight_from_report(
+    operation: ExactBooleanOperation,
+    report: &ExactPlanarArrangementReport,
+) -> ExactBooleanPreflight {
+    ExactBooleanPreflight::new(
+        operation,
+        ExactBooleanSupport::RequiresPlanarArrangement,
+        report.graph_had_unknowns(),
+        report.retained_face_pairs(),
+        report.retained_events(),
+        0,
+        Vec::new(),
+        Some(*report.blocker()),
+        report.coplanar_arrangement_evidence().cloned(),
+        None,
+    )
 }
 
 fn certified_closed_boundary_touching_support(
