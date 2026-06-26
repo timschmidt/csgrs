@@ -453,26 +453,12 @@ impl<'a> ExactMeshRef<'a> {
 
     /// Borrow one triangle by index.
     pub fn triangle(self, index: usize) -> Option<TriangleRef<'a>> {
-        (index < self.mesh.triangles().len()).then_some(FaceRef {
-            mesh: self.mesh,
-            index,
-        })
+        self.face(index)
     }
 
     /// Borrow one triangle by index, returning a typed blocker when absent.
     pub fn require_triangle(self, index: usize) -> Result<TriangleRef<'a>, ExactMeshError> {
-        self.triangle(index).ok_or_else(|| {
-            ExactMeshError::one(
-                ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::IndexOutOfBounds,
-                    format!(
-                        "mesh triangle index {index} is out of bounds for {} retained faces",
-                        self.face_count()
-                    ),
-                )
-                .with_face(index),
-            )
-        })
+        self.require_face(index)
     }
 
     /// Borrow one retained edge by index.
@@ -514,10 +500,7 @@ impl<'a> ExactMeshRef<'a> {
 
     /// Iterate borrowed triangles.
     pub fn triangle_refs(self) -> impl Iterator<Item = TriangleRef<'a>> + 'a {
-        (0..self.mesh.triangles().len()).map(move |index| FaceRef {
-            mesh: self.mesh,
-            index,
-        })
+        self.faces()
     }
 
     /// Iterate retained edges.
