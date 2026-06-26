@@ -80,7 +80,7 @@ fn exact_mesh_borrowed_view_materializes_named_operations() {
 }
 
 #[test]
-fn prepared_mesh_pair_materializes_named_operations() {
+fn prepared_mesh_pair_exposes_retained_pair_facts_without_named_policy() {
     let empty = ExactMesh::new(
         Vec::new(),
         Vec::new(),
@@ -96,37 +96,15 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    let union = pair.union().unwrap();
-    union.validate_retained_state().unwrap();
-    assert_eq!(union.triangle_count(), solid.triangle_count());
-
-    let repeated_union = pair.union().unwrap();
-    repeated_union.validate_retained_state().unwrap();
-    assert_eq!(repeated_union.triangle_count(), union.triangle_count());
-
-    let intersection = pair.intersection().unwrap();
-    intersection.validate_retained_state().unwrap();
-    assert_eq!(intersection.triangle_count(), 0);
     assert_eq!(
-        pair.intersection().unwrap().triangle_count(),
-        intersection.triangle_count()
+        pair.with_candidate_face_pairs(|pairs| pairs.len()).unwrap(),
+        0
     );
-
-    let difference = pair.difference().unwrap();
-    difference.validate_retained_state().unwrap();
-    assert_eq!(difference.triangle_count(), 0);
     assert_eq!(
-        pair.difference().unwrap().triangle_count(),
-        difference.triangle_count()
+        pair.with_current_candidate_face_pairs(|pairs| pairs.len())
+            .unwrap(),
+        0
     );
-
-    let xor = pair.xor().unwrap();
-    xor.validate_retained_state().unwrap();
-    assert_eq!(xor.triangle_count(), solid.triangle_count());
-
-    let repeated_xor = pair.xor().unwrap();
-    repeated_xor.validate_retained_state().unwrap();
-    assert_eq!(repeated_xor.triangle_count(), xor.triangle_count());
 }
 
 #[test]
@@ -606,7 +584,7 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
 }
 
 #[test]
-fn prepared_pair_named_boolean_preserves_retained_arrangement() {
+fn borrowed_named_boolean_leaves_prepared_pair_arrangement_current() {
     let left = tetra([0, 0, 0]);
     let right = tetra([1, 0, 0]);
     let pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
@@ -616,7 +594,7 @@ fn prepared_pair_named_boolean_preserves_retained_arrangement() {
     })
     .unwrap();
 
-    let intersection = pair.intersection().unwrap();
+    let intersection = left.view().intersection(right.view()).unwrap();
     pair.with_current_arrangement_view(|view| {
         view.validate_retained_state().unwrap();
     })

@@ -282,8 +282,8 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
             .as_ref(),
         &graph
     );
-    let cached_union = prepared_pair.union().unwrap();
-    cached_union.validate_retained_state().unwrap();
+    let union = left.view().union(right.view()).unwrap();
+    union.validate_retained_state().unwrap();
     prepared_pair
         .with_arrangement_view(|view| {
             view.validate_retained_state().unwrap();
