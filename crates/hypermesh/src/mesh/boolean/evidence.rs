@@ -68,11 +68,10 @@ use super::winding::{
     classify_mesh_vertices_against_closed_mesh_winding_report,
 };
 use super::{
-    ExactBooleanCertificationSet, ExactBooleanOperation, ExactBooleanRequest,
-    ExactBoundaryBooleanPolicy, adjacent_union_completion_certification,
-    boolean_convex_meshes_optional, boolean_coplanar_mesh_overlay_optional,
-    boundary_policy_shortcut_result_matches_sources, boundary_touching_report_from_graph,
-    exact_boolean_evaluation_for_replay,
+    ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
+    adjacent_union_completion_certification, boolean_convex_meshes_optional,
+    boolean_coplanar_mesh_overlay_optional, boundary_policy_shortcut_result_matches_sources,
+    boundary_touching_report_from_graph, exact_boolean_evaluation_for_replay,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
     materialize_volumetric_coplanar_boundary_closure_output,
@@ -3010,6 +3009,67 @@ fn retained_output_mesh_matches(left: &ExactMesh, right: &ExactMesh) -> bool {
         && left.facts().mesh == right.facts().mesh
         && left.validation_policy() == right.validation_policy()
         && left.provenance() == right.provenance()
+}
+
+/// Replayable certification bundle for an exact boolean request.
+///
+/// These reports are intentionally redundant with the preflight summary. The
+/// summary is the scheduling decision, while this bundle keeps the Yap-style
+/// exact facts that explain which stage certified, blocked, or declined the
+/// requested operation.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct ExactBooleanCertificationSet {
+    /// Source-shape facts used by trivial shortcut supports.
+    pub(crate) trivial: ExactTrivialBooleanFacts,
+    /// Source-shape facts used by closed regularized-solid shortcut supports.
+    pub(crate) regularized_solid: ExactRegularizedSolidBooleanFacts,
+    /// Exact graph refinement status.
+    pub(crate) refinement: ExactRefinementReport,
+    /// Boundary-contact policy status.
+    pub(crate) boundary_touching: ExactBoundaryTouchingReport,
+    /// Open-surface disjointness shortcut status.
+    pub(crate) open_surface_disjoint: ExactOpenSurfaceDisjointReport,
+    /// Adjacent closed-solid union completion shortcut status.
+    pub(crate) adjacent_union_completion: ExactAdjacentUnionCompletionReport,
+    /// Identical-mesh shortcut status.
+    pub(crate) identical: ExactIdenticalMeshReport,
+    /// Same-surface shortcut status.
+    pub(crate) same_surface: ExactSameSurfaceReport,
+    /// Left vertices classified against the right closed mesh.
+    pub(crate) closed_winding_left_in_right: ClosedMeshWindingMeshReport,
+    /// Right vertices classified against the left closed mesh.
+    pub(crate) closed_winding_right_in_left: ClosedMeshWindingMeshReport,
+    /// Left vertices classified against the right convex solid.
+    pub(crate) convex_left_in_right: ConvexSolidMeshClassification,
+    /// Right vertices classified against the left convex solid.
+    pub(crate) convex_right_in_left: ConvexSolidMeshClassification,
+    /// Closed-convex shortcut capabilities.
+    pub(crate) convex_capabilities: ExactConvexBooleanCapabilityFacts,
+    /// Arrangement-cell shortcut capabilities that cover cases not yet
+    /// consumed by the full arrangement attempt report.
+    pub(crate) arrangement_cell_complex_shortcuts: ExactArrangementCellComplexShortcutFacts,
+    /// Planar-arrangement evidence for coplanar surface output.
+    pub(crate) planar_arrangement: ExactPlanarArrangementReport,
+    /// Winding/inside-outside evidence for named volumetric output.
+    pub(crate) winding_evidence: ExactWindingEvidenceReport,
+    /// Volumetric boundary closure evidence, when meaningful for the request.
+    pub(crate) volumetric_boundary_closure: Option<ExactVolumetricBoundaryClosureReport>,
+    /// Arrangement/cell-complex materialization attempt.
+    pub(crate) arrangement_attempt: Option<ExactArrangementBooleanAttempt>,
+}
+
+impl ExactBooleanCertificationSet {
+    /// Return the planar-arrangement evidence certification report.
+    #[cfg(test)]
+    pub(crate) fn planar_arrangement(&self) -> &ExactPlanarArrangementReport {
+        &self.planar_arrangement
+    }
+
+    /// Return the winding/inside-outside evidence certification report.
+    #[cfg(test)]
+    pub(crate) fn winding_evidence(&self) -> &ExactWindingEvidenceReport {
+        &self.winding_evidence
+    }
 }
 
 /// Complete exact boolean evaluation outcome.

@@ -83,13 +83,12 @@ use evidence::{
     ExactArrangementBooleanAttempt, ExactArrangementBooleanDecline,
     ExactArrangementBooleanShortcutReason, ExactArrangementBooleanStage,
     ExactArrangementCellComplexShortcutFacts, ExactBooleanBlocker, ExactBooleanBlockerKind,
-    ExactBooleanEvaluation, ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind,
-    ExactBooleanShortcutKind, ExactBooleanSourceFacts, ExactBooleanSupport,
-    ExactBoundaryTouchingReport, ExactBoundaryTouchingStatus, ExactConvexBooleanCapabilityFacts,
-    ExactIdenticalMeshReport, ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus,
-    ExactPlanarArrangementReport, ExactPlanarArrangementStatus, ExactRefinementReport,
-    ExactRefinementStatus, ExactRegularizedSolidBooleanFacts, ExactReportValidationError,
-    ExactSameSurfaceReport, ExactTrivialBooleanFacts, ExactVolumetricBoundaryClosureReport,
+    ExactBooleanCertificationSet, ExactBooleanEvaluation, ExactBooleanPreflight,
+    ExactBooleanResult, ExactBooleanResultKind, ExactBooleanShortcutKind, ExactBooleanSourceFacts,
+    ExactBooleanSupport, ExactBoundaryTouchingReport, ExactBoundaryTouchingStatus,
+    ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport,
+    ExactPlanarArrangementStatus, ExactRefinementReport, ExactRefinementStatus,
+    ExactReportValidationError, ExactVolumetricBoundaryClosureReport,
     ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
     certified_convex_operation_shortcut_support, meshes_are_certified_bounds_disjoint,
 };
@@ -127,8 +126,8 @@ use volumetric::{
 };
 use volumetric_cells::{CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle};
 use winding::{
-    ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
-    WindingReportError, classify_mesh_vertices_against_closed_mesh_winding_report,
+    ClosedMeshWindingMeshRelation, ClosedMeshWindingRelation, WindingReportError,
+    classify_mesh_vertices_against_closed_mesh_winding_report,
 };
 
 impl ExactArrangementBooleanAttempt {
@@ -706,66 +705,7 @@ impl ExactBooleanRequest {
     }
 }
 
-/// Replayable certification bundle for an exact boolean request.
-///
-/// These reports are intentionally redundant with the preflight summary. The
-/// summary is the scheduling decision, while this bundle keeps the Yap-style
-/// exact facts that explain which stage certified, blocked, or declined the
-/// requested operation.
-#[derive(Clone, Debug, PartialEq)]
-pub(crate) struct ExactBooleanCertificationSet {
-    /// Source-shape facts used by trivial shortcut supports.
-    trivial: ExactTrivialBooleanFacts,
-    /// Source-shape facts used by closed regularized-solid shortcut supports.
-    regularized_solid: ExactRegularizedSolidBooleanFacts,
-    /// Exact graph refinement status.
-    refinement: ExactRefinementReport,
-    /// Boundary-contact policy status.
-    boundary_touching: ExactBoundaryTouchingReport,
-    /// Open-surface disjointness shortcut status.
-    open_surface_disjoint: ExactOpenSurfaceDisjointReport,
-    /// Adjacent closed-solid union completion shortcut status.
-    adjacent_union_completion: ExactAdjacentUnionCompletionReport,
-    /// Identical-mesh shortcut status.
-    identical: ExactIdenticalMeshReport,
-    /// Same-surface shortcut status.
-    same_surface: ExactSameSurfaceReport,
-    /// Left vertices classified against the right closed mesh.
-    closed_winding_left_in_right: ClosedMeshWindingMeshReport,
-    /// Right vertices classified against the left closed mesh.
-    closed_winding_right_in_left: ClosedMeshWindingMeshReport,
-    /// Left vertices classified against the right convex solid.
-    convex_left_in_right: ConvexSolidMeshClassification,
-    /// Right vertices classified against the left convex solid.
-    convex_right_in_left: ConvexSolidMeshClassification,
-    /// Closed-convex shortcut capabilities.
-    convex_capabilities: ExactConvexBooleanCapabilityFacts,
-    /// Arrangement-cell shortcut capabilities that cover cases not yet
-    /// consumed by the full arrangement attempt report.
-    arrangement_cell_complex_shortcuts: ExactArrangementCellComplexShortcutFacts,
-    /// Planar-arrangement evidence for coplanar surface output.
-    planar_arrangement: ExactPlanarArrangementReport,
-    /// Winding/inside-outside evidence for named volumetric output.
-    winding_evidence: ExactWindingEvidenceReport,
-    /// Volumetric boundary closure evidence, when meaningful for the request.
-    volumetric_boundary_closure: Option<ExactVolumetricBoundaryClosureReport>,
-    /// Arrangement/cell-complex materialization attempt.
-    arrangement_attempt: Option<ExactArrangementBooleanAttempt>,
-}
-
 impl ExactBooleanCertificationSet {
-    /// Return the planar-arrangement evidence certification report.
-    #[cfg(test)]
-    pub(crate) fn planar_arrangement(&self) -> &ExactPlanarArrangementReport {
-        &self.planar_arrangement
-    }
-
-    /// Return the winding/inside-outside evidence certification report.
-    #[cfg(test)]
-    pub(crate) fn winding_evidence(&self) -> &ExactWindingEvidenceReport {
-        &self.winding_evidence
-    }
-
     pub(crate) fn from_graph_and_regularized_arrangement(
         graph: &ExactIntersectionGraph,
         left: &ExactMesh,
