@@ -1354,12 +1354,6 @@ impl ExactBooleanResult {
         self.kind
     }
 
-    /// Replace the declared production path for this result.
-    #[cfg(test)]
-    pub(crate) fn replace_kind(&mut self, kind: ExactBooleanResultKind) -> ExactBooleanResultKind {
-        std::mem::replace(&mut self.kind, kind)
-    }
-
     /// Return whether graph extraction contained unknown events before policy checks.
     pub(crate) fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns

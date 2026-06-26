@@ -380,9 +380,9 @@ fn boundary_policy_shortcut_rejects_selected_region_operation_relabel() {
     .unwrap();
     stale_mesh.validate().unwrap();
     assert!(stale_mesh.validate_against_sources(&left, &right).is_err());
-    projected.replace_kind(ExactBooleanResultKind::BoundaryPolicyShortcut {
+    projected.kind = ExactBooleanResultKind::BoundaryPolicyShortcut {
         operation: ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
-    });
+    };
     assert_eq!(
         projected.validate(),
         Err(ExactReportValidationError::StatusEvidenceMismatch)
@@ -2028,10 +2028,10 @@ fn graph_empty_containment_routes_named_booleans_through_arrangement_pipeline() 
             let mut relabeled_closed_winding = result.clone();
             relabeled_closed_winding.topology_assembly_report = None;
             relabeled_closed_winding.region_ownership_report = None;
-            relabeled_closed_winding.replace_kind(ExactBooleanResultKind::CertifiedShortcut {
+            relabeled_closed_winding.kind = ExactBooleanResultKind::CertifiedShortcut {
                 operation,
                 shortcut: ExactBooleanShortcutKind::ClosedWindingContainment,
-            });
+            };
             relabeled_closed_winding.validate().unwrap();
             if let Err(error) = relabeled_closed_winding.validate_against_sources(left, right) {
                 assert_eq!(
@@ -2153,10 +2153,10 @@ fn graph_empty_closed_winding_separation_materializes_without_bounds_disjointnes
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
         let mut relabeled_arrangement = result.clone();
-        relabeled_arrangement.replace_kind(ExactBooleanResultKind::CertifiedShortcut {
+        relabeled_arrangement.kind = ExactBooleanResultKind::CertifiedShortcut {
             operation,
             shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-        });
+        };
         assert_eq!(
             relabeled_arrangement.validate(),
             Err(ExactReportValidationError::InvalidOutputMeshProvenance),
@@ -2344,12 +2344,10 @@ fn lower_dimensional_regularized_solid_reports_materialized_evidence() {
                 let mut relabeled_lower_dimensional = result.clone();
                 relabeled_lower_dimensional.topology_assembly_report = None;
                 relabeled_lower_dimensional.region_ownership_report = None;
-                relabeled_lower_dimensional.replace_kind(
-                    ExactBooleanResultKind::CertifiedShortcut {
-                        operation,
-                        shortcut: ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid,
-                    },
-                );
+                relabeled_lower_dimensional.kind = ExactBooleanResultKind::CertifiedShortcut {
+                    operation,
+                    shortcut: ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid,
+                };
                 relabeled_lower_dimensional.validate().unwrap();
                 assert_eq!(
                     relabeled_lower_dimensional.validate_against_sources(&left, &right),
@@ -3832,10 +3830,10 @@ fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
         let mut relabeled_boundary_shortcut = result.clone();
         relabeled_boundary_shortcut.topology_assembly_report = None;
         relabeled_boundary_shortcut.region_ownership_report = None;
-        relabeled_boundary_shortcut.replace_kind(ExactBooleanResultKind::CertifiedShortcut {
+        relabeled_boundary_shortcut.kind = ExactBooleanResultKind::CertifiedShortcut {
             operation,
             shortcut,
-        });
+        };
         relabeled_boundary_shortcut.validate().unwrap();
         assert_eq!(
             relabeled_boundary_shortcut.validate_against_sources(&left, &right),
@@ -3916,10 +3914,10 @@ fn boundary_attached_contained_tetrahedron_difference_materializes() {
     difference.validate().unwrap();
     difference.validate_against_sources(&left, &right).unwrap();
     let mut relabeled = difference.clone();
-    relabeled.replace_kind(ExactBooleanResultKind::CertifiedShortcut {
+    relabeled.kind = ExactBooleanResultKind::CertifiedShortcut {
         operation: ExactBooleanOperation::Union,
         shortcut: ExactBooleanShortcutKind::ConvexDifference,
-    });
+    };
     assert_eq!(
         relabeled.validate(),
         Err(ExactReportValidationError::StatusEvidenceMismatch)
