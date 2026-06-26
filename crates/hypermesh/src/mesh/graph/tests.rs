@@ -264,18 +264,17 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
     );
     graph.validate_against_meshes(&left, &right).unwrap();
     let prepared_pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
+    assert_eq!(prepared_pair.prepare_face_pair_classifications(), 1);
     let mut first_classifications = Vec::new();
     prepared_pair
-        .try_visit_face_pair_classifications(&mut |classification| {
-            first_classifications.push(classification.clone());
-            Ok::<(), ()>(())
+        .with_current_face_pair_classifications(|classifications| {
+            first_classifications.extend_from_slice(classifications);
         })
         .unwrap();
     let mut repeated_classifications = Vec::new();
     prepared_pair
-        .try_visit_face_pair_classifications(&mut |classification| {
-            repeated_classifications.push(classification.clone());
-            Ok::<(), ()>(())
+        .with_current_face_pair_classifications(|classifications| {
+            repeated_classifications.extend_from_slice(classifications);
         })
         .unwrap();
     assert_eq!(first_classifications, repeated_classifications);
@@ -300,7 +299,7 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
         &graph
     );
     assert!(prepared_pair.has_retained_intersection_graph());
-    assert!(!prepared_pair.has_validated_intersection_graph());
+    assert!(!prepared_pair.intersection_graph_is_current());
     assert!(prepared_pair.intersection_graph_is_certificate_blocked());
     assert_eq!(
         prepared_pair
@@ -316,7 +315,6 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
             .as_ref(),
         &graph
     );
-    assert!(prepared_pair.has_validated_intersection_graph());
     assert!(prepared_pair.intersection_graph_is_current());
     assert_eq!(
         (

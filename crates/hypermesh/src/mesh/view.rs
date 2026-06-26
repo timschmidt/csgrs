@@ -2026,20 +2026,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         Ok(arrangement)
     }
 
-    /// Visit retained coarse face-pair classifications for this prepared mesh pair.
-    #[cfg(test)]
-    pub(crate) fn try_visit_face_pair_classifications<E>(
-        &self,
-        visit: &mut impl FnMut(&MeshFacePairClassification) -> Result<(), E>,
-    ) -> Result<(), E> {
-        self.ensure_face_pair_classifications();
-        let classifications = self.face_pair_classifications.borrow();
-        for classification in classifications.as_deref().unwrap_or(&[]) {
-            visit(classification)?;
-        }
-        Ok(())
-    }
-
     pub(crate) fn with_current_face_pair_classifications<R>(
         &self,
         query: impl FnOnce(&[MeshFacePairClassification]) -> R,
@@ -2183,11 +2169,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.intersection_result.clear();
         self.difference_result.clear();
         self.xor_result.clear();
-    }
-
-    #[cfg(test)]
-    pub(crate) fn has_validated_intersection_graph(&self) -> bool {
-        self.intersection_graph_state() == PreparedMeshPairFactState::Current
     }
 
     pub(crate) fn certify_intersection_graph_source_replay(&self) {
