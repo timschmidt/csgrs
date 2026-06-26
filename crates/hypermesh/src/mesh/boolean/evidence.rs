@@ -3318,11 +3318,27 @@ impl ExactBooleanCertificationSet {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
-        if self.coplanar_boundary_closure_certified_for_request(request) {
+        if request.validation == ExactMeshValidationPolicy::CLOSED
+            && self
+                .volumetric_boundary_closure
+                .as_ref()
+                .is_some_and(|report| {
+                    report.operation == request.operation
+                        && report.is_coplanar_closure_available()
+                        && report.validate().is_ok()
+                })
+        {
             self.validate_retained_closure_and_attempt_for_request(request, true, false)?;
             return Ok(());
         }
-        if self.arrangement_cell_complex_shortcut_certified_for_request(request) {
+        if self
+            .arrangement_cell_complex_shortcuts
+            .certified_support(request.operation)
+            == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+            && self.arrangement_attempt.as_ref().is_some_and(|attempt| {
+                attempt.certifies_regularized_arrangement_cell_complex_shortcut_for_request(request)
+            })
+        {
             self.validate_retained_closure_and_attempt_for_request(request, true, true)?;
             return Ok(());
         }
@@ -3458,33 +3474,6 @@ impl ExactBooleanCertificationSet {
         }
     }
 
-    fn arrangement_cell_complex_shortcut_certified_for_request(
-        &self,
-        request: ExactBooleanRequest,
-    ) -> bool {
-        self.arrangement_cell_complex_shortcuts
-            .certified_support(request.operation)
-            == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-            && self.arrangement_attempt.as_ref().is_some_and(|attempt| {
-                attempt.certifies_regularized_arrangement_cell_complex_shortcut_for_request(request)
-            })
-    }
-
-    fn coplanar_boundary_closure_certified_for_request(
-        &self,
-        request: ExactBooleanRequest,
-    ) -> bool {
-        request.validation == ExactMeshValidationPolicy::CLOSED
-            && self
-                .volumetric_boundary_closure
-                .as_ref()
-                .is_some_and(|report| {
-                    report.operation == request.operation
-                        && report.is_coplanar_closure_available()
-                        && report.validate().is_ok()
-                })
-    }
-
     fn arrangement_attempt_certifies_output_for_operation(
         &self,
         operation: ExactBooleanOperation,
@@ -3510,22 +3499,6 @@ impl ExactBooleanCertificationSet {
         self.winding_evidence.status()
             == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
             && self.arrangement_attempt_certifies_output_for_operation(preflight.operation)
-    }
-
-    fn adjacent_union_completion_matches_preflight(
-        &self,
-        preflight: &ExactBooleanPreflight,
-    ) -> bool {
-        self.adjacent_union_completion.is_certified()
-            && self.adjacent_union_completion.operation() == preflight.operation
-            && preflight.operation == ExactBooleanOperation::Union
-            && preflight.graph_had_unknowns == self.adjacent_union_completion.graph_had_unknowns()
-            && preflight.retained_face_pairs == self.adjacent_union_completion.retained_face_pairs()
-            && preflight.retained_events == self.adjacent_union_completion.retained_events()
-            && preflight.region_count == 0
-            && preflight.region_classifications.is_empty()
-            && preflight.blocker.is_none()
-            && preflight.coplanar_arrangement_evidence.is_none()
     }
 
     fn open_surface_disjoint_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
@@ -3885,7 +3858,18 @@ impl ExactBooleanCertificationSet {
                 && self.arrangement_attempt_certifies_shortcut_for_operation(preflight.operation))
                 || self.arrangement_attempt_certifies_output_for_operation(preflight.operation));
         retained_attempt_evidence_matches
-            || self.adjacent_union_completion_matches_preflight(preflight)
+            || (self.adjacent_union_completion.is_certified()
+                && self.adjacent_union_completion.operation() == preflight.operation
+                && preflight.operation == ExactBooleanOperation::Union
+                && preflight.graph_had_unknowns
+                    == self.adjacent_union_completion.graph_had_unknowns()
+                && preflight.retained_face_pairs
+                    == self.adjacent_union_completion.retained_face_pairs()
+                && preflight.retained_events == self.adjacent_union_completion.retained_events()
+                && preflight.region_count == 0
+                && preflight.region_classifications.is_empty()
+                && preflight.blocker.is_none()
+                && preflight.coplanar_arrangement_evidence.is_none())
             || coplanar_boundary_only_evidence_matches
             || coplanar_boundary_closure_evidence_matches
             || source_fact_materialization_evidence_matches
