@@ -1816,21 +1816,6 @@ impl ExactArrangement3d {
     ) -> Result<ExactLabeledCellComplex, ExactArrangementBlocker> {
         ExactCellComplex::from_arrangement(self.clone(), policy).label_regions(policy)
     }
-
-    #[cfg(test)]
-    fn select_with_policy(
-        &self,
-        operation: super::boolean::ExactBooleanOperation,
-        policy: ExactRegularizationPolicy,
-    ) -> Result<self::cell_complex::ExactSelectedCellComplex, ExactArrangementBlocker> {
-        let labeling_policy = self::cell_complex::arrangement_cell_complex_labeling_policy(
-            self,
-            Some(operation),
-            policy,
-        );
-        self.label_regions(labeling_policy)?
-            .select_with_policy(operation, policy)
-    }
 }
 
 fn arrangement_blocker_mesh_error(blocker: ExactArrangementBlocker) -> ExactMeshError {

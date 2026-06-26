@@ -3292,12 +3292,6 @@ impl ExactBooleanCertificationSet {
         }
     }
 
-    /// Return the planar-arrangement evidence certification report.
-    #[cfg(test)]
-    pub(crate) fn planar_arrangement(&self) -> &ExactPlanarArrangementReport {
-        &self.planar_arrangement
-    }
-
     /// Return the winding/inside-outside evidence certification report.
     #[cfg(test)]
     pub(crate) fn winding_evidence(&self) -> &ExactWindingEvidenceReport {
@@ -8556,7 +8550,7 @@ impl ExactPlanarArrangementReport {
         self.validate()?;
         if let Ok(evaluation) = exact_boolean_evaluation_for_replay_result_with_materialization(
             left, right, request, false,
-        ) && self == evaluation.certifications().planar_arrangement()
+        ) && self == &evaluation.certifications().planar_arrangement
         {
             return Ok(());
         }

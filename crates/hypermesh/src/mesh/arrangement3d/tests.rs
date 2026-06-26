@@ -1,5 +1,7 @@
 use super::*;
-use crate::mesh::arrangement3d::cell_complex::ExactRegionOwnershipStatus;
+use crate::mesh::arrangement3d::cell_complex::{
+    ExactRegionOwnershipStatus, arrangement_cell_complex_labeling_policy,
+};
 use crate::mesh::arrangement3d::loop_triangulation::projected_loop_orientation;
 use crate::mesh::boolean::ExactBooleanOperation;
 use crate::mesh::validation::ExactMeshValidationPolicy;
@@ -1597,13 +1599,18 @@ fn selected_regions_materialize_open_coplanar_overlap_without_winding_blocker() 
         arrangement.blockers
     );
 
+    let operation = ExactBooleanOperation::SelectedRegions(
+        crate::mesh::boolean::region::ExactRegionSelection::KeepLeft,
+    );
+    let labeling_policy = arrangement_cell_complex_labeling_policy(
+        &arrangement,
+        Some(operation),
+        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+    );
     let selected = arrangement
-        .select_with_policy(
-            ExactBooleanOperation::SelectedRegions(
-                crate::mesh::boolean::region::ExactRegionSelection::KeepLeft,
-            ),
-            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
-        )
+        .label_regions(labeling_policy)
+        .unwrap()
+        .select_with_policy(operation, ExactRegularizationPolicy::RETAIN_ARTIFACTS)
         .unwrap();
     assert!(selected.blockers.is_empty(), "{:?}", selected.blockers);
     assert!(
