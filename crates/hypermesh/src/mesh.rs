@@ -431,6 +431,19 @@ impl ExactMesh {
         Self::from_real_triangles_with_policy(pos, idx, ExactMeshValidationPolicy::CLOSED)
     }
 
+    /// Construct an exact boundary-allowed surface mesh from flat hyperreal coordinates.
+    ///
+    /// Use this adapter for query, export, and connectivity surfaces that are
+    /// not closed solids. Named Boolean entry points still require the default
+    /// closed-solid constructor unless an algorithm explicitly accepts surface
+    /// artifacts.
+    pub fn from_real_surface_triangles(
+        pos: &[Real],
+        idx: &[usize],
+    ) -> Result<Self, ExactMeshError> {
+        Self::from_real_triangles_with_policy(pos, idx, ExactMeshValidationPolicy::ALLOW_BOUNDARY)
+    }
+
     /// Construct an exact mesh from flat hyperreal coordinates with an explicit
     /// validation policy.
     pub(crate) fn from_real_triangles_with_policy(
@@ -483,6 +496,11 @@ impl ExactMesh {
     /// on structural input coordinates.
     pub fn from_i64_triangles(pos: &[i64], idx: &[usize]) -> Result<Self, ExactMeshError> {
         Self::from_i64_triangles_with_policy(pos, idx, ExactMeshValidationPolicy::CLOSED)
+    }
+
+    /// Construct an exact boundary-allowed surface mesh from integer coordinates.
+    pub fn from_i64_surface_triangles(pos: &[i64], idx: &[usize]) -> Result<Self, ExactMeshError> {
+        Self::from_i64_triangles_with_policy(pos, idx, ExactMeshValidationPolicy::ALLOW_BOUNDARY)
     }
 
     /// Construct an exact mesh from integer coordinates with an explicit
