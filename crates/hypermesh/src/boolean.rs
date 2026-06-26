@@ -24,6 +24,7 @@ pub(crate) mod reports;
 pub(crate) mod solid;
 pub(crate) mod volumetric;
 pub(crate) mod volumetric_cells;
+pub(crate) mod winding;
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -68,10 +69,6 @@ use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::simplify::ExactSimplifiedCellComplex;
 use super::validation::ExactMeshValidationPolicy;
 use super::view::PreparedMeshPair;
-use super::winding::{
-    ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
-    WindingReportError, classify_mesh_vertices_against_closed_mesh_winding_report,
-};
 use adjacent::{
     full_face_adjacent_certificate_from_graph,
     materialize_full_face_adjacent_union_from_certificate,
@@ -127,6 +124,10 @@ use volumetric::{
     classify_triangulated_regions_against_opposite_meshes,
 };
 use volumetric_cells::{CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle};
+use winding::{
+    ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
+    WindingReportError, classify_mesh_vertices_against_closed_mesh_winding_report,
+};
 
 /// Exact selected-region boolean policy.
 ///

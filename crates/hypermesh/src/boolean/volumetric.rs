@@ -17,7 +17,7 @@ use hyperlimit::Point3;
 use super::super::graph::MeshSide;
 use super::super::mesh::ExactMesh;
 use super::super::region::{FaceRegionTriangulation, boundary_node_point};
-use super::super::winding::{
+use super::winding::{
     ClosedMeshWindingRelation, PointMeshWindingReport, WindingReportError,
     classify_point_against_closed_mesh_winding_report,
 };

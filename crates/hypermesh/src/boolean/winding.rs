@@ -13,7 +13,7 @@ use std::cmp::Ordering;
 use hyperlimit::{Point3, compare_reals};
 use hyperreal::Real;
 
-use super::mesh::ExactMesh;
+use super::super::mesh::ExactMesh;
 
 /// Deterministic exact ray direction used by an exact ray-parity query.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

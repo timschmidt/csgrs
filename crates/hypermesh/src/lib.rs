@@ -34,7 +34,6 @@ mod regularization;
 mod simplify;
 mod validation;
 mod view;
-mod winding;
 
 pub use mesh::ExactMesh;
 

@@ -28,7 +28,7 @@ use super::super::graph::{
 use super::super::intersection::MeshFacePairRelation;
 use super::super::mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 use super::super::validation::ExactMeshValidationPolicy;
-use super::super::winding::{
+use super::winding::{
     ClosedMeshWindingRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
 use hyperlimit::SourceProvenance;
@@ -476,7 +476,7 @@ fn closed_boundary_contact_only(
 }
 
 fn mesh_vertices_are_boundary_or_outside(
-    report: &super::super::winding::ClosedMeshWindingMeshReport,
+    report: &super::winding::ClosedMeshWindingMeshReport,
 ) -> bool {
     report.target_closed
         && report.vertices.iter().all(|vertex| {
@@ -487,9 +487,7 @@ fn mesh_vertices_are_boundary_or_outside(
         })
 }
 
-fn mesh_vertices_touch_boundary(
-    report: &super::super::winding::ClosedMeshWindingMeshReport,
-) -> bool {
+fn mesh_vertices_touch_boundary(report: &super::winding::ClosedMeshWindingMeshReport) -> bool {
     report
         .vertices
         .iter()

@@ -32,7 +32,7 @@ use super::super::graph::{
 use super::super::intersection::MeshFacePairRelation;
 use super::super::mesh::{ExactMesh, ExactMeshValidationError, Triangle, triangle_tuple_edges};
 use super::super::validation::ExactMeshValidationPolicy;
-use super::super::winding::{
+use super::winding::{
     ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
     classify_mesh_vertices_against_closed_mesh_winding_report,
 };

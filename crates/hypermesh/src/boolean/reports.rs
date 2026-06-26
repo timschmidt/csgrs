@@ -33,9 +33,6 @@ use super::super::region::{
 use super::super::regularization::ExactArrangementBlocker;
 use super::super::regularization::ExactRegularizationPolicy;
 use super::super::validation::ExactMeshValidationPolicy;
-use super::super::winding::{
-    ClosedMeshWindingMeshRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
-};
 use super::adjacent::materialize_full_face_adjacent_union;
 use super::affine_solid::{
     materialize_affine_orthogonal_solid_difference,
@@ -59,6 +56,9 @@ use super::volumetric::{
 };
 use super::volumetric_cells::{
     CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle,
+};
+use super::winding::{
+    ClosedMeshWindingMeshRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
 use super::{
     ExactArrangementBooleanAttempt, ExactBooleanOperation, ExactBooleanRequest,

@@ -16,6 +16,10 @@ use super::boolean::solid::{
     ClosedMeshOrientation, ConvexSolidPointClassification, ConvexSolidPointRelation,
     classify_point_against_convex_solid_report, exact_mesh_orientation,
 };
+use super::boolean::winding::{
+    ClosedMeshWindingRelation, PointMeshWindingReport,
+    classify_point_against_closed_mesh_winding_report,
+};
 use super::cell_complex::{
     ExactCellComplex, ExactLabeledCellComplex, ExactLabeledCellComplexFreshness,
     ExactRegionOwnershipReport, region_ownership_status,
@@ -39,10 +43,6 @@ use super::regularization::{
     ExactUnresolvedPolicy,
 };
 use super::validation::ExactMeshValidationPolicy;
-use super::winding::{
-    ClosedMeshWindingRelation, PointMeshWindingReport,
-    classify_point_against_closed_mesh_winding_report,
-};
 use core::cmp::Ordering;
 use hyperlimit::CoplanarProjection;
 use hyperlimit::SourceProvenance;

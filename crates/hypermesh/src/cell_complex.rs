@@ -1438,11 +1438,19 @@ fn opposite_region_label(opposite: &ArrangementOppositeClassification) -> ExactO
         | None => {}
     }
     match opposite.winding.relation {
-        super::winding::ClosedMeshWindingRelation::Inside => ExactOppositeRegionLabel::Inside,
-        super::winding::ClosedMeshWindingRelation::Outside => ExactOppositeRegionLabel::Outside,
-        super::winding::ClosedMeshWindingRelation::Boundary => ExactOppositeRegionLabel::Boundary,
-        super::winding::ClosedMeshWindingRelation::Unknown
-        | super::winding::ClosedMeshWindingRelation::NotClosed => ExactOppositeRegionLabel::Unknown,
+        super::boolean::winding::ClosedMeshWindingRelation::Inside => {
+            ExactOppositeRegionLabel::Inside
+        }
+        super::boolean::winding::ClosedMeshWindingRelation::Outside => {
+            ExactOppositeRegionLabel::Outside
+        }
+        super::boolean::winding::ClosedMeshWindingRelation::Boundary => {
+            ExactOppositeRegionLabel::Boundary
+        }
+        super::boolean::winding::ClosedMeshWindingRelation::Unknown
+        | super::boolean::winding::ClosedMeshWindingRelation::NotClosed => {
+            ExactOppositeRegionLabel::Unknown
+        }
     }
 }
 
@@ -1783,9 +1791,9 @@ mod tests {
         ArrangementOppositeClassification, ArrangementVolumeFaceSide, ExactTopologyAssemblyStatus,
     };
     use crate::boolean::solid::ConvexSolidPointClassification;
+    use crate::boolean::winding::{ClosedMeshWindingRelation, PointMeshWindingReport};
     use crate::mesh::ExactMesh;
     use crate::region::ExactRegionSelection;
-    use crate::winding::{ClosedMeshWindingRelation, PointMeshWindingReport};
     use hyperlimit::Point3;
     use hyperreal::Real;
 
