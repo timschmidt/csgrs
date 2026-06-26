@@ -1743,43 +1743,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.cache_status().current_candidate_face_pair_count()
     }
 
-    /// Return whether retained face-pair classification records are present.
-    pub fn has_retained_face_pair_classifications(&self) -> bool {
-        self.face_pair_classifications.borrow().is_some()
-    }
-
-    /// Return whether retained face-pair classification records are source-current.
-    pub fn face_pair_classifications_are_current(&self) -> bool {
-        self.cache_status().face_pair_classifications().is_current()
-    }
-
-    /// Return whether retained face-pair classification counts are present.
-    pub fn has_retained_face_pair_classification_counts(&self) -> bool {
-        self.face_pair_classification_counts.borrow().is_some()
-    }
-
-    /// Return whether retained face-pair classification counts are source-current.
-    pub fn face_pair_classification_counts_are_current(&self) -> bool {
-        self.cache_status()
-            .face_pair_classification_counts()
-            .is_current()
-    }
-
-    /// Return retained face-pair classification record count, if records are present.
-    pub fn retained_face_pair_classification_count(&self) -> Option<usize> {
-        self.face_pair_classifications
-            .borrow()
-            .as_ref()
-            .map(Vec::len)
-    }
-
-    /// Return retained face-pair classification decision counts, if present.
-    pub fn retained_face_pair_classification_counts(
-        &self,
-    ) -> Option<PreparedMeshPairClassificationCounts> {
-        *self.face_pair_classification_counts.borrow()
-    }
-
     /// Borrow retained broad-phase candidate pairs without rebuilding missing evidence.
     pub fn with_current_candidate_face_pairs<R>(
         &self,
