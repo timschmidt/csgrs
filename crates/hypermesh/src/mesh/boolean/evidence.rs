@@ -1820,146 +1820,10 @@ impl ExactBooleanResult {
             return Err(ExactReportValidationError::MissingRegionFacts);
         }
 
-        let mut unique_classifications = Vec::new();
-        for classification in &self.region_classifications {
-            classification
-                .validate()
-                .map_err(ExactReportValidationError::InvalidRegionClassification)?;
-            let classification_key = (
-                classification.region_side,
-                classification.region_face,
-                classification.plane_side,
-                classification.plane_face,
-            );
-            // the exact state. A selected-region result cannot retain the same
-            // region/plane side fact twice and still be a coherent winding
-            // handoff.
-            if unique_classifications.contains(&classification_key) {
-                return Err(ExactReportValidationError::DuplicateRegionClassification);
-            }
-            unique_classifications.push(classification_key);
-            if retains_region_artifacts && !classification.is_decided_and_proof_producing() {
-                return Err(ExactReportValidationError::RegionClassificationNotProofProducing);
-            }
-        }
-        let mut unique_triangulations = Vec::new();
-        for triangulation in &self.triangulations {
-            triangulation
-                .validate()
-                .map_err(|_| ExactReportValidationError::InvalidTriangulation)?;
-            let triangulation_key = (triangulation.side, triangulation.face);
-            // Each triangulation is the exact image of one retained
-            // auditable object; duplicating it would make output assembly
-            // provenance ambiguous even if the triangle soup still validates.
-            if unique_triangulations.contains(&triangulation_key) {
-                return Err(ExactReportValidationError::DuplicateRegionTriangulation);
-            }
-            unique_triangulations.push(triangulation_key);
-        }
-        let mut unique_volumetric_classifications = Vec::new();
-        for classification in &self.volumetric_classifications {
-            classification
-                .validate()
-                .map_err(ExactReportValidationError::InvalidVolumetricClassification)?;
-            let classification_key = classification.cell_key();
-            if unique_volumetric_classifications.contains(&classification_key) {
-                return Err(ExactReportValidationError::DuplicateRegionClassification);
-            }
-            unique_volumetric_classifications.push(classification_key);
-            if retains_volumetric_artifacts && !classification.is_materialization_decided() {
-                return Err(ExactReportValidationError::VolumetricClassificationNotDecided);
-            }
-        }
-        if retains_region_artifacts
-            && self.triangulations.iter().any(|triangulation| {
-                !self.region_classifications.iter().any(|classification| {
-                    classification.region_side == triangulation.side
-                        && classification.region_face == triangulation.face
-                })
-            })
-        {
-            return Err(ExactReportValidationError::UnclassifiedRegionTriangulation);
-        }
-        if retains_region_artifacts
-            && self.region_classifications.iter().any(|classification| {
-                !self.triangulations.iter().any(|triangulation| {
-                    triangulation.side == classification.region_side
-                        && triangulation.face == classification.region_face
-                })
-            })
-        {
-            return Err(ExactReportValidationError::OrphanedRegionClassification);
-        }
-        if retains_volumetric_artifacts
-            && self.triangulations.iter().any(|triangulation| {
-                triangulation.triangles.chunks_exact(3).any(|triangle| {
-                    !self
-                        .volumetric_classifications
-                        .iter()
-                        .any(|classification| {
-                            classification.matches_triangulated_cell(
-                                triangulation,
-                                [triangle[0], triangle[1], triangle[2]],
-                            )
-                        })
-                })
-            })
-        {
-            return Err(ExactReportValidationError::UnclassifiedVolumetricTriangulation);
-        }
-        if retains_volumetric_artifacts
-            && self
-                .volumetric_classifications
-                .iter()
-                .any(|classification| {
-                    !self.triangulations.iter().any(|triangulation| {
-                        classification.matches_triangulation(triangulation)
-                            && triangulation.triangles.chunks_exact(3).any(|triangle| {
-                                classification.triangle() == [triangle[0], triangle[1], triangle[2]]
-                            })
-                    })
-                })
-        {
-            return Err(ExactReportValidationError::OrphanedVolumetricClassification);
-        }
-        if retains_volumetric_artifacts {
-            let expected_volumetric_classifications = self
-                .triangulations
-                .iter()
-                .flat_map(|triangulation| {
-                    triangulation
-                        .triangles
-                        .chunks_exact(3)
-                        .map(move |triangle| (triangulation.side, triangulation.face, triangle))
-                })
-                .collect::<Vec<_>>();
-            if expected_volumetric_classifications.len() != self.volumetric_classifications.len()
-                || !expected_volumetric_classifications
-                    .iter()
-                    .zip(&self.volumetric_classifications)
-                    .all(|(&(side, face, triangle), classification)| {
-                        classification.cell_key()
-                            == (side, face, [triangle[0], triangle[1], triangle[2]])
-                    })
-            {
-                return Err(ExactReportValidationError::VolumetricClassificationOrderMismatch);
-            }
-        }
-        if retains_volumetric_artifacts {
-            for classification in &self.volumetric_classifications {
-                let Some(triangulation) = self.triangulations.iter().find(|triangulation| {
-                    classification.matches_triangulation(triangulation)
-                        && triangulation.triangles.chunks_exact(3).any(|triangle| {
-                            classification.triangle() == [triangle[0], triangle[1], triangle[2]]
-                        })
-                }) else {
-                    return Err(ExactReportValidationError::OrphanedVolumetricClassification);
-                };
-                classification
-                    .validate_representatives_against_triangulation(triangulation)
-                    .map_err(ExactReportValidationError::InvalidVolumetricClassification)?;
-            }
-        }
+        self.validate_retained_region_and_volumetric_facts(
+            retains_region_artifacts,
+            retains_volumetric_artifacts,
+        )?;
         if retains_region_artifacts
             && self.assembly.triangles.iter().any(|triangle| {
                 !self.triangulations.iter().any(|triangulation| {
@@ -2094,6 +1958,151 @@ impl ExactBooleanResult {
             &self.assembly,
         )?;
 
+        Ok(())
+    }
+
+    fn validate_retained_region_and_volumetric_facts(
+        &self,
+        retains_region_artifacts: bool,
+        retains_volumetric_artifacts: bool,
+    ) -> Result<(), ExactReportValidationError> {
+        let mut unique_classifications = Vec::new();
+        for classification in &self.region_classifications {
+            classification
+                .validate()
+                .map_err(ExactReportValidationError::InvalidRegionClassification)?;
+            let classification_key = (
+                classification.region_side,
+                classification.region_face,
+                classification.plane_side,
+                classification.plane_face,
+            );
+            // The exact state cannot retain the same region/plane side fact
+            // twice and still be a coherent winding handoff.
+            if unique_classifications.contains(&classification_key) {
+                return Err(ExactReportValidationError::DuplicateRegionClassification);
+            }
+            unique_classifications.push(classification_key);
+            if retains_region_artifacts && !classification.is_decided_and_proof_producing() {
+                return Err(ExactReportValidationError::RegionClassificationNotProofProducing);
+            }
+        }
+        let mut unique_triangulations = Vec::new();
+        for triangulation in &self.triangulations {
+            triangulation
+                .validate()
+                .map_err(|_| ExactReportValidationError::InvalidTriangulation)?;
+            let triangulation_key = (triangulation.side, triangulation.face);
+            // Each triangulation is the exact image of one retained
+            // auditable object; duplicating it would make output assembly
+            // provenance ambiguous even if the triangle soup still validates.
+            if unique_triangulations.contains(&triangulation_key) {
+                return Err(ExactReportValidationError::DuplicateRegionTriangulation);
+            }
+            unique_triangulations.push(triangulation_key);
+        }
+        let mut unique_volumetric_classifications = Vec::new();
+        for classification in &self.volumetric_classifications {
+            classification
+                .validate()
+                .map_err(ExactReportValidationError::InvalidVolumetricClassification)?;
+            let classification_key = classification.cell_key();
+            if unique_volumetric_classifications.contains(&classification_key) {
+                return Err(ExactReportValidationError::DuplicateRegionClassification);
+            }
+            unique_volumetric_classifications.push(classification_key);
+            if retains_volumetric_artifacts && !classification.is_materialization_decided() {
+                return Err(ExactReportValidationError::VolumetricClassificationNotDecided);
+            }
+        }
+        if retains_region_artifacts
+            && self.triangulations.iter().any(|triangulation| {
+                !self.region_classifications.iter().any(|classification| {
+                    classification.region_side == triangulation.side
+                        && classification.region_face == triangulation.face
+                })
+            })
+        {
+            return Err(ExactReportValidationError::UnclassifiedRegionTriangulation);
+        }
+        if retains_region_artifacts
+            && self.region_classifications.iter().any(|classification| {
+                !self.triangulations.iter().any(|triangulation| {
+                    triangulation.side == classification.region_side
+                        && triangulation.face == classification.region_face
+                })
+            })
+        {
+            return Err(ExactReportValidationError::OrphanedRegionClassification);
+        }
+        if retains_volumetric_artifacts
+            && self.triangulations.iter().any(|triangulation| {
+                triangulation.triangles.chunks_exact(3).any(|triangle| {
+                    !self
+                        .volumetric_classifications
+                        .iter()
+                        .any(|classification| {
+                            classification.matches_triangulated_cell(
+                                triangulation,
+                                [triangle[0], triangle[1], triangle[2]],
+                            )
+                        })
+                })
+            })
+        {
+            return Err(ExactReportValidationError::UnclassifiedVolumetricTriangulation);
+        }
+        if retains_volumetric_artifacts
+            && self
+                .volumetric_classifications
+                .iter()
+                .any(|classification| {
+                    !self.triangulations.iter().any(|triangulation| {
+                        classification.matches_triangulation(triangulation)
+                            && triangulation.triangles.chunks_exact(3).any(|triangle| {
+                                classification.triangle() == [triangle[0], triangle[1], triangle[2]]
+                            })
+                    })
+                })
+        {
+            return Err(ExactReportValidationError::OrphanedVolumetricClassification);
+        }
+        if retains_volumetric_artifacts {
+            let expected_volumetric_classifications = self
+                .triangulations
+                .iter()
+                .flat_map(|triangulation| {
+                    triangulation
+                        .triangles
+                        .chunks_exact(3)
+                        .map(move |triangle| (triangulation.side, triangulation.face, triangle))
+                })
+                .collect::<Vec<_>>();
+            if expected_volumetric_classifications.len() != self.volumetric_classifications.len()
+                || !expected_volumetric_classifications
+                    .iter()
+                    .zip(&self.volumetric_classifications)
+                    .all(|(&(side, face, triangle), classification)| {
+                        classification.cell_key()
+                            == (side, face, [triangle[0], triangle[1], triangle[2]])
+                    })
+            {
+                return Err(ExactReportValidationError::VolumetricClassificationOrderMismatch);
+            }
+            for classification in &self.volumetric_classifications {
+                let Some(triangulation) = self.triangulations.iter().find(|triangulation| {
+                    classification.matches_triangulation(triangulation)
+                        && triangulation.triangles.chunks_exact(3).any(|triangle| {
+                            classification.triangle() == [triangle[0], triangle[1], triangle[2]]
+                        })
+                }) else {
+                    return Err(ExactReportValidationError::OrphanedVolumetricClassification);
+                };
+                classification
+                    .validate_representatives_against_triangulation(triangulation)
+                    .map_err(ExactReportValidationError::InvalidVolumetricClassification)?;
+            }
+        }
         Ok(())
     }
 
