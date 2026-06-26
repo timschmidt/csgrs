@@ -20,6 +20,9 @@ use super::boolean::affine_solid::{
     materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
 };
 use super::boolean::contained_adjacent::materialize_contained_face_adjacent_union;
+use super::boolean::convex::{
+    intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
+};
 #[cfg(test)]
 use super::boolean::materialize_boolean_exact_request;
 use super::boolean::orthogonal_solid::{
@@ -57,9 +60,6 @@ use super::bounds::AabbIntersectionKind;
 use super::cell_complex::{
     ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy,
     validate_selected_gate_reports,
-};
-use super::convex::{
-    intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
 };
 use super::graph::MeshSide;
 use super::graph::{

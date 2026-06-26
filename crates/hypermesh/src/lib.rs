@@ -25,7 +25,6 @@ mod boolean;
 mod bounds;
 mod cell_complex;
 mod cells;
-mod convex;
 mod error;
 mod facts;
 mod graph;

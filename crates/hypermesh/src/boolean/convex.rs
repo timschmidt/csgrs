@@ -21,18 +21,18 @@ use hyperlimit::{
     point_on_segment,
 };
 
-use super::arrangement2d::{
+use super::super::arrangement2d::{
     ExactArrangement2dBoundaryPolicy, ExactArrangement2dOutputLoop, ExactArrangement2dOverlay,
     ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
     build_exact_arrangement2d_overlay_with_boundary_policy,
 };
-use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::mesh::triangle_edges;
-use super::mesh::{ExactMesh, Triangle};
-use super::solid::{
+use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::mesh::triangle_edges;
+use super::super::mesh::{ExactMesh, Triangle};
+use super::super::solid::{
     ClosedMeshOrientation, ConvexSolidFacts, ConvexSolidReportError, certify_convex_solid,
 };
-use super::validation::ExactMeshValidationPolicy;
+use super::super::validation::ExactMeshValidationPolicy;
 use hyperlimit::SourceProvenance;
 use hyperlimit::{CoplanarProjection, project_point3, projected_polygon_area2_value};
 use hyperreal::Real;

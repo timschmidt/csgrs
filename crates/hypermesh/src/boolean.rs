@@ -16,6 +16,7 @@
 
 pub(crate) mod affine_solid;
 pub(crate) mod contained_adjacent;
+pub(crate) mod convex;
 pub(crate) mod orthogonal_solid;
 pub(crate) mod volumetric;
 pub(crate) mod volumetric_cells;
@@ -43,9 +44,6 @@ use super::cell_complex::{
     arrangement_region_classification_blockers_resolve_operation, select_arrangement_for_replay,
 };
 use super::cells::triangulate_all_face_cells_with_cdt;
-use super::convex::{
-    intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
-};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::facts::MeshFacts;
 #[cfg(test)]
@@ -98,6 +96,9 @@ use affine_solid::{
 use contained_adjacent::{
     contained_face_adjacent_certificate_from_graph,
     materialize_contained_face_adjacent_union_from_certificate,
+};
+use convex::{
+    intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
 };
 use hyperlimit::{
     CoplanarProjection, Point2, Point3, SegmentIntersection, Sign, TriangleLocation,
