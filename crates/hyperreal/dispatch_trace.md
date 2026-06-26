@@ -114,13 +114,13 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/trig_adversarial/tan_near_half_pi` | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 2 | 0 |
 | `computable/trig_adversarial/tan_promoted_generated_604_125` | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 2 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
 | `computable/trig_adversarial/tan_tiny` | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `real/arithmetic/exact` | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 2 | 3 |
+| `real/arithmetic/exact` | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 2 | 3 |
 | `real/constants` | 17 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 6 | 0 | 0 |
 | `real/div/const_product_sqrt_over_e` | 33 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 5 | 0 | 0 | 0 | 0 | 0 | 13 | 2 | 6 | 2 | 0 |
 | `real/div/div_const_product_sqrt` | 40 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 2 | 10 | 0 | 0 | 0 | 0 | 0 | 12 | 4 | 10 | 3 | 0 |
 | `real/div/div_const_products` | 22 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 2 | 0 | 0 |
 | `real/div/rational_over_symbolic` | 15 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 3 | 1 | 0 |
-| `real/div/sqrt_two_over_sqrt_three` | 15 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 2 | 10 | 0 | 0 | 0 | 0 | 0 | 1 | 4 | 5 | 1 | 1 |
+| `real/div/sqrt_two_over_sqrt_three` | 15 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 2 | 10 | 0 | 0 | 0 | 0 | 0 | 1 | 4 | 6 | 1 | 1 |
 | `real/dot_product/active_dot3_dense_symbolic` | 37 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 17 | 9 | 2 |
 | `real/dot_product/active_dot4_dense_symbolic` | 47 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 20 | 0 | 22 | 11 | 2 |
 | `real/dot_product/dot3_all_zero` | 12 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 5 | 0 | 0 |
@@ -128,7 +128,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/dot_product/dot3_mixed_structural` | 15 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 4 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 8 | 3 | 3 |
 | `real/dot_product/dot4_dense_symbolic` | 47 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 20 | 0 | 22 | 11 | 2 |
 | `real/dot_product/dot4_mixed_structural` | 20 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 2 | 5 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 20 | 8 | 8 |
-| `real/geometry_polynomial_substrate` | 250 | 0 | 0 | 2 | 46 | 0 | 0 | 16 | 42 | 132 | 0 | 0 | 0 | 0 | 0 | 36 | 4 | 168 | 84 | 82 |
+| `real/geometry_polynomial_substrate` | 181 | 0 | 0 | 2 | 28 | 0 | 0 | 13 | 24 | 94 | 0 | 0 | 0 | 0 | 0 | 30 | 4 | 133 | 70 | 50 |
 | `real/hyperbolic_log_exp` | 17 | 0 | 0 | 1 | 4 | 0 | 0 | 1 | 5 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 0 |
 | `real/inverse/inverse_generic` | 11 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 4 | 1 | 1 |
 | `real/inverse_hyperbolic/exact_rational` | 31 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 11 | 20 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 9 | 5 | 2 |
@@ -137,12 +137,12 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/inverse_trig/exact` | 35 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 5 | 17 | 0 | 0 | 0 | 0 | 0 | 10 | 2 | 9 | 8 | 2 |
 | `real/inverse_trig/mid-domain` | 26 | 0 | 0 | 0 | 5 | 0 | 0 | 2 | 5 | 22 | 0 | 0 | 0 | 0 | 0 | 1 | 2 | 17 | 19 | 5 |
 | `real/log/scaled_e` | 13 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 23 | 9 | 8 |
-| `real/normal_scientific_substrate` | 510 | 0 | 0 | 21 | 57 | 1 | 0 | 10 | 102 | 303 | 0 | 0 | 0 | 0 | 0 | 46 | 42 | 327 | 126 | 46 |
+| `real/normal_scientific_substrate` | 478 | 0 | 0 | 17 | 54 | 1 | 0 | 10 | 93 | 290 | 0 | 0 | 0 | 0 | 0 | 43 | 38 | 309 | 125 | 46 |
 | `real/pow/small_integer_exponent` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 | 1 |
 | `real/pow/symbolic_negative_one` | 17 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 3 | 4 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 |
 | `real/sqrt_scaled_exp` | 10 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 2 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 5 | 1 | 0 |
 | `real/sqrt_scaled_rational` | 5 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 |
-| `real/stable_scalar_substrate` | 169 | 0 | 0 | 6 | 38 | 0 | 0 | 4 | 38 | 117 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 126 | 47 | 52 |
+| `real/stable_scalar_substrate` | 119 | 0 | 0 | 5 | 14 | 0 | 0 | 10 | 14 | 85 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 99 | 40 | 44 |
 | `real/structural_queries` | 11 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 13 | 4 | 6 |
 | `real/trig/general` | 13 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 3 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 2 | 0 |
 | `real/trig/large` | 7 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 2 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 |
@@ -809,56 +809,56 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/dot_product/dot4_mixed_structural` | `real` | `dot_product` | `dot4-structural-real-tree` | 1 |
 | `real/geometry_polynomial_substrate` | `computable` | `constructor` | `cached-e-internal` | 6 |
 | `real/geometry_polynomial_substrate` | `computable` | `constructor` | `cached-inv-pi` | 1 |
-| `real/geometry_polynomial_substrate` | `computable` | `constructor` | `cached-pi` | 17 |
+| `real/geometry_polynomial_substrate` | `computable` | `constructor` | `cached-pi` | 12 |
 | `real/geometry_polynomial_substrate` | `computable` | `constructor` | `one` | 1 |
 | `real/geometry_polynomial_substrate` | `computable` | `constructor` | `prescaled-cos-rational` | 1 |
 | `real/geometry_polynomial_substrate` | `computable` | `constructor` | `prescaled-sin-rational` | 1 |
-| `real/geometry_polynomial_substrate` | `computable` | `constructor` | `rational-node` | 13 |
-| `real/geometry_polynomial_substrate` | `computable` | `constructor` | `shared-constant-wrapper` | 26 |
+| `real/geometry_polynomial_substrate` | `computable` | `constructor` | `rational-node` | 9 |
+| `real/geometry_polynomial_substrate` | `computable` | `constructor` | `shared-constant-wrapper` | 21 |
 | `real/geometry_polynomial_substrate` | `computable` | `constructor` | `shared-sqrt-constant-probe` | 2 |
 | `real/geometry_polynomial_substrate` | `computable` | `cos` | `structural-small-prescaled` | 1 |
 | `real/geometry_polynomial_substrate` | `computable` | `sin` | `structural-small-prescaled` | 1 |
 | `real/geometry_polynomial_substrate` | `computable` | `sqrt` | `generic-sqrt-node` | 3 |
-| `real/geometry_polynomial_substrate` | `rational` | `dot_product` | `dyadic-shared-denominator` | 3 |
+| `real/geometry_polynomial_substrate` | `rational` | `dot_product` | `dyadic-shared-denominator` | 2 |
 | `real/geometry_polynomial_substrate` | `rational` | `dot_product` | `lcm-shared-denominator` | 1 |
-| `real/geometry_polynomial_substrate` | `rational` | `product_sum` | `lcm-shared-denominator` | 2 |
+| `real/geometry_polynomial_substrate` | `rational` | `product_sum` | `lcm-shared-denominator` | 1 |
 | `real/geometry_polynomial_substrate` | `real` | `atan` | `exact-special-form` | 1 |
 | `real/geometry_polynomial_substrate` | `real` | `atan2` | `axis-negative-x` | 1 |
 | `real/geometry_polynomial_substrate` | `real` | `atan2` | `quadrant-upper-left` | 1 |
-| `real/geometry_polynomial_substrate` | `real` | `best_sign` | `symbolic-or-rational` | 5 |
+| `real/geometry_polynomial_substrate` | `real` | `best_sign` | `symbolic-or-rational` | 4 |
 | `real/geometry_polynomial_substrate` | `real` | `constructor` | `cached-e` | 3 |
-| `real/geometry_polynomial_substrate` | `real` | `constructor` | `cached-pi` | 8 |
-| `real/geometry_polynomial_substrate` | `real` | `constructor` | `one` | 11 |
-| `real/geometry_polynomial_substrate` | `real` | `constructor` | `rational` | 50 |
-| `real/geometry_polynomial_substrate` | `real` | `constructor` | `zero` | 6 |
+| `real/geometry_polynomial_substrate` | `real` | `constructor` | `cached-pi` | 7 |
+| `real/geometry_polynomial_substrate` | `real` | `constructor` | `one` | 9 |
+| `real/geometry_polynomial_substrate` | `real` | `constructor` | `rational` | 33 |
+| `real/geometry_polynomial_substrate` | `real` | `constructor` | `zero` | 3 |
 | `real/geometry_polynomial_substrate` | `real` | `cos` | `rational-specialized-computable` | 1 |
-| `real/geometry_polynomial_substrate` | `real` | `cos_pi` | `rational-sinpi-rewrite` | 1 |
+| `real/geometry_polynomial_substrate` | `real` | `cos_pi` | `rational-exact-table` | 1 |
 | `real/geometry_polynomial_substrate` | `real` | `cosc` | `one-minus-cos-over-square` | 1 |
-| `real/geometry_polynomial_substrate` | `real` | `definitely_zero` | `rational-sign` | 29 |
+| `real/geometry_polynomial_substrate` | `real` | `definitely_zero` | `rational-sign` | 15 |
 | `real/geometry_polynomial_substrate` | `real` | `div` | `lhs-rational-symbolic-inverse` | 2 |
 | `real/geometry_polynomial_substrate` | `real` | `div` | `rhs-one` | 3 |
 | `real/geometry_polynomial_substrate` | `real` | `div` | `same-class` | 1 |
 | `real/geometry_polynomial_substrate` | `real` | `dot_product` | `dot2-exact-rational-shared-denom` | 2 |
-| `real/geometry_polynomial_substrate` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 2 |
+| `real/geometry_polynomial_substrate` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 1 |
 | `real/geometry_polynomial_substrate` | `real` | `dot_product` | `dot4-structural-real-tree` | 1 |
 | `real/geometry_polynomial_substrate` | `real` | `hypot` | `hypot-minus-rationalized` | 1 |
 | `real/geometry_polynomial_substrate` | `real` | `hypot` | `hypot2-dot-sqrt` | 2 |
-| `real/geometry_polynomial_substrate` | `real` | `hypot` | `hypot3-dot-sqrt` | 2 |
+| `real/geometry_polynomial_substrate` | `real` | `hypot` | `hypot3-dot-sqrt` | 1 |
 | `real/geometry_polynomial_substrate` | `real` | `inverse_ref` | `generic` | 1 |
 | `real/geometry_polynomial_substrate` | `real` | `inverse_ref` | `prechecked-pi` | 1 |
 | `real/geometry_polynomial_substrate` | `real` | `pi_fraction` | `cached-special-form` | 1 |
-| `real/geometry_polynomial_substrate` | `real` | `polynomial` | `eval-poly-horner` | 3 |
+| `real/geometry_polynomial_substrate` | `real` | `polynomial` | `eval-poly-exact-rational` | 1 |
+| `real/geometry_polynomial_substrate` | `real` | `polynomial` | `eval-poly-rational-x-split` | 2 |
 | `real/geometry_polynomial_substrate` | `real` | `polynomial` | `eval-rational-poly` | 1 |
 | `real/geometry_polynomial_substrate` | `real` | `powi` | `rational-exact` | 1 |
 | `real/geometry_polynomial_substrate` | `real` | `product_sum` | `diff-of-products-exact-rational` | 1 |
-| `real/geometry_polynomial_substrate` | `real` | `product_sum` | `mul-add` | 10 |
 | `real/geometry_polynomial_substrate` | `real` | `product_sum` | `mul-add-zero-product` | 1 |
 | `real/geometry_polynomial_substrate` | `real` | `sin` | `rational-specialized-computable` | 1 |
 | `real/geometry_polynomial_substrate` | `real` | `sin_pi` | `rational-special-form` | 2 |
 | `real/geometry_polynomial_substrate` | `real` | `sinc` | `exact-zero-one` | 1 |
 | `real/geometry_polynomial_substrate` | `real` | `sinc` | `sin-over-x` | 1 |
 | `real/geometry_polynomial_substrate` | `real` | `sinc_pi` | `sinpi-over-pi-x` | 1 |
-| `real/geometry_polynomial_substrate` | `real` | `sqrt` | `rational-perfect-square` | 3 |
+| `real/geometry_polynomial_substrate` | `real` | `sqrt` | `rational-perfect-square` | 2 |
 | `real/geometry_polynomial_substrate` | `real` | `sqrt` | `rational-sqrt-special-form` | 1 |
 | `real/geometry_polynomial_substrate` | `real` | `structural_facts` | `exact-rational` | 4 |
 | `real/geometry_polynomial_substrate` | `real` | `tan` | `pi-rational-exact-table` | 1 |
@@ -961,23 +961,23 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/log/scaled_e` | `real` | `ln` | `cached-one-plus-ln2` | 1 |
 | `real/normal_scientific_substrate` | `computable` | `compare_absolute` | `exact-rational` | 1 |
 | `real/normal_scientific_substrate` | `computable` | `constructor` | `cached-inv-pi` | 1 |
-| `real/normal_scientific_substrate` | `computable` | `constructor` | `cached-pi` | 14 |
-| `real/normal_scientific_substrate` | `computable` | `constructor` | `one` | 18 |
-| `real/normal_scientific_substrate` | `computable` | `constructor` | `rational-node` | 62 |
-| `real/normal_scientific_substrate` | `computable` | `constructor` | `rational-one-canonicalized` | 4 |
-| `real/normal_scientific_substrate` | `computable` | `constructor` | `rational-zero-canonicalized` | 10 |
-| `real/normal_scientific_substrate` | `computable` | `constructor` | `shared-constant-wrapper` | 24 |
+| `real/normal_scientific_substrate` | `computable` | `constructor` | `cached-pi` | 13 |
+| `real/normal_scientific_substrate` | `computable` | `constructor` | `one` | 12 |
+| `real/normal_scientific_substrate` | `computable` | `constructor` | `rational-node` | 57 |
+| `real/normal_scientific_substrate` | `computable` | `constructor` | `rational-one-canonicalized` | 3 |
+| `real/normal_scientific_substrate` | `computable` | `constructor` | `rational-zero-canonicalized` | 8 |
+| `real/normal_scientific_substrate` | `computable` | `constructor` | `shared-constant-wrapper` | 23 |
 | `real/normal_scientific_substrate` | `computable` | `constructor` | `shared-log-constant-probe` | 2 |
 | `real/normal_scientific_substrate` | `computable` | `constructor` | `shared-sqrt-constant-probe` | 4 |
-| `real/normal_scientific_substrate` | `computable` | `constructor` | `zero` | 10 |
+| `real/normal_scientific_substrate` | `computable` | `constructor` | `zero` | 8 |
 | `real/normal_scientific_substrate` | `computable` | `exp` | `ln2-range-reduction` | 3 |
 | `real/normal_scientific_substrate` | `computable` | `exp` | `prescaled-kernel` | 2 |
 | `real/normal_scientific_substrate` | `computable` | `exp` | `structural-large-range-reduction` | 1 |
-| `real/normal_scientific_substrate` | `computable` | `exp` | `structural-small-prescaled` | 19 |
+| `real/normal_scientific_substrate` | `computable` | `exp` | `structural-small-prescaled` | 15 |
 | `real/normal_scientific_substrate` | `computable` | `ln` | `prescaled-ln1p-kernel` | 2 |
 | `real/normal_scientific_substrate` | `computable` | `ln` | `sqrt-range-reduction` | 1 |
-| `real/normal_scientific_substrate` | `computable` | `sign` | `exact-sign-cache` | 24 |
-| `real/normal_scientific_substrate` | `computable` | `sqrt` | `generic-sqrt-node` | 15 |
+| `real/normal_scientific_substrate` | `computable` | `sign` | `exact-sign-cache` | 22 |
+| `real/normal_scientific_substrate` | `computable` | `sqrt` | `generic-sqrt-node` | 14 |
 | `real/normal_scientific_substrate` | `computable` | `structural_facts` | `exact-sign-cache` | 1 |
 | `real/normal_scientific_substrate` | `real` | `abs` | `known-positive` | 1 |
 | `real/normal_scientific_substrate` | `real` | `best_sign` | `scaled-computable` | 1 |
@@ -986,18 +986,18 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/normal_scientific_substrate` | `real` | `certified_cmp_until` | `exact-rational-comparison` | 5 |
 | `real/normal_scientific_substrate` | `real` | `certified_sign_until` | `structural-facts` | 1 |
 | `real/normal_scientific_substrate` | `real` | `constructor` | `cached-pi` | 6 |
-| `real/normal_scientific_substrate` | `real` | `constructor` | `one` | 19 |
+| `real/normal_scientific_substrate` | `real` | `constructor` | `one` | 18 |
 | `real/normal_scientific_substrate` | `real` | `constructor` | `rational` | 117 |
 | `real/normal_scientific_substrate` | `real` | `constructor` | `zero` | 4 |
-| `real/normal_scientific_substrate` | `real` | `definitely_zero` | `rational-sign` | 21 |
+| `real/normal_scientific_substrate` | `real` | `definitely_zero` | `rational-sign` | 18 |
 | `real/normal_scientific_substrate` | `real` | `div` | `const-product-sqrt` | 2 |
 | `real/normal_scientific_substrate` | `real` | `div` | `lhs-rational-symbolic-inverse` | 3 |
 | `real/normal_scientific_substrate` | `real` | `div` | `rhs-one` | 2 |
 | `real/normal_scientific_substrate` | `real` | `div` | `same-class` | 4 |
 | `real/normal_scientific_substrate` | `real` | `dnorm` | `generic-computable` | 6 |
-| `real/normal_scientific_substrate` | `real` | `erf` | `generic-computable` | 2 |
+| `real/normal_scientific_substrate` | `real` | `erf` | `generic-computable` | 1 |
 | `real/normal_scientific_substrate` | `real` | `erfc` | `exact-zero-one` | 1 |
-| `real/normal_scientific_substrate` | `real` | `erfc` | `generic-computable` | 2 |
+| `real/normal_scientific_substrate` | `real` | `erfc` | `generic-computable` | 1 |
 | `real/normal_scientific_substrate` | `real` | `erfcinv` | `upper-tail-transform` | 1 |
 | `real/normal_scientific_substrate` | `real` | `erfcx` | `generic-computable` | 3 |
 | `real/normal_scientific_substrate` | `real` | `erfinv` | `exact-rational-upper-tail-transform` | 1 |
@@ -1014,7 +1014,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/normal_scientific_substrate` | `real` | `log_dnorm` | `analytic-computable` | 1 |
 | `real/normal_scientific_substrate` | `real` | `log_normal_sf` | `generic-computable` | 1 |
 | `real/normal_scientific_substrate` | `real` | `log_pnorm` | `generic-computable` | 1 |
-| `real/normal_scientific_substrate` | `real` | `normal_interval` | `generic-computable` | 3 |
+| `real/normal_scientific_substrate` | `real` | `normal_interval` | `generic-computable` | 2 |
 | `real/normal_scientific_substrate` | `real` | `normal_interval_moment` | `closed-form-third` | 1 |
 | `real/normal_scientific_substrate` | `real` | `normal_sf` | `generic-computable` | 3 |
 | `real/normal_scientific_substrate` | `real` | `powi` | `exponent-one` | 4 |
@@ -1057,38 +1057,38 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/sqrt_scaled_rational` | `real` | `constructor` | `rational` | 1 |
 | `real/sqrt_scaled_rational` | `real` | `sqrt` | `scaled-shared-sqrt-constant` | 1 |
 | `real/stable_scalar_substrate` | `computable` | `constructor` | `one` | 4 |
-| `real/stable_scalar_substrate` | `computable` | `constructor` | `rational-node` | 33 |
+| `real/stable_scalar_substrate` | `computable` | `constructor` | `rational-node` | 30 |
 | `real/stable_scalar_substrate` | `computable` | `constructor` | `rational-one-canonicalized` | 1 |
-| `real/stable_scalar_substrate` | `computable` | `constructor` | `shared-constant-wrapper` | 5 |
-| `real/stable_scalar_substrate` | `computable` | `exp` | `ln2-range-reduction` | 5 |
-| `real/stable_scalar_substrate` | `computable` | `exp` | `structural-large-range-reduction` | 5 |
+| `real/stable_scalar_substrate` | `computable` | `constructor` | `shared-constant-wrapper` | 4 |
+| `real/stable_scalar_substrate` | `computable` | `exp` | `ln2-range-reduction` | 4 |
+| `real/stable_scalar_substrate` | `computable` | `exp` | `structural-large-range-reduction` | 4 |
 | `real/stable_scalar_substrate` | `computable` | `exp` | `structural-small-prescaled` | 1 |
 | `real/stable_scalar_substrate` | `computable` | `ln` | `exact-rational-direct-ln1p` | 1 |
 | `real/stable_scalar_substrate` | `computable` | `sqrt` | `generic-sqrt-node` | 2 |
-| `real/stable_scalar_substrate` | `real` | `best_sign` | `symbolic-or-rational` | 17 |
+| `real/stable_scalar_substrate` | `real` | `best_sign` | `symbolic-or-rational` | 3 |
 | `real/stable_scalar_substrate` | `real` | `certified_cmp_until` | `exact-rational-comparison` | 1 |
 | `real/stable_scalar_substrate` | `real` | `constructor` | `bigint` | 1 |
-| `real/stable_scalar_substrate` | `real` | `constructor` | `one` | 10 |
-| `real/stable_scalar_substrate` | `real` | `constructor` | `rational` | 25 |
+| `real/stable_scalar_substrate` | `real` | `constructor` | `one` | 5 |
+| `real/stable_scalar_substrate` | `real` | `constructor` | `rational` | 20 |
 | `real/stable_scalar_substrate` | `real` | `constructor` | `zero` | 1 |
-| `real/stable_scalar_substrate` | `real` | `definitely_zero` | `rational-sign` | 20 |
-| `real/stable_scalar_substrate` | `real` | `div` | `lhs-rational-symbolic-inverse` | 3 |
+| `real/stable_scalar_substrate` | `real` | `definitely_zero` | `rational-sign` | 10 |
+| `real/stable_scalar_substrate` | `real` | `div` | `lhs-rational-symbolic-inverse` | 2 |
 | `real/stable_scalar_substrate` | `real` | `div` | `same-class` | 1 |
-| `real/stable_scalar_substrate` | `real` | `exp` | `rational-exp-special-form` | 5 |
 | `real/stable_scalar_substrate` | `real` | `expm1` | `generic-computable` | 1 |
 | `real/stable_scalar_substrate` | `real` | `integer-rounding` | `floor-exact-rational` | 2 |
 | `real/stable_scalar_substrate` | `real` | `integer-rounding` | `rem-euclid-certified` | 1 |
-| `real/stable_scalar_substrate` | `real` | `inverse_ref` | `generic` | 3 |
+| `real/stable_scalar_substrate` | `real` | `inverse_ref` | `generic` | 2 |
 | `real/stable_scalar_substrate` | `real` | `ln` | `rational-inverse-ln-special-form` | 1 |
-| `real/stable_scalar_substrate` | `real` | `ln_1p` | `generic-computable` | 6 |
+| `real/stable_scalar_substrate` | `real` | `ln_1m` | `exact-rational-computable` | 1 |
+| `real/stable_scalar_substrate` | `real` | `ln_1p` | `exact-rational-computable` | 1 |
 | `real/stable_scalar_substrate` | `real` | `logaddexp` | `left-dominant` | 1 |
+| `real/stable_scalar_substrate` | `real` | `logit` | `exact-rational-stable-logs` | 1 |
 | `real/stable_scalar_substrate` | `real` | `logsubexp` | `left-dominant` | 1 |
 | `real/stable_scalar_substrate` | `real` | `pow_rational` | `negative-odd-denominator-root` | 1 |
 | `real/stable_scalar_substrate` | `real` | `powi` | `exponent-one` | 1 |
 | `real/stable_scalar_substrate` | `real` | `root_n` | `rational-perfect-root` | 3 |
-| `real/stable_scalar_substrate` | `real` | `sigmoid` | `positive-tail` | 1 |
-| `real/stable_scalar_substrate` | `real` | `softplus` | `negative-ln1p-exp` | 1 |
-| `real/stable_scalar_substrate` | `real` | `softplus` | `positive-max-plus-ln1p-tail` | 1 |
+| `real/stable_scalar_substrate` | `real` | `sigmoid` | `exact-rational-tail` | 1 |
+| `real/stable_scalar_substrate` | `real` | `softplus` | `exact-rational-tail` | 2 |
 | `real/stable_scalar_substrate` | `real` | `sqrt` | `rational-sqrt-special-form` | 2 |
 | `real/stable_scalar_substrate` | `real` | `sqrt1pm1` | `rationalized` | 2 |
 | `real/structural_queries` | `computable` | `constructor` | `cached-pi` | 2 |

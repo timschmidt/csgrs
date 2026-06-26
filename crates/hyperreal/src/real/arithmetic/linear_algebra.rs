@@ -95,6 +95,36 @@ impl Real {
             return Real::new(value);
         }
 
+        if let Some(x) = x.exact_rational_ref() {
+            let mut power = Rational::one();
+            let mut rational_value = Rational::zero();
+            let mut symbolic_total = None::<Real>;
+            let mut symbolic_terms = 0_usize;
+
+            for coeff in coeffs {
+                if let Some(coeff) = coeff.exact_rational_ref() {
+                    rational_value = &rational_value + &(coeff * &power);
+                } else {
+                    symbolic_terms += 1;
+                    let term = coeff.scaled_by_rational(&power);
+                    symbolic_total = Some(match symbolic_total.take() {
+                        Some(total) => &total + &term,
+                        None => term,
+                    });
+                }
+                power = &power * x;
+            }
+
+            if symbolic_terms > 0 {
+                crate::trace_dispatch!("real", "polynomial", "eval-poly-rational-x-split");
+                return match (symbolic_total, rational_value.sign()) {
+                    (Some(total), Sign::NoSign) => total,
+                    (Some(total), _) => &total + &Real::new(rational_value),
+                    (None, _) => Real::new(rational_value),
+                };
+            }
+        }
+
         crate::trace_dispatch!("real", "polynomial", "eval-poly-horner");
         rest.iter()
             .rev()

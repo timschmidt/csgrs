@@ -134,6 +134,58 @@ impl Real {
         }
     }
 
+    fn cos_pi_rational(rational: Rational) -> Option<Real> {
+        if rational.is_integer() {
+            let odd = rational
+                .integer_magnitude()
+                .expect("integer rational has integer magnitude")
+                .bit(0);
+            return Some(if odd { -Self::one() } else { Self::one() });
+        }
+
+        if rational.sign() == Sign::Plus && rational < *rationals::HALF {
+            let denominator = rational.denominator();
+            if denominator == unsigned::THREE.deref() {
+                return Some(constants::half());
+            }
+            if denominator == unsigned::FOUR.deref() {
+                return Some(constants::sqrt_two_over_two());
+            }
+            if denominator == unsigned::SIX.deref() {
+                return Some(constants::sqrt_three_over_two());
+            }
+        }
+
+        let mut reduced = rational.fract();
+        if reduced.sign() == Sign::Minus {
+            reduced = reduced.neg();
+        }
+
+        let negate = if reduced > *rationals::HALF {
+            reduced = Rational::one() - reduced;
+            true
+        } else {
+            false
+        };
+
+        let denominator = reduced.denominator();
+        let exact = if reduced.is_zero() {
+            Self::one()
+        } else if denominator == unsigned::TWO.deref() {
+            Self::zero()
+        } else if denominator == unsigned::THREE.deref() {
+            constants::half()
+        } else if denominator == unsigned::FOUR.deref() {
+            constants::sqrt_two_over_two()
+        } else if denominator == unsigned::SIX.deref() {
+            constants::sqrt_three_over_two()
+        } else {
+            return None;
+        };
+
+        Some(if negate { exact.neg() } else { exact })
+    }
+
     /// The inverse of this Real, or a [`Problem`] if that's impossible,
     /// in particular Problem::DivideByZero if this real is zero.
     ///

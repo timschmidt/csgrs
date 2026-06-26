@@ -207,22 +207,6 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
 
     fn sub(self, other: T) -> Self::Output {
         let other = other.as_ref();
-        if self.class == Pi
-            && self.rational.is_one()
-            && other.class == One
-            && other.rational == *rationals::THREE
-        {
-            crate::trace_dispatch!("real", "sub", "cached-pi-minus-three");
-            return constants::pi_minus_three();
-        }
-        if self.class == One
-            && self.rational == *rationals::THREE
-            && other.class == Pi
-            && other.rational.is_one()
-        {
-            crate::trace_dispatch!("real", "sub", "cached-three-minus-pi");
-            return -constants::pi_minus_three();
-        }
         if self.class == other.class {
             // Same symbolic basis subtraction mirrors addition: update the scale only.
             let rational = &self.rational - &other.rational;
@@ -239,6 +223,22 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
                 signal: self.signal.clone(),
                 primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
             };
+        }
+        if self.class == Pi
+            && self.rational.is_one()
+            && other.class == One
+            && other.rational == *rationals::THREE
+        {
+            crate::trace_dispatch!("real", "sub", "cached-pi-minus-three");
+            return constants::pi_minus_three();
+        }
+        if self.class == One
+            && self.rational == *rationals::THREE
+            && other.class == Pi
+            && other.rational.is_one()
+        {
+            crate::trace_dispatch!("real", "sub", "cached-three-minus-pi");
+            return -constants::pi_minus_three();
         }
         if other.has_zero_scale() {
             return self.clone();
@@ -396,4 +396,3 @@ impl Real {
         }
     }
 }
-
