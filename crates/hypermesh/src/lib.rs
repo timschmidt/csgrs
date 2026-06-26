@@ -24,9 +24,7 @@ pub use mesh::ExactMesh;
 
 #[doc(hidden)]
 pub mod kernel {
-    pub use crate::mesh::arrangement3d::{
-        ArrangementEdgeRef, ArrangementFaceCellRef, ArrangementVertexRef, ArrangementView,
-    };
+    pub use crate::mesh::arrangement3d::ArrangementView;
     pub use crate::mesh::error::{
         ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide,
     };
