@@ -1,4 +1,4 @@
-use hyperlimit::{ApproximationPolicy, MeshSource, Point3, SourceProvenance};
+use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::ExactMesh;
 use hypermesh::kernel::{
     ArrangementView, EdgeRef, ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshRef,
@@ -455,14 +455,6 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(view.triangle_indices().len(), 4);
     assert_eq!(view.face_count(), 4);
     assert_eq!(view.edge_count(), 6);
-    let source_stamp = view.source_stamp();
-    assert_eq!(source_stamp.source(), MeshSource::Exact);
-    assert_eq!(source_stamp.approximation(), ApproximationPolicy::ExactOnly);
-    assert_ne!(source_stamp.source_identity(), 0);
-    assert_eq!(source_stamp.construction_version(), 1);
-    assert_eq!(source_stamp.vertex_count(), view.vertex_count());
-    assert_eq!(source_stamp.edge_count(), view.edge_count());
-    assert_eq!(source_stamp.face_count(), view.face_count());
     assert_eq!(view.mesh_bounds(), Some((&p(0, 0, 0), &p(1, 1, 1))));
     assert!(view.is_closed_manifold());
     assert_eq!(view.faces().count(), 4);
@@ -611,67 +603,6 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
 
     let prepared = view.prepare_broad_phase().unwrap();
     assert_eq!(prepared.mesh_bounds(), view.mesh_bounds());
-}
-
-#[test]
-fn exact_mesh_source_stamp_distinguishes_source_provenance() {
-    let vertices = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0), p(0, 0, 1)];
-    let triangles = vec![[0, 2, 1], [0, 1, 3], [1, 2, 3], [2, 0, 3]];
-    let left = ExactMesh::new(
-        vertices.clone(),
-        triangles.clone(),
-        SourceProvenance::exact("source identity left"),
-    )
-    .unwrap();
-    let right = ExactMesh::new(
-        vertices,
-        triangles,
-        SourceProvenance::exact("source identity right"),
-    )
-    .unwrap();
-
-    let left_stamp = left.view().source_stamp();
-    let right_stamp = right.view().source_stamp();
-    assert_eq!(left_stamp.source(), right_stamp.source());
-    assert_eq!(left_stamp.approximation(), right_stamp.approximation());
-    assert_eq!(
-        left_stamp.construction_version(),
-        right_stamp.construction_version()
-    );
-    assert_eq!(left_stamp.vertex_count(), right_stamp.vertex_count());
-    assert_eq!(left_stamp.edge_count(), right_stamp.edge_count());
-    assert_eq!(left_stamp.face_count(), right_stamp.face_count());
-    assert_ne!(left_stamp.source_identity(), right_stamp.source_identity());
-}
-
-#[test]
-fn exact_mesh_source_stamp_distinguishes_same_label_geometry() {
-    let triangles = vec![[0, 2, 1], [0, 1, 3], [1, 2, 3], [2, 0, 3]];
-    let left = ExactMesh::new(
-        vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0), p(0, 0, 1)],
-        triangles.clone(),
-        SourceProvenance::exact("source identity shared"),
-    )
-    .unwrap();
-    let right = ExactMesh::new(
-        vec![p(0, 0, 0), p(2, 0, 0), p(0, 1, 0), p(0, 0, 1)],
-        triangles,
-        SourceProvenance::exact("source identity shared"),
-    )
-    .unwrap();
-
-    let left_stamp = left.view().source_stamp();
-    let right_stamp = right.view().source_stamp();
-    assert_eq!(left_stamp.source(), right_stamp.source());
-    assert_eq!(left_stamp.approximation(), right_stamp.approximation());
-    assert_eq!(
-        left_stamp.construction_version(),
-        right_stamp.construction_version()
-    );
-    assert_eq!(left_stamp.vertex_count(), right_stamp.vertex_count());
-    assert_eq!(left_stamp.edge_count(), right_stamp.edge_count());
-    assert_eq!(left_stamp.face_count(), right_stamp.face_count());
-    assert_ne!(left_stamp.source_identity(), right_stamp.source_identity());
 }
 
 #[test]
@@ -1206,10 +1137,6 @@ fn exact_mesh_transform_and_inverse_replay_retained_state() {
         .unwrap();
 
     translated.validate_retained_state().unwrap();
-    assert_eq!(
-        translated.view().source_stamp().construction_version(),
-        mesh.view().source_stamp().construction_version() + 1
-    );
     assert_eq!(translated.vertices()[0], p(2, -3, 5));
     assert_eq!(
         translated.triangle_indices().collect::<Vec<_>>(),
@@ -1226,18 +1153,10 @@ fn exact_mesh_transform_and_inverse_replay_retained_state() {
         .unwrap();
 
     reflected.validate_retained_state().unwrap();
-    assert_eq!(
-        reflected.view().source_stamp().construction_version(),
-        mesh.view().source_stamp().construction_version() + 1
-    );
     assert_eq!(reflected.triangle_indices().next(), Some([0, 1, 2]));
 
     let inverted = mesh.inverse().unwrap();
     inverted.validate_retained_state().unwrap();
-    assert_eq!(
-        inverted.view().source_stamp().construction_version(),
-        mesh.view().source_stamp().construction_version() + 1
-    );
     assert_eq!(inverted.vertices(), mesh.vertices());
     assert_eq!(inverted.triangle_indices().next(), Some([0, 1, 2]));
 }

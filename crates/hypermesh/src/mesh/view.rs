@@ -166,7 +166,7 @@ pub struct PreparedMeshPairCacheStatus {
 
 /// Compact source/freshness stamp for retained exact mesh facts.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ExactMeshSourceStamp {
+struct ExactMeshSourceStamp {
     source: MeshSource,
     approximation: ApproximationPolicy,
     source_identity: u64,
@@ -177,41 +177,6 @@ pub struct ExactMeshSourceStamp {
 }
 
 impl ExactMeshSourceStamp {
-    /// Return the retained source category.
-    pub const fn source(self) -> MeshSource {
-        self.source
-    }
-
-    /// Return the retained approximation boundary policy.
-    pub const fn approximation(self) -> ApproximationPolicy {
-        self.approximation
-    }
-
-    /// Return the deterministic identity fingerprint for the retained source provenance.
-    pub const fn source_identity(self) -> u64 {
-        self.source_identity
-    }
-
-    /// Return the retained construction version for facts derived from this source.
-    pub const fn construction_version(self) -> u64 {
-        self.construction_version
-    }
-
-    /// Return the retained vertex count covered by this stamp.
-    pub const fn vertex_count(self) -> usize {
-        self.vertex_count
-    }
-
-    /// Return the retained edge count covered by this stamp.
-    pub const fn edge_count(self) -> usize {
-        self.edge_count
-    }
-
-    /// Return the retained face count covered by this stamp.
-    pub const fn face_count(self) -> usize {
-        self.face_count
-    }
-
     fn from_mesh(mesh: &ExactMesh) -> Self {
         let provenance = mesh.provenance();
         Self {
@@ -419,8 +384,7 @@ impl<'a> ExactMeshRef<'a> {
         self.mesh
     }
 
-    /// Return the retained source/freshness stamp for this exact mesh.
-    pub fn source_stamp(self) -> ExactMeshSourceStamp {
+    fn source_stamp(self) -> ExactMeshSourceStamp {
         ExactMeshSourceStamp::from_mesh(self.mesh)
     }
 
