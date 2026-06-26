@@ -522,6 +522,30 @@ impl ExactArrangementBooleanAttempt {
             && self.output_facts == other.output_facts
     }
 
+    /// Return whether another replay attempt certifies the same materialized
+    /// arrangement/cell-complex output.
+    pub(crate) fn materialized_output_matches_replay(&self, replay: &Self) -> bool {
+        let same_source_output = self.operation == replay.operation
+            && self.output_validation == replay.output_validation
+            && self.boundary_policy == replay.boundary_policy
+            && self.policy == replay.policy
+            && self.materialized_arrangement_cell_complex_output()
+            && replay.materialized_arrangement_cell_complex_output()
+            && self.output_certificate_matches(replay);
+        if !same_source_output {
+            return false;
+        }
+        if self.materialized_shortcut == replay.materialized_shortcut
+            && self.retained_gate_reports() == replay.retained_gate_reports()
+        {
+            return true;
+        }
+        self.materialized_without_shortcut()
+            && self.retained_gate_reports().is_some()
+            && replay.materialized_arrangement_cell_complex_shortcut()
+            && replay.retained_gate_reports().is_none()
+    }
+
     /// Return whether this attempt certifies the supplied output mesh.
     pub(crate) fn certifies_output_mesh(&self, mesh: &ExactMesh) -> bool {
         let Some(output_facts) = self.output_facts.as_ref() else {

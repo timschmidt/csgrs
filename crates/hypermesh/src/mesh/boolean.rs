@@ -142,9 +142,7 @@ impl ExactArrangementBooleanAttempt {
                     .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
         {
             replay.validate_for_request_policy(request, self.policy)?;
-            return if self == &replay
-                || arrangement_attempt_materialized_outputs_match(self, &replay)
-            {
+            return if self == &replay || self.materialized_output_matches_replay(&replay) {
                 Ok(())
             } else {
                 Err(ExactReportValidationError::SourceReplayMismatch)
@@ -179,37 +177,12 @@ impl ExactArrangementBooleanAttempt {
                 .ok_or(ExactReportValidationError::SourceReplayMismatch)?,
         };
         replay.validate_for_request_policy(request, self.policy)?;
-        if self == &replay || arrangement_attempt_materialized_outputs_match(self, &replay) {
+        if self == &replay || self.materialized_output_matches_replay(&replay) {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
         }
     }
-}
-
-fn arrangement_attempt_materialized_outputs_match(
-    retained: &ExactArrangementBooleanAttempt,
-    replay: &ExactArrangementBooleanAttempt,
-) -> bool {
-    let same_source_output = retained.operation == replay.operation
-        && retained.output_validation == replay.output_validation
-        && retained.boundary_policy == replay.boundary_policy
-        && retained.policy == replay.policy
-        && retained.materialized_arrangement_cell_complex_output()
-        && replay.materialized_arrangement_cell_complex_output()
-        && retained.output_certificate_matches(replay);
-    if !same_source_output {
-        return false;
-    }
-    if retained.materialized_shortcut == replay.materialized_shortcut
-        && retained.retained_gate_reports() == replay.retained_gate_reports()
-    {
-        return true;
-    }
-    retained.materialized_without_shortcut()
-        && retained.retained_gate_reports().is_some()
-        && replay.materialized_arrangement_cell_complex_shortcut()
-        && replay.retained_gate_reports().is_none()
 }
 
 pub(crate) fn exact_boolean_evaluation_for_replay(
