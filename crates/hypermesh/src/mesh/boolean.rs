@@ -1778,22 +1778,15 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         ));
     }
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
-        let geometry = graph.face_split_geometry_plan(left, right)?;
-        let region_plan = geometry.region_plan(left, right);
-        let region_classifications =
-            checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
-        return Ok(ExactBooleanPreflight::new(
+        return region_plan_preflight_from_graph(
+            graph,
+            left,
+            right,
             operation,
             ExactBooleanSupport::SelectedRegionPolicy,
-            graph_had_unknowns,
-            retained_face_pairs,
-            retained_events,
-            region_plan.regions.len(),
-            region_classifications,
             None,
             None,
-            None,
-        ));
+        );
     }
     if requires_certified_winding
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
@@ -2106,22 +2099,15 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     let winding_report = match winding_evidence_report_from_graph(graph, left, right, operation) {
         Ok(report) => report,
         Err(_) => {
-            let geometry = graph.face_split_geometry_plan(left, right)?;
-            let region_plan = geometry.region_plan(left, right);
-            let region_classifications =
-                checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
-            return Ok(ExactBooleanPreflight::new(
+            return region_plan_preflight_from_graph(
+                graph,
+                left,
+                right,
                 operation,
                 support,
-                graph_had_unknowns,
-                retained_face_pairs,
-                retained_events,
-                region_plan.regions.len(),
-                region_classifications,
                 Some(relation_counts.into_blocker(ExactBooleanBlockerKind::Winding)),
-                None,
                 coplanar_volumetric_evidence_if_required(graph, left, right),
-            ));
+            );
         }
     };
     if winding_report
@@ -2599,6 +2585,33 @@ fn certified_arrangement_cell_complex_preflight(
         Some(graph),
         certified_arrangement_cell_complex_coplanar_evidence(graph, left, right),
     )
+}
+
+fn region_plan_preflight_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    support: ExactBooleanSupport,
+    blocker: Option<ExactBooleanBlocker>,
+    coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
+) -> Result<ExactBooleanPreflight, ExactMeshError> {
+    let geometry = graph.face_split_geometry_plan(left, right)?;
+    let region_plan = geometry.region_plan(left, right);
+    let region_classifications =
+        checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
+    Ok(ExactBooleanPreflight::new(
+        operation,
+        support,
+        graph.has_unknowns(),
+        graph.face_pairs.len(),
+        graph.event_count(),
+        region_plan.regions.len(),
+        region_classifications,
+        blocker,
+        None,
+        coplanar_volumetric_evidence,
+    ))
 }
 
 fn certified_closed_boundary_touching_support(
