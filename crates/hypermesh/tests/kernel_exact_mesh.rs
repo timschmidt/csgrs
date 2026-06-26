@@ -96,12 +96,6 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    let count_only_pair = empty.view().prepare_broad_phase_pair(solid.view()).unwrap();
-    count_only_pair.prepare_intersection_graph().unwrap();
-    count_only_pair
-        .prepare_current_intersection_graph()
-        .unwrap();
-
     let union = pair.union().unwrap();
     union.validate_retained_state().unwrap();
     assert_eq!(union.triangle_count(), solid.triangle_count());
@@ -343,14 +337,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .unwrap(),
         retained_candidate_count
     );
-    let streamed_graph_pair = left
-        .view()
-        .prepare_broad_phase_pair(overlapping.view())
-        .unwrap();
-    streamed_graph_pair.prepare_intersection_graph().unwrap();
-    streamed_graph_pair
-        .prepare_current_intersection_graph()
-        .unwrap();
     let classification_records_first_pair = left
         .view()
         .prepare_broad_phase_pair(overlapping.view())
@@ -361,8 +347,11 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         .unwrap();
     classification_first_candidates.sort_unstable();
     assert!(retained_candidate_count > 0);
-    prepared_pair.prepare_intersection_graph().unwrap();
-    prepared_pair.prepare_current_intersection_graph().unwrap();
+    prepared_pair
+        .with_arrangement_view(|view| {
+            view.validate_retained_state().unwrap();
+        })
+        .unwrap();
 
     assert_eq!(prepared_left.view().face_count(), left.triangle_count());
     assert_eq!(

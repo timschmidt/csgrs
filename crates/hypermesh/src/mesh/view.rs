@@ -16,10 +16,7 @@ use super::bounds::{
 };
 use super::error::ExactMeshError;
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
-use super::graph::{
-    ExactIntersectionGraph, build_unvalidated_intersection_graph_from_prepared_pair_rc,
-    build_validated_intersection_graph_from_prepared_pair,
-};
+use super::graph::{ExactIntersectionGraph, build_validated_intersection_graph_from_prepared_pair};
 use super::validation::ExactMeshValidationPolicy;
 use hyperlimit::{ApproximationPolicy, MeshSource, Point3, PredicateUse};
 use hyperreal::Real;
@@ -716,22 +713,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     /// Build and retain the exact arrangement.
     pub fn prepare_arrangement(&self) -> Result<(), ExactMeshError> {
         self.retained_arrangement()?;
-        Ok(())
-    }
-
-    /// Build and retain the exact intersection graph without certifying source replay.
-    ///
-    /// The graph remains certificate-blocked until
-    /// [`Self::prepare_current_intersection_graph`] validates its retained
-    /// source handles.
-    pub fn prepare_intersection_graph(&self) -> Result<(), ExactMeshError> {
-        build_unvalidated_intersection_graph_from_prepared_pair_rc(self)?;
-        Ok(())
-    }
-
-    /// Build, retain, and source-certify the exact intersection graph.
-    pub fn prepare_current_intersection_graph(&self) -> Result<(), ExactMeshError> {
-        build_validated_intersection_graph_from_prepared_pair(self)?;
         Ok(())
     }
 
