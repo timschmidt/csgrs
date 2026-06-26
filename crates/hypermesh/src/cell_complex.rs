@@ -5,6 +5,10 @@
 //! triangulation/export remains a later step with its own approximation or
 //! triangulation policy.
 
+use super::arrangement3d::regularization::{
+    ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
+    ExactUnresolvedPolicy,
+};
 use super::arrangement3d::{
     ArrangementFaceCell, ArrangementLowerDimensionalArtifact, ArrangementOppositeClassification,
     ArrangementVolumeAdjacency, ArrangementVolumeRegion, ExactArrangement, ExactArrangement3d,
@@ -14,10 +18,6 @@ use super::arrangement3d::{
 use super::boolean::ExactBooleanOperation;
 use super::boolean::solid::ConvexSolidPointRelation;
 use super::graph::MeshSide;
-use super::regularization::{
-    ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
-    ExactUnresolvedPolicy,
-};
 use super::simplify::{ExactSimplifiedCellComplex, simplify_selected_cell_complex};
 
 /// Region label for one arrangement face-cell.
@@ -478,7 +478,8 @@ impl ExactCellComplex {
             }
         };
         if !blockers.is_empty()
-            && policy.unresolved == super::regularization::ExactUnresolvedPolicy::Block
+            && policy.unresolved
+                == super::arrangement3d::regularization::ExactUnresolvedPolicy::Block
         {
             return Err(blockers[0].clone());
         }
@@ -719,7 +720,8 @@ impl ExactLabeledCellComplex {
             (selected_faces, selected_face_orientations)
         };
         if !blockers.is_empty()
-            && policy.unresolved == super::regularization::ExactUnresolvedPolicy::Block
+            && policy.unresolved
+                == super::arrangement3d::regularization::ExactUnresolvedPolicy::Block
         {
             return Err(blockers[0].clone());
         }

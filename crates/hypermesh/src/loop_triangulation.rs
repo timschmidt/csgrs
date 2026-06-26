@@ -21,9 +21,9 @@ use super::arrangement2d::{
     build_exact_arrangement2d_overlay_with_boundary_policy,
     build_exact_arrangement2d_ring_union_overlay_with_boundary_policy,
 };
+use super::arrangement3d::regularization::ExactArrangementBlocker;
 use super::graph::key::{ExactPoint3Key, exact_point3_key};
 use super::mesh::Triangle;
-use super::regularization::ExactArrangementBlocker;
 use hyperlimit::CoplanarProjection;
 
 #[derive(Clone)]

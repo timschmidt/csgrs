@@ -3,6 +3,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use super::ExactMesh;
+use super::arrangement3d::regularization::ExactRegularizationPolicy;
 use super::arrangement3d::{ArrangementView, ExactArrangement};
 use super::boolean::{
     ExactArrangementCellComplexShortcutFacts, ExactBooleanOperation, ExactBooleanRequest,
@@ -21,7 +22,6 @@ use super::graph::{
     ExactIntersectionGraph, build_unvalidated_intersection_graph_from_prepared_pair_rc,
     build_validated_intersection_graph_from_prepared_pair,
 };
-use super::regularization::ExactRegularizationPolicy;
 use super::validation::ExactMeshValidationPolicy;
 use hyperlimit::{ApproximationPolicy, MeshSource, Point3, PredicateUse};
 use hyperreal::Real;

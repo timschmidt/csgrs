@@ -13,6 +13,8 @@ use hyperreal::Real;
 use std::cmp::Ordering;
 
 use super::super::ExactMesh;
+use super::super::arrangement3d::regularization::ExactArrangementBlocker;
+use super::super::arrangement3d::regularization::ExactRegularizationPolicy;
 use super::super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::super::bounds::AabbIntersectionKind;
 use super::super::cell_complex::{
@@ -30,8 +32,6 @@ use super::super::region::{
     ExactRegionSelection, FaceRegionPlaneClassification, FaceRegionPlaneValidationError,
     FaceRegionTriangulation, boundary_node_point,
 };
-use super::super::regularization::ExactArrangementBlocker;
-use super::super::regularization::ExactRegularizationPolicy;
 use super::super::validation::ExactMeshValidationPolicy;
 use super::adjacent::materialize_full_face_adjacent_union;
 use super::affine_solid::{

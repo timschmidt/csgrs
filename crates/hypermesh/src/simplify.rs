@@ -9,6 +9,7 @@ use std::cmp::Ordering;
 
 #[cfg(test)]
 use super::arrangement3d::ExactArrangement;
+use super::arrangement3d::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::arrangement3d::{
     ArrangementFaceCellNode, ArrangementLowerDimensionalArtifact, ExactTopologyAssemblyReport,
     validate_lower_dimensional_artifacts,
@@ -26,7 +27,6 @@ use super::loop_triangulation::{
     choose_polygon_projection, group_exact_coplanar_loops, triangulate_exact_loop_group,
 };
 use super::mesh::{ExactMesh, Triangle};
-use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::validation::ExactMeshValidationPolicy;
 use hyperlimit::CoplanarProjection;
 use hyperlimit::SourceProvenance;
@@ -427,7 +427,7 @@ pub(crate) fn simplify_selected_cell_complex(
     faces.sort_by_key(simplified_sort_key);
 
     if !blockers.is_empty()
-        && policy.unresolved == super::regularization::ExactUnresolvedPolicy::Block
+        && policy.unresolved == super::arrangement3d::regularization::ExactUnresolvedPolicy::Block
     {
         return Err(blockers[0].clone());
     }

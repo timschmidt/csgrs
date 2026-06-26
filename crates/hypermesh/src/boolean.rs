@@ -35,6 +35,7 @@ use super::arrangement2d::{
     ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
     build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
 };
+use super::arrangement3d::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::arrangement3d::{
     ExactArrangement, ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
 };
@@ -65,7 +66,6 @@ use super::region::{
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, choose_region_projection,
 };
-use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::simplify::ExactSimplifiedCellComplex;
 use super::validation::ExactMeshValidationPolicy;
 use super::view::PreparedMeshPair;

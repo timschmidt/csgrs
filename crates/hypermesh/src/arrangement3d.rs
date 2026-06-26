@@ -6,6 +6,8 @@
 //! carrier-face provenance, and winding labels needed by later selection and
 //! simplification stages.
 
+pub(crate) mod regularization;
+
 use super::arrangement2d::{
     ExactArrangement2d, ExactArrangement2dBlocker, ExactArrangement2dInputSegment,
     ExactArrangement2dOverlay, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
@@ -38,14 +40,14 @@ use super::loop_triangulation::{
     group_exact_coplanar_loops, projected_loop_interior_witness, triangulate_exact_loop_group,
 };
 use super::mesh::ExactMesh;
-use super::regularization::{
-    ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
-    ExactUnresolvedPolicy,
-};
 use super::validation::ExactMeshValidationPolicy;
 use core::cmp::Ordering;
 use hyperlimit::CoplanarProjection;
 use hyperlimit::SourceProvenance;
+use regularization::{
+    ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
+    ExactUnresolvedPolicy,
+};
 use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::{
@@ -4941,9 +4943,7 @@ fn face_cell_from_original_triangle(
     );
     let opposite =
         representative.map(|point| classify_opposite(side, point, left, right, policy, blockers));
-    if opposite.is_none()
-        && policy.unresolved == super::regularization::ExactUnresolvedPolicy::Block
-    {
+    if opposite.is_none() && policy.unresolved == ExactUnresolvedPolicy::Block {
         blockers.push(ExactArrangementBlocker::UnresolvedRegionClassification);
     }
     ArrangementFaceCell {
@@ -5136,7 +5136,7 @@ fn classify_opposite(
         winding.relation,
         ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed
     ) && convex_certification.is_none()
-        && policy.unresolved == super::regularization::ExactUnresolvedPolicy::Block
+        && policy.unresolved == ExactUnresolvedPolicy::Block
     {
         blockers.push(ExactArrangementBlocker::UnresolvedRegionClassification);
     }

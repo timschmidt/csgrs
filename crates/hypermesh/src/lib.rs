@@ -29,7 +29,6 @@ mod graph;
 mod loop_triangulation;
 mod mesh;
 mod region;
-mod regularization;
 mod simplify;
 mod validation;
 mod view;
