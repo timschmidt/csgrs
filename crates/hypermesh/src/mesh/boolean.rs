@@ -39,7 +39,7 @@ use super::arrangement3d::arrangement2d::{
 };
 use super::arrangement3d::cell_complex::simplify::ExactSimplifiedCellComplex;
 use super::arrangement3d::cell_complex::{
-    ExactSelectedCellComplex, arrangement_cell_complex_labeling_policy,
+    arrangement_cell_complex_labeling_policy,
     arrangement_region_classification_blockers_resolve_operation, select_arrangement_for_replay,
 };
 use super::arrangement3d::loop_triangulation::{
@@ -79,8 +79,7 @@ use convex::{
 };
 use evidence::{
     ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus,
-    ExactArrangementBooleanAttempt, ExactArrangementBooleanDecline,
-    ExactArrangementBooleanShortcutReason, ExactArrangementBooleanStage,
+    ExactArrangementBooleanAttempt, ExactArrangementBooleanDecline, ExactArrangementBooleanStage,
     ExactArrangementCellComplexShortcutFacts, ExactBooleanBlocker, ExactBooleanBlockerKind,
     ExactBooleanCertificationSet, ExactBooleanEvaluation, ExactBooleanPreflight,
     ExactBooleanResult, ExactBooleanResultKind, ExactBooleanShortcutKind, ExactBooleanSourceFacts,
@@ -580,18 +579,6 @@ fn arrangement_blocker_error(
         kind,
         format!("{context}: {blocker:?}"),
     ))
-}
-
-fn record_selected_orientation_counts(
-    attempt: &mut ExactArrangementBooleanAttempt,
-    selected: &ExactSelectedCellComplex,
-) {
-    let counts = selected.counts();
-    attempt.selected_faces = counts.selected_faces;
-    attempt.selected_volume_regions = counts.selected_volume_regions;
-    attempt.reversed_selected_faces = counts.reversed_selected_faces;
-    attempt.volume_oriented_selected_faces = counts.volume_oriented_selected_faces;
-    attempt.label_oriented_selected_faces = counts.label_oriented_selected_faces;
 }
 
 fn retained_arrangement_attempt_for_request<'a>(
@@ -3914,23 +3901,14 @@ fn materialized_arrangement_attempt_outcome(
     clear_arrangement_blockers: bool,
     materialized_shortcut: Option<ExactBooleanShortcutKind>,
 ) -> ArrangementCellComplexOutcome {
-    let shortcut_reason =
-        materialized_shortcut.map(|_| shortcut_reason_for_recovered_arrangement_attempt(attempt));
-    attempt.stage = ExactArrangementBooleanStage::Materialized;
-    attempt.decline = None;
-    attempt.materialized_shortcut = materialized_shortcut;
-    attempt.shortcut_reason = shortcut_reason;
-    if materialized_shortcut.is_some() {
-        attempt.selected_cell_complex = None;
-        attempt.simplified_cell_complex = None;
-    }
     if let Some((topology, ownership)) = attempt.retained_gate_reports() {
         result.retain_missing_gate_reports(Some(topology), Some(ownership));
     }
-    if clear_arrangement_blockers {
-        attempt.arrangement_blockers = 0;
-    }
-    record_attempt_output_mesh(attempt, &result.mesh);
+    attempt.retain_materialized_output(
+        &result.mesh,
+        materialized_shortcut,
+        clear_arrangement_blockers,
+    );
     ArrangementCellComplexOutcome::Materialized(Box::new(result), attempt.clone())
 }
 
@@ -3970,83 +3948,11 @@ fn not_attempted_arrangement_attempt_for_request(
     }
 }
 
-fn shortcut_reason_for_recovered_arrangement_attempt(
-    attempt: &ExactArrangementBooleanAttempt,
-) -> ExactArrangementBooleanShortcutReason {
-    match attempt.decline.as_ref() {
-        Some(ExactArrangementBooleanDecline::ArrangementBlockers(_)) => {
-            return ExactArrangementBooleanShortcutReason::ArrangementConstructionBlocked;
-        }
-        Some(ExactArrangementBooleanDecline::TopologyAssembly(_)) => {
-            return ExactArrangementBooleanShortcutReason::TopologyAssemblyBlocked;
-        }
-        Some(ExactArrangementBooleanDecline::RegionOwnership(_)) => {
-            return ExactArrangementBooleanShortcutReason::RegionOwnershipBlocked;
-        }
-        Some(ExactArrangementBooleanDecline::Labeling(_))
-        | Some(ExactArrangementBooleanDecline::Selection(_)) => {
-            return ExactArrangementBooleanShortcutReason::SelectionBlocked;
-        }
-        Some(ExactArrangementBooleanDecline::Simplification(_)) => {
-            return ExactArrangementBooleanShortcutReason::SimplificationBlocked;
-        }
-        Some(ExactArrangementBooleanDecline::Triangulation(_)) => {
-            return ExactArrangementBooleanShortcutReason::TriangulationBlocked;
-        }
-        Some(ExactArrangementBooleanDecline::OutputValidation) => {
-            return ExactArrangementBooleanShortcutReason::OutputValidationBlocked;
-        }
-        None => {}
-    }
-    match attempt.stage {
-        ExactArrangementBooleanStage::NotAttempted => {
-            ExactArrangementBooleanShortcutReason::ShortcutSupportOnly
-        }
-        ExactArrangementBooleanStage::ArrangementBuilt if attempt.arrangement_blockers != 0 => {
-            ExactArrangementBooleanShortcutReason::ArrangementConstructionBlocked
-        }
-        ExactArrangementBooleanStage::ArrangementBuilt => {
-            ExactArrangementBooleanShortcutReason::TopologyAssemblyBlocked
-        }
-        ExactArrangementBooleanStage::Labeled => {
-            if !attempt.resolves_requested_volume_ownership() {
-                ExactArrangementBooleanShortcutReason::RegionOwnershipBlocked
-            } else {
-                ExactArrangementBooleanShortcutReason::SelectionBlocked
-            }
-        }
-        ExactArrangementBooleanStage::Selected => {
-            ExactArrangementBooleanShortcutReason::SimplificationBlocked
-        }
-        ExactArrangementBooleanStage::Simplified => {
-            ExactArrangementBooleanShortcutReason::TriangulationBlocked
-        }
-        ExactArrangementBooleanStage::Triangulated => {
-            ExactArrangementBooleanShortcutReason::OutputValidationBlocked
-        }
-        ExactArrangementBooleanStage::Materialized => {
-            ExactArrangementBooleanShortcutReason::GenericMaterializationUnavailable
-        }
-    }
-}
-
-fn record_attempt_output_mesh(attempt: &mut ExactArrangementBooleanAttempt, mesh: &ExactMesh) {
-    attempt.output_vertices = mesh.vertices().len();
-    attempt.output_triangles = mesh.triangles().len();
-    attempt.output_facts = Some(mesh.facts().mesh.clone());
-}
-
 fn declined_output_validation_attempt_outcome_with_counts(
     attempt: &mut ExactArrangementBooleanAttempt,
     output_counts: Option<(usize, usize)>,
 ) -> ArrangementCellComplexOutcome {
-    if let Some((vertices, triangles)) = output_counts {
-        attempt.output_vertices = vertices;
-        attempt.output_triangles = triangles;
-        attempt.output_facts = None;
-    }
-    attempt.stage = ExactArrangementBooleanStage::Triangulated;
-    attempt.decline = Some(ExactArrangementBooleanDecline::OutputValidation);
+    attempt.decline_output_validation(output_counts);
     ArrangementCellComplexOutcome::Declined(attempt.clone())
 }
 
@@ -4507,7 +4413,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
                 Some(ExactBooleanShortcutKind::ArrangementCellComplex),
             ));
         }
-        attempt.decline = Some(ExactArrangementBooleanDecline::ArrangementBlockers(
+        attempt.record_decline(ExactArrangementBooleanDecline::ArrangementBlockers(
             arrangement.blockers.clone(),
         ));
         return Ok(ArrangementCellComplexOutcome::Declined(attempt));
@@ -4528,7 +4434,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         )? {
             return Ok(outcome);
         }
-        attempt.decline = Some(ExactArrangementBooleanDecline::TopologyAssembly(
+        attempt.record_decline(ExactArrangementBooleanDecline::TopologyAssembly(
             topology_report.status,
         ));
         return Ok(ArrangementCellComplexOutcome::Declined(attempt));
@@ -4551,15 +4457,15 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
             )? {
                 return Ok(outcome);
             }
-            attempt.decline = Some(ExactArrangementBooleanDecline::Labeling(blocker));
+            attempt.record_decline(ExactArrangementBooleanDecline::Labeling(blocker));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
     };
-    attempt.stage = ExactArrangementBooleanStage::Labeled;
+    attempt.mark_labeled();
     let ownership_report = labeled.region_ownership_report(left, right, labeling_policy);
     attempt.retain_region_ownership_report(ownership_report.clone());
     if ownership_report.validate().is_err() {
-        attempt.decline = Some(ExactArrangementBooleanDecline::RegionOwnership(
+        attempt.record_decline(ExactArrangementBooleanDecline::RegionOwnership(
             ownership_report.status,
         ));
         return Ok(ArrangementCellComplexOutcome::Declined(attempt));
@@ -4580,7 +4486,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         )? {
             return Ok(outcome);
         }
-        attempt.decline = Some(ExactArrangementBooleanDecline::RegionOwnership(
+        attempt.record_decline(ExactArrangementBooleanDecline::RegionOwnership(
             ownership_report.status,
         ));
         return Ok(ArrangementCellComplexOutcome::Declined(attempt));
@@ -4593,7 +4499,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
     let mut selected = match selected_result {
         Ok(selected) if selected.blockers.is_empty() => selected,
         Ok(selected) => {
-            record_selected_orientation_counts(&mut attempt, &selected);
+            attempt.record_selected_counts(&selected);
             if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
                 regularized_sheet_recovery_surface,
@@ -4606,7 +4512,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
             )? {
                 return Ok(outcome);
             }
-            attempt.decline = Some(ExactArrangementBooleanDecline::Selection(
+            attempt.record_decline(ExactArrangementBooleanDecline::Selection(
                 selected.blockers[0].clone(),
             ));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
@@ -4624,14 +4530,12 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
             )? {
                 return Ok(outcome);
             }
-            attempt.decline = Some(ExactArrangementBooleanDecline::Selection(blocker));
+            attempt.record_decline(ExactArrangementBooleanDecline::Selection(blocker));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
     };
     selected = selected.with_gate_reports(topology_report.clone(), ownership_report.clone());
-    attempt.stage = ExactArrangementBooleanStage::Selected;
-    record_selected_orientation_counts(&mut attempt, &selected);
-    attempt.selected_cell_complex = Some(selected.clone());
+    attempt.retain_selected_cell_complex(selected.clone());
     let simplified = match selected.simplify_exact_with_policy(policy) {
         Ok(simplified) if simplified.blockers.is_empty() => simplified,
         Ok(simplified) => {
@@ -4647,7 +4551,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
             )? {
                 return Ok(outcome);
             }
-            attempt.decline = Some(ExactArrangementBooleanDecline::Simplification(
+            attempt.record_decline(ExactArrangementBooleanDecline::Simplification(
                 simplified.blockers[0].clone(),
             ));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
@@ -4665,12 +4569,11 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
             )? {
                 return Ok(outcome);
             }
-            attempt.decline = Some(ExactArrangementBooleanDecline::Simplification(blocker));
+            attempt.record_decline(ExactArrangementBooleanDecline::Simplification(blocker));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
     };
-    attempt.stage = ExactArrangementBooleanStage::Simplified;
-    attempt.simplified_cell_complex = Some(simplified.clone());
+    attempt.retain_simplified_cell_complex(simplified.clone());
     let mesh = match simplified.triangulate() {
         Ok(mesh) => mesh,
         Err(blocker) => {
@@ -4686,12 +4589,12 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
             )? {
                 return Ok(outcome);
             }
-            attempt.decline = Some(ExactArrangementBooleanDecline::Triangulation(blocker));
+            attempt.record_decline(ExactArrangementBooleanDecline::Triangulation(blocker));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
     };
-    attempt.stage = ExactArrangementBooleanStage::Triangulated;
-    record_attempt_output_mesh(&mut attempt, &mesh);
+    attempt.mark_triangulated();
+    attempt.retain_output_mesh(&mesh);
     let mesh = match copy_mesh(
         &mesh,
         "exact arrangement cell-complex boolean result",
@@ -4733,7 +4636,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
             )? {
                 return Ok(outcome);
             }
-            attempt.decline = Some(ExactArrangementBooleanDecline::OutputValidation);
+            attempt.record_decline(ExactArrangementBooleanDecline::OutputValidation);
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
     };

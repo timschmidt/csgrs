@@ -4,7 +4,8 @@ use crate::mesh::arrangement3d::cell_complex::{
     ExactRegionOwnershipReport, ExactRegionOwnershipStatus,
 };
 use crate::mesh::boolean::evidence::{
-    meshes_are_certified_identical, meshes_are_certified_same_surface,
+    ExactArrangementBooleanShortcutReason, meshes_are_certified_identical,
+    meshes_are_certified_same_surface,
 };
 
 fn test_preflight(
@@ -329,11 +330,7 @@ fn arrangement_shortcut_reason_names_generic_blocker_stage() {
     ];
 
     for (attempt, expected) in cases {
-        assert_eq!(
-            shortcut_reason_for_recovered_arrangement_attempt(&attempt),
-            expected,
-            "{attempt:?}"
-        );
+        assert_eq!(attempt.recovered_shortcut_reason(), expected, "{attempt:?}");
     }
 }
 

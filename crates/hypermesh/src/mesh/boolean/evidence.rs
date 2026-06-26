@@ -517,6 +517,147 @@ impl ExactArrangementBooleanAttempt {
             && &mesh.facts().mesh == output_facts
     }
 
+    /// Return the retained shortcut reason implied by the current attempt state.
+    pub(crate) fn recovered_shortcut_reason(&self) -> ExactArrangementBooleanShortcutReason {
+        match self.decline.as_ref() {
+            Some(ExactArrangementBooleanDecline::ArrangementBlockers(_)) => {
+                return ExactArrangementBooleanShortcutReason::ArrangementConstructionBlocked;
+            }
+            Some(ExactArrangementBooleanDecline::TopologyAssembly(_)) => {
+                return ExactArrangementBooleanShortcutReason::TopologyAssemblyBlocked;
+            }
+            Some(ExactArrangementBooleanDecline::RegionOwnership(_)) => {
+                return ExactArrangementBooleanShortcutReason::RegionOwnershipBlocked;
+            }
+            Some(ExactArrangementBooleanDecline::Labeling(_))
+            | Some(ExactArrangementBooleanDecline::Selection(_)) => {
+                return ExactArrangementBooleanShortcutReason::SelectionBlocked;
+            }
+            Some(ExactArrangementBooleanDecline::Simplification(_)) => {
+                return ExactArrangementBooleanShortcutReason::SimplificationBlocked;
+            }
+            Some(ExactArrangementBooleanDecline::Triangulation(_)) => {
+                return ExactArrangementBooleanShortcutReason::TriangulationBlocked;
+            }
+            Some(ExactArrangementBooleanDecline::OutputValidation) => {
+                return ExactArrangementBooleanShortcutReason::OutputValidationBlocked;
+            }
+            None => {}
+        }
+        match self.stage {
+            ExactArrangementBooleanStage::NotAttempted => {
+                ExactArrangementBooleanShortcutReason::ShortcutSupportOnly
+            }
+            ExactArrangementBooleanStage::ArrangementBuilt if self.arrangement_blockers != 0 => {
+                ExactArrangementBooleanShortcutReason::ArrangementConstructionBlocked
+            }
+            ExactArrangementBooleanStage::ArrangementBuilt => {
+                ExactArrangementBooleanShortcutReason::TopologyAssemblyBlocked
+            }
+            ExactArrangementBooleanStage::Labeled => {
+                if !self.resolves_requested_volume_ownership() {
+                    ExactArrangementBooleanShortcutReason::RegionOwnershipBlocked
+                } else {
+                    ExactArrangementBooleanShortcutReason::SelectionBlocked
+                }
+            }
+            ExactArrangementBooleanStage::Selected => {
+                ExactArrangementBooleanShortcutReason::SimplificationBlocked
+            }
+            ExactArrangementBooleanStage::Simplified => {
+                ExactArrangementBooleanShortcutReason::TriangulationBlocked
+            }
+            ExactArrangementBooleanStage::Triangulated => {
+                ExactArrangementBooleanShortcutReason::OutputValidationBlocked
+            }
+            ExactArrangementBooleanStage::Materialized => {
+                ExactArrangementBooleanShortcutReason::GenericMaterializationUnavailable
+            }
+        }
+    }
+
+    /// Record selected-cell orientation counts without retaining the selected
+    /// cell complex itself.
+    pub(crate) fn record_selected_counts(&mut self, selected: &ExactSelectedCellComplex) {
+        let counts = selected.counts();
+        self.selected_faces = counts.selected_faces;
+        self.selected_volume_regions = counts.selected_volume_regions;
+        self.reversed_selected_faces = counts.reversed_selected_faces;
+        self.volume_oriented_selected_faces = counts.volume_oriented_selected_faces;
+        self.label_oriented_selected_faces = counts.label_oriented_selected_faces;
+    }
+
+    /// Retain the selected cell complex and advance the attempt stage.
+    pub(crate) fn retain_selected_cell_complex(&mut self, selected: ExactSelectedCellComplex) {
+        self.stage = ExactArrangementBooleanStage::Selected;
+        self.record_selected_counts(&selected);
+        self.selected_cell_complex = Some(selected);
+    }
+
+    /// Mark that region labeling completed.
+    pub(crate) fn mark_labeled(&mut self) {
+        self.stage = ExactArrangementBooleanStage::Labeled;
+    }
+
+    /// Mark that triangulation produced an output mesh candidate.
+    pub(crate) fn mark_triangulated(&mut self) {
+        self.stage = ExactArrangementBooleanStage::Triangulated;
+    }
+
+    /// Retain the simplified cell complex and advance the attempt stage.
+    pub(crate) fn retain_simplified_cell_complex(
+        &mut self,
+        simplified: ExactSimplifiedCellComplex,
+    ) {
+        self.stage = ExactArrangementBooleanStage::Simplified;
+        self.simplified_cell_complex = Some(simplified);
+    }
+
+    /// Retain a decline reason for this attempt.
+    pub(crate) fn record_decline(&mut self, decline: ExactArrangementBooleanDecline) {
+        self.decline = Some(decline);
+    }
+
+    /// Record the output mesh certificate retained by this attempt.
+    pub(crate) fn retain_output_mesh(&mut self, mesh: &ExactMesh) {
+        self.output_vertices = mesh.vertices().len();
+        self.output_triangles = mesh.triangles().len();
+        self.output_facts = Some(mesh.facts().mesh.clone());
+    }
+
+    /// Mark the attempt as declined at output validation.
+    pub(crate) fn decline_output_validation(&mut self, output_counts: Option<(usize, usize)>) {
+        if let Some((vertices, triangles)) = output_counts {
+            self.output_vertices = vertices;
+            self.output_triangles = triangles;
+            self.output_facts = None;
+        }
+        self.stage = ExactArrangementBooleanStage::Triangulated;
+        self.decline = Some(ExactArrangementBooleanDecline::OutputValidation);
+    }
+
+    /// Mark this attempt as materialized and retain the output mesh certificate.
+    pub(crate) fn retain_materialized_output(
+        &mut self,
+        mesh: &ExactMesh,
+        materialized_shortcut: Option<ExactBooleanShortcutKind>,
+        clear_arrangement_blockers: bool,
+    ) {
+        let shortcut_reason = materialized_shortcut.map(|_| self.recovered_shortcut_reason());
+        self.stage = ExactArrangementBooleanStage::Materialized;
+        self.decline = None;
+        self.materialized_shortcut = materialized_shortcut;
+        self.shortcut_reason = shortcut_reason;
+        if materialized_shortcut.is_some() {
+            self.selected_cell_complex = None;
+            self.simplified_cell_complex = None;
+        }
+        if clear_arrangement_blockers {
+            self.arrangement_blockers = 0;
+        }
+        self.retain_output_mesh(mesh);
+    }
+
     pub(crate) fn validate_for_request_policy(
         &self,
         request: ExactBooleanRequest,
