@@ -13,7 +13,6 @@ use hyperreal::Real;
 use std::cmp::Ordering;
 
 use super::super::ExactMesh;
-use super::super::adjacent::materialize_full_face_adjacent_union;
 use super::super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::super::bounds::AabbIntersectionKind;
 use super::super::cell_complex::{
@@ -41,6 +40,7 @@ use super::super::validation::ExactMeshValidationPolicy;
 use super::super::winding::{
     ClosedMeshWindingMeshRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
+use super::adjacent::materialize_full_face_adjacent_union;
 use super::affine_solid::{
     materialize_affine_orthogonal_solid_difference,
     materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,

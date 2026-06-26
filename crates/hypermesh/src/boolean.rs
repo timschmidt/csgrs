@@ -14,6 +14,7 @@
 //! union/intersection/difference decision. Topology decisions must be certified
 //! or represented as policy choices or unknowns.
 
+pub(crate) mod adjacent;
 pub(crate) mod affine_solid;
 pub(crate) mod cells;
 pub(crate) mod contained_adjacent;
@@ -27,10 +28,6 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::SegmentPlaneRelation;
 
-use super::adjacent::{
-    full_face_adjacent_certificate_from_graph,
-    materialize_full_face_adjacent_union_from_certificate,
-};
 use super::arrangement2d::{
     ExactArrangement2dBlocker, ExactArrangement2dBoundaryPolicy, ExactArrangement2dOverlay,
     ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
@@ -77,6 +74,10 @@ use super::view::PreparedMeshPair;
 use super::winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
     WindingReportError, classify_mesh_vertices_against_closed_mesh_winding_report,
+};
+use adjacent::{
+    full_face_adjacent_certificate_from_graph,
+    materialize_full_face_adjacent_union_from_certificate,
 };
 use affine_solid::{
     AffineOrthogonalSolidOperation, has_affine_orthogonal_solid_cells,

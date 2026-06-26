@@ -20,15 +20,15 @@ mod polygon;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
-use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::graph::{
+use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::graph::{
     ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide,
     build_validated_intersection_graph,
 };
-use super::intersection::MeshFacePairRelation;
-use super::mesh::{ExactMesh, ExactMeshValidationError, Triangle};
-use super::validation::ExactMeshValidationPolicy;
-use super::winding::{
+use super::super::intersection::MeshFacePairRelation;
+use super::super::mesh::{ExactMesh, ExactMeshValidationError, Triangle};
+use super::super::validation::ExactMeshValidationPolicy;
+use super::super::winding::{
     ClosedMeshWindingRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
 use hyperlimit::SourceProvenance;
@@ -476,7 +476,7 @@ fn closed_boundary_contact_only(
 }
 
 fn mesh_vertices_are_boundary_or_outside(
-    report: &super::winding::ClosedMeshWindingMeshReport,
+    report: &super::super::winding::ClosedMeshWindingMeshReport,
 ) -> bool {
     report.target_closed
         && report.vertices.iter().all(|vertex| {
@@ -487,7 +487,9 @@ fn mesh_vertices_are_boundary_or_outside(
         })
 }
 
-fn mesh_vertices_touch_boundary(report: &super::winding::ClosedMeshWindingMeshReport) -> bool {
+fn mesh_vertices_touch_boundary(
+    report: &super::super::winding::ClosedMeshWindingMeshReport,
+) -> bool {
     report
         .vertices
         .iter()
