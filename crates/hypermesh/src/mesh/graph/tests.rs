@@ -362,7 +362,7 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
             view.validate_retained_state().unwrap();
         })
         .unwrap();
-    assert!(prepared_pair.arrangement_is_current());
+    assert!(prepared_pair.cache_status().arrangement().is_current());
     prepared_pair.retain_intersection_graph(ExactIntersectionGraph::from_face_pairs(Vec::new()));
     assert!(
         prepared_pair
@@ -370,7 +370,7 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
             .intersection_graph()
             .is_certificate_blocked()
     );
-    assert!(!prepared_pair.has_retained_arrangement());
+    assert!(prepared_pair.cache_status().arrangement().is_missing());
     assert!(
         prepared_pair
             .cache_status()

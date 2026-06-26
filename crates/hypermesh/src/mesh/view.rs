@@ -1808,21 +1808,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.cache_status().current_arrangement_counts()
     }
 
-    /// Return retained arrangement topology counts, if present.
-    pub fn retained_arrangement_counts(&self) -> Option<PreparedMeshPairArrangementCounts> {
-        *self.arrangement_counts.borrow()
-    }
-
-    /// Return whether arrangement records are present.
-    pub fn has_retained_arrangement(&self) -> bool {
-        self.arrangement.borrow().is_some()
-    }
-
-    /// Return whether the retained arrangement is present and source-current.
-    pub fn arrangement_is_current(&self) -> bool {
-        self.cache_status().arrangement().is_current()
-    }
-
     /// Return whether arrangement shortcut facts are retained and source-current.
     pub fn arrangement_shortcut_facts_are_current(&self) -> bool {
         self.cache_status()

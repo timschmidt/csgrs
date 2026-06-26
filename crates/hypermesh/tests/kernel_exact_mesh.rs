@@ -135,8 +135,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
     assert_eq!(pair.retained_face_pair_classification_count(), None);
     assert_eq!(pair.retained_face_pair_classification_counts(), None);
     assert!(pair.cache_status().intersection_graph().is_missing());
-    assert!(!pair.has_retained_arrangement());
-    assert_eq!(pair.retained_arrangement_counts(), None);
+    assert!(pair.cache_status().arrangement().is_missing());
     assert!(!pair.has_retained_arrangement_shortcut_facts());
     assert_eq!(
         pair.require_current_arrangement_shortcut_facts()
@@ -1405,7 +1404,7 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
 
     let pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
     assert!(pair.cache_status().intersection_graph().is_missing());
-    assert!(!pair.has_retained_arrangement());
+    assert!(pair.cache_status().arrangement().is_missing());
     assert_eq!(
         pair.current_arrangement_counts().unwrap_err().blockers()[0].kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
@@ -1420,7 +1419,7 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
     let prepared_arrangement_counts: PreparedMeshPairArrangementCounts =
         pair.prepare_arrangement().unwrap();
     assert!(prepared_arrangement_counts.is_complete());
-    assert!(pair.arrangement_is_current());
+    assert!(pair.cache_status().arrangement().is_current());
     assert_eq!(
         pair.current_arrangement_counts().unwrap(),
         prepared_arrangement_counts
@@ -1457,13 +1456,9 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         })
         .unwrap();
     assert_eq!(current_prepared_counts, direct_counts);
-    assert!(pair.arrangement_is_current());
+    assert!(pair.cache_status().arrangement().is_current());
     let retained_arrangement_counts = pair.current_arrangement_counts().unwrap();
     assert_eq!(retained_arrangement_counts, prepared_arrangement_counts);
-    assert_eq!(
-        pair.retained_arrangement_counts(),
-        Some(retained_arrangement_counts)
-    );
     assert_eq!(
         (
             retained_arrangement_counts.vertex_count(),
@@ -1511,12 +1506,12 @@ fn prepared_pair_named_boolean_preserves_retained_arrangement() {
     let pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
 
     let arrangement_counts = pair.prepare_arrangement().unwrap();
-    assert!(pair.arrangement_is_current());
+    assert!(pair.cache_status().arrangement().is_current());
 
     let intersection_outcome = pair
         .prepare_result(PreparedMeshPairBoolean::Intersection)
         .unwrap();
-    assert!(pair.arrangement_is_current());
+    assert!(pair.cache_status().arrangement().is_current());
     assert_eq!(
         pair.current_arrangement_counts().unwrap(),
         arrangement_counts
