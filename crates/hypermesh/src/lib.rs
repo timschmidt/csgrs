@@ -21,14 +21,11 @@
 mod arrangement2d;
 mod arrangement3d;
 mod boolean;
-mod bounds;
 mod cell_complex;
 mod error;
-mod facts;
 mod graph;
 mod mesh;
 mod region;
-mod validation;
 mod view;
 
 pub use mesh::ExactMesh;

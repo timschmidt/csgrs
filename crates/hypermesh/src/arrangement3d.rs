@@ -38,7 +38,7 @@ use super::graph::{
     MeshSide, SplitEdgeNode, SplitPlanValidationReport, build_validated_intersection_graph,
 };
 use super::mesh::ExactMesh;
-use super::validation::ExactMeshValidationPolicy;
+use super::mesh::validation::ExactMeshValidationPolicy;
 use core::cmp::Ordering;
 use hyperlimit::CoplanarProjection;
 use hyperlimit::SourceProvenance;
@@ -5195,7 +5195,7 @@ mod tests {
     use crate::arrangement3d::loop_triangulation::projected_loop_orientation;
     use crate::boolean::ExactBooleanOperation;
     use crate::cell_complex::ExactRegionOwnershipStatus;
-    use crate::validation::ExactMeshValidationPolicy;
+    use crate::mesh::validation::ExactMeshValidationPolicy;
     use hyperlimit::{
         RingPointLocation, classify_point_ring_even_odd, projected_polygon_area2_value,
     };

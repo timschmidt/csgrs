@@ -633,7 +633,7 @@ mod tests {
     use std::collections::BTreeSet;
 
     use super::*;
-    use crate::validation::ExactMeshValidationPolicy;
+    use crate::mesh::validation::ExactMeshValidationPolicy;
     use proptest::prelude::*;
 
     const OVERSIZED_COMPONENT_FACES: usize = 33;

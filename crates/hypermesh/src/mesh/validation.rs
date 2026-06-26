@@ -8,12 +8,12 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::Point3;
 
-use super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
+use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
 use super::facts::{
     EdgeFacts, FaceFacts, FacePlaneFacts, MeshFacts, MeshValidationFacts, OrientedFaceFacts,
     TriangleFacts, VertexFacts, VertexLinkKind,
 };
-use super::mesh::sorted_edge;
+use super::sorted_edge;
 use hyperlimit::{
     TriangleDegeneracy, classify_triangle3_degeneracy as classify_triangle_degeneracy,
 };

@@ -24,7 +24,7 @@ use super::graph::SplitPlanValidationReport;
 use super::graph::{ExactFaceRegionPlan, FaceSplitBoundaryNode, MeshSide};
 use super::mesh::ExactMesh;
 use super::mesh::Triangle;
-use super::validation::ExactMeshValidationPolicy;
+use super::mesh::validation::ExactMeshValidationPolicy;
 use hyperlimit::CoplanarProjection;
 use hyperlimit::PredicateUse;
 use hyperlimit::SourceProvenance;

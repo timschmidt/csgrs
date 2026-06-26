@@ -30,8 +30,8 @@ use super::super::graph::{
     ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide,
     build_validated_intersection_graph,
 };
+use super::super::mesh::validation::ExactMeshValidationPolicy;
 use super::super::mesh::{ExactMesh, ExactMeshValidationError, Triangle, triangle_tuple_edges};
-use super::super::validation::ExactMeshValidationPolicy;
 use super::winding::{
     ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
     classify_mesh_vertices_against_closed_mesh_winding_report,

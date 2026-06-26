@@ -9,10 +9,6 @@ use super::boolean::{
     ExactArrangementCellComplexShortcutFacts, ExactBooleanOperation, ExactBooleanRequest,
     materialize_boolean_exact_request_with_prepared_pair,
 };
-use super::bounds::{
-    BroadPhaseScratch, CandidateFacePairPlan, ExactAabb3, ExactAabbBroadPhase, ExactBroadPhase,
-    PreparedMeshBounds,
-};
 use super::error::ExactMeshError;
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
 use super::graph::intersection::{
@@ -22,7 +18,11 @@ use super::graph::{
     ExactIntersectionGraph, build_unvalidated_intersection_graph_from_prepared_pair_rc,
     build_validated_intersection_graph_from_prepared_pair,
 };
-use super::validation::ExactMeshValidationPolicy;
+use super::mesh::bounds::{
+    BroadPhaseScratch, CandidateFacePairPlan, ExactAabb3, ExactAabbBroadPhase, ExactBroadPhase,
+    PreparedMeshBounds,
+};
+use super::mesh::validation::ExactMeshValidationPolicy;
 use hyperlimit::{ApproximationPolicy, MeshSource, Point3, PredicateUse};
 use hyperreal::Real;
 
@@ -2729,25 +2729,28 @@ impl<'a> VertexRef<'a> {
 
     /// Whether retained facts classify the vertex link as isolated.
     pub fn has_isolated_link(self) -> Result<bool, ExactMeshError> {
-        self.has_vertex_link(super::facts::VertexLinkKind::Isolated)
+        self.has_vertex_link(super::mesh::facts::VertexLinkKind::Isolated)
     }
 
     /// Whether retained facts classify the vertex link as a closed-manifold circle.
     pub fn has_circle_link(self) -> Result<bool, ExactMeshError> {
-        self.has_vertex_link(super::facts::VertexLinkKind::Circle)
+        self.has_vertex_link(super::mesh::facts::VertexLinkKind::Circle)
     }
 
     /// Whether retained facts classify the vertex link as a boundary-manifold disk.
     pub fn has_disk_link(self) -> Result<bool, ExactMeshError> {
-        self.has_vertex_link(super::facts::VertexLinkKind::Disk)
+        self.has_vertex_link(super::mesh::facts::VertexLinkKind::Disk)
     }
 
     /// Whether retained facts classify the vertex link as non-manifold.
     pub fn has_non_manifold_link(self) -> Result<bool, ExactMeshError> {
-        self.has_vertex_link(super::facts::VertexLinkKind::NonManifold)
+        self.has_vertex_link(super::mesh::facts::VertexLinkKind::NonManifold)
     }
 
-    fn has_vertex_link(self, link: super::facts::VertexLinkKind) -> Result<bool, ExactMeshError> {
+    fn has_vertex_link(
+        self,
+        link: super::mesh::facts::VertexLinkKind,
+    ) -> Result<bool, ExactMeshError> {
         retained_vertex_facts(self.mesh, self.index).map(|facts| facts.link == link)
     }
 }
@@ -3019,7 +3022,7 @@ fn missing_retained_edge_bounds(mesh: &ExactMesh, edge: usize) -> ExactMeshError
 fn retained_vertex_facts(
     mesh: &ExactMesh,
     vertex: usize,
-) -> Result<&super::facts::VertexFacts, ExactMeshError> {
+) -> Result<&super::mesh::facts::VertexFacts, ExactMeshError> {
     mesh.facts().vertices.get(vertex).ok_or_else(|| {
         ExactMeshError::one(
             ExactMeshBlocker::new(
@@ -3034,7 +3037,7 @@ fn retained_vertex_facts(
 fn retained_face_facts(
     mesh: &ExactMesh,
     face: usize,
-) -> Result<&super::facts::FaceFacts, ExactMeshError> {
+) -> Result<&super::mesh::facts::FaceFacts, ExactMeshError> {
     mesh.facts().faces.get(face).ok_or_else(|| {
         ExactMeshError::one(
             ExactMeshBlocker::new(

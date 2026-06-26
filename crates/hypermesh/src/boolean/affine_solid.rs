@@ -13,8 +13,8 @@
 use hyperlimit::{Point3, compare_reals};
 
 use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::mesh::validation::ExactMeshValidationPolicy;
 use super::super::mesh::{ExactMesh, Triangle};
-use super::super::validation::ExactMeshValidationPolicy;
 use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, OrthogonalCellPlan,
     axis_aligned_orthogonal_solid_cell_plan, axis_aligned_orthogonal_solid_cell_selected_count,

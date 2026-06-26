@@ -28,8 +28,8 @@ use super::super::arrangement2d::{
 };
 use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::super::mesh::triangle_edges;
+use super::super::mesh::validation::ExactMeshValidationPolicy;
 use super::super::mesh::{ExactMesh, Triangle};
-use super::super::validation::ExactMeshValidationPolicy;
 use super::solid::{
     ClosedMeshOrientation, ConvexSolidFacts, ConvexSolidReportError, certify_convex_solid,
 };

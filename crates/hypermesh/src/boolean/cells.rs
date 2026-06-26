@@ -1646,7 +1646,7 @@ fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
 #[cfg(test)]
 mod tests {
     use super::super::super::graph::CoplanarOverlapSplitGraph;
-    use super::super::super::validation::ExactMeshValidationPolicy;
+    use super::super::super::mesh::validation::ExactMeshValidationPolicy;
     use super::*;
 
     fn open_triangle_mesh(pos: &[i64]) -> ExactMesh {

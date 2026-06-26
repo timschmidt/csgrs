@@ -24,8 +24,8 @@ use hyperlimit::{
     project_point3, projected_line_parameter3, projected_segment_parameter3,
 };
 
-use super::bounds::{ExactAabbBroadPhase, ExactBroadPhase};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide};
+use super::mesh::bounds::{ExactAabbBroadPhase, ExactBroadPhase};
 use super::mesh::{ExactMesh, triangle_edges};
 use super::view::{PreparedMeshPair, PreparedMeshPairClassificationCounts, PreparedMeshView};
 use hyperlimit::{CoplanarProjection, CoplanarTriangleClassification};
@@ -4299,8 +4299,8 @@ fn projected_points_equal(
 mod tests {
     use super::*;
     use crate::mesh::ExactMesh;
+    use crate::mesh::validation::ExactMeshValidationPolicy;
     use crate::region::FaceRegionPlaneRelation;
-    use crate::validation::ExactMeshValidationPolicy;
 
     fn q(numerator: i64, denominator: i64) -> Real {
         (Real::from(numerator) / &Real::from(denominator)).expect("nonzero denominator")

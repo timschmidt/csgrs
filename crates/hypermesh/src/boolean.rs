@@ -42,7 +42,6 @@ use super::arrangement3d::regularization::{ExactArrangementBlocker, ExactRegular
 use super::arrangement3d::{
     ExactArrangement, ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
 };
-use super::bounds::AabbIntersectionKind;
 use super::cell_complex::simplify::ExactSimplifiedCellComplex;
 use super::cell_complex::{
     ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
@@ -50,7 +49,6 @@ use super::cell_complex::{
     arrangement_region_classification_blockers_resolve_operation, select_arrangement_for_replay,
 };
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::facts::MeshFacts;
 #[cfg(test)]
 use super::graph::FacePairEvents;
 #[cfg(test)]
@@ -60,8 +58,11 @@ use super::graph::{
     ExactIntersectionGraph, IntersectionEvent, MeshSide, build_validated_intersection_graph,
     build_validated_intersection_graph_from_prepared_pair,
 };
+use super::mesh::bounds::AabbIntersectionKind;
+use super::mesh::facts::MeshFacts;
 #[cfg(test)]
 use super::mesh::triangle_edges as topology_triangle_edges;
+use super::mesh::validation::ExactMeshValidationPolicy;
 use super::mesh::{ExactMesh, Triangle};
 use super::region::{
     ExactBooleanAssemblyPlan, ExactRegionRetention, ExactRegionSelection,
@@ -69,7 +70,6 @@ use super::region::{
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, choose_region_projection,
 };
-use super::validation::ExactMeshValidationPolicy;
 use super::view::PreparedMeshPair;
 use adjacent::{
     full_face_adjacent_certificate_from_graph,

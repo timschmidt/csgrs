@@ -4,13 +4,13 @@
 //! `hyperreal::Real`. Primitive-float construction is a named lossy adapter
 //! and validates every coordinate before import.
 
-use super::arrangement3d::ArrangementView;
-use super::bounds::{BoundsValidationError, MeshBounds};
-use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::facts::{MeshFactsValidationError, MeshValidationFacts};
-use super::validation::{
+use self::bounds::{BoundsValidationError, MeshBounds};
+use self::facts::{MeshFactsValidationError, MeshValidationFacts};
+use self::validation::{
     ExactMeshValidationPolicy, ValidationReport, validate_triangle_rows_with_policy,
 };
+use super::arrangement3d::ArrangementView;
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::view::ExactMeshRef;
 use hyperlimit::{
     ConstructionProvenance, ConstructionProvenanceValidationError, Point3, PredicateUse,
@@ -18,6 +18,10 @@ use hyperlimit::{
 };
 use hyperreal::Real;
 use std::cmp::Ordering;
+
+pub(crate) mod bounds;
+pub(crate) mod facts;
+pub(crate) mod validation;
 
 /// Triangle index triplet.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1027,7 +1031,7 @@ fn reverse_triangle(triangle: &Triangle) -> Triangle {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::facts::EdgeFacts;
+    use crate::mesh::facts::EdgeFacts;
 
     #[test]
     fn retained_facts_reject_unexpected_zero_use_edge() {

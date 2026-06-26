@@ -20,8 +20,8 @@ use super::super::arrangement3d::{
     validate_lower_dimensional_artifacts,
 };
 use super::super::boolean::ExactBooleanOperation;
+use super::super::mesh::validation::ExactMeshValidationPolicy;
 use super::super::mesh::{ExactMesh, Triangle};
-use super::super::validation::ExactMeshValidationPolicy;
 #[cfg(test)]
 use super::select_arrangement_for_replay;
 use super::{

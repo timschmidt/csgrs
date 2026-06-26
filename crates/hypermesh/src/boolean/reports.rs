@@ -16,7 +16,6 @@ use super::super::ExactMesh;
 use super::super::arrangement3d::regularization::ExactArrangementBlocker;
 use super::super::arrangement3d::regularization::ExactRegularizationPolicy;
 use super::super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
-use super::super::bounds::AabbIntersectionKind;
 use super::super::cell_complex::{
     ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy,
     validate_selected_gate_reports,
@@ -27,12 +26,13 @@ use super::super::graph::{
     CoplanarArrangementEvidence, CoplanarArrangementEvidenceStatus, ExactIntersectionGraph,
     IntersectionEvent, build_validated_intersection_graph,
 };
+use super::super::mesh::bounds::AabbIntersectionKind;
+use super::super::mesh::validation::ExactMeshValidationPolicy;
 use super::super::region::{
     ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputTriangleOrientation,
     ExactRegionSelection, FaceRegionPlaneClassification, FaceRegionPlaneValidationError,
     FaceRegionTriangulation, boundary_node_point,
 };
-use super::super::validation::ExactMeshValidationPolicy;
 use super::adjacent::materialize_full_face_adjacent_union;
 use super::affine_solid::{
     materialize_affine_orthogonal_solid_difference,
