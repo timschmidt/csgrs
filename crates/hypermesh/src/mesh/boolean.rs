@@ -1712,6 +1712,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
 ) -> Result<ExactBooleanPreflight, ExactMeshError> {
     let operation = request.operation;
     let support = initial_reject_boundary_preflight_support(left, right, operation, shortcut_facts);
+    let requires_certified_winding = support == ExactBooleanSupport::RequiresCertifiedWinding;
     if support == ExactBooleanSupport::CertifiedArrangementCellComplex {
         return Ok(certified_arrangement_cell_complex_preflight(
             operation, graph, left, right,
@@ -1801,7 +1802,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             None,
         ));
     }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
+    if requires_certified_winding
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && open_surface_disjoint_report_from_graph(graph, left, right).is_certified()
     {
@@ -1812,7 +1813,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             None,
         ));
     }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
+    if requires_certified_winding
         && graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right)
         && volumetric_boundary_closure_report_from_graph(graph, left, right, operation)
             .ok()
@@ -1822,7 +1823,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             operation, graph, left, right,
         ));
     }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
+    if requires_certified_winding
         && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
             &mut certified_arrangement_preflight,
             operation,
@@ -1835,7 +1836,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     {
         return Ok(preflight);
     }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
+    if requires_certified_winding
         && let Some(convex_support) = certified_convex_relation_shortcut_from_graph(
             graph, left, right, operation,
         )?
@@ -1853,7 +1854,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             None,
         ));
     }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
+    if requires_certified_winding
         && let Some(convex_support) =
             certified_convex_operation_shortcut_support(left, right, operation)
     {
@@ -1864,7 +1865,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             None,
         ));
     }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
+    if requires_certified_winding
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && let Some((left_in_right, right_in_left)) =
             closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
@@ -1878,7 +1879,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             None,
         ));
     }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
+    if requires_certified_winding
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && certified_closed_winding_containment_relation_from_graph(graph, left, right)?.is_some()
     {
@@ -1889,23 +1890,12 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             None,
         ));
     }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
+    if requires_certified_winding
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && closed_zero_area_boundary_contact_evidence_from_graph(graph, left, right)?.is_some()
     {
-        let boundary_support = match operation {
-            ExactBooleanOperation::Union => {
-                ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
-            }
-            ExactBooleanOperation::Intersection => {
-                ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
-            }
-            ExactBooleanOperation::Difference => {
-                ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
-            }
-            ExactBooleanOperation::SelectedRegions(_) => {
-                return Ok(certified_preflight(operation, support, Some(graph), None));
-            }
+        let Some(boundary_support) = certified_closed_boundary_touching_support(operation) else {
+            return Ok(certified_preflight(operation, support, Some(graph), None));
         };
         return Ok(certified_preflight(
             operation,
@@ -1914,7 +1904,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             None,
         ));
     }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
+    if requires_certified_winding
         && matches!(
             operation,
             ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
@@ -1936,16 +1926,8 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
                 Some(evidence),
             ));
         }
-        let boundary_support = match operation {
-            ExactBooleanOperation::Intersection => {
-                ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
-            }
-            ExactBooleanOperation::Difference => {
-                ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
-            }
-            ExactBooleanOperation::Union | ExactBooleanOperation::SelectedRegions(_) => {
-                return Ok(certified_preflight(operation, support, Some(graph), None));
-            }
+        let Some(boundary_support) = certified_closed_boundary_touching_support(operation) else {
+            return Ok(certified_preflight(operation, support, Some(graph), None));
         };
         return Ok(certified_preflight(
             operation,
@@ -1963,7 +1945,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             operation, graph, left, right,
         ));
     }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
+    if requires_certified_winding
         && operation == ExactBooleanOperation::Union
         && certified_closed_boundary_only_contact_from_graph(graph, left, right).unwrap_or(false)
     {
@@ -1990,7 +1972,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             None,
         ));
     }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
+    if requires_certified_winding
         && coplanar_boundary_only_evidence_if_consumed(graph, left, right)
             .ok()
             .flatten()
@@ -2005,18 +1987,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         .ok()
         .flatten()
         .is_some()
-        && let Some(boundary_support) = match operation {
-            ExactBooleanOperation::Union => {
-                Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion)
-            }
-            ExactBooleanOperation::Intersection => {
-                Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection)
-            }
-            ExactBooleanOperation::Difference => {
-                Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference)
-            }
-            ExactBooleanOperation::SelectedRegions(_) => None,
-        }
+        && let Some(boundary_support) = certified_closed_boundary_touching_support(operation)
     {
         return Ok(certified_preflight(
             operation,
@@ -2025,7 +1996,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             None,
         ));
     }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
+    if requires_certified_winding
         && operation == ExactBooleanOperation::Intersection
         // The empty cavity case can have overlapping AABBs and no graph
         // events, so this retained evidence witness is checked before falling
@@ -2036,7 +2007,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             operation, graph, left, right,
         ));
     }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
+    if requires_certified_winding
         && operation == ExactBooleanOperation::Intersection
         && request.validation == ExactMeshValidationPolicy::CLOSED
         && closed_regularized_operand_kind(left)
@@ -2132,7 +2103,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     {
         return Ok(preflight);
     }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
+    if requires_certified_winding
         && !graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right)
         && operation == ExactBooleanOperation::Intersection
         && certified_convex_operation_shortcut_support(left, right, operation)
@@ -2145,7 +2116,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             None,
         ));
     }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
+    if requires_certified_winding
         && operation == ExactBooleanOperation::Difference
         && certified_convex_operation_shortcut_support(left, right, operation)
             == Some(ExactBooleanSupport::CertifiedConvexDifference)
@@ -2157,7 +2128,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             None,
         ));
     }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
+    if requires_certified_winding
         && operation == ExactBooleanOperation::Union
         && certified_convex_operation_shortcut_support(left, right, operation)
             == Some(ExactBooleanSupport::CertifiedConvexUnion)
@@ -2743,6 +2714,23 @@ fn certified_arrangement_cell_complex_preflight(
         Some(graph),
         certified_arrangement_cell_complex_coplanar_evidence(graph, left, right),
     )
+}
+
+fn certified_closed_boundary_touching_support(
+    operation: ExactBooleanOperation,
+) -> Option<ExactBooleanSupport> {
+    match operation {
+        ExactBooleanOperation::Union => {
+            Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion)
+        }
+        ExactBooleanOperation::Intersection => {
+            Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection)
+        }
+        ExactBooleanOperation::Difference => {
+            Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference)
+        }
+        ExactBooleanOperation::SelectedRegions(_) => None,
+    }
 }
 
 fn certified_arrangement_cell_complex_coplanar_evidence(
