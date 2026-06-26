@@ -4754,6 +4754,97 @@ impl ExactRefinementReport {
     }
 }
 
+/// Replayable exact identity certificate for the identical-mesh shortcut.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct ExactIdenticalMeshReport {
+    /// Coarse identity status.
+    status: ExactIdenticalMeshStatus,
+    /// Number of left source vertices compared in original order.
+    left_vertices: usize,
+    /// Number of right source vertices compared in original order.
+    right_vertices: usize,
+    /// Number of left source triangles compared in original order.
+    left_triangles: usize,
+    /// Number of right source triangles compared in original order.
+    right_triangles: usize,
+    /// Exact coordinate comparison predicates used for original-order vertex
+    /// identity.
+    predicates: Vec<PredicateUse>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum ExactIdenticalMeshStatus {
+    /// Vertex counts differ.
+    VertexCountMismatch,
+    /// A coordinate comparison was undecided.
+    VertexCoordinateUndecided,
+    /// At least one same-index vertex coordinate differs.
+    VertexCoordinateMismatch,
+    /// Triangle counts or same-index triangle records differ.
+    TriangleSequenceMismatch,
+    /// Vertices and triangles are exactly identical in source order.
+    Certified,
+}
+
+impl ExactIdenticalMeshReport {
+    pub(crate) fn new(
+        status: ExactIdenticalMeshStatus,
+        left_vertices: usize,
+        right_vertices: usize,
+        left_triangles: usize,
+        right_triangles: usize,
+        predicates: Vec<PredicateUse>,
+    ) -> Self {
+        Self {
+            status,
+            left_vertices,
+            right_vertices,
+            left_triangles,
+            right_triangles,
+            predicates,
+        }
+    }
+
+    pub(crate) const fn is_certified(&self) -> bool {
+        matches!(self.status, ExactIdenticalMeshStatus::Certified)
+    }
+
+    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+        if self.predicates.len() > self.left_vertices.saturating_mul(3) {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        match self.status {
+            ExactIdenticalMeshStatus::VertexCountMismatch => {
+                if self.left_vertices == self.right_vertices || !self.predicates.is_empty() {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactIdenticalMeshStatus::VertexCoordinateUndecided
+            | ExactIdenticalMeshStatus::VertexCoordinateMismatch => {
+                if self.left_vertices != self.right_vertices || self.predicates.is_empty() {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactIdenticalMeshStatus::TriangleSequenceMismatch => {
+                if self.left_vertices != self.right_vertices
+                    || self.predicates.len() != self.left_vertices.saturating_mul(3)
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactIdenticalMeshStatus::Certified => {
+                if self.left_vertices != self.right_vertices
+                    || self.left_triangles != self.right_triangles
+                    || self.predicates.len() != self.left_vertices.saturating_mul(3)
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
 /// Certification status for same-surface named boolean shortcuts.
 ///
 /// Same-surface detection is stronger than identical storage equality: it

@@ -86,11 +86,12 @@ use evidence::{
     ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus, ExactBooleanBlocker,
     ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind,
     ExactBooleanShortcutKind, ExactBooleanSupport, ExactBoundaryTouchingReport,
-    ExactBoundaryTouchingStatus, ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus,
-    ExactPlanarArrangementReport, ExactPlanarArrangementStatus, ExactRefinementReport,
-    ExactRefinementStatus, ExactReportValidationError, ExactSameSurfaceReport,
-    ExactSameSurfaceStatus, ExactVolumetricBoundaryClosureReport,
-    ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
+    ExactBoundaryTouchingStatus, ExactIdenticalMeshReport, ExactIdenticalMeshStatus,
+    ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport,
+    ExactPlanarArrangementStatus, ExactRefinementReport, ExactRefinementStatus,
+    ExactReportValidationError, ExactSameSurfaceReport, ExactSameSurfaceStatus,
+    ExactVolumetricBoundaryClosureReport, ExactVolumetricBoundaryClosureStatus,
+    ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
 };
 use hyperlimit::{
     CoplanarProjection, Point2, Point3, SegmentIntersection, Sign, TriangleLocation,
@@ -2707,79 +2708,6 @@ impl ExactBooleanSourceFacts {
         &self,
     ) -> &ExactArrangementCellComplexShortcutFacts {
         &self.arrangement_cell_complex_shortcuts
-    }
-}
-
-/// Replayable exact identity certificate for the identical-mesh shortcut.
-#[derive(Clone, Debug, PartialEq)]
-pub(crate) struct ExactIdenticalMeshReport {
-    /// Coarse identity status.
-    status: ExactIdenticalMeshStatus,
-    /// Number of left source vertices compared in original order.
-    left_vertices: usize,
-    /// Number of right source vertices compared in original order.
-    right_vertices: usize,
-    /// Number of left source triangles compared in original order.
-    left_triangles: usize,
-    /// Number of right source triangles compared in original order.
-    right_triangles: usize,
-    /// Exact coordinate comparison predicates used for original-order vertex
-    /// identity.
-    predicates: Vec<PredicateUse>,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum ExactIdenticalMeshStatus {
-    /// Vertex counts differ.
-    VertexCountMismatch,
-    /// A coordinate comparison was undecided.
-    VertexCoordinateUndecided,
-    /// At least one same-index vertex coordinate differs.
-    VertexCoordinateMismatch,
-    /// Triangle counts or same-index triangle records differ.
-    TriangleSequenceMismatch,
-    /// Vertices and triangles are exactly identical in source order.
-    Certified,
-}
-
-impl ExactIdenticalMeshReport {
-    const fn is_certified(&self) -> bool {
-        matches!(self.status, ExactIdenticalMeshStatus::Certified)
-    }
-
-    fn validate(&self) -> Result<(), ExactReportValidationError> {
-        if self.predicates.len() > self.left_vertices.saturating_mul(3) {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
-        match self.status {
-            ExactIdenticalMeshStatus::VertexCountMismatch => {
-                if self.left_vertices == self.right_vertices || !self.predicates.is_empty() {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
-            }
-            ExactIdenticalMeshStatus::VertexCoordinateUndecided
-            | ExactIdenticalMeshStatus::VertexCoordinateMismatch => {
-                if self.left_vertices != self.right_vertices || self.predicates.is_empty() {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
-            }
-            ExactIdenticalMeshStatus::TriangleSequenceMismatch => {
-                if self.left_vertices != self.right_vertices
-                    || self.predicates.len() != self.left_vertices.saturating_mul(3)
-                {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
-            }
-            ExactIdenticalMeshStatus::Certified => {
-                if self.left_vertices != self.right_vertices
-                    || self.left_triangles != self.right_triangles
-                    || self.predicates.len() != self.left_vertices.saturating_mul(3)
-                {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
-            }
-        }
-        Ok(())
     }
 }
 
@@ -12212,14 +12140,14 @@ fn identical_mesh_report(
     right: &ExactMesh,
     predicates: Vec<PredicateUse>,
 ) -> ExactIdenticalMeshReport {
-    ExactIdenticalMeshReport {
+    evidence::ExactIdenticalMeshReport::new(
         status,
-        left_vertices: left.vertices().len(),
-        right_vertices: right.vertices().len(),
-        left_triangles: left.triangles().len(),
-        right_triangles: right.triangles().len(),
+        left.vertices().len(),
+        right.vertices().len(),
+        left.triangles().len(),
+        right.triangles().len(),
         predicates,
-    }
+    )
 }
 
 fn same_surface_report(
