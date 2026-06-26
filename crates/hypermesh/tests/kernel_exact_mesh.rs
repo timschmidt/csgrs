@@ -119,10 +119,16 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .kind()
             == ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    assert!(pair.broad_phase_summary().plan().is_empty());
+    assert!(matches!(
+        pair.broad_phase_summary().plan(),
+        PreparedMeshPairPlanKind::Empty
+    ));
     assert_eq!(pair.broad_phase_summary().candidate_pair_capacity_hint(), 0);
     let initial_broad_phase: PreparedMeshPairBroadPhaseSummary = pair.broad_phase_summary();
-    assert!(initial_broad_phase.plan().is_empty());
+    assert!(matches!(
+        initial_broad_phase.plan(),
+        PreparedMeshPairPlanKind::Empty
+    ));
     assert_eq!(initial_broad_phase.left_face_count(), 0);
     assert_eq!(
         initial_broad_phase.right_face_count(),
@@ -933,7 +939,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         .view()
         .prepare_broad_phase_pair(overlapping.view())
         .unwrap();
-    assert!(prepared_pair.broad_phase_summary().plan().is_sweep());
+    assert!(matches!(
+        prepared_pair.broad_phase_summary().plan(),
+        PreparedMeshPairPlanKind::Sweep
+    ));
     assert_eq!(
         prepared_pair.left().view().face_count(),
         left.triangle_count()
@@ -979,7 +988,7 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     assert!(
         broad_phase_summary.candidate_pair_upper_bound() <= broad_phase_summary.face_pair_product()
     );
-    if broad_phase_summary.plan().is_sweep() {
+    if matches!(broad_phase_summary.plan(), PreparedMeshPairPlanKind::Sweep) {
         assert!(broad_phase_summary.active_face_capacity_hint().is_some());
         assert!(broad_phase_summary.sweep_axis().is_some());
         assert!(broad_phase_summary.sweep_direction().is_some());
@@ -1386,7 +1395,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         .view()
         .prepare_broad_phase_pair(disjoint.view())
         .unwrap();
-    assert!(disjoint_pair.broad_phase_summary().plan().is_empty());
+    assert!(matches!(
+        disjoint_pair.broad_phase_summary().plan(),
+        PreparedMeshPairPlanKind::Empty
+    ));
     assert_eq!(disjoint_pair.broad_phase_summary().sweep_axis(), None);
     assert_eq!(disjoint_pair.broad_phase_summary().sweep_direction(), None);
     assert_eq!(disjoint_pair.broad_phase_summary().sweep_active_set(), None);

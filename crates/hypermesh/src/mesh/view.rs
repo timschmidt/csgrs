@@ -2026,21 +2026,6 @@ const fn retained_certificate_state(
 }
 
 impl PreparedMeshPairPlanKind {
-    /// Return whether broad-phase bounds proved there are no candidate face pairs.
-    pub const fn is_empty(self) -> bool {
-        matches!(self, Self::Empty)
-    }
-
-    /// Return whether candidate traversal uses a retained sorted-axis sweep.
-    pub const fn is_sweep(self) -> bool {
-        matches!(self, Self::Sweep)
-    }
-
-    /// Return whether candidate traversal falls back to exact quadratic checks.
-    pub const fn is_quadratic(self) -> bool {
-        matches!(self, Self::Quadratic)
-    }
-
     const fn from_candidate_plan(plan: CandidateFacePairPlan) -> Self {
         match plan {
             CandidateFacePairPlan::Empty => Self::Empty,
