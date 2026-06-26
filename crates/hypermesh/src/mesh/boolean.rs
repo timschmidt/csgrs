@@ -49,7 +49,6 @@ use super::arrangement3d::regularization::{ExactArrangementBlocker, ExactRegular
 use super::arrangement3d::{
     ExactArrangement, ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
 };
-use super::bounds::AabbIntersectionKind;
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::facts::MeshFacts;
 #[cfg(test)]
@@ -89,8 +88,9 @@ use evidence::{
     ExactBoundaryTouchingStatus, ExactIdenticalMeshReport, ExactOpenSurfaceDisjointReport,
     ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport, ExactPlanarArrangementStatus,
     ExactRefinementReport, ExactRefinementStatus, ExactReportValidationError,
-    ExactSameSurfaceReport, ExactVolumetricBoundaryClosureReport,
+    ExactSameSurfaceReport, ExactTrivialBooleanFacts, ExactVolumetricBoundaryClosureReport,
     ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
+    meshes_are_certified_bounds_disjoint,
 };
 use hyperlimit::SourceProvenance;
 use hyperlimit::{
@@ -2448,22 +2448,6 @@ impl ExactBooleanCertificationSet {
     }
 }
 
-/// Replayable source-shape facts for exact boolean shortcuts that do not need
-/// graph topology.
-///
-/// These facts deliberately mirror preflight shortcut semantics rather than the
-/// lower-level bounds helper: an empty operand is certified as empty, not as a
-/// bounds-disjoint non-empty pair even when it has no mesh bounds.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct ExactTrivialBooleanFacts {
-    /// The left source has no input triangles.
-    pub(crate) left_empty: bool,
-    /// The right source has no input triangles.
-    pub(crate) right_empty: bool,
-    /// Both sources are non-empty and their exact mesh AABBs are disjoint.
-    pub(crate) bounds_disjoint: bool,
-}
-
 /// Replayable source-shape facts for closed regularized-solid shortcut
 /// supports.
 ///
@@ -2707,32 +2691,6 @@ impl ExactBooleanSourceFacts {
         &self,
     ) -> &ExactArrangementCellComplexShortcutFacts {
         &self.arrangement_cell_complex_shortcuts
-    }
-}
-
-impl ExactTrivialBooleanFacts {
-    fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
-        let left_empty = left.triangles().is_empty();
-        let right_empty = right.triangles().is_empty();
-        Self {
-            left_empty,
-            right_empty,
-            bounds_disjoint: !left_empty
-                && !right_empty
-                && meshes_are_certified_bounds_disjoint(left, right),
-        }
-    }
-
-    fn validate(&self) -> Result<(), ExactReportValidationError> {
-        if self.bounds_disjoint && (self.left_empty || self.right_empty) {
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
-        } else {
-            Ok(())
-        }
-    }
-
-    fn has_empty_operand(&self) -> bool {
-        self.left_empty || self.right_empty
     }
 }
 
@@ -11991,19 +11949,6 @@ fn concatenate_meshes_with_options(
         hyperlimit::SourceProvenance::exact(label),
         validation,
     )
-}
-
-fn meshes_are_certified_bounds_disjoint(left: &ExactMesh, right: &ExactMesh) -> bool {
-    if left.validate_retained_bounds_certificate().is_err()
-        || right.validate_retained_bounds_certificate().is_err()
-    {
-        return false;
-    }
-    let (Some(left_bounds), Some(right_bounds)) = (left.bounds().mesh(), right.bounds().mesh())
-    else {
-        return left.triangles().is_empty() || right.triangles().is_empty();
-    };
-    left_bounds.classify_intersection(right_bounds).value() == Some(AabbIntersectionKind::Disjoint)
 }
 
 fn boolean_closed_regularized_lower_dimensional_optional(

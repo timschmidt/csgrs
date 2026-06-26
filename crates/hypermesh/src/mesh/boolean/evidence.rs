@@ -1832,6 +1832,48 @@ impl ExactBooleanResult {
     }
 }
 
+/// Replayable source-shape facts for exact boolean shortcuts that do not need
+/// graph topology.
+///
+/// These facts deliberately mirror preflight shortcut semantics rather than the
+/// lower-level bounds helper: an empty operand is certified as empty, not as a
+/// bounds-disjoint non-empty pair even when it has no mesh bounds.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct ExactTrivialBooleanFacts {
+    /// The left source has no input triangles.
+    pub(crate) left_empty: bool,
+    /// The right source has no input triangles.
+    pub(crate) right_empty: bool,
+    /// Both sources are non-empty and their exact mesh AABBs are disjoint.
+    pub(crate) bounds_disjoint: bool,
+}
+
+impl ExactTrivialBooleanFacts {
+    pub(crate) fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
+        let left_empty = left.triangles().is_empty();
+        let right_empty = right.triangles().is_empty();
+        Self {
+            left_empty,
+            right_empty,
+            bounds_disjoint: !left_empty
+                && !right_empty
+                && meshes_are_certified_bounds_disjoint(left, right),
+        }
+    }
+
+    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
+        if self.bounds_disjoint && (self.left_empty || self.right_empty) {
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        } else {
+            Ok(())
+        }
+    }
+
+    pub(crate) const fn has_empty_operand(&self) -> bool {
+        self.left_empty || self.right_empty
+    }
+}
+
 fn certified_shortcut_sources_match(
     shortcut: ExactBooleanShortcutKind,
     operation: ExactBooleanOperation,
@@ -2445,7 +2487,7 @@ const fn shortcut_operation_matches(
     }
 }
 
-fn meshes_are_certified_bounds_disjoint(left: &ExactMesh, right: &ExactMesh) -> bool {
+pub(crate) fn meshes_are_certified_bounds_disjoint(left: &ExactMesh, right: &ExactMesh) -> bool {
     if left.validate_retained_bounds_certificate().is_err()
         || right.validate_retained_bounds_certificate().is_err()
     {
