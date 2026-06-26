@@ -3332,11 +3332,19 @@ impl ExactBooleanCertificationSet {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
-        if self.open_surface_arrangement_materialized() {
+        if self.winding_evidence.status()
+            == ExactWindingEvidenceStatus::OpenSurfaceArrangementAlreadyMaterialized
+        {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
-        if self.boundary_policy_shortcut_certified() {
+        if self.boundary_touching.is_certified()
+            && matches!(
+                self.winding_evidence.status(),
+                ExactWindingEvidenceStatus::BoundaryPolicyShortcutAlreadyMaterialized
+                    | ExactWindingEvidenceStatus::BoundaryPolicyRequired
+            )
+        {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
@@ -3480,20 +3488,6 @@ impl ExactBooleanCertificationSet {
             }
             _ => false,
         }
-    }
-
-    fn open_surface_arrangement_materialized(&self) -> bool {
-        self.winding_evidence.status()
-            == ExactWindingEvidenceStatus::OpenSurfaceArrangementAlreadyMaterialized
-    }
-
-    fn boundary_policy_shortcut_certified(&self) -> bool {
-        self.boundary_touching.is_certified()
-            && matches!(
-                self.winding_evidence.status(),
-                ExactWindingEvidenceStatus::BoundaryPolicyShortcutAlreadyMaterialized
-                    | ExactWindingEvidenceStatus::BoundaryPolicyRequired
-            )
     }
 
     fn arrangement_cell_complex_shortcut_certified_for_request(
