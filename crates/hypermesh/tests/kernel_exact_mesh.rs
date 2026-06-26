@@ -101,16 +101,30 @@ fn prepared_mesh_pair_materializes_named_operations() {
         .unwrap();
     let initial_status: PreparedMeshPairCacheStatus = pair.cache_status();
     let _source_state: PreparedMeshPairFactState = initial_status.source_pair();
-    assert!(initial_status.source_pair().is_current());
-    assert!(initial_status.broad_phase_traversal().is_missing());
-    assert!(initial_status.candidate_face_pairs().is_missing());
-    assert!(initial_status.face_pair_classifications().is_missing());
-    assert!(initial_status.intersection_graph().is_missing());
-    assert!(
-        initial_status
-            .result(PreparedMeshPairBoolean::Union)
-            .is_missing()
-    );
+    assert!(matches!(
+        initial_status.source_pair(),
+        PreparedMeshPairFactState::Current
+    ));
+    assert!(matches!(
+        initial_status.broad_phase_traversal(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
+        initial_status.candidate_face_pairs(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
+        initial_status.face_pair_classifications(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
+        initial_status.intersection_graph(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
+        initial_status.result(PreparedMeshPairBoolean::Union),
+        PreparedMeshPairFactState::Missing
+    ));
     assert!(
         initial_status
             .result(PreparedMeshPairBoolean::Union)
@@ -139,19 +153,26 @@ fn prepared_mesh_pair_materializes_named_operations() {
     assert_eq!(initial_broad_phase.candidate_pair_capacity_hint(), 0);
     assert_eq!(initial_broad_phase.active_face_capacity_hint(), None);
     assert_eq!(pair.broad_phase_summary(), initial_broad_phase);
-    assert!(pair.cache_status().face_pair_classifications().is_missing());
-    assert!(
-        pair.cache_status()
-            .face_pair_classification_counts()
-            .is_missing()
-    );
-    assert!(pair.cache_status().intersection_graph().is_missing());
-    assert!(pair.cache_status().arrangement().is_missing());
-    assert!(
-        pair.cache_status()
-            .arrangement_shortcut_facts()
-            .is_missing()
-    );
+    assert!(matches!(
+        pair.cache_status().face_pair_classifications(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
+        pair.cache_status().face_pair_classification_counts(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
+        pair.cache_status().intersection_graph(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
+        pair.cache_status().arrangement(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
+        pair.cache_status().arrangement_shortcut_facts(),
+        PreparedMeshPairFactState::Missing
+    ));
     assert_eq!(
         pair.cache_status()
             .arrangement_shortcut_facts()
@@ -161,11 +182,10 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    assert!(
-        pair.cache_status()
-            .result(PreparedMeshPairBoolean::Union)
-            .is_missing()
-    );
+    assert!(matches!(
+        pair.cache_status().result(PreparedMeshPairBoolean::Union),
+        PreparedMeshPairFactState::Missing
+    ));
     assert_eq!(
         pair.cache_status()
             .result(PreparedMeshPairBoolean::Union)
@@ -198,11 +218,11 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    assert!(
+    assert!(matches!(
         pair.cache_status()
-            .result(PreparedMeshPairBoolean::Intersection)
-            .is_missing()
-    );
+            .result(PreparedMeshPairBoolean::Intersection),
+        PreparedMeshPairFactState::Missing
+    ));
     assert_eq!(
         pair.cache_status()
             .result(PreparedMeshPairBoolean::Intersection)
@@ -235,11 +255,11 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    assert!(
+    assert!(matches!(
         pair.cache_status()
-            .result(PreparedMeshPairBoolean::Difference)
-            .is_missing()
-    );
+            .result(PreparedMeshPairBoolean::Difference),
+        PreparedMeshPairFactState::Missing
+    ));
     assert_eq!(
         pair.cache_status()
             .result(PreparedMeshPairBoolean::Difference)
@@ -272,11 +292,10 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    assert!(
-        pair.cache_status()
-            .result(PreparedMeshPairBoolean::Xor)
-            .is_missing()
-    );
+    assert!(matches!(
+        pair.cache_status().result(PreparedMeshPairBoolean::Xor),
+        PreparedMeshPairFactState::Missing
+    ));
     assert_eq!(
         pair.cache_status()
             .result(PreparedMeshPairBoolean::Xor)
@@ -368,24 +387,20 @@ fn prepared_mesh_pair_materializes_named_operations() {
     let count_only_graph_counts = count_only_pair.prepare_intersection_graph().unwrap();
     assert_eq!(count_only_graph_counts.face_pair_count(), 0);
     assert_eq!(count_only_graph_counts.event_count(), 0);
-    assert!(
+    assert!(matches!(
+        count_only_pair.cache_status().face_pair_classifications(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
         count_only_pair
             .cache_status()
-            .face_pair_classifications()
-            .is_missing()
-    );
-    assert!(
-        count_only_pair
-            .cache_status()
-            .face_pair_classification_counts()
-            .is_current()
-    );
-    assert!(
-        count_only_pair
-            .cache_status()
-            .intersection_graph()
-            .is_certificate_blocked()
-    );
+            .face_pair_classification_counts(),
+        PreparedMeshPairFactState::Current
+    ));
+    assert!(matches!(
+        count_only_pair.cache_status().intersection_graph(),
+        PreparedMeshPairFactState::CertificateBlocked
+    ));
 
     assert_eq!(pair.prepare_face_pair_classifications(), 0);
     pair.cache_status()
@@ -393,17 +408,18 @@ fn prepared_mesh_pair_materializes_named_operations() {
         .require_current("face-pair classification")
         .unwrap();
     let classification_status = pair.cache_status();
-    assert!(
-        classification_status
-            .face_pair_classifications()
-            .is_current()
-    );
-    assert!(
-        classification_status
-            .face_pair_classification_counts()
-            .is_current()
-    );
-    assert!(classification_status.intersection_graph().is_missing());
+    assert!(matches!(
+        classification_status.face_pair_classifications(),
+        PreparedMeshPairFactState::Current
+    ));
+    assert!(matches!(
+        classification_status.face_pair_classification_counts(),
+        PreparedMeshPairFactState::Current
+    ));
+    assert!(matches!(
+        classification_status.intersection_graph(),
+        PreparedMeshPairFactState::Missing
+    ));
     let empty_classification_counts = pair
         .cache_status()
         .current_face_pair_classification_counts()
@@ -416,12 +432,14 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .unwrap(),
         empty_classification_counts
     );
-    assert!(pair.cache_status().intersection_graph().is_missing());
-    assert!(
-        pair.cache_status()
-            .arrangement_shortcut_facts()
-            .is_missing()
-    );
+    assert!(matches!(
+        pair.cache_status().intersection_graph(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
+        pair.cache_status().arrangement_shortcut_facts(),
+        PreparedMeshPairFactState::Missing
+    ));
 
     let prepared_union_outcome = pair.prepare_result(PreparedMeshPairBoolean::Union).unwrap();
     assert!(matches!(
@@ -431,14 +449,20 @@ fn prepared_mesh_pair_materializes_named_operations() {
     let union = pair.current_result(PreparedMeshPairBoolean::Union).unwrap();
     union.validate_retained_state().unwrap();
     assert_eq!(union.triangle_count(), solid.triangle_count());
-    assert!(pair.cache_status().face_pair_classifications().is_current());
+    assert!(matches!(
+        pair.cache_status().face_pair_classifications(),
+        PreparedMeshPairFactState::Current
+    ));
     assert_eq!(
         pair.cache_status()
             .current_face_pair_classification_counts()
             .unwrap(),
         empty_classification_counts
     );
-    assert!(pair.cache_status().intersection_graph().is_missing());
+    assert!(matches!(
+        pair.cache_status().intersection_graph(),
+        PreparedMeshPairFactState::Missing
+    ));
     assert_eq!(
         pair.cache_status()
             .current_intersection_graph_counts()
@@ -455,38 +479,35 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    assert!(
-        pair.cache_status()
-            .arrangement_shortcut_facts()
-            .is_missing()
-    );
-    assert!(
-        pair.cache_status()
-            .result(PreparedMeshPairBoolean::Union)
-            .is_current()
-    );
+    assert!(matches!(
+        pair.cache_status().arrangement_shortcut_facts(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
+        pair.cache_status().result(PreparedMeshPairBoolean::Union),
+        PreparedMeshPairFactState::Current
+    ));
     let union_status = pair.cache_status();
-    assert!(union_status.arrangement_shortcut_facts().is_missing());
-    assert!(
-        union_status
-            .result(PreparedMeshPairBoolean::Union)
-            .is_current()
-    );
-    assert!(
-        union_status
-            .result(PreparedMeshPairBoolean::Intersection)
-            .is_missing()
-    );
-    assert!(
-        union_status
-            .result(PreparedMeshPairBoolean::Difference)
-            .is_missing()
-    );
-    assert!(
-        union_status
-            .result(PreparedMeshPairBoolean::Xor)
-            .is_missing()
-    );
+    assert!(matches!(
+        union_status.arrangement_shortcut_facts(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
+        union_status.result(PreparedMeshPairBoolean::Union),
+        PreparedMeshPairFactState::Current
+    ));
+    assert!(matches!(
+        union_status.result(PreparedMeshPairBoolean::Intersection),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
+        union_status.result(PreparedMeshPairBoolean::Difference),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
+        union_status.result(PreparedMeshPairBoolean::Xor),
+        PreparedMeshPairFactState::Missing
+    ));
     let union_outcome: PreparedMeshPairResultOutcome = pair
         .cache_status()
         .current_result_outcome(PreparedMeshPairBoolean::Union)
@@ -521,21 +542,20 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .triangle_count(),
         union.triangle_count()
     );
-    assert!(
+    assert!(matches!(
         pair.cache_status()
-            .result(PreparedMeshPairBoolean::Intersection)
-            .is_missing()
-    );
-    assert!(
+            .result(PreparedMeshPairBoolean::Intersection),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
         pair.cache_status()
-            .result(PreparedMeshPairBoolean::Difference)
-            .is_missing()
-    );
-    assert!(
-        pair.cache_status()
-            .result(PreparedMeshPairBoolean::Xor)
-            .is_missing()
-    );
+            .result(PreparedMeshPairBoolean::Difference),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
+        pair.cache_status().result(PreparedMeshPairBoolean::Xor),
+        PreparedMeshPairFactState::Missing
+    ));
 
     let repeated_union = pair.union().unwrap();
     repeated_union.validate_retained_state().unwrap();
@@ -553,16 +573,15 @@ fn prepared_mesh_pair_materializes_named_operations() {
         .unwrap();
     intersection.validate_retained_state().unwrap();
     assert_eq!(intersection.triangle_count(), 0);
-    assert!(
+    assert!(matches!(
+        pair.cache_status().result(PreparedMeshPairBoolean::Union),
+        PreparedMeshPairFactState::Current
+    ));
+    assert!(matches!(
         pair.cache_status()
-            .result(PreparedMeshPairBoolean::Union)
-            .is_current()
-    );
-    assert!(
-        pair.cache_status()
-            .result(PreparedMeshPairBoolean::Intersection)
-            .is_current()
-    );
+            .result(PreparedMeshPairBoolean::Intersection),
+        PreparedMeshPairFactState::Current
+    ));
     let intersection_outcome = pair
         .cache_status()
         .current_result_outcome(PreparedMeshPairBoolean::Intersection)
@@ -598,16 +617,15 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .triangle_count(),
         intersection.triangle_count()
     );
-    assert!(
+    assert!(matches!(
         pair.cache_status()
-            .result(PreparedMeshPairBoolean::Difference)
-            .is_missing()
-    );
-    assert!(
-        pair.cache_status()
-            .result(PreparedMeshPairBoolean::Xor)
-            .is_missing()
-    );
+            .result(PreparedMeshPairBoolean::Difference),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
+        pair.cache_status().result(PreparedMeshPairBoolean::Xor),
+        PreparedMeshPairFactState::Missing
+    ));
 
     let prepared_difference_outcome = pair
         .prepare_result(PreparedMeshPairBoolean::Difference)
@@ -621,11 +639,11 @@ fn prepared_mesh_pair_materializes_named_operations() {
         .unwrap();
     difference.validate_retained_state().unwrap();
     assert_eq!(difference.triangle_count(), 0);
-    assert!(
+    assert!(matches!(
         pair.cache_status()
-            .result(PreparedMeshPairBoolean::Difference)
-            .is_current()
-    );
+            .result(PreparedMeshPairBoolean::Difference),
+        PreparedMeshPairFactState::Current
+    ));
     let difference_outcome = pair
         .cache_status()
         .current_result_outcome(PreparedMeshPairBoolean::Difference)
@@ -661,11 +679,10 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .triangle_count(),
         difference.triangle_count()
     );
-    assert!(
-        pair.cache_status()
-            .result(PreparedMeshPairBoolean::Xor)
-            .is_missing()
-    );
+    assert!(matches!(
+        pair.cache_status().result(PreparedMeshPairBoolean::Xor),
+        PreparedMeshPairFactState::Missing
+    ));
 
     let prepared_xor_outcome = pair.prepare_result(PreparedMeshPairBoolean::Xor).unwrap();
     assert!(matches!(
@@ -675,11 +692,10 @@ fn prepared_mesh_pair_materializes_named_operations() {
     let xor = pair.current_result(PreparedMeshPairBoolean::Xor).unwrap();
     xor.validate_retained_state().unwrap();
     assert_eq!(xor.triangle_count(), solid.triangle_count());
-    assert!(
-        pair.cache_status()
-            .result(PreparedMeshPairBoolean::Xor)
-            .is_current()
-    );
+    assert!(matches!(
+        pair.cache_status().result(PreparedMeshPairBoolean::Xor),
+        PreparedMeshPairFactState::Current
+    ));
     let xor_outcome = pair
         .cache_status()
         .current_result_outcome(PreparedMeshPairBoolean::Xor)
@@ -989,7 +1005,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         broad_phase_summary.sweep_direction();
     let _sweep_active_set: Option<PreparedMeshPairSweepActiveSet> =
         broad_phase_summary.sweep_active_set();
-    assert!(prepared_pair.cache_status().source_pair().is_current());
+    assert!(matches!(
+        prepared_pair.cache_status().source_pair(),
+        PreparedMeshPairFactState::Current
+    ));
     assert_eq!(
         broad_phase_summary.left_source(),
         left.view().source_stamp()
@@ -1018,18 +1037,14 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         assert!(broad_phase_summary.sweep_direction().is_some());
         assert!(broad_phase_summary.sweep_active_set().is_some());
     }
-    assert!(
-        prepared_pair
-            .cache_status()
-            .candidate_face_pairs()
-            .is_missing()
-    );
-    assert!(
-        prepared_pair
-            .cache_status()
-            .broad_phase_traversal()
-            .is_missing()
-    );
+    assert!(matches!(
+        prepared_pair.cache_status().candidate_face_pairs(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
+        prepared_pair.cache_status().broad_phase_traversal(),
+        PreparedMeshPairFactState::Missing
+    ));
     assert_eq!(
         prepared_pair
             .cache_status()
@@ -1049,18 +1064,14 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     );
     let count_only_summary: PreparedMeshPairBroadPhaseTraversalSummary =
         prepared_pair.prepare_broad_phase_traversal_summary();
-    assert!(
-        prepared_pair
-            .cache_status()
-            .broad_phase_traversal()
-            .is_current()
-    );
-    assert!(
-        prepared_pair
-            .cache_status()
-            .candidate_face_pairs()
-            .is_missing()
-    );
+    assert!(matches!(
+        prepared_pair.cache_status().broad_phase_traversal(),
+        PreparedMeshPairFactState::Current
+    ));
+    assert!(matches!(
+        prepared_pair.cache_status().candidate_face_pairs(),
+        PreparedMeshPairFactState::Missing
+    ));
     assert_eq!(
         prepared_pair
             .cache_status()
@@ -1110,12 +1121,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .unwrap(),
         retained_candidate_count
     );
-    assert!(
-        prepared_pair
-            .cache_status()
-            .candidate_face_pairs()
-            .is_current()
-    );
+    assert!(matches!(
+        prepared_pair.cache_status().candidate_face_pairs(),
+        PreparedMeshPairFactState::Current
+    ));
     let traversal_summary: PreparedMeshPairBroadPhaseTraversalSummary = prepared_pair
         .cache_status()
         .current_broad_phase_traversal_summary()
@@ -1149,18 +1158,16 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         .candidate_face_pairs()
         .require_current("broad-phase candidate face pairs")
         .unwrap();
-    assert!(
+    assert!(matches!(
+        prepared_pair.cache_status().face_pair_classifications(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
         prepared_pair
             .cache_status()
-            .face_pair_classifications()
-            .is_missing()
-    );
-    assert!(
-        prepared_pair
-            .cache_status()
-            .face_pair_classification_counts()
-            .is_missing()
-    );
+            .face_pair_classification_counts(),
+        PreparedMeshPairFactState::Missing
+    ));
     assert_eq!(
         prepared_pair
             .cache_status()
@@ -1175,30 +1182,26 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         .prepare_broad_phase_pair(overlapping.view())
         .unwrap();
     let streamed_graph_counts = streamed_graph_pair.prepare_intersection_graph().unwrap();
-    assert!(
+    assert!(matches!(
+        streamed_graph_pair.cache_status().broad_phase_traversal(),
+        PreparedMeshPairFactState::Current
+    ));
+    assert!(matches!(
+        streamed_graph_pair.cache_status().candidate_face_pairs(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
         streamed_graph_pair
             .cache_status()
-            .broad_phase_traversal()
-            .is_current()
-    );
-    assert!(
+            .face_pair_classifications(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
         streamed_graph_pair
             .cache_status()
-            .candidate_face_pairs()
-            .is_missing()
-    );
-    assert!(
-        streamed_graph_pair
-            .cache_status()
-            .face_pair_classifications()
-            .is_missing()
-    );
-    assert!(
-        streamed_graph_pair
-            .cache_status()
-            .face_pair_classification_counts()
-            .is_current()
-    );
+            .face_pair_classification_counts(),
+        PreparedMeshPairFactState::Current
+    ));
     let streamed_graph_classification_counts = streamed_graph_pair
         .cache_status()
         .current_face_pair_classification_counts()
@@ -1207,42 +1210,40 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         streamed_graph_classification_counts.graph_required_count(),
         streamed_graph_counts.face_pair_count()
     );
-    assert!(
-        streamed_graph_pair
-            .cache_status()
-            .intersection_graph()
-            .is_certificate_blocked()
-    );
+    assert!(matches!(
+        streamed_graph_pair.cache_status().intersection_graph(),
+        PreparedMeshPairFactState::CertificateBlocked
+    ));
     let streamed_classification_pair = left
         .view()
         .prepare_broad_phase_pair(overlapping.view())
         .unwrap();
     let streamed_classification_counts =
         streamed_classification_pair.prepare_face_pair_classification_counts();
-    assert!(
+    assert!(matches!(
         streamed_classification_pair
             .cache_status()
-            .broad_phase_traversal()
-            .is_current()
-    );
-    assert!(
+            .broad_phase_traversal(),
+        PreparedMeshPairFactState::Current
+    ));
+    assert!(matches!(
         streamed_classification_pair
             .cache_status()
-            .candidate_face_pairs()
-            .is_missing()
-    );
-    assert!(
+            .candidate_face_pairs(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
         streamed_classification_pair
             .cache_status()
-            .face_pair_classifications()
-            .is_missing()
-    );
-    assert!(
+            .face_pair_classifications(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
         streamed_classification_pair
             .cache_status()
-            .face_pair_classification_counts()
-            .is_current()
-    );
+            .face_pair_classification_counts(),
+        PreparedMeshPairFactState::Current
+    ));
     assert_eq!(
         streamed_classification_pair
             .cache_status()
@@ -1256,46 +1257,44 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         .unwrap();
     let classification_record_count =
         classification_records_first_pair.prepare_face_pair_classifications();
-    assert!(
+    assert!(matches!(
         classification_records_first_pair
             .cache_status()
-            .face_pair_classifications()
-            .is_current()
-    );
-    assert!(
+            .face_pair_classifications(),
+        PreparedMeshPairFactState::Current
+    ));
+    assert!(matches!(
         classification_records_first_pair
             .cache_status()
-            .candidate_face_pairs()
-            .is_missing()
-    );
+            .candidate_face_pairs(),
+        PreparedMeshPairFactState::Missing
+    ));
     assert_eq!(
         classification_records_first_pair.prepare_candidate_face_pairs(),
         classification_record_count
     );
-    assert!(
+    assert!(matches!(
         classification_records_first_pair
             .cache_status()
-            .candidate_face_pairs()
-            .is_current()
-    );
+            .candidate_face_pairs(),
+        PreparedMeshPairFactState::Current
+    ));
     let classification_counts: PreparedMeshPairClassificationCounts =
         prepared_pair.prepare_face_pair_classification_counts();
     assert_eq!(
         classification_counts.face_pair_count(),
         retained_candidate_count
     );
-    assert!(
+    assert!(matches!(
+        prepared_pair.cache_status().face_pair_classifications(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
         prepared_pair
             .cache_status()
-            .face_pair_classifications()
-            .is_missing()
-    );
-    assert!(
-        prepared_pair
-            .cache_status()
-            .face_pair_classification_counts()
-            .is_current()
-    );
+            .face_pair_classification_counts(),
+        PreparedMeshPairFactState::Current
+    ));
     assert_eq!(
         prepared_pair
             .cache_status()
@@ -1324,18 +1323,16 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         classification_counts.plane_separated_count()
             + classification_counts.graph_required_count()
     );
-    assert!(
+    assert!(matches!(
+        prepared_pair.cache_status().face_pair_classifications(),
+        PreparedMeshPairFactState::Current
+    ));
+    assert!(matches!(
         prepared_pair
             .cache_status()
-            .face_pair_classifications()
-            .is_current()
-    );
-    assert!(
-        prepared_pair
-            .cache_status()
-            .face_pair_classification_counts()
-            .is_current()
-    );
+            .face_pair_classification_counts(),
+        PreparedMeshPairFactState::Current
+    ));
     assert_eq!(
         prepared_pair
             .cache_status()
@@ -1358,12 +1355,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     );
     assert!(retained_graph_counts.event_count() > 0);
     assert!(!retained_graph_counts.has_unknowns());
-    assert!(
-        prepared_pair
-            .cache_status()
-            .intersection_graph()
-            .is_certificate_blocked()
-    );
+    assert!(matches!(
+        prepared_pair.cache_status().intersection_graph(),
+        PreparedMeshPairFactState::CertificateBlocked
+    ));
     assert_eq!(
         prepared_pair
             .cache_status()
@@ -1377,12 +1372,10 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         prepared_pair.prepare_current_intersection_graph().unwrap(),
         retained_graph_counts
     );
-    assert!(
-        prepared_pair
-            .cache_status()
-            .intersection_graph()
-            .is_current()
-    );
+    assert!(matches!(
+        prepared_pair.cache_status().intersection_graph(),
+        PreparedMeshPairFactState::Current
+    ));
     assert_eq!(
         prepared_pair
             .cache_status()
@@ -1558,18 +1551,14 @@ fn prepared_pair_candidate_visitor_streams_without_storing_records() {
         })
         .unwrap();
 
-    assert!(
-        prepared_pair
-            .cache_status()
-            .broad_phase_traversal()
-            .is_current()
-    );
-    assert!(
-        prepared_pair
-            .cache_status()
-            .candidate_face_pairs()
-            .is_missing()
-    );
+    assert!(matches!(
+        prepared_pair.cache_status().broad_phase_traversal(),
+        PreparedMeshPairFactState::Current
+    ));
+    assert!(matches!(
+        prepared_pair.cache_status().candidate_face_pairs(),
+        PreparedMeshPairFactState::Missing
+    ));
     assert_eq!(
         prepared_pair
             .cache_status()
@@ -1665,8 +1654,14 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         .unwrap();
 
     let pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
-    assert!(pair.cache_status().intersection_graph().is_missing());
-    assert!(pair.cache_status().arrangement().is_missing());
+    assert!(matches!(
+        pair.cache_status().intersection_graph(),
+        PreparedMeshPairFactState::Missing
+    ));
+    assert!(matches!(
+        pair.cache_status().arrangement(),
+        PreparedMeshPairFactState::Missing
+    ));
     assert_eq!(
         pair.cache_status()
             .current_arrangement_counts()
@@ -1685,7 +1680,10 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
     let prepared_arrangement_counts: PreparedMeshPairArrangementCounts =
         pair.prepare_arrangement().unwrap();
     assert!(prepared_arrangement_counts.is_complete());
-    assert!(pair.cache_status().arrangement().is_current());
+    assert!(matches!(
+        pair.cache_status().arrangement(),
+        PreparedMeshPairFactState::Current
+    ));
     assert_eq!(
         pair.cache_status().current_arrangement_counts().unwrap(),
         prepared_arrangement_counts
@@ -1722,7 +1720,10 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         })
         .unwrap();
     assert_eq!(current_prepared_counts, direct_counts);
-    assert!(pair.cache_status().arrangement().is_current());
+    assert!(matches!(
+        pair.cache_status().arrangement(),
+        PreparedMeshPairFactState::Current
+    ));
     let retained_arrangement_counts = pair.cache_status().current_arrangement_counts().unwrap();
     assert_eq!(retained_arrangement_counts, prepared_arrangement_counts);
     assert_eq!(
@@ -1758,7 +1759,10 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         pair.cache_status().current_arrangement_counts().unwrap(),
         retained_arrangement_counts
     );
-    assert!(pair.cache_status().intersection_graph().is_current());
+    assert!(matches!(
+        pair.cache_status().intersection_graph(),
+        PreparedMeshPairFactState::Current
+    ));
     let arrangement_graph_counts = pair
         .cache_status()
         .current_intersection_graph_counts()
@@ -1775,21 +1779,27 @@ fn prepared_pair_named_boolean_preserves_retained_arrangement() {
     let pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
 
     let arrangement_counts = pair.prepare_arrangement().unwrap();
-    assert!(pair.cache_status().arrangement().is_current());
+    assert!(matches!(
+        pair.cache_status().arrangement(),
+        PreparedMeshPairFactState::Current
+    ));
 
     let intersection_outcome = pair
         .prepare_result(PreparedMeshPairBoolean::Intersection)
         .unwrap();
-    assert!(pair.cache_status().arrangement().is_current());
+    assert!(matches!(
+        pair.cache_status().arrangement(),
+        PreparedMeshPairFactState::Current
+    ));
     assert_eq!(
         pair.cache_status().current_arrangement_counts().unwrap(),
         arrangement_counts
     );
-    assert!(
+    assert!(matches!(
         pair.cache_status()
-            .result(PreparedMeshPairBoolean::Intersection)
-            .is_current()
-    );
+            .result(PreparedMeshPairBoolean::Intersection),
+        PreparedMeshPairFactState::Current
+    ));
     assert_eq!(
         pair.cache_status()
             .current_result_outcome(PreparedMeshPairBoolean::Intersection)

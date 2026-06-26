@@ -835,26 +835,6 @@ impl PreparedMeshPairClassificationCounts {
 }
 
 impl PreparedMeshPairFactState {
-    /// Return whether this fact has not been computed for the session.
-    pub const fn is_missing(self) -> bool {
-        matches!(self, Self::Missing)
-    }
-
-    /// Return whether this fact was retained for stale source stamps.
-    pub const fn is_stale(self) -> bool {
-        matches!(self, Self::Stale)
-    }
-
-    /// Return whether a later stage can consume this fact through a cheap certificate check.
-    pub const fn is_current(self) -> bool {
-        matches!(self, Self::Current)
-    }
-
-    /// Return whether the fact exists but lacks a current cheap certificate.
-    pub const fn is_certificate_blocked(self) -> bool {
-        matches!(self, Self::CertificateBlocked)
-    }
-
     /// Convert a non-current state into a typed blocker for callers that require a current fact.
     pub fn blocker(self, fact: &'static str) -> Option<ExactMeshBlocker> {
         match self {
