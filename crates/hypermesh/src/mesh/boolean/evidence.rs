@@ -3365,7 +3365,9 @@ impl ExactBooleanCertificationSet {
             self.validate_retained_closure_and_attempt_for_request(request, true, true)?;
             return Ok(());
         }
-        if self.retained_attempt_certifies_regularized_output_for_request(request) {
+        if self.arrangement_attempt.as_ref().is_some_and(|attempt| {
+            attempt.certifies_regularized_arrangement_cell_complex_output_for_request(request)
+        }) {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
@@ -3373,10 +3375,18 @@ impl ExactBooleanCertificationSet {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
-        if !self.region_ownership_resolves_operation(request.operation) {
+        if !self
+            .arrangement_attempt
+            .as_ref()
+            .is_some_and(|attempt| attempt.retained_ownership_resolves_operation(request.operation))
+        {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
-        if !self.topology_assembly_complete() {
+        if !self
+            .arrangement_attempt
+            .as_ref()
+            .is_some_and(ExactArrangementBooleanAttempt::retains_complete_gate_reports)
+        {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         if self.refinement.graph_had_unknowns() != self.planar_arrangement.graph_had_unknowns()
@@ -3539,27 +3549,6 @@ impl ExactBooleanCertificationSet {
                         && report.is_coplanar_closure_available()
                         && report.validate().is_ok()
                 })
-    }
-
-    fn retained_attempt_certifies_regularized_output_for_request(
-        &self,
-        request: ExactBooleanRequest,
-    ) -> bool {
-        self.arrangement_attempt.as_ref().is_some_and(|attempt| {
-            attempt.certifies_regularized_arrangement_cell_complex_output_for_request(request)
-        })
-    }
-
-    fn topology_assembly_complete(&self) -> bool {
-        self.arrangement_attempt
-            .as_ref()
-            .is_some_and(ExactArrangementBooleanAttempt::retains_complete_gate_reports)
-    }
-
-    fn region_ownership_resolves_operation(&self, operation: ExactBooleanOperation) -> bool {
-        self.arrangement_attempt
-            .as_ref()
-            .is_some_and(|attempt| attempt.retained_ownership_resolves_operation(operation))
     }
 
     fn arrangement_attempt_certifies_output_for_operation(
@@ -4027,8 +4016,12 @@ impl ExactBooleanCertificationSet {
             || coplanar_boundary_only_evidence_matches
             || coplanar_boundary_closure_evidence_matches
             || source_fact_materialization_evidence_matches
-            || (self.region_ownership_resolves_operation(preflight.operation)
-                && self.topology_assembly_complete()
+            || (self.arrangement_attempt.as_ref().is_some_and(|attempt| {
+                attempt.retained_ownership_resolves_operation(preflight.operation)
+            }) && self
+                .arrangement_attempt
+                .as_ref()
+                .is_some_and(ExactArrangementBooleanAttempt::retains_complete_gate_reports)
                 && {
                     let region_evidence_matches = (preflight.region_count
                         == self.winding_evidence.region_count()
