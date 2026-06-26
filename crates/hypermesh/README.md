@@ -34,18 +34,19 @@ convenience methods downstream CSG layers need: `union`, `intersection`,
 `difference`, `xor`, `transform`, `inverse`, and `with_arrangement_view`.
 
 The default crate root intentionally keeps that shape narrow: `ExactMesh` is the
-normal import. Low-level kernel errors, borrowed views, prepared pair caches,
-and retained fact summaries live under `hypermesh::kernel` for exact integrations
-that need them without becoming additional root entry points. Workspace routing,
-boundary policy, output policy, and product-facing reports belong above this
-crate rather than in the default public API.
+normal import. Low-level kernel errors and borrowed views live under
+`hypermesh::kernel` for exact integrations that need them without becoming
+additional root entry points. Workspace routing, boundary policy, output policy,
+and product-facing reports belong above this crate rather than in the default
+public API.
 
 Borrowed queries start from `ExactMesh::view()`. Mesh, triangle, face, and edge
 views avoid cloning mesh storage; prepared views reuse certificate-validated
 broad-phase facts and stream candidate face pairs with fallible early-stop
-support. Prepared mesh pairs expose an aggregate cache status so callers can
-check whether retained facts are missing, stale, certificate-blocked, or current
-before consuming them. `ExactMesh::with_arrangement_view` exposes borrowed
+support. Prepared mesh pairs expose query-shaped cache access: callers can build
+candidate-pair or arrangement evidence and inspect it through borrowed closures,
+or ask for already-current retained evidence and receive typed blockers when it
+is missing or stale. `ExactMesh::with_arrangement_view` exposes borrowed
 arrangement queries for algorithms that need retained topology without cloning
 arrangement storage or naming an owned arrangement type.
 
@@ -67,7 +68,7 @@ typed blocker rather than patched with a tolerance.
 ## Performance Model
 
 The performance direction is broad-phase pruning plus exact local decisions.
-Retained bounds, prepared views, streamed face-pair classification, split plans,
+Retained bounds, prepared views, streamed candidate-pair traversal, split plans,
 support intervals, coplanar arrangements, and borrowed views narrow work before
 expensive predicates or topology rebuilds. Routine algorithms consume retained
 facts through cheap certificate checks; full source replay remains an explicit
