@@ -1817,13 +1817,10 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     }
     if requires_certified_winding
         && requires_coplanar_volumetric_cells
-        && volumetric_boundary_closure_report_from_graph(graph, left, right, operation)
-            .ok()
-            .is_some_and(|report| report.is_coplanar_closure_available())
+        && let Some(preflight) =
+            certified_coplanar_boundary_closure_preflight(graph, left, right, operation)
     {
-        return Ok(certified_arrangement_cell_complex_preflight(
-            operation, graph, left, right,
-        ));
+        return Ok(preflight);
     }
     if requires_certified_winding
         && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
@@ -2112,13 +2109,10 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     }
     if requires_coplanar_volumetric_cells {
         if request.validation == ExactMeshValidationPolicy::CLOSED
-            && volumetric_boundary_closure_report_from_graph(graph, left, right, operation)
-                .ok()
-                .is_some_and(|report| report.is_coplanar_closure_available())
+            && let Some(preflight) =
+                certified_coplanar_boundary_closure_preflight(graph, left, right, operation)
         {
-            return Ok(certified_arrangement_cell_complex_preflight(
-                operation, graph, left, right,
-            ));
+            return Ok(preflight);
         }
         if let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
             &mut certified_arrangement_preflight,
@@ -2697,6 +2691,18 @@ fn certified_convex_operation_preflight(
 ) -> Option<ExactBooleanPreflight> {
     certified_convex_operation_shortcut_support(left, right, operation)
         .map(|support| certified_preflight(operation, support, Some(graph), None))
+}
+
+fn certified_coplanar_boundary_closure_preflight(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Option<ExactBooleanPreflight> {
+    volumetric_boundary_closure_report_from_graph(graph, left, right, operation)
+        .ok()
+        .is_some_and(|report| report.is_coplanar_closure_available())
+        .then(|| certified_arrangement_cell_complex_preflight(operation, graph, left, right))
 }
 
 fn certified_arrangement_cell_complex_coplanar_evidence(
