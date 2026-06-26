@@ -703,50 +703,21 @@ fn certification_set_from_graph_and_regularized_arrangement(
     let reject_boundary_evidence_request = request.validation
         == ExactMeshValidationPolicy::ALLOW_BOUNDARY
         && request.boundary_policy == ExactBoundaryBooleanPolicy::Reject;
-    let planar_arrangement = if matches!(
-        request.operation,
-        ExactBooleanOperation::SelectedRegions(_)
-    ) {
-        not_named_planar_arrangement_report(request.operation)
-    } else {
-        let mut arrangement_cell_complex_preflight: CertifiedArrangementCellComplexPreflightCache =
-            None;
-        match planar_arrangement_report_from_graph_with_cell_complex_cache(
-            graph,
-            left,
-            right,
-            request.operation,
-            &mut arrangement_cell_complex_preflight,
-            Some(request),
-            retained_arrangement_attempt,
-        ) {
-            Ok(report) => report,
-            Err(_) => planar_arrangement_report(
-                request.operation,
-                ExactPlanarArrangementStatus::NoPositiveOverlap,
-                graph.has_unknowns(),
-                graph.face_pairs.len(),
-                graph.event_count(),
-                retained_graph_counts(graph),
-                None,
-            ),
-        }
-    };
-    let volumetric_boundary_closure =
-        if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
-            None
-        } else if adjacent_union_completion_certified {
-            Some(no_materialized_boundary_output_report(request.operation))
-        } else if reject_boundary_evidence_request {
-            None
-        } else if request.validation == ExactMeshValidationPolicy::CLOSED {
-            volumetric_boundary_closure_report_from_graph(graph, left, right, request.operation)
-                .ok()
-                .filter(ExactVolumetricBoundaryClosureReport::is_coplanar_closure_available)
-        } else {
-            volumetric_boundary_closure_report_from_graph(graph, left, right, request.operation)
-                .ok()
-        };
+    let planar_arrangement = planar_arrangement_certification_report_from_graph(
+        graph,
+        left,
+        right,
+        request,
+        retained_arrangement_attempt,
+    );
+    let volumetric_boundary_closure = volumetric_boundary_closure_certification_report_from_graph(
+        graph,
+        left,
+        right,
+        request,
+        adjacent_union_completion_certified,
+        reject_boundary_evidence_request,
+    );
     let retained_arrangement_attempt_materializes_output = retained_arrangement_attempt
         .is_some_and(|attempt| {
             attempt.certifies_regularized_arrangement_cell_complex_output_for_request(request)
@@ -856,6 +827,68 @@ fn certification_set_from_graph_and_regularized_arrangement(
         volumetric_boundary_closure,
         arrangement_attempt,
     ))
+}
+
+fn planar_arrangement_certification_report_from_graph(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
+) -> ExactPlanarArrangementReport {
+    if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return not_named_planar_arrangement_report(request.operation);
+    }
+
+    let mut arrangement_cell_complex_preflight: CertifiedArrangementCellComplexPreflightCache =
+        None;
+    planar_arrangement_report_from_graph_with_cell_complex_cache(
+        graph,
+        left,
+        right,
+        request.operation,
+        &mut arrangement_cell_complex_preflight,
+        Some(request),
+        retained_arrangement_attempt,
+    )
+    .unwrap_or_else(|_| {
+        planar_arrangement_report(
+            request.operation,
+            ExactPlanarArrangementStatus::NoPositiveOverlap,
+            graph.has_unknowns(),
+            graph.face_pairs.len(),
+            graph.event_count(),
+            retained_graph_counts(graph),
+            None,
+        )
+    })
+}
+
+fn volumetric_boundary_closure_certification_report_from_graph(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    adjacent_union_completion_certified: bool,
+    reject_boundary_evidence_request: bool,
+) -> Option<ExactVolumetricBoundaryClosureReport> {
+    if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return None;
+    }
+    if adjacent_union_completion_certified {
+        return Some(no_materialized_boundary_output_report(request.operation));
+    }
+    if reject_boundary_evidence_request {
+        return None;
+    }
+
+    let report =
+        volumetric_boundary_closure_report_from_graph(graph, left, right, request.operation)
+            .ok()?;
+    if request.validation == ExactMeshValidationPolicy::CLOSED {
+        return report.is_coplanar_closure_available().then_some(report);
+    }
+    Some(report)
 }
 
 fn graph_for_certified_materialization<'a>(
