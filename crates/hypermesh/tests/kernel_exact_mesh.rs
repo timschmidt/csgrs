@@ -306,14 +306,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         .prepare_broad_phase_pair(overlapping.view())
         .unwrap();
     assert_eq!(
-        prepared_pair.left().view().face_count(),
-        left.triangle_count()
-    );
-    assert_eq!(
-        prepared_pair.right().view().face_count(),
-        overlapping.triangle_count()
-    );
-    assert_eq!(
         prepared_pair
             .with_current_candidate_face_pairs(|pairs| pairs.len())
             .unwrap_err()

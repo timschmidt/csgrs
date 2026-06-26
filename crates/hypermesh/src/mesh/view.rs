@@ -650,13 +650,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         }
     }
 
-    /// Return the left prepared mesh view.
-    pub const fn left(&self) -> &PreparedMeshView<'left> {
+    pub(crate) const fn left(&self) -> &PreparedMeshView<'left> {
         &self.left
     }
 
-    /// Return the right prepared mesh view.
-    pub const fn right(&self) -> &PreparedMeshView<'right> {
+    pub(crate) const fn right(&self) -> &PreparedMeshView<'right> {
         &self.right
     }
 
