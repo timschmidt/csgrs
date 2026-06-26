@@ -320,7 +320,7 @@ fn exact_boolean_evaluation_for_replay_result_with_materialization(
             )?;
         }
     }
-    let certifications = ExactBooleanCertificationSet::from_graph_and_regularized_arrangement(
+    let certifications = certification_set_from_graph_and_regularized_arrangement(
         &graph,
         left,
         right,
@@ -705,216 +705,212 @@ impl ExactBooleanRequest {
     }
 }
 
-impl ExactBooleanCertificationSet {
-    pub(crate) fn from_graph_and_regularized_arrangement(
-        graph: &ExactIntersectionGraph,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-        retained_regularized_arrangement: Option<&ExactArrangement>,
-        retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
-        source_facts: &ExactBooleanSourceFacts,
-    ) -> Result<Self, ExactMeshError> {
-        validate_graph_source_replay(graph, left, right)?;
-        if let Some(attempt) = retained_arrangement_attempt {
-            attempt
-                .validate_for_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
-                .map_err(|error| {
-                    retained_report_validation_error(
-                        "retained arrangement attempt failed validation",
-                        error,
-                    )
-                })?;
-        }
-        let trivial = source_facts.trivial.clone();
-        let regularized_solid = source_facts.regularized_solid.clone();
-        let refinement = refinement_report_from_graph(graph, request.operation);
-        let boundary_touching = boundary_touching_report_from_graph(graph, left, right)
-            .unwrap_or_else(|_| not_boundary_only_report_from_graph(graph));
-        let open_surface_disjoint = open_surface_disjoint_report_from_graph(graph, left, right);
-        let adjacent_union_completion = adjacent_union_completion_certification_from_graph(
+fn certification_set_from_graph_and_regularized_arrangement(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    retained_regularized_arrangement: Option<&ExactArrangement>,
+    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
+    source_facts: &ExactBooleanSourceFacts,
+) -> Result<ExactBooleanCertificationSet, ExactMeshError> {
+    validate_graph_source_replay(graph, left, right)?;
+    if let Some(attempt) = retained_arrangement_attempt {
+        attempt
+            .validate_for_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .map_err(|error| {
+                retained_report_validation_error(
+                    "retained arrangement attempt failed validation",
+                    error,
+                )
+            })?;
+    }
+    let trivial = source_facts.trivial.clone();
+    let regularized_solid = source_facts.regularized_solid.clone();
+    let refinement = refinement_report_from_graph(graph, request.operation);
+    let boundary_touching = boundary_touching_report_from_graph(graph, left, right)
+        .unwrap_or_else(|_| not_boundary_only_report_from_graph(graph));
+    let open_surface_disjoint = open_surface_disjoint_report_from_graph(graph, left, right);
+    let adjacent_union_completion = adjacent_union_completion_certification_from_graph(
+        graph,
+        left,
+        right,
+        request.operation,
+        None,
+    )?
+    .0;
+    let adjacent_union_completion_certified = adjacent_union_completion.is_certified();
+    let identical = source_facts.identical.clone();
+    let same_surface = source_facts.same_surface.clone();
+    let closed_winding_left_in_right = source_facts.closed_winding_left_in_right.clone();
+    let closed_winding_right_in_left = source_facts.closed_winding_right_in_left.clone();
+    let convex_left_in_right = source_facts.convex_left_in_right.clone();
+    let convex_right_in_left = source_facts.convex_right_in_left.clone();
+    let convex_capabilities = source_facts.convex_capabilities.clone();
+    let arrangement_cell_complex_shortcuts = source_facts.arrangement_cell_complex_shortcuts();
+    let arrangement_cell_complex_shortcut_support =
+        arrangement_cell_complex_shortcuts.certified_support(request.operation);
+    let reject_boundary_evidence_request = request.validation
+        == ExactMeshValidationPolicy::ALLOW_BOUNDARY
+        && request.boundary_policy == ExactBoundaryBooleanPolicy::Reject;
+    let planar_arrangement = if matches!(
+        request.operation,
+        ExactBooleanOperation::SelectedRegions(_)
+    ) {
+        not_named_planar_arrangement_report(request.operation)
+    } else {
+        let mut arrangement_cell_complex_preflight: CertifiedArrangementCellComplexPreflightCache =
+            None;
+        match planar_arrangement_report_from_graph_with_cell_complex_cache(
             graph,
             left,
             right,
             request.operation,
-            None,
-        )?
-        .0;
-        let adjacent_union_completion_certified = adjacent_union_completion.is_certified();
-        let identical = source_facts.identical.clone();
-        let same_surface = source_facts.same_surface.clone();
-        let closed_winding_left_in_right = source_facts.closed_winding_left_in_right.clone();
-        let closed_winding_right_in_left = source_facts.closed_winding_right_in_left.clone();
-        let convex_left_in_right = source_facts.convex_left_in_right.clone();
-        let convex_right_in_left = source_facts.convex_right_in_left.clone();
-        let convex_capabilities = source_facts.convex_capabilities.clone();
-        let arrangement_cell_complex_shortcuts = source_facts.arrangement_cell_complex_shortcuts();
-        let arrangement_cell_complex_shortcut_support =
-            arrangement_cell_complex_shortcuts.certified_support(request.operation);
-        let reject_boundary_evidence_request = request.validation
-            == ExactMeshValidationPolicy::ALLOW_BOUNDARY
-            && request.boundary_policy == ExactBoundaryBooleanPolicy::Reject;
-        let planar_arrangement =
-            if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
-                not_named_planar_arrangement_report(request.operation)
-            } else {
-                let mut arrangement_cell_complex_preflight:
-                    CertifiedArrangementCellComplexPreflightCache = None;
-                match planar_arrangement_report_from_graph_with_cell_complex_cache(
-                    graph,
-                    left,
-                    right,
-                    request.operation,
-                    &mut arrangement_cell_complex_preflight,
-                    Some(request),
-                    retained_arrangement_attempt,
-                ) {
-                    Ok(report) => report,
-                    Err(_) => planar_arrangement_report(
-                        request.operation,
-                        ExactPlanarArrangementStatus::NoPositiveOverlap,
-                        graph.has_unknowns(),
-                        graph.face_pairs.len(),
-                        graph.event_count(),
-                        retained_graph_counts(graph),
-                        None,
-                    ),
-                }
-            };
-        let volumetric_boundary_closure =
-            if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
-                None
-            } else if adjacent_union_completion_certified {
-                Some(no_materialized_boundary_output_report(request.operation))
-            } else if reject_boundary_evidence_request {
-                None
-            } else if request.validation == ExactMeshValidationPolicy::CLOSED {
-                volumetric_boundary_closure_report_from_graph(graph, left, right, request.operation)
-                    .ok()
-                    .filter(ExactVolumetricBoundaryClosureReport::is_coplanar_closure_available)
-            } else {
-                volumetric_boundary_closure_report_from_graph(graph, left, right, request.operation)
-                    .ok()
-            };
-        let retained_arrangement_attempt_materializes_output = retained_arrangement_attempt
-            .is_some_and(|attempt| {
-                attempt.certifies_arrangement_cell_complex_output_for_request(
+            &mut arrangement_cell_complex_preflight,
+            Some(request),
+            retained_arrangement_attempt,
+        ) {
+            Ok(report) => report,
+            Err(_) => planar_arrangement_report(
+                request.operation,
+                ExactPlanarArrangementStatus::NoPositiveOverlap,
+                graph.has_unknowns(),
+                graph.face_pairs.len(),
+                graph.event_count(),
+                retained_graph_counts(graph),
+                None,
+            ),
+        }
+    };
+    let volumetric_boundary_closure =
+        if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
+            None
+        } else if adjacent_union_completion_certified {
+            Some(no_materialized_boundary_output_report(request.operation))
+        } else if reject_boundary_evidence_request {
+            None
+        } else if request.validation == ExactMeshValidationPolicy::CLOSED {
+            volumetric_boundary_closure_report_from_graph(graph, left, right, request.operation)
+                .ok()
+                .filter(ExactVolumetricBoundaryClosureReport::is_coplanar_closure_available)
+        } else {
+            volumetric_boundary_closure_report_from_graph(graph, left, right, request.operation)
+                .ok()
+        };
+    let retained_arrangement_attempt_materializes_output = retained_arrangement_attempt
+        .is_some_and(|attempt| {
+            attempt.certifies_arrangement_cell_complex_output_for_request(
+                request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+        });
+    let retained_arrangement_cell_complex_shortcut_attempt =
+        retained_arrangement_attempt.filter(|attempt| {
+            !retained_arrangement_attempt_materializes_output
+                && attempt.certifies_arrangement_cell_complex_shortcut_for_request(
                     request,
                     ExactRegularizationPolicy::REGULARIZED_SOLID,
                 )
-            });
-        let retained_arrangement_cell_complex_shortcut_attempt = retained_arrangement_attempt
-            .filter(|attempt| {
-                !retained_arrangement_attempt_materializes_output
-                    && attempt.certifies_arrangement_cell_complex_shortcut_for_request(
-                        request,
-                        ExactRegularizationPolicy::REGULARIZED_SOLID,
-                    )
-            });
-        let arrangement_cell_complex_shortcut_certified = arrangement_cell_complex_shortcut_support
-            == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-            && !retained_arrangement_attempt_materializes_output
-            && retained_arrangement_cell_complex_shortcut_attempt.is_some();
-        let retained_attempt_has_regularized_reports = retained_arrangement_attempt
-            .is_some_and(|attempt| attempt.retained_gate_reports().is_some());
-        let owned_regularized_arrangement;
-        let regularized_arrangement =
-            if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_))
-                || arrangement_cell_complex_shortcut_certified
-                || adjacent_union_completion_certified
-                || reject_boundary_evidence_request
-                || request.validation == ExactMeshValidationPolicy::CLOSED
-                || retained_attempt_has_regularized_reports
-            {
-                None
-            } else if let Some(arrangement) = retained_regularized_arrangement {
-                Some(arrangement)
-            } else {
-                owned_regularized_arrangement =
-                    ExactArrangement::from_intersection_graph_with_policy(
-                        graph.clone(),
-                        left,
-                        right,
-                        ExactRegularizationPolicy::REGULARIZED_SOLID,
-                    )?;
-                Some(&owned_regularized_arrangement)
-            };
-        let arrangement_attempt = if adjacent_union_completion_certified {
-            None
-        } else if let Some(attempt) = retained_arrangement_attempt
-            && retained_arrangement_attempt_materializes_output
+        });
+    let arrangement_cell_complex_shortcut_certified = arrangement_cell_complex_shortcut_support
+        == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+        && !retained_arrangement_attempt_materializes_output
+        && retained_arrangement_cell_complex_shortcut_attempt.is_some();
+    let retained_attempt_has_regularized_reports = retained_arrangement_attempt
+        .is_some_and(|attempt| attempt.retained_gate_reports().is_some());
+    let owned_regularized_arrangement;
+    let regularized_arrangement =
+        if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_))
+            || arrangement_cell_complex_shortcut_certified
+            || adjacent_union_completion_certified
+            || reject_boundary_evidence_request
+            || request.validation == ExactMeshValidationPolicy::CLOSED
+            || retained_attempt_has_regularized_reports
         {
-            Some(attempt.clone())
-        } else if arrangement_cell_complex_shortcut_certified {
-            retained_arrangement_cell_complex_shortcut_attempt.cloned()
-        } else if let Some(attempt) = retained_arrangement_attempt {
-            Some(attempt.clone())
+            None
+        } else if let Some(arrangement) = retained_regularized_arrangement {
+            Some(arrangement)
         } else {
-            regularized_arrangement
-                .map(|arrangement| {
-                    arrangement_boolean_attempt_report_from_arrangement(
-                        left,
-                        right,
-                        request,
-                        ExactRegularizationPolicy::REGULARIZED_SOLID,
-                        arrangement,
-                    )
-                })
-                .transpose()?
+            owned_regularized_arrangement = ExactArrangement::from_intersection_graph_with_policy(
+                graph.clone(),
+                left,
+                right,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )?;
+            Some(&owned_regularized_arrangement)
         };
-        let winding_evidence = match winding_evidence_report_for_request_from_graph_and_attempt(
-            graph,
-            left,
-            right,
-            request,
-            arrangement_attempt.as_ref(),
-            arrangement_cell_complex_shortcuts,
-        ) {
-            Ok(report) => report,
-            Err(_) => {
-                let geometry = graph.face_split_geometry_plan(left, right)?;
-                let region_plan = geometry.region_plan(left, right);
-                let region_classifications = checked_classify_face_regions_against_opposite_planes(
-                    &region_plan,
+    let arrangement_attempt = if adjacent_union_completion_certified {
+        None
+    } else if let Some(attempt) = retained_arrangement_attempt
+        && retained_arrangement_attempt_materializes_output
+    {
+        Some(attempt.clone())
+    } else if arrangement_cell_complex_shortcut_certified {
+        retained_arrangement_cell_complex_shortcut_attempt.cloned()
+    } else if let Some(attempt) = retained_arrangement_attempt {
+        Some(attempt.clone())
+    } else {
+        regularized_arrangement
+            .map(|arrangement| {
+                arrangement_boolean_attempt_report_from_arrangement(
                     left,
                     right,
-                )?;
-                let counts = retained_graph_counts(graph);
-                winding_evidence_report(
-                    request.operation,
-                    ExactWindingEvidenceStatus::VolumetricAssemblyRequired,
-                    graph.has_unknowns(),
-                    graph.face_pairs.len(),
-                    graph.event_count(),
-                    region_plan.regions.len(),
-                    region_classifications,
-                    counts.into_blocker(ExactBooleanBlockerKind::Winding),
-                    None,
-                    coplanar_volumetric_evidence_if_required(graph, left, right),
+                    request,
+                    ExactRegularizationPolicy::REGULARIZED_SOLID,
+                    arrangement,
                 )
-            }
-        };
-        Ok(Self {
-            trivial,
-            regularized_solid,
-            refinement,
-            boundary_touching,
-            open_surface_disjoint,
-            adjacent_union_completion,
-            identical,
-            same_surface,
-            closed_winding_left_in_right,
-            closed_winding_right_in_left,
-            convex_left_in_right,
-            convex_right_in_left,
-            convex_capabilities,
-            arrangement_cell_complex_shortcuts: arrangement_cell_complex_shortcuts.clone(),
-            planar_arrangement,
-            winding_evidence,
-            volumetric_boundary_closure,
-            arrangement_attempt,
-        })
-    }
+            })
+            .transpose()?
+    };
+    let winding_evidence = match winding_evidence_report_for_request_from_graph_and_attempt(
+        graph,
+        left,
+        right,
+        request,
+        arrangement_attempt.as_ref(),
+        arrangement_cell_complex_shortcuts,
+    ) {
+        Ok(report) => report,
+        Err(_) => {
+            let geometry = graph.face_split_geometry_plan(left, right)?;
+            let region_plan = geometry.region_plan(left, right);
+            let region_classifications =
+                checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
+            let counts = retained_graph_counts(graph);
+            winding_evidence_report(
+                request.operation,
+                ExactWindingEvidenceStatus::VolumetricAssemblyRequired,
+                graph.has_unknowns(),
+                graph.face_pairs.len(),
+                graph.event_count(),
+                region_plan.regions.len(),
+                region_classifications,
+                counts.into_blocker(ExactBooleanBlockerKind::Winding),
+                None,
+                coplanar_volumetric_evidence_if_required(graph, left, right),
+            )
+        }
+    };
+    Ok(ExactBooleanCertificationSet {
+        trivial,
+        regularized_solid,
+        refinement,
+        boundary_touching,
+        open_surface_disjoint,
+        adjacent_union_completion,
+        identical,
+        same_surface,
+        closed_winding_left_in_right,
+        closed_winding_right_in_left,
+        convex_left_in_right,
+        convex_right_in_left,
+        convex_capabilities,
+        arrangement_cell_complex_shortcuts: arrangement_cell_complex_shortcuts.clone(),
+        planar_arrangement,
+        winding_evidence,
+        volumetric_boundary_closure,
+        arrangement_attempt,
+    })
 }
 
 fn graph_for_certified_materialization<'a>(
