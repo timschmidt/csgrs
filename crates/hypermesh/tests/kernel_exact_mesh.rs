@@ -321,9 +321,8 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .kind(),
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    prepared_pair.prepare_candidate_face_pairs();
     let retained_candidate_count = prepared_pair
-        .with_current_candidate_face_pairs(|pairs| pairs.len())
+        .with_candidate_face_pairs(|pairs| pairs.len())
         .unwrap();
     assert!(retained_candidate_count > 0);
     assert_eq!(
@@ -341,9 +340,8 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         .view()
         .prepare_broad_phase_pair(overlapping.view())
         .unwrap();
-    classification_records_first_pair.prepare_candidate_face_pairs();
     let mut classification_first_candidates = classification_records_first_pair
-        .with_current_candidate_face_pairs(|pairs| pairs.to_vec())
+        .with_candidate_face_pairs(|pairs| pairs.to_vec())
         .unwrap();
     classification_first_candidates.sort_unstable();
     assert!(retained_candidate_count > 0);

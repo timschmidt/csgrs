@@ -664,11 +664,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         self.candidate_pair_capacity_hint
     }
 
-    /// Build and retain broad-phase candidate face pairs.
-    pub fn prepare_candidate_face_pairs(&self) {
-        self.ensure_candidate_face_pairs();
-    }
-
     fn sources_current(&self) -> bool {
         self.left_source == self.left.view.source_stamp()
             && self.right_source == self.right.view.source_stamp()
@@ -708,6 +703,15 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             ))
         })?;
         Ok(query(pairs))
+    }
+
+    /// Build and retain broad-phase candidate face pairs, then run `query` on them.
+    pub fn with_candidate_face_pairs<R>(
+        &self,
+        query: impl FnOnce(&[[usize; 2]]) -> R,
+    ) -> Result<R, ExactMeshError> {
+        self.ensure_candidate_face_pairs();
+        self.with_current_candidate_face_pairs(query)
     }
 
     /// Build and retain the exact arrangement.
