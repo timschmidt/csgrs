@@ -4435,20 +4435,15 @@ fn run_arrangement_cell_complex_attempt_from_graph(
     )
 }
 
-fn run_arrangement_cell_complex_attempt_from_arrangement(
+fn arrangement_cell_complex_started_attempt(
     arrangement: &ExactArrangement,
-    left: &ExactMesh,
-    right: &ExactMesh,
     request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
-    regularize_unregularized_sheet_complex: bool,
-) -> Result<ArrangementCellComplexOutcome, ExactMeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    let mut attempt = ExactArrangementBooleanAttempt {
-        operation,
+) -> ExactArrangementBooleanAttempt {
+    ExactArrangementBooleanAttempt {
+        operation: request.operation,
         policy,
-        output_validation: validation,
+        output_validation: request.validation,
         boundary_policy: request.boundary_policy,
         stage: ExactArrangementBooleanStage::ArrangementBuilt,
         decline: None,
@@ -4483,7 +4478,20 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         output_vertices: 0,
         output_triangles: 0,
         output_facts: None,
-    };
+    }
+}
+
+fn run_arrangement_cell_complex_attempt_from_arrangement(
+    arrangement: &ExactArrangement,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    policy: ExactRegularizationPolicy,
+    regularize_unregularized_sheet_complex: bool,
+) -> Result<ArrangementCellComplexOutcome, ExactMeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
+    let mut attempt = arrangement_cell_complex_started_attempt(arrangement, request, policy);
     let regularized_sheet_recovery_surface = left.facts().mesh.closed_manifold
         && right.facts().mesh.closed_manifold
         && arrangement
