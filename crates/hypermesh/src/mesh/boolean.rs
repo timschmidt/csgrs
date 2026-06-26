@@ -1855,15 +1855,9 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         ));
     }
     if requires_certified_winding
-        && let Some(convex_support) =
-            certified_convex_operation_shortcut_support(left, right, operation)
+        && let Some(preflight) = certified_convex_operation_preflight(left, right, operation, graph)
     {
-        return Ok(certified_preflight(
-            operation,
-            convex_support,
-            Some(graph),
-            None,
-        ));
+        return Ok(preflight);
     }
     if requires_certified_winding
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
@@ -2103,42 +2097,18 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     {
         return Ok(preflight);
     }
+    let convex_operation_preflight_allowed = match operation {
+        ExactBooleanOperation::Intersection => {
+            !graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right)
+        }
+        ExactBooleanOperation::Union | ExactBooleanOperation::Difference => true,
+        ExactBooleanOperation::SelectedRegions(_) => false,
+    };
     if requires_certified_winding
-        && !graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right)
-        && operation == ExactBooleanOperation::Intersection
-        && certified_convex_operation_shortcut_support(left, right, operation)
-            == Some(ExactBooleanSupport::CertifiedConvexIntersection)
+        && convex_operation_preflight_allowed
+        && let Some(preflight) = certified_convex_operation_preflight(left, right, operation, graph)
     {
-        return Ok(certified_preflight(
-            operation,
-            ExactBooleanSupport::CertifiedConvexIntersection,
-            Some(graph),
-            None,
-        ));
-    }
-    if requires_certified_winding
-        && operation == ExactBooleanOperation::Difference
-        && certified_convex_operation_shortcut_support(left, right, operation)
-            == Some(ExactBooleanSupport::CertifiedConvexDifference)
-    {
-        return Ok(certified_preflight(
-            operation,
-            ExactBooleanSupport::CertifiedConvexDifference,
-            Some(graph),
-            None,
-        ));
-    }
-    if requires_certified_winding
-        && operation == ExactBooleanOperation::Union
-        && certified_convex_operation_shortcut_support(left, right, operation)
-            == Some(ExactBooleanSupport::CertifiedConvexUnion)
-    {
-        return Ok(certified_preflight(
-            operation,
-            ExactBooleanSupport::CertifiedConvexUnion,
-            Some(graph),
-            None,
-        ));
+        return Ok(preflight);
     }
     if graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right) {
         if request.validation == ExactMeshValidationPolicy::CLOSED
@@ -2161,27 +2131,13 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         )? {
             return Ok(preflight);
         }
-        if operation == ExactBooleanOperation::Union
-            && certified_convex_operation_shortcut_support(left, right, operation)
-                == Some(ExactBooleanSupport::CertifiedConvexUnion)
+        if matches!(
+            operation,
+            ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
+        ) && let Some(preflight) =
+            certified_convex_operation_preflight(left, right, operation, graph)
         {
-            return Ok(certified_preflight(
-                operation,
-                ExactBooleanSupport::CertifiedConvexUnion,
-                Some(graph),
-                None,
-            ));
-        }
-        if operation == ExactBooleanOperation::Intersection
-            && certified_convex_operation_shortcut_support(left, right, operation)
-                == Some(ExactBooleanSupport::CertifiedConvexIntersection)
-        {
-            return Ok(certified_preflight(
-                operation,
-                ExactBooleanSupport::CertifiedConvexIntersection,
-                Some(graph),
-                None,
-            ));
+            return Ok(preflight);
         }
         let winding_evidence = winding_evidence_report_from_graph(graph, left, right, operation)?;
         if winding_evidence.status().routes_to_certified_winding()
@@ -2731,6 +2687,16 @@ fn certified_closed_boundary_touching_support(
         }
         ExactBooleanOperation::SelectedRegions(_) => None,
     }
+}
+
+fn certified_convex_operation_preflight(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    graph: &super::graph::ExactIntersectionGraph,
+) -> Option<ExactBooleanPreflight> {
+    certified_convex_operation_shortcut_support(left, right, operation)
+        .map(|support| certified_preflight(operation, support, Some(graph), None))
 }
 
 fn certified_arrangement_cell_complex_coplanar_evidence(
