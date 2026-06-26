@@ -925,7 +925,10 @@ fn nested_tetrahedra_build_nested_volume_regions() {
         .clone()
         .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
         .unwrap()
-        .select(ExactBooleanOperation::Union)
+        .select_with_policy(
+            ExactBooleanOperation::Union,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
         .unwrap();
     assert_eq!(union.selected_volume_regions, vec![1, 2]);
     assert_eq!(union.selected_faces.len(), 4);
@@ -939,7 +942,10 @@ fn nested_tetrahedra_build_nested_volume_regions() {
         .clone()
         .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
         .unwrap()
-        .select(ExactBooleanOperation::Intersection)
+        .select_with_policy(
+            ExactBooleanOperation::Intersection,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
         .unwrap();
     assert_eq!(intersection.selected_volume_regions, vec![2]);
     assert_eq!(intersection.selected_faces.len(), 4);
@@ -952,7 +958,10 @@ fn nested_tetrahedra_build_nested_volume_regions() {
     let difference = arrangement
         .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
         .unwrap()
-        .select(ExactBooleanOperation::Difference)
+        .select_with_policy(
+            ExactBooleanOperation::Difference,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
         .unwrap();
     assert_eq!(difference.selected_volume_regions, vec![1]);
     assert_eq!(difference.selected_faces.len(), 8);
@@ -1110,7 +1119,10 @@ fn coincident_closed_shell_builds_mixed_source_volume_region() {
         .clone()
         .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
         .unwrap()
-        .select(ExactBooleanOperation::Union)
+        .select_with_policy(
+            ExactBooleanOperation::Union,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
         .unwrap();
     assert_eq!(union.selected_volume_regions, vec![1]);
     assert_eq!(union.selected_faces.len(), 4);
@@ -1125,7 +1137,10 @@ fn coincident_closed_shell_builds_mixed_source_volume_region() {
         .clone()
         .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
         .unwrap()
-        .select(ExactBooleanOperation::Intersection)
+        .select_with_policy(
+            ExactBooleanOperation::Intersection,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
         .unwrap();
     assert_eq!(intersection.selected_volume_regions, vec![1]);
     assert_eq!(intersection.selected_faces.len(), 4);
@@ -1146,7 +1161,10 @@ fn coincident_closed_shell_builds_mixed_source_volume_region() {
     let difference = arrangement
         .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
         .unwrap()
-        .select(ExactBooleanOperation::Difference)
+        .select_with_policy(
+            ExactBooleanOperation::Difference,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
         .unwrap();
     assert!(difference.selected_volume_regions.is_empty());
     assert!(difference.selected_faces.is_empty());
@@ -1202,7 +1220,10 @@ fn nested_tetrahedron_with_two_inner_shells_builds_volume_tree() {
     let difference = arrangement
         .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
         .unwrap()
-        .select(ExactBooleanOperation::Difference)
+        .select_with_policy(
+            ExactBooleanOperation::Difference,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
         .unwrap();
     assert_eq!(difference.selected_volume_regions, vec![left_volume.index]);
 }
@@ -1248,14 +1269,20 @@ fn same_source_reversed_nested_shell_builds_cavity_volume() {
         .clone()
         .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
         .unwrap()
-        .select(ExactBooleanOperation::Union)
+        .select_with_policy(
+            ExactBooleanOperation::Union,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
         .unwrap();
     assert!(!union.selected_volume_regions.contains(&cavity.index));
     assert!(union.selected_volume_regions.contains(&left_volume.index));
     let difference = arrangement
         .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
         .unwrap()
-        .select(ExactBooleanOperation::Difference)
+        .select_with_policy(
+            ExactBooleanOperation::Difference,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
         .unwrap();
     assert_eq!(difference.selected_volume_regions, vec![left_volume.index]);
 }
@@ -1303,7 +1330,12 @@ fn arrangement_pipeline_labels_selects_and_simplifies() {
             .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .is_ok()
     );
-    let selected = labeled.select(ExactBooleanOperation::Union).unwrap();
+    let selected = labeled
+        .select_with_policy(
+            ExactBooleanOperation::Union,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
     assert_eq!(selected.selected_faces.len(), 8);
     assert_eq!(selected.volume_regions.len(), 3);
     assert_eq!(selected.selected_volume_regions, vec![1, 2]);
@@ -1316,13 +1348,19 @@ fn arrangement_pipeline_labels_selects_and_simplifies() {
     let intersection = arrangement
         .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
         .unwrap()
-        .select(ExactBooleanOperation::Intersection)
+        .select_with_policy(
+            ExactBooleanOperation::Intersection,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
         .unwrap();
     assert!(intersection.selected_volume_regions.is_empty());
     let difference = arrangement
         .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
         .unwrap()
-        .select(ExactBooleanOperation::Difference)
+        .select_with_policy(
+            ExactBooleanOperation::Difference,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
         .unwrap();
     assert_eq!(difference.selected_volume_regions, vec![1]);
 
@@ -1480,9 +1518,12 @@ fn selected_regions_materialize_open_coplanar_overlap_without_winding_blocker() 
     );
 
     let selected = arrangement
-        .select(ExactBooleanOperation::SelectedRegions(
-            crate::mesh::boolean::region::ExactRegionSelection::KeepLeft,
-        ))
+        .select_with_policy(
+            ExactBooleanOperation::SelectedRegions(
+                crate::mesh::boolean::region::ExactRegionSelection::KeepLeft,
+            ),
+            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        )
         .unwrap();
     assert!(selected.blockers.is_empty(), "{:?}", selected.blockers);
     assert!(

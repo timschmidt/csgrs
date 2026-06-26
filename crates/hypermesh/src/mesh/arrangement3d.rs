@@ -1824,14 +1824,6 @@ impl ExactArrangement3d {
     }
 
     #[cfg(test)]
-    fn select(
-        &self,
-        operation: super::boolean::ExactBooleanOperation,
-    ) -> Result<self::cell_complex::ExactSelectedCellComplex, ExactArrangementBlocker> {
-        self.select_with_policy(operation, ExactRegularizationPolicy::default())
-    }
-
-    #[cfg(test)]
     fn select_with_policy(
         &self,
         operation: super::boolean::ExactBooleanOperation,

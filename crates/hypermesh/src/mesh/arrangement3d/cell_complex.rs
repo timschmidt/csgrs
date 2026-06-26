@@ -715,15 +715,6 @@ impl ExactLabeledCellComplex {
         }
     }
 
-    /// Select face-cells for a named Boolean operation.
-    #[cfg(test)]
-    pub(crate) fn select(
-        self,
-        operation: ExactBooleanOperation,
-    ) -> Result<ExactSelectedCellComplex, ExactArrangementBlocker> {
-        self.select_with_policy(operation, ExactRegularizationPolicy::default())
-    }
-
     /// Select face-cells for a named Boolean operation with explicit policy.
     pub(crate) fn select_with_policy(
         self,
@@ -1959,9 +1950,10 @@ mod tests {
         };
 
         let selected = labeled
-            .select(ExactBooleanOperation::SelectedRegions(
-                ExactRegionSelection::KeepLeft,
-            ))
+            .select_with_policy(
+                ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepLeft),
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
             .unwrap();
 
         assert_eq!(selected.selected_faces, vec![0]);
@@ -2046,9 +2038,10 @@ mod tests {
         };
 
         let selected = labeled
-            .select(ExactBooleanOperation::SelectedRegions(
-                ExactRegionSelection::KeepLeft,
-            ))
+            .select_with_policy(
+                ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepLeft),
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
             .unwrap();
 
         assert_eq!(selected.selected_faces, vec![0]);
@@ -2067,9 +2060,10 @@ mod tests {
 
         assert_eq!(
             labeled
-                .select(ExactBooleanOperation::SelectedRegions(
-                    ExactRegionSelection::KeepLeft,
-                ))
+                .select_with_policy(
+                    ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepLeft),
+                    ExactRegularizationPolicy::REGULARIZED_SOLID,
+                )
                 .unwrap_err(),
             ExactArrangementBlocker::NonManifoldCellComplex
         );
@@ -2294,7 +2288,12 @@ mod tests {
             vec![ExactArrangementBlocker::UnresolvedRegionClassification],
         );
 
-        let selected = labeled.select(ExactBooleanOperation::Union).unwrap();
+        let selected = labeled
+            .select_with_policy(
+                ExactBooleanOperation::Union,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+            .unwrap();
 
         assert_eq!(selected.selected_volume_regions, vec![1]);
         assert_eq!(selected.selected_faces, vec![0]);
@@ -2319,7 +2318,12 @@ mod tests {
         labeled.faces.push(duplicate_separator);
         labeled.volume_adjacencies[0].separating_face_cells.push(1);
 
-        let selected = labeled.select(ExactBooleanOperation::Union).unwrap();
+        let selected = labeled
+            .select_with_policy(
+                ExactBooleanOperation::Union,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+            .unwrap();
 
         assert_eq!(selected.selected_volume_regions, vec![1]);
         assert_eq!(selected.selected_faces, vec![0, 1]);
@@ -2347,7 +2351,10 @@ mod tests {
         let labeled = labeled_with_volume_adjacency_face(1, Vec::new());
 
         assert_eq!(
-            labeled.select(ExactBooleanOperation::Union),
+            labeled.select_with_policy(
+                ExactBooleanOperation::Union,
+                ExactRegularizationPolicy::REGULARIZED_SOLID
+            ),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2358,7 +2365,10 @@ mod tests {
         labeled.volume_adjacencies[0].separating_face_cells = vec![1];
 
         assert_eq!(
-            labeled.select(ExactBooleanOperation::Union),
+            labeled.select_with_policy(
+                ExactBooleanOperation::Union,
+                ExactRegularizationPolicy::REGULARIZED_SOLID
+            ),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2369,7 +2379,10 @@ mod tests {
         labeled.volume_adjacencies[0].separating_face_cells = vec![0, 0];
 
         assert_eq!(
-            labeled.select(ExactBooleanOperation::Union),
+            labeled.select_with_policy(
+                ExactBooleanOperation::Union,
+                ExactRegularizationPolicy::REGULARIZED_SOLID
+            ),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2381,7 +2394,10 @@ mod tests {
         labeled.volume_adjacencies[0].separating_face_cells = vec![0, 1];
 
         assert_eq!(
-            labeled.select(ExactBooleanOperation::Union),
+            labeled.select_with_policy(
+                ExactBooleanOperation::Union,
+                ExactRegularizationPolicy::REGULARIZED_SOLID
+            ),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2392,7 +2408,10 @@ mod tests {
         labeled.volume_adjacencies[0].oriented_face_sides[0].source_face = 1;
 
         assert_eq!(
-            labeled.select(ExactBooleanOperation::Union),
+            labeled.select_with_policy(
+                ExactBooleanOperation::Union,
+                ExactRegularizationPolicy::REGULARIZED_SOLID
+            ),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2404,7 +2423,10 @@ mod tests {
         labeled.volume_adjacencies[0].separating_face_cells = vec![1];
 
         assert_eq!(
-            labeled.select(ExactBooleanOperation::Union),
+            labeled.select_with_policy(
+                ExactBooleanOperation::Union,
+                ExactRegularizationPolicy::REGULARIZED_SOLID
+            ),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2415,7 +2437,10 @@ mod tests {
         labeled.volume_regions[1].index = 7;
 
         assert_eq!(
-            labeled.select(ExactBooleanOperation::Union),
+            labeled.select_with_policy(
+                ExactBooleanOperation::Union,
+                ExactRegularizationPolicy::REGULARIZED_SOLID
+            ),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2442,9 +2467,10 @@ mod tests {
             blockers: Vec::new(),
         };
         let mut selected = labeled
-            .select(ExactBooleanOperation::SelectedRegions(
-                ExactRegionSelection::KeepLeft,
-            ))
+            .select_with_policy(
+                ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepLeft),
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
             .unwrap();
         selected.validate().unwrap();
         selected.selected_faces.push(0);
@@ -2468,7 +2494,12 @@ mod tests {
             0,
             vec![ExactArrangementBlocker::UnresolvedRegionClassification],
         );
-        let mut selected = labeled.select(ExactBooleanOperation::Union).unwrap();
+        let mut selected = labeled
+            .select_with_policy(
+                ExactBooleanOperation::Union,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+            .unwrap();
         selected.validate().unwrap();
         selected.selected_face_orientations[0].reverse = true;
 
