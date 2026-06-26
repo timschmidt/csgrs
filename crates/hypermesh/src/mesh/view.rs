@@ -320,23 +320,11 @@ const fn fnv1a_u8(hash: u64, byte: u8) -> u64 {
     (hash ^ byte as u64).wrapping_mul(0x100000001b3)
 }
 
-/// Retained broad-phase plan chosen for a prepared mesh-pair session.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum PreparedMeshPairPlanKind {
-    /// Whole-mesh or face-level bounds prove that no candidate face pairs are needed.
-    Empty,
-    /// A sorted-axis sweep plan was retained for candidate traversal.
-    Sweep,
-    /// No certified sweep axis was retained, so candidate traversal falls back to exact quadratic checks.
-    Quadratic,
-}
-
 /// Retained broad-phase planning provenance for a prepared mesh-pair session.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PreparedMeshPairBroadPhaseSummary {
     left_source: ExactMeshSourceStamp,
     right_source: ExactMeshSourceStamp,
-    plan: PreparedMeshPairPlanKind,
     candidate_pair_capacity_hint: usize,
 }
 
@@ -351,11 +339,6 @@ impl PreparedMeshPairBroadPhaseSummary {
         self.right_source
     }
 
-    /// Return the retained broad-phase candidate traversal plan.
-    pub const fn plan(self) -> PreparedMeshPairPlanKind {
-        self.plan
-    }
-
     /// Return the bounded vector reserve hint used by retained pair stages.
     pub const fn candidate_pair_capacity_hint(self) -> usize {
         self.candidate_pair_capacity_hint
@@ -364,13 +347,11 @@ impl PreparedMeshPairBroadPhaseSummary {
     const fn from_plan(
         left_source: ExactMeshSourceStamp,
         right_source: ExactMeshSourceStamp,
-        plan: CandidateFacePairPlan,
         candidate_pair_capacity_hint: usize,
     ) -> Self {
         Self {
             left_source,
             right_source,
-            plan: PreparedMeshPairPlanKind::from_candidate_plan(plan),
             candidate_pair_capacity_hint,
         }
     }
@@ -884,7 +865,6 @@ impl<'a> PreparedMeshView<'a> {
             PreparedMeshPairBroadPhaseSummary::from_plan(
                 self.view.source_stamp(),
                 right.view.source_stamp(),
-                plan,
                 candidate_pair_capacity_hint,
             ),
         )
@@ -1489,16 +1469,6 @@ const fn retained_certificate_state(
         PreparedMeshPairFactState::Current
     } else {
         PreparedMeshPairFactState::CertificateBlocked
-    }
-}
-
-impl PreparedMeshPairPlanKind {
-    const fn from_candidate_plan(plan: CandidateFacePairPlan) -> Self {
-        match plan {
-            CandidateFacePairPlan::Empty => Self::Empty,
-            CandidateFacePairPlan::Sweep { .. } => Self::Sweep,
-            CandidateFacePairPlan::Quadratic => Self::Quadratic,
-        }
     }
 }
 

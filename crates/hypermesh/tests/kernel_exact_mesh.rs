@@ -4,8 +4,8 @@ use hypermesh::kernel::{
     ArrangementView, EdgeRef, ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshRef,
     FaceRef, MeshView, PreparedMeshPair, PreparedMeshPairBoolean,
     PreparedMeshPairBroadPhaseSummary, PreparedMeshPairCacheStatus,
-    PreparedMeshPairClassificationCounts, PreparedMeshPairFactState, PreparedMeshPairPlanKind,
-    PreparedMeshView, TriangleRef, VertexRef,
+    PreparedMeshPairClassificationCounts, PreparedMeshPairFactState, PreparedMeshView, TriangleRef,
+    VertexRef,
 };
 use hyperreal::Real;
 
@@ -130,16 +130,8 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .kind()
             == ExactMeshBlockerKind::MissingRequiredEvidence
     );
-    assert!(matches!(
-        pair.broad_phase_summary().plan(),
-        PreparedMeshPairPlanKind::Empty
-    ));
     assert_eq!(pair.broad_phase_summary().candidate_pair_capacity_hint(), 0);
     let initial_broad_phase: PreparedMeshPairBroadPhaseSummary = pair.broad_phase_summary();
-    assert!(matches!(
-        initial_broad_phase.plan(),
-        PreparedMeshPairPlanKind::Empty
-    ));
     assert_eq!(initial_broad_phase.candidate_pair_capacity_hint(), 0);
     assert_eq!(pair.broad_phase_summary(), initial_broad_phase);
     assert!(matches!(
@@ -748,10 +740,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         .view()
         .prepare_broad_phase_pair(overlapping.view())
         .unwrap();
-    assert!(matches!(
-        prepared_pair.broad_phase_summary().plan(),
-        PreparedMeshPairPlanKind::Sweep
-    ));
     assert_eq!(
         prepared_pair.left().view().face_count(),
         left.triangle_count()
@@ -768,7 +756,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     );
     let broad_phase_summary: PreparedMeshPairBroadPhaseSummary =
         prepared_pair.broad_phase_summary();
-    let _plan_kind: PreparedMeshPairPlanKind = broad_phase_summary.plan();
     assert!(matches!(
         prepared_pair.cache_status().source_pair(),
         PreparedMeshPairFactState::Current
@@ -1068,10 +1055,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         .view()
         .prepare_broad_phase_pair(disjoint.view())
         .unwrap();
-    assert!(matches!(
-        disjoint_pair.broad_phase_summary().plan(),
-        PreparedMeshPairPlanKind::Empty
-    ));
     assert_eq!(
         disjoint_pair
             .broad_phase_summary()
