@@ -31,41 +31,43 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::SegmentPlaneRelation;
 
-use super::arrangement3d::arrangement2d::{
+use super::super::arrangement3d::arrangement2d::{
     ExactArrangement2dBlocker, ExactArrangement2dBoundaryPolicy, ExactArrangement2dOverlay,
     ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
     build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
 };
-use super::arrangement3d::cell_complex::simplify::ExactSimplifiedCellComplex;
-use super::arrangement3d::cell_complex::{
+use super::super::arrangement3d::cell_complex::simplify::ExactSimplifiedCellComplex;
+use super::super::arrangement3d::cell_complex::{
     ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
     arrangement_cell_complex_labeling_policy,
     arrangement_region_classification_blockers_resolve_operation, select_arrangement_for_replay,
 };
-use super::arrangement3d::loop_triangulation::{
+use super::super::arrangement3d::loop_triangulation::{
     group_exact_coplanar_loops, triangulate_exact_loop_group,
 };
-use super::arrangement3d::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
-use super::arrangement3d::{
+use super::super::arrangement3d::regularization::{
+    ExactArrangementBlocker, ExactRegularizationPolicy,
+};
+use super::super::arrangement3d::{
     ExactArrangement, ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
 };
-use super::mesh::bounds::AabbIntersectionKind;
-use super::mesh::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::mesh::facts::MeshFacts;
+use super::bounds::AabbIntersectionKind;
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::facts::MeshFacts;
 #[cfg(test)]
-use super::mesh::graph::FacePairEvents;
+use super::graph::FacePairEvents;
 #[cfg(test)]
-use super::mesh::graph::build_unvalidated_intersection_graph;
-use super::mesh::graph::intersection::MeshFacePairRelation;
-use super::mesh::graph::{
+use super::graph::build_unvalidated_intersection_graph;
+use super::graph::intersection::MeshFacePairRelation;
+use super::graph::{
     ExactIntersectionGraph, IntersectionEvent, MeshSide, build_validated_intersection_graph,
     build_validated_intersection_graph_from_prepared_pair,
 };
 #[cfg(test)]
-use super::mesh::triangle_edges as topology_triangle_edges;
-use super::mesh::validation::ExactMeshValidationPolicy;
-use super::mesh::view::PreparedMeshPair;
-use super::mesh::{ExactMesh, Triangle};
+use super::triangle_edges as topology_triangle_edges;
+use super::validation::ExactMeshValidationPolicy;
+use super::view::PreparedMeshPair;
+use super::{ExactMesh, Triangle};
 use adjacent::{
     full_face_adjacent_certificate_from_graph,
     materialize_full_face_adjacent_union_from_certificate,
@@ -2998,7 +3000,7 @@ fn graph_for_certified_materialization<'a>(
         return Ok(graph);
     }
     if owned_graph.is_none() {
-        *owned_graph = Some(super::mesh::graph::build_validated_intersection_graph(
+        *owned_graph = Some(super::graph::build_validated_intersection_graph(
             left, right,
         )?);
     }
@@ -3030,7 +3032,7 @@ fn graph_for_certified_materialization_with_prepared<'a>(
         });
     }
     if owned_graph.is_none() {
-        *owned_graph = Some(super::mesh::graph::build_validated_intersection_graph(
+        *owned_graph = Some(super::graph::build_validated_intersection_graph(
             left, right,
         )?);
     }
@@ -3675,7 +3677,7 @@ pub(crate) fn replay_generic_arrangement_cell_complex_result(
 }
 
 fn materialize_selected_region_result_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     selection: ExactRegionSelection,
@@ -3987,7 +3989,7 @@ fn mesh_point_equal_any(mesh: &ExactMesh, point: &Point3) -> Result<bool, ExactM
 }
 
 fn preflight_boolean_exact_reject_boundary_policy_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
@@ -4636,7 +4638,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
 /// validation policy.
 ///
 pub(crate) fn preflight_boolean_exact_request_from_graph_with_retained_attempt(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
@@ -4745,7 +4747,7 @@ pub(crate) fn preflight_boolean_exact_request_from_graph_with_retained_attempt(
 }
 
 pub(crate) fn volumetric_boundary_closure_report_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -5051,7 +5053,7 @@ fn volumetric_boundary_closure_report_from_materialized_with_prevalidated_closur
 fn certified_preflight(
     operation: ExactBooleanOperation,
     support: ExactBooleanSupport,
-    graph: Option<&super::mesh::graph::ExactIntersectionGraph>,
+    graph: Option<&super::graph::ExactIntersectionGraph>,
     coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 ) -> ExactBooleanPreflight {
     let (graph_had_unknowns, retained_face_pairs, retained_events) =
@@ -5077,7 +5079,7 @@ fn certified_preflight(
 }
 
 fn certified_arrangement_cell_complex_coplanar_evidence(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<CoplanarVolumetricCellEvidenceReport> {
@@ -5097,7 +5099,7 @@ fn certified_arrangement_cell_complex_coplanar_evidence(
 
 fn certified_arrangement_cell_complex_preflight_if_materialized(
     operation: ExactBooleanOperation,
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<ExactBooleanPreflight>, ExactMeshError> {
@@ -5177,7 +5179,7 @@ fn orthogonal_solid_cell_materializes_for_preflight(
 }
 
 pub(crate) fn certified_arrangement_cell_complex_preflight_from_retained_attempt(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
@@ -5212,7 +5214,7 @@ type CertifiedArrangementCellComplexPreflightCache = Option<Option<ExactBooleanP
 fn cached_certified_arrangement_cell_complex_preflight(
     cache: &mut CertifiedArrangementCellComplexPreflightCache,
     operation: ExactBooleanOperation,
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     retained_request: Option<ExactBooleanRequest>,
@@ -5256,7 +5258,7 @@ fn unique_classified_region_count(classifications: &[FaceRegionPlaneClassificati
 }
 
 fn graph_requires_boundary_policy(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<bool, ExactMeshError> {
@@ -5294,7 +5296,7 @@ fn graph_requires_coplanar_volumetric_cells(counts: &ExactBooleanBlocker) -> boo
 }
 
 fn graph_requires_coplanar_volumetric_cells_for_sources(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> bool {
@@ -5317,7 +5319,7 @@ fn graph_requires_coplanar_volumetric_cells_for_sources(
 }
 
 fn coplanar_volumetric_evidence_if_required(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<CoplanarVolumetricCellEvidenceReport> {
@@ -5339,7 +5341,7 @@ fn coplanar_volumetric_evidence_if_required(
 }
 
 fn coplanar_boundary_only_evidence_if_consumed(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<CoplanarVolumetricCellEvidenceReport>, ExactMeshError> {
@@ -5359,7 +5361,7 @@ fn coplanar_boundary_only_evidence_if_consumed(
 }
 
 fn graph_has_only_boundary_contact_pairs(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> bool {
@@ -5490,7 +5492,7 @@ fn certified_closed_boundary_contact(
 }
 
 fn closed_winding_vertex_relations_from_empty_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<(ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshRelation)>, ExactMeshError>
@@ -5527,7 +5529,7 @@ enum ClosedWindingContainmentRelation {
 }
 
 fn certified_closed_winding_containment_relation_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<ClosedWindingContainmentRelation>, ExactMeshError> {
@@ -5548,7 +5550,7 @@ fn certified_closed_winding_containment_relation_from_graph(
 }
 
 fn boolean_closed_winding_containment_meshes_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -5616,7 +5618,7 @@ fn boolean_closed_winding_containment_meshes_from_graph(
 }
 
 fn materialize_graph_shortcut_from_graph_for_request(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
@@ -5730,7 +5732,7 @@ fn materialize_graph_shortcut_from_graph_for_request(
 }
 
 fn boolean_closed_winding_separated_meshes_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -6557,7 +6559,7 @@ fn certified_arrangement_cell_complex_result_from_graph(
 }
 
 fn boolean_arrangement_regularized_boundary_contact_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -6610,7 +6612,7 @@ fn boolean_arrangement_regularized_boundary_contact_from_graph(
 }
 
 fn certified_arrangement_regularized_boundary_contact_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -7054,7 +7056,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
 
 fn arrangement_open_surface_recovery_outcome(
     attempt: &mut ExactArrangementBooleanAttempt,
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -7253,7 +7255,7 @@ pub(crate) fn adjacent_union_completion_certification(
 }
 
 pub(crate) fn adjacent_union_completion_certification_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -7538,7 +7540,7 @@ pub(crate) fn materialize_adjacent_union_completion_from_graph_for_request(
 }
 
 fn boolean_arrangement_regularized_sheet_complex_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -7558,7 +7560,7 @@ fn boolean_arrangement_regularized_sheet_complex_from_graph(
 }
 
 fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -7667,7 +7669,7 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
 }
 
 pub(crate) fn materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -7801,7 +7803,7 @@ fn arrangement_difference_preserves_source_surface(
 
 fn arrangement_volumetric_split_cell_recovery_outcome(
     attempt: &mut ExactArrangementBooleanAttempt,
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -7837,7 +7839,7 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
     regularized_sheet_recovery_surface: bool,
     validation: ExactMeshValidationPolicy,
     attempt: &mut ExactArrangementBooleanAttempt,
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -7965,7 +7967,7 @@ enum ConvexRelationShortcut {
 }
 
 fn certified_convex_relation_shortcut_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -8181,7 +8183,7 @@ fn boolean_arrangement_convex_regularized_sheet_recovery(
 }
 
 fn materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -8209,7 +8211,7 @@ fn materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
 
 fn result_with_arrangement_gate_reports_from_graph(
     result: ExactBooleanResult,
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -8254,7 +8256,7 @@ pub(crate) fn materialize_volumetric_coplanar_boundary_closure_output(
 }
 
 fn materialize_volumetric_coplanar_boundary_closure_output_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -8300,7 +8302,7 @@ fn materialize_volumetric_coplanar_boundary_closure_output_from_graph(
 /// that use it as a fallback should wrap the returned result in their own
 /// recovery-specific attempt provenance.
 fn materialize_arrangement_volumetric_split_cell_result_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -8391,7 +8393,7 @@ fn materialize_arrangement_volumetric_split_cell_result_from_graph(
 
 fn validate_volumetric_arrangement_result_against_graph(
     result: &ExactBooleanResult,
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     retained_regularized_arrangement: Option<&ExactArrangement>,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -8433,7 +8435,7 @@ fn validate_volumetric_arrangement_result_against_graph(
 }
 
 fn volumetric_winding_open_boundary_candidate_counts(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -10272,7 +10274,7 @@ fn materialize_open_surface_disjoint_meshes(
 }
 
 fn boolean_open_surface_disjoint_meshes_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -10323,7 +10325,7 @@ pub(crate) fn open_surface_disjoint_result_matches_sources(
 }
 
 pub(crate) fn open_surface_disjoint_report_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> ExactOpenSurfaceDisjointReport {
@@ -10440,7 +10442,7 @@ pub(crate) fn replay_open_surface_arrangement_result(
 }
 
 fn open_surface_arrangement_result_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -10536,7 +10538,7 @@ fn materialize_open_surface_arrangement_plan(
 /// The returned classifications are not used to decide inside/outside; they
 /// are retained proof-producing side facts that make the arrangement replayable
 fn open_surface_arrangement_plan_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -10647,7 +10649,7 @@ pub(crate) fn replay_closed_same_surface_boolean_result_if_certified(
 }
 
 fn certified_closed_boundary_touching_regularized_report_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<ExactBoundaryTouchingReport>, ExactMeshError> {
@@ -10668,7 +10670,7 @@ fn certified_closed_boundary_touching_regularized_report_from_graph(
 }
 
 fn certified_closed_boundary_only_contact_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<bool, ExactMeshError> {
@@ -10687,7 +10689,7 @@ fn certified_closed_boundary_only_contact_from_graph(
 }
 
 fn closed_zero_area_boundary_contact_evidence_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<CoplanarVolumetricCellEvidenceReport>, ExactMeshError> {
@@ -10710,7 +10712,7 @@ fn closed_zero_area_boundary_contact_evidence_from_graph(
 }
 
 pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -10838,7 +10840,7 @@ pub(crate) fn boundary_policy_shortcut_result_matches_sources(
 }
 
 fn boolean_boundary_touching_meshes_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -10876,7 +10878,7 @@ fn boolean_boundary_touching_meshes_from_graph(
 
 #[cfg(test)]
 pub(crate) fn winding_evidence_report_for_request_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
@@ -10893,7 +10895,7 @@ pub(crate) fn winding_evidence_report_for_request_from_graph(
 }
 
 fn winding_evidence_report_for_request_from_graph_and_attempt(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
@@ -11024,7 +11026,7 @@ fn winding_evidence_report_for_request_from_graph_and_attempt(
 }
 
 fn arrangement_cell_complex_already_materialized_winding_evidence(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -11047,7 +11049,7 @@ fn arrangement_cell_complex_already_materialized_winding_evidence(
 }
 
 fn arrangement_materialized_evidence_blocker_kind_and_evidence(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> (
@@ -11081,7 +11083,7 @@ fn arrangement_materialized_evidence_blocker_kind_and_evidence(
 /// meshes. Predicate evidence is only useful when the combinatorial object
 /// handles attached to it are still current.
 fn validate_graph_source_replay(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<(), ExactMeshError> {
@@ -11095,14 +11097,12 @@ fn validate_graph_source_replay(
         })
 }
 
-fn retained_graph_counts(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
-) -> ExactBooleanBlocker {
+fn retained_graph_counts(graph: &super::graph::ExactIntersectionGraph) -> ExactBooleanBlocker {
     ExactBooleanBlocker::from_graph(graph, ExactBooleanBlockerKind::Winding)
 }
 
 pub(crate) fn boundary_touching_report_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactBoundaryTouchingReport, ExactMeshError> {
@@ -11130,7 +11130,7 @@ pub(crate) fn boundary_touching_report_from_graph(
 }
 
 fn not_boundary_only_report_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
 ) -> ExactBoundaryTouchingReport {
     let counts = retained_graph_counts(graph);
     let blocker_kind = counts.inferred_kind();
@@ -11144,7 +11144,7 @@ fn not_boundary_only_report_from_graph(
 }
 
 pub(crate) fn refinement_report_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     operation: ExactBooleanOperation,
 ) -> ExactRefinementReport {
     let counts = retained_graph_counts(graph);
@@ -11165,7 +11165,7 @@ pub(crate) fn refinement_report_from_graph(
 }
 
 pub(crate) fn planar_arrangement_report_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -11184,7 +11184,7 @@ pub(crate) fn planar_arrangement_report_from_graph(
 }
 
 fn planar_arrangement_report_from_graph_with_cell_complex_cache(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -11277,7 +11277,7 @@ fn planar_arrangement_report(
     retained_face_pairs: usize,
     retained_events: usize,
     counts: ExactBooleanBlocker,
-    coplanar_arrangement_evidence: Option<super::mesh::graph::CoplanarArrangementEvidence>,
+    coplanar_arrangement_evidence: Option<super::graph::CoplanarArrangementEvidence>,
 ) -> ExactPlanarArrangementReport {
     let blocker_kind = match status {
         ExactPlanarArrangementStatus::GraphUnknowns => ExactBooleanBlockerKind::Refinement,
@@ -11301,7 +11301,7 @@ fn planar_arrangement_report(
 }
 
 fn winding_evidence_report_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -11311,7 +11311,7 @@ fn winding_evidence_report_from_graph(
 }
 
 fn winding_evidence_report_from_graph_with_facts(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -11938,7 +11938,7 @@ fn winding_evidence_report(
     region_count: usize,
     region_classifications: Vec<FaceRegionPlaneClassification>,
     blocker: ExactBooleanBlocker,
-    coplanar_arrangement_evidence: Option<super::mesh::graph::CoplanarArrangementEvidence>,
+    coplanar_arrangement_evidence: Option<super::graph::CoplanarArrangementEvidence>,
     coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 ) -> ExactWindingEvidenceReport {
     ExactWindingEvidenceReport {
@@ -11970,7 +11970,7 @@ pub(crate) struct MaterializedVolumetricWindingRegionPlan {
 }
 
 fn materialize_volumetric_winding_region_plan_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -11996,7 +11996,7 @@ fn materialize_volumetric_winding_region_plan_from_graph(
 }
 
 fn materialize_closed_volumetric_winding_boundary_caps_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -12106,7 +12106,7 @@ fn materialize_volumetric_winding_region_plan(
 }
 
 fn volumetric_winding_region_plan_from_graph(
-    graph: &super::mesh::graph::ExactIntersectionGraph,
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<VolumetricWindingRegionPlan>, ExactMeshError> {
@@ -13438,8 +13438,8 @@ mod tests {
 
     #[test]
     fn exact_boolean_blocker_counts_include_unknown_segment_plane_events() {
-        let graph = super::super::mesh::graph::ExactIntersectionGraph::from_face_pairs(vec![
-            FacePairEvents {
+        let graph =
+            super::super::graph::ExactIntersectionGraph::from_face_pairs(vec![FacePairEvents {
                 left_face: 0,
                 right_face: 0,
                 relation: MeshFacePairRelation::Candidate,
@@ -13456,8 +13456,7 @@ mod tests {
                     construction_failure: None,
                     endpoint_sides: [None, Some(hyperlimit::PlaneSide::Above)],
                 }],
-            },
-        ]);
+            }]);
 
         let counts = retained_graph_counts(&graph);
         assert_eq!(counts.candidate_pairs, 1);
@@ -16179,16 +16178,16 @@ mod tests {
                     .first_mut()
                     .expect("open-surface arrangement should retain region classifications");
                 match classification.relation {
-                    crate::boolean::region::FaceRegionPlaneRelation::StrictlyAbove => {
+                    crate::mesh::boolean::region::FaceRegionPlaneRelation::StrictlyAbove => {
                         classification.relation =
-                            crate::boolean::region::FaceRegionPlaneRelation::StrictlyBelow;
+                            crate::mesh::boolean::region::FaceRegionPlaneRelation::StrictlyBelow;
                         classification
                             .node_sides
                             .fill(Some(hyperlimit::PlaneSide::Below));
                     }
                     _ => {
                         classification.relation =
-                            crate::boolean::region::FaceRegionPlaneRelation::StrictlyAbove;
+                            crate::mesh::boolean::region::FaceRegionPlaneRelation::StrictlyAbove;
                         classification
                             .node_sides
                             .fill(Some(hyperlimit::PlaneSide::Above));

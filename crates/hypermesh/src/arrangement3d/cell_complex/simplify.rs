@@ -7,7 +7,7 @@
 
 use std::cmp::Ordering;
 
-use super::super::super::boolean::ExactBooleanOperation;
+use super::super::super::mesh::boolean::ExactBooleanOperation;
 use super::super::super::mesh::validation::ExactMeshValidationPolicy;
 use super::super::super::mesh::{ExactMesh, Triangle};
 #[cfg(test)]

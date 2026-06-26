@@ -18,13 +18,13 @@ use hyperlimit::{
 };
 use hyperlimit::{Point2 as PredicatePoint2, Sign, compare_reals, orient2d_report, project_point3};
 
-use super::super::mesh::ExactMesh;
-use super::super::mesh::Triangle;
-use super::super::mesh::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::super::mesh::graph::SplitPlanBlockerKind;
-use super::super::mesh::graph::SplitPlanValidationReport;
-use super::super::mesh::graph::{ExactFaceRegionPlan, FaceSplitBoundaryNode, MeshSide};
-use super::super::mesh::validation::ExactMeshValidationPolicy;
+use super::super::ExactMesh;
+use super::super::Triangle;
+use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::graph::SplitPlanBlockerKind;
+use super::super::graph::SplitPlanValidationReport;
+use super::super::graph::{ExactFaceRegionPlan, FaceSplitBoundaryNode, MeshSide};
+use super::super::validation::ExactMeshValidationPolicy;
 use hyperlimit::CoplanarProjection;
 use hyperlimit::PredicateUse;
 use hyperlimit::SourceProvenance;
@@ -380,8 +380,8 @@ impl FaceRegionTriangulation {
 fn replay_region_plan(
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<ExactFaceRegionPlan, super::super::mesh::error::ExactMeshError> {
-    let graph = super::super::mesh::graph::build_validated_intersection_graph(left, right)?;
+) -> Result<ExactFaceRegionPlan, super::super::error::ExactMeshError> {
+    let graph = super::super::graph::build_validated_intersection_graph(left, right)?;
     let geometry = graph.face_split_geometry_plan(left, right)?;
     Ok(geometry.region_plan(left, right))
 }
@@ -589,7 +589,7 @@ impl ExactBooleanAssemblyPlan {
     pub(crate) fn to_exact_mesh(
         &self,
         policy: ExactMeshValidationPolicy,
-    ) -> Result<ExactMesh, super::super::mesh::error::ExactMeshError> {
+    ) -> Result<ExactMesh, super::super::error::ExactMeshError> {
         self.validate().map_err(assembly_validation_error)?;
         let vertices = self
             .vertices
@@ -627,13 +627,13 @@ impl ExactBooleanAssemblyPlan {
         left: &ExactMesh,
         right: &ExactMesh,
         policy: ExactMeshValidationPolicy,
-    ) -> Result<ExactMesh, super::super::mesh::error::ExactMeshError> {
+    ) -> Result<ExactMesh, super::super::error::ExactMeshError> {
         self.validate().map_err(assembly_validation_error)?;
         self.validate_source_face_incidence(left, right)
             .map_err(|error| {
-                super::super::mesh::error::ExactMeshError::one(
-                    super::super::mesh::error::ExactMeshBlocker::new(
-                        super::super::mesh::error::ExactMeshBlockerKind::DegenerateTriangle,
+                super::super::error::ExactMeshError::one(
+                    super::super::error::ExactMeshBlocker::new(
+                        super::super::error::ExactMeshBlockerKind::DegenerateTriangle,
                         format!("exact boolean assembly source incidence failed: {error}"),
                     ),
                 )
@@ -1390,13 +1390,11 @@ fn validate_output_triangle_source_orientation(
     Ok(())
 }
 
-fn assembly_validation_error(error: hypertri::Error) -> super::super::mesh::error::ExactMeshError {
-    super::super::mesh::error::ExactMeshError::one(
-        super::super::mesh::error::ExactMeshBlocker::new(
-            super::super::mesh::error::ExactMeshBlockerKind::IndexOutOfBounds,
-            format!("exact boolean assembly validation failed: {error}"),
-        ),
-    )
+fn assembly_validation_error(error: hypertri::Error) -> super::super::error::ExactMeshError {
+    super::super::error::ExactMeshError::one(super::super::error::ExactMeshBlocker::new(
+        super::super::error::ExactMeshBlockerKind::IndexOutOfBounds,
+        format!("exact boolean assembly validation failed: {error}"),
+    ))
 }
 
 /// Triangulate split face-region loops with `hypertri` exact earcut.
@@ -1990,7 +1988,7 @@ fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::super::mesh::graph::build_unvalidated_intersection_graph;
+    use super::super::super::graph::build_unvalidated_intersection_graph;
     use super::*;
     use hyperreal::Real;
 

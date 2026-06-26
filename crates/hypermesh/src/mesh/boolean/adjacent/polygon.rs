@@ -21,8 +21,8 @@ use hyperlimit::{
     point_on_segment3, project_point3, projected_polygon_area2_value,
 };
 
-use super::super::super::mesh::ExactMesh;
-use super::super::super::mesh::triangle_edges_tuple;
+use super::super::super::ExactMesh;
+use super::super::super::triangle_edges_tuple;
 use hyperreal::Real;
 
 #[derive(Clone, Debug, PartialEq)]

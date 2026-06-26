@@ -14,8 +14,8 @@ mod witness;
 
 use hyperlimit::Point3;
 
-use super::super::mesh::ExactMesh;
-use super::super::mesh::graph::MeshSide;
+use super::super::ExactMesh;
+use super::super::graph::MeshSide;
 use super::region::{FaceRegionTriangulation, boundary_node_point};
 use super::winding::{
     ClosedMeshWindingRelation, PointMeshWindingReport, WindingReportError,

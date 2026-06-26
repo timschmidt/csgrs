@@ -7,8 +7,8 @@
 
 pub(crate) mod simplify;
 
-use super::super::boolean::ExactBooleanOperation;
-use super::super::boolean::solid::ConvexSolidPointRelation;
+use super::super::mesh::boolean::ExactBooleanOperation;
+use super::super::mesh::boolean::solid::ConvexSolidPointRelation;
 use super::super::mesh::graph::MeshSide;
 use super::regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
@@ -1440,17 +1440,17 @@ fn opposite_region_label(opposite: &ArrangementOppositeClassification) -> ExactO
         | None => {}
     }
     match opposite.winding.relation {
-        super::super::boolean::winding::ClosedMeshWindingRelation::Inside => {
+        super::super::mesh::boolean::winding::ClosedMeshWindingRelation::Inside => {
             ExactOppositeRegionLabel::Inside
         }
-        super::super::boolean::winding::ClosedMeshWindingRelation::Outside => {
+        super::super::mesh::boolean::winding::ClosedMeshWindingRelation::Outside => {
             ExactOppositeRegionLabel::Outside
         }
-        super::super::boolean::winding::ClosedMeshWindingRelation::Boundary => {
+        super::super::mesh::boolean::winding::ClosedMeshWindingRelation::Boundary => {
             ExactOppositeRegionLabel::Boundary
         }
-        super::super::boolean::winding::ClosedMeshWindingRelation::Unknown
-        | super::super::boolean::winding::ClosedMeshWindingRelation::NotClosed => {
+        super::super::mesh::boolean::winding::ClosedMeshWindingRelation::Unknown
+        | super::super::mesh::boolean::winding::ClosedMeshWindingRelation::NotClosed => {
             ExactOppositeRegionLabel::Unknown
         }
     }
@@ -1792,10 +1792,10 @@ mod tests {
         ArrangementFaceCarrier, ArrangementFaceCell, ArrangementFaceCellNode,
         ArrangementOppositeClassification, ArrangementVolumeFaceSide, ExactTopologyAssemblyStatus,
     };
-    use crate::boolean::region::ExactRegionSelection;
-    use crate::boolean::solid::ConvexSolidPointClassification;
-    use crate::boolean::winding::{ClosedMeshWindingRelation, PointMeshWindingReport};
     use crate::mesh::ExactMesh;
+    use crate::mesh::boolean::region::ExactRegionSelection;
+    use crate::mesh::boolean::solid::ConvexSolidPointClassification;
+    use crate::mesh::boolean::winding::{ClosedMeshWindingRelation, PointMeshWindingReport};
     use hyperlimit::Point3;
     use hyperreal::Real;
 

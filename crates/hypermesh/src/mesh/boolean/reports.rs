@@ -12,22 +12,22 @@ use hyperlimit::{
 use hyperreal::Real;
 use std::cmp::Ordering;
 
-use super::super::ExactMesh;
-use super::super::arrangement3d::cell_complex::{
+use super::super::super::arrangement3d::cell_complex::{
     ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy,
     validate_selected_gate_reports,
 };
-use super::super::arrangement3d::regularization::ExactArrangementBlocker;
-use super::super::arrangement3d::regularization::ExactRegularizationPolicy;
-use super::super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
-use super::super::mesh::bounds::AabbIntersectionKind;
-use super::super::mesh::graph::MeshSide;
-use super::super::mesh::graph::intersection::MeshFacePairRelation;
-use super::super::mesh::graph::{
+use super::super::super::arrangement3d::regularization::ExactArrangementBlocker;
+use super::super::super::arrangement3d::regularization::ExactRegularizationPolicy;
+use super::super::super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
+use super::super::ExactMesh;
+use super::super::bounds::AabbIntersectionKind;
+use super::super::graph::MeshSide;
+use super::super::graph::intersection::MeshFacePairRelation;
+use super::super::graph::{
     CoplanarArrangementEvidence, CoplanarArrangementEvidenceStatus, ExactIntersectionGraph,
     IntersectionEvent, build_validated_intersection_graph,
 };
-use super::super::mesh::validation::ExactMeshValidationPolicy;
+use super::super::validation::ExactMeshValidationPolicy;
 use super::adjacent::materialize_full_face_adjacent_union;
 use super::affine_solid::{
     materialize_affine_orthogonal_solid_difference,
@@ -2903,7 +2903,7 @@ fn arrangement_cell_complex_output_matches_sources(
         retained_mismatch = true;
     }
 
-    let graph = super::super::mesh::graph::build_unvalidated_intersection_graph(left, right)
+    let graph = super::super::graph::build_unvalidated_intersection_graph(left, right)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
 
     if let Some((replay, evidence)) =
@@ -6481,8 +6481,8 @@ impl ExactWindingEvidenceReport {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::boolean::ExactBooleanRequest;
-    use crate::boolean::region::{ExactOutputVertex, FaceRegionPlaneRelation};
+    use crate::mesh::boolean::ExactBooleanRequest;
+    use crate::mesh::boolean::region::{ExactOutputVertex, FaceRegionPlaneRelation};
     use crate::mesh::graph::FaceSplitBoundaryNode;
 
     #[test]

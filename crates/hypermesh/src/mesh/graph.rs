@@ -4298,8 +4298,8 @@ fn projected_points_equal(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::boolean::region::FaceRegionPlaneRelation;
     use crate::mesh::ExactMesh;
+    use crate::mesh::boolean::region::FaceRegionPlaneRelation;
     use crate::mesh::validation::ExactMeshValidationPolicy;
 
     fn q(numerator: i64, denominator: i64) -> Real {
@@ -4598,7 +4598,9 @@ mod tests {
         let shortcut_facts = prepared_pair.arrangement_cell_complex_shortcut_facts();
         assert_eq!(
             shortcut_facts,
-            crate::boolean::ExactArrangementCellComplexShortcutFacts::from_sources(&left, &right)
+            crate::mesh::boolean::ExactArrangementCellComplexShortcutFacts::from_sources(
+                &left, &right
+            )
         );
         assert!(prepared_pair.has_cached_arrangement_shortcut_facts());
         assert!(!prepared_pair.has_cached_intersection_graph());

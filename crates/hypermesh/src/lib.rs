@@ -19,7 +19,6 @@
 //! implementation cannot prove a requested operation.
 
 mod arrangement3d;
-mod boolean;
 mod mesh;
 
 pub use mesh::ExactMesh;

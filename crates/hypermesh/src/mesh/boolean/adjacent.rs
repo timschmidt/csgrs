@@ -20,14 +20,14 @@ mod polygon;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
-use super::super::mesh::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::super::mesh::graph::intersection::MeshFacePairRelation;
-use super::super::mesh::graph::{
+use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::graph::intersection::MeshFacePairRelation;
+use super::super::graph::{
     ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide,
     build_validated_intersection_graph,
 };
-use super::super::mesh::validation::ExactMeshValidationPolicy;
-use super::super::mesh::{ExactMesh, ExactMeshValidationError, Triangle};
+use super::super::validation::ExactMeshValidationPolicy;
+use super::super::{ExactMesh, ExactMeshValidationError, Triangle};
 use super::winding::{
     ClosedMeshWindingRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };

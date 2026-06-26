@@ -21,17 +21,17 @@ use hyperlimit::{
     projected_polygon_area2_value,
 };
 
-use super::super::arrangement3d::arrangement2d::{
+use super::super::super::arrangement3d::arrangement2d::{
     ExactArrangement2dBoundaryPolicy, ExactArrangement2dSetOperation,
 };
-use super::super::mesh::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::super::mesh::graph::intersection::MeshFacePairRelation;
-use super::super::mesh::graph::{
+use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::graph::intersection::MeshFacePairRelation;
+use super::super::graph::{
     ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide,
     build_validated_intersection_graph,
 };
-use super::super::mesh::validation::ExactMeshValidationPolicy;
-use super::super::mesh::{ExactMesh, ExactMeshValidationError, Triangle, triangle_tuple_edges};
+use super::super::validation::ExactMeshValidationPolicy;
+use super::super::{ExactMesh, ExactMeshValidationError, Triangle, triangle_tuple_edges};
 use super::winding::{
     ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
     classify_mesh_vertices_against_closed_mesh_winding_report,

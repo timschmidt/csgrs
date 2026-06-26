@@ -21,15 +21,15 @@ use hyperlimit::{
     point_on_segment,
 };
 
-use super::super::arrangement3d::arrangement2d::{
+use super::super::super::arrangement3d::arrangement2d::{
     ExactArrangement2dBoundaryPolicy, ExactArrangement2dOutputLoop, ExactArrangement2dOverlay,
     ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
     build_exact_arrangement2d_overlay_with_boundary_policy,
 };
-use super::super::mesh::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::super::mesh::triangle_edges;
-use super::super::mesh::validation::ExactMeshValidationPolicy;
-use super::super::mesh::{ExactMesh, Triangle};
+use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::triangle_edges;
+use super::super::validation::ExactMeshValidationPolicy;
+use super::super::{ExactMesh, Triangle};
 use super::solid::{
     ClosedMeshOrientation, ConvexSolidFacts, ConvexSolidReportError, certify_convex_solid,
 };
@@ -1526,7 +1526,7 @@ fn report_error(error: ConvexSolidReportError) -> ExactMeshError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::boolean::{
+    use crate::mesh::boolean::{
         ExactBooleanOperation, ExactBooleanRequest, exact_boolean_evaluation_for_replay,
     };
 
@@ -1534,7 +1534,7 @@ mod tests {
         left: &ExactMesh,
         right: &ExactMesh,
         request: ExactBooleanRequest,
-        f: impl FnOnce(&crate::boolean::ExactBooleanEvaluation) -> R,
+        f: impl FnOnce(&crate::mesh::boolean::ExactBooleanEvaluation) -> R,
     ) -> R {
         let evaluation = exact_boolean_evaluation_for_replay(left, right, request).unwrap();
         f(&evaluation)

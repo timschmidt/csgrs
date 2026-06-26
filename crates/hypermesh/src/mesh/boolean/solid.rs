@@ -10,7 +10,7 @@ use std::cmp::Ordering;
 
 use hyperlimit::{PlaneSide, Point3, compare_reals, orient3d_report};
 
-use super::super::mesh::ExactMesh;
+use super::super::ExactMesh;
 use hyperlimit::PredicateUse;
 use hyperreal::Real;
 

@@ -21,15 +21,15 @@ use self::cell_complex::{
     ExactCellComplex, ExactLabeledCellComplex, ExactLabeledCellComplexFreshness,
     ExactRegionOwnershipReport, region_ownership_status,
 };
-use super::boolean::solid::{
+use super::mesh::ExactMesh;
+use super::mesh::boolean::solid::{
     ClosedMeshOrientation, ConvexSolidPointClassification, ConvexSolidPointRelation,
     classify_point_against_convex_solid_report, exact_mesh_orientation,
 };
-use super::boolean::winding::{
+use super::mesh::boolean::winding::{
     ClosedMeshWindingRelation, PointMeshWindingReport,
     classify_point_against_closed_mesh_winding_report,
 };
-use super::mesh::ExactMesh;
 use super::mesh::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::mesh::graph::key::{
     ExactPoint3Key, ExactUndirectedPoint3EdgeKey, exact_point3_key,
@@ -1826,7 +1826,7 @@ impl ExactArrangement3d {
     #[cfg(test)]
     fn select(
         &self,
-        operation: super::boolean::ExactBooleanOperation,
+        operation: super::mesh::boolean::ExactBooleanOperation,
     ) -> Result<self::cell_complex::ExactSelectedCellComplex, ExactArrangementBlocker> {
         self.select_with_policy(operation, ExactRegularizationPolicy::default())
     }
@@ -1834,7 +1834,7 @@ impl ExactArrangement3d {
     #[cfg(test)]
     fn select_with_policy(
         &self,
-        operation: super::boolean::ExactBooleanOperation,
+        operation: super::mesh::boolean::ExactBooleanOperation,
         policy: ExactRegularizationPolicy,
     ) -> Result<self::cell_complex::ExactSelectedCellComplex, ExactArrangementBlocker> {
         let labeling_policy = self::cell_complex::arrangement_cell_complex_labeling_policy(
@@ -5197,7 +5197,7 @@ mod tests {
     use super::*;
     use crate::arrangement3d::cell_complex::ExactRegionOwnershipStatus;
     use crate::arrangement3d::loop_triangulation::projected_loop_orientation;
-    use crate::boolean::ExactBooleanOperation;
+    use crate::mesh::boolean::ExactBooleanOperation;
     use crate::mesh::validation::ExactMeshValidationPolicy;
     use hyperlimit::{
         RingPointLocation, classify_point_ring_even_odd, projected_polygon_area2_value,
@@ -6698,7 +6698,7 @@ mod tests {
 
         let selected = arrangement
             .select(ExactBooleanOperation::SelectedRegions(
-                crate::boolean::region::ExactRegionSelection::KeepLeft,
+                crate::mesh::boolean::region::ExactRegionSelection::KeepLeft,
             ))
             .unwrap();
         assert!(selected.blockers.is_empty(), "{:?}", selected.blockers);

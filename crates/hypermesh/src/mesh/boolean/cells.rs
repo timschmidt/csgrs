@@ -23,13 +23,13 @@ use hyperlimit::{
 };
 use hypertri::Constraint;
 
-use super::super::mesh::ExactMesh;
-use super::super::mesh::graph::intersection::MeshFacePairRelation;
-use super::super::mesh::graph::{
+use super::super::ExactMesh;
+use super::super::graph::intersection::MeshFacePairRelation;
+use super::super::graph::{
     CoplanarOverlapSplitPlan, ExactFaceRegionPlan, ExactIntersectionGraph, ExactSplitTopologyPlan,
     FacePairEvents, FaceRegionBoundary, FaceSplitBoundaryNode, IntersectionEvent, MeshSide,
 };
-use super::super::mesh::triangle_edges;
+use super::super::triangle_edges;
 use super::region::{
     FaceRegionTriangulation, boundary_node_point, choose_region_projection, project_for_hypertri,
     project_for_predicate,
@@ -1570,7 +1570,7 @@ fn pair_has_proper_crossing(pair: &FacePairEvents) -> bool {
 }
 
 fn graph_vertex_in_face_pair(
-    vertex: &super::super::mesh::graph::ExactGraphVertex,
+    vertex: &super::super::graph::ExactGraphVertex,
     pair: &FacePairEvents,
     side: MeshSide,
     face: usize,
@@ -1645,8 +1645,8 @@ fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::super::mesh::graph::CoplanarOverlapSplitGraph;
-    use super::super::super::mesh::validation::ExactMeshValidationPolicy;
+    use super::super::super::graph::CoplanarOverlapSplitGraph;
+    use super::super::super::validation::ExactMeshValidationPolicy;
     use super::*;
 
     fn open_triangle_mesh(pos: &[i64]) -> ExactMesh {

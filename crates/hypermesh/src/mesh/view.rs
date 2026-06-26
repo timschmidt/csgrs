@@ -4,11 +4,11 @@ use std::{cell::RefCell, rc::Rc};
 
 use super::super::arrangement3d::regularization::ExactRegularizationPolicy;
 use super::super::arrangement3d::{ArrangementView, ExactArrangement};
-use super::super::boolean::{
+use super::ExactMesh;
+use super::boolean::{
     ExactArrangementCellComplexShortcutFacts, ExactBooleanOperation, ExactBooleanRequest,
     materialize_boolean_exact_request_with_prepared_pair,
 };
-use super::ExactMesh;
 use super::bounds::{
     BroadPhaseScratch, CandidateFacePairPlan, ExactAabb3, ExactAabbBroadPhase, ExactBroadPhase,
     PreparedMeshBounds,

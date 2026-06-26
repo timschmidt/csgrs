@@ -21,13 +21,13 @@ use hyperlimit::{
     TriangleLocation, classify_point_triangle, compare_reals, project_point3,
 };
 
-use super::super::mesh::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::super::mesh::facts::FacePlaneFacts;
-use super::super::mesh::graph::intersection::MeshFacePairRelation;
-use super::super::mesh::graph::{
+use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::facts::FacePlaneFacts;
+use super::super::graph::intersection::MeshFacePairRelation;
+use super::super::graph::{
     ExactIntersectionGraph, IntersectionEvent, MeshSide, build_validated_intersection_graph,
 };
-use super::super::mesh::{ExactMesh, sorted_edge};
+use super::super::{ExactMesh, sorted_edge};
 use super::solid::{ClosedMeshOrientation, exact_mesh_orientation};
 use hyperreal::Real;
 

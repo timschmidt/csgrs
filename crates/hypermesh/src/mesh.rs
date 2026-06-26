@@ -19,6 +19,7 @@ use hyperlimit::{
 use hyperreal::Real;
 use std::cmp::Ordering;
 
+pub(crate) mod boolean;
 pub(crate) mod bounds;
 pub(crate) mod error;
 pub(crate) mod facts;
