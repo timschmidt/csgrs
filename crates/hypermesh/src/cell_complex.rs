@@ -5,6 +5,8 @@
 //! triangulation/export remains a later step with its own approximation or
 //! triangulation policy.
 
+pub(crate) mod simplify;
+
 use super::arrangement3d::regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
     ExactUnresolvedPolicy,
@@ -18,7 +20,7 @@ use super::arrangement3d::{
 use super::boolean::ExactBooleanOperation;
 use super::boolean::solid::ConvexSolidPointRelation;
 use super::graph::MeshSide;
-use super::simplify::{ExactSimplifiedCellComplex, simplify_selected_cell_complex};
+use simplify::{ExactSimplifiedCellComplex, simplify_selected_cell_complex};
 
 /// Region label for one arrangement face-cell.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

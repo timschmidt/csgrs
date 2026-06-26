@@ -28,7 +28,6 @@ mod facts;
 mod graph;
 mod mesh;
 mod region;
-mod simplify;
 mod validation;
 mod view;
 

@@ -43,6 +43,7 @@ use super::arrangement3d::{
     ExactArrangement, ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
 };
 use super::bounds::AabbIntersectionKind;
+use super::cell_complex::simplify::ExactSimplifiedCellComplex;
 use super::cell_complex::{
     ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
     arrangement_cell_complex_labeling_policy,
@@ -68,7 +69,6 @@ use super::region::{
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, choose_region_projection,
 };
-use super::simplify::ExactSimplifiedCellComplex;
 use super::validation::ExactMeshValidationPolicy;
 use super::view::PreparedMeshPair;
 use adjacent::{

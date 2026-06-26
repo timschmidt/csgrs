@@ -8,26 +8,28 @@
 use std::cmp::Ordering;
 
 #[cfg(test)]
-use super::arrangement3d::ExactArrangement;
-use super::arrangement3d::loop_triangulation::{
+use super::super::arrangement3d::ExactArrangement;
+use super::super::arrangement3d::loop_triangulation::{
     choose_polygon_projection, group_exact_coplanar_loops, triangulate_exact_loop_group,
 };
-use super::arrangement3d::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
-use super::arrangement3d::{
+use super::super::arrangement3d::regularization::{
+    ExactArrangementBlocker, ExactRegularizationPolicy,
+};
+use super::super::arrangement3d::{
     ArrangementFaceCellNode, ArrangementLowerDimensionalArtifact, ExactTopologyAssemblyReport,
     validate_lower_dimensional_artifacts,
 };
-use super::boolean::ExactBooleanOperation;
+use super::super::boolean::ExactBooleanOperation;
+use super::super::mesh::{ExactMesh, Triangle};
+use super::super::validation::ExactMeshValidationPolicy;
 #[cfg(test)]
-use super::cell_complex::select_arrangement_for_replay;
-use super::cell_complex::{
+use super::select_arrangement_for_replay;
+use super::{
     ExactCellComplexFace, ExactCellRegionLabel, ExactOppositeRegionLabel,
     ExactRegionOwnershipReport, ExactSelectedCellComplex, ExactSelectedFaceOrientation,
     selected_cell_complex_gate_counts, validate_selected_gate_reports,
     validate_selected_gate_reports_against_counts, validate_volume_adjacency_face_provenance,
 };
-use super::mesh::{ExactMesh, Triangle};
-use super::validation::ExactMeshValidationPolicy;
 use hyperlimit::CoplanarProjection;
 use hyperlimit::SourceProvenance;
 use hyperlimit::{
@@ -427,7 +429,8 @@ pub(crate) fn simplify_selected_cell_complex(
     faces.sort_by_key(simplified_sort_key);
 
     if !blockers.is_empty()
-        && policy.unresolved == super::arrangement3d::regularization::ExactUnresolvedPolicy::Block
+        && policy.unresolved
+            == super::super::arrangement3d::regularization::ExactUnresolvedPolicy::Block
     {
         return Err(blockers[0].clone());
     }
@@ -1051,7 +1054,7 @@ fn selected_face_reverse_orientation(
 
 fn volume_adjacency_face_membership(
     faces: &[ExactCellComplexFace],
-    volume_adjacencies: &[super::arrangement3d::ArrangementVolumeAdjacency],
+    volume_adjacencies: &[super::super::arrangement3d::ArrangementVolumeAdjacency],
     enabled: bool,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Vec<bool> {
@@ -1111,10 +1114,10 @@ fn validate_selected_face_orientations(
     }
 }
 
-const fn side_key(side: super::graph::MeshSide) -> usize {
+const fn side_key(side: super::super::graph::MeshSide) -> usize {
     match side {
-        super::graph::MeshSide::Left => 0,
-        super::graph::MeshSide::Right => 1,
+        super::super::graph::MeshSide::Left => 0,
+        super::super::graph::MeshSide::Right => 1,
     }
 }
 
