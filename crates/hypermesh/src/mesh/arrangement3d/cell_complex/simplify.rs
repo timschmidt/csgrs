@@ -7,9 +7,9 @@
 
 use std::cmp::Ordering;
 
-use super::super::super::mesh::boolean::ExactBooleanOperation;
-use super::super::super::mesh::validation::ExactMeshValidationPolicy;
-use super::super::super::mesh::{ExactMesh, Triangle};
+use super::super::super::boolean::ExactBooleanOperation;
+use super::super::super::validation::ExactMeshValidationPolicy;
+use super::super::super::{ExactMesh, Triangle};
 #[cfg(test)]
 use super::super::ExactArrangement;
 use super::super::loop_triangulation::{
@@ -1111,10 +1111,10 @@ fn validate_selected_face_orientations(
     }
 }
 
-const fn side_key(side: super::super::super::mesh::graph::MeshSide) -> usize {
+const fn side_key(side: super::super::super::graph::MeshSide) -> usize {
     match side {
-        super::super::super::mesh::graph::MeshSide::Left => 0,
-        super::super::super::mesh::graph::MeshSide::Right => 1,
+        super::super::super::graph::MeshSide::Left => 0,
+        super::super::super::graph::MeshSide::Right => 1,
     }
 }
 
@@ -1702,14 +1702,14 @@ fn replace_triangle_vertex(triangle: &mut Triangle, old: usize, new: usize) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::arrangement3d::cell_complex::{
+    use crate::mesh::arrangement3d::cell_complex::{
         ExactCellComplexFace, ExactCellRegionLabel, ExactOppositeRegionLabel,
         ExactSelectedCellComplex, ExactSelectedFaceOrientation,
     };
-    use crate::arrangement3d::loop_triangulation::{
+    use crate::mesh::arrangement3d::loop_triangulation::{
         emitted_triangle_orientation, projected_loop_interior_witness,
     };
-    use crate::arrangement3d::{
+    use crate::mesh::arrangement3d::{
         ArrangementFaceCarrier, ArrangementFaceCell, ArrangementFaceCellNode,
         ArrangementVolumeAdjacency, ArrangementVolumeFaceSide,
     };

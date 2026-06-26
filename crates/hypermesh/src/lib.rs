@@ -18,14 +18,13 @@
 //! predicate evidence, certified outputs, or explicit blockers when the
 //! implementation cannot prove a requested operation.
 
-mod arrangement3d;
 mod mesh;
 
 pub use mesh::ExactMesh;
 
 #[doc(hidden)]
 pub mod kernel {
-    pub use crate::arrangement3d::{
+    pub use crate::mesh::arrangement3d::{
         ArrangementEdgeRef, ArrangementFaceCellRef, ArrangementVertexRef, ArrangementView,
     };
     pub use crate::mesh::error::{

@@ -31,24 +31,22 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::SegmentPlaneRelation;
 
-use super::super::arrangement3d::arrangement2d::{
+use super::arrangement3d::arrangement2d::{
     ExactArrangement2dBlocker, ExactArrangement2dBoundaryPolicy, ExactArrangement2dOverlay,
     ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
     build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
 };
-use super::super::arrangement3d::cell_complex::simplify::ExactSimplifiedCellComplex;
-use super::super::arrangement3d::cell_complex::{
+use super::arrangement3d::cell_complex::simplify::ExactSimplifiedCellComplex;
+use super::arrangement3d::cell_complex::{
     ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
     arrangement_cell_complex_labeling_policy,
     arrangement_region_classification_blockers_resolve_operation, select_arrangement_for_replay,
 };
-use super::super::arrangement3d::loop_triangulation::{
+use super::arrangement3d::loop_triangulation::{
     group_exact_coplanar_loops, triangulate_exact_loop_group,
 };
-use super::super::arrangement3d::regularization::{
-    ExactArrangementBlocker, ExactRegularizationPolicy,
-};
-use super::super::arrangement3d::{
+use super::arrangement3d::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
+use super::arrangement3d::{
     ExactArrangement, ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
 };
 use super::bounds::AabbIntersectionKind;
@@ -15770,7 +15768,7 @@ mod tests {
         let ownership = ExactRegionOwnershipReport {
             status: ExactRegionOwnershipStatus::RequiresWinding,
             freshness:
-                crate::arrangement3d::cell_complex::ExactLabeledCellComplexFreshness::Current,
+                crate::mesh::arrangement3d::cell_complex::ExactLabeledCellComplexFreshness::Current,
             blockers: vec![ExactArrangementBlocker::UnresolvedRegionClassification],
             face_cells: 1,
             face_cell_boundary_nodes: 3,

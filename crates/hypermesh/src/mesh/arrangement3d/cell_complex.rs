@@ -7,9 +7,9 @@
 
 pub(crate) mod simplify;
 
-use super::super::mesh::boolean::ExactBooleanOperation;
-use super::super::mesh::boolean::solid::ConvexSolidPointRelation;
-use super::super::mesh::graph::MeshSide;
+use super::super::boolean::ExactBooleanOperation;
+use super::super::boolean::solid::ConvexSolidPointRelation;
+use super::super::graph::MeshSide;
 use super::regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
     ExactUnresolvedPolicy,
@@ -506,8 +506,8 @@ impl ExactLabeledCellComplex {
     #[cfg(test)]
     pub(crate) fn validate_against_sources(
         &self,
-        left: &super::super::mesh::ExactMesh,
-        right: &super::super::mesh::ExactMesh,
+        left: &super::super::ExactMesh,
+        right: &super::super::ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> Result<(), ExactArrangementBlocker> {
         self.validate()?;
@@ -524,8 +524,8 @@ impl ExactLabeledCellComplex {
     /// Classify whether this retained labeled complex is fresh for the source operands.
     pub(crate) fn freshness_against_sources(
         &self,
-        left: &super::super::mesh::ExactMesh,
-        right: &super::super::mesh::ExactMesh,
+        left: &super::super::ExactMesh,
+        right: &super::super::ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> ExactLabeledCellComplexFreshness {
         if self.validate().is_err() {
@@ -545,8 +545,8 @@ impl ExactLabeledCellComplex {
     /// Report whether retained exact evidence resolves region ownership.
     pub(crate) fn region_ownership_report(
         &self,
-        left: &super::super::mesh::ExactMesh,
-        right: &super::super::mesh::ExactMesh,
+        left: &super::super::ExactMesh,
+        right: &super::super::ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> ExactRegionOwnershipReport {
         let freshness = self.freshness_against_sources(left, right, policy);
@@ -909,8 +909,8 @@ impl ExactSelectedCellComplex {
     #[cfg(test)]
     pub(crate) fn validate_against_sources(
         &self,
-        left: &super::super::mesh::ExactMesh,
-        right: &super::super::mesh::ExactMesh,
+        left: &super::super::ExactMesh,
+        right: &super::super::ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> Result<(), ExactArrangementBlocker> {
         self.validate()?;
@@ -944,8 +944,8 @@ impl ExactSelectedCellComplex {
 
 pub(crate) fn select_arrangement_for_replay(
     arrangement: ExactArrangement3d,
-    left: &super::super::mesh::ExactMesh,
-    right: &super::super::mesh::ExactMesh,
+    left: &super::super::ExactMesh,
+    right: &super::super::ExactMesh,
     operation: ExactBooleanOperation,
     policy: ExactRegularizationPolicy,
 ) -> Result<ExactSelectedCellComplex, ExactArrangementBlocker> {
@@ -1440,17 +1440,17 @@ fn opposite_region_label(opposite: &ArrangementOppositeClassification) -> ExactO
         | None => {}
     }
     match opposite.winding.relation {
-        super::super::mesh::boolean::winding::ClosedMeshWindingRelation::Inside => {
+        super::super::boolean::winding::ClosedMeshWindingRelation::Inside => {
             ExactOppositeRegionLabel::Inside
         }
-        super::super::mesh::boolean::winding::ClosedMeshWindingRelation::Outside => {
+        super::super::boolean::winding::ClosedMeshWindingRelation::Outside => {
             ExactOppositeRegionLabel::Outside
         }
-        super::super::mesh::boolean::winding::ClosedMeshWindingRelation::Boundary => {
+        super::super::boolean::winding::ClosedMeshWindingRelation::Boundary => {
             ExactOppositeRegionLabel::Boundary
         }
-        super::super::mesh::boolean::winding::ClosedMeshWindingRelation::Unknown
-        | super::super::mesh::boolean::winding::ClosedMeshWindingRelation::NotClosed => {
+        super::super::boolean::winding::ClosedMeshWindingRelation::Unknown
+        | super::super::boolean::winding::ClosedMeshWindingRelation::NotClosed => {
             ExactOppositeRegionLabel::Unknown
         }
     }
@@ -1788,11 +1788,11 @@ fn select_volume_region(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::arrangement3d::{
+    use crate::mesh::ExactMesh;
+    use crate::mesh::arrangement3d::{
         ArrangementFaceCarrier, ArrangementFaceCell, ArrangementFaceCellNode,
         ArrangementOppositeClassification, ArrangementVolumeFaceSide, ExactTopologyAssemblyStatus,
     };
-    use crate::mesh::ExactMesh;
     use crate::mesh::boolean::region::ExactRegionSelection;
     use crate::mesh::boolean::solid::ConvexSolidPointClassification;
     use crate::mesh::boolean::winding::{ClosedMeshWindingRelation, PointMeshWindingReport};

@@ -12,14 +12,14 @@ use hyperlimit::{
 use hyperreal::Real;
 use std::cmp::Ordering;
 
-use super::super::super::arrangement3d::cell_complex::{
+use super::super::ExactMesh;
+use super::super::arrangement3d::cell_complex::{
     ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy,
     validate_selected_gate_reports,
 };
-use super::super::super::arrangement3d::regularization::ExactArrangementBlocker;
-use super::super::super::arrangement3d::regularization::ExactRegularizationPolicy;
-use super::super::super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
-use super::super::ExactMesh;
+use super::super::arrangement3d::regularization::ExactArrangementBlocker;
+use super::super::arrangement3d::regularization::ExactRegularizationPolicy;
+use super::super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::super::bounds::AabbIntersectionKind;
 use super::super::graph::MeshSide;
 use super::super::graph::intersection::MeshFacePairRelation;

@@ -4,6 +4,7 @@
 //! `hyperreal::Real`. Primitive-float construction is a named lossy adapter
 //! and validates every coordinate before import.
 
+use self::arrangement3d::ArrangementView;
 use self::bounds::{BoundsValidationError, MeshBounds};
 use self::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use self::facts::{MeshFactsValidationError, MeshValidationFacts};
@@ -11,7 +12,6 @@ use self::validation::{
     ExactMeshValidationPolicy, ValidationReport, validate_triangle_rows_with_policy,
 };
 use self::view::ExactMeshRef;
-use super::arrangement3d::ArrangementView;
 use hyperlimit::{
     ConstructionProvenance, ConstructionProvenanceValidationError, Point3, PredicateUse,
     SourceProvenance, compare_reals,
@@ -19,6 +19,7 @@ use hyperlimit::{
 use hyperreal::Real;
 use std::cmp::Ordering;
 
+pub(crate) mod arrangement3d;
 pub(crate) mod boolean;
 pub(crate) mod bounds;
 pub(crate) mod error;

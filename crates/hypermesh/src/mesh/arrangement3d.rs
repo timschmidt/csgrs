@@ -21,26 +21,26 @@ use self::cell_complex::{
     ExactCellComplex, ExactLabeledCellComplex, ExactLabeledCellComplexFreshness,
     ExactRegionOwnershipReport, region_ownership_status,
 };
-use super::mesh::ExactMesh;
-use super::mesh::boolean::solid::{
+use super::ExactMesh;
+use super::boolean::solid::{
     ClosedMeshOrientation, ConvexSolidPointClassification, ConvexSolidPointRelation,
     classify_point_against_convex_solid_report, exact_mesh_orientation,
 };
-use super::mesh::boolean::winding::{
+use super::boolean::winding::{
     ClosedMeshWindingRelation, PointMeshWindingReport,
     classify_point_against_closed_mesh_winding_report,
 };
-use super::mesh::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::mesh::graph::key::{
+use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::graph::key::{
     ExactPoint3Key, ExactUndirectedPoint3EdgeKey, exact_point3_key,
     exact_undirected_point3_edge_key,
 };
-use super::mesh::graph::{
+use super::graph::{
     CoplanarEdgeSplitConstruction, CoplanarOverlapGraph, ExactFaceRegionPlan,
     ExactIntersectionGraph, ExactSplitTopologyPlan, FaceRegionBoundary, FaceSplitBoundaryNode,
     MeshSide, SplitEdgeNode, SplitPlanValidationReport, build_validated_intersection_graph,
 };
-use super::mesh::validation::ExactMeshValidationPolicy;
+use super::validation::ExactMeshValidationPolicy;
 use core::cmp::Ordering;
 use hyperlimit::CoplanarProjection;
 use hyperlimit::SourceProvenance;
@@ -353,8 +353,8 @@ fn validate_lower_dimensional_artifact_graph_pairs(
         };
         if !matches!(
             relation,
-            super::mesh::graph::intersection::MeshFacePairRelation::Candidate
-                | super::mesh::graph::intersection::MeshFacePairRelation::CoplanarTouching
+            super::graph::intersection::MeshFacePairRelation::Candidate
+                | super::graph::intersection::MeshFacePairRelation::CoplanarTouching
         ) {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
@@ -1826,7 +1826,7 @@ impl ExactArrangement3d {
     #[cfg(test)]
     fn select(
         &self,
-        operation: super::mesh::boolean::ExactBooleanOperation,
+        operation: super::boolean::ExactBooleanOperation,
     ) -> Result<self::cell_complex::ExactSelectedCellComplex, ExactArrangementBlocker> {
         self.select_with_policy(operation, ExactRegularizationPolicy::default())
     }
@@ -1834,7 +1834,7 @@ impl ExactArrangement3d {
     #[cfg(test)]
     fn select_with_policy(
         &self,
-        operation: super::mesh::boolean::ExactBooleanOperation,
+        operation: super::boolean::ExactBooleanOperation,
         policy: ExactRegularizationPolicy,
     ) -> Result<self::cell_complex::ExactSelectedCellComplex, ExactArrangementBlocker> {
         let labeling_policy = self::cell_complex::arrangement_cell_complex_labeling_policy(
@@ -1872,12 +1872,12 @@ fn extend_split_plan_blockers(
             blocker.kind.into(),
         ));
         match blocker.kind {
-            super::mesh::graph::SplitPlanBlockerKind::UnknownOrdering => {
+            super::graph::SplitPlanBlockerKind::UnknownOrdering => {
                 blockers.push(ExactArrangementBlocker::UndecidableOrdering)
             }
-            super::mesh::graph::SplitPlanBlockerKind::UnresolvedEquality
-            | super::mesh::graph::SplitPlanBlockerKind::UnresolvedVertexLookup
-            | super::mesh::graph::SplitPlanBlockerKind::UnknownBoundaryIncidence => {
+            super::graph::SplitPlanBlockerKind::UnresolvedEquality
+            | super::graph::SplitPlanBlockerKind::UnresolvedVertexLookup
+            | super::graph::SplitPlanBlockerKind::UnknownBoundaryIncidence => {
                 blockers.push(ExactArrangementBlocker::UnresolvedIntersection)
             }
             _ => {}
@@ -2733,8 +2733,7 @@ fn lower_dimensional_artifacts(
     let touching_pairs = graph
         .coplanar_overlap_graph_iter()
         .filter(|overlap| {
-            overlap.relation
-                == super::mesh::graph::intersection::MeshFacePairRelation::CoplanarTouching
+            overlap.relation == super::graph::intersection::MeshFacePairRelation::CoplanarTouching
         })
         .map(|overlap| ((overlap.left_face, overlap.right_face), overlap))
         .collect::<BTreeMap<_, _>>();
@@ -2789,13 +2788,13 @@ fn append_non_coplanar_lower_dimensional_artifacts(
     right: &ExactMesh,
 ) {
     for pair in &graph.face_pairs {
-        if pair.relation != super::mesh::graph::intersection::MeshFacePairRelation::Candidate {
+        if pair.relation != super::graph::intersection::MeshFacePairRelation::Candidate {
             continue;
         }
         if pair.events.iter().any(|event| {
             matches!(
                 event,
-                super::mesh::graph::IntersectionEvent::SegmentPlane {
+                super::graph::IntersectionEvent::SegmentPlane {
                     relation: hyperlimit::SegmentPlaneRelation::ProperCrossing,
                     ..
                 }
@@ -2830,11 +2829,11 @@ fn append_non_coplanar_lower_dimensional_artifacts(
 fn non_coplanar_point_contact_artifact(
     left_face: usize,
     right_face: usize,
-    event: &super::mesh::graph::IntersectionEvent,
+    event: &super::graph::IntersectionEvent,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<ArrangementLowerDimensionalArtifact> {
-    let super::mesh::graph::IntersectionEvent::SegmentPlane {
+    let super::graph::IntersectionEvent::SegmentPlane {
         plane_side,
         plane_face,
         relation: hyperlimit::SegmentPlaneRelation::EndpointOnPlane,
@@ -2868,11 +2867,11 @@ fn non_coplanar_point_contact_artifact(
 fn non_coplanar_edge_contact_artifact(
     left_face: usize,
     right_face: usize,
-    event: &super::mesh::graph::IntersectionEvent,
+    event: &super::graph::IntersectionEvent,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<ArrangementLowerDimensionalArtifact> {
-    let super::mesh::graph::IntersectionEvent::SegmentPlane {
+    let super::graph::IntersectionEvent::SegmentPlane {
         segment_side,
         edge,
         plane_side,
@@ -5195,8 +5194,8 @@ fn triangle_centroid(a: &Point3, b: &Point3, c: &Point3) -> Option<Point3> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::arrangement3d::cell_complex::ExactRegionOwnershipStatus;
-    use crate::arrangement3d::loop_triangulation::projected_loop_orientation;
+    use crate::mesh::arrangement3d::cell_complex::ExactRegionOwnershipStatus;
+    use crate::mesh::arrangement3d::loop_triangulation::projected_loop_orientation;
     use crate::mesh::boolean::ExactBooleanOperation;
     use crate::mesh::validation::ExactMeshValidationPolicy;
     use hyperlimit::{
