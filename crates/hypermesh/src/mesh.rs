@@ -9,9 +9,9 @@ use self::facts::{MeshFactsValidationError, MeshValidationFacts};
 use self::validation::{
     ExactMeshValidationPolicy, ValidationReport, validate_triangle_rows_with_policy,
 };
+use self::view::ExactMeshRef;
 use super::arrangement3d::ArrangementView;
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::view::ExactMeshRef;
 use hyperlimit::{
     ConstructionProvenance, ConstructionProvenanceValidationError, Point3, PredicateUse,
     SourceProvenance, compare_reals,
@@ -22,6 +22,7 @@ use std::cmp::Ordering;
 pub(crate) mod bounds;
 pub(crate) mod facts;
 pub(crate) mod validation;
+pub(crate) mod view;
 
 /// Triangle index triplet.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

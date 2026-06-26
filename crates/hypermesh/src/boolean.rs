@@ -64,8 +64,8 @@ use super::mesh::facts::MeshFacts;
 #[cfg(test)]
 use super::mesh::triangle_edges as topology_triangle_edges;
 use super::mesh::validation::ExactMeshValidationPolicy;
+use super::mesh::view::PreparedMeshPair;
 use super::mesh::{ExactMesh, Triangle};
-use super::view::PreparedMeshPair;
 use adjacent::{
     full_face_adjacent_certificate_from_graph,
     materialize_full_face_adjacent_union_from_certificate,

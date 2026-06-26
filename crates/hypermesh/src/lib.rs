@@ -25,7 +25,6 @@ mod cell_complex;
 mod error;
 mod graph;
 mod mesh;
-mod view;
 
 pub use mesh::ExactMesh;
 
@@ -37,7 +36,7 @@ pub mod kernel {
     pub use crate::error::{
         ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide,
     };
-    pub use crate::view::{
+    pub use crate::mesh::view::{
         EdgeRef, ExactMeshRef, ExactMeshSourceStamp, FaceRef, MeshView, PreparedMeshPair,
         PreparedMeshPairArrangementCounts, PreparedMeshPairBroadPhaseSummary,
         PreparedMeshPairBroadPhaseTraversalSummary, PreparedMeshPairCacheStatus,

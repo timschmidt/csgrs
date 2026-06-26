@@ -26,8 +26,8 @@ use hyperlimit::{
 
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide};
 use super::mesh::bounds::{ExactAabbBroadPhase, ExactBroadPhase};
+use super::mesh::view::{PreparedMeshPair, PreparedMeshPairClassificationCounts, PreparedMeshView};
 use super::mesh::{ExactMesh, triangle_edges};
-use super::view::{PreparedMeshPair, PreparedMeshPairClassificationCounts, PreparedMeshView};
 use hyperlimit::{CoplanarProjection, CoplanarTriangleClassification};
 use hyperreal::Real;
 use intersection::{
