@@ -126,7 +126,7 @@ use volumetric::{
 };
 use volumetric_cells::{CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle};
 use winding::{
-    ClosedMeshWindingMeshRelation, ClosedMeshWindingRelation, WindingReportError,
+    ClosedMeshWindingMeshRelation, WindingReportError,
     classify_mesh_vertices_against_closed_mesh_winding_report,
 };
 
@@ -3210,28 +3210,9 @@ fn certified_closed_boundary_contact(
     let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
     right_in_left.validate().map_err(winding_error)?;
 
-    Ok(left_in_right.target_closed
-        && right_in_left.target_closed
-        && left_in_right.vertices.iter().all(|vertex| {
-            matches!(
-                vertex.relation,
-                ClosedMeshWindingRelation::Outside | ClosedMeshWindingRelation::Boundary
-            )
-        })
-        && right_in_left.vertices.iter().all(|vertex| {
-            matches!(
-                vertex.relation,
-                ClosedMeshWindingRelation::Outside | ClosedMeshWindingRelation::Boundary
-            )
-        })
-        && (left_in_right
-            .vertices
-            .iter()
-            .any(|vertex| vertex.relation == ClosedMeshWindingRelation::Boundary)
-            || right_in_left
-                .vertices
-                .iter()
-                .any(|vertex| vertex.relation == ClosedMeshWindingRelation::Boundary)))
+    Ok(left_in_right.vertices_are_boundary_or_outside()
+        && right_in_left.vertices_are_boundary_or_outside()
+        && (left_in_right.vertices_touch_boundary() || right_in_left.vertices_touch_boundary()))
 }
 
 fn closed_winding_vertex_relations_from_empty_graph(
@@ -3262,7 +3243,7 @@ fn closed_winding_vertex_relations_from_empty_graph(
     right_in_left
         .validate_against_sources(right, left)
         .map_err(winding_error)?;
-    Ok(Some((left_in_right.relation, right_in_left.relation)))
+    Ok(Some((left_in_right.relation(), right_in_left.relation())))
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

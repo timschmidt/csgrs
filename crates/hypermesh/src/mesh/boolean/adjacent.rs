@@ -28,9 +28,7 @@ use super::super::graph::{
 };
 use super::super::validation::ExactMeshValidationPolicy;
 use super::super::{ExactMesh, ExactMeshValidationError, Triangle};
-use super::winding::{
-    ClosedMeshWindingRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
-};
+use super::winding::classify_mesh_vertices_against_closed_mesh_winding_report;
 use hyperlimit::SourceProvenance;
 use hyperlimit::{
     CoplanarProjection, Point3, SegmentIntersection, SegmentPlaneRelation, Sign, TriangleLocation,
@@ -469,29 +467,9 @@ fn closed_boundary_contact_only(
             "full-face adjacent boundary-contact right-in-left winding report failed validation: {error:?}"
         ))
     })?;
-    Ok(mesh_vertices_are_boundary_or_outside(&left_in_right)
-        && mesh_vertices_are_boundary_or_outside(&right_in_left)
-        && (mesh_vertices_touch_boundary(&left_in_right)
-            || mesh_vertices_touch_boundary(&right_in_left)))
-}
-
-fn mesh_vertices_are_boundary_or_outside(
-    report: &super::winding::ClosedMeshWindingMeshReport,
-) -> bool {
-    report.target_closed
-        && report.vertices.iter().all(|vertex| {
-            matches!(
-                vertex.relation,
-                ClosedMeshWindingRelation::Outside | ClosedMeshWindingRelation::Boundary
-            )
-        })
-}
-
-fn mesh_vertices_touch_boundary(report: &super::winding::ClosedMeshWindingMeshReport) -> bool {
-    report
-        .vertices
-        .iter()
-        .any(|vertex| vertex.relation == ClosedMeshWindingRelation::Boundary)
+    Ok(left_in_right.vertices_are_boundary_or_outside()
+        && right_in_left.vertices_are_boundary_or_outside()
+        && (left_in_right.vertices_touch_boundary() || right_in_left.vertices_touch_boundary()))
 }
 
 fn full_face_adjacency_certificate(

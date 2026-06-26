@@ -32,10 +32,7 @@ use super::super::graph::{
 };
 use super::super::validation::ExactMeshValidationPolicy;
 use super::super::{ExactMesh, ExactMeshValidationError, Triangle, triangle_tuple_edges};
-use super::winding::{
-    ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
-    classify_mesh_vertices_against_closed_mesh_winding_report,
-};
+use super::winding::classify_mesh_vertices_against_closed_mesh_winding_report;
 use super::{coplanar_mesh_overlay_carrier, materialize_coplanar_mesh_overlay_mesh};
 use hyperlimit::SourceProvenance;
 use hyperreal::Real;
@@ -1085,25 +1082,7 @@ fn closed_boundary_contact_only(
             "contained-face adjacent boundary-contact right-in-left winding report failed validation: {error:?}"
         ))
     })?;
-    Ok(mesh_vertices_are_boundary_or_outside(&left_in_right)
-        && mesh_vertices_are_boundary_or_outside(&right_in_left)
-        && (mesh_vertices_touch_boundary(&left_in_right)
-            || mesh_vertices_touch_boundary(&right_in_left)))
-}
-
-fn mesh_vertices_are_boundary_or_outside(report: &ClosedMeshWindingMeshReport) -> bool {
-    report.target_closed
-        && report.vertices.iter().all(|vertex| {
-            matches!(
-                vertex.relation,
-                ClosedMeshWindingRelation::Outside | ClosedMeshWindingRelation::Boundary
-            )
-        })
-}
-
-fn mesh_vertices_touch_boundary(report: &ClosedMeshWindingMeshReport) -> bool {
-    report
-        .vertices
-        .iter()
-        .any(|vertex| vertex.relation == ClosedMeshWindingRelation::Boundary)
+    Ok(left_in_right.vertices_are_boundary_or_outside()
+        && right_in_left.vertices_are_boundary_or_outside()
+        && (left_in_right.vertices_touch_boundary() || right_in_left.vertices_touch_boundary()))
 }

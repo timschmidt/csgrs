@@ -3726,13 +3726,15 @@ impl ExactBooleanCertificationSet {
     }
 
     fn closed_winding_reports_match_separated(&self) -> bool {
-        self.closed_winding_left_in_right.relation == ClosedMeshWindingMeshRelation::Outside
-            && self.closed_winding_right_in_left.relation == ClosedMeshWindingMeshRelation::Outside
+        self.closed_winding_left_in_right.relation() == ClosedMeshWindingMeshRelation::Outside
+            && self.closed_winding_right_in_left.relation()
+                == ClosedMeshWindingMeshRelation::Outside
     }
 
     fn closed_winding_reports_match_containment(&self) -> bool {
-        self.closed_winding_left_in_right.relation == ClosedMeshWindingMeshRelation::StrictlyInside
-            || self.closed_winding_right_in_left.relation
+        self.closed_winding_left_in_right.relation()
+            == ClosedMeshWindingMeshRelation::StrictlyInside
+            || self.closed_winding_right_in_left.relation()
                 == ClosedMeshWindingMeshRelation::StrictlyInside
     }
 
@@ -4699,12 +4701,12 @@ fn closed_winding_sources_match(
 
     Ok(match shortcut {
         ExactBooleanShortcutKind::ClosedWindingSeparated => {
-            left_in_right.relation == ClosedMeshWindingMeshRelation::Outside
-                && right_in_left.relation == ClosedMeshWindingMeshRelation::Outside
+            left_in_right.relation() == ClosedMeshWindingMeshRelation::Outside
+                && right_in_left.relation() == ClosedMeshWindingMeshRelation::Outside
         }
         ExactBooleanShortcutKind::ClosedWindingContainment => {
-            left_in_right.relation == ClosedMeshWindingMeshRelation::StrictlyInside
-                || right_in_left.relation == ClosedMeshWindingMeshRelation::StrictlyInside
+            left_in_right.relation() == ClosedMeshWindingMeshRelation::StrictlyInside
+                || right_in_left.relation() == ClosedMeshWindingMeshRelation::StrictlyInside
         }
         _ => unreachable!("only closed winding shortcuts are replayed here"),
     })
@@ -4794,7 +4796,7 @@ fn certified_closed_winding_relation_from_sources(
         .validate_against_sources(right, left)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
 
-    Ok(match (left_in_right.relation, right_in_left.relation) {
+    Ok(match (left_in_right.relation(), right_in_left.relation()) {
         (ClosedMeshWindingMeshRelation::Outside, ClosedMeshWindingMeshRelation::Outside) => {
             Some(ReportClosedWindingRelation::Separated)
         }

@@ -298,16 +298,39 @@ pub(crate) enum ClosedMeshWindingMeshRelation {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ClosedMeshWindingMeshReport {
     /// Summary relation derived from retained per-vertex reports.
-    pub(crate) relation: ClosedMeshWindingMeshRelation,
+    relation: ClosedMeshWindingMeshRelation,
     /// Whether the target mesh was a closed two-manifold.
-    pub(crate) target_closed: bool,
+    target_closed: bool,
     /// Number of subject vertices checked.
-    pub(crate) subject_vertex_count: usize,
+    subject_vertex_count: usize,
     /// Per-subject-vertex winding reports.
-    pub(crate) vertices: Vec<PointMeshWindingReport>,
+    vertices: Vec<PointMeshWindingReport>,
 }
 
 impl ClosedMeshWindingMeshReport {
+    /// Return the retained mesh-level winding relation.
+    pub(crate) const fn relation(&self) -> ClosedMeshWindingMeshRelation {
+        self.relation
+    }
+
+    /// Return whether every retained vertex is outside or on the target boundary.
+    pub(crate) fn vertices_are_boundary_or_outside(&self) -> bool {
+        self.target_closed
+            && self.vertices.iter().all(|vertex| {
+                matches!(
+                    vertex.relation,
+                    ClosedMeshWindingRelation::Outside | ClosedMeshWindingRelation::Boundary
+                )
+            })
+    }
+
+    /// Return whether at least one retained vertex lies on the target boundary.
+    pub(crate) fn vertices_touch_boundary(&self) -> bool {
+        self.vertices
+            .iter()
+            .any(|vertex| vertex.relation == ClosedMeshWindingRelation::Boundary)
+    }
+
     /// Validate that the summary relation follows from retained vertex reports.
     pub(crate) fn validate(&self) -> Result<(), WindingReportError> {
         if !self.target_closed {
