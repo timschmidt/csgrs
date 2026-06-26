@@ -137,7 +137,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/inverse_trig/exact` | 35 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 5 | 17 | 0 | 0 | 0 | 0 | 0 | 10 | 2 | 9 | 8 | 2 |
 | `real/inverse_trig/mid-domain` | 26 | 0 | 0 | 0 | 5 | 0 | 0 | 2 | 5 | 22 | 0 | 0 | 0 | 0 | 0 | 1 | 2 | 17 | 19 | 5 |
 | `real/log/scaled_e` | 13 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 23 | 9 | 8 |
-| `real/normal_scientific_substrate` | 478 | 0 | 0 | 17 | 54 | 1 | 0 | 10 | 93 | 290 | 0 | 0 | 0 | 0 | 0 | 43 | 38 | 309 | 125 | 46 |
+| `real/normal_scientific_substrate` | 473 | 0 | 0 | 17 | 58 | 1 | 0 | 10 | 97 | 289 | 0 | 0 | 0 | 0 | 0 | 43 | 38 | 298 | 121 | 45 |
 | `real/pow/small_integer_exponent` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 | 1 |
 | `real/pow/symbolic_negative_one` | 17 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 3 | 4 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 |
 | `real/sqrt_scaled_exp` | 10 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 2 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 5 | 1 | 0 |
@@ -982,18 +982,18 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/normal_scientific_substrate` | `real` | `abs` | `known-positive` | 1 |
 | `real/normal_scientific_substrate` | `real` | `best_sign` | `scaled-computable` | 1 |
 | `real/normal_scientific_substrate` | `real` | `best_sign` | `symbolic-or-rational` | 26 |
-| `real/normal_scientific_substrate` | `real` | `beta` | `gamma-ratio` | 1 |
+| `real/normal_scientific_substrate` | `real` | `beta` | `positive-integer-factorial-ratio` | 1 |
 | `real/normal_scientific_substrate` | `real` | `certified_cmp_until` | `exact-rational-comparison` | 5 |
 | `real/normal_scientific_substrate` | `real` | `certified_sign_until` | `structural-facts` | 1 |
 | `real/normal_scientific_substrate` | `real` | `constructor` | `cached-pi` | 6 |
 | `real/normal_scientific_substrate` | `real` | `constructor` | `one` | 18 |
-| `real/normal_scientific_substrate` | `real` | `constructor` | `rational` | 117 |
+| `real/normal_scientific_substrate` | `real` | `constructor` | `rational` | 112 |
 | `real/normal_scientific_substrate` | `real` | `constructor` | `zero` | 4 |
-| `real/normal_scientific_substrate` | `real` | `definitely_zero` | `rational-sign` | 18 |
+| `real/normal_scientific_substrate` | `real` | `definitely_zero` | `rational-sign` | 22 |
 | `real/normal_scientific_substrate` | `real` | `div` | `const-product-sqrt` | 2 |
 | `real/normal_scientific_substrate` | `real` | `div` | `lhs-rational-symbolic-inverse` | 3 |
 | `real/normal_scientific_substrate` | `real` | `div` | `rhs-one` | 2 |
-| `real/normal_scientific_substrate` | `real` | `div` | `same-class` | 4 |
+| `real/normal_scientific_substrate` | `real` | `div` | `same-class` | 3 |
 | `real/normal_scientific_substrate` | `real` | `dnorm` | `generic-computable` | 6 |
 | `real/normal_scientific_substrate` | `real` | `erf` | `generic-computable` | 1 |
 | `real/normal_scientific_substrate` | `real` | `erfc` | `exact-zero-one` | 1 |
@@ -1002,7 +1002,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/normal_scientific_substrate` | `real` | `erfcx` | `generic-computable` | 3 |
 | `real/normal_scientific_substrate` | `real` | `erfinv` | `exact-rational-upper-tail-transform` | 1 |
 | `real/normal_scientific_substrate` | `real` | `exp` | `rational-exp-special-form` | 3 |
-| `real/normal_scientific_substrate` | `real` | `gamma` | `half-integer-closed-form` | 6 |
+| `real/normal_scientific_substrate` | `real` | `gamma` | `half-integer-closed-form` | 3 |
 | `real/normal_scientific_substrate` | `real` | `inverse` | `generic` | 1 |
 | `real/normal_scientific_substrate` | `real` | `inverse_ref` | `generic` | 1 |
 | `real/normal_scientific_substrate` | `real` | `inverse_ref` | `prechecked-pi` | 1 |

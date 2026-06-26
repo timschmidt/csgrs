@@ -1909,6 +1909,15 @@ mod tests {
             Real::new(Rational::fraction(11, 16).unwrap())
         );
         assert_eq!(
+            Real::regularized_beta(
+                &Real::one(),
+                &Real::from(3_i32),
+                &Real::new(Rational::fraction(1, 2).unwrap())
+            )
+            .unwrap(),
+            Real::new(Rational::fraction(7, 8).unwrap())
+        );
+        assert_eq!(
             Real::regularized_beta_q(
                 &Real::from(2_i32),
                 &Real::from(3_i32),
@@ -1916,6 +1925,15 @@ mod tests {
             )
             .unwrap(),
             Real::new(Rational::fraction(5, 16).unwrap())
+        );
+        assert_eq!(
+            Real::regularized_beta_q(
+                &Real::one(),
+                &Real::from(3_i32),
+                &Real::new(Rational::fraction(1, 2).unwrap())
+            )
+            .unwrap(),
+            Real::new(Rational::fraction(1, 8).unwrap())
         );
         assert_close(
             Real::regularized_gamma_p(&Real::new(Rational::fraction(3, 2).unwrap()), &Real::one())

@@ -3,31 +3,34 @@
 
 Deterministic lexicase score for the current 100 promoted slow offenders. The score is the average current best-of-five wall-clock probe across the promoted set; lower is better. Delta compares with the previous score recorded in this file, and derivative is the change in delta.
 
-<!-- promoted_slow_score_nanos: 3077 -->
-<!-- promoted_slow_previous_score_nanos: 3077 -->
+<!-- promoted_slow_score_nanos: 2982 -->
+<!-- promoted_slow_previous_score_nanos: 2982 -->
 <!-- promoted_slow_score_delta_nanos: 0 -->
 
 | Metric | Value |
 | --- | ---: |
 | Cases scored | 100 |
-| Average score | 3.077 us |
+| Average score | 2.982 us |
 | Delta | 0 ns |
 | Delta derivative | 0 ns |
 
 | Rank | Current Time | Operation | Input |
 | ---: | ---: | --- | --- |
-| 1 | 4.350 us | `generated_tan_p96` | `generated[11841] -5 2/17` |
-| 2 | 4.340 us | `generated_tan_p96` | `generated[13446] -5 15/187` |
-| 3 | 4.309 us | `generated_tan_p96` | `generated[16806] 5 3/22` |
-| 4 | 4.220 us | `generated_tan_p96` | `generated[18666] 5 15/17` |
-| 5 | 4.179 us | `generated_ln_abs_plus_one_p96` | `generated[15472] -3 13/50` |
-| 6 | 4.159 us | `generated_tan_p96` | `generated[15891] -5 23/33` |
-| 7 | 4.149 us | `generated_ln_abs_plus_one_p96` | `generated[9457] -3 23/90` |
-| 8 | 4.080 us | `generated_tan_p96` | `generated[3321] -4 17/107` |
-| 9 | 4.060 us | `generated_tan_p96` | `generated[11421] -4 55/57` |
-| 10 | 3.999 us | `generated_ln_abs_plus_one_p96` | `generated[6877] -9 34/77` |
+| 1 | 4.110 us | `generated_ln_abs_plus_one_p96` | `generated[15472] -3 13/50` |
+| 2 | 4.109 us | `generated_tan_p96` | `generated[11841] -5 2/17` |
+| 3 | 4.070 us | `generated_tan_p96` | `generated[13446] -5 15/187` |
+| 4 | 4.069 us | `generated_ln_abs_plus_one_p96` | `generated[9457] -3 23/90` |
+| 5 | 4.029 us | `generated_tan_p96` | `generated[18666] 5 15/17` |
+| 6 | 4.000 us | `generated_tan_p96` | `generated[16806] 5 3/22` |
+| 7 | 3.950 us | `generated_tan_p96` | `generated[15891] -5 23/33` |
+| 8 | 3.920 us | `generated_ln_abs_plus_one_p96` | `generated[6877] -9 34/77` |
+| 9 | 3.900 us | `generated_tan_p96` | `generated[3321] -4 17/107` |
+| 10 | 3.879 us | `generated_ln_abs_plus_one_p96` | `generated[18352] -1 133/500` |
 
 <!-- END promoted_slow_offender_score -->
+
+
+
 
 
 
@@ -584,23 +587,23 @@ Geometry-facing scalar helpers for rational-turn trig, removable small-angle lim
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_geometry_polynomial_substrate/sin_pi_one_sixth` | 170.72 ns | 169.16 ns - 172.43 ns | Uses exact rational-turn sine. |
-| `real_geometry_polynomial_substrate/cos_pi_one_fourth` | 553.84 ns | 552.03 ns - 555.80 ns | Uses exact rational-turn cosine. |
-| `real_geometry_polynomial_substrate/tan_pi_one_third` | 525.36 ns | 521.12 ns - 530.01 ns | Uses exact rational-turn tangent. |
-| `real_geometry_polynomial_substrate/sinc_zero` | 74.57 ns | 74.23 ns - 75.02 ns | Returns the removable sinc limit at zero. |
-| `real_geometry_polynomial_substrate/sinc_tiny` | 330.40 ns | 327.13 ns - 334.21 ns | Builds sinc for a tiny exact input. |
-| `real_geometry_polynomial_substrate/sinc_pi_half` | 721.10 ns | 710.38 ns - 732.14 ns | Builds normalized sinc for an exact half turn. |
-| `real_geometry_polynomial_substrate/cosc_tiny` | 2.523 us | 2.486 us - 2.558 us | Builds the small-angle (1 - cos x) / x^2 helper. |
-| `real_geometry_polynomial_substrate/atan2_axis` | 254.16 ns | 250.05 ns - 258.72 ns | Classifies an axis-aligned atan2 input exactly. |
-| `real_geometry_polynomial_substrate/atan2_quadrant` | 744.46 ns | 732.84 ns - 755.37 ns | Builds a quadrant-correct atan2 expression. |
-| `real_geometry_polynomial_substrate/hypot2_3_4` | 652.92 ns | 622.31 ns - 698.08 ns | Collapses a 3-4-5 norm through exact dot products. |
-| `real_geometry_polynomial_substrate/hypot3_2_3_6` | 698.21 ns | 668.71 ns - 727.65 ns | Collapses a 2-3-6 norm through exact dot products. |
-| `real_geometry_polynomial_substrate/hypot_minus_tiny` | 9.389 us | 9.046 us - 9.734 us | Uses rationalized hypot-minus for cancellation resistance. |
-| `real_geometry_polynomial_substrate/mul_add_zero_product` | 457.87 ns | 327.05 ns - 710.90 ns | Skips a known-zero product lane. |
-| `real_geometry_polynomial_substrate/sum_products_dense` | 5.274 us | 5.090 us - 5.466 us | Builds a dense product sum. |
-| `real_geometry_polynomial_substrate/diff_of_products_near_cancel` | 1.652 us | 1.613 us - 1.698 us | Preserves determinant-like product difference structure. |
-| `real_geometry_polynomial_substrate/eval_poly_horner` | 3.991 us | 3.827 us - 4.194 us | Evaluates a polynomial through Horner form. |
-| `real_geometry_polynomial_substrate/eval_rational_poly` | 5.070 us | 4.977 us - 5.179 us | Evaluates numerator and denominator polynomial forms before division. |
+| `real_geometry_polynomial_substrate/sin_pi_one_sixth` | 167.30 ns | 166.60 ns - 168.10 ns | Uses exact rational-turn sine. |
+| `real_geometry_polynomial_substrate/cos_pi_one_fourth` | 537.24 ns | 535.14 ns - 539.45 ns | Uses exact rational-turn cosine. |
+| `real_geometry_polynomial_substrate/tan_pi_one_third` | 513.62 ns | 509.41 ns - 518.96 ns | Uses exact rational-turn tangent. |
+| `real_geometry_polynomial_substrate/sinc_zero` | 75.03 ns | 74.60 ns - 75.56 ns | Returns the removable sinc limit at zero. |
+| `real_geometry_polynomial_substrate/sinc_tiny` | 330.79 ns | 328.68 ns - 333.14 ns | Builds sinc for a tiny exact input. |
+| `real_geometry_polynomial_substrate/sinc_pi_half` | 410.11 ns | 407.65 ns - 413.03 ns | Builds normalized sinc for an exact half turn. |
+| `real_geometry_polynomial_substrate/cosc_tiny` | 1.278 us | 1.272 us - 1.284 us | Builds the small-angle (1 - cos x) / x^2 helper. |
+| `real_geometry_polynomial_substrate/atan2_axis` | 134.19 ns | 132.72 ns - 135.95 ns | Classifies an axis-aligned atan2 input exactly. |
+| `real_geometry_polynomial_substrate/atan2_quadrant` | 372.27 ns | 370.91 ns - 374.06 ns | Builds a quadrant-correct atan2 expression. |
+| `real_geometry_polynomial_substrate/hypot2_3_4` | 366.68 ns | 361.98 ns - 372.04 ns | Collapses a 3-4-5 norm through exact dot products. |
+| `real_geometry_polynomial_substrate/hypot3_2_3_6` | 433.86 ns | 430.78 ns - 437.18 ns | Collapses a 2-3-6 norm through exact dot products. |
+| `real_geometry_polynomial_substrate/hypot_minus_tiny` | 6.810 us | 6.755 us - 6.870 us | Uses rationalized hypot-minus for cancellation resistance. |
+| `real_geometry_polynomial_substrate/mul_add_zero_product` | 265.66 ns | 203.20 ns - 389.63 ns | Skips a known-zero product lane. |
+| `real_geometry_polynomial_substrate/sum_products_dense` | 4.301 us | 4.060 us - 4.766 us | Builds a dense product sum. |
+| `real_geometry_polynomial_substrate/diff_of_products_near_cancel` | 1.448 us | 1.442 us - 1.455 us | Preserves determinant-like product difference structure. |
+| `real_geometry_polynomial_substrate/eval_poly_horner` | 3.784 us | 3.758 us - 3.815 us | Evaluates a polynomial through Horner form. |
+| `real_geometry_polynomial_substrate/eval_rational_poly` | 4.952 us | 4.926 us - 4.981 us | Evaluates numerator and denominator polynomial forms before division. |
 
 ### `real_normal_scientific_substrate`
 
@@ -608,36 +611,45 @@ Gaussian tail helpers and exact/finite scientific special-function forms added f
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_normal_scientific_substrate/erfc_zero` | 63.25 ns | 62.89 ns - 63.64 ns | Takes the exact erfc(0) exit. |
-| `real_normal_scientific_substrate/erfcx_tail` | 2.929 us | 2.900 us - 2.961 us | Builds scaled erfc in a positive tail. |
-| `real_normal_scientific_substrate/normal_sf_tail` | 342.97 ns | 341.18 ns - 344.90 ns | Builds standard-normal upper-tail probability. |
-| `real_normal_scientific_substrate/pnorm_upper_tail` | 344.93 ns | 342.21 ns - 347.84 ns | Builds the upper-tail alias. |
-| `real_normal_scientific_substrate/log_pnorm_tail` | 296.53 ns | 295.27 ns - 297.93 ns | Builds lower log-CDF tail form. |
-| `real_normal_scientific_substrate/log_normal_sf_tail` | 314.16 ns | 312.09 ns - 316.57 ns | Builds upper log-survival tail form. |
-| `real_normal_scientific_substrate/log_dnorm_large` | 133.59 ns | 132.52 ns - 134.77 ns | Builds analytic log-density at a large input. |
-| `real_normal_scientific_substrate/normal_interval_narrow` | 1.700 us | 1.682 us - 1.724 us | Builds a narrow interval mass without spelling pnorm subtraction. |
-| `real_normal_scientific_substrate/erfinv_mid` | 2.287 us | 2.274 us - 2.303 us | Builds inverse error function through qnorm transform. |
-| `real_normal_scientific_substrate/erfcinv_tail` | 3.337 us | 3.325 us - 3.350 us | Builds inverse complementary error function through tail qnorm transform. |
-| `real_normal_scientific_substrate/qnorm_upper_tail` | 1.609 us | 1.592 us - 1.629 us | Builds inverse survival quantile. |
-| `real_normal_scientific_substrate/normal_pdf_parametric` | 1.903 us | 1.889 us - 1.919 us | Standardizes exactly before density construction. |
-| `real_normal_scientific_substrate/normal_survival_parametric` | 824.68 ns | 821.52 ns - 828.48 ns | Standardizes exactly before upper-tail construction. |
-| `real_normal_scientific_substrate/normal_mills_tail` | 3.802 us | 3.775 us - 3.834 us | Builds Mills ratio through erfcx identity. |
-| `real_normal_scientific_substrate/normal_hazard_tail` | 5.002 us | 4.984 us - 5.021 us | Builds reciprocal Mills hazard. |
-| `real_normal_scientific_substrate/hermite_8` | 2.587 us | 2.575 us - 2.603 us | Builds an exact probabilists' Hermite polynomial. |
-| `real_normal_scientific_substrate/dnorm_derivative_4` | 2.251 us | 2.243 us - 2.260 us | Combines exact Hermite polynomial with normal density. |
-| `real_normal_scientific_substrate/standard_normal_moment_12` | 195.27 ns | 194.58 ns - 196.05 ns | Uses double-factorial closed form. |
-| `real_normal_scientific_substrate/normal_interval_moment_3` | 7.060 us | 5.934 us - 9.285 us | Uses interval mass and density-boundary recurrence. |
-| `real_normal_scientific_substrate/truncated_normal_mean` | 2.688 us | 2.653 us - 2.728 us | Builds truncated-normal mean from stable interval mass. |
-| `real_normal_scientific_substrate/gamma_integer` | 337.77 ns | 336.06 ns - 339.81 ns | Uses exact integer gamma closed form. |
-| `real_normal_scientific_substrate/gamma_half_integer` | 566.15 ns | 559.68 ns - 573.64 ns | Uses exact half-integer gamma closed form. |
-| `real_normal_scientific_substrate/lgamma_half_integer` | 1.862 us | 1.849 us - 1.877 us | Logs the absolute half-integer gamma value. |
-| `real_normal_scientific_substrate/beta_integer` | 1.287 us | 1.269 us - 1.313 us | Builds beta through exact gamma ratio. |
-| `real_normal_scientific_substrate/ln_beta_half_integer` | 3.815 us | 3.785 us - 3.848 us | Builds log beta through lgamma sum. |
-| `real_normal_scientific_substrate/regularized_beta_mid` | 2.551 us | 2.534 us - 2.571 us | Uses finite positive-integer beta binomial tail. |
-| `real_normal_scientific_substrate/regularized_beta_q_mid` | 1.580 us | 1.572 us - 1.590 us | Uses finite positive-integer beta upper-tail form. |
-| `real_normal_scientific_substrate/regularized_gamma_p_half` | 4.397 us | 3.416 us - 6.321 us | Uses half-integer incomplete-gamma recurrence. |
-| `real_normal_scientific_substrate/regularized_gamma_q_integer` | 2.395 us | 2.379 us - 2.415 us | Uses integer incomplete-gamma recurrence. |
-| `real_normal_scientific_substrate/chi_square_sf` | 5.785 us | 5.241 us - 6.843 us | Wraps regularized upper gamma for chi-square upper tail. |
+| `real_normal_scientific_substrate/erfc_zero` | 62.84 ns | 62.63 ns - 63.09 ns | Takes the exact erfc(0) exit. |
+| `real_normal_scientific_substrate/erfcx_tail` | 2.945 us | 2.920 us - 2.972 us | Builds scaled erfc in a positive tail. |
+| `real_normal_scientific_substrate/normal_sf_tail` | 326.03 ns | 325.07 ns - 327.08 ns | Builds standard-normal upper-tail probability. |
+| `real_normal_scientific_substrate/pnorm_upper_tail` | 334.78 ns | 332.41 ns - 337.41 ns | Builds the upper-tail alias. |
+| `real_normal_scientific_substrate/log_pnorm_tail` | 289.79 ns | 288.50 ns - 291.57 ns | Builds lower log-CDF tail form. |
+| `real_normal_scientific_substrate/log_pnorm_zero` | 178.09 ns | 176.78 ns - 179.54 ns | Takes the exact log-CDF value at zero. |
+| `real_normal_scientific_substrate/log_normal_sf_tail` | 303.87 ns | 302.23 ns - 305.69 ns | Builds upper log-survival tail form. |
+| `real_normal_scientific_substrate/log_normal_sf_zero` | 182.34 ns | 179.47 ns - 185.45 ns | Takes the exact log-survival value at zero. |
+| `real_normal_scientific_substrate/log_dnorm_large` | 136.33 ns | 134.63 ns - 138.23 ns | Builds analytic log-density at a large input. |
+| `real_normal_scientific_substrate/normal_interval_narrow` | 1.689 us | 1.671 us - 1.710 us | Builds a narrow interval mass without spelling pnorm subtraction. |
+| `real_normal_scientific_substrate/erfinv_mid` | 2.333 us | 2.309 us - 2.361 us | Builds inverse error function through qnorm transform. |
+| `real_normal_scientific_substrate/erfcinv_tail` | 3.458 us | 3.431 us - 3.487 us | Builds inverse complementary error function through tail qnorm transform. |
+| `real_normal_scientific_substrate/qnorm_upper_tail` | 1.568 us | 1.562 us - 1.574 us | Builds inverse survival quantile. |
+| `real_normal_scientific_substrate/normal_pdf_parametric` | 1.881 us | 1.874 us - 1.889 us | Standardizes exactly before density construction. |
+| `real_normal_scientific_substrate/normal_survival_parametric` | 835.58 ns | 831.53 ns - 840.18 ns | Standardizes exactly before upper-tail construction. |
+| `real_normal_scientific_substrate/normal_mills_tail` | 3.701 us | 3.675 us - 3.739 us | Builds Mills ratio through erfcx identity. |
+| `real_normal_scientific_substrate/normal_mills_zero` | 165.41 ns | 164.66 ns - 166.27 ns | Takes the exact Mills ratio value at zero. |
+| `real_normal_scientific_substrate/normal_hazard_tail` | 4.984 us | 4.955 us - 5.015 us | Builds reciprocal Mills hazard. |
+| `real_normal_scientific_substrate/normal_hazard_zero` | 166.33 ns | 165.57 ns - 167.18 ns | Takes the exact hazard value at zero. |
+| `real_normal_scientific_substrate/normal_inverse_mills_zero` | 165.59 ns | 164.64 ns - 166.72 ns | Takes the exact lower inverse Mills value at zero. |
+| `real_normal_scientific_substrate/hermite_8` | 2.693 us | 2.674 us - 2.713 us | Builds an exact probabilists' Hermite polynomial. |
+| `real_normal_scientific_substrate/dnorm_derivative_4` | 2.338 us | 2.319 us - 2.360 us | Combines exact Hermite polynomial with normal density. |
+| `real_normal_scientific_substrate/standard_normal_moment_12` | 197.82 ns | 196.06 ns - 199.75 ns | Uses double-factorial closed form. |
+| `real_normal_scientific_substrate/normal_interval_moment_3` | 7.229 us | 6.155 us - 9.313 us | Uses interval mass and density-boundary recurrence. |
+| `real_normal_scientific_substrate/truncated_normal_mean` | 2.574 us | 2.560 us - 2.590 us | Builds truncated-normal mean from stable interval mass. |
+| `real_normal_scientific_substrate/gamma_integer` | 342.80 ns | 341.16 ns - 344.60 ns | Uses exact integer gamma closed form. |
+| `real_normal_scientific_substrate/gamma_half_integer` | 554.04 ns | 549.75 ns - 558.87 ns | Uses exact half-integer gamma closed form. |
+| `real_normal_scientific_substrate/lgamma_half_integer` | 1.927 us | 1.909 us - 1.951 us | Logs the absolute half-integer gamma value. |
+| `real_normal_scientific_substrate/beta_integer` | 433.16 ns | 431.13 ns - 436.33 ns | Builds integer beta through an exact factorial ratio. |
+| `real_normal_scientific_substrate/ln_beta_half_integer` | 3.815 us | 3.794 us - 3.840 us | Builds log beta through lgamma sum. |
+| `real_normal_scientific_substrate/regularized_beta_mid` | 2.482 us | 2.473 us - 2.492 us | Uses finite positive-integer beta binomial tail. |
+| `real_normal_scientific_substrate/regularized_beta_uniform` | 302.34 ns | 301.59 ns - 303.14 ns | Takes the exact I_x(1, 1) identity. |
+| `real_normal_scientific_substrate/regularized_beta_left_unity` | 585.60 ns | 581.29 ns - 590.79 ns | Reduces I_x(1, b) to one complement power. |
+| `real_normal_scientific_substrate/regularized_beta_q_mid` | 1.695 us | 1.685 us - 1.705 us | Uses finite positive-integer beta upper-tail form. |
+| `real_normal_scientific_substrate/regularized_beta_q_uniform` | 277.85 ns | 276.81 ns - 279.12 ns | Takes the exact upper-tail I_x(1, 1) complement. |
+| `real_normal_scientific_substrate/regularized_beta_q_left_unity` | 504.99 ns | 501.53 ns - 509.79 ns | Reduces the upper beta tail for a = 1 to one power. |
+| `real_normal_scientific_substrate/regularized_gamma_p_half` | 4.027 us | 3.404 us - 5.256 us | Uses half-integer incomplete-gamma recurrence. |
+| `real_normal_scientific_substrate/regularized_gamma_q_integer` | 2.437 us | 2.414 us - 2.464 us | Uses integer incomplete-gamma recurrence. |
+| `real_normal_scientific_substrate/chi_square_sf` | 5.334 us | 5.309 us - 5.362 us | Wraps regularized upper gamma for chi-square upper tail. |
 
 ### `simple_new_function_surface`
 
@@ -669,7 +681,7 @@ Cold approximation of sine, cosine, and tangent at exact, tiny, huge, and near-s
 | `trig_adversarial_approx/tan_tiny_rational_p96` | 1.035 us | 1.031 us - 1.040 us | Approximates tan(1e-12), stressing direct tiny-argument setup. |
 | `trig_adversarial_approx/sin_medium_rational_p96` | 1.723 us | 1.720 us - 1.725 us | Approximates sin(7/5), a moderate non-pi rational. |
 | `trig_adversarial_approx/cos_medium_rational_p96` | 1.579 us | 1.567 us - 1.593 us | Approximates cos(7/5), a moderate non-pi rational. |
-| `trig_adversarial_approx/tan_medium_rational_p96` | 3.235 us | 3.164 us - 3.338 us | Approximates tan(7/5), a moderate non-pi rational. |
+| `trig_adversarial_approx/tan_medium_rational_p96` | 3.545 us | 3.301 us - 3.845 us | Approximates tan(7/5), a moderate non-pi rational. |
 | `trig_adversarial_approx/sin_f64_exact_p96` | 1.940 us | 1.911 us - 1.995 us | Approximates sin(1.23456789 imported as an exact dyadic rational). |
 | `trig_adversarial_approx/cos_f64_exact_p96` | 1.880 us | 1.860 us - 1.905 us | Approximates cos(1.23456789 imported as an exact dyadic rational). |
 | `trig_adversarial_approx/sin_1e6_p96` | 2.500 us | 2.440 us - 2.568 us | Approximates sin(1000000), stressing integer argument reduction. |

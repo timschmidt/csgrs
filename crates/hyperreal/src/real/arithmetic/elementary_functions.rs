@@ -1100,6 +1100,10 @@ impl Real {
 
     /// Natural logarithm of the standard normal CDF.
     pub fn log_pnorm(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "log_pnorm", "exact-zero-minus-ln2");
+            return Ok(-constants::scaled_ln(2, 1).ok_or(Problem::Exhausted)?);
+        }
         Self::check_normal_window(&self, "log_pnorm")?;
 
         crate::trace_dispatch!("real", "log_pnorm", "generic-computable");
@@ -1108,6 +1112,10 @@ impl Real {
 
     /// Natural logarithm of the standard normal upper-tail probability.
     pub fn log_normal_sf(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "log_normal_sf", "exact-zero-minus-ln2");
+            return Ok(-constants::scaled_ln(2, 1).ok_or(Problem::Exhausted)?);
+        }
         Self::check_normal_window(&self, "log_normal_sf")?;
 
         crate::trace_dispatch!("real", "log_normal_sf", "generic-computable");
@@ -1351,12 +1359,20 @@ impl Real {
 
     /// Upper-tail Mills ratio, normal_sf(x) / dnorm(x).
     pub fn normal_mills(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "normal_mills", "exact-zero-sqrt-pi-over-two");
+            return Self::sqrt_pi_over_two();
+        }
         let z = (self / Self::sqrt_two())?;
         Ok(Self::sqrt_pi_over_two()? * z.erfcx()?)
     }
 
     /// Standard normal hazard rate, dnorm(x) / normal_sf(x).
     pub fn normal_hazard(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "normal_hazard", "exact-zero-sqrt-two-over-pi");
+            return Self::sqrt_two_over_pi();
+        }
         let z = (self / Self::sqrt_two())?;
         Self::sqrt_two_over_pi()? / z.erfcx()?
     }
@@ -1368,6 +1384,14 @@ impl Real {
 
     /// Lower-tail inverse Mills ratio, dnorm(x) / pnorm(x).
     pub fn normal_inverse_mills(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!(
+                "real",
+                "normal_inverse_mills",
+                "exact-zero-sqrt-two-over-pi"
+            );
+            return Self::sqrt_two_over_pi();
+        }
         self.clone().dnorm()? / self.pnorm()?
     }
 
@@ -1707,6 +1731,23 @@ impl Real {
 
     /// Beta function `B(a, b) = gamma(a) * gamma(b) / gamma(a + b)`.
     pub fn beta(a: &Self, b: &Self) -> Result<Real, Problem> {
+        if let (Ok(a_int), Ok(b_int)) = (Self::exact_positive_integer(a), Self::exact_positive_integer(b)) {
+            let denominator_arg = a_int
+                .checked_add(b_int)
+                .and_then(|sum| sum.checked_sub(1))
+                .ok_or(Problem::OutOfRange)?;
+            crate::trace_dispatch!("real", "beta", "positive-integer-factorial-ratio");
+            let numerator = Self::factorial_biguint(a_int - 1) * Self::factorial_biguint(b_int - 1);
+            let denominator = Self::factorial_biguint(denominator_arg);
+            return Ok(Self::new(
+                Rational::from_bigint_fraction(
+                    BigInt::from_biguint(Sign::Plus, numerator),
+                    denominator,
+                )
+                .unwrap(),
+            ));
+        }
+
         crate::trace_dispatch!("real", "beta", "gamma-ratio");
         let numerator = a.clone().gamma()? * b.clone().gamma()?;
         numerator / (a + b).gamma()?
@@ -1764,6 +1805,18 @@ impl Real {
             Sign::NoSign => return Ok(Self::one()),
             Sign::Plus => {}
         }
+        if a == 1 && b == 1 {
+            crate::trace_dispatch!("real", "regularized_beta", "uniform-identity");
+            return Ok(x.clone());
+        }
+        if b == 1 {
+            crate::trace_dispatch!("real", "regularized_beta", "right-unity-power");
+            return x.clone().powi(BigInt::from(a));
+        }
+        if a == 1 {
+            crate::trace_dispatch!("real", "regularized_beta", "left-unity-complement-power");
+            return Ok(Self::one() - one_minus_x.powi(BigInt::from(b))?);
+        }
 
         let n = a.checked_add(b).and_then(|sum| sum.checked_sub(1));
         let Some(n) = n else {
@@ -1795,6 +1848,18 @@ impl Real {
             Sign::Minus => return Err(Problem::NotANumber),
             Sign::NoSign => return Ok(Self::zero()),
             Sign::Plus => {}
+        }
+        if a == 1 && b == 1 {
+            crate::trace_dispatch!("real", "regularized_beta_q", "uniform-complement");
+            return Ok(one_minus_x);
+        }
+        if b == 1 {
+            crate::trace_dispatch!("real", "regularized_beta_q", "right-unity-complement-power");
+            return Ok(Self::one() - x.clone().powi(BigInt::from(a))?);
+        }
+        if a == 1 {
+            crate::trace_dispatch!("real", "regularized_beta_q", "left-unity-power");
+            return one_minus_x.powi(BigInt::from(b));
         }
 
         let n = a.checked_add(b).and_then(|sum| sum.checked_sub(1));

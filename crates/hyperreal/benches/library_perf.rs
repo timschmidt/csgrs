@@ -563,8 +563,16 @@ const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
                 description: "Builds lower log-CDF tail form.",
             },
             BenchDoc {
+                name: "log_pnorm_zero",
+                description: "Takes the exact log-CDF value at zero.",
+            },
+            BenchDoc {
                 name: "log_normal_sf_tail",
                 description: "Builds upper log-survival tail form.",
+            },
+            BenchDoc {
+                name: "log_normal_sf_zero",
+                description: "Takes the exact log-survival value at zero.",
             },
             BenchDoc {
                 name: "log_dnorm_large",
@@ -599,8 +607,20 @@ const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
                 description: "Builds Mills ratio through erfcx identity.",
             },
             BenchDoc {
+                name: "normal_mills_zero",
+                description: "Takes the exact Mills ratio value at zero.",
+            },
+            BenchDoc {
                 name: "normal_hazard_tail",
                 description: "Builds reciprocal Mills hazard.",
+            },
+            BenchDoc {
+                name: "normal_hazard_zero",
+                description: "Takes the exact hazard value at zero.",
+            },
+            BenchDoc {
+                name: "normal_inverse_mills_zero",
+                description: "Takes the exact lower inverse Mills value at zero.",
             },
             BenchDoc {
                 name: "hermite_8",
@@ -636,7 +656,7 @@ const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
             },
             BenchDoc {
                 name: "beta_integer",
-                description: "Builds beta through exact gamma ratio.",
+                description: "Builds integer beta through an exact factorial ratio.",
             },
             BenchDoc {
                 name: "ln_beta_half_integer",
@@ -647,8 +667,24 @@ const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
                 description: "Uses finite positive-integer beta binomial tail.",
             },
             BenchDoc {
+                name: "regularized_beta_uniform",
+                description: "Takes the exact I_x(1, 1) identity.",
+            },
+            BenchDoc {
+                name: "regularized_beta_left_unity",
+                description: "Reduces I_x(1, b) to one complement power.",
+            },
+            BenchDoc {
                 name: "regularized_beta_q_mid",
                 description: "Uses finite positive-integer beta upper-tail form.",
+            },
+            BenchDoc {
+                name: "regularized_beta_q_uniform",
+                description: "Takes the exact upper-tail I_x(1, 1) complement.",
+            },
+            BenchDoc {
+                name: "regularized_beta_q_left_unity",
+                description: "Reduces the upper beta tail for a = 1 to one power.",
             },
             BenchDoc {
                 name: "regularized_gamma_p_half",
@@ -1616,9 +1652,23 @@ fn bench_real_normal_scientific_substrate(c: &mut Criterion) {
             BatchSize::SmallInput,
         )
     });
+    group.bench_function("log_pnorm_zero", |b| {
+        b.iter_batched(
+            Real::zero,
+            |value| black_box(value.log_pnorm().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
     group.bench_function("log_normal_sf_tail", |b| {
         b.iter_batched(
             || tail.clone(),
+            |value| black_box(value.log_normal_sf().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("log_normal_sf_zero", |b| {
+        b.iter_batched(
+            Real::zero,
             |value| black_box(value.log_normal_sf().unwrap()),
             BatchSize::SmallInput,
         )
@@ -1679,10 +1729,31 @@ fn bench_real_normal_scientific_substrate(c: &mut Criterion) {
             BatchSize::SmallInput,
         )
     });
+    group.bench_function("normal_mills_zero", |b| {
+        b.iter_batched(
+            Real::zero,
+            |value| black_box(value.normal_mills().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
     group.bench_function("normal_hazard_tail", |b| {
         b.iter_batched(
             || tail.clone(),
             |value| black_box(value.normal_hazard().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("normal_hazard_zero", |b| {
+        b.iter_batched(
+            Real::zero,
+            |value| black_box(value.normal_hazard().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("normal_inverse_mills_zero", |b| {
+        b.iter_batched(
+            Real::zero,
+            |value| black_box(value.normal_inverse_mills().unwrap()),
             BatchSize::SmallInput,
         )
     });
@@ -1759,9 +1830,37 @@ fn bench_real_normal_scientific_substrate(c: &mut Criterion) {
             BatchSize::SmallInput,
         )
     });
+    group.bench_function("regularized_beta_uniform", |b| {
+        b.iter_batched(
+            || (one.clone(), one.clone(), half.clone()),
+            |(a, b, x)| black_box(Real::regularized_beta(&a, &b, &x).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("regularized_beta_left_unity", |b| {
+        b.iter_batched(
+            || (one.clone(), three.clone(), half.clone()),
+            |(a, b, x)| black_box(Real::regularized_beta(&a, &b, &x).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
     group.bench_function("regularized_beta_q_mid", |b| {
         b.iter_batched(
             || (two.clone(), three.clone(), half.clone()),
+            |(a, b, x)| black_box(Real::regularized_beta_q(&a, &b, &x).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("regularized_beta_q_uniform", |b| {
+        b.iter_batched(
+            || (one.clone(), one.clone(), half.clone()),
+            |(a, b, x)| black_box(Real::regularized_beta_q(&a, &b, &x).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("regularized_beta_q_left_unity", |b| {
+        b.iter_batched(
+            || (one.clone(), three.clone(), half.clone()),
             |(a, b, x)| black_box(Real::regularized_beta_q(&a, &b, &x).unwrap()),
             BatchSize::SmallInput,
         )
