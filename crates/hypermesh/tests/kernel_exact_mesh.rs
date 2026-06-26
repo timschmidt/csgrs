@@ -321,15 +321,7 @@ fn prepared_mesh_pair_materializes_named_operations() {
     );
     assert_eq!(
         pair.cache_status()
-            .current_face_pair_classification_count()
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
-    assert_eq!(
-        pair.cache_status()
-            .current_face_pair_classification_count()
+            .current_face_pair_classification_counts()
             .unwrap_err()
             .blockers()[0]
             .kind(),
@@ -399,12 +391,6 @@ fn prepared_mesh_pair_materializes_named_operations() {
         .cache_status()
         .current_face_pair_classification_counts()
         .unwrap();
-    assert_eq!(
-        pair.cache_status()
-            .current_face_pair_classification_count()
-            .unwrap(),
-        0
-    );
     assert_eq!(empty_classification_counts.face_pair_count(), 0);
     assert_eq!(empty_classification_counts.graph_required_count(), 0);
     assert_eq!(
@@ -412,12 +398,6 @@ fn prepared_mesh_pair_materializes_named_operations() {
             .current_face_pair_classification_counts()
             .unwrap(),
         empty_classification_counts
-    );
-    assert_eq!(
-        pair.cache_status()
-            .current_face_pair_classification_count()
-            .unwrap(),
-        0
     );
     assert!(pair.cache_status().intersection_graph().is_missing());
     assert!(
@@ -432,12 +412,6 @@ fn prepared_mesh_pair_materializes_named_operations() {
     union.validate_retained_state().unwrap();
     assert_eq!(union.triangle_count(), solid.triangle_count());
     assert!(pair.cache_status().face_pair_classifications().is_current());
-    assert_eq!(
-        pair.cache_status()
-            .current_face_pair_classification_count()
-            .unwrap(),
-        0
-    );
     assert_eq!(
         pair.cache_status()
             .current_face_pair_classification_counts()
@@ -1011,15 +985,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     assert_eq!(
         prepared_pair
             .cache_status()
-            .current_candidate_face_pair_count()
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
-    assert_eq!(
-        prepared_pair
-            .cache_status()
             .current_broad_phase_traversal_summary()
             .unwrap_err()
             .blockers()[0]
@@ -1058,8 +1023,9 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     assert_eq!(
         prepared_pair
             .cache_status()
-            .current_candidate_face_pair_count()
-            .unwrap(),
+            .current_broad_phase_traversal_summary()
+            .unwrap()
+            .candidate_pair_count(),
         count_only_summary.candidate_pair_count()
     );
     assert_eq!(
@@ -1080,8 +1046,9 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     assert_eq!(
         prepared_pair
             .cache_status()
-            .current_candidate_face_pair_count()
-            .unwrap(),
+            .current_broad_phase_traversal_summary()
+            .unwrap()
+            .candidate_pair_count(),
         retained_candidate_count
     );
     assert_eq!(
@@ -1323,13 +1290,6 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     assert_eq!(
         prepared_pair
             .cache_status()
-            .current_face_pair_classification_count()
-            .unwrap(),
-        classification_counts.face_pair_count()
-    );
-    assert_eq!(
-        prepared_pair
-            .cache_status()
             .current_face_pair_classification_counts()
             .unwrap(),
         classification_counts
@@ -1541,8 +1501,9 @@ fn prepared_pair_candidate_visitor_streams_without_storing_records() {
     assert_eq!(
         prepared_pair
             .cache_status()
-            .current_candidate_face_pair_count()
-            .unwrap(),
+            .current_broad_phase_traversal_summary()
+            .unwrap()
+            .candidate_pair_count(),
         visited
     );
     assert_eq!(

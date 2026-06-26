@@ -951,12 +951,6 @@ impl PreparedMeshPairCacheStatus {
             .require_current("broad-phase candidate face pairs")
     }
 
-    /// Return retained broad-phase candidate pair count after requiring current evidence.
-    pub fn current_candidate_face_pair_count(self) -> Result<usize, ExactMeshError> {
-        self.current_broad_phase_traversal_summary()
-            .map(PreparedMeshPairBroadPhaseTraversalSummary::candidate_pair_count)
-    }
-
     /// Return the certificate state for coarse face-pair classifications.
     pub const fn face_pair_classifications(self) -> PreparedMeshPairFactState {
         self.face_pair_classifications
@@ -971,12 +965,6 @@ impl PreparedMeshPairCacheStatus {
     pub fn require_current_face_pair_classifications(self) -> Result<(), ExactMeshError> {
         self.face_pair_classifications
             .require_current("face-pair classification")
-    }
-
-    /// Return the retained coarse face-pair classification count after requiring current evidence.
-    pub fn current_face_pair_classification_count(self) -> Result<usize, ExactMeshError> {
-        self.current_face_pair_classification_counts()
-            .map(PreparedMeshPairClassificationCounts::face_pair_count)
     }
 
     /// Return retained coarse face-pair decision counts after requiring current evidence.
