@@ -6,6 +6,7 @@
 //! carrier-face provenance, and winding labels needed by later selection and
 //! simplification stages.
 
+pub(crate) mod loop_triangulation;
 pub(crate) mod regularization;
 
 use super::arrangement2d::{
@@ -36,14 +37,14 @@ use super::graph::{
     ExactIntersectionGraph, ExactSplitTopologyPlan, FaceRegionBoundary, FaceSplitBoundaryNode,
     MeshSide, SplitEdgeNode, SplitPlanValidationReport, build_validated_intersection_graph,
 };
-use super::loop_triangulation::{
-    group_exact_coplanar_loops, projected_loop_interior_witness, triangulate_exact_loop_group,
-};
 use super::mesh::ExactMesh;
 use super::validation::ExactMeshValidationPolicy;
 use core::cmp::Ordering;
 use hyperlimit::CoplanarProjection;
 use hyperlimit::SourceProvenance;
+use loop_triangulation::{
+    group_exact_coplanar_loops, projected_loop_interior_witness, triangulate_exact_loop_group,
+};
 use regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
     ExactUnresolvedPolicy,
@@ -5191,9 +5192,9 @@ fn triangle_centroid(a: &Point3, b: &Point3, c: &Point3) -> Option<Point3> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::arrangement3d::loop_triangulation::projected_loop_orientation;
     use crate::boolean::ExactBooleanOperation;
     use crate::cell_complex::ExactRegionOwnershipStatus;
-    use crate::loop_triangulation::projected_loop_orientation;
     use crate::validation::ExactMeshValidationPolicy;
     use hyperlimit::{
         RingPointLocation, classify_point_ring_even_odd, projected_polygon_area2_value,

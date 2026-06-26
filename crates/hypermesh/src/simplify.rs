@@ -9,6 +9,9 @@ use std::cmp::Ordering;
 
 #[cfg(test)]
 use super::arrangement3d::ExactArrangement;
+use super::arrangement3d::loop_triangulation::{
+    choose_polygon_projection, group_exact_coplanar_loops, triangulate_exact_loop_group,
+};
 use super::arrangement3d::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::arrangement3d::{
     ArrangementFaceCellNode, ArrangementLowerDimensionalArtifact, ExactTopologyAssemblyReport,
@@ -22,9 +25,6 @@ use super::cell_complex::{
     ExactRegionOwnershipReport, ExactSelectedCellComplex, ExactSelectedFaceOrientation,
     selected_cell_complex_gate_counts, validate_selected_gate_reports,
     validate_selected_gate_reports_against_counts, validate_volume_adjacency_face_provenance,
-};
-use super::loop_triangulation::{
-    choose_polygon_projection, group_exact_coplanar_loops, triangulate_exact_loop_group,
 };
 use super::mesh::{ExactMesh, Triangle};
 use super::validation::ExactMeshValidationPolicy;
@@ -1702,6 +1702,9 @@ fn replace_triangle_vertex(triangle: &mut Triangle, old: usize, new: usize) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::arrangement3d::loop_triangulation::{
+        emitted_triangle_orientation, projected_loop_interior_witness,
+    };
     use crate::arrangement3d::{
         ArrangementFaceCarrier, ArrangementFaceCell, ArrangementFaceCellNode,
         ArrangementVolumeAdjacency, ArrangementVolumeFaceSide,
@@ -1711,9 +1714,6 @@ mod tests {
         ExactSelectedCellComplex, ExactSelectedFaceOrientation,
     };
     use crate::graph::MeshSide;
-    use crate::loop_triangulation::{
-        emitted_triangle_orientation, projected_loop_interior_witness,
-    };
     use hyperlimit::{Point2, RingPointLocation, classify_point_ring_even_odd};
 
     fn p(x: i64, y: i64, z: i64) -> Point3 {

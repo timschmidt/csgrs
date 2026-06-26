@@ -35,6 +35,9 @@ use super::arrangement2d::{
     ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
     build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
 };
+use super::arrangement3d::loop_triangulation::{
+    group_exact_coplanar_loops, triangulate_exact_loop_group,
+};
 use super::arrangement3d::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::arrangement3d::{
     ExactArrangement, ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
@@ -56,7 +59,6 @@ use super::graph::{
     ExactIntersectionGraph, IntersectionEvent, MeshSide, build_validated_intersection_graph,
     build_validated_intersection_graph_from_prepared_pair,
 };
-use super::loop_triangulation::{group_exact_coplanar_loops, triangulate_exact_loop_group};
 #[cfg(test)]
 use super::mesh::triangle_edges as topology_triangle_edges;
 use super::mesh::{ExactMesh, Triangle};
