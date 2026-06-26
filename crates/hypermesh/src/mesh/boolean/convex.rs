@@ -523,10 +523,10 @@ fn clip_polygon_by_face(
     let mut output = Vec::new();
     let mut previous = polygon.last()?.clone();
     let mut previous_inside =
-        keep_inside_side(clip_facts.orientation, point_side(&a, &b, &c, &previous)?);
+        keep_inside_side(clip_facts.orientation(), point_side(&a, &b, &c, &previous)?);
     for current in polygon {
         let current_inside =
-            keep_inside_side(clip_facts.orientation, point_side(&a, &b, &c, current)?);
+            keep_inside_side(clip_facts.orientation(), point_side(&a, &b, &c, current)?);
         match (previous_inside, current_inside) {
             (true, true) => output.push(current.clone()),
             (true, false) => {

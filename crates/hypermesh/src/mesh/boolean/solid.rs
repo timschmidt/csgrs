@@ -77,14 +77,19 @@ pub(crate) enum ConvexSolidReportError {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ConvexSolidFacts {
     /// Certified closed-surface orientation.
-    pub(crate) orientation: ClosedMeshOrientation,
+    orientation: ClosedMeshOrientation,
     /// Certified convexity state.
-    pub(crate) convexity: ConvexSolidClassification,
+    convexity: ConvexSolidClassification,
     /// Predicate certificates used by face/vertex halfspace tests.
-    pub(crate) predicates: Vec<PredicateUse>,
+    predicates: Vec<PredicateUse>,
 }
 
 impl ConvexSolidFacts {
+    /// Return the certified closed-surface orientation.
+    pub(crate) const fn orientation(&self) -> ClosedMeshOrientation {
+        self.orientation
+    }
+
     /// Return whether the mesh is certified as an oriented convex closed solid.
     pub(crate) const fn is_certified_convex(&self) -> bool {
         matches!(
@@ -552,7 +557,7 @@ fn classify_point_with_convex_facts_report(
                 predicates,
             };
         };
-        if side_is_outside(facts.orientation, side) {
+        if side_is_outside(facts.orientation(), side) {
             return ConvexSolidPointClassification {
                 relation: ConvexSolidPointRelation::Outside,
                 predicates,
