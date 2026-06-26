@@ -1,4 +1,4 @@
-//! Auditable exact boolean reports.
+//! Auditable exact boolean evidence.
 //!
 //! These types are internal evidence objects produced by the exact boolean
 //! staging layer. They carry graph counts, predicate certificates, and checked

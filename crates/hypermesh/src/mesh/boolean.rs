@@ -19,9 +19,9 @@ pub(crate) mod affine_solid;
 pub(crate) mod cells;
 pub(crate) mod contained_adjacent;
 pub(crate) mod convex;
+pub(crate) mod evidence;
 pub(crate) mod orthogonal_solid;
 pub(crate) mod region;
-pub(crate) mod reports;
 pub(crate) mod solid;
 pub(crate) mod volumetric;
 pub(crate) mod volumetric_cells;
@@ -84,6 +84,16 @@ use contained_adjacent::{
 use convex::{
     intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
 };
+use evidence::{
+    ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus, ExactBooleanBlocker,
+    ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind,
+    ExactBooleanShortcutKind, ExactBooleanSupport, ExactBoundaryTouchingReport,
+    ExactBoundaryTouchingStatus, ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus,
+    ExactPlanarArrangementReport, ExactPlanarArrangementStatus, ExactRefinementReport,
+    ExactRefinementStatus, ExactReportValidationError, ExactSameSurfaceReport,
+    ExactSameSurfaceStatus, ExactVolumetricBoundaryClosureReport,
+    ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
+};
 use hyperlimit::{
     CoplanarProjection, Point2, Point3, SegmentIntersection, Sign, TriangleLocation,
     classify_point_triangle, compare_reals, compare_reals_report, orient3d_report, project_point3,
@@ -105,16 +115,6 @@ use region::{
     FaceRegionPlaneClassification, FaceRegionTriangulation,
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, choose_region_projection,
-};
-use reports::{
-    ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus, ExactBooleanBlocker,
-    ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind,
-    ExactBooleanShortcutKind, ExactBooleanSupport, ExactBoundaryTouchingReport,
-    ExactBoundaryTouchingStatus, ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus,
-    ExactPlanarArrangementReport, ExactPlanarArrangementStatus, ExactRefinementReport,
-    ExactRefinementStatus, ExactReportValidationError, ExactSameSurfaceReport,
-    ExactSameSurfaceStatus, ExactVolumetricBoundaryClosureReport,
-    ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
 };
 use solid::{
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
