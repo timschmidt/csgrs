@@ -8816,68 +8816,8 @@ fn winding_evidence_report_from_graph_with_facts(
     operation: ExactBooleanOperation,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
 ) -> Result<ExactWindingEvidenceReport, ExactMeshError> {
-    let regular_operation = !matches!(operation, ExactBooleanOperation::SelectedRegions(_));
-    if regular_operation && (left.triangles().is_empty() || right.triangles().is_empty()) {
-        return Ok(winding_evidence_report(
-            operation,
-            ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized,
-            false,
-            0,
-            0,
-            0,
-            Vec::new(),
-            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::Winding),
-            None,
-            None,
-        ));
-    }
-    if regular_operation && meshes_are_certified_bounds_disjoint(left, right) {
-        return Ok(winding_evidence_report(
-            operation,
-            ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized,
-            false,
-            0,
-            0,
-            0,
-            Vec::new(),
-            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::Winding),
-            None,
-            None,
-        ));
-    }
-    if regular_operation
-        && (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
-        && (evidence::meshes_are_certified_identical(left, right)
-            || evidence::meshes_are_certified_same_surface(left, right))
-    {
-        return Ok(winding_evidence_report(
-            operation,
-            ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized,
-            false,
-            0,
-            0,
-            0,
-            Vec::new(),
-            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::Winding),
-            None,
-            None,
-        ));
-    }
-    if regular_operation
-        && certified_mixed_dimensional_regularized_solid_support(left, right).is_some()
-    {
-        return Ok(winding_evidence_report(
-            operation,
-            ExactWindingEvidenceStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
-            false,
-            0,
-            0,
-            0,
-            Vec::new(),
-            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::Winding),
-            None,
-            None,
-        ));
+    if let Some(report) = source_shortcut_winding_evidence_from_sources(left, right, operation) {
+        return Ok(report);
     }
 
     let graph_had_unknowns = graph.has_unknowns();
@@ -9364,6 +9304,49 @@ fn winding_evidence_report(
         coplanar_arrangement_evidence,
         coplanar_volumetric_evidence,
     )
+}
+
+fn source_shortcut_winding_evidence_report(
+    operation: ExactBooleanOperation,
+    status: ExactWindingEvidenceStatus,
+) -> ExactWindingEvidenceReport {
+    winding_evidence_report(
+        operation,
+        status,
+        false,
+        0,
+        0,
+        0,
+        Vec::new(),
+        ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::Winding),
+        None,
+        None,
+    )
+}
+
+fn source_shortcut_winding_evidence_from_sources(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Option<ExactWindingEvidenceReport> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return None;
+    }
+    let status = if left.triangles().is_empty() || right.triangles().is_empty() {
+        ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized
+    } else if meshes_are_certified_bounds_disjoint(left, right) {
+        ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized
+    } else if (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
+        && (evidence::meshes_are_certified_identical(left, right)
+            || evidence::meshes_are_certified_same_surface(left, right))
+    {
+        ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized
+    } else if certified_mixed_dimensional_regularized_solid_support(left, right).is_some() {
+        ExactWindingEvidenceStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
+    } else {
+        return None;
+    };
+    Some(source_shortcut_winding_evidence_report(operation, status))
 }
 
 fn winding_evidence_report_with_validated_winding_blocker(
