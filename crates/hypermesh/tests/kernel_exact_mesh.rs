@@ -928,9 +928,18 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         assert!(broad_phase_summary.sweep_direction().is_some());
         assert!(broad_phase_summary.sweep_active_set().is_some());
     }
-    assert!(!prepared_pair.has_retained_candidate_face_pairs());
-    assert!(!prepared_pair.has_retained_broad_phase_traversal_summary());
-    assert_eq!(prepared_pair.retained_broad_phase_traversal_summary(), None);
+    assert!(
+        prepared_pair
+            .cache_status()
+            .candidate_face_pairs()
+            .is_missing()
+    );
+    assert!(
+        prepared_pair
+            .cache_status()
+            .broad_phase_traversal()
+            .is_missing()
+    );
     assert_eq!(
         prepared_pair
             .current_candidate_face_pair_count()
@@ -957,11 +966,24 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     );
     let count_only_summary: PreparedMeshPairBroadPhaseTraversalSummary =
         prepared_pair.prepare_broad_phase_traversal_summary();
-    assert!(prepared_pair.broad_phase_traversal_summary_is_current());
-    assert!(!prepared_pair.has_retained_candidate_face_pairs());
+    assert!(
+        prepared_pair
+            .cache_status()
+            .broad_phase_traversal()
+            .is_current()
+    );
+    assert!(
+        prepared_pair
+            .cache_status()
+            .candidate_face_pairs()
+            .is_missing()
+    );
     assert_eq!(
-        prepared_pair.retained_broad_phase_traversal_summary(),
-        Some(count_only_summary)
+        prepared_pair
+            .cache_status()
+            .current_broad_phase_traversal_summary()
+            .unwrap(),
+        count_only_summary
     );
     assert_eq!(
         prepared_pair.current_candidate_face_pair_count().unwrap(),
@@ -1007,20 +1029,23 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         retained_candidate_count
     );
     assert_eq!(
-        prepared_pair.retained_broad_phase_traversal_summary(),
-        Some(traversal_summary)
+        prepared_pair
+            .cache_status()
+            .current_broad_phase_traversal_summary()
+            .unwrap(),
+        traversal_summary
     );
     assert_eq!(
-        prepared_pair.retained_broad_phase_rejection_count(),
-        Some(traversal_summary.broad_phase_rejection_count())
+        traversal_summary.broad_phase_rejection_count(),
+        broad_phase_summary.face_pair_product() - traversal_summary.candidate_pair_count()
     );
     assert_eq!(
-        prepared_pair.retained_candidate_upper_bound_slack(),
-        Some(traversal_summary.candidate_upper_bound_slack())
+        traversal_summary.candidate_upper_bound_slack(),
+        broad_phase_summary.candidate_pair_upper_bound() - traversal_summary.candidate_pair_count()
     );
     assert_eq!(
-        prepared_pair.retained_candidate_upper_bound_saturated(),
-        Some(traversal_summary.candidate_upper_bound_saturated())
+        traversal_summary.candidate_upper_bound_saturated(),
+        traversal_summary.candidate_upper_bound_slack() == 0
     );
     prepared_pair
         .require_current_candidate_face_pairs()
@@ -1050,8 +1075,18 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         .prepare_broad_phase_pair(overlapping.view())
         .unwrap();
     let streamed_graph_counts = streamed_graph_pair.prepare_intersection_graph().unwrap();
-    assert!(streamed_graph_pair.broad_phase_traversal_summary_is_current());
-    assert!(!streamed_graph_pair.has_retained_candidate_face_pairs());
+    assert!(
+        streamed_graph_pair
+            .cache_status()
+            .broad_phase_traversal()
+            .is_current()
+    );
+    assert!(
+        streamed_graph_pair
+            .cache_status()
+            .candidate_face_pairs()
+            .is_missing()
+    );
     assert!(
         streamed_graph_pair
             .cache_status()
@@ -1083,8 +1118,18 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         .unwrap();
     let streamed_classification_counts =
         streamed_classification_pair.prepare_face_pair_classification_counts();
-    assert!(streamed_classification_pair.broad_phase_traversal_summary_is_current());
-    assert!(!streamed_classification_pair.has_retained_candidate_face_pairs());
+    assert!(
+        streamed_classification_pair
+            .cache_status()
+            .broad_phase_traversal()
+            .is_current()
+    );
+    assert!(
+        streamed_classification_pair
+            .cache_status()
+            .candidate_face_pairs()
+            .is_missing()
+    );
     assert!(
         streamed_classification_pair
             .cache_status()
@@ -1115,7 +1160,12 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
             .face_pair_classifications()
             .is_current()
     );
-    assert!(!classification_records_first_pair.has_retained_candidate_face_pairs());
+    assert!(
+        classification_records_first_pair
+            .cache_status()
+            .candidate_face_pairs()
+            .is_missing()
+    );
     assert_eq!(
         classification_records_first_pair.prepare_candidate_face_pairs(),
         classification_record_count
@@ -1379,8 +1429,18 @@ fn prepared_pair_candidate_visitor_streams_without_storing_records() {
         visited += 1;
     });
 
-    assert!(prepared_pair.broad_phase_traversal_summary_is_current());
-    assert!(!prepared_pair.has_retained_candidate_face_pairs());
+    assert!(
+        prepared_pair
+            .cache_status()
+            .broad_phase_traversal()
+            .is_current()
+    );
+    assert!(
+        prepared_pair
+            .cache_status()
+            .candidate_face_pairs()
+            .is_missing()
+    );
     assert_eq!(
         prepared_pair.current_candidate_face_pair_count().unwrap(),
         visited

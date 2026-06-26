@@ -1564,51 +1564,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             && self.broad_phase_summary.right_source() == self.right.view.source_stamp()
     }
 
-    /// Return whether broad-phase traversal counts have been retained.
-    pub fn has_retained_broad_phase_traversal_summary(&self) -> bool {
-        self.broad_phase_traversal_summary.borrow().is_some()
-    }
-
-    /// Return whether broad-phase traversal counts are retained and source-current.
-    pub fn broad_phase_traversal_summary_is_current(&self) -> bool {
-        self.cache_status().broad_phase_traversal().is_current()
-    }
-
-    /// Return retained broad-phase traversal counts, if present.
-    pub fn retained_broad_phase_traversal_summary(
-        &self,
-    ) -> Option<PreparedMeshPairBroadPhaseTraversalSummary> {
-        *self.broad_phase_traversal_summary.borrow()
-    }
-
-    /// Return retained broad-phase rejection count, if traversal counts are present.
-    pub fn retained_broad_phase_rejection_count(&self) -> Option<usize> {
-        self.retained_broad_phase_traversal_summary()
-            .map(PreparedMeshPairBroadPhaseTraversalSummary::broad_phase_rejection_count)
-    }
-
-    /// Return retained broad-phase candidate upper-bound slack, if present.
-    pub fn retained_candidate_upper_bound_slack(&self) -> Option<usize> {
-        self.retained_broad_phase_traversal_summary()
-            .map(PreparedMeshPairBroadPhaseTraversalSummary::candidate_upper_bound_slack)
-    }
-
-    /// Return whether the retained broad-phase candidate upper bound saturated, if present.
-    pub fn retained_candidate_upper_bound_saturated(&self) -> Option<bool> {
-        self.retained_broad_phase_traversal_summary()
-            .map(PreparedMeshPairBroadPhaseTraversalSummary::candidate_upper_bound_saturated)
-    }
-
     /// Require retained broad-phase traversal counts with current source certificates.
     pub fn current_broad_phase_traversal_summary(
         &self,
     ) -> Result<PreparedMeshPairBroadPhaseTraversalSummary, ExactMeshError> {
         self.cache_status().current_broad_phase_traversal_summary()
-    }
-
-    /// Return whether candidate face-pair records have been retained.
-    pub fn has_retained_candidate_face_pairs(&self) -> bool {
-        self.candidate_face_pairs.borrow().is_some()
     }
 
     /// Return whether candidate face-pair records are retained and source-current.
