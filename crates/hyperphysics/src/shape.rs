@@ -3,7 +3,7 @@
 //! This module keeps shape classification at the object layer before any
 //! runtime collision engine is chosen. Exact boxes and support maps are carried
 //! as Hyper-native facts, while mesh closure/manifold proof remains delegated to
-//! future `hypermesh` reports. This follows Yap, "Towards Exact Geometric
+//! future exact mesh reports. This follows Yap, "Towards Exact Geometric
 //! Computation," *Computational Geometry* 7(1-2), 1997
 //! (<https://doi.org/10.1016/0925-7721(95)00040-2>): geometric decisions should
 //! use certified object facts and exact predicates instead of hidden
@@ -287,7 +287,7 @@ impl ClosedTriangleMesh3 {
     ///
     /// The constructor only checks that some facets exist. Closure and
     /// orientation are semantic obligations of the caller or upstream geometry
-    /// crate until `hypermesh` owns exact manifold validation.
+    /// crate until hypermesh owns exact manifold validation.
     pub fn new(triangles: Vec<Triangle3>) -> PhysicsResult<Self> {
         if triangles.is_empty() {
             return Err(PhysicsError::EmptyTriangleMesh);
@@ -305,30 +305,28 @@ impl ClosedTriangleMesh3 {
         self.triangles.len()
     }
 
-    /// Lowers this physics mesh carrier into `hypermesh` exact topology storage.
+    /// Lowers this physics mesh carrier into hypermesh exact topology storage.
     ///
     /// Physics keeps material and mass-property interpretation. Mesh
-    /// validation and topology facts are delegated to `hypermesh` at this
+    /// validation and topology facts are delegated to hypermesh at this
     /// boundary.
-    pub fn to_hypermesh_exact_with_policy(
+    pub fn to_hypermesh_exact(
         &self,
-        source: hypermesh::exact::SourceProvenance,
-        policy: hypermesh::exact::ValidationPolicy,
-    ) -> Result<hypermesh::exact::ExactMesh, hypermesh::exact::MeshError> {
-        let mut vertices = Vec::with_capacity(self.triangles.len() * 3);
-        let mut triangles = Vec::with_capacity(self.triangles.len());
+    ) -> Result<hypermesh::ExactMesh, hypermesh::kernel::ExactMeshError> {
+        let mut positions = Vec::with_capacity(self.triangles.len() * 9);
+        let mut indices = Vec::with_capacity(self.triangles.len() * 3);
         for triangle in &self.triangles {
-            let base = vertices.len();
+            let base = positions.len() / 3;
             for vertex in triangle.vertices() {
-                vertices.push(hypermesh::exact::ExactPoint3::new(
+                positions.extend_from_slice(&[
                     vertex[0].clone(),
                     vertex[1].clone(),
                     vertex[2].clone(),
-                ));
+                ]);
             }
-            triangles.push(hypermesh::exact::Triangle([base, base + 1, base + 2]));
+            indices.extend_from_slice(&[base, base + 1, base + 2]);
         }
-        hypermesh::exact::ExactMesh::new_with_policy(vertices, triangles, source, policy)
+        hypermesh::ExactMesh::from_real_triangles(&positions, &indices)
     }
 }
 

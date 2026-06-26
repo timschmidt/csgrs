@@ -15,14 +15,21 @@ categories = ["science", "simulation", "mathematics"]
 # Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
 hyperlattice = { path = "../hyperlattice" }
 hyperlimit = { path = "../hyperlimit" }
-hypermesh = { path = "../hypermesh", default-features = false, features = ["exact"] }
+hypermesh = { path = "../hypermesh" }
 hyperreal = { path = "../hyperreal" }
 hypersolve = { path = "../hypersolve" }
 # hyperlattice = { version = "0.6.0" }
 # hyperlimit = { version = "0.4.0" }
-# hypermesh = { version = "0.3.0", default-features = false, features = ["exact"] }
+# hypermesh = { version = "0.3.0" }
 # hyperreal = { version = "0.13.0" }
 # hypersolve = { version = "0.3.0" }
+
+# Keep transitive sibling crates unified while using local path development mode.
+[patch.crates-io]
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit" }
+hyperreal = { path = "../hyperreal" }
+
 [dev-dependencies]
 proptest = "1.7.0"
 
