@@ -2440,11 +2440,11 @@ impl ExactBooleanResult {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct ExactTrivialBooleanFacts {
     /// The left source has no input triangles.
-    pub(crate) left_empty: bool,
+    left_empty: bool,
     /// The right source has no input triangles.
-    pub(crate) right_empty: bool,
+    right_empty: bool,
     /// Both sources are non-empty and their exact mesh AABBs are disjoint.
-    pub(crate) bounds_disjoint: bool,
+    bounds_disjoint: bool,
 }
 
 impl ExactTrivialBooleanFacts {
@@ -2483,13 +2483,13 @@ impl ExactTrivialBooleanFacts {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct ExactRegularizedSolidBooleanFacts {
     /// The left source is a non-empty closed manifold solid.
-    pub(crate) left_closed_solid: bool,
+    left_closed_solid: bool,
     /// The right source is a non-empty closed manifold solid.
-    pub(crate) right_closed_solid: bool,
+    right_closed_solid: bool,
     /// The left source is a supported non-empty open manifold surface.
-    pub(crate) left_open_surface: bool,
+    left_open_surface: bool,
     /// The right source is a supported non-empty open manifold surface.
-    pub(crate) right_open_surface: bool,
+    right_open_surface: bool,
 }
 
 impl ExactRegularizedSolidBooleanFacts {
@@ -2517,11 +2517,11 @@ impl ExactRegularizedSolidBooleanFacts {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ExactConvexBooleanCapabilityFacts {
     /// Exact closed-convex union can be certified by the shortcut.
-    pub(crate) can_union: bool,
+    can_union: bool,
     /// Exact closed-convex intersection can be certified by the shortcut.
-    pub(crate) can_intersection: bool,
+    can_intersection: bool,
     /// Exact closed-convex difference can be certified by the shortcut.
-    pub(crate) can_difference: bool,
+    can_difference: bool,
 }
 
 impl ExactConvexBooleanCapabilityFacts {
