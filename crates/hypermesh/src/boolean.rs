@@ -15,6 +15,7 @@
 //! or represented as policy choices or unknowns.
 
 pub(crate) mod affine_solid;
+pub(crate) mod cells;
 pub(crate) mod contained_adjacent;
 pub(crate) mod convex;
 pub(crate) mod orthogonal_solid;
@@ -43,7 +44,6 @@ use super::cell_complex::{
     arrangement_cell_complex_labeling_policy,
     arrangement_region_classification_blockers_resolve_operation, select_arrangement_for_replay,
 };
-use super::cells::triangulate_all_face_cells_with_cdt;
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::facts::MeshFacts;
 #[cfg(test)]
@@ -93,6 +93,7 @@ use affine_solid::{
     materialize_affine_orthogonal_solid_difference,
     materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
 };
+use cells::triangulate_all_face_cells_with_cdt;
 use contained_adjacent::{
     contained_face_adjacent_certificate_from_graph,
     materialize_contained_face_adjacent_union_from_certificate,

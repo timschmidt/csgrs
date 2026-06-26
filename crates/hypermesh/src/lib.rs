@@ -24,7 +24,6 @@ mod arrangement3d;
 mod boolean;
 mod bounds;
 mod cell_complex;
-mod cells;
 mod error;
 mod facts;
 mod graph;
