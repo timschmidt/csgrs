@@ -1351,9 +1351,12 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
     );
     assert_eq!(pair_view.broad_phase_summary(), broad_phase_summary);
     let mut candidates = Vec::new();
-    pair_view.visit_candidate_face_pairs(&mut |pair| {
-        candidates.push(pair);
-    });
+    pair_view
+        .try_visit_candidate_face_pairs(&mut |pair| {
+            candidates.push(pair);
+            Ok::<(), ()>(())
+        })
+        .unwrap();
     candidates.sort_unstable();
     assert!(!candidates.is_empty());
     assert!(candidates.iter().all(|[left_face, right_face]| {
@@ -1381,39 +1384,54 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
         0
     );
     let mut disjoint_candidates = Vec::new();
-    prepared_left.visit_candidate_face_pairs(&prepared_disjoint, &mut |pair| {
-        disjoint_candidates.push(pair);
-    });
+    prepared_left
+        .try_visit_candidate_face_pairs(&prepared_disjoint, &mut |pair| {
+            disjoint_candidates.push(pair);
+            Ok::<(), ()>(())
+        })
+        .unwrap();
     assert!(disjoint_candidates.is_empty());
 
     let mut direct_pair_candidates = Vec::new();
     left.view()
-        .visit_candidate_face_pairs(overlapping.view(), &mut |pair| {
+        .prepare_broad_phase_pair(overlapping.view())
+        .unwrap()
+        .try_visit_candidate_face_pairs(&mut |pair| {
             direct_pair_candidates.push(pair);
+            Ok::<(), ()>(())
         })
         .unwrap();
     direct_pair_candidates.sort_unstable();
     assert_eq!(direct_pair_candidates, candidates);
 
     let mut prepared_pair_candidates = Vec::new();
-    prepared_left.visit_candidate_face_pairs(&prepared_overlapping, &mut |pair| {
-        prepared_pair_candidates.push(pair);
-    });
+    prepared_left
+        .try_visit_candidate_face_pairs(&prepared_overlapping, &mut |pair| {
+            prepared_pair_candidates.push(pair);
+            Ok::<(), ()>(())
+        })
+        .unwrap();
     prepared_pair_candidates.sort_unstable();
     assert_eq!(prepared_pair_candidates, candidates);
     assert_eq!(direct_pair_candidates.len(), candidates.len());
 
     let mut owned_pair_candidates = Vec::new();
-    prepared_pair.visit_candidate_face_pairs(&mut |pair| {
-        owned_pair_candidates.push(pair);
-    });
+    prepared_pair
+        .try_visit_candidate_face_pairs(&mut |pair| {
+            owned_pair_candidates.push(pair);
+            Ok::<(), ()>(())
+        })
+        .unwrap();
     owned_pair_candidates.sort_unstable();
     assert_eq!(owned_pair_candidates, candidates);
 
     let mut repeated_owned_pair_candidates = Vec::new();
-    prepared_pair.visit_candidate_face_pairs(&mut |pair| {
-        repeated_owned_pair_candidates.push(pair);
-    });
+    prepared_pair
+        .try_visit_candidate_face_pairs(&mut |pair| {
+            repeated_owned_pair_candidates.push(pair);
+            Ok::<(), ()>(())
+        })
+        .unwrap();
     repeated_owned_pair_candidates.sort_unstable();
     assert_eq!(repeated_owned_pair_candidates, candidates);
 
@@ -1434,15 +1452,18 @@ fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
 
     let mut reentrant_outer_visits = 0;
     let mut reentrant_inner_visits = 0;
-    prepared_pair.visit_candidate_face_pairs(&mut |_| {
-        reentrant_outer_visits += 1;
-        prepared_pair
-            .try_visit_candidate_face_pairs(&mut |_| {
-                reentrant_inner_visits += 1;
-                Err("inner stop")
-            })
-            .unwrap_err();
-    });
+    prepared_pair
+        .try_visit_candidate_face_pairs(&mut |_| {
+            reentrant_outer_visits += 1;
+            prepared_pair
+                .try_visit_candidate_face_pairs(&mut |_| {
+                    reentrant_inner_visits += 1;
+                    Err("inner stop")
+                })
+                .unwrap_err();
+            Ok::<(), ()>(())
+        })
+        .unwrap();
     assert_eq!(reentrant_outer_visits, candidates.len());
     assert_eq!(reentrant_inner_visits, candidates.len());
 }
@@ -1482,9 +1503,12 @@ fn prepared_pair_candidate_visitor_streams_without_storing_records() {
     let prepared_pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
 
     let mut visited = 0usize;
-    prepared_pair.visit_candidate_face_pairs(&mut |_| {
-        visited += 1;
-    });
+    prepared_pair
+        .try_visit_candidate_face_pairs(&mut |_| {
+            visited += 1;
+            Ok::<(), ()>(())
+        })
+        .unwrap();
 
     assert!(
         prepared_pair

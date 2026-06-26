@@ -1363,26 +1363,6 @@ impl<'a> ExactMeshRef<'a> {
         }
     }
 
-    /// Visit broad-phase candidate face pairs after certificate-validating both meshes.
-    pub fn visit_candidate_face_pairs<'b>(
-        self,
-        right: ExactMeshRef<'b>,
-        visit: &mut impl FnMut([usize; 2]),
-    ) -> Result<(), ExactMeshError> {
-        self.validate_retained_bounds_certificate()?;
-        right.validate_retained_bounds_certificate()?;
-        let result = ExactAabbBroadPhase::default().try_visit_candidate_face_pairs_one_shot(
-            self.mesh.bounds(),
-            right.mesh.bounds(),
-            &mut |pair| {
-                visit(pair);
-                Ok::<(), ()>(())
-            },
-        );
-        debug_assert!(result.is_ok());
-        Ok(())
-    }
-
     /// Materialize this view after a row-major exact homogeneous affine transform.
     pub fn transform(self, matrix: [[Real; 4]; 4]) -> Result<ExactMesh, ExactMeshError> {
         self.mesh.transform(matrix)
@@ -1448,15 +1428,6 @@ impl<'a> PreparedMeshView<'a> {
             plan,
             broad_phase_summary,
         }
-    }
-
-    /// Visit certificate-validated broad-phase candidate face pairs.
-    pub fn visit_candidate_face_pairs<'b>(
-        &self,
-        right: &PreparedMeshView<'b>,
-        visit: &mut impl FnMut([usize; 2]),
-    ) {
-        self.pair_with(right).visit_candidate_face_pairs(visit);
     }
 
     /// Visit certificate-validated candidate face pairs and allow the visitor to stop early.
@@ -2003,15 +1974,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         }
     }
 
-    /// Visit certificate-validated broad-phase candidate face pairs using the cached pair plan.
-    pub fn visit_candidate_face_pairs(&self, visit: &mut impl FnMut([usize; 2])) {
-        let result = self.try_visit_candidate_face_pairs(&mut |pair| {
-            visit(pair);
-            Ok::<(), ()>(())
-        });
-        debug_assert!(result.is_ok());
-    }
-
     /// Visit certificate-validated candidate face pairs and allow the visitor to stop early.
     pub fn try_visit_candidate_face_pairs<E>(
         &self,
@@ -2159,15 +2121,6 @@ impl<'pair, 'left, 'right> PreparedMeshPairView<'pair, 'left, 'right> {
     /// Return retained broad-phase planning provenance for this borrowed pair view.
     pub const fn broad_phase_summary(&self) -> PreparedMeshPairBroadPhaseSummary {
         self.broad_phase_summary
-    }
-
-    /// Visit certificate-validated broad-phase candidate face pairs using the cached pair plan.
-    pub fn visit_candidate_face_pairs(&self, visit: &mut impl FnMut([usize; 2])) {
-        let result = self.try_visit_candidate_face_pairs(&mut |pair| {
-            visit(pair);
-            Ok::<(), ()>(())
-        });
-        debug_assert!(result.is_ok());
     }
 
     /// Visit certificate-validated candidate face pairs and allow the visitor to stop early.
