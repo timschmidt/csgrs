@@ -311,6 +311,16 @@ impl Computable {
         Self::shared_constant(SharedConstant::AtanInv2)
     }
 
+    pub(crate) fn atan2_constant() -> Computable {
+        crate::trace_dispatch!("computable", "constructor", "cached-atan2");
+        Self::shared_constant(SharedConstant::Atan2)
+    }
+
+    pub(crate) fn atan_three_halves_constant() -> Computable {
+        crate::trace_dispatch!("computable", "constructor", "cached-atan-three-halves");
+        Self::shared_constant(SharedConstant::AtanThreeHalves)
+    }
+
     /// Approximate τ, the ratio of a circle's circumference to its radius.
     pub fn tau() -> Computable {
         crate::trace_dispatch!("computable", "constructor", "cached-tau");

@@ -101,4 +101,4 @@ generated_tan_p96	generated[9396] -4 128/155	18279	tan_generated_9396_neg_4_128_
 generated_sin_p96	generated[11884] 4 14/31	18269	sin_generated_11884_4_14_31_p96
 generated_tan_p96	generated[14421] 5 25/47	18209	tan_generated_14421_5_25_47_p96
 generated_sin_p96	generated[13219] 4 31/51	18188	sin_generated_13219_4_31_51_p96
-generated_cos_p96	generated[9950] -5 1/5	18169	cos_generated_9950_neg_5_1_5_p96
+generated_atan_p96	generated[2739] -1 235/241	18159	atan_generated_2739_neg_1_235_241_p96

@@ -43,8 +43,8 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/inverse_trig_adversarial/asin_near_one` | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 7 | 2 | 1 |
 | `computable/inverse_trig_adversarial/asin_tiny` | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `computable/inverse_trig_adversarial/asin_zero` | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
-| `computable/inverse_trig_adversarial/atan_generated_783_412` | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 2 | 2 | 0 | 0 | 0 | 2 | 0 | 1 | 1 | 1 |
-| `computable/inverse_trig_adversarial/atan_generated_minus_32_19` | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 4 | 2 | 2 | 0 | 0 | 0 | 2 | 0 | 1 | 1 | 1 |
+| `computable/inverse_trig_adversarial/atan_generated_783_412` | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 2 | 2 | 0 | 0 | 0 | 1 | 0 | 1 | 1 | 1 |
+| `computable/inverse_trig_adversarial/atan_generated_minus_32_19` | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 4 | 2 | 2 | 0 | 0 | 0 | 1 | 0 | 1 | 1 | 1 |
 | `computable/inverse_trig_adversarial/atan_huge` | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 2 | 2 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | `computable/inverse_trig_adversarial/atan_large` | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 2 | 2 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | `computable/inverse_trig_adversarial/atan_mid` | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 2 | 2 | 0 | 0 | 0 | 1 | 0 | 1 | 1 | 1 |
@@ -53,8 +53,8 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/ln_nonsmooth_rational` | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 1 | 2 |
 | `computable/ln_smooth_rational` | 26 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 1 | 11 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 17 | 1 | 1 |
 | `computable/ln_square_plus_one_promoted_generated_677_222` | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 5 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 6 | 2 | 2 |
-| `computable/promoted_library_slow/atan_generated_10704_pos_1_371_412` | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 4 | 2 | 2 | 0 | 0 | 0 | 2 | 0 | 4 | 2 | 2 |
-| `computable/promoted_library_slow/atan_generated_11034_pos_1_367_518` | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 4 | 2 | 2 | 0 | 0 | 0 | 2 | 0 | 4 | 2 | 2 |
+| `computable/promoted_library_slow/atan_generated_10704_pos_1_371_412` | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 5 | 2 | 2 | 0 | 0 | 0 | 3 | 0 | 5 | 3 | 2 |
+| `computable/promoted_library_slow/atan_generated_11034_pos_1_367_518` | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 5 | 2 | 2 | 0 | 0 | 0 | 3 | 0 | 5 | 3 | 2 |
 | `computable/promoted_library_slow/cos_generated_16610_pos_7_4_19` | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 3 | 1 | 2 |
 | `computable/promoted_library_slow/cos_generated_9365_pos_7_14_139` | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 4 | 2 | 2 |
 | `computable/promoted_library_slow/ln_generated_10732_pos_6_6_137` | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 5 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 8 | 2 | 3 |
@@ -325,20 +325,18 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/inverse_trig_adversarial/asin_zero` | `computable` | `constructor` | `zero` | 1 |
 | `computable/inverse_trig_adversarial/atan_generated_783_412` | `computable` | `atan` | `exact-rational-deferred` | 1 |
 | `computable/inverse_trig_adversarial/atan_generated_783_412` | `computable` | `constructor` | `atan-rational-deferred` | 1 |
-| `computable/inverse_trig_adversarial/atan_generated_783_412` | `computable` | `constructor` | `cached-atan-inv2` | 1 |
-| `computable/inverse_trig_adversarial/atan_generated_783_412` | `computable` | `constructor` | `cached-pi` | 1 |
-| `computable/inverse_trig_adversarial/atan_generated_783_412` | `computable` | `constructor` | `shared-constant-wrapper` | 2 |
+| `computable/inverse_trig_adversarial/atan_generated_783_412` | `computable` | `constructor` | `cached-atan2` | 1 |
+| `computable/inverse_trig_adversarial/atan_generated_783_412` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
 | `computable/inverse_trig_adversarial/atan_generated_783_412` | `computable_approx` | `atan` | `exact-rational-reduction` | 1 |
-| `computable/inverse_trig_adversarial/atan_generated_783_412` | `computable_approx` | `atan` | `two-anchor-half-pi` | 1 |
+| `computable/inverse_trig_adversarial/atan_generated_783_412` | `computable_approx` | `atan` | `two-anchor-shared` | 1 |
 | `computable/inverse_trig_adversarial/atan_generated_minus_32_19` | `computable` | `atan` | `exact-rational-deferred` | 1 |
 | `computable/inverse_trig_adversarial/atan_generated_minus_32_19` | `computable` | `atan` | `known-negative-symmetry` | 1 |
 | `computable/inverse_trig_adversarial/atan_generated_minus_32_19` | `computable` | `constructor` | `atan-rational-deferred` | 1 |
-| `computable/inverse_trig_adversarial/atan_generated_minus_32_19` | `computable` | `constructor` | `cached-atan-inv5` | 1 |
-| `computable/inverse_trig_adversarial/atan_generated_minus_32_19` | `computable` | `constructor` | `cached-pi` | 1 |
+| `computable/inverse_trig_adversarial/atan_generated_minus_32_19` | `computable` | `constructor` | `cached-atan-three-halves` | 1 |
 | `computable/inverse_trig_adversarial/atan_generated_minus_32_19` | `computable` | `constructor` | `rational-node` | 1 |
-| `computable/inverse_trig_adversarial/atan_generated_minus_32_19` | `computable` | `constructor` | `shared-constant-wrapper` | 2 |
+| `computable/inverse_trig_adversarial/atan_generated_minus_32_19` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
 | `computable/inverse_trig_adversarial/atan_generated_minus_32_19` | `computable_approx` | `atan` | `exact-rational-reduction` | 1 |
-| `computable/inverse_trig_adversarial/atan_generated_minus_32_19` | `computable_approx` | `atan` | `three-halves-anchor` | 1 |
+| `computable/inverse_trig_adversarial/atan_generated_minus_32_19` | `computable_approx` | `atan` | `three-halves-anchor-shared` | 1 |
 | `computable/inverse_trig_adversarial/atan_huge` | `computable` | `atan` | `exact-rational-deferred` | 1 |
 | `computable/inverse_trig_adversarial/atan_huge` | `computable` | `constructor` | `atan-rational-deferred` | 1 |
 | `computable/inverse_trig_adversarial/atan_huge` | `computable` | `constructor` | `cached-pi` | 1 |
@@ -380,19 +378,21 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/atan_generated_10704_pos_1_371_412` | `computable` | `atan` | `exact-rational-deferred` | 1 |
 | `computable/promoted_library_slow/atan_generated_10704_pos_1_371_412` | `computable` | `constructor` | `atan-rational-deferred` | 1 |
 | `computable/promoted_library_slow/atan_generated_10704_pos_1_371_412` | `computable` | `constructor` | `cached-atan-inv2` | 1 |
+| `computable/promoted_library_slow/atan_generated_10704_pos_1_371_412` | `computable` | `constructor` | `cached-atan2` | 1 |
 | `computable/promoted_library_slow/atan_generated_10704_pos_1_371_412` | `computable` | `constructor` | `cached-pi` | 1 |
-| `computable/promoted_library_slow/atan_generated_10704_pos_1_371_412` | `computable` | `constructor` | `rational-node` | 1 |
-| `computable/promoted_library_slow/atan_generated_10704_pos_1_371_412` | `computable` | `constructor` | `shared-constant-wrapper` | 2 |
+| `computable/promoted_library_slow/atan_generated_10704_pos_1_371_412` | `computable` | `constructor` | `rational-node` | 2 |
+| `computable/promoted_library_slow/atan_generated_10704_pos_1_371_412` | `computable` | `constructor` | `shared-constant-wrapper` | 3 |
 | `computable/promoted_library_slow/atan_generated_10704_pos_1_371_412` | `computable_approx` | `atan` | `exact-rational-reduction` | 1 |
-| `computable/promoted_library_slow/atan_generated_10704_pos_1_371_412` | `computable_approx` | `atan` | `two-anchor-half-pi` | 1 |
+| `computable/promoted_library_slow/atan_generated_10704_pos_1_371_412` | `computable_approx` | `atan` | `two-anchor-shared` | 1 |
 | `computable/promoted_library_slow/atan_generated_11034_pos_1_367_518` | `computable` | `atan` | `exact-rational-deferred` | 1 |
 | `computable/promoted_library_slow/atan_generated_11034_pos_1_367_518` | `computable` | `constructor` | `atan-rational-deferred` | 1 |
 | `computable/promoted_library_slow/atan_generated_11034_pos_1_367_518` | `computable` | `constructor` | `cached-atan-inv5` | 1 |
+| `computable/promoted_library_slow/atan_generated_11034_pos_1_367_518` | `computable` | `constructor` | `cached-atan-three-halves` | 1 |
 | `computable/promoted_library_slow/atan_generated_11034_pos_1_367_518` | `computable` | `constructor` | `cached-pi` | 1 |
-| `computable/promoted_library_slow/atan_generated_11034_pos_1_367_518` | `computable` | `constructor` | `rational-node` | 1 |
-| `computable/promoted_library_slow/atan_generated_11034_pos_1_367_518` | `computable` | `constructor` | `shared-constant-wrapper` | 2 |
+| `computable/promoted_library_slow/atan_generated_11034_pos_1_367_518` | `computable` | `constructor` | `rational-node` | 2 |
+| `computable/promoted_library_slow/atan_generated_11034_pos_1_367_518` | `computable` | `constructor` | `shared-constant-wrapper` | 3 |
 | `computable/promoted_library_slow/atan_generated_11034_pos_1_367_518` | `computable_approx` | `atan` | `exact-rational-reduction` | 1 |
-| `computable/promoted_library_slow/atan_generated_11034_pos_1_367_518` | `computable_approx` | `atan` | `three-halves-anchor` | 1 |
+| `computable/promoted_library_slow/atan_generated_11034_pos_1_367_518` | `computable_approx` | `atan` | `three-halves-anchor-shared` | 1 |
 | `computable/promoted_library_slow/cos_generated_16610_pos_7_4_19` | `computable` | `constructor` | `cached-pi` | 1 |
 | `computable/promoted_library_slow/cos_generated_16610_pos_7_4_19` | `computable` | `constructor` | `cos-large-rational-deferred` | 1 |
 | `computable/promoted_library_slow/cos_generated_16610_pos_7_4_19` | `computable` | `constructor` | `rational-node` | 1 |

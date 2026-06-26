@@ -272,18 +272,18 @@ Latest run sampled 20000 deterministic cases. The table below intentionally merg
 | 262 | 16.009 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[11242] 77/754` |
 | 263 | 16.009 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[16747] 143/347` |
 | 264 | 16.009 us | `computable` | `generated_tan_p96` | `generated[2571] 5 29/46` |
-| 265 | 15.979 us | `computable` | `generated_atan_p96` | `generated[13284] -1 21/25` |
-| 266 | 15.979 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17482] -35/171` |
-| 267 | 15.979 us | `computable` | `generated_tan_p96` | `generated[14781] 7 49/72` |
-| 268 | 15.969 us | `computable` | `generated_atan_p96` | `generated[10674] 1 99/493` |
-| 269 | 15.959 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9502] 2 59/467` |
-| 270 | 15.959 us | `computable` | `generated_tan_p96` | `generated[17526] -6 133/138` |
-| 271 | 15.949 us | `real` | `generated_ln_abs_plus_one_build` | `generated[1049] -6 2/5` |
-| 272 | 15.939 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9127] -395/981` |
-| 273 | 15.919 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9517] 89/925` |
-| 274 | 15.899 us | `computable` | `generated_tan_p96` | `generated[7341] -3 89/110` |
-| 275 | 15.889 us | `computable` | `generated_atan_p96` | `generated[15609] -1 86/157` |
-| 276 | 15.879 us | `computable` | `generated_tan_p96` | `generated[1071] -3 177/200` |
+| 265 | 15.999 us | `computable` | `generated_tan_p96` | `generated[1071] -3 177/200` |
+| 266 | 15.979 us | `computable` | `generated_atan_p96` | `generated[13284] -1 21/25` |
+| 267 | 15.979 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[17482] -35/171` |
+| 268 | 15.979 us | `computable` | `generated_tan_p96` | `generated[14781] 7 49/72` |
+| 269 | 15.969 us | `computable` | `generated_atan_p96` | `generated[10674] 1 99/493` |
+| 270 | 15.959 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9502] 2 59/467` |
+| 271 | 15.959 us | `computable` | `generated_tan_p96` | `generated[17526] -6 133/138` |
+| 272 | 15.949 us | `real` | `generated_ln_abs_plus_one_build` | `generated[1049] -6 2/5` |
+| 273 | 15.939 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9127] -395/981` |
+| 274 | 15.919 us | `computable` | `generated_ln_abs_plus_one_p96` | `generated[9517] 89/925` |
+| 275 | 15.899 us | `computable` | `generated_tan_p96` | `generated[7341] -3 89/110` |
+| 276 | 15.889 us | `computable` | `generated_atan_p96` | `generated[15609] -1 86/157` |
 | 277 | 15.878 us | `computable` | `generated_atan_p96` | `generated[13929] 1 147/179` |
 | 278 | 15.849 us | `computable` | `generated_atan_p96` | `generated[6939] -1 90/109` |
 | 279 | 15.849 us | `computable` | `generated_atan_p96` | `generated[714] -1 385/466` |

@@ -1,5 +1,5 @@
 impl SharedConstant {
-    pub(super) const COUNT: usize = 16;
+    pub(super) const COUNT: usize = 18;
 
     pub(super) fn cache_index(self) -> usize {
         match self {
@@ -19,6 +19,8 @@ impl SharedConstant {
             Self::Asinh1 => 13,
             Self::AtanInv2 => 14,
             Self::AtanInv5 => 15,
+            Self::Atan2 => 16,
+            Self::AtanThreeHalves => 17,
         }
     }
 }
@@ -119,6 +121,8 @@ impl SharedConstant {
             Self::Asinh1 => asinh1_constant(signal, p),
             Self::AtanInv2 => atan(signal, &BigInt::from(2_u8), p),
             Self::AtanInv5 => atan(signal, &BigInt::from(5_u8), p),
+            Self::Atan2 => atan2_constant(signal, p),
+            Self::AtanThreeHalves => atan_three_halves_constant(signal, p),
         }
     }
 }

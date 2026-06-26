@@ -68,6 +68,27 @@ fn asinh1_constant(signal: &Option<Signal>, p: Precision) -> BigInt {
         .approx_signal(signal, p)
 }
 
+fn atan2_constant(signal: &Option<Signal>, p: Precision) -> BigInt {
+    // atan(2) = pi/2 - atan(1/2). The exact-rational atan reduction uses this
+    // anchor for values near 2; a shared node lets promoted adversarial cases
+    // reuse the combined approximation instead of assembling pi and atan(1/2)
+    // independently at every precision.
+    Computable::pi()
+        .multiply(Computable::rational(Rational::fraction(1, 2).unwrap()))
+        .add(Computable::atan_inv2_constant().negate())
+        .approx_signal(signal, p)
+}
+
+fn atan_three_halves_constant(signal: &Option<Signal>, p: Precision) -> BigInt {
+    // atan(3/2) = pi/4 + atan(1/5). This is the second midpoint anchor for
+    // exact-rational atan; caching the assembled constant keeps the residual
+    // series as the only per-call work after warm-up.
+    Computable::pi()
+        .multiply(Computable::rational(Rational::fraction(1, 4).unwrap()))
+        .add(Computable::atan_inv5_constant())
+        .approx_signal(signal, p)
+}
+
 fn e_terms_for_precision(p: Precision) -> u32 {
     // Choose enough 1/k! terms so the binary-split tail is below the requested
     // bit precision. Positive precisions need only a tiny constant amount.
@@ -129,4 +150,3 @@ fn e(p: Precision) -> BigInt {
     let (tail_p, tail_q) = e_binary_split(1, terms + 1);
     rounded_ratio(tail_q.clone() + tail_p, tail_q, p)
 }
-

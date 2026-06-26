@@ -295,13 +295,15 @@ impl SharedConstant {
             SharedConstant::Tau => Some(2),
             SharedConstant::Ln2 => Some(-1),
             SharedConstant::Asinh1 => Some(-1),
+            SharedConstant::AtanThreeHalves => Some(-1),
             SharedConstant::Ln3
             | SharedConstant::Ln5
             | SharedConstant::Ln6
             | SharedConstant::Ln7
             | SharedConstant::Sqrt2
             | SharedConstant::Sqrt3
-            | SharedConstant::Acosh2 => Some(0),
+            | SharedConstant::Acosh2
+            | SharedConstant::Atan2 => Some(0),
         };
         BoundInfo::with_sign(Sign::Plus, msd)
     }
@@ -334,6 +336,14 @@ impl SharedConstant {
             Self::AtanInv2 => (
                 Rational::fraction(46, 100).unwrap(),
                 Rational::fraction(47, 100).unwrap(),
+            ),
+            Self::Atan2 => (
+                Rational::fraction(110, 100).unwrap(),
+                Rational::fraction(111, 100).unwrap(),
+            ),
+            Self::AtanThreeHalves => (
+                Rational::fraction(98, 100).unwrap(),
+                Rational::fraction(99, 100).unwrap(),
             ),
             Self::Ln2 => (
                 Rational::fraction(69, 100).unwrap(),
@@ -421,4 +431,3 @@ thread_local! {
     static SHARED_CONSTANT_CACHES: RefCell<Vec<Cache>> =
         RefCell::new(vec![Cache::Invalid; SharedConstant::COUNT]);
 }
-

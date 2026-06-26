@@ -177,4 +177,6 @@ pub(super) enum SharedConstant {
     Asinh1,
     AtanInv2,
     AtanInv5,
+    Atan2,
+    AtanThreeHalves,
 }

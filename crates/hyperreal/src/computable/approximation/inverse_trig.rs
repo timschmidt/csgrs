@@ -217,22 +217,18 @@ fn atan_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
     let extra = 3;
     let work_precision = p - extra;
     if r >= SEVEN_FOURTHS_RATIONAL.deref() && r <= TWO_RATIONAL.deref() {
-        crate::trace_dispatch!("computable_approx", "atan", "two-anchor-half-pi");
-        let half_pi = Computable::pi().approx_signal(signal, work_precision + 1);
-        let anchor_tail =
-            Computable::atan_inv2_constant().approx_signal(signal, work_precision + 1);
+        crate::trace_dispatch!("computable_approx", "atan", "two-anchor-shared");
+        let anchor = Computable::atan2_constant().approx_signal(signal, work_precision);
         let residual = atan_anchor_residual(r, 2, 1);
         let reduced = atan_rational_small(signal, &residual, work_precision);
-        return scale(half_pi - anchor_tail + reduced, -extra);
+        return scale(anchor + reduced, -extra);
     }
     if r >= FOUR_THIRDS_RATIONAL.deref() && r <= TWO_RATIONAL.deref() {
-        crate::trace_dispatch!("computable_approx", "atan", "three-halves-anchor");
-        let quarter_pi = Computable::pi().approx_signal(signal, work_precision + 2);
-        let anchor_tail =
-            Computable::atan_inv5_constant().approx_signal(signal, work_precision + 2);
+        crate::trace_dispatch!("computable_approx", "atan", "three-halves-anchor-shared");
+        let anchor = Computable::atan_three_halves_constant().approx_signal(signal, work_precision);
         let residual = atan_anchor_residual(r, 3, 2);
         let reduced = atan_rational_small(signal, &residual, work_precision);
-        return scale(quarter_pi + anchor_tail + scale(reduced, 2), -(extra + 2));
+        return scale(anchor + reduced, -extra);
     }
     if r <= TWO_RATIONAL.deref() {
         crate::trace_dispatch!("computable_approx", "atan", "unit-anchor-pi-quarter");
@@ -370,4 +366,3 @@ fn acos_positive_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -
 fn acos_negative_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
     Computable::pi().approx_signal(signal, p) - acos_positive_rational(signal, r, p)
 }
-
