@@ -3356,7 +3356,9 @@ impl ExactBooleanCertificationSet {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
-        if self.winding_evidence_materializes_arrangement_cell_complex() {
+        if self.winding_evidence.status()
+            == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
+        {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
@@ -3590,11 +3592,6 @@ impl ExactBooleanCertificationSet {
         self.winding_evidence.status()
             == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
             && self.arrangement_attempt_certifies_output_for_operation(preflight.operation)
-    }
-
-    fn winding_evidence_materializes_arrangement_cell_complex(&self) -> bool {
-        self.winding_evidence.status()
-            == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
     }
 
     fn adjacent_union_completion_matches_preflight(
@@ -4054,7 +4051,8 @@ impl ExactBooleanCertificationSet {
             .arrangement_cell_complex_shortcuts
             .certified_support(preflight.operation)
             == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-            || self.winding_evidence_materializes_arrangement_cell_complex())
+            || self.winding_evidence.status()
+                == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized)
             && matches!(
                 self.winding_evidence.status(),
                 ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
