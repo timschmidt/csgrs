@@ -7537,15 +7537,15 @@ pub(crate) enum ExactBoundaryTouchingStatus {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ExactBoundaryTouchingReport {
     /// Coarse boundary-touching certification status.
-    pub(crate) status: ExactBoundaryTouchingStatus,
+    status: ExactBoundaryTouchingStatus,
     /// Whether graph extraction retained unknown events.
-    pub(crate) graph_had_unknowns: bool,
+    graph_had_unknowns: bool,
     /// Retained face-pair records after exact scheduling.
-    pub(crate) retained_face_pairs: usize,
+    retained_face_pairs: usize,
     /// Total retained event records.
-    pub(crate) retained_events: usize,
+    retained_events: usize,
     /// Relation counts for retained face pairs.
-    pub(crate) blocker: ExactBooleanBlocker,
+    blocker: ExactBooleanBlocker,
 }
 
 /// Certification status for closed-solid adjacent union completion.
@@ -7858,6 +7858,23 @@ impl ExactAdjacentUnionCompletionReport {
 }
 
 impl ExactBoundaryTouchingReport {
+    /// Build a boundary-touching report from retained exact graph evidence.
+    pub(crate) const fn new(
+        status: ExactBoundaryTouchingStatus,
+        graph_had_unknowns: bool,
+        retained_face_pairs: usize,
+        retained_events: usize,
+        blocker: ExactBooleanBlocker,
+    ) -> Self {
+        Self {
+            status,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            blocker,
+        }
+    }
+
     /// Return whether graph extraction retained unknown events.
     pub(crate) const fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns
@@ -7871,6 +7888,11 @@ impl ExactBoundaryTouchingReport {
     /// Return the retained event record count.
     pub(crate) const fn retained_events(&self) -> usize {
         self.retained_events
+    }
+
+    /// Return the retained relation-count blocker.
+    pub(crate) const fn blocker(&self) -> &ExactBooleanBlocker {
+        &self.blocker
     }
 
     /// Return whether the graph is certified boundary-only contact.

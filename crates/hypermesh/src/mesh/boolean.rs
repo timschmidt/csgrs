@@ -2152,12 +2152,12 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         return Ok(ExactBooleanPreflight {
             operation,
             support: ExactBooleanSupport::RequiresBoundaryPolicy,
-            graph_had_unknowns: boundary_report.graph_had_unknowns,
-            retained_face_pairs: boundary_report.retained_face_pairs,
-            retained_events: boundary_report.retained_events,
+            graph_had_unknowns: boundary_report.graph_had_unknowns(),
+            retained_face_pairs: boundary_report.retained_face_pairs(),
+            retained_events: boundary_report.retained_events(),
             region_count: 0,
             region_classifications: Vec::new(),
-            blocker: Some(boundary_report.blocker),
+            blocker: Some(*boundary_report.blocker()),
             coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: None,
         });
@@ -8798,13 +8798,13 @@ pub(crate) fn boundary_touching_report_from_graph(
         ExactBoundaryTouchingStatus::Certified => ExactBooleanBlockerKind::BoundaryPolicy,
         ExactBoundaryTouchingStatus::NotBoundaryOnly => counts.inferred_kind(),
     };
-    Ok(ExactBoundaryTouchingReport {
+    Ok(ExactBoundaryTouchingReport::new(
         status,
         graph_had_unknowns,
-        retained_face_pairs: graph.face_pairs.len(),
-        retained_events: graph.event_count(),
-        blocker: counts.into_blocker(blocker_kind),
-    })
+        graph.face_pairs.len(),
+        graph.event_count(),
+        counts.into_blocker(blocker_kind),
+    ))
 }
 
 fn not_boundary_only_report_from_graph(
@@ -8812,13 +8812,13 @@ fn not_boundary_only_report_from_graph(
 ) -> ExactBoundaryTouchingReport {
     let counts = retained_graph_counts(graph);
     let blocker_kind = counts.inferred_kind();
-    ExactBoundaryTouchingReport {
-        status: ExactBoundaryTouchingStatus::NotBoundaryOnly,
-        graph_had_unknowns: graph.has_unknowns(),
-        retained_face_pairs: graph.face_pairs.len(),
-        retained_events: graph.event_count(),
-        blocker: counts.into_blocker(blocker_kind),
-    }
+    ExactBoundaryTouchingReport::new(
+        ExactBoundaryTouchingStatus::NotBoundaryOnly,
+        graph.has_unknowns(),
+        graph.face_pairs.len(),
+        graph.event_count(),
+        counts.into_blocker(blocker_kind),
+    )
 }
 
 pub(crate) fn refinement_report_from_graph(
