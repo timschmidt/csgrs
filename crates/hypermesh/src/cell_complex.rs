@@ -1794,10 +1794,10 @@ mod tests {
         ArrangementFaceCarrier, ArrangementFaceCell, ArrangementFaceCellNode,
         ArrangementOppositeClassification, ArrangementVolumeFaceSide, ExactTopologyAssemblyStatus,
     };
+    use crate::boolean::region::ExactRegionSelection;
     use crate::boolean::solid::ConvexSolidPointClassification;
     use crate::boolean::winding::{ClosedMeshWindingRelation, PointMeshWindingReport};
     use crate::mesh::ExactMesh;
-    use crate::region::ExactRegionSelection;
     use hyperlimit::Point3;
     use hyperreal::Real;
 

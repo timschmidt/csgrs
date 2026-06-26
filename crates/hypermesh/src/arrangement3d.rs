@@ -6694,7 +6694,7 @@ mod tests {
 
         let selected = arrangement
             .select(ExactBooleanOperation::SelectedRegions(
-                crate::region::ExactRegionSelection::KeepLeft,
+                crate::boolean::region::ExactRegionSelection::KeepLeft,
             ))
             .unwrap();
         assert!(selected.blockers.is_empty(), "{:?}", selected.blockers);

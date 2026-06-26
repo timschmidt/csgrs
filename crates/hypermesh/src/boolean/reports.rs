@@ -28,11 +28,6 @@ use super::super::graph::{
 };
 use super::super::mesh::bounds::AabbIntersectionKind;
 use super::super::mesh::validation::ExactMeshValidationPolicy;
-use super::super::region::{
-    ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputTriangleOrientation,
-    ExactRegionSelection, FaceRegionPlaneClassification, FaceRegionPlaneValidationError,
-    FaceRegionTriangulation, boundary_node_point,
-};
 use super::adjacent::materialize_full_face_adjacent_union;
 use super::affine_solid::{
     materialize_affine_orthogonal_solid_difference,
@@ -46,6 +41,11 @@ use super::convex::{
 use super::materialize_boolean_exact_request;
 use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, materialize_axis_aligned_orthogonal_solid_cell_output,
+};
+use super::region::{
+    ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputTriangleOrientation,
+    ExactRegionSelection, FaceRegionPlaneClassification, FaceRegionPlaneValidationError,
+    FaceRegionTriangulation, boundary_node_point,
 };
 use super::solid::{
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
@@ -6482,8 +6482,8 @@ impl ExactWindingEvidenceReport {
 mod tests {
     use super::*;
     use crate::boolean::ExactBooleanRequest;
+    use crate::boolean::region::{ExactOutputVertex, FaceRegionPlaneRelation};
     use crate::graph::FaceSplitBoundaryNode;
-    use crate::region::{ExactOutputVertex, FaceRegionPlaneRelation};
 
     #[test]
     fn selected_region_preflight_accepts_empty_region_plan_with_boundary_face_pairs() {

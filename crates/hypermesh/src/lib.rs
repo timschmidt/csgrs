@@ -25,7 +25,6 @@ mod cell_complex;
 mod error;
 mod graph;
 mod mesh;
-mod region;
 mod view;
 
 pub use mesh::ExactMesh;

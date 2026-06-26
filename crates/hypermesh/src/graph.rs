@@ -4298,9 +4298,9 @@ fn projected_points_equal(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::boolean::region::FaceRegionPlaneRelation;
     use crate::mesh::ExactMesh;
     use crate::mesh::validation::ExactMeshValidationPolicy;
-    use crate::region::FaceRegionPlaneRelation;
 
     fn q(numerator: i64, denominator: i64) -> Real {
         (Real::from(numerator) / &Real::from(denominator)).expect("nonzero denominator")

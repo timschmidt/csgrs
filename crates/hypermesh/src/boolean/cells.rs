@@ -30,7 +30,7 @@ use super::super::graph::{
 };
 use super::super::mesh::ExactMesh;
 use super::super::mesh::triangle_edges;
-use super::super::region::{
+use super::region::{
     FaceRegionTriangulation, boundary_node_point, choose_region_projection, project_for_hypertri,
     project_for_predicate,
 };

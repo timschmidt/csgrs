@@ -20,6 +20,7 @@ pub(crate) mod cells;
 pub(crate) mod contained_adjacent;
 pub(crate) mod convex;
 pub(crate) mod orthogonal_solid;
+pub(crate) mod region;
 pub(crate) mod reports;
 pub(crate) mod solid;
 pub(crate) mod volumetric;
@@ -64,12 +65,6 @@ use super::mesh::facts::MeshFacts;
 use super::mesh::triangle_edges as topology_triangle_edges;
 use super::mesh::validation::ExactMeshValidationPolicy;
 use super::mesh::{ExactMesh, Triangle};
-use super::region::{
-    ExactBooleanAssemblyPlan, ExactRegionRetention, ExactRegionSelection,
-    FaceRegionPlaneClassification, FaceRegionTriangulation,
-    checked_classify_face_regions_against_opposite_planes,
-    checked_triangulate_face_regions_with_earcut, choose_region_projection,
-};
 use super::view::PreparedMeshPair;
 use adjacent::{
     full_face_adjacent_certificate_from_graph,
@@ -104,6 +99,12 @@ use orthogonal_solid::{
 #[cfg(test)]
 use orthogonal_solid::{
     axis_aligned_orthogonal_solid_cell_plan, materialize_axis_aligned_orthogonal_solid_cell_plan,
+};
+use region::{
+    ExactBooleanAssemblyPlan, ExactRegionRetention, ExactRegionSelection,
+    FaceRegionPlaneClassification, FaceRegionTriangulation,
+    checked_classify_face_regions_against_opposite_planes,
+    checked_triangulate_face_regions_with_earcut, choose_region_projection,
 };
 use reports::{
     ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus, ExactBooleanBlocker,
@@ -16174,16 +16175,16 @@ mod tests {
                     .first_mut()
                     .expect("open-surface arrangement should retain region classifications");
                 match classification.relation {
-                    crate::region::FaceRegionPlaneRelation::StrictlyAbove => {
+                    crate::boolean::region::FaceRegionPlaneRelation::StrictlyAbove => {
                         classification.relation =
-                            crate::region::FaceRegionPlaneRelation::StrictlyBelow;
+                            crate::boolean::region::FaceRegionPlaneRelation::StrictlyBelow;
                         classification
                             .node_sides
                             .fill(Some(hyperlimit::PlaneSide::Below));
                     }
                     _ => {
                         classification.relation =
-                            crate::region::FaceRegionPlaneRelation::StrictlyAbove;
+                            crate::boolean::region::FaceRegionPlaneRelation::StrictlyAbove;
                         classification
                             .node_sides
                             .fill(Some(hyperlimit::PlaneSide::Above));
