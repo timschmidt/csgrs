@@ -86,19 +86,18 @@ use evidence::{
     ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus, ExactBooleanBlocker,
     ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind,
     ExactBooleanShortcutKind, ExactBooleanSupport, ExactBoundaryTouchingReport,
-    ExactBoundaryTouchingStatus, ExactIdenticalMeshReport, ExactIdenticalMeshStatus,
-    ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport,
-    ExactPlanarArrangementStatus, ExactRefinementReport, ExactRefinementStatus,
-    ExactReportValidationError, ExactSameSurfaceReport, ExactSameSurfaceStatus,
-    ExactVolumetricBoundaryClosureReport, ExactVolumetricBoundaryClosureStatus,
-    ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
+    ExactBoundaryTouchingStatus, ExactIdenticalMeshReport, ExactOpenSurfaceDisjointReport,
+    ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport, ExactPlanarArrangementStatus,
+    ExactRefinementReport, ExactRefinementStatus, ExactReportValidationError,
+    ExactSameSurfaceReport, ExactVolumetricBoundaryClosureReport,
+    ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
 };
+use hyperlimit::SourceProvenance;
 use hyperlimit::{
     CoplanarProjection, Point2, Point3, SegmentIntersection, Sign, TriangleLocation,
-    classify_point_triangle, compare_reals, compare_reals_report, orient3d_report, project_point3,
+    classify_point_triangle, compare_reals, orient3d_report, project_point3,
     projected_polygon_area2_value,
 };
-use hyperlimit::{PredicateUse, SourceProvenance};
 use hyperreal::Real;
 use orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, axis_aligned_orthogonal_solid_cell_selected_count,
@@ -2691,8 +2690,8 @@ impl ExactBooleanSourceFacts {
             convex_capabilities: ExactConvexBooleanCapabilityFacts::from_sources(left, right),
             arrangement_cell_complex_shortcuts:
                 ExactArrangementCellComplexShortcutFacts::from_sources(left, right),
-            identical: identical_mesh_report_from_sources(left, right),
-            same_surface: same_surface_report_from_sources(left, right),
+            identical: evidence::identical_mesh_report_from_sources(left, right),
+            same_surface: evidence::same_surface_report_from_sources(left, right),
             closed_winding_left_in_right: classify_mesh_vertices_against_closed_mesh_winding_report(
                 left, right,
             ),
@@ -3130,7 +3129,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                 || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
                 || closed_validation_regularized_solid_support(left, right, operation, validation)
                     .is_some()
-                || !meshes_are_certified_identical(left, right)
+                || !evidence::meshes_are_certified_identical(left, right)
             {
                 None
             } else {
@@ -3152,8 +3151,8 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                 || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
                 || closed_validation_regularized_solid_support(left, right, operation, validation)
                     .is_some()
-                || meshes_are_certified_identical(left, right)
-                || !meshes_are_certified_same_surface(left, right)
+                || evidence::meshes_are_certified_identical(left, right)
+                || !evidence::meshes_are_certified_same_surface(left, right)
             {
                 None
             } else {
@@ -3737,7 +3736,7 @@ fn initial_reject_boundary_preflight_support(
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference
             if (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
-                && meshes_are_certified_identical(left, right) =>
+                && evidence::meshes_are_certified_identical(left, right) =>
         {
             ExactBooleanSupport::CertifiedIdentical
         }
@@ -3745,7 +3744,7 @@ fn initial_reject_boundary_preflight_support(
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference
             if (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
-                && meshes_are_certified_same_surface(left, right) =>
+                && evidence::meshes_are_certified_same_surface(left, right) =>
         {
             ExactBooleanSupport::CertifiedSameSurface
         }
@@ -5739,12 +5738,12 @@ fn materialize_boolean_exact_request_with_graph(
         return Ok(result);
     }
     if (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
-        && meshes_are_certified_identical(left, right)
+        && evidence::meshes_are_certified_identical(left, right)
     {
         return boolean_identical_meshes(left, operation, validation);
     }
     if (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
-        && meshes_are_certified_same_surface(left, right)
+        && evidence::meshes_are_certified_same_surface(left, right)
     {
         return boolean_same_surface_meshes(left, operation, validation);
     }
@@ -6341,7 +6340,8 @@ fn boolean_arrangement_regularized_boundary_contact_from_graph(
     ) {
         return Ok(None);
     }
-    if meshes_are_certified_identical(left, right) || meshes_are_certified_same_surface(left, right)
+    if evidence::meshes_are_certified_identical(left, right)
+        || evidence::meshes_are_certified_same_surface(left, right)
     {
         return Ok(None);
     }
@@ -6393,7 +6393,8 @@ fn certified_arrangement_regularized_boundary_contact_from_graph(
     ) {
         return Ok(false);
     }
-    if meshes_are_certified_identical(left, right) || meshes_are_certified_same_surface(left, right)
+    if evidence::meshes_are_certified_identical(left, right)
+        || evidence::meshes_are_certified_same_surface(left, right)
     {
         return Ok(false);
     }
@@ -10318,7 +10319,7 @@ pub(crate) fn replay_closed_same_surface_boolean_result_if_certified(
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || !left.facts().mesh.closed_manifold
         || !right.facts().mesh.closed_manifold
-        || !meshes_are_certified_same_surface(left, right)
+        || !evidence::meshes_are_certified_same_surface(left, right)
     {
         return Ok(None);
     }
@@ -11025,8 +11026,8 @@ fn winding_evidence_report_from_graph_with_facts(
     }
     if regular_operation
         && (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
-        && (meshes_are_certified_identical(left, right)
-            || meshes_are_certified_same_surface(left, right))
+        && (evidence::meshes_are_certified_identical(left, right)
+            || evidence::meshes_are_certified_same_surface(left, right))
     {
         return Ok(winding_evidence_report(
             operation,
@@ -12003,239 +12004,6 @@ fn meshes_are_certified_bounds_disjoint(left: &ExactMesh, right: &ExactMesh) -> 
         return left.triangles().is_empty() || right.triangles().is_empty();
     };
     left_bounds.classify_intersection(right_bounds).value() == Some(AabbIntersectionKind::Disjoint)
-}
-
-fn meshes_are_certified_identical(left: &ExactMesh, right: &ExactMesh) -> bool {
-    identical_mesh_report_from_sources(left, right).is_certified()
-}
-
-fn meshes_are_certified_same_surface(left: &ExactMesh, right: &ExactMesh) -> bool {
-    same_surface_report_from_sources(left, right).is_certified()
-}
-
-/// Certify whether two meshes represent the same triangle surface.
-///
-/// The report preserves the exact coordinate-equality predicate certificates
-/// used to find a vertex bijection and the sorted triangle sets compared after
-/// remapping. This is the auditable form of the same-surface shortcut used by
-/// expose the predicate facts that justify them.
-pub(crate) fn same_surface_report_from_sources(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> ExactSameSurfaceReport {
-    if left.vertices().len() != right.vertices().len() {
-        return same_surface_report(
-            ExactSameSurfaceStatus::VertexCountMismatch,
-            Vec::new(),
-            Vec::new(),
-            Vec::new(),
-        );
-    }
-    if left.triangles().len() != right.triangles().len() {
-        return same_surface_report(
-            ExactSameSurfaceStatus::TriangleCountMismatch,
-            Vec::new(),
-            Vec::new(),
-            Vec::new(),
-        );
-    }
-
-    let (left_to_right, predicates, status) = certified_vertex_permutation_report(left, right);
-    if status != ExactSameSurfaceStatus::Certified {
-        return same_surface_report(status, left_to_right, Vec::new(), predicates);
-    }
-    let mut right_to_left = vec![0; left_to_right.len()];
-    for (left_index, &right_index) in left_to_right.iter().enumerate() {
-        right_to_left[right_index] = left_index;
-    }
-
-    let mut left_triangles = sorted_triangle_sets(left, None);
-    let mut right_triangles = sorted_triangle_sets(right, Some(&right_to_left));
-    left_triangles.sort_unstable();
-    right_triangles.sort_unstable();
-    let status = if left_triangles == right_triangles {
-        ExactSameSurfaceStatus::Certified
-    } else {
-        ExactSameSurfaceStatus::TriangleSetMismatch
-    };
-
-    ExactSameSurfaceReport {
-        status,
-        left_to_right,
-        right_to_left,
-        left_triangles,
-        right_triangles,
-        predicates,
-    }
-}
-
-/// Certify whether two meshes are exactly identical in source vertex and
-/// triangle order.
-pub(crate) fn identical_mesh_report_from_sources(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> ExactIdenticalMeshReport {
-    let mut predicates = Vec::new();
-    if left.vertices().len() != right.vertices().len() {
-        return identical_mesh_report(
-            ExactIdenticalMeshStatus::VertexCountMismatch,
-            left,
-            right,
-            predicates,
-        );
-    }
-
-    for (left_vertex, right_vertex) in left.vertices().iter().zip(right.vertices()) {
-        let x = compare_reals_report(&left_vertex.x, &right_vertex.x);
-        let y = compare_reals_report(&left_vertex.y, &right_vertex.y);
-        let z = compare_reals_report(&left_vertex.z, &right_vertex.z);
-        predicates.push(PredicateUse::from_certificate(x.certificate));
-        predicates.push(PredicateUse::from_certificate(y.certificate));
-        predicates.push(PredicateUse::from_certificate(z.certificate));
-        let Some(x_value) = x.outcome.value() else {
-            return identical_mesh_report(
-                ExactIdenticalMeshStatus::VertexCoordinateUndecided,
-                left,
-                right,
-                predicates,
-            );
-        };
-        let Some(y_value) = y.outcome.value() else {
-            return identical_mesh_report(
-                ExactIdenticalMeshStatus::VertexCoordinateUndecided,
-                left,
-                right,
-                predicates,
-            );
-        };
-        let Some(z_value) = z.outcome.value() else {
-            return identical_mesh_report(
-                ExactIdenticalMeshStatus::VertexCoordinateUndecided,
-                left,
-                right,
-                predicates,
-            );
-        };
-        if x_value != Ordering::Equal || y_value != Ordering::Equal || z_value != Ordering::Equal {
-            return identical_mesh_report(
-                ExactIdenticalMeshStatus::VertexCoordinateMismatch,
-                left,
-                right,
-                predicates,
-            );
-        }
-    }
-
-    let status = if left.triangles() == right.triangles() {
-        ExactIdenticalMeshStatus::Certified
-    } else {
-        ExactIdenticalMeshStatus::TriangleSequenceMismatch
-    };
-    identical_mesh_report(status, left, right, predicates)
-}
-
-fn identical_mesh_report(
-    status: ExactIdenticalMeshStatus,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    predicates: Vec<PredicateUse>,
-) -> ExactIdenticalMeshReport {
-    evidence::ExactIdenticalMeshReport::new(
-        status,
-        left.vertices().len(),
-        right.vertices().len(),
-        left.triangles().len(),
-        right.triangles().len(),
-        predicates,
-    )
-}
-
-fn same_surface_report(
-    status: ExactSameSurfaceStatus,
-    left_to_right: Vec<usize>,
-    right_to_left: Vec<usize>,
-    predicates: Vec<PredicateUse>,
-) -> ExactSameSurfaceReport {
-    ExactSameSurfaceReport {
-        status,
-        left_to_right,
-        right_to_left,
-        left_triangles: Vec::new(),
-        right_triangles: Vec::new(),
-        predicates,
-    }
-}
-
-fn certified_vertex_permutation_report(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> (Vec<usize>, Vec<PredicateUse>, ExactSameSurfaceStatus) {
-    let mut left_to_right = Vec::with_capacity(left.vertices().len());
-    let mut used_right = vec![false; right.vertices().len()];
-    let mut predicates = Vec::new();
-
-    for left_vertex in left.vertices() {
-        let left_point = left_vertex.clone();
-        let mut match_index = None;
-        let mut saw_undecided = false;
-        for (right_index, right_vertex) in right.vertices().iter().enumerate() {
-            if used_right[right_index] {
-                continue;
-            }
-            let right_point = right_vertex.clone();
-            let x = compare_reals_report(&left_point.x, &right_point.x);
-            let y = compare_reals_report(&left_point.y, &right_point.y);
-            let z = compare_reals_report(&left_point.z, &right_point.z);
-            predicates.push(PredicateUse::from_certificate(x.certificate));
-            predicates.push(PredicateUse::from_certificate(y.certificate));
-            predicates.push(PredicateUse::from_certificate(z.certificate));
-            let Some(x_value) = x.outcome.value() else {
-                saw_undecided = true;
-                continue;
-            };
-            let Some(y_value) = y.outcome.value() else {
-                saw_undecided = true;
-                continue;
-            };
-            let Some(z_value) = z.outcome.value() else {
-                saw_undecided = true;
-                continue;
-            };
-            let equal = x_value == Ordering::Equal
-                && y_value == Ordering::Equal
-                && z_value == Ordering::Equal;
-            if equal {
-                match_index = Some(right_index);
-                break;
-            }
-        }
-        let Some(match_index) = match_index else {
-            let status = if saw_undecided {
-                ExactSameSurfaceStatus::VertexMatchingUndecided
-            } else {
-                ExactSameSurfaceStatus::VertexCoordinateMismatch
-            };
-            return (left_to_right, predicates, status);
-        };
-        used_right[match_index] = true;
-        left_to_right.push(match_index);
-    }
-
-    (left_to_right, predicates, ExactSameSurfaceStatus::Certified)
-}
-
-fn sorted_triangle_sets(mesh: &ExactMesh, right_to_left: Option<&[usize]>) -> Vec<[usize; 3]> {
-    mesh.triangles()
-        .iter()
-        .map(|triangle| {
-            let mut vertices = triangle.0.map(|vertex| match right_to_left {
-                Some(mapping) => mapping[vertex],
-                None => vertex,
-            });
-            vertices.sort_unstable();
-            vertices
-        })
-        .collect()
 }
 
 fn boolean_closed_regularized_lower_dimensional_optional(

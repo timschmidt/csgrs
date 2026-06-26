@@ -7,7 +7,7 @@
 
 use hyperlimit::{
     ApproximationPolicy, MeshSource, Point3, TriangleLocation, classify_point_triangle,
-    compare_reals, project_point3, projected_polygon_area2_value,
+    compare_reals, compare_reals_report, project_point3, projected_polygon_area2_value,
 };
 use hyperreal::Real;
 use std::cmp::Ordering;
@@ -74,8 +74,7 @@ use super::{
     replay_boolean_exact_request_for_result_validation,
     replay_closed_same_surface_boolean_result_if_certified,
     replay_generic_arrangement_cell_complex_result, replay_open_surface_arrangement_result,
-    replay_selected_region_boolean_result, same_surface_report_from_sources,
-    volumetric_boundary_closure_report_from_graph,
+    replay_selected_region_boolean_result, volumetric_boundary_closure_report_from_graph,
 };
 #[cfg(test)]
 use super::{
@@ -2457,16 +2456,6 @@ fn meshes_are_certified_bounds_disjoint(left: &ExactMesh, right: &ExactMesh) -> 
         return left.triangles().is_empty() || right.triangles().is_empty();
     };
     left_bounds.classify_intersection(right_bounds).value() == Some(AabbIntersectionKind::Disjoint)
-}
-
-fn meshes_are_certified_identical(left: &ExactMesh, right: &ExactMesh) -> bool {
-    left.triangles() == right.triangles()
-        && left.vertices().len() == right.vertices().len()
-        && left
-            .vertices()
-            .iter()
-            .zip(right.vertices())
-            .all(|(left, right)| points_equal(left, right))
 }
 
 fn mixed_dimensional_regularized_sources(left: &ExactMesh, right: &ExactMesh) -> bool {
@@ -4967,6 +4956,238 @@ impl ExactSameSurfaceReport {
         }
         Ok(())
     }
+}
+
+pub(crate) fn meshes_are_certified_identical(left: &ExactMesh, right: &ExactMesh) -> bool {
+    identical_mesh_report_from_sources(left, right).is_certified()
+}
+
+pub(crate) fn meshes_are_certified_same_surface(left: &ExactMesh, right: &ExactMesh) -> bool {
+    same_surface_report_from_sources(left, right).is_certified()
+}
+
+/// Certify whether two meshes represent the same triangle surface.
+///
+/// The report preserves the exact coordinate-equality predicate certificates
+/// used to find a vertex bijection and the sorted triangle sets compared after
+/// remapping. This is the auditable form of the same-surface shortcut.
+pub(crate) fn same_surface_report_from_sources(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> ExactSameSurfaceReport {
+    if left.vertices().len() != right.vertices().len() {
+        return same_surface_report(
+            ExactSameSurfaceStatus::VertexCountMismatch,
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+        );
+    }
+    if left.triangles().len() != right.triangles().len() {
+        return same_surface_report(
+            ExactSameSurfaceStatus::TriangleCountMismatch,
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+        );
+    }
+
+    let (left_to_right, predicates, status) = certified_vertex_permutation_report(left, right);
+    if status != ExactSameSurfaceStatus::Certified {
+        return same_surface_report(status, left_to_right, Vec::new(), predicates);
+    }
+    let mut right_to_left = vec![0; left_to_right.len()];
+    for (left_index, &right_index) in left_to_right.iter().enumerate() {
+        right_to_left[right_index] = left_index;
+    }
+
+    let mut left_triangles = sorted_triangle_sets(left, None);
+    let mut right_triangles = sorted_triangle_sets(right, Some(&right_to_left));
+    left_triangles.sort_unstable();
+    right_triangles.sort_unstable();
+    let status = if left_triangles == right_triangles {
+        ExactSameSurfaceStatus::Certified
+    } else {
+        ExactSameSurfaceStatus::TriangleSetMismatch
+    };
+
+    ExactSameSurfaceReport {
+        status,
+        left_to_right,
+        right_to_left,
+        left_triangles,
+        right_triangles,
+        predicates,
+    }
+}
+
+/// Certify whether two meshes are exactly identical in source vertex and
+/// triangle order.
+pub(crate) fn identical_mesh_report_from_sources(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> ExactIdenticalMeshReport {
+    let mut predicates = Vec::new();
+    if left.vertices().len() != right.vertices().len() {
+        return identical_mesh_report(
+            ExactIdenticalMeshStatus::VertexCountMismatch,
+            left,
+            right,
+            predicates,
+        );
+    }
+
+    for (left_vertex, right_vertex) in left.vertices().iter().zip(right.vertices()) {
+        let x = compare_reals_report(&left_vertex.x, &right_vertex.x);
+        let y = compare_reals_report(&left_vertex.y, &right_vertex.y);
+        let z = compare_reals_report(&left_vertex.z, &right_vertex.z);
+        predicates.push(PredicateUse::from_certificate(x.certificate));
+        predicates.push(PredicateUse::from_certificate(y.certificate));
+        predicates.push(PredicateUse::from_certificate(z.certificate));
+        let Some(x_value) = x.outcome.value() else {
+            return identical_mesh_report(
+                ExactIdenticalMeshStatus::VertexCoordinateUndecided,
+                left,
+                right,
+                predicates,
+            );
+        };
+        let Some(y_value) = y.outcome.value() else {
+            return identical_mesh_report(
+                ExactIdenticalMeshStatus::VertexCoordinateUndecided,
+                left,
+                right,
+                predicates,
+            );
+        };
+        let Some(z_value) = z.outcome.value() else {
+            return identical_mesh_report(
+                ExactIdenticalMeshStatus::VertexCoordinateUndecided,
+                left,
+                right,
+                predicates,
+            );
+        };
+        if x_value != Ordering::Equal || y_value != Ordering::Equal || z_value != Ordering::Equal {
+            return identical_mesh_report(
+                ExactIdenticalMeshStatus::VertexCoordinateMismatch,
+                left,
+                right,
+                predicates,
+            );
+        }
+    }
+
+    let status = if left.triangles() == right.triangles() {
+        ExactIdenticalMeshStatus::Certified
+    } else {
+        ExactIdenticalMeshStatus::TriangleSequenceMismatch
+    };
+    identical_mesh_report(status, left, right, predicates)
+}
+
+fn identical_mesh_report(
+    status: ExactIdenticalMeshStatus,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    predicates: Vec<PredicateUse>,
+) -> ExactIdenticalMeshReport {
+    ExactIdenticalMeshReport::new(
+        status,
+        left.vertices().len(),
+        right.vertices().len(),
+        left.triangles().len(),
+        right.triangles().len(),
+        predicates,
+    )
+}
+
+fn same_surface_report(
+    status: ExactSameSurfaceStatus,
+    left_to_right: Vec<usize>,
+    right_to_left: Vec<usize>,
+    predicates: Vec<PredicateUse>,
+) -> ExactSameSurfaceReport {
+    ExactSameSurfaceReport {
+        status,
+        left_to_right,
+        right_to_left,
+        left_triangles: Vec::new(),
+        right_triangles: Vec::new(),
+        predicates,
+    }
+}
+
+fn certified_vertex_permutation_report(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> (Vec<usize>, Vec<PredicateUse>, ExactSameSurfaceStatus) {
+    let mut left_to_right = Vec::with_capacity(left.vertices().len());
+    let mut used_right = vec![false; right.vertices().len()];
+    let mut predicates = Vec::new();
+
+    for left_vertex in left.vertices() {
+        let left_point = left_vertex.clone();
+        let mut match_index = None;
+        let mut saw_undecided = false;
+        for (right_index, right_vertex) in right.vertices().iter().enumerate() {
+            if used_right[right_index] {
+                continue;
+            }
+            let right_point = right_vertex.clone();
+            let x = compare_reals_report(&left_point.x, &right_point.x);
+            let y = compare_reals_report(&left_point.y, &right_point.y);
+            let z = compare_reals_report(&left_point.z, &right_point.z);
+            predicates.push(PredicateUse::from_certificate(x.certificate));
+            predicates.push(PredicateUse::from_certificate(y.certificate));
+            predicates.push(PredicateUse::from_certificate(z.certificate));
+            let Some(x_value) = x.outcome.value() else {
+                saw_undecided = true;
+                continue;
+            };
+            let Some(y_value) = y.outcome.value() else {
+                saw_undecided = true;
+                continue;
+            };
+            let Some(z_value) = z.outcome.value() else {
+                saw_undecided = true;
+                continue;
+            };
+            let equal = x_value == Ordering::Equal
+                && y_value == Ordering::Equal
+                && z_value == Ordering::Equal;
+            if equal {
+                match_index = Some(right_index);
+                break;
+            }
+        }
+        let Some(match_index) = match_index else {
+            let status = if saw_undecided {
+                ExactSameSurfaceStatus::VertexMatchingUndecided
+            } else {
+                ExactSameSurfaceStatus::VertexCoordinateMismatch
+            };
+            return (left_to_right, predicates, status);
+        };
+        used_right[match_index] = true;
+        left_to_right.push(match_index);
+    }
+
+    (left_to_right, predicates, ExactSameSurfaceStatus::Certified)
+}
+
+fn sorted_triangle_sets(mesh: &ExactMesh, right_to_left: Option<&[usize]>) -> Vec<[usize; 3]> {
+    mesh.triangles()
+        .iter()
+        .map(|triangle| {
+            let mut vertices = triangle.0.map(|vertex| match right_to_left {
+                Some(mapping) => mapping[vertex],
+                None => vertex,
+            });
+            vertices.sort_unstable();
+            vertices
+        })
+        .collect()
 }
 
 fn validate_full_permutation(

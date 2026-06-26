@@ -1,4 +1,7 @@
 use super::*;
+use crate::mesh::boolean::evidence::{
+    meshes_are_certified_identical, meshes_are_certified_same_surface,
+};
 
 fn test_preflight(
     request: ExactBooleanRequest,
