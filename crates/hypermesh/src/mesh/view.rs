@@ -256,7 +256,7 @@ enum PreparedMeshPairFactState {
 
 impl PreparedMeshPairFactState {
     /// Convert a non-current state into a typed blocker for callers that require a current fact.
-    pub fn blocker(self, fact: &'static str) -> Option<ExactMeshBlocker> {
+    fn blocker(self, fact: &'static str) -> Option<ExactMeshBlocker> {
         match self {
             Self::Missing => Some(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::MissingRequiredEvidence,
@@ -279,7 +279,7 @@ impl PreparedMeshPairFactState {
     }
 
     /// Require a current retained fact and return a typed blocker otherwise.
-    pub fn require_current(self, fact: &'static str) -> Result<(), ExactMeshError> {
+    fn require_current(self, fact: &'static str) -> Result<(), ExactMeshError> {
         self.blocker(fact)
             .map_or(Ok(()), |blocker| Err(ExactMeshError::one(blocker)))
     }
