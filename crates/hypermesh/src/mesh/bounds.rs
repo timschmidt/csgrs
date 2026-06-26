@@ -400,27 +400,6 @@ impl ExactAabbBroadPhase {
             one_shot_quadratic_face_pair_limit,
         }
     }
-
-    #[cfg(test)]
-    fn candidate_face_pair_plan_one_shot(
-        &self,
-        left: &MeshBounds,
-        right: &MeshBounds,
-    ) -> CandidateFacePairPlan {
-        if !left.mesh_may_overlap(right) {
-            return CandidateFacePairPlan::empty();
-        }
-        if should_use_quadratic_one_shot(
-            left.faces.len(),
-            right.faces.len(),
-            self.one_shot_quadratic_face_pair_limit,
-        ) {
-            return CandidateFacePairPlan::Quadratic;
-        }
-        let left = left.prepare();
-        let right = right.prepare();
-        self.candidate_face_pair_plan(&left, &right)
-    }
 }
 
 impl Default for ExactAabbBroadPhase {
@@ -1700,15 +1679,16 @@ mod tests {
         let left = MeshBounds::from_triangles(&left_points, &triangles);
         let right = MeshBounds::from_triangles(&right_points, &triangles);
 
-        assert_eq!(
-            ExactAabbBroadPhase::new(0).candidate_face_pair_plan_one_shot(&left, &right),
-            ExactAabbBroadPhase::default()
-                .candidate_face_pair_plan(&left.prepare(), &right.prepare())
-        );
-        assert_eq!(
-            ExactAabbBroadPhase::default().candidate_face_pair_plan_one_shot(&left, &right),
-            CandidateFacePairPlan::Quadratic
-        );
+        assert!(!should_use_quadratic_one_shot(
+            left.faces.len(),
+            right.faces.len(),
+            ExactAabbBroadPhase::new(0).one_shot_quadratic_face_pair_limit()
+        ));
+        assert!(should_use_quadratic_one_shot(
+            left.faces.len(),
+            right.faces.len(),
+            ExactAabbBroadPhase::default().one_shot_quadratic_face_pair_limit()
+        ));
     }
 
     #[test]
