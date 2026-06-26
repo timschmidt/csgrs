@@ -5712,29 +5712,29 @@ impl ExactBooleanSupport {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ExactBooleanPreflight {
     /// Requested operation.
-    pub(crate) operation: ExactBooleanOperation,
+    operation: ExactBooleanOperation,
     /// Certified support level for the request.
-    pub(crate) support: ExactBooleanSupport,
+    support: ExactBooleanSupport,
     /// Whether retained graph events contain explicit unknowns.
-    pub(crate) graph_had_unknowns: bool,
+    graph_had_unknowns: bool,
     /// Retained face-pair records after exact broad/narrow scheduling.
-    pub(crate) retained_face_pairs: usize,
+    retained_face_pairs: usize,
     /// Total retained event records across all retained face pairs.
-    pub(crate) retained_events: usize,
+    retained_events: usize,
     /// Number of split-region boundaries produced for classification.
-    pub(crate) region_count: usize,
+    region_count: usize,
     /// Certified classifications of split regions against opposite face
     /// planes.
-    pub(crate) region_classifications: Vec<FaceRegionPlaneClassification>,
+    region_classifications: Vec<FaceRegionPlaneClassification>,
     /// Structured explanation for named operations that are certified enough
     /// to inspect but not yet executable by the selected policy.
-    pub(crate) blocker: Option<ExactBooleanBlocker>,
+    blocker: Option<ExactBooleanBlocker>,
     /// Checked coplanar-overlap evidence retained when preflight stops at a
     /// planar arrangement boundary.
     ///
     /// This keeps positive-area coplanar graph evidence visible to structured
     /// replay instead of flattening it into a generic "unsupported" boolean.
-    pub(crate) coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
+    coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
     /// Source-aware coplanar volumetric-cell evidence retained when the
     /// preflight crosses that exact boundary.
     ///
@@ -5743,7 +5743,7 @@ pub(crate) struct ExactBooleanPreflight {
     /// exact object evidence that authorized a blocker, a no-volume boundary
     /// shortcut, or an arrangement-materialized consumption of coplanar
     /// source-face cells.
-    pub(crate) coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
+    coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 }
 
 /// Closure status for a materialized volumetric boundary-output Boolean.
@@ -6207,6 +6207,101 @@ fn axis_aligned_orthogonal_solid_preflight_matches_sources(
 }
 
 impl ExactBooleanPreflight {
+    /// Build a boolean preflight report from retained exact evidence.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn new(
+        operation: ExactBooleanOperation,
+        support: ExactBooleanSupport,
+        graph_had_unknowns: bool,
+        retained_face_pairs: usize,
+        retained_events: usize,
+        region_count: usize,
+        region_classifications: Vec<FaceRegionPlaneClassification>,
+        blocker: Option<ExactBooleanBlocker>,
+        coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
+        coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
+    ) -> Self {
+        Self {
+            operation,
+            support,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            region_count,
+            region_classifications,
+            blocker,
+            coplanar_arrangement_evidence,
+            coplanar_volumetric_evidence,
+        }
+    }
+
+    /// Return the requested operation.
+    pub(crate) const fn operation(&self) -> ExactBooleanOperation {
+        self.operation
+    }
+
+    /// Return the certified support level.
+    pub(crate) const fn support(&self) -> ExactBooleanSupport {
+        self.support
+    }
+
+    /// Return retained face-pair count.
+    #[cfg(test)]
+    pub(crate) const fn retained_face_pairs(&self) -> usize {
+        self.retained_face_pairs
+    }
+
+    /// Return retained event count.
+    #[cfg(test)]
+    pub(crate) const fn retained_events(&self) -> usize {
+        self.retained_events
+    }
+
+    /// Return retained split-region count.
+    #[cfg(test)]
+    pub(crate) const fn region_count(&self) -> usize {
+        self.region_count
+    }
+
+    /// Return retained split-region classifications.
+    #[cfg(test)]
+    pub(crate) fn region_classifications(&self) -> &[FaceRegionPlaneClassification] {
+        &self.region_classifications
+    }
+
+    /// Return the retained blocker, if present.
+    #[cfg(test)]
+    pub(crate) const fn blocker(&self) -> Option<&ExactBooleanBlocker> {
+        self.blocker.as_ref()
+    }
+
+    /// Return retained coplanar volumetric-cell evidence, if present.
+    pub(crate) fn coplanar_volumetric_evidence(
+        &self,
+    ) -> Option<&CoplanarVolumetricCellEvidenceReport> {
+        self.coplanar_volumetric_evidence.as_ref()
+    }
+
+    /// Return this preflight report with a replacement support level.
+    #[cfg(test)]
+    pub(crate) fn with_support(mut self, support: ExactBooleanSupport) -> Self {
+        self.support = support;
+        self
+    }
+
+    /// Return this preflight report after perturbing retained coplanar volumetric evidence.
+    #[cfg(test)]
+    pub(crate) fn with_coplanar_volumetric_retained_face_pair_count(
+        mut self,
+        retained_face_pair_count: usize,
+    ) -> Self {
+        self.coplanar_volumetric_evidence
+            .as_mut()
+            .expect("preflight should retain coplanar volumetric evidence")
+            .retained_face_pair_count = retained_face_pair_count;
+        self
+    }
+
     /// Returns whether this preflight has certified support for materializing
     /// the requested operation under the policy used to produce the report.
     pub(crate) fn is_certified(&self) -> bool {

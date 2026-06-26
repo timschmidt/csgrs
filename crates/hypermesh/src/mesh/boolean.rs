@@ -274,17 +274,17 @@ fn exact_boolean_evaluation_for_replay_result_with_materialization(
         &shortcut_facts,
         regularized_attempt.as_ref(),
     )?;
-    let certified_by_coplanar_boundary_closure = preflight.support
+    let certified_by_coplanar_boundary_closure = preflight.support()
         == ExactBooleanSupport::CertifiedArrangementCellComplex
         && request.validation == ExactMeshValidationPolicy::CLOSED
-        && preflight.coplanar_volumetric_evidence.is_some();
-    let certified_by_orthogonal_cell_materialization = preflight.support
+        && preflight.coplanar_volumetric_evidence().is_some();
+    let certified_by_orthogonal_cell_materialization = preflight.support()
         == ExactBooleanSupport::CertifiedArrangementCellComplex
         && orthogonal_solid_cell_materializes_for_preflight(left, right, request.operation)?;
     let should_replay_arrangement = !certified_by_coplanar_boundary_closure
         && !certified_by_orthogonal_cell_materialization
         && matches!(
-            preflight.support,
+            preflight.support(),
             ExactBooleanSupport::CertifiedArrangementCellComplex
                 | ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
                 | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
@@ -294,7 +294,7 @@ fn exact_boolean_evaluation_for_replay_result_with_materialization(
             && !certified_by_orthogonal_cell_materialization
             && !graph.face_pairs.is_empty()
             && matches!(
-                preflight.support,
+                preflight.support(),
                 ExactBooleanSupport::CertifiedConvexUnion
                     | ExactBooleanSupport::CertifiedConvexIntersection
                     | ExactBooleanSupport::CertifiedConvexDifference
@@ -330,12 +330,15 @@ fn exact_boolean_evaluation_for_replay_result_with_materialization(
         &source_facts,
     )?;
     let result = if materialize_result && preflight.is_certified() {
-        if matches!(preflight.support, ExactBooleanSupport::SelectedRegionPolicy) {
+        if matches!(
+            preflight.support(),
+            ExactBooleanSupport::SelectedRegionPolicy
+        ) {
             try_materialize_certified_boolean_support_with_artifacts(
                 left,
                 right,
                 request,
-                preflight.support,
+                preflight.support(),
                 Some(&graph),
                 regularized_arrangement.as_ref(),
                 regularized_attempt.as_ref(),
@@ -348,7 +351,7 @@ fn exact_boolean_evaluation_for_replay_result_with_materialization(
                 left,
                 right,
                 request,
-                preflight.support,
+                preflight.support(),
                 Some(&graph),
                 regularized_arrangement.as_ref(),
                 regularized_attempt.as_ref(),
@@ -484,7 +487,7 @@ fn exact_boolean_replay_preflight(
         retained_attempt,
         shortcut_facts,
     )?;
-    if graph_preflight.operation != request.operation {
+    if graph_preflight.operation() != request.operation {
         return Err(exact_boolean_replay_report_error(
             ExactReportValidationError::StatusEvidenceMismatch,
         ));
@@ -493,7 +496,7 @@ fn exact_boolean_replay_preflight(
         .validate()
         .map_err(exact_boolean_replay_report_error)?;
     if matches!(
-        graph_preflight.support,
+        graph_preflight.support(),
         ExactBooleanSupport::CertifiedEmptyOperand
             | ExactBooleanSupport::CertifiedBoundsDisjoint
             | ExactBooleanSupport::CertifiedIdentical
@@ -504,7 +507,7 @@ fn exact_boolean_replay_preflight(
             | ExactBooleanSupport::CertifiedConvexSeparated
             | ExactBooleanSupport::CertifiedConvexContainment
     ) || (matches!(
-        graph_preflight.support,
+        graph_preflight.support(),
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
@@ -1831,36 +1834,36 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     let relation_counts = retained_graph_counts(graph);
     let mut certified_arrangement_preflight = None;
     if graph_had_unknowns || relation_counts.construction_failed_events() > 0 {
-        return Ok(ExactBooleanPreflight {
+        return Ok(ExactBooleanPreflight::new(
             operation,
-            support: ExactBooleanSupport::UnresolvedGraph,
+            ExactBooleanSupport::UnresolvedGraph,
             graph_had_unknowns,
             retained_face_pairs,
             retained_events,
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: Some(relation_counts.into_blocker(ExactBooleanBlockerKind::Refinement)),
-            coplanar_arrangement_evidence: None,
-            coplanar_volumetric_evidence: None,
-        });
+            0,
+            Vec::new(),
+            Some(relation_counts.into_blocker(ExactBooleanBlockerKind::Refinement)),
+            None,
+            None,
+        ));
     }
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         let geometry = graph.face_split_geometry_plan(left, right)?;
         let region_plan = geometry.region_plan(left, right);
         let region_classifications =
             checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
-        return Ok(ExactBooleanPreflight {
+        return Ok(ExactBooleanPreflight::new(
             operation,
-            support: ExactBooleanSupport::SelectedRegionPolicy,
+            ExactBooleanSupport::SelectedRegionPolicy,
             graph_had_unknowns,
             retained_face_pairs,
             retained_events,
-            region_count: region_plan.regions.len(),
+            region_plan.regions.len(),
             region_classifications,
-            blocker: None,
-            coplanar_arrangement_evidence: None,
-            coplanar_volumetric_evidence: None,
-        });
+            None,
+            None,
+            None,
+        ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
@@ -2132,7 +2135,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             .flatten()
     {
         let region_count = unique_classified_region_count(&region_classifications);
-        return Ok(ExactBooleanPreflight {
+        return Ok(ExactBooleanPreflight::new(
             operation,
             support,
             graph_had_unknowns,
@@ -2140,27 +2143,27 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             retained_events,
             region_count,
             region_classifications,
-            blocker: None,
-            coplanar_arrangement_evidence: None,
-            coplanar_volumetric_evidence: None,
-        });
+            None,
+            None,
+            None,
+        ));
     }
     let boundary_report = boundary_touching_report_from_graph(graph, left, right).ok();
     if let Some(boundary_report) = boundary_report
         && boundary_report.is_certified()
     {
-        return Ok(ExactBooleanPreflight {
+        return Ok(ExactBooleanPreflight::new(
             operation,
-            support: ExactBooleanSupport::RequiresBoundaryPolicy,
-            graph_had_unknowns: boundary_report.graph_had_unknowns(),
-            retained_face_pairs: boundary_report.retained_face_pairs(),
-            retained_events: boundary_report.retained_events(),
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: Some(*boundary_report.blocker()),
-            coplanar_arrangement_evidence: None,
-            coplanar_volumetric_evidence: None,
-        });
+            ExactBooleanSupport::RequiresBoundaryPolicy,
+            boundary_report.graph_had_unknowns(),
+            boundary_report.retained_face_pairs(),
+            boundary_report.retained_events(),
+            0,
+            Vec::new(),
+            Some(*boundary_report.blocker()),
+            None,
+            None,
+        ));
     }
     let planar_report = planar_arrangement_report_from_graph(graph, left, right, operation).ok();
     if let Some(planar_report) = planar_report.as_ref()
@@ -2177,18 +2180,18 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         )? {
             return Ok(preflight);
         }
-        return Ok(ExactBooleanPreflight {
+        return Ok(ExactBooleanPreflight::new(
             operation,
-            support: ExactBooleanSupport::RequiresPlanarArrangement,
-            graph_had_unknowns: planar_report.graph_had_unknowns(),
-            retained_face_pairs: planar_report.retained_face_pairs(),
-            retained_events: planar_report.retained_events(),
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: Some(*planar_report.blocker()),
-            coplanar_arrangement_evidence: planar_report.coplanar_arrangement_evidence().cloned(),
-            coplanar_volumetric_evidence: None,
-        });
+            ExactBooleanSupport::RequiresPlanarArrangement,
+            planar_report.graph_had_unknowns(),
+            planar_report.retained_face_pairs(),
+            planar_report.retained_events(),
+            0,
+            Vec::new(),
+            Some(*planar_report.blocker()),
+            planar_report.coplanar_arrangement_evidence().cloned(),
+            None,
+        ));
     }
     if planar_report
         .as_ref()
@@ -2295,36 +2298,32 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             return Ok(winding_evidence
                 .into_preflight(ExactBooleanSupport::RequiresCertifiedWinding, true));
         }
-        return Ok(ExactBooleanPreflight {
+        return Ok(ExactBooleanPreflight::new(
             operation,
-            support: ExactBooleanSupport::RequiresCoplanarVolumetricCells,
+            ExactBooleanSupport::RequiresCoplanarVolumetricCells,
             graph_had_unknowns,
             retained_face_pairs,
             retained_events,
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: Some(
-                relation_counts.into_blocker(ExactBooleanBlockerKind::CoplanarVolumetricCells),
-            ),
-            coplanar_arrangement_evidence: None,
-            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
-                graph, left, right,
-            ),
-        });
+            0,
+            Vec::new(),
+            Some(relation_counts.into_blocker(ExactBooleanBlockerKind::CoplanarVolumetricCells)),
+            None,
+            coplanar_volumetric_evidence_if_required(graph, left, right),
+        ));
     }
     if support == ExactBooleanSupport::RequiresBoundaryPolicy {
-        return Ok(ExactBooleanPreflight {
+        return Ok(ExactBooleanPreflight::new(
             operation,
             support,
             graph_had_unknowns,
             retained_face_pairs,
             retained_events,
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: Some(relation_counts.into_blocker(ExactBooleanBlockerKind::BoundaryPolicy)),
-            coplanar_arrangement_evidence: None,
-            coplanar_volumetric_evidence: None,
-        });
+            0,
+            Vec::new(),
+            Some(relation_counts.into_blocker(ExactBooleanBlockerKind::BoundaryPolicy)),
+            None,
+            None,
+        ));
     }
 
     let winding_report = match winding_evidence_report_from_graph(graph, left, right, operation) {
@@ -2334,20 +2333,18 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             let region_plan = geometry.region_plan(left, right);
             let region_classifications =
                 checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
-            return Ok(ExactBooleanPreflight {
+            return Ok(ExactBooleanPreflight::new(
                 operation,
                 support,
                 graph_had_unknowns,
                 retained_face_pairs,
                 retained_events,
-                region_count: region_plan.regions.len(),
+                region_plan.regions.len(),
                 region_classifications,
-                blocker: Some(relation_counts.into_blocker(ExactBooleanBlockerKind::Winding)),
-                coplanar_arrangement_evidence: None,
-                coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
-                    graph, left, right,
-                ),
-            });
+                Some(relation_counts.into_blocker(ExactBooleanBlockerKind::Winding)),
+                None,
+                coplanar_volumetric_evidence_if_required(graph, left, right),
+            ));
         }
     };
     if winding_report
@@ -2431,7 +2428,7 @@ pub(crate) fn preflight_boolean_exact_request_from_graph_with_retained_attempt(
     }
     if boundary_policy != ExactBoundaryBooleanPolicy::Reject
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && !preflight.support.is_certified()
+        && !preflight.support().is_certified()
         && boolean_boundary_touching_meshes_from_graph(
             graph,
             left,
@@ -2452,7 +2449,7 @@ pub(crate) fn preflight_boolean_exact_request_from_graph_with_retained_attempt(
     if validation != ExactMeshValidationPolicy::CLOSED
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && matches!(
-            preflight.support,
+            preflight.support(),
             ExactBooleanSupport::RequiresCertifiedWinding
                 | ExactBooleanSupport::RequiresCoplanarVolumetricCells
         )
@@ -2470,7 +2467,7 @@ pub(crate) fn preflight_boolean_exact_request_from_graph_with_retained_attempt(
     }
     if boundary_policy == ExactBoundaryBooleanPolicy::Reject
         || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || preflight.support != ExactBooleanSupport::RequiresBoundaryPolicy
+        || preflight.support() != ExactBooleanSupport::RequiresBoundaryPolicy
     {
         return Ok(preflight);
     }
@@ -2810,18 +2807,18 @@ fn certified_preflight(
                 graph.event_count(),
             )
         });
-    ExactBooleanPreflight {
+    ExactBooleanPreflight::new(
         operation,
         support,
         graph_had_unknowns,
         retained_face_pairs,
         retained_events,
-        region_count: 0,
-        region_classifications: Vec::new(),
-        blocker: None,
-        coplanar_arrangement_evidence: None,
+        0,
+        Vec::new(),
+        None,
+        None,
         coplanar_volumetric_evidence,
-    }
+    )
 }
 
 fn certified_arrangement_cell_complex_coplanar_evidence(

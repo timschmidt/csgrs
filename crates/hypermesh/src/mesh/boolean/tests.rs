@@ -510,11 +510,11 @@ fn open_surface_disjoint_preflight_prefers_specific_support_over_cell_complex() 
     );
     let preflight = test_preflight(request, &left, &right);
     assert_eq!(
-        preflight.support,
+        preflight.support(),
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
         "{preflight:?}"
     );
-    assert!(preflight.blocker.is_none(), "{preflight:?}");
+    assert!(preflight.blocker().is_none(), "{preflight:?}");
     preflight.validate().unwrap();
     preflight
         .validate_against_sources_for_request(&left, &right, request)
@@ -522,7 +522,7 @@ fn open_surface_disjoint_preflight_prefers_specific_support_over_cell_complex() 
 
     with_test_evaluation(request, &left, &right, |evaluation| {
         assert_eq!(
-            evaluation.preflight().support,
+            evaluation.preflight().support(),
             ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
             "{evaluation:?}"
         );
@@ -1174,11 +1174,11 @@ fn coplanar_overlay_certifies_component_holed_contact_difference() {
     );
     let preflight = test_preflight(request, &left, &opening_plus_hole);
     assert_eq!(
-        preflight.support,
+        preflight.support(),
         ExactBooleanSupport::CertifiedArrangementCellComplex,
         "{preflight:?}"
     );
-    assert!(preflight.blocker.is_none(), "{preflight:?}");
+    assert!(preflight.blocker().is_none(), "{preflight:?}");
     preflight
         .validate_against_sources_for_request(&left, &opening_plus_hole, request)
         .unwrap();
@@ -1343,12 +1343,12 @@ fn materialized_arrangement_preflight_probe_certifies_full_pipeline_output() {
         .validate_against_sources_for_request(&left, &right, request)
         .unwrap();
     assert_eq!(
-        preflight.support,
+        preflight.support(),
         ExactBooleanSupport::CertifiedArrangementCellComplex
     );
-    assert!(preflight.blocker.is_none());
-    assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
-    assert_eq!(preflight.retained_events, graph.event_count());
+    assert!(preflight.blocker().is_none());
+    assert_eq!(preflight.retained_face_pairs(), graph.face_pairs.len());
+    assert_eq!(preflight.retained_events(), graph.event_count());
 
     let materialized = materialize_axis_aligned_orthogonal_solid_cell_output(
         &left,
@@ -1423,17 +1423,17 @@ fn axis_aligned_orthogonal_cell_booleans_materialize_from_shortcut_support() {
             ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY);
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(
-            preflight.support,
+            preflight.support(),
             ExactBooleanSupport::CertifiedArrangementCellComplex,
             "{operation:?}: {preflight:?}"
         );
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
-        let mut stale_preflight = preflight.clone();
-        stale_preflight
-            .coplanar_volumetric_evidence
-            .as_mut()
-            .expect("orthogonal overlap should retain consumed coplanar-cell evidence")
-            .retained_face_pair_count += 1;
+        assert!(
+            preflight.blocker().is_none(),
+            "{operation:?}: {preflight:?}"
+        );
+        let stale_preflight = preflight
+            .clone()
+            .with_coplanar_volumetric_retained_face_pair_count(preflight.retained_face_pairs() + 1);
         assert!(
             stale_preflight.validate().is_err(),
             "{operation:?}: {stale_preflight:?}"
@@ -1596,11 +1596,14 @@ fn affine_box_booleans_materialize_from_certified_preflight_support() {
             ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY);
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(
-            preflight.support,
+            preflight.support(),
             ExactBooleanSupport::CertifiedArrangementCellComplex,
             "{operation:?}: {preflight:?}"
         );
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+        assert!(
+            preflight.blocker().is_none(),
+            "{operation:?}: {preflight:?}"
+        );
 
         let result = test_materialized_result(
             ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::CLOSED),
@@ -1647,11 +1650,11 @@ fn affine_empty_intersection_materializes_without_winding_fallback() {
     );
     let preflight = test_preflight(request, &left, &right);
     assert_eq!(
-        preflight.support,
+        preflight.support(),
         ExactBooleanSupport::CertifiedArrangementCellComplex,
         "{preflight:?}"
     );
-    assert!(preflight.blocker.is_none(), "{preflight:?}");
+    assert!(preflight.blocker().is_none(), "{preflight:?}");
 
     let result = test_materialized_result(
         ExactBooleanRequest::new(
@@ -1680,7 +1683,7 @@ fn affine_shortcut_winding_report_retains_already_materialized_status() {
             ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY);
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(
-            preflight.support,
+            preflight.support(),
             ExactBooleanSupport::CertifiedArrangementCellComplex,
             "{operation:?}: {preflight:?}"
         );
@@ -1914,8 +1917,11 @@ fn trivial_shortcuts_report_materialized_evidence() {
             let request =
                 ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY);
             let preflight = test_preflight(request, left, right);
-            assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
-            assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+            assert_eq!(preflight.support(), support, "{operation:?}: {preflight:?}");
+            assert!(
+                preflight.blocker().is_none(),
+                "{operation:?}: {preflight:?}"
+            );
 
             let evidence = test_winding_evidence(
                 ExactBooleanRequest::with_boundary_policy(
@@ -1987,11 +1993,14 @@ fn graph_empty_containment_routes_named_booleans_through_arrangement_pipeline() 
                 ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY);
             let preflight = test_preflight(request, left, right);
             assert_eq!(
-                preflight.support,
+                preflight.support(),
                 ExactBooleanSupport::CertifiedArrangementCellComplex,
                 "{right_inside_left:?} {operation:?}: {preflight:?}"
             );
-            assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+            assert!(
+                preflight.blocker().is_none(),
+                "{operation:?}: {preflight:?}"
+            );
             preflight.validate().unwrap();
             preflight
                 .validate_against_sources_for_request(left, right, request)
@@ -2109,11 +2118,14 @@ fn graph_empty_closed_winding_separation_materializes_without_bounds_disjointnes
             ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY);
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(
-            preflight.support,
+            preflight.support(),
             ExactBooleanSupport::CertifiedClosedWindingSeparated,
             "{operation:?}: {preflight:?}"
         );
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+        assert!(
+            preflight.blocker().is_none(),
+            "{operation:?}: {preflight:?}"
+        );
         preflight.validate().unwrap();
         preflight
             .validate_against_sources_for_request(&left, &right, request)
@@ -2215,11 +2227,14 @@ fn mixed_dimensional_regularized_solid_reports_materialized_evidence() {
                 right,
             );
             assert_eq!(
-                preflight.support,
+                preflight.support(),
                 ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid,
                 "{operation:?}: {preflight:?}"
             );
-            assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+            assert!(
+                preflight.blocker().is_none(),
+                "{operation:?}: {preflight:?}"
+            );
 
             let evidence = test_winding_evidence(
                 ExactBooleanRequest::with_boundary_policy(
@@ -2397,11 +2412,11 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
     );
     let preflight = test_preflight(reject_closed_request, &left, &right);
     assert_eq!(
-        preflight.support,
+        preflight.support(),
         ExactBooleanSupport::RequiresCertifiedWinding,
         "{preflight:?}"
     );
-    assert!(preflight.blocker.is_some(), "{preflight:?}");
+    assert!(preflight.blocker().is_some(), "{preflight:?}");
     preflight.validate().unwrap();
     preflight
         .validate_against_sources_for_request(&left, &right, reject_closed_request)
@@ -2447,19 +2462,19 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
         &right,
     );
     assert_eq!(
-        boundary_preflight.support,
+        boundary_preflight.support(),
         ExactBooleanSupport::CertifiedArrangementCellComplex,
         "{boundary_preflight:?}"
     );
     assert!(
-        boundary_preflight.blocker.is_none(),
+        boundary_preflight.blocker().is_none(),
         "{boundary_preflight:?}"
     );
     assert_eq!(
-        boundary_preflight.retained_face_pairs,
+        boundary_preflight.retained_face_pairs(),
         graph.face_pairs.len()
     );
-    assert_eq!(boundary_preflight.retained_events, graph.event_count());
+    assert_eq!(boundary_preflight.retained_events(), graph.event_count());
     boundary_preflight.validate().unwrap();
     boundary_preflight
         .validate_against_sources_for_request(
@@ -2654,11 +2669,14 @@ fn volumetric_coplanar_boundary_closure_materializes_closed_output() {
             ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY);
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(
-            preflight.support,
+            preflight.support(),
             ExactBooleanSupport::CertifiedArrangementCellComplex,
             "{operation:?}: {preflight:?}"
         );
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+        assert!(
+            preflight.blocker().is_none(),
+            "{operation:?}: {preflight:?}"
+        );
         preflight.validate().unwrap();
         preflight
             .validate_against_sources_for_request(&left, &right, request)
@@ -2788,7 +2806,7 @@ fn arrangement_preflight_probe_keeps_boundary_valid_open_output_separate() {
         let preflight = test_preflight(request, &left, &right);
         assert!(
             matches!(
-                preflight.support,
+                preflight.support(),
                 ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
                     | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
             ),
@@ -3292,11 +3310,15 @@ fn crossing_open_surface_boolean_materializes_inside_arrangement_attempt() {
             ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY);
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(
-            preflight.support, expected_support,
+            preflight.support(),
+            expected_support,
             "{operation:?}: {preflight:?}"
         );
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
-        assert!(preflight.region_count > 0, "{operation:?}: {preflight:?}");
+        assert!(
+            preflight.blocker().is_none(),
+            "{operation:?}: {preflight:?}"
+        );
+        assert!(preflight.region_count() > 0, "{operation:?}: {preflight:?}");
         assert!(preflight.validate().is_ok(), "{operation:?}: {preflight:?}");
         preflight
             .validate_against_sources_for_request(&left, &right, request)
@@ -3321,10 +3343,10 @@ fn crossing_open_surface_boolean_materializes_inside_arrangement_attempt() {
             ExactBooleanBlockerKind::Winding,
             "{operation:?}: {evidence:?}"
         );
-        assert_eq!(evidence.region_count(), preflight.region_count);
+        assert_eq!(evidence.region_count(), preflight.region_count());
         assert_eq!(
             evidence.region_classifications(),
-            preflight.region_classifications.as_slice()
+            preflight.region_classifications()
         );
         assert!(evidence.status().is_already_materialized());
         assert!(!evidence.status().materializes_arrangement_cell_complex());
@@ -3454,11 +3476,11 @@ fn partial_face_boundary_touch_is_regularized_without_coplanar_cell_blocker() {
     );
     let intersection = test_preflight(intersection_request, &left, &right);
     assert_eq!(
-        intersection.support,
+        intersection.support(),
         ExactBooleanSupport::CertifiedArrangementCellComplex
     );
-    assert!(intersection.retained_face_pairs > 0, "{intersection:?}");
-    assert!(intersection.blocker.is_none());
+    assert!(intersection.retained_face_pairs() > 0, "{intersection:?}");
+    assert!(intersection.blocker().is_none());
     intersection.validate().unwrap();
     intersection
         .validate_against_sources_for_request(&left, &right, intersection_request)
@@ -3470,11 +3492,11 @@ fn partial_face_boundary_touch_is_regularized_without_coplanar_cell_blocker() {
     );
     let difference = test_preflight(difference_request, &left, &right);
     assert_eq!(
-        difference.support,
+        difference.support(),
         ExactBooleanSupport::CertifiedArrangementCellComplex
     );
-    assert!(difference.retained_face_pairs > 0, "{difference:?}");
-    assert!(difference.blocker.is_none());
+    assert!(difference.retained_face_pairs() > 0, "{difference:?}");
+    assert!(difference.blocker().is_none());
     difference.validate().unwrap();
     difference
         .validate_against_sources_for_request(&left, &right, difference_request)
@@ -3534,12 +3556,17 @@ fn nested_closed_shell_booleans_materialize_through_arrangement_pipeline() {
             ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY);
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(
-            preflight.support, expected_support,
+            preflight.support(),
+            expected_support,
             "{operation:?}: {preflight:?}"
         );
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+        assert!(
+            preflight.blocker().is_none(),
+            "{operation:?}: {preflight:?}"
+        );
         assert_eq!(
-            preflight.retained_face_pairs, 0,
+            preflight.retained_face_pairs(),
+            0,
             "{operation:?}: {preflight:?}"
         );
 
@@ -3632,11 +3659,11 @@ fn closed_boundary_touching_union_materializes_without_shortcut_through_arrangem
         &right,
     );
     assert_eq!(
-        preflight.support,
+        preflight.support(),
         ExactBooleanSupport::CertifiedArrangementCellComplex,
         "{preflight:?}"
     );
-    assert!(preflight.blocker.is_none(), "{preflight:?}");
+    assert!(preflight.blocker().is_none(), "{preflight:?}");
 
     let attempt = test_arrangement_attempt(
         ExactBooleanRequest::new(
@@ -3678,11 +3705,14 @@ fn boundary_touching_orthogonal_shortcuts_report_materialized_evidence() {
             ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY);
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(
-            preflight.support,
+            preflight.support(),
             ExactBooleanSupport::CertifiedArrangementCellComplex,
             "{operation:?}: {preflight:?}"
         );
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+        assert!(
+            preflight.blocker().is_none(),
+            "{operation:?}: {preflight:?}"
+        );
 
         let evidence = test_winding_evidence(
             ExactBooleanRequest::with_boundary_policy(
@@ -3770,8 +3800,11 @@ fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
         let request =
             ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY);
         let preflight = test_preflight(request, &left, &right);
-        assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+        assert_eq!(preflight.support(), support, "{operation:?}: {preflight:?}");
+        assert!(
+            preflight.blocker().is_none(),
+            "{operation:?}: {preflight:?}"
+        );
         preflight.validate().unwrap();
         preflight
             .validate_against_sources_for_request(&left, &right, request)
@@ -3876,14 +3909,15 @@ fn boundary_attached_contained_tetrahedron_difference_materializes() {
         &right,
     );
     assert_eq!(
-        preflight.support,
+        preflight.support(),
         ExactBooleanSupport::CertifiedArrangementCellComplex
     );
-    assert!(preflight.blocker.is_none(), "{preflight:?}");
-    assert!(preflight.retained_face_pairs > 0, "{preflight:?}");
-    assert!(preflight.retained_events > 0, "{preflight:?}");
-    let mut relabeled_preflight = preflight.clone();
-    relabeled_preflight.support = ExactBooleanSupport::CertifiedConvexDifference;
+    assert!(preflight.blocker().is_none(), "{preflight:?}");
+    assert!(preflight.retained_face_pairs() > 0, "{preflight:?}");
+    assert!(preflight.retained_events() > 0, "{preflight:?}");
+    let relabeled_preflight = preflight
+        .clone()
+        .with_support(ExactBooleanSupport::CertifiedConvexDifference);
     assert!(relabeled_preflight.validate().is_err());
     let evidence = test_winding_evidence(
         ExactBooleanRequest::with_boundary_policy(
@@ -3956,13 +3990,16 @@ fn noncoplanar_convex_report_cases_retain_graph_counts() {
             ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY);
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(
-            preflight.support,
+            preflight.support(),
             ExactBooleanSupport::CertifiedArrangementCellComplex,
             "{operation:?}: {preflight:?}"
         );
-        assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
-        assert_eq!(preflight.retained_events, graph.event_count());
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+        assert_eq!(preflight.retained_face_pairs(), graph.face_pairs.len());
+        assert_eq!(preflight.retained_events(), graph.event_count());
+        assert!(
+            preflight.blocker().is_none(),
+            "{operation:?}: {preflight:?}"
+        );
         preflight.validate().unwrap();
         preflight
             .validate_against_sources_for_request(&left, &right, request)
@@ -4035,16 +4072,20 @@ fn straddling_coplanar_crossing_tetrahedron_boundary_attempt_materializes() {
             &right,
         );
         assert_eq!(
-            preflight.support, expected_support,
-            "{operation:?}: {preflight:?}"
-        );
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
-        assert!(
-            preflight.retained_face_pairs > 0,
+            preflight.support(),
+            expected_support,
             "{operation:?}: {preflight:?}"
         );
         assert!(
-            preflight.retained_events > 0,
+            preflight.blocker().is_none(),
+            "{operation:?}: {preflight:?}"
+        );
+        assert!(
+            preflight.retained_face_pairs() > 0,
+            "{operation:?}: {preflight:?}"
+        );
+        assert!(
+            preflight.retained_events() > 0,
             "{operation:?}: {preflight:?}"
         );
 
@@ -4327,7 +4368,7 @@ fn closed_identical_solids_route_through_arrangement_pipeline() {
         &right,
     );
     assert_eq!(
-        preflight.support,
+        preflight.support(),
         ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
@@ -4410,7 +4451,7 @@ fn closed_same_surface_solids_route_through_arrangement_pipeline() {
         &right,
     );
     assert_eq!(
-        preflight.support,
+        preflight.support(),
         ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
@@ -4590,7 +4631,7 @@ fn open_same_surface_sheets_remain_certified() {
             &right,
         );
         assert_eq!(
-            preflight.support,
+            preflight.support(),
             ExactBooleanSupport::CertifiedSameSurface,
             "{operation:?}: {preflight:?}"
         );
@@ -4662,7 +4703,7 @@ fn open_identical_sheets_keep_identity_shortcut() {
         &left,
         &right,
     );
-    assert_eq!(preflight.support, ExactBooleanSupport::CertifiedIdentical);
+    assert_eq!(preflight.support(), ExactBooleanSupport::CertifiedIdentical);
     let evidence = test_winding_evidence(
         ExactBooleanRequest::with_boundary_policy(
             ExactBooleanOperation::Union,
@@ -4732,10 +4773,10 @@ fn graph_backed_early_shortcuts_retain_graph_counts() {
             &left,
             &right,
         );
-        assert_eq!(preflight.support, expected_support, "{preflight:?}");
-        assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
-        assert_eq!(preflight.retained_events, graph.event_count());
-        assert!(preflight.blocker.is_none(), "{preflight:?}");
+        assert_eq!(preflight.support(), expected_support, "{preflight:?}");
+        assert_eq!(preflight.retained_face_pairs(), graph.face_pairs.len());
+        assert_eq!(preflight.retained_events(), graph.event_count());
+        assert!(preflight.blocker().is_none(), "{preflight:?}");
         preflight.validate().unwrap();
         preflight
             .validate_against_sources_for_request(
@@ -4841,13 +4882,13 @@ fn coplanar_overlay_regularizes_nonconvex_boundary_touch_intersection_to_empty()
     );
     let preflight = test_preflight(request, &left, &right);
     assert_eq!(
-        preflight.support,
+        preflight.support(),
         ExactBooleanSupport::CertifiedArrangementCellComplex,
         "{preflight:?}"
     );
-    assert!(preflight.blocker.is_none(), "{preflight:?}");
-    assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
-    assert_eq!(preflight.retained_events, graph.event_count());
+    assert!(preflight.blocker().is_none(), "{preflight:?}");
+    assert_eq!(preflight.retained_face_pairs(), graph.face_pairs.len());
+    assert_eq!(preflight.retained_events(), graph.event_count());
     preflight
         .validate_against_sources_for_request(&left, &right, request)
         .unwrap();
