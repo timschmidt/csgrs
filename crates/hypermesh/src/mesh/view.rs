@@ -96,7 +96,6 @@ pub struct PreparedMeshPair<'left, 'right> {
 #[derive(Debug, Default)]
 struct PreparedMeshPairResultCache {
     result: RefCell<Option<Result<ExactMesh, ExactMeshError>>>,
-    outcome: RefCell<Option<PreparedMeshPairResultOutcome>>,
 }
 
 impl PreparedMeshPairResultCache {
@@ -105,13 +104,11 @@ impl PreparedMeshPairResultCache {
     }
 
     fn retain(&self, result: &Result<ExactMesh, ExactMeshError>) {
-        *self.outcome.borrow_mut() = Some(PreparedMeshPairResultOutcome::from_result(result));
         *self.result.borrow_mut() = Some(result.clone());
     }
 
     fn clear(&self) {
         *self.result.borrow_mut() = None;
-        *self.outcome.borrow_mut() = None;
     }
 
     fn state(&self, sources_current: bool) -> PreparedMeshPairFactState {
@@ -120,10 +117,6 @@ impl PreparedMeshPairResultCache {
 
     fn has_retained(&self) -> bool {
         self.result.borrow().is_some()
-    }
-
-    fn retained_outcome(&self) -> Option<PreparedMeshPairResultOutcome> {
-        *self.outcome.borrow()
     }
 }
 
@@ -168,13 +161,9 @@ pub struct PreparedMeshPairCacheStatus {
     arrangement: PreparedMeshPairFactState,
     arrangement_shortcut_facts: PreparedMeshPairFactState,
     union_result: PreparedMeshPairFactState,
-    union_result_outcome: Option<PreparedMeshPairResultOutcome>,
     intersection_result: PreparedMeshPairFactState,
-    intersection_result_outcome: Option<PreparedMeshPairResultOutcome>,
     difference_result: PreparedMeshPairFactState,
-    difference_result_outcome: Option<PreparedMeshPairResultOutcome>,
     xor_result: PreparedMeshPairFactState,
-    xor_result_outcome: Option<PreparedMeshPairResultOutcome>,
 }
 
 /// Compact source/freshness stamp for retained exact mesh facts.
@@ -512,72 +501,6 @@ impl PreparedMeshPairSweepDirection {
     }
 }
 
-/// Retained outcome summary for a prepared named boolean result.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum PreparedMeshPairResultOutcome {
-    /// The retained result is an exact mesh with retained construction facts.
-    Mesh {
-        /// Output vertex count.
-        vertices: usize,
-        /// Output triangle count.
-        triangles: usize,
-    },
-    /// The retained result is a typed exact blocker set.
-    Blocked {
-        /// Number of retained blockers.
-        blockers: usize,
-        /// First retained blocker kind, when the error carried at least one blocker.
-        first_blocker: Option<ExactMeshBlockerKind>,
-    },
-}
-
-impl PreparedMeshPairResultOutcome {
-    /// Return the retained output vertex count, when the result is a mesh.
-    pub const fn vertex_count(self) -> Option<usize> {
-        match self {
-            Self::Mesh { vertices, .. } => Some(vertices),
-            Self::Blocked { .. } => None,
-        }
-    }
-
-    /// Return the retained output triangle count, when the result is a mesh.
-    pub const fn triangle_count(self) -> Option<usize> {
-        match self {
-            Self::Mesh { triangles, .. } => Some(triangles),
-            Self::Blocked { .. } => None,
-        }
-    }
-
-    /// Return the retained blocker count, when the result is blocked.
-    pub const fn blocker_count(self) -> Option<usize> {
-        match self {
-            Self::Mesh { .. } => None,
-            Self::Blocked { blockers, .. } => Some(blockers),
-        }
-    }
-
-    /// Return the first retained blocker kind, when the result is blocked.
-    pub const fn first_blocker_kind(self) -> Option<ExactMeshBlockerKind> {
-        match self {
-            Self::Mesh { .. } => None,
-            Self::Blocked { first_blocker, .. } => first_blocker,
-        }
-    }
-
-    fn from_result(result: &Result<ExactMesh, ExactMeshError>) -> Self {
-        match result {
-            Ok(mesh) => Self::Mesh {
-                vertices: mesh.vertices().len(),
-                triangles: mesh.triangle_count(),
-            },
-            Err(error) => Self::Blocked {
-                blockers: error.blockers().len(),
-                first_blocker: error.blockers().first().map(ExactMeshBlocker::kind),
-            },
-        }
-    }
-}
-
 /// Certificate state for retained facts inside a prepared mesh-pair session.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PreparedMeshPairFactState {
@@ -757,38 +680,6 @@ impl PreparedMeshPairCacheStatus {
             PreparedMeshPairBoolean::Difference => self.difference_result,
             PreparedMeshPairBoolean::Xor => self.xor_result,
         }
-    }
-
-    /// Return a retained prepared boolean outcome after requiring current evidence.
-    pub fn current_result_outcome(
-        self,
-        operation: PreparedMeshPairBoolean,
-    ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
-        let outcome = match operation {
-            PreparedMeshPairBoolean::Union => self.union_result_outcome,
-            PreparedMeshPairBoolean::Intersection => self.intersection_result_outcome,
-            PreparedMeshPairBoolean::Difference => self.difference_result_outcome,
-            PreparedMeshPairBoolean::Xor => self.xor_result_outcome,
-        };
-        self.current_result_outcome_with_state(self.result(operation), outcome, operation)
-    }
-
-    fn current_result_outcome_with_state(
-        self,
-        state: PreparedMeshPairFactState,
-        outcome: Option<PreparedMeshPairResultOutcome>,
-        operation: PreparedMeshPairBoolean,
-    ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
-        let fact = operation.result_name();
-        state.require_current(fact)?;
-        outcome.ok_or_else(|| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::MissingRequiredEvidence,
-                format!(
-                    "prepared mesh-pair session retained {fact} evidence without an outcome summary"
-                ),
-            ))
-        })
     }
 }
 
@@ -1266,13 +1157,9 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
                 sources_current,
             ),
             union_result: self.union_result.state(sources_current),
-            union_result_outcome: self.union_result.retained_outcome(),
             intersection_result: self.intersection_result.state(sources_current),
-            intersection_result_outcome: self.intersection_result.retained_outcome(),
             difference_result: self.difference_result.state(sources_current),
-            difference_result_outcome: self.difference_result.retained_outcome(),
             xor_result: self.xor_result.state(sources_current),
-            xor_result_outcome: self.xor_result.retained_outcome(),
         }
     }
 
@@ -1557,13 +1444,9 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         }
     }
 
-    /// Retain an exact boolean result or blocker summary for this pair session.
-    pub fn prepare_result(
-        &self,
-        operation: PreparedMeshPairBoolean,
-    ) -> Result<PreparedMeshPairResultOutcome, ExactMeshError> {
-        let _ = self.boolean(operation);
-        self.cache_status().current_result_outcome(operation)
+    /// Retain an exact boolean result or typed blocker for this pair session.
+    pub fn prepare_result(&self, operation: PreparedMeshPairBoolean) -> Result<(), ExactMeshError> {
+        self.boolean(operation).map(|_| ())
     }
 
     /// Return a retained boolean result or cached error without materializing it.
