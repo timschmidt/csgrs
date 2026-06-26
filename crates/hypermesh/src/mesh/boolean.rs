@@ -87,10 +87,10 @@ use evidence::{
     ExactBooleanShortcutKind, ExactBooleanSupport, ExactBoundaryTouchingReport,
     ExactBoundaryTouchingStatus, ExactIdenticalMeshReport, ExactOpenSurfaceDisjointReport,
     ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport, ExactPlanarArrangementStatus,
-    ExactRefinementReport, ExactRefinementStatus, ExactReportValidationError,
-    ExactSameSurfaceReport, ExactTrivialBooleanFacts, ExactVolumetricBoundaryClosureReport,
-    ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
-    meshes_are_certified_bounds_disjoint,
+    ExactRefinementReport, ExactRefinementStatus, ExactRegularizedSolidBooleanFacts,
+    ExactReportValidationError, ExactSameSurfaceReport, ExactTrivialBooleanFacts,
+    ExactVolumetricBoundaryClosureReport, ExactVolumetricBoundaryClosureStatus,
+    ExactWindingEvidenceReport, ExactWindingEvidenceStatus, meshes_are_certified_bounds_disjoint,
 };
 use hyperlimit::SourceProvenance;
 use hyperlimit::{
@@ -2445,46 +2445,6 @@ impl ExactBooleanCertificationSet {
             None => {}
         }
         Ok(())
-    }
-}
-
-/// Replayable source-shape facts for closed regularized-solid shortcut
-/// supports.
-///
-/// These facts retain the exact mesh-topology predicates used to classify
-/// whether an operand contributes closed volume. Empty operands are not
-/// represented as lower-dimensional here because the public dispatcher gives
-/// them distinct empty-operand provenance before regularized-solid shortcuts.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct ExactRegularizedSolidBooleanFacts {
-    /// The left source is a non-empty closed manifold solid.
-    pub(crate) left_closed_solid: bool,
-    /// The right source is a non-empty closed manifold solid.
-    pub(crate) right_closed_solid: bool,
-    /// The left source is a supported non-empty open manifold surface.
-    pub(crate) left_open_surface: bool,
-    /// The right source is a supported non-empty open manifold surface.
-    pub(crate) right_open_surface: bool,
-}
-
-impl ExactRegularizedSolidBooleanFacts {
-    fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
-        Self {
-            left_closed_solid: !left.triangles().is_empty() && left.facts().mesh.closed_manifold,
-            right_closed_solid: !right.triangles().is_empty() && right.facts().mesh.closed_manifold,
-            left_open_surface: mesh_is_open_surface(left),
-            right_open_surface: mesh_is_open_surface(right),
-        }
-    }
-
-    fn validate(&self) -> Result<(), ExactReportValidationError> {
-        if (self.left_closed_solid && self.left_open_surface)
-            || (self.right_closed_solid && self.right_open_surface)
-        {
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
-        } else {
-            Ok(())
-        }
     }
 }
 
