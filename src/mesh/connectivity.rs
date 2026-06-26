@@ -122,10 +122,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let Ok(mesh) = self.to_hypermesh_surface_exact() else {
             return (vertex_map, adjacency);
         };
-        if mesh.validate_retained_state().is_err() {
+        let view = mesh.view();
+        if view.validate_retained_state().is_err() {
             return (vertex_map, adjacency);
         }
-        let view = mesh.view();
         for (index, point) in view.vertices().iter().enumerate() {
             let position = Point3::new(point.x.clone(), point.y.clone(), point.z.clone());
             vertex_map.position_to_index.push((position.clone(), index));
