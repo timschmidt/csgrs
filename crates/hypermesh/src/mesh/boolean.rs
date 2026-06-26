@@ -9419,7 +9419,7 @@ fn winding_evidence_report_from_graph_with_facts(
         }
         if volumetric_classifications
             .iter()
-            .all(|classification| classification.relation.is_materialization_decided())
+            .all(|classification| classification.is_materialization_decided())
         {
             let region_count = unique_classified_region_count(&region_classifications);
             return Ok(winding_evidence_report(
@@ -9666,7 +9666,7 @@ fn materialize_volumetric_winding_region_plan(
 ) -> Result<Option<MaterializedVolumetricWindingRegionPlan>, ExactMeshError> {
     if !volumetric_classifications
         .iter()
-        .all(|classification| classification.relation.is_materialization_decided())
+        .all(|classification| classification.is_materialization_decided())
     {
         return Ok(None);
     }
@@ -9800,11 +9800,10 @@ fn volumetric_retention_for_operation(
     triangle: [usize; 3],
     classifications: &[ExactVolumetricRegionClassification],
 ) -> ExactRegionRetention {
-    let Some(classification) = classifications.iter().find(|classification| {
-        classification.region_side == triangulation.side
-            && classification.region_face == triangulation.face
-            && classification.triangle == triangle
-    }) else {
+    let Some(classification) = classifications
+        .iter()
+        .find(|classification| classification.matches_triangulated_cell(triangulation, triangle))
+    else {
         return ExactRegionRetention::Drop;
     };
     // Boundary cells arise when every exact representative for a source-face
@@ -9815,7 +9814,7 @@ fn volumetric_retention_for_operation(
     // copy and drop the coincident right copy; difference drops coincident
     // boundary cells because the overlapped volume is removed from the left
     // operand and right boundary faces are only used as reversed interior caps.
-    match (operation, triangulation.side, classification.relation) {
+    match (operation, triangulation.side, classification.relation()) {
         (ExactBooleanOperation::Union, _, ExactVolumetricRegionRelation::Outside)
         | (ExactBooleanOperation::Union, MeshSide::Left, ExactVolumetricRegionRelation::Boundary)
         | (ExactBooleanOperation::Intersection, _, ExactVolumetricRegionRelation::Inside)

@@ -67,16 +67,16 @@ impl ExactVolumetricRegionRelation {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ExactVolumetricRegionClassification {
     /// Mesh side owning the split source face.
-    pub(crate) region_side: MeshSide,
+    region_side: MeshSide,
     /// Source face index on [`Self::region_side`].
-    pub(crate) region_face: usize,
+    region_face: usize,
     /// Triangle indices into the retained [`FaceRegionTriangulation`] that
     /// produced [`Self::representative`].
     ///
     /// A single source face can be divided by several exact intersection
     /// segments. Retaining the local triangle handles makes the winding
     /// decision a per-cell certificate instead of a face-wide approximation,
-    pub(crate) triangle: [usize; 3],
+    triangle: [usize; 3],
     /// Exact interior representative point used for winding parity.
     ///
     /// The classifier records the first deterministic barycentric witness that
@@ -84,16 +84,16 @@ pub(crate) struct ExactVolumetricRegionClassification {
     /// boundary/unknown witness only when every candidate remains non-strict.
     /// This avoids treating an unlucky centroid-on-boundary event as a
     /// semantic blocker while keeping the chosen point replayable.
-    pub(crate) representative: Point3,
+    representative: Point3,
     /// Exact barycentric witness that produced [`Self::representative`].
     ///
     /// Retaining the integer weights keeps the representative tied to the
     /// source triangle rather than to an opaque coordinate.
-    pub(crate) representative_witness: ExactTriangleInteriorWitness,
+    representative_witness: ExactTriangleInteriorWitness,
     /// Relation derived from [`Self::winding`].
-    pub(crate) relation: ExactVolumetricRegionRelation,
+    relation: ExactVolumetricRegionRelation,
     /// Exact closed-mesh ray-parity report for [`Self::representative`].
-    pub(crate) winding: PointMeshWindingReport,
+    winding: PointMeshWindingReport,
     /// Ordered exact witness attempts that justify the retained
     /// representative.
     ///
@@ -101,7 +101,7 @@ pub(crate) struct ExactVolumetricRegionClassification {
     /// retry up to the first strict witness. Boundary/unknown classifications
     /// retain the full deterministic witness lattice, proving that no hidden
     /// perturbation was used after all exact candidates remained non-strict.
-    pub(crate) witness_attempts: Vec<ExactVolumetricWitnessAttempt>,
+    witness_attempts: Vec<ExactVolumetricWitnessAttempt>,
 }
 
 /// One exact barycentric representative tried for a volumetric cell.
@@ -114,16 +114,55 @@ pub(crate) struct ExactVolumetricRegionClassification {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ExactVolumetricWitnessAttempt {
     /// Exact barycentric witness used for this attempt.
-    pub(crate) witness: ExactTriangleInteriorWitness,
+    witness: ExactTriangleInteriorWitness,
     /// Exact representative point materialized from [`Self::witness`].
-    pub(crate) representative: Point3,
+    representative: Point3,
     /// Relation derived from [`Self::winding`].
-    pub(crate) relation: ExactVolumetricRegionRelation,
+    relation: ExactVolumetricRegionRelation,
     /// Exact closed-mesh ray-parity report for [`Self::representative`].
-    pub(crate) winding: PointMeshWindingReport,
+    winding: PointMeshWindingReport,
 }
 
 impl ExactVolumetricRegionClassification {
+    /// Mesh side owning the split source cell.
+    pub(crate) const fn region_side(&self) -> MeshSide {
+        self.region_side
+    }
+
+    /// Local triangulation cell classified by this report.
+    pub(crate) const fn triangle(&self) -> [usize; 3] {
+        self.triangle
+    }
+
+    /// Source triangulation cell key classified by this report.
+    pub(crate) const fn cell_key(&self) -> (MeshSide, usize, [usize; 3]) {
+        (self.region_side, self.region_face, self.triangle)
+    }
+
+    /// Exact volumetric relation retained for this source cell.
+    pub(crate) const fn relation(&self) -> ExactVolumetricRegionRelation {
+        self.relation
+    }
+
+    /// Return whether this classification belongs to the triangulated source face.
+    pub(crate) fn matches_triangulation(&self, triangulation: &FaceRegionTriangulation) -> bool {
+        triangulation.side == self.region_side && triangulation.face == self.region_face
+    }
+
+    /// Return whether this classification belongs to the exact triangulated source cell.
+    pub(crate) fn matches_triangulated_cell(
+        &self,
+        triangulation: &FaceRegionTriangulation,
+        triangle: [usize; 3],
+    ) -> bool {
+        self.matches_triangulation(triangulation) && self.triangle == triangle
+    }
+
+    /// Return whether this relation can drive retained cell materialization.
+    pub(crate) const fn is_materialization_decided(&self) -> bool {
+        self.relation.is_materialization_decided()
+    }
+
     /// Validate local consistency between retained representative, relation,
     /// and winding report.
     ///

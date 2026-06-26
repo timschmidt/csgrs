@@ -1656,17 +1656,12 @@ impl ExactBooleanResult {
             classification
                 .validate()
                 .map_err(ExactReportValidationError::InvalidVolumetricClassification)?;
-            let classification_key = (
-                classification.region_side,
-                classification.region_face,
-                classification.triangle,
-            );
+            let classification_key = classification.cell_key();
             if unique_volumetric_classifications.contains(&classification_key) {
                 return Err(ExactReportValidationError::DuplicateRegionClassification);
             }
             unique_volumetric_classifications.push(classification_key);
-            if retains_volumetric_artifacts && !classification.relation.is_materialization_decided()
-            {
+            if retains_volumetric_artifacts && !classification.is_materialization_decided() {
                 return Err(ExactReportValidationError::VolumetricClassificationNotDecided);
             }
         }
@@ -1697,10 +1692,10 @@ impl ExactBooleanResult {
                         .volumetric_classifications
                         .iter()
                         .any(|classification| {
-                            classification.region_side == triangulation.side
-                                && classification.region_face == triangulation.face
-                                && classification.triangle
-                                    == [triangle[0], triangle[1], triangle[2]]
+                            classification.matches_triangulated_cell(
+                                triangulation,
+                                [triangle[0], triangle[1], triangle[2]],
+                            )
                         })
                 })
             })
@@ -1713,10 +1708,9 @@ impl ExactBooleanResult {
                 .iter()
                 .any(|classification| {
                     !self.triangulations.iter().any(|triangulation| {
-                        triangulation.side == classification.region_side
-                            && triangulation.face == classification.region_face
+                        classification.matches_triangulation(triangulation)
                             && triangulation.triangles.chunks_exact(3).any(|triangle| {
-                                classification.triangle == [triangle[0], triangle[1], triangle[2]]
+                                classification.triangle() == [triangle[0], triangle[1], triangle[2]]
                             })
                     })
                 })
@@ -1739,9 +1733,8 @@ impl ExactBooleanResult {
                     .iter()
                     .zip(&self.volumetric_classifications)
                     .all(|(&(side, face, triangle), classification)| {
-                        classification.region_side == side
-                            && classification.region_face == face
-                            && classification.triangle == [triangle[0], triangle[1], triangle[2]]
+                        classification.cell_key()
+                            == (side, face, [triangle[0], triangle[1], triangle[2]])
                     })
             {
                 return Err(ExactReportValidationError::VolumetricClassificationOrderMismatch);
@@ -1750,10 +1743,9 @@ impl ExactBooleanResult {
         if retains_volumetric_artifacts {
             for classification in &self.volumetric_classifications {
                 let Some(triangulation) = self.triangulations.iter().find(|triangulation| {
-                    triangulation.side == classification.region_side
-                        && triangulation.face == classification.region_face
+                    classification.matches_triangulation(triangulation)
                         && triangulation.triangles.chunks_exact(3).any(|triangle| {
-                            classification.triangle == [triangle[0], triangle[1], triangle[2]]
+                            classification.triangle() == [triangle[0], triangle[1], triangle[2]]
                         })
                 }) else {
                     return Err(ExactReportValidationError::OrphanedVolumetricClassification);
@@ -2017,15 +2009,14 @@ impl ExactBooleanResult {
         ) {
             for classification in &self.volumetric_classifications {
                 let Some(triangulation) = self.triangulations.iter().find(|triangulation| {
-                    triangulation.side == classification.region_side
-                        && triangulation.face == classification.region_face
+                    classification.matches_triangulation(triangulation)
                         && triangulation.triangles.chunks_exact(3).any(|triangle| {
-                            classification.triangle == [triangle[0], triangle[1], triangle[2]]
+                            classification.triangle() == [triangle[0], triangle[1], triangle[2]]
                         })
                 }) else {
                     return Err(ExactReportValidationError::OrphanedVolumetricClassification);
                 };
-                let target = match classification.region_side {
+                let target = match classification.region_side() {
                     MeshSide::Left => right,
                     MeshSide::Right => left,
                 };
@@ -5401,11 +5392,10 @@ fn volumetric_cell_retention_for_operation(
     triangle: [usize; 3],
     classifications: &[ExactVolumetricRegionClassification],
 ) -> VolumetricCellRetention {
-    let Some(classification) = classifications.iter().find(|classification| {
-        classification.region_side == triangulation.side
-            && classification.region_face == triangulation.face
-            && classification.triangle == triangle
-    }) else {
+    let Some(classification) = classifications
+        .iter()
+        .find(|classification| classification.matches_triangulated_cell(triangulation, triangle))
+    else {
         return VolumetricCellRetention::Drop;
     };
     // Boundary cells are exact non-strict facts, not inside/outside guesses.
@@ -5414,7 +5404,7 @@ fn volumetric_cell_retention_for_operation(
     // intersection keep the left boundary copy and drop the coincident right
     // copy, while difference drops coincident boundary cells. This preserves
     // explicit in retained report validation.
-    match (operation, triangulation.side, classification.relation) {
+    match (operation, triangulation.side, classification.relation()) {
         (ExactBooleanOperation::Union, _, ExactVolumetricRegionRelation::Outside)
         | (ExactBooleanOperation::Union, MeshSide::Left, ExactVolumetricRegionRelation::Boundary)
         | (ExactBooleanOperation::Intersection, _, ExactVolumetricRegionRelation::Inside)
