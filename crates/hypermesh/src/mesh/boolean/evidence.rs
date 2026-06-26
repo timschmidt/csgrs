@@ -3804,20 +3804,6 @@ impl ExactBooleanCertificationSet {
         }
     }
 
-    fn coplanar_volumetric_requirement_matches_preflight(
-        &self,
-        preflight: &ExactBooleanPreflight,
-    ) -> bool {
-        self.winding_evidence.status()
-            == ExactWindingEvidenceStatus::CoplanarVolumetricCellsRequired
-            && self.winding_evidence_matches_preflight(preflight)
-    }
-
-    fn unresolved_graph_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        self.winding_evidence.status() == ExactWindingEvidenceStatus::GraphUnknowns
-            && self.winding_evidence_matches_preflight(preflight)
-    }
-
     fn certified_winding_requirement_matches_preflight(
         &self,
         preflight: &ExactBooleanPreflight,
@@ -3849,35 +3835,6 @@ impl ExactBooleanCertificationSet {
             && preflight.coplanar_arrangement_evidence.is_none()
             && preflight.coplanar_volumetric_evidence.as_ref()
                 == self.winding_evidence.coplanar_volumetric_evidence()
-    }
-
-    fn empty_operand_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        (self.winding_evidence.status()
-            == ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized
-            || self.arrangement_attempt_matches_certified_preflight(preflight))
-            && self.trivial.has_empty_operand()
-    }
-
-    fn bounds_disjoint_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        (self.winding_evidence.status()
-            == ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized
-            || self.arrangement_attempt_matches_certified_preflight(preflight))
-            && self.trivial.bounds_disjoint
-    }
-
-    fn identical_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        (self.winding_evidence.status()
-            == ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized
-            || self.arrangement_attempt_matches_certified_preflight(preflight))
-            && self.identical.is_certified()
-            && self.same_surface.is_certified()
-    }
-
-    fn same_surface_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        (self.winding_evidence.status()
-            == ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized
-            || self.arrangement_attempt_matches_certified_preflight(preflight))
-            && self.same_surface.is_certified()
     }
 
     fn closed_winding_reports_match_separated(&self) -> bool {
@@ -4109,14 +4066,29 @@ impl ExactBooleanCertificationSet {
                 self.arrangement_cell_complex_matches_preflight(preflight)
             }
             ExactBooleanSupport::CertifiedEmptyOperand => {
-                self.empty_operand_matches_preflight(preflight)
+                (self.winding_evidence.status()
+                    == ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized
+                    || self.arrangement_attempt_matches_certified_preflight(preflight))
+                    && self.trivial.has_empty_operand()
             }
             ExactBooleanSupport::CertifiedBoundsDisjoint => {
-                self.bounds_disjoint_matches_preflight(preflight)
+                (self.winding_evidence.status()
+                    == ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized
+                    || self.arrangement_attempt_matches_certified_preflight(preflight))
+                    && self.trivial.bounds_disjoint
             }
-            ExactBooleanSupport::CertifiedIdentical => self.identical_matches_preflight(preflight),
+            ExactBooleanSupport::CertifiedIdentical => {
+                (self.winding_evidence.status()
+                    == ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized
+                    || self.arrangement_attempt_matches_certified_preflight(preflight))
+                    && self.identical.is_certified()
+                    && self.same_surface.is_certified()
+            }
             ExactBooleanSupport::CertifiedSameSurface => {
-                self.same_surface_matches_preflight(preflight)
+                (self.winding_evidence.status()
+                    == ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized
+                    || self.arrangement_attempt_matches_certified_preflight(preflight))
+                    && self.same_surface.is_certified()
             }
             ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
@@ -4159,10 +4131,13 @@ impl ExactBooleanCertificationSet {
                 self.planar_arrangement_matches_preflight(preflight)
             }
             ExactBooleanSupport::RequiresCoplanarVolumetricCells => {
-                self.coplanar_volumetric_requirement_matches_preflight(preflight)
+                self.winding_evidence.status()
+                    == ExactWindingEvidenceStatus::CoplanarVolumetricCellsRequired
+                    && self.winding_evidence_matches_preflight(preflight)
             }
             ExactBooleanSupport::UnresolvedGraph => {
-                self.unresolved_graph_matches_preflight(preflight)
+                self.winding_evidence.status() == ExactWindingEvidenceStatus::GraphUnknowns
+                    && self.winding_evidence_matches_preflight(preflight)
             }
             ExactBooleanSupport::RequiresCertifiedWinding => {
                 self.certified_winding_requirement_matches_preflight(preflight)
