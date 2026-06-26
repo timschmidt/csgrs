@@ -289,46 +289,6 @@ pub(crate) struct ExactAabbBroadPhase {
     one_shot_quadratic_face_pair_limit: usize,
 }
 
-/// Broad-phase strategy for exact face-pair candidate scheduling.
-pub(crate) trait ExactBroadPhase {
-    /// Return the one-shot face-pair product limit before preparing reusable bounds.
-    fn one_shot_quadratic_face_pair_limit(&self) -> usize;
-
-    /// Choose a reusable candidate traversal plan for prepared exact bounds.
-    fn candidate_face_pair_plan(
-        &self,
-        left: &PreparedMeshBounds<'_>,
-        right: &PreparedMeshBounds<'_>,
-    ) -> CandidateFacePairPlan;
-
-    /// Visit one-shot candidate face pairs from retained mesh bounds.
-    fn try_visit_candidate_face_pairs_one_shot<E>(
-        &self,
-        left: &MeshBounds,
-        right: &MeshBounds,
-        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E>;
-
-    /// Visit candidate face pairs with a retained plan.
-    fn try_visit_candidate_face_pairs_with_plan<E>(
-        &self,
-        left: &PreparedMeshBounds<'_>,
-        right: &PreparedMeshBounds<'_>,
-        plan: CandidateFacePairPlan,
-        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E>;
-
-    /// Visit candidate face pairs with a retained plan and reusable scratch storage.
-    fn try_visit_candidate_face_pairs_with_plan_and_scratch<E>(
-        &self,
-        left: &PreparedMeshBounds<'_>,
-        right: &PreparedMeshBounds<'_>,
-        plan: CandidateFacePairPlan,
-        scratch: &mut BroadPhaseScratch,
-        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E>;
-}
-
 impl ExactAabbBroadPhase {
     const DEFAULT_ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT: usize = 64;
 
@@ -337,20 +297,14 @@ impl ExactAabbBroadPhase {
             one_shot_quadratic_face_pair_limit,
         }
     }
-}
 
-impl Default for ExactAabbBroadPhase {
-    fn default() -> Self {
-        Self::new(Self::DEFAULT_ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT)
-    }
-}
-
-impl ExactBroadPhase for ExactAabbBroadPhase {
-    fn one_shot_quadratic_face_pair_limit(&self) -> usize {
+    /// Return the one-shot face-pair product limit before preparing reusable bounds.
+    pub(crate) const fn one_shot_quadratic_face_pair_limit(&self) -> usize {
         self.one_shot_quadratic_face_pair_limit
     }
 
-    fn candidate_face_pair_plan(
+    /// Choose a reusable candidate traversal plan for prepared exact bounds.
+    pub(crate) fn candidate_face_pair_plan(
         &self,
         left: &PreparedMeshBounds<'_>,
         right: &PreparedMeshBounds<'_>,
@@ -358,7 +312,8 @@ impl ExactBroadPhase for ExactAabbBroadPhase {
         left.candidate_face_pair_plan(right)
     }
 
-    fn try_visit_candidate_face_pairs_one_shot<E>(
+    /// Visit one-shot candidate face pairs from retained mesh bounds.
+    pub(crate) fn try_visit_candidate_face_pairs_one_shot<E>(
         &self,
         left: &MeshBounds,
         right: &MeshBounds,
@@ -380,7 +335,8 @@ impl ExactBroadPhase for ExactAabbBroadPhase {
         self.try_visit_candidate_face_pairs_with_plan(&left, &right, plan, visit)
     }
 
-    fn try_visit_candidate_face_pairs_with_plan<E>(
+    /// Visit candidate face pairs with a retained plan.
+    pub(crate) fn try_visit_candidate_face_pairs_with_plan<E>(
         &self,
         left: &PreparedMeshBounds<'_>,
         right: &PreparedMeshBounds<'_>,
@@ -390,7 +346,8 @@ impl ExactBroadPhase for ExactAabbBroadPhase {
         left.try_visit_candidate_face_pairs_with_plan(right, plan, visit)
     }
 
-    fn try_visit_candidate_face_pairs_with_plan_and_scratch<E>(
+    /// Visit candidate face pairs with a retained plan and reusable scratch storage.
+    pub(crate) fn try_visit_candidate_face_pairs_with_plan_and_scratch<E>(
         &self,
         left: &PreparedMeshBounds<'_>,
         right: &PreparedMeshBounds<'_>,
@@ -399,6 +356,12 @@ impl ExactBroadPhase for ExactAabbBroadPhase {
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
         left.try_visit_candidate_face_pairs_with_plan_and_scratch(right, plan, scratch, visit)
+    }
+}
+
+impl Default for ExactAabbBroadPhase {
+    fn default() -> Self {
+        Self::new(Self::DEFAULT_ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT)
     }
 }
 
@@ -1156,22 +1119,6 @@ mod tests {
         pairs
     }
 
-    fn generic_broad_phase_pairs(
-        broad_phase: &impl ExactBroadPhase,
-        left: &PreparedMeshBounds<'_>,
-        right: &PreparedMeshBounds<'_>,
-    ) -> Vec<[usize; 2]> {
-        let mut pairs = Vec::new();
-        let plan = broad_phase.candidate_face_pair_plan(left, right);
-        let result =
-            broad_phase.try_visit_candidate_face_pairs_with_plan(left, right, plan, &mut |pair| {
-                pairs.push(pair);
-                Ok::<(), ()>(())
-            });
-        debug_assert!(result.is_ok());
-        pairs
-    }
-
     fn quadratic_candidate_face_pairs(
         left: &PreparedMeshBounds<'_>,
         right: &PreparedMeshBounds<'_>,
@@ -1419,7 +1366,7 @@ mod tests {
     }
 
     #[test]
-    fn broad_phase_strategy_trait_preserves_candidate_output() {
+    fn exact_aabb_broad_phase_preserves_candidate_output() {
         let left_points = vec![
             p(0, 0, 0),
             p(5, 0, 0),
@@ -1443,15 +1390,11 @@ mod tests {
         let prepared_right = right.prepare();
 
         assert_eq!(
-            sorted_pairs(generic_broad_phase_pairs(
-                &ExactAabbBroadPhase::default(),
-                &prepared_left,
-                &prepared_right
-            )),
             sorted_pairs(prepared_candidate_face_pairs(
                 &prepared_left,
                 &prepared_right
-            ))
+            )),
+            vec![[0, 0]]
         );
     }
 

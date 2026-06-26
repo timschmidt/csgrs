@@ -12,8 +12,7 @@ use super::boolean::{
     materialize_closed_union_with_prepared_pair,
 };
 use super::bounds::{
-    BroadPhaseScratch, CandidateFacePairPlan, ExactAabb3, ExactAabbBroadPhase, ExactBroadPhase,
-    PreparedMeshBounds,
+    BroadPhaseScratch, CandidateFacePairPlan, ExactAabb3, ExactAabbBroadPhase, PreparedMeshBounds,
 };
 use super::error::ExactMeshError;
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind};

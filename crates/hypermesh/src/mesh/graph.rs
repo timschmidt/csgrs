@@ -24,7 +24,7 @@ use hyperlimit::{
     project_point3, projected_line_parameter3, projected_segment_parameter3,
 };
 
-use super::bounds::{ExactAabbBroadPhase, ExactBroadPhase};
+use super::bounds::ExactAabbBroadPhase;
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide};
 use super::view::PreparedMeshPair;
 use super::{ExactMesh, triangle_edges};
