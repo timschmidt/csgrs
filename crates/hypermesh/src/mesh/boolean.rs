@@ -1769,6 +1769,8 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     let retained_face_pairs = graph.face_pairs.len();
     let retained_events = graph.event_count();
     let relation_counts = retained_graph_counts(graph);
+    let requires_coplanar_volumetric_cells =
+        graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right);
     let mut certified_arrangement_preflight = None;
     if graph_had_unknowns || relation_counts.construction_failed_events() > 0 {
         return Ok(ExactBooleanPreflight::new(
@@ -1814,7 +1816,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         ));
     }
     if requires_certified_winding
-        && graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right)
+        && requires_coplanar_volumetric_cells
         && volumetric_boundary_closure_report_from_graph(graph, left, right, operation)
             .ok()
             .is_some_and(|report| report.is_coplanar_closure_available())
@@ -2098,9 +2100,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         return Ok(preflight);
     }
     let convex_operation_preflight_allowed = match operation {
-        ExactBooleanOperation::Intersection => {
-            !graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right)
-        }
+        ExactBooleanOperation::Intersection => !requires_coplanar_volumetric_cells,
         ExactBooleanOperation::Union | ExactBooleanOperation::Difference => true,
         ExactBooleanOperation::SelectedRegions(_) => false,
     };
@@ -2110,7 +2110,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     {
         return Ok(preflight);
     }
-    if graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right) {
+    if requires_coplanar_volumetric_cells {
         if request.validation == ExactMeshValidationPolicy::CLOSED
             && volumetric_boundary_closure_report_from_graph(graph, left, right, operation)
                 .ok()
