@@ -2289,21 +2289,11 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             ));
         }
         let winding_evidence = winding_evidence_report_from_graph(graph, left, right, operation)?;
-        if winding_evidence.status.routes_to_certified_winding()
-            && winding_evidence.blocker.kind() == ExactBooleanBlockerKind::CoplanarVolumetricCells
+        if winding_evidence.status().routes_to_certified_winding()
+            && winding_evidence.blocker().kind() == ExactBooleanBlockerKind::CoplanarVolumetricCells
         {
-            return Ok(ExactBooleanPreflight {
-                operation,
-                support: ExactBooleanSupport::RequiresCertifiedWinding,
-                graph_had_unknowns: winding_evidence.graph_had_unknowns,
-                retained_face_pairs: winding_evidence.retained_face_pairs,
-                retained_events: winding_evidence.retained_events,
-                region_count: winding_evidence.region_count,
-                region_classifications: winding_evidence.region_classifications,
-                blocker: Some(winding_evidence.blocker),
-                coplanar_arrangement_evidence: winding_evidence.coplanar_arrangement_evidence,
-                coplanar_volumetric_evidence: winding_evidence.coplanar_volumetric_evidence,
-            });
+            return Ok(winding_evidence
+                .into_preflight(ExactBooleanSupport::RequiresCertifiedWinding, true));
         }
         return Ok(ExactBooleanPreflight {
             operation,
@@ -2361,7 +2351,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         }
     };
     if winding_report
-        .status
+        .status()
         .materializes_arrangement_cell_complex()
         || (winding_report.is_ready()
             && materialize_volumetric_winding_region_plan_from_graph(
@@ -2389,18 +2379,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         ));
     }
 
-    Ok(ExactBooleanPreflight {
-        operation,
-        support,
-        graph_had_unknowns: winding_report.graph_had_unknowns,
-        retained_face_pairs: winding_report.retained_face_pairs,
-        retained_events: winding_report.retained_events,
-        region_count: winding_report.region_count,
-        region_classifications: winding_report.region_classifications,
-        blocker: Some(winding_report.blocker),
-        coplanar_arrangement_evidence: None,
-        coplanar_volumetric_evidence: winding_report.coplanar_volumetric_evidence,
-    })
+    Ok(winding_report.into_preflight(support, false))
 }
 
 /// Preflight a graph-backed exact boolean operation for a specific output
@@ -3613,7 +3592,7 @@ fn materialize_arrangement_lower_dimensional_intersection_from_graph(
         ))
     })?;
     if !matches!(
-        evidence.status,
+        evidence.status(),
         ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
             | ExactWindingEvidenceStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
     ) {
@@ -8651,7 +8630,7 @@ fn winding_evidence_report_for_request_from_graph_and_attempt(
         if validation == ExactMeshValidationPolicy::CLOSED
             || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
             || !matches!(
-                evidence.status,
+                evidence.status(),
                 ExactWindingEvidenceStatus::VolumetricAssemblyRequired
                     | ExactWindingEvidenceStatus::CoplanarVolumetricCellsRequired
             )
@@ -8671,7 +8650,7 @@ fn winding_evidence_report_for_request_from_graph_and_attempt(
     };
     if boundary_policy == ExactBoundaryBooleanPolicy::Reject
         || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || evidence.status != ExactWindingEvidenceStatus::BoundaryPolicyRequired
+        || evidence.status() != ExactWindingEvidenceStatus::BoundaryPolicyRequired
     {
         return Ok(evidence);
     }
@@ -9401,12 +9380,14 @@ fn winding_evidence_report_from_graph_with_facts(
         ));
     }
     if arrangement_cell_complex_shortcut_materializes {
-        let mut materialized = arrangement_cell_complex_already_materialized_winding_evidence(
-            graph, left, right, operation,
+        return Ok(
+            arrangement_cell_complex_already_materialized_winding_evidence(
+                graph, left, right, operation,
+            )
+            .with_blocker(
+                retained_graph_counts(graph).into_blocker(ExactBooleanBlockerKind::Winding),
+            ),
         );
-        materialized.blocker =
-            retained_graph_counts(graph).into_blocker(ExactBooleanBlockerKind::Winding);
-        return Ok(materialized);
     }
     if let Some((region_classifications, triangulations, volumetric_classifications)) =
         volumetric_winding_region_plan_from_graph(graph, left, right)?
@@ -9619,7 +9600,7 @@ fn winding_evidence_report(
     coplanar_arrangement_evidence: Option<super::graph::CoplanarArrangementEvidence>,
     coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 ) -> ExactWindingEvidenceReport {
-    ExactWindingEvidenceReport {
+    ExactWindingEvidenceReport::new(
         operation,
         status,
         graph_had_unknowns,
@@ -9630,7 +9611,7 @@ fn winding_evidence_report(
         blocker,
         coplanar_arrangement_evidence,
         coplanar_volumetric_evidence,
-    }
+    )
 }
 
 type VolumetricWindingRegionPlan = (

@@ -8410,34 +8410,90 @@ impl ExactWindingEvidenceStatus {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ExactWindingEvidenceReport {
     /// Requested named operation.
-    pub(crate) operation: ExactBooleanOperation,
+    operation: ExactBooleanOperation,
     /// Coarse evidence status.
-    pub(crate) status: ExactWindingEvidenceStatus,
+    status: ExactWindingEvidenceStatus,
     /// Whether graph extraction retained unknown events.
-    pub(crate) graph_had_unknowns: bool,
+    graph_had_unknowns: bool,
     /// Retained face-pair records after exact scheduling.
-    pub(crate) retained_face_pairs: usize,
+    retained_face_pairs: usize,
     /// Total retained event records.
-    pub(crate) retained_events: usize,
+    retained_events: usize,
     /// Number of checked split regions prepared for winding.
-    pub(crate) region_count: usize,
+    region_count: usize,
     /// Certified region-vs-opposite-plane classifications.
-    pub(crate) region_classifications: Vec<FaceRegionPlaneClassification>,
+    region_classifications: Vec<FaceRegionPlaneClassification>,
     /// Relation counts for the blocker represented by this report.
-    pub(crate) blocker: ExactBooleanBlocker,
+    blocker: ExactBooleanBlocker,
     /// Checked coplanar-overlap evidence retained when winding is blocked by
     /// planar-cell extraction rather than by volumetric inside/outside policy.
-    pub(crate) coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
+    coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
     /// Source-aware coplanar volumetric-cell evidence retained when evidence
     /// is blocked by, or has just consumed, coplanar source-face cells.
     ///
     /// The winding evidence must not reduce this state to raw coplanar pair
     /// counts: exact side evidence is what distinguishes boundary-only contact
     /// from a real volumetric-cell topology obligation.
-    pub(crate) coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
+    coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 }
 
 impl ExactWindingEvidenceReport {
+    /// Build a winding-evidence report from retained exact graph evidence.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn new(
+        operation: ExactBooleanOperation,
+        status: ExactWindingEvidenceStatus,
+        graph_had_unknowns: bool,
+        retained_face_pairs: usize,
+        retained_events: usize,
+        region_count: usize,
+        region_classifications: Vec<FaceRegionPlaneClassification>,
+        blocker: ExactBooleanBlocker,
+        coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
+        coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
+    ) -> Self {
+        Self {
+            operation,
+            status,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            region_count,
+            region_classifications,
+            blocker,
+            coplanar_arrangement_evidence,
+            coplanar_volumetric_evidence,
+        }
+    }
+
+    /// Move retained winding evidence into a boolean preflight report.
+    pub(crate) fn into_preflight(
+        self,
+        support: ExactBooleanSupport,
+        retain_coplanar_arrangement_evidence: bool,
+    ) -> ExactBooleanPreflight {
+        ExactBooleanPreflight {
+            operation: self.operation,
+            support,
+            graph_had_unknowns: self.graph_had_unknowns,
+            retained_face_pairs: self.retained_face_pairs,
+            retained_events: self.retained_events,
+            region_count: self.region_count,
+            region_classifications: self.region_classifications,
+            blocker: Some(self.blocker),
+            coplanar_arrangement_evidence: retain_coplanar_arrangement_evidence
+                .then_some(self.coplanar_arrangement_evidence)
+                .flatten(),
+            coplanar_volumetric_evidence: self.coplanar_volumetric_evidence,
+        }
+    }
+
+    /// Return this report with a replacement retained relation-count blocker.
+    pub(crate) fn with_blocker(mut self, blocker: ExactBooleanBlocker) -> Self {
+        self.blocker = blocker;
+        self
+    }
+
     /// Return the requested named operation.
     pub(crate) const fn operation(&self) -> ExactBooleanOperation {
         self.operation
