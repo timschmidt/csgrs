@@ -139,28 +139,60 @@ pub(crate) enum ClosedMeshWindingRelation {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct PointMeshWindingReport {
     /// Final certified or unresolved relation.
-    pub(crate) relation: ClosedMeshWindingRelation,
+    relation: ClosedMeshWindingRelation,
     /// Ray direction that produced the retained parity decision or boundary hit.
-    pub(crate) axis: Option<WindingRayAxis>,
+    axis: Option<WindingRayAxis>,
     /// Number of rays attempted.
-    pub(crate) tested_axes: usize,
+    tested_axes: usize,
     /// Number of source triangles scanned by each attempted ray.
-    pub(crate) triangle_count: usize,
+    triangle_count: usize,
     /// Certified positive ray/triangle crossings on the selected axis.
-    pub(crate) crossings: usize,
+    crossings: usize,
     /// Triangles whose exact projected relation put the query point on the
     /// triangle boundary.
-    pub(crate) boundary_hits: usize,
+    boundary_hits: usize,
     /// Triangles where the ray hit a projected edge/vertex and that axis had
     /// to be rejected.
-    pub(crate) degenerate_hits: usize,
+    degenerate_hits: usize,
     /// Triangles parallel to the selected ray axis.
-    pub(crate) parallel_faces: usize,
+    parallel_faces: usize,
     /// Triangles whose comparison state was undecidable for the selected ray.
-    pub(crate) unknown_hits: usize,
+    unknown_hits: usize,
 }
 
 impl PointMeshWindingReport {
+    /// Build a winding report from retained exact ray evidence.
+    #[cfg(test)]
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) const fn new(
+        relation: ClosedMeshWindingRelation,
+        axis: Option<WindingRayAxis>,
+        tested_axes: usize,
+        triangle_count: usize,
+        crossings: usize,
+        boundary_hits: usize,
+        degenerate_hits: usize,
+        parallel_faces: usize,
+        unknown_hits: usize,
+    ) -> Self {
+        Self {
+            relation,
+            axis,
+            tested_axes,
+            triangle_count,
+            crossings,
+            boundary_hits,
+            degenerate_hits,
+            parallel_faces,
+            unknown_hits,
+        }
+    }
+
+    /// Return the retained point/mesh winding relation.
+    pub(crate) const fn relation(&self) -> ClosedMeshWindingRelation {
+        self.relation
+    }
+
     /// Validate local report consistency.
     ///
     /// This audits the report shape, not the source mesh. Inside/outside

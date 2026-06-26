@@ -1439,7 +1439,7 @@ fn opposite_region_label(opposite: &ArrangementOppositeClassification) -> ExactO
         Some(ConvexSolidPointRelation::Unknown | ConvexSolidPointRelation::NotCertifiedConvex)
         | None => {}
     }
-    match opposite.winding.relation {
+    match opposite.winding.relation() {
         super::super::boolean::winding::ClosedMeshWindingRelation::Inside => {
             ExactOppositeRegionLabel::Inside
         }
@@ -1828,17 +1828,7 @@ mod tests {
     }
 
     fn winding_report(relation: ClosedMeshWindingRelation) -> PointMeshWindingReport {
-        PointMeshWindingReport {
-            relation,
-            axis: None,
-            tested_axes: 0,
-            triangle_count: 0,
-            crossings: 0,
-            boundary_hits: 0,
-            degenerate_hits: 0,
-            parallel_faces: 0,
-            unknown_hits: 0,
-        }
+        PointMeshWindingReport::new(relation, None, 0, 0, 0, 0, 0, 0, 0)
     }
 
     fn convex_classification(relation: ConvexSolidPointRelation) -> ConvexSolidPointClassification {

@@ -5136,7 +5136,7 @@ fn classify_opposite(
     };
     let winding = classify_point_against_closed_mesh_winding_report(&point, target);
     if matches!(
-        winding.relation,
+        winding.relation(),
         ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed
     ) && convex_certification.is_none()
         && policy.unresolved == ExactUnresolvedPolicy::Block
