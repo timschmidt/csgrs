@@ -901,27 +901,17 @@ impl PreparedMeshPairCacheStatus {
         self.source_pair
     }
 
-    /// Require retained pair source stamps to match the current session meshes.
-    pub fn require_current_sources(self) -> Result<(), ExactMeshError> {
-        self.source_pair.require_current("source-pair stamp")
-    }
-
     /// Return the certificate state for retained broad-phase traversal counts.
     pub const fn broad_phase_traversal(self) -> PreparedMeshPairFactState {
         self.broad_phase_traversal
-    }
-
-    /// Require retained broad-phase traversal counts with current certificates.
-    pub fn require_current_broad_phase_traversal(self) -> Result<(), ExactMeshError> {
-        self.broad_phase_traversal
-            .require_current("broad-phase traversal summary")
     }
 
     /// Return retained broad-phase traversal counts after requiring current evidence.
     pub fn current_broad_phase_traversal_summary(
         self,
     ) -> Result<PreparedMeshPairBroadPhaseTraversalSummary, ExactMeshError> {
-        self.require_current_broad_phase_traversal()?;
+        self.broad_phase_traversal
+            .require_current("broad-phase traversal summary")?;
         self.retained_broad_phase_traversal_summary
             .ok_or_else(|| {
                 ExactMeshError::one(ExactMeshBlocker::new(
@@ -936,12 +926,6 @@ impl PreparedMeshPairCacheStatus {
         self.candidate_face_pairs
     }
 
-    /// Require retained broad-phase candidate pairs with current certificates.
-    pub fn require_current_candidate_face_pairs(self) -> Result<(), ExactMeshError> {
-        self.candidate_face_pairs
-            .require_current("broad-phase candidate face pairs")
-    }
-
     /// Return the certificate state for coarse face-pair classifications.
     pub const fn face_pair_classifications(self) -> PreparedMeshPairFactState {
         self.face_pair_classifications
@@ -950,12 +934,6 @@ impl PreparedMeshPairCacheStatus {
     /// Return the certificate state for coarse face-pair classification counts.
     pub const fn face_pair_classification_counts(self) -> PreparedMeshPairFactState {
         self.face_pair_classification_counts
-    }
-
-    /// Require retained coarse face-pair classifications with current certificates.
-    pub fn require_current_face_pair_classifications(self) -> Result<(), ExactMeshError> {
-        self.face_pair_classifications
-            .require_current("face-pair classification")
     }
 
     /// Return retained coarse face-pair decision counts after requiring current evidence.
@@ -973,12 +951,6 @@ impl PreparedMeshPairCacheStatus {
             })
     }
 
-    /// Require a retained exact intersection graph with a current replay certificate.
-    pub fn require_current_intersection_graph(self) -> Result<(), ExactMeshError> {
-        self.intersection_graph
-            .require_current("intersection graph")
-    }
-
     /// Return the certificate state for the retained exact intersection graph.
     pub const fn intersection_graph(self) -> PreparedMeshPairFactState {
         self.intersection_graph
@@ -988,7 +960,8 @@ impl PreparedMeshPairCacheStatus {
     pub fn current_intersection_graph_counts(
         self,
     ) -> Result<PreparedMeshPairIntersectionGraphCounts, ExactMeshError> {
-        self.require_current_intersection_graph()?;
+        self.intersection_graph
+            .require_current("intersection graph")?;
         self.retained_intersection_graph_counts.ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::MissingRequiredEvidence,
@@ -1002,16 +975,11 @@ impl PreparedMeshPairCacheStatus {
         self.arrangement
     }
 
-    /// Require a retained arrangement built from current certificates.
-    pub fn require_current_arrangement(self) -> Result<(), ExactMeshError> {
-        self.arrangement.require_current("arrangement")
-    }
-
     /// Return retained arrangement topology counts after requiring current evidence.
     pub fn current_arrangement_counts(
         self,
     ) -> Result<PreparedMeshPairArrangementCounts, ExactMeshError> {
-        self.require_current_arrangement()?;
+        self.arrangement.require_current("arrangement")?;
         self.retained_arrangement_counts.ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::MissingRequiredEvidence,
@@ -1025,12 +993,6 @@ impl PreparedMeshPairCacheStatus {
         self.arrangement_shortcut_facts
     }
 
-    /// Require retained arrangement shortcut facts with current certificates.
-    pub fn require_current_arrangement_shortcut_facts(self) -> Result<(), ExactMeshError> {
-        self.arrangement_shortcut_facts
-            .require_current("arrangement shortcut facts")
-    }
-
     /// Return the certificate state for a prepared boolean result or error.
     pub const fn result(self, operation: PreparedMeshPairBoolean) -> PreparedMeshPairFactState {
         match operation {
@@ -1039,15 +1001,6 @@ impl PreparedMeshPairCacheStatus {
             PreparedMeshPairBoolean::Difference => self.difference_result,
             PreparedMeshPairBoolean::Xor => self.xor_result,
         }
-    }
-
-    /// Require a retained prepared boolean result or error.
-    pub fn require_current_result(
-        self,
-        operation: PreparedMeshPairBoolean,
-    ) -> Result<(), ExactMeshError> {
-        self.result(operation)
-            .require_current(operation.result_name())
     }
 
     /// Return a retained prepared boolean outcome after requiring current evidence.
@@ -1587,7 +1540,9 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         query: impl FnOnce(&[[usize; 2]]) -> R,
     ) -> Result<R, ExactMeshError> {
-        self.cache_status().require_current_candidate_face_pairs()?;
+        self.cache_status()
+            .candidate_face_pairs()
+            .require_current("broad-phase candidate face pairs")?;
         let candidate_face_pairs = self.candidate_face_pairs.borrow();
         let pairs = candidate_face_pairs.as_deref().ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
@@ -1642,7 +1597,9 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         query: impl for<'a> FnOnce(ArrangementView<'a>) -> R,
     ) -> Result<R, ExactMeshError> {
-        self.cache_status().require_current_arrangement()?;
+        self.cache_status()
+            .arrangement()
+            .require_current("arrangement")?;
         let arrangement = self.arrangement.borrow();
         let arrangement = arrangement.as_ref().ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
@@ -1677,7 +1634,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         query: impl FnOnce(&[MeshFacePairClassification]) -> R,
     ) -> Result<R, ExactMeshError> {
         self.cache_status()
-            .require_current_face_pair_classifications()?;
+            .face_pair_classifications()
+            .require_current("face-pair classification")?;
         let classifications = self.face_pair_classifications.borrow();
         let classifications = classifications.as_deref().ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
@@ -1898,7 +1856,9 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         operation: PreparedMeshPairBoolean,
     ) -> Result<ExactMesh, ExactMeshError> {
-        self.cache_status().require_current_result(operation)?;
+        self.cache_status()
+            .result(operation)
+            .require_current(operation.result_name())?;
         self.cached_named_boolean_mesh(operation).ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::MissingRequiredEvidence,
