@@ -2,6 +2,7 @@ use super::*;
 use crate::mesh::ExactMesh;
 use crate::mesh::boolean::region::FaceRegionPlaneRelation;
 use crate::mesh::validation::ExactMeshValidationPolicy;
+use crate::mesh::view::PreparedMeshPairBoolean;
 
 fn q(numerator: i64, denominator: i64) -> Real {
     (Real::from(numerator) / &Real::from(denominator)).expect("nonzero denominator")
@@ -337,7 +338,7 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
     );
     let cached_union = prepared_pair.union().unwrap();
     cached_union.validate_retained_state().unwrap();
-    assert!(prepared_pair.union_result_is_current());
+    assert!(prepared_pair.result_is_current(PreparedMeshPairBoolean::Union));
     prepared_pair
         .with_arrangement_view(|view| {
             view.validate_retained_state().unwrap();
@@ -347,8 +348,11 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
     prepared_pair.retain_intersection_graph(ExactIntersectionGraph::from_face_pairs(Vec::new()));
     assert!(prepared_pair.intersection_graph_is_certificate_blocked());
     assert!(!prepared_pair.has_retained_arrangement());
-    assert!(!prepared_pair.has_retained_union_result());
-    assert_eq!(prepared_pair.retained_union_result_outcome(), None);
+    assert!(!prepared_pair.has_retained_result(PreparedMeshPairBoolean::Union));
+    assert_eq!(
+        prepared_pair.retained_result_outcome(PreparedMeshPairBoolean::Union),
+        None
+    );
     assert_eq!(
         build_validated_intersection_graph_from_prepared_pair(&prepared_pair)
             .unwrap_err()

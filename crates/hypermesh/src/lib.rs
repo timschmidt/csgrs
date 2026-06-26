@@ -32,12 +32,12 @@ pub mod kernel {
     };
     pub use crate::mesh::view::{
         EdgeRef, ExactMeshRef, ExactMeshSourceStamp, FaceRef, MeshView, PreparedMeshPair,
-        PreparedMeshPairArrangementCounts, PreparedMeshPairBroadPhaseSummary,
-        PreparedMeshPairBroadPhaseTraversalSummary, PreparedMeshPairCacheStatus,
-        PreparedMeshPairClassificationCounts, PreparedMeshPairFactState,
-        PreparedMeshPairIntersectionGraphCounts, PreparedMeshPairPlanKind,
-        PreparedMeshPairResultOutcome, PreparedMeshPairSweepActiveSet, PreparedMeshPairSweepAxis,
-        PreparedMeshPairSweepDirection, PreparedMeshPairView, PreparedMeshView, TriangleRef,
-        VertexRef,
+        PreparedMeshPairArrangementCounts, PreparedMeshPairBoolean,
+        PreparedMeshPairBroadPhaseSummary, PreparedMeshPairBroadPhaseTraversalSummary,
+        PreparedMeshPairCacheStatus, PreparedMeshPairClassificationCounts,
+        PreparedMeshPairFactState, PreparedMeshPairIntersectionGraphCounts,
+        PreparedMeshPairPlanKind, PreparedMeshPairResultOutcome, PreparedMeshPairSweepActiveSet,
+        PreparedMeshPairSweepAxis, PreparedMeshPairSweepDirection, PreparedMeshPairView,
+        PreparedMeshView, TriangleRef, VertexRef,
     };
 }
