@@ -26,7 +26,9 @@ fn with_test_evaluation<R>(
     f: impl FnOnce(&ExactBooleanEvaluation) -> R,
 ) -> R {
     let evaluation = exact_boolean_evaluation_for_replay(left, right, request).unwrap();
-    evaluation.validate().unwrap();
+    evaluation
+        .validate_with_missing_result_policy(false)
+        .unwrap();
     f(&evaluation)
 }
 
@@ -37,7 +39,9 @@ fn test_materialized_result(
 ) -> ExactBooleanResult {
     let result = materialize_boolean_exact_request(left, right, request).unwrap();
     let evaluation = exact_boolean_evaluation_for_replay(left, right, request).unwrap();
-    evaluation.validate().unwrap();
+    evaluation
+        .validate_with_missing_result_policy(false)
+        .unwrap();
     if let Some(retained) = evaluation.materialized_result() {
         assert!(retained.matches_retained_replay(&result));
     }
@@ -644,7 +648,9 @@ fn assert_contained_face_adjacent_union_replays(
     request: ExactBooleanRequest,
 ) {
     let evaluation = exact_boolean_evaluation_for_replay(left, right, request).unwrap();
-    evaluation.validate().unwrap();
+    evaluation
+        .validate_with_missing_result_policy(false)
+        .unwrap();
     evaluation.validate_against_sources(left, right).unwrap();
     let result = evaluation
         .materialized_result()
@@ -1365,7 +1371,9 @@ fn certifications_reuse_regularized_arrangement_attempt_reports() {
         ExactRegularizationPolicy::REGULARIZED_SOLID,
     );
     let evaluation = exact_boolean_evaluation_for_replay(&left, &right, request).unwrap();
-    evaluation.validate().unwrap();
+    evaluation
+        .validate_with_missing_result_policy(false)
+        .unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
     let certifications = evaluation.certifications().clone();
     certifications.validate_for_request(request).unwrap();

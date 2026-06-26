@@ -4292,12 +4292,6 @@ impl ExactBooleanEvaluation {
         self.result.as_ref()
     }
 
-    /// Validate the retained evaluation shape without replaying sources.
-    #[cfg(test)]
-    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
-        self.validate_with_missing_result_policy(false)
-    }
-
     pub(crate) fn validate_with_missing_result_policy(
         &self,
         allow_missing_materialized_result: bool,
@@ -4329,7 +4323,7 @@ impl ExactBooleanEvaluation {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
-        self.validate()?;
+        self.validate_with_missing_result_policy(false)?;
         let replay = exact_boolean_evaluation_for_replay(left, right, self.request)?;
         if &self.preflight != replay.preflight() {
             return Err(ExactReportValidationError::SourceReplayMismatch);
