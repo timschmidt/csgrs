@@ -192,10 +192,6 @@ pub(crate) fn is_axis_aligned_orthogonal_solid(mesh: &ExactMesh) -> bool {
     certify_axis_aligned_orthogonal_solid(mesh).is_some()
 }
 
-pub(crate) fn certified_axis_aligned_box_pair(left: &ExactMesh, right: &ExactMesh) -> bool {
-    is_axis_aligned_box(left) && is_axis_aligned_box(right)
-}
-
 pub(crate) fn try_certified_axis_aligned_box_pair(
     left: &ExactMesh,
     right: &ExactMesh,

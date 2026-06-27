@@ -49,7 +49,7 @@ use super::convex::{
 };
 use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, axis_aligned_orthogonal_solid_cell_selected_count,
-    certified_axis_aligned_box_pair, materialize_axis_aligned_orthogonal_solid_cell_output,
+    is_axis_aligned_box, materialize_axis_aligned_orthogonal_solid_cell_output,
 };
 use super::region::{
     ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputTriangleOrientation,
@@ -2752,7 +2752,7 @@ impl ExactArrangementCellComplexShortcutFacts {
 
     pub(crate) fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
         Self::from_supports(
-            certified_axis_aligned_box_pair(left, right),
+            is_axis_aligned_box(left) && is_axis_aligned_box(right),
             axis_aligned_orthogonal_solid_cell_selected_count(
                 left,
                 right,

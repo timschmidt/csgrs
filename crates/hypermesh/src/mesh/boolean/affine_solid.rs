@@ -144,7 +144,7 @@ pub(crate) fn has_affine_orthogonal_solid_cells(
     right: &ExactMesh,
     operation: AffineOrthogonalSolidOperation,
 ) -> bool {
-    affine_orthogonal_solid_operation_is_supported(left, right, operation)
+    affine_orthogonal_solid_selected_count(left, right, operation).is_some()
 }
 
 /// Return whether exact affine-normalized occupancy certifies no shared
@@ -207,14 +207,6 @@ fn certify_affine_orthogonal_solid_inputs(
         basis,
         uvw_output_plan,
     })
-}
-
-fn affine_orthogonal_solid_operation_is_supported(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: AffineOrthogonalSolidOperation,
-) -> bool {
-    affine_orthogonal_solid_selected_count(left, right, operation).is_some()
 }
 
 fn affine_orthogonal_solid_selected_count(
