@@ -354,11 +354,10 @@ fn append_non_coplanar_face_cell_constraints(
     interior_constraints: &mut Vec<Constraint>,
     unique_interior_constraints: &mut BTreeSet<(usize, usize)>,
 ) -> hypertri::Result<bool> {
-    for pair in graph
-        .face_pairs
-        .iter()
-        .filter(|pair| pair_involves_face(pair, side, face))
-    {
+    for pair in graph.face_pairs.iter().filter(|pair| match side {
+        MeshSide::Left => pair.left_face == face,
+        MeshSide::Right => pair.right_face == face,
+    }) {
         if pair.relation != MeshFacePairRelation::Candidate || !pair_has_proper_crossing(pair) {
             continue;
         }
@@ -423,7 +422,11 @@ fn append_coplanar_face_cell_constraints(
     unique_constraints: &mut BTreeSet<(usize, usize)>,
 ) -> hypertri::Result<()> {
     for graph in &split_plan.graphs {
-        if !coplanar_split_graph_involves_face(graph.left_face, graph.right_face, side, face) {
+        let graph_involves_face = match side {
+            MeshSide::Left => graph.left_face == face,
+            MeshSide::Right => graph.right_face == face,
+        };
+        if !graph_involves_face {
             continue;
         }
         let mut edges =
@@ -745,19 +748,6 @@ fn seed_source_boundary_edge_crossings_on_coplanar_opposite_edges(
         }
     }
     Ok(())
-}
-
-/// Return whether a coplanar split graph touches the requested source face.
-fn coplanar_split_graph_involves_face(
-    left_face: usize,
-    right_face: usize,
-    side: MeshSide,
-    face: usize,
-) -> bool {
-    match side {
-        MeshSide::Left => left_face == face,
-        MeshSide::Right => right_face == face,
-    }
 }
 
 /// Return the opposite triangle's directed edges for one source-face graph.
@@ -1575,13 +1565,6 @@ fn segment_parameter(
     Err(hypertri::Error::InvalidInput {
         reason: "face-cell source boundary has duplicate projected endpoints",
     })
-}
-
-fn pair_involves_face(pair: &FacePairEvents, side: MeshSide, face: usize) -> bool {
-    match side {
-        MeshSide::Left => pair.left_face == face,
-        MeshSide::Right => pair.right_face == face,
-    }
 }
 
 fn pair_has_proper_crossing(pair: &FacePairEvents) -> bool {
