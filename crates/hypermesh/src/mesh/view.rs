@@ -948,9 +948,16 @@ impl<'a> EdgeRef<'a> {
 
     /// Borrow the edge endpoint vertices.
     pub fn vertex_refs(self) -> Result<[VertexRef<'a>; 2], ExactMeshError> {
-        let [a, b] = self.vertex_indices();
-        require_retained_edge_endpoint(self.mesh, self.index, a)?;
-        require_retained_edge_endpoint(self.mesh, self.index, b)?;
+        let edge_vertices @ [a, b] = self.vertex_indices();
+        for vertex in edge_vertices {
+            if vertex >= self.mesh.vertices().len() {
+                return Err(retained_edge_endpoint_error(
+                    self.index,
+                    edge_vertices,
+                    vertex,
+                ));
+            }
+        }
         Ok([
             VertexRef {
                 mesh: self.mesh,
@@ -1098,19 +1105,6 @@ fn require_retained_vertex_incident_edges(
         }
     }
     Ok(())
-}
-
-fn require_retained_edge_endpoint(
-    mesh: &ExactMesh,
-    edge: usize,
-    vertex: usize,
-) -> Result<(), ExactMeshError> {
-    if vertex < mesh.vertices().len() {
-        Ok(())
-    } else {
-        let edge_vertices = mesh.facts().edges[edge].vertices;
-        Err(retained_edge_endpoint_error(edge, edge_vertices, vertex))
-    }
 }
 
 fn retained_face_vertex_error(face: usize, triangle: [usize; 3], vertex: usize) -> ExactMeshError {
