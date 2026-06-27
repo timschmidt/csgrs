@@ -4734,11 +4734,17 @@ fn face_cell_from_original_triangle(
         .iter()
         .map(|vertex| mesh.vertices()[*vertex].clone())
         .collect();
-    let representative = triangle_centroid(
-        &mesh.vertices()[triangle[0]],
-        &mesh.vertices()[triangle[1]],
-        &mesh.vertices()[triangle[2]],
-    );
+    let third = (Real::from(1) / &Real::from(3)).ok();
+    let representative = third.map(|third| {
+        let a = &mesh.vertices()[triangle[0]];
+        let b = &mesh.vertices()[triangle[1]];
+        let c = &mesh.vertices()[triangle[2]];
+        Point3::new(
+            (a.x.clone() + &b.x + &c.x) * &third,
+            (a.y.clone() + &b.y + &c.y) * &third,
+            (a.z.clone() + &b.z + &c.z) * &third,
+        )
+    });
     let opposite =
         representative.map(|point| classify_opposite(side, point, left, right, policy, blockers));
     if opposite.is_none() && policy.unresolved == ExactUnresolvedPolicy::Block {
@@ -4767,10 +4773,15 @@ fn lift_carrier_plane_point(
     let a = mesh.vertices().get(triangle[0])?;
     let b = mesh.vertices().get(triangle[1])?;
     let c = mesh.vertices().get(triangle[2])?;
-    let ab = point3_sub(b, a);
-    let ac = point3_sub(c, a);
-    let normal = cross(&ab, &ac);
-    let plane_value = dot(&normal, a);
+    let ab = Point3::new(b.x.clone() - &a.x, b.y.clone() - &a.y, b.z.clone() - &a.z);
+    let ac = Point3::new(c.x.clone() - &a.x, c.y.clone() - &a.y, c.z.clone() - &a.z);
+    let normal = Point3::new(
+        ab.y.clone() * &ac.z - &(ab.z.clone() * &ac.y),
+        ab.z.clone() * &ac.x - &(ab.x.clone() * &ac.z),
+        ab.x.clone() * &ac.y - &(ab.y.clone() * &ac.x),
+    );
+    let plane_value =
+        normal.x.clone() * &a.x + &(normal.y.clone() * &a.y) + &(normal.z.clone() * &a.z);
 
     let lifted = match projection {
         CoplanarProjection::Xy => {
@@ -4828,26 +4839,6 @@ fn lift_carrier_plane_point(
             None
         }
     }
-}
-
-fn point3_sub(left: &Point3, right: &Point3) -> Point3 {
-    Point3::new(
-        left.x.clone() - &right.x,
-        left.y.clone() - &right.y,
-        left.z.clone() - &right.z,
-    )
-}
-
-fn cross(left: &Point3, right: &Point3) -> Point3 {
-    Point3::new(
-        left.y.clone() * &right.z - &(left.z.clone() * &right.y),
-        left.z.clone() * &right.x - &(left.x.clone() * &right.z),
-        left.x.clone() * &right.y - &(left.y.clone() * &right.x),
-    )
-}
-
-fn dot(left: &Point3, right: &Point3) -> Real {
-    left.x.clone() * &right.x + &(left.y.clone() * &right.y) + &(left.z.clone() * &right.z)
 }
 
 fn projected_triangle_area2(points: &[Point3; 3], projection: CoplanarProjection) -> Real {
@@ -4974,15 +4965,6 @@ fn representative_from_boundary_nodes(nodes: &[FaceSplitBoundaryNode]) -> Option
         z += &point.z;
     }
     Some(Point3::new(x * &inv, y * &inv, z * &inv))
-}
-
-fn triangle_centroid(a: &Point3, b: &Point3, c: &Point3) -> Option<Point3> {
-    let third = (Real::from(1) / &Real::from(3)).ok()?;
-    Some(Point3::new(
-        (a.x.clone() + &b.x + &c.x) * &third,
-        (a.y.clone() + &b.y + &c.y) * &third,
-        (a.z.clone() + &b.z + &c.z) * &third,
-    ))
 }
 
 #[cfg(test)]
