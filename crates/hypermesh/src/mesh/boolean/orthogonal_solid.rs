@@ -418,6 +418,7 @@ fn certify_axis_aligned_orthogonal_solid_face_cells(
         return None;
     }
 
+    let half = (Real::from(1) / &Real::from(2)).ok()?;
     let mut planes = Vec::<FacePlaneAccumulator>::new();
     for triangle in mesh.triangles() {
         let sample = triangle_face_cell_sample(mesh, triangle, &x, &y, &z)?;
@@ -437,17 +438,14 @@ fn certify_axis_aligned_orthogonal_solid_face_cells(
             }
         };
         accumulator.triangle_area2 = add(&accumulator.triangle_area2, &sample.area2);
+        let (u_axis, v_axis) = canonical_face_axes(sample.key.axis);
+        let u_coords = axis_coords(&x, &y, &z, u_axis);
+        let v_coords = axis_coords(&x, &y, &z, v_axis);
         for u in sample.u_range.clone() {
             for v in sample.v_range.clone() {
                 let midpoint = ProjectedFacePoint {
-                    u: midpoint_real(
-                        &axis_coords(&x, &y, &z, canonical_face_axes(sample.key.axis).0)[u],
-                        &axis_coords(&x, &y, &z, canonical_face_axes(sample.key.axis).0)[u + 1],
-                    )?,
-                    v: midpoint_real(
-                        &axis_coords(&x, &y, &z, canonical_face_axes(sample.key.axis).1)[v],
-                        &axis_coords(&x, &y, &z, canonical_face_axes(sample.key.axis).1)[v + 1],
-                    )?,
+                    u: mul(&add(&u_coords[u], &u_coords[u + 1]), &half),
+                    v: mul(&add(&v_coords[v], &v_coords[v + 1]), &half),
                 };
                 if point_in_projected_triangle(&midpoint, &sample.projected)? {
                     accumulator.selected.insert((u, v));
@@ -1638,11 +1636,6 @@ fn projected_face_orientation(
     let ac_u = sub(&c.u, &a.u);
     let ac_v = sub(&c.v, &a.v);
     Some(sub(&mul(&ab_u, &ac_v), &mul(&ab_v, &ac_u)))
-}
-
-fn midpoint_real(left: &Real, right: &Real) -> Option<Real> {
-    let half = (Real::from(1) / &Real::from(2)).ok()?;
-    Some(mul(&add(left, right), &half))
 }
 
 fn add(left: &Real, right: &Real) -> Real {
