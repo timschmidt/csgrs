@@ -1215,8 +1215,24 @@ fn refine_boundary_segments_with_collinear_points(
             }
             refined_boundary.extend(ordered);
         }
-        remove_consecutive_duplicate_points(&mut refined_boundary);
-        refined.push(refined_boundary);
+        let mut deduped = Vec::<Point3>::new();
+        for point in refined_boundary {
+            if deduped
+                .last()
+                .is_none_or(|last| !point3_coordinates_equal(last, &point))
+            {
+                deduped.push(point);
+            }
+        }
+        if deduped.len() > 1
+            && deduped
+                .first()
+                .zip(deduped.last())
+                .is_some_and(|(first, last)| point3_coordinates_equal(first, last))
+        {
+            deduped.pop();
+        }
+        refined.push(deduped);
     }
     Ok(refined)
 }
@@ -1265,29 +1281,6 @@ fn point3_axis_value(point: &Point3, axis: Point3CoordinateAxis) -> &Real {
         Point3CoordinateAxis::Y => &point.y,
         Point3CoordinateAxis::Z => &point.z,
     }
-}
-
-fn remove_consecutive_duplicate_points(points: &mut Vec<Point3>) -> usize {
-    let original_len = points.len();
-    let mut deduped = Vec::<Point3>::new();
-    for point in points.iter() {
-        if deduped
-            .last()
-            .is_none_or(|last| !point3_coordinates_equal(last, point))
-        {
-            deduped.push(point.clone());
-        }
-    }
-    if deduped.len() > 1
-        && deduped
-            .first()
-            .zip(deduped.last())
-            .is_some_and(|(first, last)| point3_coordinates_equal(first, last))
-    {
-        deduped.pop();
-    }
-    *points = deduped;
-    original_len.saturating_sub(points.len())
 }
 
 fn split_triangles_at_edge_vertices(
