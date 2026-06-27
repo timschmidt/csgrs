@@ -2026,7 +2026,14 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         {
             return Ok(preflight);
         }
-        let winding_evidence = winding_evidence_report_from_graph(graph, left, right, operation)?;
+        let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
+        let winding_evidence = winding_evidence_report_from_graph_with_facts(
+            graph,
+            left,
+            right,
+            operation,
+            &shortcut_facts,
+        )?;
         if winding_evidence.status().routes_to_certified_winding()
             && winding_evidence.blocker().kind() == ExactBooleanBlockerKind::CoplanarVolumetricCells
         {
@@ -2061,7 +2068,14 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         ));
     }
 
-    let winding_report = match winding_evidence_report_from_graph(graph, left, right, operation) {
+    let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
+    let winding_report = match winding_evidence_report_from_graph_with_facts(
+        graph,
+        left,
+        right,
+        operation,
+        &shortcut_facts,
+    ) {
         Ok(report) => report,
         Err(_) => {
             return region_plan_preflight_from_graph(
@@ -8434,16 +8448,6 @@ fn planar_arrangement_report(
         counts.into_blocker(blocker_kind),
         coplanar_arrangement_evidence,
     )
-}
-
-fn winding_evidence_report_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<ExactWindingEvidenceReport, ExactMeshError> {
-    let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
-    winding_evidence_report_from_graph_with_facts(graph, left, right, operation, &shortcut_facts)
 }
 
 fn winding_evidence_report_from_graph_with_facts(
