@@ -594,8 +594,18 @@ fn mesh_local_off_plane_side(
     face: usize,
     plane: &FacePlaneFacts,
 ) -> Option<PlaneSide> {
-    if mesh.triangles().get(face).is_none() || !mesh_face_is_coplanar_with_plane(mesh, face, plane)
-    {
+    let face_is_coplanar_with_plane = |face: usize| {
+        mesh.triangles().get(face).is_some_and(|triangle| {
+            triangle.0.iter().all(|&vertex| {
+                mesh.vertices()
+                    .get(vertex)
+                    .and_then(|point| retained_plane_side(plane, point))
+                    == Some(PlaneSide::On)
+            })
+        })
+    };
+
+    if mesh.triangles().get(face).is_none() || !face_is_coplanar_with_plane(face) {
         return None;
     }
     let edge_to_faces = mesh_edge_to_faces(mesh);
@@ -611,9 +621,7 @@ fn mesh_local_off_plane_side(
                 .into_iter()
                 .flat_map(|faces| faces.iter())
             {
-                if !patch.contains(&neighbor)
-                    && mesh_face_is_coplanar_with_plane(mesh, neighbor, plane)
-                {
+                if !patch.contains(&neighbor) && face_is_coplanar_with_plane(neighbor) {
                     stack.push(neighbor);
                 }
             }
@@ -674,17 +682,6 @@ fn mesh_face_edges(mesh: &ExactMesh, face: usize) -> Option<[[usize; 2]; 3]> {
         sorted_edge([triangle[1], triangle[2]]),
         sorted_edge([triangle[2], triangle[0]]),
     ])
-}
-
-fn mesh_face_is_coplanar_with_plane(mesh: &ExactMesh, face: usize, plane: &FacePlaneFacts) -> bool {
-    mesh.triangles().get(face).is_some_and(|triangle| {
-        triangle.0.iter().all(|&vertex| {
-            mesh.vertices()
-                .get(vertex)
-                .and_then(|point| retained_plane_side(plane, point))
-                == Some(PlaneSide::On)
-        })
-    })
 }
 
 fn coplanar_pair_has_positive_area_overlap(events: &[IntersectionEvent]) -> bool {
