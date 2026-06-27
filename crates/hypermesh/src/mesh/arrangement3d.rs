@@ -819,9 +819,12 @@ impl<'a> ArrangementView<'a> {
 
     /// Validate retained arrangement state without cloning arrangement storage.
     pub fn validate_retained_state(self) -> Result<(), ExactMeshError> {
-        self.arrangement
-            .validate()
-            .map_err(arrangement_blocker_mesh_error)
+        self.arrangement.validate().map_err(|blocker| {
+            ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::ExactConstructionFailure,
+                format!("retained arrangement validation failed: {blocker:?}"),
+            ))
+        })
     }
 
     /// Retained arrangement vertex count.
@@ -1815,13 +1818,6 @@ impl ExactArrangement3d {
     ) -> Result<ExactLabeledCellComplex, ExactArrangementBlocker> {
         ExactCellComplex::from_arrangement(self.clone(), policy).label_regions(policy)
     }
-}
-
-fn arrangement_blocker_mesh_error(blocker: ExactArrangementBlocker) -> ExactMeshError {
-    ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::ExactConstructionFailure,
-        format!("retained arrangement validation failed: {blocker:?}"),
-    ))
 }
 
 fn extend_split_plan_blockers(
