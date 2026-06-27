@@ -560,21 +560,6 @@ fn arrangement_blocker_error(
     ))
 }
 
-fn retained_arrangement_attempt_for_request<'a>(
-    retained: Option<&'a ExactArrangementBooleanAttempt>,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-    policy: ExactRegularizationPolicy,
-) -> Result<Option<&'a ExactArrangementBooleanAttempt>, ExactEvidenceValidationError> {
-    let Some(attempt) = retained else {
-        return Ok(None);
-    };
-    attempt.validate_for_request_policy(request, policy)?;
-    attempt.validate_against_sources_for_request(left, right, request)?;
-    Ok(Some(attempt))
-}
-
 /// Exact boolean operation request.
 ///
 /// Named booleans are represented now, but they intentionally do not fall back
@@ -1329,20 +1314,23 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
 ) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let operation = request.operation;
     let validation = request.validation;
-    let retained_arrangement_attempt = retained_arrangement_attempt_for_request(
-        retained_arrangement_attempt,
-        left,
-        right,
-        request,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
-    )
-    .map_err(|error| {
-        retained_evidence_validation_error(
-            "retained arrangement attempt failed validation",
-            error,
-            ExactMeshBlockerKind::ExactConstructionFailure,
-        )
-    })?;
+    let retained_arrangement_attempt = retained_arrangement_attempt
+        .map(|attempt| {
+            attempt.validate_for_request_policy(
+                request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )?;
+            attempt.validate_against_sources_for_request(left, right, request)?;
+            Ok(attempt)
+        })
+        .transpose()
+        .map_err(|error| {
+            retained_evidence_validation_error(
+                "retained arrangement attempt failed validation",
+                error,
+                ExactMeshBlockerKind::ExactConstructionFailure,
+            )
+        })?;
     if shortcut_facts.certified_support(operation)
         == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
         && let Some(result) =

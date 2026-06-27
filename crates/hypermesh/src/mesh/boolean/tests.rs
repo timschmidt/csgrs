@@ -2903,10 +2903,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
             )
     );
     assert_eq!(
-        retained_arrangement_attempt_for_request(
-            Some(&wrong_validation_attempt),
-            &left,
-            &right,
+        wrong_validation_attempt.validate_for_request_policy(
             ExactBooleanRequest::new(
                 ExactBooleanOperation::Union,
                 ExactMeshValidationPolicy::ALLOW_BOUNDARY,
