@@ -640,6 +640,7 @@ fn connected_components(
     faces: &BTreeMap<UnitFaceKey, i8>,
 ) -> Option<Vec<usize>> {
     let cell_count = nx.checked_mul(ny)?.checked_mul(nz)?;
+    let layer = ny * nz;
     let mut components = vec![usize::MAX; cell_count];
     let mut component = 0usize;
     for index in 0..cell_count {
@@ -649,7 +650,10 @@ fn connected_components(
         components[index] = component;
         let mut queue = VecDeque::from([index]);
         while let Some(cell) = queue.pop_front() {
-            let (i, j, k) = unravel_cell(cell, ny, nz);
+            let i = cell / layer;
+            let rest = cell % layer;
+            let j = rest / nz;
+            let k = rest % nz;
             let neighbors = [
                 (
                     i > 0,
@@ -1485,15 +1489,6 @@ fn cell_index(i: usize, j: usize, k: usize, ny: usize, nz: usize) -> Option<usiz
         .checked_add(j)?
         .checked_mul(nz)?
         .checked_add(k)
-}
-
-fn unravel_cell(index: usize, ny: usize, nz: usize) -> (usize, usize, usize) {
-    let layer = ny * nz;
-    let i = index / layer;
-    let rest = index % layer;
-    let j = rest / nz;
-    let k = rest % nz;
-    (i, j, k)
 }
 
 fn canonical_face_axes(axis: Axis) -> (Axis, Axis) {
