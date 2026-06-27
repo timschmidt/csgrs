@@ -4254,31 +4254,32 @@ fn shell_region_witnesses(
         for point in &cell.boundary_points {
             witness_index.push_unique(&mut witnesses, point.clone());
         }
-        if let Some(point) = face_cell_interior_witness(cell, left, right) {
-            witness_index.push_unique(&mut witnesses, point);
+        if cell.boundary_points.len() >= 3 {
+            let mesh = cell.carrier.side.mesh(left, right);
+            let mut blockers = Vec::new();
+            if let Some(projection) =
+                choose_triangle_projection(mesh, cell.carrier.triangle, &mut blockers)
+            {
+                let projected = cell
+                    .boundary_points
+                    .iter()
+                    .map(|point| project_point3(point, projection))
+                    .collect::<Vec<_>>();
+                if let Ok(witness) = projected_loop_interior_witness(&projected)
+                    && let Some(point) = lift_carrier_plane_point(
+                        mesh,
+                        cell.carrier.face,
+                        projection,
+                        &witness,
+                        &mut blockers,
+                    )
+                {
+                    witness_index.push_unique(&mut witnesses, point);
+                }
+            }
         }
     }
     witnesses
-}
-
-fn face_cell_interior_witness(
-    cell: &ArrangementFaceCell,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<Point3> {
-    if cell.boundary_points.len() < 3 {
-        return None;
-    }
-    let mesh = cell.carrier.side.mesh(left, right);
-    let mut blockers = Vec::new();
-    let projection = choose_triangle_projection(mesh, cell.carrier.triangle, &mut blockers)?;
-    let projected = cell
-        .boundary_points
-        .iter()
-        .map(|point| project_point3(point, projection))
-        .collect::<Vec<_>>();
-    let witness = projected_loop_interior_witness(&projected).ok()?;
-    lift_carrier_plane_point(mesh, cell.carrier.face, projection, &witness, &mut blockers)
 }
 
 fn shell_region_mesh(
