@@ -4488,7 +4488,9 @@ impl ArrangementEdgeUserIndex {
             if let Some(key) = point_key {
                 self.point_key_buckets.entry(key).or_insert(index);
             }
-            push_unique_edge_user(&mut self.edge_users[index].1, cell);
+            if !self.edge_users[index].1.contains(&cell) {
+                self.edge_users[index].1.push(cell);
+            }
             return;
         }
 
@@ -4519,12 +4521,6 @@ impl ArrangementEdgeUserIndex {
                 .find(|(_, (existing, _))| boundary_edges_equivalent(existing, edge))
                 .map(|(index, _)| index)
         }
-    }
-}
-
-fn push_unique_edge_user(users: &mut Vec<usize>, cell: usize) {
-    if !users.contains(&cell) {
-        users.push(cell);
     }
 }
 
