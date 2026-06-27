@@ -3523,37 +3523,25 @@ fn regularized_incident_sheet_count(
 }
 
 fn exact_boundary_loops_equivalent(left: &[Point3], right: &[Point3]) -> bool {
-    exact_boundary_loops_same_orientation(left, right)
-        || exact_boundary_loops_opposite_orientation(left, right)
-}
-
-fn exact_boundary_loops_same_orientation(left: &[Point3], right: &[Point3]) -> bool {
     if left.len() != right.len() {
         return false;
     }
     if left.is_empty() {
         return true;
     }
-    (0..right.len()).any(|offset| {
-        (0..left.len()).all(|index| {
-            point3_equal(&left[index], &right[(offset + index) % right.len()]).value() == Some(true)
+    let matches = |reverse| {
+        (0..right.len()).any(|offset| {
+            (0..left.len()).all(|index| {
+                let right_index = if reverse {
+                    (offset + right.len() - index) % right.len()
+                } else {
+                    (offset + index) % right.len()
+                };
+                point3_equal(&left[index], &right[right_index]).value() == Some(true)
+            })
         })
-    })
-}
-
-fn exact_boundary_loops_opposite_orientation(left: &[Point3], right: &[Point3]) -> bool {
-    if left.len() != right.len() {
-        return false;
-    }
-    if left.is_empty() {
-        return true;
-    }
-    (0..right.len()).any(|offset| {
-        (0..left.len()).all(|index| {
-            let right_index = (offset + right.len() - index) % right.len();
-            point3_equal(&left[index], &right[right_index]).value() == Some(true)
-        })
-    })
+    };
+    matches(false) || matches(true)
 }
 
 fn arrangement_region_oriented_sides(
@@ -3908,41 +3896,25 @@ pub(crate) fn exact_node_loops_equivalent(
     left: &[ArrangementFaceCellNode],
     right: &[ArrangementFaceCellNode],
 ) -> bool {
-    exact_node_loops_same_orientation(left, right)
-        || exact_node_loops_opposite_orientation(left, right)
-}
-
-fn exact_node_loops_same_orientation(
-    left: &[ArrangementFaceCellNode],
-    right: &[ArrangementFaceCellNode],
-) -> bool {
     if left.len() != right.len() {
         return false;
     }
     if left.is_empty() {
         return true;
     }
-    (0..right.len()).any(|offset| {
-        (0..left.len()).all(|index| left[index] == right[(offset + index) % right.len()])
-    })
-}
-
-fn exact_node_loops_opposite_orientation(
-    left: &[ArrangementFaceCellNode],
-    right: &[ArrangementFaceCellNode],
-) -> bool {
-    if left.len() != right.len() {
-        return false;
-    }
-    if left.is_empty() {
-        return true;
-    }
-    (0..right.len()).any(|offset| {
-        (0..left.len()).all(|index| {
-            let right_index = (offset + right.len() - index) % right.len();
-            left[index] == right[right_index]
+    let matches = |reverse| {
+        (0..right.len()).any(|offset| {
+            (0..left.len()).all(|index| {
+                let right_index = if reverse {
+                    (offset + right.len() - index) % right.len()
+                } else {
+                    (offset + index) % right.len()
+                };
+                left[index] == right[right_index]
+            })
         })
-    })
+    };
+    matches(false) || matches(true)
 }
 
 type NestedVolumeGraph = (
