@@ -44,8 +44,6 @@ use super::contained_adjacent::materialize_contained_face_adjacent_union;
 use super::convex::{
     intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
 };
-#[cfg(test)]
-use super::materialize_boolean_exact_request;
 use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, axis_aligned_orthogonal_solid_cell_selected_count,
     certified_axis_aligned_box_pair, materialize_axis_aligned_orthogonal_solid_cell_output,
@@ -73,14 +71,13 @@ use super::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
     adjacent_union_completion_certification, boolean_convex_meshes_optional,
     boolean_coplanar_mesh_overlay_optional, boundary_policy_shortcut_result_matches_sources,
-    boundary_touching_report_from_graph,
+    boundary_touching_report_from_graph, materialize_boolean_exact_request,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
     materialize_volumetric_coplanar_boundary_closure_output,
     no_materialized_boundary_output_report, open_surface_disjoint_report_from_graph,
     open_surface_disjoint_result_matches_sources, preflight_report_for_request_from_graph,
     rematerialize_retained_arrangement_cell_complex_attempt,
-    replay_boolean_exact_request_for_result_validation,
     replay_closed_same_surface_boolean_result_if_certified,
     replay_generic_arrangement_cell_complex_result, replay_open_surface_arrangement_result,
     replay_selected_region_boolean_result, volumetric_boundary_closure_report_from_graph,
@@ -2504,7 +2501,7 @@ impl ExactBooleanResult {
             && self.arrangement_cell_complex_operation() == Some(request.operation)
             && self.mesh.validation_policy().satisfies(request.validation)
         {
-            let replay = replay_boolean_exact_request_for_result_validation(left, right, request)
+            let replay = materialize_boolean_exact_request(left, right, request)
                 .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
             return if self.matches_retained_replay(&replay) {
                 Ok(())
@@ -2512,7 +2509,7 @@ impl ExactBooleanResult {
                 Err(ExactEvidenceValidationError::SourceReplayMismatch)
             };
         }
-        let replay = replay_boolean_exact_request_for_result_validation(left, right, request)
+        let replay = materialize_boolean_exact_request(left, right, request)
             .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         if self.matches_retained_replay(&replay) {
             Ok(())

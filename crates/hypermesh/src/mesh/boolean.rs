@@ -196,17 +196,8 @@ pub(crate) fn exact_boolean_evaluation_for_replay(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<ExactBooleanEvaluation, ExactEvidenceValidationError> {
-    exact_boolean_evaluation_for_replay_result(left, right, request)
-        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)
-}
-
-#[cfg(test)]
-fn exact_boolean_evaluation_for_replay_result(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactBooleanEvaluation, ExactMeshError> {
     exact_boolean_evaluation_for_replay_result_with_materialization(left, right, request, true)
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)
 }
 
 #[cfg(test)]
@@ -3684,14 +3675,6 @@ fn materialize_arrangement_lower_dimensional_intersection_from_graph(
 /// intersection and difference do not need that projection policy once the
 /// same exact boundary-touch report proves no shared interior volume; those
 /// two operations use certified shortcuts before the policy layer.
-pub(crate) fn replay_boolean_exact_request_for_result_validation(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactBooleanResult, ExactMeshError> {
-    materialize_boolean_exact_request(left, right, request)
-}
-
 pub(crate) fn materialize_boolean_exact_request(
     left: &ExactMesh,
     right: &ExactMesh,
