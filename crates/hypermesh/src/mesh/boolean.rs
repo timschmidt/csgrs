@@ -1359,11 +1359,21 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     {
         return Ok(Some(result));
     }
-    if let Some((result, _closure)) =
-        materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
+    if let Some((mesh, closure_report)) =
+        materialize_volumetric_coplanar_boundary_closure_output_from_graph(
             graph, left, right, operation, validation,
         )?
     {
+        let result = certified_shortcut_result(
+            mesh,
+            operation,
+            ExactBooleanShortcutKind::ArrangementCellComplex,
+        );
+        let result =
+            result_with_arrangement_gate_reports_from_graph(result, graph, left, right, operation)?;
+        if result.validate().is_err() || closure_report.validate().is_err() {
+            return Ok(None);
+        }
         let arrangement_mesh = copy_mesh(
             &result.mesh,
             "exact arrangement cell-complex boundary materialization",
@@ -5612,33 +5622,6 @@ fn boolean_arrangement_convex_regularized_sheet_recovery(
         return Ok(None);
     }
     Ok(Some(result))
-}
-
-fn materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<(ExactBooleanResult, ExactVolumetricBoundaryClosureReport)>, ExactMeshError> {
-    let Some((mesh, closure_report)) =
-        materialize_volumetric_coplanar_boundary_closure_output_from_graph(
-            graph, left, right, operation, validation,
-        )?
-    else {
-        return Ok(None);
-    };
-    let result = certified_shortcut_result(
-        mesh,
-        operation,
-        ExactBooleanShortcutKind::ArrangementCellComplex,
-    );
-    let result =
-        result_with_arrangement_gate_reports_from_graph(result, graph, left, right, operation)?;
-    if result.validate().is_err() || closure_report.validate().is_err() {
-        return Ok(None);
-    }
-    Ok(Some((result, closure_report)))
 }
 
 fn result_with_arrangement_gate_reports_from_graph(
