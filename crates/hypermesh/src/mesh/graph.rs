@@ -1712,7 +1712,10 @@ fn split_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> ExactMe
                     blocker.message,
                 );
                 if let Some(side) = blocker.side {
-                    mesh = mesh.with_source_side(exact_mesh_source_side(side));
+                    mesh = mesh.with_source_side(match side {
+                        MeshSide::Left => ExactMeshSourceSide::Left,
+                        MeshSide::Right => ExactMeshSourceSide::Right,
+                    });
                 }
                 if let Some(face) = blocker.face {
                     mesh = mesh.with_face(face);
@@ -1724,13 +1727,6 @@ fn split_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> ExactMe
             })
             .collect(),
     )
-}
-
-const fn exact_mesh_source_side(side: MeshSide) -> ExactMeshSourceSide {
-    match side {
-        MeshSide::Left => ExactMeshSourceSide::Left,
-        MeshSide::Right => ExactMeshSourceSide::Right,
-    }
 }
 
 fn split_plan_blocker_mesh_kind(kind: SplitPlanBlockerKind) -> ExactMeshBlockerKind {
