@@ -72,7 +72,7 @@ use super::winding::{
 };
 use super::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
-    adjacent_union_completion_certification, boolean_convex_meshes_optional,
+    adjacent_union_completion_certification_from_graph, boolean_convex_meshes_optional,
     boolean_coplanar_mesh_overlay_optional, boundary_policy_shortcut_result_matches_sources,
     boundary_touching_report_from_graph, materialize_boolean_exact_request,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
@@ -4862,9 +4862,12 @@ fn arrangement_cell_complex_sources_match(
     {
         return Ok(true);
     }
+    let graph = validated_report_intersection_graph(left, right)?;
     if operation == ExactBooleanOperation::Union {
-        let (report, _) = adjacent_union_completion_certification(left, right, operation, None)
-            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
+        let (report, _) = adjacent_union_completion_certification_from_graph(
+            &graph, left, right, operation, None,
+        )
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         report.validate()?;
         if matches!(
             report.status,
@@ -4874,7 +4877,6 @@ fn arrangement_cell_complex_sources_match(
             return Ok(true);
         }
     }
-    let graph = validated_report_intersection_graph(left, right)?;
     if graph.has_unknowns() {
         return Ok(false);
     }
@@ -4955,10 +4957,14 @@ fn arrangement_cell_complex_output_matches_sources(
         retained_mismatch = true;
     }
 
-    let graph = validated_report_intersection_graph(left, right)?;
+    let validated_graph = validated_report_intersection_graph(left, right)?;
     if let Some((replay, closure_report)) =
         materialize_volumetric_coplanar_boundary_closure_output_from_graph(
-            &graph, left, right, operation, validation,
+            &validated_graph,
+            left,
+            right,
+            operation,
+            validation,
         )
         .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
     {
@@ -5061,9 +5067,14 @@ fn arrangement_cell_complex_output_matches_sources(
         return Ok(retained_mismatch.then_some(false));
     }
 
-    let (adjacent_report, _) =
-        adjacent_union_completion_certification(left, right, operation, None)
-            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
+    let (adjacent_report, _) = adjacent_union_completion_certification_from_graph(
+        &validated_graph,
+        left,
+        right,
+        operation,
+        None,
+    )
+    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
     adjacent_report.validate()?;
     match adjacent_report.status {
         ExactAdjacentUnionCompletionStatus::CertifiedFullFace => {
@@ -8045,9 +8056,15 @@ impl ExactAdjacentUnionCompletionReport {
         right: &ExactMesh,
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
-        let (replay, _) =
-            adjacent_union_completion_certification(left, right, self.operation, None)
-                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
+        let graph = validated_report_intersection_graph(left, right)?;
+        let (replay, _) = adjacent_union_completion_certification_from_graph(
+            &graph,
+            left,
+            right,
+            self.operation,
+            None,
+        )
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
         } else {
