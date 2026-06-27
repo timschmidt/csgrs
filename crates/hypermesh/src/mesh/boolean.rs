@@ -1906,10 +1906,24 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     {
         return Ok(preflight);
     }
-    if let Some(preflight) =
-        open_surface_arrangement_preflight_from_graph(graph, left, right, operation)
+    if let Some((support, region_classifications, _triangulations)) =
+        open_surface_arrangement_plan_from_graph(graph, left, right, operation)
+            .ok()
+            .flatten()
     {
-        return Ok(preflight);
+        let region_count = unique_classified_region_count(&region_classifications);
+        return Ok(ExactBooleanPreflight::new(
+            operation,
+            support,
+            graph.has_unknowns(),
+            graph.face_pairs.len(),
+            graph.event_count(),
+            region_count,
+            region_classifications,
+            None,
+            None,
+            None,
+        ));
     }
     let boundary_report = boundary_touching_report_from_graph(graph, left, right).ok();
     if let Some(boundary_report) = boundary_report
@@ -2654,31 +2668,6 @@ fn region_plan_preflight_from_graph(
         blocker,
         None,
         coplanar_volumetric_evidence,
-    ))
-}
-
-fn open_surface_arrangement_preflight_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Option<ExactBooleanPreflight> {
-    let (support, region_classifications, _triangulations) =
-        open_surface_arrangement_plan_from_graph(graph, left, right, operation)
-            .ok()
-            .flatten()?;
-    let region_count = unique_classified_region_count(&region_classifications);
-    Some(ExactBooleanPreflight::new(
-        operation,
-        support,
-        graph.has_unknowns(),
-        graph.face_pairs.len(),
-        graph.event_count(),
-        region_count,
-        region_classifications,
-        None,
-        None,
-        None,
     ))
 }
 
