@@ -36,9 +36,9 @@ use super::graph::key::{
     exact_undirected_point3_edge_key,
 };
 use super::graph::{
-    CoplanarEdgeSplitConstruction, CoplanarOverlapGraph, ExactFaceRegionPlan,
-    ExactIntersectionGraph, ExactSplitTopologyPlan, FaceRegionBoundary, FaceSplitBoundaryNode,
-    MeshSide, SplitEdgeNode, SplitPlanValidationReport, build_validated_intersection_graph,
+    CoplanarOverlapGraph, ExactFaceRegionPlan, ExactIntersectionGraph, ExactSplitTopologyPlan,
+    FaceRegionBoundary, FaceSplitBoundaryNode, MeshSide, SplitEdgeNode, SplitPlanValidationReport,
+    build_validated_intersection_graph,
 };
 use super::validation::ExactMeshValidationPolicy;
 use core::cmp::Ordering;
@@ -2735,13 +2735,31 @@ fn lower_dimensional_artifacts(
                 continue;
             }
             for edge_split in &split_graph.edge_splits {
-                push_lower_dimensional_edge_artifacts(
-                    &mut artifacts,
-                    &mut artifact_index,
-                    split_graph.left_face,
-                    split_graph.right_face,
-                    edge_split,
-                );
+                for split_point in &edge_split.points {
+                    push_lower_dimensional_artifact(
+                        &mut artifacts,
+                        &mut artifact_index,
+                        ArrangementLowerDimensionalArtifact::PointContact {
+                            left_face: split_graph.left_face,
+                            right_face: split_graph.right_face,
+                            point: split_point.point.clone(),
+                        },
+                    );
+                }
+                if let Some(interval) = &edge_split.interval {
+                    push_lower_dimensional_artifact(
+                        &mut artifacts,
+                        &mut artifact_index,
+                        ArrangementLowerDimensionalArtifact::EdgeContact {
+                            left_face: split_graph.left_face,
+                            right_face: split_graph.right_face,
+                            endpoints: [
+                                interval.endpoints[0].point.clone(),
+                                interval.endpoints[1].point.clone(),
+                            ],
+                        },
+                    );
+                }
             }
             for vertex_overlap in &split_graph.vertex_overlaps {
                 let mesh = vertex_overlap.vertex_side.mesh(left, right);
@@ -2983,40 +3001,6 @@ fn compare_point3_on_axis(
         Some(order)
     } else {
         Some(order.reverse())
-    }
-}
-
-fn push_lower_dimensional_edge_artifacts(
-    artifacts: &mut Vec<ArrangementLowerDimensionalArtifact>,
-    artifact_index: &mut LowerDimensionalArtifactBuildIndex,
-    left_face: usize,
-    right_face: usize,
-    edge_split: &CoplanarEdgeSplitConstruction,
-) {
-    for split_point in &edge_split.points {
-        push_lower_dimensional_artifact(
-            artifacts,
-            artifact_index,
-            ArrangementLowerDimensionalArtifact::PointContact {
-                left_face,
-                right_face,
-                point: split_point.point.clone(),
-            },
-        );
-    }
-    if let Some(interval) = &edge_split.interval {
-        push_lower_dimensional_artifact(
-            artifacts,
-            artifact_index,
-            ArrangementLowerDimensionalArtifact::EdgeContact {
-                left_face,
-                right_face,
-                endpoints: [
-                    interval.endpoints[0].point.clone(),
-                    interval.endpoints[1].point.clone(),
-                ],
-            },
-        );
     }
 }
 
