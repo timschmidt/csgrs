@@ -1806,10 +1806,19 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     {
         return Ok(certified_preflight(operation, support, Some(graph), None));
     }
-    if let Some(preflight) = certified_closed_winding_separated_preflight_from_empty_graph(
-        graph, left, right, operation,
-    )? {
-        return Ok(preflight);
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && graph.face_pairs.is_empty()
+        && let Some((left_in_right, right_in_left)) =
+            closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
+        && left_in_right == ClosedMeshWindingMeshRelation::Outside
+        && right_in_left == ClosedMeshWindingMeshRelation::Outside
+    {
+        return Ok(certified_preflight(
+            operation,
+            ExactBooleanSupport::CertifiedClosedWindingSeparated,
+            Some(graph),
+            None,
+        ));
     }
 
     if operation == ExactBooleanOperation::Difference
@@ -2761,35 +2770,6 @@ fn certified_closed_boundary_touching_support(
         }
         ExactBooleanOperation::SelectedRegions(_) => None,
     }
-}
-
-fn certified_closed_winding_separated_preflight_from_empty_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<Option<ExactBooleanPreflight>, ExactMeshError> {
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || !graph.face_pairs.is_empty()
-    {
-        return Ok(None);
-    }
-    let Some((left_in_right, right_in_left)) =
-        closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
-    else {
-        return Ok(None);
-    };
-    if left_in_right != ClosedMeshWindingMeshRelation::Outside
-        || right_in_left != ClosedMeshWindingMeshRelation::Outside
-    {
-        return Ok(None);
-    }
-    Ok(Some(certified_preflight(
-        operation,
-        ExactBooleanSupport::CertifiedClosedWindingSeparated,
-        Some(graph),
-        None,
-    )))
 }
 
 fn certified_closed_boundary_only_contact_preflight(
