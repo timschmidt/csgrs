@@ -196,7 +196,8 @@ pub(crate) fn try_certified_axis_aligned_box_pair(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<bool, ExactMeshError> {
-    Ok(try_is_axis_aligned_box(left)? && try_is_axis_aligned_box(right)?)
+    Ok(try_certify_axis_aligned_box(left)?.is_some()
+        && try_certify_axis_aligned_box(right)?.is_some())
 }
 
 /// Return whether one mesh certifies as a retained exact axis-aligned box.
@@ -208,12 +209,6 @@ pub(crate) fn try_certified_axis_aligned_box_pair(
 /// coordinate transform alone.
 pub(crate) fn is_axis_aligned_box(mesh: &ExactMesh) -> bool {
     matches!(try_certify_axis_aligned_box(mesh), Ok(Some(_)))
-}
-
-/// Return whether one mesh certifies as a retained exact axis-aligned box,
-/// preserving retained-certificate and exact-predicate blockers.
-pub(crate) fn try_is_axis_aligned_box(mesh: &ExactMesh) -> Result<bool, ExactMeshError> {
-    try_certify_axis_aligned_box(mesh).map(|box_| box_.is_some())
 }
 
 pub(crate) fn axis_aligned_orthogonal_solid_cell_plan(

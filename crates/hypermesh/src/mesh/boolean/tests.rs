@@ -1529,10 +1529,10 @@ fn axis_aligned_orthogonal_cell_booleans_materialize_from_shortcut_support() {
 #[test]
 fn axis_aligned_box_predicate_certifies_box_shape() {
     let box_mesh = axis_aligned_box_i64([0, 0, 0], [1, 1, 1]);
-    assert!(try_is_axis_aligned_box(&box_mesh).unwrap());
+    assert!(try_certified_axis_aligned_box_pair(&box_mesh, &box_mesh).unwrap());
 
     let tetrahedron = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
-    assert!(!try_is_axis_aligned_box(&tetrahedron).unwrap());
+    assert!(!try_certified_axis_aligned_box_pair(&tetrahedron, &box_mesh).unwrap());
 }
 
 #[test]
