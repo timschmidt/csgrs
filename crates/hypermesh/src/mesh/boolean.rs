@@ -3700,22 +3700,19 @@ pub(crate) fn materialize_boolean_exact_request(
     materialize_boolean_exact_request_with_graph(left, right, request, None, None)
 }
 
-pub(crate) fn materialize_boolean_exact_request_with_prepared_pair(
-    pair: &PreparedMeshPair<'_, '_>,
-    request: ExactBooleanRequest,
-) -> Result<ExactBooleanResult, ExactMeshError> {
-    let left = pair.left_mesh();
-    let right = pair.right_mesh();
-    materialize_boolean_exact_request_with_graph(left, right, request, None, Some(pair))
-}
-
 pub(crate) fn materialize_closed_named_boolean_with_prepared_pair(
     pair: &PreparedMeshPair<'_, '_>,
     operation: ExactBooleanOperation,
 ) -> Result<ExactMesh, ExactMeshError> {
     let request = ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::CLOSED);
-    materialize_boolean_exact_request_with_prepared_pair(pair, request)
-        .map(ExactBooleanResult::into_mesh)
+    materialize_boolean_exact_request_with_graph(
+        pair.left_mesh(),
+        pair.right_mesh(),
+        request,
+        None,
+        Some(pair),
+    )
+    .map(ExactBooleanResult::into_mesh)
 }
 
 fn materialize_boolean_exact_request_with_graph(
