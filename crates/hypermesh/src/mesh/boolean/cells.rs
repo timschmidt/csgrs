@@ -567,7 +567,11 @@ fn seed_contained_coplanar_opposite_edge_endpoints(
     for edge in edge_keys {
         for (vertex, parameter) in [(edge[0], Real::from(0)), (edge[1], Real::from(1))] {
             let point = vertex_point_for_side(opposite_side, vertex, left, right)?;
-            if point_lies_on_mesh_face_closed(source_mesh, face, &point)? {
+            let location = classify_point_on_mesh_face(source_mesh, face, &point)?;
+            if matches!(
+                location,
+                TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
+            ) {
                 push_coplanar_cell_edge_point(edges, edge, parameter, point)?;
             }
         }
@@ -1606,8 +1610,13 @@ fn point_lies_in_face_pair_overlap(
 ) -> hypertri::Result<bool> {
     let left_location = classify_point_on_mesh_face(left, pair.left_face, point)?;
     let right_location = classify_point_on_mesh_face(right, pair.right_face, point)?;
-    Ok(point_triangle_location_is_closed(left_location)
-        && point_triangle_location_is_closed(right_location))
+    Ok(matches!(
+        left_location,
+        TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
+    ) && matches!(
+        right_location,
+        TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
+    ))
 }
 
 fn classify_point_on_mesh_face(
@@ -1632,21 +1641,6 @@ fn classify_point_on_mesh_face(
     .ok_or(hypertri::Error::PredicateUndecided {
         predicate: "face_cell_pair_endpoint_containment",
     })
-}
-
-const fn point_triangle_location_is_closed(location: TriangleLocation) -> bool {
-    matches!(
-        location,
-        TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
-    )
-}
-
-fn point_lies_on_mesh_face_closed(
-    mesh: &ExactMesh,
-    face: usize,
-    point: &Point3,
-) -> hypertri::Result<bool> {
-    classify_point_on_mesh_face(mesh, face, point).map(point_triangle_location_is_closed)
 }
 
 fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
