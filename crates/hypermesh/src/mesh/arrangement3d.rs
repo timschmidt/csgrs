@@ -3289,7 +3289,16 @@ fn arrangement_regions(
             .iter()
             .filter(|incidence| incidence.boundary)
             .count();
-        let oriented_sides = arrangement_region_oriented_sides(&component, face_cells);
+        let mut oriented_sides = Vec::with_capacity(component.len());
+        for &face_cell in &component {
+            let cell = &face_cells[face_cell];
+            oriented_sides.push(ArrangementRegionSide {
+                face_cell,
+                source: cell.carrier.side,
+                source_face: cell.carrier.face,
+                boundary: cell.boundary.clone(),
+            });
+        }
         let mut has_left_source = false;
         let mut has_right_source = false;
         for &face_cell in &component {
@@ -3410,24 +3419,6 @@ fn exact_boundary_loops_equivalent(left: &[Point3], right: &[Point3]) -> bool {
         })
     };
     matches(false) || matches(true)
-}
-
-fn arrangement_region_oriented_sides(
-    component: &[usize],
-    face_cells: &[ArrangementFaceCell],
-) -> Vec<ArrangementRegionSide> {
-    component
-        .iter()
-        .map(|&face_cell| {
-            let cell = &face_cells[face_cell];
-            ArrangementRegionSide {
-                face_cell,
-                source: cell.carrier.side,
-                source_face: cell.carrier.face,
-                boundary: cell.boundary.clone(),
-            }
-        })
-        .collect()
 }
 
 fn arrangement_volume_graph(
