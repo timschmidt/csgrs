@@ -168,8 +168,11 @@ pub(crate) fn full_face_adjacent_certificate(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<FullFaceAdjacentCertificate>, ExactMeshError> {
-    Ok(full_face_adjacent_union_certificate(left, right)?
-        .map(|inner| FullFaceAdjacentCertificate { inner }))
+    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        return Ok(None);
+    }
+    let graph = build_validated_intersection_graph(left, right)?;
+    full_face_adjacent_certificate_from_graph(left, right, &graph)
 }
 
 /// Return the retained full-face adjacency certificate from a validated graph.
@@ -178,47 +181,6 @@ pub(crate) fn full_face_adjacent_certificate_from_graph(
     right: &ExactMesh,
     graph: &ExactIntersectionGraph,
 ) -> Result<Option<FullFaceAdjacentCertificate>, ExactMeshError> {
-    Ok(
-        full_face_adjacent_union_certificate_from_graph(left, right, graph)?
-            .map(|inner| FullFaceAdjacentCertificate { inner }),
-    )
-}
-
-pub(crate) fn materialize_full_face_adjacent_union_from_certificate(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    certificate: &FullFaceAdjacentCertificate,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<FullFaceAdjacentUnion>, ExactMeshError> {
-    let certificate = &certificate.inner;
-    let Some(mesh) = merged_union_mesh(left, right, certificate, validation)? else {
-        return Ok(None);
-    };
-    let union = FullFaceAdjacentUnion {
-        shared_faces: certificate.shared_faces.clone(),
-        shared_patches: certificate.shared_patches.clone(),
-        mesh,
-    };
-    union.validate().map_err(full_face_adjacent_union_error)?;
-    Ok(Some(union))
-}
-
-fn full_face_adjacent_union_certificate(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<Option<FullFaceAdjacencyCertificate>, ExactMeshError> {
-    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
-        return Ok(None);
-    }
-    let graph = build_validated_intersection_graph(left, right)?;
-    full_face_adjacent_union_certificate_from_graph(left, right, &graph)
-}
-
-fn full_face_adjacent_union_certificate_from_graph(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    graph: &ExactIntersectionGraph,
-) -> Result<Option<FullFaceAdjacencyCertificate>, ExactMeshError> {
     if graph.has_unknowns() {
         return Ok(None);
     }
@@ -238,7 +200,26 @@ fn full_face_adjacent_union_certificate_from_graph(
         return Ok(None);
     }
 
-    Ok(Some(certificate))
+    Ok(Some(FullFaceAdjacentCertificate { inner: certificate }))
+}
+
+pub(crate) fn materialize_full_face_adjacent_union_from_certificate(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    certificate: &FullFaceAdjacentCertificate,
+    validation: ExactMeshValidationPolicy,
+) -> Result<Option<FullFaceAdjacentUnion>, ExactMeshError> {
+    let certificate = &certificate.inner;
+    let Some(mesh) = merged_union_mesh(left, right, certificate, validation)? else {
+        return Ok(None);
+    };
+    let union = FullFaceAdjacentUnion {
+        shared_faces: certificate.shared_faces.clone(),
+        shared_patches: certificate.shared_patches.clone(),
+        mesh,
+    };
+    union.validate().map_err(full_face_adjacent_union_error)?;
+    Ok(Some(union))
 }
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]

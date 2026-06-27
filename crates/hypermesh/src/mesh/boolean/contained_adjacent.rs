@@ -142,8 +142,11 @@ pub(crate) fn contained_face_adjacent_certificate(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<ContainedFaceAdjacentCertificate>, ExactMeshError> {
-    Ok(contained_face_adjacent_union_certificate(left, right)?
-        .map(|inner| ContainedFaceAdjacentCertificate { inner }))
+    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        return Ok(None);
+    }
+    let graph = build_validated_intersection_graph(left, right)?;
+    contained_face_adjacent_certificate_from_graph(left, right, &graph)
 }
 
 /// Return the retained contained-face adjacency certificate from a validated graph.
@@ -152,8 +155,18 @@ pub(crate) fn contained_face_adjacent_certificate_from_graph(
     right: &ExactMesh,
     graph: &ExactIntersectionGraph,
 ) -> Result<Option<ContainedFaceAdjacentCertificate>, ExactMeshError> {
+    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        return Ok(None);
+    }
+    if graph.has_unknowns() || graph.face_pairs.is_empty() {
+        return Ok(None);
+    }
+    if !closed_boundary_contact_only(left, right)? {
+        return Ok(None);
+    }
+
     Ok(
-        contained_face_adjacent_union_certificate_from_graph(left, right, graph)?
+        contained_face_adjacency_certificate(left, right, &graph.face_pairs)
             .map(|inner| ContainedFaceAdjacentCertificate { inner }),
     )
 }
@@ -181,50 +194,6 @@ pub(crate) fn materialize_contained_face_adjacent_union_from_certificate(
         .validate()
         .map_err(contained_face_adjacent_union_error)?;
     Ok(Some(union))
-}
-
-fn contained_face_adjacent_union_certificate(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<Option<ContainedFaceAdjacencyCertificate>, ExactMeshError> {
-    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
-        return Ok(None);
-    }
-    let graph = build_validated_intersection_graph(left, right)?;
-    if graph.has_unknowns() || graph.face_pairs.is_empty() {
-        return Ok(None);
-    }
-    if !closed_boundary_contact_only(left, right)? {
-        return Ok(None);
-    }
-
-    Ok(contained_face_adjacency_certificate(
-        left,
-        right,
-        &graph.face_pairs,
-    ))
-}
-
-fn contained_face_adjacent_union_certificate_from_graph(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    graph: &ExactIntersectionGraph,
-) -> Result<Option<ContainedFaceAdjacencyCertificate>, ExactMeshError> {
-    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
-        return Ok(None);
-    }
-    if graph.has_unknowns() || graph.face_pairs.is_empty() {
-        return Ok(None);
-    }
-    if !closed_boundary_contact_only(left, right)? {
-        return Ok(None);
-    }
-
-    Ok(contained_face_adjacency_certificate(
-        left,
-        right,
-        &graph.face_pairs,
-    ))
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
