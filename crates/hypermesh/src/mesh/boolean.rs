@@ -1947,14 +1947,73 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     {
         return Ok(preflight);
     }
-    if let Some(preflight) = boundary_or_planar_report_preflight_from_graph(
+    let boundary_report = boundary_touching_report_from_graph(graph, left, right).ok();
+    if let Some(boundary_report) = boundary_report
+        && boundary_report.is_certified()
+    {
+        return Ok(ExactBooleanPreflight::new(
+            operation,
+            ExactBooleanSupport::RequiresBoundaryPolicy,
+            boundary_report.graph_had_unknowns(),
+            boundary_report.retained_face_pairs(),
+            boundary_report.retained_events(),
+            0,
+            Vec::new(),
+            Some(*boundary_report.blocker()),
+            None,
+            None,
+        ));
+    }
+    let planar_report = planar_arrangement_report_from_graph_with_cell_complex_cache(
         graph,
         left,
         right,
-        request,
-        retained_attempt,
+        operation,
         &mut certified_arrangement_preflight,
-    )? {
+        Some(request),
+        retained_attempt,
+    )
+    .ok();
+    if let Some(planar_report) = planar_report.as_ref()
+        && planar_report.is_required()
+    {
+        if let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
+            &mut certified_arrangement_preflight,
+            operation,
+            graph,
+            left,
+            right,
+            Some(request),
+            retained_attempt,
+        )? {
+            return Ok(preflight);
+        }
+        return Ok(ExactBooleanPreflight::new(
+            operation,
+            ExactBooleanSupport::RequiresPlanarArrangement,
+            planar_report.graph_had_unknowns(),
+            planar_report.retained_face_pairs(),
+            planar_report.retained_events(),
+            0,
+            Vec::new(),
+            Some(*planar_report.blocker()),
+            planar_report.coplanar_arrangement_evidence().cloned(),
+            None,
+        ));
+    }
+    if planar_report
+        .as_ref()
+        .is_some_and(ExactPlanarArrangementReport::is_already_materialized)
+        && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
+            &mut certified_arrangement_preflight,
+            operation,
+            graph,
+            left,
+            right,
+            Some(request),
+            retained_attempt,
+        )?
+    {
         return Ok(preflight);
     }
     let convex_operation_preflight_allowed = match operation {
@@ -2156,72 +2215,6 @@ fn certified_winding_shortcut_preflight_from_graph(
             Some(graph),
             None,
         )));
-    }
-    Ok(None)
-}
-
-fn boundary_or_planar_report_preflight_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-    retained_attempt: Option<&ExactArrangementBooleanAttempt>,
-    certified_arrangement_preflight: &mut CertifiedArrangementCellComplexPreflightCache,
-) -> Result<Option<ExactBooleanPreflight>, ExactMeshError> {
-    let operation = request.operation;
-    let boundary_report = boundary_touching_report_from_graph(graph, left, right).ok();
-    if let Some(boundary_report) = boundary_report
-        && boundary_report.is_certified()
-    {
-        return Ok(Some(boundary_policy_required_preflight_from_report(
-            operation,
-            &boundary_report,
-        )));
-    }
-
-    let planar_report = planar_arrangement_report_from_graph_with_cell_complex_cache(
-        graph,
-        left,
-        right,
-        operation,
-        certified_arrangement_preflight,
-        Some(request),
-        retained_attempt,
-    )
-    .ok();
-    if let Some(planar_report) = planar_report.as_ref()
-        && planar_report.is_required()
-    {
-        if let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
-            certified_arrangement_preflight,
-            operation,
-            graph,
-            left,
-            right,
-            Some(request),
-            retained_attempt,
-        )? {
-            return Ok(Some(preflight));
-        }
-        return Ok(Some(planar_arrangement_required_preflight_from_report(
-            operation,
-            planar_report,
-        )));
-    }
-    if planar_report
-        .as_ref()
-        .is_some_and(ExactPlanarArrangementReport::is_already_materialized)
-        && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
-            certified_arrangement_preflight,
-            operation,
-            graph,
-            left,
-            right,
-            Some(request),
-            retained_attempt,
-        )?
-    {
-        return Ok(Some(preflight));
     }
     Ok(None)
 }
@@ -2745,42 +2738,6 @@ fn lower_dimensional_intersection_arrangement_preflight(
         left,
         right,
     ))
-}
-
-fn boundary_policy_required_preflight_from_report(
-    operation: ExactBooleanOperation,
-    report: &ExactBoundaryTouchingReport,
-) -> ExactBooleanPreflight {
-    ExactBooleanPreflight::new(
-        operation,
-        ExactBooleanSupport::RequiresBoundaryPolicy,
-        report.graph_had_unknowns(),
-        report.retained_face_pairs(),
-        report.retained_events(),
-        0,
-        Vec::new(),
-        Some(*report.blocker()),
-        None,
-        None,
-    )
-}
-
-fn planar_arrangement_required_preflight_from_report(
-    operation: ExactBooleanOperation,
-    report: &ExactPlanarArrangementReport,
-) -> ExactBooleanPreflight {
-    ExactBooleanPreflight::new(
-        operation,
-        ExactBooleanSupport::RequiresPlanarArrangement,
-        report.graph_had_unknowns(),
-        report.retained_face_pairs(),
-        report.retained_events(),
-        0,
-        Vec::new(),
-        Some(*report.blocker()),
-        report.coplanar_arrangement_evidence().cloned(),
-        None,
-    )
 }
 
 fn certified_closed_boundary_touching_support(
