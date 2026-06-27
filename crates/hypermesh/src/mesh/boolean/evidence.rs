@@ -37,8 +37,7 @@ use super::super::validation::ExactMeshValidationPolicy;
 use super::adjacent::materialize_full_face_adjacent_union;
 use super::affine_solid::{
     AffineOrthogonalSolidOperation, has_affine_orthogonal_solid_cells,
-    materialize_affine_orthogonal_solid_difference,
-    materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
+    materialize_affine_orthogonal_solid_operation,
 };
 use super::contained_adjacent::materialize_contained_face_adjacent_union;
 use super::convex::{
@@ -5025,40 +5024,20 @@ fn arrangement_cell_complex_output_matches_sources(
         retained_mismatch = true;
     }
 
-    match operation {
-        ExactBooleanOperation::Union => {
-            if let Some(replay) = materialize_affine_orthogonal_solid_union(left, right, validation)
-                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
-            {
-                if mesh_output_matches(mesh, &replay.mesh) {
-                    return Ok(Some(true));
-                }
-                retained_mismatch = true;
-            }
-        }
-        ExactBooleanOperation::Intersection => {
-            if let Some(replay) =
-                materialize_affine_orthogonal_solid_intersection(left, right, validation)
-                    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
-            {
-                if mesh_output_matches(mesh, &replay.mesh) {
-                    return Ok(Some(true));
-                }
-                retained_mismatch = true;
-            }
-        }
-        ExactBooleanOperation::Difference => {
-            if let Some(replay) =
-                materialize_affine_orthogonal_solid_difference(left, right, validation)
-                    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
-            {
-                if mesh_output_matches(mesh, &replay.mesh) {
-                    return Ok(Some(true));
-                }
-                retained_mismatch = true;
-            }
-        }
+    let affine_operation = match operation {
+        ExactBooleanOperation::Union => AffineOrthogonalSolidOperation::Union,
+        ExactBooleanOperation::Intersection => AffineOrthogonalSolidOperation::Intersection,
+        ExactBooleanOperation::Difference => AffineOrthogonalSolidOperation::Difference,
         ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+    };
+    if let Some(replay) =
+        materialize_affine_orthogonal_solid_operation(left, right, affine_operation, validation)
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+    {
+        if mesh_output_matches(mesh, &replay.mesh) {
+            return Ok(Some(true));
+        }
+        retained_mismatch = true;
     }
 
     if let Some(replay) =

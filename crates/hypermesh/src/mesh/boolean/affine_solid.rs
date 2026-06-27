@@ -117,7 +117,7 @@ impl AffineOrthogonalSolidArrangement {
         right: &ExactMesh,
     ) -> Result<(), ExactMeshError> {
         self.validate()?;
-        let replay = materialize_affine_orthogonal_solids(
+        let replay = materialize_affine_orthogonal_solid_operation(
             left,
             right,
             self.operation,
@@ -136,48 +136,6 @@ impl AffineOrthogonalSolidArrangement {
             ))
         }
     }
-}
-
-/// Certify and materialize an affine orthogonal-solid union.
-pub(crate) fn materialize_affine_orthogonal_solid_union(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<AffineOrthogonalSolidArrangement>, ExactMeshError> {
-    materialize_affine_orthogonal_solids(
-        left,
-        right,
-        AffineOrthogonalSolidOperation::Union,
-        validation,
-    )
-}
-
-/// Certify and materialize an affine orthogonal-solid intersection.
-pub(crate) fn materialize_affine_orthogonal_solid_intersection(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<AffineOrthogonalSolidArrangement>, ExactMeshError> {
-    materialize_affine_orthogonal_solids(
-        left,
-        right,
-        AffineOrthogonalSolidOperation::Intersection,
-        validation,
-    )
-}
-
-/// Certify and materialize an affine orthogonal-solid difference.
-pub(crate) fn materialize_affine_orthogonal_solid_difference(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<AffineOrthogonalSolidArrangement>, ExactMeshError> {
-    materialize_affine_orthogonal_solids(
-        left,
-        right,
-        AffineOrthogonalSolidOperation::Difference,
-        validation,
-    )
 }
 
 /// Return whether an affine orthogonal-solid operation is certified.
@@ -208,7 +166,8 @@ pub(crate) fn has_empty_affine_orthogonal_solid_cell_intersection(
     .is_some_and(|selected_count| selected_count == 0)
 }
 
-fn materialize_affine_orthogonal_solids(
+/// Certify and materialize one affine orthogonal-solid operation.
+pub(crate) fn materialize_affine_orthogonal_solid_operation(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: AffineOrthogonalSolidOperation,

@@ -66,8 +66,7 @@ use adjacent::{
 use affine_solid::{
     AffineOrthogonalSolidOperation, has_affine_orthogonal_solid_cells,
     has_empty_affine_orthogonal_solid_cell_intersection,
-    materialize_affine_orthogonal_solid_difference,
-    materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
+    materialize_affine_orthogonal_solid_operation,
 };
 use cells::triangulate_all_face_cells_with_cdt;
 use contained_adjacent::{
@@ -7656,17 +7655,8 @@ fn boolean_arrangement_affine_orthogonal_solid_recovery(
         ExactBooleanOperation::Difference => AffineOrthogonalSolidOperation::Difference,
         ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
     };
-    let arrangement = match affine_operation {
-        AffineOrthogonalSolidOperation::Union => {
-            materialize_affine_orthogonal_solid_union(left, right, validation)?
-        }
-        AffineOrthogonalSolidOperation::Intersection => {
-            materialize_affine_orthogonal_solid_intersection(left, right, validation)?
-        }
-        AffineOrthogonalSolidOperation::Difference => {
-            materialize_affine_orthogonal_solid_difference(left, right, validation)?
-        }
-    };
+    let arrangement =
+        materialize_affine_orthogonal_solid_operation(left, right, affine_operation, validation)?;
     let Some(arrangement) = arrangement else {
         return Ok(None);
     };
