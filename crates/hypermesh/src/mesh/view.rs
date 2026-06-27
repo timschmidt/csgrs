@@ -8,7 +8,7 @@ use super::arrangement3d::{ArrangementView, ExactArrangement};
 use super::boolean::evidence::ExactArrangementCellComplexShortcutFacts;
 use super::boolean::{ExactBooleanOperation, materialize_closed_named_boolean_with_prepared_pair};
 use super::bounds::{
-    BroadPhaseScratch, CandidateFacePairPlan, ExactAabb3, ExactAabbBroadPhase, PreparedMeshBounds,
+    BroadPhaseScratch, CandidateFacePairPlan, ExactAabbBroadPhase, PreparedMeshBounds,
 };
 use super::error::ExactMeshError;
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
@@ -236,17 +236,26 @@ impl<'a> MeshView<'a> {
 
     /// Borrow retained whole-mesh bounds as exact min/max corners.
     pub fn mesh_bounds(self) -> Option<(&'a Point3, &'a Point3)> {
-        self.mesh.bounds().mesh().map(bounds_corners)
+        self.mesh
+            .bounds()
+            .mesh()
+            .map(|bounds| (&bounds.min, &bounds.max))
     }
 
     /// Borrow retained bounds for one face as exact min/max corners.
     pub fn face_bounds(self, index: usize) -> Option<(&'a Point3, &'a Point3)> {
-        self.mesh.bounds().face(index).map(bounds_corners)
+        self.mesh
+            .bounds()
+            .face(index)
+            .map(|bounds| (&bounds.min, &bounds.max))
     }
 
     /// Borrow retained bounds for one edge as exact min/max corners.
     pub fn edge_bounds(self, index: usize) -> Option<(&'a Point3, &'a Point3)> {
-        self.mesh.bounds().edge(index).map(bounds_corners)
+        self.mesh
+            .bounds()
+            .edge(index)
+            .map(|bounds| (&bounds.min, &bounds.max))
     }
 
     /// Borrow retained bounds for one face, returning a typed blocker when absent.
@@ -838,7 +847,7 @@ impl<'a> FaceRef<'a> {
         self.mesh
             .bounds()
             .face(self.index)
-            .map(bounds_corners)
+            .map(|bounds| (&bounds.min, &bounds.max))
             .ok_or_else(|| missing_retained_face_bounds(self.index))
     }
 
@@ -963,7 +972,7 @@ impl<'a> EdgeRef<'a> {
         self.mesh
             .bounds()
             .edge(self.index)
-            .map(bounds_corners)
+            .map(|bounds| (&bounds.min, &bounds.max))
             .ok_or_else(|| {
                 ExactMeshError::one(
                     ExactMeshBlocker::new(
@@ -1004,10 +1013,6 @@ impl<'a> EdgeRef<'a> {
             })?;
         Ok([start, end])
     }
-}
-
-fn bounds_corners(bounds: &ExactAabb3) -> (&Point3, &Point3) {
-    (&bounds.min, &bounds.max)
 }
 
 fn missing_retained_face_bounds(face: usize) -> ExactMeshError {
