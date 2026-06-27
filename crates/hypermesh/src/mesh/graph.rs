@@ -2967,10 +2967,6 @@ fn face_split_geometry_plan(
     topology: &ExactSplitTopologyPlan,
     face_plan: &ExactFaceSplitPlan,
 ) -> Result<ExactFaceSplitGeometryPlan, ExactMeshError> {
-    if let Some(blocker) = first_face_geometry_error(left, right, topology, face_plan) {
-        return Err(ExactMeshError::one(blocker));
-    }
-
     let chains = topology
         .edge_chains
         .iter()
@@ -2980,10 +2976,42 @@ fn face_split_geometry_plan(
     let mut faces = Vec::with_capacity(face_plan.faces.len());
     for face in &face_plan.faces {
         let mesh = face.side.mesh(left, right);
+        if face.face >= mesh.triangles().len() {
+            return Err(ExactMeshError::one(
+                ExactMeshBlocker::new(
+                    ExactMeshBlockerKind::IndexOutOfBounds,
+                    "face split geometry references a missing face",
+                )
+                .with_face(face.face),
+            ));
+        }
         let triangle = mesh.triangles()[face.face].0;
         let mut boundary_chains = Vec::with_capacity(face.edges.len());
         for edge in &face.edges {
-            let chain = chains[&(side_key(face.side), edge.edge[0], edge.edge[1])];
+            let chain = chains
+                .get(&(side_key(face.side), edge.edge[0], edge.edge[1]))
+                .ok_or_else(|| {
+                    ExactMeshError::one(
+                        ExactMeshBlocker::new(
+                            ExactMeshBlockerKind::IndexOutOfBounds,
+                            "face split geometry references a missing split edge chain",
+                        )
+                        .with_face(face.face)
+                        .with_edge(edge.edge),
+                    )
+                })?;
+            for &graph_vertex in &edge.graph_vertices {
+                if graph_vertex >= topology.graph_vertices.len() {
+                    return Err(ExactMeshError::one(
+                        ExactMeshBlocker::new(
+                            ExactMeshBlockerKind::IndexOutOfBounds,
+                            "face split geometry references a missing graph vertex",
+                        )
+                        .with_face(face.face)
+                        .with_edge(edge.edge),
+                    ));
+                }
+            }
             boundary_chains.push(FaceSplitBoundaryChain {
                 edge: edge.edge,
                 nodes: chain
@@ -3002,58 +3030,6 @@ fn face_split_geometry_plan(
     }
 
     Ok(ExactFaceSplitGeometryPlan { faces })
-}
-
-fn first_face_geometry_error(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    topology: &ExactSplitTopologyPlan,
-    face_plan: &ExactFaceSplitPlan,
-) -> Option<ExactMeshBlocker> {
-    let chains = topology
-        .edge_chains
-        .iter()
-        .map(|chain| ((side_key(chain.side), chain.edge[0], chain.edge[1]), chain))
-        .collect::<BTreeMap<_, _>>();
-
-    for face in &face_plan.faces {
-        let mesh = face.side.mesh(left, right);
-        if face.face >= mesh.triangles().len() {
-            return Some(
-                ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::IndexOutOfBounds,
-                    "face split geometry references a missing face",
-                )
-                .with_face(face.face),
-            );
-        }
-        for edge in &face.edges {
-            if !chains.contains_key(&(side_key(face.side), edge.edge[0], edge.edge[1])) {
-                return Some(
-                    ExactMeshBlocker::new(
-                        ExactMeshBlockerKind::IndexOutOfBounds,
-                        "face split geometry references a missing split edge chain",
-                    )
-                    .with_face(face.face)
-                    .with_edge(edge.edge),
-                );
-            }
-            for &graph_vertex in &edge.graph_vertices {
-                if graph_vertex >= topology.graph_vertices.len() {
-                    return Some(
-                        ExactMeshBlocker::new(
-                            ExactMeshBlockerKind::IndexOutOfBounds,
-                            "face split geometry references a missing graph vertex",
-                        )
-                        .with_face(face.face)
-                        .with_edge(edge.edge),
-                    );
-                }
-            }
-        }
-    }
-
-    None
 }
 
 fn face_boundary_node(
