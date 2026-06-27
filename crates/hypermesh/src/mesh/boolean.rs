@@ -724,14 +724,24 @@ fn certification_set_from_graph_and_regularized_arrangement(
         request,
         retained_arrangement_attempt,
     );
-    let volumetric_boundary_closure = volumetric_boundary_closure_certification_report_from_graph(
-        graph,
-        left,
-        right,
-        request,
-        adjacent_union_completion_certified,
-        reject_boundary_evidence_request,
-    );
+    let volumetric_boundary_closure =
+        if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_))
+            || reject_boundary_evidence_request
+        {
+            None
+        } else if adjacent_union_completion_certified {
+            Some(no_materialized_boundary_output_report(request.operation))
+        } else {
+            volumetric_boundary_closure_report_from_graph(graph, left, right, request.operation)
+                .ok()
+                .and_then(|report| {
+                    if request.validation == ExactMeshValidationPolicy::CLOSED {
+                        report.is_coplanar_closure_available().then_some(report)
+                    } else {
+                        Some(report)
+                    }
+                })
+        };
     let arrangement_attempt = if adjacent_union_completion_certified {
         None
     } else {
@@ -873,34 +883,6 @@ fn planar_arrangement_certification_report_from_graph(
             None,
         )
     })
-}
-
-#[cfg(test)]
-fn volumetric_boundary_closure_certification_report_from_graph(
-    graph: &ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-    adjacent_union_completion_certified: bool,
-    reject_boundary_evidence_request: bool,
-) -> Option<ExactVolumetricBoundaryClosureReport> {
-    if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
-        return None;
-    }
-    if adjacent_union_completion_certified {
-        return Some(no_materialized_boundary_output_report(request.operation));
-    }
-    if reject_boundary_evidence_request {
-        return None;
-    }
-
-    let report =
-        volumetric_boundary_closure_report_from_graph(graph, left, right, request.operation)
-            .ok()?;
-    if request.validation == ExactMeshValidationPolicy::CLOSED {
-        return report.is_coplanar_closure_available().then_some(report);
-    }
-    Some(report)
 }
 
 fn graph_for_certified_materialization<'a>(
