@@ -2288,7 +2288,14 @@ fn arrangement_face_cells(
 ) -> Vec<ArrangementFaceCell> {
     let mut cells = Vec::new();
     let skipped_carriers = overlay_carriers(carrier_plane_overlays);
-    let skipped_face_arrangements = face_arrangement_carriers(face_plane_arrangements);
+    let mut skipped_face_arrangements = BTreeSet::new();
+    for arrangement in face_plane_arrangements {
+        push_unique_carrier(
+            &mut skipped_face_arrangements,
+            arrangement.side,
+            arrangement.face,
+        );
+    }
 
     if let Some(region_plan) = region_plan
         && !region_plan.regions.is_empty()
@@ -2376,16 +2383,6 @@ type ArrangementCarrierKey = (usize, usize);
 
 fn carrier_key(side: MeshSide, face: usize) -> ArrangementCarrierKey {
     (side_key(side), face)
-}
-
-fn face_arrangement_carriers(
-    face_plane_arrangements: &[ArrangementFacePlaneArrangement],
-) -> BTreeSet<ArrangementCarrierKey> {
-    let mut carriers = BTreeSet::new();
-    for arrangement in face_plane_arrangements {
-        push_unique_carrier(&mut carriers, arrangement.side, arrangement.face);
-    }
-    carriers
 }
 
 fn face_plane_arrangements(
