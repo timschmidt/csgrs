@@ -2345,7 +2345,10 @@ fn validate_intersection_event_sources(
                 return Err(IntersectionGraphValidationError::EventSourceOutOfRange);
             }
             validate_edge_vertices(*segment_side, *edge, left, right)?;
-            if !edge_in_triangle(*edge, segment_tri) {
+            if edge[0] == edge[1]
+                || !segment_tri.contains(&edge[0])
+                || !segment_tri.contains(&edge[1])
+            {
                 return Err(IntersectionGraphValidationError::EventSourceMismatch);
             }
             Ok(())
@@ -2357,7 +2360,12 @@ fn validate_intersection_event_sources(
         } => {
             validate_edge_vertices(MeshSide::Left, *left_edge, left, right)?;
             validate_edge_vertices(MeshSide::Right, *right_edge, left, right)?;
-            if !edge_in_triangle(*left_edge, left_tri) || !edge_in_triangle(*right_edge, right_tri)
+            if left_edge[0] == left_edge[1]
+                || !left_tri.contains(&left_edge[0])
+                || !left_tri.contains(&left_edge[1])
+                || right_edge[0] == right_edge[1]
+                || !right_tri.contains(&right_edge[0])
+                || !right_tri.contains(&right_edge[1])
             {
                 return Err(IntersectionGraphValidationError::EventSourceMismatch);
             }
@@ -2420,10 +2428,6 @@ fn validate_vertex(
     } else {
         Err(IntersectionGraphValidationError::EventSourceOutOfRange)
     }
-}
-
-fn edge_in_triangle(edge: [usize; 2], triangle: [usize; 3]) -> bool {
-    triangle.contains(&edge[0]) && triangle.contains(&edge[1]) && edge[0] != edge[1]
 }
 
 fn face_pair_relation_needs_graph_construction(relation: MeshFacePairRelation) -> bool {
