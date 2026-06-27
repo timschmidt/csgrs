@@ -1281,7 +1281,10 @@ pub(crate) fn build_unvalidated_intersection_graph(
         )));
     }
     let broad_phase = ExactAabbBroadPhase::default();
-    let face_pair_product = left.triangle_count().saturating_mul(right.triangle_count());
+    let face_pair_product = left
+        .triangles()
+        .len()
+        .saturating_mul(right.triangles().len());
     if face_pair_product <= broad_phase.one_shot_quadratic_face_pair_limit() {
         let mut face_pairs =
             Vec::with_capacity(if left.bounds().mesh_may_overlap(right.bounds()) {

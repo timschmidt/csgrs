@@ -533,11 +533,6 @@ impl ExactMesh {
         &self.vertices
     }
 
-    /// Return retained triangle count for internal kernel stages.
-    pub(crate) fn triangle_count(&self) -> usize {
-        self.triangles.len()
-    }
-
     /// Return copied triangle index rows for internal kernel stages.
     pub(crate) fn triangle_indices(&self) -> impl ExactSizeIterator<Item = [usize; 3]> + '_ {
         self.triangles.iter().map(|triangle| triangle.0)
