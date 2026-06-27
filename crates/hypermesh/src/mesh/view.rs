@@ -635,8 +635,12 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
     ) -> Result<Option<Rc<ExactIntersectionGraph>>, ExactMeshError> {
         if !self.sources_current() {
-            retained_current_state(self.intersection_graph.borrow().is_some(), false)
-                .require_current("intersection graph")?;
+            let state = if self.intersection_graph.borrow().is_some() {
+                PreparedMeshPairFactState::Stale
+            } else {
+                PreparedMeshPairFactState::Missing
+            };
+            state.require_current("intersection graph")?;
         }
         Ok(self.intersection_graph.borrow().clone())
     }
@@ -701,19 +705,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             &mut local_scratch,
             visit,
         )
-    }
-}
-
-const fn retained_current_state(
-    retained: bool,
-    sources_current: bool,
-) -> PreparedMeshPairFactState {
-    if !retained {
-        PreparedMeshPairFactState::Missing
-    } else if sources_current {
-        PreparedMeshPairFactState::Current
-    } else {
-        PreparedMeshPairFactState::Stale
     }
 }
 
