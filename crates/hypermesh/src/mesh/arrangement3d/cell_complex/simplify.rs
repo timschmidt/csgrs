@@ -1111,7 +1111,12 @@ fn triangulate_simplified_cell_complex(
         split_triangles_at_edge_vertices(&vertices, &mut triangles)?;
     }
     orient_paired_triangle_edges(&mut triangles)?;
-    remove_duplicate_triangle_vertex_sets(&mut triangles);
+    let mut seen_triangle_vertex_sets = std::collections::BTreeSet::<[usize; 3]>::new();
+    triangles.retain(|triangle| {
+        let mut key = triangle.0;
+        key.sort_unstable();
+        seen_triangle_vertex_sets.insert(key)
+    });
     orient_paired_triangle_edges(&mut triangles)?;
     split_disconnected_triangle_vertex_fans(&mut vertices, &mut triangles);
     orient_paired_triangle_edges(&mut triangles)?;
@@ -1506,17 +1511,6 @@ fn orient_paired_triangle_edges(
         }
     }
     Ok(flipped)
-}
-
-fn remove_duplicate_triangle_vertex_sets(triangles: &mut Vec<Triangle>) -> usize {
-    let original_len = triangles.len();
-    let mut seen = std::collections::BTreeSet::<[usize; 3]>::new();
-    triangles.retain(|triangle| {
-        let mut key = triangle.0;
-        key.sort_unstable();
-        seen.insert(key)
-    });
-    original_len - triangles.len()
 }
 
 #[derive(Clone, Copy)]
