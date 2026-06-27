@@ -966,8 +966,8 @@ enum AxisBound {
 
 fn face_axis_interval(bounds: &ExactAabb3, axis: Axis) -> FaceAxisInterval<'_> {
     FaceAxisInterval {
-        min: axis_min(bounds, axis),
-        max: axis_max(bounds, axis),
+        min: axis_bound(bounds, axis, AxisBound::Min),
+        max: axis_bound(bounds, axis, AxisBound::Max),
     }
 }
 
@@ -994,9 +994,13 @@ fn sorted_face_indices_by_axis_bound(
 }
 
 fn axis_bound(bounds: &ExactAabb3, axis: Axis, bound: AxisBound) -> &Real {
-    match bound {
-        AxisBound::Min => axis_min(bounds, axis),
-        AxisBound::Max => axis_max(bounds, axis),
+    match (axis, bound) {
+        (Axis::X, AxisBound::Min) => &bounds.min.x,
+        (Axis::X, AxisBound::Max) => &bounds.max.x,
+        (Axis::Y, AxisBound::Min) => &bounds.min.y,
+        (Axis::Y, AxisBound::Max) => &bounds.max.y,
+        (Axis::Z, AxisBound::Min) => &bounds.min.z,
+        (Axis::Z, AxisBound::Max) => &bounds.max.z,
     }
 }
 
@@ -1013,22 +1017,6 @@ const fn should_use_quadratic_one_shot(
     face_pair_limit: usize,
 ) -> bool {
     left_face_count.saturating_mul(right_face_count) <= face_pair_limit
-}
-
-fn axis_min(bounds: &ExactAabb3, axis: Axis) -> &Real {
-    match axis {
-        Axis::X => &bounds.min.x,
-        Axis::Y => &bounds.min.y,
-        Axis::Z => &bounds.min.z,
-    }
-}
-
-fn axis_max(bounds: &ExactAabb3, axis: Axis) -> &Real {
-    match axis {
-        Axis::X => &bounds.max.x,
-        Axis::Y => &bounds.max.y,
-        Axis::Z => &bounds.max.z,
-    }
 }
 
 fn include_axis(min: &mut Real, max: &mut Real, value: &Real) {
