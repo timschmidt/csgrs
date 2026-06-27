@@ -3420,7 +3420,21 @@ fn arrangement_regions(
             .filter(|incidence| incidence.boundary)
             .count();
         let oriented_sides = arrangement_region_oriented_sides(&component, face_cells);
-        let source_sides = arrangement_region_source_sides(&component, face_cells);
+        let mut has_left_source = false;
+        let mut has_right_source = false;
+        for &face_cell in &component {
+            match face_cells[face_cell].carrier.side {
+                MeshSide::Left => has_left_source = true,
+                MeshSide::Right => has_right_source = true,
+            }
+        }
+        let mut source_sides = Vec::new();
+        if has_left_source {
+            source_sides.push(MeshSide::Left);
+        }
+        if has_right_source {
+            source_sides.push(MeshSide::Right);
+        }
         regions.push(ArrangementRegion {
             face_cells: component,
             adjacent_face_cells,
@@ -4315,28 +4329,6 @@ fn shell_region_mesh(
         ExactMeshValidationPolicy::CLOSED,
     )
     .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)
-}
-
-fn arrangement_region_source_sides(
-    component: &[usize],
-    face_cells: &[ArrangementFaceCell],
-) -> Vec<MeshSide> {
-    let mut has_left = false;
-    let mut has_right = false;
-    for &face_cell in component {
-        match face_cells[face_cell].carrier.side {
-            MeshSide::Left => has_left = true,
-            MeshSide::Right => has_right = true,
-        }
-    }
-    let mut sides = Vec::new();
-    if has_left {
-        sides.push(MeshSide::Left);
-    }
-    if has_right {
-        sides.push(MeshSide::Right);
-    }
-    sides
 }
 
 struct ArrangementFaceCellBoundaryEdge {
