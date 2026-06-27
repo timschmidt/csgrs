@@ -181,7 +181,31 @@ pub(crate) fn materialize_affine_orthogonal_solid_operation(
         "exact affine-normalized orthogonal solid cell boolean",
         ExactMeshValidationPolicy::CLOSED,
     )?;
-    let mesh = mesh_from_uvw(&uvw_output, &basis, operation.output_label(), validation)?;
+    let vertices = uvw_output
+        .vertices()
+        .iter()
+        .map(|point| {
+            let point = point.clone();
+            let lifted = point_from_uvw(&point.x, &point.y, &point.z, &basis);
+            Point3::new(lifted.x, lifted.y, lifted.z)
+        })
+        .collect::<Vec<_>>();
+    let triangles =
+        if compare_reals(&basis.determinant(), &Real::from(0)).value() == Some(Ordering::Less) {
+            uvw_output
+                .triangles()
+                .iter()
+                .map(reverse_triangle)
+                .collect()
+        } else {
+            uvw_output.triangles().to_vec()
+        };
+    let mesh = ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact(operation.output_label()),
+        validation,
+    )?;
     let arrangement = AffineOrthogonalSolidArrangement {
         basis,
         operation,
@@ -261,35 +285,6 @@ fn mesh_to_uvw(
         validation,
     )
     .ok()
-}
-
-fn mesh_from_uvw(
-    mesh: &ExactMesh,
-    basis: &AffineBoxBasis,
-    label: &'static str,
-    validation: ExactMeshValidationPolicy,
-) -> Result<ExactMesh, ExactMeshError> {
-    let vertices = mesh
-        .vertices()
-        .iter()
-        .map(|point| {
-            let point = point.clone();
-            let lifted = point_from_uvw(&point.x, &point.y, &point.z, basis);
-            Point3::new(lifted.x, lifted.y, lifted.z)
-        })
-        .collect::<Vec<_>>();
-    let triangles =
-        if compare_reals(&basis.determinant(), &Real::from(0)).value() == Some(Ordering::Less) {
-            mesh.triangles().iter().map(reverse_triangle).collect()
-        } else {
-            mesh.triangles().to_vec()
-        };
-    ExactMesh::new_with_policy(
-        vertices,
-        triangles,
-        SourceProvenance::exact(label),
-        validation,
-    )
 }
 
 fn point_to_uvw_checked(point: &Point3, basis: &AffineBoxBasis) -> Option<Point3> {
