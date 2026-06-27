@@ -2833,21 +2833,34 @@ fn certified_arrangement_cell_complex_preflight_if_materialized(
     let arrangement_materializes = if orthogonal_cell_materializes {
         false
     } else {
-        [false, true]
-            .into_iter()
-            .try_fold(false, |materialized, regularize_sheet_complex| {
-                if materialized {
-                    Ok(true)
-                } else {
-                    arrangement_cell_complex_materializes_for_preflight_from_graph(
-                        graph,
-                        left,
-                        right,
-                        operation,
-                        regularize_sheet_complex,
-                    )
+        let validation_policies: &[ExactMeshValidationPolicy] =
+            if left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold {
+                &[ExactMeshValidationPolicy::CLOSED]
+            } else {
+                &[
+                    ExactMeshValidationPolicy::CLOSED,
+                    ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                ]
+            };
+        let mut materializes = false;
+        'arrangement_probe: for regularize_sheet_complex in [false, true] {
+            for &validation in validation_policies {
+                if certified_arrangement_cell_complex_result_from_graph(
+                    graph,
+                    left,
+                    right,
+                    operation,
+                    validation,
+                    regularize_sheet_complex,
+                )?
+                .is_some()
+                {
+                    materializes = true;
+                    break 'arrangement_probe;
                 }
-            })?
+            }
+        }
+        materializes
     };
     if orthogonal_cell_materializes
         || arrangement_materializes
@@ -4296,39 +4309,6 @@ fn arrangement_cell_complex_result_matches_retained_attempt(
         return false;
     }
     attempt.certifies_output_mesh(&result.mesh)
-}
-
-fn arrangement_cell_complex_materializes_for_preflight_from_graph(
-    graph: &ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    regularize_unregularized_sheet_complex: bool,
-) -> Result<bool, ExactMeshError> {
-    let validation_policies: &[ExactMeshValidationPolicy] =
-        if left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold {
-            &[ExactMeshValidationPolicy::CLOSED]
-        } else {
-            &[
-                ExactMeshValidationPolicy::CLOSED,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-            ]
-        };
-    for &validation in validation_policies {
-        if certified_arrangement_cell_complex_result_from_graph(
-            graph,
-            left,
-            right,
-            operation,
-            validation,
-            regularize_unregularized_sheet_complex,
-        )?
-        .is_some()
-        {
-            return Ok(true);
-        }
-    }
-    Ok(false)
 }
 
 fn certified_arrangement_cell_complex_result_from_graph(

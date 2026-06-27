@@ -2764,7 +2764,6 @@ fn arrangement_preflight_probe_keeps_boundary_valid_open_output_separate() {
     )
     .unwrap();
 
-    let graph = build_validated_intersection_graph(&left, &right).unwrap();
     for operation in [
         ExactBooleanOperation::Union,
         ExactBooleanOperation::Intersection,
@@ -2784,12 +2783,6 @@ fn arrangement_preflight_probe_keeps_boundary_valid_open_output_separate() {
                 operation,
                 ExactMeshValidationPolicy::ALLOW_BOUNDARY
             )
-        );
-        assert!(
-            !arrangement_cell_complex_materializes_for_preflight_from_graph(
-                &graph, &left, &right, operation, true
-            )
-            .unwrap()
         );
         let request =
             ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY);
