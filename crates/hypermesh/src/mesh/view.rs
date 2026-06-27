@@ -93,7 +93,14 @@ impl ExactMeshSourceStamp {
 
 fn exact_mesh_source_identity(mesh: &ExactMesh) -> u64 {
     let facts = &mesh.facts().mesh;
-    let mut hash = source_provenance_identity(mesh.provenance());
+    let provenance = mesh.provenance();
+    let mut hash = 0xcbf29ce484222325u64;
+    hash = fnv1a_u64(hash, mesh_source_tag(provenance.source.source));
+    hash = fnv1a_u64(
+        hash,
+        approximation_policy_tag(provenance.source.approximation),
+    );
+    hash = fnv1a_str(hash, provenance.source.label.as_str());
 
     hash = fnv1a_u64(hash, facts.vertex_count as u64);
     hash = fnv1a_u64(hash, facts.face_count as u64);
@@ -119,16 +126,6 @@ fn exact_mesh_source_identity(mesh: &ExactMesh) -> u64 {
     }
 
     hash
-}
-
-fn source_provenance_identity(provenance: &hyperlimit::ConstructionProvenance) -> u64 {
-    let mut hash = 0xcbf29ce484222325u64;
-    hash = fnv1a_u64(hash, mesh_source_tag(provenance.source.source));
-    hash = fnv1a_u64(
-        hash,
-        approximation_policy_tag(provenance.source.approximation),
-    );
-    fnv1a_str(hash, provenance.source.label.as_str())
 }
 
 fn fnv1a_real(hash: u64, value: &Real) -> u64 {
