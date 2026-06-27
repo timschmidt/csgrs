@@ -4415,7 +4415,10 @@ fn arrangement_edge_users(
     face_cells: &[ArrangementFaceCell],
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Vec<([ArrangementFaceCellNode; 2], Vec<usize>)> {
-    let raw_edges = arrangement_raw_boundary_edges(face_cells);
+    let mut raw_edges = Vec::new();
+    for (cell, face_cell) in face_cells.iter().enumerate() {
+        raw_edges.extend(cell_boundary_edges(face_cell, cell));
+    }
     if raw_edges.is_empty() {
         return Vec::new();
     }
@@ -4502,16 +4505,6 @@ impl ArrangementEdgeUserIndex {
                 .map(|(index, _)| index)
         }
     }
-}
-
-fn arrangement_raw_boundary_edges(
-    face_cells: &[ArrangementFaceCell],
-) -> Vec<ArrangementFaceCellRawBoundaryEdge> {
-    let mut edges = Vec::new();
-    for (cell, face_cell) in face_cells.iter().enumerate() {
-        edges.extend(cell_boundary_edges(face_cell, cell));
-    }
-    edges
 }
 
 fn cell_boundary_edges(
