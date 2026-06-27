@@ -1882,10 +1882,21 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         ));
     }
     if requires_certified_winding
-        && let Some(preflight) =
-            lower_dimensional_intersection_arrangement_preflight(graph, left, right, request)
+        && operation == ExactBooleanOperation::Intersection
+        && request.validation == ExactMeshValidationPolicy::CLOSED
+        && closed_regularized_operand_kind(left)
+            == Some(ClosedRegularizedOperandKind::LowerDimensional)
+        && closed_regularized_operand_kind(right)
+            == Some(ClosedRegularizedOperandKind::LowerDimensional)
+        && !graph.face_pairs.is_empty()
+        && open_surface_arrangement_plan_from_graph(graph, left, right, operation)
+            .ok()
+            .flatten()
+            .is_some()
     {
-        return Ok(preflight);
+        return Ok(certified_arrangement_cell_complex_preflight(
+            operation, graph, left, right,
+        ));
     }
     if let Some((support, region_classifications, _triangulations)) =
         open_surface_arrangement_plan_from_graph(graph, left, right, operation)
@@ -2649,34 +2660,6 @@ fn region_plan_preflight_from_graph(
         blocker,
         None,
         coplanar_volumetric_evidence,
-    ))
-}
-
-fn lower_dimensional_intersection_arrangement_preflight(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Option<ExactBooleanPreflight> {
-    if request.operation != ExactBooleanOperation::Intersection
-        || request.validation != ExactMeshValidationPolicy::CLOSED
-        || closed_regularized_operand_kind(left)
-            != Some(ClosedRegularizedOperandKind::LowerDimensional)
-        || closed_regularized_operand_kind(right)
-            != Some(ClosedRegularizedOperandKind::LowerDimensional)
-        || graph.face_pairs.is_empty()
-        || open_surface_arrangement_plan_from_graph(graph, left, right, request.operation)
-            .ok()
-            .flatten()
-            .is_none()
-    {
-        return None;
-    }
-    Some(certified_arrangement_cell_complex_preflight(
-        request.operation,
-        graph,
-        left,
-        right,
     ))
 }
 
