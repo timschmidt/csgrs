@@ -2350,7 +2350,11 @@ pub(crate) fn volumetric_boundary_closure_report_from_graph(
     else {
         return Ok(no_materialized_boundary_output_report(operation));
     };
-    volumetric_boundary_closure_report_from_materialized(&materialized, operation)
+    volumetric_boundary_closure_report_from_materialized_with_prevalidated_closure(
+        &materialized,
+        operation,
+        None,
+    )
 }
 
 pub(crate) fn no_materialized_boundary_output_report(
@@ -2372,17 +2376,6 @@ pub(crate) fn no_materialized_boundary_output_report(
         0,
         0,
         0,
-    )
-}
-
-fn volumetric_boundary_closure_report_from_materialized(
-    materialized: &MaterializedVolumetricWindingRegionPlan,
-    operation: ExactBooleanOperation,
-) -> Result<ExactVolumetricBoundaryClosureReport, ExactMeshError> {
-    volumetric_boundary_closure_report_from_materialized_with_prevalidated_closure(
-        materialized,
-        operation,
-        None,
     )
 }
 
@@ -6251,7 +6244,12 @@ fn volumetric_winding_open_boundary_candidate_counts(
         return Ok(None);
     }
     if matches!(
-        volumetric_boundary_closure_report_from_materialized(&materialized, operation)?.status(),
+        volumetric_boundary_closure_report_from_materialized_with_prevalidated_closure(
+            &materialized,
+            operation,
+            None,
+        )?
+        .status(),
         &ExactVolumetricBoundaryClosureStatus::AlreadyClosed
             | &ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
     ) {
