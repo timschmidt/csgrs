@@ -314,12 +314,21 @@ pub(crate) fn simplify_selected_cell_complex(
         selected.operation,
         ExactBooleanOperation::SelectedRegions(_)
     ) && !selected.volume_adjacencies.is_empty();
-    let volume_adjacency_faces = volume_adjacency_face_membership(
-        &selected.faces,
-        &selected.volume_adjacencies,
-        require_volume_orientations,
-        &mut blockers,
-    );
+    let mut volume_adjacency_faces = vec![false; selected.faces.len()];
+    if require_volume_orientations {
+        for adjacency in &selected.volume_adjacencies {
+            if validate_volume_adjacency_face_provenance(&selected.faces, adjacency).is_err() {
+                blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
+                continue;
+            }
+            for side in &adjacency.oriented_face_sides {
+                match volume_adjacency_faces.get_mut(side.face_cell) {
+                    Some(member) => *member = true,
+                    None => blockers.push(ExactArrangementBlocker::NonManifoldCellComplex),
+                }
+            }
+        }
+    }
     let remove_collinear_nodes = matches!(
         selected.operation,
         ExactBooleanOperation::SelectedRegions(_)
@@ -1044,32 +1053,6 @@ fn selected_face_reverse_orientation(
     }
     Ok(operation == ExactBooleanOperation::Difference
         && face.source == ExactCellRegionLabel::RightBoundary)
-}
-
-fn volume_adjacency_face_membership(
-    faces: &[ExactCellComplexFace],
-    volume_adjacencies: &[super::super::ArrangementVolumeAdjacency],
-    enabled: bool,
-    blockers: &mut Vec<ExactArrangementBlocker>,
-) -> Vec<bool> {
-    let face_count = faces.len();
-    let mut membership = vec![false; face_count];
-    if !enabled {
-        return membership;
-    }
-    for adjacency in volume_adjacencies {
-        if validate_volume_adjacency_face_provenance(faces, adjacency).is_err() {
-            blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
-            continue;
-        }
-        for side in &adjacency.oriented_face_sides {
-            match membership.get_mut(side.face_cell) {
-                Some(member) => *member = true,
-                None => blockers.push(ExactArrangementBlocker::NonManifoldCellComplex),
-            }
-        }
-    }
-    membership
 }
 
 fn validate_selected_face_orientations(
