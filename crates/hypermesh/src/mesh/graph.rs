@@ -2446,6 +2446,11 @@ fn validate_graph_segment_plane_event(
     construction_failure: &Option<SegmentPlaneConstructionFailure>,
     endpoint_sides: [Option<PlaneSide>; 2],
 ) -> Result<(), IntersectionGraphValidationError> {
+    let endpoints_are_opposite_strict_sides = matches!(
+        endpoint_sides,
+        [Some(PlaneSide::Above), Some(PlaneSide::Below)]
+            | [Some(PlaneSide::Below), Some(PlaneSide::Above)]
+    );
     match relation {
         SegmentPlaneRelation::Disjoint => {
             if construction_failure.is_none() {
@@ -2481,7 +2486,7 @@ fn validate_graph_segment_plane_event(
         SegmentPlaneRelation::ProperCrossing => {
             if let (Some(parameter), Some(ratio)) = (parameter, parameter_ratio) {
                 if point.is_some()
-                    && opposite_strict_sides(endpoint_sides)
+                    && endpoints_are_opposite_strict_sides
                     && construction_failure.is_none()
                     && ratio_matches_parameter(ratio, parameter)
                 {
@@ -2506,7 +2511,7 @@ fn validate_graph_segment_plane_event(
             }
         }
         SegmentPlaneRelation::ConstructionFailed => {
-            if opposite_strict_sides(endpoint_sides)
+            if endpoints_are_opposite_strict_sides
                 && point.is_none()
                 && parameter.is_none()
                 && parameter_ratio.is_none()
@@ -2518,14 +2523,6 @@ fn validate_graph_segment_plane_event(
             }
         }
     }
-}
-
-fn opposite_strict_sides(sides: [Option<PlaneSide>; 2]) -> bool {
-    matches!(
-        sides,
-        [Some(PlaneSide::Above), Some(PlaneSide::Below)]
-            | [Some(PlaneSide::Below), Some(PlaneSide::Above)]
-    )
 }
 
 fn ratio_matches_parameter(ratio: &SegmentPlaneParameterRatio, parameter: &Real) -> bool {
