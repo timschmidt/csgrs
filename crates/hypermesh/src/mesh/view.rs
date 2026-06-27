@@ -95,10 +95,22 @@ fn exact_mesh_source_identity(mesh: &ExactMesh) -> u64 {
     let facts = &mesh.facts().mesh;
     let provenance = mesh.provenance();
     let mut hash = 0xcbf29ce484222325u64;
-    hash = fnv1a_u64(hash, mesh_source_tag(provenance.source.source));
     hash = fnv1a_u64(
         hash,
-        approximation_policy_tag(provenance.source.approximation),
+        match provenance.source.source {
+            MeshSource::Exact => 0x01,
+            MeshSource::LossyF64 => 0x02,
+            MeshSource::HypermeshAdapter => 0x03,
+            MeshSource::ExternalAdapter => 0x04,
+        },
+    );
+    hash = fnv1a_u64(
+        hash,
+        match provenance.source.approximation {
+            ApproximationPolicy::ExactOnly => 0x11,
+            ApproximationPolicy::EdgeOnly => 0x12,
+            ApproximationPolicy::ExplicitApproximateDecision => 0x13,
+        },
     );
     hash = fnv1a_str(hash, provenance.source.label.as_str());
 
@@ -144,23 +156,6 @@ fn fnv1a_str(mut hash: u64, text: &str) -> u64 {
         hash = fnv1a_u8(hash, byte);
     }
     hash
-}
-
-const fn mesh_source_tag(source: MeshSource) -> u64 {
-    match source {
-        MeshSource::Exact => 0x01,
-        MeshSource::LossyF64 => 0x02,
-        MeshSource::HypermeshAdapter => 0x03,
-        MeshSource::ExternalAdapter => 0x04,
-    }
-}
-
-const fn approximation_policy_tag(approximation: ApproximationPolicy) -> u64 {
-    match approximation {
-        ApproximationPolicy::ExactOnly => 0x11,
-        ApproximationPolicy::EdgeOnly => 0x12,
-        ApproximationPolicy::ExplicitApproximateDecision => 0x13,
-    }
 }
 
 const fn fnv1a_u64(mut hash: u64, value: u64) -> u64 {
