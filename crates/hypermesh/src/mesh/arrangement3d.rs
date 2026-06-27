@@ -2428,7 +2428,10 @@ fn face_plane_arrangements(
                 graph_vertex,
             );
 
-            let plane_side = opposite_side(source_use.side);
+            let plane_side = match source_use.side {
+                MeshSide::Left => MeshSide::Right,
+                MeshSide::Right => MeshSide::Left,
+            };
             push_face_pair_vertex(
                 &mut pair_vertices,
                 plane_side,
@@ -2477,13 +2480,6 @@ fn push_face_pair_vertex(
         .entry((side_key(side), face, face_pair[0], face_pair[1]))
         .or_default()
         .insert(graph_vertex);
-}
-
-const fn opposite_side(side: MeshSide) -> MeshSide {
-    match side {
-        MeshSide::Left => MeshSide::Right,
-        MeshSide::Right => MeshSide::Left,
-    }
 }
 
 const fn side_from_key(side: usize) -> MeshSide {
