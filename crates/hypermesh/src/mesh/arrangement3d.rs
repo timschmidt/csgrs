@@ -1384,7 +1384,12 @@ impl ExactArrangement3d {
         right: &ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> Result<Self, ExactMeshError> {
-        let mut blockers = blockers_from_graph_validation(&graph);
+        let mut blockers = match graph.validate() {
+            Ok(()) => Vec::new(),
+            Err(error) => vec![ExactArrangementBlocker::InvalidIntersectionGraph(
+                error.into(),
+            )],
+        };
         if graph.has_unknowns() {
             blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
         }
@@ -1823,15 +1828,6 @@ fn arrangement_blocker_mesh_error(blocker: ExactArrangementBlocker) -> ExactMesh
         ExactMeshBlockerKind::ExactConstructionFailure,
         format!("retained arrangement validation failed: {blocker:?}"),
     ))
-}
-
-fn blockers_from_graph_validation(graph: &ExactIntersectionGraph) -> Vec<ExactArrangementBlocker> {
-    match graph.validate() {
-        Ok(()) => Vec::new(),
-        Err(error) => vec![ExactArrangementBlocker::InvalidIntersectionGraph(
-            error.into(),
-        )],
-    }
 }
 
 fn extend_split_plan_blockers(
