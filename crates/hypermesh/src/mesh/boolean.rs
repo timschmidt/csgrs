@@ -7559,7 +7559,7 @@ fn boolean_arrangement_affine_orthogonal_solid_recovery(
     Ok(Some(result))
 }
 
-fn materialize_open_surface_disjoint_meshes(
+pub(crate) fn materialize_open_surface_disjoint_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -7617,34 +7617,6 @@ fn boolean_open_surface_disjoint_meshes_from_graph(
         .then_some(result));
     }
     Ok(None)
-}
-
-pub(crate) fn open_surface_disjoint_result_matches_sources(
-    result: &ExactBooleanResult,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
-) -> bool {
-    let Ok(graph) = build_validated_intersection_graph(left, right) else {
-        return false;
-    };
-    let report = open_surface_disjoint_report_from_graph(&graph, left, right);
-    if !report.is_certified()
-        || report.validate_against_sources(left, right).is_err()
-        || !result.is_certified_shortcut_kind_for(
-            operation,
-            ExactBooleanShortcutKind::OpenSurfaceDisjoint,
-        )
-        || result.validate().is_err()
-    {
-        return false;
-    }
-    let Ok(expected) = materialize_open_surface_disjoint_meshes(left, right, operation, validation)
-    else {
-        return false;
-    };
-    expected.validate().is_ok() && result == &expected
 }
 
 pub(crate) fn open_surface_disjoint_report_from_graph(
