@@ -336,11 +336,43 @@ impl FaceRegionTriangulation {
                     reason: "region triangulation retained a duplicate triangle cell",
                 });
             }
-            validate_projected_triangle(
+            let [a, b, c] = [
                 &self.vertices[tri[0]],
                 &self.vertices[tri[1]],
                 &self.vertices[tri[2]],
-            )?;
+            ];
+            for (left, right) in [(a, b), (b, c), (c, a)] {
+                match exact_points_equal(left, right) {
+                    Some(false) => {}
+                    Some(true) => {
+                        return Err(hypertri::Error::InvalidInput {
+                            reason: "region triangulation triangle has repeated exact projected points",
+                        });
+                    }
+                    None => {
+                        return Err(hypertri::Error::PredicateUndecided {
+                            predicate: "region_triangulation_projected_point_equality",
+                        });
+                    }
+                }
+            }
+
+            let pa = PredicatePoint2::new(a.x.clone(), a.y.clone());
+            let pb = PredicatePoint2::new(b.x.clone(), b.y.clone());
+            let pc = PredicatePoint2::new(c.x.clone(), c.y.clone());
+            match orient2d_report(&pa, &pb, &pc).value() {
+                Some(Sign::Negative | Sign::Positive) => {}
+                Some(Sign::Zero) => {
+                    return Err(hypertri::Error::InvalidInput {
+                        reason: "region triangulation triangle is exactly collinear",
+                    });
+                }
+                None => {
+                    return Err(hypertri::Error::PredicateUndecided {
+                        predicate: "region_triangulation_projected_area",
+                    });
+                }
+            }
         }
 
         Ok(())
@@ -726,7 +758,22 @@ impl ExactBooleanAssemblyPlan {
     /// later mesh validation; contradictory parity means the selected complex
     /// is not orientable as a triangle manifold.
     pub(crate) fn orient_paired_edge_uses(&mut self) -> hypertri::Result<usize> {
-        let edge_uses = assembly_edge_uses(self);
+        let mut edge_uses = BTreeMap::<[usize; 2], Vec<AssemblyEdgeUse>>::new();
+        for (triangle_index, triangle) in self.triangles.iter().enumerate() {
+            for edge in [
+                [triangle.vertices[0], triangle.vertices[1]],
+                [triangle.vertices[1], triangle.vertices[2]],
+                [triangle.vertices[2], triangle.vertices[0]],
+            ] {
+                let mut key = edge;
+                key.sort_unstable();
+                edge_uses.entry(key).or_default().push(AssemblyEdgeUse {
+                    triangle: triangle_index,
+                    forward_with_key: edge == key,
+                });
+            }
+        }
+
         let mut adjacency = vec![Vec::<TriangleOrientationConstraint>::new(); self.triangles.len()];
         for uses in edge_uses.values() {
             let [left, right] = uses.as_slice() else {
@@ -896,27 +943,6 @@ struct ExistingVertexEdgeSplit {
     triangle: usize,
     edge: usize,
     vertex: usize,
-}
-
-fn assembly_edge_uses(
-    assembly: &ExactBooleanAssemblyPlan,
-) -> BTreeMap<[usize; 2], Vec<AssemblyEdgeUse>> {
-    let mut edge_uses = BTreeMap::<[usize; 2], Vec<AssemblyEdgeUse>>::new();
-    for (triangle_index, triangle) in assembly.triangles.iter().enumerate() {
-        for edge in [
-            [triangle.vertices[0], triangle.vertices[1]],
-            [triangle.vertices[1], triangle.vertices[2]],
-            [triangle.vertices[2], triangle.vertices[0]],
-        ] {
-            let mut key = edge;
-            key.sort_unstable();
-            edge_uses.entry(key).or_default().push(AssemblyEdgeUse {
-                triangle: triangle_index,
-                forward_with_key: edge == key,
-            });
-        }
-    }
-    edge_uses
 }
 
 fn find_existing_vertex_edge_split(
@@ -1549,68 +1575,35 @@ fn orient_output_triangle_for_source(
         MeshSide::Left => left,
         MeshSide::Right => right,
     };
-    let source_sign = source_face_projected_orientation(
-        source_mesh,
-        triangulation.face,
-        triangulation.projection,
-    )?;
-    let output_sign = output_triangle_projected_orientation(
-        vertices,
-        *output_vertices,
-        triangulation.projection,
-    )?;
-    if output_sign == Sign::Zero {
-        return Err(hypertri::Error::InvalidInput {
-            reason: "assembled output triangle has zero projected source orientation",
-        });
-    }
-
-    let preserves_source = output_sign == source_sign;
-    let should_preserve = orientation == ExactOutputTriangleOrientation::PreserveSource;
-    if preserves_source != should_preserve {
-        output_vertices.swap(1, 2);
-    }
-    Ok(())
-}
-
-fn source_face_projected_orientation(
-    mesh: &ExactMesh,
-    face: usize,
-    projection: CoplanarProjection,
-) -> hypertri::Result<Sign> {
-    let Some(triangle) = mesh.triangles().get(face).map(|triangle| triangle.0) else {
+    let Some(source_triangle) = source_mesh
+        .triangles()
+        .get(triangulation.face)
+        .map(|triangle| triangle.0)
+    else {
         return Err(hypertri::Error::InvalidInput {
             reason: "region triangulation references a missing source face",
         });
     };
-    let points = [
-        mesh.vertices()[triangle[0]].clone(),
-        mesh.vertices()[triangle[1]].clone(),
-        mesh.vertices()[triangle[2]].clone(),
+    let source_points = [
+        source_mesh.vertices()[source_triangle[0]].clone(),
+        source_mesh.vertices()[source_triangle[1]].clone(),
+        source_mesh.vertices()[source_triangle[2]].clone(),
     ];
-    let sign = orient2d_report(
-        &project_for_predicate(&points[0], projection),
-        &project_for_predicate(&points[1], projection),
-        &project_for_predicate(&points[2], projection),
+    let source_sign = orient2d_report(
+        &project_for_predicate(&source_points[0], triangulation.projection),
+        &project_for_predicate(&source_points[1], triangulation.projection),
+        &project_for_predicate(&source_points[2], triangulation.projection),
     )
     .value()
     .ok_or(hypertri::Error::PredicateUndecided {
         predicate: "assembly_source_orientation",
     })?;
-    if sign == Sign::Zero {
+    if source_sign == Sign::Zero {
         return Err(hypertri::Error::InvalidInput {
             reason: "source face has zero projected orientation",
         });
     }
-    Ok(sign)
-}
-
-fn output_triangle_projected_orientation(
-    vertices: &[ExactOutputVertex],
-    output_vertices: [usize; 3],
-    projection: CoplanarProjection,
-) -> hypertri::Result<Sign> {
-    let [a, b, c] = output_vertices;
+    let [a, b, c] = *output_vertices;
     let Some(a) = vertices.get(a) else {
         return Err(hypertri::Error::InvalidInput {
             reason: "assembled output triangle references a missing vertex",
@@ -1626,15 +1619,27 @@ fn output_triangle_projected_orientation(
             reason: "assembled output triangle references a missing vertex",
         });
     };
-    orient2d_report(
-        &project_for_predicate(&a.point, projection),
-        &project_for_predicate(&b.point, projection),
-        &project_for_predicate(&c.point, projection),
+    let output_sign = orient2d_report(
+        &project_for_predicate(&a.point, triangulation.projection),
+        &project_for_predicate(&b.point, triangulation.projection),
+        &project_for_predicate(&c.point, triangulation.projection),
     )
     .value()
     .ok_or(hypertri::Error::PredicateUndecided {
         predicate: "assembly_output_orientation",
-    })
+    })?;
+    if output_sign == Sign::Zero {
+        return Err(hypertri::Error::InvalidInput {
+            reason: "assembled output triangle has zero projected source orientation",
+        });
+    }
+
+    let preserves_source = output_sign == source_sign;
+    let should_preserve = orientation == ExactOutputTriangleOrientation::PreserveSource;
+    if preserves_source != should_preserve {
+        output_vertices.swap(1, 2);
+    }
+    Ok(())
 }
 
 /// Map a region-local boundary vertex into the compact output assembly.
@@ -1878,41 +1883,6 @@ fn validate_projected_boundary_vertex(
         }),
         None => Err(hypertri::Error::PredicateUndecided {
             predicate: "region_triangulation_vertex_source_equality",
-        }),
-    }
-}
-
-fn validate_projected_triangle(
-    a: &hypertri::ExactPoint,
-    b: &hypertri::ExactPoint,
-    c: &hypertri::ExactPoint,
-) -> hypertri::Result<()> {
-    for (left, right) in [(a, b), (b, c), (c, a)] {
-        match exact_points_equal(left, right) {
-            Some(false) => {}
-            Some(true) => {
-                return Err(hypertri::Error::InvalidInput {
-                    reason: "region triangulation triangle has repeated exact projected points",
-                });
-            }
-            None => {
-                return Err(hypertri::Error::PredicateUndecided {
-                    predicate: "region_triangulation_projected_point_equality",
-                });
-            }
-        }
-    }
-
-    let pa = PredicatePoint2::new(a.x.clone(), a.y.clone());
-    let pb = PredicatePoint2::new(b.x.clone(), b.y.clone());
-    let pc = PredicatePoint2::new(c.x.clone(), c.y.clone());
-    match orient2d_report(&pa, &pb, &pc).value() {
-        Some(Sign::Negative | Sign::Positive) => Ok(()),
-        Some(Sign::Zero) => Err(hypertri::Error::InvalidInput {
-            reason: "region triangulation triangle is exactly collinear",
-        }),
-        None => Err(hypertri::Error::PredicateUndecided {
-            predicate: "region_triangulation_projected_area",
         }),
     }
 }
