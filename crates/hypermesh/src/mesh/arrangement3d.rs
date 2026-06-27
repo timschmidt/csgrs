@@ -2780,13 +2780,15 @@ fn non_coplanar_point_contact_artifact(
     let c = project_point3(plane_mesh.vertices().get(triangle[2])?, projection);
     let projected = project_point3(point, projection);
     let location = classify_point_triangle(&a, &b, &c, &projected).value()?;
-    constructive_triangle_location(location).then_some(
-        ArrangementLowerDimensionalArtifact::PointContact {
-            left_face,
-            right_face,
-            point: point.clone(),
-        },
+    matches!(
+        location,
+        TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
     )
+    .then_some(ArrangementLowerDimensionalArtifact::PointContact {
+        left_face,
+        right_face,
+        point: point.clone(),
+    })
 }
 
 fn non_coplanar_edge_contact_artifact(
@@ -2846,7 +2848,10 @@ fn coplanar_segment_triangle_interval(
     for (point, projected) in [(start, &segment_start), (end, &segment_end)] {
         let location =
             classify_point_triangle(triangle[0], triangle[1], triangle[2], projected).value()?;
-        if constructive_triangle_location(location) {
+        if matches!(
+            location,
+            TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
+        ) {
             point_index.push_unique(&mut points, point.clone());
         }
     }
@@ -2903,13 +2908,6 @@ fn coplanar_segment_triangle_interval(
     let first = points.first()?.clone();
     let last = points.last()?.clone();
     (!point3_equal(&first, &last).value()?).then_some([first, last])
-}
-
-fn constructive_triangle_location(location: TriangleLocation) -> bool {
-    matches!(
-        location,
-        TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
-    )
 }
 
 fn lift_projected_point_to_segment(
