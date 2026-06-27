@@ -670,10 +670,25 @@ fn connected_face_components(mesh: &ExactMesh) -> Option<Vec<Vec<usize>>> {
         visited[seed] = true;
         while let Some(face) = stack.pop() {
             component.push(face);
+            let face_edges = triangle_edges_tuple(mesh.triangles()[face].0);
             for (neighbor, neighbor_visited) in visited.iter_mut().enumerate() {
-                if !*neighbor_visited
-                    && triangles_share_edge(mesh.triangles()[face], mesh.triangles()[neighbor])
-                {
+                if *neighbor_visited {
+                    continue;
+                }
+                let neighbor_edges = triangle_edges_tuple(mesh.triangles()[neighbor].0);
+                let mut shares_edge = false;
+                for left_edge in &face_edges {
+                    for right_edge in &neighbor_edges {
+                        if left_edge == right_edge {
+                            shares_edge = true;
+                            break;
+                        }
+                    }
+                    if shares_edge {
+                        break;
+                    }
+                }
+                if shares_edge {
                     *neighbor_visited = true;
                     stack.push(neighbor);
                 }
@@ -714,14 +729,6 @@ impl PairUnionFind {
             self.parent[right_root] = left_root;
         }
     }
-}
-
-fn triangles_share_edge(left: Triangle, right: Triangle) -> bool {
-    triangle_edges_tuple(left.0).iter().any(|left| {
-        triangle_edges_tuple(right.0)
-            .iter()
-            .any(|right| left == right)
-    })
 }
 
 fn append_source_mesh_without_face(
