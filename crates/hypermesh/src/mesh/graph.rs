@@ -602,7 +602,15 @@ impl CoplanarOverlapSplitGraph {
             validate_coplanar_edge_split(split)?;
         }
         for vertex in &self.vertex_overlaps {
-            validate_split_vertex_overlap(vertex)?;
+            if vertex.vertex_side == vertex.triangle_side {
+                return Err(CoplanarOverlapSplitValidationError::SameSideVertexOverlap);
+            }
+            if matches!(
+                vertex.location,
+                TriangleLocation::Outside | TriangleLocation::Degenerate
+            ) {
+                return Err(CoplanarOverlapSplitValidationError::NonConstructiveVertexOverlap);
+            }
         }
         Ok(())
     }
@@ -2329,7 +2337,8 @@ fn validate_intersection_event_sources(
             if plane_mesh.triangles().get(*plane_face).is_none() {
                 return Err(IntersectionGraphValidationError::EventSourceOutOfRange);
             }
-            validate_edge_vertices(*segment_side, *edge, left, right)?;
+            validate_vertex(*segment_side, edge[0], left, right)?;
+            validate_vertex(*segment_side, edge[1], left, right)?;
             if edge[0] == edge[1]
                 || !segment_tri.contains(&edge[0])
                 || !segment_tri.contains(&edge[1])
@@ -2343,8 +2352,10 @@ fn validate_intersection_event_sources(
             right_edge,
             ..
         } => {
-            validate_edge_vertices(MeshSide::Left, *left_edge, left, right)?;
-            validate_edge_vertices(MeshSide::Right, *right_edge, left, right)?;
+            validate_vertex(MeshSide::Left, left_edge[0], left, right)?;
+            validate_vertex(MeshSide::Left, left_edge[1], left, right)?;
+            validate_vertex(MeshSide::Right, right_edge[0], left, right)?;
+            validate_vertex(MeshSide::Right, right_edge[1], left, right)?;
             if left_edge[0] == left_edge[1]
                 || !left_tri.contains(&left_edge[0])
                 || !left_tri.contains(&left_edge[1])
@@ -2386,16 +2397,6 @@ fn validate_intersection_event_sources(
         }
         IntersectionEvent::Unknown => Ok(()),
     }
-}
-
-fn validate_edge_vertices(
-    side: MeshSide,
-    edge: [usize; 2],
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<(), IntersectionGraphValidationError> {
-    validate_vertex(side, edge[0], left, right)?;
-    validate_vertex(side, edge[1], left, right)
 }
 
 fn validate_vertex(
@@ -3656,8 +3657,10 @@ fn validate_coplanar_edge_split(
                 .interval
                 .as_ref()
                 .ok_or(CoplanarOverlapSplitValidationError::MissingIntervalEndpoints)?;
-            validate_interval_endpoint(&interval.endpoints[0])?;
-            validate_interval_endpoint(&interval.endpoints[1])?;
+            validate_unit_parameter(&interval.endpoints[0].left_parameter)?;
+            validate_unit_parameter(&interval.endpoints[0].right_parameter)?;
+            validate_unit_parameter(&interval.endpoints[1].left_parameter)?;
+            validate_unit_parameter(&interval.endpoints[1].right_parameter)?;
             match compare_reals(
                 &interval.endpoints[0].left_parameter,
                 &interval.endpoints[1].left_parameter,
@@ -3672,29 +3675,6 @@ fn validate_coplanar_edge_split(
             }
         }
     }
-}
-
-fn validate_split_vertex_overlap(
-    vertex: &CoplanarVertexOverlap,
-) -> Result<(), CoplanarOverlapSplitValidationError> {
-    if vertex.vertex_side == vertex.triangle_side {
-        return Err(CoplanarOverlapSplitValidationError::SameSideVertexOverlap);
-    }
-    if matches!(
-        vertex.location,
-        TriangleLocation::Outside | TriangleLocation::Degenerate
-    ) {
-        return Err(CoplanarOverlapSplitValidationError::NonConstructiveVertexOverlap);
-    }
-    Ok(())
-}
-
-fn validate_interval_endpoint(
-    point: &CoplanarEdgeSplitPoint,
-) -> Result<(), CoplanarOverlapSplitValidationError> {
-    validate_unit_parameter(&point.left_parameter)?;
-    validate_unit_parameter(&point.right_parameter)?;
-    Ok(())
 }
 
 fn validate_coplanar_edge_split_against_edges(
