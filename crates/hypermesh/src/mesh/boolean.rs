@@ -2179,7 +2179,16 @@ fn boundary_or_planar_report_preflight_from_graph(
         )));
     }
 
-    let planar_report = planar_arrangement_report_from_graph(graph, left, right, operation).ok();
+    let planar_report = planar_arrangement_report_from_graph_with_cell_complex_cache(
+        graph,
+        left,
+        right,
+        operation,
+        certified_arrangement_preflight,
+        Some(request),
+        retained_attempt,
+    )
+    .ok();
     if let Some(planar_report) = planar_report.as_ref()
         && planar_report.is_required()
     {
@@ -8910,6 +8919,7 @@ pub(crate) fn refinement_report_from_graph(
     )
 }
 
+#[cfg(test)]
 pub(crate) fn planar_arrangement_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
