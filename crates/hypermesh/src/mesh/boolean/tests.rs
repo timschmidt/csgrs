@@ -85,7 +85,18 @@ fn test_planar_arrangement_report(
         return not_named_planar_arrangement_report(request.operation);
     }
     let graph = build_validated_intersection_graph(left, right).unwrap();
-    planar_arrangement_report_from_graph(&graph, left, right, request.operation).unwrap()
+    let mut arrangement_cell_complex_preflight: CertifiedArrangementCellComplexPreflightCache =
+        None;
+    planar_arrangement_report_from_graph_with_cell_complex_cache(
+        &graph,
+        left,
+        right,
+        request.operation,
+        &mut arrangement_cell_complex_preflight,
+        None,
+        None,
+    )
+    .unwrap()
 }
 
 fn exact_meshes_have_same_shape(left: &ExactMesh, right: &ExactMesh) -> bool {

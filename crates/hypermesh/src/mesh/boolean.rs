@@ -8388,26 +8388,6 @@ pub(crate) fn boundary_touching_report_from_graph(
     ))
 }
 
-#[cfg(test)]
-pub(crate) fn planar_arrangement_report_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<ExactPlanarArrangementReport, ExactMeshError> {
-    let mut arrangement_cell_complex_preflight: CertifiedArrangementCellComplexPreflightCache =
-        None;
-    planar_arrangement_report_from_graph_with_cell_complex_cache(
-        graph,
-        left,
-        right,
-        operation,
-        &mut arrangement_cell_complex_preflight,
-        None,
-        None,
-    )
-}
-
 fn planar_arrangement_report_from_graph_with_cell_complex_cache(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
