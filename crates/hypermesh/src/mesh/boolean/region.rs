@@ -314,7 +314,20 @@ impl FaceRegionTriangulation {
         }
 
         for (vertex, source) in self.vertices.iter().zip(&self.boundary) {
-            validate_projected_boundary_vertex(vertex, source, self.projection)?;
+            let expected = project_for_hypertri(boundary_node_point(source), self.projection);
+            match exact_points_equal(vertex, &expected) {
+                Some(true) => {}
+                Some(false) => {
+                    return Err(hypertri::Error::InvalidInput {
+                        reason: "region triangulation vertex does not match retained boundary source",
+                    });
+                }
+                None => {
+                    return Err(hypertri::Error::PredicateUndecided {
+                        predicate: "region_triangulation_vertex_source_equality",
+                    });
+                }
+            }
         }
 
         let mut retained_cells = BTreeSet::<[usize; 3]>::new();
@@ -1867,23 +1880,6 @@ pub(crate) fn project_for_hypertri(
         CoplanarProjection::Xy => hypertri::ExactPoint::new(point.x.clone(), point.y.clone()),
         CoplanarProjection::Xz => hypertri::ExactPoint::new(point.x.clone(), point.z.clone()),
         CoplanarProjection::Yz => hypertri::ExactPoint::new(point.y.clone(), point.z.clone()),
-    }
-}
-
-fn validate_projected_boundary_vertex(
-    vertex: &hypertri::ExactPoint,
-    source: &FaceSplitBoundaryNode,
-    projection: CoplanarProjection,
-) -> hypertri::Result<()> {
-    let expected = project_for_hypertri(boundary_node_point(source), projection);
-    match exact_points_equal(vertex, &expected) {
-        Some(true) => Ok(()),
-        Some(false) => Err(hypertri::Error::InvalidInput {
-            reason: "region triangulation vertex does not match retained boundary source",
-        }),
-        None => Err(hypertri::Error::PredicateUndecided {
-            predicate: "region_triangulation_vertex_source_equality",
-        }),
     }
 }
 
