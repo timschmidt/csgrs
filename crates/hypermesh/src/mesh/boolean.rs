@@ -1522,9 +1522,6 @@ pub(crate) fn rematerialize_retained_arrangement_cell_complex_attempt(
     let Some(simplified) = attempt.simplified_cell_complex_with_retained_gate_reports() else {
         return Ok(None);
     };
-    if simplified.operation != request.operation || simplified.validate().is_err() {
-        return Ok(None);
-    }
     rematerialize_simplified_arrangement_cell_complex(request, simplified)
 }
 
