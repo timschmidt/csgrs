@@ -263,7 +263,15 @@ fn mesh_to_uvw(
             point_to_uvw_checked(&point.clone(), basis).map(|uvw| Point3::new(uvw.x, uvw.y, uvw.z))
         })
         .collect::<Option<Vec<_>>>()?;
-    let triangles = triangles_for_affine_orientation(mesh, basis)?;
+    // A negative determinant reverses orientation under the exact affine
+    // coordinate map. Reversing triangle order keeps the normalized shell
+    // compatible with the orthogonal solid materializer.
+    let triangles =
+        if compare_reals(&basis.determinant(), &Real::from(0)).value()? == Ordering::Less {
+            mesh.triangles().iter().map(reverse_triangle).collect()
+        } else {
+            mesh.triangles().to_vec()
+        };
     ExactMesh::new_with_policy(
         vertices,
         triangles,
@@ -322,20 +330,6 @@ fn point_to_uvw(point: &Point3, basis: &AffineBoxBasis) -> Option<Point3> {
     let v = (det3(&basis.basis_u, &delta, &basis.basis_w) / &denominator).ok()?;
     let w = (det3(&basis.basis_u, &basis.basis_v, &delta) / &denominator).ok()?;
     Some(Point3::new(u, v, w))
-}
-
-fn triangles_for_affine_orientation(
-    mesh: &ExactMesh,
-    basis: &AffineBoxBasis,
-) -> Option<Vec<Triangle>> {
-    // A negative determinant reverses orientation under the exact affine
-    // coordinate map. Reversing triangle order keeps the normalized shell
-    // compatible with the orthogonal solid materializer.
-    if compare_reals(&basis.determinant(), &Real::from(0)).value()? == Ordering::Less {
-        Some(mesh.triangles().iter().map(reverse_triangle).collect())
-    } else {
-        Some(mesh.triangles().to_vec())
-    }
 }
 
 fn reverse_triangle(triangle: &Triangle) -> Triangle {
@@ -409,7 +403,12 @@ fn find_affine_cell_basis<T>(
         let origin_point = mesh.vertices()[origin].clone();
         let mut directions = unique_edge_directions(mesh, origin, neighbors);
         directions.sort_by_key(|direction| {
-            core::cmp::Reverse(direction_weight(direction, &direction_counts))
+            let weight = direction_counts
+                .iter()
+                .find(|(seen, _)| points_equal_or_opposite(seen, direction))
+                .map(|(_, count)| *count)
+                .unwrap_or(0);
+            core::cmp::Reverse(weight)
         });
         for u in 0..directions.len() {
             for v in u + 1..directions.len() {
@@ -464,15 +463,6 @@ fn count_edge_direction(mesh: &ExactMesh, a: usize, b: usize, counts: &mut Vec<(
     } else {
         counts.push((direction, 1));
     }
-}
-
-/// Return the frequency assigned to an exact direction, ignoring sign.
-fn direction_weight(direction: &Point3, counts: &[(Point3, usize)]) -> usize {
-    counts
-        .iter()
-        .find(|(seen, _)| points_equal_or_opposite(seen, direction))
-        .map(|(_, count)| *count)
-        .unwrap_or(0)
 }
 
 /// Build a unique undirected vertex adjacency list from retained triangles.
