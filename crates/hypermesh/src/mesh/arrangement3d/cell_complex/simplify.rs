@@ -1335,9 +1335,27 @@ fn triangle_boundary_with_edge_vertices(
 ) -> Result<Vec<usize>, ExactArrangementBlocker> {
     let [a, b, c] = triangle.0;
     let mut boundary = Vec::new();
-    append_edge_with_interior_vertices(vertices, a, b, &mut boundary)?;
-    append_edge_with_interior_vertices(vertices, b, c, &mut boundary)?;
-    append_edge_with_interior_vertices(vertices, c, a, &mut boundary)?;
+    for (start, end) in [(a, b), (b, c), (c, a)] {
+        boundary.push(start);
+        let mut interior = Vec::new();
+        for (candidate, point) in vertices.iter().enumerate() {
+            if candidate == start
+                || candidate == end
+                || interior.contains(&candidate)
+                || point3_coordinates_equal(point, &vertices[start])
+                || point3_coordinates_equal(point, &vertices[end])
+            {
+                continue;
+            }
+            match point_on_segment3(&vertices[start], &vertices[end], point).value() {
+                Some(true) => interior.push(candidate),
+                Some(false) => {}
+                None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+            }
+        }
+        sort_vertex_indices_along_segment(vertices, start, end, &mut interior)?;
+        boundary.extend(interior);
+    }
     let mut deduped = Vec::<usize>::new();
     for vertex in boundary {
         if deduped.last().copied() != Some(vertex) {
@@ -1349,34 +1367,6 @@ fn triangle_boundary_with_edge_vertices(
     }
     let boundary = deduped;
     Ok(boundary)
-}
-
-fn append_edge_with_interior_vertices(
-    vertices: &[Point3],
-    start: usize,
-    end: usize,
-    boundary: &mut Vec<usize>,
-) -> Result<(), ExactArrangementBlocker> {
-    boundary.push(start);
-    let mut interior = Vec::new();
-    for (candidate, point) in vertices.iter().enumerate() {
-        if candidate == start
-            || candidate == end
-            || interior.contains(&candidate)
-            || point3_coordinates_equal(point, &vertices[start])
-            || point3_coordinates_equal(point, &vertices[end])
-        {
-            continue;
-        }
-        match point_on_segment3(&vertices[start], &vertices[end], point).value() {
-            Some(true) => interior.push(candidate),
-            Some(false) => {}
-            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
-        }
-    }
-    sort_vertex_indices_along_segment(vertices, start, end, &mut interior)?;
-    boundary.extend(interior);
-    Ok(())
 }
 
 fn sort_vertex_indices_along_segment(
