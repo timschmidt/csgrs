@@ -441,25 +441,20 @@ fn vertex_adjacency(mesh: &ExactMesh) -> Vec<Vec<usize>> {
     let mut adjacency = vec![Vec::new(); mesh.vertices().len()];
     for triangle in mesh.triangles() {
         let [a, b, c] = triangle.0;
-        push_edge(&mut adjacency, a, b);
-        push_edge(&mut adjacency, b, c);
-        push_edge(&mut adjacency, c, a);
+        for [a, b] in [[a, b], [b, c], [c, a]] {
+            if let Some(neighbors) = adjacency.get_mut(a)
+                && !neighbors.contains(&b)
+            {
+                neighbors.push(b);
+            }
+            if let Some(neighbors) = adjacency.get_mut(b)
+                && !neighbors.contains(&a)
+            {
+                neighbors.push(a);
+            }
+        }
     }
     adjacency
-}
-
-/// Insert one undirected adjacency edge if both endpoint rows exist.
-fn push_edge(adjacency: &mut [Vec<usize>], a: usize, b: usize) {
-    if let Some(neighbors) = adjacency.get_mut(a)
-        && !neighbors.contains(&b)
-    {
-        neighbors.push(b);
-    }
-    if let Some(neighbors) = adjacency.get_mut(b)
-        && !neighbors.contains(&a)
-    {
-        neighbors.push(a);
-    }
 }
 
 /// Return unique outgoing exact edge directions at one origin vertex.
