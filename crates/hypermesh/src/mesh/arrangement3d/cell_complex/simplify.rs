@@ -1522,7 +1522,6 @@ fn remove_duplicate_triangle_vertex_sets(triangles: &mut Vec<Triangle>) -> usize
 #[derive(Clone, Copy)]
 struct VertexFanEdgeUse {
     local_triangle: usize,
-    other: usize,
     forward_from_vertex: bool,
 }
 
@@ -1565,8 +1564,21 @@ fn triangle_vertex_fan_components(
     let mut parent = (0..incident.len()).collect::<Vec<_>>();
     let mut edge_uses = std::collections::BTreeMap::<usize, Vec<VertexFanEdgeUse>>::new();
     for (local_triangle, &triangle_index) in incident.iter().enumerate() {
-        for use_ in vertex_fan_edge_uses(local_triangle, vertex, triangles[triangle_index].0) {
-            edge_uses.entry(use_.other).or_default().push(use_);
+        let triangle = triangles[triangle_index].0;
+        for edge in 0..3 {
+            let start = triangle[edge];
+            let end = triangle[(edge + 1) % 3];
+            if start == vertex {
+                edge_uses.entry(end).or_default().push(VertexFanEdgeUse {
+                    local_triangle,
+                    forward_from_vertex: true,
+                });
+            } else if end == vertex {
+                edge_uses.entry(start).or_default().push(VertexFanEdgeUse {
+                    local_triangle,
+                    forward_from_vertex: false,
+                });
+            }
         }
     }
     for uses in edge_uses.values() {
@@ -1582,32 +1594,6 @@ fn triangle_vertex_fan_components(
         components.entry(root).or_default().push(triangle);
     }
     components.into_values().collect()
-}
-
-fn vertex_fan_edge_uses(
-    local_triangle: usize,
-    vertex: usize,
-    triangle: [usize; 3],
-) -> Vec<VertexFanEdgeUse> {
-    let mut uses = Vec::new();
-    for edge in 0..3 {
-        let start = triangle[edge];
-        let end = triangle[(edge + 1) % 3];
-        if start == vertex {
-            uses.push(VertexFanEdgeUse {
-                local_triangle,
-                other: end,
-                forward_from_vertex: true,
-            });
-        } else if end == vertex {
-            uses.push(VertexFanEdgeUse {
-                local_triangle,
-                other: start,
-                forward_from_vertex: false,
-            });
-        }
-    }
-    uses
 }
 
 fn union_vertex_fan(parent: &mut [usize], left: usize, right: usize) {
