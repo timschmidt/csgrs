@@ -417,7 +417,10 @@ impl MeshBounds {
     /// Return whether retained whole-mesh bounds require face-pair scheduling.
     pub(crate) fn mesh_may_overlap(&self, other: &Self) -> bool {
         match (&self.mesh, &other.mesh) {
-            (Some(left), Some(right)) => must_keep_candidate(left.classify_intersection(right)),
+            (Some(left), Some(right)) => match left.classify_intersection(right) {
+                PredicateOutcome::Decided { value, .. } => value.needs_narrow_phase(),
+                PredicateOutcome::Unknown { .. } => true,
+            },
             _ => false,
         }
     }
@@ -429,7 +432,11 @@ impl MeshBounds {
     ) -> Result<(), E> {
         for (left, left_box) in self.faces.iter().enumerate() {
             for (right, right_box) in other.faces.iter().enumerate() {
-                if must_keep_candidate(left_box.classify_intersection(right_box)) {
+                let keep_candidate = match left_box.classify_intersection(right_box) {
+                    PredicateOutcome::Decided { value, .. } => value.needs_narrow_phase(),
+                    PredicateOutcome::Unknown { .. } => true,
+                };
+                if keep_candidate {
                     visit([left, right])?;
                 }
             }
@@ -1043,13 +1050,6 @@ fn include_axis(min: &mut Real, max: &mut Real, value: &Real) {
 
 fn compare(left: &Real, right: &Real) -> Option<Ordering> {
     compare_reals(left, right).value()
-}
-
-fn must_keep_candidate(outcome: PredicateOutcome<AabbIntersectionKind>) -> bool {
-    match outcome {
-        PredicateOutcome::Decided { value, .. } => value.needs_narrow_phase(),
-        PredicateOutcome::Unknown { .. } => true,
-    }
 }
 
 #[cfg(test)]
