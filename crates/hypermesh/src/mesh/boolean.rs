@@ -670,8 +670,18 @@ fn certification_set_from_graph_and_regularized_arrangement(
     let trivial = source_facts.trivial().clone();
     let regularized_solid = source_facts.regularized_solid().clone();
     let refinement = refinement_report_from_graph(graph, request.operation);
-    let boundary_touching = boundary_touching_report_from_graph(graph, left, right)
-        .unwrap_or_else(|_| not_boundary_only_report_from_graph(graph));
+    let boundary_touching =
+        boundary_touching_report_from_graph(graph, left, right).unwrap_or_else(|_| {
+            let counts = retained_graph_counts(graph);
+            let blocker_kind = counts.inferred_kind();
+            ExactBoundaryTouchingReport::new(
+                ExactBoundaryTouchingStatus::NotBoundaryOnly,
+                graph.has_unknowns(),
+                graph.face_pairs.len(),
+                graph.event_count(),
+                counts.into_blocker(blocker_kind),
+            )
+        });
     let open_surface_disjoint = open_surface_disjoint_report_from_graph(graph, left, right);
     let adjacent_union_completion = adjacent_union_completion_certification_from_graph(
         graph,
@@ -8641,21 +8651,6 @@ pub(crate) fn boundary_touching_report_from_graph(
         graph.event_count(),
         counts.into_blocker(blocker_kind),
     ))
-}
-
-#[cfg(test)]
-fn not_boundary_only_report_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-) -> ExactBoundaryTouchingReport {
-    let counts = retained_graph_counts(graph);
-    let blocker_kind = counts.inferred_kind();
-    ExactBoundaryTouchingReport::new(
-        ExactBoundaryTouchingStatus::NotBoundaryOnly,
-        graph.has_unknowns(),
-        graph.face_pairs.len(),
-        graph.event_count(),
-        counts.into_blocker(blocker_kind),
-    )
 }
 
 #[cfg(test)]
