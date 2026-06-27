@@ -4209,29 +4209,40 @@ fn exact_coplanar_boundary_closer_handles_multiple_planar_loops() {
 
 #[test]
 fn exact_coplanar_boundary_closer_can_append_cap_vertices() {
-    let mut vertices = vec![
-        Point3::new(Real::from(0), Real::from(0), Real::from(0)),
-        Point3::new(Real::from(4), Real::from(0), Real::from(0)),
-        Point3::new(Real::from(0), Real::from(4), Real::from(0)),
-    ];
-    let reused = find_or_insert_exact_mesh_vertex(
-        &mut vertices,
-        Point3::new(Real::from(4), Real::from(0), Real::from(0)),
+    let mesh = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, //
+            4, 0, 0, //
+            0, 4, 0,
+        ],
+        &[0, 1, 2],
+        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
     )
-    .expect("exact existing cap vertex should be reusable");
-    assert_eq!(reused, 1);
-    assert_eq!(vertices.len(), 3);
-
-    let inserted = find_or_insert_exact_mesh_vertex(
+    .expect("test triangle should construct");
+    let mut vertices = mesh.vertices().to_vec();
+    let mapped = map_cap_vertices_to_boundary_or_insert(
+        &mesh,
+        &[vec![0, 1, 2]],
         &mut vertices,
+        vec![
+            Point3::new(Real::from(4), Real::from(0), Real::from(0)),
+            Point3::new(
+                (Real::from(4) / &Real::from(3)).unwrap(),
+                (Real::from(4) / &Real::from(3)).unwrap(),
+                Real::from(0),
+            ),
+        ],
+    )
+    .expect("exact cap vertices should map or append");
+    assert_eq!(mapped, vec![1, 3]);
+    assert_eq!(
+        vertices[3],
         Point3::new(
             (Real::from(4) / &Real::from(3)).unwrap(),
             (Real::from(4) / &Real::from(3)).unwrap(),
             Real::from(0),
-        ),
-    )
-    .expect("exact cap triangulation vertex should be appendable");
-    assert_eq!(inserted, 3);
+        )
+    );
     assert_eq!(vertices.len(), 4);
 }
 

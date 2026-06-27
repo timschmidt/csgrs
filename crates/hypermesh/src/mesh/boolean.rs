@@ -6127,19 +6127,6 @@ fn close_exact_coplanar_boundary_loops_from_loops(
     .map(Some)
 }
 
-fn find_or_insert_exact_mesh_vertex(vertices: &mut Vec<Point3>, point: Point3) -> Option<usize> {
-    for (index, existing) in vertices.iter().enumerate() {
-        match point3_exact_equal(existing, &point) {
-            Some(true) => return Some(index),
-            Some(false) => {}
-            None => return None,
-        }
-    }
-    let index = vertices.len();
-    vertices.push(point);
-    Some(index)
-}
-
 fn group_exact_coplanar_vertex_loops(
     mesh: &ExactMesh,
     boundaries: Vec<Vec<usize>>,
@@ -6219,7 +6206,16 @@ fn map_cap_vertices_to_boundary_or_insert(
                     None => return None,
                 }
             }
-            find_or_insert_exact_mesh_vertex(vertices, point)
+            for (index, existing) in vertices.iter().enumerate() {
+                match point3_exact_equal(existing, &point) {
+                    Some(true) => return Some(index),
+                    Some(false) => {}
+                    None => return None,
+                }
+            }
+            let index = vertices.len();
+            vertices.push(point);
+            Some(index)
         })
         .collect()
 }
