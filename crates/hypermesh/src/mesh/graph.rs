@@ -1949,7 +1949,23 @@ fn events_for_face_pair(
     let right_tri = right.triangles()[classification.right_face].0;
     let left_edges = triangle_edges(left_tri);
     let right_edges = triangle_edges(right_tri);
-    let mut events = Vec::with_capacity(face_pair_event_capacity_hint(classification));
+    let mut event_capacity = usize::from(classification.relation == MeshFacePairRelation::Unknown);
+    if let Some(triangle) = &classification.triangle {
+        event_capacity += triangle
+            .right_edge_events
+            .as_ref()
+            .map_or(0, |events| events.len());
+        event_capacity += triangle
+            .left_edge_events
+            .as_ref()
+            .map_or(0, |events| events.len());
+        if let Some(coplanar) = &triangle.coplanar {
+            event_capacity += coplanar.edge_intersections.len();
+            event_capacity += coplanar.right_vertices_in_left.len();
+            event_capacity += coplanar.left_vertices_in_right.len();
+        }
+    }
+    let mut events = Vec::with_capacity(event_capacity);
     let mut projection = None;
 
     if let Some(triangle) = &classification.triangle {
@@ -2002,29 +2018,6 @@ fn events_for_face_pair(
         projection,
         events,
     }
-}
-
-fn face_pair_event_capacity_hint(classification: &MeshFacePairClassification) -> usize {
-    let mut capacity = usize::from(classification.relation == MeshFacePairRelation::Unknown);
-    let Some(triangle) = &classification.triangle else {
-        return capacity;
-    };
-
-    capacity += triangle
-        .right_edge_events
-        .as_ref()
-        .map_or(0, |events| events.len());
-    capacity += triangle
-        .left_edge_events
-        .as_ref()
-        .map_or(0, |events| events.len());
-    if let Some(coplanar) = &triangle.coplanar {
-        capacity += coplanar.edge_intersections.len();
-        capacity += coplanar.right_vertices_in_left.len();
-        capacity += coplanar.left_vertices_in_right.len();
-    }
-
-    capacity
 }
 
 fn edge_split_plan(graph: &ExactIntersectionGraph) -> ExactEdgeSplitPlan {
