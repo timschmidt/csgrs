@@ -4444,8 +4444,47 @@ fn arrangement_edge_users(
         .collect::<Vec<_>>();
     let mut edge_users = ArrangementEdgeUserIndex::default();
     for edge in raw_edges {
-        for atomic in conforming_boundary_edges(&edge, &endpoints, blockers) {
-            edge_users.push(atomic, edge.cell);
+        let mut split_points = vec![edge.start.clone(), edge.end.clone()];
+        let mut split_point_index =
+            ArrangementBoundaryPointUniquenessIndex::from_points(&split_points);
+        for endpoint in &endpoints {
+            if boundary_points_equal(endpoint, &edge.start)
+                || boundary_points_equal(endpoint, &edge.end)
+            {
+                continue;
+            }
+            match point_on_segment3(&edge.start.point, &edge.end.point, &endpoint.point).value() {
+                Some(true) => {
+                    split_point_index.push_unique(&mut split_points, endpoint.clone());
+                }
+                Some(false) => {}
+                None => push_unique_blocker(blockers, ExactArrangementBlocker::UndecidableOrdering),
+            }
+        }
+        if sort_boundary_points_along_segment(&edge.start.point, &edge.end.point, &mut split_points)
+            .is_err()
+        {
+            push_unique_blocker(blockers, ExactArrangementBlocker::UndecidableOrdering);
+            edge_users.push(
+                ArrangementFaceCellBoundaryEdge {
+                    nodes: canonical_cell_edge(edge.start.node.clone(), edge.end.node.clone()),
+                    points: Some([edge.start.point.clone(), edge.end.point.clone()]),
+                },
+                edge.cell,
+            );
+            continue;
+        }
+        for pair in split_points.windows(2) {
+            if boundary_points_equal(&pair[0], &pair[1]) {
+                continue;
+            }
+            edge_users.push(
+                ArrangementFaceCellBoundaryEdge {
+                    nodes: canonical_cell_edge(pair[0].node.clone(), pair[1].node.clone()),
+                    points: Some([pair[0].point.clone(), pair[1].point.clone()]),
+                },
+                edge.cell,
+            );
         }
     }
     edge_users
@@ -4521,43 +4560,6 @@ impl ArrangementEdgeUserIndex {
                 .map(|(index, _)| index)
         }
     }
-}
-
-fn conforming_boundary_edges(
-    edge: &ArrangementFaceCellRawBoundaryEdge,
-    endpoints: &[ArrangementFaceCellBoundaryPoint],
-    blockers: &mut Vec<ExactArrangementBlocker>,
-) -> Vec<ArrangementFaceCellBoundaryEdge> {
-    let mut split_points = vec![edge.start.clone(), edge.end.clone()];
-    let mut split_point_index = ArrangementBoundaryPointUniquenessIndex::from_points(&split_points);
-    for endpoint in endpoints {
-        if boundary_points_equal(endpoint, &edge.start)
-            || boundary_points_equal(endpoint, &edge.end)
-        {
-            continue;
-        }
-        match point_on_segment3(&edge.start.point, &edge.end.point, &endpoint.point).value() {
-            Some(true) => {
-                split_point_index.push_unique(&mut split_points, endpoint.clone());
-            }
-            Some(false) => {}
-            None => push_unique_blocker(blockers, ExactArrangementBlocker::UndecidableOrdering),
-        }
-    }
-    if sort_boundary_points_along_segment(&edge.start.point, &edge.end.point, &mut split_points)
-        .is_err()
-    {
-        push_unique_blocker(blockers, ExactArrangementBlocker::UndecidableOrdering);
-        return vec![boundary_edge_from_points(&edge.start, &edge.end)];
-    }
-    let mut atoms = Vec::new();
-    for pair in split_points.windows(2) {
-        if boundary_points_equal(&pair[0], &pair[1]) {
-            continue;
-        }
-        atoms.push(boundary_edge_from_points(&pair[0], &pair[1]));
-    }
-    atoms
 }
 
 #[derive(Default)]
@@ -4716,17 +4718,6 @@ fn point3_axis_value(point: &Point3, axis: ArrangementPointAxis) -> &Real {
         ArrangementPointAxis::X => &point.x,
         ArrangementPointAxis::Y => &point.y,
         ArrangementPointAxis::Z => &point.z,
-    }
-}
-
-fn boundary_edge_from_points(
-    start: &ArrangementFaceCellBoundaryPoint,
-    end: &ArrangementFaceCellBoundaryPoint,
-) -> ArrangementFaceCellBoundaryEdge {
-    let nodes = canonical_cell_edge(start.node.clone(), end.node.clone());
-    ArrangementFaceCellBoundaryEdge {
-        nodes,
-        points: Some([start.point.clone(), end.point.clone()]),
     }
 }
 

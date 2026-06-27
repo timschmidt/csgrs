@@ -139,14 +139,18 @@ fn arrangement_edge_user_index_buckets_exact_rational_edges() {
         node: ArrangementFaceCellNode::Source { side, vertex },
         point,
     };
-    let left_edge = boundary_edge_from_points(
-        &boundary_point(MeshSide::Left, 0, point_a.clone()),
-        &boundary_point(MeshSide::Left, 1, point_b.clone()),
-    );
-    let right_edge = boundary_edge_from_points(
-        &boundary_point(MeshSide::Right, 4, point_b),
-        &boundary_point(MeshSide::Right, 5, point_a),
-    );
+    let left_start = boundary_point(MeshSide::Left, 0, point_a.clone());
+    let left_end = boundary_point(MeshSide::Left, 1, point_b.clone());
+    let left_edge = ArrangementFaceCellBoundaryEdge {
+        nodes: [left_start.node, left_end.node],
+        points: Some([left_start.point, left_end.point]),
+    };
+    let right_start = boundary_point(MeshSide::Right, 4, point_b);
+    let right_end = boundary_point(MeshSide::Right, 5, point_a);
+    let right_edge = ArrangementFaceCellBoundaryEdge {
+        nodes: [right_start.node, right_end.node],
+        points: Some([right_start.point, right_end.point]),
+    };
     let mut index = ArrangementEdgeUserIndex::default();
 
     index.push(left_edge, 0);
