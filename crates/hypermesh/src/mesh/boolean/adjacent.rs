@@ -858,7 +858,7 @@ fn triangle_edge_split_parameter(
     triangle_points: &[Point3; 3],
     point: &Point3,
 ) -> Option<Option<(usize, Real)>> {
-    let projection = choose_triangle_projection(triangle_points)?;
+    let projection = choose_polygon_projection(triangle_points)?;
     for edge in 0..3 {
         let start = &triangle_points[edge];
         let end = &triangle_points[(edge + 1) % 3];
@@ -995,7 +995,7 @@ fn fan_faces_cover_triangle(
     // handoff.
     let whole_triangle = whole_mesh.triangles().get(whole_face)?.0;
     let whole_points = triangle_points(whole_mesh, whole_triangle)?;
-    let projection = choose_triangle_projection(&whole_points)?;
+    let projection = choose_polygon_projection(&whole_points)?;
     let whole_area = projected_polygon_area2_value(&whole_points, projection);
     let whole_sign = real_sign(&whole_area)?;
 
@@ -1170,10 +1170,6 @@ const fn normalized_edge(a: usize, b: usize) -> (usize, usize) {
 
 fn point_on_triangle_plane(triangle: &[Point3; 3], point: &Point3) -> Option<bool> {
     Some(orient3d_report(&triangle[0], &triangle[1], &triangle[2], point).value()? == Sign::Zero)
-}
-
-fn choose_triangle_projection(points: &[Point3; 3]) -> Option<CoplanarProjection> {
-    choose_polygon_projection(points)
 }
 
 fn choose_polygon_projection(points: &[Point3]) -> Option<CoplanarProjection> {
