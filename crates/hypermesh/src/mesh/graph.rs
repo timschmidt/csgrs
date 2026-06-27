@@ -1963,7 +1963,10 @@ fn events_for_face_pair(
             &right_edges,
             MeshSide::Left,
             classification.left_face,
-            segment_plane_event_slice(&triangle.right_edge_events),
+            triangle
+                .right_edge_events
+                .as_ref()
+                .map_or(&[], |events| events.as_slice()),
         );
         append_segment_plane_events(
             &mut events,
@@ -1971,7 +1974,10 @@ fn events_for_face_pair(
             &left_edges,
             MeshSide::Right,
             classification.right_face,
-            segment_plane_event_slice(&triangle.left_edge_events),
+            triangle
+                .left_edge_events
+                .as_ref()
+                .map_or(&[], |events| events.as_slice()),
         );
 
         if let Some(coplanar) = &triangle.coplanar {
@@ -4075,12 +4081,6 @@ fn sort_split_points(points: &mut [EdgeSplitPoint]) -> usize {
         },
     );
     unknown_orderings
-}
-
-fn segment_plane_event_slice(
-    events: &Option<[SegmentPlaneIntersection; 3]>,
-) -> &[SegmentPlaneIntersection] {
-    events.as_ref().map_or(&[], |events| events.as_slice())
 }
 
 fn append_segment_plane_events(
