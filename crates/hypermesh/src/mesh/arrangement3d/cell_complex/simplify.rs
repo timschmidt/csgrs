@@ -1436,7 +1436,25 @@ struct SimplifiedTriangleOrientationConstraint {
 fn orient_paired_triangle_edges(
     triangles: &mut [Triangle],
 ) -> Result<usize, ExactArrangementBlocker> {
-    let edge_uses = simplified_triangle_edge_uses(triangles);
+    let mut edge_uses =
+        std::collections::BTreeMap::<[usize; 2], Vec<SimplifiedTriangleEdgeUse>>::new();
+    for (triangle_index, triangle) in triangles.iter().enumerate() {
+        for edge in [
+            [triangle.0[0], triangle.0[1]],
+            [triangle.0[1], triangle.0[2]],
+            [triangle.0[2], triangle.0[0]],
+        ] {
+            let mut key = edge;
+            key.sort_unstable();
+            edge_uses
+                .entry(key)
+                .or_default()
+                .push(SimplifiedTriangleEdgeUse {
+                    triangle: triangle_index,
+                    forward_with_key: edge == key,
+                });
+        }
+    }
     let mut adjacency =
         vec![Vec::<SimplifiedTriangleOrientationConstraint>::new(); triangles.len()];
     for uses in edge_uses.values() {
@@ -1488,31 +1506,6 @@ fn orient_paired_triangle_edges(
         }
     }
     Ok(flipped)
-}
-
-fn simplified_triangle_edge_uses(
-    triangles: &[Triangle],
-) -> std::collections::BTreeMap<[usize; 2], Vec<SimplifiedTriangleEdgeUse>> {
-    let mut edge_uses =
-        std::collections::BTreeMap::<[usize; 2], Vec<SimplifiedTriangleEdgeUse>>::new();
-    for (triangle_index, triangle) in triangles.iter().enumerate() {
-        for edge in [
-            [triangle.0[0], triangle.0[1]],
-            [triangle.0[1], triangle.0[2]],
-            [triangle.0[2], triangle.0[0]],
-        ] {
-            let mut key = edge;
-            key.sort_unstable();
-            edge_uses
-                .entry(key)
-                .or_default()
-                .push(SimplifiedTriangleEdgeUse {
-                    triangle: triangle_index,
-                    forward_with_key: edge == key,
-                });
-        }
-    }
-    edge_uses
 }
 
 fn remove_duplicate_triangle_vertex_sets(triangles: &mut Vec<Triangle>) -> usize {
