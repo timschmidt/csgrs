@@ -1514,7 +1514,11 @@ fn triangle_vertex_fan_components(
         if let [left, right] = uses.as_slice()
             && left.forward_from_vertex != right.forward_from_vertex
         {
-            union_vertex_fan(&mut parent, left.local_triangle, right.local_triangle);
+            let left_root = find_vertex_fan_root(&mut parent, left.local_triangle);
+            let right_root = find_vertex_fan_root(&mut parent, right.local_triangle);
+            if left_root != right_root {
+                parent[right_root] = left_root;
+            }
         }
     }
     let mut components = std::collections::BTreeMap::<usize, Vec<usize>>::new();
@@ -1523,14 +1527,6 @@ fn triangle_vertex_fan_components(
         components.entry(root).or_default().push(triangle);
     }
     components.into_values().collect()
-}
-
-fn union_vertex_fan(parent: &mut [usize], left: usize, right: usize) {
-    let left_root = find_vertex_fan_root(parent, left);
-    let right_root = find_vertex_fan_root(parent, right);
-    if left_root != right_root {
-        parent[right_root] = left_root;
-    }
 }
 
 fn find_vertex_fan_root(parent: &mut [usize], index: usize) -> usize {
