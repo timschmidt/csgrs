@@ -1202,32 +1202,23 @@ fn refine_boundary_segments_with_collinear_points(
                     None => return Err(ExactArrangementBlocker::UndecidableOrdering),
                 }
             }
-            let candidates = sort_points_along_segment(start, end, candidates)?;
-            refined_boundary.extend(candidates);
+            let (axis, forward) = segment_order_axis(start, end)?;
+            let mut ordered = Vec::<Point3>::new();
+            'candidates: for point in candidates {
+                for index in 0..ordered.len() {
+                    if point_precedes_on_axis(&point, &ordered[index], axis, forward)? {
+                        ordered.insert(index, point);
+                        continue 'candidates;
+                    }
+                }
+                ordered.push(point);
+            }
+            refined_boundary.extend(ordered);
         }
         remove_consecutive_duplicate_points(&mut refined_boundary);
         refined.push(refined_boundary);
     }
     Ok(refined)
-}
-
-fn sort_points_along_segment(
-    start: &Point3,
-    end: &Point3,
-    points: Vec<Point3>,
-) -> Result<Vec<Point3>, ExactArrangementBlocker> {
-    let (axis, forward) = segment_order_axis(start, end)?;
-    let mut ordered = Vec::<Point3>::new();
-    'points: for point in points {
-        for index in 0..ordered.len() {
-            if point_precedes_on_axis(&point, &ordered[index], axis, forward)? {
-                ordered.insert(index, point);
-                continue 'points;
-            }
-        }
-        ordered.push(point);
-    }
-    Ok(ordered)
 }
 
 fn segment_order_axis(
@@ -1327,8 +1318,23 @@ fn split_triangles_at_edge_vertices(
                     None => return Err(ExactArrangementBlocker::UndecidableOrdering),
                 }
             }
-            sort_vertex_indices_along_segment(vertices, start, end, &mut interior)?;
-            boundary.extend(interior);
+            let (axis, forward) = segment_order_axis(&vertices[start], &vertices[end])?;
+            let mut ordered = Vec::<usize>::new();
+            'interior: for vertex in interior {
+                for ordered_index in 0..ordered.len() {
+                    if point_precedes_on_axis(
+                        &vertices[vertex],
+                        &vertices[ordered[ordered_index]],
+                        axis,
+                        forward,
+                    )? {
+                        ordered.insert(ordered_index, vertex);
+                        continue 'interior;
+                    }
+                }
+                ordered.push(vertex);
+            }
+            boundary.extend(ordered);
         }
         let mut deduped = Vec::<usize>::new();
         for vertex in boundary {
@@ -1359,32 +1365,6 @@ fn split_triangles_at_edge_vertices(
     let added = split.len().saturating_sub(original_len);
     *triangles = split;
     Ok(added)
-}
-
-fn sort_vertex_indices_along_segment(
-    vertices: &[Point3],
-    start: usize,
-    end: usize,
-    indices: &mut Vec<usize>,
-) -> Result<(), ExactArrangementBlocker> {
-    let (axis, forward) = segment_order_axis(&vertices[start], &vertices[end])?;
-    let mut ordered = Vec::<usize>::new();
-    'indices: for index in indices.drain(..) {
-        for ordered_index in 0..ordered.len() {
-            if point_precedes_on_axis(
-                &vertices[index],
-                &vertices[ordered[ordered_index]],
-                axis,
-                forward,
-            )? {
-                ordered.insert(ordered_index, index);
-                continue 'indices;
-            }
-        }
-        ordered.push(index);
-    }
-    *indices = ordered;
-    Ok(())
 }
 
 fn triangulate_simplified_face_group(
