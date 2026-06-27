@@ -1060,31 +1060,25 @@ pub(crate) fn validate_selected_gate_reports_against_counts(
     region_ownership_report: Option<&ExactRegionOwnershipReport>,
     counts: &SelectedCellComplexGateCounts,
 ) -> Result<(), ExactArrangementBlocker> {
-    if topology_assembly_report.is_some_and(|report| !topology_report_counts_match(report, counts))
-    {
+    if topology_assembly_report.is_some_and(|report| {
+        report.arrangement_face_cells != counts.face_cells
+            || report.arrangement_face_cell_boundary_nodes != counts.face_cell_boundary_nodes
+            || report.arrangement_face_cell_boundary_points != counts.face_cell_boundary_points
+            || report.volume_regions != counts.volume_regions
+            || report.volume_adjacencies != counts.volume_adjacencies
+            || report.volume_adjacency_face_sides != counts.volume_adjacency_face_sides
+            || report.volume_adjacency_separating_faces != counts.volume_adjacency_separating_faces
+            || report.lower_dimensional_artifacts != counts.lower_dimensional_artifacts
+            || report.lower_dimensional_point_contacts != counts.lower_dimensional_point_contacts
+            || report.lower_dimensional_edge_contacts != counts.lower_dimensional_edge_contacts
+            || report.lower_dimensional_edge_endpoints != counts.lower_dimensional_edge_endpoints
+    }) {
         return Err(ExactArrangementBlocker::NonManifoldCellComplex);
     }
     if region_ownership_report.is_some_and(|report| !report.matches_selected_gate_counts(counts)) {
         return Err(ExactArrangementBlocker::NonManifoldCellComplex);
     }
     Ok(())
-}
-
-fn topology_report_counts_match(
-    report: &ExactTopologyAssemblyReport,
-    counts: &SelectedCellComplexGateCounts,
-) -> bool {
-    report.arrangement_face_cells == counts.face_cells
-        && report.arrangement_face_cell_boundary_nodes == counts.face_cell_boundary_nodes
-        && report.arrangement_face_cell_boundary_points == counts.face_cell_boundary_points
-        && report.volume_regions == counts.volume_regions
-        && report.volume_adjacencies == counts.volume_adjacencies
-        && report.volume_adjacency_face_sides == counts.volume_adjacency_face_sides
-        && report.volume_adjacency_separating_faces == counts.volume_adjacency_separating_faces
-        && report.lower_dimensional_artifacts == counts.lower_dimensional_artifacts
-        && report.lower_dimensional_point_contacts == counts.lower_dimensional_point_contacts
-        && report.lower_dimensional_edge_contacts == counts.lower_dimensional_edge_contacts
-        && report.lower_dimensional_edge_endpoints == counts.lower_dimensional_edge_endpoints
 }
 
 pub(crate) struct SelectedCellComplexGateCounts {
