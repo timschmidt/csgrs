@@ -945,12 +945,8 @@ fn map_point(vertices: &mut Vec<Point3>, point: &Point3) -> Option<usize> {
         return Some(existing);
     }
     let mapped = vertices.len();
-    vertices.push(point_to_exact(point));
+    vertices.push(point.clone());
     Some(mapped)
-}
-
-fn point_to_exact(point: &Point3) -> Point3 {
-    Point3::new(point.x.clone(), point.y.clone(), point.z.clone())
 }
 
 fn skip_faces_for_side(
