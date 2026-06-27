@@ -893,7 +893,35 @@ fn face_boundaries_are_coplanar(
     right: &[Point3],
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> bool {
-    let Some([a, b, c]) = non_collinear_point_triple(left) else {
+    let witness = 'witness: {
+        for projection in [
+            CoplanarProjection::Xy,
+            CoplanarProjection::Xz,
+            CoplanarProjection::Yz,
+        ] {
+            for first in 0..left.len() {
+                for second in first + 1..left.len() {
+                    for third in second + 1..left.len() {
+                        let a = project_point3(&left[first], projection);
+                        let b = project_point3(&left[second], projection);
+                        let c = project_point3(&left[third], projection);
+                        match orient2d_report(&a, &b, &c).value() {
+                            Some(Sign::Positive | Sign::Negative) => {
+                                break 'witness Some([
+                                    left[first].clone(),
+                                    left[second].clone(),
+                                    left[third].clone(),
+                                ]);
+                            }
+                            Some(Sign::Zero) | None => {}
+                        }
+                    }
+                }
+            }
+        }
+        None
+    };
+    let Some([a, b, c]) = witness else {
         return false;
     };
     for point in left.iter().chain(right.iter()) {
@@ -907,35 +935,6 @@ fn face_boundaries_are_coplanar(
         }
     }
     true
-}
-
-fn non_collinear_point_triple(points: &[Point3]) -> Option<[Point3; 3]> {
-    for projection in [
-        CoplanarProjection::Xy,
-        CoplanarProjection::Xz,
-        CoplanarProjection::Yz,
-    ] {
-        for first in 0..points.len() {
-            for second in first + 1..points.len() {
-                for third in second + 1..points.len() {
-                    let a = project_point3(&points[first], projection);
-                    let b = project_point3(&points[second], projection);
-                    let c = project_point3(&points[third], projection);
-                    match orient2d_report(&a, &b, &c).value() {
-                        Some(Sign::Positive | Sign::Negative) => {
-                            return Some([
-                                points[first].clone(),
-                                points[second].clone(),
-                                points[third].clone(),
-                            ]);
-                        }
-                        Some(Sign::Zero) | None => {}
-                    }
-                }
-            }
-        }
-    }
-    None
 }
 
 fn remove_collinear_boundary_nodes(
