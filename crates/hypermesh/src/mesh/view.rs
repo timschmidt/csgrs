@@ -108,7 +108,9 @@ fn exact_mesh_source_identity(mesh: &ExactMesh) -> u64 {
     hash = fnv1a_u64(hash, facts.fixed_coordinates_exact_rational as u64);
 
     for vertex in mesh.vertices() {
-        hash = fnv1a_point3(hash, vertex);
+        hash = fnv1a_real(hash, &vertex.x);
+        hash = fnv1a_real(hash, &vertex.y);
+        hash = fnv1a_real(hash, &vertex.z);
     }
     for triangle in mesh.triangles() {
         hash = fnv1a_u64(hash, triangle.0[0] as u64);
@@ -127,12 +129,6 @@ fn source_provenance_identity(provenance: &hyperlimit::ConstructionProvenance) -
         approximation_policy_tag(provenance.source.approximation),
     );
     fnv1a_str(hash, provenance.source.label.as_str())
-}
-
-fn fnv1a_point3(mut hash: u64, point: &Point3) -> u64 {
-    hash = fnv1a_real(hash, &point.x);
-    hash = fnv1a_real(hash, &point.y);
-    fnv1a_real(hash, &point.z)
 }
 
 fn fnv1a_real(hash: u64, value: &Real) -> u64 {
