@@ -2284,73 +2284,89 @@ fn arrangement_face_cells(
                 Some(face_cell_from_region(region, left, right, policy, blockers))
             }
         }));
-        append_face_plane_arrangement_face_cells(
-            &mut cells,
-            face_plane_arrangements,
-            left,
-            right,
-            policy,
-            blockers,
-        );
-        append_carrier_plane_overlay_face_cells(
-            &mut cells,
-            carrier_plane_overlays,
-            left,
-            right,
-            policy,
-            blockers,
-        );
-        return cells;
-    }
-
-    for (face, triangle) in left.triangles().iter().enumerate() {
-        if skipped_carriers.contains(&carrier_key(MeshSide::Left, face))
-            || skipped_face_arrangements.contains(&carrier_key(MeshSide::Left, face))
-        {
-            continue;
+    } else {
+        for (face, triangle) in left.triangles().iter().enumerate() {
+            if skipped_carriers.contains(&carrier_key(MeshSide::Left, face))
+                || skipped_face_arrangements.contains(&carrier_key(MeshSide::Left, face))
+            {
+                continue;
+            }
+            cells.push(face_cell_from_original_triangle(
+                MeshSide::Left,
+                face,
+                triangle.0,
+                left,
+                right,
+                policy,
+                blockers,
+            ));
         }
-        cells.push(face_cell_from_original_triangle(
-            MeshSide::Left,
-            face,
-            triangle.0,
-            left,
-            right,
-            policy,
-            blockers,
-        ));
-    }
-    for (face, triangle) in right.triangles().iter().enumerate() {
-        if skipped_carriers.contains(&carrier_key(MeshSide::Right, face))
-            || skipped_face_arrangements.contains(&carrier_key(MeshSide::Right, face))
-        {
-            continue;
+        for (face, triangle) in right.triangles().iter().enumerate() {
+            if skipped_carriers.contains(&carrier_key(MeshSide::Right, face))
+                || skipped_face_arrangements.contains(&carrier_key(MeshSide::Right, face))
+            {
+                continue;
+            }
+            cells.push(face_cell_from_original_triangle(
+                MeshSide::Right,
+                face,
+                triangle.0,
+                left,
+                right,
+                policy,
+                blockers,
+            ));
         }
-        cells.push(face_cell_from_original_triangle(
-            MeshSide::Right,
-            face,
-            triangle.0,
-            left,
-            right,
-            policy,
-            blockers,
-        ));
     }
-    append_face_plane_arrangement_face_cells(
-        &mut cells,
-        face_plane_arrangements,
-        left,
-        right,
-        policy,
-        blockers,
-    );
-    append_carrier_plane_overlay_face_cells(
-        &mut cells,
-        carrier_plane_overlays,
-        left,
-        right,
-        policy,
-        blockers,
-    );
+    for (arrangement_index, arrangement) in face_plane_arrangements.iter().enumerate() {
+        for face in 0..arrangement.arrangement.faces.len() {
+            if let Some(cell) = face_cell_from_face_plane_arrangement(
+                arrangement_index,
+                arrangement,
+                face,
+                left,
+                right,
+                policy,
+                blockers,
+            ) {
+                cells.push(cell);
+            }
+        }
+    }
+    for (overlay_index, overlay) in carrier_plane_overlays.iter().enumerate() {
+        for overlay_face in &overlay.overlay.faces {
+            if overlay_face.in_left
+                && let Some(cell) = face_cell_from_carrier_plane_overlay(
+                    overlay_index,
+                    overlay,
+                    overlay_face.face,
+                    &overlay_face.witness,
+                    MeshSide::Left,
+                    left,
+                    right,
+                    policy,
+                    blockers,
+                )
+            {
+                cells.push(cell);
+            }
+            if overlay_face.in_right
+                && let Some(cell) = face_cell_from_carrier_plane_overlay(
+                    overlay_index,
+                    overlay,
+                    overlay_face.face,
+                    &overlay_face.witness,
+                    MeshSide::Right,
+                    left,
+                    right,
+                    policy,
+                    blockers,
+                )
+            {
+                cells.push(cell);
+            }
+        }
+    }
     cells
 }
 
@@ -2939,75 +2955,6 @@ fn compare_point3_on_axis(
         Some(order)
     } else {
         Some(order.reverse())
-    }
-}
-
-fn append_carrier_plane_overlay_face_cells(
-    cells: &mut Vec<ArrangementFaceCell>,
-    carrier_plane_overlays: &[ArrangementCarrierPlaneOverlay],
-    left: &ExactMesh,
-    right: &ExactMesh,
-    policy: ExactRegularizationPolicy,
-    blockers: &mut Vec<ExactArrangementBlocker>,
-) {
-    for (overlay_index, overlay) in carrier_plane_overlays.iter().enumerate() {
-        for overlay_face in &overlay.overlay.faces {
-            if overlay_face.in_left
-                && let Some(cell) = face_cell_from_carrier_plane_overlay(
-                    overlay_index,
-                    overlay,
-                    overlay_face.face,
-                    &overlay_face.witness,
-                    MeshSide::Left,
-                    left,
-                    right,
-                    policy,
-                    blockers,
-                )
-            {
-                cells.push(cell);
-            }
-            if overlay_face.in_right
-                && let Some(cell) = face_cell_from_carrier_plane_overlay(
-                    overlay_index,
-                    overlay,
-                    overlay_face.face,
-                    &overlay_face.witness,
-                    MeshSide::Right,
-                    left,
-                    right,
-                    policy,
-                    blockers,
-                )
-            {
-                cells.push(cell);
-            }
-        }
-    }
-}
-
-fn append_face_plane_arrangement_face_cells(
-    cells: &mut Vec<ArrangementFaceCell>,
-    face_plane_arrangements: &[ArrangementFacePlaneArrangement],
-    left: &ExactMesh,
-    right: &ExactMesh,
-    policy: ExactRegularizationPolicy,
-    blockers: &mut Vec<ExactArrangementBlocker>,
-) {
-    for (arrangement_index, arrangement) in face_plane_arrangements.iter().enumerate() {
-        for face in 0..arrangement.arrangement.faces.len() {
-            if let Some(cell) = face_cell_from_face_plane_arrangement(
-                arrangement_index,
-                arrangement,
-                face,
-                left,
-                right,
-                policy,
-                blockers,
-            ) {
-                cells.push(cell);
-            }
-        }
     }
 }
 
