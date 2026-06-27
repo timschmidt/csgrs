@@ -413,7 +413,31 @@ pub(crate) fn simplify_selected_cell_complex(
                 continue;
             }
         }
-        duplicate_boundary_nodes_removed += remove_consecutive_duplicate_nodes(&mut face);
+        let mut duplicate_nodes_removed = 0;
+        let mut canonical_boundary = Vec::new();
+        let mut canonical_points = Vec::new();
+        for (index, node) in face.cell.boundary.iter().enumerate() {
+            if canonical_boundary.last() == Some(node) {
+                duplicate_nodes_removed += 1;
+            } else {
+                canonical_boundary.push(node.clone());
+                if let Some(point) = face.cell.boundary_points.get(index) {
+                    canonical_points.push(point.clone());
+                }
+            }
+        }
+        if canonical_boundary.len() > 1 && canonical_boundary.first() == canonical_boundary.last() {
+            canonical_boundary.pop();
+            canonical_points.pop();
+            duplicate_nodes_removed += 1;
+        }
+        let boundary_points_match_original =
+            face.cell.boundary_points.len() == canonical_boundary.len() + duplicate_nodes_removed;
+        face.cell.boundary = canonical_boundary;
+        if boundary_points_match_original {
+            face.cell.boundary_points = canonical_points;
+        }
+        duplicate_boundary_nodes_removed += duplicate_nodes_removed;
         if remove_collinear_nodes {
             collinear_boundary_nodes_removed +=
                 remove_collinear_boundary_nodes(&mut face, &mut blockers);
@@ -920,35 +944,6 @@ fn same_node_or_point(
     right_point: &Point3,
 ) -> bool {
     left_node == right_node || point3_equal(left_point, right_point).value() == Some(true)
-}
-
-fn remove_consecutive_duplicate_nodes(face: &mut ExactCellComplexFace) -> usize {
-    if face.cell.boundary.is_empty() {
-        return 0;
-    }
-    let mut removed = 0;
-    let mut canonical_boundary = Vec::new();
-    let mut canonical_points = Vec::new();
-    for (index, node) in face.cell.boundary.iter().enumerate() {
-        if canonical_boundary.last() == Some(node) {
-            removed += 1;
-        } else {
-            canonical_boundary.push(node.clone());
-            if let Some(point) = face.cell.boundary_points.get(index) {
-                canonical_points.push(point.clone());
-            }
-        }
-    }
-    if canonical_boundary.len() > 1 && canonical_boundary.first() == canonical_boundary.last() {
-        canonical_boundary.pop();
-        canonical_points.pop();
-        removed += 1;
-    }
-    face.cell.boundary = canonical_boundary;
-    if face.cell.boundary_points.len() == face.cell.boundary.len() + removed {
-        face.cell.boundary_points = canonical_points;
-    }
-    removed
 }
 
 fn remove_collinear_boundary_nodes(
