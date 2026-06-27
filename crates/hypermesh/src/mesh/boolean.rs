@@ -4000,17 +4000,36 @@ impl ArrangementCellComplexRecoveryContext<'_> {
                 )));
             }
         }
-        if self.enabled
-            && let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome(
-                attempt,
+        if self.enabled {
+            if let Some(result) = materialize_arrangement_volumetric_split_cell_result_from_graph(
                 self.graph,
                 self.left,
                 self.right,
                 self.operation,
                 self.validation,
-            )?
-        {
-            return Ok(Some(outcome));
+            )? {
+                return Ok(Some(materialized_arrangement_attempt_outcome(
+                    attempt,
+                    result,
+                    true,
+                    Some(ExactBooleanShortcutKind::ArrangementCellComplex),
+                )));
+            }
+            if self.validation == ExactMeshValidationPolicy::CLOSED
+                && let Some(output_counts) = volumetric_winding_open_boundary_candidate_counts(
+                    self.graph,
+                    self.left,
+                    self.right,
+                    self.operation,
+                )?
+            {
+                return Ok(Some(
+                    declined_output_validation_attempt_outcome_with_counts(
+                        attempt,
+                        Some(output_counts),
+                    ),
+                ));
+            }
         }
         if !matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
             && !open_surface_disjoint_report_from_graph(self.graph, self.left, self.right)
@@ -5566,39 +5585,6 @@ fn arrangement_difference_preserves_source_surface(
         };
         compare_reals(&retained_area_by_face[face], &source_area).value() == Some(Ordering::Equal)
     })
-}
-
-fn arrangement_volumetric_split_cell_recovery_outcome(
-    attempt: &mut ExactArrangementBooleanAttempt,
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<ArrangementCellComplexOutcome>, ExactMeshError> {
-    let Some(result) = materialize_arrangement_volumetric_split_cell_result_from_graph(
-        graph, left, right, operation, validation,
-    )?
-    else {
-        if validation == ExactMeshValidationPolicy::CLOSED
-            && let Some(output_counts) =
-                volumetric_winding_open_boundary_candidate_counts(graph, left, right, operation)?
-        {
-            return Ok(Some(
-                declined_output_validation_attempt_outcome_with_counts(
-                    attempt,
-                    Some(output_counts),
-                ),
-            ));
-        }
-        return Ok(None);
-    };
-    Ok(Some(materialized_arrangement_attempt_outcome(
-        attempt,
-        result,
-        true,
-        Some(ExactBooleanShortcutKind::ArrangementCellComplex),
-    )))
 }
 
 fn boolean_convex_meshes_optional(
