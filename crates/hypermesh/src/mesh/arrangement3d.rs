@@ -1383,7 +1383,12 @@ impl ExactArrangement3d {
             None
         };
 
-        let carrier_plane_overlays = carrier_plane_overlays(&graph, left, right, &mut blockers);
+        let mut carrier_plane_overlays = Vec::new();
+        for overlap in graph.coplanar_overlap_graph_iter() {
+            if let Some(overlay) = carrier_plane_overlay(&overlap, left, right, &mut blockers) {
+                carrier_plane_overlays.push(overlay);
+            }
+        }
         let lower_dimensional_artifacts =
             lower_dimensional_artifacts(&graph, left, right, policy, &mut blockers);
         let face_plane_arrangements = face_plane_arrangements(
@@ -3159,18 +3164,6 @@ fn orient_overlay_boundary_to_carrier(
         Some(Ordering::Equal) => blockers.push(ExactArrangementBlocker::NonManifoldCellComplex),
         None => blockers.push(ExactArrangementBlocker::UndecidableOrdering),
     }
-}
-
-fn carrier_plane_overlays(
-    graph: &ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    blockers: &mut Vec<ExactArrangementBlocker>,
-) -> Vec<ArrangementCarrierPlaneOverlay> {
-    graph
-        .coplanar_overlap_graph_iter()
-        .filter_map(|overlap| carrier_plane_overlay(&overlap, left, right, blockers))
-        .collect()
 }
 
 fn carrier_plane_overlay(
