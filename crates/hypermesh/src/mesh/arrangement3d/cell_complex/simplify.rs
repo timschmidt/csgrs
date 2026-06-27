@@ -1307,7 +1307,39 @@ fn split_triangles_at_edge_vertices(
     let original = triangles.clone();
     let mut split = Vec::new();
     for triangle in original {
-        let boundary = triangle_boundary_with_edge_vertices(vertices, triangle)?;
+        let [a, b, c] = triangle.0;
+        let mut boundary = Vec::new();
+        for (start, end) in [(a, b), (b, c), (c, a)] {
+            boundary.push(start);
+            let mut interior = Vec::new();
+            for (candidate, point) in vertices.iter().enumerate() {
+                if candidate == start
+                    || candidate == end
+                    || interior.contains(&candidate)
+                    || point3_coordinates_equal(point, &vertices[start])
+                    || point3_coordinates_equal(point, &vertices[end])
+                {
+                    continue;
+                }
+                match point_on_segment3(&vertices[start], &vertices[end], point).value() {
+                    Some(true) => interior.push(candidate),
+                    Some(false) => {}
+                    None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+                }
+            }
+            sort_vertex_indices_along_segment(vertices, start, end, &mut interior)?;
+            boundary.extend(interior);
+        }
+        let mut deduped = Vec::<usize>::new();
+        for vertex in boundary {
+            if deduped.last().copied() != Some(vertex) {
+                deduped.push(vertex);
+            }
+        }
+        if deduped.len() > 1 && deduped.first() == deduped.last() {
+            deduped.pop();
+        }
+        let boundary = deduped;
         if boundary.len() == 3 {
             split.push(triangle);
             continue;
@@ -1327,46 +1359,6 @@ fn split_triangles_at_edge_vertices(
     let added = split.len().saturating_sub(original_len);
     *triangles = split;
     Ok(added)
-}
-
-fn triangle_boundary_with_edge_vertices(
-    vertices: &[Point3],
-    triangle: Triangle,
-) -> Result<Vec<usize>, ExactArrangementBlocker> {
-    let [a, b, c] = triangle.0;
-    let mut boundary = Vec::new();
-    for (start, end) in [(a, b), (b, c), (c, a)] {
-        boundary.push(start);
-        let mut interior = Vec::new();
-        for (candidate, point) in vertices.iter().enumerate() {
-            if candidate == start
-                || candidate == end
-                || interior.contains(&candidate)
-                || point3_coordinates_equal(point, &vertices[start])
-                || point3_coordinates_equal(point, &vertices[end])
-            {
-                continue;
-            }
-            match point_on_segment3(&vertices[start], &vertices[end], point).value() {
-                Some(true) => interior.push(candidate),
-                Some(false) => {}
-                None => return Err(ExactArrangementBlocker::UndecidableOrdering),
-            }
-        }
-        sort_vertex_indices_along_segment(vertices, start, end, &mut interior)?;
-        boundary.extend(interior);
-    }
-    let mut deduped = Vec::<usize>::new();
-    for vertex in boundary {
-        if deduped.last().copied() != Some(vertex) {
-            deduped.push(vertex);
-        }
-    }
-    if deduped.len() > 1 && deduped.first() == deduped.last() {
-        deduped.pop();
-    }
-    let boundary = deduped;
-    Ok(boundary)
 }
 
 fn sort_vertex_indices_along_segment(
