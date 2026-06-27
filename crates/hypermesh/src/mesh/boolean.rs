@@ -944,14 +944,6 @@ fn graph_for_certified_materialization_with_prepared<'a>(
     })
 }
 
-#[cfg(test)]
-fn unsupported_certified_materialization_error(support: ExactBooleanSupport) -> ExactMeshError {
-    ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::UnsupportedCellMaterializer,
-        format!("certified exact boolean support did not materialize: {support:?}"),
-    ))
-}
-
 fn exact_boolean_internal_error(message: impl Into<String>) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
         ExactMeshBlockerKind::ExactConstructionFailure,
@@ -986,7 +978,10 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
     let result = match support {
         ExactBooleanSupport::SelectedRegionPolicy => {
             let ExactBooleanOperation::SelectedRegions(selection) = operation else {
-                return Err(unsupported_certified_materialization_error(support));
+                return Err(ExactMeshError::one(ExactMeshBlocker::new(
+                    ExactMeshBlockerKind::UnsupportedCellMaterializer,
+                    format!("certified exact boolean support did not materialize: {support:?}"),
+                )));
             };
             let graph =
                 graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
@@ -1280,7 +1275,10 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
             ExactBooleanSupport::CertifiedArrangementCellComplex
         )
     {
-        return Err(unsupported_certified_materialization_error(support));
+        return Err(ExactMeshError::one(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::UnsupportedCellMaterializer,
+            format!("certified exact boolean support did not materialize: {support:?}"),
+        )));
     }
     Ok(result)
 }
@@ -6312,13 +6310,6 @@ fn boundary_loop_self_contact_evidence(
         }
     }
     Ok(evidence)
-}
-
-#[cfg(test)]
-fn canonicalize_degenerate_boundary_self_contact(
-    points: Vec<Point3>,
-) -> Result<Vec<Point3>, ExactArrangementBlocker> {
-    canonicalize_degenerate_cyclic_self_contact(points, &point3s_exact_equal)
 }
 
 fn point3s_exact_equal(left: &Point3, right: &Point3) -> Result<bool, ExactArrangementBlocker> {

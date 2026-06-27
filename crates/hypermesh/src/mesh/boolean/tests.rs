@@ -4254,13 +4254,10 @@ fn exact_coplanar_boundary_canonicalizes_only_degenerate_self_contact_spurs() {
     let d = Point3::new(Real::from(0), Real::from(1), Real::from(0));
     let e = Point3::new(Real::from(-1), Real::from(0), Real::from(0));
 
-    let degenerate_spur = canonicalize_degenerate_boundary_self_contact(vec![
-        a.clone(),
-        b.clone(),
-        a.clone(),
-        c.clone(),
-        d.clone(),
-    ])
+    let degenerate_spur = canonicalize_degenerate_cyclic_self_contact(
+        vec![a.clone(), b.clone(), a.clone(), c.clone(), d.clone()],
+        &point3s_exact_equal,
+    )
     .expect("exact degenerate spur canonicalization should decide");
     assert_eq!(degenerate_spur.len(), 3);
     assert_eq!(point3_exact_equal(&degenerate_spur[0], &a), Some(true));
@@ -4274,9 +4271,11 @@ fn exact_coplanar_boundary_canonicalizes_only_degenerate_self_contact_spurs() {
     );
     assert!(exact_loop_is_coplanar(&degenerate_spur).unwrap());
 
-    let nondegenerate_self_contact =
-        canonicalize_degenerate_boundary_self_contact(vec![a.clone(), b, c, a, d, e])
-            .expect("exact nondegenerate self-contact classification should decide");
+    let nondegenerate_self_contact = canonicalize_degenerate_cyclic_self_contact(
+        vec![a.clone(), b, c, a, d, e],
+        &point3s_exact_equal,
+    )
+    .expect("exact nondegenerate self-contact classification should decide");
     assert_eq!(nondegenerate_self_contact.len(), 6);
     assert_eq!(
         boundary_loop_self_contact_evidence(&nondegenerate_self_contact)
