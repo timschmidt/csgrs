@@ -419,7 +419,17 @@ fn contained_adjacency_contact_pair(
     pair: &FacePairEvents,
     certificate: &ContainedFaceAdjacencyCertificate,
 ) -> bool {
-    if certificate_face_pair_contains(certificate, pair.left_face, pair.right_face) {
+    let certificate_contains_pair = match certificate.containing_side {
+        MeshSide::Left => certificate.patches.iter().any(|patch| {
+            patch.containing_faces.contains(&pair.left_face)
+                && patch.contained_faces.contains(&pair.right_face)
+        }),
+        MeshSide::Right => certificate.patches.iter().any(|patch| {
+            patch.containing_faces.contains(&pair.right_face)
+                && patch.contained_faces.contains(&pair.left_face)
+        }),
+    };
+    if certificate_contains_pair {
         return pair.relation == MeshFacePairRelation::CoplanarOverlapping;
     }
 
@@ -431,23 +441,6 @@ fn contained_adjacency_contact_pair(
             .all(|event| boundary_candidate_event(left, right, event)),
         MeshFacePairRelation::PlaneSeparated => true,
         MeshFacePairRelation::CoplanarOverlapping | MeshFacePairRelation::Unknown => false,
-    }
-}
-
-fn certificate_face_pair_contains(
-    certificate: &ContainedFaceAdjacencyCertificate,
-    left_face: usize,
-    right_face: usize,
-) -> bool {
-    match certificate.containing_side {
-        MeshSide::Left => certificate.patches.iter().any(|patch| {
-            patch.containing_faces.contains(&left_face)
-                && patch.contained_faces.contains(&right_face)
-        }),
-        MeshSide::Right => certificate.patches.iter().any(|patch| {
-            patch.containing_faces.contains(&right_face)
-                && patch.contained_faces.contains(&left_face)
-        }),
     }
 }
 
