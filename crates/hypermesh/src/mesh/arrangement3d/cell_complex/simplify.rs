@@ -1144,12 +1144,18 @@ fn triangulate_simplified_cell_complex(
                 let mut ordered = Vec::<usize>::new();
                 'interior: for vertex in interior {
                     for ordered_index in 0..ordered.len() {
-                        if point_precedes_on_axis(
-                            &vertices[vertex],
-                            &vertices[ordered[ordered_index]],
-                            axis,
-                            forward,
-                        )? {
+                        let precedes = match compare_reals(
+                            point3_axis_value(&vertices[vertex], axis),
+                            point3_axis_value(&vertices[ordered[ordered_index]], axis),
+                        )
+                        .value()
+                        {
+                            Some(Ordering::Less) => forward,
+                            Some(Ordering::Greater) => !forward,
+                            Some(Ordering::Equal) => false,
+                            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+                        };
+                        if precedes {
                             ordered.insert(ordered_index, vertex);
                             continue 'interior;
                         }
@@ -1331,7 +1337,18 @@ fn refine_boundary_segments_with_collinear_points(
             let mut ordered = Vec::<Point3>::new();
             'candidates: for point in candidates {
                 for index in 0..ordered.len() {
-                    if point_precedes_on_axis(&point, &ordered[index], axis, forward)? {
+                    let precedes = match compare_reals(
+                        point3_axis_value(&point, axis),
+                        point3_axis_value(&ordered[index], axis),
+                    )
+                    .value()
+                    {
+                        Some(Ordering::Less) => forward,
+                        Some(Ordering::Greater) => !forward,
+                        Some(Ordering::Equal) => false,
+                        None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+                    };
+                    if precedes {
                         ordered.insert(index, point);
                         continue 'candidates;
                     }
@@ -1379,25 +1396,6 @@ fn segment_order_axis(
         }
     }
     Err(ExactArrangementBlocker::NonManifoldCellComplex)
-}
-
-fn point_precedes_on_axis(
-    left: &Point3,
-    right: &Point3,
-    axis: Point3CoordinateAxis,
-    forward: bool,
-) -> Result<bool, ExactArrangementBlocker> {
-    match compare_reals(
-        point3_axis_value(left, axis),
-        point3_axis_value(right, axis),
-    )
-    .value()
-    {
-        Some(Ordering::Less) => Ok(forward),
-        Some(Ordering::Greater) => Ok(!forward),
-        Some(Ordering::Equal) => Ok(false),
-        None => Err(ExactArrangementBlocker::UndecidableOrdering),
-    }
 }
 
 fn point3_axis_value(point: &Point3, axis: Point3CoordinateAxis) -> &Real {
