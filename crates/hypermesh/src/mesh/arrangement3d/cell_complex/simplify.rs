@@ -1542,7 +1542,11 @@ fn split_disconnected_triangle_vertex_fans(
             let clone_index = vertices.len();
             vertices.push(vertices[vertex].clone());
             for triangle in component {
-                replace_triangle_vertex(&mut triangles[triangle], vertex, clone_index);
+                for triangle_vertex in &mut triangles[triangle].0 {
+                    if *triangle_vertex == vertex {
+                        *triangle_vertex = clone_index;
+                    }
+                }
             }
             cloned_vertices += 1;
         }
@@ -1603,14 +1607,6 @@ fn find_vertex_fan_root(parent: &mut [usize], index: usize) -> usize {
         parent[index] = find_vertex_fan_root(parent, parent[index]);
     }
     parent[index]
-}
-
-fn replace_triangle_vertex(triangle: &mut Triangle, old: usize, new: usize) {
-    for vertex in &mut triangle.0 {
-        if *vertex == old {
-            *vertex = new;
-        }
-    }
 }
 
 #[cfg(test)]
