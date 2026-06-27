@@ -337,42 +337,6 @@ pub(crate) fn lower_dimensional_artifact_counts(
     (point_contacts, edge_contacts, edge_endpoints)
 }
 
-fn validate_lower_dimensional_artifact_graph_pairs(
-    artifacts: &[ArrangementLowerDimensionalArtifact],
-    graph: &ExactIntersectionGraph,
-) -> Result<(), ExactArrangementBlocker> {
-    let face_pair_relations = graph
-        .face_pairs
-        .iter()
-        .map(|pair| ((pair.left_face, pair.right_face), pair.relation))
-        .collect::<BTreeMap<_, _>>();
-    for artifact in artifacts {
-        let (left_face, right_face) = match artifact {
-            ArrangementLowerDimensionalArtifact::PointContact {
-                left_face,
-                right_face,
-                ..
-            }
-            | ArrangementLowerDimensionalArtifact::EdgeContact {
-                left_face,
-                right_face,
-                ..
-            } => (*left_face, *right_face),
-        };
-        let Some(relation) = face_pair_relations.get(&(left_face, right_face)).copied() else {
-            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
-        };
-        if !matches!(
-            relation,
-            super::graph::intersection::MeshFacePairRelation::Candidate
-                | super::graph::intersection::MeshFacePairRelation::CoplanarTouching
-        ) {
-            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
-        }
-    }
-    Ok(())
-}
-
 fn validate_lower_dimensional_artifacts_unique(
     artifacts: &[ArrangementLowerDimensionalArtifact],
 ) -> Result<(), ExactArrangementBlocker> {
@@ -1563,10 +1527,34 @@ impl ExactArrangement3d {
         self.graph
             .validate()
             .map_err(|error| ExactArrangementBlocker::InvalidIntersectionGraph(error.into()))?;
-        validate_lower_dimensional_artifact_graph_pairs(
-            &self.lower_dimensional_artifacts,
-            &self.graph,
-        )?;
+        let mut face_pair_relations = BTreeMap::new();
+        for pair in &self.graph.face_pairs {
+            face_pair_relations.insert((pair.left_face, pair.right_face), pair.relation);
+        }
+        for artifact in &self.lower_dimensional_artifacts {
+            let (left_face, right_face) = match artifact {
+                ArrangementLowerDimensionalArtifact::PointContact {
+                    left_face,
+                    right_face,
+                    ..
+                }
+                | ArrangementLowerDimensionalArtifact::EdgeContact {
+                    left_face,
+                    right_face,
+                    ..
+                } => (*left_face, *right_face),
+            };
+            let Some(relation) = face_pair_relations.get(&(left_face, right_face)).copied() else {
+                return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+            };
+            if !matches!(
+                relation,
+                super::graph::intersection::MeshFacePairRelation::Candidate
+                    | super::graph::intersection::MeshFacePairRelation::CoplanarTouching
+            ) {
+                return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+            }
+        }
         if self.graph.has_unknowns()
             && !self
                 .blockers
