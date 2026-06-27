@@ -1215,7 +1215,7 @@ fn reversed_whole_face_vertex_map(
             .position(|left_point| points_equal(left_point, right_point) == Some(true))?;
         labels[right_corner] = label;
     }
-    if !is_reversed_cycle(labels) {
+    if !matches!(labels, [0, 2, 1] | [2, 1, 0] | [1, 0, 2]) {
         return None;
     }
     Some([
@@ -1262,10 +1262,6 @@ fn triangle_points(mesh: &ExactMesh, triangle: [usize; 3]) -> Option<[Point3; 3]
         mesh.vertices().get(triangle[1])?.clone(),
         mesh.vertices().get(triangle[2])?.clone(),
     ])
-}
-
-const fn is_reversed_cycle(labels: [usize; 3]) -> bool {
-    matches!(labels, [0, 2, 1] | [2, 1, 0] | [1, 0, 2])
 }
 
 fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
