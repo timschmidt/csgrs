@@ -1490,7 +1490,7 @@ fn triangle_vertex_fan_components(
     vertex: usize,
     incident: &[usize],
 ) -> Vec<Vec<usize>> {
-    let mut parent = (0..incident.len()).collect::<Vec<_>>();
+    let mut adjacency = vec![Vec::<usize>::new(); incident.len()];
     let mut edge_uses = std::collections::BTreeMap::<usize, Vec<VertexFanEdgeUse>>::new();
     for (local_triangle, &triangle_index) in incident.iter().enumerate() {
         let triangle = triangles[triangle_index].0;
@@ -1514,26 +1514,31 @@ fn triangle_vertex_fan_components(
         if let [left, right] = uses.as_slice()
             && left.forward_from_vertex != right.forward_from_vertex
         {
-            let left_root = find_vertex_fan_root(&mut parent, left.local_triangle);
-            let right_root = find_vertex_fan_root(&mut parent, right.local_triangle);
-            if left_root != right_root {
-                parent[right_root] = left_root;
-            }
+            adjacency[left.local_triangle].push(right.local_triangle);
+            adjacency[right.local_triangle].push(left.local_triangle);
         }
     }
-    let mut components = std::collections::BTreeMap::<usize, Vec<usize>>::new();
-    for (local, &triangle) in incident.iter().enumerate() {
-        let root = find_vertex_fan_root(&mut parent, local);
-        components.entry(root).or_default().push(triangle);
+    let mut components = Vec::<Vec<usize>>::new();
+    let mut visited = vec![false; incident.len()];
+    for start in 0..incident.len() {
+        if visited[start] {
+            continue;
+        }
+        visited[start] = true;
+        let mut stack = vec![start];
+        let mut component = Vec::<usize>::new();
+        while let Some(local) = stack.pop() {
+            component.push(incident[local]);
+            for &neighbor in &adjacency[local] {
+                if !visited[neighbor] {
+                    visited[neighbor] = true;
+                    stack.push(neighbor);
+                }
+            }
+        }
+        components.push(component);
     }
-    components.into_values().collect()
-}
-
-fn find_vertex_fan_root(parent: &mut [usize], index: usize) -> usize {
-    if parent[index] != index {
-        parent[index] = find_vertex_fan_root(parent, parent[index]);
-    }
-    parent[index]
+    components
 }
 
 #[cfg(test)]
