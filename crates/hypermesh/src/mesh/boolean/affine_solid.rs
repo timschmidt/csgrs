@@ -137,7 +137,14 @@ pub(crate) fn has_affine_orthogonal_solid_cells(
     right: &ExactMesh,
     operation: AffineOrthogonalSolidOperation,
 ) -> bool {
-    affine_orthogonal_solid_selected_count(left, right, operation).is_some()
+    find_affine_orthogonal_solid_basis(left, right, |left_uvw, right_uvw| {
+        axis_aligned_orthogonal_solid_cell_selected_count(
+            &left_uvw,
+            &right_uvw,
+            operation.to_axis_aligned(),
+        )
+    })
+    .is_some()
 }
 
 /// Return whether exact affine-normalized occupancy certifies no shared
@@ -151,12 +158,14 @@ pub(crate) fn has_empty_affine_orthogonal_solid_cell_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> bool {
-    affine_orthogonal_solid_selected_count(
-        left,
-        right,
-        AffineOrthogonalSolidOperation::Intersection,
-    )
-    .is_some_and(|selected_count| selected_count == 0)
+    find_affine_orthogonal_solid_basis(left, right, |left_uvw, right_uvw| {
+        axis_aligned_orthogonal_solid_cell_selected_count(
+            &left_uvw,
+            &right_uvw,
+            AxisAlignedOrthogonalSolidOperation::Intersection,
+        )
+    })
+    .is_some_and(|(_basis, selected_count)| selected_count == 0)
 }
 
 /// Certify and materialize one affine orthogonal-solid operation.
@@ -213,21 +222,6 @@ pub(crate) fn materialize_affine_orthogonal_solid_operation(
     };
     arrangement.validate()?;
     Ok(Some(arrangement))
-}
-
-fn affine_orthogonal_solid_selected_count(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: AffineOrthogonalSolidOperation,
-) -> Option<usize> {
-    find_affine_orthogonal_solid_basis(left, right, |left_uvw, right_uvw| {
-        axis_aligned_orthogonal_solid_cell_selected_count(
-            &left_uvw,
-            &right_uvw,
-            operation.to_axis_aligned(),
-        )
-    })
-    .map(|(_basis, selected_count)| selected_count)
 }
 
 fn find_affine_orthogonal_solid_basis<T>(
