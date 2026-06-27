@@ -74,6 +74,7 @@ impl WindingRayAxis {
 }
 
 const GENERATED_RAY_BOUND: i16 = 4;
+const WINDING_RAY_CANDIDATE_COUNT: usize = 580;
 
 fn winding_ray_candidates() -> Vec<WindingRayAxis> {
     let mut candidates = WindingRayAxis::FIXED.to_vec();
@@ -97,10 +98,6 @@ fn winding_ray_candidates() -> Vec<WindingRayAxis> {
         }
     }
     candidates
-}
-
-fn winding_ray_candidate_count() -> usize {
-    winding_ray_candidates().len()
 }
 
 fn gcd_i16(a: i16, b: i16) -> i16 {
@@ -197,7 +194,7 @@ impl PointMeshWindingReport {
     /// blocked by degeneracy or undecidable comparisons. The split mirrors
     /// unresolved states are separate public values, not nearby booleans.
     pub(crate) fn validate(&self) -> Result<(), WindingReportError> {
-        let candidate_count = winding_ray_candidate_count();
+        let candidate_count = WINDING_RAY_CANDIDATE_COUNT;
         if self.tested_axes > candidate_count {
             return Err(WindingReportError::InvalidAxisCount);
         }
@@ -979,6 +976,7 @@ mod tests {
             dy: 1,
             dz: 3,
         };
+        assert_eq!(winding_ray_candidates().len(), WINDING_RAY_CANDIDATE_COUNT);
         assert!(winding_ray_candidates().contains(&generated));
 
         let point = p(0, 0, 0);
@@ -998,7 +996,7 @@ mod tests {
                 dy: 4,
                 dz: 4,
             }),
-            tested_axes: winding_ray_candidate_count(),
+            tested_axes: WINDING_RAY_CANDIDATE_COUNT,
             triangle_count: 1,
             crossings: 1,
             boundary_hits: 0,
@@ -1076,7 +1074,7 @@ mod tests {
 
     #[test]
     fn winding_report_bounds_accumulated_unresolved_ray_evidence() {
-        let candidate_count = winding_ray_candidate_count();
+        let candidate_count = WINDING_RAY_CANDIDATE_COUNT;
         let fallback_boundary = PointMeshWindingReport {
             relation: ClosedMeshWindingRelation::Boundary,
             axis: Some(WindingRayAxis::X),
@@ -1133,7 +1131,7 @@ mod tests {
 
     #[test]
     fn mesh_winding_report_requires_complete_unknown_vertex_evidence() {
-        let candidate_count = winding_ray_candidate_count();
+        let candidate_count = WINDING_RAY_CANDIDATE_COUNT;
         let inside = PointMeshWindingReport {
             relation: ClosedMeshWindingRelation::Inside,
             axis: Some(WindingRayAxis::X),
