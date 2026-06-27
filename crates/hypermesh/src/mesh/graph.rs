@@ -1256,13 +1256,6 @@ pub(crate) fn build_unvalidated_intersection_graph(
             format!("exact mesh retained broad-phase certificate failed: {error:?}"),
         )));
     }
-    build_unvalidated_intersection_graph_from_certified_bounds(left, right)
-}
-
-fn build_unvalidated_intersection_graph_from_certified_bounds(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<ExactIntersectionGraph, ExactMeshError> {
     let broad_phase = ExactAabbBroadPhase::default();
     let face_pair_product = left.triangle_count().saturating_mul(right.triangle_count());
     if face_pair_product <= broad_phase.one_shot_quadratic_face_pair_limit() {
