@@ -4877,7 +4877,14 @@ fn face_region_interior_representative(
     let projected = region
         .boundary
         .iter()
-        .map(|node| project_point3(&face_split_boundary_node_point(node), projection))
+        .map(|node| {
+            let point = match node {
+                FaceSplitBoundaryNode::OriginalVertex { point, .. }
+                | FaceSplitBoundaryNode::GraphVertex { point, .. }
+                | FaceSplitBoundaryNode::FaceInterior { point } => point,
+            };
+            project_point3(point, projection)
+        })
         .collect::<Vec<_>>();
     let witness = match projected_loop_interior_witness(&projected) {
         Ok(witness) => witness,
@@ -4901,14 +4908,6 @@ fn face_region_interior_representative(
         return fallback;
     }
     lifted
-}
-
-fn face_split_boundary_node_point(node: &FaceSplitBoundaryNode) -> Point3 {
-    match node {
-        FaceSplitBoundaryNode::OriginalVertex { point, .. }
-        | FaceSplitBoundaryNode::GraphVertex { point, .. }
-        | FaceSplitBoundaryNode::FaceInterior { point } => point.clone(),
-    }
 }
 
 fn classify_opposite(
