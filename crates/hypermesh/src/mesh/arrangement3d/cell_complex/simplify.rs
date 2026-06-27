@@ -343,12 +343,16 @@ pub(crate) fn simplify_selected_cell_complex(
             None => blockers.push(ExactArrangementBlocker::NonManifoldCellComplex),
         }
     }
-    validate_selected_face_orientations(
-        selected.faces.len(),
-        &selected_face_set,
-        &selected_face_orientations,
-        &mut blockers,
-    );
+    for orientation in &selected_face_orientations {
+        if orientation.face >= selected.faces.len() {
+            blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
+            continue;
+        }
+        match selected_face_set.get(orientation.face).copied() {
+            Some(true) => {}
+            Some(false) | None => blockers.push(ExactArrangementBlocker::NonManifoldCellComplex),
+        }
+    }
 
     for source_face in selected.selected_faces {
         let Some(mut face) = selected.faces.get(source_face).cloned() else {
@@ -1052,24 +1056,6 @@ fn selected_face_reverse_orientation(
     }
     Ok(operation == ExactBooleanOperation::Difference
         && face.source == ExactCellRegionLabel::RightBoundary)
-}
-
-fn validate_selected_face_orientations(
-    face_count: usize,
-    selected_faces: &[bool],
-    orientations: &[ExactSelectedFaceOrientation],
-    blockers: &mut Vec<ExactArrangementBlocker>,
-) {
-    for orientation in orientations {
-        if orientation.face >= face_count {
-            blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
-            continue;
-        }
-        match selected_faces.get(orientation.face).copied() {
-            Some(true) => {}
-            Some(false) | None => blockers.push(ExactArrangementBlocker::NonManifoldCellComplex),
-        }
-    }
 }
 
 const fn side_key(side: super::super::super::graph::MeshSide) -> usize {
