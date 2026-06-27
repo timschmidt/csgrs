@@ -3244,7 +3244,14 @@ fn validate_face_split_boundary_chain_shape(
 
     let expected_start = Some(chain.edge[0]);
     let expected_end = Some(chain.edge[1]);
-    if original_boundary_vertex(chain.nodes.first()) != expected_start {
+    let actual_start = match chain.nodes.first() {
+        Some(FaceSplitBoundaryNode::OriginalVertex { vertex, .. }) => Some(*vertex),
+        Some(
+            FaceSplitBoundaryNode::GraphVertex { .. } | FaceSplitBoundaryNode::FaceInterior { .. },
+        )
+        | None => None,
+    };
+    if actual_start != expected_start {
         blockers.push(
             SplitPlanBlocker::new(
                 SplitPlanBlockerKind::WrongChainStart,
@@ -3255,7 +3262,14 @@ fn validate_face_split_boundary_chain_shape(
             .with_edge(chain.edge),
         );
     }
-    if original_boundary_vertex(chain.nodes.last()) != expected_end {
+    let actual_end = match chain.nodes.last() {
+        Some(FaceSplitBoundaryNode::OriginalVertex { vertex, .. }) => Some(*vertex),
+        Some(
+            FaceSplitBoundaryNode::GraphVertex { .. } | FaceSplitBoundaryNode::FaceInterior { .. },
+        )
+        | None => None,
+    };
+    if actual_end != expected_end {
         blockers.push(
             SplitPlanBlocker::new(
                 SplitPlanBlockerKind::WrongChainEnd,
@@ -3294,16 +3308,6 @@ fn validate_face_split_boundary_chain_shape(
                 .with_edge(chain.edge),
             );
         }
-    }
-}
-
-fn original_boundary_vertex(node: Option<&FaceSplitBoundaryNode>) -> Option<usize> {
-    match node {
-        Some(FaceSplitBoundaryNode::OriginalVertex { vertex, .. }) => Some(*vertex),
-        Some(
-            FaceSplitBoundaryNode::GraphVertex { .. } | FaceSplitBoundaryNode::FaceInterior { .. },
-        )
-        | None => None,
     }
 }
 
