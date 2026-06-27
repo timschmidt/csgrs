@@ -137,12 +137,18 @@ impl ExactArrangementBooleanAttempt {
         request: ExactBooleanRequest,
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
+        let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
         if self.materialized_arrangement_cell_complex_shortcut()
             && orthogonal_solid_cell_materializes_for_preflight(left, right, request.operation)
                 .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
-            && let Some(replay) =
-                arrangement_cell_complex_shortcut_attempt(left, right, request, self.policy)
-                    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+            && let Some(replay) = arrangement_cell_complex_shortcut_attempt_with_facts(
+                left,
+                right,
+                request,
+                self.policy,
+                &shortcut_facts,
+            )
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
         {
             replay.validate_for_request_policy(request, self.policy)?;
             return if self == &replay || self.materialized_output_matches_replay(&replay) {
@@ -161,23 +167,39 @@ impl ExactArrangementBooleanAttempt {
                     &arrangement,
                 ) {
                     Ok(attempt) => attempt,
-                    Err(_) => {
-                        arrangement_cell_complex_shortcut_attempt(left, right, request, self.policy)
-                            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
-                            .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?
-                    }
+                    Err(_) => arrangement_cell_complex_shortcut_attempt_with_facts(
+                        left,
+                        right,
+                        request,
+                        self.policy,
+                        &shortcut_facts,
+                    )
+                    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+                    .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?,
                 };
                 if attempt.materialized_arrangement_cell_complex_output() {
                     attempt
                 } else {
-                    arrangement_cell_complex_shortcut_attempt(left, right, request, self.policy)
-                        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
-                        .unwrap_or(attempt)
+                    arrangement_cell_complex_shortcut_attempt_with_facts(
+                        left,
+                        right,
+                        request,
+                        self.policy,
+                        &shortcut_facts,
+                    )
+                    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+                    .unwrap_or(attempt)
                 }
             }
-            Err(_) => arrangement_cell_complex_shortcut_attempt(left, right, request, self.policy)
-                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
-                .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?,
+            Err(_) => arrangement_cell_complex_shortcut_attempt_with_facts(
+                left,
+                right,
+                request,
+                self.policy,
+                &shortcut_facts,
+            )
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+            .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?,
         };
         replay.validate_for_request_policy(request, self.policy)?;
         if self == &replay || self.materialized_output_matches_replay(&replay) {
@@ -4110,22 +4132,6 @@ fn arrangement_cell_complex_decline_after_recovery(
     }
     attempt.record_decline(decline);
     Ok(ArrangementCellComplexOutcome::Declined(attempt))
-}
-
-pub(crate) fn arrangement_cell_complex_shortcut_attempt(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-    policy: ExactRegularizationPolicy,
-) -> Result<Option<ExactArrangementBooleanAttempt>, ExactMeshError> {
-    let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
-    arrangement_cell_complex_shortcut_attempt_with_facts(
-        left,
-        right,
-        request,
-        policy,
-        &shortcut_facts,
-    )
 }
 
 pub(crate) fn arrangement_cell_complex_shortcut_attempt_with_facts(
