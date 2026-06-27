@@ -4623,16 +4623,14 @@ fn boundary_edges_equivalent(
 ) -> bool {
     left.nodes == right.nodes
         || match (&left.points, &right.points) {
-            (Some(left), Some(right)) => exact_undirected_point_edges_equal(left, right),
+            (Some(left), Some(right)) => {
+                (point3_equal(&left[0], &right[0]).value() == Some(true)
+                    && point3_equal(&left[1], &right[1]).value() == Some(true))
+                    || (point3_equal(&left[0], &right[1]).value() == Some(true)
+                        && point3_equal(&left[1], &right[0]).value() == Some(true))
+            }
             _ => false,
         }
-}
-
-fn exact_undirected_point_edges_equal(left: &[Point3; 2], right: &[Point3; 2]) -> bool {
-    (point3_equal(&left[0], &right[0]).value() == Some(true)
-        && point3_equal(&left[1], &right[1]).value() == Some(true))
-        || (point3_equal(&left[0], &right[1]).value() == Some(true)
-            && point3_equal(&left[1], &right[0]).value() == Some(true))
 }
 
 fn canonical_cell_edge(
