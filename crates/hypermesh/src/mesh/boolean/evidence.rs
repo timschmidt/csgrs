@@ -1904,12 +1904,13 @@ impl ExactBooleanResult {
             return Ok(());
         };
 
-        if self
-            .assembly
-            .triangles
-            .iter()
-            .any(|triangle| !selection_keeps(selection, triangle.source_side))
-        {
+        if self.assembly.triangles.iter().any(|triangle| {
+            !matches!(
+                (selection, triangle.source_side),
+                (ExactRegionSelection::KeepAll, _)
+                    | (ExactRegionSelection::KeepLeft, MeshSide::Left)
+            )
+        }) {
             return Err(ExactEvidenceValidationError::SelectedRegionAssemblyViolatesSelection);
         }
         validate_selected_region_assembly_covers_selection(
@@ -5436,7 +5437,11 @@ fn validate_selected_region_assembly_covers_selection(
     assembly: &ExactBooleanAssemblyPlan,
 ) -> Result<(), ExactEvidenceValidationError> {
     for triangulation in triangulations {
-        if !selection_keeps(selection, triangulation.side) || triangulation.triangles.is_empty() {
+        if !matches!(
+            (selection, triangulation.side),
+            (ExactRegionSelection::KeepAll, _) | (ExactRegionSelection::KeepLeft, MeshSide::Left)
+        ) || triangulation.triangles.is_empty()
+        {
             continue;
         }
 
@@ -5577,13 +5582,6 @@ fn points_equal(left: &Point3, right: &Point3) -> bool {
     ) && matches!(
         compare_reals(&left.z, &right.z).value(),
         Some(Ordering::Equal)
-    )
-}
-
-fn selection_keeps(selection: ExactRegionSelection, side: MeshSide) -> bool {
-    matches!(
-        (selection, side),
-        (ExactRegionSelection::KeepAll, _) | (ExactRegionSelection::KeepLeft, MeshSide::Left)
     )
 }
 
