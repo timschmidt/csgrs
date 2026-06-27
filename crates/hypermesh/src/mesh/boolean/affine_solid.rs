@@ -16,9 +16,8 @@ use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError
 use super::super::validation::ExactMeshValidationPolicy;
 use super::super::{ExactMesh, Triangle};
 use super::orthogonal_solid::{
-    AxisAlignedOrthogonalSolidOperation, OrthogonalCellPlan,
-    axis_aligned_orthogonal_solid_cell_plan, axis_aligned_orthogonal_solid_cell_selected_count,
-    is_axis_aligned_orthogonal_solid,
+    AxisAlignedOrthogonalSolidOperation, axis_aligned_orthogonal_solid_cell_plan,
+    axis_aligned_orthogonal_solid_cell_selected_count, is_axis_aligned_orthogonal_solid,
 };
 use core::cmp::Ordering;
 use hyperlimit::SourceProvenance;
@@ -68,12 +67,6 @@ pub(crate) struct AffineOrthogonalSolidArrangement {
     pub operation: AffineOrthogonalSolidOperation,
     /// Exact lifted closed output mesh in original 3D space.
     pub mesh: ExactMesh,
-}
-
-#[derive(Clone, Debug)]
-struct AffineOrthogonalSolidInputs {
-    basis: AffineBoxBasis,
-    uvw_output_plan: OrthogonalCellPlan,
 }
 
 impl AffineOrthogonalSolidArrangement {
@@ -173,40 +166,29 @@ pub(crate) fn materialize_affine_orthogonal_solid_operation(
     operation: AffineOrthogonalSolidOperation,
     validation: ExactMeshValidationPolicy,
 ) -> Result<Option<AffineOrthogonalSolidArrangement>, ExactMeshError> {
-    let Some(inputs) = certify_affine_orthogonal_solid_inputs(left, right, operation) else {
+    let Some((basis, uvw_output_plan)) =
+        find_affine_orthogonal_solid_basis(left, right, |left_uvw, right_uvw| {
+            axis_aligned_orthogonal_solid_cell_plan(
+                &left_uvw,
+                &right_uvw,
+                operation.to_axis_aligned(),
+            )
+        })
+    else {
         return Ok(None);
     };
-    let uvw_output = inputs.uvw_output_plan.to_mesh(
+    let uvw_output = uvw_output_plan.to_mesh(
         "exact affine-normalized orthogonal solid cell boolean",
         ExactMeshValidationPolicy::CLOSED,
     )?;
-    let mesh = mesh_from_uvw(
-        &uvw_output,
-        &inputs.basis,
-        operation.output_label(),
-        validation,
-    )?;
+    let mesh = mesh_from_uvw(&uvw_output, &basis, operation.output_label(), validation)?;
     let arrangement = AffineOrthogonalSolidArrangement {
-        basis: inputs.basis,
+        basis,
         operation,
         mesh,
     };
     arrangement.validate()?;
     Ok(Some(arrangement))
-}
-
-fn certify_affine_orthogonal_solid_inputs(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: AffineOrthogonalSolidOperation,
-) -> Option<AffineOrthogonalSolidInputs> {
-    find_affine_orthogonal_solid_basis(left, right, |left_uvw, right_uvw| {
-        axis_aligned_orthogonal_solid_cell_plan(&left_uvw, &right_uvw, operation.to_axis_aligned())
-    })
-    .map(|(basis, uvw_output_plan)| AffineOrthogonalSolidInputs {
-        basis,
-        uvw_output_plan,
-    })
 }
 
 fn affine_orthogonal_solid_selected_count(
