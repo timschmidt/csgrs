@@ -229,14 +229,6 @@ pub(crate) fn axis_aligned_orthogonal_solid_cell_plan(
     orthogonal_cell_plan_from_inputs(inputs, operation)
 }
 
-pub(crate) fn materialize_axis_aligned_orthogonal_solid_cell_plan(
-    plan: OrthogonalCellPlan,
-    label: &'static str,
-    validation: ExactMeshValidationPolicy,
-) -> Result<ExactMesh, ExactMeshError> {
-    plan.to_mesh(label, validation)
-}
-
 pub(crate) fn materialize_axis_aligned_orthogonal_solid_cell_output(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -247,7 +239,7 @@ pub(crate) fn materialize_axis_aligned_orthogonal_solid_cell_output(
     let Some(plan) = axis_aligned_orthogonal_solid_cell_plan(left, right, operation) else {
         return Ok(None);
     };
-    materialize_axis_aligned_orthogonal_solid_cell_plan(plan, label, validation).map(Some)
+    plan.to_mesh(label, validation).map(Some)
 }
 
 /// Recognize a closed exact mesh as exactly its retained AABB.
@@ -954,7 +946,7 @@ impl OrthogonalCellPlan {
         Ok(self.selected[self.selected_index(i, j, k)?])
     }
 
-    fn to_mesh(
+    pub(crate) fn to_mesh(
         &self,
         label: &'static str,
         validation: ExactMeshValidationPolicy,
@@ -1707,12 +1699,12 @@ mod tests {
             AxisAlignedOrthogonalSolidOperation::Union,
         )
         .expect("cell union should plan");
-        let mesh = materialize_axis_aligned_orthogonal_solid_cell_plan(
-            plan,
-            "test axis-aligned orthogonal solid cell union",
-            ExactMeshValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let mesh = plan
+            .to_mesh(
+                "test axis-aligned orthogonal solid cell union",
+                ExactMeshValidationPolicy::CLOSED,
+            )
+            .unwrap();
         assert!(certify_axis_aligned_orthogonal_solid(&mesh).is_some());
 
         let cutter = axis_aligned_box_i64([2, 0, 0], [3, 2, 2]);
@@ -1739,12 +1731,12 @@ mod tests {
         .expect("cell union should plan");
         plan.selected.pop();
 
-        let error = materialize_axis_aligned_orthogonal_solid_cell_plan(
-            plan,
-            "test corrupted axis-aligned orthogonal solid cell union",
-            ExactMeshValidationPolicy::CLOSED,
-        )
-        .expect_err("corrupted retained occupancy should not materialize");
+        let error = plan
+            .to_mesh(
+                "test corrupted axis-aligned orthogonal solid cell union",
+                ExactMeshValidationPolicy::CLOSED,
+            )
+            .expect_err("corrupted retained occupancy should not materialize");
         assert_eq!(
             error.blockers()[0].kind(),
             ExactMeshBlockerKind::StaleFactReplay

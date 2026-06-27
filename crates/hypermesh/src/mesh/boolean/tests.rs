@@ -4992,8 +4992,7 @@ fn axis_aligned_orthogonal_l_solid_i64() -> ExactMesh {
         AxisAlignedOrthogonalSolidOperation::Union,
     )
     .expect("L solid should have an orthogonal cell plan");
-    materialize_axis_aligned_orthogonal_solid_cell_plan(
-        plan,
+    plan.to_mesh(
         "test axis-aligned orthogonal L solid",
         ExactMeshValidationPolicy::CLOSED,
     )

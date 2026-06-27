@@ -106,8 +106,7 @@ use orthogonal_solid::{
 };
 #[cfg(test)]
 use orthogonal_solid::{
-    axis_aligned_orthogonal_solid_cell_plan, is_axis_aligned_box,
-    materialize_axis_aligned_orthogonal_solid_cell_plan, try_is_axis_aligned_box,
+    axis_aligned_orthogonal_solid_cell_plan, is_axis_aligned_box, try_is_axis_aligned_box,
 };
 use region::{
     ExactBooleanAssemblyPlan, ExactRegionRetention, ExactRegionSelection,

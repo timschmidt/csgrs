@@ -18,7 +18,7 @@ use super::super::{ExactMesh, Triangle};
 use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, OrthogonalCellPlan,
     axis_aligned_orthogonal_solid_cell_plan, axis_aligned_orthogonal_solid_cell_selected_count,
-    is_axis_aligned_orthogonal_solid, materialize_axis_aligned_orthogonal_solid_cell_plan,
+    is_axis_aligned_orthogonal_solid,
 };
 use core::cmp::Ordering;
 use hyperlimit::SourceProvenance;
@@ -176,8 +176,7 @@ pub(crate) fn materialize_affine_orthogonal_solid_operation(
     let Some(inputs) = certify_affine_orthogonal_solid_inputs(left, right, operation) else {
         return Ok(None);
     };
-    let uvw_output = materialize_axis_aligned_orthogonal_solid_cell_plan(
-        inputs.uvw_output_plan,
+    let uvw_output = inputs.uvw_output_plan.to_mesh(
         "exact affine-normalized orthogonal solid cell boolean",
         ExactMeshValidationPolicy::CLOSED,
     )?;
