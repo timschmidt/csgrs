@@ -525,23 +525,23 @@ fn contained_face_union_mesh(
 ) -> Result<Option<ExactMesh>, ExactMeshError> {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
-    if append_source_mesh_without_face(
-        left,
-        skip_faces_for_side(certificate, MeshSide::Left),
-        &mut vertices,
-        &mut triangles,
-    )
-    .is_none()
+    let (left_skip_faces, right_skip_faces) = match certificate.containing_side {
+        MeshSide::Left => (
+            certificate.containing_faces(),
+            certificate.contained_faces(),
+        ),
+        MeshSide::Right => (
+            certificate.contained_faces(),
+            certificate.containing_faces(),
+        ),
+    };
+    if append_source_mesh_without_face(left, left_skip_faces, &mut vertices, &mut triangles)
+        .is_none()
     {
         return Ok(None);
     }
-    if append_source_mesh_without_face(
-        right,
-        skip_faces_for_side(certificate, MeshSide::Right),
-        &mut vertices,
-        &mut triangles,
-    )
-    .is_none()
+    if append_source_mesh_without_face(right, right_skip_faces, &mut vertices, &mut triangles)
+        .is_none()
     {
         return Ok(None);
     }
@@ -916,20 +916,6 @@ fn map_point(vertices: &mut Vec<Point3>, point: &Point3) -> Option<usize> {
     let mapped = vertices.len();
     vertices.push(point.clone());
     Some(mapped)
-}
-
-fn skip_faces_for_side(
-    certificate: &ContainedFaceAdjacencyCertificate,
-    side: MeshSide,
-) -> Vec<usize> {
-    match (certificate.containing_side, side) {
-        (MeshSide::Left, MeshSide::Left) | (MeshSide::Right, MeshSide::Right) => {
-            certificate.containing_faces()
-        }
-        (MeshSide::Left, MeshSide::Right) | (MeshSide::Right, MeshSide::Left) => {
-            certificate.contained_faces()
-        }
-    }
 }
 
 fn triangle_points(mesh: &ExactMesh, face: usize) -> Option<[Point3; 3]> {
