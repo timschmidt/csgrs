@@ -3867,7 +3867,7 @@ fn endpoint_touch_split_point(
             return Some(CoplanarEdgeSplitPoint {
                 point: left_point.clone(),
                 left_parameter: Real::from(left_index as i64),
-                right_parameter: endpoint_parameter_on_segment(
+                right_parameter: projected_segment_parameter3(
                     left_point, &right[0], &right[1], projection,
                 )?,
             });
@@ -3881,7 +3881,7 @@ fn endpoint_touch_split_point(
         if point_on_segment(&left_start, &left_end, &projected).value() == Some(true) {
             return Some(CoplanarEdgeSplitPoint {
                 point: right_point.clone(),
-                left_parameter: endpoint_parameter_on_segment(
+                left_parameter: projected_segment_parameter3(
                     right_point,
                     &left[0],
                     &left[1],
@@ -3959,7 +3959,7 @@ fn certified_endpoint_parameter_on_segment(
     let projected_end = project_point3(end, projection);
     let projected_point = project_point3(point, projection);
     if point_on_segment(&projected_start, &projected_end, &projected_point).value() == Some(true) {
-        endpoint_parameter_on_segment(point, start, end, projection)
+        projected_segment_parameter3(point, start, end, projection)
     } else {
         None
     }
@@ -3977,15 +3977,6 @@ fn push_interval_endpoint(
     }
     endpoints.push(candidate);
     Some(())
-}
-
-fn endpoint_parameter_on_segment(
-    point: &Point3,
-    start: &Point3,
-    end: &Point3,
-    projection: CoplanarProjection,
-) -> Option<Real> {
-    projected_segment_parameter3(point, start, end, projection)
 }
 
 fn proper_coplanar_edge_split_point(
