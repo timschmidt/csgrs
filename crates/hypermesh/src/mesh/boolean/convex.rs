@@ -226,7 +226,7 @@ pub(crate) fn subtract_closed_convex_solids(
 
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
-    if append_convex_difference_left_faces(left, right, &right_facts, &mut vertices, &mut triangles)
+    if append_convex_union_source_faces(left, right, &right_facts, &mut vertices, &mut triangles)
         .is_none()
         || append_convex_difference_right_faces(
             right,
@@ -521,12 +521,19 @@ fn clip_polygon_by_face(
     let c = clip.vertices()[face[2]].clone();
 
     let mut output = Vec::new();
+    let orientation = clip_facts.orientation();
     let mut previous = polygon.last()?.clone();
-    let mut previous_inside =
-        keep_inside_side(clip_facts.orientation(), point_side(&a, &b, &c, &previous)?);
+    let mut previous_inside = !matches!(
+        (orientation, point_side(&a, &b, &c, &previous)?),
+        (ClosedMeshOrientation::Positive, PlaneSide::Below)
+            | (ClosedMeshOrientation::Negative, PlaneSide::Above)
+    );
     for current in polygon {
-        let current_inside =
-            keep_inside_side(clip_facts.orientation(), point_side(&a, &b, &c, current)?);
+        let current_inside = !matches!(
+            (orientation, point_side(&a, &b, &c, current)?),
+            (ClosedMeshOrientation::Positive, PlaneSide::Below)
+                | (ClosedMeshOrientation::Negative, PlaneSide::Above)
+        );
         match (previous_inside, current_inside) {
             (true, true) => output.push(current.clone()),
             (true, false) => {
@@ -547,10 +554,6 @@ fn clip_polygon_by_face(
     }
     simplify_polygon(&mut output);
     Some(output)
-}
-
-fn keep_inside_side(orientation: ClosedMeshOrientation, side: PlaneSide) -> bool {
-    side == PlaneSide::On || !side_is_outside(orientation, side)
 }
 
 fn polygon_centroid(points: &[Point3]) -> Option<Point3> {
@@ -592,16 +595,6 @@ fn append_convex_union_source_faces(
         )?;
     }
     Some(())
-}
-
-fn append_convex_difference_left_faces(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    right_facts: &ConvexSolidFacts,
-    vertices: &mut Vec<Point3>,
-    triangles: &mut Vec<Triangle>,
-) -> Option<()> {
-    append_convex_union_source_faces(left, right, right_facts, vertices, triangles)
 }
 
 fn append_convex_difference_right_faces(
@@ -1477,14 +1470,6 @@ fn points_are_collinear(a: &Point3, b: &Point3, c: &Point3) -> bool {
     compare_reals(&cross_x, &Real::from(0)).value() == Some(Ordering::Equal)
         && compare_reals(&cross_y, &Real::from(0)).value() == Some(Ordering::Equal)
         && compare_reals(&cross_z, &Real::from(0)).value() == Some(Ordering::Equal)
-}
-
-fn side_is_outside(orientation: ClosedMeshOrientation, side: PlaneSide) -> bool {
-    matches!(
-        (orientation, side),
-        (ClosedMeshOrientation::Positive, PlaneSide::Below)
-            | (ClosedMeshOrientation::Negative, PlaneSide::Above)
-    )
 }
 
 fn points_equal(left: &Point3, right: &Point3) -> bool {
