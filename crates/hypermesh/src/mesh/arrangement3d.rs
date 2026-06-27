@@ -2385,25 +2385,29 @@ fn face_plane_arrangements(
                 MeshSide::Left => source_use.face_pair[0],
                 MeshSide::Right => source_use.face_pair[1],
             };
-            push_face_pair_vertex(
-                &mut pair_vertices,
-                source_use.side,
-                edge_carrier,
-                source_use.face_pair,
-                graph_vertex,
-            );
+            pair_vertices
+                .entry((
+                    side_key(source_use.side),
+                    edge_carrier,
+                    source_use.face_pair[0],
+                    source_use.face_pair[1],
+                ))
+                .or_default()
+                .insert(graph_vertex);
 
             let plane_side = match source_use.side {
                 MeshSide::Left => MeshSide::Right,
                 MeshSide::Right => MeshSide::Left,
             };
-            push_face_pair_vertex(
-                &mut pair_vertices,
-                plane_side,
-                source_use.plane_face,
-                source_use.face_pair,
-                graph_vertex,
-            );
+            pair_vertices
+                .entry((
+                    side_key(plane_side),
+                    source_use.plane_face,
+                    source_use.face_pair[0],
+                    source_use.face_pair[1],
+                ))
+                .or_default()
+                .insert(graph_vertex);
         }
     }
 
@@ -2432,19 +2436,6 @@ fn face_plane_arrangements(
         }
     }
     arrangements
-}
-
-fn push_face_pair_vertex(
-    pair_vertices: &mut BTreeMap<(usize, usize, usize, usize), BTreeSet<usize>>,
-    side: MeshSide,
-    face: usize,
-    face_pair: [usize; 2],
-    graph_vertex: usize,
-) {
-    pair_vertices
-        .entry((side_key(side), face, face_pair[0], face_pair[1]))
-        .or_default()
-        .insert(graph_vertex);
 }
 
 const fn side_from_key(side: usize) -> MeshSide {
