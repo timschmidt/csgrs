@@ -4468,7 +4468,7 @@ struct ArrangementEdgeUserIndex {
 
 impl ArrangementEdgeUserIndex {
     fn push(&mut self, edge: ArrangementFaceCellBoundaryEdge, cell: usize) {
-        let node_key = boundary_edge_node_key(&edge);
+        let node_key = [cell_node_key(&edge.nodes[0]), cell_node_key(&edge.nodes[1])];
         let point_key = edge
             .points
             .as_ref()
@@ -4526,10 +4526,6 @@ fn push_unique_edge_user(users: &mut Vec<usize>, cell: usize) {
     if !users.contains(&cell) {
         users.push(cell);
     }
-}
-
-fn boundary_edge_node_key(edge: &ArrangementFaceCellBoundaryEdge) -> ArrangementBoundaryNodeKey {
-    [cell_node_key(&edge.nodes[0]), cell_node_key(&edge.nodes[1])]
 }
 
 fn arrangement_raw_boundary_edges(
