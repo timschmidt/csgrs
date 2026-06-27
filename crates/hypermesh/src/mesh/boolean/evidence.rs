@@ -5344,58 +5344,54 @@ fn output_triangles_cover_triangulated_cell<'a>(
     triangulation: &FaceRegionTriangulation,
     triangle: [usize; 3],
 ) -> bool {
-    let Some(cell_area) = triangulated_cell_projected_area2_abs(triangulation, triangle) else {
+    let Some(cell_points) = triangle
+        .iter()
+        .map(|&vertex| triangulation.boundary.get(vertex).map(boundary_node_point))
+        .collect::<Option<Vec<_>>>()
+    else {
+        return false;
+    };
+    let cell_area = projected_polygon_area2_value(
+        &[
+            cell_points[0].clone(),
+            cell_points[1].clone(),
+            cell_points[2].clone(),
+        ],
+        triangulation.projection,
+    );
+    let Some(cell_area) = (match compare_reals(&cell_area, &Real::from(0)).value() {
+        Some(Ordering::Less) => Some(-cell_area),
+        Some(Ordering::Equal | Ordering::Greater) => Some(cell_area),
+        None => None,
+    }) else {
         return false;
     };
     let mut output_area = Real::from(0);
     let mut found = false;
     for output in outputs {
-        let Some(area) = output_triangle_projected_area2_abs(output, assembly, triangulation)
+        let Some(points) = output
+            .vertices
+            .iter()
+            .map(|&vertex| assembly.vertices.get(vertex).map(|vertex| &vertex.point))
+            .collect::<Option<Vec<_>>>()
         else {
+            return false;
+        };
+        let area = projected_polygon_area2_value(
+            &[points[0].clone(), points[1].clone(), points[2].clone()],
+            triangulation.projection,
+        );
+        let Some(area) = (match compare_reals(&area, &Real::from(0)).value() {
+            Some(Ordering::Less) => Some(-area),
+            Some(Ordering::Equal | Ordering::Greater) => Some(area),
+            None => None,
+        }) else {
             return false;
         };
         output_area += &area;
         found = true;
     }
     found && compare_reals(&output_area, &cell_area).value() == Some(Ordering::Equal)
-}
-
-fn triangulated_cell_projected_area2_abs(
-    triangulation: &FaceRegionTriangulation,
-    triangle: [usize; 3],
-) -> Option<Real> {
-    let points = triangle
-        .iter()
-        .map(|&vertex| triangulation.boundary.get(vertex).map(boundary_node_point))
-        .collect::<Option<Vec<_>>>()?;
-    let area = projected_polygon_area2_value(
-        &[points[0].clone(), points[1].clone(), points[2].clone()],
-        triangulation.projection,
-    );
-    match compare_reals(&area, &Real::from(0)).value()? {
-        Ordering::Less => Some(-area),
-        Ordering::Equal | Ordering::Greater => Some(area),
-    }
-}
-
-fn output_triangle_projected_area2_abs(
-    output: &ExactOutputTriangle,
-    assembly: &ExactBooleanAssemblyPlan,
-    triangulation: &FaceRegionTriangulation,
-) -> Option<Real> {
-    let points = output
-        .vertices
-        .iter()
-        .map(|&vertex| assembly.vertices.get(vertex).map(|vertex| &vertex.point))
-        .collect::<Option<Vec<_>>>()?;
-    let area = projected_polygon_area2_value(
-        &[points[0].clone(), points[1].clone(), points[2].clone()],
-        triangulation.projection,
-    );
-    match compare_reals(&area, &Real::from(0)).value()? {
-        Ordering::Less => Some(-area),
-        Ordering::Equal | Ordering::Greater => Some(area),
-    }
 }
 
 fn output_triangle_lies_in_triangulated_cell(
