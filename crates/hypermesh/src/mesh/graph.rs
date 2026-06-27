@@ -1471,7 +1471,40 @@ impl ExactGraphVertexPlan {
     /// The graph-vertex plan is the first place where multiple exact
     /// facts instead of trusting the representative coordinate alone.
     pub fn validate(&self) -> SplitPlanValidationReport {
-        validate_graph_vertex_plan(self)
+        let mut blockers = Vec::new();
+
+        for _ in 0..self.unresolved_equalities {
+            blockers.push(SplitPlanBlocker::new(
+                SplitPlanBlockerKind::UnresolvedEquality,
+                "graph-vertex equality could not be certified",
+            ));
+        }
+
+        for index in 0..self.vertices.len() {
+            let vertex = &self.vertices[index];
+            if vertex.uses.is_empty() {
+                let mut blocker = SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::EmptyGraphVertexUses,
+                    "graph vertex has no exact source uses",
+                );
+                blocker.graph_vertex = Some(index);
+                blockers.push(blocker);
+                continue;
+            }
+
+            for vertex_use in &vertex.uses {
+                push_graph_vertex_source_use_blockers(
+                    &mut blockers,
+                    index,
+                    vertex_use,
+                    "graph vertex source use determinant ratio does not match its parameter",
+                    "graph vertex source use was not certified by opposite strict endpoint sides",
+                    "graph vertex source use is missing endpoint side facts",
+                );
+            }
+        }
+
+        SplitPlanValidationReport { blockers }
     }
 }
 
@@ -2179,43 +2212,6 @@ fn find_matching_graph_vertex_in_indices(
         }
     }
     None
-}
-
-fn validate_graph_vertex_plan(plan: &ExactGraphVertexPlan) -> SplitPlanValidationReport {
-    let mut blockers = Vec::new();
-
-    for _ in 0..plan.unresolved_equalities {
-        blockers.push(SplitPlanBlocker::new(
-            SplitPlanBlockerKind::UnresolvedEquality,
-            "graph-vertex equality could not be certified",
-        ));
-    }
-
-    for (index, vertex) in plan.vertices.iter().enumerate() {
-        if vertex.uses.is_empty() {
-            blockers.push(
-                SplitPlanBlocker::new(
-                    SplitPlanBlockerKind::EmptyGraphVertexUses,
-                    "graph vertex has no exact source uses",
-                )
-                .with_graph_vertex(index),
-            );
-            continue;
-        }
-
-        for vertex_use in &vertex.uses {
-            push_graph_vertex_source_use_blockers(
-                &mut blockers,
-                index,
-                vertex_use,
-                "graph vertex source use determinant ratio does not match its parameter",
-                "graph vertex source use was not certified by opposite strict endpoint sides",
-                "graph vertex source use is missing endpoint side facts",
-            );
-        }
-    }
-
-    SplitPlanValidationReport { blockers }
 }
 
 fn push_graph_vertex_source_use_blockers(
