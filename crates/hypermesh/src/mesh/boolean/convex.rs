@@ -1290,7 +1290,11 @@ fn find_triangle_edge_split(
     triangles: &[Triangle],
 ) -> Option<Option<(usize, usize, usize)>> {
     for (triangle_index, triangle) in triangles.iter().enumerate() {
-        let projection = choose_triangle_projection(vertices, triangle.0)?;
+        let projection = choose_polygon_projection(&[
+            vertices[triangle.0[0]].clone(),
+            vertices[triangle.0[1]].clone(),
+            vertices[triangle.0[2]].clone(),
+        ])?;
         let [ta, tb, tc] = triangle.0;
         for edge in 0..3 {
             let start = triangle.0[edge];
@@ -1329,17 +1333,6 @@ fn find_triangle_edge_split(
         }
     }
     Some(None)
-}
-
-fn choose_triangle_projection(
-    vertices: &[Point3],
-    triangle: [usize; 3],
-) -> Option<CoplanarProjection> {
-    choose_polygon_projection(&[
-        vertices[triangle[0]].clone(),
-        vertices[triangle[1]].clone(),
-        vertices[triangle[2]].clone(),
-    ])
 }
 
 fn remove_duplicate_triangle_vertex_sets(triangles: &mut Vec<Triangle>) {
