@@ -3332,8 +3332,14 @@ fn face_region_plan(
                 chain.nodes.clone()
             } else {
                 vec![
-                    original_boundary_node(mesh, edge[0]),
-                    original_boundary_node(mesh, edge[1]),
+                    FaceSplitBoundaryNode::OriginalVertex {
+                        vertex: edge[0],
+                        point: mesh.vertices()[edge[0]].clone(),
+                    },
+                    FaceSplitBoundaryNode::OriginalVertex {
+                        vertex: edge[1],
+                        point: mesh.vertices()[edge[1]].clone(),
+                    },
                 ]
             };
             for node in nodes {
@@ -3997,13 +4003,6 @@ fn proper_coplanar_edge_split_point(
         left_parameter,
         right_parameter,
     })
-}
-
-fn original_boundary_node(mesh: &ExactMesh, vertex: usize) -> FaceSplitBoundaryNode {
-    FaceSplitBoundaryNode::OriginalVertex {
-        vertex,
-        point: mesh.vertices()[vertex].clone(),
-    }
 }
 
 fn push_boundary_node(boundary: &mut Vec<FaceSplitBoundaryNode>, node: FaceSplitBoundaryNode) {
