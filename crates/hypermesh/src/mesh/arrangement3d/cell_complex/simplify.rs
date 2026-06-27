@@ -817,13 +817,14 @@ fn merge_same_label_group(
         let mut boundary_points = vec![first.from_point];
         let max_steps = boundary_edges.len().saturating_add(1);
         let mut guard = 0usize;
-        while !same_node_or_point(&current, &current_point, &start, &start_point) {
+        while current != start && point3_equal(&current_point, &start_point).value() != Some(true) {
             guard += 1;
             if guard > max_steps {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             }
             let Some(next_index) = boundary_edges.iter().position(|edge| {
-                same_node_or_point(&edge.from, &edge.from_point, &current, &current_point)
+                edge.from == current
+                    || point3_equal(&edge.from_point, &current_point).value() == Some(true)
             }) else {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             };
@@ -935,15 +936,6 @@ fn non_collinear_point_triple(points: &[Point3]) -> Option<[Point3; 3]> {
         }
     }
     None
-}
-
-fn same_node_or_point(
-    left_node: &ArrangementFaceCellNode,
-    left_point: &Point3,
-    right_node: &ArrangementFaceCellNode,
-    right_point: &Point3,
-) -> bool {
-    left_node == right_node || point3_equal(left_point, right_point).value() == Some(true)
 }
 
 fn remove_collinear_boundary_nodes(
