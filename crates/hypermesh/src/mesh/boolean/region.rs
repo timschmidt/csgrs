@@ -22,7 +22,6 @@ use super::super::ExactMesh;
 use super::super::Triangle;
 use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::super::graph::SplitPlanBlockerKind;
-use super::super::graph::SplitPlanValidationReport;
 use super::super::graph::{ExactFaceRegionPlan, FaceSplitBoundaryNode, MeshSide};
 use super::super::validation::ExactMeshValidationPolicy;
 use hyperlimit::CoplanarProjection;
@@ -238,46 +237,42 @@ pub(crate) fn checked_classify_face_regions_against_opposite_planes(
             regions, left, right,
         ))
     } else {
-        Err(region_plan_report_to_mesh_error(report))
+        Err(ExactMeshError::new(
+            report
+                .blockers
+                .into_iter()
+                .map(|blocker| {
+                    let kind = match blocker.kind {
+                        SplitPlanBlockerKind::UnknownBoundaryIncidence => {
+                            ExactMeshBlockerKind::UndecidablePredicate
+                        }
+                        SplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange => {
+                            ExactMeshBlockerKind::IndexOutOfBounds
+                        }
+                        SplitPlanBlockerKind::BoundaryNodeSourceVertexNotOnTriangle
+                        | SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch => {
+                            ExactMeshBlockerKind::StaleFactReplay
+                        }
+                        SplitPlanBlockerKind::BoundaryNodeOffFacePlane
+                        | SplitPlanBlockerKind::EmptyOrShortRegionBoundary
+                        | SplitPlanBlockerKind::DuplicateConsecutiveRegionNode
+                        | SplitPlanBlockerKind::BoundaryChainEdgeNotOnTriangle => {
+                            ExactMeshBlockerKind::ExactConstructionFailure
+                        }
+                        _ => ExactMeshBlockerKind::ExactConstructionFailure,
+                    };
+                    let mut mesh = ExactMeshBlocker::new(kind, blocker.message);
+                    if let Some(face) = blocker.face {
+                        mesh = mesh.with_face(face);
+                    }
+                    if let Some(edge) = blocker.edge {
+                        mesh = mesh.with_edge(edge);
+                    }
+                    mesh
+                })
+                .collect(),
+        ))
     }
-}
-
-fn region_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> ExactMeshError {
-    ExactMeshError::new(
-        report
-            .blockers
-            .into_iter()
-            .map(|blocker| {
-                let kind = match blocker.kind {
-                    SplitPlanBlockerKind::UnknownBoundaryIncidence => {
-                        ExactMeshBlockerKind::UndecidablePredicate
-                    }
-                    SplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange => {
-                        ExactMeshBlockerKind::IndexOutOfBounds
-                    }
-                    SplitPlanBlockerKind::BoundaryNodeSourceVertexNotOnTriangle
-                    | SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch => {
-                        ExactMeshBlockerKind::StaleFactReplay
-                    }
-                    SplitPlanBlockerKind::BoundaryNodeOffFacePlane
-                    | SplitPlanBlockerKind::EmptyOrShortRegionBoundary
-                    | SplitPlanBlockerKind::DuplicateConsecutiveRegionNode
-                    | SplitPlanBlockerKind::BoundaryChainEdgeNotOnTriangle => {
-                        ExactMeshBlockerKind::ExactConstructionFailure
-                    }
-                    _ => ExactMeshBlockerKind::ExactConstructionFailure,
-                };
-                let mut mesh = ExactMeshBlocker::new(kind, blocker.message);
-                if let Some(face) = blocker.face {
-                    mesh = mesh.with_face(face);
-                }
-                if let Some(edge) = blocker.edge {
-                    mesh = mesh.with_edge(edge);
-                }
-                mesh
-            })
-            .collect(),
-    )
 }
 
 /// Exact earcut triangulation of one split face region.
