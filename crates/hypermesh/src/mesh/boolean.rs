@@ -433,6 +433,7 @@ fn replay_regularized_arrangement_attempt(
     Ok(())
 }
 
+#[cfg(test)]
 fn exact_boolean_replay_preflight(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -516,16 +517,7 @@ fn exact_boolean_replay_preflight(
     Ok(graph_preflight)
 }
 
-pub(crate) fn preflight_report_for_request_from_graph(
-    graph: &ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactBooleanPreflight, ExactMeshError> {
-    let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
-    exact_boolean_replay_preflight(left, right, request, graph, &shortcut_facts, None)
-}
-
+#[cfg(test)]
 const RETAINED_EVIDENCE_REPLAY_CONTEXT: &str =
     "exact boolean retained evidence failed replay validation";
 

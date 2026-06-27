@@ -76,7 +76,8 @@ use super::{
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
     materialize_volumetric_coplanar_boundary_closure_output,
     no_materialized_boundary_output_report, open_surface_disjoint_report_from_graph,
-    open_surface_disjoint_result_matches_sources, preflight_report_for_request_from_graph,
+    open_surface_disjoint_result_matches_sources,
+    preflight_boolean_exact_request_from_graph_with_retained_attempt,
     rematerialize_retained_arrangement_cell_complex_attempt,
     replay_closed_same_surface_boolean_result_if_certified,
     replay_generic_arrangement_cell_complex_result, replay_open_surface_arrangement_result,
@@ -4883,11 +4884,14 @@ fn arrangement_cell_complex_sources_match(
             return Ok(true);
         }
     }
-    let preflight = preflight_report_for_request_from_graph(
+    let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
+    let preflight = preflight_boolean_exact_request_from_graph_with_retained_attempt(
         &graph,
         left,
         right,
         ExactBooleanRequest::new(operation, validation),
+        None,
+        &shortcut_facts,
     )
     .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
     preflight.validate()?;
@@ -6191,6 +6195,7 @@ impl ExactBooleanPreflight {
     }
 
     /// Return the requested operation.
+    #[cfg(test)]
     pub(crate) const fn operation(&self) -> ExactBooleanOperation {
         self.operation
     }
@@ -6311,8 +6316,15 @@ impl ExactBooleanPreflight {
         {
             return Ok(());
         }
-        if let Ok(replay) = preflight_report_for_request_from_graph(&graph, left, right, request)
-            && self == &replay
+        let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
+        if let Ok(replay) = preflight_boolean_exact_request_from_graph_with_retained_attempt(
+            &graph,
+            left,
+            right,
+            request,
+            None,
+            &shortcut_facts,
+        ) && self == &replay
         {
             return Ok(());
         }
