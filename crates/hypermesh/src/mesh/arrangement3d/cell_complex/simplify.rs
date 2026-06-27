@@ -24,9 +24,9 @@ use super::super::{
 use super::select_arrangement_for_replay;
 use super::{
     ExactCellComplexFace, ExactCellRegionLabel, ExactOppositeRegionLabel,
-    ExactRegionOwnershipReport, ExactSelectedCellComplex, ExactSelectedFaceOrientation,
-    selected_cell_complex_gate_counts, validate_selected_gate_reports,
-    validate_selected_gate_reports_against_counts, validate_volume_adjacency_face_provenance,
+    ExactRegionOwnershipReport, ExactSelectedCellComplex, selected_cell_complex_gate_counts,
+    validate_selected_gate_reports, validate_selected_gate_reports_against_counts,
+    validate_volume_adjacency_face_provenance,
 };
 use hyperlimit::CoplanarProjection;
 use hyperlimit::SourceProvenance;
@@ -364,13 +364,45 @@ pub(crate) fn simplify_selected_cell_complex(
             continue;
         };
         let require_volume_orientation = require_volume_orientations && volume_adjacency_face;
-        match selected_face_reverse_orientation(
-            &face,
-            source_face,
-            selected.operation,
-            &selected_face_orientations,
-            require_volume_orientation,
-        ) {
+        let reverse_orientation = (|| -> Result<bool, ExactArrangementBlocker> {
+            let mut volume_matches = selected_face_orientations.iter().filter(|orientation| {
+                orientation.face == source_face && orientation.from_volume_adjacency
+            });
+            if let Some(first) = volume_matches.next() {
+                let reverse = first.reverse;
+                for orientation in volume_matches {
+                    if orientation.reverse != reverse {
+                        return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
+                    }
+                }
+                Ok(reverse)
+            } else {
+                let mut label_matches = selected_face_orientations
+                    .iter()
+                    .filter(|orientation| orientation.face == source_face);
+                if let Some(first) = label_matches.next() {
+                    if require_volume_orientation {
+                        Err(ExactArrangementBlocker::UnresolvedRegionClassification)
+                    } else {
+                        let reverse = first.reverse;
+                        for orientation in label_matches {
+                            if orientation.reverse != reverse {
+                                return Err(
+                                    ExactArrangementBlocker::UnresolvedRegionClassification,
+                                );
+                            }
+                        }
+                        Ok(reverse)
+                    }
+                } else if require_volume_orientation {
+                    Err(ExactArrangementBlocker::UnresolvedRegionClassification)
+                } else {
+                    Ok(selected.operation == ExactBooleanOperation::Difference
+                        && face.source == ExactCellRegionLabel::RightBoundary)
+                }
+            }
+        })();
+        match reverse_orientation {
             Ok(true) => {
                 face.cell.boundary.reverse();
                 face.cell.boundary_points.reverse();
@@ -1022,48 +1054,6 @@ fn exact_boundary_loops_opposite_orientation(left: &[Point3], right: &[Point3]) 
             point3_equal(&left[index], &right[right_index]).value() == Some(true)
         })
     })
-}
-
-fn selected_face_reverse_orientation(
-    face: &ExactCellComplexFace,
-    source_face: usize,
-    operation: ExactBooleanOperation,
-    orientations: &[ExactSelectedFaceOrientation],
-    require_volume_orientation: bool,
-) -> Result<bool, ExactArrangementBlocker> {
-    let mut volume_matches = orientations
-        .iter()
-        .filter(|orientation| orientation.face == source_face && orientation.from_volume_adjacency);
-    if let Some(first) = volume_matches.next() {
-        let reverse = first.reverse;
-        for orientation in volume_matches {
-            if orientation.reverse != reverse {
-                return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
-            }
-        }
-        return Ok(reverse);
-    }
-
-    let mut label_matches = orientations
-        .iter()
-        .filter(|orientation| orientation.face == source_face);
-    if let Some(first) = label_matches.next() {
-        if require_volume_orientation {
-            return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
-        }
-        let reverse = first.reverse;
-        for orientation in label_matches {
-            if orientation.reverse != reverse {
-                return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
-            }
-        }
-        return Ok(reverse);
-    }
-    if require_volume_orientation {
-        return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
-    }
-    Ok(operation == ExactBooleanOperation::Difference
-        && face.source == ExactCellRegionLabel::RightBoundary)
 }
 
 const fn side_key(side: super::super::super::graph::MeshSide) -> usize {
