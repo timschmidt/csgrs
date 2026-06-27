@@ -899,14 +899,21 @@ impl MeshBounds {
         triangles: impl IntoIterator<Item = [usize; 3]>,
     ) -> Result<(), BoundsValidationError> {
         let triangles = triangles.into_iter().collect::<Vec<_>>();
-        let edge_count = retained_edge_count(&triangles);
+        let mut edge_keys = Vec::<[usize; 2]>::with_capacity(triangle_count.saturating_mul(3));
+        for triangle in &triangles {
+            edge_keys.push(sorted_edge([triangle[0], triangle[1]]));
+            edge_keys.push(sorted_edge([triangle[1], triangle[2]]));
+            edge_keys.push(sorted_edge([triangle[2], triangle[0]]));
+        }
+        edge_keys.sort_unstable();
+        edge_keys.dedup();
+        let edge_count = edge_keys.len();
         self.validate(points.len(), edge_count, triangle_count)?;
         let mut replay = Self {
             mesh: ExactAabb3::from_points(points),
             edges: Vec::with_capacity(edge_count),
             faces: Vec::with_capacity(triangle_count),
         };
-        let mut edge_keys = Vec::<[usize; 2]>::with_capacity(triangle_count.saturating_mul(3));
         for triangle in triangles {
             if triangle.iter().any(|&vertex| vertex >= points.len()) {
                 return Err(BoundsValidationError::SourceReplayMismatch);
@@ -916,12 +923,7 @@ impl MeshBounds {
                 &points[triangle[1]],
                 &points[triangle[2]],
             ]));
-            edge_keys.push(sorted_edge([triangle[0], triangle[1]]));
-            edge_keys.push(sorted_edge([triangle[1], triangle[2]]));
-            edge_keys.push(sorted_edge([triangle[2], triangle[0]]));
         }
-        edge_keys.sort_unstable();
-        edge_keys.dedup();
         replay.edges = edge_keys
             .into_iter()
             .map(|edge| ExactAabb3::from_segment([&points[edge[0]], &points[edge[1]]]))
@@ -932,18 +934,6 @@ impl MeshBounds {
             Err(BoundsValidationError::SourceReplayMismatch)
         }
     }
-}
-
-fn retained_edge_count(triangles: &[[usize; 3]]) -> usize {
-    let mut edges = Vec::<[usize; 2]>::with_capacity(triangles.len().saturating_mul(3));
-    for triangle in triangles {
-        edges.push(sorted_edge([triangle[0], triangle[1]]));
-        edges.push(sorted_edge([triangle[1], triangle[2]]));
-        edges.push(sorted_edge([triangle[2], triangle[0]]));
-    }
-    edges.sort_unstable();
-    edges.dedup();
-    edges.len()
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
