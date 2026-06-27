@@ -737,7 +737,13 @@ impl FacePairEvents {
     /// projection, and event payloads consistent before downstream split
     /// planning converts construction records into topology.
     pub fn validate(&self) -> Result<(), IntersectionGraphValidationError> {
-        if !face_pair_relation_needs_graph_construction(self.relation) {
+        if !matches!(
+            self.relation,
+            MeshFacePairRelation::Candidate
+                | MeshFacePairRelation::CoplanarTouching
+                | MeshFacePairRelation::CoplanarOverlapping
+                | MeshFacePairRelation::Unknown
+        ) {
             return if self.events.is_empty() {
                 Ok(())
             } else {
@@ -2424,16 +2430,6 @@ fn validate_vertex(
     } else {
         Err(IntersectionGraphValidationError::EventSourceOutOfRange)
     }
-}
-
-fn face_pair_relation_needs_graph_construction(relation: MeshFacePairRelation) -> bool {
-    matches!(
-        relation,
-        MeshFacePairRelation::Candidate
-            | MeshFacePairRelation::CoplanarTouching
-            | MeshFacePairRelation::CoplanarOverlapping
-            | MeshFacePairRelation::Unknown
-    )
 }
 
 fn validate_graph_segment_plane_event(
