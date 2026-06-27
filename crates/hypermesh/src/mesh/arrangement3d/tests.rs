@@ -821,19 +821,6 @@ fn shell_containment_classifier_uses_consistent_exact_witnesses() {
     let container = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
 
     assert_eq!(
-        shell_containment_relation_from_convex(ConvexSolidPointRelation::Inside),
-        ShellContainmentRelation::Inside
-    );
-    assert_eq!(
-        shell_containment_relation_from_convex(ConvexSolidPointRelation::Outside),
-        ShellContainmentRelation::Outside
-    );
-    assert_eq!(
-        shell_containment_relation_from_convex(ConvexSolidPointRelation::Boundary),
-        ShellContainmentRelation::Boundary
-    );
-
-    assert_eq!(
         classify_shell_witnesses_against_container(&[p3(1, 1, 1), p3(2, 1, 1)], &container),
         ShellContainmentRelation::Inside
     );

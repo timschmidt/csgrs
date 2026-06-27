@@ -4167,23 +4167,17 @@ fn classify_shell_witness_against_container(
 ) -> ShellContainmentRelation {
     let convex = classify_point_against_convex_solid_report(witness, container);
     if let Some(relation) = certified_convex_point_relation(convex.relation()) {
-        return shell_containment_relation_from_convex(relation);
+        return match relation {
+            ConvexSolidPointRelation::Inside => ShellContainmentRelation::Inside,
+            ConvexSolidPointRelation::Outside => ShellContainmentRelation::Outside,
+            ConvexSolidPointRelation::Boundary => ShellContainmentRelation::Boundary,
+            ConvexSolidPointRelation::Unknown | ConvexSolidPointRelation::NotCertifiedConvex => {
+                ShellContainmentRelation::Unknown
+            }
+        };
     }
 
     ShellContainmentRelation::Unknown
-}
-
-fn shell_containment_relation_from_convex(
-    relation: ConvexSolidPointRelation,
-) -> ShellContainmentRelation {
-    match relation {
-        ConvexSolidPointRelation::Inside => ShellContainmentRelation::Inside,
-        ConvexSolidPointRelation::Outside => ShellContainmentRelation::Outside,
-        ConvexSolidPointRelation::Boundary => ShellContainmentRelation::Boundary,
-        ConvexSolidPointRelation::Unknown | ConvexSolidPointRelation::NotCertifiedConvex => {
-            ShellContainmentRelation::Unknown
-        }
-    }
 }
 
 fn deepest_containing_shell(containers: &[usize], contains: &[Vec<bool>]) -> Option<usize> {
