@@ -410,30 +410,25 @@ fn mesh_direction_counts(mesh: &ExactMesh) -> Vec<(Point3, usize)> {
     let mut counts = Vec::<(Point3, usize)>::new();
     for triangle in mesh.triangles() {
         let [a, b, c] = triangle.0;
-        count_edge_direction(mesh, a, b, &mut counts);
-        count_edge_direction(mesh, b, c, &mut counts);
-        count_edge_direction(mesh, c, a, &mut counts);
+        for [a, b] in [[a, b], [b, c], [c, a]] {
+            let (Some(a), Some(b)) = (mesh.vertices().get(a), mesh.vertices().get(b)) else {
+                continue;
+            };
+            let direction = sub3(&b.clone(), &a.clone());
+            if point_is_zero(&direction) {
+                continue;
+            }
+            if let Some((_, count)) = counts
+                .iter_mut()
+                .find(|(seen, _)| points_equal_or_opposite(seen, &direction))
+            {
+                *count += 1;
+            } else {
+                counts.push((direction, 1));
+            }
+        }
     }
     counts
-}
-
-/// Add one exact undirected edge direction to the frequency table.
-fn count_edge_direction(mesh: &ExactMesh, a: usize, b: usize, counts: &mut Vec<(Point3, usize)>) {
-    let (Some(a), Some(b)) = (mesh.vertices().get(a), mesh.vertices().get(b)) else {
-        return;
-    };
-    let direction = sub3(&b.clone(), &a.clone());
-    if point_is_zero(&direction) {
-        return;
-    }
-    if let Some((_, count)) = counts
-        .iter_mut()
-        .find(|(seen, _)| points_equal_or_opposite(seen, &direction))
-    {
-        *count += 1;
-    } else {
-        counts.push((direction, 1));
-    }
 }
 
 /// Build a unique undirected vertex adjacency list from retained triangles.
