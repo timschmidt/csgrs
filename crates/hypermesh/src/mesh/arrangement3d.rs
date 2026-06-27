@@ -383,16 +383,20 @@ fn validate_lower_dimensional_artifacts_unique(
         let bucket = lower_dimensional_artifact_bucket_key(artifact);
         let exact_key = lower_dimensional_artifact_exact_key(artifact);
         if let Some(candidates) = unkeyed_by_bucket.get(&bucket) {
-            validate_lower_dimensional_artifact_not_duplicate_of_candidates(
-                artifact, artifacts, candidates,
-            )?;
+            for &candidate in candidates {
+                if lower_dimensional_artifacts_duplicate(artifact, &artifacts[candidate])? {
+                    return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+                }
+            }
         }
         if exact_key.is_none()
             && let Some(candidates) = keyed_by_bucket.get(&bucket)
         {
-            validate_lower_dimensional_artifact_not_duplicate_of_candidates(
-                artifact, artifacts, candidates,
-            )?;
+            for &candidate in candidates {
+                if lower_dimensional_artifacts_duplicate(artifact, &artifacts[candidate])? {
+                    return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+                }
+            }
         }
         if let Some(key) = exact_key {
             if !exact_keys.insert(key) {
@@ -401,19 +405,6 @@ fn validate_lower_dimensional_artifacts_unique(
             keyed_by_bucket.entry(bucket).or_default().push(index);
         } else {
             unkeyed_by_bucket.entry(bucket).or_default().push(index);
-        }
-    }
-    Ok(())
-}
-
-fn validate_lower_dimensional_artifact_not_duplicate_of_candidates(
-    artifact: &ArrangementLowerDimensionalArtifact,
-    artifacts: &[ArrangementLowerDimensionalArtifact],
-    candidates: &[usize],
-) -> Result<(), ExactArrangementBlocker> {
-    for &candidate in candidates {
-        if lower_dimensional_artifacts_duplicate(artifact, &artifacts[candidate])? {
-            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
     }
     Ok(())
