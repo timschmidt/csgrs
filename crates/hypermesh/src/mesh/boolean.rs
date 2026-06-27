@@ -7165,8 +7165,21 @@ pub(crate) fn coplanar_mesh_overlay_carrier(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<([Point3; 3], CoplanarProjection)> {
-    let carrier_points =
-        first_projectable_triangle(left).or_else(|| first_projectable_triangle(right))?;
+    let mut carrier_points = None;
+    'meshes: for mesh in [left, right] {
+        for triangle in mesh.triangles() {
+            let points = [
+                mesh.vertices().get(triangle.0[0])?.clone(),
+                mesh.vertices().get(triangle.0[1])?.clone(),
+                mesh.vertices().get(triangle.0[2])?.clone(),
+            ];
+            if choose_triangle_projection(&points).is_some() {
+                carrier_points = Some(points);
+                break 'meshes;
+            }
+        }
+    }
+    let carrier_points = carrier_points?;
     let projection = choose_triangle_projection(&carrier_points)?;
     for mesh in [left, right] {
         for point in mesh.vertices() {
@@ -7197,20 +7210,6 @@ pub(crate) fn coplanar_mesh_overlay_carrier(
         }
     }
     Some((carrier_points, projection))
-}
-
-fn first_projectable_triangle(mesh: &ExactMesh) -> Option<[Point3; 3]> {
-    for triangle in mesh.triangles() {
-        let points = [
-            mesh.vertices().get(triangle.0[0])?.clone(),
-            mesh.vertices().get(triangle.0[1])?.clone(),
-            mesh.vertices().get(triangle.0[2])?.clone(),
-        ];
-        if choose_triangle_projection(&points).is_some() {
-            return Some(points);
-        }
-    }
-    None
 }
 
 fn projected_mesh_boundary_rings(
