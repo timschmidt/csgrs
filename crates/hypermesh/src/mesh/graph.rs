@@ -3622,21 +3622,36 @@ fn validate_coplanar_edge_split(
             let point = &split.points[0];
             validate_unit_parameter(&point.left_parameter)?;
             validate_unit_parameter(&point.right_parameter)?;
+            let zero = Real::from(0);
+            let one = Real::from(1);
+            let parameter_position = |parameter: &Real| -> Result<
+                (bool, bool),
+                CoplanarOverlapSplitValidationError,
+            > {
+                match (
+                    compare_reals(parameter, &zero).value(),
+                    compare_reals(parameter, &one).value(),
+                ) {
+                    (Some(Ordering::Equal), _) | (_, Some(Ordering::Equal)) => Ok((true, false)),
+                    (Some(Ordering::Greater), Some(Ordering::Less)) => Ok((false, true)),
+                    (Some(_), Some(_)) => Ok((false, false)),
+                    _ => Err(CoplanarOverlapSplitValidationError::UnknownSplitParameterOrder),
+                }
+            };
+            let (left_endpoint, left_strict_interior) = parameter_position(&point.left_parameter)?;
+            let (right_endpoint, right_strict_interior) =
+                parameter_position(&point.right_parameter)?;
             // These edge parameters are the retained structure sorted and
             // merged by planar-cell extraction, so endpoint/proper relation
             // labels must agree with certified parameter positions before the
             // record can be consumed.
             if split.overlap.relation == SegmentIntersection::EndpointTouch {
-                if parameter_is_endpoint(&point.left_parameter)?
-                    || parameter_is_endpoint(&point.right_parameter)?
-                {
+                if left_endpoint || right_endpoint {
                     Ok(())
                 } else {
                     Err(CoplanarOverlapSplitValidationError::EndpointTouchWithoutEndpointParameter)
                 }
-            } else if parameter_is_strict_interior(&point.left_parameter)?
-                && parameter_is_strict_interior(&point.right_parameter)?
-            {
+            } else if left_strict_interior && right_strict_interior {
                 Ok(())
             } else {
                 Err(CoplanarOverlapSplitValidationError::ProperCrossingEndpointParameter)
@@ -3794,34 +3809,6 @@ fn validate_unit_parameter(parameter: &Real) -> Result<(), CoplanarOverlapSplitV
             Err(CoplanarOverlapSplitValidationError::SplitParameterOutOfRange)
         }
         (Some(_), Some(_)) => Ok(()),
-        _ => Err(CoplanarOverlapSplitValidationError::UnknownSplitParameterOrder),
-    }
-}
-
-fn parameter_is_endpoint(parameter: &Real) -> Result<bool, CoplanarOverlapSplitValidationError> {
-    let zero = Real::from(0);
-    let one = Real::from(1);
-    match (
-        compare_reals(parameter, &zero).value(),
-        compare_reals(parameter, &one).value(),
-    ) {
-        (Some(Ordering::Equal), _) | (_, Some(Ordering::Equal)) => Ok(true),
-        (Some(_), Some(_)) => Ok(false),
-        _ => Err(CoplanarOverlapSplitValidationError::UnknownSplitParameterOrder),
-    }
-}
-
-fn parameter_is_strict_interior(
-    parameter: &Real,
-) -> Result<bool, CoplanarOverlapSplitValidationError> {
-    let zero = Real::from(0);
-    let one = Real::from(1);
-    match (
-        compare_reals(parameter, &zero).value(),
-        compare_reals(parameter, &one).value(),
-    ) {
-        (Some(Ordering::Greater), Some(Ordering::Less)) => Ok(true),
-        (Some(_), Some(_)) => Ok(false),
         _ => Err(CoplanarOverlapSplitValidationError::UnknownSplitParameterOrder),
     }
 }
