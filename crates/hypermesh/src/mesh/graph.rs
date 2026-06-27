@@ -4094,52 +4094,39 @@ fn append_coplanar_events(
         }
     }
 
-    for (vertex, location) in right_tri.into_iter().zip(coplanar.right_vertices_in_left) {
-        append_vertex_event(
-            events,
+    for (vertex_side, vertices, triangle_side, triangle_face, locations) in [
+        (
             MeshSide::Right,
-            vertex,
+            right_tri,
             MeshSide::Left,
             left_face,
-            location,
-        );
-    }
-    for (vertex, location) in left_tri.into_iter().zip(coplanar.left_vertices_in_right) {
-        append_vertex_event(
-            events,
+            coplanar.right_vertices_in_left,
+        ),
+        (
             MeshSide::Left,
-            vertex,
+            left_tri,
             MeshSide::Right,
             right_face,
-            location,
-        );
-    }
-}
-
-fn append_vertex_event(
-    events: &mut Vec<IntersectionEvent>,
-    vertex_side: MeshSide,
-    vertex: usize,
-    triangle_side: MeshSide,
-    triangle_face: usize,
-    location: Option<TriangleLocation>,
-) {
-    match location {
-        Some(
-            location @ (TriangleLocation::Inside
-            | TriangleLocation::OnEdge
-            | TriangleLocation::OnVertex),
-        ) => {
-            events.push(IntersectionEvent::CoplanarVertex {
-                vertex_side,
-                vertex,
-                triangle_side,
-                triangle_face,
-                location,
-            });
+            coplanar.left_vertices_in_right,
+        ),
+    ] {
+        for (vertex, location) in vertices.into_iter().zip(locations) {
+            match location {
+                Some(
+                    location @ (TriangleLocation::Inside
+                    | TriangleLocation::OnEdge
+                    | TriangleLocation::OnVertex),
+                ) => events.push(IntersectionEvent::CoplanarVertex {
+                    vertex_side,
+                    vertex,
+                    triangle_side,
+                    triangle_face,
+                    location,
+                }),
+                None => events.push(IntersectionEvent::Unknown),
+                Some(TriangleLocation::Outside | TriangleLocation::Degenerate) => {}
+            }
         }
-        None => events.push(IntersectionEvent::Unknown),
-        Some(TriangleLocation::Outside | TriangleLocation::Degenerate) => {}
     }
 }
 
