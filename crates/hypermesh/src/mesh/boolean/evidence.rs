@@ -1384,7 +1384,14 @@ impl ExactBooleanResult {
     }
 
     pub(crate) fn matches_retained_replay(&self, replay: &Self) -> bool {
-        retained_boolean_result_matches(self, replay)
+        self.kind == replay.kind
+            && self.graph_had_unknowns == replay.graph_had_unknowns
+            && self.region_classifications == replay.region_classifications
+            && self.triangulations == replay.triangulations
+            && self.assembly == replay.assembly
+            && self.volumetric_classifications == replay.volumetric_classifications
+            && retained_gate_reports_match(self, replay)
+            && retained_output_mesh_matches(&self.mesh, &replay.mesh)
     }
 }
 
@@ -3164,20 +3171,6 @@ fn retained_split_region_result_matches(
         && retained.triangulations == replay.triangulations
         && retained.volumetric_classifications == replay.volumetric_classifications
         && retained.assembly == replay.assembly
-        && retained_output_mesh_matches(&retained.mesh, &replay.mesh)
-}
-
-fn retained_boolean_result_matches(
-    retained: &ExactBooleanResult,
-    replay: &ExactBooleanResult,
-) -> bool {
-    retained.kind == replay.kind
-        && retained.graph_had_unknowns == replay.graph_had_unknowns
-        && retained.region_classifications == replay.region_classifications
-        && retained.triangulations == replay.triangulations
-        && retained.assembly == replay.assembly
-        && retained.volumetric_classifications == replay.volumetric_classifications
-        && retained_gate_reports_match(retained, replay)
         && retained_output_mesh_matches(&retained.mesh, &replay.mesh)
 }
 
