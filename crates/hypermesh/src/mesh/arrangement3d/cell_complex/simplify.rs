@@ -1338,7 +1338,16 @@ fn triangle_boundary_with_edge_vertices(
     append_edge_with_interior_vertices(vertices, a, b, &mut boundary)?;
     append_edge_with_interior_vertices(vertices, b, c, &mut boundary)?;
     append_edge_with_interior_vertices(vertices, c, a, &mut boundary)?;
-    dedup_consecutive_vertex_indices(&mut boundary);
+    let mut deduped = Vec::<usize>::new();
+    for vertex in boundary {
+        if deduped.last().copied() != Some(vertex) {
+            deduped.push(vertex);
+        }
+    }
+    if deduped.len() > 1 && deduped.first() == deduped.last() {
+        deduped.pop();
+    }
+    let boundary = deduped;
     Ok(boundary)
 }
 
@@ -1394,19 +1403,6 @@ fn sort_vertex_indices_along_segment(
     }
     *indices = ordered;
     Ok(())
-}
-
-fn dedup_consecutive_vertex_indices(boundary: &mut Vec<usize>) {
-    let mut deduped = Vec::<usize>::new();
-    for &vertex in boundary.iter() {
-        if deduped.last().copied() != Some(vertex) {
-            deduped.push(vertex);
-        }
-    }
-    if deduped.len() > 1 && deduped.first() == deduped.last() {
-        deduped.pop();
-    }
-    *boundary = deduped;
 }
 
 fn triangulate_simplified_face_group(
