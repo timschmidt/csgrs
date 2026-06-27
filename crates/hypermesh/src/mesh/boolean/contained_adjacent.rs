@@ -124,12 +124,6 @@ impl ContainedFaceAdjacentUnion {
     }
 }
 
-fn contained_face_adjacent_union_error(error: ContainedFaceAdjacentUnionError) -> ExactMeshError {
-    exact_construction_failure(format!(
-        "contained-face adjacent union retained output failed validation: {error:?}"
-    ))
-}
-
 fn exact_construction_failure(message: impl Into<String>) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
         ExactMeshBlockerKind::ExactConstructionFailure,
@@ -190,9 +184,11 @@ pub(crate) fn materialize_contained_face_adjacent_union_from_certificate(
         containing_faces: certificate.containing_faces(),
         mesh,
     };
-    union
-        .validate()
-        .map_err(contained_face_adjacent_union_error)?;
+    union.validate().map_err(|error| {
+        exact_construction_failure(format!(
+            "contained-face adjacent union retained output failed validation: {error:?}"
+        ))
+    })?;
     Ok(Some(union))
 }
 

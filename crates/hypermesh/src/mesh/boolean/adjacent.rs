@@ -138,12 +138,6 @@ impl FullFaceAdjacentUnion {
     }
 }
 
-fn full_face_adjacent_union_error(error: FullFaceAdjacentUnionError) -> ExactMeshError {
-    exact_construction_failure(format!(
-        "full-face adjacent union retained output failed validation: {error:?}"
-    ))
-}
-
 fn exact_construction_failure(message: impl Into<String>) -> ExactMeshError {
     ExactMeshError::one(ExactMeshBlocker::new(
         ExactMeshBlockerKind::ExactConstructionFailure,
@@ -218,7 +212,11 @@ pub(crate) fn materialize_full_face_adjacent_union_from_certificate(
         shared_patches: certificate.shared_patches.clone(),
         mesh,
     };
-    union.validate().map_err(full_face_adjacent_union_error)?;
+    union.validate().map_err(|error| {
+        exact_construction_failure(format!(
+            "full-face adjacent union retained output failed validation: {error:?}"
+        ))
+    })?;
     Ok(Some(union))
 }
 
