@@ -3107,16 +3107,10 @@ fn choose_triangle_projection(points: &[Point3; 3]) -> Option<CoplanarProjection
     .into_iter()
     .find(|&projection| {
         let area = projected_polygon_area2_value(points, projection);
-        !matches!(real_sign(&area), Some(Sign::Zero) | None)
+        compare_reals(&area, &Real::from(0))
+            .value()
+            .is_some_and(|order| order != Ordering::Equal)
     })
-}
-
-fn real_sign(value: &Real) -> Option<Sign> {
-    match compare_reals(value, &Real::from(0)).value()? {
-        Ordering::Less => Some(Sign::Negative),
-        Ordering::Equal => Some(Sign::Zero),
-        Ordering::Greater => Some(Sign::Positive),
-    }
 }
 
 fn certified_closed_boundary_contact(
@@ -5304,9 +5298,9 @@ fn arrangement_difference_preserves_source_surface(
             return false;
         };
         let area = projected_polygon_area2_value(&points, projection);
-        let Some(area) = (match real_sign(&area) {
-            Some(Sign::Negative) => Some(Real::from(0) - area),
-            Some(Sign::Zero | Sign::Positive) => Some(area),
+        let Some(area) = (match compare_reals(&area, &Real::from(0)).value() {
+            Some(Ordering::Less) => Some(Real::from(0) - area),
+            Some(Ordering::Equal | Ordering::Greater) => Some(area),
             None => None,
         }) else {
             return false;
@@ -5326,9 +5320,9 @@ fn arrangement_difference_preserves_source_surface(
             return false;
         };
         let source_area = projected_polygon_area2_value(&points, projection);
-        let Some(source_area) = (match real_sign(&source_area) {
-            Some(Sign::Negative) => Some(Real::from(0) - source_area),
-            Some(Sign::Zero | Sign::Positive) => Some(source_area),
+        let Some(source_area) = (match compare_reals(&source_area, &Real::from(0)).value() {
+            Some(Ordering::Less) => Some(Real::from(0) - source_area),
+            Some(Ordering::Equal | Ordering::Greater) => Some(source_area),
             None => None,
         }) else {
             return false;
