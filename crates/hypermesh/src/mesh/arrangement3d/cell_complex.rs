@@ -872,8 +872,22 @@ impl ExactSelectedCellComplex {
             self.region_ownership_report.as_ref(),
             &gate_counts,
         )?;
-        validate_selected_indices(&self.selected_faces, self.faces.len())?;
-        validate_selected_indices(&self.selected_volume_regions, self.volume_regions.len())?;
+        if self
+            .selected_faces
+            .iter()
+            .any(|&face| face >= self.faces.len())
+            || sorted_unique_usize_set(&self.selected_faces).is_none()
+        {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        if self
+            .selected_volume_regions
+            .iter()
+            .any(|&region| region >= self.volume_regions.len())
+            || sorted_unique_usize_set(&self.selected_volume_regions).is_none()
+        {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
         if self.selected_face_orientations.len() != self.selected_faces.len() {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
@@ -1627,18 +1641,6 @@ fn validate_cell_complex_parts(
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
         validate_volume_adjacency_face_provenance(faces, adjacency)?;
-    }
-    Ok(())
-}
-
-fn validate_selected_indices(
-    selected: &[usize],
-    upper_bound: usize,
-) -> Result<(), ExactArrangementBlocker> {
-    if selected.iter().any(|&index| index >= upper_bound)
-        || sorted_unique_usize_set(selected).is_none()
-    {
-        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
     }
     Ok(())
 }
