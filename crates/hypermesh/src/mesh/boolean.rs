@@ -9534,7 +9534,9 @@ fn boolean_disjoint_meshes(
     validation: ExactMeshValidationPolicy,
 ) -> Result<ExactBooleanResult, ExactMeshError> {
     let mesh = match operation {
-        ExactBooleanOperation::Union => concatenate_meshes(left, right, validation)?,
+        ExactBooleanOperation::Union => {
+            concatenate_meshes_with_options(left, right, false, "exact disjoint union", validation)?
+        }
         ExactBooleanOperation::Intersection => {
             empty_mesh("empty exact bounds-disjoint intersection", validation)?
         }
@@ -9583,7 +9585,9 @@ fn boolean_empty_operand(
                 validation,
             )?
         }
-        ExactBooleanOperation::Union => concatenate_meshes(left, right, validation)?,
+        ExactBooleanOperation::Union => {
+            concatenate_meshes_with_options(left, right, false, "exact disjoint union", validation)?
+        }
         ExactBooleanOperation::Intersection => {
             empty_mesh("empty exact intersection with empty operand", validation)?
         }
@@ -9691,27 +9695,6 @@ fn certified_shortcut_result(
         region_ownership_report: None,
         mesh,
     }
-}
-
-fn concatenate_meshes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ExactMeshValidationPolicy,
-) -> Result<ExactMesh, ExactMeshError> {
-    let mut vertices = left.vertices().to_vec();
-    let right_offset = vertices.len();
-    vertices.extend_from_slice(right.vertices());
-    let mut triangles = left.triangles().to_vec();
-    triangles.extend(right.triangles().iter().map(|triangle| {
-        let [a, b, c] = triangle.0;
-        Triangle([a + right_offset, b + right_offset, c + right_offset])
-    }));
-    ExactMesh::new_with_policy(
-        vertices,
-        triangles,
-        hyperlimit::SourceProvenance::exact("exact disjoint union"),
-        validation,
-    )
 }
 
 #[cfg(test)]

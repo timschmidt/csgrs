@@ -1968,8 +1968,14 @@ fn trivial_shortcuts_report_materialized_evidence() {
 fn graph_empty_containment_routes_named_booleans_through_arrangement_pipeline() {
     let outer = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
     let disjoint_shell = tetrahedron_i64([20, 0, 0], [21, 0, 0], [20, 1, 0], [20, 0, 1]);
-    let container = concatenate_meshes(&outer, &disjoint_shell, ExactMeshValidationPolicy::CLOSED)
-        .expect("disconnected closed container fixture should validate");
+    let container = concatenate_meshes_with_options(
+        &outer,
+        &disjoint_shell,
+        false,
+        "exact disjoint union",
+        ExactMeshValidationPolicy::CLOSED,
+    )
+    .expect("disconnected closed container fixture should validate");
     let contained = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
     let uncontained = tetrahedron_i64([30, 0, 0], [31, 0, 0], [30, 1, 0], [30, 0, 1]);
 
@@ -2101,7 +2107,14 @@ fn graph_empty_containment_routes_named_booleans_through_arrangement_pipeline() 
 fn graph_empty_closed_winding_separation_materializes_without_bounds_disjointness() {
     let left_a = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let left_b = tetrahedron_i64([10, 0, 0], [11, 0, 0], [10, 1, 0], [10, 0, 1]);
-    let left = concatenate_meshes(&left_a, &left_b, ExactMeshValidationPolicy::CLOSED).unwrap();
+    let left = concatenate_meshes_with_options(
+        &left_a,
+        &left_b,
+        false,
+        "exact disjoint union",
+        ExactMeshValidationPolicy::CLOSED,
+    )
+    .unwrap();
     let right = tetrahedron_i64([5, 0, 0], [6, 0, 0], [5, 1, 0], [5, 0, 1]);
     let intersecting_right = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
 
@@ -3721,8 +3734,14 @@ fn boundary_touching_orthogonal_shortcuts_report_materialized_evidence() {
 fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
     let left_a = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let left_b = tetrahedron_i64([10, 0, 0], [12, 0, 0], [10, 2, 0], [10, 0, 2]);
-    let left = concatenate_meshes(&left_a, &left_b, ExactMeshValidationPolicy::CLOSED)
-        .expect("disconnected nonconvex boundary fixture should validate");
+    let left = concatenate_meshes_with_options(
+        &left_a,
+        &left_b,
+        false,
+        "exact disjoint union",
+        ExactMeshValidationPolicy::CLOSED,
+    )
+    .expect("disconnected nonconvex boundary fixture should validate");
     let right = tetrahedron_i64([0, 0, 0], [-4, 0, 0], [0, -4, 0], [0, 0, -4]);
     let separated_right = tetrahedron_i64([100, 0, 0], [104, 0, 0], [100, 4, 0], [100, 0, 4]);
     let overlapping_right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
