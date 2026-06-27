@@ -2420,7 +2420,7 @@ fn volumetric_boundary_closure_report_from_materialized_with_prevalidated_closur
         })?;
     let boundary_points = boundary_points
         .into_iter()
-        .map(split_boundary_self_contact_cycles)
+        .map(|boundary| split_cyclic_self_contact_cycles(boundary, &point3s_exact_equal))
         .collect::<Result<Vec<_>, _>>()
         .map(|split| split.into_iter().flatten().collect::<Vec<_>>())
         .map_err(|blocker| {
@@ -5904,12 +5904,13 @@ fn boundary_loops_are_exactly_coplanar_without_self_contact(
         else {
             return Ok(false);
         };
-        let split = split_boundary_self_contact_cycles(points).map_err(|blocker| {
-            arrangement_blocker_error(
-                "exact coplanar boundary closure self-contact split failed",
-                blocker,
-            )
-        })?;
+        let split =
+            split_cyclic_self_contact_cycles(points, &point3s_exact_equal).map_err(|blocker| {
+                arrangement_blocker_error(
+                    "exact coplanar boundary closure self-contact split failed",
+                    blocker,
+                )
+            })?;
         boundary_points.extend(split);
     }
     if boundary_points.is_empty() {
@@ -5989,13 +5990,23 @@ fn close_exact_coplanar_boundary_loops_from_loops(
     let boundary_edges = directed_boundary_edges(mesh);
     let mut split_boundary_loops = Vec::new();
     for boundary_loop in boundary_loops {
-        let split =
-            split_boundary_vertex_self_contact_cycles(mesh, boundary_loop).map_err(|blocker| {
-                arrangement_blocker_error(
-                    "exact coplanar boundary closure vertex self-contact split failed",
-                    blocker,
-                )
-            })?;
+        let split = split_cyclic_self_contact_cycles(boundary_loop, &|left, right| {
+            let left = mesh
+                .vertices()
+                .get(*left)
+                .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+            let right = mesh
+                .vertices()
+                .get(*right)
+                .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+            point3_exact_equal(left, right).ok_or(ExactArrangementBlocker::UndecidableOrdering)
+        })
+        .map_err(|blocker| {
+            arrangement_blocker_error(
+                "exact coplanar boundary closure vertex self-contact split failed",
+                blocker,
+            )
+        })?;
         split_boundary_loops.extend(split);
     }
     if split_boundary_loops.is_empty() {
@@ -6296,21 +6307,6 @@ fn canonicalize_degenerate_boundary_self_contact(
     canonicalize_degenerate_cyclic_self_contact(points, &point3s_exact_equal)
 }
 
-fn split_boundary_self_contact_cycles(
-    points: Vec<Point3>,
-) -> Result<Vec<Vec<Point3>>, ExactArrangementBlocker> {
-    split_cyclic_self_contact_cycles(points, &point3s_exact_equal)
-}
-
-fn split_boundary_vertex_self_contact_cycles(
-    mesh: &ExactMesh,
-    vertices: Vec<usize>,
-) -> Result<Vec<Vec<usize>>, ExactArrangementBlocker> {
-    split_cyclic_self_contact_cycles(vertices, &|left, right| {
-        boundary_vertices_exact_equal(mesh, *left, *right)
-    })
-}
-
 fn point3s_exact_equal(left: &Point3, right: &Point3) -> Result<bool, ExactArrangementBlocker> {
     point3_exact_equal(left, right).ok_or(ExactArrangementBlocker::UndecidableOrdering)
 }
@@ -6372,22 +6368,6 @@ fn split_cyclic_self_contact_cycles<T: Clone>(
         }
     }
     Ok(vec![items])
-}
-
-fn boundary_vertices_exact_equal(
-    mesh: &ExactMesh,
-    left: usize,
-    right: usize,
-) -> Result<bool, ExactArrangementBlocker> {
-    let left = mesh
-        .vertices()
-        .get(left)
-        .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
-    let right = mesh
-        .vertices()
-        .get(right)
-        .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
-    point3_exact_equal(left, right).ok_or(ExactArrangementBlocker::UndecidableOrdering)
 }
 
 fn cyclic_interval_items<T: Clone>(

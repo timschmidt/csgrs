@@ -4285,7 +4285,7 @@ fn exact_coplanar_boundary_canonicalizes_only_degenerate_self_contact_spurs() {
         2
     );
 
-    let split = split_boundary_self_contact_cycles(nondegenerate_self_contact)
+    let split = split_cyclic_self_contact_cycles(nondegenerate_self_contact, &point3s_exact_equal)
         .expect("exact self-contact cycle splitting should decide");
     assert_eq!(split.len(), 2);
     assert!(split.iter().all(|cycle| cycle.len() == 3));
