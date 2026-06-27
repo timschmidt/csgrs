@@ -3649,29 +3649,29 @@ fn materialize_boolean_exact_request_with_graph(
     if let Some(graph) = owned_graph.as_ref() {
         return materialize_boolean_exact_request_from_ready_graph(graph, left, right, request);
     }
-    if let Some(pair) = prepared_pair {
-        if let Some(arrangement) = pair.retained_arrangement_for_reuse() {
-            let graph = graph_for_certified_materialization_with_prepared(
-                retained_graph,
-                &mut owned_graph,
-                &mut prepared_graph,
-                prepared_pair,
-                left,
-                right,
-            )?;
-            let shortcut_facts = pair.arrangement_cell_complex_shortcut_facts();
-            let result = materialize_certified_arrangement_cell_complex_support_with_arrangement(
-                left,
-                right,
-                request,
-                Some(graph),
-                Some(arrangement.as_ref()),
-                None,
-                &shortcut_facts,
-            )?;
-            if let Some(result) = result {
-                return Ok(result);
-            }
+    if let Some(pair) = prepared_pair
+        && let Some(arrangement) = pair.retained_arrangement_for_reuse()
+    {
+        let graph = graph_for_certified_materialization_with_prepared(
+            retained_graph,
+            &mut owned_graph,
+            &mut prepared_graph,
+            prepared_pair,
+            left,
+            right,
+        )?;
+        let shortcut_facts = pair.arrangement_cell_complex_shortcut_facts();
+        let result = materialize_certified_arrangement_cell_complex_support_with_arrangement(
+            left,
+            right,
+            request,
+            Some(graph),
+            Some(arrangement.as_ref()),
+            None,
+            &shortcut_facts,
+        )?;
+        if let Some(result) = result {
+            return Ok(result);
         }
     }
     if let Some(graph) = prepared_graph.as_deref() {
@@ -4567,8 +4567,8 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         &recovery,
         attempt,
     )? {
-        ArrangementCellComplexGateOutcome::Ready(evidence) => evidence,
-        ArrangementCellComplexGateOutcome::Declined(outcome) => return Ok(outcome),
+        ArrangementCellComplexGateOutcome::Ready(evidence) => *evidence,
+        ArrangementCellComplexGateOutcome::Declined(outcome) => return Ok(*outcome),
     };
     let selected = match if ownership_report.volume_selection_resolves_operation(operation) {
         labeled.select_volume_resolved(operation)
@@ -4687,8 +4687,8 @@ struct ArrangementCellComplexGateEvidence {
 }
 
 enum ArrangementCellComplexGateOutcome {
-    Ready(ArrangementCellComplexGateEvidence),
-    Declined(ArrangementCellComplexOutcome),
+    Ready(Box<ArrangementCellComplexGateEvidence>),
+    Declined(Box<ArrangementCellComplexOutcome>),
 }
 
 fn arrangement_cell_complex_gate_evidence_from_arrangement(
@@ -4703,13 +4703,13 @@ fn arrangement_cell_complex_gate_evidence_from_arrangement(
     let topology_report = arrangement.topology_assembly_report_with_policy(left, right, policy);
     attempt.retain_topology_assembly_report(topology_report.clone());
     if topology_report.validate().is_err() || !topology_report.is_complete() {
-        return Ok(ArrangementCellComplexGateOutcome::Declined(
+        return Ok(ArrangementCellComplexGateOutcome::Declined(Box::new(
             arrangement_cell_complex_decline_after_recovery(
                 recovery,
                 attempt,
                 ExactArrangementBooleanDecline::TopologyAssembly(topology_report.status),
             )?,
-        ));
+        )));
     }
 
     let labeling_policy =
@@ -4717,13 +4717,13 @@ fn arrangement_cell_complex_gate_evidence_from_arrangement(
     let labeled = match arrangement.label_regions(labeling_policy) {
         Ok(labeled) => labeled,
         Err(blocker) => {
-            return Ok(ArrangementCellComplexGateOutcome::Declined(
+            return Ok(ArrangementCellComplexGateOutcome::Declined(Box::new(
                 arrangement_cell_complex_decline_after_recovery(
                     recovery,
                     attempt,
                     ExactArrangementBooleanDecline::Labeling(blocker),
                 )?,
-            ));
+            )));
         }
     };
     attempt.mark_labeled();
@@ -4734,31 +4734,31 @@ fn arrangement_cell_complex_gate_evidence_from_arrangement(
         attempt.record_decline(ExactArrangementBooleanDecline::RegionOwnership(
             ownership_report.status,
         ));
-        return Ok(ArrangementCellComplexGateOutcome::Declined(
+        return Ok(ArrangementCellComplexGateOutcome::Declined(Box::new(
             ArrangementCellComplexOutcome::Declined(attempt),
-        ));
+        )));
     }
     let ownership_resolves_named_selection = ownership_report
         .resolves_operation_selection(operation)
         || matches!(operation, ExactBooleanOperation::SelectedRegions(_));
     if !ownership_resolves_named_selection {
-        return Ok(ArrangementCellComplexGateOutcome::Declined(
+        return Ok(ArrangementCellComplexGateOutcome::Declined(Box::new(
             arrangement_cell_complex_decline_after_recovery(
                 recovery,
                 attempt,
                 ExactArrangementBooleanDecline::RegionOwnership(ownership_report.status),
             )?,
-        ));
+        )));
     }
 
-    Ok(ArrangementCellComplexGateOutcome::Ready(
+    Ok(ArrangementCellComplexGateOutcome::Ready(Box::new(
         ArrangementCellComplexGateEvidence {
             attempt,
             labeled,
             topology_report,
             ownership_report,
         },
-    ))
+    )))
 }
 
 fn adjacent_union_completion_report(

@@ -1231,15 +1231,13 @@ fn volume_evidence_resolves_named_operation(
     volume_adjacencies: &[ArrangementVolumeAdjacency],
     operation: ExactBooleanOperation,
 ) -> bool {
-    match checked_volume_evidence_resolves_named_operation(
+    checked_volume_evidence_resolves_named_operation(
         faces,
         volume_regions,
         volume_adjacencies,
         operation,
-    ) {
-        Ok(resolved) => resolved,
-        Err(_) => false,
-    }
+    )
+    .unwrap_or_default()
 }
 
 fn checked_volume_evidence_resolves_named_operation(

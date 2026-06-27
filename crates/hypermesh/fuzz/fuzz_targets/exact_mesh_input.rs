@@ -19,7 +19,7 @@ fuzz_target!(|data: &[u8]| {
     }
 
     if let Ok(mesh) = ExactMesh::from_lossy_f64_triangles(&pos, &idx) {
-        mesh.validate_retained_state().unwrap();
+        mesh.view().validate_retained_state().unwrap();
         exercise_mesh_kernel_pair(&mesh, &mesh);
     }
 

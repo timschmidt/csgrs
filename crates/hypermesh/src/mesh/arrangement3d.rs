@@ -2686,13 +2686,43 @@ fn lower_dimensional_artifacts(
 
     let mut artifacts = Vec::new();
     let mut artifact_index = LowerDimensionalArtifactBuildIndex::default();
-    append_non_coplanar_lower_dimensional_artifacts(
-        &mut artifacts,
-        &mut artifact_index,
-        graph,
-        left,
-        right,
-    );
+    for pair in &graph.face_pairs {
+        if pair.relation != super::graph::intersection::MeshFacePairRelation::Candidate {
+            continue;
+        }
+        if pair.events.iter().any(|event| {
+            matches!(
+                event,
+                super::graph::IntersectionEvent::SegmentPlane {
+                    relation: hyperlimit::SegmentPlaneRelation::ProperCrossing,
+                    ..
+                }
+            )
+        }) {
+            continue;
+        }
+        for event in &pair.events {
+            if let Some(artifact) = non_coplanar_edge_contact_artifact(
+                pair.left_face,
+                pair.right_face,
+                event,
+                left,
+                right,
+            ) {
+                push_lower_dimensional_artifact(&mut artifacts, &mut artifact_index, artifact);
+                continue;
+            }
+            if let Some(artifact) = non_coplanar_point_contact_artifact(
+                pair.left_face,
+                pair.right_face,
+                event,
+                left,
+                right,
+            ) {
+                push_lower_dimensional_artifact(&mut artifacts, &mut artifact_index, artifact);
+            }
+        }
+    }
     let touching_pairs = graph
         .coplanar_overlap_graph_iter()
         .filter(|overlap| {
@@ -2741,52 +2771,6 @@ fn lower_dimensional_artifacts(
     }
 
     artifacts
-}
-
-fn append_non_coplanar_lower_dimensional_artifacts(
-    artifacts: &mut Vec<ArrangementLowerDimensionalArtifact>,
-    artifact_index: &mut LowerDimensionalArtifactBuildIndex,
-    graph: &ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) {
-    for pair in &graph.face_pairs {
-        if pair.relation != super::graph::intersection::MeshFacePairRelation::Candidate {
-            continue;
-        }
-        if pair.events.iter().any(|event| {
-            matches!(
-                event,
-                super::graph::IntersectionEvent::SegmentPlane {
-                    relation: hyperlimit::SegmentPlaneRelation::ProperCrossing,
-                    ..
-                }
-            )
-        }) {
-            continue;
-        }
-        for event in &pair.events {
-            if let Some(artifact) = non_coplanar_edge_contact_artifact(
-                pair.left_face,
-                pair.right_face,
-                event,
-                left,
-                right,
-            ) {
-                push_lower_dimensional_artifact(artifacts, artifact_index, artifact);
-                continue;
-            }
-            if let Some(artifact) = non_coplanar_point_contact_artifact(
-                pair.left_face,
-                pair.right_face,
-                event,
-                left,
-                right,
-            ) {
-                push_lower_dimensional_artifact(artifacts, artifact_index, artifact);
-            }
-        }
-    }
 }
 
 fn non_coplanar_point_contact_artifact(

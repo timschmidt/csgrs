@@ -1,24 +1,23 @@
 use hypermesh::ExactMesh;
 
 pub fn exercise_mesh_kernel_pair(left: &ExactMesh, right: &ExactMesh) {
-    left.validate_retained_state().unwrap();
-    right.validate_retained_state().unwrap();
     let left_view = left.view();
     let right_view = right.view();
-    let prepared_left = left_view.prepare_broad_phase().unwrap();
-    let prepared_right = right_view.prepare_broad_phase().unwrap();
 
-    let mut direct_candidate_pairs = 0;
-    left_view
-        .visit_candidate_face_pairs(right_view, &mut |_| {
-            direct_candidate_pairs += 1;
-        })
-        .unwrap();
-    let mut prepared_candidate_pairs = 0;
-    prepared_left.visit_candidate_face_pairs(&prepared_right, &mut |_| {
-        prepared_candidate_pairs += 1;
-    });
-    assert_eq!(direct_candidate_pairs, prepared_candidate_pairs);
+    left_view.validate_retained_state().unwrap();
+    right_view.validate_retained_state().unwrap();
+    left_view.validate_retained_bounds().unwrap();
+    right_view.validate_retained_bounds().unwrap();
+
+    if let Ok(mesh) = left_view.union(right_view) {
+        mesh.view().validate_retained_state().unwrap();
+    }
+    if let Ok(mesh) = left_view.intersection(right_view) {
+        mesh.view().validate_retained_state().unwrap();
+    }
+    if let Ok(mesh) = left_view.difference(right_view) {
+        mesh.view().validate_retained_state().unwrap();
+    }
 }
 
 pub fn generated_tetra_pair(data: &[u8]) -> Option<(ExactMesh, ExactMesh)> {
