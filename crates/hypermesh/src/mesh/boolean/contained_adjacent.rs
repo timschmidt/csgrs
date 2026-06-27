@@ -173,15 +173,40 @@ pub(crate) fn materialize_contained_face_adjacent_union_from_certificate(
     validation: ExactMeshValidationPolicy,
 ) -> Result<Option<ContainedFaceAdjacentUnion>, ExactMeshError> {
     let certificate = &certificate.inner;
-    let Some(mesh) = contained_face_union_mesh(left, right, certificate, validation)? else {
+    let mut contained_faces = Vec::new();
+    let mut containing_faces = Vec::new();
+    for patch in &certificate.patches {
+        for &face in &patch.contained_faces {
+            push_unique_face(&mut contained_faces, face);
+        }
+        for &face in &patch.containing_faces {
+            push_unique_face(&mut containing_faces, face);
+        }
+    }
+    let (Some(containing_face), Some(contained_face)) = (
+        containing_faces.first().copied(),
+        contained_faces.first().copied(),
+    ) else {
+        return Ok(None);
+    };
+    let Some(mesh) = contained_face_union_mesh(
+        left,
+        right,
+        certificate.containing_side,
+        &certificate.patches,
+        &containing_faces,
+        &contained_faces,
+        validation,
+    )?
+    else {
         return Ok(None);
     };
     let union = ContainedFaceAdjacentUnion {
         containing_side: certificate.containing_side,
-        containing_face: certificate.containing_face(),
-        contained_face: certificate.contained_faces()[0],
-        contained_faces: certificate.contained_faces(),
-        containing_faces: certificate.containing_faces(),
+        containing_face,
+        contained_face,
+        contained_faces,
+        containing_faces,
         mesh,
     };
     union.validate().map_err(|error| {
@@ -204,36 +229,6 @@ struct ContainedFacePatch {
     contained_faces: Vec<usize>,
     projection: CoplanarProjection,
     containing_projected_sign: Sign,
-}
-
-impl ContainedFaceAdjacencyCertificate {
-    fn containing_face(&self) -> usize {
-        self.patches[0].containing_faces[0]
-    }
-
-    fn contained_faces(&self) -> Vec<usize> {
-        let mut faces = Vec::new();
-        for patch in &self.patches {
-            for &face in &patch.contained_faces {
-                if !faces.contains(&face) {
-                    faces.push(face);
-                }
-            }
-        }
-        faces
-    }
-
-    fn containing_faces(&self) -> Vec<usize> {
-        let mut faces = Vec::new();
-        for patch in &self.patches {
-            for &face in &patch.containing_faces {
-                if !faces.contains(&face) {
-                    faces.push(face);
-                }
-            }
-        }
-        faces
-    }
 }
 
 fn contained_face_adjacency_certificate(
@@ -509,20 +504,17 @@ fn retained_plane_crossing_is_not_inside_plane_face(
 fn contained_face_union_mesh(
     left: &ExactMesh,
     right: &ExactMesh,
-    certificate: &ContainedFaceAdjacencyCertificate,
+    containing_side: MeshSide,
+    patches: &[ContainedFacePatch],
+    containing_faces: &[usize],
+    contained_faces: &[usize],
     validation: ExactMeshValidationPolicy,
 ) -> Result<Option<ExactMesh>, ExactMeshError> {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
-    let (left_skip_faces, right_skip_faces) = match certificate.containing_side {
-        MeshSide::Left => (
-            certificate.containing_faces(),
-            certificate.contained_faces(),
-        ),
-        MeshSide::Right => (
-            certificate.contained_faces(),
-            certificate.containing_faces(),
-        ),
+    let (left_skip_faces, right_skip_faces) = match containing_side {
+        MeshSide::Left => (containing_faces, contained_faces),
+        MeshSide::Right => (contained_faces, containing_faces),
     };
     if append_source_mesh_without_face(left, left_skip_faces, &mut vertices, &mut triangles)
         .is_none()
@@ -534,11 +526,11 @@ fn contained_face_union_mesh(
     {
         return Ok(None);
     }
-    for patch in &certificate.patches {
+    for patch in patches {
         if append_contained_face_patch_group(
             left,
             right,
-            certificate.containing_side,
+            containing_side,
             patch,
             &mut vertices,
             &mut triangles,
@@ -733,7 +725,7 @@ impl PairUnionFind {
 
 fn append_source_mesh_without_face(
     mesh: &ExactMesh,
-    skip_faces: Vec<usize>,
+    skip_faces: &[usize],
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
 ) -> Option<()> {
