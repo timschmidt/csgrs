@@ -1444,12 +1444,6 @@ fn orient_paired_triangle_edges(
     Ok(flipped)
 }
 
-#[derive(Clone, Copy)]
-struct VertexFanEdgeUse {
-    local_triangle: usize,
-    forward_from_vertex: bool,
-}
-
 fn split_disconnected_triangle_vertex_fans(
     vertices: &mut Vec<Point3>,
     triangles: &mut [Triangle],
@@ -1465,7 +1459,57 @@ fn split_disconnected_triangle_vertex_fans(
         if incident.len() <= 1 {
             continue;
         }
-        let components = triangle_vertex_fan_components(triangles, vertex, &incident);
+        let mut adjacency = vec![Vec::<usize>::new(); incident.len()];
+        let mut edge_uses = std::collections::BTreeMap::<usize, Vec<(usize, bool)>>::new();
+        for (local_triangle, &triangle_index) in incident.iter().enumerate() {
+            let triangle = triangles[triangle_index].0;
+            for edge in 0..3 {
+                let start = triangle[edge];
+                let end = triangle[(edge + 1) % 3];
+                if start == vertex {
+                    edge_uses
+                        .entry(end)
+                        .or_default()
+                        .push((local_triangle, true));
+                } else if end == vertex {
+                    edge_uses
+                        .entry(start)
+                        .or_default()
+                        .push((local_triangle, false));
+                }
+            }
+        }
+        for uses in edge_uses.values() {
+            if let [
+                (left_triangle, left_forward),
+                (right_triangle, right_forward),
+            ] = uses.as_slice()
+                && left_forward != right_forward
+            {
+                adjacency[*left_triangle].push(*right_triangle);
+                adjacency[*right_triangle].push(*left_triangle);
+            }
+        }
+        let mut components = Vec::<Vec<usize>>::new();
+        let mut visited = vec![false; incident.len()];
+        for start in 0..incident.len() {
+            if visited[start] {
+                continue;
+            }
+            visited[start] = true;
+            let mut stack = vec![start];
+            let mut component = Vec::<usize>::new();
+            while let Some(local) = stack.pop() {
+                component.push(incident[local]);
+                for &neighbor in &adjacency[local] {
+                    if !visited[neighbor] {
+                        visited[neighbor] = true;
+                        stack.push(neighbor);
+                    }
+                }
+            }
+            components.push(component);
+        }
         if components.len() <= 1 {
             continue;
         }
@@ -1483,62 +1527,6 @@ fn split_disconnected_triangle_vertex_fans(
         }
     }
     cloned_vertices
-}
-
-fn triangle_vertex_fan_components(
-    triangles: &[Triangle],
-    vertex: usize,
-    incident: &[usize],
-) -> Vec<Vec<usize>> {
-    let mut adjacency = vec![Vec::<usize>::new(); incident.len()];
-    let mut edge_uses = std::collections::BTreeMap::<usize, Vec<VertexFanEdgeUse>>::new();
-    for (local_triangle, &triangle_index) in incident.iter().enumerate() {
-        let triangle = triangles[triangle_index].0;
-        for edge in 0..3 {
-            let start = triangle[edge];
-            let end = triangle[(edge + 1) % 3];
-            if start == vertex {
-                edge_uses.entry(end).or_default().push(VertexFanEdgeUse {
-                    local_triangle,
-                    forward_from_vertex: true,
-                });
-            } else if end == vertex {
-                edge_uses.entry(start).or_default().push(VertexFanEdgeUse {
-                    local_triangle,
-                    forward_from_vertex: false,
-                });
-            }
-        }
-    }
-    for uses in edge_uses.values() {
-        if let [left, right] = uses.as_slice()
-            && left.forward_from_vertex != right.forward_from_vertex
-        {
-            adjacency[left.local_triangle].push(right.local_triangle);
-            adjacency[right.local_triangle].push(left.local_triangle);
-        }
-    }
-    let mut components = Vec::<Vec<usize>>::new();
-    let mut visited = vec![false; incident.len()];
-    for start in 0..incident.len() {
-        if visited[start] {
-            continue;
-        }
-        visited[start] = true;
-        let mut stack = vec![start];
-        let mut component = Vec::<usize>::new();
-        while let Some(local) = stack.pop() {
-            component.push(incident[local]);
-            for &neighbor in &adjacency[local] {
-                if !visited[neighbor] {
-                    visited[neighbor] = true;
-                    stack.push(neighbor);
-                }
-            }
-        }
-        components.push(component);
-    }
-    components
 }
 
 #[cfg(test)]
