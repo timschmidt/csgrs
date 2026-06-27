@@ -5526,18 +5526,18 @@ fn output_triangle_matches_triangulated_cell(
     else {
         return false;
     };
-    exact_point_sets_equal(&output_points, &cell_points)
-}
-
-fn exact_point_sets_equal(left: &[&Point3], right: &[&Point3]) -> bool {
-    if left.len() != right.len() {
+    if output_points.len() != cell_points.len() {
         return false;
     }
-    let mut matched = vec![false; right.len()];
-    for left_point in left {
-        let Some(index) = right.iter().enumerate().position(|(index, right_point)| {
-            !matched[index] && points_equal(left_point, right_point)
-        }) else {
+    let mut matched = vec![false; cell_points.len()];
+    for output_point in output_points {
+        let Some(index) = cell_points
+            .iter()
+            .enumerate()
+            .position(|(index, cell_point)| {
+                !matched[index] && points_equal(output_point, cell_point)
+            })
+        else {
             return false;
         };
         matched[index] = true;
