@@ -4417,7 +4417,23 @@ fn arrangement_edge_users(
 ) -> Vec<([ArrangementFaceCellNode; 2], Vec<usize>)> {
     let mut raw_edges = Vec::new();
     for (cell, face_cell) in face_cells.iter().enumerate() {
-        raw_edges.extend(cell_boundary_edges(face_cell, cell));
+        if face_cell.boundary.len() < 2 {
+            continue;
+        }
+        for index in 0..face_cell.boundary.len() {
+            let next = (index + 1) % face_cell.boundary.len();
+            raw_edges.push(ArrangementFaceCellRawBoundaryEdge {
+                start: ArrangementFaceCellBoundaryPoint {
+                    node: face_cell.boundary[index].clone(),
+                    point: face_cell.boundary_points[index].clone(),
+                },
+                end: ArrangementFaceCellBoundaryPoint {
+                    node: face_cell.boundary[next].clone(),
+                    point: face_cell.boundary_points[next].clone(),
+                },
+                cell,
+            });
+        }
     }
     if raw_edges.is_empty() {
         return Vec::new();
@@ -4505,31 +4521,6 @@ impl ArrangementEdgeUserIndex {
                 .map(|(index, _)| index)
         }
     }
-}
-
-fn cell_boundary_edges(
-    cell: &ArrangementFaceCell,
-    cell_index: usize,
-) -> Vec<ArrangementFaceCellRawBoundaryEdge> {
-    if cell.boundary.len() < 2 {
-        return Vec::new();
-    }
-    (0..cell.boundary.len())
-        .map(|index| {
-            let next = (index + 1) % cell.boundary.len();
-            ArrangementFaceCellRawBoundaryEdge {
-                start: ArrangementFaceCellBoundaryPoint {
-                    node: cell.boundary[index].clone(),
-                    point: cell.boundary_points[index].clone(),
-                },
-                end: ArrangementFaceCellBoundaryPoint {
-                    node: cell.boundary[next].clone(),
-                    point: cell.boundary_points[next].clone(),
-                },
-                cell: cell_index,
-            }
-        })
-        .collect()
 }
 
 fn conforming_boundary_edges(
