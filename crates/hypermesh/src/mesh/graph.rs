@@ -1244,14 +1244,6 @@ pub(crate) fn build_unvalidated_intersection_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    validate_intersection_graph_bounds(left, right)?;
-    build_unvalidated_intersection_graph_from_certified_bounds(left, right)
-}
-
-fn validate_intersection_graph_bounds(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<(), ExactMeshError> {
     if let Err(error) = left.validate_retained_bounds_certificate() {
         return Err(ExactMeshError::one(ExactMeshBlocker::new(
             ExactMeshBlockerKind::StaleFactReplay,
@@ -1264,7 +1256,7 @@ fn validate_intersection_graph_bounds(
             format!("exact mesh retained broad-phase certificate failed: {error:?}"),
         )));
     }
-    Ok(())
+    build_unvalidated_intersection_graph_from_certified_bounds(left, right)
 }
 
 fn build_unvalidated_intersection_graph_from_certified_bounds(
