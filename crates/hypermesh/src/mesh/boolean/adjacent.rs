@@ -245,14 +245,6 @@ fn shared_face_pair(certificate: &FullFaceAdjacencyCertificate, pair: &FacePairE
         })
 }
 
-fn consumed_by_certificate(
-    certificate: &FullFaceAdjacencyCertificate,
-    pair: &FacePairEvents,
-) -> bool {
-    face_consumed_by_certificate(certificate, MeshSide::Left, pair.left_face)
-        && face_consumed_by_certificate(certificate, MeshSide::Right, pair.right_face)
-}
-
 fn face_consumed_by_certificate(
     certificate: &FullFaceAdjacencyCertificate,
     side: MeshSide,
@@ -280,16 +272,6 @@ fn face_consumed_by_certificate(
                     .any(|patch| patch.right_faces.contains(&face))
         }
     }
-}
-
-fn one_face_consumed_by_certificate(
-    certificate: &FullFaceAdjacencyCertificate,
-    pair: &FacePairEvents,
-) -> bool {
-    let left_consumed = face_consumed_by_certificate(certificate, MeshSide::Left, pair.left_face);
-    let right_consumed =
-        face_consumed_by_certificate(certificate, MeshSide::Right, pair.right_face);
-    left_consumed ^ right_consumed
 }
 
 fn consumed_boundary_candidate_event(event: &IntersectionEvent) -> bool {
@@ -338,7 +320,10 @@ fn adjacency_contact_pair(
             MeshFacePairRelation::CoplanarOverlapping | MeshFacePairRelation::CoplanarTouching
         ));
     }
-    if consumed_by_certificate(certificate, pair) {
+    let left_consumed = face_consumed_by_certificate(certificate, MeshSide::Left, pair.left_face);
+    let right_consumed =
+        face_consumed_by_certificate(certificate, MeshSide::Right, pair.right_face);
+    if left_consumed && right_consumed {
         // A bounded source disk may replay partly as exact whole-face pairs and
         // partly as a polygon patch. Cross-record coplanar edge contacts are
         // model requires that we keep this as certificate replay, not as a
@@ -348,9 +333,7 @@ fn adjacency_contact_pair(
             MeshFacePairRelation::CoplanarOverlapping | MeshFacePairRelation::CoplanarTouching
         ));
     }
-    if one_face_consumed_by_certificate(certificate, pair)
-        && pair.relation == MeshFacePairRelation::Candidate
-    {
+    if (left_consumed ^ right_consumed) && pair.relation == MeshFacePairRelation::Candidate {
         // Retained side faces around a nonconvex source-owned disk can cross
         // the deleted cap triangulation at exact boundary points even when no
         // output-volume intersection exists. Exact boundary replay keeps
