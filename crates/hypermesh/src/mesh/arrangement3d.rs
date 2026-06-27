@@ -495,8 +495,29 @@ fn lower_dimensional_artifacts_duplicate(
                 endpoints: right_endpoints,
             },
         ) if left_left_face == right_left_face && left_right_face == right_right_face => {
-            let same = endpoint_pairs_equal(left_endpoints, right_endpoints, false);
-            let reversed = endpoint_pairs_equal(left_endpoints, right_endpoints, true);
+            let endpoints_equal = |reverse_right| {
+                let right_first = if reverse_right {
+                    &right_endpoints[1]
+                } else {
+                    &right_endpoints[0]
+                };
+                let right_second = if reverse_right {
+                    &right_endpoints[0]
+                } else {
+                    &right_endpoints[1]
+                };
+                let first = point3_equal(&left_endpoints[0], right_first).value();
+                let second = point3_equal(&left_endpoints[1], right_second).value();
+                if first == Some(false) || second == Some(false) {
+                    Some(false)
+                } else if first == Some(true) && second == Some(true) {
+                    Some(true)
+                } else {
+                    None
+                }
+            };
+            let same = endpoints_equal(false);
+            let reversed = endpoints_equal(true);
             match (same, reversed) {
                 (Some(true), _) | (_, Some(true)) => Ok(true),
                 (Some(false), Some(false)) => Ok(false),
@@ -504,24 +525,6 @@ fn lower_dimensional_artifacts_duplicate(
             }
         }
         _ => Ok(false),
-    }
-}
-
-fn endpoint_pairs_equal(
-    left: &[Point3; 2],
-    right: &[Point3; 2],
-    reverse_right: bool,
-) -> Option<bool> {
-    let right_first = if reverse_right { &right[1] } else { &right[0] };
-    let right_second = if reverse_right { &right[0] } else { &right[1] };
-    let first = point3_equal(&left[0], right_first).value();
-    let second = point3_equal(&left[1], right_second).value();
-    if first == Some(false) || second == Some(false) {
-        Some(false)
-    } else if first == Some(true) && second == Some(true) {
-        Some(true)
-    } else {
-        None
     }
 }
 
