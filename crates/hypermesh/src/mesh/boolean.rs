@@ -6161,7 +6161,25 @@ fn group_exact_coplanar_vertex_loops(
             exact_loop_carrier(&points)?.ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
         let mut group_index = None;
         for (index, (group_carrier, _)) in groups.iter().enumerate() {
-            if exact_loop_is_coplanar_with_carrier(&points, group_carrier)? {
+            let mut is_coplanar = true;
+            for point in &points {
+                match orient3d_report(
+                    &group_carrier[0],
+                    &group_carrier[1],
+                    &group_carrier[2],
+                    point,
+                )
+                .value()
+                {
+                    Some(Sign::Zero) => {}
+                    Some(Sign::Negative | Sign::Positive) => {
+                        is_coplanar = false;
+                        break;
+                    }
+                    None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+                }
+            }
+            if is_coplanar {
                 group_index = Some(index);
                 break;
             }
@@ -6173,20 +6191,6 @@ fn group_exact_coplanar_vertex_loops(
         }
     }
     Ok(groups.into_iter().map(|(_, loops)| loops).collect())
-}
-
-fn exact_loop_is_coplanar_with_carrier(
-    points: &[Point3],
-    carrier: &[Point3; 3],
-) -> Result<bool, ExactArrangementBlocker> {
-    for point in points {
-        match orient3d_report(&carrier[0], &carrier[1], &carrier[2], point).value() {
-            Some(Sign::Zero) => {}
-            Some(Sign::Negative | Sign::Positive) => return Ok(false),
-            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
-        }
-    }
-    Ok(true)
 }
 
 fn map_cap_vertices_to_boundary_or_insert(
