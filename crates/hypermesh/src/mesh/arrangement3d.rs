@@ -4469,7 +4469,10 @@ struct ArrangementEdgeUserIndex {
 impl ArrangementEdgeUserIndex {
     fn push(&mut self, edge: ArrangementFaceCellBoundaryEdge, cell: usize) {
         let node_key = boundary_edge_node_key(&edge);
-        let point_key = boundary_edge_point_key(&edge);
+        let point_key = edge
+            .points
+            .as_ref()
+            .and_then(exact_undirected_point3_edge_key);
         if let Some(index) = self
             .node_key_buckets
             .get(&node_key)
@@ -4527,12 +4530,6 @@ fn push_unique_edge_user(users: &mut Vec<usize>, cell: usize) {
 
 fn boundary_edge_node_key(edge: &ArrangementFaceCellBoundaryEdge) -> ArrangementBoundaryNodeKey {
     [cell_node_key(&edge.nodes[0]), cell_node_key(&edge.nodes[1])]
-}
-
-fn boundary_edge_point_key(
-    edge: &ArrangementFaceCellBoundaryEdge,
-) -> Option<ExactUndirectedPoint3EdgeKey> {
-    exact_undirected_point3_edge_key(edge.points.as_ref()?)
 }
 
 fn arrangement_raw_boundary_edges(
