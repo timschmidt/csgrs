@@ -1065,12 +1065,15 @@ fn triangulate_simplified_cell_complex(
                 .push(index);
         }
         for face_indices in groups.values() {
-            triangulate_simplified_face_group(
-                complex,
-                face_indices,
-                &mut vertices,
-                &mut triangles,
-            )?;
+            let mut boundaries = Vec::new();
+            for &face_index in face_indices {
+                let face = &complex.faces[face_index].face.cell;
+                if face.boundary.len() != face.boundary_points.len() || face.boundary.len() < 3 {
+                    return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+                }
+                boundaries.push(face.boundary_points.clone());
+            }
+            triangulate_exact_loop_group(&boundaries, &mut vertices, &mut triangles)?;
         }
     } else {
         let boundaries = complex
@@ -1403,23 +1406,6 @@ fn point3_axis_value(point: &Point3, axis: Point3CoordinateAxis) -> &Real {
         Point3CoordinateAxis::Y => &point.y,
         Point3CoordinateAxis::Z => &point.z,
     }
-}
-
-fn triangulate_simplified_face_group(
-    complex: &ExactSimplifiedCellComplex,
-    face_indices: &[usize],
-    vertices: &mut Vec<Point3>,
-    triangles: &mut Vec<Triangle>,
-) -> Result<(), ExactArrangementBlocker> {
-    let mut boundaries = Vec::new();
-    for &face_index in face_indices {
-        let face = &complex.faces[face_index].face.cell;
-        if face.boundary.len() != face.boundary_points.len() || face.boundary.len() < 3 {
-            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
-        }
-        boundaries.push(face.boundary_points.clone());
-    }
-    triangulate_exact_loop_group(&boundaries, vertices, triangles)
 }
 
 #[derive(Clone, Copy)]
