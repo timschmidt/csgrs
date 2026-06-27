@@ -600,6 +600,19 @@ pub(crate) enum ExactBooleanOperation {
     Difference,
 }
 
+impl ExactBooleanOperation {
+    pub(crate) const fn to_axis_aligned_orthogonal_solid(
+        self,
+    ) -> Option<AxisAlignedOrthogonalSolidOperation> {
+        match self {
+            Self::Union => Some(AxisAlignedOrthogonalSolidOperation::Union),
+            Self::Intersection => Some(AxisAlignedOrthogonalSolidOperation::Intersection),
+            Self::Difference => Some(AxisAlignedOrthogonalSolidOperation::Difference),
+            Self::SelectedRegions(_) => None,
+        }
+    }
+}
+
 /// Boundary-only policy for named exact boolean operations.
 ///
 /// Triangle meshes cannot represent lower-dimensional set intersections
@@ -2851,7 +2864,7 @@ fn orthogonal_solid_cell_materializes_for_preflight(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<bool, ExactMeshError> {
-    let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation) else {
+    let Some(solid_operation) = operation.to_axis_aligned_orthogonal_solid() else {
         return Ok(false);
     };
     let validation_policies: &[ExactMeshValidationPolicy] =
@@ -7386,19 +7399,6 @@ fn lift_projected_point_to_carrier(
     ))
 }
 
-const fn axis_aligned_orthogonal_solid_operation(
-    operation: ExactBooleanOperation,
-) -> Option<AxisAlignedOrthogonalSolidOperation> {
-    match operation {
-        ExactBooleanOperation::Union => Some(AxisAlignedOrthogonalSolidOperation::Union),
-        ExactBooleanOperation::Intersection => {
-            Some(AxisAlignedOrthogonalSolidOperation::Intersection)
-        }
-        ExactBooleanOperation::Difference => Some(AxisAlignedOrthogonalSolidOperation::Difference),
-        ExactBooleanOperation::SelectedRegions(_) => None,
-    }
-}
-
 fn boolean_arrangement_cell_complex_recovery(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -7419,7 +7419,7 @@ fn boolean_arrangement_orthogonal_solid_cell_recovery(
     operation: ExactBooleanOperation,
     validation: ExactMeshValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
-    let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation) else {
+    let Some(solid_operation) = operation.to_axis_aligned_orthogonal_solid() else {
         return Ok(None);
     };
     let label = match solid_operation {

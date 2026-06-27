@@ -4938,19 +4938,6 @@ fn arrangement_cell_complex_sources_match(
     Ok(preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex)
 }
 
-fn axis_aligned_orthogonal_solid_operation(
-    operation: ExactBooleanOperation,
-) -> Option<AxisAlignedOrthogonalSolidOperation> {
-    match operation {
-        ExactBooleanOperation::Union => Some(AxisAlignedOrthogonalSolidOperation::Union),
-        ExactBooleanOperation::Intersection => {
-            Some(AxisAlignedOrthogonalSolidOperation::Intersection)
-        }
-        ExactBooleanOperation::Difference => Some(AxisAlignedOrthogonalSolidOperation::Difference),
-        ExactBooleanOperation::SelectedRegions(_) => None,
-    }
-}
-
 fn axis_aligned_orthogonal_solid_output_matches_sources(
     operation: ExactBooleanOperation,
     validation: ExactMeshValidationPolicy,
@@ -4958,7 +4945,7 @@ fn axis_aligned_orthogonal_solid_output_matches_sources(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<bool>, ExactEvidenceValidationError> {
-    let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation) else {
+    let Some(solid_operation) = operation.to_axis_aligned_orthogonal_solid() else {
         return Ok(None);
     };
     let Some(replay) = materialize_axis_aligned_orthogonal_solid_cell_output(
@@ -6200,7 +6187,7 @@ fn axis_aligned_orthogonal_solid_preflight_matches_sources(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<bool, ExactEvidenceValidationError> {
-    let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(request.operation) else {
+    let Some(solid_operation) = request.operation.to_axis_aligned_orthogonal_solid() else {
         return Ok(false);
     };
     materialize_axis_aligned_orthogonal_solid_cell_output(
