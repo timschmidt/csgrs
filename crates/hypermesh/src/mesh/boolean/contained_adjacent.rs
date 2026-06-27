@@ -177,10 +177,14 @@ pub(crate) fn materialize_contained_face_adjacent_union_from_certificate(
     let mut containing_faces = Vec::new();
     for patch in &certificate.patches {
         for &face in &patch.contained_faces {
-            push_unique_face(&mut contained_faces, face);
+            if !contained_faces.contains(&face) {
+                contained_faces.push(face);
+            }
         }
         for &face in &patch.containing_faces {
-            push_unique_face(&mut containing_faces, face);
+            if !containing_faces.contains(&face) {
+                containing_faces.push(face);
+            }
         }
     }
     let (Some(containing_face), Some(contained_face)) = (
@@ -319,8 +323,12 @@ fn overlap_face_components(overlapping: &[&FacePairEvents]) -> Option<Vec<Overla
             });
             grouped.len() - 1
         };
-        push_unique_face(&mut grouped[group_index].left_faces, pair.left_face);
-        push_unique_face(&mut grouped[group_index].right_faces, pair.right_face);
+        if !grouped[group_index].left_faces.contains(&pair.left_face) {
+            grouped[group_index].left_faces.push(pair.left_face);
+        }
+        if !grouped[group_index].right_faces.contains(&pair.right_face) {
+            grouped[group_index].right_faces.push(pair.right_face);
+        }
     }
     Some(grouped)
 }
@@ -400,12 +408,6 @@ fn component_contained_adjacency_for_side(
             containing_projected_sign: sign,
         }],
     })
-}
-
-fn push_unique_face(faces: &mut Vec<usize>, face: usize) {
-    if !faces.contains(&face) {
-        faces.push(face);
-    }
 }
 
 fn contained_adjacency_contact_pair(
