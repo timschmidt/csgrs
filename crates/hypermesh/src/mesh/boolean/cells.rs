@@ -1337,8 +1337,12 @@ fn split_triangle_edge(
 ) -> hypertri::Result<bool> {
     let first = [a, mid, opposite];
     let second = [mid, b, opposite];
-    if !triangle_is_non_degenerate(vertices, first)?
-        || !triangle_is_non_degenerate(vertices, second)?
+    let zero = Real::from(0);
+    let first_area = triangle_area2_signed(vertices, first)?;
+    let second_area = triangle_area2_signed(vertices, second)?;
+    if compare_ordering(&first_area, &zero, "face-cell refined triangle area")? == Ordering::Equal
+        || compare_ordering(&second_area, &zero, "face-cell refined triangle area")?
+            == Ordering::Equal
     {
         return Ok(false);
     }
@@ -1347,17 +1351,6 @@ fn split_triangle_edge(
         first.into_iter().chain(second),
     );
     Ok(true)
-}
-
-fn triangle_is_non_degenerate(
-    vertices: &[hypertri::ExactPoint],
-    triangle: [usize; 3],
-) -> hypertri::Result<bool> {
-    Ok(compare_ordering(
-        &triangle_area2_signed(vertices, triangle)?,
-        &Real::from(0),
-        "face-cell refined triangle area",
-    )? != Ordering::Equal)
 }
 
 fn triangle_area2_signed(
