@@ -48,7 +48,7 @@ pub struct EdgeRef<'a> {
 
 /// Owned borrowed mesh-pair cache with certificate-validated broad-phase facts.
 #[derive(Debug)]
-pub struct PreparedMeshPair<'left, 'right> {
+pub(crate) struct PreparedMeshPair<'left, 'right> {
     left_view: MeshView<'left>,
     right_view: MeshView<'right>,
     left_bounds: PreparedMeshBounds<'left>,
@@ -58,7 +58,6 @@ pub struct PreparedMeshPair<'left, 'right> {
     right_source: ExactMeshSourceStamp,
     candidate_pair_capacity_hint: usize,
     scratch: RefCell<BroadPhaseScratch>,
-    candidate_face_pairs: RefCell<Option<Vec<[usize; 2]>>>,
     intersection_graph: RefCell<Option<Rc<ExactIntersectionGraph>>>,
     intersection_graph_validated: RefCell<bool>,
     arrangement: RefCell<Option<Rc<ExactArrangement>>>,
@@ -464,7 +463,7 @@ impl<'a> MeshView<'a> {
     }
 
     /// Prepare certificate-validated broad-phase facts for this mesh pair.
-    pub fn prepare_broad_phase_pair<'b>(
+    pub(crate) fn prepare_broad_phase_pair<'b>(
         self,
         right: MeshView<'b>,
     ) -> Result<PreparedMeshPair<'a, 'b>, ExactMeshError> {
@@ -476,6 +475,16 @@ impl<'a> MeshView<'a> {
             left_bounds,
             right_bounds,
         ))
+    }
+
+    /// Build a retained arrangement for this mesh pair and query its borrowed view.
+    pub fn with_arrangement_view<R>(
+        self,
+        right: MeshView<'_>,
+        query: impl for<'arrangement> FnOnce(ArrangementView<'arrangement>) -> R,
+    ) -> Result<R, ExactMeshError> {
+        let pair = self.prepare_broad_phase_pair(right)?;
+        pair.with_arrangement_view(query)
     }
 
     /// Materialize this view after a row-major exact homogeneous affine transform.
@@ -543,7 +552,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             right_source,
             candidate_pair_capacity_hint,
             scratch: RefCell::new(BroadPhaseScratch::default()),
-            candidate_face_pairs: RefCell::new(None),
             intersection_graph: RefCell::new(None),
             intersection_graph_validated: RefCell::new(false),
             arrangement: RefCell::new(None),
@@ -568,68 +576,16 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             && self.right_source == self.right_view.source_stamp()
     }
 
-    fn require_current_retained(
-        &self,
-        retained: bool,
-        fact: &'static str,
-    ) -> Result<(), ExactMeshError> {
-        retained_current_state(retained, self.sources_current()).require_current(fact)
-    }
-
-    /// Borrow retained broad-phase candidate pairs without rebuilding missing evidence.
-    pub fn with_current_candidate_face_pairs<R>(
-        &self,
-        query: impl FnOnce(&[[usize; 2]]) -> R,
-    ) -> Result<R, ExactMeshError> {
-        self.require_current_retained(
-            self.candidate_face_pairs.borrow().is_some(),
-            "broad-phase candidate face pairs",
-        )?;
-        let candidate_face_pairs = self.candidate_face_pairs.borrow();
-        let pairs = candidate_face_pairs.as_deref().ok_or_else(|| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::MissingRequiredEvidence,
-                "prepared mesh-pair session retained broad-phase candidate-pair state without candidate records",
-            ))
-        })?;
-        Ok(query(pairs))
-    }
-
-    /// Build and retain broad-phase candidate face pairs, then run `query` on them.
-    pub fn with_candidate_face_pairs<R>(
-        &self,
-        query: impl FnOnce(&[[usize; 2]]) -> R,
-    ) -> Result<R, ExactMeshError> {
-        self.ensure_candidate_face_pairs();
-        self.with_current_candidate_face_pairs(query)
-    }
-
     /// Build a retained arrangement from this pair session and run `query` on its borrowed view.
     ///
     /// The pair's retained intersection graph is source-certified first. The
     /// arrangement builder then consumes that current graph certificate instead
     /// of replay-building the graph from the source meshes.
-    pub fn with_arrangement_view<R>(
+    pub(crate) fn with_arrangement_view<R>(
         &self,
-        query: impl for<'a> FnOnce(ArrangementView<'a>) -> R,
+        query: impl for<'arrangement> FnOnce(ArrangementView<'arrangement>) -> R,
     ) -> Result<R, ExactMeshError> {
         let arrangement = self.retained_arrangement()?;
-        Ok(query(arrangement.view()))
-    }
-
-    /// Query a retained arrangement view without rebuilding missing evidence.
-    pub fn with_current_arrangement_view<R>(
-        &self,
-        query: impl for<'a> FnOnce(ArrangementView<'a>) -> R,
-    ) -> Result<R, ExactMeshError> {
-        self.require_current_retained(self.arrangement.borrow().is_some(), "arrangement")?;
-        let arrangement = self.arrangement.borrow();
-        let arrangement = arrangement.as_ref().ok_or_else(|| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::MissingRequiredEvidence,
-                "prepared mesh-pair session retained arrangement state without arrangement records",
-            ))
-        })?;
         Ok(query(arrangement.view()))
     }
 
@@ -712,38 +668,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         );
         *self.arrangement_shortcut_facts.borrow_mut() = Some(facts.clone());
         facts
-    }
-
-    /// Visit certificate-validated candidate face pairs and allow the visitor to stop early.
-    pub fn try_visit_candidate_face_pairs<E>(
-        &self,
-        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E> {
-        let candidate_face_pairs = self.candidate_face_pairs.borrow();
-        if let Some(candidate_face_pairs) = candidate_face_pairs.as_deref() {
-            for &pair in candidate_face_pairs {
-                visit(pair)?;
-            }
-            return Ok(());
-        }
-
-        drop(candidate_face_pairs);
-        self.try_visit_candidate_face_pairs_uncached(&mut |pair| visit(pair))?;
-        Ok(())
-    }
-
-    fn ensure_candidate_face_pairs(&self) {
-        if self.candidate_face_pairs.borrow().is_some() {
-            return;
-        }
-
-        let mut candidate_face_pairs = Vec::with_capacity(self.candidate_pair_capacity_hint);
-        let result = self.try_visit_candidate_face_pairs_uncached(&mut |pair| {
-            candidate_face_pairs.push(pair);
-            Ok::<(), ()>(())
-        });
-        debug_assert!(result.is_ok());
-        *self.candidate_face_pairs.borrow_mut() = Some(candidate_face_pairs);
     }
 
     pub(crate) fn try_visit_candidate_face_pairs_uncached<E>(
@@ -1230,4 +1154,116 @@ fn retained_edge_endpoint_error(
         .with_edge(edge_vertices)
         .with_vertex(vertex),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use hyperlimit::SourceProvenance;
+
+    fn p(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    fn tetra(offset: [i64; 3]) -> ExactMesh {
+        let [ox, oy, oz] = offset;
+        ExactMesh::new(
+            vec![
+                p(ox, oy, oz),
+                p(ox + 1, oy, oz),
+                p(ox, oy + 1, oz),
+                p(ox, oy, oz + 1),
+            ],
+            vec![[0, 2, 1], [0, 1, 3], [1, 2, 3], [2, 0, 3]],
+            SourceProvenance::exact("view test tetra"),
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn prepared_mesh_pair_streams_candidate_facts_internally() {
+        let left = tetra([0, 0, 0]);
+        let overlapping = tetra([0, 0, 0]);
+        let disjoint = tetra([5, 0, 0]);
+
+        left.view().validate_retained_bounds().unwrap();
+        left.view().validate_retained_bounds_certificate().unwrap();
+
+        let mut disjoint_candidates = Vec::new();
+        left.view()
+            .prepare_broad_phase_pair(disjoint.view())
+            .unwrap()
+            .try_visit_candidate_face_pairs_uncached(&mut |pair| {
+                disjoint_candidates.push(pair);
+                Ok::<(), ()>(())
+            })
+            .unwrap();
+        assert!(disjoint_candidates.is_empty());
+
+        let mut direct_pair_candidates = Vec::new();
+        left.view()
+            .prepare_broad_phase_pair(overlapping.view())
+            .unwrap()
+            .try_visit_candidate_face_pairs_uncached(&mut |pair| {
+                direct_pair_candidates.push(pair);
+                Ok::<(), ()>(())
+            })
+            .unwrap();
+        direct_pair_candidates.sort_unstable();
+        assert!(!direct_pair_candidates.is_empty());
+        assert!(
+            direct_pair_candidates
+                .iter()
+                .all(|[left_face, right_face]| {
+                    *left_face < left.view().face_count()
+                        && *right_face < overlapping.view().face_count()
+                })
+        );
+
+        let mut owned_pair_candidates = Vec::new();
+        let prepared_pair = left
+            .view()
+            .prepare_broad_phase_pair(overlapping.view())
+            .unwrap();
+        prepared_pair
+            .try_visit_candidate_face_pairs_uncached(&mut |pair| {
+                owned_pair_candidates.push(pair);
+                Ok::<(), ()>(())
+            })
+            .unwrap();
+        owned_pair_candidates.sort_unstable();
+        assert_eq!(owned_pair_candidates, direct_pair_candidates);
+    }
+
+    #[test]
+    fn prepared_pair_uncached_candidate_visitor_can_stop_early() {
+        let left = tetra([0, 0, 0]);
+        let right = tetra([0, 0, 0]);
+        let prepared_pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
+
+        let mut visited = 0;
+        let result = prepared_pair.try_visit_candidate_face_pairs_uncached(&mut |_| {
+            visited += 1;
+            Err("stop")
+        });
+
+        assert_eq!(result, Err("stop"));
+        assert_eq!(visited, 1);
+    }
+
+    #[test]
+    fn retained_prepared_arrangement_survives_named_boolean() {
+        let left = tetra([0, 0, 0]);
+        let right = tetra([1, 0, 0]);
+        let pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
+
+        pair.with_arrangement_view(|view| {
+            view.validate_retained_state().unwrap();
+        })
+        .unwrap();
+
+        let intersection = left.view().intersection(right.view()).unwrap();
+        assert!(pair.retained_arrangement_for_reuse().is_some());
+        intersection.view().validate_retained_state().unwrap();
+    }
 }

@@ -289,15 +289,9 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
             view.validate_retained_state().unwrap();
         })
         .unwrap();
+    assert!(prepared_pair.retained_arrangement_for_reuse().is_some());
     prepared_pair.retain_intersection_graph(ExactIntersectionGraph::from_face_pairs(Vec::new()));
-    assert_eq!(
-        prepared_pair
-            .with_current_arrangement_view(|view| view.vertex_count())
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
+    assert!(prepared_pair.retained_arrangement_for_reuse().is_none());
     assert_eq!(
         prepared_pair
             .current_intersection_graph()

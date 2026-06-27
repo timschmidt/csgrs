@@ -18,6 +18,8 @@ use hyperlimit::{
 use hyperreal::Real;
 use std::cmp::Ordering;
 
+pub use arrangement3d::ArrangementView;
+
 pub(crate) mod arrangement3d;
 pub(crate) mod boolean;
 pub(crate) mod bounds;
@@ -746,7 +748,7 @@ impl ExactMesh {
     ///
     /// This is the mesh-kernel convenience entry point for named booleans. It
     /// returns only the output mesh; callers that need retained arrangement
-    /// evidence should use the lower-level internal kernel stages from csgrs.
+    /// evidence should query [`MeshView::with_arrangement_view`].
     pub fn union(&self, right: &ExactMesh) -> Result<ExactMesh, ExactMeshError> {
         self.view().union(right.view())
     }

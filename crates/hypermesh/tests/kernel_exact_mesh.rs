@@ -92,34 +92,6 @@ fn exact_mesh_borrowed_view_materializes_named_operations() {
 }
 
 #[test]
-fn prepared_mesh_pair_exposes_retained_pair_facts_without_named_policy() {
-    let empty = ExactMesh::new(
-        Vec::new(),
-        Vec::new(),
-        SourceProvenance::exact("empty test mesh"),
-    )
-    .unwrap();
-    let solid = tetra([0, 0, 0]);
-    let pair = empty.view().prepare_broad_phase_pair(solid.view()).unwrap();
-    assert_eq!(
-        pair.with_current_arrangement_view(|view| view.vertex_count())
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
-    assert_eq!(
-        pair.with_candidate_face_pairs(|pairs| pairs.len()).unwrap(),
-        0
-    );
-    assert_eq!(
-        pair.with_current_candidate_face_pairs(|pairs| pairs.len())
-            .unwrap(),
-        0
-    );
-}
-
-#[test]
 fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let mesh = tetra([0, 0, 0]);
     let view: MeshView<'_> = mesh.view();
@@ -281,193 +253,12 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
 }
 
 #[test]
-fn exact_mesh_borrowed_view_certifies_bounds_before_candidate_pairs() {
-    let left = tetra([0, 0, 0]);
-    let overlapping = tetra([0, 0, 0]);
-    let disjoint = tetra([5, 0, 0]);
-
-    left.view().validate_retained_bounds().unwrap();
-    left.view().validate_retained_bounds_certificate().unwrap();
-    let prepared_pair = left
-        .view()
-        .prepare_broad_phase_pair(overlapping.view())
-        .unwrap();
-    assert_eq!(
-        prepared_pair
-            .with_current_candidate_face_pairs(|pairs| pairs.len())
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
-    let retained_candidate_count = prepared_pair
-        .with_candidate_face_pairs(|pairs| pairs.len())
-        .unwrap();
-    assert!(retained_candidate_count > 0);
-    assert_eq!(
-        prepared_pair
-            .with_current_candidate_face_pairs(|pairs| {
-                assert!(pairs.iter().all(|[left_face, right_face]| {
-                    *left_face < triangle_count(&left) && *right_face < triangle_count(&overlapping)
-                }));
-                pairs.len()
-            })
-            .unwrap(),
-        retained_candidate_count
-    );
-    let classification_records_first_pair = left
-        .view()
-        .prepare_broad_phase_pair(overlapping.view())
-        .unwrap();
-    let mut classification_first_candidates = classification_records_first_pair
-        .with_candidate_face_pairs(|pairs| pairs.to_vec())
-        .unwrap();
-    classification_first_candidates.sort_unstable();
-    assert!(retained_candidate_count > 0);
-    prepared_pair
-        .with_arrangement_view(|view| {
-            view.validate_retained_state().unwrap();
-        })
-        .unwrap();
-
-    assert_eq!(left.view().face_count(), triangle_count(&left));
-    assert_eq!(
-        overlapping.view().face_count(),
-        triangle_count(&overlapping)
-    );
-    let candidates = classification_first_candidates.clone();
-    assert!(!candidates.is_empty());
-    assert!(candidates.iter().all(|[left_face, right_face]| {
-        *left_face < triangle_count(&left) && *right_face < triangle_count(&overlapping)
-    }));
-    assert_eq!(classification_first_candidates, candidates);
-
-    let mut disjoint_candidates = Vec::new();
-    left.view()
-        .prepare_broad_phase_pair(disjoint.view())
-        .unwrap()
-        .try_visit_candidate_face_pairs(&mut |pair| {
-            disjoint_candidates.push(pair);
-            Ok::<(), ()>(())
-        })
-        .unwrap();
-    assert!(disjoint_candidates.is_empty());
-
-    let mut direct_pair_candidates = Vec::new();
-    left.view()
-        .prepare_broad_phase_pair(overlapping.view())
-        .unwrap()
-        .try_visit_candidate_face_pairs(&mut |pair| {
-            direct_pair_candidates.push(pair);
-            Ok::<(), ()>(())
-        })
-        .unwrap();
-    direct_pair_candidates.sort_unstable();
-    assert_eq!(direct_pair_candidates, candidates);
-
-    assert_eq!(direct_pair_candidates.len(), candidates.len());
-
-    let mut owned_pair_candidates = Vec::new();
-    prepared_pair
-        .try_visit_candidate_face_pairs(&mut |pair| {
-            owned_pair_candidates.push(pair);
-            Ok::<(), ()>(())
-        })
-        .unwrap();
-    owned_pair_candidates.sort_unstable();
-    assert_eq!(owned_pair_candidates, candidates);
-
-    let mut repeated_owned_pair_candidates = Vec::new();
-    prepared_pair
-        .try_visit_candidate_face_pairs(&mut |pair| {
-            repeated_owned_pair_candidates.push(pair);
-            Ok::<(), ()>(())
-        })
-        .unwrap();
-    repeated_owned_pair_candidates.sort_unstable();
-    assert_eq!(repeated_owned_pair_candidates, candidates);
-
-    let mut outer_visits = 0;
-    let mut inner_visits = 0;
-    prepared_pair
-        .try_visit_candidate_face_pairs(&mut |_| {
-            outer_visits += 1;
-            prepared_pair.try_visit_candidate_face_pairs(&mut |_| {
-                inner_visits += 1;
-                Err("inner stop")
-            })?;
-            Err("outer stop")
-        })
-        .unwrap_err();
-    assert_eq!(outer_visits, 1);
-    assert_eq!(inner_visits, 1);
-
-    let mut reentrant_outer_visits = 0;
-    let mut reentrant_inner_visits = 0;
-    prepared_pair
-        .try_visit_candidate_face_pairs(&mut |_| {
-            reentrant_outer_visits += 1;
-            prepared_pair
-                .try_visit_candidate_face_pairs(&mut |_| {
-                    reentrant_inner_visits += 1;
-                    Err("inner stop")
-                })
-                .unwrap_err();
-            Ok::<(), ()>(())
-        })
-        .unwrap();
-    assert_eq!(reentrant_outer_visits, candidates.len());
-    assert_eq!(reentrant_inner_visits, candidates.len());
-}
-
-#[test]
-fn prepared_broad_phase_candidate_visitor_can_stop_early() {
-    let left = tetra([0, 0, 0]);
-    let right = tetra([0, 0, 0]);
-    let prepared_pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
-
-    let mut visited = 0;
-    let result = prepared_pair.try_visit_candidate_face_pairs(&mut |_| {
-        visited += 1;
-        Err("stop")
-    });
-
-    assert_eq!(result, Err("stop"));
-    assert_eq!(visited, 1);
-}
-
-#[test]
-fn prepared_pair_candidate_visitor_streams_without_storing_records() {
-    let left = tetra([0, 0, 0]);
-    let right = tetra([0, 0, 0]);
-    let prepared_pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
-
-    let mut visited = 0usize;
-    prepared_pair
-        .try_visit_candidate_face_pairs(&mut |_| {
-            visited += 1;
-            Ok::<(), ()>(())
-        })
-        .unwrap();
-
-    assert!(visited > 0);
-    assert_eq!(
-        prepared_pair
-            .with_current_candidate_face_pairs(|pairs| pairs.len())
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
-}
-
-#[test]
 fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);
-    let direct_pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
-    let direct_counts = direct_pair
-        .with_arrangement_view(|view| {
+    let direct_counts = left
+        .view()
+        .with_arrangement_view(right.view(), |view| {
             view.validate_retained_state().unwrap();
             assert!(view.is_complete());
             assert_eq!(view.vertices().count(), view.vertex_count());
@@ -538,48 +329,9 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         })
         .unwrap();
 
-    let pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
-    assert_eq!(
-        pair.with_current_arrangement_view(|view| view.vertex_count())
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
-    );
-    let prepared_counts = pair
-        .with_arrangement_view(|view| {
-            view.validate_retained_state().unwrap();
-            assert!(view.is_complete());
-            (
-                view.vertex_count(),
-                view.edge_count(),
-                view.face_cell_count(),
-                view.region_count(),
-                view.volume_region_count(),
-                view.volume_adjacency_count(),
-                view.lower_dimensional_artifact_count(),
-                view.blocker_count(),
-            )
-        })
-        .unwrap();
-    assert_eq!(prepared_counts, direct_counts);
-    let current_prepared_counts = pair
-        .with_current_arrangement_view(|view| {
-            (
-                view.vertex_count(),
-                view.edge_count(),
-                view.face_cell_count(),
-                view.region_count(),
-                view.volume_region_count(),
-                view.volume_adjacency_count(),
-                view.lower_dimensional_artifact_count(),
-                view.blocker_count(),
-            )
-        })
-        .unwrap();
-    assert_eq!(current_prepared_counts, direct_counts);
-    let repeated_counts = pair
-        .with_arrangement_view(|view| {
+    let repeated_counts = left
+        .view()
+        .with_arrangement_view(right.view(), |view| {
             (
                 view.vertex_count(),
                 view.edge_count(),
@@ -593,25 +345,6 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
         })
         .unwrap();
     assert_eq!(repeated_counts, direct_counts);
-}
-
-#[test]
-fn borrowed_named_boolean_leaves_prepared_pair_arrangement_current() {
-    let left = tetra([0, 0, 0]);
-    let right = tetra([1, 0, 0]);
-    let pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
-
-    pair.with_arrangement_view(|view| {
-        view.validate_retained_state().unwrap();
-    })
-    .unwrap();
-
-    let intersection = left.view().intersection(right.view()).unwrap();
-    pair.with_current_arrangement_view(|view| {
-        view.validate_retained_state().unwrap();
-    })
-    .unwrap();
-    intersection.view().validate_retained_state().unwrap();
 }
 
 #[test]
