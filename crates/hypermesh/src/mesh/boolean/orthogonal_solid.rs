@@ -254,12 +254,26 @@ fn try_certify_axis_aligned_box(
     let corners = box_bounds.corners();
     for vertex in mesh.vertices() {
         let point = vertex.clone();
-        if !points_equal_any(&corners, &point)? {
+        let mut matches_corner = false;
+        for corner in &corners {
+            if exact_points_equal(corner, &point)? {
+                matches_corner = true;
+                break;
+            }
+        }
+        if !matches_corner {
             return Ok(None);
         }
     }
     for corner in &corners {
-        if !mesh_point_equal_any(mesh, corner)? {
+        let mut matches_vertex = false;
+        for vertex in mesh.vertices() {
+            if exact_points_equal(corner, vertex)? {
+                matches_vertex = true;
+                break;
+            }
+        }
+        if !matches_vertex {
             return Ok(None);
         }
     }
@@ -1564,24 +1578,6 @@ fn exact_points_equal(left: &Point3, right: &Point3) -> Result<bool, ExactMeshEr
     Ok(exact_compare_axis(&left.x, &right.x)? == Ordering::Equal
         && exact_compare_axis(&left.y, &right.y)? == Ordering::Equal
         && exact_compare_axis(&left.z, &right.z)? == Ordering::Equal)
-}
-
-fn points_equal_any(points: &[Point3], point: &Point3) -> Result<bool, ExactMeshError> {
-    for candidate in points {
-        if exact_points_equal(candidate, point)? {
-            return Ok(true);
-        }
-    }
-    Ok(false)
-}
-
-fn mesh_point_equal_any(mesh: &ExactMesh, point: &Point3) -> Result<bool, ExactMeshError> {
-    for vertex in mesh.vertices() {
-        if exact_points_equal(point, vertex)? {
-            return Ok(true);
-        }
-    }
-    Ok(false)
 }
 
 fn cmp(left: &Real, right: &Real) -> Option<Ordering> {
