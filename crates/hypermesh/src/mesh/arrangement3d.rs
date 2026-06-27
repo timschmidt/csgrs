@@ -3669,7 +3669,11 @@ fn validate_arrangement_volume_graph(
         }
         shell_adjacency_counts[adjacency.shell_region] += 1;
         let shell = &shell_regions[adjacency.shell_region];
-        if !same_unique_usize_set(&adjacency.separating_face_cells, &shell.face_cells)
+        let separating_face_cells_match = sorted_unique_usize_set(&adjacency.separating_face_cells)
+            .is_some_and(|left| {
+                sorted_unique_usize_set(&shell.face_cells).is_some_and(|right| left == right)
+            });
+        if !separating_face_cells_match
             || !volume_face_sides_match_shell(adjacency, shell)
             || !volume_regions[adjacency.exterior_volume]
                 .boundary_shells
@@ -3729,11 +3733,6 @@ fn volume_region_boundary_shells_match_adjacencies(
         };
         boundary_shells == expected[index]
     })
-}
-
-fn same_unique_usize_set(left: &[usize], right: &[usize]) -> bool {
-    sorted_unique_usize_set(left)
-        .is_some_and(|left| sorted_unique_usize_set(right).is_some_and(|right| left == right))
 }
 
 pub(crate) fn sorted_unique_usize_set(values: &[usize]) -> Option<Vec<usize>> {
