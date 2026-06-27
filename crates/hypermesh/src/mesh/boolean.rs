@@ -4703,14 +4703,55 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
             );
         }
     };
-    materialize_triangulated_arrangement_cell_complex_attempt(
-        &recovery,
-        attempt,
+    attempt.mark_triangulated();
+    attempt.retain_output_mesh(&mesh);
+    let mesh = match copy_mesh(
+        &mesh,
+        "exact arrangement cell-complex boolean result",
+        validation,
+    ) {
+        Ok(mesh) => mesh,
+        Err(_) => {
+            if validation == ExactMeshValidationPolicy::CLOSED {
+                let maybe_mesh = close_exact_coplanar_boundary_loops(
+                    &mesh,
+                    "exact arrangement cell-complex closed coplanar-boundary result",
+                    validation,
+                )
+                .ok()
+                .flatten();
+                if let Some(mesh) = maybe_mesh {
+                    let result = certified_shortcut_result(
+                        mesh,
+                        operation,
+                        ExactBooleanShortcutKind::ArrangementCellComplex,
+                    );
+                    return Ok(materialized_arrangement_attempt_outcome(
+                        &mut attempt,
+                        result,
+                        false,
+                        Some(ExactBooleanShortcutKind::ArrangementCellComplex),
+                    ));
+                }
+            }
+            return arrangement_cell_complex_decline_after_recovery(
+                &recovery,
+                attempt,
+                ExactArrangementBooleanDecline::OutputValidation,
+            );
+        }
+    };
+    let result = certified_shortcut_result(
         mesh,
         operation,
-        validation,
+        ExactBooleanShortcutKind::ArrangementCellComplex,
+    );
+    Ok(materialized_arrangement_attempt_outcome(
+        &mut attempt,
+        result,
         volume_resolves_region_classification,
-    )
+        None,
+    ))
 }
 
 struct ArrangementCellComplexGateEvidence {
@@ -4792,65 +4833,6 @@ fn arrangement_cell_complex_gate_evidence_from_arrangement(
             topology_report,
             ownership_report,
         },
-    ))
-}
-
-fn materialize_triangulated_arrangement_cell_complex_attempt(
-    recovery: &ArrangementCellComplexRecoveryContext<'_>,
-    mut attempt: ExactArrangementBooleanAttempt,
-    mesh: ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
-    volume_resolves_region_classification: bool,
-) -> Result<ArrangementCellComplexOutcome, ExactMeshError> {
-    attempt.mark_triangulated();
-    attempt.retain_output_mesh(&mesh);
-    let mesh = match copy_mesh(
-        &mesh,
-        "exact arrangement cell-complex boolean result",
-        validation,
-    ) {
-        Ok(mesh) => mesh,
-        Err(_) => {
-            if validation == ExactMeshValidationPolicy::CLOSED {
-                let maybe_mesh = close_exact_coplanar_boundary_loops(
-                    &mesh,
-                    "exact arrangement cell-complex closed coplanar-boundary result",
-                    validation,
-                )
-                .ok()
-                .flatten();
-                if let Some(mesh) = maybe_mesh {
-                    let result = certified_shortcut_result(
-                        mesh,
-                        operation,
-                        ExactBooleanShortcutKind::ArrangementCellComplex,
-                    );
-                    return Ok(materialized_arrangement_attempt_outcome(
-                        &mut attempt,
-                        result,
-                        false,
-                        Some(ExactBooleanShortcutKind::ArrangementCellComplex),
-                    ));
-                }
-            }
-            return arrangement_cell_complex_decline_after_recovery(
-                recovery,
-                attempt,
-                ExactArrangementBooleanDecline::OutputValidation,
-            );
-        }
-    };
-    let result = certified_shortcut_result(
-        mesh,
-        operation,
-        ExactBooleanShortcutKind::ArrangementCellComplex,
-    );
-    Ok(materialized_arrangement_attempt_outcome(
-        &mut attempt,
-        result,
-        volume_resolves_region_classification,
-        None,
     ))
 }
 
