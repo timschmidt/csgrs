@@ -324,11 +324,16 @@ pub(crate) fn simplify_selected_cell_complex(
         selected.operation,
         ExactBooleanOperation::SelectedRegions(_)
     );
-    let selected_face_set = retained_selected_face_membership(
-        selected.faces.len(),
-        &selected.selected_faces,
-        &mut blockers,
-    );
+    let mut selected_face_set = vec![false; selected.faces.len()];
+    for &face in &selected.selected_faces {
+        match selected_face_set.get_mut(face) {
+            Some(member) if *member => {
+                blockers.push(ExactArrangementBlocker::NonManifoldCellComplex)
+            }
+            Some(member) => *member = true,
+            None => blockers.push(ExactArrangementBlocker::NonManifoldCellComplex),
+        }
+    }
     validate_selected_face_orientations(
         selected.faces.len(),
         &selected_face_set,
@@ -1062,24 +1067,6 @@ fn volume_adjacency_face_membership(
                 Some(member) => *member = true,
                 None => blockers.push(ExactArrangementBlocker::NonManifoldCellComplex),
             }
-        }
-    }
-    membership
-}
-
-fn retained_selected_face_membership(
-    face_count: usize,
-    selected_faces: &[usize],
-    blockers: &mut Vec<ExactArrangementBlocker>,
-) -> Vec<bool> {
-    let mut membership = vec![false; face_count];
-    for &face in selected_faces {
-        match membership.get_mut(face) {
-            Some(member) if *member => {
-                blockers.push(ExactArrangementBlocker::NonManifoldCellComplex)
-            }
-            Some(member) => *member = true,
-            None => blockers.push(ExactArrangementBlocker::NonManifoldCellComplex),
         }
     }
     membership
