@@ -1699,12 +1699,21 @@ fn vertex_fan_components(
     let mut fan = DisjointTriangleFan::new(incident.len());
     let mut edge_uses = BTreeMap::<usize, Vec<VertexFanEdgeUse>>::new();
     for (local_triangle, &triangle_index) in incident.iter().enumerate() {
-        for edge_use in vertex_fan_edge_uses(
-            local_triangle,
-            vertex,
-            assembly.triangles[triangle_index].vertices,
-        ) {
-            edge_uses.entry(edge_use.other).or_default().push(edge_use);
+        let triangle = assembly.triangles[triangle_index].vertices;
+        for index in 0..3 {
+            let from = triangle[index];
+            let to = triangle[(index + 1) % 3];
+            if from == vertex {
+                edge_uses.entry(to).or_default().push(VertexFanEdgeUse {
+                    local_triangle,
+                    forward_from_vertex: true,
+                });
+            } else if to == vertex {
+                edge_uses.entry(from).or_default().push(VertexFanEdgeUse {
+                    local_triangle,
+                    forward_from_vertex: false,
+                });
+            }
         }
     }
     for uses in edge_uses.values() {
@@ -1733,34 +1742,7 @@ fn vertex_fan_components(
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct VertexFanEdgeUse {
     local_triangle: usize,
-    other: usize,
     forward_from_vertex: bool,
-}
-
-fn vertex_fan_edge_uses(
-    local_triangle: usize,
-    vertex: usize,
-    triangle: [usize; 3],
-) -> Vec<VertexFanEdgeUse> {
-    let mut uses = Vec::with_capacity(2);
-    for index in 0..3 {
-        let from = triangle[index];
-        let to = triangle[(index + 1) % 3];
-        if from == vertex {
-            uses.push(VertexFanEdgeUse {
-                local_triangle,
-                other: to,
-                forward_from_vertex: true,
-            });
-        } else if to == vertex {
-            uses.push(VertexFanEdgeUse {
-                local_triangle,
-                other: from,
-                forward_from_vertex: false,
-            });
-        }
-    }
-    uses
 }
 
 fn replace_triangle_vertex(triangle: &mut ExactOutputTriangle, old: usize, new: usize) {
