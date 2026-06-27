@@ -2551,7 +2551,11 @@ fn split_topology_plan(
             vertex: split.edge[0],
         });
         for point in &split.points {
-            match find_graph_vertex(&point.point, graph_vertices) {
+            match graph_vertices
+                .vertices
+                .iter()
+                .position(|vertex| points_equal(&point.point, &vertex.point) == Some(true))
+            {
                 Some(index) => nodes.push(SplitEdgeNode::GraphVertex {
                     graph_vertex: index,
                 }),
@@ -4057,13 +4061,6 @@ fn boundary_nodes_equal(
     right: &FaceSplitBoundaryNode,
 ) -> Option<bool> {
     points_equal(boundary_node_point(left), boundary_node_point(right))
-}
-
-fn find_graph_vertex(point: &Point3, graph_vertices: &ExactGraphVertexPlan) -> Option<usize> {
-    graph_vertices
-        .vertices
-        .iter()
-        .position(|vertex| points_equal(point, &vertex.point) == Some(true))
 }
 
 fn sort_split_points(points: &mut [EdgeSplitPoint]) -> usize {
