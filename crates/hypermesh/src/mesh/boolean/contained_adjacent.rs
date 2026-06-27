@@ -137,23 +137,6 @@ fn exact_construction_failure(message: impl Into<String>) -> ExactMeshError {
     ))
 }
 
-/// Certify and materialize a contained-face adjacent closed-solid union.
-pub(crate) fn materialize_contained_face_adjacent_union(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<ContainedFaceAdjacentUnion>, ExactMeshError> {
-    let Some(certificate) = contained_face_adjacent_certificate(left, right)? else {
-        return Ok(None);
-    };
-    materialize_contained_face_adjacent_union_from_certificate(
-        left,
-        right,
-        &certificate,
-        validation,
-    )
-}
-
 /// Return the retained contained-face adjacency certificate for these sources.
 pub(crate) fn contained_face_adjacent_certificate(
     left: &ExactMesh,

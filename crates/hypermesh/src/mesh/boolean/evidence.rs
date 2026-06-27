@@ -34,12 +34,16 @@ use super::super::graph::{
     build_validated_intersection_graph,
 };
 use super::super::validation::ExactMeshValidationPolicy;
-use super::adjacent::materialize_full_face_adjacent_union;
+use super::adjacent::{
+    full_face_adjacent_certificate, materialize_full_face_adjacent_union_from_certificate,
+};
 use super::affine_solid::{
     AffineOrthogonalSolidOperation, has_affine_orthogonal_solid_cells,
     materialize_affine_orthogonal_solid_operation,
 };
-use super::contained_adjacent::materialize_contained_face_adjacent_union;
+use super::contained_adjacent::{
+    contained_face_adjacent_certificate, materialize_contained_face_adjacent_union_from_certificate,
+};
 use super::convex::{
     intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
 };
@@ -5060,8 +5064,18 @@ fn arrangement_cell_complex_output_matches_sources(
     adjacent_report.validate()?;
     match adjacent_report.status {
         ExactAdjacentUnionCompletionStatus::CertifiedFullFace => {
-            let Some(replay) = materialize_full_face_adjacent_union(left, right, validation)
+            let Some(certificate) = full_face_adjacent_certificate(left, right)
                 .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+            else {
+                return Ok(retained_mismatch.then_some(false));
+            };
+            let Some(replay) = materialize_full_face_adjacent_union_from_certificate(
+                left,
+                right,
+                &certificate,
+                validation,
+            )
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             else {
                 return Ok(retained_mismatch.then_some(false));
             };
@@ -5071,8 +5085,18 @@ fn arrangement_cell_complex_output_matches_sources(
             retained_mismatch = true;
         }
         ExactAdjacentUnionCompletionStatus::CertifiedContainedFace => {
-            let Some(replay) = materialize_contained_face_adjacent_union(left, right, validation)
+            let Some(certificate) = contained_face_adjacent_certificate(left, right)
                 .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+            else {
+                return Ok(retained_mismatch.then_some(false));
+            };
+            let Some(replay) = materialize_contained_face_adjacent_union_from_certificate(
+                left,
+                right,
+                &certificate,
+                validation,
+            )
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             else {
                 return Ok(retained_mismatch.then_some(false));
             };

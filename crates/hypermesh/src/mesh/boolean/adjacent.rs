@@ -163,18 +163,6 @@ fn undecidable_shared_face_equality(left_face: usize, right_face: usize) -> Exac
     )
 }
 
-/// Certify and materialize a full-face adjacent closed-solid union.
-pub(crate) fn materialize_full_face_adjacent_union(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<FullFaceAdjacentUnion>, ExactMeshError> {
-    let Some(certificate) = full_face_adjacent_certificate(left, right)? else {
-        return Ok(None);
-    };
-    materialize_full_face_adjacent_union_from_certificate(left, right, &certificate, validation)
-}
-
 /// Return the retained full-face adjacency certificate for these sources.
 pub(crate) fn full_face_adjacent_certificate(
     left: &ExactMesh,
