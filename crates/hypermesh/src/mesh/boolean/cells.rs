@@ -944,10 +944,8 @@ fn lift_projected_face_cell_point(
     let ab = point3_sub(&b, &a);
     let ac = point3_sub(&c, &a);
     let normal = cross(&ab, &ac);
-    let plane_value = add_real(
-        &add_real(&mul_real(&normal.x, &a.x), &mul_real(&normal.y, &a.y)),
-        &mul_real(&normal.z, &a.z),
-    );
+    let plane_xy = mul_real(&normal.x, &a.x) + &mul_real(&normal.y, &a.y);
+    let plane_value = plane_xy + &mul_real(&normal.z, &a.z);
 
     // The projection was selected by an exact nonzero projected area, so the
     // dropped normal component is the denominator that recovers the omitted
@@ -1412,10 +1410,6 @@ fn cross(left: &Point3, right: &Point3) -> Point3 {
         sub_real(&mul_real(&left.z, &right.x), &mul_real(&left.x, &right.z)),
         sub_real(&mul_real(&left.x, &right.y), &mul_real(&left.y, &right.x)),
     )
-}
-
-fn add_real(left: &Real, right: &Real) -> Real {
-    left.clone() + right
 }
 
 fn sub_real(left: &Real, right: &Real) -> Real {
