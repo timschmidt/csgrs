@@ -794,30 +794,29 @@ fn faces_share_reversed_exact_edge(
     left: &ExactSimplifiedFaceCell,
     right: &ExactSimplifiedFaceCell,
 ) -> bool {
-    face_boundary_edges(left).iter().any(|left_edge| {
-        face_boundary_edges(right)
+    let mut left_edges = Vec::new();
+    let mut right_edges = Vec::new();
+    for (face, edges) in [(left, &mut left_edges), (right, &mut right_edges)] {
+        if face.face.cell.boundary.len() != face.face.cell.boundary_points.len()
+            || face.face.cell.boundary.len() < 2
+        {
+            continue;
+        }
+        for index in 0..face.face.cell.boundary.len() {
+            let next = (index + 1) % face.face.cell.boundary.len();
+            edges.push(DirectedBoundaryEdge {
+                from: face.face.cell.boundary[index].clone(),
+                to: face.face.cell.boundary[next].clone(),
+                from_point: face.face.cell.boundary_points[index].clone(),
+                to_point: face.face.cell.boundary_points[next].clone(),
+            });
+        }
+    }
+    left_edges.iter().any(|left_edge| {
+        right_edges
             .iter()
             .any(|right_edge| exact_edges_are_reversed(left_edge, right_edge))
     })
-}
-
-fn face_boundary_edges(face: &ExactSimplifiedFaceCell) -> Vec<DirectedBoundaryEdge> {
-    let mut edges = Vec::new();
-    if face.face.cell.boundary.len() != face.face.cell.boundary_points.len()
-        || face.face.cell.boundary.len() < 2
-    {
-        return edges;
-    }
-    for index in 0..face.face.cell.boundary.len() {
-        let next = (index + 1) % face.face.cell.boundary.len();
-        edges.push(DirectedBoundaryEdge {
-            from: face.face.cell.boundary[index].clone(),
-            to: face.face.cell.boundary[next].clone(),
-            from_point: face.face.cell.boundary_points[index].clone(),
-            to_point: face.face.cell.boundary_points[next].clone(),
-        });
-    }
-    edges
 }
 
 fn face_boundaries_are_coplanar(
