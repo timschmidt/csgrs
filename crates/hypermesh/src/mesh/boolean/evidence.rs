@@ -77,7 +77,7 @@ use super::{
     boundary_touching_report_from_graph, materialize_boolean_exact_request,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
-    materialize_volumetric_coplanar_boundary_closure_output,
+    materialize_volumetric_coplanar_boundary_closure_output_from_graph,
     no_materialized_boundary_output_report, open_surface_disjoint_report_from_graph,
     open_surface_disjoint_result_matches_sources,
     preflight_boolean_exact_request_from_graph_with_retained_attempt,
@@ -4955,9 +4955,12 @@ fn arrangement_cell_complex_output_matches_sources(
         retained_mismatch = true;
     }
 
+    let graph = validated_report_intersection_graph(left, right)?;
     if let Some((replay, closure_report)) =
-        materialize_volumetric_coplanar_boundary_closure_output(left, right, operation, validation)
-            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+        materialize_volumetric_coplanar_boundary_closure_output_from_graph(
+            &graph, left, right, operation, validation,
+        )
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
     {
         closure_report.validate()?;
         if mesh_output_matches(mesh, &replay) {

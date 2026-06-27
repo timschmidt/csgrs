@@ -5776,19 +5776,7 @@ fn result_with_arrangement_gate_reports_from_graph(
     Ok(result.with_gate_reports(Some(topology_report), Some(ownership_report)))
 }
 
-pub(crate) fn materialize_volumetric_coplanar_boundary_closure_output(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<(ExactMesh, ExactVolumetricBoundaryClosureReport)>, ExactMeshError> {
-    let graph = build_validated_intersection_graph(left, right)?;
-    materialize_volumetric_coplanar_boundary_closure_output_from_graph(
-        &graph, left, right, operation, validation,
-    )
-}
-
-fn materialize_volumetric_coplanar_boundary_closure_output_from_graph(
+pub(crate) fn materialize_volumetric_coplanar_boundary_closure_output_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
