@@ -1533,7 +1533,11 @@ fn split_disconnected_triangle_vertex_fans(
     let original_vertex_count = vertices.len();
     let mut cloned_vertices = 0;
     for vertex in 0..original_vertex_count {
-        let incident = incident_triangle_indices(triangles, vertex);
+        let incident = triangles
+            .iter()
+            .enumerate()
+            .filter_map(|(triangle, vertices)| vertices.0.contains(&vertex).then_some(triangle))
+            .collect::<Vec<_>>();
         if incident.len() <= 1 {
             continue;
         }
@@ -1551,14 +1555,6 @@ fn split_disconnected_triangle_vertex_fans(
         }
     }
     cloned_vertices
-}
-
-fn incident_triangle_indices(triangles: &[Triangle], vertex: usize) -> Vec<usize> {
-    triangles
-        .iter()
-        .enumerate()
-        .filter_map(|(triangle, vertices)| vertices.0.contains(&vertex).then_some(triangle))
-        .collect()
 }
 
 fn triangle_vertex_fan_components(
