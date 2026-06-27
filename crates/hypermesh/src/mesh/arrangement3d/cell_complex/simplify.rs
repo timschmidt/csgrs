@@ -149,8 +149,16 @@ impl ExactSimplifiedCellComplex {
             validate_simplified_face(face)?;
         }
         for pair in self.faces.windows(2) {
-            let left = simplified_sort_key(&pair[0]);
-            let right = simplified_sort_key(&pair[1]);
+            let left = (
+                side_key(pair[0].face.cell.carrier.side),
+                pair[0].face.cell.carrier.face,
+                pair[0].source_face,
+            );
+            let right = (
+                side_key(pair[1].face.cell.carrier.side),
+                pair[1].face.cell.carrier.face,
+                pair[1].source_face,
+            );
             if left > right {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             }
@@ -251,14 +259,6 @@ fn validate_simplified_face(face: &ExactSimplifiedFaceCell) -> Result<(), ExactA
         return Err(ExactArrangementBlocker::NonManifoldCellComplex);
     }
     Ok(())
-}
-
-fn simplified_sort_key(face: &ExactSimplifiedFaceCell) -> (usize, usize, usize) {
-    (
-        side_key(face.face.cell.carrier.side),
-        face.face.cell.carrier.face,
-        face.source_face,
-    )
 }
 
 /// Simplify a selected cell complex by exact canonicalization.
@@ -451,7 +451,13 @@ pub(crate) fn simplify_selected_cell_complex(
         zero_area_cells_removed += merged.zero_area_cells_removed;
     }
 
-    faces.sort_by_key(simplified_sort_key);
+    faces.sort_by_key(|face| {
+        (
+            side_key(face.face.cell.carrier.side),
+            face.face.cell.carrier.face,
+            face.source_face,
+        )
+    });
 
     if !blockers.is_empty()
         && policy.unresolved == super::super::regularization::ExactUnresolvedPolicy::Block
