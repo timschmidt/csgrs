@@ -4647,78 +4647,29 @@ fn boundary_points_equal(
     point3_equal(&left.point, &right.point).value() == Some(true)
 }
 
-#[derive(Clone, Copy)]
-enum ArrangementPointAxis {
-    X,
-    Y,
-    Z,
-}
-
 fn sort_boundary_points_along_segment(
     start: &Point3,
     end: &Point3,
     points: &mut Vec<ArrangementFaceCellBoundaryPoint>,
 ) -> Result<(), ExactArrangementBlocker> {
-    let (axis, forward) = boundary_segment_order_axis(start, end)?;
+    let axis =
+        segment_order_axis(start, end).ok_or(ExactArrangementBlocker::UndecidableOrdering)?;
     let mut ordered = Vec::<ArrangementFaceCellBoundaryPoint>::new();
     'points: for point in points.drain(..) {
         for index in 0..ordered.len() {
-            if boundary_point_precedes_on_axis(&point.point, &ordered[index].point, axis, forward)?
-            {
-                ordered.insert(index, point);
-                continue 'points;
+            match compare_point3_on_axis(&point.point, &ordered[index].point, axis, start, end) {
+                Some(Ordering::Less) => {
+                    ordered.insert(index, point);
+                    continue 'points;
+                }
+                Some(Ordering::Equal | Ordering::Greater) => {}
+                None => return Err(ExactArrangementBlocker::UndecidableOrdering),
             }
         }
         ordered.push(point);
     }
     *points = ordered;
     Ok(())
-}
-
-fn boundary_segment_order_axis(
-    start: &Point3,
-    end: &Point3,
-) -> Result<(ArrangementPointAxis, bool), ExactArrangementBlocker> {
-    for axis in [
-        ArrangementPointAxis::X,
-        ArrangementPointAxis::Y,
-        ArrangementPointAxis::Z,
-    ] {
-        match compare_reals(point3_axis_value(start, axis), point3_axis_value(end, axis)).value() {
-            Some(Ordering::Less) => return Ok((axis, true)),
-            Some(Ordering::Greater) => return Ok((axis, false)),
-            Some(Ordering::Equal) => {}
-            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
-        }
-    }
-    Err(ExactArrangementBlocker::NonManifoldCellComplex)
-}
-
-fn boundary_point_precedes_on_axis(
-    left: &Point3,
-    right: &Point3,
-    axis: ArrangementPointAxis,
-    forward: bool,
-) -> Result<bool, ExactArrangementBlocker> {
-    match compare_reals(
-        point3_axis_value(left, axis),
-        point3_axis_value(right, axis),
-    )
-    .value()
-    {
-        Some(Ordering::Less) => Ok(forward),
-        Some(Ordering::Greater) => Ok(!forward),
-        Some(Ordering::Equal) => Ok(false),
-        None => Err(ExactArrangementBlocker::UndecidableOrdering),
-    }
-}
-
-fn point3_axis_value(point: &Point3, axis: ArrangementPointAxis) -> &Real {
-    match axis {
-        ArrangementPointAxis::X => &point.x,
-        ArrangementPointAxis::Y => &point.y,
-        ArrangementPointAxis::Z => &point.z,
-    }
 }
 
 fn boundary_edges_equivalent(
