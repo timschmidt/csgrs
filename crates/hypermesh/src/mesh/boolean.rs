@@ -669,7 +669,21 @@ fn certification_set_from_graph_and_regularized_arrangement(
     }
     let trivial = source_facts.trivial().clone();
     let regularized_solid = source_facts.regularized_solid().clone();
-    let refinement = refinement_report_from_graph(graph, request.operation);
+    let counts = retained_graph_counts(graph);
+    let graph_had_unknowns = graph.has_unknowns();
+    let needs_refinement = graph_had_unknowns || counts.construction_failed_events() > 0;
+    let refinement = ExactRefinementReport::new(
+        request.operation,
+        if needs_refinement {
+            ExactRefinementStatus::Required
+        } else {
+            ExactRefinementStatus::NotRequired
+        },
+        graph_had_unknowns,
+        graph.face_pairs.len(),
+        graph.event_count(),
+        needs_refinement.then(|| counts.into_blocker(ExactBooleanBlockerKind::Refinement)),
+    );
     let boundary_touching =
         boundary_touching_report_from_graph(graph, left, right).unwrap_or_else(|_| {
             let counts = retained_graph_counts(graph);
@@ -8640,28 +8654,6 @@ pub(crate) fn boundary_touching_report_from_graph(
         graph.event_count(),
         counts.into_blocker(blocker_kind),
     ))
-}
-
-#[cfg(test)]
-pub(crate) fn refinement_report_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    operation: ExactBooleanOperation,
-) -> ExactRefinementReport {
-    let counts = retained_graph_counts(graph);
-    let graph_had_unknowns = graph.has_unknowns();
-    let needs_refinement = graph_had_unknowns || counts.construction_failed_events() > 0;
-    ExactRefinementReport::new(
-        operation,
-        if needs_refinement {
-            ExactRefinementStatus::Required
-        } else {
-            ExactRefinementStatus::NotRequired
-        },
-        graph_had_unknowns,
-        graph.face_pairs.len(),
-        graph.event_count(),
-        needs_refinement.then(|| counts.into_blocker(ExactBooleanBlockerKind::Refinement)),
-    )
 }
 
 #[cfg(test)]
