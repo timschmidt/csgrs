@@ -594,7 +594,10 @@ impl<'a> PreparedMeshBounds<'a> {
         let mut max_target_active = 0usize;
 
         for driver_bounds in &self.bounds.faces {
-            let driver_interval = face_axis_interval(driver_bounds, axis);
+            let driver_interval = FaceAxisInterval {
+                min: axis_bound(driver_bounds, axis, AxisBound::Min),
+                max: axis_bound(driver_bounds, axis, AxisBound::Max),
+            };
             let mut started = 0usize;
             let mut search_end = other_min_order.len();
             while started < search_end {
@@ -873,7 +876,11 @@ impl<'a> PreparedMeshBounds<'a> {
     }
 
     fn axis_interval(&self, axis: Axis, face: usize) -> FaceAxisInterval<'a> {
-        face_axis_interval(&self.bounds.faces[face], axis)
+        let bounds = &self.bounds.faces[face];
+        FaceAxisInterval {
+            min: axis_bound(bounds, axis, AxisBound::Min),
+            max: axis_bound(bounds, axis, AxisBound::Max),
+        }
     }
 }
 
@@ -957,13 +964,6 @@ impl MeshBounds {
 enum AxisBound {
     Min,
     Max,
-}
-
-fn face_axis_interval(bounds: &ExactAabb3, axis: Axis) -> FaceAxisInterval<'_> {
-    FaceAxisInterval {
-        min: axis_bound(bounds, axis, AxisBound::Min),
-        max: axis_bound(bounds, axis, AxisBound::Max),
-    }
 }
 
 fn sorted_face_indices_by_axis_bound(
