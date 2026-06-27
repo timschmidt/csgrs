@@ -560,14 +560,6 @@ fn simplified_group_key(face: &ExactSimplifiedFaceCell) -> (usize, usize, usize,
     )
 }
 
-fn simplified_label_key(face: &ExactSimplifiedFaceCell) -> (usize, usize, usize) {
-    (
-        side_key(face.face.cell.carrier.side),
-        region_label_key(face.face.source),
-        opposite_label_key(face.face.opposite),
-    )
-}
-
 fn merge_coplanar_same_label_faces_across_carriers(
     mut faces: Vec<ExactSimplifiedFaceCell>,
     blockers: &mut Vec<ExactArrangementBlocker>,
@@ -581,7 +573,17 @@ fn merge_coplanar_same_label_faces_across_carriers(
         changed = false;
         'pairs: for left in 0..faces.len() {
             for right in (left + 1)..faces.len() {
-                if simplified_label_key(&faces[left]) != simplified_label_key(&faces[right])
+                let left_label = (
+                    side_key(faces[left].face.cell.carrier.side),
+                    region_label_key(faces[left].face.source),
+                    opposite_label_key(faces[left].face.opposite),
+                );
+                let right_label = (
+                    side_key(faces[right].face.cell.carrier.side),
+                    region_label_key(faces[right].face.source),
+                    opposite_label_key(faces[right].face.opposite),
+                );
+                if left_label != right_label
                     || faces[left].face.cell.carrier.face == faces[right].face.cell.carrier.face
                     || !faces_share_reversed_exact_edge(&faces[left], &faces[right])
                     || !face_boundaries_are_coplanar(
