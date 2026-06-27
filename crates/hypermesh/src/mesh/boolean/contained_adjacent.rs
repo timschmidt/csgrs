@@ -542,7 +542,12 @@ fn contained_face_union_mesh(
             return Ok(None);
         }
     }
-    dedupe_triangle_vertex_sets(&mut triangles);
+    let mut seen = std::collections::BTreeSet::new();
+    triangles.retain(|triangle| {
+        let mut key = triangle.0;
+        key.sort_unstable();
+        seen.insert(key)
+    });
 
     let mesh = ExactMesh::new_with_policy(
         vertices,
@@ -551,15 +556,6 @@ fn contained_face_union_mesh(
         validation,
     )?;
     Ok(Some(mesh))
-}
-
-fn dedupe_triangle_vertex_sets(triangles: &mut Vec<Triangle>) {
-    let mut seen = std::collections::BTreeSet::new();
-    triangles.retain(|triangle| {
-        let mut key = triangle.0;
-        key.sort_unstable();
-        seen.insert(key)
-    });
 }
 
 /// Append one retained holed replacement for a containing source face.
