@@ -601,20 +601,43 @@ impl<'a> PreparedMeshBounds<'a> {
 
         for driver_bounds in &self.bounds.faces {
             let driver_interval = face_axis_interval(driver_bounds, axis);
-            let started = upper_bound_axis_bound(
-                other_min_order,
-                other.bounds.faces.as_slice(),
-                axis,
-                AxisBound::Min,
-                driver_interval.max,
-            )?;
-            let ended = lower_bound_axis_bound(
-                other_max_order,
-                other.bounds.faces.as_slice(),
-                axis,
-                AxisBound::Max,
-                driver_interval.min,
-            )?;
+            let mut started = 0usize;
+            let mut search_end = other_min_order.len();
+            while started < search_end {
+                let mid = started + (search_end - started) / 2;
+                let ordering = compare(
+                    axis_bound(
+                        &other.bounds.faces[other_min_order[mid]],
+                        axis,
+                        AxisBound::Min,
+                    ),
+                    driver_interval.max,
+                )?;
+                if ordering == Ordering::Greater {
+                    search_end = mid;
+                } else {
+                    started = mid + 1;
+                }
+            }
+
+            let mut ended = 0usize;
+            let mut search_end = other_max_order.len();
+            while ended < search_end {
+                let mid = ended + (search_end - ended) / 2;
+                let ordering = compare(
+                    axis_bound(
+                        &other.bounds.faces[other_max_order[mid]],
+                        axis,
+                        AxisBound::Max,
+                    ),
+                    driver_interval.min,
+                )?;
+                if ordering == Ordering::Less {
+                    ended = mid + 1;
+                } else {
+                    search_end = mid;
+                }
+            }
             let active = started.saturating_sub(ended);
             pair_count = pair_count.saturating_add(active);
             max_target_active = max_target_active.max(active);
@@ -976,48 +999,6 @@ fn axis_bound(bounds: &ExactAabb3, axis: Axis, bound: AxisBound) -> &Real {
         AxisBound::Min => axis_min(bounds, axis),
         AxisBound::Max => axis_max(bounds, axis),
     }
-}
-
-fn lower_bound_axis_bound(
-    order: &[usize],
-    faces: &[ExactAabb3],
-    axis: Axis,
-    bound: AxisBound,
-    value: &Real,
-) -> Option<usize> {
-    let mut start = 0usize;
-    let mut end = order.len();
-    while start < end {
-        let mid = start + (end - start) / 2;
-        let ordering = compare(axis_bound(&faces[order[mid]], axis, bound), value)?;
-        if ordering == Ordering::Less {
-            start = mid + 1;
-        } else {
-            end = mid;
-        }
-    }
-    Some(start)
-}
-
-fn upper_bound_axis_bound(
-    order: &[usize],
-    faces: &[ExactAabb3],
-    axis: Axis,
-    bound: AxisBound,
-    value: &Real,
-) -> Option<usize> {
-    let mut start = 0usize;
-    let mut end = order.len();
-    while start < end {
-        let mid = start + (end - start) / 2;
-        let ordering = compare(axis_bound(&faces[order[mid]], axis, bound), value)?;
-        if ordering == Ordering::Greater {
-            end = mid;
-        } else {
-            start = mid + 1;
-        }
-    }
-    Some(start)
 }
 
 const fn should_use_sparse_sweep(
