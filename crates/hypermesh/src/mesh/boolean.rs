@@ -6477,40 +6477,33 @@ fn exact_loop_carrier(points: &[Point3]) -> Result<Option<[Point3; 3]>, ExactArr
         for second_index in first_index + 1..points.len() {
             let first = &points[first_index];
             let second = &points[second_index];
-            if !exact_points_are_collinear(anchor, first, second)? {
+            let abx = first.x.clone() - &anchor.x;
+            let aby = first.y.clone() - &anchor.y;
+            let abz = first.z.clone() - &anchor.z;
+            let acx = second.x.clone() - &anchor.x;
+            let acy = second.y.clone() - &anchor.y;
+            let acz = second.z.clone() - &anchor.z;
+            let cross_x = aby.clone() * &acz - &(abz.clone() * &acy);
+            let cross_y = abz * &acx - &(abx.clone() * &acz);
+            let cross_z = abx * &acy - &(aby * &acx);
+            let is_collinear = compare_reals(&cross_x, &Real::from(0))
+                .value()
+                .ok_or(ExactArrangementBlocker::UndecidableOrdering)?
+                == Ordering::Equal
+                && compare_reals(&cross_y, &Real::from(0))
+                    .value()
+                    .ok_or(ExactArrangementBlocker::UndecidableOrdering)?
+                    == Ordering::Equal
+                && compare_reals(&cross_z, &Real::from(0))
+                    .value()
+                    .ok_or(ExactArrangementBlocker::UndecidableOrdering)?
+                    == Ordering::Equal;
+            if !is_collinear {
                 return Ok(Some([anchor.clone(), first.clone(), second.clone()]));
             }
         }
     }
     Ok(None)
-}
-
-fn exact_points_are_collinear(
-    a: &Point3,
-    b: &Point3,
-    c: &Point3,
-) -> Result<bool, ExactArrangementBlocker> {
-    let abx = b.x.clone() - &a.x;
-    let aby = b.y.clone() - &a.y;
-    let abz = b.z.clone() - &a.z;
-    let acx = c.x.clone() - &a.x;
-    let acy = c.y.clone() - &a.y;
-    let acz = c.z.clone() - &a.z;
-    let cross_x = aby.clone() * &acz - &(abz.clone() * &acy);
-    let cross_y = abz * &acx - &(abx.clone() * &acz);
-    let cross_z = abx * &acy - &(aby * &acx);
-    Ok(compare_reals(&cross_x, &Real::from(0))
-        .value()
-        .ok_or(ExactArrangementBlocker::UndecidableOrdering)?
-        == Ordering::Equal
-        && compare_reals(&cross_y, &Real::from(0))
-            .value()
-            .ok_or(ExactArrangementBlocker::UndecidableOrdering)?
-            == Ordering::Equal
-        && compare_reals(&cross_z, &Real::from(0))
-            .value()
-            .ok_or(ExactArrangementBlocker::UndecidableOrdering)?
-            == Ordering::Equal)
 }
 
 #[derive(Clone, Copy, Default)]
