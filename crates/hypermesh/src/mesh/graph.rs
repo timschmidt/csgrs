@@ -2045,7 +2045,15 @@ fn edge_split_plan(graph: &ExactIntersectionGraph) -> ExactEdgeSplitPlan {
     let mut unknown_orderings = 0;
     let mut splits = grouped.into_values().collect::<Vec<_>>();
     for split in &mut splits {
-        unknown_orderings += sort_split_points(&mut split.points);
+        split.points.sort_by(|left, right| {
+            match compare_reals(&left.parameter, &right.parameter).value() {
+                Some(ordering) => ordering,
+                None => {
+                    unknown_orderings += 1;
+                    Ordering::Equal
+                }
+            }
+        });
     }
     ExactEdgeSplitPlan {
         splits,
@@ -3986,20 +3994,6 @@ fn boundary_nodes_equal(
     right: &FaceSplitBoundaryNode,
 ) -> Option<bool> {
     points_equal(boundary_node_point(left), boundary_node_point(right))
-}
-
-fn sort_split_points(points: &mut [EdgeSplitPoint]) -> usize {
-    let mut unknown_orderings = 0;
-    points.sort_by(
-        |left, right| match compare_reals(&left.parameter, &right.parameter).value() {
-            Some(ordering) => ordering,
-            None => {
-                unknown_orderings += 1;
-                Ordering::Equal
-            }
-        },
-    );
-    unknown_orderings
 }
 
 fn append_segment_plane_events(
