@@ -534,12 +534,12 @@ fn contained_face_union_mesh(
     {
         return Ok(None);
     }
-    for group in contained_face_patch_groups(certificate) {
+    for patch in &certificate.patches {
         if append_contained_face_patch_group(
             left,
             right,
             certificate.containing_side,
-            &group,
+            patch,
             &mut vertices,
             &mut triangles,
         )
@@ -568,29 +568,6 @@ fn dedupe_triangle_vertex_sets(triangles: &mut Vec<Triangle>) {
     });
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-struct ContainedFacePatchGroup {
-    containing_faces: Vec<usize>,
-    contained_faces: Vec<usize>,
-    projection: CoplanarProjection,
-    containing_projected_sign: Sign,
-}
-
-fn contained_face_patch_groups(
-    certificate: &ContainedFaceAdjacencyCertificate,
-) -> Vec<ContainedFacePatchGroup> {
-    certificate
-        .patches
-        .iter()
-        .map(|patch| ContainedFacePatchGroup {
-            containing_faces: patch.containing_faces.clone(),
-            contained_faces: patch.contained_faces.clone(),
-            projection: patch.projection,
-            containing_projected_sign: patch.containing_projected_sign,
-        })
-        .collect()
-}
-
 /// Append one retained holed replacement for a containing source face.
 ///
 /// A single contained cap uses the one-hole triangle arrangement. Multiple
@@ -603,13 +580,13 @@ fn append_contained_face_patch_group(
     left: &ExactMesh,
     right: &ExactMesh,
     containing_side: MeshSide,
-    group: &ContainedFacePatchGroup,
+    patch: &ContainedFacePatch,
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
 ) -> Option<()> {
     let containing_mesh = faces_mesh(
         containing_side.mesh(left, right),
-        &group.containing_faces,
+        &patch.containing_faces,
         "exact contained-face adjacency containing faces",
     )?;
     let contained_side = match containing_side {
@@ -618,15 +595,15 @@ fn append_contained_face_patch_group(
     };
     let contained_mesh = faces_mesh(
         contained_side.mesh(left, right),
-        &group.contained_faces,
+        &patch.contained_faces,
         "exact contained-face adjacency contained faces",
     )?;
     let (replacement, _) =
         materialize_contained_patch_difference(&containing_mesh, &contained_mesh)?;
     append_holed_replacement(
         &replacement,
-        group.projection,
-        group.containing_projected_sign,
+        patch.projection,
+        patch.containing_projected_sign,
         vertices,
         triangles,
     )
