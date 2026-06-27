@@ -832,10 +832,10 @@ impl<'a> PreparedMeshBounds<'a> {
             .into_iter()
             .filter(|&axis| axis != sweep_axis)
             .all(|axis| {
-                axis_intervals_may_overlap(
-                    self.axis_interval(axis, left),
-                    other.axis_interval(axis, right),
-                )
+                let left = self.axis_interval(axis, left);
+                let right = other.axis_interval(axis, right);
+                !matches!(compare(left.max, right.min), Some(Ordering::Less))
+                    && !matches!(compare(right.max, left.min), Some(Ordering::Less))
             })
     }
 
@@ -1033,11 +1033,6 @@ const fn should_use_quadratic_one_shot(
     face_pair_limit: usize,
 ) -> bool {
     left_face_count.saturating_mul(right_face_count) <= face_pair_limit
-}
-
-fn axis_intervals_may_overlap(left: FaceAxisInterval<'_>, right: FaceAxisInterval<'_>) -> bool {
-    !matches!(compare(left.max, right.min), Some(Ordering::Less))
-        && !matches!(compare(right.max, left.min), Some(Ordering::Less))
 }
 
 fn axis_min(bounds: &ExactAabb3, axis: Axis) -> &Real {
