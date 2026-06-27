@@ -2262,14 +2262,14 @@ fn arrangement_face_cells(
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Vec<ArrangementFaceCell> {
     let mut cells = Vec::new();
-    let skipped_carriers = overlay_carriers(carrier_plane_overlays);
+    let mut skipped_carriers = BTreeSet::new();
+    for overlay in carrier_plane_overlays {
+        skipped_carriers.insert(carrier_key(MeshSide::Left, overlay.left_face));
+        skipped_carriers.insert(carrier_key(MeshSide::Right, overlay.right_face));
+    }
     let mut skipped_face_arrangements = BTreeSet::new();
     for arrangement in face_plane_arrangements {
-        push_unique_carrier(
-            &mut skipped_face_arrangements,
-            arrangement.side,
-            arrangement.face,
-        );
+        skipped_face_arrangements.insert(carrier_key(arrangement.side, arrangement.face));
     }
 
     if let Some(region_plan) = region_plan
@@ -2370,7 +2370,11 @@ fn face_plane_arrangements(
     let Some(topology) = topology else {
         return Vec::new();
     };
-    let skipped_carriers = overlay_carriers(carrier_plane_overlays);
+    let mut skipped_carriers = BTreeSet::new();
+    for overlay in carrier_plane_overlays {
+        skipped_carriers.insert(carrier_key(MeshSide::Left, overlay.left_face));
+        skipped_carriers.insert(carrier_key(MeshSide::Right, overlay.right_face));
+    }
     let mut pair_vertices = BTreeMap::<(usize, usize, usize, usize), BTreeSet<usize>>::new();
     for (graph_vertex, vertex) in topology.graph_vertices.iter().enumerate() {
         for source_use in &vertex.uses {
@@ -2605,25 +2609,6 @@ fn face_plane_vertex_provenance(
         }
     }
     None
-}
-
-fn overlay_carriers(
-    carrier_plane_overlays: &[ArrangementCarrierPlaneOverlay],
-) -> BTreeSet<ArrangementCarrierKey> {
-    let mut carriers = BTreeSet::new();
-    for overlay in carrier_plane_overlays {
-        push_unique_carrier(&mut carriers, MeshSide::Left, overlay.left_face);
-        push_unique_carrier(&mut carriers, MeshSide::Right, overlay.right_face);
-    }
-    carriers
-}
-
-fn push_unique_carrier(
-    carriers: &mut BTreeSet<ArrangementCarrierKey>,
-    side: MeshSide,
-    face: usize,
-) {
-    carriers.insert(carrier_key(side, face));
 }
 
 fn lower_dimensional_artifacts(
