@@ -73,8 +73,8 @@ use super::winding::{
 use super::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
     adjacent_union_completion_certification_from_graph, boolean_convex_meshes_optional,
-    boolean_coplanar_mesh_overlay_optional, boundary_policy_shortcut_result_matches_sources,
-    boundary_touching_report_from_graph, materialize_boolean_exact_request,
+    boolean_coplanar_mesh_overlay_optional, boundary_touching_report_from_graph,
+    materialize_boolean_exact_request, materialize_boundary_policy_shortcut_result,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
     materialize_open_surface_disjoint_meshes,
@@ -2199,17 +2199,28 @@ impl ExactBooleanResult {
                     .map_err(ExactEvidenceValidationError::InvalidVolumetricClassification)?;
             }
         }
-        if let ExactBooleanResultKind::BoundaryPolicyShortcut { operation } = self.kind
-            && !boundary_policy_shortcut_result_matches_sources(
-                self,
+        if let ExactBooleanResultKind::BoundaryPolicyShortcut { operation } = self.kind {
+            let graph = validated_report_intersection_graph(left, right)?;
+            let report = boundary_touching_report_from_graph(&graph, left, right)
+                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
+            if !report.is_certified()
+                || report.validate_against_sources(left, right).is_err()
+                || !self.is_boundary_policy_shortcut_for(operation)
+                || self.validate().is_err()
+            {
+                return Err(ExactEvidenceValidationError::SourceReplayMismatch);
+            }
+            let expected = materialize_boundary_policy_shortcut_result(
                 left,
                 right,
                 operation,
                 self.mesh.validation_policy(),
-                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             )
-        {
-            return Err(ExactEvidenceValidationError::SourceReplayMismatch);
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+            .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?;
+            if expected.validate().is_err() || self != &expected {
+                return Err(ExactEvidenceValidationError::SourceReplayMismatch);
+            }
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,

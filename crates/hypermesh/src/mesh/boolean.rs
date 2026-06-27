@@ -8035,7 +8035,7 @@ pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evid
     )
 }
 
-fn materialize_boundary_policy_shortcut_result(
+pub(crate) fn materialize_boundary_policy_shortcut_result(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -8077,38 +8077,6 @@ fn materialize_boundary_policy_shortcut_result(
         region_ownership_report: None,
         mesh,
     }))
-}
-
-pub(crate) fn boundary_policy_shortcut_result_matches_sources(
-    result: &ExactBooleanResult,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
-    boundary_policy: ExactBoundaryBooleanPolicy,
-) -> bool {
-    if boundary_policy != ExactBoundaryBooleanPolicy::PreserveSeparateShells {
-        return false;
-    }
-    let Ok(graph) = build_validated_intersection_graph(left, right) else {
-        return false;
-    };
-    let Ok(report) = boundary_touching_report_from_graph(&graph, left, right) else {
-        return false;
-    };
-    if !report.is_certified()
-        || report.validate_against_sources(left, right).is_err()
-        || !result.is_boundary_policy_shortcut_for(operation)
-        || result.validate().is_err()
-    {
-        return false;
-    }
-    let Ok(Some(expected)) =
-        materialize_boundary_policy_shortcut_result(left, right, operation, validation)
-    else {
-        return false;
-    };
-    expected.validate().is_ok() && result == &expected
 }
 
 fn boolean_boundary_touching_meshes_from_graph(
