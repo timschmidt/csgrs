@@ -275,8 +275,16 @@ impl<'a> MeshView<'a> {
         self,
         index: usize,
     ) -> Result<(&'a Point3, &'a Point3), ExactMeshError> {
-        self.edge_bounds(index)
-            .ok_or_else(|| missing_retained_edge_bounds(self.mesh, index))
+        self.edge_bounds(index).ok_or_else(|| {
+            let mut blocker = ExactMeshBlocker::new(
+                ExactMeshBlockerKind::MissingRequiredEvidence,
+                format!("mesh edge {index} has no retained exact bounds"),
+            );
+            if let Some(facts) = self.mesh.facts().edges.get(index) {
+                blocker = blocker.with_edge(facts.vertices);
+            }
+            ExactMeshError::one(blocker)
+        })
     }
 
     /// Borrow one vertex by index.
@@ -1015,17 +1023,6 @@ fn missing_retained_face_bounds(face: usize) -> ExactMeshError {
         )
         .with_face(face),
     )
-}
-
-fn missing_retained_edge_bounds(mesh: &ExactMesh, edge: usize) -> ExactMeshError {
-    let mut blocker = ExactMeshBlocker::new(
-        ExactMeshBlockerKind::MissingRequiredEvidence,
-        format!("mesh edge {edge} has no retained exact bounds"),
-    );
-    if let Some(facts) = mesh.facts().edges.get(edge) {
-        blocker = blocker.with_edge(facts.vertices);
-    }
-    ExactMeshError::one(blocker)
 }
 
 fn retained_vertex_facts(
