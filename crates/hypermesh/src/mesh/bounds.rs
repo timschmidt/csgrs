@@ -231,11 +231,8 @@ impl CandidateFacePairPlan {
                 ..
             } => candidate_pair_capacity_hint,
             Self::Quadratic
-                if should_use_quadratic_one_shot(
-                    left_face_count,
-                    right_face_count,
-                    ExactAabbBroadPhase::DEFAULT_ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT,
-                ) =>
+                if left_face_count.saturating_mul(right_face_count)
+                    <= ExactAabbBroadPhase::DEFAULT_ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT =>
             {
                 left_face_count.saturating_mul(right_face_count)
             }
@@ -318,11 +315,9 @@ impl ExactAabbBroadPhase {
         if !left.mesh_may_overlap(right) {
             return Ok(());
         }
-        if should_use_quadratic_one_shot(
-            left.faces.len(),
-            right.faces.len(),
-            self.one_shot_quadratic_face_pair_limit,
-        ) {
+        if left.faces.len().saturating_mul(right.faces.len())
+            <= self.one_shot_quadratic_face_pair_limit
+        {
             return left.try_visit_candidate_face_pairs_quadratic(right, visit);
         }
         let left = left.prepare();
@@ -670,7 +665,7 @@ impl<'a> PreparedMeshBounds<'a> {
                 &mut local_scratch
             }
         };
-        if should_use_sparse_sweep(active_face_capacity_hint, other.bounds.faces.len()) {
+        if active_face_capacity_hint.saturating_mul(4) < other.bounds.faces.len() {
             return self.try_visit_candidate_face_pairs_sparse_sweep_axis(
                 other,
                 axis,
@@ -1002,21 +997,6 @@ fn axis_bound(bounds: &ExactAabb3, axis: Axis, bound: AxisBound) -> &Real {
         (Axis::Z, AxisBound::Min) => &bounds.min.z,
         (Axis::Z, AxisBound::Max) => &bounds.max.z,
     }
-}
-
-const fn should_use_sparse_sweep(
-    active_face_capacity_hint: usize,
-    target_face_count: usize,
-) -> bool {
-    active_face_capacity_hint.saturating_mul(4) < target_face_count
-}
-
-const fn should_use_quadratic_one_shot(
-    left_face_count: usize,
-    right_face_count: usize,
-    face_pair_limit: usize,
-) -> bool {
-    left_face_count.saturating_mul(right_face_count) <= face_pair_limit
 }
 
 fn include_axis(min: &mut Real, max: &mut Real, value: &Real) {
@@ -1408,10 +1388,6 @@ mod tests {
 
         assert_eq!(estimate.pair_count, 5);
         assert_eq!(estimate.max_target_active, 1);
-        assert!(should_use_sparse_sweep(
-            estimate.max_target_active,
-            prepared_right.bounds.faces.len()
-        ));
 
         let CandidateFacePairPlan::Sweep {
             active_face_capacity_hint,
@@ -1468,16 +1444,13 @@ mod tests {
             64
         );
         assert_eq!(
+            CandidateFacePairPlan::Quadratic.bounded_capacity_hint(1, 64),
+            64
+        );
+        assert_eq!(
             CandidateFacePairPlan::Quadratic.bounded_capacity_hint(9, 8),
             0
         );
-    }
-
-    #[test]
-    fn prepared_sweep_keeps_marker_path_for_dense_active_targets() {
-        assert!(!should_use_sparse_sweep(3, 12));
-        assert!(!should_use_sparse_sweep(8, 12));
-        assert!(should_use_sparse_sweep(2, 12));
     }
 
     #[test]
@@ -1496,33 +1469,6 @@ mod tests {
         scratch.active_mark_epoch = u32::MAX;
         assert_eq!(scratch.next_active_mark_epoch(8), 1);
         assert!(scratch.active_marks.iter().all(|&mark| mark == 0));
-    }
-
-    #[test]
-    fn one_shot_uses_quadratic_for_small_face_products() {
-        assert!(should_use_quadratic_one_shot(8, 8, 64));
-        assert!(should_use_quadratic_one_shot(1, 64, 64));
-        assert!(!should_use_quadratic_one_shot(9, 8, 64));
-    }
-
-    #[test]
-    fn one_shot_plan_is_strategy_owned() {
-        let left_points = vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0)];
-        let right_points = vec![p(1, 0, 0), p(3, 0, 0), p(1, 2, 0)];
-        let triangles = [[0, 1, 2]];
-        let left = MeshBounds::from_triangles(&left_points, &triangles);
-        let right = MeshBounds::from_triangles(&right_points, &triangles);
-
-        assert!(!should_use_quadratic_one_shot(
-            left.faces.len(),
-            right.faces.len(),
-            ExactAabbBroadPhase::new(0).one_shot_quadratic_face_pair_limit()
-        ));
-        assert!(should_use_quadratic_one_shot(
-            left.faces.len(),
-            right.faces.len(),
-            ExactAabbBroadPhase::default().one_shot_quadratic_face_pair_limit()
-        ));
     }
 
     #[test]
