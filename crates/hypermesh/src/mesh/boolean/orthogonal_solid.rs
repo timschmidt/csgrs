@@ -1567,14 +1567,10 @@ fn exact_compare_axis(left: &Real, right: &Real) -> Result<Ordering, ExactMeshEr
     })
 }
 
-fn exact_real_eq(left: &Real, right: &Real) -> Result<bool, ExactMeshError> {
-    Ok(exact_compare_axis(left, right)? == Ordering::Equal)
-}
-
 fn exact_points_equal(left: &Point3, right: &Point3) -> Result<bool, ExactMeshError> {
-    Ok(exact_real_eq(&left.x, &right.x)?
-        && exact_real_eq(&left.y, &right.y)?
-        && exact_real_eq(&left.z, &right.z)?)
+    Ok(exact_compare_axis(&left.x, &right.x)? == Ordering::Equal
+        && exact_compare_axis(&left.y, &right.y)? == Ordering::Equal
+        && exact_compare_axis(&left.z, &right.z)? == Ordering::Equal)
 }
 
 fn points_equal_any(points: &[Point3], point: &Point3) -> Result<bool, ExactMeshError> {
