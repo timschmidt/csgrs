@@ -1322,7 +1322,7 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
     let left = pair.left_mesh();
     let right = pair.right_mesh();
     let mut face_pairs = Vec::with_capacity(pair.candidate_pair_capacity_hint());
-    pair.try_visit_unretained_candidate_face_pairs(&mut |[left_face, right_face]| {
+    pair.try_visit_candidate_face_pairs_uncached(&mut |[left_face, right_face]| {
         let classification = classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
         if classification.needs_graph_construction() {
             face_pairs.push(events_for_face_pair(left, right, &classification));

@@ -744,7 +744,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         *self.candidate_face_pairs.borrow_mut() = Some(candidate_face_pairs);
     }
 
-    fn try_visit_candidate_face_pairs_uncached<E>(
+    pub(crate) fn try_visit_candidate_face_pairs_uncached<E>(
         &self,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
@@ -767,13 +767,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             &mut local_scratch,
             visit,
         )
-    }
-
-    pub(crate) fn try_visit_unretained_candidate_face_pairs<E>(
-        &self,
-        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E> {
-        self.try_visit_candidate_face_pairs_uncached(visit)
     }
 }
 
