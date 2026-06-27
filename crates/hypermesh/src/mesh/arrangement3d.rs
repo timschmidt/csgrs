@@ -3414,7 +3414,11 @@ fn arrangement_regions(
                 let right = users[right_index];
                 adjacency[left].push(right);
                 adjacency[right].push(left);
-                adjacent_pairs.push(canonical_face_pair(left, right));
+                adjacent_pairs.push(if left <= right {
+                    [left, right]
+                } else {
+                    [right, left]
+                });
             }
         }
     }
@@ -3481,14 +3485,6 @@ fn arrangement_regions(
     }
     regions.sort_by_key(|region| region.face_cells.first().copied().unwrap_or(usize::MAX));
     regions
-}
-
-const fn canonical_face_pair(left: usize, right: usize) -> [usize; 2] {
-    if left <= right {
-        [left, right]
-    } else {
-        [right, left]
-    }
 }
 
 struct ArrangementRegionComponentMembership {
