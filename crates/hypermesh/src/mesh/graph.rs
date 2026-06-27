@@ -1713,10 +1713,44 @@ fn split_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> ExactMe
             .blockers
             .into_iter()
             .map(|blocker| {
-                let mut mesh = ExactMeshBlocker::new(
-                    split_plan_blocker_mesh_kind(blocker.kind),
-                    blocker.message,
-                );
+                let kind = match blocker.kind {
+                    SplitPlanBlockerKind::UnknownOrdering
+                    | SplitPlanBlockerKind::UnresolvedEquality
+                    | SplitPlanBlockerKind::UnknownBoundaryIncidence => {
+                        ExactMeshBlockerKind::UndecidablePredicate
+                    }
+                    #[cfg(test)]
+                    SplitPlanBlockerKind::SourceReplayMismatch => {
+                        ExactMeshBlockerKind::StaleFactReplay
+                    }
+                    SplitPlanBlockerKind::SourceTriangleMismatch
+                    | SplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange
+                    | SplitPlanBlockerKind::BoundaryNodeSourceVertexNotOnTriangle
+                    | SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch => {
+                        ExactMeshBlockerKind::StaleFactReplay
+                    }
+                    SplitPlanBlockerKind::UnresolvedVertexLookup
+                    | SplitPlanBlockerKind::MissingEndpointSideFacts
+                    | SplitPlanBlockerKind::NonCrossingEndpointSideFacts
+                    | SplitPlanBlockerKind::InvalidConstructionRatio
+                    | SplitPlanBlockerKind::EmptyOrShortEdgeChain
+                    | SplitPlanBlockerKind::WrongChainStart
+                    | SplitPlanBlockerKind::WrongChainEnd
+                    | SplitPlanBlockerKind::ChainSideMismatch
+                    | SplitPlanBlockerKind::GraphVertexOutOfRange
+                    | SplitPlanBlockerKind::EmptyGraphVertexUses
+                    | SplitPlanBlockerKind::EmptyFaceSplit
+                    | SplitPlanBlockerKind::EmptyFaceSplitEdge
+                    | SplitPlanBlockerKind::DuplicateFaceSplitEdge
+                    | SplitPlanBlockerKind::MissingFaceSplitSourceUse
+                    | SplitPlanBlockerKind::BoundaryNodeOffFacePlane
+                    | SplitPlanBlockerKind::EmptyOrShortRegionBoundary
+                    | SplitPlanBlockerKind::DuplicateConsecutiveRegionNode
+                    | SplitPlanBlockerKind::BoundaryChainEdgeNotOnTriangle => {
+                        ExactMeshBlockerKind::ExactConstructionFailure
+                    }
+                };
+                let mut mesh = ExactMeshBlocker::new(kind, blocker.message);
                 if let Some(side) = blocker.side {
                     mesh = mesh.with_source_side(match side {
                         MeshSide::Left => ExactMeshSourceSide::Left,
@@ -1733,44 +1767,6 @@ fn split_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> ExactMe
             })
             .collect(),
     )
-}
-
-fn split_plan_blocker_mesh_kind(kind: SplitPlanBlockerKind) -> ExactMeshBlockerKind {
-    match kind {
-        SplitPlanBlockerKind::UnknownOrdering
-        | SplitPlanBlockerKind::UnresolvedEquality
-        | SplitPlanBlockerKind::UnknownBoundaryIncidence => {
-            ExactMeshBlockerKind::UndecidablePredicate
-        }
-        #[cfg(test)]
-        SplitPlanBlockerKind::SourceReplayMismatch => ExactMeshBlockerKind::StaleFactReplay,
-        SplitPlanBlockerKind::SourceTriangleMismatch
-        | SplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange
-        | SplitPlanBlockerKind::BoundaryNodeSourceVertexNotOnTriangle
-        | SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch => {
-            ExactMeshBlockerKind::StaleFactReplay
-        }
-        SplitPlanBlockerKind::UnresolvedVertexLookup
-        | SplitPlanBlockerKind::MissingEndpointSideFacts
-        | SplitPlanBlockerKind::NonCrossingEndpointSideFacts
-        | SplitPlanBlockerKind::InvalidConstructionRatio
-        | SplitPlanBlockerKind::EmptyOrShortEdgeChain
-        | SplitPlanBlockerKind::WrongChainStart
-        | SplitPlanBlockerKind::WrongChainEnd
-        | SplitPlanBlockerKind::ChainSideMismatch
-        | SplitPlanBlockerKind::GraphVertexOutOfRange
-        | SplitPlanBlockerKind::EmptyGraphVertexUses
-        | SplitPlanBlockerKind::EmptyFaceSplit
-        | SplitPlanBlockerKind::EmptyFaceSplitEdge
-        | SplitPlanBlockerKind::DuplicateFaceSplitEdge
-        | SplitPlanBlockerKind::MissingFaceSplitSourceUse
-        | SplitPlanBlockerKind::BoundaryNodeOffFacePlane
-        | SplitPlanBlockerKind::EmptyOrShortRegionBoundary
-        | SplitPlanBlockerKind::DuplicateConsecutiveRegionNode
-        | SplitPlanBlockerKind::BoundaryChainEdgeNotOnTriangle => {
-            ExactMeshBlockerKind::ExactConstructionFailure
-        }
-    }
 }
 
 /// Validation report for exact split topology and face split plans.
