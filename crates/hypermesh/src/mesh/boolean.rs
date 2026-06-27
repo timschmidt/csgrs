@@ -7246,8 +7246,13 @@ fn projected_mesh_boundary_rings(
 fn order_mesh_boundary_loops(mesh: &ExactMesh) -> Option<Vec<Vec<usize>>> {
     let mut edge_counts: Vec<((usize, usize), usize)> = Vec::new();
     for triangle in mesh.triangles() {
-        for (a, b) in mesh_triangle_edges(triangle.0) {
-            let edge = canonical_mesh_edge(a, b);
+        let [a, b, c] = triangle.0;
+        for (start, end) in [(a, b), (b, c), (c, a)] {
+            let edge = if start <= end {
+                (start, end)
+            } else {
+                (end, start)
+            };
             if let Some((_, count)) = edge_counts
                 .iter_mut()
                 .find(|(candidate, _)| *candidate == edge)
@@ -7347,18 +7352,6 @@ fn order_mesh_boundary_loops(mesh: &ExactMesh) -> Option<Vec<Vec<usize>>> {
     } else {
         Some(loops)
     }
-}
-
-fn mesh_triangle_edges(triangle: [usize; 3]) -> [(usize, usize); 3] {
-    [
-        (triangle[0], triangle[1]),
-        (triangle[1], triangle[2]),
-        (triangle[2], triangle[0]),
-    ]
-}
-
-fn canonical_mesh_edge(a: usize, b: usize) -> (usize, usize) {
-    if a <= b { (a, b) } else { (b, a) }
 }
 
 fn projected_mesh_face_ring(
