@@ -3343,7 +3343,12 @@ fn face_region_plan(
                 ]
             };
             for node in nodes {
-                push_boundary_node(&mut boundary, node);
+                if boundary
+                    .last()
+                    .is_none_or(|last| boundary_nodes_equal(last, &node) != Some(true))
+                {
+                    boundary.push(node);
+                }
             }
         }
         if boundary
@@ -3994,16 +3999,6 @@ fn proper_coplanar_edge_split_point(
         left_parameter,
         right_parameter,
     })
-}
-
-fn push_boundary_node(boundary: &mut Vec<FaceSplitBoundaryNode>, node: FaceSplitBoundaryNode) {
-    if boundary
-        .last()
-        .is_some_and(|last| boundary_nodes_equal(last, &node) == Some(true))
-    {
-        return;
-    }
-    boundary.push(node);
 }
 
 fn boundary_node_point(node: &FaceSplitBoundaryNode) -> &Point3 {
