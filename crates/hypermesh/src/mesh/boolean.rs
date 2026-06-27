@@ -1728,13 +1728,16 @@ fn replay_selected_region_boolean_result_from_graph(
 /// booleans that still need unresolved inside/outside semantics, it returns
 /// [`ExactBooleanSupport::RequiresCertifiedWinding`] with replayable facts
 /// instead of approximating them.
-fn initial_reject_boundary_preflight_support(
+fn preflight_boolean_exact_reject_boundary_policy_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
+    request: ExactBooleanRequest,
+    retained_attempt: Option<&ExactArrangementBooleanAttempt>,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
-) -> ExactBooleanSupport {
-    match operation {
+) -> Result<ExactBooleanPreflight, ExactMeshError> {
+    let operation = request.operation;
+    let support = match operation {
         ExactBooleanOperation::SelectedRegions(_) => ExactBooleanSupport::SelectedRegionPolicy,
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
@@ -1772,19 +1775,7 @@ fn initial_reject_boundary_preflight_support(
             .certified_support(operation)
             .or_else(|| certified_mixed_dimensional_regularized_solid_support(left, right))
             .unwrap_or(ExactBooleanSupport::RequiresCertifiedWinding),
-    }
-}
-
-fn preflight_boolean_exact_reject_boundary_policy_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-    retained_attempt: Option<&ExactArrangementBooleanAttempt>,
-    shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
-) -> Result<ExactBooleanPreflight, ExactMeshError> {
-    let operation = request.operation;
-    let support = initial_reject_boundary_preflight_support(left, right, operation, shortcut_facts);
+    };
     let requires_certified_winding = support == ExactBooleanSupport::RequiresCertifiedWinding;
     if support == ExactBooleanSupport::CertifiedArrangementCellComplex {
         return Ok(certified_arrangement_cell_complex_preflight(
