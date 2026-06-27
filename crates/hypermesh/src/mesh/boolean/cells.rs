@@ -358,12 +358,33 @@ fn append_non_coplanar_face_cell_constraints(
         MeshSide::Left => pair.left_face == face,
         MeshSide::Right => pair.right_face == face,
     }) {
-        if pair.relation != MeshFacePairRelation::Candidate || !pair_has_proper_crossing(pair) {
+        // Contact-only candidate pairs can occur next to coplanar source-face
+        // overlaps. They are valid graph evidence, but they do not cut a
+        // positive-area cell. Only proper segment/plane constructions become
+        // topology constraints here; endpoint and coplanar contacts stay
+        // explicit graph facts for boundary policy.
+        let has_proper_crossing = pair.events.iter().any(|event| {
+            matches!(
+                event,
+                IntersectionEvent::SegmentPlane {
+                    relation: SegmentPlaneRelation::ProperCrossing,
+                    ..
+                }
+            )
+        });
+        if pair.relation != MeshFacePairRelation::Candidate || !has_proper_crossing {
             continue;
         }
         let mut endpoints = Vec::new();
         for (graph_vertex, vertex) in topology.graph_vertices.iter().enumerate() {
-            if !graph_vertex_in_face_pair(vertex, pair, side, face) {
+            let vertex_in_face_pair = vertex.uses.iter().any(|source_use| {
+                source_use.face_pair == [pair.left_face, pair.right_face]
+                    && match side {
+                        MeshSide::Left => source_use.face_pair[0] == face,
+                        MeshSide::Right => source_use.face_pair[1] == face,
+                    }
+            });
+            if !vertex_in_face_pair {
                 continue;
             }
             if !point_lies_in_face_pair_overlap(&vertex.point, pair, left, right)? {
@@ -1562,37 +1583,6 @@ fn segment_parameter(
     }
     Err(hypertri::Error::InvalidInput {
         reason: "face-cell source boundary has duplicate projected endpoints",
-    })
-}
-
-fn pair_has_proper_crossing(pair: &FacePairEvents) -> bool {
-    // Contact-only candidate pairs can occur next to coplanar source-face
-    // overlaps. They are valid graph evidence, but they do not cut a positive
-    // segment/plane constructions become topology constraints here; endpoint
-    // and coplanar contacts stay explicit graph facts for boundary policy.
-    pair.events.iter().any(|event| {
-        matches!(
-            event,
-            IntersectionEvent::SegmentPlane {
-                relation: SegmentPlaneRelation::ProperCrossing,
-                ..
-            }
-        )
-    })
-}
-
-fn graph_vertex_in_face_pair(
-    vertex: &super::super::graph::ExactGraphVertex,
-    pair: &FacePairEvents,
-    side: MeshSide,
-    face: usize,
-) -> bool {
-    vertex.uses.iter().any(|source_use| {
-        source_use.face_pair == [pair.left_face, pair.right_face]
-            && match side {
-                MeshSide::Left => source_use.face_pair[0] == face,
-                MeshSide::Right => source_use.face_pair[1] == face,
-            }
     })
 }
 
