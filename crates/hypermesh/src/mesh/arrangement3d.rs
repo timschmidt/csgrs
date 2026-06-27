@@ -347,7 +347,18 @@ fn validate_lower_dimensional_artifact_graph_pairs(
         .map(|pair| ((pair.left_face, pair.right_face), pair.relation))
         .collect::<BTreeMap<_, _>>();
     for artifact in artifacts {
-        let (left_face, right_face) = lower_dimensional_artifact_faces(artifact);
+        let (left_face, right_face) = match artifact {
+            ArrangementLowerDimensionalArtifact::PointContact {
+                left_face,
+                right_face,
+                ..
+            }
+            | ArrangementLowerDimensionalArtifact::EdgeContact {
+                left_face,
+                right_face,
+                ..
+            } => (*left_face, *right_face),
+        };
         let Some(relation) = face_pair_relations.get(&(left_face, right_face)).copied() else {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         };
@@ -406,23 +417,6 @@ fn validate_lower_dimensional_artifact_not_duplicate_of_candidates(
         }
     }
     Ok(())
-}
-
-fn lower_dimensional_artifact_faces(
-    artifact: &ArrangementLowerDimensionalArtifact,
-) -> (usize, usize) {
-    match artifact {
-        ArrangementLowerDimensionalArtifact::PointContact {
-            left_face,
-            right_face,
-            ..
-        }
-        | ArrangementLowerDimensionalArtifact::EdgeContact {
-            left_face,
-            right_face,
-            ..
-        } => (*left_face, *right_face),
-    }
 }
 
 fn lower_dimensional_artifact_bucket_key(
