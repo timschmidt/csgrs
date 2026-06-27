@@ -2917,7 +2917,19 @@ fn coplanar_segment_triangle_interval(
     if points.len() < 2 {
         return None;
     }
-    sort_points_along_segment(&mut points, start, end)?;
+    let axis = segment_order_axis(start, end)?;
+    for index in 1..points.len() {
+        let mut current = index;
+        while current > 0 {
+            let ordering =
+                compare_point3_on_axis(&points[current - 1], &points[current], axis, start, end)?;
+            if ordering != Ordering::Greater {
+                break;
+            }
+            points.swap(current - 1, current);
+            current -= 1;
+        }
+    }
     let first = points.first()?.clone();
     let last = points.last()?.clone();
     (!point3_equal(&first, &last).value()?).then_some([first, last])
@@ -2952,23 +2964,6 @@ fn lift_projected_point_to_segment(
         start.y.clone() + &((end.y.clone() - &start.y) * &parameter),
         start.z.clone() + &((end.z.clone() - &start.z) * &parameter),
     ))
-}
-
-fn sort_points_along_segment(points: &mut [Point3], start: &Point3, end: &Point3) -> Option<()> {
-    let axis = segment_order_axis(start, end)?;
-    for index in 1..points.len() {
-        let mut current = index;
-        while current > 0 {
-            let ordering =
-                compare_point3_on_axis(&points[current - 1], &points[current], axis, start, end)?;
-            if ordering != Ordering::Greater {
-                break;
-            }
-            points.swap(current - 1, current);
-            current -= 1;
-        }
-    }
-    Some(())
 }
 
 fn segment_order_axis(start: &Point3, end: &Point3) -> Option<usize> {
