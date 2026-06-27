@@ -4065,15 +4065,69 @@ impl ArrangementCellComplexRecoveryContext<'_> {
                 }
             }
         }
-        if let Some(outcome) = arrangement_open_surface_recovery_outcome(
-            attempt,
+        if let Some(plan) = open_surface_arrangement_plan_from_graph(
             self.graph,
             self.left,
             self.right,
             self.operation,
-            self.validation,
         )? {
-            return Ok(Some(outcome));
+            let result = match materialize_open_surface_arrangement_plan(
+                self.left,
+                self.right,
+                self.operation,
+                self.validation,
+                self.graph.has_unknowns(),
+                plan.clone(),
+            ) {
+                Ok(Some(result)) => result,
+                Ok(None) => {
+                    let output_counts = materialize_open_surface_arrangement_plan(
+                        self.left,
+                        self.right,
+                        self.operation,
+                        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                        self.graph.has_unknowns(),
+                        plan,
+                    )
+                    .ok()
+                    .flatten()
+                    .map(|result| (result.mesh.vertices().len(), result.mesh.triangles().len()));
+                    return Ok(Some(
+                        declined_output_validation_attempt_outcome_with_counts(
+                            attempt,
+                            output_counts,
+                        ),
+                    ));
+                }
+                Err(error) => {
+                    let output_counts = materialize_open_surface_arrangement_plan(
+                        self.left,
+                        self.right,
+                        self.operation,
+                        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                        self.graph.has_unknowns(),
+                        plan,
+                    )
+                    .ok()
+                    .flatten()
+                    .map(|result| (result.mesh.vertices().len(), result.mesh.triangles().len()));
+                    if output_counts.is_some() {
+                        return Ok(Some(
+                            declined_output_validation_attempt_outcome_with_counts(
+                                attempt,
+                                output_counts,
+                            ),
+                        ));
+                    }
+                    return Err(error);
+                }
+            };
+            return Ok(Some(materialized_arrangement_attempt_outcome(
+                attempt,
+                result,
+                false,
+                Some(ExactBooleanShortcutKind::ArrangementCellComplex),
+            )));
         }
         let Some(result) = boolean_arrangement_cell_complex_recovery(
             self.left,
@@ -4841,71 +4895,6 @@ fn materialize_triangulated_arrangement_cell_complex_attempt(
         volume_resolves_region_classification,
         None,
     ))
-}
-
-fn arrangement_open_surface_recovery_outcome(
-    attempt: &mut ExactArrangementBooleanAttempt,
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<ArrangementCellComplexOutcome>, ExactMeshError> {
-    let Some(plan) = open_surface_arrangement_plan_from_graph(graph, left, right, operation)?
-    else {
-        return Ok(None);
-    };
-    let result = match materialize_open_surface_arrangement_plan(
-        left,
-        right,
-        operation,
-        validation,
-        graph.has_unknowns(),
-        plan.clone(),
-    ) {
-        Ok(Some(result)) => result,
-        Ok(None) => {
-            let output_counts = materialize_open_surface_arrangement_plan(
-                left,
-                right,
-                operation,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                graph.has_unknowns(),
-                plan,
-            )
-            .ok()
-            .flatten()
-            .map(|result| (result.mesh.vertices().len(), result.mesh.triangles().len()));
-            return Ok(Some(
-                declined_output_validation_attempt_outcome_with_counts(attempt, output_counts),
-            ));
-        }
-        Err(error) => {
-            let output_counts = materialize_open_surface_arrangement_plan(
-                left,
-                right,
-                operation,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                graph.has_unknowns(),
-                plan,
-            )
-            .ok()
-            .flatten()
-            .map(|result| (result.mesh.vertices().len(), result.mesh.triangles().len()));
-            if output_counts.is_some() {
-                return Ok(Some(
-                    declined_output_validation_attempt_outcome_with_counts(attempt, output_counts),
-                ));
-            }
-            return Err(error);
-        }
-    };
-    Ok(Some(materialized_arrangement_attempt_outcome(
-        attempt,
-        result,
-        false,
-        Some(ExactBooleanShortcutKind::ArrangementCellComplex),
-    )))
 }
 
 fn adjacent_union_completion_report(
