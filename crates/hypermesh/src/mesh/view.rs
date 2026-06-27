@@ -617,11 +617,15 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     pub(crate) fn current_intersection_graph(
         &self,
     ) -> Result<Rc<ExactIntersectionGraph>, ExactMeshError> {
-        let state = retained_certificate_state(
-            self.intersection_graph.borrow().is_some(),
-            *self.intersection_graph_validated.borrow(),
-            self.sources_current(),
-        );
+        let state = if self.intersection_graph.borrow().is_none() {
+            PreparedMeshPairFactState::Missing
+        } else if !self.sources_current() {
+            PreparedMeshPairFactState::Stale
+        } else if *self.intersection_graph_validated.borrow() {
+            PreparedMeshPairFactState::Current
+        } else {
+            PreparedMeshPairFactState::CertificateBlocked
+        };
         state.require_current("intersection graph")?;
         self.intersection_graph.borrow().clone().ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
@@ -705,22 +709,6 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             &mut local_scratch,
             visit,
         )
-    }
-}
-
-const fn retained_certificate_state(
-    retained: bool,
-    certificate_current: bool,
-    sources_current: bool,
-) -> PreparedMeshPairFactState {
-    if !retained {
-        PreparedMeshPairFactState::Missing
-    } else if !sources_current {
-        PreparedMeshPairFactState::Stale
-    } else if certificate_current {
-        PreparedMeshPairFactState::Current
-    } else {
-        PreparedMeshPairFactState::CertificateBlocked
     }
 }
 
