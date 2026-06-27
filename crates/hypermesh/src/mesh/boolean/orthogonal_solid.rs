@@ -934,20 +934,18 @@ impl AxisAlignedOrthogonalSolid {
 impl OrthogonalCellPlan {
     fn selected_index(&self, i: usize, j: usize, k: usize) -> Result<usize, ExactMeshError> {
         let Some(index) = cell_index(i, j, k, self.ny, self.nz) else {
-            return Err(orthogonal_retained_grid_error(
-                "retained orthogonal cell plan index overflowed",
-                i,
-                j,
-                k,
-            ));
+            return Err(ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::StaleFactReplay,
+                format!("retained orthogonal cell plan index overflowed at cell ({i}, {j}, {k})"),
+            )));
         };
         if index >= self.selected.len() {
-            return Err(orthogonal_retained_grid_error(
-                "retained orthogonal cell plan index exceeded selected occupancy",
-                i,
-                j,
-                k,
-            ));
+            return Err(ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::StaleFactReplay,
+                format!(
+                    "retained orthogonal cell plan index exceeded selected occupancy at cell ({i}, {j}, {k})"
+                ),
+            )));
         }
         Ok(index)
     }
@@ -1123,18 +1121,6 @@ impl OrthogonalCellPlan {
         }
         Ok(Some((i_min, i_max, j_min, j_max, k_min, k_max)))
     }
-}
-
-fn orthogonal_retained_grid_error(
-    message: &'static str,
-    i: usize,
-    j: usize,
-    k: usize,
-) -> ExactMeshError {
-    ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::StaleFactReplay,
-        format!("{message} at cell ({i}, {j}, {k})"),
-    ))
 }
 
 fn emit_cell_face(
