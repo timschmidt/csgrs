@@ -732,7 +732,7 @@ fn append_left_triangle_with_edge_splits(
         map_left_vertex(left, left_vertex_map, vertices, triangle[2])?,
     ];
     let points = triangle_points(left, triangle)?;
-    let mut splits = triangle_edge_split_buckets();
+    let mut splits = [Vec::new(), Vec::new(), Vec::new()];
     for &right_vertex in right_candidates {
         let point = right.vertices().get(right_vertex)?.clone();
         let Some((edge, parameter)) = triangle_edge_split_parameter(&points, &point)? else {
@@ -793,7 +793,7 @@ fn append_right_triangle_with_edge_splits(
         )?,
     ];
     let points = triangle_points(right, triangle)?;
-    let mut splits = triangle_edge_split_buckets();
+    let mut splits = [Vec::new(), Vec::new(), Vec::new()];
     for &left_vertex in left_candidates {
         let point = left.vertices().get(left_vertex)?.clone();
         let Some((edge, parameter)) = triangle_edge_split_parameter(&points, &point)? else {
@@ -810,10 +810,6 @@ struct TriangleEdgeSplit {
     parameter: Real,
     mapped_vertex: usize,
     point: Point3,
-}
-
-fn triangle_edge_split_buckets() -> [Vec<TriangleEdgeSplit>; 3] {
-    [Vec::new(), Vec::new(), Vec::new()]
 }
 
 fn triangle_edge_split_parameter(
@@ -980,7 +976,11 @@ fn fan_faces_cover_triangle(
             continue;
         };
 
-        for edge in normalized_triangle_edges(fan_triangle.0) {
+        for edge in [
+            normalized_edge(fan_triangle.0[0], fan_triangle.0[1]),
+            normalized_edge(fan_triangle.0[1], fan_triangle.0[2]),
+            normalized_edge(fan_triangle.0[2], fan_triangle.0[0]),
+        ] {
             let count = edge_counts.entry(edge).or_default();
             *count += 1;
             if *count > 2 {
@@ -1116,14 +1116,6 @@ fn fan_triangle_in_whole_triangle(
         return Some(None);
     }
     Some(Some(area_abs))
-}
-
-fn normalized_triangle_edges(triangle: [usize; 3]) -> [(usize, usize); 3] {
-    [
-        normalized_edge(triangle[0], triangle[1]),
-        normalized_edge(triangle[1], triangle[2]),
-        normalized_edge(triangle[2], triangle[0]),
-    ]
 }
 
 const fn normalized_edge(a: usize, b: usize) -> (usize, usize) {
