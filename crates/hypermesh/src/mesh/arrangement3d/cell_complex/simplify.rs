@@ -1093,7 +1093,27 @@ fn triangulate_simplified_cell_complex(
     }
 
     if !matches!(complex.operation, ExactBooleanOperation::SelectedRegions(_)) {
-        weld_exact_duplicate_vertices(&mut vertices, &mut triangles);
+        let mut unique = Vec::<Point3>::new();
+        let mut remap = Vec::<usize>::with_capacity(vertices.len());
+        for vertex in &vertices {
+            if let Some(existing) = unique
+                .iter()
+                .position(|point| point3_coordinates_equal(point, vertex))
+            {
+                remap.push(existing);
+            } else {
+                remap.push(unique.len());
+                unique.push(vertex.clone());
+            }
+        }
+        for triangle in &mut triangles {
+            for vertex in &mut triangle.0 {
+                if let Some(&mapped) = remap.get(*vertex) {
+                    *vertex = mapped;
+                }
+            }
+        }
+        vertices = unique;
         split_triangles_at_edge_vertices(&vertices, &mut triangles)?;
     }
     orient_paired_triangle_edges(&mut triangles)?;
@@ -1114,32 +1134,6 @@ fn triangulate_simplified_cell_complex(
         ExactMeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)
-}
-
-fn weld_exact_duplicate_vertices(vertices: &mut Vec<Point3>, triangles: &mut [Triangle]) -> usize {
-    let mut unique = Vec::<Point3>::new();
-    let mut remap = Vec::<usize>::with_capacity(vertices.len());
-    for vertex in vertices.iter() {
-        if let Some(existing) = unique
-            .iter()
-            .position(|point| point3_coordinates_equal(point, vertex))
-        {
-            remap.push(existing);
-        } else {
-            remap.push(unique.len());
-            unique.push(vertex.clone());
-        }
-    }
-    for triangle in triangles {
-        for vertex in &mut triangle.0 {
-            if let Some(&mapped) = remap.get(*vertex) {
-                *vertex = mapped;
-            }
-        }
-    }
-    let removed = vertices.len().saturating_sub(unique.len());
-    *vertices = unique;
-    removed
 }
 
 fn point3_coordinates_equal(left: &Point3, right: &Point3) -> bool {
