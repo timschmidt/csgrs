@@ -6236,15 +6236,6 @@ fn map_cap_vertices_to_boundary_or_insert(
         .collect()
 }
 
-fn find_exact_mesh_vertex(vertices: &[Point3], point: &Point3) -> Option<usize> {
-    for (index, existing) in vertices.iter().enumerate() {
-        if point3_exact_equal(existing, point)? {
-            return Some(index);
-        }
-    }
-    None
-}
-
 fn point3_exact_equal(left: &Point3, right: &Point3) -> Option<bool> {
     Some(
         compare_reals(&left.x, &right.x).value()? == Ordering::Equal
@@ -7106,7 +7097,18 @@ fn mesh_from_projected_overlay_selected_faces(
         let face_to_mesh = face_vertices
             .into_iter()
             .map(|point| {
-                if let Some(existing) = find_exact_mesh_vertex(&vertices, &point) {
+                let mut existing_vertex = None;
+                for (index, existing) in vertices.iter().enumerate() {
+                    match point3_exact_equal(existing, &point) {
+                        Some(true) => {
+                            existing_vertex = Some(index);
+                            break;
+                        }
+                        Some(false) => {}
+                        None => break,
+                    }
+                }
+                if let Some(existing) = existing_vertex {
                     Some(existing)
                 } else {
                     let index = vertices.len();
