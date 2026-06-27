@@ -7198,13 +7198,13 @@ pub(crate) fn coplanar_mesh_overlay_carrier(
         for face in 0..mesh.triangles().len() {
             let ring =
                 projected_mesh_face_ring(ExactArrangement2dRegion::Left, mesh, face, projection)?;
-            if compare_reals(
-                &projected_loop_signed_area_twice(&ring.vertices),
-                &Real::from(0),
-            )
-            .value()?
-                == Ordering::Equal
-            {
+            let mut area = Real::from(0);
+            for index in 0..ring.vertices.len() {
+                let current = &ring.vertices[index];
+                let next = &ring.vertices[(index + 1) % ring.vertices.len()];
+                area += &(current.x.clone() * &next.y) - &(current.y.clone() * &next.x);
+            }
+            if compare_reals(&area, &Real::from(0)).value()? == Ordering::Equal {
                 return None;
             }
         }
@@ -7378,16 +7378,6 @@ fn coplanar_mesh_overlay_materialized_boundary_policy(
             Ok(Some(_))
         )
     })
-}
-
-fn projected_loop_signed_area_twice(points: &[Point2]) -> Real {
-    let mut area = Real::from(0);
-    for index in 0..points.len() {
-        let current = &points[index];
-        let next = &points[(index + 1) % points.len()];
-        area += &(current.x.clone() * &next.y) - &(current.y.clone() * &next.x);
-    }
-    area
 }
 
 fn lift_projected_point_to_carrier(
