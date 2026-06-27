@@ -6043,7 +6043,12 @@ fn close_exact_coplanar_boundary_loops_from_loops(
         };
         let mut triangles = mesh.triangles().to_vec();
         triangles.extend(cap_triangles);
-        remove_duplicate_triangle_vertex_sets(&mut triangles);
+        let mut seen = BTreeSet::new();
+        triangles.retain(|triangle| {
+            let mut key = triangle.0;
+            key.sort_unstable();
+            seen.insert(key)
+        });
         return ExactMesh::new_with_policy(
             mesh.vertices().to_vec(),
             triangles,
@@ -6107,7 +6112,12 @@ fn close_exact_coplanar_boundary_loops_from_loops(
 
     let mut triangles = mesh.triangles().to_vec();
     triangles.extend(cap_triangles);
-    remove_duplicate_triangle_vertex_sets(&mut triangles);
+    let mut seen = BTreeSet::new();
+    triangles.retain(|triangle| {
+        let mut key = triangle.0;
+        key.sort_unstable();
+        seen.insert(key)
+    });
     ExactMesh::new_with_policy(
         vertices,
         triangles,
@@ -6115,15 +6125,6 @@ fn close_exact_coplanar_boundary_loops_from_loops(
         validation,
     )
     .map(Some)
-}
-
-fn remove_duplicate_triangle_vertex_sets(triangles: &mut Vec<Triangle>) {
-    let mut seen = BTreeSet::new();
-    triangles.retain(|triangle| {
-        let mut key = triangle.0;
-        key.sort_unstable();
-        seen.insert(key)
-    });
 }
 
 fn find_or_insert_exact_mesh_vertex(vertices: &mut Vec<Point3>, point: Point3) -> Option<usize> {
