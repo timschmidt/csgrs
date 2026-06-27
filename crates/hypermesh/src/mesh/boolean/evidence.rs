@@ -5995,7 +5995,12 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.boundary_edges == 0
                     || self.boundary_loops == 0
                     || self.has_boundary_topology_failure_evidence()
-                    || !self.has_valid_optional_self_contact_evidence()
+                    || !((self.repeated_exact_boundary_points == 0
+                        && self.self_contact_exact_points == 0
+                        && self.self_contact_topological_vertices == 0
+                        && self.self_contact_degenerate_cycles == 0
+                        && self.self_contact_nondegenerate_cycles == 0)
+                        || self.has_valid_self_contact_evidence())
                     || !matches!(
                         blocker,
                         ExactArrangementBlocker::UndecidableOrdering
@@ -6059,19 +6064,6 @@ impl ExactVolumetricBoundaryClosureReport {
         };
         let max_repeated = max_repeated_ordered_pairs / 2;
         self.repeated_exact_boundary_points > max_repeated
-    }
-
-    fn has_valid_optional_self_contact_evidence(&self) -> bool {
-        if self.repeated_exact_boundary_points == 0
-            && self.self_contact_exact_points == 0
-            && self.self_contact_topological_vertices == 0
-            && self.self_contact_degenerate_cycles == 0
-            && self.self_contact_nondegenerate_cycles == 0
-        {
-            true
-        } else {
-            self.has_valid_self_contact_evidence()
-        }
     }
 
     fn has_valid_self_contact_evidence(&self) -> bool {
