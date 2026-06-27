@@ -7880,7 +7880,7 @@ fn open_surface_arrangement_plan_from_graph(
     Ok(Some((support, region_classifications, triangulations)))
 }
 
-fn boolean_same_surface_meshes(
+pub(crate) fn boolean_same_surface_meshes(
     mesh: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ExactMeshValidationPolicy,
@@ -7905,22 +7905,6 @@ fn boolean_same_surface_meshes(
         operation,
         ExactBooleanShortcutKind::SameSurface,
     ))
-}
-
-pub(crate) fn replay_closed_same_surface_boolean_result_if_certified(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || !left.facts().mesh.closed_manifold
-        || !right.facts().mesh.closed_manifold
-        || !evidence::meshes_are_certified_same_surface(left, right)
-    {
-        return Ok(None);
-    }
-    boolean_same_surface_meshes(left, operation, validation).map(Some)
 }
 
 fn certified_closed_boundary_touching_regularized_report_from_graph(

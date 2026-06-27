@@ -73,8 +73,9 @@ use super::winding::{
 use super::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
     adjacent_union_completion_certification_from_graph, boolean_convex_meshes_optional,
-    boolean_coplanar_mesh_overlay_optional, boundary_touching_report_from_graph,
-    materialize_boolean_exact_request, materialize_boundary_policy_shortcut_result,
+    boolean_coplanar_mesh_overlay_optional, boolean_same_surface_meshes,
+    boundary_touching_report_from_graph, materialize_boolean_exact_request,
+    materialize_boundary_policy_shortcut_result,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
     materialize_open_surface_disjoint_meshes,
@@ -82,7 +83,6 @@ use super::{
     no_materialized_boundary_output_report, open_surface_disjoint_report_from_graph,
     preflight_boolean_exact_request_from_graph_with_retained_attempt,
     rematerialize_retained_arrangement_cell_complex_attempt,
-    replay_closed_same_surface_boolean_result_if_certified,
     replay_generic_arrangement_cell_complex_result,
     replay_selected_region_boolean_result_from_graph,
     volumetric_boundary_closure_report_from_graph,
@@ -5094,10 +5094,13 @@ fn arrangement_cell_complex_output_matches_sources(
         retained_mismatch = true;
     }
 
-    if let Some(replay) =
-        replay_closed_same_surface_boolean_result_if_certified(left, right, operation, validation)
-            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && left.facts().mesh.closed_manifold
+        && right.facts().mesh.closed_manifold
+        && meshes_are_certified_same_surface(left, right)
     {
+        let replay = boolean_same_surface_meshes(left, operation, validation)
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         if mesh_output_matches(mesh, &replay.mesh) {
             return Ok(Some(true));
         }
