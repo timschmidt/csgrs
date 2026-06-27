@@ -1631,17 +1631,7 @@ fn materialize_selected_region_result_from_graph(
     Ok(result)
 }
 
-pub(crate) fn replay_selected_region_boolean_result(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    selection: ExactRegionSelection,
-    validation: ExactMeshValidationPolicy,
-) -> Result<ExactBooleanResult, ExactMeshError> {
-    let graph = build_validated_intersection_graph(left, right)?;
-    replay_selected_region_boolean_result_from_graph(&graph, left, right, selection, validation)
-}
-
-fn replay_selected_region_boolean_result_from_graph(
+pub(crate) fn replay_selected_region_boolean_result_from_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -7754,27 +7744,7 @@ type OpenSurfaceArrangementPlan = (
     Vec<FaceRegionTriangulation>,
 );
 
-pub(crate) fn replay_open_surface_arrangement_result(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
-    let graph = build_validated_intersection_graph(left, right)?;
-    let Some(result) =
-        open_surface_arrangement_result_from_graph(&graph, left, right, operation, validation)?
-    else {
-        return Ok(None);
-    };
-    if !result.is_open_surface_arrangement_for(operation)
-        || result.mesh.validation_policy() != validation
-    {
-        return Ok(None);
-    }
-    Ok(Some(result))
-}
-
-fn open_surface_arrangement_result_from_graph(
+pub(crate) fn open_surface_arrangement_result_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,

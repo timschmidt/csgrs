@@ -83,8 +83,9 @@ use super::{
     preflight_boolean_exact_request_from_graph_with_retained_attempt,
     rematerialize_retained_arrangement_cell_complex_attempt,
     replay_closed_same_surface_boolean_result_if_certified,
-    replay_generic_arrangement_cell_complex_result, replay_open_surface_arrangement_result,
-    replay_selected_region_boolean_result, volumetric_boundary_closure_report_from_graph,
+    replay_generic_arrangement_cell_complex_result,
+    replay_selected_region_boolean_result_from_graph,
+    volumetric_boundary_closure_report_from_graph,
 };
 #[cfg(test)]
 use super::{
@@ -2111,8 +2112,14 @@ impl ExactBooleanResult {
             return Ok(());
         }
         let mut arrangement_cell_complex_output_replayed = false;
+        let mut validated_graph = None;
         if let ExactBooleanResultKind::SelectedRegions { selection } = self.kind {
-            let replay = replay_selected_region_boolean_result(
+            let graph = validated_graph
+                .get_or_insert_with(|| validated_report_intersection_graph(left, right))
+                .as_ref()
+                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
+            let replay = replay_selected_region_boolean_result_from_graph(
+                graph,
                 left,
                 right,
                 selection,
@@ -2124,13 +2131,22 @@ impl ExactBooleanResult {
             }
         }
         if let ExactBooleanResultKind::OpenSurfaceArrangement { operation } = self.kind {
-            let replay = replay_open_surface_arrangement_result(
+            let graph = validated_graph
+                .get_or_insert_with(|| validated_report_intersection_graph(left, right))
+                .as_ref()
+                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
+            let replay = super::open_surface_arrangement_result_from_graph(
+                graph,
                 left,
                 right,
                 operation,
                 self.mesh.validation_policy(),
             )
             .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+            .filter(|replay| {
+                replay.is_open_surface_arrangement_for(operation)
+                    && replay.mesh.validation_policy() == self.mesh.validation_policy()
+            })
             .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?;
             if !retained_split_region_result_matches(self, &replay) {
                 return Err(ExactEvidenceValidationError::SourceReplayMismatch);
