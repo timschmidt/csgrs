@@ -9031,17 +9031,66 @@ fn winding_evidence_report_from_graph_with_facts(
     )? {
         return Ok(report);
     }
-    if let Some(report) = boundary_policy_or_planar_arrangement_winding_evidence(
+    let boundary_policy_required = graph_requires_boundary_policy(graph, left, right)?;
+    if arrangement_cell_complex_shortcut_materializes && boundary_policy_required {
+        return Ok(winding_evidence_report_with_validated_winding_blocker(
+            operation,
+            ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
+            graph_had_unknowns,
+            graph,
+            counts,
+        ));
+    }
+    if boundary_policy_required {
+        return Ok(winding_evidence_report(
+            operation,
+            ExactWindingEvidenceStatus::BoundaryPolicyRequired,
+            graph_had_unknowns,
+            graph.face_pairs.len(),
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::BoundaryPolicy),
+            None,
+            None,
+        ));
+    }
+    let planar_report = planar_arrangement_report_from_graph_with_cell_complex_cache(
         graph,
         left,
         right,
         operation,
-        graph_had_unknowns,
-        counts,
-        arrangement_cell_complex_shortcut_materializes,
         &mut arrangement_cell_complex_preflight,
-    )? {
-        return Ok(report);
+        None,
+        None,
+    )?;
+    if planar_report.is_required() {
+        return Ok(winding_evidence_report(
+            operation,
+            ExactWindingEvidenceStatus::PlanarArrangementRequired,
+            graph_had_unknowns,
+            graph.face_pairs.len(),
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::PlanarArrangement),
+            planar_report.coplanar_arrangement_evidence().cloned(),
+            None,
+        ));
+    }
+    if planar_report.is_already_materialized() {
+        return Ok(winding_evidence_report(
+            operation,
+            ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized,
+            graph_had_unknowns,
+            graph.face_pairs.len(),
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::PlanarArrangement),
+            planar_report.coplanar_arrangement_evidence().cloned(),
+            None,
+        ));
     }
     if arrangement_cell_complex_shortcut_materializes {
         return Ok(
@@ -9321,82 +9370,6 @@ fn volumetric_winding_region_plan_evidence_from_graph(
         )));
     }
 
-    Ok(None)
-}
-
-fn boundary_policy_or_planar_arrangement_winding_evidence(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    graph_had_unknowns: bool,
-    counts: ExactBooleanBlocker,
-    arrangement_cell_complex_shortcut_materializes: bool,
-    arrangement_cell_complex_preflight: &mut CertifiedArrangementCellComplexPreflightCache,
-) -> Result<Option<ExactWindingEvidenceReport>, ExactMeshError> {
-    let boundary_policy_required = graph_requires_boundary_policy(graph, left, right)?;
-    if arrangement_cell_complex_shortcut_materializes && boundary_policy_required {
-        return Ok(Some(
-            winding_evidence_report_with_validated_winding_blocker(
-                operation,
-                ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
-                graph_had_unknowns,
-                graph,
-                counts,
-            ),
-        ));
-    }
-    if boundary_policy_required {
-        return Ok(Some(winding_evidence_report(
-            operation,
-            ExactWindingEvidenceStatus::BoundaryPolicyRequired,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
-            0,
-            Vec::new(),
-            counts.into_blocker(ExactBooleanBlockerKind::BoundaryPolicy),
-            None,
-            None,
-        )));
-    }
-    let planar_report = planar_arrangement_report_from_graph_with_cell_complex_cache(
-        graph,
-        left,
-        right,
-        operation,
-        arrangement_cell_complex_preflight,
-        None,
-        None,
-    )?;
-    if planar_report.is_required() {
-        return Ok(Some(winding_evidence_report(
-            operation,
-            ExactWindingEvidenceStatus::PlanarArrangementRequired,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
-            0,
-            Vec::new(),
-            counts.into_blocker(ExactBooleanBlockerKind::PlanarArrangement),
-            planar_report.coplanar_arrangement_evidence().cloned(),
-            None,
-        )));
-    }
-    if planar_report.is_already_materialized() {
-        return Ok(Some(winding_evidence_report(
-            operation,
-            ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
-            0,
-            Vec::new(),
-            counts.into_blocker(ExactBooleanBlockerKind::PlanarArrangement),
-            planar_report.coplanar_arrangement_evidence().cloned(),
-            None,
-        )));
-    }
     Ok(None)
 }
 
