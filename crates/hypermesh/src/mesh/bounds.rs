@@ -219,10 +219,6 @@ pub(crate) enum CandidateFacePairPlan {
 }
 
 impl CandidateFacePairPlan {
-    const fn empty() -> Self {
-        Self::Empty
-    }
-
     pub(crate) fn bounded_capacity_hint(
         self,
         left_face_count: usize,
@@ -465,12 +461,12 @@ impl<'a> PreparedMeshBounds<'a> {
         &self,
         other: &PreparedMeshBounds<'_>,
     ) -> CandidateFacePairPlan {
-        if !self.mesh_bounds_may_overlap(other) {
-            return CandidateFacePairPlan::empty();
+        if !self.bounds.mesh_may_overlap(other.bounds) {
+            return CandidateFacePairPlan::Empty;
         }
         if let Some(sweep) = self.sweep_plan(other) {
             if sweep.axis_pair_count == 0 {
-                return CandidateFacePairPlan::empty();
+                return CandidateFacePairPlan::Empty;
             }
             return CandidateFacePairPlan::Sweep {
                 plan: sweep.plan,
@@ -538,10 +534,6 @@ impl<'a> PreparedMeshBounds<'a> {
             return self.try_visit_candidate_face_pairs_quadratic(other, visit);
         }
         Ok(())
-    }
-
-    fn mesh_bounds_may_overlap(&self, other: &PreparedMeshBounds<'_>) -> bool {
-        self.bounds.mesh_may_overlap(other.bounds)
     }
 
     fn try_visit_candidate_face_pairs_quadratic<E>(
