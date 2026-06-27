@@ -97,12 +97,16 @@ impl AffineOrthogonalSolidArrangement {
         }
         let normalized = mesh_to_uvw(&self.mesh, &self.basis, self.mesh.validation_policy())
             .ok_or_else(|| {
-                affine_solid_error("affine orthogonal solid output does not replay through basis")
+                ExactMeshError::one(ExactMeshBlocker::new(
+                    ExactMeshBlockerKind::UnsupportedExactOperation,
+                    "affine orthogonal solid output does not replay through basis",
+                ))
             })?;
         if !is_axis_aligned_orthogonal_solid(&normalized) {
-            return Err(affine_solid_error(
+            return Err(ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::UnsupportedExactOperation,
                 "affine orthogonal solid output is not a normalized cell complex",
-            ));
+            )));
         }
         Ok(())
     }
@@ -624,13 +628,6 @@ impl AffineOrthogonalSolidOperation {
             Self::Difference => "exact affine orthogonal solid cell difference",
         }
     }
-}
-
-fn affine_solid_error(message: impl Into<String>) -> ExactMeshError {
-    ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::UnsupportedExactOperation,
-        message,
-    ))
 }
 
 fn affine_solid_replay_error(message: impl Into<String>) -> ExactMeshError {
