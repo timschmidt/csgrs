@@ -83,7 +83,7 @@ fn winding_ray_candidates() -> Vec<WindingRayAxis> {
                 if dx == 0 && dy == 0 && dz == 0 {
                     continue;
                 }
-                if gcd3_i16(dx, dy, dz) != 1 {
+                if gcd_i16(gcd_i16(dx, dy), dz) != 1 {
                     continue;
                 }
                 let candidate = WindingRayAxis::Generated { dx, dy, dz };
@@ -101,10 +101,6 @@ fn winding_ray_candidates() -> Vec<WindingRayAxis> {
 
 fn winding_ray_candidate_count() -> usize {
     winding_ray_candidates().len()
-}
-
-fn gcd3_i16(a: i16, b: i16, c: i16) -> i16 {
-    gcd_i16(gcd_i16(a, b), c)
 }
 
 fn gcd_i16(a: i16, b: i16) -> i16 {
