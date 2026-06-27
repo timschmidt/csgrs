@@ -6,11 +6,7 @@ use super::ExactMesh;
 use super::arrangement3d::regularization::ExactRegularizationPolicy;
 use super::arrangement3d::{ArrangementView, ExactArrangement};
 use super::boolean::evidence::ExactArrangementCellComplexShortcutFacts;
-use super::boolean::{
-    materialize_closed_difference_with_prepared_pair,
-    materialize_closed_intersection_with_prepared_pair,
-    materialize_closed_union_with_prepared_pair,
-};
+use super::boolean::{ExactBooleanOperation, materialize_closed_named_boolean_with_prepared_pair};
 use super::bounds::{
     BroadPhaseScratch, CandidateFacePairPlan, ExactAabb3, ExactAabbBroadPhase, PreparedMeshBounds,
 };
@@ -495,19 +491,25 @@ impl<'a> MeshView<'a> {
     /// Materialize the exact closed union of this view and `right`.
     pub fn union(self, right: MeshView<'_>) -> Result<ExactMesh, ExactMeshError> {
         let pair = self.prepare_broad_phase_pair(right)?;
-        materialize_closed_union_with_prepared_pair(&pair)
+        materialize_closed_named_boolean_with_prepared_pair(&pair, ExactBooleanOperation::Union)
     }
 
     /// Materialize the exact closed intersection of this view and `right`.
     pub fn intersection(self, right: MeshView<'_>) -> Result<ExactMesh, ExactMeshError> {
         let pair = self.prepare_broad_phase_pair(right)?;
-        materialize_closed_intersection_with_prepared_pair(&pair)
+        materialize_closed_named_boolean_with_prepared_pair(
+            &pair,
+            ExactBooleanOperation::Intersection,
+        )
     }
 
     /// Materialize the exact closed difference of this view minus `right`.
     pub fn difference(self, right: MeshView<'_>) -> Result<ExactMesh, ExactMeshError> {
         let pair = self.prepare_broad_phase_pair(right)?;
-        materialize_closed_difference_with_prepared_pair(&pair)
+        materialize_closed_named_boolean_with_prepared_pair(
+            &pair,
+            ExactBooleanOperation::Difference,
+        )
     }
 
     /// Materialize the exact closed symmetric difference of this view and `right`.
