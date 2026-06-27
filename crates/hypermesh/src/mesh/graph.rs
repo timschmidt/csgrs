@@ -778,7 +778,23 @@ impl FacePairEvents {
         }
 
         for event in &self.events {
-            validate_event_family_matches_pair_relation(self.relation, event)?;
+            match (self.relation, event) {
+                (
+                    MeshFacePairRelation::CoplanarTouching
+                    | MeshFacePairRelation::CoplanarOverlapping,
+                    IntersectionEvent::SegmentPlane { .. },
+                ) => {
+                    return Err(IntersectionGraphValidationError::CoplanarPairHasSegmentPlaneEvent);
+                }
+                (
+                    MeshFacePairRelation::Candidate | MeshFacePairRelation::Unknown,
+                    IntersectionEvent::CoplanarEdge { .. }
+                    | IntersectionEvent::CoplanarVertex { .. },
+                ) => {
+                    return Err(IntersectionGraphValidationError::NonCoplanarPairHasCoplanarEvent);
+                }
+                _ => {}
+            }
             validate_intersection_event(event)?;
         }
         Ok(())
@@ -2284,23 +2300,6 @@ fn validate_intersection_event(
             }
         },
         IntersectionEvent::Unknown => Ok(()),
-    }
-}
-
-fn validate_event_family_matches_pair_relation(
-    relation: MeshFacePairRelation,
-    event: &IntersectionEvent,
-) -> Result<(), IntersectionGraphValidationError> {
-    match (relation, event) {
-        (
-            MeshFacePairRelation::CoplanarTouching | MeshFacePairRelation::CoplanarOverlapping,
-            IntersectionEvent::SegmentPlane { .. },
-        ) => Err(IntersectionGraphValidationError::CoplanarPairHasSegmentPlaneEvent),
-        (
-            MeshFacePairRelation::Candidate | MeshFacePairRelation::Unknown,
-            IntersectionEvent::CoplanarEdge { .. } | IntersectionEvent::CoplanarVertex { .. },
-        ) => Err(IntersectionGraphValidationError::NonCoplanarPairHasCoplanarEvent),
-        _ => Ok(()),
     }
 }
 
