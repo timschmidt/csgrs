@@ -422,7 +422,11 @@ fn component_contained_adjacency_for_side(
         || !mesh_projected_triangle_signs_match(
             &contained_mesh,
             arrangement_projection,
-            opposite_sign(sign),
+            match sign {
+                Sign::Negative => Sign::Positive,
+                Sign::Positive => Sign::Negative,
+                Sign::Zero => Sign::Zero,
+            },
         )?
     {
         return None;
@@ -650,8 +654,12 @@ fn append_contained_face_patch_group(
         &group.containing_faces,
         "exact contained-face adjacency containing faces",
     )?;
+    let contained_side = match containing_side {
+        MeshSide::Left => MeshSide::Right,
+        MeshSide::Right => MeshSide::Left,
+    };
     let contained_mesh = faces_mesh(
-        opposite_side(containing_side).mesh(left, right),
+        contained_side.mesh(left, right),
         &group.contained_faces,
         "exact contained-face adjacency contained faces",
     )?;
@@ -959,13 +967,6 @@ fn skip_faces_for_side(
     }
 }
 
-const fn opposite_side(side: MeshSide) -> MeshSide {
-    match side {
-        MeshSide::Left => MeshSide::Right,
-        MeshSide::Right => MeshSide::Left,
-    }
-}
-
 fn triangle_points(mesh: &ExactMesh, face: usize) -> Option<[Point3; 3]> {
     let triangle = mesh.triangles().get(face)?.0;
     Some([
@@ -1023,14 +1024,6 @@ fn mesh_projected_triangle_signs_match(
         }
     }
     Some(true)
-}
-
-const fn opposite_sign(sign: Sign) -> Sign {
-    match sign {
-        Sign::Negative => Sign::Positive,
-        Sign::Positive => Sign::Negative,
-        Sign::Zero => Sign::Zero,
-    }
 }
 
 fn real_sign(value: &Real) -> Option<Sign> {
