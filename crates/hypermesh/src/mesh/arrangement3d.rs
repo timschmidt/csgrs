@@ -279,26 +279,25 @@ impl LowerDimensionalArtifactBuildIndex {
             return self
                 .unkeyed_by_bucket
                 .get(&bucket)
-                .is_some_and(|candidates| artifact_matches_any(artifact, artifacts, candidates));
+                .is_some_and(|candidates| {
+                    candidates
+                        .iter()
+                        .any(|&candidate| artifact == &artifacts[candidate])
+                });
         }
-        self.keyed_by_bucket
+        self.keyed_by_bucket.get(&bucket).is_some_and(|candidates| {
+            candidates
+                .iter()
+                .any(|&candidate| artifact == &artifacts[candidate])
+        }) || self
+            .unkeyed_by_bucket
             .get(&bucket)
-            .is_some_and(|candidates| artifact_matches_any(artifact, artifacts, candidates))
-            || self
-                .unkeyed_by_bucket
-                .get(&bucket)
-                .is_some_and(|candidates| artifact_matches_any(artifact, artifacts, candidates))
+            .is_some_and(|candidates| {
+                candidates
+                    .iter()
+                    .any(|&candidate| artifact == &artifacts[candidate])
+            })
     }
-}
-
-fn artifact_matches_any(
-    artifact: &ArrangementLowerDimensionalArtifact,
-    artifacts: &[ArrangementLowerDimensionalArtifact],
-    candidates: &[usize],
-) -> bool {
-    candidates
-        .iter()
-        .any(|&candidate| artifact == &artifacts[candidate])
 }
 
 /// Validate retained lower-dimensional contact evidence.
@@ -2663,7 +2662,7 @@ fn lower_dimensional_artifacts(
                 left,
                 right,
             ) {
-                push_lower_dimensional_artifact(&mut artifacts, &mut artifact_index, artifact);
+                artifact_index.push_unique(&mut artifacts, artifact);
                 continue;
             }
             if let Some(artifact) = non_coplanar_point_contact_artifact(
@@ -2673,7 +2672,7 @@ fn lower_dimensional_artifacts(
                 left,
                 right,
             ) {
-                push_lower_dimensional_artifact(&mut artifacts, &mut artifact_index, artifact);
+                artifact_index.push_unique(&mut artifacts, artifact);
             }
         }
     }
@@ -2700,9 +2699,8 @@ fn lower_dimensional_artifacts(
             }
             for edge_split in &split_graph.edge_splits {
                 for split_point in &edge_split.points {
-                    push_lower_dimensional_artifact(
+                    artifact_index.push_unique(
                         &mut artifacts,
-                        &mut artifact_index,
                         ArrangementLowerDimensionalArtifact::PointContact {
                             left_face: split_graph.left_face,
                             right_face: split_graph.right_face,
@@ -2711,9 +2709,8 @@ fn lower_dimensional_artifacts(
                     );
                 }
                 if let Some(interval) = &edge_split.interval {
-                    push_lower_dimensional_artifact(
+                    artifact_index.push_unique(
                         &mut artifacts,
-                        &mut artifact_index,
                         ArrangementLowerDimensionalArtifact::EdgeContact {
                             left_face: split_graph.left_face,
                             right_face: split_graph.right_face,
@@ -2728,9 +2725,8 @@ fn lower_dimensional_artifacts(
             for vertex_overlap in &split_graph.vertex_overlaps {
                 let mesh = vertex_overlap.vertex_side.mesh(left, right);
                 if let Some(point) = mesh.vertices().get(vertex_overlap.vertex) {
-                    push_lower_dimensional_artifact(
+                    artifact_index.push_unique(
                         &mut artifacts,
-                        &mut artifact_index,
                         ArrangementLowerDimensionalArtifact::PointContact {
                             left_face: split_graph.left_face,
                             right_face: split_graph.right_face,
@@ -2959,14 +2955,6 @@ fn compare_point3_on_axis(
     } else {
         Some(order.reverse())
     }
-}
-
-fn push_lower_dimensional_artifact(
-    artifacts: &mut Vec<ArrangementLowerDimensionalArtifact>,
-    artifact_index: &mut LowerDimensionalArtifactBuildIndex,
-    artifact: ArrangementLowerDimensionalArtifact,
-) {
-    artifact_index.push_unique(artifacts, artifact);
 }
 
 fn append_carrier_plane_overlay_face_cells(
