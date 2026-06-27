@@ -889,21 +889,17 @@ fn lift_projected_point_to_carrier(
     let det = ux.clone() * &vy - &(uy.clone() * &vx);
     let a = ((wx.clone() * &vy - &(wy.clone() * &vx)) / &det).ok()?;
     let b = ((ux * &wy - &(uy * &wx)) / &det).ok()?;
-    let p1 = vector_between(&carrier[0], &carrier[1]);
-    let p2 = vector_between(&carrier[0], &carrier[2]);
+    let p1x = carrier[1].x.clone() - &carrier[0].x;
+    let p1y = carrier[1].y.clone() - &carrier[0].y;
+    let p1z = carrier[1].z.clone() - &carrier[0].z;
+    let p2x = carrier[2].x.clone() - &carrier[0].x;
+    let p2y = carrier[2].y.clone() - &carrier[0].y;
+    let p2z = carrier[2].z.clone() - &carrier[0].z;
     Some(Point3::new(
-        carrier[0].x.clone() + &(p1.x * &a) + &(p2.x * &b),
-        carrier[0].y.clone() + &(p1.y * &a) + &(p2.y * &b),
-        carrier[0].z.clone() + &(p1.z * &a) + &(p2.z * &b),
+        carrier[0].x.clone() + &(p1x * &a) + &(p2x * &b),
+        carrier[0].y.clone() + &(p1y * &a) + &(p2y * &b),
+        carrier[0].z.clone() + &(p1z * &a) + &(p2z * &b),
     ))
-}
-
-fn vector_between(from: &Point3, to: &Point3) -> Point3 {
-    Point3::new(
-        to.x.clone() - &from.x,
-        to.y.clone() - &from.y,
-        to.z.clone() - &from.z,
-    )
 }
 
 fn choose_polygon_projection(points: &[Point3]) -> Option<CoplanarProjection> {
