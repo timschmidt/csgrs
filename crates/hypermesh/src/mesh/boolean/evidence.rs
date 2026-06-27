@@ -5367,10 +5367,14 @@ fn triangulated_cell_projected_area2_abs(
         .iter()
         .map(|&vertex| triangulation.boundary.get(vertex).map(boundary_node_point))
         .collect::<Option<Vec<_>>>()?;
-    real_abs(&projected_polygon_area2_value(
+    let area = projected_polygon_area2_value(
         &[points[0].clone(), points[1].clone(), points[2].clone()],
         triangulation.projection,
-    ))
+    );
+    match compare_reals(&area, &Real::from(0)).value()? {
+        Ordering::Less => Some(-area),
+        Ordering::Equal | Ordering::Greater => Some(area),
+    }
 }
 
 fn output_triangle_projected_area2_abs(
@@ -5383,16 +5387,13 @@ fn output_triangle_projected_area2_abs(
         .iter()
         .map(|&vertex| assembly.vertices.get(vertex).map(|vertex| &vertex.point))
         .collect::<Option<Vec<_>>>()?;
-    real_abs(&projected_polygon_area2_value(
+    let area = projected_polygon_area2_value(
         &[points[0].clone(), points[1].clone(), points[2].clone()],
         triangulation.projection,
-    ))
-}
-
-fn real_abs(value: &Real) -> Option<Real> {
-    match compare_reals(value, &Real::from(0)).value()? {
-        Ordering::Less => Some(-value.clone()),
-        Ordering::Equal | Ordering::Greater => Some(value.clone()),
+    );
+    match compare_reals(&area, &Real::from(0)).value()? {
+        Ordering::Less => Some(-area),
+        Ordering::Equal | Ordering::Greater => Some(area),
     }
 }
 
