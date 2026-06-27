@@ -2078,10 +2078,32 @@ fn arrangement_edges(
     if let Some(topology) = topology {
         for chain in &topology.edge_chains {
             for pair in chain.nodes.windows(2) {
-                let Some(left) = arrangement_node_index(&pair[0], &vertex_index) else {
+                let Some(left) = vertex_index.get_provenance(&match pair[0] {
+                    SplitEdgeNode::OriginalVertex {
+                        side,
+                        vertex: index,
+                    } => ArrangementVertexProvenance::SourceVertex {
+                        side,
+                        vertex: index,
+                    },
+                    SplitEdgeNode::GraphVertex { graph_vertex } => {
+                        ArrangementVertexProvenance::GraphIntersection { graph_vertex }
+                    }
+                }) else {
                     continue;
                 };
-                let Some(right) = arrangement_node_index(&pair[1], &vertex_index) else {
+                let Some(right) = vertex_index.get_provenance(&match pair[1] {
+                    SplitEdgeNode::OriginalVertex {
+                        side,
+                        vertex: index,
+                    } => ArrangementVertexProvenance::SourceVertex {
+                        side,
+                        vertex: index,
+                    },
+                    SplitEdgeNode::GraphVertex { graph_vertex } => {
+                        ArrangementVertexProvenance::GraphIntersection { graph_vertex }
+                    }
+                }) else {
                     continue;
                 };
                 push_arrangement_edge(
@@ -2099,22 +2121,20 @@ fn arrangement_edges(
     }
     for (overlay_index, overlay) in carrier_plane_overlays.iter().enumerate() {
         for (edge_index, edge) in overlay.overlay.arrangement.edges.iter().enumerate() {
-            let Some(left) = arrangement_vertex_index_by_provenance(
-                &vertex_index,
-                &ArrangementVertexProvenance::CarrierPlaneVertex {
+            let Some(left) =
+                vertex_index.get_provenance(&ArrangementVertexProvenance::CarrierPlaneVertex {
                     overlay: overlay_index,
                     vertex: edge.vertices[0],
-                },
-            ) else {
+                })
+            else {
                 continue;
             };
-            let Some(right) = arrangement_vertex_index_by_provenance(
-                &vertex_index,
-                &ArrangementVertexProvenance::CarrierPlaneVertex {
+            let Some(right) =
+                vertex_index.get_provenance(&ArrangementVertexProvenance::CarrierPlaneVertex {
                     overlay: overlay_index,
                     vertex: edge.vertices[1],
-                },
-            ) else {
+                })
+            else {
                 continue;
             };
             push_arrangement_edge(
@@ -2131,22 +2151,20 @@ fn arrangement_edges(
     }
     for (arrangement_index, arrangement) in face_plane_arrangements.iter().enumerate() {
         for (edge_index, edge) in arrangement.arrangement.edges.iter().enumerate() {
-            let Some(left) = arrangement_vertex_index_by_provenance(
-                &vertex_index,
-                &ArrangementVertexProvenance::FacePlaneVertex {
+            let Some(left) =
+                vertex_index.get_provenance(&ArrangementVertexProvenance::FacePlaneVertex {
                     arrangement: arrangement_index,
                     vertex: edge.vertices[0],
-                },
-            ) else {
+                })
+            else {
                 continue;
             };
-            let Some(right) = arrangement_vertex_index_by_provenance(
-                &vertex_index,
-                &ArrangementVertexProvenance::FacePlaneVertex {
+            let Some(right) =
+                vertex_index.get_provenance(&ArrangementVertexProvenance::FacePlaneVertex {
                     arrangement: arrangement_index,
                     vertex: edge.vertices[1],
-                },
-            ) else {
+                })
+            else {
                 continue;
             };
             push_arrangement_edge(
@@ -2217,30 +2235,6 @@ impl ArrangementVertexProvenanceIndex {
             .get(&arrangement_vertex_provenance_key(provenance))
             .copied()
     }
-
-    fn get_key(&self, key: ArrangementVertexProvenanceKey) -> Option<usize> {
-        self.by_provenance.get(&key).copied()
-    }
-}
-
-fn arrangement_vertex_index_by_provenance(
-    index: &ArrangementVertexProvenanceIndex,
-    provenance: &ArrangementVertexProvenance,
-) -> Option<usize> {
-    index.get_provenance(provenance)
-}
-
-fn arrangement_node_index(
-    node: &SplitEdgeNode,
-    index: &ArrangementVertexProvenanceIndex,
-) -> Option<usize> {
-    index.get_key(match node {
-        SplitEdgeNode::OriginalVertex {
-            side,
-            vertex: index,
-        } => (0, side_key(*side), *index),
-        SplitEdgeNode::GraphVertex { graph_vertex } => (1, 0, *graph_vertex),
-    })
 }
 
 fn arrangement_vertex_provenance_key(
