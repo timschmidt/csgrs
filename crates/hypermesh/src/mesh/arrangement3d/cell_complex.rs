@@ -959,7 +959,16 @@ impl ExactSelectedCellComplex {
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
         let replay =
             select_arrangement_for_replay(arrangement, left, right, self.operation, policy)?;
-        if selected_cell_complex_matches_replay(self, &replay) {
+        if self == &replay {
+            return Ok(());
+        }
+        if self.topology_assembly_report.is_some() || self.region_ownership_report.is_some() {
+            return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
+        }
+        let mut replay_without_gate_reports = replay;
+        replay_without_gate_reports.topology_assembly_report = None;
+        replay_without_gate_reports.region_ownership_report = None;
+        if self == &replay_without_gate_reports {
             Ok(())
         } else {
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
@@ -1011,23 +1020,6 @@ pub(crate) fn select_arrangement_for_replay(
     }?
     .with_gate_reports(topology_report, ownership_report);
     Ok(selected)
-}
-
-#[cfg(test)]
-fn selected_cell_complex_matches_replay(
-    retained: &ExactSelectedCellComplex,
-    replay: &ExactSelectedCellComplex,
-) -> bool {
-    if retained == replay {
-        return true;
-    }
-    if retained.topology_assembly_report.is_some() || retained.region_ownership_report.is_some() {
-        return false;
-    }
-    let mut replay_without_gate_reports = replay.clone();
-    replay_without_gate_reports.topology_assembly_report = None;
-    replay_without_gate_reports.region_ownership_report = None;
-    retained == &replay_without_gate_reports
 }
 
 pub(crate) fn validate_selected_gate_reports(
