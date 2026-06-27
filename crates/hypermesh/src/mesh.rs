@@ -49,10 +49,6 @@ pub(crate) fn triangle_edges_tuple(triangle: [usize; 3]) -> [(usize, usize); 3] 
     ]
 }
 
-pub(crate) fn triangle_tuple_edges(triangle: Triangle) -> [(usize, usize); 3] {
-    triangle_edges_tuple(triangle.0)
-}
-
 pub(crate) fn sorted_edge(edge: [usize; 2]) -> [usize; 2] {
     if edge[0] < edge[1] {
         edge

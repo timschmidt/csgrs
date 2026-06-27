@@ -31,7 +31,7 @@ use super::super::graph::{
     build_validated_intersection_graph,
 };
 use super::super::validation::ExactMeshValidationPolicy;
-use super::super::{ExactMesh, ExactMeshValidationError, Triangle, triangle_tuple_edges};
+use super::super::{ExactMesh, ExactMeshValidationError, Triangle, triangle_edges_tuple};
 use super::winding::classify_mesh_vertices_against_closed_mesh_winding_report;
 use super::{coplanar_mesh_overlay_carrier, materialize_coplanar_mesh_overlay_mesh};
 use hyperlimit::SourceProvenance;
@@ -747,8 +747,8 @@ impl PairUnionFind {
 }
 
 fn triangles_share_edge(left: Triangle, right: Triangle) -> bool {
-    triangle_tuple_edges(left).iter().any(|left| {
-        triangle_tuple_edges(right)
+    triangle_edges_tuple(left.0).iter().any(|left| {
+        triangle_edges_tuple(right.0)
             .iter()
             .any(|right| left == right)
     })
