@@ -2141,14 +2141,45 @@ fn graph_vertex_plan(split_plan: &ExactEdgeSplitPlan) -> ExactGraphVertexPlan {
             };
 
             let point_key = exact_point3_key(&point.point);
-            let matched = find_matching_graph_vertex(
-                &point.point,
-                point_key.as_ref(),
-                &vertices,
-                &point_key_buckets,
-                &unkeyed_vertices,
-                &mut unresolved_equalities,
-            );
+            let matched = 'matching_vertex: {
+                if let Some(key) = point_key.as_ref() {
+                    if let Some(bucket) = point_key_buckets.get(key) {
+                        for &index in bucket {
+                            match points_equal(&point.point, &vertices[index].point) {
+                                Some(true) => break 'matching_vertex Some(index),
+                                Some(false) => {}
+                                None => unresolved_equalities += 1,
+                            }
+                        }
+                    }
+                    for &index in &unkeyed_vertices {
+                        match points_equal(&point.point, &vertices[index].point) {
+                            Some(true) => break 'matching_vertex Some(index),
+                            Some(false) => {}
+                            None => unresolved_equalities += 1,
+                        }
+                    }
+                    None
+                } else {
+                    for bucket in point_key_buckets.values() {
+                        for &index in bucket {
+                            match points_equal(&point.point, &vertices[index].point) {
+                                Some(true) => break 'matching_vertex Some(index),
+                                Some(false) => {}
+                                None => unresolved_equalities += 1,
+                            }
+                        }
+                    }
+                    for &index in &unkeyed_vertices {
+                        match points_equal(&point.point, &vertices[index].point) {
+                            Some(true) => break 'matching_vertex Some(index),
+                            Some(false) => {}
+                            None => unresolved_equalities += 1,
+                        }
+                    }
+                    None
+                }
+            };
 
             if let Some(index) = matched {
                 vertices[index].uses.push(vertex_use);
@@ -2171,58 +2202,6 @@ fn graph_vertex_plan(split_plan: &ExactEdgeSplitPlan) -> ExactGraphVertexPlan {
         vertices,
         unresolved_equalities,
     }
-}
-
-fn find_matching_graph_vertex(
-    point: &Point3,
-    point_key: Option<&ExactPoint3Key>,
-    vertices: &[ExactGraphVertex],
-    point_key_buckets: &BTreeMap<ExactPoint3Key, Vec<usize>>,
-    unkeyed_vertices: &[usize],
-    unresolved_equalities: &mut usize,
-) -> Option<usize> {
-    if let Some(key) = point_key {
-        if let Some(bucket) = point_key_buckets.get(key)
-            && let Some(index) = find_matching_graph_vertex_in_indices(
-                point,
-                vertices,
-                bucket,
-                unresolved_equalities,
-            )
-        {
-            return Some(index);
-        }
-        return find_matching_graph_vertex_in_indices(
-            point,
-            vertices,
-            unkeyed_vertices,
-            unresolved_equalities,
-        );
-    }
-    for bucket in point_key_buckets.values() {
-        if let Some(index) =
-            find_matching_graph_vertex_in_indices(point, vertices, bucket, unresolved_equalities)
-        {
-            return Some(index);
-        }
-    }
-    find_matching_graph_vertex_in_indices(point, vertices, unkeyed_vertices, unresolved_equalities)
-}
-
-fn find_matching_graph_vertex_in_indices(
-    point: &Point3,
-    vertices: &[ExactGraphVertex],
-    candidates: &[usize],
-    unresolved_equalities: &mut usize,
-) -> Option<usize> {
-    for &index in candidates {
-        match points_equal(point, &vertices[index].point) {
-            Some(true) => return Some(index),
-            Some(false) => {}
-            None => *unresolved_equalities += 1,
-        }
-    }
-    None
 }
 
 fn push_graph_vertex_source_use_blockers(
