@@ -329,20 +329,22 @@ fn exact_boolean_evaluation_for_replay_result_with_materialization(
     } else {
         None
     };
-    ExactBooleanEvaluation::from_parts_with_missing_result_policy(
+    let evaluation = ExactBooleanEvaluation {
         request,
         preflight,
         certifications,
         result,
-        !materialize_result,
-    )
-    .map_err(|error| {
-        retained_evidence_validation_error(
-            RETAINED_EVIDENCE_REPLAY_CONTEXT,
-            error,
-            ExactMeshBlockerKind::StaleFactReplay,
-        )
-    })
+    };
+    evaluation
+        .validate_with_missing_result_policy(!materialize_result)
+        .map_err(|error| {
+            retained_evidence_validation_error(
+                RETAINED_EVIDENCE_REPLAY_CONTEXT,
+                error,
+                ExactMeshBlockerKind::StaleFactReplay,
+            )
+        })?;
+    Ok(evaluation)
 }
 
 #[cfg(test)]

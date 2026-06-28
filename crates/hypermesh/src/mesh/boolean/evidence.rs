@@ -4020,7 +4020,7 @@ impl ExactBooleanCertificationSet {
 #[cfg(test)]
 pub(crate) struct ExactBooleanEvaluation {
     /// Request policy evaluated.
-    request: ExactBooleanRequest,
+    pub(super) request: ExactBooleanRequest,
     /// Exact preflight/scheduling result.
     pub(super) preflight: ExactBooleanPreflight,
     /// Replayable exact certification reports for the request.
@@ -4034,23 +4034,6 @@ pub(crate) struct ExactBooleanEvaluation {
 
 #[cfg(test)]
 impl ExactBooleanEvaluation {
-    pub(crate) fn from_parts_with_missing_result_policy(
-        request: ExactBooleanRequest,
-        preflight: ExactBooleanPreflight,
-        certifications: ExactBooleanCertificationSet,
-        result: Option<ExactBooleanResult>,
-        allow_missing_materialized_result: bool,
-    ) -> Result<Self, ExactEvidenceValidationError> {
-        let evaluation = Self {
-            request,
-            preflight,
-            certifications,
-            result,
-        };
-        evaluation.validate_with_missing_result_policy(allow_missing_materialized_result)?;
-        Ok(evaluation)
-    }
-
     pub(crate) fn validate_with_missing_result_policy(
         &self,
         allow_missing_materialized_result: bool,
