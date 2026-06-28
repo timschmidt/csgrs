@@ -470,8 +470,22 @@ impl<'a> PreparedMeshBounds<'a> {
         let mut best = None::<SweepPlanEstimate>;
         for direction in directions {
             for axis in Axis::ALL {
-                let Some(estimate) = self.estimate_sweep_plan(other, axis, direction) else {
+                let (driver, target) = match direction {
+                    SweepDirection::LeftDriven => (self, other),
+                    SweepDirection::RightDriven => (other, self),
+                };
+                if driver.min_axis_order(axis).is_none() {
                     continue;
+                }
+                let Some(axis_estimate) = driver.axis_interval_overlap_estimate(target, axis)
+                else {
+                    continue;
+                };
+                let estimate = SweepPlanEstimate {
+                    plan: SweepPlan { axis, direction },
+                    axis_pair_count: axis_estimate.pair_count,
+                    driver_face_count: driver.bounds.faces.len(),
+                    active_face_capacity_hint: axis_estimate.max_target_active,
                 };
                 if best.is_none_or(|best| estimate.is_better_than(best)) {
                     best = Some(estimate);
@@ -482,26 +496,6 @@ impl<'a> PreparedMeshBounds<'a> {
             }
         }
         best
-    }
-
-    fn estimate_sweep_plan(
-        &self,
-        other: &PreparedMeshBounds<'_>,
-        axis: Axis,
-        direction: SweepDirection,
-    ) -> Option<SweepPlanEstimate> {
-        let (driver, target) = match direction {
-            SweepDirection::LeftDriven => (self, other),
-            SweepDirection::RightDriven => (other, self),
-        };
-        driver.min_axis_order(axis)?;
-        let estimate = driver.axis_interval_overlap_estimate(target, axis)?;
-        Some(SweepPlanEstimate {
-            plan: SweepPlan { axis, direction },
-            axis_pair_count: estimate.pair_count,
-            driver_face_count: driver.bounds.faces.len(),
-            active_face_capacity_hint: estimate.max_target_active,
-        })
     }
 
     fn axis_interval_overlap_estimate(
