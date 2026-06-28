@@ -1492,65 +1492,55 @@ fn append_subdivided_source_boundary_constraints(
         let mut chain = Vec::new();
         for (index, point) in vertices.iter().enumerate() {
             if point_on_closed_segment(point, &vertices[start], &vertices[end])? {
-                let parameter = segment_parameter(point, &vertices[start], &vertices[end])?;
+                let zero = Real::from(0);
+                let dx = sub_real(&vertices[end].x, &vertices[start].x);
+                let parameter = if compare_ordering(&dx, &zero, "face-cell boundary dx")?
+                    != Ordering::Equal
+                {
+                    div_real(
+                        sub_real(&point.x, &vertices[start].x),
+                        &dx,
+                        "face-cell boundary x parameter denominator is zero",
+                    )?
+                } else {
+                    let dy = sub_real(&vertices[end].y, &vertices[start].y);
+                    if compare_ordering(&dy, &zero, "face-cell boundary dy")? == Ordering::Equal {
+                        return Err(hypertri::Error::InvalidInput {
+                            reason: "face-cell source boundary has duplicate projected endpoints",
+                        });
+                    }
+                    div_real(
+                        sub_real(&point.y, &vertices[start].y),
+                        &dy,
+                        "face-cell boundary y parameter denominator is zero",
+                    )?
+                };
                 chain.push((index, parameter));
             }
         }
-        sort_boundary_chain(&mut chain)?;
-        for pair in chain.windows(2) {
+        let mut ordered = Vec::<(usize, Real)>::with_capacity(chain.len());
+        for candidate in chain {
+            let mut insert_at = ordered.len();
+            for (index, (_, parameter)) in ordered.iter().enumerate() {
+                match compare_ordering(
+                    &candidate.1,
+                    parameter,
+                    "face-cell boundary parameter ordering",
+                )? {
+                    Ordering::Less => {
+                        insert_at = index;
+                        break;
+                    }
+                    Ordering::Equal | Ordering::Greater => {}
+                }
+            }
+            ordered.insert(insert_at, candidate);
+        }
+        for pair in ordered.windows(2) {
             push_constraint(constraints, unique, pair[0].0, pair[1].0);
         }
     }
     Ok(())
-}
-
-fn sort_boundary_chain(chain: &mut Vec<(usize, Real)>) -> hypertri::Result<()> {
-    let mut ordered = Vec::<(usize, Real)>::with_capacity(chain.len());
-    for candidate in chain.drain(..) {
-        let mut insert_at = ordered.len();
-        for (index, (_, parameter)) in ordered.iter().enumerate() {
-            match compare_ordering(
-                &candidate.1,
-                parameter,
-                "face-cell boundary parameter ordering",
-            )? {
-                Ordering::Less => {
-                    insert_at = index;
-                    break;
-                }
-                Ordering::Equal | Ordering::Greater => {}
-            }
-        }
-        ordered.insert(insert_at, candidate);
-    }
-    *chain = ordered;
-    Ok(())
-}
-
-fn segment_parameter(
-    point: &hypertri::ExactPoint,
-    start: &hypertri::ExactPoint,
-    end: &hypertri::ExactPoint,
-) -> hypertri::Result<Real> {
-    let dx = sub_real(&end.x, &start.x);
-    if compare_ordering(&dx, &Real::from(0), "face-cell boundary dx")? != Ordering::Equal {
-        return div_real(
-            sub_real(&point.x, &start.x),
-            &dx,
-            "face-cell boundary x parameter denominator is zero",
-        );
-    }
-    let dy = sub_real(&end.y, &start.y);
-    if compare_ordering(&dy, &Real::from(0), "face-cell boundary dy")? != Ordering::Equal {
-        return div_real(
-            sub_real(&point.y, &start.y),
-            &dy,
-            "face-cell boundary y parameter denominator is zero",
-        );
-    }
-    Err(hypertri::Error::InvalidInput {
-        reason: "face-cell source boundary has duplicate projected endpoints",
-    })
 }
 
 fn point_lies_in_face_pair_overlap(
