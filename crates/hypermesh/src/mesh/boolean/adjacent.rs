@@ -22,7 +22,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::super::graph::intersection::MeshFacePairRelation;
-use super::super::graph::{ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide};
+use super::super::graph::{ExactIntersectionGraph, FacePairEvents, IntersectionEvent};
 use super::super::validation::ExactMeshValidationPolicy;
 use super::super::{ExactMesh, ExactMeshValidationError, Triangle};
 use super::winding::classify_mesh_vertices_against_closed_mesh_winding_report;
@@ -220,46 +220,6 @@ impl FullFaceAdjacencyCertificate {
     }
 }
 
-fn shared_face_pair(certificate: &FullFaceAdjacencyCertificate, pair: &FacePairEvents) -> bool {
-    certificate
-        .shared_faces
-        .iter()
-        .any(|shared| shared.left_face == pair.left_face && shared.right_face == pair.right_face)
-        || certificate.shared_patches.iter().any(|patch| {
-            patch.left_faces.contains(&pair.left_face)
-                && patch.right_faces.contains(&pair.right_face)
-        })
-}
-
-fn face_consumed_by_certificate(
-    certificate: &FullFaceAdjacencyCertificate,
-    side: MeshSide,
-    face: usize,
-) -> bool {
-    match side {
-        MeshSide::Left => {
-            certificate
-                .shared_faces
-                .iter()
-                .any(|shared| shared.left_face == face)
-                || certificate
-                    .shared_patches
-                    .iter()
-                    .any(|patch| patch.left_faces.contains(&face))
-        }
-        MeshSide::Right => {
-            certificate
-                .shared_faces
-                .iter()
-                .any(|shared| shared.right_face == face)
-                || certificate
-                    .shared_patches
-                    .iter()
-                    .any(|patch| patch.right_faces.contains(&face))
-        }
-    }
-}
-
 fn consumed_boundary_candidate_event(event: &IntersectionEvent) -> bool {
     match event {
         IntersectionEvent::SegmentPlane { relation, .. } => matches!(
@@ -300,15 +260,36 @@ fn adjacency_contact_pair(
     pair: &FacePairEvents,
     certificate: &FullFaceAdjacencyCertificate,
 ) -> Result<bool, ExactMeshError> {
-    if shared_face_pair(certificate, pair) {
+    if certificate
+        .shared_faces
+        .iter()
+        .any(|shared| shared.left_face == pair.left_face && shared.right_face == pair.right_face)
+        || certificate.shared_patches.iter().any(|patch| {
+            patch.left_faces.contains(&pair.left_face)
+                && patch.right_faces.contains(&pair.right_face)
+        })
+    {
         return Ok(matches!(
             pair.relation,
             MeshFacePairRelation::CoplanarOverlapping | MeshFacePairRelation::CoplanarTouching
         ));
     }
-    let left_consumed = face_consumed_by_certificate(certificate, MeshSide::Left, pair.left_face);
-    let right_consumed =
-        face_consumed_by_certificate(certificate, MeshSide::Right, pair.right_face);
+    let left_consumed = certificate
+        .shared_faces
+        .iter()
+        .any(|shared| shared.left_face == pair.left_face)
+        || certificate
+            .shared_patches
+            .iter()
+            .any(|patch| patch.left_faces.contains(&pair.left_face));
+    let right_consumed = certificate
+        .shared_faces
+        .iter()
+        .any(|shared| shared.right_face == pair.right_face)
+        || certificate
+            .shared_patches
+            .iter()
+            .any(|patch| patch.right_faces.contains(&pair.right_face));
     if left_consumed && right_consumed {
         // A bounded source disk may replay partly as exact whole-face pairs and
         // partly as a polygon patch. Cross-record coplanar edge contacts are
