@@ -42,10 +42,11 @@ pub(crate) fn triangle_edges(triangle: [usize; 3]) -> [[usize; 2]; 3] {
 }
 
 pub(crate) fn triangle_edges_tuple(triangle: [usize; 3]) -> [(usize, usize); 3] {
+    let [a, b, c] = triangle;
     [
-        canonical_edge_tuple(triangle[0], triangle[1]),
-        canonical_edge_tuple(triangle[1], triangle[2]),
-        canonical_edge_tuple(triangle[2], triangle[0]),
+        if a < b { (a, b) } else { (b, a) },
+        if b < c { (b, c) } else { (c, b) },
+        if c < a { (c, a) } else { (a, c) },
     ]
 }
 
@@ -54,14 +55,6 @@ pub(crate) fn sorted_edge(edge: [usize; 2]) -> [usize; 2] {
         edge
     } else {
         [edge[1], edge[0]]
-    }
-}
-
-fn canonical_edge_tuple(left: usize, right: usize) -> (usize, usize) {
-    if left < right {
-        (left, right)
-    } else {
-        (right, left)
     }
 }
 
