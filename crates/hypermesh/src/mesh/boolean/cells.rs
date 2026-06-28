@@ -362,7 +362,7 @@ fn append_non_coplanar_face_cell_constraints(
         // overlaps. They are valid graph evidence, but they do not cut a
         // positive-area cell. Only proper segment/plane constructions become
         // topology constraints here; endpoint and coplanar contacts stay
-        // explicit graph facts for boundary policy.
+        // explicit graph facts for boundary-only contact blockers.
         let has_proper_crossing = pair.events.iter().any(|event| {
             matches!(
                 event,

@@ -1167,7 +1167,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                 retained_arrangement_attempt,
             )
         }
-        ExactBooleanSupport::RequiresBoundaryPolicy
+        ExactBooleanSupport::RequiresBoundaryOnlyContact
         | ExactBooleanSupport::RequiresPlanarArrangement
         | ExactBooleanSupport::RequiresCoplanarVolumetricCells
         | ExactBooleanSupport::RequiresCertifiedWinding
@@ -1838,7 +1838,7 @@ fn preflight_boolean_exact_request_from_graph_core(
     {
         return Ok(ExactBooleanPreflight::new(
             operation,
-            ExactBooleanSupport::RequiresBoundaryPolicy,
+            ExactBooleanSupport::RequiresBoundaryOnlyContact,
             boundary_report.graph_had_unknowns(),
             boundary_report.retained_face_pairs(),
             boundary_report.retained_events(),
@@ -1968,7 +1968,7 @@ fn preflight_boolean_exact_request_from_graph_core(
             coplanar_volumetric_evidence_if_required(graph, left, right),
         ));
     }
-    if support == ExactBooleanSupport::RequiresBoundaryPolicy {
+    if support == ExactBooleanSupport::RequiresBoundaryOnlyContact {
         return Ok(ExactBooleanPreflight::new(
             operation,
             support,
@@ -1977,7 +1977,7 @@ fn preflight_boolean_exact_request_from_graph_core(
             retained_events,
             0,
             Vec::new(),
-            Some(relation_counts.into_blocker(ExactBooleanBlockerKind::BoundaryPolicy)),
+            Some(relation_counts.into_blocker(ExactBooleanBlockerKind::BoundaryOnlyContact)),
             None,
             None,
         ));
@@ -2811,7 +2811,7 @@ fn unique_classified_region_count(classifications: &[FaceRegionPlaneClassificati
     unique.len()
 }
 
-fn graph_requires_boundary_policy(
+fn graph_requires_boundary_only_contact(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -4548,7 +4548,7 @@ fn adjacent_union_completion_report(
         ExactAdjacentUnionCompletionStatus::GraphUnresolved => ExactBooleanBlockerKind::Refinement,
         ExactAdjacentUnionCompletionStatus::CertifiedFullFace
         | ExactAdjacentUnionCompletionStatus::CertifiedContainedFace => {
-            ExactBooleanBlockerKind::BoundaryPolicy
+            ExactBooleanBlockerKind::BoundaryOnlyContact
         }
         _ => counts.inferred_kind(),
     };
@@ -7847,13 +7847,13 @@ fn arrangement_materialized_evidence_blocker_kind_and_evidence(
         .map(|evidence| evidence.obstacle())
     {
         Some(CoplanarVolumetricCellObstacle::BoundaryOnlyContact) => {
-            ExactBooleanBlockerKind::BoundaryPolicy
+            ExactBooleanBlockerKind::BoundaryOnlyContact
         }
         Some(obstacle) if obstacle.requires_coplanar_volumetric_cells() => {
             ExactBooleanBlockerKind::CoplanarVolumetricCells
         }
         _ if graph_has_only_boundary_contact_pairs(graph, left, right) => {
-            ExactBooleanBlockerKind::BoundaryPolicy
+            ExactBooleanBlockerKind::BoundaryOnlyContact
         }
         _ if graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right) => {
             ExactBooleanBlockerKind::CoplanarVolumetricCells
@@ -7949,14 +7949,14 @@ pub(crate) fn boundary_touching_report_from_graph(
     let counts = retained_graph_counts(graph);
     let status = if graph_had_unknowns {
         ExactBoundaryTouchingStatus::GraphUnknowns
-    } else if graph_requires_boundary_policy(graph, left, right)? {
+    } else if graph_requires_boundary_only_contact(graph, left, right)? {
         ExactBoundaryTouchingStatus::Certified
     } else {
         ExactBoundaryTouchingStatus::NotBoundaryOnly
     };
     let blocker_kind = match status {
         ExactBoundaryTouchingStatus::GraphUnknowns => ExactBooleanBlockerKind::Refinement,
-        ExactBoundaryTouchingStatus::Certified => ExactBooleanBlockerKind::BoundaryPolicy,
+        ExactBoundaryTouchingStatus::Certified => ExactBooleanBlockerKind::BoundaryOnlyContact,
         ExactBoundaryTouchingStatus::NotBoundaryOnly => counts.inferred_kind(),
     };
     Ok(ExactBoundaryTouchingReport::new(
@@ -8010,8 +8010,8 @@ fn planar_arrangement_report_from_graph_with_cell_complex_cache(
     .is_some()
     {
         ExactPlanarArrangementStatus::AlreadyMaterialized
-    } else if graph_requires_boundary_policy(graph, left, right)? {
-        ExactPlanarArrangementStatus::BoundaryPolicyRequired
+    } else if graph_requires_boundary_only_contact(graph, left, right)? {
+        ExactPlanarArrangementStatus::BoundaryOnlyContactRequired
     } else if requires_planar_arrangement
         && cached_certified_arrangement_cell_complex_preflight(
             arrangement_cell_complex_preflight,
@@ -8066,8 +8066,8 @@ fn planar_arrangement_report(
 ) -> ExactPlanarArrangementReport {
     let blocker_kind = match status {
         ExactPlanarArrangementStatus::GraphUnknowns => ExactBooleanBlockerKind::Refinement,
-        ExactPlanarArrangementStatus::BoundaryPolicyRequired => {
-            ExactBooleanBlockerKind::BoundaryPolicy
+        ExactPlanarArrangementStatus::BoundaryOnlyContactRequired => {
+            ExactBooleanBlockerKind::BoundaryOnlyContact
         }
         ExactPlanarArrangementStatus::Required => ExactBooleanBlockerKind::PlanarArrangement,
         ExactPlanarArrangementStatus::NotNamedOperation
@@ -8205,7 +8205,7 @@ fn winding_evidence_report_from_graph_with_facts(
             graph.event_count(),
             0,
             Vec::new(),
-            counts.into_blocker(ExactBooleanBlockerKind::BoundaryPolicy),
+            counts.into_blocker(ExactBooleanBlockerKind::BoundaryOnlyContact),
             None,
             Some(evidence),
         ));
@@ -8289,8 +8289,8 @@ fn winding_evidence_report_from_graph_with_facts(
     )? {
         return Ok(report);
     }
-    let boundary_policy_required = graph_requires_boundary_policy(graph, left, right)?;
-    if arrangement_cell_complex_shortcut_materializes && boundary_policy_required {
+    let boundary_only_contact_required = graph_requires_boundary_only_contact(graph, left, right)?;
+    if arrangement_cell_complex_shortcut_materializes && boundary_only_contact_required {
         return Ok(winding_evidence_report_with_validated_winding_blocker(
             operation,
             ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
@@ -8299,16 +8299,16 @@ fn winding_evidence_report_from_graph_with_facts(
             counts,
         ));
     }
-    if boundary_policy_required {
+    if boundary_only_contact_required {
         return Ok(winding_evidence_report(
             operation,
-            ExactWindingEvidenceStatus::BoundaryPolicyRequired,
+            ExactWindingEvidenceStatus::BoundaryOnlyContactRequired,
             graph_had_unknowns,
             graph.face_pairs.len(),
             graph.event_count(),
             0,
             Vec::new(),
-            counts.into_blocker(ExactBooleanBlockerKind::BoundaryPolicy),
+            counts.into_blocker(ExactBooleanBlockerKind::BoundaryOnlyContact),
             None,
             None,
         ));
@@ -8515,7 +8515,7 @@ fn closed_boundary_touching_winding_evidence_from_graph(
             graph.event_count(),
             0,
             Vec::new(),
-            counts.into_blocker(ExactBooleanBlockerKind::BoundaryPolicy),
+            counts.into_blocker(ExactBooleanBlockerKind::BoundaryOnlyContact),
             None,
             None,
         )));
@@ -8535,7 +8535,7 @@ fn closed_boundary_touching_winding_evidence_from_graph(
             graph.event_count(),
             0,
             Vec::new(),
-            counts.into_blocker(ExactBooleanBlockerKind::BoundaryPolicy),
+            counts.into_blocker(ExactBooleanBlockerKind::BoundaryOnlyContact),
             None,
             coplanar_boundary_only_evidence_if_consumed(graph, left, right)?,
         )));
@@ -8856,7 +8856,7 @@ fn volumetric_winding_region_plan_from_graph(
     {
         return Ok(None);
     }
-    if graph_requires_boundary_policy(graph, left, right)? {
+    if graph_requires_boundary_only_contact(graph, left, right)? {
         return Ok(None);
     }
 

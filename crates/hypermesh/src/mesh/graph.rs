@@ -1032,7 +1032,7 @@ impl ExactIntersectionGraph {
     ///
     /// The report first validates each retained overlap graph and its split
     /// construction records, then collapses them to counts that explain whether
-    /// a named operation is blocked on boundary policy or true planar-cell
+    /// a named operation is blocked on boundary-only contact or true planar-cell
     /// evidence is preserved and checked, while the missing cell extraction
     /// algorithm remains an explicit status rather than a tolerance fallback.
     pub(crate) fn coplanar_arrangement_evidence(

@@ -1120,11 +1120,11 @@ fn validate_adjacent_certified_boundary_blocker(
     retained_events: usize,
 ) -> Result<(), ExactEvidenceValidationError> {
     if retained_face_pairs == 0 && retained_events == 0 && !blocker_has_any_evidence(blocker) {
-        return (blocker.kind == ExactBooleanBlockerKind::BoundaryPolicy)
+        return (blocker.kind == ExactBooleanBlockerKind::BoundaryOnlyContact)
             .then_some(())
             .ok_or(ExactEvidenceValidationError::WrongBlockerKind);
     }
-    blocker.validate_for_kind(ExactBooleanBlockerKind::BoundaryPolicy)
+    blocker.validate_for_kind(ExactBooleanBlockerKind::BoundaryOnlyContact)
 }
 
 fn validate_refinement_partition(
@@ -1641,7 +1641,7 @@ impl ExactBooleanResult {
             ExactBooleanSupport::CertifiedConvexSeparated => {
                 ExactBooleanShortcutKind::ConvexSeparated
             }
-            ExactBooleanSupport::RequiresBoundaryPolicy
+            ExactBooleanSupport::RequiresBoundaryOnlyContact
             | ExactBooleanSupport::RequiresPlanarArrangement
             | ExactBooleanSupport::RequiresCoplanarVolumetricCells
             | ExactBooleanSupport::RequiresCertifiedWinding
@@ -3287,7 +3287,7 @@ impl ExactBooleanCertificationSet {
         if self.boundary_touching.is_certified()
             && matches!(
                 self.winding_evidence.status(),
-                ExactWindingEvidenceStatus::BoundaryPolicyRequired
+                ExactWindingEvidenceStatus::BoundaryOnlyContactRequired
             )
         {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
@@ -3938,10 +3938,10 @@ impl ExactBooleanCertificationSet {
                         && self.closed_winding_reports_match_containment())
                     || self.arrangement_attempt_matches_certified_preflight(preflight)
             }
-            ExactBooleanSupport::RequiresBoundaryPolicy => {
+            ExactBooleanSupport::RequiresBoundaryOnlyContact => {
                 self.boundary_touching.is_certified()
                     && self.winding_evidence.status()
-                        == ExactWindingEvidenceStatus::BoundaryPolicyRequired
+                        == ExactWindingEvidenceStatus::BoundaryOnlyContactRequired
                     && self.boundary_report_matches_preflight(preflight, true)
             }
             ExactBooleanSupport::RequiresPlanarArrangement => {
@@ -5396,11 +5396,11 @@ fn volumetric_cell_retention_for_operation(
         return VolumetricCellRetention::Drop;
     };
     // Boundary cells are exact non-strict facts, not inside/outside guesses.
-    // The executor consumes them through the deterministic owner policy
+    // The executor consumes them through deterministic owner selection
     // documented in `boolean::volumetric_retention_for_operation`: union and
     // intersection keep the left boundary copy and drop the coincident right
     // copy, while difference drops coincident boundary cells. This preserves
-    // the explicit boundary policy checked by retained evidence validation.
+    // the explicit boundary ownership checked by retained evidence validation.
     match (operation, triangulation.side, classification.relation()) {
         (ExactBooleanOperation::Union, _, ExactVolumetricRegionRelation::Outside)
         | (ExactBooleanOperation::Union, MeshSide::Left, ExactVolumetricRegionRelation::Boundary)
@@ -5580,7 +5580,7 @@ pub(crate) enum ExactBooleanSupport {
     /// boundary-only by exact winding evidence. A caller must choose a
     /// boundary/shared-feature policy before this can become named boolean
     /// output.
-    RequiresBoundaryPolicy,
+    RequiresBoundaryOnlyContact,
     /// Coplanar positive-area overlap is certified, but the requested named
     /// output needs planar arrangement materialization.
     RequiresPlanarArrangement,
@@ -6236,7 +6236,7 @@ impl ExactBooleanPreflight {
     /// Boundary-only named booleans are intentionally blocked until a caller
     /// chooses how to project lower-dimensional contact. Request-native replay
     /// preserves that complete choice instead of splitting validation and
-    /// boundary policy away from the operation they certify.
+    /// boundary-contact handling away from the operation they certify.
     #[cfg(test)]
     pub(crate) fn validate_against_sources_for_request(
         &self,
@@ -6466,7 +6466,7 @@ impl ExactBooleanPreflight {
                 }
                 checked_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactBooleanSupport::RequiresBoundaryPolicy => {
+            ExactBooleanSupport::RequiresBoundaryOnlyContact => {
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                 {
@@ -6474,12 +6474,12 @@ impl ExactBooleanPreflight {
                 }
                 blocker_kind(
                     self.blocker.as_ref(),
-                    ExactBooleanBlockerKind::BoundaryPolicy,
+                    ExactBooleanBlockerKind::BoundaryOnlyContact,
                 )?;
                 self.blocker
                     .as_ref()
                     .unwrap()
-                    .validate_for_kind(ExactBooleanBlockerKind::BoundaryPolicy)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::BoundaryOnlyContact)?;
                 validate_blocker_count_bounds(
                     self.blocker.as_ref().unwrap(),
                     self.retained_face_pairs,
@@ -6803,7 +6803,7 @@ impl ExactBooleanBlocker {
     ///
     /// This keeps executor reports and validation replay on the same
     /// provenance-count interpretation: refinement evidence outranks topology
-    /// policy, coplanar-only graphs route to planar cells or boundary policy,
+    /// requirements, coplanar-only graphs route to planar cells or boundary-only contact,
     /// mixed coplanar/non-coplanar graphs need volumetric coplanar handling, and
     /// remaining resolved non-coplanar graph state needs winding.
     pub(crate) fn inferred_kind(&self) -> ExactBooleanBlockerKind {
@@ -6813,7 +6813,7 @@ impl ExactBooleanBlocker {
             if self.candidate_pairs() == 0 && self.coplanar_overlapping_pairs > 0 {
                 ExactBooleanBlockerKind::PlanarArrangement
             } else if self.candidate_pairs() == 0 {
-                ExactBooleanBlockerKind::BoundaryPolicy
+                ExactBooleanBlockerKind::BoundaryOnlyContact
             } else {
                 ExactBooleanBlockerKind::CoplanarVolumetricCells
             }
@@ -6840,7 +6840,7 @@ impl ExactBooleanBlocker {
             ExactBooleanBlockerKind::Refinement => {
                 self.unknown_pairs > 0 || self.construction_failed_events > 0
             }
-            ExactBooleanBlockerKind::BoundaryPolicy => {
+            ExactBooleanBlockerKind::BoundaryOnlyContact => {
                 (self.candidate_pairs != 0
                     || self.coplanar_touching_pairs != 0
                     || self.coplanar_overlapping_pairs != 0)
@@ -6879,7 +6879,7 @@ pub(crate) enum ExactBooleanBlockerKind {
     /// Predicate or equality refinement is required before policy can run.
     Refinement,
     /// A lower-dimensional shared-boundary output policy is required.
-    BoundaryPolicy,
+    BoundaryOnlyContact,
     /// A planar arrangement output model is required for coplanar surfaces.
     PlanarArrangement,
     /// Coplanar source-face cells must be materialized before closed
@@ -7818,7 +7818,7 @@ impl ExactAdjacentUnionCompletionReport {
             }
             ExactAdjacentUnionCompletionStatus::CertifiedFullFace
             | ExactAdjacentUnionCompletionStatus::CertifiedContainedFace => {
-                ExactBooleanBlockerKind::BoundaryPolicy
+                ExactBooleanBlockerKind::BoundaryOnlyContact
             }
             _ => self.blocker.inferred_kind(),
         };
@@ -8056,7 +8056,7 @@ impl ExactBoundaryTouchingReport {
         }
         let expected_kind = match self.status {
             ExactBoundaryTouchingStatus::GraphUnknowns => ExactBooleanBlockerKind::Refinement,
-            ExactBoundaryTouchingStatus::Certified => ExactBooleanBlockerKind::BoundaryPolicy,
+            ExactBoundaryTouchingStatus::Certified => ExactBooleanBlockerKind::BoundaryOnlyContact,
             ExactBoundaryTouchingStatus::NotBoundaryOnly => {
                 let coplanar_pairs = self.blocker.coplanar_overlapping_pairs != 0
                     || self.blocker.coplanar_touching_pairs != 0;
@@ -8101,7 +8101,7 @@ impl ExactBoundaryTouchingReport {
         }
         if self.is_certified() {
             self.blocker
-                .validate_for_kind(ExactBooleanBlockerKind::BoundaryPolicy)?;
+                .validate_for_kind(ExactBooleanBlockerKind::BoundaryOnlyContact)?;
         }
         Ok(())
     }
@@ -8140,9 +8140,9 @@ pub(crate) enum ExactPlanarArrangementStatus {
     /// The exact graph does not consist solely of positive-area coplanar
     /// overlaps requiring planar arrangement output.
     NoPositiveOverlap,
-    /// Closed-solid coplanar contact was certified as a boundary-only policy
-    /// case before planar-cell output should be considered.
-    BoundaryPolicyRequired,
+    /// Closed-solid coplanar contact was certified as a boundary-only contact
+    /// blocker before planar-cell output should be considered.
+    BoundaryOnlyContactRequired,
     /// Certified positive-area coplanar overlap requires a planar arrangement
     /// output model before this named operation can be materialized.
     Required,
@@ -8254,8 +8254,8 @@ impl ExactPlanarArrangementReport {
         // policy. It is still blocked on predicate/construction refinement, a
         let expected_kind = match self.status {
             ExactPlanarArrangementStatus::GraphUnknowns => ExactBooleanBlockerKind::Refinement,
-            ExactPlanarArrangementStatus::BoundaryPolicyRequired => {
-                ExactBooleanBlockerKind::BoundaryPolicy
+            ExactPlanarArrangementStatus::BoundaryOnlyContactRequired => {
+                ExactBooleanBlockerKind::BoundaryOnlyContact
             }
             ExactPlanarArrangementStatus::Required => ExactBooleanBlockerKind::PlanarArrangement,
             ExactPlanarArrangementStatus::NotNamedOperation
@@ -8291,7 +8291,7 @@ impl ExactPlanarArrangementReport {
             ExactPlanarArrangementStatus::GraphUnknowns => {}
             ExactPlanarArrangementStatus::AlreadyMaterialized
             | ExactPlanarArrangementStatus::NoPositiveOverlap
-            | ExactPlanarArrangementStatus::BoundaryPolicyRequired => {
+            | ExactPlanarArrangementStatus::BoundaryOnlyContactRequired => {
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
                     return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
@@ -8330,7 +8330,7 @@ impl ExactPlanarArrangementReport {
             }
             ExactPlanarArrangementStatus::AlreadyMaterialized
             | ExactPlanarArrangementStatus::NoPositiveOverlap
-            | ExactPlanarArrangementStatus::BoundaryPolicyRequired => {
+            | ExactPlanarArrangementStatus::BoundaryOnlyContactRequired => {
                 let evidence = self
                     .coplanar_arrangement_evidence
                     .as_ref()
@@ -8360,10 +8360,10 @@ impl ExactPlanarArrangementReport {
                 .validate_for_kind(ExactBooleanBlockerKind::PlanarArrangement)?;
         } else if matches!(
             self.status,
-            ExactPlanarArrangementStatus::BoundaryPolicyRequired
+            ExactPlanarArrangementStatus::BoundaryOnlyContactRequired
         ) {
             self.blocker
-                .validate_for_kind(ExactBooleanBlockerKind::BoundaryPolicy)?;
+                .validate_for_kind(ExactBooleanBlockerKind::BoundaryOnlyContact)?;
         }
         Ok(())
     }
@@ -8400,7 +8400,7 @@ pub(crate) enum ExactWindingEvidenceStatus {
     GraphUnknowns,
     /// Retained graph pairs are boundary-only contacts and need boundary
     /// output policy rather than winding.
-    BoundaryPolicyRequired,
+    BoundaryOnlyContactRequired,
     /// Retained graph pairs are positive-area coplanar overlaps and need a
     /// planar arrangement output model rather than volumetric winding.
     PlanarArrangementRequired,
@@ -8724,7 +8724,7 @@ impl ExactWindingEvidenceReport {
                 )?;
                 no_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactWindingEvidenceStatus::BoundaryPolicyRequired => {
+            ExactWindingEvidenceStatus::BoundaryOnlyContactRequired => {
                 if self.coplanar_arrangement_evidence.is_some() {
                     return Err(
                         ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
@@ -8733,9 +8733,12 @@ impl ExactWindingEvidenceReport {
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
                     return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
-                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::BoundaryPolicy)?;
+                blocker_kind(
+                    Some(&self.blocker),
+                    ExactBooleanBlockerKind::BoundaryOnlyContact,
+                )?;
                 self.blocker
-                    .validate_for_kind(ExactBooleanBlockerKind::BoundaryPolicy)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::BoundaryOnlyContact)?;
                 validate_blocker_count_bounds(
                     &self.blocker,
                     self.retained_face_pairs,
@@ -8936,8 +8939,8 @@ impl ExactWindingEvidenceReport {
                     return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 let expected = match self.blocker.kind {
-                    ExactBooleanBlockerKind::BoundaryPolicy => {
-                        ExactBooleanBlockerKind::BoundaryPolicy
+                    ExactBooleanBlockerKind::BoundaryOnlyContact => {
+                        ExactBooleanBlockerKind::BoundaryOnlyContact
                     }
                     ExactBooleanBlockerKind::CoplanarVolumetricCells => {
                         ExactBooleanBlockerKind::CoplanarVolumetricCells
@@ -8965,7 +8968,7 @@ impl ExactWindingEvidenceReport {
                             ExactEvidenceValidationError::MissingCoplanarVolumetricEvidence,
                         );
                     }
-                    (ExactBooleanBlockerKind::BoundaryPolicy, Some(evidence)) => {
+                    (ExactBooleanBlockerKind::BoundaryOnlyContact, Some(evidence)) => {
                         validate_coplanar_volumetric_evidence_matches_blocker(
                             evidence,
                             &self.blocker,
@@ -8978,7 +8981,7 @@ impl ExactWindingEvidenceReport {
                             self.retained_events,
                         )?;
                     }
-                    (ExactBooleanBlockerKind::BoundaryPolicy, None)
+                    (ExactBooleanBlockerKind::BoundaryOnlyContact, None)
                     | (ExactBooleanBlockerKind::Winding, None) => {
                         validate_blocker_count_bounds(
                             &self.blocker,
@@ -9089,9 +9092,12 @@ impl ExactWindingEvidenceReport {
                 {
                     return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
-                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::BoundaryPolicy)?;
+                blocker_kind(
+                    Some(&self.blocker),
+                    ExactBooleanBlockerKind::BoundaryOnlyContact,
+                )?;
                 self.blocker
-                    .validate_for_kind(ExactBooleanBlockerKind::BoundaryPolicy)?;
+                    .validate_for_kind(ExactBooleanBlockerKind::BoundaryOnlyContact)?;
                 validate_blocker_count_bounds(
                     &self.blocker,
                     self.retained_face_pairs,
@@ -10105,7 +10111,7 @@ mod tests {
             retained_face_pairs: 2,
             retained_events: 2,
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::BoundaryPolicy,
+                kind: ExactBooleanBlockerKind::BoundaryOnlyContact,
                 candidate_pairs: 2,
                 coplanar_overlapping_pairs: 0,
                 coplanar_touching_pairs: 0,
@@ -10134,7 +10140,7 @@ mod tests {
             retained_face_pairs: 2,
             retained_events: 2,
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::BoundaryPolicy,
+                kind: ExactBooleanBlockerKind::BoundaryOnlyContact,
                 candidate_pairs: 2,
                 coplanar_overlapping_pairs: 0,
                 coplanar_touching_pairs: 0,
@@ -10370,14 +10376,14 @@ mod tests {
             Err(ExactEvidenceValidationError::MissingCoplanarArrangementEvidence)
         );
 
-        let mut boundary_policy = ExactPlanarArrangementReport {
+        let mut boundary_only_contact = ExactPlanarArrangementReport {
             operation: ExactBooleanOperation::Difference,
-            status: ExactPlanarArrangementStatus::BoundaryPolicyRequired,
+            status: ExactPlanarArrangementStatus::BoundaryOnlyContactRequired,
             graph_had_unknowns: false,
             retained_face_pairs: 1,
             retained_events: 1,
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::BoundaryPolicy,
+                kind: ExactBooleanBlockerKind::BoundaryOnlyContact,
                 candidate_pairs: 0,
                 coplanar_overlapping_pairs: 0,
                 coplanar_touching_pairs: 1,
@@ -10396,10 +10402,10 @@ mod tests {
                 interval_endpoint_count: 0,
             }),
         };
-        boundary_policy.validate().unwrap();
-        boundary_policy.coplanar_arrangement_evidence = None;
+        boundary_only_contact.validate().unwrap();
+        boundary_only_contact.coplanar_arrangement_evidence = None;
         assert_eq!(
-            boundary_policy.validate(),
+            boundary_only_contact.validate(),
             Err(ExactEvidenceValidationError::MissingCoplanarArrangementEvidence)
         );
     }
@@ -10481,7 +10487,7 @@ mod tests {
             region_count: 0,
             region_classifications: Vec::new(),
             blocker: ExactBooleanBlocker {
-                kind: ExactBooleanBlockerKind::BoundaryPolicy,
+                kind: ExactBooleanBlockerKind::BoundaryOnlyContact,
                 candidate_pairs: 0,
                 coplanar_overlapping_pairs: 1,
                 coplanar_touching_pairs: 0,

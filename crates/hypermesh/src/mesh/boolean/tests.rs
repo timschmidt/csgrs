@@ -802,7 +802,7 @@ fn selected_region_winding_evidence_classifies_retained_graph_blocker() {
 
     let relabeled_blocker = disjoint_evidence
         .blocker()
-        .into_blocker(ExactBooleanBlockerKind::BoundaryPolicy);
+        .into_blocker(ExactBooleanBlockerKind::BoundaryOnlyContact);
     let relabeled_empty = disjoint_evidence.with_blocker(relabeled_blocker);
     assert_eq!(
         relabeled_empty.validate(),
@@ -1693,7 +1693,7 @@ fn winding_evidence_status_partition_identifies_materialized_handoffs() {
     for status in [
         ExactWindingEvidenceStatus::NotNamedOperation,
         ExactWindingEvidenceStatus::GraphUnknowns,
-        ExactWindingEvidenceStatus::BoundaryPolicyRequired,
+        ExactWindingEvidenceStatus::BoundaryOnlyContactRequired,
         ExactWindingEvidenceStatus::PlanarArrangementRequired,
         ExactWindingEvidenceStatus::CoplanarVolumetricCellsRequired,
         ExactWindingEvidenceStatus::VolumetricAssemblyRequired,
@@ -1769,7 +1769,7 @@ fn winding_evidence_status_partition_identifies_materialized_handoffs() {
     for status in [
         ExactWindingEvidenceStatus::NotNamedOperation,
         ExactWindingEvidenceStatus::GraphUnknowns,
-        ExactWindingEvidenceStatus::BoundaryPolicyRequired,
+        ExactWindingEvidenceStatus::BoundaryOnlyContactRequired,
         ExactWindingEvidenceStatus::PlanarArrangementRequired,
         ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized,
         ExactWindingEvidenceStatus::CoplanarVolumetricCellsRequired,
@@ -3657,11 +3657,11 @@ fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
     );
     assert!(!test_boundary_touching_report(&left, &overlapping_right).is_certified());
     assert!(
-        graph_requires_boundary_policy(&graph, &left, &right).unwrap(),
+        graph_requires_boundary_only_contact(&graph, &left, &right).unwrap(),
         "certified boundary contact should remain retained blocker evidence"
     );
     assert!(
-        !graph_requires_boundary_policy(&graph, &left, &overlapping_right).unwrap(),
+        !graph_requires_boundary_only_contact(&graph, &left, &overlapping_right).unwrap(),
         "overlapping volume should not be classified as boundary-only policy evidence"
     );
 
@@ -4708,7 +4708,7 @@ fn arrangement_materialized_evidence_retains_boundary_only_evidence() {
     );
     assert_eq!(
         evidence.blocker().kind(),
-        ExactBooleanBlockerKind::BoundaryPolicy
+        ExactBooleanBlockerKind::BoundaryOnlyContact
     );
     let volumetric_evidence = evidence
         .coplanar_volumetric_evidence()
