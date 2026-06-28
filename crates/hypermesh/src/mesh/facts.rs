@@ -336,6 +336,29 @@ impl MeshValidationFacts {
     /// this method verifies that the structural bookkeeping has not drifted
     /// from those retained predicate outcomes.
     pub(crate) fn validate(&self) -> Result<(), MeshFactsValidationError> {
+        let expect_len = |field, expected, actual| {
+            if expected == actual {
+                Ok(())
+            } else {
+                Err(MeshFactsValidationError::SummaryLengthMismatch {
+                    field,
+                    expected,
+                    actual,
+                })
+            }
+        };
+        let expect_count = |field, expected, actual| {
+            if expected == actual {
+                Ok(())
+            } else {
+                Err(MeshFactsValidationError::SummaryCountMismatch {
+                    field,
+                    expected,
+                    actual,
+                })
+            }
+        };
+
         expect_len("vertex_count", self.vertices.len(), self.mesh.vertex_count)?;
         expect_len("edge_count", self.edges.len(), self.mesh.edge_count)?;
         expect_len("face_count", self.faces.len(), self.mesh.face_count)?;
@@ -582,38 +605,6 @@ impl MeshValidationFacts {
         } else {
             Err(MeshFactsValidationError::SourceReplayMismatch)
         }
-    }
-}
-
-fn expect_len(
-    field: &'static str,
-    expected: usize,
-    actual: usize,
-) -> Result<(), MeshFactsValidationError> {
-    if expected == actual {
-        Ok(())
-    } else {
-        Err(MeshFactsValidationError::SummaryLengthMismatch {
-            field,
-            expected,
-            actual,
-        })
-    }
-}
-
-fn expect_count(
-    field: &'static str,
-    expected: usize,
-    actual: usize,
-) -> Result<(), MeshFactsValidationError> {
-    if expected == actual {
-        Ok(())
-    } else {
-        Err(MeshFactsValidationError::SummaryCountMismatch {
-            field,
-            expected,
-            actual,
-        })
     }
 }
 
