@@ -885,7 +885,23 @@ fn sort_split_points(
     for point in points.drain(..) {
         let mut inserted = false;
         for index in 0..sorted.len() {
-            match compare_along_segment(segment, &point, &sorted[index]) {
+            let order = (|| {
+                if point2_equal(&point, &sorted[index]).value()? {
+                    return Some(Ordering::Equal);
+                }
+                let start = &segment.endpoints[0];
+                let end = &segment.endpoints[1];
+                match compare_reals(&start.x, &end.x).value()? {
+                    Ordering::Less => compare_reals(&point.x, &sorted[index].x).value(),
+                    Ordering::Greater => compare_reals(&sorted[index].x, &point.x).value(),
+                    Ordering::Equal => match compare_reals(&start.y, &end.y).value()? {
+                        Ordering::Less => compare_reals(&point.y, &sorted[index].y).value(),
+                        Ordering::Greater => compare_reals(&sorted[index].y, &point.y).value(),
+                        Ordering::Equal => Some(Ordering::Equal),
+                    },
+                }
+            })();
+            match order {
                 Some(Ordering::Less) => {
                     sorted.insert(index, point.clone());
                     inserted = true;
@@ -910,27 +926,6 @@ fn sort_split_points(
         }
     }
     *points = sorted;
-}
-
-fn compare_along_segment(
-    segment: &ExactArrangement2dInputSegment,
-    left: &Point2,
-    right: &Point2,
-) -> Option<Ordering> {
-    if point2_equal(left, right).value()? {
-        return Some(Ordering::Equal);
-    }
-    let start = &segment.endpoints[0];
-    let end = &segment.endpoints[1];
-    match compare_reals(&start.x, &end.x).value()? {
-        Ordering::Less => compare_reals(&left.x, &right.x).value(),
-        Ordering::Greater => compare_reals(&right.x, &left.x).value(),
-        Ordering::Equal => match compare_reals(&start.y, &end.y).value()? {
-            Ordering::Less => compare_reals(&left.y, &right.y).value(),
-            Ordering::Greater => compare_reals(&right.y, &left.y).value(),
-            Ordering::Equal => Some(Ordering::Equal),
-        },
-    }
 }
 
 fn canonical_edge_key(left: usize, right: usize) -> [usize; 2] {
