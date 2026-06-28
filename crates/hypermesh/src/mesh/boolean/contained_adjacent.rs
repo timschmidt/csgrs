@@ -793,7 +793,18 @@ fn append_triangle_with_existing_edge_splits(
         if mapped_triangle.contains(&candidate) {
             continue;
         }
-        if triangle_edge_contains_strict_point(triangle_points, point)? {
+        let mut lies_on_triangle_edge = false;
+        for edge in 0..3 {
+            if point_lies_strictly_on_segment3(
+                &triangle_points[edge],
+                &triangle_points[(edge + 1) % 3],
+                point,
+            )? {
+                lies_on_triangle_edge = true;
+                break;
+            }
+        }
+        if lies_on_triangle_edge {
             point_by_vertex.insert(candidate, point.clone());
             split_vertices.push(candidate);
         }
@@ -809,22 +820,6 @@ fn append_triangle_with_existing_edge_splits(
     }
     triangles.extend(refined);
     Some(())
-}
-
-fn triangle_edge_contains_strict_point(
-    triangle_points: &[Point3; 3],
-    point: &Point3,
-) -> Option<bool> {
-    for edge in 0..3 {
-        if point_lies_strictly_on_segment3(
-            &triangle_points[edge],
-            &triangle_points[(edge + 1) % 3],
-            point,
-        )? {
-            return Some(true);
-        }
-    }
-    Some(false)
 }
 
 fn split_output_triangle_edge(
