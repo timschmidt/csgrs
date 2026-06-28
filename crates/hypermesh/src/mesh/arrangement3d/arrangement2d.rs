@@ -1627,37 +1627,39 @@ fn select_start_boundary_fragment(
             selected = Some(fragment);
             continue;
         };
-        let ordering = compare_boundary_fragment_start(fragment, current, arrangement).ok_or(
-            ExactArrangement2dBlocker::UnresolvedSelectedBoundaryOrdering {
-                left_start: fragment.start,
-                right_start: current.start,
-            },
-        )?;
+        let ordering = {
+            let start_order = compare_point2_lexicographic(
+                &arrangement.vertices[fragment.start].point,
+                &arrangement.vertices[current.start].point,
+            )
+            .value()
+            .ok_or(
+                ExactArrangement2dBlocker::UnresolvedSelectedBoundaryOrdering {
+                    left_start: fragment.start,
+                    right_start: current.start,
+                },
+            )?;
+            if start_order == Ordering::Equal {
+                compare_point2_lexicographic(
+                    &arrangement.vertices[fragment.end].point,
+                    &arrangement.vertices[current.end].point,
+                )
+                .value()
+                .ok_or(
+                    ExactArrangement2dBlocker::UnresolvedSelectedBoundaryOrdering {
+                        left_start: fragment.start,
+                        right_start: current.start,
+                    },
+                )?
+            } else {
+                start_order
+            }
+        };
         if ordering == Ordering::Less {
             selected = Some(fragment);
         }
     }
     Ok(selected)
-}
-
-fn compare_boundary_fragment_start(
-    left: SelectedBoundaryFragment,
-    right: SelectedBoundaryFragment,
-    arrangement: &ExactArrangement2d,
-) -> Option<Ordering> {
-    let start_order = compare_point2_lexicographic(
-        &arrangement.vertices[left.start].point,
-        &arrangement.vertices[right.start].point,
-    )
-    .value()?;
-    if start_order != Ordering::Equal {
-        return Some(start_order);
-    }
-    compare_point2_lexicographic(
-        &arrangement.vertices[left.end].point,
-        &arrangement.vertices[right.end].point,
-    )
-    .value()
 }
 
 fn select_next_boundary_fragment(
