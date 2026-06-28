@@ -313,29 +313,25 @@ fn adjacency_contact_pair(
                     IntersectionEvent::SegmentPlane { .. } | IntersectionEvent::Unknown => false,
                 })
         }
-        MeshFacePairRelation::Candidate => pair.events.iter().all(boundary_candidate_event),
+        MeshFacePairRelation::Candidate => pair.events.iter().all(|event| match event {
+            IntersectionEvent::SegmentPlane { relation, .. } => matches!(
+                relation,
+                SegmentPlaneRelation::Disjoint
+                    | SegmentPlaneRelation::Coplanar
+                    | SegmentPlaneRelation::EndpointOnPlane
+            ),
+            IntersectionEvent::CoplanarEdge { relation, .. } => {
+                *relation != SegmentIntersection::Disjoint
+            }
+            IntersectionEvent::CoplanarVertex { location, .. } => matches!(
+                location,
+                TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
+            ),
+            IntersectionEvent::Unknown => false,
+        }),
         MeshFacePairRelation::PlaneSeparated | MeshFacePairRelation::Unknown => false,
     };
     Ok(contact)
-}
-
-fn boundary_candidate_event(event: &IntersectionEvent) -> bool {
-    match event {
-        IntersectionEvent::SegmentPlane { relation, .. } => matches!(
-            relation,
-            SegmentPlaneRelation::Disjoint
-                | SegmentPlaneRelation::Coplanar
-                | SegmentPlaneRelation::EndpointOnPlane
-        ),
-        IntersectionEvent::CoplanarEdge { relation, .. } => {
-            *relation != SegmentIntersection::Disjoint
-        }
-        IntersectionEvent::CoplanarVertex { location, .. } => matches!(
-            location,
-            TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
-        ),
-        IntersectionEvent::Unknown => false,
-    }
 }
 
 fn same_whole_face_any_orientation(
