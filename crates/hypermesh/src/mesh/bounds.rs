@@ -419,16 +419,6 @@ impl<'a> PreparedMeshBounds<'a> {
         scratch: &mut BroadPhaseScratch,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
-        self.try_visit_candidate_face_pairs_with_plan_impl(other, plan, scratch, visit)
-    }
-
-    fn try_visit_candidate_face_pairs_with_plan_impl<E>(
-        &self,
-        other: &PreparedMeshBounds<'_>,
-        plan: CandidateFacePairPlan,
-        scratch: &mut BroadPhaseScratch,
-        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E> {
         let (sweep_plan, active_face_capacity_hint) = match plan {
             CandidateFacePairPlan::Empty => return Ok(()),
             CandidateFacePairPlan::Quadratic => {
