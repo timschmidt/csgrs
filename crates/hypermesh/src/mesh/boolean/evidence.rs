@@ -3167,11 +3167,11 @@ pub(crate) struct ExactBooleanCertificationSet {
     /// Planar-arrangement evidence for coplanar surface output.
     planar_arrangement: ExactPlanarArrangementReport,
     /// Winding/inside-outside evidence for named volumetric output.
-    winding_evidence: ExactWindingEvidenceReport,
+    pub(super) winding_evidence: ExactWindingEvidenceReport,
     /// Volumetric boundary closure evidence, when meaningful for the request.
     volumetric_boundary_closure: Option<ExactVolumetricBoundaryClosureReport>,
     /// Arrangement/cell-complex materialization attempt.
-    arrangement_attempt: Option<ExactArrangementBooleanAttempt>,
+    pub(super) arrangement_attempt: Option<ExactArrangementBooleanAttempt>,
 }
 
 #[cfg(test)]
@@ -3216,19 +3216,6 @@ impl ExactBooleanCertificationSet {
             volumetric_boundary_closure,
             arrangement_attempt,
         }
-    }
-
-    /// Return the winding/inside-outside evidence certification report.
-    #[cfg(test)]
-    pub(crate) fn winding_evidence(&self) -> &ExactWindingEvidenceReport {
-        &self.winding_evidence
-    }
-
-    /// Return the retained arrangement/cell-complex attempt for this request,
-    /// when evaluation reached that canonical pipeline.
-    #[cfg(test)]
-    pub(crate) fn retained_arrangement_attempt(&self) -> Option<&ExactArrangementBooleanAttempt> {
-        self.arrangement_attempt.as_ref()
     }
 
     /// Validate this certification bundle against the request it claims to
@@ -6012,7 +5999,7 @@ fn validate_winding_evidence_against_sources_for_request(
 
     if let Ok(evaluation) =
         exact_boolean_evaluation_for_replay_result_with_materialization(left, right, request, true)
-        && report == evaluation.certifications.winding_evidence()
+        && report == &evaluation.certifications.winding_evidence
     {
         return Ok(());
     }

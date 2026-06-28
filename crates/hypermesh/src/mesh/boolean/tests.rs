@@ -66,7 +66,7 @@ fn test_winding_evidence(
     evaluation
         .validate_with_missing_result_policy(true)
         .unwrap();
-    evaluation.certifications.winding_evidence().clone()
+    evaluation.certifications.winding_evidence.clone()
 }
 
 fn test_volumetric_boundary_closure(
@@ -771,7 +771,7 @@ fn selected_region_winding_evidence_classifies_retained_graph_blocker() {
             evaluation.result.as_ref().is_none(),
             "selected-region evaluation should retain certifications when materialization declines"
         );
-        evaluation.certifications.winding_evidence().clone()
+        evaluation.certifications.winding_evidence.clone()
     });
     assert_eq!(
         evidence.status(),
@@ -1363,7 +1363,8 @@ fn certifications_reuse_regularized_arrangement_attempt_reports() {
     let certifications = evaluation.certifications.clone();
     certifications.validate_for_request(request).unwrap();
     let attempt = certifications
-        .retained_arrangement_attempt()
+        .arrangement_attempt
+        .as_ref()
         .expect("nested tetrahedra should retain an arrangement attempt");
     assert_eq!(attempt, &retained_attempt);
     assert!(
@@ -2275,7 +2276,7 @@ fn lower_dimensional_regularized_solid_reports_materialized_evidence() {
     ] {
         let request = ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::CLOSED);
         with_test_evaluation(request, &left, &right, |evaluation| {
-            let evidence = evaluation.certifications.winding_evidence();
+            let evidence = &evaluation.certifications.winding_evidence;
             let arrangement_materialized = operation == ExactBooleanOperation::Intersection;
             let expected_status = if arrangement_materialized {
                 ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
@@ -2470,7 +2471,7 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
         ExactMeshValidationPolicy::ALLOW_BOUNDARY,
     );
     with_test_evaluation(boundary_request, &left, &right, |boundary_evaluation| {
-        let boundary_evidence = boundary_evaluation.certifications.winding_evidence();
+        let boundary_evidence = &boundary_evaluation.certifications.winding_evidence;
         assert_eq!(
             boundary_evidence.status(),
             ExactWindingEvidenceStatus::VolumetricAssemblyRequired,
