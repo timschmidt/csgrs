@@ -962,11 +962,17 @@ fn lift_projected_face_cell_point(
     let a = mesh.vertices()[triangle[0]].clone();
     let b = mesh.vertices()[triangle[1]].clone();
     let c = mesh.vertices()[triangle[2]].clone();
-    let ab = point3_sub(&b, &a);
-    let ac = point3_sub(&c, &a);
-    let normal = cross(&ab, &ac);
-    let plane_xy = mul_real(&normal.x, &a.x) + &mul_real(&normal.y, &a.y);
-    let plane_value = plane_xy + &mul_real(&normal.z, &a.z);
+    let abx = sub_real(&b.x, &a.x);
+    let aby = sub_real(&b.y, &a.y);
+    let abz = sub_real(&b.z, &a.z);
+    let acx = sub_real(&c.x, &a.x);
+    let acy = sub_real(&c.y, &a.y);
+    let acz = sub_real(&c.z, &a.z);
+    let normal_x = sub_real(&mul_real(&aby, &acz), &mul_real(&abz, &acy));
+    let normal_y = sub_real(&mul_real(&abz, &acx), &mul_real(&abx, &acz));
+    let normal_z = sub_real(&mul_real(&abx, &acy), &mul_real(&aby, &acx));
+    let plane_xy = mul_real(&normal_x, &a.x) + &mul_real(&normal_y, &a.y);
+    let plane_value = plane_xy + &mul_real(&normal_z, &a.z);
 
     // The projection was selected by an exact nonzero projected area, so the
     // dropped normal component is the denominator that recovers the omitted
@@ -977,12 +983,12 @@ fn lift_projected_face_cell_point(
             let x = point.x.clone();
             let y = point.y.clone();
             let numerator = sub_real(
-                &sub_real(&plane_value, &mul_real(&normal.x, &x)),
-                &mul_real(&normal.y, &y),
+                &sub_real(&plane_value, &mul_real(&normal_x, &x)),
+                &mul_real(&normal_y, &y),
             );
             let z = div_real(
                 numerator,
-                &normal.z,
+                &normal_z,
                 "face-cell XY Steiner lift has zero normal denominator",
             )?;
             Point3::new(x, y, z)
@@ -991,12 +997,12 @@ fn lift_projected_face_cell_point(
             let x = point.x.clone();
             let z = point.y.clone();
             let numerator = sub_real(
-                &sub_real(&plane_value, &mul_real(&normal.x, &x)),
-                &mul_real(&normal.z, &z),
+                &sub_real(&plane_value, &mul_real(&normal_x, &x)),
+                &mul_real(&normal_z, &z),
             );
             let y = div_real(
                 numerator,
-                &normal.y,
+                &normal_y,
                 "face-cell XZ Steiner lift has zero normal denominator",
             )?;
             Point3::new(x, y, z)
@@ -1005,12 +1011,12 @@ fn lift_projected_face_cell_point(
             let y = point.x.clone();
             let z = point.y.clone();
             let numerator = sub_real(
-                &sub_real(&plane_value, &mul_real(&normal.y, &y)),
-                &mul_real(&normal.z, &z),
+                &sub_real(&plane_value, &mul_real(&normal_y, &y)),
+                &mul_real(&normal_z, &z),
             );
             let x = div_real(
                 numerator,
-                &normal.x,
+                &normal_x,
                 "face-cell YZ Steiner lift has zero normal denominator",
             )?;
             Point3::new(x, y, z)
@@ -1408,22 +1414,6 @@ fn compare_ordering(
 
 fn predicate_point2(point: &hypertri::ExactPoint) -> Point2 {
     Point2::new(point.x.clone(), point.y.clone())
-}
-
-fn point3_sub(left: &Point3, right: &Point3) -> Point3 {
-    Point3::new(
-        sub_real(&left.x, &right.x),
-        sub_real(&left.y, &right.y),
-        sub_real(&left.z, &right.z),
-    )
-}
-
-fn cross(left: &Point3, right: &Point3) -> Point3 {
-    Point3::new(
-        sub_real(&mul_real(&left.y, &right.z), &mul_real(&left.z, &right.y)),
-        sub_real(&mul_real(&left.z, &right.x), &mul_real(&left.x, &right.z)),
-        sub_real(&mul_real(&left.x, &right.y), &mul_real(&left.y, &right.x)),
-    )
 }
 
 fn sub_real(left: &Real, right: &Real) -> Real {
