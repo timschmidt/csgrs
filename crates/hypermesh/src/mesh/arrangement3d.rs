@@ -3836,10 +3836,22 @@ fn nested_shell_volume_graph(
         let containers = (0..shell_regions.len())
             .filter(|&candidate| contains[shell][candidate])
             .collect::<Vec<_>>();
-        let Some(parent) = deepest_containing_shell(&containers, &contains) else {
-            continue;
-        };
-        parents[shell] = Some(parent);
+        let mut parent = None;
+        let mut parent_depth = 0usize;
+        for candidate in containers {
+            let depth = (0..shell_regions.len())
+                .filter(|&other| other != candidate && contains[shell][other])
+                .filter(|&other| contains[candidate][other])
+                .count();
+            if parent.is_none() || depth > parent_depth {
+                parent = Some(candidate);
+                parent_depth = depth;
+            } else if depth == parent_depth {
+                parent = None;
+                break;
+            }
+        }
+        parents[shell] = parent;
     }
     diagnose_same_source_same_orientation_nesting(
         shell_regions,
@@ -3942,24 +3954,6 @@ fn classify_shell_witness_against_container(
     }
 
     ShellContainmentRelation::Unknown
-}
-
-fn deepest_containing_shell(containers: &[usize], contains: &[Vec<bool>]) -> Option<usize> {
-    let mut best = None;
-    let mut best_depth = 0usize;
-    for &candidate in containers {
-        let depth = containers
-            .iter()
-            .filter(|&&other| other != candidate && contains[candidate][other])
-            .count();
-        if best.is_none() || depth > best_depth {
-            best = Some(candidate);
-            best_depth = depth;
-        } else if depth == best_depth {
-            return None;
-        }
-    }
-    best
 }
 
 fn diagnose_same_source_same_orientation_nesting(
