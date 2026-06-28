@@ -336,32 +336,27 @@ impl MeshValidationFacts {
     /// this method verifies that the structural bookkeeping has not drifted
     /// from those retained predicate outcomes.
     pub(crate) fn validate(&self) -> Result<(), MeshFactsValidationError> {
-        let expect_len = |field, expected, actual| {
-            if expected == actual {
-                Ok(())
-            } else {
-                Err(MeshFactsValidationError::SummaryLengthMismatch {
-                    field,
-                    expected,
-                    actual,
-                })
-            }
-        };
-        let expect_count = |field, expected, actual| {
-            if expected == actual {
-                Ok(())
-            } else {
-                Err(MeshFactsValidationError::SummaryCountMismatch {
-                    field,
-                    expected,
-                    actual,
-                })
-            }
-        };
-
-        expect_len("vertex_count", self.vertices.len(), self.mesh.vertex_count)?;
-        expect_len("edge_count", self.edges.len(), self.mesh.edge_count)?;
-        expect_len("face_count", self.faces.len(), self.mesh.face_count)?;
+        if self.vertices.len() != self.mesh.vertex_count {
+            return Err(MeshFactsValidationError::SummaryLengthMismatch {
+                field: "vertex_count",
+                expected: self.vertices.len(),
+                actual: self.mesh.vertex_count,
+            });
+        }
+        if self.edges.len() != self.mesh.edge_count {
+            return Err(MeshFactsValidationError::SummaryLengthMismatch {
+                field: "edge_count",
+                expected: self.edges.len(),
+                actual: self.mesh.edge_count,
+            });
+        }
+        if self.faces.len() != self.mesh.face_count {
+            return Err(MeshFactsValidationError::SummaryLengthMismatch {
+                field: "face_count",
+                expected: self.faces.len(),
+                actual: self.mesh.face_count,
+            });
+        }
 
         let expected_euler = self.mesh.vertex_count as isize - self.mesh.edge_count as isize
             + self.mesh.face_count as isize;
@@ -498,13 +493,6 @@ impl MeshValidationFacts {
             .vertices
             .iter()
             .all(|vertex| vertex.fixed_coordinates_exact_rational);
-        let first_mismatch_index = |expected: &[usize], actual: &[usize]| {
-            expected
-                .iter()
-                .zip(actual)
-                .position(|(expected, actual)| expected != actual)
-                .unwrap_or_else(|| expected.len().min(actual.len()))
-        };
         for (index, vertex) in self.vertices.iter().enumerate() {
             if vertex.index != index {
                 return Err(MeshFactsValidationError::VertexIndexMismatch {
@@ -521,12 +509,18 @@ impl MeshValidationFacts {
                 });
             }
             if vertex.incident_face_indices != vertex_incident_face_indices[index] {
+                let mismatch_index = vertex_incident_face_indices[index]
+                    .iter()
+                    .zip(&vertex.incident_face_indices)
+                    .position(|(expected, actual)| expected != actual)
+                    .unwrap_or_else(|| {
+                        vertex_incident_face_indices[index]
+                            .len()
+                            .min(vertex.incident_face_indices.len())
+                    });
                 return Err(MeshFactsValidationError::VertexIncidentFaceListMismatch {
                     vertex: index,
-                    mismatch_index: first_mismatch_index(
-                        &vertex_incident_face_indices[index],
-                        &vertex.incident_face_indices,
-                    ),
+                    mismatch_index,
                     expected_len: vertex_incident_face_indices[index].len(),
                     actual_len: vertex.incident_face_indices.len(),
                 });
@@ -540,12 +534,18 @@ impl MeshValidationFacts {
                 });
             }
             if vertex.incident_edge_indices != vertex_incident_edge_indices[index] {
+                let mismatch_index = vertex_incident_edge_indices[index]
+                    .iter()
+                    .zip(&vertex.incident_edge_indices)
+                    .position(|(expected, actual)| expected != actual)
+                    .unwrap_or_else(|| {
+                        vertex_incident_edge_indices[index]
+                            .len()
+                            .min(vertex.incident_edge_indices.len())
+                    });
                 return Err(MeshFactsValidationError::VertexIncidentEdgeListMismatch {
                     vertex: index,
-                    mismatch_index: first_mismatch_index(
-                        &vertex_incident_edge_indices[index],
-                        &vertex.incident_edge_indices,
-                    ),
+                    mismatch_index,
                     expected_len: vertex_incident_edge_indices[index].len(),
                     actual_len: vertex.incident_edge_indices.len(),
                 });
@@ -555,27 +555,41 @@ impl MeshValidationFacts {
             }
         }
 
-        expect_count("boundary_edges", boundary_edges, self.mesh.boundary_edges)?;
-        expect_count(
-            "non_manifold_edges",
-            non_manifold_edges,
-            self.mesh.non_manifold_edges,
-        )?;
-        expect_count(
-            "duplicate_directed_edges",
-            duplicate_directed_edges,
-            self.mesh.duplicate_directed_edges,
-        )?;
-        expect_count(
-            "degenerate_triangles",
-            degenerate_triangles,
-            self.mesh.degenerate_triangles,
-        )?;
-        expect_count(
-            "non_manifold_vertices",
-            non_manifold_vertices,
-            self.mesh.non_manifold_vertices,
-        )?;
+        if boundary_edges != self.mesh.boundary_edges {
+            return Err(MeshFactsValidationError::SummaryCountMismatch {
+                field: "boundary_edges",
+                expected: boundary_edges,
+                actual: self.mesh.boundary_edges,
+            });
+        }
+        if non_manifold_edges != self.mesh.non_manifold_edges {
+            return Err(MeshFactsValidationError::SummaryCountMismatch {
+                field: "non_manifold_edges",
+                expected: non_manifold_edges,
+                actual: self.mesh.non_manifold_edges,
+            });
+        }
+        if duplicate_directed_edges != self.mesh.duplicate_directed_edges {
+            return Err(MeshFactsValidationError::SummaryCountMismatch {
+                field: "duplicate_directed_edges",
+                expected: duplicate_directed_edges,
+                actual: self.mesh.duplicate_directed_edges,
+            });
+        }
+        if degenerate_triangles != self.mesh.degenerate_triangles {
+            return Err(MeshFactsValidationError::SummaryCountMismatch {
+                field: "degenerate_triangles",
+                expected: degenerate_triangles,
+                actual: self.mesh.degenerate_triangles,
+            });
+        }
+        if non_manifold_vertices != self.mesh.non_manifold_vertices {
+            return Err(MeshFactsValidationError::SummaryCountMismatch {
+                field: "non_manifold_vertices",
+                expected: non_manifold_vertices,
+                actual: self.mesh.non_manifold_vertices,
+            });
+        }
 
         let closed_manifold = boundary_edges == 0
             && non_manifold_edges == 0
