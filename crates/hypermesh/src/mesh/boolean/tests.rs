@@ -253,8 +253,14 @@ fn assert_result_retains_attempt_gate_reports(
     let (attempt_topology, attempt_ownership) = attempt
         .retained_gate_reports()
         .expect("attempt should retain complete gate reports");
-    assert_eq!(result.topology_assembly_report(), Some(attempt_topology));
-    assert_eq!(result.region_ownership_report(), Some(attempt_ownership));
+    assert_eq!(
+        result.topology_assembly_report.as_ref(),
+        Some(attempt_topology)
+    );
+    assert_eq!(
+        result.region_ownership_report.as_ref(),
+        Some(attempt_ownership)
+    );
 }
 
 fn synthetic_arrangement_attempt(
@@ -2672,7 +2678,7 @@ fn volumetric_coplanar_boundary_closure_materializes_closed_output() {
             &left,
             &right,
         );
-        assert_eq!(public.kind(), result.kind(), "{operation:?}: {public:?}");
+        assert_eq!(public.kind, result.kind, "{operation:?}: {public:?}");
         public.validate().unwrap();
     }
 }
@@ -4550,7 +4556,7 @@ fn open_same_surface_sheets_remain_certified() {
         );
         assert!(
             matches!(
-                result.kind(),
+                result.kind,
                 ExactBooleanResultKind::CertifiedShortcut {
                     operation: result_operation,
                     ..
@@ -4620,7 +4626,7 @@ fn open_identical_sheets_keep_identity_shortcut() {
         &right,
     );
     assert!(matches!(
-        union.kind(),
+        union.kind,
         ExactBooleanResultKind::CertifiedShortcut {
             operation: ExactBooleanOperation::Union,
             ..

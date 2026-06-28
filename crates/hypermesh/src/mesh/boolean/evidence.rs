@@ -1329,27 +1329,6 @@ pub(crate) struct ExactBooleanResult {
 }
 
 impl ExactBooleanResult {
-    /// Return the declared production path for this result.
-    pub(crate) fn kind(&self) -> ExactBooleanResultKind {
-        self.kind
-    }
-
-    /// Return whether graph extraction contained unknown events before policy checks.
-    #[cfg(test)]
-    pub(crate) fn graph_had_unknowns(&self) -> bool {
-        self.graph_had_unknowns
-    }
-
-    /// Return retained topology assembly gate evidence, when present.
-    pub(crate) fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {
-        self.topology_assembly_report.as_ref()
-    }
-
-    /// Return retained region ownership gate evidence, when present.
-    pub(crate) fn region_ownership_report(&self) -> Option<&ExactRegionOwnershipReport> {
-        self.region_ownership_report.as_ref()
-    }
-
     /// Consume this result and return the materialized exact output mesh.
     pub(crate) fn into_mesh(self) -> ExactMesh {
         self.mesh
@@ -3592,7 +3571,7 @@ impl ExactBooleanCertificationSet {
         result: &ExactBooleanResult,
         request: ExactBooleanRequest,
     ) -> bool {
-        match result.kind() {
+        match result.kind {
             ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
                 operation == request.operation
                     && self.arrangement_attempt_certifies_output_for_operation(request.operation)
@@ -4091,8 +4070,8 @@ impl ExactBooleanEvaluation {
         if let Some(result) = self.result.as_ref() {
             let retained_attempt = if result
                 .is_arrangement_cell_complex_shortcut_for(self.request.operation)
-                || result.topology_assembly_report().is_some()
-                || result.region_ownership_report().is_some()
+                || result.topology_assembly_report.is_some()
+                || result.region_ownership_report.is_some()
             {
                 self.certifications.arrangement_attempt.as_ref()
             } else {
@@ -4130,10 +4109,10 @@ impl ExactBooleanEvaluation {
         {
             return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
-        if match result.kind() {
+        if match result.kind {
             ExactBooleanResultKind::SelectedRegions { .. }
             | ExactBooleanResultKind::OpenSurfaceArrangement { .. } => {
-                result.graph_had_unknowns() != self.preflight.graph_had_unknowns
+                result.graph_had_unknowns != self.preflight.graph_had_unknowns
                     || result.region_classifications != self.preflight.region_classifications
             }
             ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }

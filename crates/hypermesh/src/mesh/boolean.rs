@@ -1561,7 +1561,7 @@ fn replay_selected_region_boolean_result_from_graph(
     let result =
         materialize_selected_region_result_from_graph(graph, left, right, selection, validation)?;
     if !matches!(
-        result.kind(),
+        result.kind,
         ExactBooleanResultKind::SelectedRegions {
             selection: result_selection,
         } if result_selection == selection
@@ -3240,7 +3240,7 @@ fn request_replayable_result(
 ) -> Option<ExactBooleanResult> {
     let result = result?;
     let retained_arrangement_attempt = matches!(
-        result.kind(),
+        result.kind,
         ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
             | ExactBooleanResultKind::CertifiedShortcut {
                 shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
@@ -3971,7 +3971,7 @@ fn arrangement_cell_complex_result_is_certified_for_preflight(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> bool {
-    let operation = match result.kind() {
+    let operation = match result.kind {
         ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation }
         | ExactBooleanResultKind::CertifiedShortcut {
             shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
@@ -4001,7 +4001,7 @@ fn arrangement_cell_complex_result_matches_retained_attempt(
     result: &ExactBooleanResult,
     attempt: &ExactArrangementBooleanAttempt,
 ) -> bool {
-    let operation = match result.kind() {
+    let operation = match result.kind {
         ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation }
         | ExactBooleanResultKind::CertifiedShortcut {
             shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
@@ -5592,8 +5592,8 @@ fn validate_volumetric_arrangement_result_against_graph(
     };
     let replay = volumetric_arrangement_cell_complex_result(operation, materialized)
         .with_gate_reports(
-            result.topology_assembly_report().cloned(),
-            result.region_ownership_report().cloned(),
+            result.topology_assembly_report.clone(),
+            result.region_ownership_report.clone(),
         );
     replay.validate()?;
     if result == &replay {
