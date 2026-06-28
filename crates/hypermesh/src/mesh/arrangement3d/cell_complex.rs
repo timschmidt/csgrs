@@ -935,9 +935,10 @@ impl ExactSelectedCellComplex {
             }
         } else {
             for orientation in &self.selected_face_orientations {
-                if orientation.reverse
-                    != operation_reverses_face(&self.faces[orientation.face], self.operation)
-                {
+                let face = &self.faces[orientation.face];
+                let expected_reverse = self.operation == ExactBooleanOperation::Difference
+                    && face.source == ExactCellRegionLabel::RightBoundary;
+                if orientation.reverse != expected_reverse {
                     return Err(ExactArrangementBlocker::NonManifoldCellComplex);
                 }
             }
@@ -1720,17 +1721,13 @@ fn selected_face_orientations_from_operation(
         .copied()
         .map(|face| ExactSelectedFaceOrientation {
             face,
-            reverse: faces
-                .get(face)
-                .is_some_and(|cell| operation_reverses_face(cell, operation)),
+            reverse: faces.get(face).is_some_and(|cell| {
+                operation == ExactBooleanOperation::Difference
+                    && cell.source == ExactCellRegionLabel::RightBoundary
+            }),
             from_volume_adjacency: false,
         })
         .collect()
-}
-
-fn operation_reverses_face(face: &ExactCellComplexFace, operation: ExactBooleanOperation) -> bool {
-    operation == ExactBooleanOperation::Difference
-        && face.source == ExactCellRegionLabel::RightBoundary
 }
 
 fn selected_volume_regions(
