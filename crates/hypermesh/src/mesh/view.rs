@@ -199,10 +199,6 @@ impl<'a> MeshView<'a> {
         Self { mesh }
     }
 
-    pub(crate) const fn mesh(self) -> &'a ExactMesh {
-        self.mesh
-    }
-
     fn source_stamp(self) -> ExactMeshSourceStamp {
         let provenance = self.mesh.provenance();
         ExactMeshSourceStamp {
@@ -548,11 +544,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     }
 
     pub(crate) const fn left_mesh(&self) -> &'left ExactMesh {
-        self.left_view.mesh()
+        self.left_view.mesh
     }
 
     pub(crate) const fn right_mesh(&self) -> &'right ExactMesh {
-        self.right_view.mesh()
+        self.right_view.mesh
     }
 
     pub(crate) const fn candidate_pair_capacity_hint(&self) -> usize {
