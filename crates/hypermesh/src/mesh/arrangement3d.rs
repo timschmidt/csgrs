@@ -249,54 +249,45 @@ impl LowerDimensionalArtifactBuildIndex {
     ) {
         let bucket = lower_dimensional_artifact_bucket_key(&artifact);
         let exact_key = lower_dimensional_artifact_exact_key(&artifact);
-        if self.contains_equivalent(artifacts, &artifact, bucket, exact_key.as_ref()) {
-            return;
-        }
-        let index = artifacts.len();
         if let Some(key) = exact_key {
+            if self.exact_keys.contains(&key)
+                || self
+                    .unkeyed_by_bucket
+                    .get(&bucket)
+                    .is_some_and(|candidates| {
+                        candidates
+                            .iter()
+                            .any(|&candidate| artifact == artifacts[candidate])
+                    })
+            {
+                return;
+            }
+            let index = artifacts.len();
             self.exact_keys.insert(key);
             self.keyed_by_bucket.entry(bucket).or_default().push(index);
         } else {
+            if self.keyed_by_bucket.get(&bucket).is_some_and(|candidates| {
+                candidates
+                    .iter()
+                    .any(|&candidate| artifact == artifacts[candidate])
+            }) || self
+                .unkeyed_by_bucket
+                .get(&bucket)
+                .is_some_and(|candidates| {
+                    candidates
+                        .iter()
+                        .any(|&candidate| artifact == artifacts[candidate])
+                })
+            {
+                return;
+            }
+            let index = artifacts.len();
             self.unkeyed_by_bucket
                 .entry(bucket)
                 .or_default()
                 .push(index);
         }
         artifacts.push(artifact);
-    }
-
-    fn contains_equivalent(
-        &self,
-        artifacts: &[ArrangementLowerDimensionalArtifact],
-        artifact: &ArrangementLowerDimensionalArtifact,
-        bucket: LowerDimensionalArtifactBucketKey,
-        exact_key: Option<&LowerDimensionalArtifactExactKey>,
-    ) -> bool {
-        if let Some(key) = exact_key {
-            if self.exact_keys.contains(key) {
-                return true;
-            }
-            return self
-                .unkeyed_by_bucket
-                .get(&bucket)
-                .is_some_and(|candidates| {
-                    candidates
-                        .iter()
-                        .any(|&candidate| artifact == &artifacts[candidate])
-                });
-        }
-        self.keyed_by_bucket.get(&bucket).is_some_and(|candidates| {
-            candidates
-                .iter()
-                .any(|&candidate| artifact == &artifacts[candidate])
-        }) || self
-            .unkeyed_by_bucket
-            .get(&bucket)
-            .is_some_and(|candidates| {
-                candidates
-                    .iter()
-                    .any(|&candidate| artifact == &artifacts[candidate])
-            })
     }
 }
 
