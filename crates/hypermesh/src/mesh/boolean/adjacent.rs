@@ -303,7 +303,15 @@ fn adjacency_contact_pair(
             // different topology and must wait for the general arrangement
             // distinction instead of a tolerance-based merge.
             !same_whole_face_any_orientation(left, pair.left_face, right, pair.right_face)?
-                && !coplanar_pair_has_positive_area_evidence(pair)
+                && !pair.events.iter().any(|event| match event {
+                    IntersectionEvent::CoplanarEdge { relation, .. } => {
+                        *relation == SegmentIntersection::Proper
+                    }
+                    IntersectionEvent::CoplanarVertex { location, .. } => {
+                        *location == TriangleLocation::Inside
+                    }
+                    IntersectionEvent::SegmentPlane { .. } | IntersectionEvent::Unknown => false,
+                })
         }
         MeshFacePairRelation::Candidate => pair.events.iter().all(boundary_candidate_event),
         MeshFacePairRelation::PlaneSeparated | MeshFacePairRelation::Unknown => false,
@@ -328,16 +336,6 @@ fn boundary_candidate_event(event: &IntersectionEvent) -> bool {
         ),
         IntersectionEvent::Unknown => false,
     }
-}
-
-fn coplanar_pair_has_positive_area_evidence(pair: &FacePairEvents) -> bool {
-    pair.events.iter().any(|event| match event {
-        IntersectionEvent::CoplanarEdge { relation, .. } => {
-            *relation == SegmentIntersection::Proper
-        }
-        IntersectionEvent::CoplanarVertex { location, .. } => *location == TriangleLocation::Inside,
-        IntersectionEvent::SegmentPlane { .. } | IntersectionEvent::Unknown => false,
-    })
 }
 
 fn same_whole_face_any_orientation(
