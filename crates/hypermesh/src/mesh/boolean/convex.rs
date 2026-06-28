@@ -1514,7 +1514,8 @@ fn report_error(error: ConvexSolidReportError) -> ExactMeshError {
 mod tests {
     use super::*;
     use crate::mesh::boolean::{
-        ExactBooleanOperation, ExactBooleanRequest, exact_boolean_evaluation_for_replay,
+        ExactBooleanOperation, ExactBooleanRequest,
+        exact_boolean_evaluation_for_replay_result_with_materialization,
     };
 
     fn with_materialized_evaluation_for_test<R>(
@@ -1523,7 +1524,10 @@ mod tests {
         request: ExactBooleanRequest,
         f: impl FnOnce(&crate::mesh::boolean::ExactBooleanEvaluation) -> R,
     ) -> R {
-        let evaluation = exact_boolean_evaluation_for_replay(left, right, request).unwrap();
+        let evaluation = exact_boolean_evaluation_for_replay_result_with_materialization(
+            left, right, request, true,
+        )
+        .unwrap();
         f(&evaluation)
     }
 

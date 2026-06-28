@@ -90,7 +90,6 @@ use super::{
 };
 #[cfg(test)]
 use super::{
-    exact_boolean_evaluation_for_replay,
     exact_boolean_evaluation_for_replay_result_with_materialization,
     winding_evidence_report_for_request_from_graph,
 };
@@ -4073,7 +4072,13 @@ impl ExactBooleanEvaluation {
         right: &ExactMesh,
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate_with_missing_result_policy(false)?;
-        let replay = exact_boolean_evaluation_for_replay(left, right, self.request)?;
+        let replay = exact_boolean_evaluation_for_replay_result_with_materialization(
+            left,
+            right,
+            self.request,
+            true,
+        )
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         if self.preflight != replay.preflight {
             return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
@@ -6019,7 +6024,8 @@ fn validate_winding_evidence_against_sources_for_request(
         return Ok(());
     }
 
-    if let Ok(evaluation) = exact_boolean_evaluation_for_replay(left, right, request)
+    if let Ok(evaluation) =
+        exact_boolean_evaluation_for_replay_result_with_materialization(left, right, request, true)
         && report == evaluation.certifications.winding_evidence()
     {
         return Ok(());
@@ -6254,9 +6260,12 @@ impl ExactBooleanPreflight {
         {
             return Ok(());
         }
-        let replay = exact_boolean_evaluation_for_replay(left, right, request)?
-            .preflight
-            .clone();
+        let replay = exact_boolean_evaluation_for_replay_result_with_materialization(
+            left, right, request, true,
+        )
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+        .preflight
+        .clone();
         if self == &replay {
             Ok(())
         } else {

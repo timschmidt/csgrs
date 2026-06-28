@@ -211,16 +211,6 @@ impl ExactArrangementBooleanAttempt {
 }
 
 #[cfg(test)]
-fn exact_boolean_evaluation_for_replay(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactBooleanEvaluation, ExactEvidenceValidationError> {
-    exact_boolean_evaluation_for_replay_result_with_materialization(left, right, request, true)
-        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)
-}
-
-#[cfg(test)]
 fn exact_boolean_evaluation_for_replay_result_with_materialization(
     left: &ExactMesh,
     right: &ExactMesh,

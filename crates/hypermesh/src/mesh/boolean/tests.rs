@@ -25,7 +25,9 @@ fn with_test_evaluation<R>(
     right: &ExactMesh,
     f: impl FnOnce(&ExactBooleanEvaluation) -> R,
 ) -> R {
-    let evaluation = exact_boolean_evaluation_for_replay(left, right, request).unwrap();
+    let evaluation =
+        exact_boolean_evaluation_for_replay_result_with_materialization(left, right, request, true)
+            .unwrap();
     evaluation
         .validate_with_missing_result_policy(false)
         .unwrap();
@@ -39,7 +41,9 @@ fn test_materialized_result(
 ) -> ExactBooleanResult {
     let result =
         materialize_boolean_operation(left, right, request.operation, request.validation).unwrap();
-    let evaluation = exact_boolean_evaluation_for_replay(left, right, request).unwrap();
+    let evaluation =
+        exact_boolean_evaluation_for_replay_result_with_materialization(left, right, request, true)
+            .unwrap();
     evaluation
         .validate_with_missing_result_policy(false)
         .unwrap();
@@ -618,7 +622,9 @@ fn assert_contained_face_adjacent_union_replays(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) {
-    let evaluation = exact_boolean_evaluation_for_replay(left, right, request).unwrap();
+    let evaluation =
+        exact_boolean_evaluation_for_replay_result_with_materialization(left, right, request, true)
+            .unwrap();
     evaluation
         .validate_with_missing_result_policy(false)
         .unwrap();
@@ -1340,7 +1346,10 @@ fn certifications_reuse_regularized_arrangement_attempt_reports() {
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
     );
-    let evaluation = exact_boolean_evaluation_for_replay(&left, &right, request).unwrap();
+    let evaluation = exact_boolean_evaluation_for_replay_result_with_materialization(
+        &left, &right, request, true,
+    )
+    .unwrap();
     evaluation
         .validate_with_missing_result_policy(false)
         .unwrap();
