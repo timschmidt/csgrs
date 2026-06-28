@@ -464,7 +464,13 @@ fn retained_plane_crossing_is_not_inside_plane_face(
     let Some(triangle) = triangle_points(plane_side.mesh(left, right), *plane_face) else {
         return false;
     };
-    let Some(projection) = choose_triangle_projection(&triangle) else {
+    let Some(projection) = [
+        CoplanarProjection::Xy,
+        CoplanarProjection::Xz,
+        CoplanarProjection::Yz,
+    ]
+    .into_iter()
+    .find(|&projection| projected_triangle_sign(&triangle, projection).is_some()) else {
         return false;
     };
     classify_point_triangle(
@@ -857,16 +863,6 @@ fn triangle_points(mesh: &ExactMesh, face: usize) -> Option<[Point3; 3]> {
         mesh.vertices().get(triangle[1])?.clone(),
         mesh.vertices().get(triangle[2])?.clone(),
     ])
-}
-
-fn choose_triangle_projection(points: &[Point3; 3]) -> Option<CoplanarProjection> {
-    [
-        CoplanarProjection::Xy,
-        CoplanarProjection::Xz,
-        CoplanarProjection::Yz,
-    ]
-    .into_iter()
-    .find(|&projection| projected_triangle_sign(points, projection).is_some())
 }
 
 fn projected_triangle_sign(points: &[Point3; 3], projection: CoplanarProjection) -> Option<Sign> {
