@@ -739,11 +739,11 @@ fn selected_overlay_faces_triangulate_simple_coplanar_difference_cells() {
         &right,
     );
     assert_eq!(
-        evidence.status(),
+        evidence.status,
         ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
         "{evidence:?}"
     );
-    assert_eq!(evidence.blocker().kind(), ExactBooleanBlockerKind::Winding);
+    assert_eq!(evidence.blocker.kind(), ExactBooleanBlockerKind::Winding);
     evidence.validate_against_sources(&left, &right).unwrap();
 }
 
@@ -773,19 +773,19 @@ fn selected_region_winding_evidence_classifies_retained_graph_blocker() {
         evaluation.certifications.winding_evidence.clone()
     });
     assert_eq!(
-        evidence.status(),
+        evidence.status,
         ExactWindingEvidenceStatus::NotNamedOperation
     );
     assert_eq!(
-        evidence.blocker().kind(),
+        evidence.blocker.kind(),
         ExactBooleanBlockerKind::PlanarArrangement
     );
-    assert_eq!(evidence.blocker().coplanar_overlapping_pairs(), 1);
-    assert_eq!(evidence.blocker().coplanar_touching_pairs(), 2);
+    assert_eq!(evidence.blocker.coplanar_overlapping_pairs(), 1);
+    assert_eq!(evidence.blocker.coplanar_touching_pairs(), 2);
     evidence.validate_against_sources(&left, &right).unwrap();
 
     let stale_blocker = evidence
-        .blocker()
+        .blocker
         .into_blocker(ExactBooleanBlockerKind::Winding);
     let stale = evidence.clone().with_blocker(stale_blocker);
     assert_eq!(
@@ -801,21 +801,21 @@ fn selected_region_winding_evidence_classifies_retained_graph_blocker() {
     .unwrap();
     let disjoint_evidence = test_winding_evidence(request, &left, &disjoint_right);
     assert_eq!(
-        disjoint_evidence.status(),
+        disjoint_evidence.status,
         ExactWindingEvidenceStatus::NotNamedOperation
     );
     assert_eq!(
-        disjoint_evidence.blocker().kind(),
+        disjoint_evidence.blocker.kind(),
         ExactBooleanBlockerKind::Winding
     );
-    assert_eq!(disjoint_evidence.retained_face_pairs(), 0);
+    assert_eq!(disjoint_evidence.retained_face_pairs, 0);
     disjoint_evidence.validate().unwrap();
     disjoint_evidence
         .validate_against_sources(&left, &disjoint_right)
         .unwrap();
 
     let relabeled_blocker = disjoint_evidence
-        .blocker()
+        .blocker
         .into_blocker(ExactBooleanBlockerKind::BoundaryOnlyContact);
     let relabeled_empty = disjoint_evidence.with_blocker(relabeled_blocker);
     assert_eq!(
@@ -1417,13 +1417,13 @@ fn axis_aligned_orthogonal_cell_booleans_materialize_from_shortcut_support() {
             &right,
         );
         assert_eq!(
-            evidence.status(),
+            evidence.status,
             ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
             "{operation:?}: {evidence:?}"
         );
-        assert!(evidence.status().is_already_materialized());
+        assert!(evidence.status.is_already_materialized());
         assert_eq!(
-            evidence.blocker().kind(),
+            evidence.blocker.kind(),
             ExactBooleanBlockerKind::Winding,
             "{operation:?}: {evidence:?}"
         );
@@ -1658,13 +1658,13 @@ fn affine_shortcut_winding_report_retains_already_materialized_status() {
             &right,
         );
         assert_eq!(
-            evidence.status(),
+            evidence.status,
             ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
             "{operation:?}: {evidence:?}"
         );
-        assert!(evidence.status().is_already_materialized());
+        assert!(evidence.status.is_already_materialized());
         assert_eq!(
-            evidence.blocker().kind(),
+            evidence.blocker.kind(),
             ExactBooleanBlockerKind::Winding,
             "{operation:?}: {evidence:?}"
         );
@@ -1726,7 +1726,7 @@ fn winding_evidence_status_partition_identifies_materialized_handoffs() {
         None,
         None,
     );
-    assert_eq!(ready_report.status(), ExactWindingEvidenceStatus::Ready);
+    assert_eq!(ready_report.status, ExactWindingEvidenceStatus::Ready);
 
     for status in [
         ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized,
@@ -1879,17 +1879,17 @@ fn trivial_shortcuts_report_materialized_evidence() {
                 left,
                 right,
             );
-            assert_eq!(evidence.status(), status, "{operation:?}: {evidence:?}");
+            assert_eq!(evidence.status, status, "{operation:?}: {evidence:?}");
             assert_eq!(
-                evidence.blocker().kind(),
+                evidence.blocker.kind(),
                 ExactBooleanBlockerKind::Winding,
                 "{operation:?}: {evidence:?}"
             );
-            assert_eq!(evidence.retained_face_pairs(), 0, "{operation:?}");
-            assert_eq!(evidence.retained_events(), 0, "{operation:?}");
-            assert_eq!(evidence.region_count(), 0, "{operation:?}");
-            assert!(evidence.status().is_already_materialized());
-            assert!(!evidence.status().materializes_arrangement_cell_complex());
+            assert_eq!(evidence.retained_face_pairs, 0, "{operation:?}");
+            assert_eq!(evidence.retained_events, 0, "{operation:?}");
+            assert_eq!(evidence.region_count, 0, "{operation:?}");
+            assert!(evidence.status.is_already_materialized());
+            assert!(!evidence.status.materializes_arrangement_cell_complex());
             evidence.validate().unwrap();
             evidence.validate_against_sources(left, right).unwrap();
 
@@ -1962,19 +1962,19 @@ fn graph_empty_containment_routes_named_booleans_through_arrangement_pipeline() 
                 right,
             );
             assert_eq!(
-                evidence.status(),
+                evidence.status,
                 ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
                 "{right_inside_left:?} {operation:?}: {evidence:?}"
             );
             assert_eq!(
-                evidence.blocker().kind(),
+                evidence.blocker.kind(),
                 ExactBooleanBlockerKind::Winding,
                 "{operation:?}: {evidence:?}"
             );
-            assert_eq!(evidence.retained_face_pairs(), 0, "{operation:?}");
-            assert_eq!(evidence.retained_events(), 0, "{operation:?}");
-            assert!(evidence.status().is_already_materialized());
-            assert!(evidence.status().materializes_arrangement_cell_complex());
+            assert_eq!(evidence.retained_face_pairs, 0, "{operation:?}");
+            assert_eq!(evidence.retained_events, 0, "{operation:?}");
+            assert!(evidence.status.is_already_materialized());
+            assert!(evidence.status.materializes_arrangement_cell_complex());
             evidence.validate().unwrap();
             evidence.validate_against_sources(left, right).unwrap();
 
@@ -2087,19 +2087,19 @@ fn graph_empty_closed_winding_separation_materializes_without_bounds_disjointnes
             &right,
         );
         assert_eq!(
-            evidence.status(),
+            evidence.status,
             ExactWindingEvidenceStatus::ClosedWindingSeparatedAlreadyMaterialized,
             "{operation:?}: {evidence:?}"
         );
         assert_eq!(
-            evidence.blocker().kind(),
+            evidence.blocker.kind(),
             ExactBooleanBlockerKind::Winding,
             "{operation:?}: {evidence:?}"
         );
-        assert_eq!(evidence.retained_face_pairs(), 0, "{operation:?}");
-        assert_eq!(evidence.retained_events(), 0, "{operation:?}");
-        assert!(evidence.status().is_already_materialized());
-        assert!(!evidence.status().materializes_arrangement_cell_complex());
+        assert_eq!(evidence.retained_face_pairs, 0, "{operation:?}");
+        assert_eq!(evidence.retained_events, 0, "{operation:?}");
+        assert!(evidence.status.is_already_materialized());
+        assert!(!evidence.status.materializes_arrangement_cell_complex());
         evidence.validate().unwrap();
         evidence.validate_against_sources(&left, &right).unwrap();
 
@@ -2185,19 +2185,19 @@ fn mixed_dimensional_regularized_solid_reports_materialized_evidence() {
                 right,
             );
             assert_eq!(
-                evidence.status(),
+                evidence.status,
                 ExactWindingEvidenceStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
                 "{operation:?}: {evidence:?}"
             );
             assert_eq!(
-                evidence.blocker().kind(),
+                evidence.blocker.kind(),
                 ExactBooleanBlockerKind::Winding,
                 "{operation:?}: {evidence:?}"
             );
-            assert_eq!(evidence.retained_face_pairs(), 0);
-            assert_eq!(evidence.retained_events(), 0);
-            assert!(evidence.status().is_already_materialized());
-            assert!(!evidence.status().materializes_arrangement_cell_complex());
+            assert_eq!(evidence.retained_face_pairs, 0);
+            assert_eq!(evidence.retained_events, 0);
+            assert!(evidence.status.is_already_materialized());
+            assert!(!evidence.status.materializes_arrangement_cell_complex());
             evidence.validate().unwrap();
             evidence.validate_against_sources(left, right).unwrap();
 
@@ -2265,27 +2265,26 @@ fn lower_dimensional_regularized_solid_reports_materialized_evidence() {
                 ExactWindingEvidenceStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
             };
             assert_eq!(
-                evidence.status(),
-                expected_status,
+                evidence.status, expected_status,
                 "{operation:?}: {evidence:?}"
             );
             assert_eq!(
-                evidence.blocker().kind(),
+                evidence.blocker.kind(),
                 ExactBooleanBlockerKind::Winding,
                 "{operation:?}: {evidence:?}"
             );
             assert_eq!(
-                evidence.retained_face_pairs(),
+                evidence.retained_face_pairs,
                 usize::from(arrangement_materialized)
             );
             assert_eq!(
-                evidence.retained_events(),
+                evidence.retained_events,
                 if arrangement_materialized { 4 } else { 0 }
             );
-            assert_eq!(evidence.region_count(), 0);
-            assert!(evidence.status().is_already_materialized());
+            assert_eq!(evidence.region_count, 0);
+            assert!(evidence.status.is_already_materialized());
             assert_eq!(
-                evidence.status().materializes_arrangement_cell_complex(),
+                evidence.status.materializes_arrangement_cell_complex(),
                 arrangement_materialized
             );
             evidence.validate().unwrap();
@@ -2439,11 +2438,11 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
         &right,
     );
     assert_eq!(
-        evidence.status(),
+        evidence.status,
         ExactWindingEvidenceStatus::VolumetricAssemblyRequired,
         "{evidence:?}"
     );
-    assert!(evidence.region_count() > 0, "{evidence:?}");
+    assert!(evidence.region_count > 0, "{evidence:?}");
     evidence.validate().unwrap();
     evidence.validate_against_sources(&left, &right).unwrap();
 
@@ -2454,25 +2453,25 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
     with_test_evaluation(boundary_request, &left, &right, |boundary_evaluation| {
         let boundary_evidence = &boundary_evaluation.certifications.winding_evidence;
         assert_eq!(
-            boundary_evidence.status(),
+            boundary_evidence.status,
             ExactWindingEvidenceStatus::VolumetricAssemblyRequired,
             "{boundary_evidence:?}"
         );
         assert_eq!(
-            boundary_evidence.blocker().kind(),
+            boundary_evidence.blocker.kind(),
             ExactBooleanBlockerKind::Winding,
             "{boundary_evidence:?}"
         );
         assert_eq!(
-            boundary_evidence.retained_face_pairs(),
+            boundary_evidence.retained_face_pairs,
             graph.face_pairs.len()
         );
-        assert_eq!(boundary_evidence.retained_events(), graph.event_count());
-        assert!(boundary_evidence.region_count() > 0);
-        assert!(!boundary_evidence.status().is_already_materialized());
+        assert_eq!(boundary_evidence.retained_events, graph.event_count());
+        assert!(boundary_evidence.region_count > 0);
+        assert!(!boundary_evidence.status.is_already_materialized());
         assert!(
             !boundary_evidence
-                .status()
+                .status
                 .materializes_arrangement_cell_complex()
         );
         boundary_evidence.validate().unwrap();
@@ -2621,7 +2620,7 @@ fn volumetric_coplanar_boundary_closure_materializes_closed_output() {
             &right,
         );
         assert_eq!(
-            evidence.status(),
+            evidence.status,
             ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
             "{operation:?}: {evidence:?}"
         );
@@ -3233,22 +3232,22 @@ fn crossing_open_surface_boolean_materializes_inside_arrangement_attempt() {
             &right,
         );
         assert_eq!(
-            evidence.status(),
+            evidence.status,
             ExactWindingEvidenceStatus::OpenSurfaceArrangementAlreadyMaterialized,
             "{operation:?}: {evidence:?}"
         );
         assert_eq!(
-            evidence.blocker().kind(),
+            evidence.blocker.kind(),
             ExactBooleanBlockerKind::Winding,
             "{operation:?}: {evidence:?}"
         );
-        assert_eq!(evidence.region_count(), preflight.region_count);
+        assert_eq!(evidence.region_count, preflight.region_count);
         assert_eq!(
-            evidence.region_classifications(),
+            evidence.region_classifications.as_slice(),
             preflight.region_classifications.as_slice()
         );
-        assert!(evidence.status().is_already_materialized());
-        assert!(!evidence.status().materializes_arrangement_cell_complex());
+        assert!(evidence.status.is_already_materialized());
+        assert!(!evidence.status.materializes_arrangement_cell_complex());
         evidence.validate().unwrap();
         evidence.validate_against_sources(&left, &right).unwrap();
 
@@ -3470,17 +3469,17 @@ fn nested_closed_shell_booleans_materialize_through_arrangement_pipeline() {
             &right,
         );
         assert_eq!(
-            evidence.status(),
+            evidence.status,
             ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized,
             "{operation:?}: {evidence:?}"
         );
         assert_eq!(
-            evidence.blocker().kind(),
+            evidence.blocker.kind(),
             ExactBooleanBlockerKind::Winding,
             "{operation:?}: {evidence:?}"
         );
-        assert_eq!(evidence.retained_face_pairs(), 0);
-        assert_eq!(evidence.retained_events(), 0);
+        assert_eq!(evidence.retained_face_pairs, 0);
+        assert_eq!(evidence.retained_events, 0);
         evidence.validate().unwrap();
         evidence.validate_against_sources(&left, &right).unwrap();
 
@@ -3602,16 +3601,16 @@ fn boundary_touching_orthogonal_shortcuts_report_materialized_evidence() {
             &right,
         );
         assert_eq!(
-            evidence.status(),
+            evidence.status,
             ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
             "{operation:?}: {evidence:?}"
         );
         assert_eq!(
-            evidence.blocker().kind(),
+            evidence.blocker.kind(),
             ExactBooleanBlockerKind::Winding,
             "{operation:?}: {evidence:?}"
         );
-        assert!(evidence.status().is_already_materialized());
+        assert!(evidence.status.is_already_materialized());
         evidence.validate().unwrap();
         evidence.validate_against_sources(&left, &right).unwrap();
     }
@@ -3681,16 +3680,16 @@ fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
             &right,
         );
         assert_eq!(
-            evidence.status(),
+            evidence.status,
             ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
             "{operation:?}: {evidence:?}"
         );
         assert_eq!(
-            evidence.blocker().kind(),
+            evidence.blocker.kind(),
             ExactBooleanBlockerKind::Winding,
             "{operation:?}: {evidence:?}"
         );
-        assert!(evidence.status().is_already_materialized());
+        assert!(evidence.status.is_already_materialized());
         evidence.validate().unwrap();
         evidence.validate_against_sources(&left, &right).unwrap();
 
@@ -3789,7 +3788,7 @@ fn boundary_attached_contained_tetrahedron_difference_materializes() {
         &right,
     );
     assert_eq!(
-        evidence.status(),
+        evidence.status,
         ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
         "{evidence:?}"
     );
@@ -3876,15 +3875,15 @@ fn noncoplanar_convex_report_cases_retain_graph_counts() {
             ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
         };
         assert!(
-            evidence.status() == expected_evidence_status
-                || evidence.status()
+            evidence.status == expected_evidence_status
+                || evidence.status
                     == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
             "{operation:?}: {evidence:?}"
         );
-        assert_eq!(evidence.retained_face_pairs(), graph.face_pairs.len());
-        assert_eq!(evidence.retained_events(), graph.event_count());
-        assert_eq!(evidence.blocker().kind(), ExactBooleanBlockerKind::Winding);
-        assert_eq!(evidence.blocker().candidate_pairs(), graph.face_pairs.len());
+        assert_eq!(evidence.retained_face_pairs, graph.face_pairs.len());
+        assert_eq!(evidence.retained_events, graph.event_count());
+        assert_eq!(evidence.blocker.kind(), ExactBooleanBlockerKind::Winding);
+        assert_eq!(evidence.blocker.candidate_pairs(), graph.face_pairs.len());
         evidence.validate().unwrap();
         evidence.validate_against_sources(&left, &right).unwrap();
     }
@@ -3943,8 +3942,8 @@ fn straddling_coplanar_crossing_tetrahedron_boundary_attempt_materializes() {
             &right,
         );
         assert!(
-            evidence.status() == expected_status
-                || evidence.status()
+            evidence.status == expected_status
+                || evidence.status
                     == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
             "{operation:?}: {evidence:?}"
         );
@@ -4497,12 +4496,12 @@ fn open_same_surface_sheets_remain_certified() {
             &right,
         );
         assert_eq!(
-            evidence.status(),
+            evidence.status,
             ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized,
             "{operation:?}: {evidence:?}"
         );
-        assert_eq!(evidence.retained_face_pairs(), 0);
-        assert_eq!(evidence.retained_events(), 0);
+        assert_eq!(evidence.retained_face_pairs, 0);
+        assert_eq!(evidence.retained_events, 0);
         evidence.validate().unwrap();
         evidence.validate_against_sources(&left, &right).unwrap();
 
@@ -4567,7 +4566,7 @@ fn open_identical_sheets_keep_identity_shortcut() {
         &right,
     );
     assert_eq!(
-        evidence.status(),
+        evidence.status,
         ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized,
         "{evidence:?}"
     );
@@ -4679,20 +4678,21 @@ fn arrangement_materialized_evidence_retains_boundary_only_evidence() {
     );
 
     assert_eq!(
-        evidence.status(),
+        evidence.status,
         ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
     );
     assert_eq!(
-        evidence.blocker().kind(),
+        evidence.blocker.kind(),
         ExactBooleanBlockerKind::BoundaryOnlyContact
     );
     let volumetric_evidence = evidence
-        .coplanar_volumetric_evidence()
+        .coplanar_volumetric_evidence
+        .as_ref()
         .expect("arrangement evidence should retain boundary-only evidence");
     assert!(volumetric_evidence.is_boundary_only_positive_area_contact());
     assert_eq!(
         volumetric_evidence.retained_face_pair_count(),
-        evidence.retained_face_pairs()
+        evidence.retained_face_pairs
     );
     volumetric_evidence.validate().unwrap();
 }

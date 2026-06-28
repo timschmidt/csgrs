@@ -1939,8 +1939,8 @@ fn preflight_boolean_exact_request_from_graph_core(
             operation,
             &shortcut_facts,
         )?;
-        if winding_evidence.status().routes_to_certified_winding()
-            && winding_evidence.blocker().kind() == ExactBooleanBlockerKind::CoplanarVolumetricCells
+        if winding_evidence.status.routes_to_certified_winding()
+            && winding_evidence.blocker.kind() == ExactBooleanBlockerKind::CoplanarVolumetricCells
         {
             return Ok(winding_evidence
                 .into_preflight(ExactBooleanSupport::RequiresCertifiedWinding, true));
@@ -1995,9 +1995,9 @@ fn preflight_boolean_exact_request_from_graph_core(
         }
     };
     if winding_report
-        .status()
+        .status
         .materializes_arrangement_cell_complex()
-        || (winding_report.status() == ExactWindingEvidenceStatus::Ready
+        || (winding_report.status == ExactWindingEvidenceStatus::Ready
             && materialize_volumetric_winding_region_plan_from_graph(
                 graph,
                 left,
@@ -3298,7 +3298,7 @@ fn materialize_arrangement_lower_dimensional_intersection_from_graph(
         ))
     })?;
     if !matches!(
-        evidence.status(),
+        evidence.status,
         ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
             | ExactWindingEvidenceStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
     ) {
@@ -7772,7 +7772,7 @@ fn winding_evidence_report_for_request_from_graph_and_attempt(
         if validation == ExactMeshValidationPolicy::CLOSED
             || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
             || !matches!(
-                evidence.status(),
+                evidence.status,
                 ExactWindingEvidenceStatus::VolumetricAssemblyRequired
                     | ExactWindingEvidenceStatus::CoplanarVolumetricCellsRequired
             )
