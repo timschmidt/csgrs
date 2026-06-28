@@ -316,18 +316,6 @@ impl ExactAabbBroadPhase {
         let plan = left.candidate_face_pair_plan(&right);
         left.try_visit_candidate_face_pairs_with_plan(&right, plan, visit)
     }
-
-    /// Visit candidate face pairs with a retained plan and reusable scratch storage.
-    pub(crate) fn try_visit_candidate_face_pairs_with_plan_and_scratch<E>(
-        &self,
-        left: &PreparedMeshBounds<'_>,
-        right: &PreparedMeshBounds<'_>,
-        plan: CandidateFacePairPlan,
-        scratch: &mut BroadPhaseScratch,
-        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E> {
-        left.try_visit_candidate_face_pairs_with_plan_and_scratch(right, plan, scratch, visit)
-    }
 }
 
 impl Default for ExactAabbBroadPhase {

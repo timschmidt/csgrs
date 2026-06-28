@@ -7,9 +7,7 @@ use super::arrangement3d::regularization::ExactRegularizationPolicy;
 use super::arrangement3d::{ArrangementView, ExactArrangement};
 use super::boolean::evidence::ExactArrangementCellComplexShortcutFacts;
 use super::boolean::{ExactBooleanOperation, materialize_closed_named_boolean_with_prepared_pair};
-use super::bounds::{
-    BroadPhaseScratch, CandidateFacePairPlan, ExactAabbBroadPhase, PreparedMeshBounds,
-};
+use super::bounds::{BroadPhaseScratch, CandidateFacePairPlan, PreparedMeshBounds};
 use super::error::ExactMeshError;
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
 use super::graph::{ExactIntersectionGraph, build_validated_intersection_graph_from_prepared_pair};
@@ -679,25 +677,25 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
-        let broad_phase = ExactAabbBroadPhase::default();
         if let Ok(mut scratch) = self.scratch.try_borrow_mut() {
-            return broad_phase.try_visit_candidate_face_pairs_with_plan_and_scratch(
-                &self.left_bounds,
-                &self.right_bounds,
-                self.plan,
-                &mut scratch,
-                visit,
-            );
+            return self
+                .left_bounds
+                .try_visit_candidate_face_pairs_with_plan_and_scratch(
+                    &self.right_bounds,
+                    self.plan,
+                    &mut scratch,
+                    visit,
+                );
         }
 
         let mut local_scratch = BroadPhaseScratch::default();
-        broad_phase.try_visit_candidate_face_pairs_with_plan_and_scratch(
-            &self.left_bounds,
-            &self.right_bounds,
-            self.plan,
-            &mut local_scratch,
-            visit,
-        )
+        self.left_bounds
+            .try_visit_candidate_face_pairs_with_plan_and_scratch(
+                &self.right_bounds,
+                self.plan,
+                &mut local_scratch,
+                visit,
+            )
     }
 }
 
