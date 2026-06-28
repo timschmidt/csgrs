@@ -569,13 +569,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         query: impl for<'arrangement> FnOnce(ArrangementView<'arrangement>) -> R,
     ) -> Result<R, ExactMeshError> {
-        let arrangement = self.retained_arrangement()?;
-        Ok(query(arrangement.view()))
-    }
-
-    fn retained_arrangement(&self) -> Result<Rc<ExactArrangement>, ExactMeshError> {
         if let Some(arrangement) = self.arrangement.borrow().clone() {
-            return Ok(arrangement);
+            return Ok(query(arrangement.view()));
         }
 
         let graph = build_validated_intersection_graph_from_prepared_pair(self)?;
@@ -587,7 +582,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         )?;
         let arrangement = Rc::new(arrangement);
         *self.arrangement.borrow_mut() = Some(Rc::clone(&arrangement));
-        Ok(arrangement)
+        Ok(query(arrangement.view()))
     }
 
     pub(crate) fn current_intersection_graph(
