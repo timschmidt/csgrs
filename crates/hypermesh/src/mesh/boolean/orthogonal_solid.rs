@@ -259,10 +259,12 @@ fn try_certify_axis_aligned_box(
     }
     let corners = box_bounds.corners();
     for vertex in mesh.vertices() {
-        let point = vertex.clone();
         let mut matches_corner = false;
         for corner in &corners {
-            if exact_points_equal(corner, &point)? {
+            if exact_compare_axis(&corner.x, &vertex.x)? == Ordering::Equal
+                && exact_compare_axis(&corner.y, &vertex.y)? == Ordering::Equal
+                && exact_compare_axis(&corner.z, &vertex.z)? == Ordering::Equal
+            {
                 matches_corner = true;
                 break;
             }
@@ -274,7 +276,10 @@ fn try_certify_axis_aligned_box(
     for corner in &corners {
         let mut matches_vertex = false;
         for vertex in mesh.vertices() {
-            if exact_points_equal(corner, vertex)? {
+            if exact_compare_axis(&corner.x, &vertex.x)? == Ordering::Equal
+                && exact_compare_axis(&corner.y, &vertex.y)? == Ordering::Equal
+                && exact_compare_axis(&corner.z, &vertex.z)? == Ordering::Equal
+            {
                 matches_vertex = true;
                 break;
             }
@@ -1567,12 +1572,6 @@ fn exact_compare_axis(left: &Real, right: &Real) -> Result<Ordering, ExactMeshEr
             "exact axis-aligned box certificate comparison was undecidable",
         ))
     })
-}
-
-fn exact_points_equal(left: &Point3, right: &Point3) -> Result<bool, ExactMeshError> {
-    Ok(exact_compare_axis(&left.x, &right.x)? == Ordering::Equal
-        && exact_compare_axis(&left.y, &right.y)? == Ordering::Equal
-        && exact_compare_axis(&left.z, &right.z)? == Ordering::Equal)
 }
 
 fn cmp(left: &Real, right: &Real) -> Option<Ordering> {
