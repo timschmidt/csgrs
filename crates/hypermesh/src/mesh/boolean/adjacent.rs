@@ -604,7 +604,12 @@ fn merged_union_mesh(
             return Ok(None);
         }
     }
-    remove_duplicate_triangle_vertex_sets(&mut triangles);
+    let mut seen = BTreeSet::new();
+    triangles.retain(|triangle| {
+        let mut key = triangle.0;
+        key.sort_unstable();
+        seen.insert(key)
+    });
 
     let mesh = ExactMesh::new_with_policy(
         vertices,
@@ -613,15 +618,6 @@ fn merged_union_mesh(
         validation,
     )?;
     Ok(Some(mesh))
-}
-
-fn remove_duplicate_triangle_vertex_sets(triangles: &mut Vec<Triangle>) {
-    let mut seen = BTreeSet::new();
-    triangles.retain(|triangle| {
-        let mut key = triangle.0;
-        key.sort_unstable();
-        seen.insert(key)
-    });
 }
 
 fn insert_seam_map<I>(right_to_left: &mut BTreeMap<usize, usize>, pairs: I) -> Option<()>
