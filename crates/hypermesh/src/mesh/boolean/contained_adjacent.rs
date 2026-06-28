@@ -417,38 +417,27 @@ fn contained_adjacency_contact_pair(
 
     match pair.relation {
         MeshFacePairRelation::CoplanarTouching => true,
-        MeshFacePairRelation::Candidate => pair
-            .events
-            .iter()
-            .all(|event| boundary_candidate_event(left, right, event)),
+        MeshFacePairRelation::Candidate => pair.events.iter().all(|event| match event {
+            IntersectionEvent::SegmentPlane { relation, .. } => {
+                matches!(
+                    relation,
+                    SegmentPlaneRelation::Disjoint
+                        | SegmentPlaneRelation::Coplanar
+                        | SegmentPlaneRelation::EndpointOnPlane
+                ) || (*relation == SegmentPlaneRelation::ProperCrossing
+                    && retained_plane_crossing_is_not_inside_plane_face(left, right, event))
+            }
+            IntersectionEvent::CoplanarEdge { relation, .. } => {
+                *relation != SegmentIntersection::Disjoint
+            }
+            IntersectionEvent::CoplanarVertex { location, .. } => matches!(
+                location,
+                TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
+            ),
+            IntersectionEvent::Unknown => false,
+        }),
         MeshFacePairRelation::PlaneSeparated => true,
         MeshFacePairRelation::CoplanarOverlapping | MeshFacePairRelation::Unknown => false,
-    }
-}
-
-fn boundary_candidate_event(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    event: &IntersectionEvent,
-) -> bool {
-    match event {
-        IntersectionEvent::SegmentPlane { relation, .. } => {
-            matches!(
-                relation,
-                SegmentPlaneRelation::Disjoint
-                    | SegmentPlaneRelation::Coplanar
-                    | SegmentPlaneRelation::EndpointOnPlane
-            ) || (*relation == SegmentPlaneRelation::ProperCrossing
-                && retained_plane_crossing_is_not_inside_plane_face(left, right, event))
-        }
-        IntersectionEvent::CoplanarEdge { relation, .. } => {
-            *relation != SegmentIntersection::Disjoint
-        }
-        IntersectionEvent::CoplanarVertex { location, .. } => matches!(
-            location,
-            TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
-        ),
-        IntersectionEvent::Unknown => false,
     }
 }
 
