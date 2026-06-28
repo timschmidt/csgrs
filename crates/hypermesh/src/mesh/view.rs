@@ -653,12 +653,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         let graph = Rc::new(graph);
         *self.intersection_graph.borrow_mut() = Some(Rc::clone(&graph));
         *self.intersection_graph_validated.borrow_mut() = false;
-        self.clear_graph_dependent_retained_facts();
-        graph
-    }
-
-    fn clear_graph_dependent_retained_facts(&self) {
         *self.arrangement.borrow_mut() = None;
+        graph
     }
 
     pub(crate) fn certify_intersection_graph_source_replay(&self) {
