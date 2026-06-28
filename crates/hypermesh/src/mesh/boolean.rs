@@ -2584,7 +2584,7 @@ fn certified_closed_boundary_only_contact_preflight(
             format!("{validation_label}: {error:?}"),
         ))
     })?;
-    if evidence.positive_area_coplanar_overlapping_pairs() != 0 {
+    if evidence.positive_area_coplanar_overlapping_pairs != 0 {
         return Ok(Some(certified_preflight(
             operation,
             ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -7829,10 +7829,7 @@ fn arrangement_materialized_evidence_blocker_kind_and_evidence(
 ) {
     let coplanar_evidence =
         certified_arrangement_cell_complex_coplanar_evidence(graph, left, right);
-    let blocker_kind = match coplanar_evidence
-        .as_ref()
-        .map(|evidence| evidence.obstacle())
-    {
+    let blocker_kind = match coplanar_evidence.as_ref().map(|evidence| evidence.obstacle) {
         Some(CoplanarVolumetricCellObstacle::BoundaryOnlyContact) => {
             ExactBooleanBlockerKind::BoundaryOnlyContact
         }

@@ -4690,7 +4690,7 @@ fn arrangement_materialized_evidence_retains_boundary_only_evidence() {
         .expect("arrangement evidence should retain boundary-only evidence");
     assert!(volumetric_evidence.is_boundary_only_positive_area_contact());
     assert_eq!(
-        volumetric_evidence.retained_face_pair_count(),
+        volumetric_evidence.retained_face_pair_count,
         evidence.retained_face_pairs
     );
     volumetric_evidence.validate().unwrap();

@@ -1236,11 +1236,11 @@ fn validate_coplanar_volumetric_evidence_matches_blocker(
     retained_events: usize,
 ) -> Result<(), ExactEvidenceValidationError> {
     validate_coplanar_volumetric_evidence_counts(evidence, retained_face_pairs, retained_events)?;
-    if evidence.candidate_pairs() != blocker.candidate_pairs
-        || evidence.coplanar_touching_pairs() != blocker.coplanar_touching_pairs
-        || evidence.coplanar_overlapping_pairs() != blocker.coplanar_overlapping_pairs
-        || evidence.unknown_pairs() != blocker.unknown_pairs
-        || evidence.construction_failed_events() != blocker.construction_failed_events
+    if evidence.candidate_pairs != blocker.candidate_pairs
+        || evidence.coplanar_touching_pairs != blocker.coplanar_touching_pairs
+        || evidence.coplanar_overlapping_pairs != blocker.coplanar_overlapping_pairs
+        || evidence.unknown_pairs != blocker.unknown_pairs
+        || evidence.construction_failed_events != blocker.construction_failed_events
     {
         return Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch);
     }
@@ -1258,7 +1258,7 @@ fn validate_coplanar_volumetric_evidence_counts(
     let Some(retained_evidence_events) = evidence.retained_event_count() else {
         return Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch);
     };
-    if evidence.retained_face_pair_count() != retained_face_pairs
+    if evidence.retained_face_pair_count != retained_face_pairs
         || retained_evidence_events != retained_events
     {
         return Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch);
@@ -4503,7 +4503,7 @@ fn closed_boundary_touching_sources_match(
         evidence
             .validate()
             .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
-        if evidence.positive_area_coplanar_overlapping_pairs() != 0 {
+        if evidence.positive_area_coplanar_overlapping_pairs != 0 {
             return Ok(false);
         }
     }
