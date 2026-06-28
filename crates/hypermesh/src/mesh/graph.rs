@@ -24,7 +24,7 @@ use hyperlimit::{
     project_point3, projected_line_parameter3, projected_segment_parameter3,
 };
 
-use super::bounds::ExactAabbBroadPhase;
+use super::bounds::{ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT, try_visit_candidate_face_pairs_one_shot};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide};
 use super::view::PreparedMeshPair;
 use super::{ExactMesh, triangle_edges};
@@ -1280,30 +1280,28 @@ pub(crate) fn build_unvalidated_intersection_graph(
             format!("exact mesh retained broad-phase certificate failed: {error:?}"),
         )));
     }
-    let broad_phase = ExactAabbBroadPhase::default();
     let face_pair_product = left
         .triangles()
         .len()
         .saturating_mul(right.triangles().len());
-    if face_pair_product <= broad_phase.one_shot_quadratic_face_pair_limit() {
+    if face_pair_product <= ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT {
         let mut face_pairs =
             Vec::with_capacity(if left.bounds().mesh_may_overlap(right.bounds()) {
                 face_pair_product
             } else {
                 0
             });
-        broad_phase.try_visit_candidate_face_pairs_one_shot(
-            left.bounds(),
-            right.bounds(),
-            &mut |[left_face, right_face]| {
-                let classification =
-                    classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
-                if classification.needs_graph_construction() {
-                    face_pairs.push(events_for_face_pair(left, right, &classification));
-                }
-                Ok::<(), ExactMeshError>(())
-            },
-        )?;
+        try_visit_candidate_face_pairs_one_shot(left.bounds(), right.bounds(), &mut |[
+            left_face,
+            right_face,
+        ]| {
+            let classification =
+                classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
+            if classification.needs_graph_construction() {
+                face_pairs.push(events_for_face_pair(left, right, &classification));
+            }
+            Ok::<(), ExactMeshError>(())
+        })?;
         return Ok(ExactIntersectionGraph::from_face_pairs(face_pairs));
     }
 

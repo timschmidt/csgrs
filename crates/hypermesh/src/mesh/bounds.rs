@@ -232,7 +232,7 @@ impl CandidateFacePairPlan {
             } => candidate_pair_capacity_hint,
             Self::Quadratic
                 if left_face_count.saturating_mul(right_face_count)
-                    <= ExactAabbBroadPhase::DEFAULT_ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT =>
+                    <= ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT =>
             {
                 left_face_count.saturating_mul(right_face_count)
             }
@@ -243,6 +243,7 @@ impl CandidateFacePairPlan {
 }
 
 const MAX_CANDIDATE_FACE_PAIR_RESERVE: usize = 4096;
+pub(crate) const ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT: usize = 64;
 
 /// Reusable broad-phase traversal storage for prepared pair queries.
 #[derive(Debug, Default)]
@@ -276,53 +277,23 @@ impl BroadPhaseScratch {
     }
 }
 
-/// Exact AABB broad phase with an adaptive one-shot/prepared sweep split.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) struct ExactAabbBroadPhase {
-    one_shot_quadratic_face_pair_limit: usize,
-}
-
-impl ExactAabbBroadPhase {
-    const DEFAULT_ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT: usize = 64;
-
-    pub(crate) const fn new(one_shot_quadratic_face_pair_limit: usize) -> Self {
-        Self {
-            one_shot_quadratic_face_pair_limit,
-        }
+/// Visit one-shot candidate face pairs from retained mesh bounds.
+pub(crate) fn try_visit_candidate_face_pairs_one_shot<E>(
+    left: &MeshBounds,
+    right: &MeshBounds,
+    visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
+) -> Result<(), E> {
+    if !left.mesh_may_overlap(right) {
+        return Ok(());
     }
-
-    /// Return the one-shot face-pair product limit before preparing reusable bounds.
-    pub(crate) const fn one_shot_quadratic_face_pair_limit(&self) -> usize {
-        self.one_shot_quadratic_face_pair_limit
+    if left.faces.len().saturating_mul(right.faces.len()) <= ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT {
+        return left.try_visit_candidate_face_pairs_quadratic(right, visit);
     }
-
-    /// Visit one-shot candidate face pairs from retained mesh bounds.
-    pub(crate) fn try_visit_candidate_face_pairs_one_shot<E>(
-        &self,
-        left: &MeshBounds,
-        right: &MeshBounds,
-        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E> {
-        if !left.mesh_may_overlap(right) {
-            return Ok(());
-        }
-        if left.faces.len().saturating_mul(right.faces.len())
-            <= self.one_shot_quadratic_face_pair_limit
-        {
-            return left.try_visit_candidate_face_pairs_quadratic(right, visit);
-        }
-        let left = left.prepare();
-        let right = right.prepare();
-        let plan = left.candidate_face_pair_plan(&right);
-        let mut scratch = BroadPhaseScratch::default();
-        left.try_visit_candidate_face_pairs_with_plan_and_scratch(&right, plan, &mut scratch, visit)
-    }
-}
-
-impl Default for ExactAabbBroadPhase {
-    fn default() -> Self {
-        Self::new(Self::DEFAULT_ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT)
-    }
+    let left = left.prepare();
+    let right = right.prepare();
+    let plan = left.candidate_face_pair_plan(&right);
+    let mut scratch = BroadPhaseScratch::default();
+    left.try_visit_candidate_face_pairs_with_plan_and_scratch(&right, plan, &mut scratch, visit)
 }
 
 impl MeshBounds {
@@ -1247,7 +1218,7 @@ mod tests {
     }
 
     #[test]
-    fn exact_aabb_broad_phase_preserves_candidate_output() {
+    fn one_shot_broad_phase_preserves_candidate_output() {
         let left_points = vec![
             p(0, 0, 0),
             p(5, 0, 0),
@@ -1446,12 +1417,11 @@ mod tests {
         let left = MeshBounds::from_triangles(&left_points, &triangles);
         let right = MeshBounds::from_triangles(&right_points, &triangles);
         let mut pairs = Vec::new();
-        ExactAabbBroadPhase::default()
-            .try_visit_candidate_face_pairs_one_shot(&left, &right, &mut |pair| {
-                pairs.push(pair);
-                Ok::<(), ()>(())
-            })
-            .unwrap();
+        try_visit_candidate_face_pairs_one_shot(&left, &right, &mut |pair| {
+            pairs.push(pair);
+            Ok::<(), ()>(())
+        })
+        .unwrap();
 
         assert_eq!(
             sorted_pairs(pairs),
