@@ -3322,46 +3322,46 @@ fn materialize_arrangement_lower_dimensional_intersection_from_graph(
     )))
 }
 
-/// Materialize an exact boolean request.
+/// Materialize an exact boolean operation under an output validation contract.
 ///
 /// This path is still strict about general winding. Boundary-only contact is
 /// retained as certified evidence and returned as a blocker unless a complete
 /// kernel materializer can prove a triangle-mesh result. Projection policy for
 /// lower-dimensional contact belongs above `hypermesh`.
-pub(crate) fn materialize_boolean_exact_request(
+fn materialize_boolean_operation(
     left: &ExactMesh,
     right: &ExactMesh,
-    request: ExactBooleanRequest,
+    operation: ExactBooleanOperation,
+    validation: ExactMeshValidationPolicy,
 ) -> Result<ExactBooleanResult, ExactMeshError> {
-    materialize_boolean_exact_request_with_graph(left, right, request, None, None)
+    materialize_boolean_operation_with_graph(left, right, operation, validation, None, None)
 }
 
 pub(crate) fn materialize_closed_named_boolean_with_prepared_pair(
     pair: &PreparedMeshPair<'_, '_>,
     operation: ExactBooleanOperation,
 ) -> Result<ExactMesh, ExactMeshError> {
-    let request = ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::CLOSED);
-    materialize_boolean_exact_request_with_graph(
+    materialize_boolean_operation_with_graph(
         pair.left_mesh(),
         pair.right_mesh(),
-        request,
+        operation,
+        ExactMeshValidationPolicy::CLOSED,
         None,
         Some(pair),
     )
     .map(ExactBooleanResult::into_mesh)
 }
 
-fn materialize_boolean_exact_request_with_graph(
+fn materialize_boolean_operation_with_graph(
     left: &ExactMesh,
     right: &ExactMesh,
-    request: ExactBooleanRequest,
+    operation: ExactBooleanOperation,
+    validation: ExactMeshValidationPolicy,
     retained_graph: Option<&ExactIntersectionGraph>,
     prepared_pair: Option<&PreparedMeshPair<'_, '_>>,
 ) -> Result<ExactBooleanResult, ExactMeshError> {
     left.validate_retained_bounds_certificate()?;
     right.validate_retained_bounds_certificate()?;
-    let operation = request.operation;
-    let validation = request.validation;
     let mut owned_graph = None;
     let mut prepared_graph = None;
     if let ExactBooleanOperation::SelectedRegions(selection) = operation {
@@ -3383,6 +3383,7 @@ fn materialize_boolean_exact_request_with_graph(
     if meshes_are_certified_bounds_disjoint(left, right) {
         return boolean_disjoint_meshes(left, right, operation, validation);
     }
+    let request = ExactBooleanRequest::new(operation, validation);
     if request_uses_arrangement_lower_dimensional_regularized_shortcut(request) {
         let graph = graph_for_certified_materialization_with_prepared(
             retained_graph,
@@ -3423,10 +3424,14 @@ fn materialize_boolean_exact_request_with_graph(
         return boolean_same_surface_meshes(left, operation, validation);
     }
     if let Some(graph) = retained_graph {
-        return materialize_boolean_exact_request_from_ready_graph(graph, left, right, request);
+        return materialize_boolean_operation_from_ready_graph(
+            graph, left, right, operation, validation,
+        );
     }
     if let Some(graph) = owned_graph.as_ref() {
-        return materialize_boolean_exact_request_from_ready_graph(graph, left, right, request);
+        return materialize_boolean_operation_from_ready_graph(
+            graph, left, right, operation, validation,
+        );
     }
     if let Some(pair) = prepared_pair
         && let Some(arrangement) = pair.retained_arrangement_for_reuse()
@@ -3454,18 +3459,22 @@ fn materialize_boolean_exact_request_with_graph(
         }
     }
     if let Some(graph) = prepared_graph.as_deref() {
-        return materialize_boolean_exact_request_from_ready_graph(graph, left, right, request);
+        return materialize_boolean_operation_from_ready_graph(
+            graph, left, right, operation, validation,
+        );
     }
 
     if let Some(pair) = prepared_pair {
         let graph = build_validated_intersection_graph_from_prepared_pair(pair)?;
-        return materialize_boolean_exact_request_from_ready_graph(&graph, left, right, request);
+        return materialize_boolean_operation_from_ready_graph(
+            &graph, left, right, operation, validation,
+        );
     }
 
     match build_validated_intersection_graph(left, right) {
-        Ok(graph) => {
-            materialize_boolean_exact_request_from_ready_graph(&graph, left, right, request)
-        }
+        Ok(graph) => materialize_boolean_operation_from_ready_graph(
+            &graph, left, right, operation, validation,
+        ),
         Err(error) => {
             if let Some(result) =
                 boolean_arrangement_cell_complex_recovery(left, right, operation, validation)?
@@ -3482,14 +3491,13 @@ fn materialize_boolean_exact_request_with_graph(
     }
 }
 
-fn materialize_boolean_exact_request_from_ready_graph(
+fn materialize_boolean_operation_from_ready_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-    request: ExactBooleanRequest,
+    operation: ExactBooleanOperation,
+    validation: ExactMeshValidationPolicy,
 ) -> Result<ExactBooleanResult, ExactMeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
     let prefer_boundary_or_no_volume = matches!(
         operation,
         ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
@@ -3536,7 +3544,10 @@ fn materialize_boolean_exact_request_from_ready_graph(
     if operation == ExactBooleanOperation::Union
         && let Some((result, _report)) =
             materialize_adjacent_union_completion_from_graph_for_request(
-                graph, left, right, request,
+                graph,
+                left,
+                right,
+                ExactBooleanRequest::new(operation, validation),
             )?
     {
         return Ok(result);

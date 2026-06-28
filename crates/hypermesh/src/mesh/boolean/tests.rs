@@ -37,7 +37,8 @@ fn test_materialized_result(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> ExactBooleanResult {
-    let result = materialize_boolean_exact_request(left, right, request).unwrap();
+    let result =
+        materialize_boolean_operation(left, right, request.operation, request.validation).unwrap();
     let evaluation = exact_boolean_evaluation_for_replay(left, right, request).unwrap();
     evaluation
         .validate_with_missing_result_policy(false)

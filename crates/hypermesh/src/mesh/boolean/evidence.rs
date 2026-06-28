@@ -76,7 +76,7 @@ use super::{
     ExactBooleanOperation, ExactBooleanRequest, adjacent_union_completion_certification_from_graph,
     boolean_convex_meshes_optional, boolean_coplanar_mesh_overlay_optional,
     boolean_same_surface_meshes, boundary_touching_report_from_graph,
-    materialize_boolean_exact_request,
+    materialize_boolean_operation,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
     materialize_open_surface_disjoint_meshes,
@@ -2501,16 +2501,18 @@ impl ExactBooleanResult {
             && self.arrangement_cell_complex_operation() == Some(request.operation)
             && self.mesh.validation_policy().satisfies(request.validation)
         {
-            let replay = materialize_boolean_exact_request(left, right, request)
-                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
+            let replay =
+                materialize_boolean_operation(left, right, request.operation, request.validation)
+                    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
             return if self.matches_retained_replay(&replay) {
                 Ok(())
             } else {
                 Err(ExactEvidenceValidationError::SourceReplayMismatch)
             };
         }
-        let replay = materialize_boolean_exact_request(left, right, request)
-            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
+        let replay =
+            materialize_boolean_operation(left, right, request.operation, request.validation)
+                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         if self.matches_retained_replay(&replay) {
             Ok(())
         } else {
@@ -9246,7 +9248,6 @@ impl ExactWindingEvidenceReport {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mesh::boolean::ExactBooleanRequest;
     use crate::mesh::boolean::region::{ExactOutputVertex, FaceRegionPlaneRelation};
     use crate::mesh::graph::FaceSplitBoundaryNode;
 
@@ -9297,13 +9298,11 @@ mod tests {
     fn selected_region_result_rejects_duplicate_assembly_triangle() {
         let left = report_test_triangle(&[[0, 0, 0], [4, 0, 0], [0, 4, 0]]);
         let right = report_test_triangle(&[[1, -1, -1], [1, 3, 1], [1, 3, -1]]);
-        let mut result = materialize_boolean_exact_request(
+        let mut result = materialize_boolean_operation(
             &left,
             &right,
-            ExactBooleanRequest::new(
-                ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-            ),
+            ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
         result.validate().unwrap();
