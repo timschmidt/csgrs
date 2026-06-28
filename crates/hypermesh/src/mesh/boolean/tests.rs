@@ -2509,12 +2509,12 @@ fn volumetric_boundary_closure_report_certifies_triangular_coplanar_cap() {
         &right,
     );
     assert_eq!(
-        closure.status(),
+        &closure.status,
         &ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
         "{closure:?}"
     );
-    assert_eq!(closure.boundary_loops(), 1, "{closure:?}");
-    assert_eq!(closure.coplanar_loop_groups(), 1, "{closure:?}");
+    assert_eq!(closure.boundary_loops, 1, "{closure:?}");
+    assert_eq!(closure.coplanar_loop_groups, 1, "{closure:?}");
     closure.validate().unwrap();
     closure.validate_against_sources(&left, &right).unwrap();
 }
@@ -2552,7 +2552,7 @@ fn volumetric_coplanar_boundary_closure_materializes_closed_output() {
         &right,
     );
     assert_eq!(
-        union_closure.status(),
+        &union_closure.status,
         &ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
         "{union_closure:?}"
     );
@@ -2570,7 +2570,7 @@ fn volumetric_coplanar_boundary_closure_materializes_closed_output() {
         &right,
     );
     assert_eq!(
-        difference_closure.status(),
+        &difference_closure.status,
         &ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
         "{difference_closure:?}"
     );
@@ -2587,14 +2587,13 @@ fn volumetric_coplanar_boundary_closure_materializes_closed_output() {
             &right,
         );
         assert_eq!(
-            closure.status(),
+            &closure.status,
             &ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
             "{operation:?}: {closure:?}"
         );
-        assert_eq!(closure.boundary_loops(), 1, "{operation:?}: {closure:?}");
+        assert_eq!(closure.boundary_loops, 1, "{operation:?}: {closure:?}");
         assert_eq!(
-            closure.coplanar_loop_groups(),
-            1,
+            closure.coplanar_loop_groups, 1,
             "{operation:?}: {closure:?}"
         );
         closure.validate().unwrap();

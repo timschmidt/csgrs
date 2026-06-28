@@ -5623,12 +5623,12 @@ fn volumetric_winding_open_boundary_candidate_counts(
         return Ok(None);
     }
     if matches!(
-        volumetric_boundary_closure_report_from_materialized_with_prevalidated_closure(
+        &volumetric_boundary_closure_report_from_materialized_with_prevalidated_closure(
             &materialized,
             operation,
             None,
         )?
-        .status(),
+        .status,
         &ExactVolumetricBoundaryClosureStatus::AlreadyClosed
             | &ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
     ) {

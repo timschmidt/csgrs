@@ -5615,13 +5615,13 @@ pub(crate) struct ExactVolumetricBoundaryClosureReport {
     /// Requested named operation.
     operation: ExactBooleanOperation,
     /// Certified closure status.
-    status: ExactVolumetricBoundaryClosureStatus,
+    pub(super) status: ExactVolumetricBoundaryClosureStatus,
     /// Number of output triangles in the retained boundary materialization.
     output_triangles: usize,
     /// Number of boundary edges retained by the materialized output mesh.
     boundary_edges: usize,
     /// Number of directed boundary loops, when loop extraction succeeded.
-    boundary_loops: usize,
+    pub(super) boundary_loops: usize,
     /// Number of boundary vertices whose outgoing directed boundary-edge count
     /// is not exactly one.
     boundary_vertices_with_invalid_outgoing_degree: usize,
@@ -5648,7 +5648,7 @@ pub(crate) struct ExactVolumetricBoundaryClosureReport {
     /// three distinct exact points.
     self_contact_nondegenerate_cycles: usize,
     /// Number of coplanar loop groups produced by exact loop grouping.
-    coplanar_loop_groups: usize,
+    pub(super) coplanar_loop_groups: usize,
 }
 
 impl ExactVolumetricBoundaryClosureReport {
@@ -5688,23 +5688,6 @@ impl ExactVolumetricBoundaryClosureReport {
             self_contact_nondegenerate_cycles,
             coplanar_loop_groups,
         }
-    }
-
-    /// Return the certified closure status.
-    pub(crate) const fn status(&self) -> &ExactVolumetricBoundaryClosureStatus {
-        &self.status
-    }
-
-    /// Return the directed boundary loop count.
-    #[cfg(test)]
-    pub(crate) const fn boundary_loops(&self) -> usize {
-        self.boundary_loops
-    }
-
-    /// Return the coplanar loop group count.
-    #[cfg(test)]
-    pub(crate) const fn coplanar_loop_groups(&self) -> usize {
-        self.coplanar_loop_groups
     }
 
     /// Return whether retained evidence proves coplanar boundary closure is
