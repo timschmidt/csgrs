@@ -2072,15 +2072,41 @@ fn arrangement_edges(
     let mut vertex_index = BTreeMap::<ArrangementVertexProvenanceKey, usize>::new();
     for (index, vertex) in vertices.iter().enumerate() {
         for provenance in &vertex.provenance {
-            vertex_index
-                .entry(arrangement_vertex_provenance_key(provenance))
-                .or_insert(index);
+            let key = match provenance {
+                ArrangementVertexProvenance::SourceVertex { side, vertex } => {
+                    (0, side_key(*side), *vertex)
+                }
+                ArrangementVertexProvenance::GraphIntersection { graph_vertex } => {
+                    (1, 0, *graph_vertex)
+                }
+                ArrangementVertexProvenance::CarrierPlaneVertex { overlay, vertex } => {
+                    (2, *overlay, *vertex)
+                }
+                ArrangementVertexProvenance::FacePlaneVertex {
+                    arrangement,
+                    vertex,
+                } => (3, *arrangement, *vertex),
+            };
+            vertex_index.entry(key).or_insert(index);
         }
     }
     let find_vertex = |provenance: ArrangementVertexProvenance| {
-        vertex_index
-            .get(&arrangement_vertex_provenance_key(&provenance))
-            .copied()
+        let key = match &provenance {
+            ArrangementVertexProvenance::SourceVertex { side, vertex } => {
+                (0, side_key(*side), *vertex)
+            }
+            ArrangementVertexProvenance::GraphIntersection { graph_vertex } => {
+                (1, 0, *graph_vertex)
+            }
+            ArrangementVertexProvenance::CarrierPlaneVertex { overlay, vertex } => {
+                (2, *overlay, *vertex)
+            }
+            ArrangementVertexProvenance::FacePlaneVertex {
+                arrangement,
+                vertex,
+            } => (3, *arrangement, *vertex),
+        };
+        vertex_index.get(&key).copied()
     };
     if let Some(topology) = topology {
         for chain in &topology.edge_chains {
@@ -2211,22 +2237,6 @@ fn push_arrangement_edge(
 }
 
 type ArrangementVertexProvenanceKey = (usize, usize, usize);
-
-fn arrangement_vertex_provenance_key(
-    provenance: &ArrangementVertexProvenance,
-) -> ArrangementVertexProvenanceKey {
-    match provenance {
-        ArrangementVertexProvenance::SourceVertex { side, vertex } => (0, side_key(*side), *vertex),
-        ArrangementVertexProvenance::GraphIntersection { graph_vertex } => (1, 0, *graph_vertex),
-        ArrangementVertexProvenance::CarrierPlaneVertex { overlay, vertex } => {
-            (2, *overlay, *vertex)
-        }
-        ArrangementVertexProvenance::FacePlaneVertex {
-            arrangement,
-            vertex,
-        } => (3, *arrangement, *vertex),
-    }
-}
 
 fn arrangement_face_cells(
     left: &ExactMesh,
