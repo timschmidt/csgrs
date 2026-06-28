@@ -72,7 +72,11 @@ impl ExactAffineTransform3 {
             [m20, m21, m22, tz],
             affine_row,
         ] = matrix;
-        if !homogeneous_affine_row_is_exact(&affine_row)? {
+        let affine_row_is_exact = real_equals(&affine_row[0], &Real::zero())?
+            && real_equals(&affine_row[1], &Real::zero())?
+            && real_equals(&affine_row[2], &Real::zero())?
+            && real_equals(&affine_row[3], &Real::one())?;
+        if !affine_row_is_exact {
             return Err(ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::UnsupportedExactOperation,
                 "homogeneous mesh transform must be affine with final row [0, 0, 0, 1]",
@@ -974,13 +978,6 @@ fn det3_rows(rows: &[[Real; 3]; 3]) -> Real {
     let y_minor = &(&rows[1][0] * &rows[2][2]) - &(&rows[1][2] * &rows[2][0]);
     let z_minor = &(&rows[1][0] * &rows[2][1]) - &(&rows[1][1] * &rows[2][0]);
     &(&rows[0][0] * &x_minor) - &(&rows[0][1] * &y_minor) + &(&rows[0][2] * &z_minor)
-}
-
-fn homogeneous_affine_row_is_exact(row: &[Real; 4]) -> Result<bool, ExactMeshError> {
-    Ok(real_equals(&row[0], &Real::zero())?
-        && real_equals(&row[1], &Real::zero())?
-        && real_equals(&row[2], &Real::zero())?
-        && real_equals(&row[3], &Real::one())?)
 }
 
 fn real_equals(left: &Real, right: &Real) -> Result<bool, ExactMeshError> {
