@@ -3555,6 +3555,22 @@ fn coplanar_edge_split_construction(
 fn validate_coplanar_edge_split(
     split: &CoplanarEdgeSplitConstruction,
 ) -> Result<(), CoplanarOverlapSplitValidationError> {
+    let zero = Real::from(0);
+    let one = Real::from(1);
+    let validate_unit_parameter =
+        |parameter: &Real| -> Result<(), CoplanarOverlapSplitValidationError> {
+            match (
+                compare_reals(parameter, &zero).value(),
+                compare_reals(parameter, &one).value(),
+            ) {
+                (Some(Ordering::Less), _) | (_, Some(Ordering::Greater)) => {
+                    Err(CoplanarOverlapSplitValidationError::SplitParameterOutOfRange)
+                }
+                (Some(_), Some(_)) => Ok(()),
+                _ => Err(CoplanarOverlapSplitValidationError::UnknownSplitParameterOrder),
+            }
+        };
+
     match split.overlap.relation {
         SegmentIntersection::Disjoint => {
             Err(CoplanarOverlapSplitValidationError::DisjointEdgeSplit)
@@ -3572,8 +3588,6 @@ fn validate_coplanar_edge_split(
             let point = &split.points[0];
             validate_unit_parameter(&point.left_parameter)?;
             validate_unit_parameter(&point.right_parameter)?;
-            let zero = Real::from(0);
-            let one = Real::from(1);
             let parameter_position = |parameter: &Real| -> Result<
                 (bool, bool),
                 CoplanarOverlapSplitValidationError,
@@ -3724,21 +3738,6 @@ fn coplanar_split_validation_mesh_kind(
         | CoplanarOverlapSplitValidationError::DegenerateInterval => {
             ExactMeshBlockerKind::ExactConstructionFailure
         }
-    }
-}
-
-fn validate_unit_parameter(parameter: &Real) -> Result<(), CoplanarOverlapSplitValidationError> {
-    let zero = Real::from(0);
-    let one = Real::from(1);
-    match (
-        compare_reals(parameter, &zero).value(),
-        compare_reals(parameter, &one).value(),
-    ) {
-        (Some(Ordering::Less), _) | (_, Some(Ordering::Greater)) => {
-            Err(CoplanarOverlapSplitValidationError::SplitParameterOutOfRange)
-        }
-        (Some(_), Some(_)) => Ok(()),
-        _ => Err(CoplanarOverlapSplitValidationError::UnknownSplitParameterOrder),
     }
 }
 
