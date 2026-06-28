@@ -314,18 +314,7 @@ impl ExactAabbBroadPhase {
         let left = left.prepare();
         let right = right.prepare();
         let plan = left.candidate_face_pair_plan(&right);
-        self.try_visit_candidate_face_pairs_with_plan(&left, &right, plan, visit)
-    }
-
-    /// Visit candidate face pairs with a retained plan.
-    pub(crate) fn try_visit_candidate_face_pairs_with_plan<E>(
-        &self,
-        left: &PreparedMeshBounds<'_>,
-        right: &PreparedMeshBounds<'_>,
-        plan: CandidateFacePairPlan,
-        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E> {
-        left.try_visit_candidate_face_pairs_with_plan(right, plan, visit)
+        left.try_visit_candidate_face_pairs_with_plan(&right, plan, visit)
     }
 
     /// Visit candidate face pairs with a retained plan and reusable scratch storage.
@@ -1025,13 +1014,11 @@ mod tests {
         right: &PreparedMeshBounds<'_>,
     ) -> Vec<[usize; 2]> {
         let mut pairs = Vec::new();
-        let broad_phase = ExactAabbBroadPhase::default();
         let plan = left.candidate_face_pair_plan(right);
-        let result =
-            broad_phase.try_visit_candidate_face_pairs_with_plan(left, right, plan, &mut |pair| {
-                pairs.push(pair);
-                Ok::<(), ()>(())
-            });
+        let result = left.try_visit_candidate_face_pairs_with_plan(right, plan, &mut |pair| {
+            pairs.push(pair);
+            Ok::<(), ()>(())
+        });
         debug_assert!(result.is_ok());
         pairs
     }
