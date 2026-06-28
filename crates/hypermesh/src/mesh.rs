@@ -692,20 +692,7 @@ impl ExactMesh {
     /// determinant reverses triangle winding so transformed closed shells keep
     /// their outside orientation.
     pub fn transform(&self, matrix: [[Real; 4]; 4]) -> Result<ExactMesh, ExactMeshError> {
-        self.transform_affine(&ExactAffineTransform3::from_homogeneous_rows(matrix)?)
-    }
-
-    fn next_construction_version(&self) -> u64 {
-        self.provenance
-            .construction_version
-            .saturating_add(1)
-            .max(1)
-    }
-
-    fn transform_affine(
-        &self,
-        transform: &ExactAffineTransform3,
-    ) -> Result<ExactMesh, ExactMeshError> {
+        let transform = ExactAffineTransform3::from_homogeneous_rows(matrix)?;
         let vertices = self
             .vertices
             .iter()
@@ -722,6 +709,13 @@ impl ExactMesh {
             self.validation_policy,
             self.next_construction_version(),
         )
+    }
+
+    fn next_construction_version(&self) -> u64 {
+        self.provenance
+            .construction_version
+            .saturating_add(1)
+            .max(1)
     }
 
     /// Materialize this mesh with every triangle orientation reversed.
