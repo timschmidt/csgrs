@@ -1442,24 +1442,22 @@ fn shared_grid_vertex_index(
 }
 
 fn collect_sorted_unique_axis_coords(mesh: &ExactMesh, axis: Axis) -> Option<Vec<Real>> {
-    let mut values = mesh
+    let values = mesh
         .vertices()
         .iter()
         .map(|vertex| axis_coord(&vertex.clone(), axis).clone())
         .collect::<Vec<_>>();
-    sort_reals(&mut values)?;
-    dedup_sorted_reals(values).filter(|values| values.len() >= 2)
+    sorted_unique_reals(values).filter(|values| values.len() >= 2)
 }
 
 fn merge_axis_coords(left: &[Real], right: &[Real]) -> Option<Vec<Real>> {
     let mut values = Vec::with_capacity(left.len().checked_add(right.len())?);
     values.extend(left.iter().cloned());
     values.extend(right.iter().cloned());
-    sort_reals(&mut values)?;
-    dedup_sorted_reals(values).filter(|values| values.len() >= 2)
+    sorted_unique_reals(values).filter(|values| values.len() >= 2)
 }
 
-fn sort_reals(values: &mut [Real]) -> Option<()> {
+fn sorted_unique_reals(mut values: Vec<Real>) -> Option<Vec<Real>> {
     for index in 1..values.len() {
         let mut cursor = index;
         while cursor > 0 && cmp(&values[cursor], &values[cursor - 1])? == Ordering::Less {
@@ -1467,10 +1465,6 @@ fn sort_reals(values: &mut [Real]) -> Option<()> {
             cursor -= 1;
         }
     }
-    Some(())
-}
-
-fn dedup_sorted_reals(values: Vec<Real>) -> Option<Vec<Real>> {
     let mut unique = Vec::with_capacity(values.len());
     for value in values {
         if unique
