@@ -3188,7 +3188,7 @@ impl ExactBooleanCertificationSet {
         self.validate_named_operation_materialization_reports()?;
         self.planar_arrangement.validate()?;
         self.winding_evidence.validate()?;
-        if self.planar_arrangement.operation() != request.operation
+        if self.planar_arrangement.operation != request.operation
             || self.winding_evidence.operation != request.operation
         {
             return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
@@ -3294,10 +3294,9 @@ impl ExactBooleanCertificationSet {
         {
             return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
-        if self.refinement.graph_had_unknowns() != self.planar_arrangement.graph_had_unknowns()
-            || self.refinement.retained_face_pairs()
-                != self.planar_arrangement.retained_face_pairs()
-            || self.refinement.retained_events() != self.planar_arrangement.retained_events()
+        if self.refinement.graph_had_unknowns() != self.planar_arrangement.graph_had_unknowns
+            || self.refinement.retained_face_pairs() != self.planar_arrangement.retained_face_pairs
+            || self.refinement.retained_events() != self.planar_arrangement.retained_events
         {
             return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
@@ -3350,9 +3349,9 @@ impl ExactBooleanCertificationSet {
             .map_err(|_| ExactEvidenceValidationError::StatusEvidenceMismatch)?;
         self.convex_capabilities.validate()?;
         self.arrangement_cell_complex_shortcuts.validate()?;
-        if self.refinement.graph_had_unknowns() != self.boundary_touching.graph_had_unknowns()
-            || self.refinement.retained_face_pairs() != self.boundary_touching.retained_face_pairs()
-            || self.refinement.retained_events() != self.boundary_touching.retained_events()
+        if self.refinement.graph_had_unknowns() != self.boundary_touching.graph_had_unknowns
+            || self.refinement.retained_face_pairs() != self.boundary_touching.retained_face_pairs
+            || self.refinement.retained_events() != self.boundary_touching.retained_events
         {
             return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
@@ -3888,15 +3887,17 @@ impl ExactBooleanCertificationSet {
             ExactBooleanSupport::RequiresPlanarArrangement => {
                 self.winding_evidence.status
                     == ExactWindingEvidenceStatus::PlanarArrangementRequired
-                    && preflight.graph_had_unknowns == self.planar_arrangement.graph_had_unknowns()
-                    && preflight.retained_face_pairs
-                        == self.planar_arrangement.retained_face_pairs()
-                    && preflight.retained_events == self.planar_arrangement.retained_events()
+                    && preflight.graph_had_unknowns == self.planar_arrangement.graph_had_unknowns
+                    && preflight.retained_face_pairs == self.planar_arrangement.retained_face_pairs
+                    && preflight.retained_events == self.planar_arrangement.retained_events
                     && preflight.region_count == 0
                     && preflight.region_classifications.is_empty()
-                    && preflight.blocker.as_ref() == Some(self.planar_arrangement.blocker())
+                    && preflight.blocker.as_ref() == Some(&self.planar_arrangement.blocker)
                     && preflight.coplanar_arrangement_evidence.as_ref()
-                        == self.planar_arrangement.coplanar_arrangement_evidence()
+                        == self
+                            .planar_arrangement
+                            .coplanar_arrangement_evidence
+                            .as_ref()
                     && preflight.coplanar_volumetric_evidence.is_none()
             }
             ExactBooleanSupport::RequiresCoplanarVolumetricCells => {
@@ -7509,15 +7510,15 @@ pub(crate) enum ExactBoundaryTouchingStatus {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ExactBoundaryTouchingReport {
     /// Coarse boundary-touching certification status.
-    status: ExactBoundaryTouchingStatus,
+    pub(super) status: ExactBoundaryTouchingStatus,
     /// Whether graph extraction retained unknown events.
-    graph_had_unknowns: bool,
+    pub(super) graph_had_unknowns: bool,
     /// Retained face-pair records after exact scheduling.
-    retained_face_pairs: usize,
+    pub(super) retained_face_pairs: usize,
     /// Total retained event records.
-    retained_events: usize,
+    pub(super) retained_events: usize,
     /// Relation counts for retained face pairs.
-    blocker: ExactBooleanBlocker,
+    pub(super) blocker: ExactBooleanBlocker,
 }
 
 /// Certification status for closed-solid adjacent union completion.
@@ -7895,26 +7896,6 @@ impl ExactBoundaryTouchingReport {
         }
     }
 
-    /// Return whether graph extraction retained unknown events.
-    pub(crate) const fn graph_had_unknowns(&self) -> bool {
-        self.graph_had_unknowns
-    }
-
-    /// Return the retained face-pair record count.
-    pub(crate) const fn retained_face_pairs(&self) -> usize {
-        self.retained_face_pairs
-    }
-
-    /// Return the retained event record count.
-    pub(crate) const fn retained_events(&self) -> usize {
-        self.retained_events
-    }
-
-    /// Return the retained relation-count blocker.
-    pub(crate) const fn blocker(&self) -> &ExactBooleanBlocker {
-        &self.blocker
-    }
-
     /// Return whether the graph is certified boundary-only contact.
     pub(crate) const fn is_certified(&self) -> bool {
         matches!(self.status, ExactBoundaryTouchingStatus::Certified)
@@ -8032,20 +8013,20 @@ pub(crate) enum ExactPlanarArrangementStatus {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ExactPlanarArrangementReport {
     /// Requested named operation.
-    operation: ExactBooleanOperation,
+    pub(super) operation: ExactBooleanOperation,
     /// Coarse planar-arrangement certification status.
-    status: ExactPlanarArrangementStatus,
+    pub(super) status: ExactPlanarArrangementStatus,
     /// Whether graph extraction retained unknown events.
-    graph_had_unknowns: bool,
+    pub(super) graph_had_unknowns: bool,
     /// Retained face-pair records after exact scheduling.
-    retained_face_pairs: usize,
+    pub(super) retained_face_pairs: usize,
     /// Total retained event records.
-    retained_events: usize,
+    pub(super) retained_events: usize,
     /// Relation counts for retained face pairs.
-    blocker: ExactBooleanBlocker,
+    pub(super) blocker: ExactBooleanBlocker,
     /// Checked coplanar-overlap evidence summary retained from the graph
     /// layer.
-    coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
+    pub(super) coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
 }
 
 impl ExactPlanarArrangementReport {
@@ -8068,37 +8049,6 @@ impl ExactPlanarArrangementReport {
             blocker,
             coplanar_arrangement_evidence,
         }
-    }
-
-    /// Return the requested named operation.
-    #[cfg(test)]
-    pub(crate) const fn operation(&self) -> ExactBooleanOperation {
-        self.operation
-    }
-
-    /// Return whether graph extraction retained unknown events.
-    pub(crate) const fn graph_had_unknowns(&self) -> bool {
-        self.graph_had_unknowns
-    }
-
-    /// Return the retained face-pair record count.
-    pub(crate) const fn retained_face_pairs(&self) -> usize {
-        self.retained_face_pairs
-    }
-
-    /// Return the retained event record count.
-    pub(crate) const fn retained_events(&self) -> usize {
-        self.retained_events
-    }
-
-    /// Return the retained relation-count blocker.
-    pub(crate) const fn blocker(&self) -> &ExactBooleanBlocker {
-        &self.blocker
-    }
-
-    /// Return the retained coplanar arrangement evidence summary.
-    pub(crate) fn coplanar_arrangement_evidence(&self) -> Option<&CoplanarArrangementEvidence> {
-        self.coplanar_arrangement_evidence.as_ref()
     }
 
     /// Return whether this operation is blocked on planar arrangement output.

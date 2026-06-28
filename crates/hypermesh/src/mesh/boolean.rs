@@ -1829,12 +1829,12 @@ fn preflight_boolean_exact_request_from_graph_core(
         return Ok(ExactBooleanPreflight::new(
             operation,
             ExactBooleanSupport::RequiresBoundaryOnlyContact,
-            boundary_report.graph_had_unknowns(),
-            boundary_report.retained_face_pairs(),
-            boundary_report.retained_events(),
+            boundary_report.graph_had_unknowns,
+            boundary_report.retained_face_pairs,
+            boundary_report.retained_events,
             0,
             Vec::new(),
-            Some(*boundary_report.blocker()),
+            Some(boundary_report.blocker),
             None,
             None,
         ));
@@ -1866,13 +1866,16 @@ fn preflight_boolean_exact_request_from_graph_core(
         return Ok(ExactBooleanPreflight::new(
             operation,
             ExactBooleanSupport::RequiresPlanarArrangement,
-            planar_report.graph_had_unknowns(),
-            planar_report.retained_face_pairs(),
-            planar_report.retained_events(),
+            planar_report.graph_had_unknowns,
+            planar_report.retained_face_pairs,
+            planar_report.retained_events,
             0,
             Vec::new(),
-            Some(*planar_report.blocker()),
-            planar_report.coplanar_arrangement_evidence().cloned(),
+            Some(planar_report.blocker),
+            planar_report
+                .coplanar_arrangement_evidence
+                .as_ref()
+                .cloned(),
             None,
         ));
     }
@@ -8316,7 +8319,10 @@ fn winding_evidence_report_from_graph_with_facts(
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::PlanarArrangement),
-            planar_report.coplanar_arrangement_evidence().cloned(),
+            planar_report
+                .coplanar_arrangement_evidence
+                .as_ref()
+                .cloned(),
             None,
         ));
     }
@@ -8330,7 +8336,10 @@ fn winding_evidence_report_from_graph_with_facts(
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::PlanarArrangement),
-            planar_report.coplanar_arrangement_evidence().cloned(),
+            planar_report
+                .coplanar_arrangement_evidence
+                .as_ref()
+                .cloned(),
             None,
         ));
     }
