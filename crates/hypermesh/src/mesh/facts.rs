@@ -498,6 +498,13 @@ impl MeshValidationFacts {
             .vertices
             .iter()
             .all(|vertex| vertex.fixed_coordinates_exact_rational);
+        let first_mismatch_index = |expected: &[usize], actual: &[usize]| {
+            expected
+                .iter()
+                .zip(actual)
+                .position(|(expected, actual)| expected != actual)
+                .unwrap_or_else(|| expected.len().min(actual.len()))
+        };
         for (index, vertex) in self.vertices.iter().enumerate() {
             if vertex.index != index {
                 return Err(MeshFactsValidationError::VertexIndexMismatch {
@@ -606,12 +613,4 @@ impl MeshValidationFacts {
             Err(MeshFactsValidationError::SourceReplayMismatch)
         }
     }
-}
-
-fn first_mismatch_index(expected: &[usize], actual: &[usize]) -> usize {
-    expected
-        .iter()
-        .zip(actual)
-        .position(|(expected, actual)| expected != actual)
-        .unwrap_or_else(|| expected.len().min(actual.len()))
 }
