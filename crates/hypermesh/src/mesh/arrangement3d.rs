@@ -3156,18 +3156,20 @@ fn carrier_plane_overlay(
         blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
         return None;
     }
-    let left_ring = projected_face_ring(
-        ExactArrangement2dRegion::Left,
-        left,
-        overlap.left_face,
-        overlap.projection,
-    )?;
-    let right_ring = projected_face_ring(
-        ExactArrangement2dRegion::Right,
-        right,
-        overlap.right_face,
-        overlap.projection,
-    )?;
+    let projected_face_ring = |region: ExactArrangement2dRegion,
+                               mesh: &ExactMesh,
+                               face: usize|
+     -> Option<ExactArrangement2dRegionRing> {
+        let triangle = mesh.triangles().get(face)?.0;
+        let vertices = triangle
+            .iter()
+            .map(|vertex| project_point3(&mesh.vertices()[*vertex], overlap.projection))
+            .collect::<Vec<Point2>>();
+        Some(ExactArrangement2dRegionRing::new(region, vertices))
+    };
+    let left_ring = projected_face_ring(ExactArrangement2dRegion::Left, left, overlap.left_face)?;
+    let right_ring =
+        projected_face_ring(ExactArrangement2dRegion::Right, right, overlap.right_face)?;
     let overlay = build_exact_arrangement2d_overlay(
         &[left_ring, right_ring],
         ExactArrangement2dSetOperation::Union,
@@ -3181,20 +3183,6 @@ fn carrier_plane_overlay(
         projection: overlap.projection,
         overlay,
     })
-}
-
-fn projected_face_ring(
-    region: ExactArrangement2dRegion,
-    mesh: &ExactMesh,
-    face: usize,
-    projection: CoplanarProjection,
-) -> Option<ExactArrangement2dRegionRing> {
-    let triangle = mesh.triangles().get(face)?.0;
-    let vertices = triangle
-        .iter()
-        .map(|vertex| project_point3(&mesh.vertices()[*vertex], projection))
-        .collect::<Vec<Point2>>();
-    Some(ExactArrangement2dRegionRing::new(region, vertices))
 }
 
 fn arrangement_regions(
