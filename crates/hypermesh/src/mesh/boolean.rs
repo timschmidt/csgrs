@@ -655,7 +655,7 @@ fn certification_set_from_graph_and_regularized_arrangement(
     let regularized_solid = source_facts.regularized_solid.clone();
     let counts = retained_graph_counts(graph);
     let graph_had_unknowns = graph.has_unknowns();
-    let needs_refinement = graph_had_unknowns || counts.construction_failed_events() > 0;
+    let needs_refinement = graph_had_unknowns || counts.construction_failed_events > 0;
     let refinement = ExactRefinementReport::new(
         request.operation,
         if needs_refinement {
@@ -1686,7 +1686,7 @@ fn preflight_boolean_exact_request_from_graph_core(
     let requires_coplanar_volumetric_cells =
         graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right);
     let mut certified_arrangement_preflight = None;
-    if graph_had_unknowns || relation_counts.construction_failed_events() > 0 {
+    if graph_had_unknowns || relation_counts.construction_failed_events > 0 {
         return Ok(ExactBooleanPreflight::new(
             operation,
             ExactBooleanSupport::UnresolvedGraph,
@@ -1943,7 +1943,7 @@ fn preflight_boolean_exact_request_from_graph_core(
             &shortcut_facts,
         )?;
         if winding_evidence.status.routes_to_certified_winding()
-            && winding_evidence.blocker.kind() == ExactBooleanBlockerKind::CoplanarVolumetricCells
+            && winding_evidence.blocker.kind == ExactBooleanBlockerKind::CoplanarVolumetricCells
         {
             return Ok(winding_evidence
                 .into_preflight(ExactBooleanSupport::RequiresCertifiedWinding, true));
@@ -2821,7 +2821,7 @@ fn graph_requires_boundary_only_contact(
         return Ok(false);
     }
     let counts = retained_graph_counts(graph);
-    if counts.coplanar_overlapping_pairs() == 0
+    if counts.coplanar_overlapping_pairs == 0
         && (mesh_is_open_surface(left) || mesh_is_open_surface(right))
     {
         return Ok(true);
@@ -2850,7 +2850,7 @@ fn graph_requires_coplanar_volumetric_cells(counts: &ExactBooleanBlocker) -> boo
     // planar-surface output problem and not ordinary non-coplanar winding
     // state instead of approximating the cells or relabeling them as generic
     // winding evidence.
-    counts.coplanar_overlapping_pairs() + counts.coplanar_touching_pairs() > 0
+    counts.coplanar_overlapping_pairs + counts.coplanar_touching_pairs > 0
 }
 
 fn graph_requires_coplanar_volumetric_cells_for_sources(
@@ -3016,7 +3016,7 @@ fn closed_winding_vertex_relations_from_empty_graph(
         return Ok(None);
     }
     let counts = retained_graph_counts(graph);
-    if counts.construction_failed_events() != 0 {
+    if counts.construction_failed_events != 0 {
         return Ok(None);
     }
 
@@ -4662,7 +4662,7 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
     let retained_face_pairs = graph.face_pairs.len();
     let retained_events = graph.event_count();
     let counts = retained_graph_counts(graph);
-    if graph_had_unknowns || counts.construction_failed_events() != 0 {
+    if graph_had_unknowns || counts.construction_failed_events != 0 {
         return Ok((
             adjacent_union_completion_report(
                 operation,
@@ -5184,7 +5184,7 @@ fn certified_convex_relation_shortcut_from_graph(
         return Ok(None);
     }
     let relation_counts = retained_graph_counts(graph);
-    if graph.has_unknowns() || relation_counts.construction_failed_events() > 0 {
+    if graph.has_unknowns() || relation_counts.construction_failed_events > 0 {
         return Ok(None);
     }
 
@@ -7534,10 +7534,10 @@ fn open_surface_arrangement_plan_from_graph(
     });
     if graph.has_unknowns()
         || graph.face_pairs.is_empty()
-        || counts.unknown_pairs() != 0
-        || counts.construction_failed_events() != 0
-        || counts.coplanar_overlapping_pairs() != 0
-        || counts.coplanar_touching_pairs() != 0
+        || counts.unknown_pairs != 0
+        || counts.construction_failed_events != 0
+        || counts.coplanar_overlapping_pairs != 0
+        || counts.coplanar_touching_pairs != 0
         || !has_proper_surface_crossing
     {
         return Ok(None);
@@ -8842,8 +8842,8 @@ fn volumetric_winding_region_plan_from_graph(
     let counts = retained_graph_counts(graph);
     if graph.has_unknowns()
         || graph.face_pairs.is_empty()
-        || counts.unknown_pairs() != 0
-        || counts.construction_failed_events() != 0
+        || counts.unknown_pairs != 0
+        || counts.construction_failed_events != 0
         || !left.facts().mesh.closed_manifold
         || !right.facts().mesh.closed_manifold
     {

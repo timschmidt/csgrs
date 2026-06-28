@@ -6539,18 +6539,18 @@ impl ExactBooleanPreflight {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) struct ExactBooleanBlocker {
     /// Missing policy or refinement class.
-    kind: ExactBooleanBlockerKind,
+    pub(super) kind: ExactBooleanBlockerKind,
     /// Number of retained non-coplanar candidate face pairs.
-    candidate_pairs: usize,
+    pub(super) candidate_pairs: usize,
     /// Number of retained coplanar positive-overlap face pairs.
-    coplanar_overlapping_pairs: usize,
+    pub(super) coplanar_overlapping_pairs: usize,
     /// Number of retained coplanar touching face pairs.
-    coplanar_touching_pairs: usize,
+    pub(super) coplanar_touching_pairs: usize,
     /// Number of retained unknown face pairs.
-    unknown_pairs: usize,
+    pub(super) unknown_pairs: usize,
     /// Number of retained segment/plane events whose endpoint predicates
     /// certified a crossing but whose exact construction failed.
-    construction_failed_events: usize,
+    pub(super) construction_failed_events: usize,
 }
 
 impl Default for ExactBooleanBlocker {
@@ -6577,30 +6577,6 @@ impl ExactBooleanBlocker {
             unknown_pairs,
             construction_failed_events,
         }
-    }
-
-    pub(crate) const fn kind(&self) -> ExactBooleanBlockerKind {
-        self.kind
-    }
-
-    pub(crate) const fn candidate_pairs(&self) -> usize {
-        self.candidate_pairs
-    }
-
-    pub(crate) const fn coplanar_overlapping_pairs(&self) -> usize {
-        self.coplanar_overlapping_pairs
-    }
-
-    pub(crate) const fn coplanar_touching_pairs(&self) -> usize {
-        self.coplanar_touching_pairs
-    }
-
-    pub(crate) const fn unknown_pairs(&self) -> usize {
-        self.unknown_pairs
-    }
-
-    pub(crate) const fn construction_failed_events(&self) -> usize {
-        self.construction_failed_events
     }
 
     /// Return this exact graph-count blocker with a different semantic kind.
@@ -6668,9 +6644,9 @@ impl ExactBooleanBlocker {
         if blocker_has_refinement_evidence(self) {
             ExactBooleanBlockerKind::Refinement
         } else if self.coplanar_overlapping_pairs != 0 || self.coplanar_touching_pairs != 0 {
-            if self.candidate_pairs() == 0 && self.coplanar_overlapping_pairs > 0 {
+            if self.candidate_pairs == 0 && self.coplanar_overlapping_pairs > 0 {
                 ExactBooleanBlockerKind::PlanarArrangement
-            } else if self.candidate_pairs() == 0 {
+            } else if self.candidate_pairs == 0 {
                 ExactBooleanBlockerKind::BoundaryOnlyContact
             } else {
                 ExactBooleanBlockerKind::CoplanarVolumetricCells
