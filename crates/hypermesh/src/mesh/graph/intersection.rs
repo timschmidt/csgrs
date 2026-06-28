@@ -120,7 +120,10 @@ pub(crate) fn classify_mesh_face_pair_unchecked(
     let right_against_left = classify_mesh_triangle_against_retained_face_plane_unchecked(
         left, left_face, right, right_face,
     );
-    if triangle_is_strictly_one_sided(right_against_left.relation) {
+    if matches!(
+        right_against_left.relation,
+        TrianglePlaneRelation::StrictlyAbove | TrianglePlaneRelation::StrictlyBelow
+    ) {
         return MeshFacePairClassification {
             left_face,
             right_face,
@@ -132,7 +135,10 @@ pub(crate) fn classify_mesh_face_pair_unchecked(
     let left_against_right = classify_mesh_triangle_against_retained_face_plane_unchecked(
         right, right_face, left, left_face,
     );
-    if triangle_is_strictly_one_sided(left_against_right.relation) {
+    if matches!(
+        left_against_right.relation,
+        TrianglePlaneRelation::StrictlyAbove | TrianglePlaneRelation::StrictlyBelow
+    ) {
         return MeshFacePairClassification {
             left_face,
             right_face,
@@ -165,13 +171,6 @@ pub(crate) fn classify_mesh_face_pair_unchecked(
         triangle: Some(triangle),
         relation,
     }
-}
-
-fn triangle_is_strictly_one_sided(relation: TrianglePlaneRelation) -> bool {
-    matches!(
-        relation,
-        TrianglePlaneRelation::StrictlyAbove | TrianglePlaneRelation::StrictlyBelow
-    )
 }
 
 fn classify_mesh_triangles_from_retained_plane_relations(
