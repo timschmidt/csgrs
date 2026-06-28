@@ -289,8 +289,15 @@ fn polygon_patch_candidate(
         signed_area2 += area;
     }
 
-    let area_abs = real_abs(&signed_area2)?;
-    let boundary_area_abs = real_abs(&projected_polygon_area2_value(&boundary_points, projection))?;
+    let area_abs = match real_sign(&signed_area2)? {
+        Sign::Negative => -signed_area2.clone(),
+        Sign::Zero | Sign::Positive => signed_area2.clone(),
+    };
+    let boundary_area = projected_polygon_area2_value(&boundary_points, projection);
+    let boundary_area_abs = match real_sign(&boundary_area)? {
+        Sign::Negative => -boundary_area,
+        Sign::Zero | Sign::Positive => boundary_area,
+    };
     if compare_reals(&area_abs, &boundary_area_abs).value() != Some(Ordering::Equal) {
         return Some(None);
     }
@@ -603,13 +610,6 @@ fn triangle_points(mesh: &ExactMesh, triangle: [usize; 3]) -> Option<[Point3; 3]
         mesh.vertices().get(triangle[1])?.clone(),
         mesh.vertices().get(triangle[2])?.clone(),
     ])
-}
-
-fn real_abs(value: &Real) -> Option<Real> {
-    match real_sign(value)? {
-        Sign::Negative => Some(-value.clone()),
-        Sign::Zero | Sign::Positive => Some(value.clone()),
-    }
 }
 
 fn real_sign(value: &Real) -> Option<Sign> {
