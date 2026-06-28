@@ -543,8 +543,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     ) -> Self {
         let left_source = left_view.source_stamp();
         let right_source = right_view.source_stamp();
-        let broad_phase = ExactAabbBroadPhase::default();
-        let plan = broad_phase.candidate_face_pair_plan(&left_bounds, &right_bounds);
+        let plan = left_bounds.candidate_face_pair_plan(&right_bounds);
         let candidate_pair_capacity_hint =
             plan.bounded_capacity_hint(left_view.face_count(), right_view.face_count());
         Self {

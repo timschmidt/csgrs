@@ -296,15 +296,6 @@ impl ExactAabbBroadPhase {
         self.one_shot_quadratic_face_pair_limit
     }
 
-    /// Choose a reusable candidate traversal plan for prepared exact bounds.
-    pub(crate) fn candidate_face_pair_plan(
-        &self,
-        left: &PreparedMeshBounds<'_>,
-        right: &PreparedMeshBounds<'_>,
-    ) -> CandidateFacePairPlan {
-        left.candidate_face_pair_plan(right)
-    }
-
     /// Visit one-shot candidate face pairs from retained mesh bounds.
     pub(crate) fn try_visit_candidate_face_pairs_one_shot<E>(
         &self,
@@ -322,7 +313,7 @@ impl ExactAabbBroadPhase {
         }
         let left = left.prepare();
         let right = right.prepare();
-        let plan = self.candidate_face_pair_plan(&left, &right);
+        let plan = left.candidate_face_pair_plan(&right);
         self.try_visit_candidate_face_pairs_with_plan(&left, &right, plan, visit)
     }
 
@@ -1035,7 +1026,7 @@ mod tests {
     ) -> Vec<[usize; 2]> {
         let mut pairs = Vec::new();
         let broad_phase = ExactAabbBroadPhase::default();
-        let plan = broad_phase.candidate_face_pair_plan(left, right);
+        let plan = left.candidate_face_pair_plan(right);
         let result =
             broad_phase.try_visit_candidate_face_pairs_with_plan(left, right, plan, &mut |pair| {
                 pairs.push(pair);
@@ -1151,7 +1142,7 @@ mod tests {
         let right = right_bounds.prepare();
 
         assert_eq!(
-            ExactAabbBroadPhase::default().candidate_face_pair_plan(&left, &right),
+            left.candidate_face_pair_plan(&right),
             CandidateFacePairPlan::Empty
         );
         assert!(
@@ -1204,8 +1195,7 @@ mod tests {
 
         let prepared_left = left.prepare();
         let prepared_right = right.prepare();
-        let plan = ExactAabbBroadPhase::default()
-            .candidate_face_pair_plan(&prepared_left, &prepared_right);
+        let plan = prepared_left.candidate_face_pair_plan(&prepared_right);
         let CandidateFacePairPlan::Sweep {
             plan: sweep_plan, ..
         } = plan
@@ -1243,7 +1233,7 @@ mod tests {
         let right = right_bounds.prepare();
 
         assert_eq!(
-            ExactAabbBroadPhase::default().candidate_face_pair_plan(&left, &right),
+            left.candidate_face_pair_plan(&right),
             CandidateFacePairPlan::Empty
         );
         assert!(prepared_candidate_face_pairs(&left, &right).is_empty());
@@ -1392,8 +1382,7 @@ mod tests {
         let CandidateFacePairPlan::Sweep {
             active_face_capacity_hint,
             ..
-        } = ExactAabbBroadPhase::default()
-            .candidate_face_pair_plan(&prepared_left, &prepared_right)
+        } = prepared_left.candidate_face_pair_plan(&prepared_right)
         else {
             panic!("expected sweep plan");
         };
@@ -1431,8 +1420,7 @@ mod tests {
         let triangles = [[0, 1, 2], [3, 4, 5]];
         let left = MeshBounds::from_triangles(&left_points, &triangles);
         let right = MeshBounds::from_triangles(&right_points, &triangles);
-        let plan =
-            ExactAabbBroadPhase::new(0).candidate_face_pair_plan(&left.prepare(), &right.prepare());
+        let plan = left.prepare().candidate_face_pair_plan(&right.prepare());
 
         assert_eq!(plan.bounded_capacity_hint(2, 2), 1);
     }
