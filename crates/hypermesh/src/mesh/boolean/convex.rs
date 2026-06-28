@@ -725,7 +725,11 @@ fn append_source_face_convex_inside_reversed(
     if source_sign == Ordering::Equal {
         return None;
     }
-    let reversed_sign = reverse_orientation_sign(source_sign);
+    let reversed_sign = match source_sign {
+        Ordering::Less => Ordering::Greater,
+        Ordering::Equal => Ordering::Equal,
+        Ordering::Greater => Ordering::Less,
+    };
     let projected = inside
         .iter()
         .map(|point| project_point3(point, projection))
@@ -752,14 +756,6 @@ fn polygon_lies_on_any_clip_boundary_face(polygon: &[Point3], clip: &ExactMesh) 
             ) == Some(PlaneSide::On)
         })
     })
-}
-
-fn reverse_orientation_sign(sign: Ordering) -> Ordering {
-    match sign {
-        Ordering::Less => Ordering::Greater,
-        Ordering::Equal => Ordering::Equal,
-        Ordering::Greater => Ordering::Less,
-    }
 }
 
 fn append_projected_polygon_triangles(
