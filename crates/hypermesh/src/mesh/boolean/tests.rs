@@ -226,11 +226,7 @@ fn assert_current_arrangement_attempt(
     right: &ExactMesh,
 ) {
     attempt.validate().unwrap();
-    let request = ExactBooleanRequest::with_boundary_policy(
-        attempt.operation,
-        attempt.output_validation,
-        attempt.boundary_policy,
-    );
+    let request = ExactBooleanRequest::new(attempt.operation, attempt.output_validation);
     attempt
         .validate_against_sources_for_request(left, right, request)
         .unwrap();
@@ -364,46 +360,6 @@ fn exact_mesh_shape_accepts_same_boundary_with_different_triangulation() {
 
     assert!(exact_mesh_boundary_edges_match(&diagonal, &centered));
     assert!(exact_meshes_have_same_shape(&diagonal, &centered));
-}
-
-#[test]
-fn boundary_policy_shortcut_rejects_selected_region_operation_relabel() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
-        &[0, 0, 0, 2, 0, 0, 0, 2, 0],
-        &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
-        &[2, 0, 0, 0, 2, 0, 2, 2, 2],
-        &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .unwrap();
-    let mut projected = materialize_boundary_policy_shortcut_result(
-        &left,
-        &right,
-        ExactBooleanOperation::Union,
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .unwrap()
-    .unwrap();
-    projected.validate_against_sources(&left, &right).unwrap();
-    let mut stale_mesh = projected.clone();
-    stale_mesh.mesh = empty_mesh(
-        "empty exact stale boundary-policy projection",
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .unwrap();
-    stale_mesh.validate().unwrap();
-    assert!(stale_mesh.validate_against_sources(&left, &right).is_err());
-    projected.kind = ExactBooleanResultKind::BoundaryPolicyShortcut {
-        operation: ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
-    };
-    assert_eq!(
-        projected.validate(),
-        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
-    );
 }
 
 #[test]
@@ -761,10 +717,9 @@ fn selected_overlay_faces_triangulate_simple_coplanar_difference_cells() {
     );
 
     let evidence = test_winding_evidence(
-        ExactBooleanRequest::with_boundary_policy(
+        ExactBooleanRequest::new(
             ExactBooleanOperation::Difference,
             ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-            ExactBoundaryBooleanPolicy::Reject,
         ),
         &left,
         &right,
@@ -792,10 +747,9 @@ fn selected_region_winding_evidence_classifies_retained_graph_blocker() {
         ExactMeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let request = ExactBooleanRequest::with_boundary_policy(
+    let request = ExactBooleanRequest::new(
         ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
         ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-        ExactBoundaryBooleanPolicy::Reject,
     );
     let evidence = with_test_evaluation(request, &left, &right, |evaluation| {
         assert!(
@@ -1443,11 +1397,7 @@ fn axis_aligned_orthogonal_cell_booleans_materialize_from_shortcut_support() {
         );
 
         let evidence = test_winding_evidence(
-            ExactBooleanRequest::with_boundary_policy(
-                operation,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            ),
+            ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY),
             &left,
             &right,
         );
@@ -1691,11 +1641,7 @@ fn affine_shortcut_winding_report_retains_already_materialized_status() {
         );
 
         let evidence = test_winding_evidence(
-            ExactBooleanRequest::with_boundary_policy(
-                operation,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            ),
+            ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY),
             &left,
             &right,
         );
@@ -1735,7 +1681,6 @@ fn winding_evidence_status_partition_identifies_materialized_handoffs() {
         ExactWindingEvidenceStatus::OpenSurfaceArrangementAlreadyMaterialized,
         ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized,
         ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized,
-        ExactWindingEvidenceStatus::BoundaryPolicyShortcutAlreadyMaterialized,
         ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized,
         ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized,
         ExactWindingEvidenceStatus::OpenSurfaceDisjointAlreadyMaterialized,
@@ -1803,10 +1748,6 @@ fn winding_evidence_status_partition_identifies_materialized_handoffs() {
         !ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized
             .materializes_arrangement_cell_complex()
     );
-    assert!(
-        !ExactWindingEvidenceStatus::BoundaryPolicyShortcutAlreadyMaterialized
-            .materializes_arrangement_cell_complex()
-    );
     for status in [
         ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized,
         ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized,
@@ -1840,7 +1781,6 @@ fn winding_evidence_status_partition_identifies_materialized_handoffs() {
         ExactWindingEvidenceStatus::OpenSurfaceArrangementAlreadyMaterialized,
         ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized,
         ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized,
-        ExactWindingEvidenceStatus::BoundaryPolicyShortcutAlreadyMaterialized,
         ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized,
         ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized,
         ExactWindingEvidenceStatus::OpenSurfaceDisjointAlreadyMaterialized,
@@ -1926,11 +1866,7 @@ fn trivial_shortcuts_report_materialized_evidence() {
             );
 
             let evidence = test_winding_evidence(
-                ExactBooleanRequest::with_boundary_policy(
-                    operation,
-                    ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                    ExactBoundaryBooleanPolicy::Reject,
-                ),
+                ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY),
                 left,
                 right,
             );
@@ -2015,11 +1951,7 @@ fn graph_empty_containment_routes_named_booleans_through_arrangement_pipeline() 
                 .unwrap();
 
             let evidence = test_winding_evidence(
-                ExactBooleanRequest::with_boundary_policy(
-                    operation,
-                    ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                    ExactBoundaryBooleanPolicy::Reject,
-                ),
+                ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY),
                 left,
                 right,
             );
@@ -2147,11 +2079,7 @@ fn graph_empty_closed_winding_separation_materializes_without_bounds_disjointnes
             .unwrap();
 
         let evidence = test_winding_evidence(
-            ExactBooleanRequest::with_boundary_policy(
-                operation,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            ),
+            ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY),
             &left,
             &right,
         );
@@ -2252,11 +2180,7 @@ fn mixed_dimensional_regularized_solid_reports_materialized_evidence() {
             );
 
             let evidence = test_winding_evidence(
-                ExactBooleanRequest::with_boundary_policy(
-                    operation,
-                    ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                    ExactBoundaryBooleanPolicy::Reject,
-                ),
+                ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY),
                 left,
                 right,
             );
@@ -2418,10 +2342,9 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
     assert!(right.facts().mesh.closed_manifold);
     let graph = build_validated_intersection_graph(&left, &right).unwrap();
 
-    let reject_closed_request = ExactBooleanRequest::with_boundary_policy(
+    let reject_closed_request = ExactBooleanRequest::new(
         ExactBooleanOperation::Union,
         ExactMeshValidationPolicy::CLOSED,
-        ExactBoundaryBooleanPolicy::Reject,
     );
     let preflight = test_preflight(reject_closed_request, &left, &right);
     assert_eq!(
@@ -2695,11 +2618,7 @@ fn volumetric_coplanar_boundary_closure_materializes_closed_output() {
             .unwrap();
 
         let evidence = test_winding_evidence(
-            ExactBooleanRequest::with_boundary_policy(
-                operation,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            ),
+            ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY),
             &left,
             &right,
         );
@@ -3315,11 +3234,7 @@ fn crossing_open_surface_boolean_materializes_inside_arrangement_attempt() {
             .unwrap();
 
         let evidence = test_winding_evidence(
-            ExactBooleanRequest::with_boundary_policy(
-                operation,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            ),
+            ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY),
             &left,
             &right,
         );
@@ -3561,11 +3476,7 @@ fn nested_closed_shell_booleans_materialize_through_arrangement_pipeline() {
         );
 
         let evidence = test_winding_evidence(
-            ExactBooleanRequest::with_boundary_policy(
-                operation,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            ),
+            ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY),
             &left,
             &right,
         );
@@ -3618,11 +3529,7 @@ fn nested_closed_shell_booleans_materialize_through_arrangement_pipeline() {
             .validate_request_against_sources_with_retained_attempt(
                 &left,
                 &right,
-                ExactBooleanRequest::with_boundary_policy(
-                    operation,
-                    ExactMeshValidationPolicy::CLOSED,
-                    ExactBoundaryBooleanPolicy::Reject,
-                ),
+                ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::CLOSED),
                 None,
             )
             .unwrap();
@@ -3704,11 +3611,7 @@ fn boundary_touching_orthogonal_shortcuts_report_materialized_evidence() {
         );
 
         let evidence = test_winding_evidence(
-            ExactBooleanRequest::with_boundary_policy(
-                operation,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            ),
+            ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY),
             &left,
             &right,
         );
@@ -3754,28 +3657,12 @@ fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
     );
     assert!(!test_boundary_touching_report(&left, &overlapping_right).is_certified());
     assert!(
-        boolean_boundary_touching_meshes_from_graph(
-            &graph,
-            &left,
-            &right,
-            ExactBooleanOperation::Difference,
-            ExactMeshValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .unwrap()
-        .is_none()
+        graph_requires_boundary_policy(&graph, &left, &right).unwrap(),
+        "certified boundary contact should remain retained blocker evidence"
     );
     assert!(
-        boolean_boundary_touching_meshes_from_graph(
-            &graph,
-            &left,
-            &overlapping_right,
-            ExactBooleanOperation::Difference,
-            ExactMeshValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .unwrap()
-        .is_none()
+        !graph_requires_boundary_policy(&graph, &left, &overlapping_right).unwrap(),
+        "overlapping volume should not be classified as boundary-only policy evidence"
     );
 
     for (operation, support) in [
@@ -3806,11 +3693,7 @@ fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
             .unwrap();
 
         let evidence = test_winding_evidence(
-            ExactBooleanRequest::with_boundary_policy(
-                operation,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            ),
+            ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY),
             &left,
             &right,
         );
@@ -3915,10 +3798,9 @@ fn boundary_attached_contained_tetrahedron_difference_materializes() {
         .with_support(ExactBooleanSupport::CertifiedConvexDifference);
     assert!(relabeled_preflight.validate().is_err());
     let evidence = test_winding_evidence(
-        ExactBooleanRequest::with_boundary_policy(
+        ExactBooleanRequest::new(
             ExactBooleanOperation::Difference,
             ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-            ExactBoundaryBooleanPolicy::Reject,
         ),
         &left,
         &right,
@@ -3955,10 +3837,9 @@ fn boundary_attached_contained_tetrahedron_difference_materializes() {
         .validate_request_against_sources_with_retained_attempt(
             &left,
             &right,
-            ExactBooleanRequest::with_boundary_policy(
+            ExactBooleanRequest::new(
                 ExactBooleanOperation::Difference,
                 ExactMeshValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
             ),
             None,
         )
@@ -4001,11 +3882,7 @@ fn noncoplanar_convex_report_cases_retain_graph_counts() {
             .unwrap();
 
         let evidence = test_winding_evidence(
-            ExactBooleanRequest::with_boundary_policy(
-                operation,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            ),
+            ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY),
             &left,
             &right,
         );
@@ -4085,11 +3962,7 @@ fn straddling_coplanar_crossing_tetrahedron_boundary_attempt_materializes() {
         );
 
         let evidence = test_winding_evidence(
-            ExactBooleanRequest::with_boundary_policy(
-                operation,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            ),
+            ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY),
             &left,
             &right,
         );
@@ -4118,11 +3991,7 @@ fn straddling_coplanar_crossing_tetrahedron_boundary_attempt_materializes() {
             .validate_request_against_sources_with_retained_attempt(
                 &left,
                 &right,
-                ExactBooleanRequest::with_boundary_policy(
-                    operation,
-                    ExactMeshValidationPolicy::CLOSED,
-                    ExactBoundaryBooleanPolicy::Reject,
-                ),
+                ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::CLOSED),
                 None,
             )
             .unwrap();
@@ -4647,11 +4516,7 @@ fn open_same_surface_sheets_remain_certified() {
             "{operation:?}: {preflight:?}"
         );
         let evidence = test_winding_evidence(
-            ExactBooleanRequest::with_boundary_policy(
-                operation,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            ),
+            ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY),
             &left,
             &right,
         );
@@ -4686,11 +4551,7 @@ fn open_same_surface_sheets_remain_certified() {
             .validate_request_against_sources_with_retained_attempt(
                 &left,
                 &right,
-                ExactBooleanRequest::with_boundary_policy(
-                    operation,
-                    ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                    ExactBoundaryBooleanPolicy::Reject,
-                ),
+                ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY),
                 None,
             )
             .unwrap();
@@ -4722,10 +4583,9 @@ fn open_identical_sheets_keep_identity_shortcut() {
     );
     assert_eq!(preflight.support(), ExactBooleanSupport::CertifiedIdentical);
     let evidence = test_winding_evidence(
-        ExactBooleanRequest::with_boundary_policy(
+        ExactBooleanRequest::new(
             ExactBooleanOperation::Union,
             ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-            ExactBoundaryBooleanPolicy::Reject,
         ),
         &left,
         &right,
@@ -4757,10 +4617,9 @@ fn open_identical_sheets_keep_identity_shortcut() {
         .validate_request_against_sources_with_retained_attempt(
             &left,
             &right,
-            ExactBooleanRequest::with_boundary_policy(
+            ExactBooleanRequest::new(
                 ExactBooleanOperation::Union,
                 ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
             ),
             None,
         )
