@@ -519,7 +519,12 @@ pub(crate) fn certify_coplanar_volumetric_cell_evidence(
 ) -> Result<CoplanarVolumetricCellEvidenceReport, ExactMeshError> {
     let graph = build_validated_intersection_graph(left, right)?;
     let report = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
-    report.validate().map_err(volumetric_cell_mesh_error)?;
+    if let Err(error) = report.validate() {
+        return Err(ExactMeshError::one(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::ExactConstructionFailure,
+            format!("coplanar volumetric-cell evidence failed validation: {error:?}"),
+        )));
+    }
     Ok(report)
 }
 
@@ -840,13 +845,6 @@ fn projected_area2_signed(points: &[Point3; 3], projection: CoplanarProjection) 
         sum += &((current.x * &next.y) - &(current.y * &next.x));
     }
     sum
-}
-
-fn volumetric_cell_mesh_error(error: CoplanarVolumetricCellEvidenceError) -> ExactMeshError {
-    ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::ExactConstructionFailure,
-        format!("coplanar volumetric-cell evidence failed validation: {error:?}"),
-    ))
 }
 
 #[cfg(test)]
