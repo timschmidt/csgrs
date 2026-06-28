@@ -422,7 +422,9 @@ impl<'a> PreparedMeshBounds<'a> {
         let (sweep_plan, active_face_capacity_hint) = match plan {
             CandidateFacePairPlan::Empty => return Ok(()),
             CandidateFacePairPlan::Quadratic => {
-                return self.try_visit_candidate_face_pairs_quadratic(other, visit);
+                return self
+                    .bounds
+                    .try_visit_candidate_face_pairs_quadratic(other.bounds, visit);
             }
             CandidateFacePairPlan::Sweep {
                 plan,
@@ -447,18 +449,11 @@ impl<'a> PreparedMeshBounds<'a> {
             )?,
         };
         if !used_sweep {
-            return self.try_visit_candidate_face_pairs_quadratic(other, visit);
+            return self
+                .bounds
+                .try_visit_candidate_face_pairs_quadratic(other.bounds, visit);
         }
         Ok(())
-    }
-
-    fn try_visit_candidate_face_pairs_quadratic<E>(
-        &self,
-        other: &PreparedMeshBounds<'_>,
-        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E> {
-        self.bounds
-            .try_visit_candidate_face_pairs_quadratic(other.bounds, visit)
     }
 
     fn sweep_plan(&self, other: &PreparedMeshBounds<'_>) -> Option<SweepPlanEstimate> {
@@ -961,10 +956,12 @@ mod tests {
         right: &PreparedMeshBounds<'_>,
     ) -> Vec<[usize; 2]> {
         let mut pairs = Vec::new();
-        let result = left.try_visit_candidate_face_pairs_quadratic(right, &mut |pair| {
-            pairs.push(pair);
-            Ok::<(), ()>(())
-        });
+        let result =
+            left.bounds
+                .try_visit_candidate_face_pairs_quadratic(right.bounds, &mut |pair| {
+                    pairs.push(pair);
+                    Ok::<(), ()>(())
+                });
         debug_assert!(result.is_ok());
         pairs
     }
