@@ -560,8 +560,26 @@ fn merged_union_mesh(
     let mut left_vertex_map = vec![None; left.vertices().len()];
     let mut right_vertex_map = vec![None; right.vertices().len()];
     let mut triangles = Vec::new();
-    let left_output_vertices = unskipped_vertices(left, &skip_left);
-    let right_output_vertices = unskipped_vertices(right, &skip_right);
+    let left_output_vertices = {
+        let mut vertices = BTreeSet::new();
+        for (face, triangle) in left.triangles().iter().enumerate() {
+            if skip_left.contains(&face) {
+                continue;
+            }
+            vertices.extend(triangle.0);
+        }
+        vertices
+    };
+    let right_output_vertices = {
+        let mut vertices = BTreeSet::new();
+        for (face, triangle) in right.triangles().iter().enumerate() {
+            if skip_right.contains(&face) {
+                continue;
+            }
+            vertices.extend(triangle.0);
+        }
+        vertices
+    };
 
     for (face, triangle) in left.triangles().iter().enumerate() {
         if skip_left.contains(&face) {
@@ -698,17 +716,6 @@ fn map_right_vertex(
     vertices.push(right.vertices().get(vertex)?.clone());
     *right_vertex_map.get_mut(vertex)? = Some(mapped);
     Some(mapped)
-}
-
-fn unskipped_vertices(mesh: &ExactMesh, skipped_faces: &BTreeSet<usize>) -> BTreeSet<usize> {
-    let mut vertices = BTreeSet::new();
-    for (face, triangle) in mesh.triangles().iter().enumerate() {
-        if skipped_faces.contains(&face) {
-            continue;
-        }
-        vertices.extend(triangle.0);
-    }
-    vertices
 }
 
 fn append_left_triangle_with_edge_splits(
