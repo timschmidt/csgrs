@@ -506,10 +506,12 @@ fn triangulate_loop_with_holes(
         Ok(_) | Err(_)
             if !hole_loop_indices.is_empty() && hole_loops_touch(loops, hole_loop_indices)? =>
         {
-            return triangulate_touching_hole_loop_group_via_arrangement(
+            let mut loop_indices = Vec::with_capacity(hole_loop_indices.len() + 1);
+            loop_indices.push(outer_index);
+            loop_indices.extend(hole_loop_indices.iter().copied());
+            return triangulate_projected_loop_indices_via_arrangement(
                 loops,
-                outer_index,
-                hole_loop_indices,
+                &loop_indices,
                 vertices,
                 vertex_index,
                 triangles,
@@ -549,28 +551,6 @@ fn hole_loops_touch(
         }
     }
     Ok(false)
-}
-
-fn triangulate_touching_hole_loop_group_via_arrangement(
-    loops: &[ProjectedFaceLoop],
-    outer_index: usize,
-    hole_loop_indices: &[usize],
-    vertices: &mut Vec<Point3>,
-    vertex_index: &mut ExactVertexInsertIndex,
-    triangles: &mut Vec<Triangle>,
-    output_orientation: Ordering,
-) -> Result<(), ExactArrangementBlocker> {
-    let mut loop_indices = Vec::with_capacity(hole_loop_indices.len() + 1);
-    loop_indices.push(outer_index);
-    loop_indices.extend(hole_loop_indices.iter().copied());
-    triangulate_projected_loop_indices_via_arrangement(
-        loops,
-        &loop_indices,
-        vertices,
-        vertex_index,
-        triangles,
-        output_orientation,
-    )
 }
 
 fn triangulate_loop_group_union_via_arrangement(
