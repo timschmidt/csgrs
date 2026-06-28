@@ -1462,7 +1462,25 @@ fn select_face(
         }));
     }
     if face.opposite == ExactOppositeRegionLabel::Boundary {
-        return select_boundary_face(face, operation, policy);
+        if policy.lower_dimensional != ExactLowerDimensionalPolicy::Drop {
+            return match operation {
+                ExactBooleanOperation::Union => Some(false),
+                ExactBooleanOperation::Intersection => Some(true),
+                ExactBooleanOperation::Difference => match face.source {
+                    ExactCellRegionLabel::LeftBoundary => Some(false),
+                    ExactCellRegionLabel::RightBoundary => Some(true),
+                },
+                ExactBooleanOperation::SelectedRegions(_) => None,
+            };
+        }
+        return match operation {
+            ExactBooleanOperation::Union | ExactBooleanOperation::Intersection => Some(false),
+            ExactBooleanOperation::Difference => match face.source {
+                ExactCellRegionLabel::LeftBoundary => Some(true),
+                ExactCellRegionLabel::RightBoundary => Some(false),
+            },
+            ExactBooleanOperation::SelectedRegions(_) => None,
+        };
     }
     let inside = match face.opposite {
         ExactOppositeRegionLabel::Inside => true,
@@ -1476,32 +1494,6 @@ fn select_face(
         ExactBooleanOperation::Difference => match face.source {
             ExactCellRegionLabel::LeftBoundary => Some(!inside),
             ExactCellRegionLabel::RightBoundary => Some(inside),
-        },
-        ExactBooleanOperation::SelectedRegions(_) => None,
-    }
-}
-
-fn select_boundary_face(
-    face: &ExactCellComplexFace,
-    operation: ExactBooleanOperation,
-    policy: ExactRegularizationPolicy,
-) -> Option<bool> {
-    if policy.lower_dimensional != ExactLowerDimensionalPolicy::Drop {
-        return match operation {
-            ExactBooleanOperation::Union => Some(false),
-            ExactBooleanOperation::Intersection => Some(true),
-            ExactBooleanOperation::Difference => match face.source {
-                ExactCellRegionLabel::LeftBoundary => Some(false),
-                ExactCellRegionLabel::RightBoundary => Some(true),
-            },
-            ExactBooleanOperation::SelectedRegions(_) => None,
-        };
-    }
-    match operation {
-        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection => Some(false),
-        ExactBooleanOperation::Difference => match face.source {
-            ExactCellRegionLabel::LeftBoundary => Some(true),
-            ExactCellRegionLabel::RightBoundary => Some(false),
         },
         ExactBooleanOperation::SelectedRegions(_) => None,
     }
