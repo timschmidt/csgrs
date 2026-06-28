@@ -248,9 +248,15 @@ fn try_certify_axis_aligned_box(
         min: bounds.min.clone(),
         max: bounds.max.clone(),
     };
-    let Some(box_bounds) = valid_box(box_bounds)? else {
-        return Ok(None);
-    };
+    for axis in [Axis::X, Axis::Y, Axis::Z] {
+        if exact_compare_axis(
+            axis_coord(&box_bounds.min, axis),
+            axis_coord(&box_bounds.max, axis),
+        )? != Ordering::Less
+        {
+            return Ok(None);
+        }
+    }
     let corners = box_bounds.corners();
     for vertex in mesh.vertices() {
         let point = vertex.clone();
@@ -1552,17 +1558,6 @@ impl AxisAlignedBox {
             Point3::new(min.x.clone(), max.y.clone(), max.z.clone()),
         ]
     }
-}
-
-fn valid_box(bounds: AxisAlignedBox) -> Result<Option<AxisAlignedBox>, ExactMeshError> {
-    for axis in [Axis::X, Axis::Y, Axis::Z] {
-        if exact_compare_axis(axis_coord(&bounds.min, axis), axis_coord(&bounds.max, axis))?
-            != Ordering::Less
-        {
-            return Ok(None);
-        }
-    }
-    Ok(Some(bounds))
 }
 
 fn exact_compare_axis(left: &Real, right: &Real) -> Result<Ordering, ExactMeshError> {
