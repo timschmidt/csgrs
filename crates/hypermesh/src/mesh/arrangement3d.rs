@@ -4232,9 +4232,16 @@ fn arrangement_edge_users(
             .is_err()
         {
             push_unique_blocker(blockers, ExactArrangementBlocker::UndecidableOrdering);
+            let left = edge.start.node.clone();
+            let right = edge.end.node.clone();
+            let nodes = if cell_node_key(&left) <= cell_node_key(&right) {
+                [left, right]
+            } else {
+                [right, left]
+            };
             edge_users.push(
                 ArrangementFaceCellBoundaryEdge {
-                    nodes: canonical_cell_edge(edge.start.node.clone(), edge.end.node.clone()),
+                    nodes,
                     points: Some([edge.start.point.clone(), edge.end.point.clone()]),
                 },
                 edge.cell,
@@ -4245,9 +4252,16 @@ fn arrangement_edge_users(
             if boundary_points_equal(&pair[0], &pair[1]) {
                 continue;
             }
+            let left = pair[0].node.clone();
+            let right = pair[1].node.clone();
+            let nodes = if cell_node_key(&left) <= cell_node_key(&right) {
+                [left, right]
+            } else {
+                [right, left]
+            };
             edge_users.push(
                 ArrangementFaceCellBoundaryEdge {
-                    nodes: canonical_cell_edge(pair[0].node.clone(), pair[1].node.clone()),
+                    nodes,
                     points: Some([pair[0].point.clone(), pair[1].point.clone()]),
                 },
                 edge.cell,
@@ -4315,15 +4329,36 @@ impl ArrangementEdgeUserIndex {
         has_point_key: bool,
     ) -> Option<usize> {
         if has_point_key {
-            self.unkeyed_edges
-                .iter()
-                .copied()
-                .find(|&index| boundary_edges_equivalent(&self.edge_users[index].0, edge))
+            self.unkeyed_edges.iter().copied().find(|&index| {
+                let existing = &self.edge_users[index].0;
+                existing.nodes == edge.nodes
+                    || match (&existing.points, &edge.points) {
+                        (Some(existing), Some(edge)) => {
+                            (point3_equal(&existing[0], &edge[0]).value() == Some(true)
+                                && point3_equal(&existing[1], &edge[1]).value() == Some(true))
+                                || (point3_equal(&existing[0], &edge[1]).value() == Some(true)
+                                    && point3_equal(&existing[1], &edge[0]).value() == Some(true))
+                        }
+                        _ => false,
+                    }
+            })
         } else {
             self.edge_users
                 .iter()
                 .enumerate()
-                .find(|(_, (existing, _))| boundary_edges_equivalent(existing, edge))
+                .find(|(_, (existing, _))| {
+                    existing.nodes == edge.nodes
+                        || match (&existing.points, &edge.points) {
+                            (Some(existing), Some(edge)) => {
+                                (point3_equal(&existing[0], &edge[0]).value() == Some(true)
+                                    && point3_equal(&existing[1], &edge[1]).value() == Some(true))
+                                    || (point3_equal(&existing[0], &edge[1]).value() == Some(true)
+                                        && point3_equal(&existing[1], &edge[0]).value()
+                                            == Some(true))
+                            }
+                            _ => false,
+                        }
+                })
                 .map(|(index, _)| index)
         }
     }
@@ -4437,33 +4472,6 @@ fn sort_boundary_points_along_segment(
     }
     *points = ordered;
     Ok(())
-}
-
-fn boundary_edges_equivalent(
-    left: &ArrangementFaceCellBoundaryEdge,
-    right: &ArrangementFaceCellBoundaryEdge,
-) -> bool {
-    left.nodes == right.nodes
-        || match (&left.points, &right.points) {
-            (Some(left), Some(right)) => {
-                (point3_equal(&left[0], &right[0]).value() == Some(true)
-                    && point3_equal(&left[1], &right[1]).value() == Some(true))
-                    || (point3_equal(&left[0], &right[1]).value() == Some(true)
-                        && point3_equal(&left[1], &right[0]).value() == Some(true))
-            }
-            _ => false,
-        }
-}
-
-fn canonical_cell_edge(
-    left: ArrangementFaceCellNode,
-    right: ArrangementFaceCellNode,
-) -> [ArrangementFaceCellNode; 2] {
-    if cell_node_key(&left) <= cell_node_key(&right) {
-        [left, right]
-    } else {
-        [right, left]
-    }
 }
 
 fn cell_node_key(node: &ArrangementFaceCellNode) -> (usize, usize, usize) {
