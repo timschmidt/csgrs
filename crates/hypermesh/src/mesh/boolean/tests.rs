@@ -2925,7 +2925,7 @@ fn arrangement_certification_accepts_requested_volume_ownership() {
     };
 
     ownership.validate().unwrap();
-    assert!(!ownership.is_resolved());
+    assert!(!ownership.status.is_resolved());
     assert!(ownership.resolves_operation_selection(ExactBooleanOperation::Intersection));
     assert!(ownership.resolves_operation_selection(ExactBooleanOperation::Difference));
     assert!(!ownership.resolves_operation_selection(ExactBooleanOperation::Union));

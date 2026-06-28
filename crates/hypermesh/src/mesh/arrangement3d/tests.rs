@@ -1075,7 +1075,7 @@ fn region_ownership_report_certifies_volume_resolved_nested_solids() {
         .unwrap();
 
     assert_eq!(report.status, ExactRegionOwnershipStatus::VolumeResolved);
-    assert!(report.is_resolved());
+    assert!(report.status.is_resolved());
     assert_eq!(report.freshness, ExactLabeledCellComplexFreshness::Current);
     assert!(report.blockers.is_empty(), "{:?}", report.blockers);
     let (face_cell_boundary_nodes, face_cell_boundary_points) =
@@ -1125,7 +1125,7 @@ fn region_ownership_report_retains_blocked_open_shell_reason() {
         .unwrap();
 
     assert_eq!(report.status, ExactRegionOwnershipStatus::Blocked);
-    assert!(!report.is_resolved());
+    assert!(!report.status.is_resolved());
     assert_eq!(report.freshness, ExactLabeledCellComplexFreshness::Current);
     assert!(
         report

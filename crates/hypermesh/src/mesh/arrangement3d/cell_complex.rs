@@ -254,11 +254,6 @@ pub(crate) struct ExactRegionOwnershipReport {
 }
 
 impl ExactRegionOwnershipReport {
-    /// Return whether retained exact evidence resolves region ownership.
-    pub(crate) fn is_resolved(&self) -> bool {
-        self.status.is_resolved()
-    }
-
     /// Return whether retained volume-region evidence resolves this named
     /// operation even if other named operations still require winding.
     pub(crate) fn volume_selection_resolves_operation(
@@ -276,7 +271,7 @@ impl ExactRegionOwnershipReport {
     /// Return whether retained ownership evidence can select the requested
     /// operation without falling back to winding.
     pub(crate) fn resolves_operation_selection(&self, operation: ExactBooleanOperation) -> bool {
-        self.is_resolved() || self.volume_selection_resolves_operation(operation)
+        self.status.is_resolved() || self.volume_selection_resolves_operation(operation)
     }
 
     /// Return whether this ownership report matches selected-cell gate counts.
@@ -1012,7 +1007,7 @@ pub(crate) fn select_arrangement_for_replay(
     let selected = if ownership_report.volume_selection_resolves_operation(operation) {
         labeled.select_volume_resolved(operation)
     } else {
-        if !ownership_report.is_resolved()
+        if !ownership_report.status.is_resolved()
             && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
@@ -2597,7 +2592,7 @@ mod tests {
             lower_dimensional_edge_endpoints: 0,
         };
         report.validate().unwrap();
-        assert!(!report.is_resolved());
+        assert!(!report.status.is_resolved());
         assert!(report.resolves_operation_selection(ExactBooleanOperation::Difference));
         assert!(!report.resolves_operation_selection(ExactBooleanOperation::Union));
         assert!(report.volume_selection_resolves_operation(ExactBooleanOperation::Difference));
@@ -2739,7 +2734,6 @@ mod tests {
             .as_ref()
             .expect("replay-selected cells should retain region ownership");
         ownership.validate().unwrap();
-        assert!(ownership.is_resolved());
         assert!(ownership.status.is_resolved());
         selected.validate().unwrap();
         selected
