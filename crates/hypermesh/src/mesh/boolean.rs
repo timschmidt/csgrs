@@ -8908,7 +8908,7 @@ fn volumetric_retention_for_operation(
     // copy and drop the coincident right copy; difference drops coincident
     // boundary cells because the overlapped volume is removed from the left
     // operand and right boundary faces are only used as reversed interior caps.
-    match (operation, triangulation.side, classification.relation()) {
+    match (operation, triangulation.side, classification.relation) {
         (ExactBooleanOperation::Union, _, ExactVolumetricRegionRelation::Outside)
         | (ExactBooleanOperation::Union, MeshSide::Left, ExactVolumetricRegionRelation::Boundary)
         | (ExactBooleanOperation::Intersection, _, ExactVolumetricRegionRelation::Inside)

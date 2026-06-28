@@ -67,16 +67,16 @@ impl ExactVolumetricRegionRelation {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ExactVolumetricRegionClassification {
     /// Mesh side owning the split source face.
-    region_side: MeshSide,
+    pub(super) region_side: MeshSide,
     /// Source face index on [`Self::region_side`].
-    region_face: usize,
+    pub(super) region_face: usize,
     /// Triangle indices into the retained [`FaceRegionTriangulation`] that
     /// produced [`Self::representative`].
     ///
     /// A single source face can be divided by several exact intersection
     /// segments. Retaining the local triangle handles makes the winding
     /// decision a per-cell certificate instead of a face-wide approximation,
-    triangle: [usize; 3],
+    pub(super) triangle: [usize; 3],
     /// Exact interior representative point used for winding parity.
     ///
     /// The classifier records the first deterministic barycentric witness that
@@ -91,7 +91,7 @@ pub(crate) struct ExactVolumetricRegionClassification {
     /// source triangle rather than to an opaque coordinate.
     representative_witness: ExactTriangleInteriorWitness,
     /// Relation derived from [`Self::winding`].
-    relation: ExactVolumetricRegionRelation,
+    pub(super) relation: ExactVolumetricRegionRelation,
     /// Exact closed-mesh ray-parity report for [`Self::representative`].
     winding: PointMeshWindingReport,
     /// Ordered exact witness attempts that justify the retained
@@ -124,26 +124,6 @@ pub(crate) struct ExactVolumetricWitnessAttempt {
 }
 
 impl ExactVolumetricRegionClassification {
-    /// Mesh side owning the split source cell.
-    pub(crate) const fn region_side(&self) -> MeshSide {
-        self.region_side
-    }
-
-    /// Local triangulation cell classified by this report.
-    pub(crate) const fn triangle(&self) -> [usize; 3] {
-        self.triangle
-    }
-
-    /// Source triangulation cell key classified by this report.
-    pub(crate) const fn cell_key(&self) -> (MeshSide, usize, [usize; 3]) {
-        (self.region_side, self.region_face, self.triangle)
-    }
-
-    /// Exact volumetric relation retained for this source cell.
-    pub(crate) const fn relation(&self) -> ExactVolumetricRegionRelation {
-        self.relation
-    }
-
     /// Return whether this classification belongs to the triangulated source face.
     pub(crate) fn matches_triangulation(&self, triangulation: &FaceRegionTriangulation) -> bool {
         triangulation.side == self.region_side && triangulation.face == self.region_face
