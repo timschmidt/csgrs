@@ -1013,17 +1013,13 @@ impl ExactIntersectionGraph {
             .filter_map(FacePairEvents::coplanar_overlap_graph)
     }
 
-    fn coplanar_overlap_graph_count_hint(&self) -> usize {
-        self.summary.coplanar_overlap_graph_count
-    }
-
     /// Construct exact split-point/interval records for coplanar overlap graphs.
     pub fn coplanar_overlap_split_plan(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<CoplanarOverlapSplitPlan, ExactMeshError> {
-        let mut split_graphs = Vec::with_capacity(self.coplanar_overlap_graph_count_hint());
+        let mut split_graphs = Vec::with_capacity(self.summary.coplanar_overlap_graph_count);
         for graph in self.coplanar_overlap_graph_iter() {
             split_graphs.push(graph.split_constructions(left, right)?);
         }

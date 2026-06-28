@@ -196,7 +196,7 @@ fn intersection_graph_retains_coplanar_face_pair_events_internal() {
 
     let mut overlaps = graph.coplanar_overlap_graph_iter().collect::<Vec<_>>();
     let overlap = overlaps.pop().unwrap();
-    assert!(graph.coplanar_overlap_graph_count_hint() >= overlaps.len());
+    assert!(graph.summary.coplanar_overlap_graph_count >= overlaps.len());
     overlap.validate_against_sources(&left, &right).unwrap();
     let mut invalid_overlap = overlap.clone();
     invalid_overlap.edge_overlaps.clear();
