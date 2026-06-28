@@ -1272,7 +1272,7 @@ fn validate_coplanar_volumetric_evidence_shape(
     retained_events: usize,
 ) -> Result<(), ExactEvidenceValidationError> {
     validate_coplanar_volumetric_evidence_counts(evidence, retained_face_pairs, retained_events)?;
-    if !evidence.requires_coplanar_volumetric_cells() {
+    if !evidence.obstacle.requires_coplanar_volumetric_cells() {
         return Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch);
     }
     Ok(())
@@ -6417,7 +6417,7 @@ impl ExactBooleanPreflight {
                     self.retained_face_pairs,
                     self.retained_events,
                 )?;
-                if !evidence.requires_coplanar_volumetric_cells() {
+                if !evidence.obstacle.requires_coplanar_volumetric_cells() {
                     return Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
@@ -6456,7 +6456,7 @@ impl ExactBooleanPreflight {
                             self.retained_face_pairs,
                             self.retained_events,
                         )?;
-                        if !evidence.requires_coplanar_volumetric_cells() {
+                        if !evidence.obstacle.requires_coplanar_volumetric_cells() {
                             return Err(
                                 ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch,
                             );
@@ -8504,7 +8504,7 @@ impl ExactWindingEvidenceReport {
                     self.retained_face_pairs,
                     self.retained_events,
                 )?;
-                if !evidence.requires_coplanar_volumetric_cells() {
+                if !evidence.obstacle.requires_coplanar_volumetric_cells() {
                     return Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
@@ -8539,7 +8539,7 @@ impl ExactWindingEvidenceReport {
                     self.retained_face_pairs,
                     self.retained_events,
                 )?;
-                if !evidence.requires_coplanar_volumetric_cells() {
+                if !evidence.obstacle.requires_coplanar_volumetric_cells() {
                     return Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
@@ -8579,7 +8579,7 @@ impl ExactWindingEvidenceReport {
                             self.retained_face_pairs,
                             self.retained_events,
                         )?;
-                        if !evidence.requires_coplanar_volumetric_cells() {
+                        if !evidence.obstacle.requires_coplanar_volumetric_cells() {
                             return Err(
                                 ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch,
                             );
@@ -8629,7 +8629,7 @@ impl ExactWindingEvidenceReport {
                             self.retained_face_pairs,
                             self.retained_events,
                         )?;
-                        if !evidence.requires_coplanar_volumetric_cells() {
+                        if !evidence.obstacle.requires_coplanar_volumetric_cells() {
                             return Err(
                                 ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch,
                             );
@@ -8852,7 +8852,7 @@ impl ExactWindingEvidenceReport {
                             self.retained_face_pairs,
                             self.retained_events,
                         )?;
-                        if !evidence.requires_coplanar_volumetric_cells() {
+                        if !evidence.obstacle.requires_coplanar_volumetric_cells() {
                             return Err(
                                 ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch,
                             );

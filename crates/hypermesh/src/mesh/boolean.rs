@@ -2869,6 +2869,7 @@ fn graph_requires_coplanar_volumetric_cells_for_sources(
     // coplanar volumetric-cell materializer. Keeping the decision in
     // consume replayable exact object evidence, not aggregate counters.
     CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)
+        .obstacle
         .requires_coplanar_volumetric_cells()
 }
 
@@ -2889,6 +2890,7 @@ fn coplanar_volumetric_evidence_if_required(
         return None;
     }
     evidence
+        .obstacle
         .requires_coplanar_volumetric_cells()
         .then_some(evidence)
 }

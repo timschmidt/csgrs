@@ -333,11 +333,6 @@ impl CoplanarVolumetricCellEvidenceReport {
         report
     }
 
-    /// Return whether retained evidence requires coplanar volumetric cells.
-    pub(crate) const fn requires_coplanar_volumetric_cells(&self) -> bool {
-        self.obstacle.requires_coplanar_volumetric_cells()
-    }
-
     /// Return whether retained evidence proves boundary-only contact.
     pub(crate) const fn is_boundary_only_contact(&self) -> bool {
         matches!(
@@ -358,7 +353,8 @@ impl CoplanarVolumetricCellEvidenceReport {
 
     /// Return whether retained evidence can be consumed by arrangement materialization.
     pub(crate) const fn is_arrangement_materializable(&self) -> bool {
-        self.requires_coplanar_volumetric_cells() || self.is_boundary_only_positive_area_contact()
+        self.obstacle.requires_coplanar_volumetric_cells()
+            || self.is_boundary_only_positive_area_contact()
     }
 
     /// Return retained event count represented by this compact evidence.
