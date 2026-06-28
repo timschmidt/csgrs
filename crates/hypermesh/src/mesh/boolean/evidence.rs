@@ -91,7 +91,7 @@ use super::{
 #[cfg(test)]
 use super::{
     exact_boolean_evaluation_for_replay_result_with_materialization,
-    winding_evidence_report_for_request_from_graph,
+    winding_evidence_report_for_request_from_graph_and_attempt,
 };
 use hyperlimit::PredicateUse;
 
@@ -6018,8 +6018,15 @@ fn validate_winding_evidence_against_sources_for_request(
     {
         return Ok(());
     }
-    if let Ok(replay) = winding_evidence_report_for_request_from_graph(&graph, left, right, request)
-        && report == &replay
+    let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
+    if let Ok(replay) = winding_evidence_report_for_request_from_graph_and_attempt(
+        &graph,
+        left,
+        right,
+        request,
+        None,
+        &shortcut_facts,
+    ) && report == &replay
     {
         return Ok(());
     }

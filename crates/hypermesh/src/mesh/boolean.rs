@@ -7702,24 +7702,6 @@ pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evid
     )
 }
 
-#[cfg(test)]
-fn winding_evidence_report_for_request_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactWindingEvidenceReport, ExactMeshError> {
-    let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
-    winding_evidence_report_for_request_from_graph_and_attempt(
-        graph,
-        left,
-        right,
-        request,
-        None,
-        &shortcut_facts,
-    )
-}
-
 fn winding_evidence_report_for_request_from_graph_and_attempt(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
