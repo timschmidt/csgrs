@@ -142,7 +142,7 @@ impl ArrangementOppositeClassification {
     pub(crate) fn convex_certified_relation(&self) -> Option<ConvexSolidPointRelation> {
         self.convex_fallback
             .as_ref()
-            .and_then(|classification| certified_convex_point_relation(classification.relation()))
+            .and_then(|classification| certified_convex_point_relation(classification.relation))
     }
 }
 
@@ -3942,7 +3942,7 @@ fn classify_shell_witness_against_container(
     container: &ExactMesh,
 ) -> ShellContainmentRelation {
     let convex = classify_point_against_convex_solid_report(witness, container);
-    if let Some(relation) = certified_convex_point_relation(convex.relation()) {
+    if let Some(relation) = certified_convex_point_relation(convex.relation) {
         return match relation {
             ConvexSolidPointRelation::Inside => ShellContainmentRelation::Inside,
             ConvexSolidPointRelation::Outside => ShellContainmentRelation::Outside,
@@ -4738,14 +4738,14 @@ fn classify_opposite(
         MeshSide::Right => left,
     };
     let convex = classify_point_against_convex_solid_report(&point, target);
-    let convex_certification = if certified_convex_point_relation(convex.relation()).is_some() {
+    let convex_certification = if certified_convex_point_relation(convex.relation).is_some() {
         Some(convex)
     } else {
         None
     };
     let winding = classify_point_against_closed_mesh_winding_report(&point, target);
     if matches!(
-        winding.relation(),
+        winding.relation,
         ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed
     ) && convex_certification.is_none()
         && policy.unresolved == ExactUnresolvedPolicy::Block

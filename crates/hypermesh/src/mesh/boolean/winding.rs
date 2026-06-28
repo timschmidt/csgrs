@@ -132,7 +132,7 @@ pub(crate) enum ClosedMeshWindingRelation {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct PointMeshWindingReport {
     /// Final certified or unresolved relation.
-    relation: ClosedMeshWindingRelation,
+    pub(crate) relation: ClosedMeshWindingRelation,
     /// Ray direction that produced the retained parity decision or boundary hit.
     axis: Option<WindingRayAxis>,
     /// Number of rays attempted.
@@ -179,11 +179,6 @@ impl PointMeshWindingReport {
             parallel_faces,
             unknown_hits,
         }
-    }
-
-    /// Return the retained point/mesh winding relation.
-    pub(crate) const fn relation(&self) -> ClosedMeshWindingRelation {
-        self.relation
     }
 
     /// Validate local report consistency.
@@ -323,7 +318,7 @@ pub(crate) enum ClosedMeshWindingMeshRelation {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ClosedMeshWindingMeshReport {
     /// Summary relation derived from retained per-vertex reports.
-    relation: ClosedMeshWindingMeshRelation,
+    pub(super) relation: ClosedMeshWindingMeshRelation,
     /// Whether the target mesh was a closed two-manifold.
     target_closed: bool,
     /// Number of subject vertices checked.
@@ -333,11 +328,6 @@ pub(crate) struct ClosedMeshWindingMeshReport {
 }
 
 impl ClosedMeshWindingMeshReport {
-    /// Return the retained mesh-level winding relation.
-    pub(crate) const fn relation(&self) -> ClosedMeshWindingMeshRelation {
-        self.relation
-    }
-
     /// Return whether every retained vertex is outside or on the target boundary.
     pub(crate) fn vertices_are_boundary_or_outside(&self) -> bool {
         self.target_closed

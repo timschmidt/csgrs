@@ -157,7 +157,7 @@ impl ExactVolumetricRegionClassification {
         self.winding
             .validate()
             .map_err(ExactVolumetricRegionError::Winding)?;
-        if self.relation != relation_from_winding(self.winding.relation()) {
+        if self.relation != relation_from_winding(self.winding.relation) {
             return Err(ExactVolumetricRegionError::RelationMismatch);
         }
         validate_witness_attempts(self)?;
@@ -363,7 +363,7 @@ fn classify_witness_attempt(
     Ok(ExactVolumetricWitnessAttempt {
         witness,
         representative,
-        relation: relation_from_winding(winding.relation()),
+        relation: relation_from_winding(winding.relation),
         winding,
     })
 }
@@ -421,7 +421,7 @@ fn validate_witness_attempts(
             .winding
             .validate()
             .map_err(ExactVolumetricRegionError::Winding)?;
-        if attempt.relation != relation_from_winding(attempt.winding.relation()) {
+        if attempt.relation != relation_from_winding(attempt.winding.relation) {
             return Err(ExactVolumetricRegionError::RepresentativeAttemptRelationMismatch);
         }
     }

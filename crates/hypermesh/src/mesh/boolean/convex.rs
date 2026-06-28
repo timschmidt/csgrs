@@ -521,7 +521,7 @@ fn clip_polygon_by_face(
     let c = clip.vertices()[face[2]].clone();
 
     let mut output = Vec::new();
-    let orientation = clip_facts.orientation();
+    let orientation = clip_facts.orientation;
     let mut previous = polygon.last()?.clone();
     let mut previous_inside = !matches!(
         (orientation, point_side(&a, &b, &c, &previous)?),

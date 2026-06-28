@@ -3030,7 +3030,7 @@ fn closed_winding_vertex_relations_from_empty_graph(
     right_in_left
         .validate_against_sources(right, left)
         .map_err(winding_error)?;
-    Ok(Some((left_in_right.relation(), right_in_left.relation())))
+    Ok(Some((left_in_right.relation, right_in_left.relation)))
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -5208,7 +5208,7 @@ fn certified_convex_relation_shortcut_from_graph(
         })?;
 
     if graph.face_pairs.is_empty() {
-        return Ok(match (left_in_right.relation(), right_in_left.relation()) {
+        return Ok(match (left_in_right.relation, right_in_left.relation) {
             (ConvexSolidMeshRelation::StrictlyInside, _) => {
                 Some(ConvexRelationShortcut::LeftInsideRight)
             }

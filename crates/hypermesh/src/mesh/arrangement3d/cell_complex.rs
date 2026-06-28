@@ -1434,7 +1434,7 @@ fn opposite_region_label(opposite: &ArrangementOppositeClassification) -> ExactO
         Some(ConvexSolidPointRelation::Unknown | ConvexSolidPointRelation::NotCertifiedConvex)
         | None => {}
     }
-    match opposite.winding.relation() {
+    match opposite.winding.relation {
         super::super::boolean::winding::ClosedMeshWindingRelation::Inside => {
             ExactOppositeRegionLabel::Inside
         }

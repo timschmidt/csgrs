@@ -3574,15 +3574,13 @@ impl ExactBooleanCertificationSet {
     }
 
     fn closed_winding_reports_match_separated(&self) -> bool {
-        self.closed_winding_left_in_right.relation() == ClosedMeshWindingMeshRelation::Outside
-            && self.closed_winding_right_in_left.relation()
-                == ClosedMeshWindingMeshRelation::Outside
+        self.closed_winding_left_in_right.relation == ClosedMeshWindingMeshRelation::Outside
+            && self.closed_winding_right_in_left.relation == ClosedMeshWindingMeshRelation::Outside
     }
 
     fn closed_winding_reports_match_containment(&self) -> bool {
-        self.closed_winding_left_in_right.relation()
-            == ClosedMeshWindingMeshRelation::StrictlyInside
-            || self.closed_winding_right_in_left.relation()
+        self.closed_winding_left_in_right.relation == ClosedMeshWindingMeshRelation::StrictlyInside
+            || self.closed_winding_right_in_left.relation
                 == ClosedMeshWindingMeshRelation::StrictlyInside
     }
 
@@ -4284,7 +4282,7 @@ fn certified_convex_relation_from_sources(
         .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
 
     if graph.face_pairs.is_empty() {
-        return Ok(match (left_in_right.relation(), right_in_left.relation()) {
+        return Ok(match (left_in_right.relation, right_in_left.relation) {
             (ConvexSolidMeshRelation::StrictlyInside, _) => {
                 Some(ReportConvexRelation::LeftInsideRight)
             }
@@ -4573,12 +4571,12 @@ fn closed_winding_sources_match(
 
     Ok(match shortcut {
         ExactBooleanShortcutKind::ClosedWindingSeparated => {
-            left_in_right.relation() == ClosedMeshWindingMeshRelation::Outside
-                && right_in_left.relation() == ClosedMeshWindingMeshRelation::Outside
+            left_in_right.relation == ClosedMeshWindingMeshRelation::Outside
+                && right_in_left.relation == ClosedMeshWindingMeshRelation::Outside
         }
         ExactBooleanShortcutKind::ClosedWindingContainment => {
-            left_in_right.relation() == ClosedMeshWindingMeshRelation::StrictlyInside
-                || right_in_left.relation() == ClosedMeshWindingMeshRelation::StrictlyInside
+            left_in_right.relation == ClosedMeshWindingMeshRelation::StrictlyInside
+                || right_in_left.relation == ClosedMeshWindingMeshRelation::StrictlyInside
         }
         _ => unreachable!("only closed winding shortcuts are replayed here"),
     })
@@ -4668,7 +4666,7 @@ fn certified_closed_winding_relation_from_sources(
         .validate_against_sources(right, left)
         .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
 
-    Ok(match (left_in_right.relation(), right_in_left.relation()) {
+    Ok(match (left_in_right.relation, right_in_left.relation) {
         (ClosedMeshWindingMeshRelation::Outside, ClosedMeshWindingMeshRelation::Outside) => {
             Some(ReportClosedWindingRelation::Separated)
         }
@@ -4724,8 +4722,8 @@ fn convex_relation_shortcut_sources_match(
 
     Ok(match shortcut {
         ExactBooleanShortcutKind::ConvexContainment if graph.face_pairs.is_empty() => {
-            left_in_right.relation() == ConvexSolidMeshRelation::StrictlyInside
-                || right_in_left.relation() == ConvexSolidMeshRelation::StrictlyInside
+            left_in_right.relation == ConvexSolidMeshRelation::StrictlyInside
+                || right_in_left.relation == ConvexSolidMeshRelation::StrictlyInside
         }
         ExactBooleanShortcutKind::ConvexContainment => {
             left_in_right.supports_boundary_containment_against(&right_in_left)
@@ -4733,8 +4731,8 @@ fn convex_relation_shortcut_sources_match(
         }
         ExactBooleanShortcutKind::ConvexSeparated => {
             graph.face_pairs.is_empty()
-                && left_in_right.relation() == ConvexSolidMeshRelation::Outside
-                && right_in_left.relation() == ConvexSolidMeshRelation::Outside
+                && left_in_right.relation == ConvexSolidMeshRelation::Outside
+                && right_in_left.relation == ConvexSolidMeshRelation::Outside
         }
         _ => unreachable!("only convex relation shortcuts are replayed here"),
     })

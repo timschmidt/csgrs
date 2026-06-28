@@ -77,7 +77,7 @@ pub(crate) enum ConvexSolidReportError {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ConvexSolidFacts {
     /// Certified closed-surface orientation.
-    orientation: ClosedMeshOrientation,
+    pub(super) orientation: ClosedMeshOrientation,
     /// Certified convexity state.
     convexity: ConvexSolidClassification,
     /// Predicate certificates used by face/vertex halfspace tests.
@@ -85,11 +85,6 @@ pub(crate) struct ConvexSolidFacts {
 }
 
 impl ConvexSolidFacts {
-    /// Return the certified closed-surface orientation.
-    pub(crate) const fn orientation(&self) -> ClosedMeshOrientation {
-        self.orientation
-    }
-
     /// Return whether the mesh is certified as an oriented convex closed solid.
     pub(crate) const fn is_certified_convex(&self) -> bool {
         matches!(
@@ -140,7 +135,7 @@ impl ConvexSolidFacts {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ConvexSolidPointClassification {
     /// Exact point/solid relation.
-    relation: ConvexSolidPointRelation,
+    pub(crate) relation: ConvexSolidPointRelation,
     /// Predicate certificates used by the halfspace tests for this point.
     predicates: Vec<PredicateUse>,
 }
@@ -153,11 +148,6 @@ impl ConvexSolidPointClassification {
             relation,
             predicates,
         }
-    }
-
-    /// Return the retained point/solid relation.
-    pub(crate) const fn relation(&self) -> ConvexSolidPointRelation {
-        self.relation
     }
 
     /// Validate point/solid classification report invariants.
@@ -211,7 +201,7 @@ pub(crate) enum ConvexSolidMeshRelation {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ConvexSolidMeshClassification {
     /// Exact relation between the subject vertices and the convex solid.
-    relation: ConvexSolidMeshRelation,
+    pub(super) relation: ConvexSolidMeshRelation,
     /// Convexity facts certified for the containing solid.
     solid_facts: ConvexSolidFacts,
     /// Number of subject vertices covered by this summary.
@@ -221,11 +211,6 @@ pub(crate) struct ConvexSolidMeshClassification {
 }
 
 impl ConvexSolidMeshClassification {
-    /// Return the retained mesh/solid relation.
-    pub(crate) const fn relation(&self) -> ConvexSolidMeshRelation {
-        self.relation
-    }
-
     /// Return whether the containing solid was certified as convex.
     pub(crate) const fn solid_is_certified_convex(&self) -> bool {
         self.solid_facts.is_certified_convex()
@@ -557,7 +542,7 @@ fn classify_point_with_convex_facts_report(
                 predicates,
             };
         };
-        if side_is_outside(facts.orientation(), side) {
+        if side_is_outside(facts.orientation, side) {
             return ConvexSolidPointClassification {
                 relation: ConvexSolidPointRelation::Outside,
                 predicates,
