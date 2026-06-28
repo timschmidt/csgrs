@@ -476,7 +476,22 @@ where
         &mut Vec<ExactArrangement2dBlocker>,
     ) -> Vec<ExactArrangement2dOverlayFace>,
 {
-    let segments = arrangement_segments_from_rings(&normalized);
+    let mut segments = Vec::new();
+    for ring in &normalized {
+        for edge in 0..ring.vertices.len() {
+            segments.push(ExactArrangement2dInputSegment::new(
+                [
+                    ring.vertices[edge].clone(),
+                    ring.vertices[(edge + 1) % ring.vertices.len()].clone(),
+                ],
+                ExactArrangement2dSegmentSource::RegionBoundary {
+                    region: ring.region,
+                    ring: ring.ring,
+                    edge,
+                },
+            ));
+        }
+    }
     let arrangement = build_exact_arrangement2d(&segments);
     blockers.extend(arrangement.blockers.iter().cloned());
 
@@ -584,28 +599,6 @@ fn normalize_region_rings(
         });
     }
     normalized
-}
-
-fn arrangement_segments_from_rings(
-    rings: &[NormalizedRegionRing],
-) -> Vec<ExactArrangement2dInputSegment> {
-    let mut segments = Vec::new();
-    for ring in rings {
-        for edge in 0..ring.vertices.len() {
-            segments.push(ExactArrangement2dInputSegment::new(
-                [
-                    ring.vertices[edge].clone(),
-                    ring.vertices[(edge + 1) % ring.vertices.len()].clone(),
-                ],
-                ExactArrangement2dSegmentSource::RegionBoundary {
-                    region: ring.region,
-                    ring: ring.ring,
-                    edge,
-                },
-            ));
-        }
-    }
-    segments
 }
 
 fn classify_overlay_faces(
