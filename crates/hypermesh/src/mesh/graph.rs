@@ -2963,13 +2963,57 @@ fn face_split_geometry_plan(
                     ));
                 }
             }
+            let mut nodes = Vec::with_capacity(chain.nodes.len());
+            for node in &chain.nodes {
+                nodes.push(match node {
+                    SplitEdgeNode::OriginalVertex {
+                        side: vertex_side,
+                        vertex,
+                    } if *vertex_side == face.side => {
+                        let point = mesh.vertices().get(*vertex).ok_or_else(|| {
+                            ExactMeshError::one(
+                                ExactMeshBlocker::new(
+                                    ExactMeshBlockerKind::IndexOutOfBounds,
+                                    "split boundary references a missing original vertex",
+                                )
+                                .with_vertex(*vertex),
+                            )
+                        })?;
+                        FaceSplitBoundaryNode::OriginalVertex {
+                            vertex: *vertex,
+                            point: point.clone(),
+                        }
+                    }
+                    SplitEdgeNode::GraphVertex { graph_vertex } => {
+                        let vertex =
+                            topology.graph_vertices.get(*graph_vertex).ok_or_else(|| {
+                                ExactMeshError::one(
+                                    ExactMeshBlocker::new(
+                                        ExactMeshBlockerKind::IndexOutOfBounds,
+                                        "split boundary references a missing graph vertex",
+                                    )
+                                    .with_vertex(*graph_vertex),
+                                )
+                            })?;
+                        FaceSplitBoundaryNode::GraphVertex {
+                            graph_vertex: *graph_vertex,
+                            point: vertex.point.clone(),
+                        }
+                    }
+                    SplitEdgeNode::OriginalVertex { vertex, .. } => {
+                        return Err(ExactMeshError::one(
+                            ExactMeshBlocker::new(
+                                ExactMeshBlockerKind::IndexOutOfBounds,
+                                "split boundary original vertex is on the wrong mesh side",
+                            )
+                            .with_vertex(*vertex),
+                        ));
+                    }
+                });
+            }
             boundary_chains.push(FaceSplitBoundaryChain {
                 edge: edge.edge,
-                nodes: chain
-                    .nodes
-                    .iter()
-                    .map(|node| face_boundary_node(face.side, node, left, right, topology))
-                    .collect::<Result<Vec<_>, _>>()?,
+                nodes,
             });
         }
         faces.push(FaceSplitGeometry {
@@ -2981,58 +3025,6 @@ fn face_split_geometry_plan(
     }
 
     Ok(ExactFaceSplitGeometryPlan { faces })
-}
-
-fn face_boundary_node(
-    side: MeshSide,
-    node: &SplitEdgeNode,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    topology: &ExactSplitTopologyPlan,
-) -> Result<FaceSplitBoundaryNode, ExactMeshError> {
-    match node {
-        SplitEdgeNode::OriginalVertex {
-            side: vertex_side,
-            vertex,
-        } if *vertex_side == side => {
-            let mesh = side.mesh(left, right);
-            let point = mesh.vertices().get(*vertex).ok_or_else(|| {
-                ExactMeshError::one(
-                    ExactMeshBlocker::new(
-                        ExactMeshBlockerKind::IndexOutOfBounds,
-                        "split boundary references a missing original vertex",
-                    )
-                    .with_vertex(*vertex),
-                )
-            })?;
-            Ok(FaceSplitBoundaryNode::OriginalVertex {
-                vertex: *vertex,
-                point: point.clone(),
-            })
-        }
-        SplitEdgeNode::GraphVertex { graph_vertex } => {
-            let vertex = topology.graph_vertices.get(*graph_vertex).ok_or_else(|| {
-                ExactMeshError::one(
-                    ExactMeshBlocker::new(
-                        ExactMeshBlockerKind::IndexOutOfBounds,
-                        "split boundary references a missing graph vertex",
-                    )
-                    .with_vertex(*graph_vertex),
-                )
-            })?;
-            Ok(FaceSplitBoundaryNode::GraphVertex {
-                graph_vertex: *graph_vertex,
-                point: vertex.point.clone(),
-            })
-        }
-        SplitEdgeNode::OriginalVertex { vertex, .. } => Err(ExactMeshError::one(
-            ExactMeshBlocker::new(
-                ExactMeshBlockerKind::IndexOutOfBounds,
-                "split boundary original vertex is on the wrong mesh side",
-            )
-            .with_vertex(*vertex),
-        )),
-    }
 }
 
 fn validate_face_split_geometry_incidence(
