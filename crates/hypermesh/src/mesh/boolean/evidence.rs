@@ -3576,8 +3576,8 @@ impl ExactBooleanCertificationSet {
     }
 
     fn convex_reports_match_preflight_support(&self, preflight: &ExactBooleanPreflight) -> bool {
-        if !self.convex_left_in_right.solid_is_certified_convex()
-            || !self.convex_right_in_left.solid_is_certified_convex()
+        if !self.convex_left_in_right.solid_facts.is_certified_convex()
+            || !self.convex_right_in_left.solid_facts.is_certified_convex()
         {
             return false;
         }

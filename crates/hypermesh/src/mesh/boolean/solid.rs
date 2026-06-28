@@ -203,7 +203,7 @@ pub(crate) struct ConvexSolidMeshClassification {
     /// Exact relation between the subject vertices and the convex solid.
     pub(super) relation: ConvexSolidMeshRelation,
     /// Convexity facts certified for the containing solid.
-    solid_facts: ConvexSolidFacts,
+    pub(super) solid_facts: ConvexSolidFacts,
     /// Number of subject vertices covered by this summary.
     subject_vertex_count: usize,
     /// Per-subject-vertex classifications.
@@ -211,11 +211,6 @@ pub(crate) struct ConvexSolidMeshClassification {
 }
 
 impl ConvexSolidMeshClassification {
-    /// Return whether the containing solid was certified as convex.
-    pub(crate) const fn solid_is_certified_convex(&self) -> bool {
-        self.solid_facts.is_certified_convex()
-    }
-
     /// Return whether every retained subject vertex is inside or on the container.
     pub(crate) fn vertices_are_inside_or_boundary(&self) -> bool {
         self.vertices.iter().all(|vertex| {
@@ -251,8 +246,8 @@ impl ConvexSolidMeshClassification {
         &self,
         container_in_subject: &Self,
     ) -> bool {
-        self.solid_is_certified_convex()
-            && container_in_subject.solid_is_certified_convex()
+        self.solid_facts.is_certified_convex()
+            && container_in_subject.solid_facts.is_certified_convex()
             && self.vertices_are_inside_or_boundary()
             && self.vertices_touch_boundary()
             && container_in_subject.vertices_include_outside()
