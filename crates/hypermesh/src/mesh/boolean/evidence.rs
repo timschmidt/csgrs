@@ -2762,25 +2762,25 @@ impl ExactArrangementCellComplexShortcutFacts {
 #[cfg(test)]
 pub(crate) struct ExactBooleanSourceFacts {
     /// Trivial non-topological shortcut facts.
-    trivial: ExactTrivialBooleanFacts,
+    pub(super) trivial: ExactTrivialBooleanFacts,
     /// Regularized-solid dimensionality facts.
-    regularized_solid: ExactRegularizedSolidBooleanFacts,
+    pub(super) regularized_solid: ExactRegularizedSolidBooleanFacts,
     /// Closed-convex shortcut capabilities.
-    convex_capabilities: ExactConvexBooleanCapabilityFacts,
+    pub(super) convex_capabilities: ExactConvexBooleanCapabilityFacts,
     /// Arrangement/cell-complex shortcut capabilities.
-    arrangement_cell_complex_shortcuts: ExactArrangementCellComplexShortcutFacts,
+    pub(super) arrangement_cell_complex_shortcuts: ExactArrangementCellComplexShortcutFacts,
     /// Exact identical-mesh shortcut report.
-    identical: ExactIdenticalMeshReport,
+    pub(super) identical: ExactIdenticalMeshReport,
     /// Exact same-surface shortcut report.
-    same_surface: ExactSameSurfaceReport,
+    pub(super) same_surface: ExactSameSurfaceReport,
     /// Left vertices classified against the right closed mesh.
-    closed_winding_left_in_right: ClosedMeshWindingMeshReport,
+    pub(super) closed_winding_left_in_right: ClosedMeshWindingMeshReport,
     /// Right vertices classified against the left closed mesh.
-    closed_winding_right_in_left: ClosedMeshWindingMeshReport,
+    pub(super) closed_winding_right_in_left: ClosedMeshWindingMeshReport,
     /// Left vertices classified against the right convex solid.
-    convex_left_in_right: ConvexSolidMeshClassification,
+    pub(super) convex_left_in_right: ConvexSolidMeshClassification,
     /// Right vertices classified against the left convex solid.
-    convex_right_in_left: ConvexSolidMeshClassification,
+    pub(super) convex_right_in_left: ConvexSolidMeshClassification,
 }
 
 #[cfg(test)]
@@ -2803,48 +2803,6 @@ impl ExactBooleanSourceFacts {
             convex_left_in_right: classify_mesh_vertices_against_convex_solid_report(left, right),
             convex_right_in_left: classify_mesh_vertices_against_convex_solid_report(right, left),
         }
-    }
-
-    pub(crate) const fn arrangement_cell_complex_shortcuts(
-        &self,
-    ) -> &ExactArrangementCellComplexShortcutFacts {
-        &self.arrangement_cell_complex_shortcuts
-    }
-
-    pub(crate) const fn trivial(&self) -> &ExactTrivialBooleanFacts {
-        &self.trivial
-    }
-
-    pub(crate) const fn regularized_solid(&self) -> &ExactRegularizedSolidBooleanFacts {
-        &self.regularized_solid
-    }
-
-    pub(crate) const fn convex_capabilities(&self) -> &ExactConvexBooleanCapabilityFacts {
-        &self.convex_capabilities
-    }
-
-    pub(crate) const fn identical(&self) -> &ExactIdenticalMeshReport {
-        &self.identical
-    }
-
-    pub(crate) const fn same_surface(&self) -> &ExactSameSurfaceReport {
-        &self.same_surface
-    }
-
-    pub(crate) const fn closed_winding_left_in_right(&self) -> &ClosedMeshWindingMeshReport {
-        &self.closed_winding_left_in_right
-    }
-
-    pub(crate) const fn closed_winding_right_in_left(&self) -> &ClosedMeshWindingMeshReport {
-        &self.closed_winding_right_in_left
-    }
-
-    pub(crate) const fn convex_left_in_right(&self) -> &ConvexSolidMeshClassification {
-        &self.convex_left_in_right
-    }
-
-    pub(crate) const fn convex_right_in_left(&self) -> &ConvexSolidMeshClassification {
-        &self.convex_right_in_left
     }
 }
 

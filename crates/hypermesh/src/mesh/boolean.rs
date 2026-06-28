@@ -220,7 +220,7 @@ fn exact_boolean_evaluation_for_replay_result_with_materialization(
     left.validate_retained_bounds()?;
     right.validate_retained_bounds()?;
     let source_facts = ExactBooleanSourceFacts::from_sources(left, right);
-    let shortcut_facts = source_facts.arrangement_cell_complex_shortcuts().clone();
+    let shortcut_facts = source_facts.arrangement_cell_complex_shortcuts.clone();
     let graph = build_validated_intersection_graph(left, right)?;
     let mut regularized_arrangement = None;
     let mut regularized_attempt = None;
@@ -654,8 +654,8 @@ fn certification_set_from_graph_and_regularized_arrangement(
                 )
             })?;
     }
-    let trivial = source_facts.trivial().clone();
-    let regularized_solid = source_facts.regularized_solid().clone();
+    let trivial = source_facts.trivial.clone();
+    let regularized_solid = source_facts.regularized_solid.clone();
     let counts = retained_graph_counts(graph);
     let graph_had_unknowns = graph.has_unknowns();
     let needs_refinement = graph_had_unknowns || counts.construction_failed_events() > 0;
@@ -693,14 +693,14 @@ fn certification_set_from_graph_and_regularized_arrangement(
     )?
     .0;
     let adjacent_union_completion_certified = adjacent_union_completion.is_certified();
-    let identical = source_facts.identical().clone();
-    let same_surface = source_facts.same_surface().clone();
-    let closed_winding_left_in_right = source_facts.closed_winding_left_in_right().clone();
-    let closed_winding_right_in_left = source_facts.closed_winding_right_in_left().clone();
-    let convex_left_in_right = source_facts.convex_left_in_right().clone();
-    let convex_right_in_left = source_facts.convex_right_in_left().clone();
-    let convex_capabilities = source_facts.convex_capabilities().clone();
-    let arrangement_cell_complex_shortcuts = source_facts.arrangement_cell_complex_shortcuts();
+    let identical = source_facts.identical.clone();
+    let same_surface = source_facts.same_surface.clone();
+    let closed_winding_left_in_right = source_facts.closed_winding_left_in_right.clone();
+    let closed_winding_right_in_left = source_facts.closed_winding_right_in_left.clone();
+    let convex_left_in_right = source_facts.convex_left_in_right.clone();
+    let convex_right_in_left = source_facts.convex_right_in_left.clone();
+    let convex_capabilities = source_facts.convex_capabilities.clone();
+    let arrangement_cell_complex_shortcuts = &source_facts.arrangement_cell_complex_shortcuts;
     let reject_boundary_evidence_request =
         request.validation == ExactMeshValidationPolicy::ALLOW_BOUNDARY;
     let planar_arrangement = if matches!(
