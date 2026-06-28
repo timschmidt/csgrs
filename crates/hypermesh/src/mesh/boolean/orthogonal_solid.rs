@@ -587,7 +587,16 @@ fn triangle_face_cell_sample(
             ))
         })
         .collect::<Option<Vec<_>>>()?;
-    let normal_sign = projected_orientation([oriented[0], oriented[1], oriented[2]])?;
+    let [a, b, c] = [oriented[0], oriented[1], oriented[2]];
+    let du1 = i128::try_from(b.0).ok()? - i128::try_from(a.0).ok()?;
+    let dv1 = i128::try_from(b.1).ok()? - i128::try_from(a.1).ok()?;
+    let du2 = i128::try_from(c.0).ok()? - i128::try_from(a.0).ok()?;
+    let dv2 = i128::try_from(c.1).ok()? - i128::try_from(a.1).ok()?;
+    let normal_sign = match (du1.checked_mul(dv2)? - dv1.checked_mul(du2)?).cmp(&0) {
+        Ordering::Less => -1,
+        Ordering::Equal => return None,
+        Ordering::Greater => 1,
+    };
     let area = projected_face_orientation(&projected[0], &projected[1], &projected[2])?;
     let area2 = match cmp(&area, &Real::from(0))? {
         Ordering::Less => mul(&Real::from(-1), &area),
@@ -1498,19 +1507,6 @@ fn coord_index(coords: &[Real], value: &Real) -> Option<usize> {
     coords
         .iter()
         .position(|candidate| real_eq(candidate, value))
-}
-
-fn projected_orientation(points: [(usize, usize); 3]) -> Option<i8> {
-    let [a, b, c] = points;
-    let du1 = i128::try_from(b.0).ok()? - i128::try_from(a.0).ok()?;
-    let dv1 = i128::try_from(b.1).ok()? - i128::try_from(a.1).ok()?;
-    let du2 = i128::try_from(c.0).ok()? - i128::try_from(a.0).ok()?;
-    let dv2 = i128::try_from(c.1).ok()? - i128::try_from(a.1).ok()?;
-    match (du1.checked_mul(dv2)? - dv1.checked_mul(du2)?).cmp(&0) {
-        Ordering::Less => Some(-1),
-        Ordering::Equal => None,
-        Ordering::Greater => Some(1),
-    }
 }
 
 fn cell_index(i: usize, j: usize, k: usize, ny: usize, nz: usize) -> Option<usize> {
