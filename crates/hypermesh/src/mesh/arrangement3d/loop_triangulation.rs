@@ -150,34 +150,34 @@ pub(crate) fn triangulate_exact_loop_group(
     }
     let mut vertex_index = ExactVertexInsertIndex::from_vertices(vertices);
     if let Err(error) = compute_loop_depths(&mut loops) {
-        return triangulate_loop_group_union_via_arrangement_or_error(
+        return triangulate_loop_group_union_via_arrangement(
             &loops,
             vertices,
             &mut vertex_index,
             triangles,
-            error,
-        );
+        )
+        .or(Err(error));
     }
     let isolate_component_vertices = match same_depth_endpoint_touch_flags(&loops) {
         Ok(flags) => flags,
         Err(error) => {
-            return triangulate_loop_group_union_via_arrangement_or_error(
+            return triangulate_loop_group_union_via_arrangement(
                 &loops,
                 vertices,
                 &mut vertex_index,
                 triangles,
-                error,
-            );
+            )
+            .or(Err(error));
         }
     };
     if let Err(error) = validate_loop_topology(&loops) {
-        return triangulate_loop_group_union_via_arrangement_or_error(
+        return triangulate_loop_group_union_via_arrangement(
             &loops,
             vertices,
             &mut vertex_index,
             triangles,
-            error,
-        );
+        )
+        .or(Err(error));
     }
     let mut used_as_hole = vec![false; loops.len()];
     for outer_index in 0..loops.len() {
@@ -208,13 +208,13 @@ pub(crate) fn triangulate_exact_loop_group(
     }
     for (index, loop_) in loops.iter().enumerate() {
         if loop_.depth % 2 != 0 && !used_as_hole[index] {
-            return triangulate_loop_group_union_via_arrangement_or_error(
+            return triangulate_loop_group_union_via_arrangement(
                 &loops,
                 vertices,
                 &mut vertex_index,
                 triangles,
-                ExactArrangementBlocker::NonManifoldCellComplex,
-            );
+            )
+            .or(Err(ExactArrangementBlocker::NonManifoldCellComplex));
         }
     }
     Ok(())
@@ -571,17 +571,6 @@ fn triangulate_touching_hole_loop_group_via_arrangement(
         triangles,
         output_orientation,
     )
-}
-
-fn triangulate_loop_group_union_via_arrangement_or_error(
-    loops: &[ProjectedFaceLoop],
-    vertices: &mut Vec<Point3>,
-    vertex_index: &mut ExactVertexInsertIndex,
-    triangles: &mut Vec<Triangle>,
-    error: ExactArrangementBlocker,
-) -> Result<(), ExactArrangementBlocker> {
-    triangulate_loop_group_union_via_arrangement(loops, vertices, vertex_index, triangles)
-        .or(Err(error))
 }
 
 fn triangulate_loop_group_union_via_arrangement(
