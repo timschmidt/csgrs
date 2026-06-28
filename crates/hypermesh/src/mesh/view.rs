@@ -462,18 +462,15 @@ impl<'a> MeshView<'a> {
         })
     }
 
-    fn prepare_broad_phase_bounds(self) -> Result<PreparedMeshBounds<'a>, ExactMeshError> {
-        self.validate_retained_bounds_certificate()?;
-        Ok(self.mesh.bounds().prepare())
-    }
-
     /// Prepare certificate-validated broad-phase facts for this mesh pair.
     pub(crate) fn prepare_broad_phase_pair<'b>(
         self,
         right: MeshView<'b>,
     ) -> Result<PreparedMeshPair<'a, 'b>, ExactMeshError> {
-        let left_bounds = self.prepare_broad_phase_bounds()?;
-        let right_bounds = right.prepare_broad_phase_bounds()?;
+        self.validate_retained_bounds_certificate()?;
+        right.validate_retained_bounds_certificate()?;
+        let left_bounds = self.mesh.bounds().prepare();
+        let right_bounds = right.mesh.bounds().prepare();
         Ok(PreparedMeshPair::new(
             self,
             right,
