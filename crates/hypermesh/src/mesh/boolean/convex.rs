@@ -1053,26 +1053,26 @@ fn point_lies_between_segment_endpoints(
     end: &Point3,
     point: &Point3,
 ) -> Option<bool> {
+    let coordinate_between = |value: &Real, start: &Real, end: &Real| -> Option<bool> {
+        let start_cmp = compare_reals(value, start).value()?;
+        let end_cmp = compare_reals(value, end).value()?;
+        Some(matches!(
+            (start_cmp, end_cmp),
+            (
+                Ordering::Greater | Ordering::Equal,
+                Ordering::Less | Ordering::Equal
+            ) | (
+                Ordering::Less | Ordering::Equal,
+                Ordering::Greater | Ordering::Equal
+            )
+        ))
+    };
+
     Some(
         coordinate_between(&point.x, &start.x, &end.x)?
             && coordinate_between(&point.y, &start.y, &end.y)?
             && coordinate_between(&point.z, &start.z, &end.z)?,
     )
-}
-
-fn coordinate_between(value: &Real, start: &Real, end: &Real) -> Option<bool> {
-    let start_cmp = compare_reals(value, start).value()?;
-    let end_cmp = compare_reals(value, end).value()?;
-    Some(matches!(
-        (start_cmp, end_cmp),
-        (
-            Ordering::Greater | Ordering::Equal,
-            Ordering::Less | Ordering::Equal
-        ) | (
-            Ordering::Less | Ordering::Equal,
-            Ordering::Greater | Ordering::Equal
-        )
-    ))
 }
 
 fn projected_area2_signed(
