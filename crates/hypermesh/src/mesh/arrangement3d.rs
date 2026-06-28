@@ -2078,11 +2078,23 @@ fn arrangement_edges(
 ) -> Vec<ArrangementEdge> {
     let mut edges = Vec::new();
     let mut edge_lookup = BTreeMap::<[usize; 2], usize>::new();
-    let vertex_index = ArrangementVertexProvenanceIndex::new(vertices);
+    let mut vertex_index = BTreeMap::<ArrangementVertexProvenanceKey, usize>::new();
+    for (index, vertex) in vertices.iter().enumerate() {
+        for provenance in &vertex.provenance {
+            vertex_index
+                .entry(arrangement_vertex_provenance_key(provenance))
+                .or_insert(index);
+        }
+    }
+    let find_vertex = |provenance: ArrangementVertexProvenance| {
+        vertex_index
+            .get(&arrangement_vertex_provenance_key(&provenance))
+            .copied()
+    };
     if let Some(topology) = topology {
         for chain in &topology.edge_chains {
             for pair in chain.nodes.windows(2) {
-                let Some(left) = vertex_index.get_provenance(&match pair[0] {
+                let Some(left) = find_vertex(match pair[0] {
                     SplitEdgeNode::OriginalVertex {
                         side,
                         vertex: index,
@@ -2096,7 +2108,7 @@ fn arrangement_edges(
                 }) else {
                     continue;
                 };
-                let Some(right) = vertex_index.get_provenance(&match pair[1] {
+                let Some(right) = find_vertex(match pair[1] {
                     SplitEdgeNode::OriginalVertex {
                         side,
                         vertex: index,
@@ -2125,20 +2137,16 @@ fn arrangement_edges(
     }
     for (overlay_index, overlay) in carrier_plane_overlays.iter().enumerate() {
         for (edge_index, edge) in overlay.overlay.arrangement.edges.iter().enumerate() {
-            let Some(left) =
-                vertex_index.get_provenance(&ArrangementVertexProvenance::CarrierPlaneVertex {
-                    overlay: overlay_index,
-                    vertex: edge.vertices[0],
-                })
-            else {
+            let Some(left) = find_vertex(ArrangementVertexProvenance::CarrierPlaneVertex {
+                overlay: overlay_index,
+                vertex: edge.vertices[0],
+            }) else {
                 continue;
             };
-            let Some(right) =
-                vertex_index.get_provenance(&ArrangementVertexProvenance::CarrierPlaneVertex {
-                    overlay: overlay_index,
-                    vertex: edge.vertices[1],
-                })
-            else {
+            let Some(right) = find_vertex(ArrangementVertexProvenance::CarrierPlaneVertex {
+                overlay: overlay_index,
+                vertex: edge.vertices[1],
+            }) else {
                 continue;
             };
             push_arrangement_edge(
@@ -2155,20 +2163,16 @@ fn arrangement_edges(
     }
     for (arrangement_index, arrangement) in face_plane_arrangements.iter().enumerate() {
         for (edge_index, edge) in arrangement.arrangement.edges.iter().enumerate() {
-            let Some(left) =
-                vertex_index.get_provenance(&ArrangementVertexProvenance::FacePlaneVertex {
-                    arrangement: arrangement_index,
-                    vertex: edge.vertices[0],
-                })
-            else {
+            let Some(left) = find_vertex(ArrangementVertexProvenance::FacePlaneVertex {
+                arrangement: arrangement_index,
+                vertex: edge.vertices[0],
+            }) else {
                 continue;
             };
-            let Some(right) =
-                vertex_index.get_provenance(&ArrangementVertexProvenance::FacePlaneVertex {
-                    arrangement: arrangement_index,
-                    vertex: edge.vertices[1],
-                })
-            else {
+            let Some(right) = find_vertex(ArrangementVertexProvenance::FacePlaneVertex {
+                arrangement: arrangement_index,
+                vertex: edge.vertices[1],
+            }) else {
                 continue;
             };
             push_arrangement_edge(
@@ -2216,30 +2220,6 @@ fn push_arrangement_edge(
 }
 
 type ArrangementVertexProvenanceKey = (usize, usize, usize);
-
-struct ArrangementVertexProvenanceIndex {
-    by_provenance: BTreeMap<ArrangementVertexProvenanceKey, usize>,
-}
-
-impl ArrangementVertexProvenanceIndex {
-    fn new(vertices: &[ArrangementVertex]) -> Self {
-        let mut by_provenance = BTreeMap::new();
-        for (index, vertex) in vertices.iter().enumerate() {
-            for provenance in &vertex.provenance {
-                by_provenance
-                    .entry(arrangement_vertex_provenance_key(provenance))
-                    .or_insert(index);
-            }
-        }
-        Self { by_provenance }
-    }
-
-    fn get_provenance(&self, provenance: &ArrangementVertexProvenance) -> Option<usize> {
-        self.by_provenance
-            .get(&arrangement_vertex_provenance_key(provenance))
-            .copied()
-    }
-}
 
 fn arrangement_vertex_provenance_key(
     provenance: &ArrangementVertexProvenance,
