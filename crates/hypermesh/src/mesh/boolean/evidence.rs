@@ -5534,29 +5534,29 @@ impl ExactBooleanSupport {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ExactBooleanPreflight {
     /// Requested operation.
-    operation: ExactBooleanOperation,
+    pub(super) operation: ExactBooleanOperation,
     /// Certified support level for the request.
-    support: ExactBooleanSupport,
+    pub(super) support: ExactBooleanSupport,
     /// Whether retained graph events contain explicit unknowns.
-    graph_had_unknowns: bool,
+    pub(super) graph_had_unknowns: bool,
     /// Retained face-pair records after exact broad/narrow scheduling.
-    retained_face_pairs: usize,
+    pub(super) retained_face_pairs: usize,
     /// Total retained event records across all retained face pairs.
-    retained_events: usize,
+    pub(super) retained_events: usize,
     /// Number of split-region boundaries produced for classification.
-    region_count: usize,
+    pub(super) region_count: usize,
     /// Certified classifications of split regions against opposite face
     /// planes.
-    region_classifications: Vec<FaceRegionPlaneClassification>,
+    pub(super) region_classifications: Vec<FaceRegionPlaneClassification>,
     /// Structured explanation for named operations that are certified enough
     /// to inspect but not yet executable by the selected policy.
-    blocker: Option<ExactBooleanBlocker>,
+    pub(super) blocker: Option<ExactBooleanBlocker>,
     /// Checked coplanar-overlap evidence retained when preflight stops at a
     /// planar arrangement boundary.
     ///
     /// This keeps positive-area coplanar graph evidence visible to structured
     /// replay instead of flattening it into a generic "unsupported" boolean.
-    coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
+    pub(super) coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
     /// Source-aware coplanar volumetric-cell evidence retained when the
     /// preflight crosses that exact boundary.
     ///
@@ -5565,7 +5565,7 @@ pub(crate) struct ExactBooleanPreflight {
     /// exact object evidence that authorized a blocker, a no-volume boundary
     /// shortcut, or an arrangement-materialized consumption of coplanar
     /// source-face cells.
-    coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
+    pub(super) coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 }
 
 /// Closure status for a materialized volumetric boundary-output Boolean.
@@ -6055,55 +6055,6 @@ impl ExactBooleanPreflight {
             coplanar_arrangement_evidence,
             coplanar_volumetric_evidence,
         }
-    }
-
-    /// Return the requested operation.
-    #[cfg(test)]
-    pub(crate) const fn operation(&self) -> ExactBooleanOperation {
-        self.operation
-    }
-
-    /// Return the certified support level.
-    pub(crate) const fn support(&self) -> ExactBooleanSupport {
-        self.support
-    }
-
-    /// Return retained face-pair count.
-    #[cfg(test)]
-    pub(crate) const fn retained_face_pairs(&self) -> usize {
-        self.retained_face_pairs
-    }
-
-    /// Return retained event count.
-    #[cfg(test)]
-    pub(crate) const fn retained_events(&self) -> usize {
-        self.retained_events
-    }
-
-    /// Return retained split-region count.
-    #[cfg(test)]
-    pub(crate) const fn region_count(&self) -> usize {
-        self.region_count
-    }
-
-    /// Return retained split-region classifications.
-    #[cfg(test)]
-    pub(crate) fn region_classifications(&self) -> &[FaceRegionPlaneClassification] {
-        &self.region_classifications
-    }
-
-    /// Return the retained blocker, if present.
-    #[cfg(test)]
-    pub(crate) const fn blocker(&self) -> Option<&ExactBooleanBlocker> {
-        self.blocker.as_ref()
-    }
-
-    /// Return retained coplanar volumetric-cell evidence, if present.
-    #[cfg(test)]
-    pub(crate) fn coplanar_volumetric_evidence(
-        &self,
-    ) -> Option<&CoplanarVolumetricCellEvidenceReport> {
-        self.coplanar_volumetric_evidence.as_ref()
     }
 
     /// Return this preflight report with a replacement support level.

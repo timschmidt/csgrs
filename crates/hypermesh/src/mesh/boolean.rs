@@ -232,17 +232,17 @@ fn exact_boolean_evaluation_for_replay_result_with_materialization(
         &shortcut_facts,
         regularized_attempt.as_ref(),
     )?;
-    let certified_by_coplanar_boundary_closure = preflight.support()
+    let certified_by_coplanar_boundary_closure = preflight.support
         == ExactBooleanSupport::CertifiedArrangementCellComplex
         && request.validation == ExactMeshValidationPolicy::CLOSED
-        && preflight.coplanar_volumetric_evidence().is_some();
-    let certified_by_orthogonal_cell_materialization = preflight.support()
+        && preflight.coplanar_volumetric_evidence.as_ref().is_some();
+    let certified_by_orthogonal_cell_materialization = preflight.support
         == ExactBooleanSupport::CertifiedArrangementCellComplex
         && orthogonal_solid_cell_materializes_for_preflight(left, right, request.operation)?;
     let should_replay_arrangement = !certified_by_coplanar_boundary_closure
         && !certified_by_orthogonal_cell_materialization
         && matches!(
-            preflight.support(),
+            preflight.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex
                 | ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
                 | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
@@ -252,7 +252,7 @@ fn exact_boolean_evaluation_for_replay_result_with_materialization(
             && !certified_by_orthogonal_cell_materialization
             && !graph.face_pairs.is_empty()
             && matches!(
-                preflight.support(),
+                preflight.support,
                 ExactBooleanSupport::CertifiedConvexUnion
                     | ExactBooleanSupport::CertifiedConvexIntersection
                     | ExactBooleanSupport::CertifiedConvexDifference
@@ -288,15 +288,12 @@ fn exact_boolean_evaluation_for_replay_result_with_materialization(
         &source_facts,
     )?;
     let result = if materialize_result && preflight.is_certified() {
-        if matches!(
-            preflight.support(),
-            ExactBooleanSupport::SelectedRegionPolicy
-        ) {
+        if matches!(preflight.support, ExactBooleanSupport::SelectedRegionPolicy) {
             try_materialize_certified_boolean_support_with_artifacts(
                 left,
                 right,
                 request,
-                preflight.support(),
+                preflight.support,
                 Some(&graph),
                 regularized_arrangement.as_ref(),
                 regularized_attempt.as_ref(),
@@ -309,7 +306,7 @@ fn exact_boolean_evaluation_for_replay_result_with_materialization(
                 left,
                 right,
                 request,
-                preflight.support(),
+                preflight.support,
                 Some(&graph),
                 regularized_arrangement.as_ref(),
                 regularized_attempt.as_ref(),
@@ -467,7 +464,7 @@ fn exact_boolean_replay_preflight(
         retained_attempt,
         shortcut_facts,
     )?;
-    if graph_preflight.operation() != request.operation {
+    if graph_preflight.operation != request.operation {
         return Err(retained_evidence_validation_error(
             RETAINED_EVIDENCE_REPLAY_CONTEXT,
             ExactEvidenceValidationError::StatusEvidenceMismatch,
@@ -482,7 +479,7 @@ fn exact_boolean_replay_preflight(
         )
     })?;
     if matches!(
-        graph_preflight.support(),
+        graph_preflight.support,
         ExactBooleanSupport::CertifiedEmptyOperand
             | ExactBooleanSupport::CertifiedBoundsDisjoint
             | ExactBooleanSupport::CertifiedIdentical
@@ -493,7 +490,7 @@ fn exact_boolean_replay_preflight(
             | ExactBooleanSupport::CertifiedConvexSeparated
             | ExactBooleanSupport::CertifiedConvexContainment
     ) || (matches!(
-        graph_preflight.support(),
+        graph_preflight.support,
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
@@ -2163,7 +2160,7 @@ pub(crate) fn preflight_boolean_exact_request_from_graph_with_retained_attempt(
     if validation != ExactMeshValidationPolicy::CLOSED
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && matches!(
-            preflight.support(),
+            preflight.support,
             ExactBooleanSupport::RequiresCertifiedWinding
                 | ExactBooleanSupport::RequiresCoplanarVolumetricCells
         )
