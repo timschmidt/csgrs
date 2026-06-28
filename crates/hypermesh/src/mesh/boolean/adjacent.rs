@@ -176,10 +176,10 @@ pub(crate) fn full_face_adjacent_certificate_from_graph(
     if certificate.is_empty() {
         return Ok(None);
     }
-    if !graph.face_pairs.is_empty()
-        && !graph_has_only_adjacency_contacts(left, right, &graph.face_pairs, &certificate)?
-    {
-        return Ok(None);
+    for pair in &graph.face_pairs {
+        if !adjacency_contact_pair(left, right, pair, &certificate)? {
+            return Ok(None);
+        }
     }
 
     Ok(Some(FullFaceAdjacentCertificate { inner: certificate }))
@@ -238,20 +238,6 @@ fn consumed_boundary_candidate_event(event: &IntersectionEvent) -> bool {
         ),
         IntersectionEvent::Unknown => false,
     }
-}
-
-fn graph_has_only_adjacency_contacts(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    pairs: &[FacePairEvents],
-    certificate: &FullFaceAdjacencyCertificate,
-) -> Result<bool, ExactMeshError> {
-    for pair in pairs {
-        if !adjacency_contact_pair(left, right, pair, certificate)? {
-            return Ok(false);
-        }
-    }
-    Ok(true)
 }
 
 fn adjacency_contact_pair(
