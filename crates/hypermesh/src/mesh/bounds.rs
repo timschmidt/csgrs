@@ -314,7 +314,8 @@ impl ExactAabbBroadPhase {
         let left = left.prepare();
         let right = right.prepare();
         let plan = left.candidate_face_pair_plan(&right);
-        left.try_visit_candidate_face_pairs_with_plan(&right, plan, visit)
+        let mut scratch = BroadPhaseScratch::default();
+        left.try_visit_candidate_face_pairs_with_plan_and_scratch(&right, plan, &mut scratch, visit)
     }
 }
 
@@ -440,15 +441,6 @@ impl<'a> PreparedMeshBounds<'a> {
         CandidateFacePairPlan::Quadratic
     }
 
-    pub(crate) fn try_visit_candidate_face_pairs_with_plan<E>(
-        &self,
-        other: &PreparedMeshBounds<'_>,
-        plan: CandidateFacePairPlan,
-        visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
-    ) -> Result<(), E> {
-        self.try_visit_candidate_face_pairs_with_plan_impl(other, plan, None, visit)
-    }
-
     pub(crate) fn try_visit_candidate_face_pairs_with_plan_and_scratch<E>(
         &self,
         other: &PreparedMeshBounds<'_>,
@@ -456,14 +448,14 @@ impl<'a> PreparedMeshBounds<'a> {
         scratch: &mut BroadPhaseScratch,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
-        self.try_visit_candidate_face_pairs_with_plan_impl(other, plan, Some(scratch), visit)
+        self.try_visit_candidate_face_pairs_with_plan_impl(other, plan, scratch, visit)
     }
 
     fn try_visit_candidate_face_pairs_with_plan_impl<E>(
         &self,
         other: &PreparedMeshBounds<'_>,
         plan: CandidateFacePairPlan,
-        scratch: Option<&mut BroadPhaseScratch>,
+        scratch: &mut BroadPhaseScratch,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<(), E> {
         let (sweep_plan, active_face_capacity_hint) = match plan {
@@ -619,7 +611,7 @@ impl<'a> PreparedMeshBounds<'a> {
         other: &PreparedMeshBounds<'_>,
         axis: Axis,
         active_face_capacity_hint: usize,
-        scratch: Option<&mut BroadPhaseScratch>,
+        scratch: &mut BroadPhaseScratch,
         visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
     ) -> Result<bool, E> {
         let Some(left_order) = self.min_axis_order(axis) else {
@@ -627,14 +619,6 @@ impl<'a> PreparedMeshBounds<'a> {
         };
         let Some(right_order) = other.min_axis_order(axis) else {
             return Ok(false);
-        };
-        let mut local_scratch;
-        let scratch = match scratch {
-            Some(scratch) => scratch,
-            None => {
-                local_scratch = BroadPhaseScratch::default();
-                &mut local_scratch
-            }
         };
         if active_face_capacity_hint.saturating_mul(4) < other.bounds.faces.len() {
             return self.try_visit_candidate_face_pairs_sparse_sweep_axis(
@@ -1003,10 +987,16 @@ mod tests {
     ) -> Vec<[usize; 2]> {
         let mut pairs = Vec::new();
         let plan = left.candidate_face_pair_plan(right);
-        let result = left.try_visit_candidate_face_pairs_with_plan(right, plan, &mut |pair| {
-            pairs.push(pair);
-            Ok::<(), ()>(())
-        });
+        let mut scratch = BroadPhaseScratch::default();
+        let result = left.try_visit_candidate_face_pairs_with_plan_and_scratch(
+            right,
+            plan,
+            &mut scratch,
+            &mut |pair| {
+                pairs.push(pair);
+                Ok::<(), ()>(())
+            },
+        );
         debug_assert!(result.is_ok());
         pairs
     }
