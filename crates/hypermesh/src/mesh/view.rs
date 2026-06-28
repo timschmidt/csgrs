@@ -74,21 +74,6 @@ struct ExactMeshSourceStamp {
     face_count: usize,
 }
 
-impl ExactMeshSourceStamp {
-    fn from_mesh(mesh: &ExactMesh) -> Self {
-        let provenance = mesh.provenance();
-        Self {
-            source: provenance.source.source,
-            approximation: provenance.source.approximation,
-            source_identity: exact_mesh_source_identity(mesh),
-            construction_version: provenance.construction_version,
-            vertex_count: mesh.facts().mesh.vertex_count,
-            edge_count: mesh.facts().mesh.edge_count,
-            face_count: mesh.facts().mesh.face_count,
-        }
-    }
-}
-
 fn exact_mesh_source_identity(mesh: &ExactMesh) -> u64 {
     let facts = &mesh.facts().mesh;
     let provenance = mesh.provenance();
@@ -224,7 +209,16 @@ impl<'a> MeshView<'a> {
     }
 
     fn source_stamp(self) -> ExactMeshSourceStamp {
-        ExactMeshSourceStamp::from_mesh(self.mesh)
+        let provenance = self.mesh.provenance();
+        ExactMeshSourceStamp {
+            source: provenance.source.source,
+            approximation: provenance.source.approximation,
+            source_identity: exact_mesh_source_identity(self.mesh),
+            construction_version: provenance.construction_version,
+            vertex_count: self.mesh.facts().mesh.vertex_count,
+            edge_count: self.mesh.facts().mesh.edge_count,
+            face_count: self.mesh.facts().mesh.face_count,
+        }
     }
 
     /// Return exact vertices.
