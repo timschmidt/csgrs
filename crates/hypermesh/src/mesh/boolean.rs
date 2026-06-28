@@ -616,18 +616,13 @@ impl ExactBooleanOperation {
 
 /// Boundary-only policy for named exact boolean operations.
 ///
-/// Triangle meshes cannot represent lower-dimensional set intersections
-/// certified coplanar-touching graphs are either rejected, or projected into a
-/// triangle-mesh-only result that preserves separate shells and discards
-/// lower-dimensional intersection geometry.
+/// Triangle meshes cannot represent lower-dimensional set intersections.
+/// `hypermesh` retains that state as a blocker; product-level projection
+/// policy belongs above the kernel.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ExactBoundaryBooleanPolicy {
-    /// Reject boundary-only named booleans until a caller chooses a projection
-    /// policy.
+    /// Reject boundary-only named booleans with retained evidence.
     Reject,
-    /// Preserve separate shells for union, keep the left shell for difference,
-    /// and return an empty triangle mesh for lower-dimensional intersections.
-    PreserveSeparateShells,
 }
 
 /// Complete policy for an exact boolean request.
@@ -646,14 +641,8 @@ pub(crate) struct ExactBooleanRequest {
 }
 
 impl ExactBooleanRequest {
-    /// Creates a request using the default exact materialization policy.
-    ///
-    /// Certified boundary-only contact is supportable by the triangle-mesh
-    /// output contract: union preserves separate shells, difference keeps the
-    /// left shell, and intersection yields the representable empty triangle
-    /// mesh for lower-dimensional contact. Call
-    /// [`Self::with_boundary_policy`] with [`ExactBoundaryBooleanPolicy::Reject`]
-    /// when a caller wants to retain that state as an explicit blocker.
+    /// Creates a request using the kernel's default exact materialization
+    /// policy. Boundary-only contacts are retained as explicit blockers.
     pub(crate) const fn new(
         operation: ExactBooleanOperation,
         validation: ExactMeshValidationPolicy,
@@ -661,7 +650,7 @@ impl ExactBooleanRequest {
         Self {
             operation,
             validation,
-            boundary_policy: ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            boundary_policy: ExactBoundaryBooleanPolicy::Reject,
         }
     }
 
@@ -3490,8 +3479,7 @@ fn request_uses_arrangement_lower_dimensional_regularized_shortcut(
     request: ExactBooleanRequest,
 ) -> bool {
     request.validation == ExactMeshValidationPolicy::CLOSED
-        && (request.operation == ExactBooleanOperation::Intersection
-            || request.boundary_policy == ExactBoundaryBooleanPolicy::PreserveSeparateShells)
+        && request.operation == ExactBooleanOperation::Intersection
 }
 
 fn materialize_arrangement_lower_dimensional_intersection_from_graph(
@@ -3544,17 +3532,10 @@ fn materialize_arrangement_lower_dimensional_intersection_from_graph(
 
 /// Materialize an exact boolean request.
 ///
-/// This path is still strict about general winding. The additional
-/// policy only applies when the exact event graph contains certified
-/// boundary-only contact: coplanar touching, closed-solid coplanar boundary
-/// overlap, or closed-solid edge/vertex contact whose retained candidate
-/// events have no proper crossings, construction failures, or unknowns. In
-/// that narrow case, [`ExactBoundaryBooleanPolicy::PreserveSeparateShells`]
-/// projects lower-dimensional contact into triangle-mesh output instead of
-/// silently invoking the specialized tolerance path. Closed-solid regularized
-/// intersection and difference do not need that projection policy once the
-/// same exact boundary-touch report proves no shared interior volume; those
-/// two operations use certified shortcuts before the policy layer.
+/// This path is still strict about general winding. Boundary-only contact is
+/// retained as certified evidence and returned as a blocker unless a complete
+/// kernel materializer can prove a triangle-mesh result. Projection policy for
+/// lower-dimensional contact belongs above `hypermesh`.
 pub(crate) fn materialize_boolean_exact_request(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -8010,12 +7991,8 @@ fn boolean_boundary_touching_meshes_from_graph(
     else {
         return Ok(None);
     };
-    Ok(
-        (boundary_policy == ExactBoundaryBooleanPolicy::PreserveSeparateShells
-            && result.is_boundary_policy_shortcut_for(operation)
-            && result.validate().is_ok())
-        .then_some(result),
-    )
+    Ok((result.is_boundary_policy_shortcut_for(operation) && result.validate().is_ok())
+        .then_some(result))
 }
 
 #[cfg(test)]

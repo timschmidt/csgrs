@@ -380,15 +380,14 @@ fn boundary_policy_shortcut_rejects_selected_region_operation_relabel() {
         ExactMeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let mut projected = test_materialized_result(
-        ExactBooleanRequest::with_boundary_policy(
-            ExactBooleanOperation::Union,
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-        ),
+    let mut projected = materialize_boundary_policy_shortcut_result(
         &left,
         &right,
-    );
+        ExactBooleanOperation::Union,
+        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap()
+    .unwrap();
     projected.validate_against_sources(&left, &right).unwrap();
     let mut stale_mesh = projected.clone();
     stale_mesh.mesh = empty_mesh(
@@ -2508,10 +2507,9 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
     );
 
     let evidence = test_winding_evidence(
-        ExactBooleanRequest::with_boundary_policy(
+        ExactBooleanRequest::new(
             ExactBooleanOperation::Union,
             ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-            ExactBoundaryBooleanPolicy::Reject,
         ),
         &left,
         &right,
@@ -2533,7 +2531,7 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
         let boundary_evidence = boundary_evaluation.certifications().winding_evidence();
         assert_eq!(
             boundary_evidence.status(),
-            ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
+            ExactWindingEvidenceStatus::VolumetricAssemblyRequired,
             "{boundary_evidence:?}"
         );
         assert_eq!(
@@ -2546,10 +2544,10 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
             graph.face_pairs.len()
         );
         assert_eq!(boundary_evidence.retained_events(), graph.event_count());
-        assert_eq!(boundary_evidence.region_count(), 0);
-        assert!(boundary_evidence.status().is_already_materialized());
+        assert!(boundary_evidence.region_count() > 0);
+        assert!(!boundary_evidence.status().is_already_materialized());
         assert!(
-            boundary_evidence
+            !boundary_evidence
                 .status()
                 .materializes_arrangement_cell_complex()
         );
@@ -3762,10 +3760,10 @@ fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
             &right,
             ExactBooleanOperation::Difference,
             ExactMeshValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap()
-        .is_some()
+        .is_none()
     );
     assert!(
         boolean_boundary_touching_meshes_from_graph(
@@ -3774,7 +3772,7 @@ fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
             &overlapping_right,
             ExactBooleanOperation::Difference,
             ExactMeshValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap()
         .is_none()
