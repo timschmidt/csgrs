@@ -897,9 +897,10 @@ fn choose_triangle_projection(points: &[Point3; 3]) -> Option<CoplanarProjection
 
 fn projected_triangle_sign(points: &[Point3; 3], projection: CoplanarProjection) -> Option<Sign> {
     let area = projected_polygon_area2_value(points, projection);
-    match real_sign(&area)? {
-        Sign::Zero => None,
-        sign => Some(sign),
+    match compare_reals(&area, &Real::from(0)).value()? {
+        Ordering::Less => Some(Sign::Negative),
+        Ordering::Equal => None,
+        Ordering::Greater => Some(Sign::Positive),
     }
 }
 
@@ -933,14 +934,6 @@ fn mesh_projected_triangle_signs_match(
         }
     }
     Some(true)
-}
-
-fn real_sign(value: &Real) -> Option<Sign> {
-    match compare_reals(value, &Real::from(0)).value()? {
-        Ordering::Less => Some(Sign::Negative),
-        Ordering::Equal => Some(Sign::Zero),
-        Ordering::Greater => Some(Sign::Positive),
-    }
 }
 
 fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
