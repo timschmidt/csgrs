@@ -245,7 +245,16 @@ fn polygon_patch_candidate(
         .iter()
         .map(|&vertex| mesh.vertices().get(vertex).cloned())
         .collect::<Option<Vec<_>>>()?;
-    let Some(projection) = choose_polygon_projection(&boundary_points) else {
+    let Some(projection) = [
+        CoplanarProjection::Xy,
+        CoplanarProjection::Xz,
+        CoplanarProjection::Yz,
+    ]
+    .into_iter()
+    .find(|&projection| {
+        let area = projected_polygon_area2_value(&boundary_points, projection);
+        !matches!(real_sign(&area), Some(Sign::Zero) | None)
+    }) else {
         return Some(None);
     };
     if !loop_is_simple(&boundary_points, projection)? {
@@ -589,19 +598,6 @@ fn point_on_triangle_plane_vec(points: &[Point3], point: &Point3) -> Option<bool
         return Some(false);
     };
     Some(orient3d_report(a, b, c, point).value()? == Sign::Zero)
-}
-
-fn choose_polygon_projection(points: &[Point3]) -> Option<CoplanarProjection> {
-    [
-        CoplanarProjection::Xy,
-        CoplanarProjection::Xz,
-        CoplanarProjection::Yz,
-    ]
-    .into_iter()
-    .find(|&projection| {
-        let area = projected_polygon_area2_value(points, projection);
-        !matches!(real_sign(&area), Some(Sign::Zero) | None)
-    })
 }
 
 fn triangle_points(mesh: &ExactMesh, triangle: [usize; 3]) -> Option<[Point3; 3]> {
