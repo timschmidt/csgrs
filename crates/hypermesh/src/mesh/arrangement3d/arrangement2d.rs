@@ -1222,7 +1222,14 @@ fn edge_center_witness(
     blockers: &mut Vec<ExactArrangement2dBlocker>,
 ) -> Option<Point2> {
     let face = &arrangement.faces[face_index];
-    let center = polygon_vertex_average(face, &arrangement.vertices)?;
+    let inv = (Real::from(1) / &Real::from(face.vertices.len() as i64)).ok()?;
+    let mut center_x = Real::from(0);
+    let mut center_y = Real::from(0);
+    for vertex in &face.vertices {
+        center_x += &arrangement.vertices[*vertex].point.x;
+        center_y += &arrangement.vertices[*vertex].point.y;
+    }
+    let center = Point2::new(center_x * &inv, center_y * &inv);
     let ratios = [
         rational_real(1, 4)?,
         rational_real(1, 8)?,
@@ -1328,20 +1335,6 @@ fn triangle_centroid(a: &Point2, b: &Point2, c: &Point2) -> Option<Point2> {
         (a.x.clone() + &b.x + &c.x) * &third,
         (a.y.clone() + &b.y + &c.y) * &third,
     ))
-}
-
-fn polygon_vertex_average(
-    face: &ExactArrangement2dFace,
-    vertices: &[ExactArrangement2dVertex],
-) -> Option<Point2> {
-    let inv = (Real::from(1) / &Real::from(face.vertices.len() as i64)).ok()?;
-    let mut x = Real::from(0);
-    let mut y = Real::from(0);
-    for vertex in &face.vertices {
-        x += &vertices[*vertex].point.x;
-        y += &vertices[*vertex].point.y;
-    }
-    Some(Point2::new(x * &inv, y * &inv))
 }
 
 fn rational_real(numerator: i64, denominator: i64) -> Option<Real> {
