@@ -4022,14 +4022,14 @@ pub(crate) struct ExactBooleanEvaluation {
     /// Request policy evaluated.
     request: ExactBooleanRequest,
     /// Exact preflight/scheduling result.
-    preflight: ExactBooleanPreflight,
+    pub(super) preflight: ExactBooleanPreflight,
     /// Replayable exact certification reports for the request.
-    certifications: ExactBooleanCertificationSet,
+    pub(super) certifications: ExactBooleanCertificationSet,
     /// Materialized exact result, when available under `request`.
     ///
     /// Test code borrows this through the retained materialized-result helper
     /// when evaluation materialized a certified result.
-    result: Option<ExactBooleanResult>,
+    pub(super) result: Option<ExactBooleanResult>,
 }
 
 #[cfg(test)]
@@ -4049,24 +4049,6 @@ impl ExactBooleanEvaluation {
         };
         evaluation.validate_with_missing_result_policy(allow_missing_materialized_result)?;
         Ok(evaluation)
-    }
-
-    /// Return the exact preflight/scheduling report retained by this evaluation.
-    pub(crate) fn preflight(&self) -> &ExactBooleanPreflight {
-        &self.preflight
-    }
-
-    /// Return the replayable certification bundle retained by this evaluation.
-    #[cfg(test)]
-    pub(crate) fn certifications(&self) -> &ExactBooleanCertificationSet {
-        &self.certifications
-    }
-
-    /// Return the materialized result retained by this evaluation, when the
-    /// request reached a certified output.
-    #[cfg(test)]
-    pub(crate) fn materialized_result(&self) -> Option<&ExactBooleanResult> {
-        self.result.as_ref()
     }
 
     pub(crate) fn validate_with_missing_result_policy(
@@ -4109,12 +4091,12 @@ impl ExactBooleanEvaluation {
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate_with_missing_result_policy(false)?;
         let replay = exact_boolean_evaluation_for_replay(left, right, self.request)?;
-        if &self.preflight != replay.preflight() {
+        if self.preflight != replay.preflight {
             return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
         if self.certifications != replay.certifications
             && (!self.certifications.matches_preflight(&self.preflight)
-                || !replay.certifications.matches_preflight(replay.preflight()))
+                || !replay.certifications.matches_preflight(&replay.preflight))
         {
             return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
@@ -6055,7 +6037,7 @@ fn validate_winding_evidence_against_sources_for_request(
     }
 
     if let Ok(evaluation) = exact_boolean_evaluation_for_replay(left, right, request)
-        && report == evaluation.certifications().winding_evidence()
+        && report == evaluation.certifications.winding_evidence()
     {
         return Ok(());
     }
@@ -6290,7 +6272,7 @@ impl ExactBooleanPreflight {
             return Ok(());
         }
         let replay = exact_boolean_evaluation_for_replay(left, right, request)?
-            .preflight()
+            .preflight
             .clone();
         if self == &replay {
             Ok(())
@@ -8385,7 +8367,7 @@ impl ExactPlanarArrangementReport {
         self.validate()?;
         if let Ok(evaluation) = exact_boolean_evaluation_for_replay_result_with_materialization(
             left, right, request, false,
-        ) && self == &evaluation.certifications().planar_arrangement
+        ) && self == &evaluation.certifications.planar_arrangement
         {
             return Ok(());
         }

@@ -15,7 +15,7 @@ fn test_preflight(
 ) -> ExactBooleanPreflight {
     exact_boolean_evaluation_for_replay_result_with_materialization(left, right, request, false)
         .unwrap()
-        .preflight()
+        .preflight
         .clone()
 }
 
@@ -43,7 +43,7 @@ fn test_materialized_result(
     evaluation
         .validate_with_missing_result_policy(false)
         .unwrap();
-    if let Some(retained) = evaluation.materialized_result() {
+    if let Some(retained) = evaluation.result.as_ref() {
         assert!(retained.matches_retained_replay(&result));
     }
     result.validate_against_sources(left, right).unwrap();
@@ -62,7 +62,7 @@ fn test_winding_evidence(
     evaluation
         .validate_with_missing_result_policy(true)
         .unwrap();
-    evaluation.certifications().winding_evidence().clone()
+    evaluation.certifications.winding_evidence().clone()
 }
 
 fn test_volumetric_boundary_closure(
@@ -488,12 +488,13 @@ fn open_surface_disjoint_preflight_prefers_specific_support_over_cell_complex() 
 
     with_test_evaluation(request, &left, &right, |evaluation| {
         assert_eq!(
-            evaluation.preflight().support(),
+            evaluation.preflight.support(),
             ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
             "{evaluation:?}"
         );
         let materialized = evaluation
-            .materialized_result()
+            .result
+            .as_ref()
             .expect("open-surface disjoint support should materialize");
         assert!(
             materialized.is_certified_shortcut_kind_for(
@@ -623,7 +624,8 @@ fn assert_contained_face_adjacent_union_replays(
         .unwrap();
     evaluation.validate_against_sources(left, right).unwrap();
     let result = evaluation
-        .materialized_result()
+        .result
+        .as_ref()
         .expect("contained-face adjacent union should materialize");
     assert!(result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union));
     result.validate_against_sources(left, right).unwrap();
@@ -754,10 +756,10 @@ fn selected_region_winding_evidence_classifies_retained_graph_blocker() {
     );
     let evidence = with_test_evaluation(request, &left, &right, |evaluation| {
         assert!(
-            evaluation.materialized_result().is_none(),
+            evaluation.result.as_ref().is_none(),
             "selected-region evaluation should retain certifications when materialization declines"
         );
-        evaluation.certifications().winding_evidence().clone()
+        evaluation.certifications.winding_evidence().clone()
     });
     assert_eq!(
         evidence.status(),
@@ -1343,7 +1345,7 @@ fn certifications_reuse_regularized_arrangement_attempt_reports() {
         .validate_with_missing_result_policy(false)
         .unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
-    let certifications = evaluation.certifications().clone();
+    let certifications = evaluation.certifications.clone();
     certifications.validate_for_request(request).unwrap();
     let attempt = certifications
         .retained_arrangement_attempt()
@@ -2258,7 +2260,7 @@ fn lower_dimensional_regularized_solid_reports_materialized_evidence() {
     ] {
         let request = ExactBooleanRequest::new(operation, ExactMeshValidationPolicy::CLOSED);
         with_test_evaluation(request, &left, &right, |evaluation| {
-            let evidence = evaluation.certifications().winding_evidence();
+            let evidence = evaluation.certifications.winding_evidence();
             let arrangement_materialized = operation == ExactBooleanOperation::Intersection;
             let expected_status = if arrangement_materialized {
                 ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
@@ -2293,7 +2295,8 @@ fn lower_dimensional_regularized_solid_reports_materialized_evidence() {
             evaluation.validate_against_sources(&left, &right).unwrap();
             if arrangement_materialized {
                 let result = evaluation
-                    .materialized_result()
+                    .result
+                    .as_ref()
                     .expect("arrangement-backed lower-dimensional result should materialize");
                 assert!(
                     result.is_arrangement_cell_complex_shortcut_for(operation)
@@ -2452,7 +2455,7 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
         ExactMeshValidationPolicy::ALLOW_BOUNDARY,
     );
     with_test_evaluation(boundary_request, &left, &right, |boundary_evaluation| {
-        let boundary_evidence = boundary_evaluation.certifications().winding_evidence();
+        let boundary_evidence = boundary_evaluation.certifications.winding_evidence();
         assert_eq!(
             boundary_evidence.status(),
             ExactWindingEvidenceStatus::VolumetricAssemblyRequired,
