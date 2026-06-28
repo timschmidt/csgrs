@@ -371,24 +371,6 @@ fn triangle_points(
     Ok((a, b, c))
 }
 
-fn classify_representative(
-    triangulation: &FaceRegionTriangulation,
-    triangle: [usize; 3],
-    attempt: &ExactVolumetricWitnessAttempt,
-    attempts: Vec<ExactVolumetricWitnessAttempt>,
-) -> Result<ExactVolumetricRegionClassification, ExactVolumetricRegionError> {
-    Ok(ExactVolumetricRegionClassification {
-        region_side: triangulation.side,
-        region_face: triangulation.face,
-        triangle,
-        representative: attempt.representative.clone(),
-        representative_witness: attempt.witness,
-        relation: attempt.relation,
-        winding: attempt.winding.clone(),
-        witness_attempts: attempts,
-    })
-}
-
 fn classify_witness_attempt(
     witness: ExactTriangleInteriorWitness,
     representative: Point3,
@@ -424,7 +406,16 @@ fn classification_from_attempts(
         })
         .unwrap_or(0);
     let attempt = attempts[chosen].clone();
-    classify_representative(triangulation, triangle, &attempt, attempts)
+    Ok(ExactVolumetricRegionClassification {
+        region_side: triangulation.side,
+        region_face: triangulation.face,
+        triangle,
+        representative: attempt.representative,
+        representative_witness: attempt.witness,
+        relation: attempt.relation,
+        winding: attempt.winding,
+        witness_attempts: attempts,
+    })
 }
 
 fn validate_witness_attempts(
