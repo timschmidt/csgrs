@@ -220,26 +220,6 @@ impl FullFaceAdjacencyCertificate {
     }
 }
 
-fn consumed_boundary_candidate_event(event: &IntersectionEvent) -> bool {
-    match event {
-        IntersectionEvent::SegmentPlane { relation, .. } => matches!(
-            relation,
-            SegmentPlaneRelation::Disjoint
-                | SegmentPlaneRelation::Coplanar
-                | SegmentPlaneRelation::EndpointOnPlane
-                | SegmentPlaneRelation::ProperCrossing
-        ),
-        IntersectionEvent::CoplanarEdge { relation, .. } => {
-            *relation != SegmentIntersection::Disjoint
-        }
-        IntersectionEvent::CoplanarVertex { location, .. } => matches!(
-            location,
-            TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
-        ),
-        IntersectionEvent::Unknown => false,
-    }
-}
-
 fn adjacency_contact_pair(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -292,7 +272,23 @@ fn adjacency_contact_pair(
         // output-volume intersection exists. Exact boundary replay keeps
         // those proper crossings tied to a consumed source face instead of
         // relaxing the general candidate gate.
-        return Ok(pair.events.iter().all(consumed_boundary_candidate_event));
+        return Ok(pair.events.iter().all(|event| match event {
+            IntersectionEvent::SegmentPlane { relation, .. } => matches!(
+                relation,
+                SegmentPlaneRelation::Disjoint
+                    | SegmentPlaneRelation::Coplanar
+                    | SegmentPlaneRelation::EndpointOnPlane
+                    | SegmentPlaneRelation::ProperCrossing
+            ),
+            IntersectionEvent::CoplanarEdge { relation, .. } => {
+                *relation != SegmentIntersection::Disjoint
+            }
+            IntersectionEvent::CoplanarVertex { location, .. } => matches!(
+                location,
+                TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
+            ),
+            IntersectionEvent::Unknown => false,
+        }));
     }
 
     let contact = match pair.relation {
