@@ -1060,7 +1060,19 @@ fn sort_neighbors_around_vertex(
 fn compare_angle(center: &Point2, left: &Point2, right: &Point2) -> Option<Ordering> {
     let left_vector = Point2::new(left.x.clone() - &center.x, left.y.clone() - &center.y);
     let right_vector = Point2::new(right.x.clone() - &center.x, right.y.clone() - &center.y);
-    match (upper_half(&left_vector)?, upper_half(&right_vector)?) {
+    let left_upper_half = match compare_reals(&left_vector.y, &Real::from(0)).value()? {
+        Ordering::Greater => true,
+        Ordering::Less => false,
+        Ordering::Equal => compare_reals(&left_vector.x, &Real::from(0)).value()? != Ordering::Less,
+    };
+    let right_upper_half = match compare_reals(&right_vector.y, &Real::from(0)).value()? {
+        Ordering::Greater => true,
+        Ordering::Less => false,
+        Ordering::Equal => {
+            compare_reals(&right_vector.x, &Real::from(0)).value()? != Ordering::Less
+        }
+    };
+    match (left_upper_half, right_upper_half) {
         (true, false) => return Some(Ordering::Less),
         (false, true) => return Some(Ordering::Greater),
         _ => {}
@@ -1075,16 +1087,6 @@ fn compare_angle(center: &Point2, left: &Point2, right: &Point2) -> Option<Order
         Sign::Positive => Some(Ordering::Less),
         Sign::Negative => Some(Ordering::Greater),
         Sign::Zero => compare_point2_lexicographic(left, right).value(),
-    }
-}
-
-fn upper_half(vector: &Point2) -> Option<bool> {
-    match compare_reals(&vector.y, &Real::from(0)).value()? {
-        Ordering::Greater => Some(true),
-        Ordering::Less => Some(false),
-        Ordering::Equal => {
-            Some(compare_reals(&vector.x, &Real::from(0)).value()? != Ordering::Less)
-        }
     }
 }
 
