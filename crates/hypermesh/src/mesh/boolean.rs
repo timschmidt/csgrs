@@ -211,7 +211,7 @@ impl ExactArrangementBooleanAttempt {
 }
 
 #[cfg(test)]
-pub(crate) fn exact_boolean_evaluation_for_replay(
+fn exact_boolean_evaluation_for_replay(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
@@ -935,7 +935,7 @@ fn unsupported_boolean_operation_error(
 }
 
 #[cfg(test)]
-pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
+fn try_materialize_certified_boolean_support_with_artifacts(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
@@ -1397,7 +1397,7 @@ fn materialize_retained_arrangement_cell_complex_attempt(
     }
 }
 
-pub(crate) fn rematerialize_retained_arrangement_cell_complex_attempt(
+fn rematerialize_retained_arrangement_cell_complex_attempt(
     request: ExactBooleanRequest,
     attempt: &ExactArrangementBooleanAttempt,
 ) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
@@ -1455,7 +1455,7 @@ fn rematerialize_simplified_arrangement_cell_complex(
     Ok(Some(result))
 }
 
-pub(crate) fn replay_generic_arrangement_cell_complex_result(
+fn replay_generic_arrangement_cell_complex_result(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -1558,7 +1558,7 @@ fn materialize_selected_region_result_from_graph(
     Ok(result)
 }
 
-pub(crate) fn replay_selected_region_boolean_result_from_graph(
+fn replay_selected_region_boolean_result_from_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2185,7 +2185,7 @@ pub(crate) fn preflight_boolean_exact_request_from_graph_with_retained_attempt(
     Ok(preflight)
 }
 
-pub(crate) fn volumetric_boundary_closure_report_from_graph(
+fn volumetric_boundary_closure_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2212,7 +2212,7 @@ pub(crate) fn volumetric_boundary_closure_report_from_graph(
     )
 }
 
-pub(crate) fn no_materialized_boundary_output_report(
+fn no_materialized_boundary_output_report(
     operation: ExactBooleanOperation,
 ) -> ExactVolumetricBoundaryClosureReport {
     ExactVolumetricBoundaryClosureReport::new(
@@ -2732,7 +2732,7 @@ fn orthogonal_solid_cell_materializes_for_preflight(
     Ok(false)
 }
 
-pub(crate) fn certified_arrangement_cell_complex_preflight_from_retained_attempt(
+fn certified_arrangement_cell_complex_preflight_from_retained_attempt(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -4834,7 +4834,7 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
     ))
 }
 
-pub(crate) fn materialize_adjacent_union_completion_from_graph(
+fn materialize_adjacent_union_completion_from_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -7711,7 +7711,7 @@ pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evid
 }
 
 #[cfg(test)]
-pub(crate) fn winding_evidence_report_for_request_from_graph(
+fn winding_evidence_report_for_request_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
