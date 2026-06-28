@@ -588,7 +588,11 @@ fn triangle_face_cell_sample(
         })
         .collect::<Option<Vec<_>>>()?;
     let normal_sign = projected_orientation([oriented[0], oriented[1], oriented[2]])?;
-    let area2 = projected_triangle_area2(&projected)?;
+    let area = projected_face_orientation(&projected[0], &projected[1], &projected[2])?;
+    let area2 = match cmp(&area, &Real::from(0))? {
+        Ordering::Less => mul(&Real::from(-1), &area),
+        Ordering::Equal | Ordering::Greater => area,
+    };
     if cmp(&area2, &Real::from(0))? != Ordering::Greater {
         return None;
     }
@@ -1601,14 +1605,6 @@ fn point_in_projected_triangle(
         }
     }
     Some(true)
-}
-
-fn projected_triangle_area2(triangle: &[ProjectedFacePoint; 3]) -> Option<Real> {
-    let area = projected_face_orientation(&triangle[0], &triangle[1], &triangle[2])?;
-    match cmp(&area, &Real::from(0))? {
-        Ordering::Less => Some(mul(&Real::from(-1), &area)),
-        Ordering::Equal | Ordering::Greater => Some(area),
-    }
 }
 
 fn projected_face_orientation(
