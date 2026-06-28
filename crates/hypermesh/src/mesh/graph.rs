@@ -912,10 +912,32 @@ struct ExactIntersectionGraphSummary {
 
 impl ExactIntersectionGraph {
     pub(crate) fn from_face_pairs(face_pairs: Vec<FacePairEvents>) -> Self {
-        let summary = ExactIntersectionGraphSummary::from_face_pairs(&face_pairs);
+        let mut event_count = 0;
+        let mut has_unknowns = false;
+        let mut coplanar_overlap_graph_count = 0;
+
+        for pair in &face_pairs {
+            event_count += pair.events.len();
+            has_unknowns |= pair.relation == MeshFacePairRelation::Unknown
+                || pair
+                    .events
+                    .iter()
+                    .any(IntersectionEvent::has_unknown_relation);
+            if matches!(
+                pair.relation,
+                MeshFacePairRelation::CoplanarTouching | MeshFacePairRelation::CoplanarOverlapping
+            ) {
+                coplanar_overlap_graph_count += 1;
+            }
+        }
+
         Self {
             face_pairs,
-            summary,
+            summary: ExactIntersectionGraphSummary {
+                event_count,
+                has_unknowns,
+                coplanar_overlap_graph_count,
+            },
         }
     }
 
@@ -1199,35 +1221,6 @@ impl ExactIntersectionGraph {
             return Err(split_plan_report_to_mesh_error(face_report));
         }
         face_split_geometry_plan(left, right, &topology, &face_plan)
-    }
-}
-
-impl ExactIntersectionGraphSummary {
-    fn from_face_pairs(face_pairs: &[FacePairEvents]) -> Self {
-        let mut event_count = 0;
-        let mut has_unknowns = false;
-        let mut coplanar_overlap_graph_count = 0;
-
-        for pair in face_pairs {
-            event_count += pair.events.len();
-            has_unknowns |= pair.relation == MeshFacePairRelation::Unknown
-                || pair
-                    .events
-                    .iter()
-                    .any(IntersectionEvent::has_unknown_relation);
-            if matches!(
-                pair.relation,
-                MeshFacePairRelation::CoplanarTouching | MeshFacePairRelation::CoplanarOverlapping
-            ) {
-                coplanar_overlap_graph_count += 1;
-            }
-        }
-
-        Self {
-            event_count,
-            has_unknowns,
-            coplanar_overlap_graph_count,
-        }
     }
 }
 
