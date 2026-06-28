@@ -3313,12 +3313,12 @@ impl ExactBooleanCertificationSet {
         self.refinement.validate()?;
         self.adjacent_union_completion.validate()?;
         if self.refinement.operation != request.operation
-            || self.adjacent_union_completion.operation() != request.operation
+            || self.adjacent_union_completion.operation != request.operation
         {
             return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         let adjacent_union_completion_certified = self.adjacent_union_completion.is_certified()
-            && self.adjacent_union_completion.operation() == request.operation
+            && self.adjacent_union_completion.operation == request.operation
             && request.operation == ExactBooleanOperation::Union
             && self.arrangement_attempt.is_none();
         if adjacent_union_completion_certified {
@@ -3535,7 +3535,7 @@ impl ExactBooleanCertificationSet {
                             request.operation,
                         ))
                         || (self.adjacent_union_completion.is_certified()
-                            && self.adjacent_union_completion.operation() == operation)
+                            && self.adjacent_union_completion.operation == operation)
                         || self.winding_evidence.coplanar_volumetric_evidence.as_ref()
                             .is_some_and(|evidence| {
                                 evidence.is_boundary_only_positive_area_contact()
@@ -3697,13 +3697,13 @@ impl ExactBooleanCertificationSet {
                 || self.arrangement_attempt_certifies_output_for_operation(preflight.operation));
         retained_attempt_evidence_matches
             || (self.adjacent_union_completion.is_certified()
-                && self.adjacent_union_completion.operation() == preflight.operation
+                && self.adjacent_union_completion.operation == preflight.operation
                 && preflight.operation == ExactBooleanOperation::Union
                 && preflight.graph_had_unknowns
-                    == self.adjacent_union_completion.graph_had_unknowns()
+                    == self.adjacent_union_completion.graph_had_unknowns
                 && preflight.retained_face_pairs
-                    == self.adjacent_union_completion.retained_face_pairs()
-                && preflight.retained_events == self.adjacent_union_completion.retained_events()
+                    == self.adjacent_union_completion.retained_face_pairs
+                && preflight.retained_events == self.adjacent_union_completion.retained_events
                 && preflight.region_count == 0
                 && preflight.region_classifications.is_empty()
                 && preflight.blocker.is_none()
@@ -4995,7 +4995,7 @@ fn arrangement_cell_complex_output_matches_sources(
         }
         _ => {}
     }
-    if adjacent_report.status() != ExactAdjacentUnionCompletionStatus::NoAdjacencyCertificate {
+    if adjacent_report.status != ExactAdjacentUnionCompletionStatus::NoAdjacencyCertificate {
         return Ok(retained_mismatch.then_some(false));
     }
     if !mesh_is_closed_solid(left) || !mesh_is_closed_solid(right) {
@@ -7558,9 +7558,9 @@ pub(crate) enum ExactAdjacentUnionCompletionStatus {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ExactAdjacentUnionCompletionReport {
     /// Requested named operation.
-    operation: ExactBooleanOperation,
+    pub(super) operation: ExactBooleanOperation,
     /// Coarse certification status.
-    status: ExactAdjacentUnionCompletionStatus,
+    pub(super) status: ExactAdjacentUnionCompletionStatus,
     /// Whether the left source mesh was a closed manifold.
     left_closed: bool,
     /// Whether the right source mesh was a closed manifold.
@@ -7570,11 +7570,11 @@ pub(crate) struct ExactAdjacentUnionCompletionReport {
     /// Whether another exact kernel should materialize this union first.
     stronger_kernel_available: bool,
     /// Whether graph extraction retained unknown events.
-    graph_had_unknowns: bool,
+    pub(super) graph_had_unknowns: bool,
     /// Retained face-pair records after exact scheduling.
-    retained_face_pairs: usize,
+    pub(super) retained_face_pairs: usize,
     /// Total retained event records.
-    retained_events: usize,
+    pub(super) retained_events: usize,
     /// Relation counts for retained face pairs.
     blocker: ExactBooleanBlocker,
     /// Count of exact whole-face pairs consumed by full-face completion.
@@ -7629,35 +7629,6 @@ impl ExactAdjacentUnionCompletionReport {
             contained_faces,
             containing_faces,
         }
-    }
-
-    /// Return the requested named operation.
-    #[cfg(test)]
-    pub(crate) const fn operation(&self) -> ExactBooleanOperation {
-        self.operation
-    }
-
-    /// Return the coarse adjacent-union completion status.
-    pub(crate) const fn status(&self) -> ExactAdjacentUnionCompletionStatus {
-        self.status
-    }
-
-    /// Return whether graph extraction retained unknown events.
-    #[cfg(test)]
-    pub(crate) const fn graph_had_unknowns(&self) -> bool {
-        self.graph_had_unknowns
-    }
-
-    /// Return the retained face-pair record count.
-    #[cfg(test)]
-    pub(crate) const fn retained_face_pairs(&self) -> usize {
-        self.retained_face_pairs
-    }
-
-    /// Return the retained event record count.
-    #[cfg(test)]
-    pub(crate) const fn retained_events(&self) -> usize {
-        self.retained_events
     }
 
     /// Return whether adjacent union completion was certified.
