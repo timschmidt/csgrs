@@ -1053,11 +1053,16 @@ fn point_lies_between_segment_endpoints(
     end: &Point3,
     point: &Point3,
 ) -> Option<bool> {
-    let coordinate_between = |value: &Real, start: &Real, end: &Real| -> Option<bool> {
-        let start_cmp = compare_reals(value, start).value()?;
-        let end_cmp = compare_reals(value, end).value()?;
-        Some(matches!(
-            (start_cmp, end_cmp),
+    let x_start = compare_reals(&point.x, &start.x).value()?;
+    let x_end = compare_reals(&point.x, &end.x).value()?;
+    let y_start = compare_reals(&point.y, &start.y).value()?;
+    let y_end = compare_reals(&point.y, &end.y).value()?;
+    let z_start = compare_reals(&point.z, &start.z).value()?;
+    let z_end = compare_reals(&point.z, &end.z).value()?;
+
+    Some(
+        matches!(
+            (x_start, x_end),
             (
                 Ordering::Greater | Ordering::Equal,
                 Ordering::Less | Ordering::Equal
@@ -1065,13 +1070,25 @@ fn point_lies_between_segment_endpoints(
                 Ordering::Less | Ordering::Equal,
                 Ordering::Greater | Ordering::Equal
             )
-        ))
-    };
-
-    Some(
-        coordinate_between(&point.x, &start.x, &end.x)?
-            && coordinate_between(&point.y, &start.y, &end.y)?
-            && coordinate_between(&point.z, &start.z, &end.z)?,
+        ) && matches!(
+            (y_start, y_end),
+            (
+                Ordering::Greater | Ordering::Equal,
+                Ordering::Less | Ordering::Equal
+            ) | (
+                Ordering::Less | Ordering::Equal,
+                Ordering::Greater | Ordering::Equal
+            )
+        ) && matches!(
+            (z_start, z_end),
+            (
+                Ordering::Greater | Ordering::Equal,
+                Ordering::Less | Ordering::Equal
+            ) | (
+                Ordering::Less | Ordering::Equal,
+                Ordering::Greater | Ordering::Equal
+            )
+        ),
     )
 }
 
