@@ -1278,9 +1278,24 @@ fn witness_inside_face_without_child_cycle(
         RingPointLocation::Outside | RingPointLocation::Boundary => return Some(false),
     }
     for other in 0..arrangement.faces.len() {
-        if other == face_index
-            || !face_contains_face_cycle(face_index, other, arrangement, blockers)?
+        if other == face_index {
+            continue;
+        }
+        let child_vertex = arrangement.faces[other].vertices.first().copied()?;
+        let contains_child_cycle = match classify_point_ring_even_odd(
+            &face_ring_points(&arrangement.faces[face_index], &arrangement.vertices),
+            &arrangement.vertices[child_vertex].point,
+        )
+        .value()
         {
+            Some(RingPointLocation::Inside) => true,
+            Some(RingPointLocation::Outside | RingPointLocation::Boundary) => false,
+            None => {
+                blockers.push(ExactArrangement2dBlocker::UnresolvedFaceWitness { face: other });
+                return None;
+            }
+        };
+        if !contains_child_cycle {
             continue;
         }
         match classify_point_ring_even_odd(
@@ -1294,28 +1309,6 @@ fn witness_inside_face_without_child_cycle(
         }
     }
     Some(true)
-}
-
-fn face_contains_face_cycle(
-    container: usize,
-    child: usize,
-    arrangement: &ExactArrangement2d,
-    blockers: &mut Vec<ExactArrangement2dBlocker>,
-) -> Option<bool> {
-    let child_vertex = arrangement.faces[child].vertices.first().copied()?;
-    match classify_point_ring_even_odd(
-        &face_ring_points(&arrangement.faces[container], &arrangement.vertices),
-        &arrangement.vertices[child_vertex].point,
-    )
-    .value()
-    {
-        Some(RingPointLocation::Inside) => Some(true),
-        Some(RingPointLocation::Outside | RingPointLocation::Boundary) => Some(false),
-        None => {
-            blockers.push(ExactArrangement2dBlocker::UnresolvedFaceWitness { face: child });
-            None
-        }
-    }
 }
 
 fn face_ring_points(
