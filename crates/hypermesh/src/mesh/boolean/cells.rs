@@ -1039,28 +1039,23 @@ fn positive_area_interior_constraints(
     let mut retained = Vec::new();
     let mut unique = BTreeSet::new();
     for &constraint in constraints {
-        if constraint_lies_on_source_boundary(vertices, constraint)? {
+        let mut lies_on_source_boundary = false;
+        for boundary in [
+            Constraint::new(0, 1),
+            Constraint::new(1, 2),
+            Constraint::new(2, 0),
+        ] {
+            if edge_is_subsegment_of_constraint(constraint, vertices, boundary)? {
+                lies_on_source_boundary = true;
+                break;
+            }
+        }
+        if lies_on_source_boundary {
             continue;
         }
         push_constraint(&mut retained, &mut unique, constraint.from, constraint.to);
     }
     Ok(retained)
-}
-
-fn constraint_lies_on_source_boundary(
-    vertices: &[hypertri::ExactPoint],
-    constraint: Constraint,
-) -> hypertri::Result<bool> {
-    for boundary in [
-        Constraint::new(0, 1),
-        Constraint::new(1, 2),
-        Constraint::new(2, 0),
-    ] {
-        if edge_is_subsegment_of_constraint(constraint, vertices, boundary)? {
-            return Ok(true);
-        }
-    }
-    Ok(false)
 }
 
 fn planarized_interior_constraints(
