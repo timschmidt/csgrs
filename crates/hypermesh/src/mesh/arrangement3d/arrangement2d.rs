@@ -380,10 +380,13 @@ pub(crate) fn build_exact_arrangement2d(
             }
             let key = canonical_edge_key(pair[0], pair[1]);
             match edge_by_vertices.get(&key).copied() {
-                Some(edge_index) => push_unique_source(
-                    &mut edges[edge_index].sources,
-                    segments[segment_index].source,
-                ),
+                Some(edge_index) => {
+                    let source = segments[segment_index].source;
+                    if !edges[edge_index].sources.contains(&source) {
+                        edges[edge_index].sources.push(source);
+                        edges[edge_index].sources.sort();
+                    }
+                }
                 None => {
                     let edge_index = edges.len();
                     edge_by_vertices.insert(key, edge_index);
@@ -934,16 +937,6 @@ fn compare_along_segment(
             Ordering::Greater => compare_reals(&right.y, &left.y).value(),
             Ordering::Equal => Some(Ordering::Equal),
         },
-    }
-}
-
-fn push_unique_source(
-    sources: &mut Vec<ExactArrangement2dSegmentSource>,
-    source: ExactArrangement2dSegmentSource,
-) {
-    if !sources.contains(&source) {
-        sources.push(source);
-        sources.sort();
     }
 }
 
