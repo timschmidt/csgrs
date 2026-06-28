@@ -2544,10 +2544,6 @@ impl ExactTrivialBooleanFacts {
             Ok(())
         }
     }
-
-    pub(crate) const fn has_empty_operand(&self) -> bool {
-        self.left_empty || self.right_empty
-    }
 }
 
 /// Replayable source-shape facts for closed regularized-solid shortcut
@@ -2648,7 +2644,7 @@ impl ExactConvexBooleanCapabilityFacts {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ExactArrangementCellComplexShortcutFacts {
     /// Both operands certify as exact retained axis-aligned boxes.
-    axis_aligned_box_pair: bool,
+    pub(super) axis_aligned_box_pair: bool,
     /// Axis-aligned orthogonal cell decomposition supports union.
     axis_aligned_union: bool,
     /// Axis-aligned orthogonal cell decomposition supports intersection.
@@ -2730,11 +2726,6 @@ impl ExactArrangementCellComplexShortcutFacts {
             return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         Ok(())
-    }
-
-    /// Return whether source facts certify both operands as exact AABB boxes.
-    pub(crate) const fn certifies_axis_aligned_box_pair(&self) -> bool {
-        self.axis_aligned_box_pair
     }
 
     /// Return the certified support proven by these retained shortcut facts.
@@ -3371,7 +3362,7 @@ impl ExactBooleanCertificationSet {
     ) -> bool {
         match self.winding_evidence.status {
             ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized => {
-                self.trivial.has_empty_operand()
+                self.trivial.left_empty || self.trivial.right_empty
             }
             ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized => {
                 self.trivial.bounds_disjoint
@@ -3788,7 +3779,7 @@ impl ExactBooleanCertificationSet {
                 (self.winding_evidence.status
                     == ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized
                     || self.arrangement_attempt_matches_certified_preflight(preflight))
-                    && self.trivial.has_empty_operand()
+                    && (self.trivial.left_empty || self.trivial.right_empty)
             }
             ExactBooleanSupport::CertifiedBoundsDisjoint => {
                 (self.winding_evidence.status

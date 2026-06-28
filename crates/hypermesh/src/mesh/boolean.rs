@@ -454,8 +454,7 @@ fn exact_boolean_replay_preflight(
     let graph_preflight_has_source_arrangement_shortcut = shortcut_facts
         .certified_support(request.operation)
         == Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
-    let graph_preflight_has_certified_axis_aligned_box_pair =
-        shortcut_facts.certifies_axis_aligned_box_pair();
+    let graph_preflight_has_certified_axis_aligned_box_pair = shortcut_facts.axis_aligned_box_pair;
     let graph_preflight = preflight_boolean_exact_request_from_graph_with_retained_attempt(
         graph,
         left,
@@ -1662,9 +1661,7 @@ fn preflight_boolean_exact_request_from_graph_core(
         ));
     }
 
-    if operation == ExactBooleanOperation::Difference
-        && shortcut_facts.certifies_axis_aligned_box_pair()
-    {
+    if operation == ExactBooleanOperation::Difference && shortcut_facts.axis_aligned_box_pair {
         return Ok(certified_arrangement_cell_complex_preflight(
             operation, graph, left, right,
         ));
