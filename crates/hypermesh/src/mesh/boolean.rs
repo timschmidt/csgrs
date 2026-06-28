@@ -3000,7 +3000,18 @@ fn graph_requires_boundary_policy(
     {
         return Ok(true);
     }
-    certified_closed_boundary_contact(left, right)
+    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        return Ok(false);
+    }
+
+    let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
+    left_in_right.validate().map_err(winding_error)?;
+    let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
+    right_in_left.validate().map_err(winding_error)?;
+
+    Ok(left_in_right.vertices_are_boundary_or_outside()
+        && right_in_left.vertices_are_boundary_or_outside()
+        && (left_in_right.vertices_touch_boundary() || right_in_left.vertices_touch_boundary()))
 }
 
 fn graph_requires_coplanar_volumetric_cells(counts: &ExactBooleanBlocker) -> bool {
@@ -3158,24 +3169,6 @@ fn choose_triangle_projection(points: &[Point3; 3]) -> Option<CoplanarProjection
             .value()
             .is_some_and(|order| order != Ordering::Equal)
     })
-}
-
-fn certified_closed_boundary_contact(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<bool, ExactMeshError> {
-    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
-        return Ok(false);
-    }
-
-    let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
-    left_in_right.validate().map_err(winding_error)?;
-    let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
-    right_in_left.validate().map_err(winding_error)?;
-
-    Ok(left_in_right.vertices_are_boundary_or_outside()
-        && right_in_left.vertices_are_boundary_or_outside()
-        && (left_in_right.vertices_touch_boundary() || right_in_left.vertices_touch_boundary()))
 }
 
 fn closed_winding_vertex_relations_from_empty_graph(
