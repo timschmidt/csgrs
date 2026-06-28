@@ -22,10 +22,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::super::graph::intersection::MeshFacePairRelation;
-use super::super::graph::{
-    ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide,
-    build_validated_intersection_graph,
-};
+use super::super::graph::{ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide};
 use super::super::validation::ExactMeshValidationPolicy;
 use super::super::{ExactMesh, ExactMeshValidationError, Triangle};
 use super::winding::classify_mesh_vertices_against_closed_mesh_winding_report;
@@ -157,24 +154,15 @@ fn undecidable_shared_face_equality(left_face: usize, right_face: usize) -> Exac
     )
 }
 
-/// Return the retained full-face adjacency certificate for these sources.
-pub(crate) fn full_face_adjacent_certificate(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<Option<FullFaceAdjacentCertificate>, ExactMeshError> {
-    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
-        return Ok(None);
-    }
-    let graph = build_validated_intersection_graph(left, right)?;
-    full_face_adjacent_certificate_from_graph(left, right, &graph)
-}
-
 /// Return the retained full-face adjacency certificate from a validated graph.
 pub(crate) fn full_face_adjacent_certificate_from_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     graph: &ExactIntersectionGraph,
 ) -> Result<Option<FullFaceAdjacentCertificate>, ExactMeshError> {
+    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        return Ok(None);
+    }
     if graph.has_unknowns() {
         return Ok(None);
     }

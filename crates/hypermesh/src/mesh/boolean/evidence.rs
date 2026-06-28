@@ -35,7 +35,8 @@ use super::super::graph::{
 };
 use super::super::validation::ExactMeshValidationPolicy;
 use super::adjacent::{
-    full_face_adjacent_certificate, materialize_full_face_adjacent_union_from_certificate,
+    full_face_adjacent_certificate_from_graph,
+    materialize_full_face_adjacent_union_from_certificate,
 };
 use super::affine_solid::{
     AffineOrthogonalSolidOperation, has_affine_orthogonal_solid_cells,
@@ -5103,8 +5104,9 @@ fn arrangement_cell_complex_output_matches_sources(
     adjacent_report.validate()?;
     match adjacent_report.status {
         ExactAdjacentUnionCompletionStatus::CertifiedFullFace => {
-            let Some(certificate) = full_face_adjacent_certificate(left, right)
-                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+            let Some(certificate) =
+                full_face_adjacent_certificate_from_graph(left, right, &validated_graph)
+                    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             else {
                 return Ok(retained_mismatch.then_some(false));
             };
