@@ -3294,9 +3294,9 @@ impl ExactBooleanCertificationSet {
         {
             return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
-        if self.refinement.graph_had_unknowns() != self.planar_arrangement.graph_had_unknowns
-            || self.refinement.retained_face_pairs() != self.planar_arrangement.retained_face_pairs
-            || self.refinement.retained_events() != self.planar_arrangement.retained_events
+        if self.refinement.graph_had_unknowns != self.planar_arrangement.graph_had_unknowns
+            || self.refinement.retained_face_pairs != self.planar_arrangement.retained_face_pairs
+            || self.refinement.retained_events != self.planar_arrangement.retained_events
         {
             return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
@@ -3349,9 +3349,9 @@ impl ExactBooleanCertificationSet {
             .map_err(|_| ExactEvidenceValidationError::StatusEvidenceMismatch)?;
         self.convex_capabilities.validate()?;
         self.arrangement_cell_complex_shortcuts.validate()?;
-        if self.refinement.graph_had_unknowns() != self.boundary_touching.graph_had_unknowns
-            || self.refinement.retained_face_pairs() != self.boundary_touching.retained_face_pairs
-            || self.refinement.retained_events() != self.boundary_touching.retained_events
+        if self.refinement.graph_had_unknowns != self.boundary_touching.graph_had_unknowns
+            || self.refinement.retained_face_pairs != self.boundary_touching.retained_face_pairs
+            || self.refinement.retained_events != self.boundary_touching.retained_events
         {
             return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
@@ -6822,24 +6822,6 @@ impl ExactRefinementReport {
             retained_events,
             blocker,
         }
-    }
-
-    /// Return whether graph extraction retained unknown predicate outcomes.
-    #[cfg(test)]
-    pub(crate) const fn graph_had_unknowns(&self) -> bool {
-        self.graph_had_unknowns
-    }
-
-    /// Return the retained face-pair record count.
-    #[cfg(test)]
-    pub(crate) const fn retained_face_pairs(&self) -> usize {
-        self.retained_face_pairs
-    }
-
-    /// Return the retained event record count.
-    #[cfg(test)]
-    pub(crate) const fn retained_events(&self) -> usize {
-        self.retained_events
     }
 
     /// Validate status, retained counts, and refinement blocker consistency.
