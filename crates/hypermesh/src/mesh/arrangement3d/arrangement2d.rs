@@ -1202,7 +1202,11 @@ fn face_interior_witness(
             }
         }
         if is_ear {
-            let candidate = triangle_centroid(a, b, c)?;
+            let third = rational_real(1, 3)?;
+            let candidate = Point2::new(
+                (a.x.clone() + &b.x + &c.x) * &third,
+                (a.y.clone() + &b.y + &c.y) * &third,
+            );
             if witness_inside_face_without_child_cycle(
                 face_index,
                 arrangement,
@@ -1327,14 +1331,6 @@ fn face_ring_points(
         .iter()
         .map(|vertex| vertices[*vertex].point.clone())
         .collect()
-}
-
-fn triangle_centroid(a: &Point2, b: &Point2, c: &Point2) -> Option<Point2> {
-    let third = rational_real(1, 3)?;
-    Some(Point2::new(
-        (a.x.clone() + &b.x + &c.x) * &third,
-        (a.y.clone() + &b.y + &c.y) * &third,
-    ))
 }
 
 fn rational_real(numerator: i64, denominator: i64) -> Option<Real> {
