@@ -1119,17 +1119,18 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
             }
         }
         ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
-            if request_uses_arrangement_lower_dimensional_regularized_shortcut(request)
-                && let Some(result) =
-                    materialize_certified_arrangement_cell_complex_support_with_arrangement(
-                        left,
-                        right,
-                        request,
-                        retained_graph,
-                        retained_regularized_arrangement,
-                        retained_arrangement_attempt,
-                        shortcut_facts,
-                    )?
+            if operation_uses_arrangement_lower_dimensional_regularized_shortcut(
+                operation, validation,
+            ) && let Some(result) =
+                materialize_certified_arrangement_cell_complex_support_with_arrangement(
+                    left,
+                    right,
+                    request,
+                    retained_graph,
+                    retained_regularized_arrangement,
+                    retained_arrangement_attempt,
+                    shortcut_facts,
+                )?
             {
                 Some(result)
             } else {
@@ -1252,7 +1253,8 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
         graph,
         left,
         right,
-        request,
+        operation,
+        validation,
         retained_arrangement_attempt,
         shortcut_facts,
     )? {
@@ -1276,10 +1278,9 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
         }
     }
     if operation == ExactBooleanOperation::Union
-        && let Some((result, _report)) =
-            materialize_adjacent_union_completion_from_graph_for_request(
-                graph, left, right, request,
-            )?
+        && let Some((result, _report)) = materialize_adjacent_union_completion_from_graph(
+            graph, left, right, operation, validation,
+        )?
     {
         return Ok(Some(result));
     }
@@ -3267,22 +3268,24 @@ fn request_replayable_result(
         .then_some(result)
 }
 
-fn request_uses_arrangement_lower_dimensional_regularized_shortcut(
-    request: ExactBooleanRequest,
+fn operation_uses_arrangement_lower_dimensional_regularized_shortcut(
+    operation: ExactBooleanOperation,
+    validation: ExactMeshValidationPolicy,
 ) -> bool {
-    request.validation == ExactMeshValidationPolicy::CLOSED
-        && request.operation == ExactBooleanOperation::Intersection
+    validation == ExactMeshValidationPolicy::CLOSED
+        && operation == ExactBooleanOperation::Intersection
 }
 
 fn materialize_arrangement_lower_dimensional_intersection_from_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-    request: ExactBooleanRequest,
+    operation: ExactBooleanOperation,
+    validation: ExactMeshValidationPolicy,
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
 ) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
-    if !request_uses_arrangement_lower_dimensional_regularized_shortcut(request)
+    if !operation_uses_arrangement_lower_dimensional_regularized_shortcut(operation, validation)
         || closed_regularized_operand_kind(left)
             != Some(ClosedRegularizedOperandKind::LowerDimensional)
         || closed_regularized_operand_kind(right)
@@ -3290,6 +3293,7 @@ fn materialize_arrangement_lower_dimensional_intersection_from_graph(
     {
         return Ok(None);
     }
+    let request = ExactBooleanRequest::new(operation, validation);
     let evidence = winding_evidence_report_for_request_from_graph_and_attempt(
         graph,
         left,
@@ -3313,11 +3317,11 @@ fn materialize_arrangement_lower_dimensional_intersection_from_graph(
     }
     let mesh = empty_mesh(
         "empty exact arrangement cell-complex lower-dimensional intersection",
-        request.validation,
+        validation,
     )?;
     Ok(Some(certified_shortcut_result(
         mesh,
-        request.operation,
+        operation,
         ExactBooleanShortcutKind::ArrangementCellComplex,
     )))
 }
@@ -3383,8 +3387,7 @@ fn materialize_boolean_operation_with_graph(
     if meshes_are_certified_bounds_disjoint(left, right) {
         return boolean_disjoint_meshes(left, right, operation, validation);
     }
-    let request = ExactBooleanRequest::new(operation, validation);
-    if request_uses_arrangement_lower_dimensional_regularized_shortcut(request) {
+    if operation_uses_arrangement_lower_dimensional_regularized_shortcut(operation, validation) {
         let graph = graph_for_certified_materialization_with_prepared(
             retained_graph,
             &mut owned_graph,
@@ -3401,7 +3404,8 @@ fn materialize_boolean_operation_with_graph(
             graph,
             left,
             right,
-            request,
+            operation,
+            validation,
             None,
             &shortcut_facts,
         )? {
@@ -3423,6 +3427,7 @@ fn materialize_boolean_operation_with_graph(
     {
         return boolean_same_surface_meshes(left, operation, validation);
     }
+    let request = ExactBooleanRequest::new(operation, validation);
     if let Some(graph) = retained_graph {
         return materialize_boolean_operation_from_ready_graph(
             graph, left, right, operation, validation,
@@ -3542,13 +3547,9 @@ fn materialize_boolean_operation_from_ready_graph(
     }
 
     if operation == ExactBooleanOperation::Union
-        && let Some((result, _report)) =
-            materialize_adjacent_union_completion_from_graph_for_request(
-                graph,
-                left,
-                right,
-                ExactBooleanRequest::new(operation, validation),
-            )?
+        && let Some((result, _report)) = materialize_adjacent_union_completion_from_graph(
+            graph, left, right, operation, validation,
+        )?
     {
         return Ok(result);
     }
@@ -4833,18 +4834,19 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
     ))
 }
 
-pub(crate) fn materialize_adjacent_union_completion_from_graph_for_request(
+pub(crate) fn materialize_adjacent_union_completion_from_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-    request: ExactBooleanRequest,
+    operation: ExactBooleanOperation,
+    validation: ExactMeshValidationPolicy,
 ) -> Result<Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>, ExactMeshError> {
     let (report, result) = adjacent_union_completion_certification_from_graph(
         graph,
         left,
         right,
-        request.operation,
-        Some(request.validation),
+        operation,
+        Some(validation),
     )?;
     if !report.is_certified() {
         return Ok(None);
