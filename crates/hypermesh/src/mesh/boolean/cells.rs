@@ -1312,17 +1312,25 @@ fn split_collinear_triangle_edge(
             let b = triangle[(edge + 1) % 3];
             let opposite = triangle[(edge + 2) % 3];
             for mid in [from, to] {
-                if point_lies_strictly_between(vertices, mid, a, b)?
-                    && split_triangle_edge(
-                        vertices,
-                        triangles,
-                        triangle_index,
-                        a,
-                        mid,
-                        b,
-                        opposite,
-                    )?
+                if mid == a || mid == b {
+                    continue;
+                }
+                let point_ref = vertices.get(mid).ok_or(hypertri::Error::InvalidInput {
+                    reason: "face-cell refined split point is out of range",
+                })?;
+                let start_ref = vertices.get(a).ok_or(hypertri::Error::InvalidInput {
+                    reason: "face-cell refined edge start is out of range",
+                })?;
+                let end_ref = vertices.get(b).ok_or(hypertri::Error::InvalidInput {
+                    reason: "face-cell refined edge end is out of range",
+                })?;
+                if exact_points_equal(point_ref, start_ref)?
+                    || exact_points_equal(point_ref, end_ref)?
+                    || !point_on_closed_segment(point_ref, start_ref, end_ref)?
                 {
+                    continue;
+                }
+                if split_triangle_edge(vertices, triangles, triangle_index, a, mid, b, opposite)? {
                     return Ok(true);
                 }
             }
@@ -1376,30 +1384,6 @@ fn triangle_area2_signed(
     Ok(((a.x.clone() * &b.y) - &(a.y.clone() * &b.x))
         + &((b.x.clone() * &c.y) - &(b.y.clone() * &c.x))
         + &((c.x.clone() * &a.y) - &(c.y.clone() * &a.x)))
-}
-
-fn point_lies_strictly_between(
-    vertices: &[hypertri::ExactPoint],
-    point: usize,
-    start: usize,
-    end: usize,
-) -> hypertri::Result<bool> {
-    if point == start || point == end {
-        return Ok(false);
-    }
-    let point_ref = vertices.get(point).ok_or(hypertri::Error::InvalidInput {
-        reason: "face-cell refined split point is out of range",
-    })?;
-    let start_ref = vertices.get(start).ok_or(hypertri::Error::InvalidInput {
-        reason: "face-cell refined edge start is out of range",
-    })?;
-    let end_ref = vertices.get(end).ok_or(hypertri::Error::InvalidInput {
-        reason: "face-cell refined edge end is out of range",
-    })?;
-    if exact_points_equal(point_ref, start_ref)? || exact_points_equal(point_ref, end_ref)? {
-        return Ok(false);
-    }
-    point_on_closed_segment(point_ref, start_ref, end_ref)
 }
 
 fn compare_ordering(
