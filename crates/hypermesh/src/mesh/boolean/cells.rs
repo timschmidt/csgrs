@@ -1347,8 +1347,23 @@ fn split_triangle_edge(
     let first = [a, mid, opposite];
     let second = [mid, b, opposite];
     let zero = Real::from(0);
-    let first_area = triangle_area2_signed(vertices, first)?;
-    let second_area = triangle_area2_signed(vertices, second)?;
+    let triangle_area2_signed = |triangle: [usize; 3]| -> hypertri::Result<Real> {
+        let [a, b, c] = triangle;
+        let a = vertices.get(a).ok_or(hypertri::Error::InvalidInput {
+            reason: "face-cell refined triangle references missing vertex",
+        })?;
+        let b = vertices.get(b).ok_or(hypertri::Error::InvalidInput {
+            reason: "face-cell refined triangle references missing vertex",
+        })?;
+        let c = vertices.get(c).ok_or(hypertri::Error::InvalidInput {
+            reason: "face-cell refined triangle references missing vertex",
+        })?;
+        Ok(((a.x.clone() * &b.y) - &(a.y.clone() * &b.x))
+            + &((b.x.clone() * &c.y) - &(b.y.clone() * &c.x))
+            + &((c.x.clone() * &a.y) - &(c.y.clone() * &a.x)))
+    };
+    let first_area = triangle_area2_signed(first)?;
+    let second_area = triangle_area2_signed(second)?;
     if compare_ordering(&first_area, &zero, "face-cell refined triangle area")? == Ordering::Equal
         || compare_ordering(&second_area, &zero, "face-cell refined triangle area")?
             == Ordering::Equal
@@ -1360,25 +1375,6 @@ fn split_triangle_edge(
         first.into_iter().chain(second),
     );
     Ok(true)
-}
-
-fn triangle_area2_signed(
-    vertices: &[hypertri::ExactPoint],
-    triangle: [usize; 3],
-) -> hypertri::Result<Real> {
-    let [a, b, c] = triangle;
-    let a = vertices.get(a).ok_or(hypertri::Error::InvalidInput {
-        reason: "face-cell refined triangle references missing vertex",
-    })?;
-    let b = vertices.get(b).ok_or(hypertri::Error::InvalidInput {
-        reason: "face-cell refined triangle references missing vertex",
-    })?;
-    let c = vertices.get(c).ok_or(hypertri::Error::InvalidInput {
-        reason: "face-cell refined triangle references missing vertex",
-    })?;
-    Ok(((a.x.clone() * &b.y) - &(a.y.clone() * &b.x))
-        + &((b.x.clone() * &c.y) - &(b.y.clone() * &c.x))
-        + &((c.x.clone() * &a.y) - &(c.y.clone() * &a.x)))
 }
 
 fn compare_ordering(
