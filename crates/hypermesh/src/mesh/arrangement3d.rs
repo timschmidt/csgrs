@@ -2405,7 +2405,10 @@ fn face_plane_arrangements(
         if vertices.len() < 2 {
             continue;
         }
-        let side = side_from_key(side);
+        let side = match side {
+            0 => MeshSide::Left,
+            _ => MeshSide::Right,
+        };
         if skipped_carriers.contains(&carrier_key(side, face)) {
             continue;
         }
@@ -2417,7 +2420,10 @@ fn face_plane_arrangements(
 
     let mut arrangements = Vec::new();
     for ((side, face), groups) in per_face_groups {
-        let side = side_from_key(side);
+        let side = match side {
+            0 => MeshSide::Left,
+            _ => MeshSide::Right,
+        };
         if let Some(arrangement) =
             face_plane_arrangement(side, face, groups, topology, left, right, blockers)
         {
@@ -2425,13 +2431,6 @@ fn face_plane_arrangements(
         }
     }
     arrangements
-}
-
-const fn side_from_key(side: usize) -> MeshSide {
-    match side {
-        0 => MeshSide::Left,
-        _ => MeshSide::Right,
-    }
 }
 
 fn face_plane_arrangement(
