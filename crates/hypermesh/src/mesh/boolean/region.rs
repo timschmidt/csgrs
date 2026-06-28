@@ -539,10 +539,10 @@ impl ExactBooleanAssemblyPlan {
     ) -> hypertri::Result<Self> {
         let should_keep =
             move |triangulation: &FaceRegionTriangulation| selection.keeps(triangulation.side);
-        assemble_region_triangulations_with_retention(
+        assemble_region_triangulations_with_triangle_retention(
             triangulations,
             Some((left, right)),
-            &mut |triangulation| {
+            &mut |triangulation, _triangle| {
                 if should_keep(triangulation) {
                     ExactRegionRetention::Keep
                 } else {
@@ -1501,18 +1501,6 @@ pub(crate) fn checked_triangulate_face_regions_with_earcut(
         triangulation.validate()?;
     }
     Ok(triangulations)
-}
-
-fn assemble_region_triangulations_with_retention(
-    triangulations: &[FaceRegionTriangulation],
-    sources: Option<(&ExactMesh, &ExactMesh)>,
-    retain: &mut impl FnMut(&FaceRegionTriangulation) -> ExactRegionRetention,
-) -> hypertri::Result<ExactBooleanAssemblyPlan> {
-    assemble_region_triangulations_with_triangle_retention(
-        triangulations,
-        sources,
-        &mut |triangulation, _triangle| retain(triangulation),
-    )
 }
 
 fn assemble_region_triangulations_with_triangle_retention(
