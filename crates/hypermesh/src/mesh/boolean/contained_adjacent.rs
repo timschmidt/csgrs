@@ -26,10 +26,7 @@ use super::super::arrangement3d::arrangement2d::{
 };
 use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::super::graph::intersection::MeshFacePairRelation;
-use super::super::graph::{
-    ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide,
-    build_validated_intersection_graph,
-};
+use super::super::graph::{ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide};
 use super::super::validation::ExactMeshValidationPolicy;
 use super::super::{ExactMesh, ExactMeshValidationError, Triangle, triangle_edges_tuple};
 use super::winding::classify_mesh_vertices_against_closed_mesh_winding_report;
@@ -129,18 +126,6 @@ fn exact_construction_failure(message: impl Into<String>) -> ExactMeshError {
         ExactMeshBlockerKind::ExactConstructionFailure,
         message,
     ))
-}
-
-/// Return the retained contained-face adjacency certificate for these sources.
-pub(crate) fn contained_face_adjacent_certificate(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<Option<ContainedFaceAdjacentCertificate>, ExactMeshError> {
-    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
-        return Ok(None);
-    }
-    let graph = build_validated_intersection_graph(left, right)?;
-    contained_face_adjacent_certificate_from_graph(left, right, &graph)
 }
 
 /// Return the retained contained-face adjacency certificate from a validated graph.

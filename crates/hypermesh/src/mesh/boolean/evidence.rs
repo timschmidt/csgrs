@@ -43,7 +43,8 @@ use super::affine_solid::{
     materialize_affine_orthogonal_solid_operation,
 };
 use super::contained_adjacent::{
-    contained_face_adjacent_certificate, materialize_contained_face_adjacent_union_from_certificate,
+    contained_face_adjacent_certificate_from_graph,
+    materialize_contained_face_adjacent_union_from_certificate,
 };
 use super::convex::{
     intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
@@ -5126,8 +5127,9 @@ fn arrangement_cell_complex_output_matches_sources(
             retained_mismatch = true;
         }
         ExactAdjacentUnionCompletionStatus::CertifiedContainedFace => {
-            let Some(certificate) = contained_face_adjacent_certificate(left, right)
-                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+            let Some(certificate) =
+                contained_face_adjacent_certificate_from_graph(left, right, &validated_graph)
+                    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             else {
                 return Ok(retained_mismatch.then_some(false));
             };
