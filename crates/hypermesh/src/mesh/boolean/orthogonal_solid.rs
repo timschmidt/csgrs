@@ -155,19 +155,14 @@ struct OrientedPlaneKey {
     normal_sign: i8,
 }
 
-type GridBoxBounds = (usize, usize, usize, usize, usize, usize);
-
-/// Return whether exact orthogonal occupancy certifies an empty intersection.
-pub(crate) fn has_empty_axis_aligned_orthogonal_solid_cell_intersection(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> bool {
-    axis_aligned_orthogonal_solid_cell_selected_count(
-        left,
-        right,
-        AxisAlignedOrthogonalSolidOperation::Intersection,
-    )
-    .is_some_and(|selected_count| selected_count == 0)
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct GridBoxBounds {
+    i_min: usize,
+    i_max: usize,
+    j_min: usize,
+    j_max: usize,
+    k_min: usize,
+    k_max: usize,
 }
 
 /// Return the exact count of selected cells for a certified orthogonal
@@ -189,7 +184,7 @@ pub(crate) fn axis_aligned_orthogonal_solid_cell_selected_count(
 
 /// Return whether one mesh certifies as an exact orthogonal solid cell complex.
 pub(crate) fn is_axis_aligned_orthogonal_solid(mesh: &ExactMesh) -> bool {
-    certify_axis_aligned_orthogonal_solid(mesh).is_some()
+    certify_axis_aligned_orthogonal_solid_face_cells(mesh).is_some()
 }
 
 pub(crate) fn try_certified_axis_aligned_box_pair(
@@ -237,7 +232,7 @@ pub(crate) fn materialize_axis_aligned_orthogonal_solid_cell_output(
 fn try_certify_axis_aligned_box(
     mesh: &ExactMesh,
 ) -> Result<Option<AxisAlignedBox>, ExactMeshError> {
-    if mesh.vertices().len() != 8 || mesh.triangles().len() != 12 {
+    if mesh.vertices().len() != 8 || mesh.facts().mesh.face_count != 12 {
         return Ok(None);
     }
     mesh.validate_retained_bounds_certificate()?;
@@ -300,8 +295,8 @@ fn certify_orthogonal_cell_inputs(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<OrthogonalCellInputs> {
-    let left = certify_axis_aligned_orthogonal_solid(left)?;
-    let right = certify_axis_aligned_orthogonal_solid(right)?;
+    let left = certify_axis_aligned_orthogonal_solid_face_cells(left)?;
+    let right = certify_axis_aligned_orthogonal_solid_face_cells(right)?;
     let x = merge_axis_coords(&left.x, &right.x)?;
     let y = merge_axis_coords(&left.y, &right.y)?;
     let z = merge_axis_coords(&left.z, &right.z)?;
@@ -404,18 +399,6 @@ fn orthogonal_cell_selected(
     })
 }
 
-/// Certify that a mesh is an exact axis-aligned orthogonal cell solid.
-///
-/// Certification reconstructs the source as a grid object: every triangle must
-/// be one half of an axis-aligned rectangular grid face, paired into a complete
-/// rectangle, expanded into unit cell faces, and oriented consistently with a
-/// unique occupied side. The component constraints are then replayed across
-/// the accepted mesh is a retained cell complex, not merely a triangle soup
-/// whose samples happen to look orthogonal.
-fn certify_axis_aligned_orthogonal_solid(mesh: &ExactMesh) -> Option<AxisAlignedOrthogonalSolid> {
-    certify_axis_aligned_orthogonal_solid_face_cells(mesh)
-}
-
 /// Certify an orthogonal solid from exact axis-aligned face-cell replay.
 ///
 /// Every source triangle must lie on one axis-aligned grid plane. Each triangle
@@ -430,7 +413,7 @@ fn certify_axis_aligned_orthogonal_solid(mesh: &ExactMesh) -> Option<AxisAligned
 fn certify_axis_aligned_orthogonal_solid_face_cells(
     mesh: &ExactMesh,
 ) -> Option<AxisAlignedOrthogonalSolid> {
-    if mesh.vertices().is_empty() || mesh.triangles().is_empty() {
+    if mesh.vertices().is_empty() || mesh.facts().mesh.face_count == 0 {
         return None;
     }
     let x = collect_sorted_unique_axis_coords(mesh, Axis::X)?;
@@ -445,8 +428,8 @@ fn certify_axis_aligned_orthogonal_solid_face_cells(
 
     let half = (Real::from(1) / &Real::from(2)).ok()?;
     let mut planes = Vec::<FacePlaneAccumulator>::new();
-    for triangle in mesh.triangles() {
-        let sample = triangle_face_cell_sample(mesh, triangle, &x, &y, &z)?;
+    for face in &mesh.facts().faces {
+        let sample = triangle_face_cell_sample(mesh, face.triangle.vertices, &x, &y, &z)?;
         let accumulator = match planes
             .iter_mut()
             .find(|plane| plane.key == sample.key && plane.normal_sign == sample.normal_sign)
@@ -462,15 +445,15 @@ fn certify_axis_aligned_orthogonal_solid_face_cells(
                 planes.last_mut()?
             }
         };
-        accumulator.triangle_area2 = add(&accumulator.triangle_area2, &sample.area2);
+        accumulator.triangle_area2 = &accumulator.triangle_area2 + &sample.area2;
         let (u_axis, v_axis) = canonical_face_axes(sample.key.axis);
         let u_coords = axis_coords(&x, &y, &z, u_axis);
         let v_coords = axis_coords(&x, &y, &z, v_axis);
         for u in sample.u_range.clone() {
             for v in sample.v_range.clone() {
                 let midpoint = ProjectedFacePoint {
-                    u: mul(&add(&u_coords[u], &u_coords[u + 1]), &half),
-                    v: mul(&add(&v_coords[v], &v_coords[v + 1]), &half),
+                    u: &(&u_coords[u] + &u_coords[u + 1]) * &half,
+                    v: &(&v_coords[v] + &v_coords[v + 1]) * &half,
                 };
                 if point_in_projected_triangle(&midpoint, &sample.projected)? {
                     accumulator.selected.insert((u, v));
@@ -490,9 +473,10 @@ fn certify_axis_aligned_orthogonal_solid_face_cells(
         let v_coords = axis_coords(&x, &y, &z, v_axis);
         let mut cell_area2 = Real::from(0);
         for &(u, v) in &plane.selected {
-            let du = sub(&u_coords[u + 1], &u_coords[u]);
-            let dv = sub(&v_coords[v + 1], &v_coords[v]);
-            cell_area2 = add(&cell_area2, &mul(&Real::from(2), &mul(&du, &dv)));
+            let du = &u_coords[u + 1] - &u_coords[u];
+            let dv = &v_coords[v + 1] - &v_coords[v];
+            let cell = &Real::from(2) * &(&du * &dv);
+            cell_area2 = &cell_area2 + &cell;
             let key = UnitFaceKey {
                 axis: plane.key.axis,
                 plane: plane.key.plane,
@@ -512,13 +496,12 @@ fn certify_axis_aligned_orthogonal_solid_face_cells(
 
 fn triangle_face_cell_sample(
     mesh: &ExactMesh,
-    triangle: &Triangle,
+    triangle: [usize; 3],
     x: &[Real],
     y: &[Real],
     z: &[Real],
 ) -> Option<FaceTriangleSample> {
     let points = triangle
-        .0
         .map(|index| mesh.vertices().get(index).cloned())
         .into_iter()
         .collect::<Option<Vec<_>>>()?;
@@ -526,8 +509,9 @@ fn triangle_face_cell_sample(
     let constant_axes = [Axis::X, Axis::Y, Axis::Z]
         .into_iter()
         .filter(|&axis| {
-            real_eq(axis_coord(&points[0], axis), axis_coord(&points[1], axis))
-                && real_eq(axis_coord(&points[0], axis), axis_coord(&points[2], axis))
+            cmp(axis_coord(&points[0], axis), axis_coord(&points[1], axis)) == Some(Ordering::Equal)
+                && cmp(axis_coord(&points[0], axis), axis_coord(&points[2], axis))
+                    == Some(Ordering::Equal)
         })
         .collect::<Vec<_>>();
     if constant_axes.len() != 1 {
@@ -599,7 +583,7 @@ fn triangle_face_cell_sample(
     };
     let area = projected_face_orientation(&projected[0], &projected[1], &projected[2])?;
     let area2 = match cmp(&area, &Real::from(0))? {
-        Ordering::Less => mul(&Real::from(-1), &area),
+        Ordering::Less => -area,
         Ordering::Equal | Ordering::Greater => area,
     };
     if cmp(&area2, &Real::from(0))? != Ordering::Greater {
@@ -921,17 +905,6 @@ fn face_side_cell(
 }
 
 impl AxisAlignedOrthogonalSolid {
-    fn selected_index(&self, i: usize, j: usize, k: usize) -> Option<usize> {
-        debug_assert!(i < self.nx);
-        debug_assert!(j < self.ny);
-        debug_assert!(k < self.nz);
-        cell_index(i, j, k, self.ny, self.nz)
-    }
-
-    fn is_occupied(&self, i: usize, j: usize, k: usize) -> Option<bool> {
-        self.occupied.get(self.selected_index(i, j, k)?).copied()
-    }
-
     fn cell_contains_interval(
         &self,
         x_min: &Real,
@@ -950,7 +923,12 @@ impl AxisAlignedOrthogonalSolid {
         let Some(k) = containing_interval_or_outside(&self.z, z_min, z_max)? else {
             return Some(false);
         };
-        self.is_occupied(i, j, k)
+        debug_assert!(i < self.nx);
+        debug_assert!(j < self.ny);
+        debug_assert!(k < self.nz);
+        self.occupied
+            .get(cell_index(i, j, k, self.ny, self.nz)?)
+            .copied()
     }
 }
 
@@ -994,10 +972,92 @@ impl OrthogonalCellPlan {
         let mut vertex_indices = BTreeMap::new();
         let mut triangles = Vec::new();
         if let Some(bounds) = self.selected_rectangular_block_bounds()? {
-            emit_rectangular_box_faces(
+            emit_rect_face(
                 self,
-                bounds,
-                1,
+                OrientedPlaneKey {
+                    axis: Axis::X,
+                    plane: bounds.i_min,
+                    normal_sign: -1,
+                },
+                bounds.j_min,
+                bounds.j_max,
+                bounds.k_min,
+                bounds.k_max,
+                &mut vertices,
+                &mut vertex_indices,
+                &mut triangles,
+            );
+            emit_rect_face(
+                self,
+                OrientedPlaneKey {
+                    axis: Axis::X,
+                    plane: bounds.i_max,
+                    normal_sign: 1,
+                },
+                bounds.j_min,
+                bounds.j_max,
+                bounds.k_min,
+                bounds.k_max,
+                &mut vertices,
+                &mut vertex_indices,
+                &mut triangles,
+            );
+            emit_rect_face(
+                self,
+                OrientedPlaneKey {
+                    axis: Axis::Y,
+                    plane: bounds.j_min,
+                    normal_sign: -1,
+                },
+                bounds.i_min,
+                bounds.i_max,
+                bounds.k_min,
+                bounds.k_max,
+                &mut vertices,
+                &mut vertex_indices,
+                &mut triangles,
+            );
+            emit_rect_face(
+                self,
+                OrientedPlaneKey {
+                    axis: Axis::Y,
+                    plane: bounds.j_max,
+                    normal_sign: 1,
+                },
+                bounds.i_min,
+                bounds.i_max,
+                bounds.k_min,
+                bounds.k_max,
+                &mut vertices,
+                &mut vertex_indices,
+                &mut triangles,
+            );
+            emit_rect_face(
+                self,
+                OrientedPlaneKey {
+                    axis: Axis::Z,
+                    plane: bounds.k_min,
+                    normal_sign: -1,
+                },
+                bounds.i_min,
+                bounds.i_max,
+                bounds.j_min,
+                bounds.j_max,
+                &mut vertices,
+                &mut vertex_indices,
+                &mut triangles,
+            );
+            emit_rect_face(
+                self,
+                OrientedPlaneKey {
+                    axis: Axis::Z,
+                    plane: bounds.k_max,
+                    normal_sign: 1,
+                },
+                bounds.i_min,
+                bounds.i_max,
+                bounds.j_min,
+                bounds.j_max,
                 &mut vertices,
                 &mut vertex_indices,
                 &mut triangles,
@@ -1142,7 +1202,14 @@ impl OrthogonalCellPlan {
                 }
             }
         }
-        Ok(Some((i_min, i_max, j_min, j_max, k_min, k_max)))
+        Ok(Some(GridBoxBounds {
+            i_min,
+            i_max,
+            j_min,
+            j_max,
+            k_min,
+            k_max,
+        }))
     }
 }
 
@@ -1216,107 +1283,6 @@ fn emit_cell_face(
             grid_vertex(i, j + 1, k + 1),
         ),
     }
-}
-
-fn emit_rectangular_box_faces(
-    plan: &OrthogonalCellPlan,
-    bounds: GridBoxBounds,
-    orientation_sign: i8,
-    vertices: &mut Vec<Point3>,
-    vertex_indices: &mut BTreeMap<GridVertexKey, usize>,
-    triangles: &mut Vec<Triangle>,
-) {
-    let (i_min, i_max, j_min, j_max, k_min, k_max) = bounds;
-    emit_rect_face(
-        plan,
-        OrientedPlaneKey {
-            axis: Axis::X,
-            plane: i_min,
-            normal_sign: -orientation_sign,
-        },
-        j_min,
-        j_max,
-        k_min,
-        k_max,
-        vertices,
-        vertex_indices,
-        triangles,
-    );
-    emit_rect_face(
-        plan,
-        OrientedPlaneKey {
-            axis: Axis::X,
-            plane: i_max,
-            normal_sign: orientation_sign,
-        },
-        j_min,
-        j_max,
-        k_min,
-        k_max,
-        vertices,
-        vertex_indices,
-        triangles,
-    );
-    emit_rect_face(
-        plan,
-        OrientedPlaneKey {
-            axis: Axis::Y,
-            plane: j_min,
-            normal_sign: -orientation_sign,
-        },
-        i_min,
-        i_max,
-        k_min,
-        k_max,
-        vertices,
-        vertex_indices,
-        triangles,
-    );
-    emit_rect_face(
-        plan,
-        OrientedPlaneKey {
-            axis: Axis::Y,
-            plane: j_max,
-            normal_sign: orientation_sign,
-        },
-        i_min,
-        i_max,
-        k_min,
-        k_max,
-        vertices,
-        vertex_indices,
-        triangles,
-    );
-    emit_rect_face(
-        plan,
-        OrientedPlaneKey {
-            axis: Axis::Z,
-            plane: k_min,
-            normal_sign: -orientation_sign,
-        },
-        i_min,
-        i_max,
-        j_min,
-        j_max,
-        vertices,
-        vertex_indices,
-        triangles,
-    );
-    emit_rect_face(
-        plan,
-        OrientedPlaneKey {
-            axis: Axis::Z,
-            plane: k_max,
-            normal_sign: orientation_sign,
-        },
-        i_min,
-        i_max,
-        j_min,
-        j_max,
-        vertices,
-        vertex_indices,
-        triangles,
-    );
 }
 
 fn emit_rect_face(
@@ -1445,7 +1411,7 @@ fn collect_sorted_unique_axis_coords(mesh: &ExactMesh, axis: Axis) -> Option<Vec
     let values = mesh
         .vertices()
         .iter()
-        .map(|vertex| axis_coord(&vertex.clone(), axis).clone())
+        .map(|vertex| axis_coord(vertex, axis).clone())
         .collect::<Vec<_>>();
     sorted_unique_reals(values).filter(|values| values.len() >= 2)
 }
@@ -1467,10 +1433,12 @@ fn sorted_unique_reals(mut values: Vec<Real>) -> Option<Vec<Real>> {
     }
     let mut unique = Vec::with_capacity(values.len());
     for value in values {
-        if unique
-            .last()
-            .is_none_or(|previous| !real_eq(previous, &value))
-        {
+        let is_new_value = if let Some(previous) = unique.last() {
+            cmp(previous, &value) != Some(Ordering::Equal)
+        } else {
+            true
+        };
+        if is_new_value {
             unique.push(value);
         }
     }
@@ -1500,7 +1468,7 @@ fn containing_interval_or_outside(
 fn coord_index(coords: &[Real], value: &Real) -> Option<usize> {
     coords
         .iter()
-        .position(|candidate| real_eq(candidate, value))
+        .position(|candidate| cmp(candidate, value) == Some(Ordering::Equal))
 }
 
 fn cell_index(i: usize, j: usize, k: usize, ny: usize, nz: usize) -> Option<usize> {
@@ -1572,10 +1540,6 @@ fn cmp(left: &Real, right: &Real) -> Option<Ordering> {
     compare_reals(left, right).value()
 }
 
-fn real_eq(left: &Real, right: &Real) -> bool {
-    cmp(left, right) == Some(Ordering::Equal)
-}
-
 fn point_in_projected_triangle(
     point: &ProjectedFacePoint,
     triangle: &[ProjectedFacePoint; 3],
@@ -1602,23 +1566,11 @@ fn projected_face_orientation(
     b: &ProjectedFacePoint,
     c: &ProjectedFacePoint,
 ) -> Option<Real> {
-    let ab_u = sub(&b.u, &a.u);
-    let ab_v = sub(&b.v, &a.v);
-    let ac_u = sub(&c.u, &a.u);
-    let ac_v = sub(&c.v, &a.v);
-    Some(sub(&mul(&ab_u, &ac_v), &mul(&ab_v, &ac_u)))
-}
-
-fn add(left: &Real, right: &Real) -> Real {
-    left + right
-}
-
-fn sub(left: &Real, right: &Real) -> Real {
-    left - right
-}
-
-fn mul(left: &Real, right: &Real) -> Real {
-    left * right
+    let ab_u = &b.u - &a.u;
+    let ab_v = &b.v - &a.v;
+    let ac_u = &c.u - &a.u;
+    let ac_v = &c.v - &a.v;
+    Some(&(&ab_u * &ac_v) - &(&ab_v * &ac_u))
 }
 
 #[cfg(test)]
@@ -1656,10 +1608,10 @@ mod tests {
                 ExactMeshValidationPolicy::CLOSED,
             )
             .unwrap();
-        assert!(certify_axis_aligned_orthogonal_solid(&mesh).is_some());
+        assert!(certify_axis_aligned_orthogonal_solid_face_cells(&mesh).is_some());
 
         let cutter = axis_aligned_box_i64([2, 0, 0], [3, 2, 2]);
-        assert!(certify_axis_aligned_orthogonal_solid(&cutter).is_some());
+        assert!(certify_axis_aligned_orthogonal_solid_face_cells(&cutter).is_some());
         assert!(
             axis_aligned_orthogonal_solid_cell_plan(
                 &mesh,

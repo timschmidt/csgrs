@@ -15,9 +15,6 @@ use hyperreal::Real;
 
 use super::sorted_edge;
 
-/// Exact broad-phase relation between two 3D boxes.
-pub(crate) type AabbIntersectionKind = Aabb3Intersection;
-
 /// Structural inconsistency in retained exact bounds.
 ///
 /// Bounds are object-level acceleration facts, not topology certificates.
@@ -99,7 +96,7 @@ impl ExactAabb3 {
     pub(crate) fn classify_intersection(
         &self,
         other: &Self,
-    ) -> PredicateOutcome<AabbIntersectionKind> {
+    ) -> PredicateOutcome<Aabb3Intersection> {
         classify_aabb3_intersection(&self.min, &self.max, &other.min, &other.max)
     }
 

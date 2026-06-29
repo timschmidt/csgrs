@@ -15,12 +15,13 @@ use super::regularization::{
     ExactUnresolvedPolicy,
 };
 use super::{
-    ArrangementFaceCell, ArrangementLowerDimensionalArtifact, ArrangementOppositeClassification,
-    ArrangementVolumeAdjacency, ArrangementVolumeRegion, ExactArrangement, ExactArrangement3d,
-    ExactTopologyAssemblyReport, exact_node_loops_equivalent, lower_dimensional_artifact_counts,
+    ArrangementFaceCell, ArrangementLowerDimensionalArtifact, ArrangementVolumeAdjacency,
+    ArrangementVolumeRegion, ExactArrangement3d, ExactTopologyAssemblyReport,
+    ExactTopologyAssemblyStatus, exact_node_loops_equivalent, lower_dimensional_artifact_counts,
     sorted_unique_usize_set, validate_arrangement_face_cell, validate_lower_dimensional_artifacts,
 };
-use simplify::{ExactSimplifiedCellComplex, simplify_selected_cell_complex};
+#[cfg(test)]
+use simplify::simplify_selected_cell_complex;
 
 /// Region label for one arrangement face-cell.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -68,15 +69,6 @@ pub(crate) struct ExactCellComplexVolumeRegion {
     pub(crate) in_left: bool,
     /// Whether the volume is owned by the right source shell graph.
     pub(crate) in_right: bool,
-}
-
-/// Exact cell complex built from a 3D arrangement.
-#[derive(Clone, Debug, PartialEq)]
-pub(crate) struct ExactCellComplex {
-    /// Source arrangement.
-    pub(crate) arrangement: ExactArrangement3d,
-    /// Regularization policy used to build this view.
-    pub(crate) policy: ExactRegularizationPolicy,
 }
 
 /// Labeled arrangement cells.
@@ -132,7 +124,11 @@ pub(crate) struct ExactSelectedFaceOrientation {
     pub(crate) from_volume_adjacency: bool,
 }
 
-type VolumeResolvedFaceSelection = (Vec<usize>, Vec<ExactSelectedFaceOrientation>);
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct VolumeResolvedFaceSelection {
+    selected_faces: Vec<usize>,
+    selected_face_orientations: Vec<ExactSelectedFaceOrientation>,
+}
 
 /// Retained selection count summary consumed by arrangement attempts and
 /// simplification reports.
@@ -177,14 +173,6 @@ pub(crate) enum ExactRegionOwnershipStatus {
     LabelingReplayBlocked,
     /// Source operands relabel, but the retained ownership report is stale.
     StaleOwnership,
-}
-
-impl ExactRegionOwnershipStatus {
-    /// Return whether this ownership status can select named Boolean regions
-    /// without additional winding evidence.
-    pub(crate) const fn is_resolved(self) -> bool {
-        matches!(self, Self::VolumeResolved | Self::FaceResolved)
-    }
 }
 
 /// Compact exact ownership report for arrangement regions.
@@ -271,7 +259,10 @@ impl ExactRegionOwnershipReport {
     /// Return whether retained ownership evidence can select the requested
     /// operation without falling back to winding.
     pub(crate) fn resolves_operation_selection(&self, operation: ExactBooleanOperation) -> bool {
-        self.status.is_resolved() || self.volume_selection_resolves_operation(operation)
+        matches!(
+            self.status,
+            ExactRegionOwnershipStatus::VolumeResolved | ExactRegionOwnershipStatus::FaceResolved
+        ) || self.volume_selection_resolves_operation(operation)
     }
 
     /// Return whether this ownership report matches selected-cell gate counts.
@@ -464,39 +455,27 @@ impl ExactRegionOwnershipReport {
     }
 }
 
-impl ExactCellComplex {
-    /// Build a cell-complex view over an arrangement.
-    pub(crate) fn from_arrangement(
-        arrangement: ExactArrangement3d,
-        policy: ExactRegularizationPolicy,
-    ) -> Self {
-        Self {
-            arrangement,
-            policy,
-        }
-    }
-
+impl ExactArrangement3d {
     /// Label arrangement face-cells by source boundary and opposite winding.
     pub(crate) fn label_regions(
-        self,
+        &self,
         policy: ExactRegularizationPolicy,
     ) -> Result<ExactLabeledCellComplex, ExactArrangementBlocker> {
-        let mut blockers = self.arrangement.blockers.clone();
-        for blocker in self.arrangement.retained_volume_graph_blockers() {
+        let mut blockers = self.blockers.clone();
+        for blocker in self.retained_volume_graph_blockers() {
             if !blockers.contains(&blocker) {
                 blockers.push(blocker);
             }
         }
         let faces = self
-            .arrangement
             .face_cells
             .iter()
             .cloned()
             .map(label_face_cell)
             .collect::<Vec<_>>();
         let (volume_regions, volume_adjacencies) = match (
-            self.arrangement.volume_regions.as_deref(),
-            self.arrangement.volume_adjacencies.as_ref(),
+            self.volume_regions.as_deref(),
+            self.volume_adjacencies.as_ref(),
         ) {
             (Some(volume_regions), Some(volume_adjacencies)) => (
                 labeled_volume_regions_from_arrangement(volume_regions),
@@ -519,7 +498,7 @@ impl ExactCellComplex {
             faces,
             volume_regions,
             volume_adjacencies,
-            lower_dimensional_artifacts: self.arrangement.lower_dimensional_artifacts,
+            lower_dimensional_artifacts: self.lower_dimensional_artifacts.clone(),
             blockers,
         })
     }
@@ -542,7 +521,7 @@ impl ExactLabeledCellComplex {
         policy: ExactRegularizationPolicy,
     ) -> Result<(), ExactArrangementBlocker> {
         self.validate()?;
-        let replay = ExactArrangement::from_meshes_with_policy(left, right, policy)
+        let replay = ExactArrangement3d::from_meshes_with_policy(left, right, policy)
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
             .label_regions(policy)?;
         if replay == *self {
@@ -562,7 +541,7 @@ impl ExactLabeledCellComplex {
         if self.validate().is_err() {
             return ExactLabeledCellComplexFreshness::StaleLabeledCells;
         }
-        let arrangement = match ExactArrangement::from_meshes_with_policy(left, right, policy) {
+        let arrangement = match ExactArrangement3d::from_meshes_with_policy(left, right, policy) {
             Ok(arrangement) => arrangement,
             Err(_) => return ExactLabeledCellComplexFreshness::SourceReplayBlocked,
         };
@@ -723,7 +702,7 @@ impl ExactLabeledCellComplex {
             &self.volume_adjacencies,
             operation,
         );
-        let (selected_faces, selected_face_orientations) = if let Some(selected) =
+        let (selected_faces, selected_face_orientations) = if let Some(selection) =
             match volume_selected {
                 Ok(selected) => selected,
                 Err(blocker) => {
@@ -734,7 +713,10 @@ impl ExactLabeledCellComplex {
             blockers.retain(|blocker| {
                 *blocker != ExactArrangementBlocker::UnresolvedRegionClassification
             });
-            selected
+            (
+                selection.selected_faces,
+                selection.selected_face_orientations,
+            )
         } else {
             let selected_faces =
                 select_faces_from_face_labels(&self.faces, operation, policy, &mut blockers);
@@ -786,13 +768,12 @@ impl ExactLabeledCellComplex {
         )? {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
-        let Some((selected_faces, selected_face_orientations)) =
-            checked_volume_resolved_face_selection(
-                &self.faces,
-                &self.volume_regions,
-                &self.volume_adjacencies,
-                operation,
-            )?
+        let Some(selection) = checked_volume_resolved_face_selection(
+            &self.faces,
+            &self.volume_regions,
+            &self.volume_adjacencies,
+            operation,
+        )?
         else {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         };
@@ -804,8 +785,8 @@ impl ExactLabeledCellComplex {
             lower_dimensional_artifacts: self.lower_dimensional_artifacts,
             topology_assembly_report: None,
             region_ownership_report: None,
-            selected_faces,
-            selected_face_orientations,
+            selected_faces: selection.selected_faces,
+            selected_face_orientations: selection.selected_face_orientations,
             selected_volume_regions,
             operation,
             blockers: Vec::new(),
@@ -814,16 +795,6 @@ impl ExactLabeledCellComplex {
 }
 
 impl ExactSelectedCellComplex {
-    pub(crate) fn with_gate_reports(
-        mut self,
-        topology_assembly_report: ExactTopologyAssemblyReport,
-        region_ownership_report: ExactRegionOwnershipReport,
-    ) -> Self {
-        self.topology_assembly_report = Some(topology_assembly_report);
-        self.region_ownership_report = Some(region_ownership_report);
-        self
-    }
-
     pub(crate) fn counts(&self) -> ExactSelectedCellComplexCounts {
         let volume_oriented_selected_faces = self
             .selected_face_orientations
@@ -913,18 +884,17 @@ impl ExactSelectedCellComplex {
             .iter()
             .any(|orientation| orientation.from_volume_adjacency)
         {
-            let Some((selected_faces, selected_face_orientations)) =
-                checked_volume_resolved_face_selection(
-                    &self.faces,
-                    &self.volume_regions,
-                    &self.volume_adjacencies,
-                    self.operation,
-                )?
+            let Some(selection) = checked_volume_resolved_face_selection(
+                &self.faces,
+                &self.volume_regions,
+                &self.volume_adjacencies,
+                self.operation,
+            )?
             else {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             };
-            if self.selected_faces != selected_faces
-                || self.selected_face_orientations != selected_face_orientations
+            if self.selected_faces != selection.selected_faces
+                || self.selected_face_orientations != selection.selected_face_orientations
             {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             }
@@ -951,7 +921,7 @@ impl ExactSelectedCellComplex {
         policy: ExactRegularizationPolicy,
     ) -> Result<(), ExactArrangementBlocker> {
         self.validate()?;
-        let arrangement = ExactArrangement::from_meshes_with_policy(left, right, policy)
+        let arrangement = ExactArrangement3d::from_meshes_with_policy(left, right, policy)
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
         let replay =
             select_arrangement_for_replay(arrangement, left, right, self.operation, policy)?;
@@ -970,14 +940,6 @@ impl ExactSelectedCellComplex {
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
         }
     }
-
-    /// Run exact canonicalization on selected cells with explicit policy.
-    pub(crate) fn simplify_exact_with_policy(
-        self,
-        policy: ExactRegularizationPolicy,
-    ) -> Result<ExactSimplifiedCellComplex, ExactArrangementBlocker> {
-        simplify_selected_cell_complex(self, policy)
-    }
 }
 
 pub(crate) fn select_arrangement_for_replay(
@@ -989,7 +951,10 @@ pub(crate) fn select_arrangement_for_replay(
 ) -> Result<ExactSelectedCellComplex, ExactArrangementBlocker> {
     let topology_report = arrangement.topology_assembly_report_with_policy(left, right, policy);
     topology_report.validate()?;
-    if !topology_report.is_complete() {
+    if !matches!(
+        topology_report.status,
+        ExactTopologyAssemblyStatus::Complete
+    ) {
         if let Some(blocker) = topology_report
             .blockers
             .iter()
@@ -1004,17 +969,18 @@ pub(crate) fn select_arrangement_for_replay(
     let labeled = arrangement.label_regions(labeling_policy)?;
     let ownership_report = labeled.region_ownership_report(left, right, labeling_policy);
     ownership_report.validate()?;
-    let selected = if ownership_report.volume_selection_resolves_operation(operation) {
+    let mut selected = if ownership_report.volume_selection_resolves_operation(operation) {
         labeled.select_volume_resolved(operation)
     } else {
-        if !ownership_report.status.is_resolved()
+        if !ownership_report.resolves_operation_selection(operation)
             && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
         labeled.select_with_policy(operation, policy)
-    }?
-    .with_gate_reports(topology_report, ownership_report);
+    }?;
+    selected.topology_assembly_report = Some(topology_report);
+    selected.region_ownership_report = Some(ownership_report);
     Ok(selected)
 }
 
@@ -1025,7 +991,10 @@ pub(crate) fn validate_selected_gate_reports(
 ) -> Result<(), ExactArrangementBlocker> {
     if let Some(topology_report) = topology_assembly_report {
         topology_report.validate()?;
-        if !topology_report.is_complete() {
+        if !matches!(
+            topology_report.status,
+            ExactTopologyAssemblyStatus::Complete
+        ) {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
     }
@@ -1198,18 +1167,9 @@ fn arrangement_volume_evidence_resolves_named_operation(
     else {
         return false;
     };
-    volume_evidence_resolves_named_operation(&faces, &volume_regions, volume_adjacencies, operation)
-}
-
-fn volume_evidence_resolves_named_operation(
-    faces: &[ExactCellComplexFace],
-    volume_regions: &[ExactCellComplexVolumeRegion],
-    volume_adjacencies: &[ArrangementVolumeAdjacency],
-    operation: ExactBooleanOperation,
-) -> bool {
     checked_volume_evidence_resolves_named_operation(
-        faces,
-        volume_regions,
+        &faces,
+        &volume_regions,
         volume_adjacencies,
         operation,
     )
@@ -1248,61 +1208,71 @@ fn volume_selection_resolution(
     volume_regions: &[ExactCellComplexVolumeRegion],
     volume_adjacencies: &[ArrangementVolumeAdjacency],
 ) -> ExactVolumeSelectionResolution {
-    match checked_volume_selection_resolution(faces, volume_regions, volume_adjacencies) {
-        Ok(resolution) => resolution,
-        Err(_) => ExactVolumeSelectionResolution {
-            all_named: false,
-            union: false,
-            intersection: false,
-            difference: false,
-        },
-    }
-}
-
-fn checked_volume_selection_resolution(
-    faces: &[ExactCellComplexFace],
-    volume_regions: &[ExactCellComplexVolumeRegion],
-    volume_adjacencies: &[ArrangementVolumeAdjacency],
-) -> Result<ExactVolumeSelectionResolution, ExactArrangementBlocker> {
-    let union = checked_volume_evidence_resolves_named_operation(
+    let union = match checked_volume_evidence_resolves_named_operation(
         faces,
         volume_regions,
         volume_adjacencies,
         ExactBooleanOperation::Union,
-    )?;
-    let intersection = checked_volume_evidence_resolves_named_operation(
+    ) {
+        Ok(union) => union,
+        Err(_) => {
+            return ExactVolumeSelectionResolution {
+                all_named: false,
+                union: false,
+                intersection: false,
+                difference: false,
+            };
+        }
+    };
+    let intersection = match checked_volume_evidence_resolves_named_operation(
         faces,
         volume_regions,
         volume_adjacencies,
         ExactBooleanOperation::Intersection,
-    )?;
-    let difference = checked_volume_evidence_resolves_named_operation(
+    ) {
+        Ok(intersection) => intersection,
+        Err(_) => {
+            return ExactVolumeSelectionResolution {
+                all_named: false,
+                union: false,
+                intersection: false,
+                difference: false,
+            };
+        }
+    };
+    let difference = match checked_volume_evidence_resolves_named_operation(
         faces,
         volume_regions,
         volume_adjacencies,
         ExactBooleanOperation::Difference,
-    )?;
-    Ok(ExactVolumeSelectionResolution {
+    ) {
+        Ok(difference) => difference,
+        Err(_) => {
+            return ExactVolumeSelectionResolution {
+                all_named: false,
+                union: false,
+                intersection: false,
+                difference: false,
+            };
+        }
+    };
+    ExactVolumeSelectionResolution {
         all_named: union && intersection && difference,
         union,
         intersection,
         difference,
-    })
-}
-
-fn arrangement_has_only_region_classification_blockers(arrangement: &ExactArrangement3d) -> bool {
-    !arrangement.blockers.is_empty()
-        && arrangement
-            .blockers
-            .iter()
-            .all(|blocker| *blocker == ExactArrangementBlocker::UnresolvedRegionClassification)
+    }
 }
 
 pub(crate) fn arrangement_region_classification_blockers_resolve_operation(
     arrangement: &ExactArrangement3d,
     operation: ExactBooleanOperation,
 ) -> bool {
-    arrangement_has_only_region_classification_blockers(arrangement)
+    !arrangement.blockers.is_empty()
+        && arrangement
+            .blockers
+            .iter()
+            .all(|blocker| *blocker == ExactArrangementBlocker::UnresolvedRegionClassification)
         && arrangement_volume_evidence_resolves_named_operation(arrangement, operation)
 }
 
@@ -1316,7 +1286,10 @@ pub(crate) fn arrangement_cell_complex_labeling_policy(
             arrangement_region_classification_blockers_resolve_operation(arrangement, operation)
         }
         None => {
-            arrangement_has_only_region_classification_blockers(arrangement)
+            !arrangement.blockers.is_empty()
+                && arrangement.blockers.iter().all(|blocker| {
+                    *blocker == ExactArrangementBlocker::UnresolvedRegionClassification
+                })
                 && arrangement.retained_volume_graph_blockers().is_empty()
                 && arrangement_volume_evidence(arrangement).is_some_and(
                     |(faces, volume_regions, volume_adjacencies)| {
@@ -1391,40 +1364,41 @@ fn label_face_cell(cell: ArrangementFaceCell) -> ExactCellComplexFace {
         MeshSide::Left => ExactCellRegionLabel::LeftBoundary,
         MeshSide::Right => ExactCellRegionLabel::RightBoundary,
     };
-    let opposite = cell
-        .opposite
-        .as_ref()
-        .map(opposite_region_label)
-        .unwrap_or(ExactOppositeRegionLabel::Unknown);
+    let opposite = match cell.opposite.as_ref() {
+        None => ExactOppositeRegionLabel::Unknown,
+        Some(opposite) => {
+            let winding_label = match opposite.winding.relation {
+                super::super::boolean::winding::ClosedMeshWindingRelation::Inside => {
+                    ExactOppositeRegionLabel::Inside
+                }
+                super::super::boolean::winding::ClosedMeshWindingRelation::Outside => {
+                    ExactOppositeRegionLabel::Outside
+                }
+                super::super::boolean::winding::ClosedMeshWindingRelation::Boundary => {
+                    ExactOppositeRegionLabel::Boundary
+                }
+                super::super::boolean::winding::ClosedMeshWindingRelation::Unknown
+                | super::super::boolean::winding::ClosedMeshWindingRelation::NotClosed => {
+                    ExactOppositeRegionLabel::Unknown
+                }
+            };
+            if let Some(convex) = &opposite.convex_fallback {
+                match convex.relation {
+                    ConvexSolidPointRelation::Inside => ExactOppositeRegionLabel::Inside,
+                    ConvexSolidPointRelation::Outside => ExactOppositeRegionLabel::Outside,
+                    ConvexSolidPointRelation::Boundary => ExactOppositeRegionLabel::Boundary,
+                    ConvexSolidPointRelation::Unknown
+                    | ConvexSolidPointRelation::NotCertifiedConvex => winding_label,
+                }
+            } else {
+                winding_label
+            }
+        }
+    };
     ExactCellComplexFace {
         cell,
         source,
         opposite,
-    }
-}
-
-fn opposite_region_label(opposite: &ArrangementOppositeClassification) -> ExactOppositeRegionLabel {
-    match opposite.convex_certified_relation() {
-        Some(ConvexSolidPointRelation::Inside) => return ExactOppositeRegionLabel::Inside,
-        Some(ConvexSolidPointRelation::Outside) => return ExactOppositeRegionLabel::Outside,
-        Some(ConvexSolidPointRelation::Boundary) => return ExactOppositeRegionLabel::Boundary,
-        Some(ConvexSolidPointRelation::Unknown | ConvexSolidPointRelation::NotCertifiedConvex)
-        | None => {}
-    }
-    match opposite.winding.relation {
-        super::super::boolean::winding::ClosedMeshWindingRelation::Inside => {
-            ExactOppositeRegionLabel::Inside
-        }
-        super::super::boolean::winding::ClosedMeshWindingRelation::Outside => {
-            ExactOppositeRegionLabel::Outside
-        }
-        super::super::boolean::winding::ClosedMeshWindingRelation::Boundary => {
-            ExactOppositeRegionLabel::Boundary
-        }
-        super::super::boolean::winding::ClosedMeshWindingRelation::Unknown
-        | super::super::boolean::winding::ClosedMeshWindingRelation::NotClosed => {
-            ExactOppositeRegionLabel::Unknown
-        }
     }
 }
 
@@ -1509,7 +1483,15 @@ fn select_faces_from_volume_adjacencies(
     validate_volume_regions_for_selection(volume_regions)?;
     let selected_volumes = volume_regions
         .iter()
-        .map(|region| select_volume_region(region, operation))
+        .map(|region| match operation {
+            ExactBooleanOperation::Union => region.in_left || region.in_right,
+            ExactBooleanOperation::Intersection => region.in_left && region.in_right,
+            ExactBooleanOperation::Difference => region.in_left && !region.in_right,
+            ExactBooleanOperation::SelectedRegions(selection) => {
+                (region.in_left && selection.keeps(MeshSide::Left))
+                    || (region.in_right && selection.keeps(MeshSide::Right))
+            }
+        })
         .collect::<Vec<_>>();
     let face_count = faces.len();
     let mut selected = Vec::<ExactSelectedFaceOrientation>::new();
@@ -1528,11 +1510,16 @@ fn select_faces_from_volume_adjacencies(
             if face_cell >= face_count {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             }
+            let face = &faces[face_cell];
             if !adjacency
                 .oriented_face_sides
                 .iter()
                 .any(|side| side.face_cell == face_cell)
-                && !oriented_volume_side_covers_face_provenance(&faces[face_cell], adjacency)
+                && !adjacency.oriented_face_sides.iter().any(|side| {
+                    side.source == face.cell.carrier.side
+                        && side.source_face == face.cell.carrier.face
+                        && exact_node_loops_equivalent(&face.cell.boundary, &side.boundary)
+                })
             {
                 continue;
             }
@@ -1558,7 +1545,10 @@ fn select_faces_from_volume_adjacencies(
         .iter()
         .map(|orientation| orientation.face)
         .collect::<Vec<_>>();
-    Ok(Some((selected_faces, selected)))
+    Ok(Some(VolumeResolvedFaceSelection {
+        selected_faces,
+        selected_face_orientations: selected,
+    }))
 }
 
 fn checked_volume_resolved_face_selection(
@@ -1659,33 +1649,14 @@ pub(crate) fn validate_volume_adjacency_face_provenance(
         .any(|face| separating_face_cells.binary_search(face).is_err())
         || separating_face_cells.iter().any(|&face| {
             side_faces.binary_search(&face).is_err()
-                && !oriented_volume_side_covers_face_boundary(&faces[face], adjacency)
+                && !adjacency.oriented_face_sides.iter().any(|side| {
+                    exact_node_loops_equivalent(&faces[face].cell.boundary, &side.boundary)
+                })
         })
     {
         return Err(ExactArrangementBlocker::NonManifoldCellComplex);
     }
     Ok(())
-}
-
-fn oriented_volume_side_covers_face_boundary(
-    face: &ExactCellComplexFace,
-    adjacency: &ArrangementVolumeAdjacency,
-) -> bool {
-    adjacency
-        .oriented_face_sides
-        .iter()
-        .any(|side| exact_node_loops_equivalent(&face.cell.boundary, &side.boundary))
-}
-
-fn oriented_volume_side_covers_face_provenance(
-    face: &ExactCellComplexFace,
-    adjacency: &ArrangementVolumeAdjacency,
-) -> bool {
-    adjacency.oriented_face_sides.iter().any(|side| {
-        side.source == face.cell.carrier.side
-            && side.source_face == face.cell.carrier.face
-            && exact_node_loops_equivalent(&face.cell.boundary, &side.boundary)
-    })
 }
 
 fn selected_face_orientations_from_operation(
@@ -1714,23 +1685,19 @@ fn selected_volume_regions(
     volume_regions
         .iter()
         .enumerate()
-        .filter_map(|(index, volume)| select_volume_region(volume, operation).then_some(index))
+        .filter_map(|(index, volume)| {
+            match operation {
+                ExactBooleanOperation::Union => volume.in_left || volume.in_right,
+                ExactBooleanOperation::Intersection => volume.in_left && volume.in_right,
+                ExactBooleanOperation::Difference => volume.in_left && !volume.in_right,
+                ExactBooleanOperation::SelectedRegions(selection) => {
+                    (volume.in_left && selection.keeps(MeshSide::Left))
+                        || (volume.in_right && selection.keeps(MeshSide::Right))
+                }
+            }
+            .then_some(index)
+        })
         .collect()
-}
-
-fn select_volume_region(
-    region: &ExactCellComplexVolumeRegion,
-    operation: ExactBooleanOperation,
-) -> bool {
-    match operation {
-        ExactBooleanOperation::Union => region.in_left || region.in_right,
-        ExactBooleanOperation::Intersection => region.in_left && region.in_right,
-        ExactBooleanOperation::Difference => region.in_left && !region.in_right,
-        ExactBooleanOperation::SelectedRegions(selection) => {
-            (region.in_left && selection.keeps(MeshSide::Left))
-                || (region.in_right && selection.keeps(MeshSide::Right))
-        }
-    }
 }
 
 #[cfg(test)]
@@ -1775,14 +1742,6 @@ mod tests {
         }
     }
 
-    fn winding_report(relation: ClosedMeshWindingRelation) -> PointMeshWindingReport {
-        PointMeshWindingReport::new(relation, None, 0, 0, 0, 0, 0, 0, 0)
-    }
-
-    fn convex_classification(relation: ConvexSolidPointRelation) -> ConvexSolidPointClassification {
-        ConvexSolidPointClassification::new(relation, Vec::new())
-    }
-
     fn face_with_opposite(
         winding_relation: ClosedMeshWindingRelation,
         convex_relation: Option<ConvexSolidPointRelation>,
@@ -1790,17 +1749,13 @@ mod tests {
         let mut face = labeled_face(MeshSide::Left).cell;
         face.opposite = Some(ArrangementOppositeClassification {
             representative: p(0, 0, 0),
-            winding: winding_report(winding_relation),
-            convex_fallback: convex_relation.map(convex_classification),
+            winding: PointMeshWindingReport::new(winding_relation, None, 0, 0, 0, 0, 0, 0, 0),
+            convex_fallback: convex_relation.map(|relation| ConvexSolidPointClassification {
+                relation,
+                predicates: Vec::new(),
+            }),
         });
         face
-    }
-
-    fn boundary_labeled_face(side: MeshSide) -> ExactCellComplexFace {
-        ExactCellComplexFace {
-            opposite: ExactOppositeRegionLabel::Boundary,
-            ..labeled_face(side)
-        }
     }
 
     fn unoriented_labeled_face(side: MeshSide) -> ExactCellComplexFace {
@@ -1826,10 +1781,10 @@ mod tests {
 
     fn replay_arrangement_with_blocker(
         blocker: ExactArrangementBlocker,
-    ) -> (ExactArrangement, ExactMesh, ExactMesh) {
+    ) -> (ExactArrangement3d, ExactMesh, ExactMesh) {
         let left = tetrahedron_i64([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
         let right = tetrahedron_i64([1, 0, 0], [3, 0, 0], [1, 2, 0], [1, 0, 2]);
-        let mut arrangement = ExactArrangement::from_meshes_with_policy(
+        let mut arrangement = ExactArrangement3d::from_meshes_with_policy(
             &left,
             &right,
             ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -2054,8 +2009,7 @@ mod tests {
             lower_dimensional_edge_endpoints: 0,
         };
         report.validate().unwrap();
-        assert!(report.status.is_resolved());
-        assert_ne!(report.status, ExactRegionOwnershipStatus::VolumeResolved);
+        assert_eq!(report.status, ExactRegionOwnershipStatus::FaceResolved);
 
         let mut overflowing_boundary_partition = report.clone();
         overflowing_boundary_partition.left_boundary_faces = usize::MAX;
@@ -2136,7 +2090,7 @@ mod tests {
     fn arrangement_volume_resolution_requires_selectable_adjacency_provenance() {
         let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
         let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-        let mut arrangement = ExactArrangement::from_meshes_with_policy(
+        let mut arrangement = ExactArrangement3d::from_meshes_with_policy(
             &left,
             &right,
             ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -2202,8 +2156,14 @@ mod tests {
     fn regularized_solid_selection_drops_boundary_contact_intersection() {
         let labeled = ExactLabeledCellComplex {
             faces: vec![
-                boundary_labeled_face(MeshSide::Left),
-                boundary_labeled_face(MeshSide::Right),
+                ExactCellComplexFace {
+                    opposite: ExactOppositeRegionLabel::Boundary,
+                    ..labeled_face(MeshSide::Left)
+                },
+                ExactCellComplexFace {
+                    opposite: ExactOppositeRegionLabel::Boundary,
+                    ..labeled_face(MeshSide::Right)
+                },
             ],
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
@@ -2226,8 +2186,14 @@ mod tests {
     fn regularized_solid_difference_keeps_only_left_boundary_contact() {
         let labeled = ExactLabeledCellComplex {
             faces: vec![
-                boundary_labeled_face(MeshSide::Left),
-                boundary_labeled_face(MeshSide::Right),
+                ExactCellComplexFace {
+                    opposite: ExactOppositeRegionLabel::Boundary,
+                    ..labeled_face(MeshSide::Left)
+                },
+                ExactCellComplexFace {
+                    opposite: ExactOppositeRegionLabel::Boundary,
+                    ..labeled_face(MeshSide::Right)
+                },
             ],
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
@@ -2533,18 +2499,24 @@ mod tests {
             )
             .all_named
         );
-        assert!(!volume_evidence_resolves_named_operation(
-            &labeled.faces,
-            &labeled.volume_regions,
-            &labeled.volume_adjacencies,
-            ExactBooleanOperation::Union,
-        ));
-        assert!(volume_evidence_resolves_named_operation(
-            &labeled.faces,
-            &labeled.volume_regions,
-            &labeled.volume_adjacencies,
-            ExactBooleanOperation::Difference,
-        ));
+        assert!(
+            !checked_volume_evidence_resolves_named_operation(
+                &labeled.faces,
+                &labeled.volume_regions,
+                &labeled.volume_adjacencies,
+                ExactBooleanOperation::Union,
+            )
+            .unwrap()
+        );
+        assert!(
+            checked_volume_evidence_resolves_named_operation(
+                &labeled.faces,
+                &labeled.volume_regions,
+                &labeled.volume_adjacencies,
+                ExactBooleanOperation::Difference,
+            )
+            .unwrap()
+        );
         assert_eq!(
             labeled
                 .clone()
@@ -2592,7 +2564,6 @@ mod tests {
             lower_dimensional_edge_endpoints: 0,
         };
         report.validate().unwrap();
-        assert!(!report.status.is_resolved());
         assert!(report.resolves_operation_selection(ExactBooleanOperation::Difference));
         assert!(!report.resolves_operation_selection(ExactBooleanOperation::Union));
         assert!(report.volume_selection_resolves_operation(ExactBooleanOperation::Difference));
@@ -2707,7 +2678,7 @@ mod tests {
     fn replay_selection_retains_topology_and_ownership_reports() {
         let left = tetrahedron_i64([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
         let right = tetrahedron_i64([1, 0, 0], [3, 0, 0], [1, 2, 0], [1, 0, 2]);
-        let arrangement = ExactArrangement::from_meshes_with_policy(
+        let arrangement = ExactArrangement3d::from_meshes_with_policy(
             &left,
             &right,
             ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -2734,15 +2705,16 @@ mod tests {
             .as_ref()
             .expect("replay-selected cells should retain region ownership");
         ownership.validate().unwrap();
-        assert!(ownership.status.is_resolved());
+        assert!(ownership.resolves_operation_selection(ExactBooleanOperation::Union));
         selected.validate().unwrap();
         selected
             .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap();
-        let simplified = selected
-            .clone()
-            .simplify_exact_with_policy(ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap();
+        let simplified = simplify_selected_cell_complex(
+            selected.clone(),
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
         assert!(simplified.topology_assembly_report.is_some());
         assert!(simplified.region_ownership_report.is_some());
         simplified.validate().unwrap();
@@ -2758,7 +2730,10 @@ mod tests {
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
         );
         assert_eq!(
-            stale_topology.simplify_exact_with_policy(ExactRegularizationPolicy::REGULARIZED_SOLID),
+            simplify_selected_cell_complex(
+                stale_topology,
+                ExactRegularizationPolicy::REGULARIZED_SOLID
+            ),
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
         );
 
@@ -2771,8 +2746,10 @@ mod tests {
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
         assert_eq!(
-            stale_payload_counts
-                .simplify_exact_with_policy(ExactRegularizationPolicy::REGULARIZED_SOLID),
+            simplify_selected_cell_complex(
+                stale_payload_counts,
+                ExactRegularizationPolicy::REGULARIZED_SOLID
+            ),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
 
@@ -2783,8 +2760,10 @@ mod tests {
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
         assert_eq!(
-            missing_topology
-                .simplify_exact_with_policy(ExactRegularizationPolicy::REGULARIZED_SOLID),
+            simplify_selected_cell_complex(
+                missing_topology,
+                ExactRegularizationPolicy::REGULARIZED_SOLID
+            ),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }

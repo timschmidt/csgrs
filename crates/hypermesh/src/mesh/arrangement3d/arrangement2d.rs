@@ -67,16 +67,6 @@ pub(crate) struct ExactArrangement2dInputSegment {
     pub(crate) source: ExactArrangement2dSegmentSource,
 }
 
-impl ExactArrangement2dInputSegment {
-    /// Construct an input segment with explicit provenance.
-    pub(crate) const fn new(
-        endpoints: [Point2; 2],
-        source: ExactArrangement2dSegmentSource,
-    ) -> Self {
-        Self { endpoints, source }
-    }
-}
-
 /// Closed boundary ring supplied to the region overlay builder.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ExactArrangement2dRegionRing {
@@ -85,13 +75,6 @@ pub(crate) struct ExactArrangement2dRegionRing {
     /// Ring vertices. A repeated closing vertex is accepted and normalized
     /// away; otherwise the ring is interpreted cyclically.
     pub(crate) vertices: Vec<Point2>,
-}
-
-impl ExactArrangement2dRegionRing {
-    /// Construct a region boundary ring.
-    pub(crate) fn new(region: ExactArrangement2dRegion, vertices: Vec<Point2>) -> Self {
-        Self { region, vertices }
-    }
 }
 
 /// Vertex in the exact planar arrangement graph.
@@ -185,27 +168,6 @@ pub(crate) enum ExactArrangement2dBoundaryPolicy {
     SimplifyCollinear,
     /// Preserve exact boundary-use vertices from the arrangement graph.
     PreserveCollinear,
-}
-
-impl ExactArrangement2dOverlay {
-    /// Return whether arrangement construction, face classification, and output
-    /// loop simplification all completed.
-    pub(crate) fn is_complete(&self) -> bool {
-        self.blockers.is_empty()
-    }
-}
-
-/// Construct an exact strict interior witness for one bounded arrangement face.
-///
-/// The witness is suitable for source-region and winding classification of a
-/// planar cell. Undecidable predicates are retained in `blockers` instead of
-/// falling back to an approximate point.
-pub(crate) fn exact_arrangement2d_face_witness(
-    arrangement: &ExactArrangement2d,
-    face: usize,
-    blockers: &mut Vec<ExactArrangement2dBlocker>,
-) -> Option<Point2> {
-    face_interior_witness(face, arrangement, blockers)
 }
 
 /// Reason an exact arrangement could not be completed.
@@ -414,19 +376,6 @@ pub(crate) fn build_exact_arrangement2d(
     }
 }
 
-/// Build a 2D arrangement overlay and simplify selected cells into boundary
-/// loops.
-pub(crate) fn build_exact_arrangement2d_overlay(
-    rings: &[ExactArrangement2dRegionRing],
-    operation: ExactArrangement2dSetOperation,
-) -> ExactArrangement2dOverlay {
-    build_exact_arrangement2d_overlay_with_boundary_policy(
-        rings,
-        operation,
-        ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
-    )
-}
-
 /// Build a 2D arrangement overlay with explicit output boundary policy.
 pub(crate) fn build_exact_arrangement2d_overlay_with_boundary_policy(
     rings: &[ExactArrangement2dRegionRing],
@@ -451,7 +400,10 @@ pub(crate) fn build_exact_arrangement2d_ring_union_overlay_with_boundary_policy(
 ) -> ExactArrangement2dOverlay {
     let region_rings = rings
         .iter()
-        .map(|ring| ExactArrangement2dRegionRing::new(ExactArrangement2dRegion::Left, ring.clone()))
+        .map(|ring| ExactArrangement2dRegionRing {
+            region: ExactArrangement2dRegion::Left,
+            vertices: ring.clone(),
+        })
         .collect::<Vec<_>>();
     let mut blockers = Vec::new();
     let normalized = normalize_region_rings(&region_rings, &mut blockers);
@@ -479,17 +431,17 @@ where
     let mut segments = Vec::new();
     for ring in &normalized {
         for edge in 0..ring.vertices.len() {
-            segments.push(ExactArrangement2dInputSegment::new(
-                [
+            segments.push(ExactArrangement2dInputSegment {
+                endpoints: [
                     ring.vertices[edge].clone(),
                     ring.vertices[(edge + 1) % ring.vertices.len()].clone(),
                 ],
-                ExactArrangement2dSegmentSource::RegionBoundary {
+                source: ExactArrangement2dSegmentSource::RegionBoundary {
                     region: ring.region,
                     ring: ring.ring,
                     edge,
                 },
-            ));
+            });
         }
     }
     let arrangement = build_exact_arrangement2d(&segments);
@@ -609,7 +561,8 @@ fn classify_overlay_faces(
 ) -> Vec<ExactArrangement2dOverlayFace> {
     let mut overlay_faces = Vec::new();
     for face_index in 0..arrangement.faces.len() {
-        let Some(witness) = face_interior_witness(face_index, arrangement, blockers) else {
+        let Some(witness) = exact_arrangement2d_face_witness(face_index, arrangement, blockers)
+        else {
             blockers.push(ExactArrangement2dBlocker::UnresolvedFaceWitness { face: face_index });
             continue;
         };
@@ -654,7 +607,8 @@ fn classify_ring_union_overlay_faces(
 ) -> Vec<ExactArrangement2dOverlayFace> {
     let mut overlay_faces = Vec::new();
     for face_index in 0..arrangement.faces.len() {
-        let Some(witness) = face_interior_witness(face_index, arrangement, blockers) else {
+        let Some(witness) = exact_arrangement2d_face_witness(face_index, arrangement, blockers)
+        else {
             blockers.push(ExactArrangement2dBlocker::UnresolvedFaceWitness { face: face_index });
             continue;
         };
@@ -1143,7 +1097,12 @@ fn signed_area_twice(vertices_in_face: &[usize], vertices: &[ExactArrangement2dV
     area
 }
 
-fn face_interior_witness(
+/// Construct an exact strict interior witness for one bounded arrangement face.
+///
+/// The witness is suitable for source-region and winding classification of a
+/// planar cell. Undecidable predicates are retained in `blockers` instead of
+/// falling back to an approximate point.
+pub(crate) fn exact_arrangement2d_face_witness(
     face_index: usize,
     arrangement: &ExactArrangement2d,
     blockers: &mut Vec<ExactArrangement2dBlocker>,
@@ -1256,12 +1215,12 @@ fn witness_inside_face_without_child_cycle(
     candidate: &Point2,
     blockers: &mut Vec<ExactArrangement2dBlocker>,
 ) -> Option<bool> {
-    match classify_point_ring_even_odd(
-        &face_ring_points(&arrangement.faces[face_index], &arrangement.vertices),
-        candidate,
-    )
-    .value()?
-    {
+    let face_ring = arrangement.faces[face_index]
+        .vertices
+        .iter()
+        .map(|vertex| arrangement.vertices[*vertex].point.clone())
+        .collect::<Vec<_>>();
+    match classify_point_ring_even_odd(&face_ring, candidate).value()? {
         RingPointLocation::Inside => {}
         RingPointLocation::Outside | RingPointLocation::Boundary => return Some(false),
     }
@@ -1271,7 +1230,7 @@ fn witness_inside_face_without_child_cycle(
         }
         let child_vertex = arrangement.faces[other].vertices.first().copied()?;
         let contains_child_cycle = match classify_point_ring_even_odd(
-            &face_ring_points(&arrangement.faces[face_index], &arrangement.vertices),
+            &face_ring,
             &arrangement.vertices[child_vertex].point,
         )
         .value()
@@ -1286,27 +1245,17 @@ fn witness_inside_face_without_child_cycle(
         if !contains_child_cycle {
             continue;
         }
-        match classify_point_ring_even_odd(
-            &face_ring_points(&arrangement.faces[other], &arrangement.vertices),
-            candidate,
-        )
-        .value()?
-        {
+        let other_ring = arrangement.faces[other]
+            .vertices
+            .iter()
+            .map(|vertex| arrangement.vertices[*vertex].point.clone())
+            .collect::<Vec<_>>();
+        match classify_point_ring_even_odd(&other_ring, candidate).value()? {
             RingPointLocation::Inside | RingPointLocation::Boundary => return Some(false),
             RingPointLocation::Outside => {}
         }
     }
     Some(true)
-}
-
-fn face_ring_points(
-    face: &ExactArrangement2dFace,
-    vertices: &[ExactArrangement2dVertex],
-) -> Vec<Point2> {
-    face.vertices
-        .iter()
-        .map(|vertex| vertices[*vertex].point.clone())
-        .collect()
 }
 
 fn rational_real(numerator: i64, denominator: i64) -> Option<Real> {
@@ -1838,21 +1787,20 @@ mod tests {
     }
 
     fn segment(index: usize, start: (i64, i64), end: (i64, i64)) -> ExactArrangement2dInputSegment {
-        ExactArrangement2dInputSegment::new(
-            [p(start.0, start.1), p(end.0, end.1)],
-            ExactArrangement2dSegmentSource::Anonymous(index),
-        )
+        ExactArrangement2dInputSegment {
+            endpoints: [p(start.0, start.1), p(end.0, end.1)],
+            source: ExactArrangement2dSegmentSource::Anonymous(index),
+        }
     }
 
     fn ring(
         region: ExactArrangement2dRegion,
         points: &[(i64, i64)],
     ) -> ExactArrangement2dRegionRing {
-        ExactArrangement2dRegionRing::new(region, points.iter().map(|&(x, y)| p(x, y)).collect())
-    }
-
-    fn real_eq(left: &Real, right: i64) -> bool {
-        compare_reals(left, &Real::from(right)).value() == Some(Ordering::Equal)
+        ExactArrangement2dRegionRing {
+            region,
+            vertices: points.iter().map(|&(x, y)| p(x, y)).collect(),
+        }
     }
 
     #[test]
@@ -1932,7 +1880,7 @@ mod tests {
 
     #[test]
     fn overlapping_square_intersection_simplifies_to_shared_cell() {
-        let overlay = build_exact_arrangement2d_overlay(
+        let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
             &[
                 ring(
                     ExactArrangement2dRegion::Left,
@@ -1944,17 +1892,21 @@ mod tests {
                 ),
             ],
             ExactArrangement2dSetOperation::Intersection,
+            ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
         );
 
         assert!(overlay.blockers.is_empty(), "{:?}", overlay.blockers);
         assert_eq!(overlay.output_loops.len(), 1);
         assert_eq!(overlay.output_loops[0].points.len(), 4);
-        assert!(real_eq(&overlay.output_loops[0].signed_area_twice, 2));
+        assert_eq!(
+            compare_reals(&overlay.output_loops[0].signed_area_twice, &Real::from(2)).value(),
+            Some(Ordering::Equal)
+        );
     }
 
     #[test]
     fn overlapping_square_union_removes_internal_edges() {
-        let overlay = build_exact_arrangement2d_overlay(
+        let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
             &[
                 ring(
                     ExactArrangement2dRegion::Left,
@@ -1966,12 +1918,16 @@ mod tests {
                 ),
             ],
             ExactArrangement2dSetOperation::Union,
+            ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
         );
 
         assert!(overlay.blockers.is_empty(), "{:?}", overlay.blockers);
         assert_eq!(overlay.output_loops.len(), 1);
         assert_eq!(overlay.output_loops[0].points.len(), 8);
-        assert!(real_eq(&overlay.output_loops[0].signed_area_twice, 14));
+        assert_eq!(
+            compare_reals(&overlay.output_loops[0].signed_area_twice, &Real::from(14)).value(),
+            Some(Ordering::Equal)
+        );
     }
 
     #[test]
@@ -1986,8 +1942,11 @@ mod tests {
                 &[(2, 0), (6, 0), (6, 2), (2, 2)],
             ),
         ];
-        let simplified =
-            build_exact_arrangement2d_overlay(&rings, ExactArrangement2dSetOperation::Union);
+        let simplified = build_exact_arrangement2d_overlay_with_boundary_policy(
+            &rings,
+            ExactArrangement2dSetOperation::Union,
+            ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
+        );
         let preserved = build_exact_arrangement2d_overlay_with_boundary_policy(
             &rings,
             ExactArrangement2dSetOperation::Union,
@@ -2000,13 +1959,27 @@ mod tests {
         assert_eq!(preserved.output_loops.len(), 1);
         assert_eq!(simplified.output_loops[0].points.len(), 4);
         assert_eq!(preserved.output_loops[0].points.len(), 8);
-        assert!(real_eq(&simplified.output_loops[0].signed_area_twice, 24));
-        assert!(real_eq(&preserved.output_loops[0].signed_area_twice, 24));
+        assert_eq!(
+            compare_reals(
+                &simplified.output_loops[0].signed_area_twice,
+                &Real::from(24)
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(
+                &preserved.output_loops[0].signed_area_twice,
+                &Real::from(24)
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
     }
 
     #[test]
     fn nested_even_odd_rings_emit_hole_boundary() {
-        let overlay = build_exact_arrangement2d_overlay(
+        let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
             &[
                 ring(
                     ExactArrangement2dRegion::Left,
@@ -2018,6 +1991,7 @@ mod tests {
                 ),
             ],
             ExactArrangement2dSetOperation::Union,
+            ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
         );
 
         assert!(overlay.blockers.is_empty(), "{:?}", overlay.blockers);
@@ -2039,7 +2013,7 @@ mod tests {
 
     #[test]
     fn nested_even_odd_rings_emit_separate_island_component() {
-        let overlay = build_exact_arrangement2d_overlay(
+        let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
             &[
                 ring(
                     ExactArrangement2dRegion::Left,
@@ -2055,6 +2029,7 @@ mod tests {
                 ),
             ],
             ExactArrangement2dSetOperation::Union,
+            ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
         );
 
         assert!(overlay.blockers.is_empty(), "{:?}", overlay.blockers);
@@ -2080,7 +2055,7 @@ mod tests {
 
     #[test]
     fn point_touching_difference_emits_exact_selected_cells() {
-        let overlay = build_exact_arrangement2d_overlay(
+        let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
             &[
                 ring(
                     ExactArrangement2dRegion::Left,
@@ -2096,6 +2071,7 @@ mod tests {
                 ),
             ],
             ExactArrangement2dSetOperation::Difference,
+            ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
         );
 
         assert!(overlay.blockers.is_empty(), "{:?}", overlay.blockers);
@@ -2106,7 +2082,7 @@ mod tests {
 
     #[test]
     fn point_touching_holes_are_retained_as_separate_exact_loops() {
-        let overlay = build_exact_arrangement2d_overlay(
+        let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
             &[
                 ring(
                     ExactArrangement2dRegion::Left,
@@ -2122,6 +2098,7 @@ mod tests {
                 ),
             ],
             ExactArrangement2dSetOperation::Difference,
+            ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
         );
 
         assert!(overlay.blockers.is_empty(), "{:?}", overlay.blockers);

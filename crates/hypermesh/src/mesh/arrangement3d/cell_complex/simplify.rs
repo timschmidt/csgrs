@@ -9,9 +9,9 @@ use std::cmp::Ordering;
 
 use super::super::super::boolean::ExactBooleanOperation;
 use super::super::super::validation::ExactMeshValidationPolicy;
-use super::super::super::{ExactMesh, Triangle};
+use super::super::super::{ExactMesh, Triangle, point3_exact_equal};
 #[cfg(test)]
-use super::super::ExactArrangement;
+use super::super::ExactArrangement3d;
 use super::super::loop_triangulation::{
     choose_polygon_projection, group_exact_coplanar_loops, triangulate_exact_loop_group,
 };
@@ -31,7 +31,7 @@ use super::{
 use hyperlimit::CoplanarProjection;
 use hyperlimit::SourceProvenance;
 use hyperlimit::{
-    Point3, Sign, compare_reals, orient2d_report, orient3d_report, point_on_segment3, point3_equal,
+    Point3, Sign, compare_reals, orient2d_report, orient3d_report, point_on_segment3,
     project_point3, projected_polygon_area2_value,
 };
 use hyperreal::Real;
@@ -150,12 +150,12 @@ impl ExactSimplifiedCellComplex {
         }
         for pair in self.faces.windows(2) {
             let left = (
-                side_key(pair[0].face.cell.carrier.side),
+                pair[0].face.cell.carrier.side.sort_key(),
                 pair[0].face.cell.carrier.face,
                 pair[0].source_face,
             );
             let right = (
-                side_key(pair[1].face.cell.carrier.side),
+                pair[1].face.cell.carrier.side.sort_key(),
                 pair[1].face.cell.carrier.face,
                 pair[1].source_face,
             );
@@ -189,11 +189,12 @@ impl ExactSimplifiedCellComplex {
         policy: ExactRegularizationPolicy,
     ) -> Result<(), ExactArrangementBlocker> {
         self.validate()?;
-        let arrangement = ExactArrangement::from_meshes_with_policy(left, right, policy)
+        let arrangement = ExactArrangement3d::from_meshes_with_policy(left, right, policy)
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
-        let replay =
-            select_arrangement_for_replay(arrangement, left, right, self.operation, policy)?
-                .simplify_exact_with_policy(policy)?;
+        let replay = simplify_selected_cell_complex(
+            select_arrangement_for_replay(arrangement, left, right, self.operation, policy)?,
+            policy,
+        )?;
         if self == &replay {
             return Ok(());
         }
@@ -208,15 +209,6 @@ impl ExactSimplifiedCellComplex {
         } else {
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         }
-    }
-
-    /// Triangulate selected cells into an exact mesh.
-    ///
-    /// The retained boundary of each selected face-cell is projected through a
-    /// certified nonzero carrier-plane projection and triangulated by
-    /// `hypertri` over exact coordinates. No primitive-float tolerance is used.
-    pub(crate) fn triangulate(&self) -> Result<ExactMesh, ExactArrangementBlocker> {
-        triangulate_simplified_cell_complex(self)
     }
 }
 
@@ -509,7 +501,7 @@ pub(crate) fn simplify_selected_cell_complex(
 
     faces.sort_by_key(|face| {
         (
-            side_key(face.face.cell.carrier.side),
+            face.face.cell.carrier.side.sort_key(),
             face.face.cell.carrier.face,
             face.source_face,
         )
@@ -615,7 +607,7 @@ fn merge_same_label_adjacent_faces(
 
 fn simplified_group_key(face: &ExactSimplifiedFaceCell) -> (usize, usize, usize, usize) {
     (
-        side_key(face.face.cell.carrier.side),
+        face.face.cell.carrier.side.sort_key(),
         face.face.cell.carrier.face,
         region_label_key(face.face.source),
         opposite_label_key(face.face.opposite),
@@ -636,12 +628,12 @@ fn merge_coplanar_same_label_faces_across_carriers(
         'pairs: for left in 0..faces.len() {
             for right in (left + 1)..faces.len() {
                 let left_label = (
-                    side_key(faces[left].face.cell.carrier.side),
+                    faces[left].face.cell.carrier.side.sort_key(),
                     region_label_key(faces[left].face.source),
                     opposite_label_key(faces[left].face.opposite),
                 );
                 let right_label = (
-                    side_key(faces[right].face.cell.carrier.side),
+                    faces[right].face.cell.carrier.side.sort_key(),
                     region_label_key(faces[right].face.source),
                     opposite_label_key(faces[right].face.opposite),
                 );
@@ -817,14 +809,14 @@ fn merge_same_label_group(
         let mut boundary_points = vec![first.from_point];
         let max_steps = boundary_edges.len().saturating_add(1);
         let mut guard = 0usize;
-        while current != start && point3_equal(&current_point, &start_point).value() != Some(true) {
+        while current != start && point3_exact_equal(&current_point, &start_point) != Some(true) {
             guard += 1;
             if guard > max_steps {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             }
             let Some(next_index) = boundary_edges.iter().position(|edge| {
                 edge.from == current
-                    || point3_equal(&edge.from_point, &current_point).value() == Some(true)
+                    || point3_exact_equal(&edge.from_point, &current_point) == Some(true)
             }) else {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             };
@@ -855,8 +847,8 @@ fn merge_same_label_group(
 
 fn exact_edges_are_reversed(left: &DirectedBoundaryEdge, right: &DirectedBoundaryEdge) -> bool {
     (left.from == right.to && left.to == right.from)
-        || (point3_equal(&left.from_point, &right.to_point).value() == Some(true)
-            && point3_equal(&left.to_point, &right.from_point).value() == Some(true))
+        || (point3_exact_equal(&left.from_point, &right.to_point) == Some(true)
+            && point3_exact_equal(&left.to_point, &right.from_point) == Some(true))
 }
 
 fn faces_share_reversed_exact_edge(
@@ -1022,7 +1014,7 @@ fn exact_boundary_loops_same_orientation(left: &[Point3], right: &[Point3]) -> b
     }
     (0..right.len()).any(|offset| {
         (0..left.len()).all(|index| {
-            point3_equal(&left[index], &right[(offset + index) % right.len()]).value() == Some(true)
+            point3_exact_equal(&left[index], &right[(offset + index) % right.len()]) == Some(true)
         })
     })
 }
@@ -1037,19 +1029,17 @@ fn exact_boundary_loops_opposite_orientation(left: &[Point3], right: &[Point3]) 
     (0..right.len()).any(|offset| {
         (0..left.len()).all(|index| {
             let right_index = (offset + right.len() - index) % right.len();
-            point3_equal(&left[index], &right[right_index]).value() == Some(true)
+            point3_exact_equal(&left[index], &right[right_index]) == Some(true)
         })
     })
 }
 
-const fn side_key(side: super::super::super::graph::MeshSide) -> usize {
-    match side {
-        super::super::super::graph::MeshSide::Left => 0,
-        super::super::super::graph::MeshSide::Right => 1,
-    }
-}
-
-fn triangulate_simplified_cell_complex(
+/// Triangulate selected cells into an exact mesh.
+///
+/// The retained boundary of each selected face-cell is projected through a
+/// certified nonzero carrier-plane projection and triangulated by `hypertri`
+/// over exact coordinates. No primitive-float tolerance is used.
+pub(crate) fn triangulate_simplified_cell_complex(
     complex: &ExactSimplifiedCellComplex,
 ) -> Result<ExactMesh, ExactArrangementBlocker> {
     complex.validate()?;
@@ -1101,7 +1091,7 @@ fn triangulate_simplified_cell_complex(
         for vertex in &vertices {
             if let Some(existing) = unique
                 .iter()
-                .position(|point| point3_coordinates_equal(point, vertex))
+                .position(|point| point3_exact_equal(point, vertex) == Some(true))
             {
                 remap.push(existing);
             } else {
@@ -1129,8 +1119,8 @@ fn triangulate_simplified_cell_complex(
                     if candidate == start
                         || candidate == end
                         || interior.contains(&candidate)
-                        || point3_coordinates_equal(point, &vertices[start])
-                        || point3_coordinates_equal(point, &vertices[end])
+                        || point3_exact_equal(point, &vertices[start]) == Some(true)
+                        || point3_exact_equal(point, &vertices[end]) == Some(true)
                     {
                         continue;
                     }
@@ -1287,12 +1277,6 @@ fn triangulate_simplified_cell_complex(
     .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)
 }
 
-fn point3_coordinates_equal(left: &Point3, right: &Point3) -> bool {
-    compare_reals(&left.x, &right.x).value() == Some(Ordering::Equal)
-        && compare_reals(&left.y, &right.y).value() == Some(Ordering::Equal)
-        && compare_reals(&left.z, &right.z).value() == Some(Ordering::Equal)
-}
-
 #[derive(Clone, Copy)]
 enum Point3CoordinateAxis {
     X,
@@ -1319,11 +1303,11 @@ fn refine_boundary_segments_with_collinear_points(
             refined_boundary.push(start.clone());
             let mut candidates = Vec::new();
             for point in &all_points {
-                if point3_coordinates_equal(point, start)
-                    || point3_coordinates_equal(point, end)
+                if point3_exact_equal(point, start) == Some(true)
+                    || point3_exact_equal(point, end) == Some(true)
                     || candidates
                         .iter()
-                        .any(|candidate| point3_coordinates_equal(candidate, point))
+                        .any(|candidate| point3_exact_equal(candidate, point) == Some(true))
                 {
                     continue;
                 }
@@ -1361,7 +1345,7 @@ fn refine_boundary_segments_with_collinear_points(
         for point in refined_boundary {
             if deduped
                 .last()
-                .is_none_or(|last| !point3_coordinates_equal(last, &point))
+                .is_none_or(|last| point3_exact_equal(last, &point) != Some(true))
             {
                 deduped.push(point);
             }
@@ -1370,7 +1354,7 @@ fn refine_boundary_segments_with_collinear_points(
             && deduped
                 .first()
                 .zip(deduped.last())
-                .is_some_and(|(first, last)| point3_coordinates_equal(first, last))
+                .is_some_and(|(first, last)| point3_exact_equal(first, last) == Some(true))
         {
             deduped.pop();
         }
@@ -1519,13 +1503,14 @@ mod tests {
     }
 
     fn selected_face(
-        _source_face: usize,
+        source_face: usize,
         vertices: &[usize],
         points: &[Point3],
     ) -> ExactCellComplexFace {
-        selected_face_with_source(
+        selected_face_with_carrier(
             MeshSide::Left,
             ExactCellRegionLabel::LeftBoundary,
+            source_face,
             vertices,
             points,
         )
@@ -1564,10 +1549,6 @@ mod tests {
             source,
             opposite: ExactOppositeRegionLabel::Outside,
         }
-    }
-
-    fn dummy_volume_adjacency(face_cell: usize) -> ArrangementVolumeAdjacency {
-        dummy_volume_adjacency_for(face_cell, MeshSide::Right, &[0, 1, 2])
     }
 
     fn dummy_volume_adjacency_for(
@@ -1627,7 +1608,7 @@ mod tests {
         assert_eq!(simplified.faces.len(), 1);
         assert_eq!(simplified.interior_edges_removed, 1);
         assert_eq!(simplified.faces[0].face.cell.boundary.len(), 4);
-        let mesh = simplified.triangulate().unwrap();
+        let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
         assert_eq!(mesh.vertices().len(), 4);
         assert_eq!(mesh.triangles().len(), 2);
     }
@@ -1673,11 +1654,11 @@ mod tests {
     fn triangulation_rejects_stale_simplified_report_counts() {
         let mut simplified = simplified_square();
         simplified.validate().unwrap();
-        simplified.triangulate().unwrap();
+        triangulate_simplified_cell_complex(&simplified).unwrap();
         simplified.selected_faces_before_simplification = 0;
 
         assert_eq!(
-            simplified.triangulate(),
+            triangulate_simplified_cell_complex(&simplified),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -1849,7 +1830,7 @@ mod tests {
         assert_eq!(simplified.faces.len(), 1);
         assert_eq!(simplified.interior_edges_removed, 1);
         assert_eq!(simplified.faces[0].face.cell.boundary_points.len(), 4);
-        let mesh = simplified.triangulate().unwrap();
+        let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
         assert_eq!(mesh.vertices().len(), 4);
         assert_eq!(mesh.triangles().len(), 2);
     }
@@ -2042,7 +2023,7 @@ mod tests {
                 &points,
             )],
             volume_regions: Vec::new(),
-            volume_adjacencies: vec![dummy_volume_adjacency(0)],
+            volume_adjacencies: vec![dummy_volume_adjacency_for(0, MeshSide::Right, &[0, 1, 2])],
             lower_dimensional_artifacts: Vec::new(),
             topology_assembly_report: None,
             region_ownership_report: None,
@@ -2120,7 +2101,7 @@ mod tests {
                 &points,
             )],
             volume_regions: Vec::new(),
-            volume_adjacencies: vec![dummy_volume_adjacency(0)],
+            volume_adjacencies: vec![dummy_volume_adjacency_for(0, MeshSide::Right, &[0, 1, 2])],
             lower_dimensional_artifacts: Vec::new(),
             topology_assembly_report: None,
             region_ownership_report: None,
@@ -2160,7 +2141,7 @@ mod tests {
                 &points,
             )],
             volume_regions: Vec::new(),
-            volume_adjacencies: vec![dummy_volume_adjacency(0)],
+            volume_adjacencies: vec![dummy_volume_adjacency_for(0, MeshSide::Right, &[0, 1, 2])],
             lower_dimensional_artifacts: Vec::new(),
             topology_assembly_report: None,
             region_ownership_report: None,
@@ -2207,7 +2188,7 @@ mod tests {
                 &points,
             )],
             volume_regions: Vec::new(),
-            volume_adjacencies: vec![dummy_volume_adjacency(0)],
+            volume_adjacencies: vec![dummy_volume_adjacency_for(0, MeshSide::Right, &[0, 1, 2])],
             lower_dimensional_artifacts: Vec::new(),
             topology_assembly_report: None,
             region_ownership_report: None,
@@ -2248,7 +2229,7 @@ mod tests {
                 &points,
             )],
             volume_regions: Vec::new(),
-            volume_adjacencies: vec![dummy_volume_adjacency(0)],
+            volume_adjacencies: vec![dummy_volume_adjacency_for(0, MeshSide::Right, &[0, 1, 2])],
             lower_dimensional_artifacts: Vec::new(),
             topology_assembly_report: None,
             region_ownership_report: None,
@@ -2359,7 +2340,7 @@ mod tests {
         let selected = ExactSelectedCellComplex {
             faces: vec![selected_face(0, &[0, 1, 2], &points)],
             volume_regions: Vec::new(),
-            volume_adjacencies: vec![dummy_volume_adjacency(1)],
+            volume_adjacencies: vec![dummy_volume_adjacency_for(1, MeshSide::Right, &[0, 1, 2])],
             lower_dimensional_artifacts: Vec::new(),
             topology_assembly_report: None,
             region_ownership_report: None,
@@ -2383,7 +2364,7 @@ mod tests {
     #[test]
     fn simplification_rejects_out_of_range_volume_adjacency_separating_face() {
         let points = [p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
-        let mut adjacency = dummy_volume_adjacency(0);
+        let mut adjacency = dummy_volume_adjacency_for(0, MeshSide::Right, &[0, 1, 2]);
         adjacency.separating_face_cells = vec![1];
         let selected = ExactSelectedCellComplex {
             faces: vec![selected_face(0, &[0, 1, 2], &points)],
@@ -2412,7 +2393,7 @@ mod tests {
     #[test]
     fn simplification_rejects_volume_side_missing_from_separating_faces() {
         let points = [p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
-        let mut adjacency = dummy_volume_adjacency(0);
+        let mut adjacency = dummy_volume_adjacency_for(0, MeshSide::Right, &[0, 1, 2]);
         adjacency.separating_face_cells.clear();
         let selected = ExactSelectedCellComplex {
             faces: vec![selected_face(0, &[0, 1, 2], &points)],
@@ -2462,7 +2443,7 @@ mod tests {
         let simplified =
             simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
                 .unwrap();
-        let mesh = simplified.triangulate().unwrap();
+        let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
 
         assert_eq!(mesh.vertices().len(), 8);
         assert_eq!(mesh.triangles().len(), 8);
@@ -2492,7 +2473,7 @@ mod tests {
         let simplified =
             simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
                 .unwrap();
-        let mesh = simplified.triangulate().unwrap();
+        let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
 
         assert_eq!(mesh.vertices().len(), 8);
         assert_eq!(mesh.triangles().len(), 8);
@@ -2505,7 +2486,13 @@ mod tests {
         let selected = ExactSelectedCellComplex {
             faces: vec![
                 selected_face(0, &[0, 1, 2, 3], &outer),
-                selected_face(1, &[4, 5, 6, 7], &hole),
+                selected_face_with_carrier(
+                    MeshSide::Left,
+                    ExactCellRegionLabel::LeftBoundary,
+                    0,
+                    &[4, 5, 6, 7],
+                    &hole,
+                ),
             ],
             volume_regions: Vec::new(),
             volume_adjacencies: vec![
@@ -2536,7 +2523,7 @@ mod tests {
         let simplified =
             simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
                 .unwrap();
-        let mesh = simplified.triangulate().unwrap();
+        let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
 
         assert_eq!(mesh.vertices().len(), 8);
         assert_eq!(mesh.triangles().len(), 8);
@@ -2575,7 +2562,7 @@ mod tests {
             simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
                 .unwrap();
 
-        let mesh = simplified.triangulate().unwrap();
+        let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
         assert!(!mesh.triangles().is_empty());
         let area = mesh_projected_area2(&mesh, CoplanarProjection::Xy);
         assert!(
@@ -2591,7 +2578,7 @@ mod tests {
         simplified.faces[0].face.cell.boundary.pop();
 
         assert_eq!(
-            simplified.triangulate(),
+            triangulate_simplified_cell_complex(&simplified),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2631,7 +2618,7 @@ mod tests {
         let simplified =
             simplify_selected_cell_complex(selected, ExactRegularizationPolicy::RETAIN_ARTIFACTS)
                 .unwrap();
-        let mesh = simplified.triangulate().unwrap();
+        let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
 
         assert_eq!(mesh.triangles().len(), 2);
         assert_eq!(mesh.vertices().len(), 6);
@@ -2663,7 +2650,7 @@ mod tests {
             simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
                 .unwrap();
 
-        let mesh = simplified.triangulate().unwrap();
+        let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
         assert_eq!(mesh.vertices().len(), 8);
         assert_eq!(mesh.triangles().len(), 4);
     }
@@ -2694,7 +2681,7 @@ mod tests {
         let simplified =
             simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
                 .unwrap();
-        let mesh = simplified.triangulate().unwrap();
+        let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
 
         assert_eq!(mesh.vertices().len(), 12);
         assert_eq!(mesh.triangles().len(), 10);

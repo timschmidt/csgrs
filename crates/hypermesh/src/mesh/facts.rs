@@ -62,13 +62,6 @@ pub(crate) struct EdgeFacts {
     pub(crate) directed_uses: [usize; 2],
 }
 
-impl EdgeFacts {
-    /// Return whether the edge has exactly two opposing incident faces.
-    pub(crate) const fn is_closed_manifold_edge(&self) -> bool {
-        self.incident_faces == 2 && self.directed_uses[0] == 1 && self.directed_uses[1] == 1
-    }
-}
-
 /// Facts known for one triangle.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct TriangleFacts {

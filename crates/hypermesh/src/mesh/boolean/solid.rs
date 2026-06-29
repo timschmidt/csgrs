@@ -137,19 +137,10 @@ pub(crate) struct ConvexSolidPointClassification {
     /// Exact point/solid relation.
     pub(crate) relation: ConvexSolidPointRelation,
     /// Predicate certificates used by the halfspace tests for this point.
-    predicates: Vec<PredicateUse>,
+    pub(crate) predicates: Vec<PredicateUse>,
 }
 
 impl ConvexSolidPointClassification {
-    /// Build a point/solid classification from retained predicate evidence.
-    #[cfg(test)]
-    pub(crate) fn new(relation: ConvexSolidPointRelation, predicates: Vec<PredicateUse>) -> Self {
-        Self {
-            relation,
-            predicates,
-        }
-    }
-
     /// Validate point/solid classification report invariants.
     ///
     /// Non-certified point reports are produced before any face halfspace
@@ -211,30 +202,6 @@ pub(crate) struct ConvexSolidMeshClassification {
 }
 
 impl ConvexSolidMeshClassification {
-    /// Return whether every retained subject vertex is inside or on the container.
-    pub(crate) fn vertices_are_inside_or_boundary(&self) -> bool {
-        self.vertices.iter().all(|vertex| {
-            matches!(
-                vertex.relation,
-                ConvexSolidPointRelation::Inside | ConvexSolidPointRelation::Boundary
-            )
-        })
-    }
-
-    /// Return whether at least one retained subject vertex is on the container boundary.
-    pub(crate) fn vertices_touch_boundary(&self) -> bool {
-        self.vertices
-            .iter()
-            .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Boundary))
-    }
-
-    /// Return whether at least one retained subject vertex is outside the container.
-    pub(crate) fn vertices_include_outside(&self) -> bool {
-        self.vertices
-            .iter()
-            .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Outside))
-    }
-
     /// Return whether these two convex-solid reports certify boundary containment.
     ///
     /// This is retained exact predicate evidence: every subject vertex is
@@ -248,9 +215,20 @@ impl ConvexSolidMeshClassification {
     ) -> bool {
         self.solid_facts.is_certified_convex()
             && container_in_subject.solid_facts.is_certified_convex()
-            && self.vertices_are_inside_or_boundary()
-            && self.vertices_touch_boundary()
-            && container_in_subject.vertices_include_outside()
+            && self.vertices.iter().all(|vertex| {
+                matches!(
+                    vertex.relation,
+                    ConvexSolidPointRelation::Inside | ConvexSolidPointRelation::Boundary
+                )
+            })
+            && self
+                .vertices
+                .iter()
+                .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Boundary))
+            && container_in_subject
+                .vertices
+                .iter()
+                .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Outside))
     }
 
     /// Validate mesh/solid vertex-classification report invariants.
@@ -396,17 +374,17 @@ pub(crate) fn certify_convex_solid(mesh: &ExactMesh) -> ConvexSolidFacts {
 
     let mut predicates = Vec::new();
     let mut saw_unknown = false;
-    for triangle in mesh.triangles() {
-        let tri = triangle.0;
-        let a = mesh.vertices()[tri[0]].clone();
-        let b = mesh.vertices()[tri[1]].clone();
-        let c = mesh.vertices()[tri[2]].clone();
+    for face in &mesh.facts().faces {
+        let tri = face.triangle.vertices;
+        let a = &mesh.vertices()[tri[0]];
+        let b = &mesh.vertices()[tri[1]];
+        let c = &mesh.vertices()[tri[2]];
 
         for (vertex, point) in mesh.vertices().iter().enumerate() {
             if tri.contains(&vertex) {
                 continue;
             }
-            let report = orient3d_report(&a, &b, &c, &point.clone());
+            let report = orient3d_report(a, b, c, point);
             predicates.push(PredicateUse::from_certificate(report.certificate));
             let Some(side) = report.value().map(PlaneSide::from) else {
                 saw_unknown = true;
@@ -474,8 +452,7 @@ pub(crate) fn classify_mesh_vertices_against_convex_solid_report(
     let mut unknown = 0_usize;
     let mut vertices = Vec::with_capacity(subject.vertices().len());
     for vertex in subject.vertices() {
-        let classification =
-            classify_point_with_convex_facts_report(&vertex.clone(), solid, &facts);
+        let classification = classify_point_with_convex_facts_report(vertex, solid, &facts);
         match classification.relation {
             ConvexSolidPointRelation::Inside => inside += 1,
             ConvexSolidPointRelation::Boundary => boundary += 1,
@@ -523,13 +500,13 @@ fn classify_point_with_convex_facts_report(
     }
 
     let mut touches_boundary = false;
-    let mut predicates = Vec::with_capacity(solid.triangles().len());
-    for triangle in solid.triangles() {
-        let tri = triangle.0;
-        let a = solid.vertices()[tri[0]].clone();
-        let b = solid.vertices()[tri[1]].clone();
-        let c = solid.vertices()[tri[2]].clone();
-        let report = orient3d_report(&a, &b, &c, point);
+    let mut predicates = Vec::with_capacity(solid.facts().mesh.face_count);
+    for face in &solid.facts().faces {
+        let tri = face.triangle.vertices;
+        let a = &solid.vertices()[tri[0]];
+        let b = &solid.vertices()[tri[1]];
+        let c = &solid.vertices()[tri[2]];
+        let report = orient3d_report(a, b, c, point);
         predicates.push(PredicateUse::from_certificate(report.certificate));
         let Some(side) = report.value().map(PlaneSide::from) else {
             return ConvexSolidPointClassification {
@@ -559,14 +536,15 @@ fn classify_point_with_convex_facts_report(
 
 pub(crate) fn exact_mesh_orientation(mesh: &ExactMesh) -> ClosedMeshOrientation {
     let signed_volume = mesh
-        .triangles()
+        .facts()
+        .faces
         .iter()
-        .map(|triangle| {
-            let tri = triangle.0;
+        .map(|face| {
+            let tri = face.triangle.vertices;
             determinant_from_origin(
-                &mesh.vertices()[tri[0]].clone(),
-                &mesh.vertices()[tri[1]].clone(),
-                &mesh.vertices()[tri[2]].clone(),
+                &mesh.vertices()[tri[0]],
+                &mesh.vertices()[tri[1]],
+                &mesh.vertices()[tri[2]],
             )
         })
         .fold(Real::from(0), |sum, det| &sum + &det);
@@ -609,30 +587,29 @@ fn side_is_outside(orientation: ClosedMeshOrientation, side: PlaneSide) -> bool 
 mod tests {
     use super::*;
 
-    fn certified_facts() -> ConvexSolidFacts {
-        ConvexSolidFacts {
+    #[test]
+    fn convex_mesh_report_requires_complete_unknown_vertex_evidence() {
+        let solid_facts = ConvexSolidFacts {
             orientation: ClosedMeshOrientation::Positive,
             convexity: ConvexSolidClassification::Convex,
             predicates: Vec::new(),
-        }
-    }
-
-    fn point(relation: ConvexSolidPointRelation) -> ConvexSolidPointClassification {
-        ConvexSolidPointClassification {
-            relation,
+        };
+        let inside = ConvexSolidPointClassification {
+            relation: ConvexSolidPointRelation::Inside,
             predicates: Vec::new(),
-        }
-    }
-
-    #[test]
-    fn convex_mesh_report_requires_complete_unknown_vertex_evidence() {
-        let inside = point(ConvexSolidPointRelation::Inside);
-        let unknown = point(ConvexSolidPointRelation::Unknown);
-        let outside = point(ConvexSolidPointRelation::Outside);
+        };
+        let unknown = ConvexSolidPointClassification {
+            relation: ConvexSolidPointRelation::Unknown,
+            predicates: Vec::new(),
+        };
+        let outside = ConvexSolidPointClassification {
+            relation: ConvexSolidPointRelation::Outside,
+            predicates: Vec::new(),
+        };
 
         let report = ConvexSolidMeshClassification {
             relation: ConvexSolidMeshRelation::Unknown,
-            solid_facts: certified_facts(),
+            solid_facts: solid_facts.clone(),
             subject_vertex_count: 3,
             vertices: vec![inside.clone(), unknown.clone(), outside],
         };
@@ -640,7 +617,7 @@ mod tests {
 
         let incomplete = ConvexSolidMeshClassification {
             relation: ConvexSolidMeshRelation::Unknown,
-            solid_facts: certified_facts(),
+            solid_facts: solid_facts.clone(),
             subject_vertex_count: 3,
             vertices: vec![inside.clone(), unknown.clone()],
         };
@@ -651,7 +628,7 @@ mod tests {
 
         let missing_unknown_vertex = ConvexSolidMeshClassification {
             relation: ConvexSolidMeshRelation::Unknown,
-            solid_facts: certified_facts(),
+            solid_facts,
             subject_vertex_count: 3,
             vertices: vec![inside.clone(), inside.clone(), inside],
         };

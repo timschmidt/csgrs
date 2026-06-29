@@ -30,6 +30,7 @@ use super::super::graph::{
     FacePairEvents, FaceRegionBoundary, FaceSplitBoundaryNode, IntersectionEvent, MeshSide,
 };
 use super::super::triangle_edges;
+use super::point3_exact_equal;
 use super::region::{
     FaceRegionTriangulation, boundary_node_point, choose_region_projection, project_for_hypertri,
     project_for_predicate,
@@ -38,16 +39,6 @@ use hyperlimit::CoplanarProjection;
 use hyperreal::Real;
 
 impl ExactIntersectionGraph {
-    /// Triangulate every source face into exact constrained planar cells.
-    #[cfg(test)]
-    pub(crate) fn triangulate_face_cells_with_cdt(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> hypertri::Result<Option<(ExactFaceRegionPlan, Vec<FaceRegionTriangulation>)>> {
-        triangulate_all_face_cells_with_cdt(self, left, right)
-    }
-
     /// Validate a retained constrained face-cell triangulation by source replay.
     #[cfg(test)]
     pub(crate) fn validate_face_cell_cdt_against_sources(
@@ -103,7 +94,7 @@ pub(crate) fn triangulate_all_face_cells_with_cdt(
     if topology.unresolved_equalities != 0
         || topology.unresolved_vertex_lookups != 0
         || topology.unknown_orderings != 0
-        || !topology.validate().is_valid()
+        || !topology.validate().blockers.is_empty()
     {
         return Ok(None);
     }
@@ -113,10 +104,12 @@ pub(crate) fn triangulate_all_face_cells_with_cdt(
             reason: "face-cell coplanar overlap split construction failed",
         })?;
 
-    let mut regions = Vec::with_capacity(left.triangles().len() + right.triangles().len());
-    let mut triangulations = Vec::with_capacity(left.triangles().len() + right.triangles().len());
+    let mut regions =
+        Vec::with_capacity(left.facts().mesh.face_count + right.facts().mesh.face_count);
+    let mut triangulations =
+        Vec::with_capacity(left.facts().mesh.face_count + right.facts().mesh.face_count);
     for (side, mesh) in [(MeshSide::Left, left), (MeshSide::Right, right)] {
-        for face in 0..mesh.triangles().len() {
+        for face in 0..mesh.facts().mesh.face_count {
             let Some((region, triangulation)) = triangulate_one_face_cell_graph(
                 graph,
                 &topology,
@@ -153,7 +146,7 @@ pub(crate) fn validate_face_cell_cdt_against_sources(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> hypertri::Result<()> {
-    if !regions.validate(left, right).is_valid() {
+    if !regions.validate(left, right).blockers.is_empty() {
         return Err(hypertri::Error::InvalidInput {
             reason: "face-cell CDT region plan failed exact validation",
         });
@@ -191,7 +184,15 @@ fn triangulate_one_face_cell_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> hypertri::Result<Option<(FaceRegionBoundary, FaceRegionTriangulation)>> {
-    let source_triangle = mesh.triangles()[face].0;
+    let source_triangle = mesh
+        .facts()
+        .faces
+        .get(face)
+        .ok_or(hypertri::Error::InvalidInput {
+            reason: "face cell references a missing source face",
+        })?
+        .triangle
+        .vertices;
     let projection = choose_region_projection(mesh, face)?;
     let mut boundary = Vec::new();
     let mut interior_constraints = Vec::new();
@@ -537,7 +538,7 @@ fn append_coplanar_face_cell_constraints(
                 {
                     continue;
                 }
-                if points_equal(&pair[0].point, &pair[1].point) != Some(false) {
+                if point3_exact_equal(&pair[0].point, &pair[1].point) != Some(false) {
                     continue;
                 }
                 let from = push_cell_node(
@@ -624,13 +625,15 @@ fn seed_source_boundary_vertices_on_coplanar_opposite_edges(
         MeshSide::Left => MeshSide::Right,
         MeshSide::Right => MeshSide::Left,
     };
-    let source_triangle =
-        source_mesh
-            .triangles()
-            .get(face)
-            .ok_or(hypertri::Error::InvalidInput {
-                reason: "face-cell coplanar split graph references a missing source face",
-            })?;
+    let source_triangle = source_mesh
+        .facts()
+        .faces
+        .get(face)
+        .ok_or(hypertri::Error::InvalidInput {
+            reason: "face-cell coplanar split graph references a missing source face",
+        })?
+        .triangle
+        .vertices;
     let projection = choose_region_projection(source_mesh, face)?;
 
     let edge_keys = edges.iter().map(|edge| edge.edge).collect::<Vec<_>>();
@@ -639,7 +642,7 @@ fn seed_source_boundary_vertices_on_coplanar_opposite_edges(
         let end = vertex_point_for_side(opposite_side, edge[1], left, right)?;
         let projected_start = project_for_predicate(&start, projection);
         let projected_end = project_for_predicate(&end, projection);
-        for &vertex in &source_triangle.0 {
+        for vertex in source_triangle {
             let point = source_mesh
                 .vertices()
                 .get(vertex)
@@ -691,15 +694,17 @@ fn seed_source_boundary_edge_crossings_on_coplanar_opposite_edges(
         MeshSide::Left => MeshSide::Right,
         MeshSide::Right => MeshSide::Left,
     };
-    let source_triangle =
-        source_mesh
-            .triangles()
-            .get(face)
-            .ok_or(hypertri::Error::InvalidInput {
-                reason: "face-cell coplanar split graph references a missing source face",
-            })?;
+    let source_triangle = source_mesh
+        .facts()
+        .faces
+        .get(face)
+        .ok_or(hypertri::Error::InvalidInput {
+            reason: "face-cell coplanar split graph references a missing source face",
+        })?
+        .triangle
+        .vertices;
     let projection = choose_region_projection(source_mesh, face)?;
-    let source_edges = triangle_edges(source_triangle.0);
+    let source_edges = triangle_edges(source_triangle);
 
     let edge_keys = edges.iter().map(|edge| edge.edge).collect::<Vec<_>>();
     for edge in edge_keys {
@@ -788,12 +793,15 @@ fn coplanar_opposite_edges(
         MeshSide::Right => (left, left_face),
     };
     let triangle = mesh
-        .triangles()
+        .facts()
+        .faces
         .get(face)
         .ok_or(hypertri::Error::InvalidInput {
             reason: "face-cell coplanar split graph references a missing opposite face",
-        })?;
-    Ok(triangle_edges(triangle.0)
+        })?
+        .triangle
+        .vertices;
+    Ok(triangle_edges(triangle)
         .into_iter()
         .map(|edge| CoplanarCellEdge {
             edge,
@@ -845,7 +853,7 @@ fn push_coplanar_cell_edge_point(
     if entry
         .points
         .iter()
-        .any(|seen| points_equal(&seen.point, &point) == Some(true))
+        .any(|seen| point3_exact_equal(&seen.point, &point) == Some(true))
     {
         return Ok(());
     }
@@ -885,7 +893,7 @@ fn dedup_coplanar_cell_edge_points(
     for point in points.drain(..) {
         if deduped
             .iter()
-            .any(|seen| points_equal(&seen.point, &point.point) == Some(true))
+            .any(|seen| point3_exact_equal(&seen.point, &point.point) == Some(true))
         {
             continue;
         }
@@ -958,21 +966,29 @@ fn lift_projected_face_cell_point(
     projection: CoplanarProjection,
     point: &hypertri::ExactPoint,
 ) -> hypertri::Result<Point3> {
-    let triangle = mesh.triangles()[face].0;
-    let a = mesh.vertices()[triangle[0]].clone();
-    let b = mesh.vertices()[triangle[1]].clone();
-    let c = mesh.vertices()[triangle[2]].clone();
-    let abx = sub_real(&b.x, &a.x);
-    let aby = sub_real(&b.y, &a.y);
-    let abz = sub_real(&b.z, &a.z);
-    let acx = sub_real(&c.x, &a.x);
-    let acy = sub_real(&c.y, &a.y);
-    let acz = sub_real(&c.z, &a.z);
-    let normal_x = sub_real(&mul_real(&aby, &acz), &mul_real(&abz, &acy));
-    let normal_y = sub_real(&mul_real(&abz, &acx), &mul_real(&abx, &acz));
-    let normal_z = sub_real(&mul_real(&abx, &acy), &mul_real(&aby, &acx));
-    let plane_xy = mul_real(&normal_x, &a.x) + &mul_real(&normal_y, &a.y);
-    let plane_value = plane_xy + &mul_real(&normal_z, &a.z);
+    let triangle = mesh
+        .facts()
+        .faces
+        .get(face)
+        .ok_or(hypertri::Error::InvalidInput {
+            reason: "face cell lift references a missing source face",
+        })?
+        .triangle
+        .vertices;
+    let a = &mesh.vertices()[triangle[0]];
+    let b = &mesh.vertices()[triangle[1]];
+    let c = &mesh.vertices()[triangle[2]];
+    let abx = &b.x - &a.x;
+    let aby = &b.y - &a.y;
+    let abz = &b.z - &a.z;
+    let acx = &c.x - &a.x;
+    let acy = &c.y - &a.y;
+    let acz = &c.z - &a.z;
+    let normal_x = &(&aby * &acz) - &(&abz * &acy);
+    let normal_y = &(&abz * &acx) - &(&abx * &acz);
+    let normal_z = &(&abx * &acy) - &(&aby * &acx);
+    let plane_xy = &normal_x * &a.x + &(&normal_y * &a.y);
+    let plane_value = plane_xy + &(&normal_z * &a.z);
 
     // The projection was selected by an exact nonzero projected area, so the
     // dropped normal component is the denominator that recovers the omitted
@@ -982,10 +998,7 @@ fn lift_projected_face_cell_point(
         CoplanarProjection::Xy => {
             let x = point.x.clone();
             let y = point.y.clone();
-            let numerator = sub_real(
-                &sub_real(&plane_value, &mul_real(&normal_x, &x)),
-                &mul_real(&normal_y, &y),
-            );
+            let numerator = &(&plane_value - &(&normal_x * &x)) - &(&normal_y * &y);
             let z = div_real(
                 numerator,
                 &normal_z,
@@ -996,10 +1009,7 @@ fn lift_projected_face_cell_point(
         CoplanarProjection::Xz => {
             let x = point.x.clone();
             let z = point.y.clone();
-            let numerator = sub_real(
-                &sub_real(&plane_value, &mul_real(&normal_x, &x)),
-                &mul_real(&normal_z, &z),
-            );
+            let numerator = &(&plane_value - &(&normal_x * &x)) - &(&normal_z * &z);
             let y = div_real(
                 numerator,
                 &normal_y,
@@ -1010,10 +1020,7 @@ fn lift_projected_face_cell_point(
         CoplanarProjection::Yz => {
             let y = point.x.clone();
             let z = point.y.clone();
-            let numerator = sub_real(
-                &sub_real(&plane_value, &mul_real(&normal_y, &y)),
-                &mul_real(&normal_z, &z),
-            );
+            let numerator = &(&plane_value - &(&normal_y * &y)) - &(&normal_z * &z);
             let x = div_real(
                 numerator,
                 &normal_x,
@@ -1391,14 +1398,6 @@ fn predicate_point2(point: &hypertri::ExactPoint) -> Point2 {
     Point2::new(point.x.clone(), point.y.clone())
 }
 
-fn sub_real(left: &Real, right: &Real) -> Real {
-    left.clone() - right
-}
-
-fn mul_real(left: &Real, right: &Real) -> Real {
-    left.clone() * right
-}
-
 fn div_real(numerator: Real, denominator: &Real, reason: &'static str) -> hypertri::Result<Real> {
     (numerator / denominator).map_err(|_| hypertri::Error::InvalidInput { reason })
 }
@@ -1436,7 +1435,7 @@ fn push_cell_node(
     node: FaceSplitBoundaryNode,
 ) -> hypertri::Result<usize> {
     for (index, existing) in nodes.iter().enumerate() {
-        match points_equal(boundary_node_point(existing), boundary_node_point(&node)) {
+        match point3_exact_equal(boundary_node_point(existing), boundary_node_point(&node)) {
             Some(true) => return Ok(index),
             Some(false) => {}
             None => {
@@ -1484,24 +1483,24 @@ fn append_subdivided_source_boundary_constraints(
         for (index, point) in vertices.iter().enumerate() {
             if point_on_closed_segment(point, &vertices[start], &vertices[end])? {
                 let zero = Real::from(0);
-                let dx = sub_real(&vertices[end].x, &vertices[start].x);
+                let dx = &vertices[end].x - &vertices[start].x;
                 let parameter = if compare_ordering(&dx, &zero, "face-cell boundary dx")?
                     != Ordering::Equal
                 {
                     div_real(
-                        sub_real(&point.x, &vertices[start].x),
+                        &point.x - &vertices[start].x,
                         &dx,
                         "face-cell boundary x parameter denominator is zero",
                     )?
                 } else {
-                    let dy = sub_real(&vertices[end].y, &vertices[start].y);
+                    let dy = &vertices[end].y - &vertices[start].y;
                     if compare_ordering(&dy, &zero, "face-cell boundary dy")? == Ordering::Equal {
                         return Err(hypertri::Error::InvalidInput {
                             reason: "face-cell source boundary has duplicate projected endpoints",
                         });
                     }
                     div_real(
-                        sub_real(&point.y, &vertices[start].y),
+                        &point.y - &vertices[start].y,
                         &dy,
                         "face-cell boundary y parameter denominator is zero",
                     )?
@@ -1557,30 +1556,30 @@ fn classify_point_on_mesh_face(
     point: &Point3,
 ) -> hypertri::Result<TriangleLocation> {
     let projection = choose_region_projection(mesh, face)?;
-    let triangle = mesh.triangles()[face].0;
+    let triangle = mesh
+        .facts()
+        .faces
+        .get(face)
+        .ok_or(hypertri::Error::InvalidInput {
+            reason: "face cell point classification references a missing source face",
+        })?
+        .triangle
+        .vertices;
     let vertices = [
-        mesh.vertices()[triangle[0]].clone(),
-        mesh.vertices()[triangle[1]].clone(),
-        mesh.vertices()[triangle[2]].clone(),
+        &mesh.vertices()[triangle[0]],
+        &mesh.vertices()[triangle[1]],
+        &mesh.vertices()[triangle[2]],
     ];
     classify_point_triangle(
-        &project_for_predicate(&vertices[0], projection),
-        &project_for_predicate(&vertices[1], projection),
-        &project_for_predicate(&vertices[2], projection),
+        &project_for_predicate(vertices[0], projection),
+        &project_for_predicate(vertices[1], projection),
+        &project_for_predicate(vertices[2], projection),
         &project_for_predicate(point, projection),
     )
     .value()
     .ok_or(hypertri::Error::PredicateUndecided {
         predicate: "face_cell_pair_endpoint_containment",
     })
-}
-
-fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
-    Some(
-        compare_reals(&left.x, &right.x).value()? == std::cmp::Ordering::Equal
-            && compare_reals(&left.y, &right.y).value()? == std::cmp::Ordering::Equal
-            && compare_reals(&left.z, &right.z).value()? == std::cmp::Ordering::Equal,
-    )
 }
 
 #[cfg(test)]
@@ -1604,6 +1603,18 @@ mod tests {
 
     fn p3(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    fn retained_source_boundary(mesh: &ExactMesh) -> Vec<FaceSplitBoundaryNode> {
+        mesh.facts().faces[0]
+            .triangle
+            .vertices
+            .into_iter()
+            .map(|vertex| FaceSplitBoundaryNode::OriginalVertex {
+                vertex,
+                point: mesh.vertices()[vertex].clone(),
+            })
+            .collect()
     }
 
     fn assert_point(point: &Point3, x: i64, y: i64, z: i64) {
@@ -1672,14 +1683,7 @@ mod tests {
                 vertex_overlaps: Vec::new(),
             }],
         };
-        let mut boundary = left.triangles()[0]
-            .0
-            .into_iter()
-            .map(|vertex| FaceSplitBoundaryNode::OriginalVertex {
-                vertex,
-                point: left.vertices()[vertex].clone(),
-            })
-            .collect::<Vec<_>>();
+        let mut boundary = retained_source_boundary(&left);
         let mut constraints = Vec::new();
         let mut unique_constraints = BTreeSet::new();
 
@@ -1721,14 +1725,7 @@ mod tests {
                 vertex_overlaps: Vec::new(),
             }],
         };
-        let mut boundary = left.triangles()[0]
-            .0
-            .into_iter()
-            .map(|vertex| FaceSplitBoundaryNode::OriginalVertex {
-                vertex,
-                point: left.vertices()[vertex].clone(),
-            })
-            .collect::<Vec<_>>();
+        let mut boundary = retained_source_boundary(&left);
         let mut constraints = Vec::new();
         let mut unique_constraints = BTreeSet::new();
 
@@ -1766,14 +1763,7 @@ mod tests {
                 vertex_overlaps: Vec::new(),
             }],
         };
-        let mut boundary = left.triangles()[0]
-            .0
-            .into_iter()
-            .map(|vertex| FaceSplitBoundaryNode::OriginalVertex {
-                vertex,
-                point: left.vertices()[vertex].clone(),
-            })
-            .collect::<Vec<_>>();
+        let mut boundary = retained_source_boundary(&left);
         let mut constraints = Vec::new();
         let mut unique_constraints = BTreeSet::new();
 
@@ -1791,18 +1781,20 @@ mod tests {
 
         assert_eq!(constraints.len(), 1);
         assert!(constraints.iter().any(|constraint| {
-            points_equal(
+            point3_exact_equal(
                 boundary_node_point(&boundary[constraint.from]),
                 &p3(0, 1, 0),
             ) == Some(true)
-                && points_equal(boundary_node_point(&boundary[constraint.to]), &p3(1, 0, 0))
+                && point3_exact_equal(boundary_node_point(&boundary[constraint.to]), &p3(1, 0, 0))
                     == Some(true)
-                || points_equal(
+                || point3_exact_equal(
                     boundary_node_point(&boundary[constraint.from]),
                     &p3(1, 0, 0),
                 ) == Some(true)
-                    && points_equal(boundary_node_point(&boundary[constraint.to]), &p3(0, 1, 0))
-                        == Some(true)
+                    && point3_exact_equal(
+                        boundary_node_point(&boundary[constraint.to]),
+                        &p3(0, 1, 0),
+                    ) == Some(true)
         }));
     }
 }

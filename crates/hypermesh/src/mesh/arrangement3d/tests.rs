@@ -1,4 +1,7 @@
 use super::*;
+use crate::mesh::arrangement3d::cell_complex::simplify::{
+    simplify_selected_cell_complex, triangulate_simplified_cell_complex,
+};
 use crate::mesh::arrangement3d::cell_complex::{
     ExactRegionOwnershipStatus, arrangement_cell_complex_labeling_policy,
 };
@@ -205,13 +208,13 @@ fn arrangement_from_retained_graph_matches_mesh_construction() {
     let right = tetrahedron_i64([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]);
     let graph = crate::mesh::graph::build_unvalidated_intersection_graph(&left, &right).unwrap();
 
-    let from_meshes = ExactArrangement::from_meshes_with_policy(
+    let from_meshes = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
     )
     .unwrap();
-    let from_graph = ExactArrangement::from_intersection_graph_with_policy(
+    let from_graph = ExactArrangement3d::from_intersection_graph_with_policy(
         graph,
         &left,
         &right,
@@ -362,12 +365,10 @@ fn shell_replay_triangulates_grouped_hole_carrier_loops() {
         ClosedMeshOrientation::Unknown
     );
     assert!(
-        mesh.vertices().iter().all(|point| point3_equal(
+        mesh.vertices().iter().all(|point| point3_exact_equal(
             point,
             &Point3::new(Real::from(2), Real::from(2), Real::from(1))
-        )
-        .value()
-            == Some(false)),
+        ) == Some(false)),
         "shell replay must preserve annular cap holes instead of fan-filling them"
     );
 }
@@ -377,7 +378,7 @@ fn disjoint_tetrahedra_build_complete_arrangement_cells() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
 
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -500,7 +501,7 @@ fn disjoint_tetrahedra_build_complete_arrangement_cells() {
 fn volume_graph_validation_rejects_missing_shell_adjacency() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -530,7 +531,7 @@ fn volume_graph_validation_rejects_missing_shell_adjacency() {
 fn arrangement_validate_rejects_missing_volume_adjacency() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let mut arrangement = ExactArrangement::from_meshes_with_policy(
+    let mut arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -557,7 +558,7 @@ fn arrangement_validate_rejects_missing_volume_adjacency() {
 fn arrangement_validate_rejects_missing_unblocked_topology() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let mut arrangement = ExactArrangement::from_meshes_with_policy(
+    let mut arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -577,7 +578,7 @@ fn arrangement_validate_rejects_missing_unblocked_topology() {
 fn volume_graph_validation_rejects_relabelled_source_sides() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -607,7 +608,7 @@ fn volume_graph_validation_rejects_relabelled_source_sides() {
 fn volume_graph_validation_rejects_extra_boundary_shell() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -637,7 +638,7 @@ fn volume_graph_validation_rejects_extra_boundary_shell() {
 fn volume_graph_validation_rejects_duplicate_separating_face() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -668,7 +669,7 @@ fn volume_graph_validation_rejects_duplicate_separating_face() {
 fn volume_graph_validation_rejects_duplicate_boundary_shell() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -698,7 +699,7 @@ fn volume_graph_validation_rejects_duplicate_boundary_shell() {
 fn label_regions_rejects_relabelled_volume_source_sides() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let mut arrangement = ExactArrangement::from_meshes_with_policy(
+    let mut arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -718,7 +719,7 @@ fn label_regions_rejects_relabelled_volume_source_sides() {
 fn label_regions_rejects_stale_volume_boundary_shells() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let mut arrangement = ExactArrangement::from_meshes_with_policy(
+    let mut arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -863,7 +864,7 @@ fn shell_containment_classifier_requires_convex_certified_container() {
 fn shell_region_witnesses_include_exact_face_interior_points() {
     let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
     let right = tetrahedron_i64([10, 0, 0], [16, 0, 0], [10, 6, 0], [10, 0, 6]);
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -881,7 +882,7 @@ fn shell_region_witnesses_include_exact_face_interior_points() {
     assert!(witnesses.iter().any(|witness| {
         boundary_points
             .iter()
-            .all(|boundary| point3_equal(witness, boundary).value() == Some(false))
+            .all(|boundary| point3_exact_equal(witness, boundary) == Some(false))
     }));
 }
 
@@ -940,7 +941,7 @@ fn nested_tetrahedra_build_nested_volume_regions() {
     let left = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
     let right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
 
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -1038,7 +1039,7 @@ fn nested_tetrahedra_build_nested_volume_regions() {
 fn region_ownership_report_certifies_volume_resolved_nested_solids() {
     let left = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
     let right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -1075,7 +1076,7 @@ fn region_ownership_report_certifies_volume_resolved_nested_solids() {
         .unwrap();
 
     assert_eq!(report.status, ExactRegionOwnershipStatus::VolumeResolved);
-    assert!(report.status.is_resolved());
+    assert!(report.resolves_operation_selection(ExactBooleanOperation::Union));
     assert_eq!(report.freshness, ExactLabeledCellComplexFreshness::Current);
     assert!(report.blockers.is_empty(), "{:?}", report.blockers);
     let (face_cell_boundary_nodes, face_cell_boundary_points) =
@@ -1109,7 +1110,7 @@ fn region_ownership_report_certifies_volume_resolved_nested_solids() {
 fn region_ownership_report_retains_blocked_open_shell_reason() {
     let left = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
     let right = open_triangle_i64([4, 0, 0], [6, 0, 0], [4, 2, 0]);
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -1125,7 +1126,7 @@ fn region_ownership_report_retains_blocked_open_shell_reason() {
         .unwrap();
 
     assert_eq!(report.status, ExactRegionOwnershipStatus::Blocked);
-    assert!(!report.status.is_resolved());
+    assert!(!report.resolves_operation_selection(ExactBooleanOperation::Union));
     assert_eq!(report.freshness, ExactLabeledCellComplexFreshness::Current);
     assert!(
         report
@@ -1145,7 +1146,7 @@ fn coincident_closed_shell_builds_mixed_source_volume_region() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = left.clone();
 
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -1179,12 +1180,18 @@ fn coincident_closed_shell_builds_mixed_source_volume_region() {
         .unwrap();
     assert_eq!(union.selected_volume_regions, vec![1]);
     assert_eq!(union.selected_faces.len(), 4);
-    let simplified_union = union
-        .simplify_exact_with_policy(ExactRegularizationPolicy::REGULARIZED_SOLID)
-        .unwrap();
+    let simplified_union =
+        simplify_selected_cell_complex(union, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap();
     assert_eq!(simplified_union.faces.len(), 4);
     assert_eq!(simplified_union.duplicate_cells_removed, 0);
-    assert_eq!(simplified_union.triangulate().unwrap().triangles().len(), 4);
+    assert_eq!(
+        triangulate_simplified_cell_complex(&simplified_union)
+            .unwrap()
+            .triangles()
+            .len(),
+        4
+    );
 
     let intersection = arrangement
         .clone()
@@ -1197,14 +1204,13 @@ fn coincident_closed_shell_builds_mixed_source_volume_region() {
         .unwrap();
     assert_eq!(intersection.selected_volume_regions, vec![1]);
     assert_eq!(intersection.selected_faces.len(), 4);
-    let simplified_intersection = intersection
-        .simplify_exact_with_policy(ExactRegularizationPolicy::REGULARIZED_SOLID)
-        .unwrap();
+    let simplified_intersection =
+        simplify_selected_cell_complex(intersection, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap();
     assert_eq!(simplified_intersection.faces.len(), 4);
     assert_eq!(simplified_intersection.duplicate_cells_removed, 0);
     assert_eq!(
-        simplified_intersection
-            .triangulate()
+        triangulate_simplified_cell_complex(&simplified_intersection)
             .unwrap()
             .triangles()
             .len(),
@@ -1231,7 +1237,7 @@ fn nested_tetrahedron_with_two_inner_shells_builds_volume_tree() {
         [[5, 1, 1], [6, 1, 1], [5, 2, 1], [5, 1, 2]],
     ]);
 
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -1294,7 +1300,7 @@ fn same_source_reversed_nested_shell_builds_cavity_volume() {
     );
     let right = tetrahedron_i64([30, 0, 0], [31, 0, 0], [30, 1, 0], [30, 0, 1]);
 
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -1358,7 +1364,7 @@ fn same_source_same_orientation_nested_shell_reports_nonmanifold_volume() {
     ]);
     let right = tetrahedron_i64([30, 0, 0], [31, 0, 0], [30, 1, 0], [30, 0, 1]);
 
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -1388,7 +1394,7 @@ fn same_source_same_orientation_nested_shell_reports_nonmanifold_volume() {
 fn arrangement_pipeline_labels_selects_and_simplifies() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -1437,9 +1443,9 @@ fn arrangement_pipeline_labels_selects_and_simplifies() {
         .unwrap();
     assert_eq!(difference.selected_volume_regions, vec![1]);
 
-    let simplified = selected
-        .simplify_exact_with_policy(ExactRegularizationPolicy::REGULARIZED_SOLID)
-        .unwrap();
+    let simplified =
+        simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap();
     assert_eq!(simplified.faces.len(), 8);
     assert_eq!(simplified.duplicate_cells_removed, 0);
     assert!(
@@ -1447,7 +1453,7 @@ fn arrangement_pipeline_labels_selects_and_simplifies() {
             .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .is_ok()
     );
-    let mesh = simplified.triangulate().unwrap();
+    let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
     assert_eq!(mesh.vertices().len(), 8);
     assert_eq!(mesh.triangles().len(), 8);
 }
@@ -1457,7 +1463,7 @@ fn regularized_solid_arrangement_blocks_open_shell_regions() {
     let left = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
     let right = open_triangle_i64([4, 0, 0], [6, 0, 0], [4, 2, 0]);
 
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -1527,7 +1533,7 @@ fn coplanar_overlapping_triangles_retain_carrier_plane_overlay() {
     let left = open_triangle_i64([0, 0, 0], [4, 0, 0], [0, 4, 0]);
     let right = open_triangle_i64([1, 1, 0], [5, 1, 0], [1, 5, 0]);
 
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::RETAIN_ARTIFACTS,
@@ -1578,7 +1584,7 @@ fn selected_regions_materialize_open_coplanar_overlap_without_winding_blocker() 
     let left = open_triangle_i64([0, 0, 0], [4, 0, 0], [0, 4, 0]);
     let right = open_triangle_i64([1, 1, 0], [5, 1, 0], [1, 5, 0]);
 
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::RETAIN_ARTIFACTS,
@@ -1611,11 +1617,11 @@ fn selected_regions_materialize_open_coplanar_overlap_without_winding_blocker() 
             .all(|face| selected.faces[*face].cell.carrier.side == MeshSide::Left)
     );
 
-    let simplified = selected
-        .simplify_exact_with_policy(ExactRegularizationPolicy::REGULARIZED_SOLID)
-        .unwrap();
+    let simplified =
+        simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap();
     assert!(simplified.blockers.is_empty(), "{:?}", simplified.blockers);
-    let mesh = simplified.triangulate().unwrap();
+    let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
     assert!(!mesh.triangles().is_empty());
     assert!(
         mesh.facts().mesh.boundary_edges > 0,
@@ -1629,7 +1635,7 @@ fn blocking_policy_reports_open_coplanar_overlap_winding_blockers() {
     let left = open_triangle_i64([0, 0, 0], [4, 0, 0], [0, 4, 0]);
     let right = open_triangle_i64([1, 1, 0], [5, 1, 0], [1, 5, 0]);
 
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -1650,7 +1656,7 @@ fn retained_artifact_policy_keeps_open_sheet_complex_without_regularization_bloc
     let left = open_triangle_i64([0, 0, 0], [4, 0, 0], [0, 4, 0]);
     let right = open_triangle_i64([1, -1, -1], [1, 3, 1], [1, 3, -1]);
 
-    let retained = ExactArrangement::from_meshes_with_policy(
+    let retained = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::RETAIN_ARTIFACTS,
@@ -1672,7 +1678,7 @@ fn retained_artifact_policy_keeps_open_sheet_complex_without_regularization_bloc
     assert!(regions[0].boundary_edges > 0);
     assert!(regions[0].non_manifold_edges > 0);
 
-    let regularized = ExactArrangement::from_meshes_with_policy(
+    let regularized = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -1699,7 +1705,7 @@ fn crossing_triangles_build_face_plane_arrangement_cells() {
     let left = open_triangle_i64([0, 0, 0], [4, 0, 0], [0, 4, 0]);
     let right = open_triangle_i64([1, -1, -1], [1, 3, 1], [1, 3, -1]);
 
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::RETAIN_ARTIFACTS,
@@ -1745,7 +1751,7 @@ fn lower_dimensional_policy_controls_coplanar_touch_artifacts() {
     let left = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
     let right = open_triangle_i64([2, 0, 0], [4, 0, 0], [2, 2, 0]);
 
-    let dropped = ExactArrangement::from_meshes_with_policy(
+    let dropped = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -1753,7 +1759,7 @@ fn lower_dimensional_policy_controls_coplanar_touch_artifacts() {
     .unwrap();
     assert!(dropped.lower_dimensional_artifacts.is_empty());
 
-    let retained = ExactArrangement::from_meshes_with_policy(
+    let retained = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::RETAIN_ARTIFACTS,
@@ -1869,7 +1875,7 @@ fn lower_dimensional_policy_retains_noncoplanar_point_touch() {
     let left = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
     let right = open_triangle_i64([0, 0, 0], [0, -2, 0], [0, 0, 2]);
 
-    let retained = ExactArrangement::from_meshes_with_policy(
+    let retained = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::RETAIN_ARTIFACTS,
@@ -1911,12 +1917,12 @@ fn lower_dimensional_policy_ignores_endpoint_on_plane_outside_triangle() {
                     relation: hyperlimit::SegmentPlaneRelation::EndpointOnPlane,
                     point: Some(point),
                     ..
-                } if point3_equal(point, &outside_endpoint).value() == Some(true)
+                } if point3_exact_equal(point, &outside_endpoint) == Some(true)
             )),
         "{graph:?}"
     );
 
-    let retained = ExactArrangement::from_meshes_with_policy(
+    let retained = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::RETAIN_ARTIFACTS,
@@ -1930,7 +1936,7 @@ fn lower_dimensional_policy_ignores_endpoint_on_plane_outside_triangle() {
             .all(|artifact| !matches!(
                 artifact,
                 ArrangementLowerDimensionalArtifact::PointContact { point, .. }
-                    if point3_equal(point, &outside_endpoint).value() == Some(true)
+                    if point3_exact_equal(point, &outside_endpoint) == Some(true)
             )),
         "{:?}",
         retained.lower_dimensional_artifacts
@@ -1942,7 +1948,7 @@ fn lower_dimensional_policy_retains_noncoplanar_edge_touch() {
     let left = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
     let right = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 0, 2]);
 
-    let dropped = ExactArrangement::from_meshes_with_policy(
+    let dropped = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -1950,7 +1956,7 @@ fn lower_dimensional_policy_retains_noncoplanar_edge_touch() {
     .unwrap();
     assert!(dropped.lower_dimensional_artifacts.is_empty());
 
-    let retained = ExactArrangement::from_meshes_with_policy(
+    let retained = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::RETAIN_ARTIFACTS,
@@ -2014,7 +2020,7 @@ fn lower_dimensional_policy_retains_noncoplanar_edge_touch() {
 fn topology_assembly_report_certifies_current_arrangement_bridge() {
     let left = tetrahedron_i64([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
     let right = tetrahedron_i64([1, 0, 0], [3, 0, 0], [1, 2, 0], [1, 0, 2]);
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -2028,8 +2034,6 @@ fn topology_assembly_report_certifies_current_arrangement_bridge() {
     );
 
     assert_eq!(report.status, ExactTopologyAssemblyStatus::Complete);
-    assert!(report.status.is_complete());
-    assert!(report.is_complete());
     assert_eq!(report.freshness, ExactArrangementFreshness::Current);
     assert!(report.blockers.is_empty(), "{:?}", report.blockers);
     assert_eq!(report.graph_face_pairs, arrangement.graph.face_pairs.len());
@@ -2094,7 +2098,7 @@ fn topology_assembly_report_certifies_current_arrangement_bridge() {
 fn topology_assembly_report_retains_blocked_bridge_reason() {
     let left = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
     let right = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 0, 2]);
-    let arrangement = ExactArrangement::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -2108,7 +2112,6 @@ fn topology_assembly_report_retains_blocked_bridge_reason() {
     );
 
     assert_eq!(report.freshness, ExactArrangementFreshness::Current);
-    assert!(!report.is_complete());
     assert_eq!(
         report.status,
         ExactTopologyAssemblyStatus::ArrangementBlocked
@@ -2129,7 +2132,7 @@ fn lower_dimensional_policy_retains_noncoplanar_partial_edge_touch() {
     let left = open_triangle_i64([-1, 0, 0], [3, 0, 0], [-1, 2, 0]);
     let right = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 0, 2]);
 
-    let retained = ExactArrangement::from_meshes_with_policy(
+    let retained = ExactArrangement3d::from_meshes_with_policy(
         &left,
         &right,
         ExactRegularizationPolicy::RETAIN_ARTIFACTS,
@@ -2145,8 +2148,8 @@ fn lower_dimensional_policy_retains_noncoplanar_partial_edge_touch() {
             .any(|artifact| matches!(
                 artifact,
                 ArrangementLowerDimensionalArtifact::EdgeContact { endpoints, .. }
-                    if point3_equal(&endpoints[0], &expected_start).value() == Some(true)
-                        && point3_equal(&endpoints[1], &expected_end).value() == Some(true)
+                    if point3_exact_equal(&endpoints[0], &expected_start) == Some(true)
+                        && point3_exact_equal(&endpoints[1], &expected_end) == Some(true)
             )),
         "{:?}",
         retained.lower_dimensional_artifacts

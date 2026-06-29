@@ -52,7 +52,8 @@ pub(crate) fn group_exact_coplanar_loops(
             .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
         let mut group_index = None;
         for (index, group) in groups.iter().enumerate() {
-            if point_loop_is_exactly_coplanar(&boundary, group.carrier_refs())? {
+            let carrier_refs = (&group.carrier[0], &group.carrier[1], &group.carrier[2]);
+            if point_loop_is_exactly_coplanar(&boundary, carrier_refs)? {
                 group_index = Some(index);
                 break;
             }
@@ -70,12 +71,6 @@ pub(crate) fn group_exact_coplanar_loops(
         });
     }
     Ok(groups.into_iter().map(|group| group.loops).collect())
-}
-
-impl ExactCoplanarLoopGroup {
-    fn carrier_refs(&self) -> (&Point3, &Point3, &Point3) {
-        (&self.carrier[0], &self.carrier[1], &self.carrier[2])
-    }
 }
 
 fn exact_non_collinear_point_loop_carrier(points: &[Point3]) -> Option<[Point3; 3]> {
@@ -250,10 +245,8 @@ fn validate_loop_topology(loops: &[ProjectedFaceLoop]) -> Result<(), ExactArrang
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             }
             if loops[left_index].depth == loops[right_index].depth {
-                validate_same_depth_loops_are_area_disjoint(
-                    &loops[left_index],
-                    &loops[right_index],
-                )?;
+                validate_same_depth_loop_witness_outside(&loops[left_index], &loops[right_index])?;
+                validate_same_depth_loop_witness_outside(&loops[right_index], &loops[left_index])?;
             }
         }
     }
@@ -289,14 +282,6 @@ fn validate_loop_boundaries_do_not_cross_or_overlap(
         }
     }
     Ok(endpoint_touching)
-}
-
-fn validate_same_depth_loops_are_area_disjoint(
-    left: &ProjectedFaceLoop,
-    right: &ProjectedFaceLoop,
-) -> Result<(), ExactArrangementBlocker> {
-    validate_same_depth_loop_witness_outside(left, right)?;
-    validate_same_depth_loop_witness_outside(right, left)
 }
 
 fn validate_same_depth_loop_witness_outside(
@@ -629,10 +614,10 @@ fn triangulate_projected_loop_indices_via_arrangement(
         if loops[loop_index].projection != projection {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
-        rings.push(ExactArrangement2dRegionRing::new(
-            ExactArrangement2dRegion::Left,
-            loops[loop_index].projected.clone(),
-        ));
+        rings.push(ExactArrangement2dRegionRing {
+            region: ExactArrangement2dRegion::Left,
+            vertices: loops[loop_index].projected.clone(),
+        });
     }
 
     let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
@@ -660,7 +645,7 @@ fn triangulate_selected_overlay_faces(
     vertex_index: &mut ExactVertexInsertIndex,
     triangles: &mut Vec<Triangle>,
 ) -> Result<(), ExactArrangementBlocker> {
-    if !overlay.is_complete() {
+    if !overlay.blockers.is_empty() {
         return Err(map_arrangement2d_blocker(
             overlay
                 .blockers
@@ -1096,11 +1081,6 @@ mod tests {
         area
     }
 
-    fn area_magnitude_eq(area: &Real, expected: i64) -> bool {
-        compare_reals(area, &Real::from(expected)).value() == Some(Ordering::Equal)
-            || compare_reals(area, &Real::from(-expected)).value() == Some(Ordering::Equal)
-    }
-
     #[test]
     fn vertex_insert_index_buckets_exact_rational_points() {
         let mut vertices = Vec::new();
@@ -1156,10 +1136,11 @@ mod tests {
         triangulate_exact_loop_group(&loops, &mut vertices, &mut triangles).unwrap();
 
         assert!(!triangles.is_empty());
-        assert!(area_magnitude_eq(
-            &triangle_area2(&vertices, &triangles, CoplanarProjection::Xy),
-            40
-        ));
+        let area = triangle_area2(&vertices, &triangles, CoplanarProjection::Xy);
+        assert!(
+            compare_reals(&area, &Real::from(40)).value() == Some(Ordering::Equal)
+                || compare_reals(&area, &Real::from(-40)).value() == Some(Ordering::Equal)
+        );
         assert!(
             vertices
                 .iter()

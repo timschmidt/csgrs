@@ -43,26 +43,6 @@ pub(crate) enum ExactVolumetricRegionRelation {
     Unknown,
 }
 
-impl ExactVolumetricRegionRelation {
-    /// Return whether this relation can directly drive named volumetric
-    /// union/intersection/difference assembly.
-    pub(crate) const fn is_strictly_decided(self) -> bool {
-        matches!(self, Self::Inside | Self::Outside)
-    }
-
-    /// Return whether this relation is decided enough to drive a conservative
-    /// coplanar-boundary materialization policy.
-    ///
-    /// Boundary classifications are not strict winding facts, but they are
-    /// exact outcomes: every deterministic interior witness for the retained
-    /// source cell replayed to the opposite closed mesh boundary. The boolean
-    /// pipeline may consume that state only through an explicit topology
-    /// policy; it must not relabel it as inside/outside.
-    pub(crate) const fn is_materialization_decided(self) -> bool {
-        matches!(self, Self::Inside | Self::Outside | Self::Boundary)
-    }
-}
-
 /// Retained winding evidence for one triangulated split cell.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ExactVolumetricRegionClassification {
@@ -124,25 +104,6 @@ pub(crate) struct ExactVolumetricWitnessAttempt {
 }
 
 impl ExactVolumetricRegionClassification {
-    /// Return whether this classification belongs to the triangulated source face.
-    pub(crate) fn matches_triangulation(&self, triangulation: &FaceRegionTriangulation) -> bool {
-        triangulation.side == self.region_side && triangulation.face == self.region_face
-    }
-
-    /// Return whether this classification belongs to the exact triangulated source cell.
-    pub(crate) fn matches_triangulated_cell(
-        &self,
-        triangulation: &FaceRegionTriangulation,
-        triangle: [usize; 3],
-    ) -> bool {
-        self.matches_triangulation(triangulation) && self.triangle == triangle
-    }
-
-    /// Return whether this relation can drive retained cell materialization.
-    pub(crate) const fn is_materialization_decided(&self) -> bool {
-        self.relation.is_materialization_decided()
-    }
-
     /// Validate local consistency between retained representative, relation,
     /// and winding report.
     ///
@@ -184,7 +145,24 @@ impl ExactVolumetricRegionClassification {
         {
             return Err(ExactVolumetricRegionError::InvalidTriangleIndex);
         }
-        let (a, b, c) = triangle_points(triangulation, self.triangle)?;
+        let a = boundary_node_point(
+            triangulation
+                .boundary
+                .get(self.triangle[0])
+                .ok_or(ExactVolumetricRegionError::InvalidTriangleIndex)?,
+        );
+        let b = boundary_node_point(
+            triangulation
+                .boundary
+                .get(self.triangle[1])
+                .ok_or(ExactVolumetricRegionError::InvalidTriangleIndex)?,
+        );
+        let c = boundary_node_point(
+            triangulation
+                .boundary
+                .get(self.triangle[2])
+                .ok_or(ExactVolumetricRegionError::InvalidTriangleIndex)?,
+        );
         for attempt in &self.witness_attempts {
             let expected = attempt
                 .witness
@@ -275,18 +253,36 @@ pub(crate) fn classify_triangulated_region_triangle_against_closed_mesh(
     {
         return Err(ExactVolumetricRegionError::InvalidTriangleIndex);
     }
-    let (a, b, c) = triangle_points(triangulation, triangle)?;
+    let a = boundary_node_point(
+        triangulation
+            .boundary
+            .get(triangle[0])
+            .ok_or(ExactVolumetricRegionError::InvalidTriangleIndex)?,
+    );
+    let b = boundary_node_point(
+        triangulation
+            .boundary
+            .get(triangle[1])
+            .ok_or(ExactVolumetricRegionError::InvalidTriangleIndex)?,
+    );
+    let c = boundary_node_point(
+        triangulation
+            .boundary
+            .get(triangle[2])
+            .ok_or(ExactVolumetricRegionError::InvalidTriangleIndex)?,
+    );
     let mut attempts = Vec::new();
     for witness in EXACT_TRIANGLE_INTERIOR_WITNESSES.iter().copied() {
         let representative = witness
             .point_for_triangle(a, b, c)
             .map_err(ExactVolumetricRegionError::InvalidRepresentativeWitness)?;
         let attempt = classify_witness_attempt(witness, representative, target)?;
+        let attempt_resolves_region = matches!(
+            attempt.relation,
+            ExactVolumetricRegionRelation::Inside | ExactVolumetricRegionRelation::Outside
+        );
         attempts.push(attempt);
-        if attempts
-            .last()
-            .is_some_and(|attempt| attempt.relation.is_strictly_decided())
-        {
+        if attempt_resolves_region {
             return classification_from_attempts(triangulation, triangle, attempts);
         }
     }
@@ -326,31 +322,6 @@ fn relation_from_winding(relation: ClosedMeshWindingRelation) -> ExactVolumetric
     }
 }
 
-fn triangle_points(
-    triangulation: &FaceRegionTriangulation,
-    triangle: [usize; 3],
-) -> Result<(&Point3, &Point3, &Point3), ExactVolumetricRegionError> {
-    let a = boundary_node_point(
-        triangulation
-            .boundary
-            .get(triangle[0])
-            .ok_or(ExactVolumetricRegionError::InvalidTriangleIndex)?,
-    );
-    let b = boundary_node_point(
-        triangulation
-            .boundary
-            .get(triangle[1])
-            .ok_or(ExactVolumetricRegionError::InvalidTriangleIndex)?,
-    );
-    let c = boundary_node_point(
-        triangulation
-            .boundary
-            .get(triangle[2])
-            .ok_or(ExactVolumetricRegionError::InvalidTriangleIndex)?,
-    );
-    Ok((a, b, c))
-}
-
 fn classify_witness_attempt(
     witness: ExactTriangleInteriorWitness,
     representative: Point3,
@@ -378,7 +349,12 @@ fn classification_from_attempts(
     }
     let chosen = attempts
         .iter()
-        .position(|attempt| attempt.relation.is_strictly_decided())
+        .position(|attempt| {
+            matches!(
+                attempt.relation,
+                ExactVolumetricRegionRelation::Inside | ExactVolumetricRegionRelation::Outside
+            )
+        })
         .or_else(|| {
             attempts
                 .iter()
@@ -437,10 +413,18 @@ fn validate_witness_attempts(
         })
         .ok_or(ExactVolumetricRegionError::RepresentativeAttemptMismatch)?;
 
-    if classification.relation.is_strictly_decided() {
+    if matches!(
+        classification.relation,
+        ExactVolumetricRegionRelation::Inside | ExactVolumetricRegionRelation::Outside
+    ) {
         if classification.witness_attempts[..chosen]
             .iter()
-            .any(|attempt| attempt.relation.is_strictly_decided())
+            .any(|attempt| {
+                matches!(
+                    attempt.relation,
+                    ExactVolumetricRegionRelation::Inside | ExactVolumetricRegionRelation::Outside
+                )
+            })
         {
             return Err(ExactVolumetricRegionError::RepresentativeAttemptSkippedStrict);
         }
@@ -450,11 +434,12 @@ fn validate_witness_attempts(
         return Ok(());
     }
 
-    if classification
-        .witness_attempts
-        .iter()
-        .any(|attempt| attempt.relation.is_strictly_decided())
-    {
+    if classification.witness_attempts.iter().any(|attempt| {
+        matches!(
+            attempt.relation,
+            ExactVolumetricRegionRelation::Inside | ExactVolumetricRegionRelation::Outside
+        )
+    }) {
         return Err(ExactVolumetricRegionError::RepresentativeAttemptSkippedStrict);
     }
     if classification.witness_attempts.len() != EXACT_TRIANGLE_INTERIOR_WITNESSES.len() {

@@ -28,6 +28,8 @@ use hyperlimit::CoplanarProjection;
 use hyperlimit::PredicateUse;
 use hyperlimit::SourceProvenance;
 
+use super::{DisjointSets, point3_exact_equal};
+
 /// Exact relation between a split region boundary and an opposite face plane.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum FaceRegionPlaneRelation {
@@ -109,15 +111,6 @@ impl FaceRegionPlaneClassification {
             .all(PredicateUse::is_proof_producing)
     }
 
-    /// Return whether the classification is ready for winding policy.
-    ///
-    /// A retained region/plane side fact is only consumable by inside/outside
-    /// policy when every predicate was proof-producing and the derived
-    /// undecided relations remain explicit refinement state.
-    pub(crate) fn is_decided_and_proof_producing(&self) -> bool {
-        self.all_proof_producing() && !matches!(self.relation, FaceRegionPlaneRelation::Unknown)
-    }
-
     /// Validate the coarse region/plane relation against retained node sides.
     ///
     /// This check is deliberately local: split-region topology and source-face
@@ -174,27 +167,6 @@ impl FaceRegionPlaneClassification {
     }
 }
 
-#[cfg(test)]
-impl ExactFaceRegionPlan {
-    /// Validate and classify split regions against every opposite face plane.
-    pub(crate) fn classify_against_opposite_face_planes(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Vec<FaceRegionPlaneClassification>, ExactMeshError> {
-        checked_classify_face_regions_against_opposite_planes(self, left, right)
-    }
-
-    /// Validate and triangulate split face-region loops with exact earcut.
-    pub(crate) fn triangulate_with_earcut(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> hypertri::Result<Vec<FaceRegionTriangulation>> {
-        checked_triangulate_face_regions_with_earcut(self, left, right)
-    }
-}
-
 /// Classify every split region against every opposite mesh face plane.
 ///
 /// This is a certified input to later winding/side policy. It deliberately
@@ -212,7 +184,7 @@ pub(crate) fn classify_face_regions_against_opposite_planes(
             MeshSide::Left => (MeshSide::Right, right),
             MeshSide::Right => (MeshSide::Left, left),
         };
-        for plane_face in 0..plane_mesh.triangles().len() {
+        for plane_face in 0..plane_mesh.facts().mesh.face_count {
             classifications.push(classify_region_against_face_plane(
                 region.side,
                 region.face,
@@ -232,7 +204,7 @@ pub(crate) fn checked_classify_face_regions_against_opposite_planes(
     right: &ExactMesh,
 ) -> Result<Vec<FaceRegionPlaneClassification>, ExactMeshError> {
     let report = regions.validate(left, right);
-    if report.is_valid() {
+    if report.blockers.is_empty() {
         Ok(classify_face_regions_against_opposite_planes(
             regions, left, right,
         ))
@@ -630,7 +602,12 @@ impl ExactBooleanAssemblyPlan {
         &self,
         policy: ExactMeshValidationPolicy,
     ) -> Result<ExactMesh, super::super::error::ExactMeshError> {
-        self.validate().map_err(assembly_validation_error)?;
+        self.validate().map_err(|error| {
+            super::super::error::ExactMeshError::one(super::super::error::ExactMeshBlocker::new(
+                super::super::error::ExactMeshBlockerKind::IndexOutOfBounds,
+                format!("exact boolean assembly validation failed: {error}"),
+            ))
+        })?;
         let vertices = self
             .vertices
             .iter()
@@ -668,16 +645,18 @@ impl ExactBooleanAssemblyPlan {
         right: &ExactMesh,
         policy: ExactMeshValidationPolicy,
     ) -> Result<ExactMesh, super::super::error::ExactMeshError> {
-        self.validate().map_err(assembly_validation_error)?;
-        self.validate_source_face_incidence(left, right)
-            .map_err(|error| {
-                super::super::error::ExactMeshError::one(
-                    super::super::error::ExactMeshBlocker::new(
-                        super::super::error::ExactMeshBlockerKind::DegenerateTriangle,
-                        format!("exact boolean assembly source incidence failed: {error}"),
-                    ),
-                )
-            })?;
+        self.validate().map_err(|error| {
+            super::super::error::ExactMeshError::one(super::super::error::ExactMeshBlocker::new(
+                super::super::error::ExactMeshBlockerKind::IndexOutOfBounds,
+                format!("exact boolean assembly validation failed: {error}"),
+            ))
+        })?;
+        validate_assembly_source_face_incidence(self, left, right).map_err(|error| {
+            super::super::error::ExactMeshError::one(super::super::error::ExactMeshBlocker::new(
+                super::super::error::ExactMeshBlockerKind::DegenerateTriangle,
+                format!("exact boolean assembly source incidence failed: {error}"),
+            ))
+        })?;
         self.to_exact_mesh(policy)
     }
 
@@ -698,23 +677,8 @@ impl ExactBooleanAssemblyPlan {
         self.remove_duplicate_triangle_vertex_sets()?;
         self.split_disconnected_vertex_fans()?;
         self.orient_paired_edge_uses()?;
-        self.validate_source_face_incidence(left, right)?;
+        validate_assembly_source_face_incidence(self, left, right)?;
         Ok(())
-    }
-
-    /// Validate output triangles against their retained source face planes.
-    ///
-    /// Output triangles carry `source_side` and `source_face` so later boolean
-    /// stages can audit where each triangle came from. This check replays that
-    /// incidence with exact `hyperlimit::orient3d_report` predicates before
-    /// handoffs should retain and revalidate the geometric certificates they
-    /// depend on.
-    pub(crate) fn validate_source_face_incidence(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> hypertri::Result<()> {
-        validate_assembly_source_face_incidence(self, left, right)
     }
 
     /// Split exact-equal assembly vertices whose retained triangle fans are
@@ -911,7 +875,7 @@ impl ExactBooleanAssemblyPlan {
         selection: ExactRegionSelection,
     ) -> hypertri::Result<()> {
         self.validate()?;
-        self.validate_source_face_incidence(left, right)?;
+        validate_assembly_source_face_incidence(self, left, right)?;
         let region_plan =
             replay_region_plan(left, right).map_err(|_| hypertri::Error::InvalidInput {
                 reason: "assembly source replay could not rebuild region plan",
@@ -1070,7 +1034,15 @@ fn assembly_vertex_lies_on_source_face(
         MeshSide::Left => left,
         MeshSide::Right => right,
     };
-    let source_triangle = mesh.triangles()[triangle.source_face].0;
+    let source_triangle = mesh
+        .facts()
+        .faces
+        .get(triangle.source_face)
+        .ok_or(hypertri::Error::InvalidInput {
+            reason: "assembly triangle references a missing source face",
+        })?
+        .triangle
+        .vertices;
     let a = &mesh.vertices()[source_triangle[0]];
     let b = &mesh.vertices()[source_triangle[1]];
     let c = &mesh.vertices()[source_triangle[2]];
@@ -1092,8 +1064,8 @@ fn assembly_vertex_lies_strictly_on_projected_edge(
     let candidate_point = &assembly.vertices[candidate].point;
     let start_point = &assembly.vertices[start].point;
     let end_point = &assembly.vertices[end].point;
-    if points_equal(candidate_point, start_point) == Some(true)
-        || points_equal(candidate_point, end_point) == Some(true)
+    if point3_exact_equal(candidate_point, start_point) == Some(true)
+        || point3_exact_equal(candidate_point, end_point) == Some(true)
     {
         return Ok(false);
     }
@@ -1122,7 +1094,7 @@ const fn toggled_output_orientation(
 }
 
 fn validate_output_vertex_source(vertex: &ExactOutputVertex) -> hypertri::Result<()> {
-    match points_equal(&vertex.point, boundary_node_point(&vertex.source)) {
+    match point3_exact_equal(&vertex.point, boundary_node_point(&vertex.source)) {
         Some(true) => Ok(()),
         Some(false) => Err(hypertri::Error::InvalidInput {
             reason: "assembled output vertex does not match its retained source boundary node",
@@ -1139,7 +1111,7 @@ fn validate_output_triangle_distinct_points(
 ) -> hypertri::Result<()> {
     let [a, b, c] = triangle.vertices;
     for (left, right) in [(a, b), (b, c), (c, a)] {
-        match points_equal(
+        match point3_exact_equal(
             &assembly.vertices[left].point,
             &assembly.vertices[right].point,
         ) {
@@ -1159,7 +1131,14 @@ fn validate_output_triangle_distinct_points(
     Ok(())
 }
 
-fn validate_assembly_source_face_incidence(
+/// Validate output triangles against their retained source face planes.
+///
+/// Output triangles carry `source_side` and `source_face` so later boolean
+/// stages can audit where each triangle came from. This check replays that
+/// incidence with exact `hyperlimit::orient3d_report` predicates before
+/// handoffs should retain and revalidate the geometric certificates they
+/// depend on.
+pub(crate) fn validate_assembly_source_face_incidence(
     assembly: &ExactBooleanAssemblyPlan,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -1182,18 +1161,14 @@ fn validate_assembly_source_face_incidence(
             MeshSide::Left => left,
             MeshSide::Right => right,
         };
-        let Some(source_triangle) = mesh
-            .triangles()
-            .get(triangle.source_face)
-            .map(|triangle| triangle.0)
-        else {
-            return Err(hypertri::Error::InvalidInput {
-                reason: "assembled output triangle references a missing source face",
-            });
-        };
-        let a = mesh.vertices()[source_triangle[0]].clone();
-        let b = mesh.vertices()[source_triangle[1]].clone();
-        let c = mesh.vertices()[source_triangle[2]].clone();
+        let source_triangle = retained_source_face_vertices(
+            mesh,
+            triangle.source_face,
+            "assembled output triangle references a missing source face",
+        )?;
+        let a = &mesh.vertices()[source_triangle[0]];
+        let b = &mesh.vertices()[source_triangle[1]];
+        let c = &mesh.vertices()[source_triangle[2]];
         for &vertex in &triangle.vertices {
             let Some(output_vertex) = assembly.vertices.get(vertex) else {
                 return Err(hypertri::Error::InvalidInput {
@@ -1211,7 +1186,7 @@ fn validate_assembly_source_face_incidence(
                 mesh,
                 triangle.source_face,
             )?;
-            match orient3d_report(&a, &b, &c, &output_vertex.point).value() {
+            match orient3d_report(a, b, c, &output_vertex.point).value() {
                 Some(hyperlimit::Sign::Zero) => {}
                 Some(hyperlimit::Sign::Negative | hyperlimit::Sign::Positive) => {
                     return Err(hypertri::Error::InvalidInput {
@@ -1248,7 +1223,7 @@ fn validate_assembly_output_vertex_source_against_sources(
                     continue;
                 };
                 saw_source_vertex = true;
-                match points_equal(point, source_point) {
+                match point3_exact_equal(point, source_point) {
                     Some(true) => return Ok(()),
                     Some(false) => {}
                     None => saw_unknown_equality = true,
@@ -1308,7 +1283,7 @@ fn validate_assembly_graph_vertex_source_against_region_plan(
             continue;
         }
         saw_graph_vertex = true;
-        match points_equal(point, replayed_point) {
+        match point3_exact_equal(point, replayed_point) {
             Some(true) => return Ok(()),
             Some(false) => {}
             None => saw_unknown_equality = true,
@@ -1338,7 +1313,12 @@ fn validate_assembly_face_interior_source_against_face(
         return Ok(());
     };
     let projection = choose_region_projection(mesh, source_face)?;
-    let Some(source_triangle) = mesh.triangles().get(source_face).map(|triangle| triangle.0) else {
+    let Some(source_triangle) = mesh
+        .facts()
+        .faces
+        .get(source_face)
+        .map(|face| face.triangle.vertices)
+    else {
         return Err(hypertri::Error::InvalidInput {
             reason: "assembled output triangle references a missing source face",
         });
@@ -1380,14 +1360,14 @@ fn validate_output_triangle_source_orientation(
 ) -> hypertri::Result<()> {
     let projection = choose_region_projection(mesh, triangle.source_face)?;
     let source_points = [
-        mesh.vertices()[source_triangle[0]].clone(),
-        mesh.vertices()[source_triangle[1]].clone(),
-        mesh.vertices()[source_triangle[2]].clone(),
+        &mesh.vertices()[source_triangle[0]],
+        &mesh.vertices()[source_triangle[1]],
+        &mesh.vertices()[source_triangle[2]],
     ];
     let source_sign = orient2d_report(
-        &project_for_predicate(&source_points[0], projection),
-        &project_for_predicate(&source_points[1], projection),
-        &project_for_predicate(&source_points[2], projection),
+        &project_for_predicate(source_points[0], projection),
+        &project_for_predicate(source_points[1], projection),
+        &project_for_predicate(source_points[2], projection),
     )
     .value()
     .ok_or(hypertri::Error::PredicateUndecided {
@@ -1422,13 +1402,6 @@ fn validate_output_triangle_source_orientation(
         | ExactOutputTriangleOrientation::ReverseSource => {}
     }
     Ok(())
-}
-
-fn assembly_validation_error(error: hypertri::Error) -> super::super::error::ExactMeshError {
-    super::super::error::ExactMeshError::one(super::super::error::ExactMeshBlocker::new(
-        super::super::error::ExactMeshBlockerKind::IndexOutOfBounds,
-        format!("exact boolean assembly validation failed: {error}"),
-    ))
 }
 
 /// Triangulate split face-region loops with `hypertri` exact earcut.
@@ -1482,7 +1455,7 @@ pub(crate) fn checked_triangulate_face_regions_with_earcut(
     right: &ExactMesh,
 ) -> hypertri::Result<Vec<FaceRegionTriangulation>> {
     let report = regions.validate(left, right);
-    if !report.is_valid() {
+    if !report.blockers.is_empty() {
         if report
             .blockers
             .iter()
@@ -1576,24 +1549,20 @@ fn orient_output_triangle_for_source(
         MeshSide::Left => left,
         MeshSide::Right => right,
     };
-    let Some(source_triangle) = source_mesh
-        .triangles()
-        .get(triangulation.face)
-        .map(|triangle| triangle.0)
-    else {
-        return Err(hypertri::Error::InvalidInput {
-            reason: "region triangulation references a missing source face",
-        });
-    };
+    let source_triangle = retained_source_face_vertices(
+        source_mesh,
+        triangulation.face,
+        "region triangulation references a missing source face",
+    )?;
     let source_points = [
-        source_mesh.vertices()[source_triangle[0]].clone(),
-        source_mesh.vertices()[source_triangle[1]].clone(),
-        source_mesh.vertices()[source_triangle[2]].clone(),
+        &source_mesh.vertices()[source_triangle[0]],
+        &source_mesh.vertices()[source_triangle[1]],
+        &source_mesh.vertices()[source_triangle[2]],
     ];
     let source_sign = orient2d_report(
-        &project_for_predicate(&source_points[0], triangulation.projection),
-        &project_for_predicate(&source_points[1], triangulation.projection),
-        &project_for_predicate(&source_points[2], triangulation.projection),
+        &project_for_predicate(source_points[0], triangulation.projection),
+        &project_for_predicate(source_points[1], triangulation.projection),
+        &project_for_predicate(source_points[2], triangulation.projection),
     )
     .value()
     .ok_or(hypertri::Error::PredicateUndecided {
@@ -1664,7 +1633,7 @@ fn remap_region_vertex(
     let source = triangulation.boundary[region_vertex].clone();
     let point = boundary_node_point(&source).clone();
     for (index, vertex) in vertices.iter().enumerate() {
-        match points_equal(&vertex.point, &point) {
+        match point3_exact_equal(&vertex.point, &point) {
             Some(true) => {
                 remap[region_vertex] = Some(index);
                 return Ok(index);
@@ -1702,7 +1671,7 @@ fn vertex_fan_components(
     vertex: usize,
     incident: &[usize],
 ) -> Vec<Vec<usize>> {
-    let mut fan = DisjointTriangleFan::new(incident.len());
+    let mut fan = DisjointSets::new(incident.len());
     let mut edge_uses = BTreeMap::<usize, Vec<VertexFanEdgeUse>>::new();
     for (local_triangle, &triangle_index) in incident.iter().enumerate() {
         let triangle = assembly.triangles[triangle_index].vertices;
@@ -1759,37 +1728,6 @@ fn replace_triangle_vertex(triangle: &mut ExactOutputTriangle, old: usize, new: 
     }
 }
 
-struct DisjointTriangleFan {
-    parent: Vec<usize>,
-}
-
-impl DisjointTriangleFan {
-    fn new(len: usize) -> Self {
-        Self {
-            parent: (0..len).collect(),
-        }
-    }
-
-    fn find(&mut self, index: usize) -> usize {
-        let parent = self.parent[index];
-        if parent == index {
-            index
-        } else {
-            let root = self.find(parent);
-            self.parent[index] = root;
-            root
-        }
-    }
-
-    fn union(&mut self, left: usize, right: usize) {
-        let left_root = self.find(left);
-        let right_root = self.find(right);
-        if left_root != right_root {
-            self.parent[right_root] = left_root;
-        }
-    }
-}
-
 fn classify_region_against_face_plane(
     region_side: MeshSide,
     region_face: usize,
@@ -1798,15 +1736,30 @@ fn classify_region_against_face_plane(
     plane_mesh: &ExactMesh,
     plane_face: usize,
 ) -> FaceRegionPlaneClassification {
-    let tri = plane_mesh.triangles()[plane_face].0;
-    let a = plane_mesh.vertices()[tri[0]].clone();
-    let b = plane_mesh.vertices()[tri[1]].clone();
-    let c = plane_mesh.vertices()[tri[2]].clone();
+    let Some(tri) = plane_mesh
+        .facts()
+        .faces
+        .get(plane_face)
+        .map(|face| face.triangle.vertices)
+    else {
+        return FaceRegionPlaneClassification {
+            region_side,
+            region_face,
+            plane_side,
+            plane_face,
+            relation: FaceRegionPlaneRelation::Unknown,
+            node_sides: vec![None; boundary.len()],
+            predicates: Vec::new(),
+        };
+    };
+    let a = &plane_mesh.vertices()[tri[0]];
+    let b = &plane_mesh.vertices()[tri[1]];
+    let c = &plane_mesh.vertices()[tri[2]];
     let mut predicates = Vec::with_capacity(boundary.len());
     let mut node_sides = Vec::with_capacity(boundary.len());
 
     for node in boundary {
-        let report = orient3d_report(&a, &b, &c, boundary_node_point(node));
+        let report = orient3d_report(a, b, c, boundary_node_point(node));
         predicates.push(PredicateUse::from_certificate(report.certificate));
         node_sides.push(report.value().map(PlaneSide::from));
     }
@@ -1827,19 +1780,23 @@ pub(crate) fn choose_region_projection(
     mesh: &ExactMesh,
     face: usize,
 ) -> hypertri::Result<CoplanarProjection> {
-    let triangle = mesh.triangles()[face].0;
-    let a = mesh.vertices()[triangle[0]].clone();
-    let b = mesh.vertices()[triangle[1]].clone();
-    let c = mesh.vertices()[triangle[2]].clone();
+    let triangle = retained_source_face_vertices(
+        mesh,
+        face,
+        "face region projection references a missing source face",
+    )?;
+    let a = &mesh.vertices()[triangle[0]];
+    let b = &mesh.vertices()[triangle[1]];
+    let c = &mesh.vertices()[triangle[2]];
     for projection in [
         CoplanarProjection::Xy,
         CoplanarProjection::Xz,
         CoplanarProjection::Yz,
     ] {
         let [pa, pb, pc] = [
-            project_for_predicate(&a, projection),
-            project_for_predicate(&b, projection),
-            project_for_predicate(&c, projection),
+            project_for_predicate(a, projection),
+            project_for_predicate(b, projection),
+            project_for_predicate(c, projection),
         ];
         if matches!(
             orient2d_report(&pa, &pb, &pc).value(),
@@ -1851,6 +1808,18 @@ pub(crate) fn choose_region_projection(
     Err(hypertri::Error::PredicateUndecided {
         predicate: "face_region_projection",
     })
+}
+
+fn retained_source_face_vertices(
+    mesh: &ExactMesh,
+    face: usize,
+    reason: &'static str,
+) -> hypertri::Result<[usize; 3]> {
+    mesh.facts()
+        .faces
+        .get(face)
+        .map(|face| face.triangle.vertices)
+        .ok_or(hypertri::Error::InvalidInput { reason })
 }
 
 pub(crate) fn project_for_predicate(
@@ -1908,13 +1877,6 @@ pub(crate) fn boundary_node_point(node: &FaceSplitBoundaryNode) -> &Point3 {
         | FaceSplitBoundaryNode::GraphVertex { point, .. }
         | FaceSplitBoundaryNode::FaceInterior { point } => point,
     }
-}
-
-fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
-    let x = compare_reals(&left.x, &right.x).value()?;
-    let y = compare_reals(&left.y, &right.y).value()?;
-    let z = compare_reals(&left.z, &right.z).value()?;
-    Some(x == Ordering::Equal && y == Ordering::Equal && z == Ordering::Equal)
 }
 
 #[cfg(test)]
@@ -2016,9 +1978,10 @@ mod tests {
                                 }],
                             };
                             if candidate.validate().is_ok()
-                                && candidate
-                                    .validate_source_face_incidence(&left, &right)
-                                    .is_ok()
+                                && validate_assembly_source_face_incidence(
+                                    &candidate, &left, &right,
+                                )
+                                .is_ok()
                             {
                                 assembly = Some(candidate);
                                 break 'search;
@@ -2046,11 +2009,7 @@ mod tests {
         *graph_vertex = usize::MAX;
 
         assembly.validate().unwrap();
-        assert!(
-            assembly
-                .validate_source_face_incidence(&left, &right)
-                .is_err()
-        );
+        assert!(validate_assembly_source_face_incidence(&assembly, &left, &right).is_err());
     }
 
     #[test]
@@ -2092,11 +2051,7 @@ mod tests {
         };
 
         assembly.validate().unwrap();
-        assert!(
-            assembly
-                .validate_source_face_incidence(&left, &right)
-                .is_err()
-        );
+        assert!(validate_assembly_source_face_incidence(&assembly, &left, &right).is_err());
     }
 
     #[test]
@@ -2173,7 +2128,7 @@ mod tests {
                 ExactMeshValidationPolicy::ALLOW_BOUNDARY,
             )
             .unwrap();
-        assert_eq!(mesh.triangles().len(), 2);
+        assert_eq!(mesh.facts().mesh.face_count, 2);
         assert_eq!(mesh.facts().mesh.boundary_edges, 4);
         mesh.validate_retained_state().unwrap();
     }

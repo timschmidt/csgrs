@@ -18,11 +18,12 @@ use std::collections::{BTreeMap, BTreeSet};
 use hyperlimit::{
     CoplanarProjection, Point2, Point3, RingPointLocation, SegmentIntersection, Sign,
     classify_point_ring_even_odd, classify_segment_intersection, compare_reals, orient3d_report,
-    point_on_segment3, project_point3, projected_polygon_area2_value,
+    point_on_segment3, point2_equal, project_point3, projected_polygon_area2_value,
 };
 
-use super::super::super::ExactMesh;
-use super::super::super::triangle_edges_tuple;
+use super::super::super::{ExactMesh, sorted_edge};
+use super::super::point3_exact_equal;
+use super::{real_sign, triangle_point_refs};
 use hyperreal::Real;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -159,10 +160,12 @@ fn collect_path_polygon_patch_candidates(
         for end in start + 2..=path.len() {
             let mut key = path[start..end].to_vec();
             key.sort_unstable();
-            if seen.insert(key.clone())
-                && let Some(candidate) = polygon_patch_candidate(mesh, &key)?
-            {
-                candidates.push(candidate);
+            if !seen.contains(&key) {
+                let candidate = polygon_patch_candidate(mesh, &key)?;
+                seen.insert(key);
+                if let Some(candidate) = candidate {
+                    candidates.push(candidate);
+                }
             }
         }
     }
@@ -180,10 +183,12 @@ fn collect_polygon_patch_candidates(
     if selected.len() >= 2 {
         let mut key = selected.clone();
         key.sort_unstable();
-        if seen.insert(key.clone())
-            && let Some(candidate) = polygon_patch_candidate(mesh, &key)?
-        {
-            candidates.push(candidate);
+        if !seen.contains(&key) {
+            let candidate = polygon_patch_candidate(mesh, &key)?;
+            seen.insert(key);
+            if let Some(candidate) = candidate {
+                candidates.push(candidate);
+            }
         }
     }
 
@@ -214,10 +219,16 @@ fn polygon_patch_candidate(
     // Boundary topology is reconstructed from source-owned edge incidences. Candidate
     // patches must be a triangulated disk: every edge appears at most twice and at
     // least one boundary cycle remains after interior-edge cancellation.
-    let mut edge_counts = BTreeMap::<(usize, usize), usize>::new();
+    let mut edge_counts = BTreeMap::<[usize; 2], usize>::new();
     for &face in faces {
-        let triangle = mesh.triangles().get(face)?.0;
-        for edge in triangle_edges_tuple(triangle) {
+        for edge in mesh
+            .facts()
+            .faces
+            .get(face)?
+            .oriented
+            .directed_edges
+            .map(sorted_edge)
+        {
             let count = edge_counts.entry(edge).or_default();
             *count += 1;
             if *count > 2 {
@@ -268,8 +279,8 @@ fn polygon_patch_candidate(
     let mut area_sign = None;
     let mut signed_area2 = Real::from(0);
     for &face in faces {
-        let triangle = mesh.triangles().get(face)?.0;
-        let points = triangle_points(mesh, triangle)?;
+        let triangle = mesh.facts().faces.get(face)?.triangle.vertices;
+        let points = triangle_point_refs(mesh, triangle)?;
         if !points
             .iter()
             .all(|point| point_on_triangle_plane_vec(&boundary_points, point) == Some(true))
@@ -279,13 +290,18 @@ fn polygon_patch_candidate(
         for point in &points {
             if !boundary_points
                 .iter()
-                .any(|boundary_point| points_equal(boundary_point, point) == Some(true))
+                .any(|boundary_point| point3_exact_equal(boundary_point, point) == Some(true))
                 && !point_strictly_inside_simple_loop(point, &boundary_ring, projection)?
             {
                 return Some(None);
             }
         }
-        let area = projected_polygon_area2_value(&points, projection);
+        let projected_triangle = [
+            (*points[0]).clone(),
+            (*points[1]).clone(),
+            (*points[2]).clone(),
+        ];
+        let area = projected_polygon_area2_value(&projected_triangle, projection);
         let sign = real_sign(&area)?;
         if sign == Sign::Zero {
             return Some(None);
@@ -323,9 +339,16 @@ fn edge_connected_face_neighbors(
     mesh: &ExactMesh,
     faces: &[usize],
 ) -> Option<BTreeMap<usize, BTreeSet<usize>>> {
-    let mut edge_faces = BTreeMap::<(usize, usize), Vec<usize>>::new();
+    let mut edge_faces = BTreeMap::<[usize; 2], Vec<usize>>::new();
     for &face in faces {
-        for edge in triangle_edges_tuple(mesh.triangles().get(face)?.0) {
+        for edge in mesh
+            .facts()
+            .faces
+            .get(face)?
+            .oriented
+            .directed_edges
+            .map(sorted_edge)
+        {
             edge_faces.entry(edge).or_default().push(face);
         }
     }
@@ -399,18 +422,25 @@ fn faces_are_coplanar(mesh: &ExactMesh, left_face: usize, right_face: usize) -> 
     // Source-disk discovery is a planar certificate, not a shell-connectivity
     // topology by exact retained planes before promoting a connected component
     // to a planar disk candidate.
-    let left_triangle = mesh.triangles().get(left_face)?.0;
-    let right_triangle = mesh.triangles().get(right_face)?.0;
-    let left_points = triangle_points(mesh, left_triangle)?;
-    let right_points = triangle_points(mesh, right_triangle)?;
-    Some(
-        right_points
-            .iter()
-            .all(|point| point_on_triangle_plane_vec(&left_points, point) == Some(true))
-            && left_points
-                .iter()
-                .all(|point| point_on_triangle_plane_vec(&right_points, point) == Some(true)),
-    )
+    let left_triangle = mesh.facts().faces.get(left_face)?.triangle.vertices;
+    let right_triangle = mesh.facts().faces.get(right_face)?.triangle.vertices;
+    let left_points = triangle_point_refs(mesh, left_triangle)?;
+    let right_points = triangle_point_refs(mesh, right_triangle)?;
+    for point in right_points {
+        if orient3d_report(left_points[0], left_points[1], left_points[2], point).value()?
+            != Sign::Zero
+        {
+            return Some(false);
+        }
+    }
+    for point in left_points {
+        if orient3d_report(right_points[0], right_points[1], right_points[2], point).value()?
+            != Sign::Zero
+        {
+            return Some(false);
+        }
+    }
+    Some(true)
 }
 
 fn extract_polygon_patch_component(
@@ -440,10 +470,10 @@ fn extract_polygon_patch_component(
     Some(component)
 }
 
-fn order_boundary_vertices(edges: &[(usize, usize)]) -> Option<Vec<usize>> {
+fn order_boundary_vertices(edges: &[[usize; 2]]) -> Option<Vec<usize>> {
     // Reconstruct a single boundary cycle from degree-2 adjacency.
     let mut adjacency = BTreeMap::<usize, Vec<usize>>::new();
-    for &(a, b) in edges {
+    for &[a, b] in edges {
         adjacency.entry(a).or_default().push(b);
         adjacency.entry(b).or_default().push(a);
     }
@@ -493,7 +523,7 @@ fn loop_is_simple(points: &[Point3], projection: CoplanarProjection) -> Option<b
         .collect::<Vec<_>>();
     for left in 0..projected.len() {
         for right in left + 1..projected.len() {
-            if points2_equal(&projected[left], &projected[right])? {
+            if point2_equal(&projected[left], &projected[right]).value()? {
                 return Some(false);
             }
         }
@@ -538,13 +568,6 @@ fn point_strictly_inside_simple_loop(
         RingPointLocation::Inside => Some(true),
         RingPointLocation::Boundary | RingPointLocation::Outside => Some(false),
     }
-}
-
-fn points2_equal(left: &Point2, right: &Point2) -> Option<bool> {
-    Some(
-        compare_reals(&left.x, &right.x).value()? == Ordering::Equal
-            && compare_reals(&left.y, &right.y).value()? == Ordering::Equal,
-    )
 }
 
 fn polygon_patch_candidates_match(
@@ -598,30 +621,6 @@ fn point_on_triangle_plane_vec(points: &[Point3], point: &Point3) -> Option<bool
         return Some(false);
     };
     Some(orient3d_report(a, b, c, point).value()? == Sign::Zero)
-}
-
-fn triangle_points(mesh: &ExactMesh, triangle: [usize; 3]) -> Option<[Point3; 3]> {
-    Some([
-        mesh.vertices().get(triangle[0])?.clone(),
-        mesh.vertices().get(triangle[1])?.clone(),
-        mesh.vertices().get(triangle[2])?.clone(),
-    ])
-}
-
-fn real_sign(value: &Real) -> Option<Sign> {
-    match compare_reals(value, &Real::from(0)).value()? {
-        Ordering::Less => Some(Sign::Negative),
-        Ordering::Equal => Some(Sign::Zero),
-        Ordering::Greater => Some(Sign::Positive),
-    }
-}
-
-fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
-    Some(
-        compare_reals(&left.x, &right.x).value()? == Ordering::Equal
-            && compare_reals(&left.y, &right.y).value()? == Ordering::Equal
-            && compare_reals(&left.z, &right.z).value()? == Ordering::Equal,
-    )
 }
 
 #[cfg(test)]

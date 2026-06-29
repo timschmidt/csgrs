@@ -25,11 +25,14 @@ use super::super::graph::intersection::MeshFacePairRelation;
 use super::super::graph::{ExactIntersectionGraph, FacePairEvents, IntersectionEvent};
 use super::super::validation::ExactMeshValidationPolicy;
 use super::super::{ExactMesh, ExactMeshValidationError, Triangle};
-use super::winding::classify_mesh_vertices_against_closed_mesh_winding_report;
+use super::{
+    choose_nonzero_projected_polygon_area, closed_boundary_contact_only, point3_exact_equal,
+    point3_lies_strictly_on_segment,
+};
 use hyperlimit::SourceProvenance;
 use hyperlimit::{
     CoplanarProjection, Point3, SegmentIntersection, SegmentPlaneRelation, Sign, TriangleLocation,
-    classify_point_triangle, compare_reals, orient3d_report, point_on_segment3, project_point3,
+    classify_point_triangle, compare_reals, orient3d_report, project_point3,
     projected_polygon_area2_value, projected_segment_parameter3,
 };
 use hyperreal::Real;
@@ -135,13 +138,6 @@ impl FullFaceAdjacentUnion {
     }
 }
 
-fn exact_construction_failure(message: impl Into<String>) -> ExactMeshError {
-    ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::ExactConstructionFailure,
-        message,
-    ))
-}
-
 fn undecidable_shared_face_equality(left_face: usize, right_face: usize) -> ExactMeshError {
     ExactMeshError::one(
         ExactMeshBlocker::new(
@@ -173,7 +169,7 @@ pub(crate) fn full_face_adjacent_certificate_from_graph(
     let Some(certificate) = full_face_adjacency_certificate(left, right) else {
         return Ok(None);
     };
-    if certificate.is_empty() {
+    if certificate.shared_faces.is_empty() && certificate.shared_patches.is_empty() {
         return Ok(None);
     }
     for pair in &graph.face_pairs {
@@ -201,8 +197,9 @@ pub(crate) fn materialize_full_face_adjacent_union_from_certificate(
         mesh,
     };
     union.validate().map_err(|error| {
-        exact_construction_failure(format!(
-            "full-face adjacent union retained output failed validation: {error:?}"
+        ExactMeshError::one(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::ExactConstructionFailure,
+            format!("full-face adjacent union retained output failed validation: {error:?}"),
         ))
     })?;
     Ok(Some(union))
@@ -212,12 +209,6 @@ pub(crate) fn materialize_full_face_adjacent_union_from_certificate(
 struct FullFaceAdjacencyCertificate {
     shared_faces: Vec<FullFaceAdjacentFacePair>,
     shared_patches: Vec<FullFaceAdjacentPatch>,
-}
-
-impl FullFaceAdjacencyCertificate {
-    fn is_empty(&self) -> bool {
-        self.shared_faces.is_empty() && self.shared_patches.is_empty()
-    }
 }
 
 fn adjacency_contact_pair(
@@ -336,35 +327,24 @@ fn same_whole_face_any_orientation(
     right: &ExactMesh,
     right_face: usize,
 ) -> Result<bool, ExactMeshError> {
-    let Some(left_triangle) = left.triangles().get(left_face).map(|triangle| triangle.0) else {
+    let Some(left_triangle) = left
+        .facts()
+        .faces
+        .get(left_face)
+        .map(|face| face.triangle.vertices)
+    else {
         return Ok(false);
     };
-    let Some(right_triangle) = right.triangles().get(right_face).map(|triangle| triangle.0) else {
+    let Some(right_triangle) = right
+        .facts()
+        .faces
+        .get(right_face)
+        .map(|face| face.triangle.vertices)
+    else {
         return Ok(false);
     };
     same_whole_face_vertices_decided(left, left_triangle, right, right_triangle)
         .ok_or_else(|| undecidable_shared_face_equality(left_face, right_face))
-}
-
-fn closed_boundary_contact_only(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<bool, ExactMeshError> {
-    let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
-    left_in_right.validate().map_err(|error| {
-        exact_construction_failure(format!(
-            "full-face adjacent boundary-contact left-in-right winding report failed validation: {error:?}"
-        ))
-    })?;
-    let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
-    right_in_left.validate().map_err(|error| {
-        exact_construction_failure(format!(
-            "full-face adjacent boundary-contact right-in-left winding report failed validation: {error:?}"
-        ))
-    })?;
-    Ok(left_in_right.vertices_are_boundary_or_outside()
-        && right_in_left.vertices_are_boundary_or_outside()
-        && (left_in_right.vertices_touch_boundary() || right_in_left.vertices_touch_boundary()))
 }
 
 fn full_face_adjacency_certificate(
@@ -375,10 +355,15 @@ fn full_face_adjacency_certificate(
     let mut left_seen = BTreeSet::new();
     let mut right_seen = BTreeSet::new();
 
-    for (left_face, left_triangle) in left.triangles().iter().enumerate() {
-        for (right_face, right_triangle) in right.triangles().iter().enumerate() {
-            if reversed_whole_face_vertex_map(left, left_triangle.0, right, right_triangle.0)
-                .is_some()
+    for (left_face, left_facts) in left.facts().faces.iter().enumerate() {
+        for (right_face, right_facts) in right.facts().faces.iter().enumerate() {
+            if reversed_whole_face_vertex_map(
+                left,
+                left_facts.triangle.vertices,
+                right,
+                right_facts.triangle.vertices,
+            )
+            .is_some()
             {
                 if !left_seen.insert(left_face) || !right_seen.insert(right_face) {
                     return None;
@@ -413,7 +398,7 @@ fn full_face_adjacency_certificate(
         });
     }
 
-    for left_face in 0..left.triangles().len() {
+    for left_face in 0..left.facts().mesh.face_count {
         if left_seen.contains(&left_face) {
             continue;
         }
@@ -433,7 +418,7 @@ fn full_face_adjacency_certificate(
         }
     }
 
-    for right_face in 0..right.triangles().len() {
+    for right_face in 0..right.facts().mesh.face_count {
         if right_seen.contains(&right_face) {
             continue;
         }
@@ -468,16 +453,18 @@ fn merged_union_mesh(
 
     for pair in &certificate.shared_faces {
         let Some(left_triangle) = left
-            .triangles()
+            .facts()
+            .faces
             .get(pair.left_face)
-            .map(|triangle| triangle.0)
+            .map(|face| face.triangle.vertices)
         else {
             return Ok(None);
         };
         let Some(right_triangle) = right
-            .triangles()
+            .facts()
+            .faces
             .get(pair.right_face)
-            .map(|triangle| triangle.0)
+            .map(|face| face.triangle.vertices)
         else {
             return Ok(None);
         };
@@ -507,26 +494,26 @@ fn merged_union_mesh(
     let mut triangles = Vec::new();
     let left_output_vertices = {
         let mut vertices = BTreeSet::new();
-        for (face, triangle) in left.triangles().iter().enumerate() {
+        for (face, face_facts) in left.facts().faces.iter().enumerate() {
             if skip_left.contains(&face) {
                 continue;
             }
-            vertices.extend(triangle.0);
+            vertices.extend(face_facts.triangle.vertices);
         }
         vertices
     };
     let right_output_vertices = {
         let mut vertices = BTreeSet::new();
-        for (face, triangle) in right.triangles().iter().enumerate() {
+        for (face, face_facts) in right.facts().faces.iter().enumerate() {
             if skip_right.contains(&face) {
                 continue;
             }
-            vertices.extend(triangle.0);
+            vertices.extend(face_facts.triangle.vertices);
         }
         vertices
     };
 
-    for (face, triangle) in left.triangles().iter().enumerate() {
+    for (face, face_facts) in left.facts().faces.iter().enumerate() {
         if skip_left.contains(&face) {
             continue;
         }
@@ -538,7 +525,7 @@ fn merged_union_mesh(
             &mut right_vertex_map,
             &mut vertices,
             &mut triangles,
-            triangle.0,
+            face_facts.triangle.vertices,
             &right_output_vertices,
         )
         .is_none()
@@ -547,7 +534,7 @@ fn merged_union_mesh(
         }
     }
 
-    for (face, triangle) in right.triangles().iter().enumerate() {
+    for (face, face_facts) in right.facts().faces.iter().enumerate() {
         if skip_right.contains(&face) {
             continue;
         }
@@ -559,7 +546,7 @@ fn merged_union_mesh(
             &mut right_vertex_map,
             &mut vertices,
             &mut triangles,
-            triangle.0,
+            face_facts.triangle.vertices,
             &left_output_vertices,
         )
         .is_none()
@@ -607,19 +594,21 @@ fn insert_patch_seam_map(
 ) -> Option<()> {
     let mut left_vertices = BTreeSet::new();
     for &left_face in &patch.left_faces {
-        left_vertices.extend(left.triangles().get(left_face)?.0);
+        left_vertices.extend(left.facts().faces.get(left_face)?.triangle.vertices);
     }
     let mut right_vertices = BTreeSet::new();
     for &right_face in &patch.right_faces {
-        right_vertices.extend(right.triangles().get(right_face)?.0);
+        right_vertices.extend(right.facts().faces.get(right_face)?.triangle.vertices);
     }
 
     let mut pairs = Vec::new();
     for right_vertex in right_vertices {
-        let right_point = right.vertices().get(right_vertex)?.clone();
+        let right_point = right.vertices().get(right_vertex)?;
         if let Some(left_vertex) = left_vertices.iter().copied().find(|&left_vertex| {
-            let left_point = left.vertices()[left_vertex].clone();
-            points_equal(&left_point, &right_point) == Some(true)
+            match left.vertices().get(left_vertex) {
+                Some(left_point) => point3_exact_equal(left_point, right_point) == Some(true),
+                None => false,
+            }
         }) {
             pairs.push((right_vertex, left_vertex));
         }
@@ -679,11 +668,11 @@ fn append_left_triangle_with_edge_splits(
         map_left_vertex(left, left_vertex_map, vertices, triangle[1])?,
         map_left_vertex(left, left_vertex_map, vertices, triangle[2])?,
     ];
-    let points = triangle_points(left, triangle)?;
+    let points = triangle_point_refs(left, triangle)?;
     let mut splits = [Vec::new(), Vec::new(), Vec::new()];
     for &right_vertex in right_candidates {
-        let point = right.vertices().get(right_vertex)?.clone();
-        let Some((edge, parameter)) = triangle_edge_split_parameter(&points, &point)? else {
+        let point = right.vertices().get(right_vertex)?;
+        let Some((edge, parameter)) = triangle_edge_split_parameter(&points, point)? else {
             continue;
         };
         let mapped = map_right_vertex(
@@ -695,9 +684,9 @@ fn append_left_triangle_with_edge_splits(
             vertices,
             right_vertex,
         )?;
-        insert_triangle_edge_split(&mut splits[edge], mapped, point, parameter);
+        insert_triangle_edge_split(&mut splits[edge], vertices, mapped, point, parameter);
     }
-    append_refined_triangle(&points, mapped, splits, triangles)
+    append_refined_triangle(mapped, splits, vertices, triangles)
 }
 
 fn append_right_triangle_with_edge_splits(
@@ -740,35 +729,39 @@ fn append_right_triangle_with_edge_splits(
             triangle[2],
         )?,
     ];
-    let points = triangle_points(right, triangle)?;
+    let points = triangle_point_refs(right, triangle)?;
     let mut splits = [Vec::new(), Vec::new(), Vec::new()];
     for &left_vertex in left_candidates {
-        let point = left.vertices().get(left_vertex)?.clone();
-        let Some((edge, parameter)) = triangle_edge_split_parameter(&points, &point)? else {
+        let point = left.vertices().get(left_vertex)?;
+        let Some((edge, parameter)) = triangle_edge_split_parameter(&points, point)? else {
             continue;
         };
         let mapped = map_left_vertex(left, left_vertex_map, vertices, left_vertex)?;
-        insert_triangle_edge_split(&mut splits[edge], mapped, point, parameter);
+        insert_triangle_edge_split(&mut splits[edge], vertices, mapped, point, parameter);
     }
-    append_refined_triangle(&points, mapped, splits, triangles)
+    append_refined_triangle(mapped, splits, vertices, triangles)
 }
 
 #[derive(Clone, Debug)]
 struct TriangleEdgeSplit {
     parameter: Real,
     mapped_vertex: usize,
-    point: Point3,
 }
 
 fn triangle_edge_split_parameter(
-    triangle_points: &[Point3; 3],
+    triangle_points: &[&Point3; 3],
     point: &Point3,
 ) -> Option<Option<(usize, Real)>> {
-    let projection = choose_polygon_projection(triangle_points)?;
+    let projected_triangle = [
+        (*triangle_points[0]).clone(),
+        (*triangle_points[1]).clone(),
+        (*triangle_points[2]).clone(),
+    ];
+    let projection = choose_nonzero_projected_polygon_area(&projected_triangle)?;
     for edge in 0..3 {
-        let start = &triangle_points[edge];
-        let end = &triangle_points[(edge + 1) % 3];
-        if !point_lies_strictly_on_segment3(start, end, point)? {
+        let start = triangle_points[edge];
+        let end = triangle_points[(edge + 1) % 3];
+        if !point3_lies_strictly_on_segment(start, end, point)? {
             continue;
         }
         let parameter = projected_segment_parameter3(point, start, end, projection)?;
@@ -779,26 +772,29 @@ fn triangle_edge_split_parameter(
 
 fn insert_triangle_edge_split(
     splits: &mut Vec<TriangleEdgeSplit>,
+    vertices: &[Point3],
     mapped_vertex: usize,
-    point: Point3,
+    point: &Point3,
     parameter: Real,
 ) {
     if splits.iter().any(|split| {
-        split.mapped_vertex == mapped_vertex || points_equal(&split.point, &point) == Some(true)
+        split.mapped_vertex == mapped_vertex
+            || vertices
+                .get(split.mapped_vertex)
+                .is_some_and(|existing| point3_exact_equal(existing, point) == Some(true))
     }) {
         return;
     }
     splits.push(TriangleEdgeSplit {
         parameter,
         mapped_vertex,
-        point,
     });
 }
 
 fn append_refined_triangle(
-    triangle_points: &[Point3; 3],
     mapped_triangle: [usize; 3],
     mut splits: [Vec<TriangleEdgeSplit>; 3],
+    vertices: &[Point3],
     triangles: &mut Vec<Triangle>,
 ) -> Option<()> {
     if splits.iter().all(Vec::is_empty) {
@@ -809,19 +805,10 @@ fn append_refined_triangle(
         sort_edge_splits(edge_splits)?;
     }
 
-    let mut point_by_vertex = BTreeMap::<usize, Point3>::new();
-    for index in 0..3 {
-        point_by_vertex.insert(mapped_triangle[index], triangle_points[index].clone());
-    }
-    for edge_splits in &splits {
-        for split in edge_splits {
-            point_by_vertex.insert(split.mapped_vertex, split.point.clone());
-        }
-    }
     let mut refined = vec![Triangle(mapped_triangle)];
     for edge_splits in &splits {
         for split in edge_splits {
-            split_output_triangle_edge(&point_by_vertex, &mut refined, split.mapped_vertex)?;
+            split_output_triangle_edge(vertices, &mut refined, split.mapped_vertex)?;
         }
     }
     triangles.extend(refined);
@@ -829,11 +816,11 @@ fn append_refined_triangle(
 }
 
 fn split_output_triangle_edge(
-    point_by_vertex: &BTreeMap<usize, Point3>,
+    vertices: &[Point3],
     triangles: &mut Vec<Triangle>,
     split_vertex: usize,
 ) -> Option<()> {
-    let split_point = point_by_vertex.get(&split_vertex)?;
+    let split_point = vertices.get(split_vertex)?;
     let mut triangle_index = 0;
     while triangle_index < triangles.len() {
         let triangle = triangles[triangle_index].0;
@@ -845,9 +832,9 @@ fn split_output_triangle_edge(
             let a = triangle[edge];
             let b = triangle[(edge + 1) % 3];
             let opposite = triangle[(edge + 2) % 3];
-            let a_point = point_by_vertex.get(&a)?;
-            let b_point = point_by_vertex.get(&b)?;
-            if point_lies_strictly_on_segment3(a_point, b_point, split_point)? {
+            let a_point = vertices.get(a)?;
+            let b_point = vertices.get(b)?;
+            if point3_lies_strictly_on_segment(a_point, b_point, split_point)? {
                 triangles.splice(
                     triangle_index..triangle_index + 1,
                     [
@@ -879,13 +866,6 @@ fn sort_edge_splits(splits: &mut Vec<TriangleEdgeSplit>) -> Option<()> {
     Some(())
 }
 
-fn point_lies_strictly_on_segment3(start: &Point3, end: &Point3, point: &Point3) -> Option<bool> {
-    if points_equal(point, start)? || points_equal(point, end)? {
-        return Some(false);
-    }
-    point_on_segment3(start, end, point).value()
-}
-
 fn fan_faces_cover_triangle(
     whole_mesh: &ExactMesh,
     whole_face: usize,
@@ -899,35 +879,41 @@ fn fan_faces_cover_triangle(
     // area matches. Interior vertices are deleted with the patch; boundary
     // split vertices are retained by refining copied side faces before mesh
     // handoff.
-    let whole_triangle = whole_mesh.triangles().get(whole_face)?.0;
-    let whole_points = triangle_points(whole_mesh, whole_triangle)?;
-    let projection = choose_polygon_projection(&whole_points)?;
-    let whole_area = projected_polygon_area2_value(&whole_points, projection);
+    let whole_triangle = whole_mesh.facts().faces.get(whole_face)?.triangle.vertices;
+    let whole_points = triangle_point_refs(whole_mesh, whole_triangle)?;
+    let whole_projection_points = [
+        (*whole_points[0]).clone(),
+        (*whole_points[1]).clone(),
+        (*whole_points[2]).clone(),
+    ];
+    let projection = choose_nonzero_projected_polygon_area(&whole_projection_points)?;
+    let whole_area = projected_polygon_area2_value(&whole_projection_points, projection);
     let whole_sign = real_sign(&whole_area)?;
 
     let mut fan_faces = Vec::new();
     let mut edge_counts = BTreeMap::<(usize, usize), usize>::new();
     let mut area_sum = Real::from(0);
 
-    for (fan_face, fan_triangle) in fan_mesh.triangles().iter().enumerate() {
+    for (fan_face, fan_facts) in fan_mesh.facts().faces.iter().enumerate() {
         if consumed_fan_faces.contains(&fan_face) {
             continue;
         }
+        let fan_triangle = fan_facts.triangle.vertices;
         let Some(area_abs) = fan_triangle_in_whole_triangle(
-            &whole_points,
+            whole_points,
             projection,
             whole_sign,
             fan_mesh,
-            fan_triangle.0,
+            fan_triangle,
         )?
         else {
             continue;
         };
 
         for edge in [
-            normalized_edge(fan_triangle.0[0], fan_triangle.0[1]),
-            normalized_edge(fan_triangle.0[1], fan_triangle.0[2]),
-            normalized_edge(fan_triangle.0[2], fan_triangle.0[0]),
+            normalized_edge(fan_triangle[0], fan_triangle[1]),
+            normalized_edge(fan_triangle[1], fan_triangle[2]),
+            normalized_edge(fan_triangle[2], fan_triangle[0]),
         ] {
             let count = edge_counts.entry(edge).or_default();
             *count += 1;
@@ -957,12 +943,13 @@ fn fan_faces_cover_triangle(
     if boundary_vertices.len() != boundary_edges.len() {
         return Some(None);
     }
-    for whole_point in &whole_points {
+    for whole_point in whole_points {
         if !boundary_vertices.iter().any(|&vertex| {
-            fan_mesh
-                .vertices()
-                .get(vertex)
-                .is_some_and(|point| points_equal(whole_point, point) == Some(true))
+            if let Some(point) = fan_mesh.vertices().get(vertex) {
+                point3_exact_equal(whole_point, point) == Some(true)
+            } else {
+                false
+            }
         }) {
             return Some(None);
         }
@@ -971,9 +958,9 @@ fn fan_faces_cover_triangle(
         let point = fan_mesh.vertices().get(vertex)?;
         let projected = project_point3(point, projection);
         let location = classify_point_triangle(
-            &project_point3(&whole_points[0], projection),
-            &project_point3(&whole_points[1], projection),
-            &project_point3(&whole_points[2], projection),
+            &project_point3(whole_points[0], projection),
+            &project_point3(whole_points[1], projection),
+            &project_point3(whole_points[2], projection),
             &projected,
         )
         .value()?;
@@ -1023,13 +1010,13 @@ fn order_fan_boundary_cycle(edges: &[(usize, usize)]) -> Option<Vec<usize>> {
 }
 
 fn fan_triangle_in_whole_triangle(
-    whole_points: &[Point3; 3],
+    whole_points: [&Point3; 3],
     projection: CoplanarProjection,
     whole_sign: Sign,
     fan_mesh: &ExactMesh,
     fan_triangle: [usize; 3],
 ) -> Option<Option<Real>> {
-    let fan_points = triangle_points(fan_mesh, fan_triangle)?;
+    let fan_points = triangle_point_refs(fan_mesh, fan_triangle)?;
     if !fan_points
         .iter()
         .all(|point| point_on_triangle_plane(whole_points, point) == Some(true))
@@ -1037,7 +1024,12 @@ fn fan_triangle_in_whole_triangle(
         return Some(None);
     }
 
-    let fan_area = projected_polygon_area2_value(&fan_points, projection);
+    let fan_projection_points = [
+        (*fan_points[0]).clone(),
+        (*fan_points[1]).clone(),
+        (*fan_points[2]).clone(),
+    ];
+    let fan_area = projected_polygon_area2_value(&fan_projection_points, projection);
     let fan_sign = real_sign(&fan_area)?;
     if fan_sign == Sign::Zero || fan_sign == whole_sign {
         return Some(None);
@@ -1046,9 +1038,9 @@ fn fan_triangle_in_whole_triangle(
     for fan_point in &fan_points {
         let projected = project_point3(fan_point, projection);
         let location = classify_point_triangle(
-            &project_point3(&whole_points[0], projection),
-            &project_point3(&whole_points[1], projection),
-            &project_point3(&whole_points[2], projection),
+            &project_point3(whole_points[0], projection),
+            &project_point3(whole_points[1], projection),
+            &project_point3(whole_points[2], projection),
             &projected,
         )
         .value()?;
@@ -1070,21 +1062,8 @@ const fn normalized_edge(a: usize, b: usize) -> (usize, usize) {
     if a < b { (a, b) } else { (b, a) }
 }
 
-fn point_on_triangle_plane(triangle: &[Point3; 3], point: &Point3) -> Option<bool> {
-    Some(orient3d_report(&triangle[0], &triangle[1], &triangle[2], point).value()? == Sign::Zero)
-}
-
-fn choose_polygon_projection(points: &[Point3]) -> Option<CoplanarProjection> {
-    [
-        CoplanarProjection::Xy,
-        CoplanarProjection::Xz,
-        CoplanarProjection::Yz,
-    ]
-    .into_iter()
-    .find(|&projection| {
-        let area = projected_polygon_area2_value(points, projection);
-        !matches!(real_sign(&area), Some(Sign::Zero) | None)
-    })
+fn point_on_triangle_plane(triangle: [&Point3; 3], point: &Point3) -> Option<bool> {
+    Some(orient3d_report(triangle[0], triangle[1], triangle[2], point).value()? == Sign::Zero)
 }
 
 fn real_abs(value: &Real) -> Option<Real> {
@@ -1108,13 +1087,13 @@ fn reversed_whole_face_vertex_map(
     right: &ExactMesh,
     right_triangle: [usize; 3],
 ) -> Option<[usize; 3]> {
-    let left_points = triangle_points(left, left_triangle)?;
-    let right_points = triangle_points(right, right_triangle)?;
+    let left_points = triangle_point_refs(left, left_triangle)?;
+    let right_points = triangle_point_refs(right, right_triangle)?;
     let mut labels = [usize::MAX; 3];
     for (right_corner, right_point) in right_points.iter().enumerate() {
         let label = left_points
             .iter()
-            .position(|left_point| points_equal(left_point, right_point) == Some(true))?;
+            .position(|left_point| point3_exact_equal(left_point, right_point) == Some(true))?;
         labels[right_corner] = label;
     }
     if !matches!(labels, [0, 2, 1] | [2, 1, 0] | [1, 0, 2]) {
@@ -1133,13 +1112,13 @@ fn same_whole_face_vertices_decided(
     right: &ExactMesh,
     right_triangle: [usize; 3],
 ) -> Option<bool> {
-    let left_points = triangle_points(left, left_triangle)?;
-    let right_points = triangle_points(right, right_triangle)?;
+    let left_points = triangle_point_refs(left, left_triangle)?;
+    let right_points = triangle_point_refs(right, right_triangle)?;
     for right_point in &right_points {
         let mut matched = false;
         let mut undecided = false;
         for left_point in &left_points {
-            match points_equal(left_point, right_point) {
+            match point3_exact_equal(left_point, right_point) {
                 Some(true) => {
                     matched = true;
                     break;
@@ -1158,18 +1137,10 @@ fn same_whole_face_vertices_decided(
     Some(true)
 }
 
-fn triangle_points(mesh: &ExactMesh, triangle: [usize; 3]) -> Option<[Point3; 3]> {
+fn triangle_point_refs(mesh: &ExactMesh, triangle: [usize; 3]) -> Option<[&Point3; 3]> {
     Some([
-        mesh.vertices().get(triangle[0])?.clone(),
-        mesh.vertices().get(triangle[1])?.clone(),
-        mesh.vertices().get(triangle[2])?.clone(),
+        mesh.vertices().get(triangle[0])?,
+        mesh.vertices().get(triangle[1])?,
+        mesh.vertices().get(triangle[2])?,
     ])
-}
-
-fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
-    Some(
-        compare_reals(&left.x, &right.x).value()? == std::cmp::Ordering::Equal
-            && compare_reals(&left.y, &right.y).value()? == std::cmp::Ordering::Equal
-            && compare_reals(&left.z, &right.z).value()? == std::cmp::Ordering::Equal,
-    )
 }

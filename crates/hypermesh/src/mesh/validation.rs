@@ -73,13 +73,6 @@ impl Default for ExactMeshValidationPolicy {
     }
 }
 
-impl ValidationReport {
-    /// Return whether the report contains no fatal blockers.
-    pub(crate) fn is_valid(&self) -> bool {
-        self.blockers.is_empty()
-    }
-}
-
 pub(crate) fn validate_triangle_rows_with_policy(
     points: &[Point3],
     triangle_count: usize,
@@ -397,37 +390,20 @@ fn face_plane_facts(points: &[Point3], tri: [usize; 3]) -> FacePlaneFacts {
     let a = &points[tri[0]];
     let b = &points[tri[1]];
     let c = &points[tri[2]];
-    let ux = sub(&b.x, &a.x);
-    let uy = sub(&b.y, &a.y);
-    let uz = sub(&b.z, &a.z);
-    let vx = sub(&c.x, &a.x);
-    let vy = sub(&c.y, &a.y);
-    let vz = sub(&c.z, &a.z);
+    let ux = b.x.clone() - &a.x;
+    let uy = b.y.clone() - &a.y;
+    let uz = b.z.clone() - &a.z;
+    let vx = c.x.clone() - &a.x;
+    let vy = c.y.clone() - &a.y;
+    let vz = c.z.clone() - &a.z;
     let normal = [
-        sub(&mul(&uy, &vz), &mul(&uz, &vy)),
-        sub(&mul(&uz, &vx), &mul(&ux, &vz)),
-        sub(&mul(&ux, &vy), &mul(&uy, &vx)),
+        uy.clone() * &vz - &(uz.clone() * &vy),
+        uz.clone() * &vx - &(ux.clone() * &vz),
+        ux.clone() * &vy - &(uy.clone() * &vx),
     ];
-    let offset = sub(
-        &Real::from(0),
-        &add(
-            &add(&mul(&normal[0], &a.x), &mul(&normal[1], &a.y)),
-            &mul(&normal[2], &a.z),
-        ),
-    );
+    let offset = Real::from(0)
+        - &((normal[0].clone() * &a.x) + &(normal[1].clone() * &a.y) + &(normal[2].clone() * &a.z));
     FacePlaneFacts { normal, offset }
-}
-
-fn add(left: &Real, right: &Real) -> Real {
-    left.clone() + right
-}
-
-fn sub(left: &Real, right: &Real) -> Real {
-    left.clone() - right
-}
-
-fn mul(left: &Real, right: &Real) -> Real {
-    left.clone() * right
 }
 
 #[cfg(test)]
@@ -448,7 +424,7 @@ mod tests {
             ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         );
 
-        assert!(!report.is_valid());
+        assert!(!report.blockers.is_empty());
         assert_eq!(report.blockers.len(), 1);
         assert_eq!(
             report.blockers[0].kind(),

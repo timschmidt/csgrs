@@ -17,8 +17,8 @@ use std::cmp::Ordering;
 use std::collections::{BTreeSet, HashMap};
 
 use hyperlimit::{
-    CoplanarProjection, PlaneSide, Point3, SegmentIntersection, SegmentPlaneRelation,
-    TriangleLocation, classify_point_triangle, compare_reals, project_point3,
+    PlaneSide, SegmentIntersection, SegmentPlaneRelation, TriangleLocation,
+    classify_point_triangle, compare_reals, project_point3,
 };
 
 use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
@@ -28,6 +28,7 @@ use super::super::graph::{
     ExactIntersectionGraph, IntersectionEvent, MeshSide, build_validated_intersection_graph,
 };
 use super::super::{ExactMesh, sorted_edge};
+use super::choose_nonzero_projected_polygon_area;
 use super::solid::{ClosedMeshOrientation, exact_mesh_orientation};
 use hyperreal::Real;
 
@@ -53,17 +54,6 @@ pub(crate) enum CoplanarVolumetricCellObstacle {
     UnknownGraphEvidence,
     /// Retained graph evidence contains a failed exact construction event.
     ConstructionFailureEvidence,
-}
-
-impl CoplanarVolumetricCellObstacle {
-    /// Return whether a certified coplanar volumetric-cell materializer is the
-    /// next required topology stage.
-    pub(crate) const fn requires_coplanar_volumetric_cells(self) -> bool {
-        matches!(
-            self,
-            Self::NeedsCoplanarVolumetricCells | Self::MixedCoplanarAndCrossingCells
-        )
-    }
 }
 
 /// Validation failure for a coplanar volumetric-cell evidence report.
@@ -204,12 +194,6 @@ impl CoplanarVolumetricCellEvidenceReport {
         report
     }
 
-    #[cfg(test)]
-    pub(crate) fn with_test_retained_face_pair_count(mut self, count: usize) -> Self {
-        self.retained_face_pair_count = count;
-        self
-    }
-
     /// Build a report from a validated exact intersection graph.
     ///
     /// The graph is only counted here; source replay remains the job of
@@ -331,30 +315,6 @@ impl CoplanarVolumetricCellEvidenceReport {
 
         report.obstacle = derive_obstacle(&report);
         report
-    }
-
-    /// Return whether retained evidence proves boundary-only contact.
-    pub(crate) const fn is_boundary_only_contact(&self) -> bool {
-        matches!(
-            self.obstacle,
-            CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-        )
-    }
-
-    /// Return whether retained evidence proves boundary-only positive-area contact.
-    pub(crate) const fn is_boundary_only_positive_area_contact(&self) -> bool {
-        self.is_boundary_only_contact() && self.positive_area_coplanar_overlapping_pairs != 0
-    }
-
-    /// Return whether retained evidence proves only zero-area boundary contact.
-    pub(crate) const fn is_zero_area_boundary_only_contact(&self) -> bool {
-        self.is_boundary_only_contact() && self.positive_area_coplanar_overlapping_pairs == 0
-    }
-
-    /// Return whether retained evidence can be consumed by arrangement materialization.
-    pub(crate) const fn is_arrangement_materializable(&self) -> bool {
-        self.obstacle.requires_coplanar_volumetric_cells()
-            || self.is_boundary_only_positive_area_contact()
     }
 
     /// Return retained event count represented by this compact evidence.
@@ -554,27 +514,45 @@ fn mesh_local_off_plane_side(
     plane: &FacePlaneFacts,
 ) -> Option<PlaneSide> {
     let face_is_coplanar_with_plane = |face: usize| {
-        mesh.triangles().get(face).is_some_and(|triangle| {
-            triangle.0.iter().all(|&vertex| {
+        if let Some(face) = mesh.facts().faces.get(face) {
+            face.triangle.vertices.iter().all(|&vertex| {
                 mesh.vertices()
                     .get(vertex)
                     .and_then(|point| retained_plane_side(plane, point))
                     == Some(PlaneSide::On)
             })
-        })
+        } else {
+            false
+        }
     };
 
-    if mesh.triangles().get(face).is_none() || !face_is_coplanar_with_plane(face) {
+    if mesh.facts().faces.get(face).is_none() || !face_is_coplanar_with_plane(face) {
         return None;
     }
-    let edge_to_faces = mesh_edge_to_faces(mesh);
+    let mut edge_to_faces = HashMap::<[usize; 2], Vec<usize>>::new();
+    for face in &mesh.facts().faces {
+        for edge in face.oriented.directed_edges.map(sorted_edge) {
+            edge_to_faces
+                .entry(edge)
+                .or_default()
+                .push(face.triangle.face);
+        }
+    }
+
     let mut patch = BTreeSet::new();
     let mut stack = vec![face];
     while let Some(current) = stack.pop() {
         if !patch.insert(current) {
             continue;
         }
-        for edge in mesh_face_edges(mesh, current)? {
+        for edge in mesh
+            .facts()
+            .faces
+            .get(current)?
+            .oriented
+            .directed_edges
+            .map(sorted_edge)
+        {
             for &neighbor in edge_to_faces
                 .get(&edge)
                 .into_iter()
@@ -589,7 +567,14 @@ fn mesh_local_off_plane_side(
 
     let mut side = None;
     for &patch_face in &patch {
-        for edge in mesh_face_edges(mesh, patch_face)? {
+        for edge in mesh
+            .facts()
+            .faces
+            .get(patch_face)?
+            .oriented
+            .directed_edges
+            .map(sorted_edge)
+        {
             for &neighbor in edge_to_faces
                 .get(&edge)
                 .into_iter()
@@ -598,8 +583,7 @@ fn mesh_local_off_plane_side(
                 if patch.contains(&neighbor) {
                     continue;
                 }
-                let triangle = mesh.triangles().get(neighbor)?.0;
-                for vertex in triangle {
+                for vertex in mesh.facts().faces.get(neighbor)?.triangle.vertices {
                     if edge.contains(&vertex) {
                         continue;
                     }
@@ -620,27 +604,6 @@ fn mesh_local_off_plane_side(
         }
     }
     side
-}
-
-fn mesh_edge_to_faces(mesh: &ExactMesh) -> HashMap<[usize; 2], Vec<usize>> {
-    let mut edge_to_faces = HashMap::<[usize; 2], Vec<usize>>::new();
-    for face in 0..mesh.triangles().len() {
-        if let Some(edges) = mesh_face_edges(mesh, face) {
-            for edge in edges {
-                edge_to_faces.entry(edge).or_default().push(face);
-            }
-        }
-    }
-    edge_to_faces
-}
-
-fn mesh_face_edges(mesh: &ExactMesh, face: usize) -> Option<[[usize; 2]; 3]> {
-    let triangle = mesh.triangles().get(face)?.0;
-    Some([
-        sorted_edge([triangle[0], triangle[1]]),
-        sorted_edge([triangle[1], triangle[2]]),
-        sorted_edge([triangle[2], triangle[0]]),
-    ])
 }
 
 fn coplanar_pair_has_positive_area_overlap(events: &[IntersectionEvent]) -> bool {
@@ -753,52 +716,32 @@ fn proper_crossing_event(event: &IntersectionEvent, left: &ExactMesh, right: &Ex
             }
         );
     };
-    let Some(triangle) = triangle_points(plane_side.mesh(left, right), *plane_face) else {
+    let mesh = plane_side.mesh(left, right);
+    let Some(face) = mesh.facts().faces.get(*plane_face) else {
         return true;
     };
-    let Some(projection) = choose_triangle_projection(&triangle) else {
+    let triangle = face.triangle.vertices;
+    let Some(a) = mesh.vertices().get(triangle[0]) else {
+        return true;
+    };
+    let Some(b) = mesh.vertices().get(triangle[1]) else {
+        return true;
+    };
+    let Some(c) = mesh.vertices().get(triangle[2]) else {
+        return true;
+    };
+    let points = [a.clone(), b.clone(), c.clone()];
+    let Some(projection) = choose_nonzero_projected_polygon_area(&points) else {
         return true;
     };
     classify_point_triangle(
-        &project_point3(&triangle[0], projection),
-        &project_point3(&triangle[1], projection),
-        &project_point3(&triangle[2], projection),
+        &project_point3(&points[0], projection),
+        &project_point3(&points[1], projection),
+        &project_point3(&points[2], projection),
         &project_point3(point, projection),
     )
     .value()
         == Some(TriangleLocation::Inside)
-}
-
-fn triangle_points(mesh: &ExactMesh, face: usize) -> Option<[Point3; 3]> {
-    let triangle = mesh.triangles().get(face)?.0;
-    Some([
-        mesh.vertices().get(triangle[0])?.clone(),
-        mesh.vertices().get(triangle[1])?.clone(),
-        mesh.vertices().get(triangle[2])?.clone(),
-    ])
-}
-
-fn choose_triangle_projection(points: &[Point3; 3]) -> Option<CoplanarProjection> {
-    [
-        CoplanarProjection::Xy,
-        CoplanarProjection::Xz,
-        CoplanarProjection::Yz,
-    ]
-    .into_iter()
-    .find(|&projection| {
-        let area = projected_area2_signed(points, projection);
-        compare_reals(&area, &Real::from(0)).value() != Some(Ordering::Equal)
-    })
-}
-
-fn projected_area2_signed(points: &[Point3; 3], projection: CoplanarProjection) -> Real {
-    let mut sum = Real::from(0);
-    for index in 0..3 {
-        let current = project_point3(&points[index], projection);
-        let next = project_point3(&points[(index + 1) % 3], projection);
-        sum += &((current.x * &next.y) - &(current.y * &next.x));
-    }
-    sum
 }
 
 #[cfg(test)]
@@ -901,7 +844,11 @@ mod tests {
             report.obstacle,
             CoplanarVolumetricCellObstacle::BoundaryOnlyContact
         );
-        assert!(!report.obstacle.requires_coplanar_volumetric_cells());
+        assert!(!matches!(
+            report.obstacle,
+            CoplanarVolumetricCellObstacle::NeedsCoplanarVolumetricCells
+                | CoplanarVolumetricCellObstacle::MixedCoplanarAndCrossingCells
+        ));
         assert_eq!(report.validate(), Ok(()));
     }
 
@@ -915,7 +862,11 @@ mod tests {
             report.obstacle,
             CoplanarVolumetricCellObstacle::MixedCoplanarAndCrossingCells
         );
-        assert!(report.obstacle.requires_coplanar_volumetric_cells());
+        assert!(matches!(
+            report.obstacle,
+            CoplanarVolumetricCellObstacle::NeedsCoplanarVolumetricCells
+                | CoplanarVolumetricCellObstacle::MixedCoplanarAndCrossingCells
+        ));
         assert_eq!(report.validate(), Ok(()));
     }
 
@@ -1046,7 +997,11 @@ mod tests {
 
         assert!(report.positive_area_coplanar_overlapping_pairs > 0);
         assert!(report.same_side_coplanar_overlapping_pairs > 0);
-        assert!(report.obstacle.requires_coplanar_volumetric_cells());
+        assert!(matches!(
+            report.obstacle,
+            CoplanarVolumetricCellObstacle::NeedsCoplanarVolumetricCells
+                | CoplanarVolumetricCellObstacle::MixedCoplanarAndCrossingCells
+        ));
         report.validate_against_sources(&left, &right).unwrap();
     }
 

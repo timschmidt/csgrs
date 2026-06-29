@@ -17,8 +17,7 @@
 
 use hyperlimit::{
     CoplanarProjection, Point3, SegmentIntersection, SegmentPlaneRelation, Sign, TriangleLocation,
-    classify_point_triangle, compare_reals, point_on_segment3, project_point3,
-    projected_polygon_area2_value,
+    classify_point_triangle, compare_reals, project_point3, projected_polygon_area2_value,
 };
 
 use super::super::arrangement3d::arrangement2d::{
@@ -28,9 +27,12 @@ use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError
 use super::super::graph::intersection::MeshFacePairRelation;
 use super::super::graph::{ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide};
 use super::super::validation::ExactMeshValidationPolicy;
-use super::super::{ExactMesh, ExactMeshValidationError, Triangle, triangle_edges_tuple};
-use super::winding::classify_mesh_vertices_against_closed_mesh_winding_report;
-use super::{coplanar_mesh_overlay_carrier, materialize_coplanar_mesh_overlay_mesh};
+use super::super::{ExactMesh, ExactMeshValidationError, Triangle, sorted_edge};
+use super::closed_boundary_contact_only;
+use super::{
+    DisjointSets, coplanar_mesh_overlay_carrier, materialize_coplanar_mesh_overlay_mesh,
+    point3_exact_equal, point3_lies_strictly_on_segment,
+};
 use hyperlimit::SourceProvenance;
 use hyperreal::Real;
 
@@ -121,13 +123,6 @@ impl ContainedFaceAdjacentUnion {
     }
 }
 
-fn exact_construction_failure(message: impl Into<String>) -> ExactMeshError {
-    ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::ExactConstructionFailure,
-        message,
-    ))
-}
-
 /// Return the retained contained-face adjacency certificate from a validated graph.
 pub(crate) fn contained_face_adjacent_certificate_from_graph(
     left: &ExactMesh,
@@ -199,8 +194,9 @@ pub(crate) fn materialize_contained_face_adjacent_union_from_certificate(
         mesh,
     };
     union.validate().map_err(|error| {
-        exact_construction_failure(format!(
-            "contained-face adjacent union retained output failed validation: {error:?}"
+        ExactMeshError::one(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::ExactConstructionFailure,
+            format!("contained-face adjacent union retained output failed validation: {error:?}"),
         ))
     })?;
     Ok(Some(union))
@@ -255,15 +251,39 @@ fn component_contained_adjacency_certificate(
     }
 
     let components = overlap_face_components(&overlapping)?;
-    component_contained_adjacency_components_for_side(MeshSide::Left, left, right, &components)
-        .or_else(|| {
-            component_contained_adjacency_components_for_side(
-                MeshSide::Right,
-                right,
-                left,
-                &components,
-            )
-        })
+    'sides: for (containing_side, containing_source, contained_source) in [
+        (MeshSide::Left, left, right),
+        (MeshSide::Right, right, left),
+    ] {
+        let mut patches = Vec::with_capacity(components.len());
+        for component in &components {
+            let (containing_faces, contained_faces) = match containing_side {
+                MeshSide::Left => (
+                    component.left_faces.as_slice(),
+                    component.right_faces.as_slice(),
+                ),
+                MeshSide::Right => (
+                    component.right_faces.as_slice(),
+                    component.left_faces.as_slice(),
+                ),
+            };
+            let Some(certificate) = component_contained_adjacency_for_side(
+                containing_side,
+                containing_source,
+                contained_source,
+                containing_faces,
+                contained_faces,
+            ) else {
+                continue 'sides;
+            };
+            patches.extend(certificate.patches);
+        }
+        return Some(ContainedFaceAdjacencyCertificate {
+            containing_side,
+            patches,
+        });
+    }
+    None
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -283,7 +303,7 @@ fn overlap_face_components(overlapping: &[&FacePairEvents]) -> Option<Vec<Overla
     if overlapping.is_empty() {
         return None;
     }
-    let mut components = PairUnionFind::new(overlapping.len());
+    let mut components = DisjointSets::new(overlapping.len());
     for left in 0..overlapping.len() {
         for right in left + 1..overlapping.len() {
             if overlapping[left].left_face == overlapping[right].left_face
@@ -318,39 +338,12 @@ fn overlap_face_components(overlapping: &[&FacePairEvents]) -> Option<Vec<Overla
     Some(grouped)
 }
 
-fn component_contained_adjacency_components_for_side(
-    containing_side: MeshSide,
-    containing_source: &ExactMesh,
-    contained_source: &ExactMesh,
-    components: &[OverlapFaceComponent],
-) -> Option<ContainedFaceAdjacencyCertificate> {
-    let mut patches = Vec::with_capacity(components.len());
-    for component in components {
-        let (containing_faces, contained_faces) = match containing_side {
-            MeshSide::Left => (component.left_faces.clone(), component.right_faces.clone()),
-            MeshSide::Right => (component.right_faces.clone(), component.left_faces.clone()),
-        };
-        let certificate = component_contained_adjacency_for_side(
-            containing_side,
-            containing_source,
-            contained_source,
-            containing_faces,
-            contained_faces,
-        )?;
-        patches.extend(certificate.patches);
-    }
-    Some(ContainedFaceAdjacencyCertificate {
-        containing_side,
-        patches,
-    })
-}
-
 fn component_contained_adjacency_for_side(
     containing_side: MeshSide,
     containing_source: &ExactMesh,
     contained_source: &ExactMesh,
-    containing_faces: Vec<usize>,
-    contained_faces: Vec<usize>,
+    containing_faces: &[usize],
+    contained_faces: &[usize],
 ) -> Option<ContainedFaceAdjacencyCertificate> {
     if containing_faces.is_empty() || contained_faces.is_empty() {
         return None;
@@ -365,7 +358,7 @@ fn component_contained_adjacency_for_side(
         &contained_faces,
         "exact contained-face adjacency contained component",
     )?;
-    if connected_face_components(&containing_mesh)?.len() != 1 {
+    if connected_face_component_count(&containing_mesh)? != 1 {
         return None;
     }
     let (_, arrangement_projection) =
@@ -387,8 +380,8 @@ fn component_contained_adjacency_for_side(
     Some(ContainedFaceAdjacencyCertificate {
         containing_side,
         patches: vec![ContainedFacePatch {
-            containing_faces,
-            contained_faces,
+            containing_faces: containing_faces.to_vec(),
+            contained_faces: contained_faces.to_vec(),
             projection: arrangement_projection,
             containing_projected_sign: sign,
         }],
@@ -461,9 +454,21 @@ fn retained_plane_crossing_is_not_inside_plane_face(
     // finite triangle, or exactly on its boundary. That construction is exact
     // evidence for splitting, not for volume overlap; preserving the
     // shortcut consumes. Strict interior crossings remain blockers.
-    let Some(triangle) = triangle_points(plane_side.mesh(left, right), *plane_face) else {
+    let mesh = plane_side.mesh(left, right);
+    let Some(face) = mesh.facts().faces.get(*plane_face) else {
         return false;
     };
+    let triangle_vertices = face.triangle.vertices;
+    let Some(a) = mesh.vertices().get(triangle_vertices[0]) else {
+        return false;
+    };
+    let Some(b) = mesh.vertices().get(triangle_vertices[1]) else {
+        return false;
+    };
+    let Some(c) = mesh.vertices().get(triangle_vertices[2]) else {
+        return false;
+    };
+    let triangle = [a.clone(), b.clone(), c.clone()];
     let Some(projection) = [
         CoplanarProjection::Xy,
         CoplanarProjection::Xz,
@@ -473,14 +478,17 @@ fn retained_plane_crossing_is_not_inside_plane_face(
     .find(|&projection| projected_triangle_sign(&triangle, projection).is_some()) else {
         return false;
     };
-    classify_point_triangle(
+    match classify_point_triangle(
         &project_point3(&triangle[0], projection),
         &project_point3(&triangle[1], projection),
         &project_point3(&triangle[2], projection),
         &project_point3(point, projection),
     )
     .value()
-    .is_some_and(|location| location != TriangleLocation::Inside)
+    {
+        Some(location) => location != TriangleLocation::Inside,
+        None => false,
+    }
 }
 
 fn contained_face_union_mesh(
@@ -609,11 +617,11 @@ fn faces_mesh(mesh: &ExactMesh, faces: &[usize], label: &'static str) -> Option<
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
     for &face in faces {
-        let triangle = mesh.triangles().get(face)?.0;
+        let triangle = mesh.facts().faces.get(face)?.triangle.vertices;
         triangles.push(Triangle([
-            map_point(&mut vertices, &mesh.vertices().get(triangle[0])?.clone())?,
-            map_point(&mut vertices, &mesh.vertices().get(triangle[1])?.clone())?,
-            map_point(&mut vertices, &mesh.vertices().get(triangle[2])?.clone())?,
+            map_point(&mut vertices, mesh.vertices().get(triangle[0])?)?,
+            map_point(&mut vertices, mesh.vertices().get(triangle[1])?)?,
+            map_point(&mut vertices, mesh.vertices().get(triangle[2])?)?,
         ]));
     }
     ExactMesh::new_with_policy(
@@ -625,80 +633,47 @@ fn faces_mesh(mesh: &ExactMesh, faces: &[usize], label: &'static str) -> Option<
     .ok()
 }
 
-fn connected_face_components(mesh: &ExactMesh) -> Option<Vec<Vec<usize>>> {
-    if mesh.triangles().is_empty() {
+fn connected_face_component_count(mesh: &ExactMesh) -> Option<usize> {
+    let face_count = mesh.facts().faces.len();
+    if face_count == 0 {
         return None;
     }
-    let mut visited = vec![false; mesh.triangles().len()];
-    let mut components = Vec::new();
-    for seed in 0..mesh.triangles().len() {
-        if visited[seed] {
-            continue;
+    let mut edge_faces = BTreeMap::<[usize; 2], Vec<usize>>::new();
+    for face in &mesh.facts().faces {
+        if face.triangle.face >= face_count {
+            return None;
         }
-        let mut component = Vec::new();
-        let mut stack = vec![seed];
-        visited[seed] = true;
-        while let Some(face) = stack.pop() {
-            component.push(face);
-            let face_edges = triangle_edges_tuple(mesh.triangles()[face].0);
-            for (neighbor, neighbor_visited) in visited.iter_mut().enumerate() {
-                if *neighbor_visited {
-                    continue;
+        for edge in face.oriented.directed_edges {
+            edge_faces
+                .entry(sorted_edge(edge))
+                .or_default()
+                .push(face.triangle.face);
+        }
+    }
+
+    let mut components = DisjointSets::new(face_count);
+    for faces in edge_faces.values() {
+        for left in 0..faces.len() {
+            for right in left + 1..faces.len() {
+                let left_face = faces[left];
+                let right_face = faces[right];
+                if left_face >= face_count || right_face >= face_count {
+                    return None;
                 }
-                let neighbor_edges = triangle_edges_tuple(mesh.triangles()[neighbor].0);
-                let mut shares_edge = false;
-                for left_edge in &face_edges {
-                    for right_edge in &neighbor_edges {
-                        if left_edge == right_edge {
-                            shares_edge = true;
-                            break;
-                        }
-                    }
-                    if shares_edge {
-                        break;
-                    }
-                }
-                if shares_edge {
-                    *neighbor_visited = true;
-                    stack.push(neighbor);
-                }
+                components.union(left_face, right_face);
             }
         }
-        components.push(component);
     }
-    Some(components)
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-struct PairUnionFind {
-    parent: Vec<usize>,
-}
-
-impl PairUnionFind {
-    fn new(len: usize) -> Self {
-        Self {
-            parent: (0..len).collect(),
+    let mut roots = Vec::new();
+    let mut component_count = 0;
+    for face in 0..face_count {
+        let root = components.find(face);
+        if !roots.contains(&root) {
+            roots.push(root);
+            component_count += 1;
         }
     }
-
-    fn find(&mut self, index: usize) -> usize {
-        let parent = self.parent[index];
-        if parent == index {
-            index
-        } else {
-            let root = self.find(parent);
-            self.parent[index] = root;
-            root
-        }
-    }
-
-    fn union(&mut self, left: usize, right: usize) {
-        let left_root = self.find(left);
-        let right_root = self.find(right);
-        if left_root != right_root {
-            self.parent[right_root] = left_root;
-        }
-    }
+    Some(component_count)
 }
 
 fn append_source_mesh_without_face(
@@ -707,14 +682,15 @@ fn append_source_mesh_without_face(
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
 ) -> Option<()> {
-    for (face, triangle) in mesh.triangles().iter().enumerate() {
+    for (face, face_facts) in mesh.facts().faces.iter().enumerate() {
         if skip_faces.contains(&face) {
             continue;
         }
+        let triangle = face_facts.triangle.vertices;
         triangles.push(Triangle([
-            map_point(vertices, &mesh.vertices().get(triangle.0[0])?.clone())?,
-            map_point(vertices, &mesh.vertices().get(triangle.0[1])?.clone())?,
-            map_point(vertices, &mesh.vertices().get(triangle.0[2])?.clone())?,
+            map_point(vertices, mesh.vertices().get(triangle[0])?)?,
+            map_point(vertices, mesh.vertices().get(triangle[1])?)?,
+            map_point(vertices, mesh.vertices().get(triangle[2])?)?,
         ]));
     }
     Some(())
@@ -729,45 +705,33 @@ fn append_holed_replacement(
 ) -> Option<()> {
     let source_sign = first_projected_mesh_triangle_sign(mesh, projection)?;
     let flip = source_sign != target_sign;
-    for triangle in mesh.triangles() {
+    for face in &mesh.facts().faces {
+        let triangle = face.triangle.vertices;
         let points = [
-            mesh.vertices().get(triangle.0[0])?.clone(),
-            mesh.vertices().get(triangle.0[1])?.clone(),
-            mesh.vertices().get(triangle.0[2])?.clone(),
+            mesh.vertices().get(triangle[0])?.clone(),
+            mesh.vertices().get(triangle[1])?.clone(),
+            mesh.vertices().get(triangle[2])?.clone(),
         ];
         let mapped = [
             map_point(vertices, &points[0])?,
             map_point(vertices, &points[1])?,
             map_point(vertices, &points[2])?,
         ];
-        let (triangle_points, mapped_triangle) = if flip {
-            (
-                [points[0].clone(), points[2].clone(), points[1].clone()],
-                [mapped[0], mapped[2], mapped[1]],
-            )
+        let mapped_triangle = if flip {
+            [mapped[0], mapped[2], mapped[1]]
         } else {
-            (points, mapped)
+            mapped
         };
-        append_triangle_with_existing_edge_splits(
-            &triangle_points,
-            mapped_triangle,
-            vertices,
-            triangles,
-        )?;
+        append_triangle_with_existing_edge_splits(mapped_triangle, vertices, triangles)?;
     }
     Some(())
 }
 
 fn append_triangle_with_existing_edge_splits(
-    triangle_points: &[Point3; 3],
     mapped_triangle: [usize; 3],
     vertices: &[Point3],
     triangles: &mut Vec<Triangle>,
 ) -> Option<()> {
-    let mut point_by_vertex = BTreeMap::<usize, Point3>::new();
-    for index in 0..3 {
-        point_by_vertex.insert(mapped_triangle[index], triangle_points[index].clone());
-    }
     let mut split_vertices = Vec::new();
     for (candidate, point) in vertices.iter().enumerate() {
         if mapped_triangle.contains(&candidate) {
@@ -775,17 +739,14 @@ fn append_triangle_with_existing_edge_splits(
         }
         let mut lies_on_triangle_edge = false;
         for edge in 0..3 {
-            if point_lies_strictly_on_segment3(
-                &triangle_points[edge],
-                &triangle_points[(edge + 1) % 3],
-                point,
-            )? {
+            let start = vertices.get(mapped_triangle[edge])?;
+            let end = vertices.get(mapped_triangle[(edge + 1) % 3])?;
+            if point3_lies_strictly_on_segment(start, end, point)? {
                 lies_on_triangle_edge = true;
                 break;
             }
         }
         if lies_on_triangle_edge {
-            point_by_vertex.insert(candidate, point.clone());
             split_vertices.push(candidate);
         }
     }
@@ -796,18 +757,18 @@ fn append_triangle_with_existing_edge_splits(
 
     let mut refined = vec![Triangle(mapped_triangle)];
     for split_vertex in split_vertices {
-        split_output_triangle_edge(&point_by_vertex, &mut refined, split_vertex)?;
+        split_output_triangle_edge(vertices, &mut refined, split_vertex)?;
     }
     triangles.extend(refined);
     Some(())
 }
 
 fn split_output_triangle_edge(
-    point_by_vertex: &BTreeMap<usize, Point3>,
+    vertices: &[Point3],
     triangles: &mut Vec<Triangle>,
     split_vertex: usize,
 ) -> Option<()> {
-    let split_point = point_by_vertex.get(&split_vertex)?;
+    let split_point = vertices.get(split_vertex)?;
     let mut triangle_index = 0;
     while triangle_index < triangles.len() {
         let triangle = triangles[triangle_index].0;
@@ -819,9 +780,9 @@ fn split_output_triangle_edge(
             let a = triangle[edge];
             let b = triangle[(edge + 1) % 3];
             let opposite = triangle[(edge + 2) % 3];
-            let a_point = point_by_vertex.get(&a)?;
-            let b_point = point_by_vertex.get(&b)?;
-            if point_lies_strictly_on_segment3(a_point, b_point, split_point)? {
+            let a_point = vertices.get(a)?;
+            let b_point = vertices.get(b)?;
+            if point3_lies_strictly_on_segment(a_point, b_point, split_point)? {
                 triangles.splice(
                     triangle_index..triangle_index + 1,
                     [
@@ -837,32 +798,16 @@ fn split_output_triangle_edge(
     None
 }
 
-fn point_lies_strictly_on_segment3(start: &Point3, end: &Point3, point: &Point3) -> Option<bool> {
-    if points_equal(point, start)? || points_equal(point, end)? {
-        return Some(false);
-    }
-    point_on_segment3(start, end, point).value()
-}
-
 fn map_point(vertices: &mut Vec<Point3>, point: &Point3) -> Option<usize> {
     if let Some(existing) = vertices
         .iter()
-        .position(|candidate| points_equal(&candidate.clone(), point) == Some(true))
+        .position(|candidate| point3_exact_equal(candidate, point) == Some(true))
     {
         return Some(existing);
     }
     let mapped = vertices.len();
     vertices.push(point.clone());
     Some(mapped)
-}
-
-fn triangle_points(mesh: &ExactMesh, face: usize) -> Option<[Point3; 3]> {
-    let triangle = mesh.triangles().get(face)?.0;
-    Some([
-        mesh.vertices().get(triangle[0])?.clone(),
-        mesh.vertices().get(triangle[1])?.clone(),
-        mesh.vertices().get(triangle[2])?.clone(),
-    ])
 }
 
 fn projected_triangle_sign(points: &[Point3; 3], projection: CoplanarProjection) -> Option<Sign> {
@@ -878,11 +823,12 @@ fn first_projected_mesh_triangle_sign(
     mesh: &ExactMesh,
     projection: CoplanarProjection,
 ) -> Option<Sign> {
-    mesh.triangles().iter().find_map(|triangle| {
+    mesh.facts().faces.iter().find_map(|face| {
+        let triangle = face.triangle.vertices;
         let points = [
-            mesh.vertices().get(triangle.0[0])?.clone(),
-            mesh.vertices().get(triangle.0[1])?.clone(),
-            mesh.vertices().get(triangle.0[2])?.clone(),
+            mesh.vertices().get(triangle[0])?.clone(),
+            mesh.vertices().get(triangle[1])?.clone(),
+            mesh.vertices().get(triangle[2])?.clone(),
         ];
         projected_triangle_sign(&points, projection)
     })
@@ -893,44 +839,16 @@ fn mesh_projected_triangle_signs_match(
     projection: CoplanarProjection,
     expected: Sign,
 ) -> Option<bool> {
-    for triangle in mesh.triangles() {
+    for face in &mesh.facts().faces {
+        let triangle = face.triangle.vertices;
         let points = [
-            mesh.vertices().get(triangle.0[0])?.clone(),
-            mesh.vertices().get(triangle.0[1])?.clone(),
-            mesh.vertices().get(triangle.0[2])?.clone(),
+            mesh.vertices().get(triangle[0])?.clone(),
+            mesh.vertices().get(triangle[1])?.clone(),
+            mesh.vertices().get(triangle[2])?.clone(),
         ];
         if projected_triangle_sign(&points, projection)? != expected {
             return Some(false);
         }
     }
     Some(true)
-}
-
-fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
-    Some(
-        compare_reals(&left.x, &right.x).value()? == Ordering::Equal
-            && compare_reals(&left.y, &right.y).value()? == Ordering::Equal
-            && compare_reals(&left.z, &right.z).value()? == Ordering::Equal,
-    )
-}
-
-fn closed_boundary_contact_only(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<bool, ExactMeshError> {
-    let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
-    left_in_right.validate().map_err(|error| {
-        exact_construction_failure(format!(
-            "contained-face adjacent boundary-contact left-in-right winding report failed validation: {error:?}"
-        ))
-    })?;
-    let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
-    right_in_left.validate().map_err(|error| {
-        exact_construction_failure(format!(
-            "contained-face adjacent boundary-contact right-in-left winding report failed validation: {error:?}"
-        ))
-    })?;
-    Ok(left_in_right.vertices_are_boundary_or_outside()
-        && right_in_left.vertices_are_boundary_or_outside()
-        && (left_in_right.vertices_touch_boundary() || right_in_left.vertices_touch_boundary()))
 }

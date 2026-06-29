@@ -47,9 +47,9 @@ impl ExactTriangleInteriorWitness {
         }
     }
 
-    /// Return whether the witness is a strict positive barycentric point.
-    pub(crate) const fn is_strict_interior(self) -> bool {
-        self.denominator > 0
+    /// Validate the retained witness shape.
+    pub(crate) fn validate(self) -> Result<(), ExactTriangleInteriorWitnessError> {
+        let strict_interior = self.denominator > 0
             && self.weights[0] > 0
             && self.weights[1] > 0
             && self.weights[2] > 0
@@ -59,12 +59,8 @@ impl ExactTriangleInteriorWitness {
                     None => false,
                 },
                 None => false,
-            }
-    }
-
-    /// Validate the retained witness shape.
-    pub(crate) fn validate(self) -> Result<(), ExactTriangleInteriorWitnessError> {
-        if self.is_strict_interior() {
+            };
+        if strict_interior {
             Ok(())
         } else {
             Err(ExactTriangleInteriorWitnessError::NotStrictInterior)

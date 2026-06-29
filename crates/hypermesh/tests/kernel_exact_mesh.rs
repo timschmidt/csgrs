@@ -34,7 +34,7 @@ fn triangle_count(mesh: &ExactMesh) -> usize {
 }
 
 fn triangle_indices(mesh: &ExactMesh) -> impl ExactSizeIterator<Item = [usize; 3]> + '_ {
-    mesh.view().triangle_indices()
+    mesh.view().triangles().map(TriangleRef::vertex_indices)
 }
 
 #[test]
@@ -99,15 +99,36 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
 
     view.validate_retained_state().unwrap();
     assert_eq!(mesh_view.vertices().len(), 4);
-    assert_eq!(view.triangle_indices().len(), 4);
+    assert_eq!(view.triangles().len(), 4);
     assert_eq!(view.face_count(), 4);
     assert_eq!(view.edge_count(), 6);
     assert_eq!(view.mesh_bounds(), Some((&p(0, 0, 0), &p(1, 1, 1))));
     assert!(view.is_closed_manifold());
     assert_eq!(view.faces().count(), 4);
     assert_eq!(view.vertex_refs().count(), 4);
-    assert_eq!(view.triangle_refs().count(), 4);
     assert_eq!(view.edges().count(), view.edge_count());
+    assert_eq!(
+        view.triangles()
+            .map(TriangleRef::vertex_indices)
+            .collect::<Vec<_>>(),
+        view.faces()
+            .map(FaceRef::vertex_indices)
+            .collect::<Vec<_>>()
+    );
+    assert_eq!(view.triangle(0).unwrap().index(), 0);
+    assert_eq!(view.triangle(0).unwrap().vertex_indices(), [0, 2, 1]);
+    assert_eq!(
+        view.require_triangle(0)
+            .unwrap()
+            .vertex_refs()
+            .unwrap()
+            .map(VertexRef::index),
+        [0, 2, 1]
+    );
+    assert_eq!(
+        view.require_triangle(0).unwrap().vertices().unwrap().len(),
+        3
+    );
 
     assert_eq!(view.require_vertex(0).unwrap().index(), 0);
     let missing_vertex = view.require_vertex(view.vertex_count()).unwrap_err();
@@ -160,6 +181,9 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
 
     let face: FaceRef<'_> = view.face(0).unwrap();
     assert_eq!(face.index(), 0);
+    let triangle: TriangleRef<'_> = face.triangle();
+    assert_eq!(triangle.index(), face.index());
+    assert_eq!(triangle.vertex_indices(), face.vertex_indices());
     assert_eq!(face.vertex_indices(), [0, 2, 1]);
     assert_eq!(view.face_bounds(0), Some((&p(0, 0, 0), &p(1, 1, 0))));
     assert_eq!(
@@ -187,34 +211,41 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     );
     assert_eq!(face.vertices().unwrap().len(), 3);
 
-    assert_eq!(view.require_triangle(1).unwrap().index(), 1);
-    let missing_triangle = view.require_triangle(view.face_count()).unwrap_err();
+    assert_eq!(view.require_face(1).unwrap().index(), 1);
+    let missing_face_row = view.require_face(view.face_count()).unwrap_err();
     assert_eq!(
-        missing_triangle.blockers()[0].kind(),
+        missing_face_row.blockers()[0].kind(),
         ExactMeshBlockerKind::IndexOutOfBounds
     );
     assert_eq!(
-        missing_triangle.blockers()[0].face(),
+        missing_face_row.blockers()[0].face(),
         Some(view.face_count())
     );
 
-    let triangle: TriangleRef<'_> = view.triangle(1).unwrap();
-    assert_eq!(triangle.index(), 1);
-    assert_eq!(triangle.vertex_indices(), [0, 1, 3]);
-    assert_eq!(triangle.bounds().unwrap(), (&p(0, 0, 0), &p(1, 0, 1)));
+    let second_face: FaceRef<'_> = view.face(1).unwrap();
+    assert_eq!(second_face.index(), 1);
+    assert_eq!(second_face.vertex_indices(), [0, 1, 3]);
+    assert_eq!(second_face.bounds().unwrap(), (&p(0, 0, 0), &p(1, 0, 1)));
     assert_eq!(
-        triangle.vertex_refs().unwrap().map(VertexRef::index),
-        triangle.vertex_indices()
+        second_face.vertex_refs().unwrap().map(VertexRef::index),
+        second_face.vertex_indices()
     );
-    assert_eq!(triangle.directed_edges().unwrap(), [[0, 1], [1, 3], [3, 0]]);
-    assert!(triangle.is_non_degenerate().unwrap());
-    assert!(!triangle.degeneracy_predicates().unwrap().is_empty());
     assert_eq!(
-        triangle.plane_coefficients().unwrap(),
+        second_face.directed_edges().unwrap(),
+        [[0, 1], [1, 3], [3, 0]]
+    );
+    assert!(second_face.is_non_degenerate().unwrap());
+    assert!(!second_face.degeneracy_predicates().unwrap().is_empty());
+    assert_eq!(
+        second_face.plane_coefficients().unwrap(),
         (
-            triangle.plane_normal().unwrap(),
-            triangle.plane_offset().unwrap()
+            second_face.plane_normal().unwrap(),
+            second_face.plane_offset().unwrap()
         )
+    );
+    assert_eq!(
+        second_face.vertices().unwrap(),
+        [&p(0, 0, 0), &p(1, 0, 0), &p(0, 0, 1)]
     );
 
     assert_eq!(view.require_edge(0).unwrap().index(), 0);

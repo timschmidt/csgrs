@@ -41,21 +41,20 @@ pub(crate) fn triangle_edges(triangle: [usize; 3]) -> [[usize; 2]; 3] {
     ]
 }
 
-pub(crate) fn triangle_edges_tuple(triangle: [usize; 3]) -> [(usize, usize); 3] {
-    let [a, b, c] = triangle;
-    [
-        if a < b { (a, b) } else { (b, a) },
-        if b < c { (b, c) } else { (c, b) },
-        if c < a { (c, a) } else { (a, c) },
-    ]
-}
-
 pub(crate) fn sorted_edge(edge: [usize; 2]) -> [usize; 2] {
     if edge[0] < edge[1] {
         edge
     } else {
         [edge[1], edge[0]]
     }
+}
+
+pub(crate) fn point3_exact_equal(left: &Point3, right: &Point3) -> Option<bool> {
+    Some(
+        compare_reals(&left.x, &right.x).value()? == Ordering::Equal
+            && compare_reals(&left.y, &right.y).value()? == Ordering::Equal
+            && compare_reals(&left.z, &right.z).value()? == Ordering::Equal,
+    )
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -389,7 +388,7 @@ impl ExactMesh {
             triangles.iter().map(|tri| tri.0),
             policy,
         );
-        if !report.is_valid() {
+        if !report.blockers.is_empty() {
             return Err(ExactMeshError::new(report.blockers));
         }
         let bounds = MeshBounds::from_triangle_rows(
@@ -526,11 +525,6 @@ impl ExactMesh {
         &self.vertices
     }
 
-    /// Return copied triangle index rows for internal kernel stages.
-    pub(crate) fn triangle_indices(&self) -> impl ExactSizeIterator<Item = [usize; 3]> + '_ {
-        self.triangles.iter().map(|triangle| triangle.0)
-    }
-
     /// Return retained triangle index storage.
     pub(crate) fn triangles(&self) -> &[Triangle] {
         &self.triangles
@@ -567,7 +561,7 @@ impl ExactMesh {
 
     /// Borrow this exact mesh through the lightweight query view API.
     pub const fn view(&self) -> MeshView<'_> {
-        MeshView::new(self)
+        MeshView { mesh: self }
     }
 
     /// Validate all retained state stored on this exact mesh.
@@ -992,7 +986,7 @@ fn real_equals(left: &Real, right: &Real) -> Result<bool, ExactMeshError> {
         })
 }
 
-fn reverse_triangle(triangle: &Triangle) -> Triangle {
+pub(crate) fn reverse_triangle(triangle: &Triangle) -> Triangle {
     let [a, b, c] = triangle.0;
     Triangle([a, c, b])
 }

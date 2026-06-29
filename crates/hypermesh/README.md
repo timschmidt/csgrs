@@ -41,15 +41,12 @@ and product-facing reports belong above this crate rather than in the default
 public API.
 
 Borrowed queries start from `ExactMesh::view()`. Mesh, triangle, face, and edge
-views avoid cloning mesh storage. Prepared mesh pairs reuse certificate-validated
-broad-phase facts, stream candidate face pairs with fallible early-stop support,
-and expose query-shaped cache access: callers can build
-candidate-pair or arrangement evidence and inspect it through borrowed closures,
-or ask for already-current retained evidence and receive typed blockers when it
-is missing or stale. The prepared pair returned by
-`MeshView::prepare_broad_phase_pair` exposes borrowed arrangement queries for
-algorithms that need retained topology without cloning arrangement storage or
-naming an owned arrangement type.
+views avoid cloning mesh storage. Repeated pair queries use crate-internal
+prepared mesh-pair sessions that retain certificate-validated broad-phase facts,
+stream candidate face pairs with fallible early-stop support, and return typed
+blockers when retained evidence is missing or stale. Public callers that need
+arrangement topology can use `MeshView::with_arrangement_view` to inspect a
+borrowed arrangement without naming or cloning the owned arrangement storage.
 
 Retained graph, arrangement, cell-complex, winding, and shortcut evidence remain
 kernel internals unless a borrowed view is needed for exact query reuse.

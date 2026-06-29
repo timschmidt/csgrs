@@ -4,7 +4,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use super::ExactMesh;
 use super::arrangement3d::regularization::ExactRegularizationPolicy;
-use super::arrangement3d::{ArrangementView, ExactArrangement};
+use super::arrangement3d::{ArrangementView, ExactArrangement3d};
 use super::boolean::evidence::ExactArrangementCellComplexShortcutFacts;
 use super::boolean::{ExactBooleanOperation, materialize_closed_named_boolean_with_prepared_pair};
 use super::bounds::{BroadPhaseScratch, CandidateFacePairPlan, PreparedMeshBounds};
@@ -17,7 +17,7 @@ use hyperreal::Real;
 /// Borrowed exact view of an [`ExactMesh`].
 #[derive(Clone, Copy, Debug)]
 pub struct MeshView<'a> {
-    mesh: &'a ExactMesh,
+    pub(crate) mesh: &'a ExactMesh,
 }
 
 /// Borrowed face/triangle view.
@@ -27,8 +27,12 @@ pub struct FaceRef<'a> {
     index: usize,
 }
 
-/// Alias for the borrowed triangle view.
-pub type TriangleRef<'a> = FaceRef<'a>;
+/// Borrowed triangle geometry view.
+#[derive(Clone, Copy, Debug)]
+pub struct TriangleRef<'a> {
+    mesh: &'a ExactMesh,
+    index: usize,
+}
 
 /// Borrowed vertex view.
 #[derive(Clone, Copy, Debug)]
@@ -58,7 +62,7 @@ pub(crate) struct PreparedMeshPair<'left, 'right> {
     scratch: RefCell<BroadPhaseScratch>,
     intersection_graph: RefCell<Option<Rc<ExactIntersectionGraph>>>,
     intersection_graph_validated: RefCell<bool>,
-    arrangement: RefCell<Option<Rc<ExactArrangement>>>,
+    arrangement: RefCell<Option<Rc<ExactArrangement3d>>>,
     arrangement_shortcut_facts: RefCell<Option<ExactArrangementCellComplexShortcutFacts>>,
 }
 
@@ -114,10 +118,11 @@ fn exact_mesh_source_identity(mesh: &ExactMesh) -> u64 {
         hash = fnv1a_real(hash, &vertex.y);
         hash = fnv1a_real(hash, &vertex.z);
     }
-    for triangle in mesh.triangles() {
-        hash = fnv1a_u64(hash, triangle.0[0] as u64);
-        hash = fnv1a_u64(hash, triangle.0[1] as u64);
-        hash = fnv1a_u64(hash, triangle.0[2] as u64);
+    for face in &mesh.facts().faces {
+        let triangle = face.triangle.vertices;
+        hash = fnv1a_u64(hash, triangle[0] as u64);
+        hash = fnv1a_u64(hash, triangle[1] as u64);
+        hash = fnv1a_u64(hash, triangle[2] as u64);
     }
 
     hash
@@ -194,11 +199,6 @@ impl PreparedMeshPairFactState {
 }
 
 impl<'a> MeshView<'a> {
-    /// Borrow an exact mesh as a replayable view.
-    pub(crate) const fn new(mesh: &'a ExactMesh) -> Self {
-        Self { mesh }
-    }
-
     fn source_stamp(self) -> ExactMeshSourceStamp {
         let provenance = self.mesh.provenance();
         ExactMeshSourceStamp {
@@ -214,11 +214,14 @@ impl<'a> MeshView<'a> {
 
     /// Return exact vertices.
     pub fn vertices(self) -> &'a [Point3] {
-        self.mesh.vertices()
+        &self.mesh.vertices()[..current_vertex_row_count(self.mesh)]
     }
 
     /// Borrow retained whole-mesh bounds as exact min/max corners.
     pub fn mesh_bounds(self) -> Option<(&'a Point3, &'a Point3)> {
+        if current_vertex_row_count(self.mesh) != self.mesh.vertices().len() {
+            return None;
+        }
         self.mesh
             .bounds()
             .mesh()
@@ -227,6 +230,9 @@ impl<'a> MeshView<'a> {
 
     /// Borrow retained bounds for one face as exact min/max corners.
     pub fn face_bounds(self, index: usize) -> Option<(&'a Point3, &'a Point3)> {
+        if index >= current_face_row_count(self.mesh) {
+            return None;
+        }
         self.mesh
             .bounds()
             .face(index)
@@ -235,6 +241,9 @@ impl<'a> MeshView<'a> {
 
     /// Borrow retained bounds for one edge as exact min/max corners.
     pub fn edge_bounds(self, index: usize) -> Option<(&'a Point3, &'a Point3)> {
+        if index >= current_edge_row_count(self.mesh) {
+            return None;
+        }
         self.mesh
             .bounds()
             .edge(index)
@@ -246,6 +255,11 @@ impl<'a> MeshView<'a> {
         self,
         index: usize,
     ) -> Result<(&'a Point3, &'a Point3), ExactMeshError> {
+        if index >= current_face_row_count(self.mesh)
+            && (index < self.mesh.facts().faces.len() || index < self.mesh.facts().mesh.face_count)
+        {
+            return Err(stale_retained_face_row_error(index, self.face_count()));
+        }
         self.face_bounds(index)
             .ok_or_else(|| missing_retained_face_bounds(index))
     }
@@ -255,6 +269,15 @@ impl<'a> MeshView<'a> {
         self,
         index: usize,
     ) -> Result<(&'a Point3, &'a Point3), ExactMeshError> {
+        if index >= current_edge_row_count(self.mesh)
+            && (index < self.mesh.facts().edges.len() || index < self.mesh.facts().mesh.edge_count)
+        {
+            return Err(stale_retained_edge_row_error(
+                self.mesh,
+                index,
+                self.edge_count(),
+            ));
+        }
         self.edge_bounds(index).ok_or_else(|| {
             let mut blocker = ExactMeshBlocker::new(
                 ExactMeshBlockerKind::MissingRequiredEvidence,
@@ -269,7 +292,7 @@ impl<'a> MeshView<'a> {
 
     /// Borrow one vertex by index.
     pub fn vertex(self, index: usize) -> Option<VertexRef<'a>> {
-        (index < self.mesh.vertices().len()).then_some(VertexRef {
+        (index < current_vertex_row_count(self.mesh)).then_some(VertexRef {
             mesh: self.mesh,
             index,
         })
@@ -277,23 +300,26 @@ impl<'a> MeshView<'a> {
 
     /// Borrow one vertex by index, returning a typed blocker when absent.
     pub fn require_vertex(self, index: usize) -> Result<VertexRef<'a>, ExactMeshError> {
-        self.vertex(index).ok_or_else(|| {
-            ExactMeshError::one(
+        if index >= self.mesh.vertices().len() {
+            return Err(ExactMeshError::one(
                 ExactMeshBlocker::new(
                     ExactMeshBlockerKind::IndexOutOfBounds,
                     format!(
-                        "mesh vertex index {index} is out of bounds for {} retained vertices",
-                        self.vertex_count()
+                        "mesh vertex index {index} is out of bounds for {} source vertices",
+                        self.mesh.vertices().len()
                     ),
                 )
                 .with_vertex(index),
-            )
+            ));
+        }
+        retained_vertex_facts(self.mesh, index)?;
+        if index >= self.mesh.facts().mesh.vertex_count {
+            return Err(stale_retained_vertex_row_error(index, self.vertex_count()));
+        }
+        Ok(VertexRef {
+            mesh: self.mesh,
+            index,
         })
-    }
-
-    /// Return copied triangle index rows.
-    pub fn triangle_indices(self) -> impl ExactSizeIterator<Item = [usize; 3]> + 'a {
-        self.mesh.triangle_indices()
     }
 
     /// Retained vertex count.
@@ -363,7 +389,15 @@ impl<'a> MeshView<'a> {
 
     /// Borrow one face by index.
     pub fn face(self, index: usize) -> Option<FaceRef<'a>> {
-        (index < self.mesh.triangles().len()).then_some(FaceRef {
+        (index < current_face_row_count(self.mesh)).then_some(FaceRef {
+            mesh: self.mesh,
+            index,
+        })
+    }
+
+    /// Borrow one triangle by retained face index.
+    pub fn triangle(self, index: usize) -> Option<TriangleRef<'a>> {
+        (index < current_face_row_count(self.mesh)).then_some(TriangleRef {
             mesh: self.mesh,
             index,
         })
@@ -371,8 +405,8 @@ impl<'a> MeshView<'a> {
 
     /// Borrow one face by index, returning a typed blocker when absent.
     pub fn require_face(self, index: usize) -> Result<FaceRef<'a>, ExactMeshError> {
-        self.face(index).ok_or_else(|| {
-            ExactMeshError::one(
+        if index >= self.mesh.facts().faces.len() && index >= self.mesh.facts().mesh.face_count {
+            return Err(ExactMeshError::one(
                 ExactMeshBlocker::new(
                     ExactMeshBlockerKind::IndexOutOfBounds,
                     format!(
@@ -381,23 +415,26 @@ impl<'a> MeshView<'a> {
                     ),
                 )
                 .with_face(index),
-            )
+            ));
+        }
+        retained_face_facts(self.mesh, index)?;
+        if index >= self.mesh.facts().mesh.face_count {
+            return Err(stale_retained_face_row_error(index, self.face_count()));
+        }
+        Ok(FaceRef {
+            mesh: self.mesh,
+            index,
         })
     }
 
-    /// Borrow one triangle by index.
-    pub fn triangle(self, index: usize) -> Option<TriangleRef<'a>> {
-        self.face(index)
-    }
-
-    /// Borrow one triangle by index, returning a typed blocker when absent.
+    /// Borrow one triangle by retained face index, returning a typed blocker when absent.
     pub fn require_triangle(self, index: usize) -> Result<TriangleRef<'a>, ExactMeshError> {
-        self.require_face(index)
+        self.require_face(index).map(|face| face.triangle())
     }
 
     /// Borrow one retained edge by index.
     pub fn edge(self, index: usize) -> Option<EdgeRef<'a>> {
-        (index < self.mesh.facts().edges.len()).then_some(EdgeRef {
+        (index < current_edge_row_count(self.mesh)).then_some(EdgeRef {
             mesh: self.mesh,
             index,
         })
@@ -405,20 +442,33 @@ impl<'a> MeshView<'a> {
 
     /// Borrow one retained edge by index, returning a typed blocker when absent.
     pub fn require_edge(self, index: usize) -> Result<EdgeRef<'a>, ExactMeshError> {
-        self.edge(index).ok_or_else(|| {
-            ExactMeshError::one(ExactMeshBlocker::new(
+        if index >= self.mesh.facts().mesh.edge_count && index >= self.mesh.facts().edges.len() {
+            return Err(ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::IndexOutOfBounds,
                 format!(
                     "mesh edge index {index} is out of bounds for {} retained edges",
                     self.edge_count()
                 ),
-            ))
+            )));
+        }
+        retained_edge_facts(self.mesh, index)?;
+        if index >= self.mesh.facts().mesh.edge_count {
+            return Err(stale_retained_edge_row_error(
+                self.mesh,
+                index,
+                self.edge_count(),
+            ));
+        }
+        Ok(EdgeRef {
+            mesh: self.mesh,
+            index,
         })
     }
 
     /// Iterate borrowed vertices.
     pub fn vertex_refs(self) -> impl Iterator<Item = VertexRef<'a>> + 'a {
-        (0..self.mesh.vertices().len()).map(move |index| VertexRef {
+        let count = current_vertex_row_count(self.mesh);
+        (0..count).map(move |index| VertexRef {
             mesh: self.mesh,
             index,
         })
@@ -426,20 +476,26 @@ impl<'a> MeshView<'a> {
 
     /// Iterate borrowed faces.
     pub fn faces(self) -> impl Iterator<Item = FaceRef<'a>> + 'a {
-        (0..self.mesh.triangles().len()).map(move |index| FaceRef {
+        let count = current_face_row_count(self.mesh);
+        (0..count).map(move |index| FaceRef {
             mesh: self.mesh,
             index,
         })
     }
 
     /// Iterate borrowed triangles.
-    pub fn triangle_refs(self) -> impl Iterator<Item = TriangleRef<'a>> + 'a {
-        self.faces()
+    pub fn triangles(self) -> impl ExactSizeIterator<Item = TriangleRef<'a>> + 'a {
+        let count = current_face_row_count(self.mesh);
+        (0..count).map(move |index| TriangleRef {
+            mesh: self.mesh,
+            index,
+        })
     }
 
     /// Iterate retained edges.
     pub fn edges(self) -> impl Iterator<Item = EdgeRef<'a>> + 'a {
-        (0..self.mesh.facts().edges.len()).map(move |index| EdgeRef {
+        let count = current_edge_row_count(self.mesh);
+        (0..count).map(move |index| EdgeRef {
             mesh: self.mesh,
             index,
         })
@@ -484,26 +540,17 @@ impl<'a> MeshView<'a> {
 
     /// Materialize the exact closed union of this view and `right`.
     pub fn union(self, right: MeshView<'_>) -> Result<ExactMesh, ExactMeshError> {
-        let pair = self.prepare_broad_phase_pair(right)?;
-        materialize_closed_named_boolean_with_prepared_pair(&pair, ExactBooleanOperation::Union)
+        self.materialize_closed_named_boolean(right, ExactBooleanOperation::Union)
     }
 
     /// Materialize the exact closed intersection of this view and `right`.
     pub fn intersection(self, right: MeshView<'_>) -> Result<ExactMesh, ExactMeshError> {
-        let pair = self.prepare_broad_phase_pair(right)?;
-        materialize_closed_named_boolean_with_prepared_pair(
-            &pair,
-            ExactBooleanOperation::Intersection,
-        )
+        self.materialize_closed_named_boolean(right, ExactBooleanOperation::Intersection)
     }
 
     /// Materialize the exact closed difference of this view minus `right`.
     pub fn difference(self, right: MeshView<'_>) -> Result<ExactMesh, ExactMeshError> {
-        let pair = self.prepare_broad_phase_pair(right)?;
-        materialize_closed_named_boolean_with_prepared_pair(
-            &pair,
-            ExactBooleanOperation::Difference,
-        )
+        self.materialize_closed_named_boolean(right, ExactBooleanOperation::Difference)
     }
 
     /// Materialize the exact closed symmetric difference of this view and `right`.
@@ -511,6 +558,15 @@ impl<'a> MeshView<'a> {
         let left_only = self.difference(right)?;
         let right_only = right.difference(self)?;
         left_only.view().union(right_only.view())
+    }
+
+    fn materialize_closed_named_boolean(
+        self,
+        right: MeshView<'_>,
+        operation: ExactBooleanOperation,
+    ) -> Result<ExactMesh, ExactMeshError> {
+        let pair = self.prepare_broad_phase_pair(right)?;
+        materialize_closed_named_boolean_with_prepared_pair(&pair, operation)
     }
 }
 
@@ -569,12 +625,12 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         query: impl for<'arrangement> FnOnce(ArrangementView<'arrangement>) -> R,
     ) -> Result<R, ExactMeshError> {
-        if let Some(arrangement) = self.arrangement.borrow().clone() {
+        if let Some(arrangement) = self.current_arrangement_for_reuse()? {
             return Ok(query(arrangement.view()));
         }
 
         let graph = build_validated_intersection_graph_from_prepared_pair(self)?;
-        let arrangement = ExactArrangement::from_source_certified_intersection_graph_with_policy(
+        let arrangement = ExactArrangement3d::from_source_certified_intersection_graph_with_policy(
             graph.as_ref().clone(),
             self.left_mesh(),
             self.right_mesh(),
@@ -588,10 +644,10 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     pub(crate) fn current_intersection_graph(
         &self,
     ) -> Result<Rc<ExactIntersectionGraph>, ExactMeshError> {
-        let state = if self.intersection_graph.borrow().is_none() {
-            PreparedMeshPairFactState::Missing
-        } else if !self.sources_current() {
+        let state = if !self.sources_current() {
             PreparedMeshPairFactState::Stale
+        } else if self.intersection_graph.borrow().is_none() {
+            PreparedMeshPairFactState::Missing
         } else if *self.intersection_graph_validated.borrow() {
             PreparedMeshPairFactState::Current
         } else {
@@ -610,18 +666,22 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
     ) -> Result<Option<Rc<ExactIntersectionGraph>>, ExactMeshError> {
         if !self.sources_current() {
-            let state = if self.intersection_graph.borrow().is_some() {
-                PreparedMeshPairFactState::Stale
-            } else {
-                PreparedMeshPairFactState::Missing
-            };
-            state.require_current("intersection graph")?;
+            PreparedMeshPairFactState::Stale.require_current("intersection graph")?;
         }
         Ok(self.intersection_graph.borrow().clone())
     }
 
-    pub(crate) fn retained_arrangement_for_reuse(&self) -> Option<Rc<ExactArrangement>> {
-        self.arrangement.borrow().clone()
+    pub(crate) fn current_arrangement_for_reuse(
+        &self,
+    ) -> Result<Option<Rc<ExactArrangement3d>>, ExactMeshError> {
+        if !self.sources_current() {
+            PreparedMeshPairFactState::Stale.require_current("arrangement")?;
+        }
+        let arrangement = self.arrangement.borrow().clone();
+        if arrangement.is_some() {
+            PreparedMeshPairFactState::Current.require_current("arrangement")?;
+        }
+        Ok(arrangement)
     }
 
     pub(crate) fn retain_intersection_graph(
@@ -635,22 +695,53 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         graph
     }
 
-    pub(crate) fn certify_intersection_graph_source_replay(&self) {
+    pub(crate) fn validate_retained_intersection_graph_source_replay(
+        &self,
+        graph: &Rc<ExactIntersectionGraph>,
+    ) -> Result<(), ExactMeshError> {
+        if !self.sources_current() {
+            PreparedMeshPairFactState::Stale.require_current("intersection graph")?;
+        }
+        let retained = self.intersection_graph.borrow().clone().ok_or_else(|| {
+            ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::MissingRequiredEvidence,
+                "prepared mesh-pair session cannot certify a graph that is not retained",
+            ))
+        })?;
+        if !Rc::ptr_eq(&retained, graph) {
+            return Err(ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::MissingRequiredEvidence,
+                "prepared mesh-pair session cannot certify a different retained intersection graph",
+            )));
+        }
+        graph
+            .validate_against_sources(self.left_mesh(), self.right_mesh())
+            .map_err(|error| {
+                ExactMeshError::one(ExactMeshBlocker::new(
+                    ExactMeshBlockerKind::StaleFactReplay,
+                    format!("exact intersection graph failed source replay: {error:?}"),
+                ))
+            })?;
         *self.intersection_graph_validated.borrow_mut() = true;
+        Ok(())
     }
 
-    pub(crate) fn arrangement_cell_complex_shortcut_facts(
+    pub(crate) fn current_arrangement_cell_complex_shortcut_facts(
         &self,
-    ) -> ExactArrangementCellComplexShortcutFacts {
+    ) -> Result<ExactArrangementCellComplexShortcutFacts, ExactMeshError> {
+        if !self.sources_current() {
+            PreparedMeshPairFactState::Stale
+                .require_current("arrangement cell-complex shortcut facts")?;
+        }
         if let Some(facts) = self.arrangement_shortcut_facts.borrow().clone() {
-            return facts;
+            return Ok(facts);
         }
         let facts = ExactArrangementCellComplexShortcutFacts::from_sources(
             self.left_mesh(),
             self.right_mesh(),
         );
         *self.arrangement_shortcut_facts.borrow_mut() = Some(facts.clone());
-        facts
+        Ok(facts)
     }
 
     pub(crate) fn try_visit_candidate_face_pairs_uncached<E>(
@@ -715,14 +806,14 @@ impl<'a> VertexRef<'a> {
     pub fn incident_face_indices(self) -> Result<&'a [usize], ExactMeshError> {
         let facts = retained_vertex_facts(self.mesh, self.index)?;
         for &face in &facts.incident_face_indices {
-            if face >= self.mesh.facts().faces.len() {
+            if face >= current_face_row_count(self.mesh) {
                 return Err(ExactMeshError::one(
                     ExactMeshBlocker::new(
                         ExactMeshBlockerKind::StaleFactReplay,
                         format!(
-                            "retained mesh vertex {} references incident face {face}, but only {} retained faces exist",
+                            "retained mesh vertex {} references incident face {face}, but only {} current retained faces exist",
                             self.index,
-                            self.mesh.facts().faces.len()
+                            current_face_row_count(self.mesh)
                         ),
                     )
                     .with_vertex(self.index)
@@ -737,14 +828,14 @@ impl<'a> VertexRef<'a> {
     pub fn incident_edge_indices(self) -> Result<&'a [usize], ExactMeshError> {
         let facts = retained_vertex_facts(self.mesh, self.index)?;
         for &edge in &facts.incident_edge_indices {
-            if edge >= self.mesh.facts().edges.len() {
+            if edge >= current_edge_row_count(self.mesh) {
                 return Err(ExactMeshError::one(
                     ExactMeshBlocker::new(
                         ExactMeshBlockerKind::StaleFactReplay,
                         format!(
-                            "retained mesh vertex {} references incident edge row {edge}, but only {} retained edges exist",
+                            "retained mesh vertex {} references incident edge row {edge}, but only {} current retained edges exist",
                             self.index,
-                            self.mesh.facts().edges.len()
+                            current_edge_row_count(self.mesh)
                         ),
                     )
                     .with_vertex(self.index),
@@ -807,13 +898,27 @@ impl<'a> FaceRef<'a> {
         self.index
     }
 
+    /// Borrow this face's triangle geometry.
+    pub const fn triangle(self) -> TriangleRef<'a> {
+        TriangleRef {
+            mesh: self.mesh,
+            index: self.index,
+        }
+    }
+
     /// Triangle vertex indices for this face.
     pub fn vertex_indices(self) -> [usize; 3] {
-        self.mesh.triangles()[self.index].0
+        self.mesh.facts().faces[self.index].triangle.vertices
     }
 
     /// Borrow retained face bounds as exact min/max corners.
     pub fn bounds(self) -> Result<(&'a Point3, &'a Point3), ExactMeshError> {
+        if self.index >= current_face_row_count(self.mesh) {
+            return Err(stale_retained_face_row_error(
+                self.index,
+                self.mesh.facts().mesh.face_count,
+            ));
+        }
         self.mesh
             .bounds()
             .face(self.index)
@@ -825,7 +930,7 @@ impl<'a> FaceRef<'a> {
     pub fn vertex_refs(self) -> Result<[VertexRef<'a>; 3], ExactMeshError> {
         let triangle = self.vertex_indices();
         let [a, b, c] = triangle;
-        let vertex_count = self.mesh.vertices().len();
+        let vertex_count = current_vertex_row_count(self.mesh);
         for vertex in triangle {
             if vertex >= vertex_count {
                 return Err(retained_face_vertex_error(self.index, triangle, vertex));
@@ -881,24 +986,39 @@ impl<'a> FaceRef<'a> {
 
     /// Exact face vertices.
     pub fn vertices(self) -> Result<[&'a Point3; 3], ExactMeshError> {
-        let triangle = self.vertex_indices();
-        let [a, b, c] = triangle;
-        let a = self
-            .mesh
-            .vertices()
-            .get(a)
-            .ok_or_else(|| retained_face_vertex_error(self.index, triangle, a))?;
-        let b = self
-            .mesh
-            .vertices()
-            .get(b)
-            .ok_or_else(|| retained_face_vertex_error(self.index, triangle, b))?;
-        let c = self
-            .mesh
-            .vertices()
-            .get(c)
-            .ok_or_else(|| retained_face_vertex_error(self.index, triangle, c))?;
-        Ok([a, b, c])
+        let [a, b, c] = self.vertex_refs()?;
+        let vertices = self.mesh.vertices();
+        Ok([&vertices[a.index], &vertices[b.index], &vertices[c.index]])
+    }
+}
+
+impl<'a> TriangleRef<'a> {
+    /// Retained face index that owns this triangle row.
+    pub const fn index(self) -> usize {
+        self.index
+    }
+
+    /// Triangle vertex indices.
+    pub fn vertex_indices(self) -> [usize; 3] {
+        self.mesh.facts().faces[self.index].triangle.vertices
+    }
+
+    /// Borrow the triangle vertex references.
+    pub fn vertex_refs(self) -> Result<[VertexRef<'a>; 3], ExactMeshError> {
+        FaceRef {
+            mesh: self.mesh,
+            index: self.index,
+        }
+        .vertex_refs()
+    }
+
+    /// Exact triangle vertices.
+    pub fn vertices(self) -> Result<[&'a Point3; 3], ExactMeshError> {
+        FaceRef {
+            mesh: self.mesh,
+            index: self.index,
+        }
+        .vertices()
     }
 }
 
@@ -917,7 +1037,7 @@ impl<'a> EdgeRef<'a> {
     pub fn vertex_refs(self) -> Result<[VertexRef<'a>; 2], ExactMeshError> {
         let edge_vertices @ [a, b] = self.vertex_indices();
         for vertex in edge_vertices {
-            if vertex >= self.mesh.vertices().len() {
+            if vertex >= current_vertex_row_count(self.mesh) {
                 return Err(retained_edge_endpoint_error(
                     self.index,
                     edge_vertices,
@@ -939,6 +1059,13 @@ impl<'a> EdgeRef<'a> {
 
     /// Borrow retained edge bounds as exact min/max corners.
     pub fn bounds(self) -> Result<(&'a Point3, &'a Point3), ExactMeshError> {
+        if self.index >= current_edge_row_count(self.mesh) {
+            return Err(stale_retained_edge_row_error(
+                self.mesh,
+                self.index,
+                self.mesh.facts().mesh.edge_count,
+            ));
+        }
         self.mesh
             .bounds()
             .edge(self.index)
@@ -967,21 +1094,14 @@ impl<'a> EdgeRef<'a> {
     /// Whether retained facts classify this edge as a closed-manifold edge.
     pub fn is_closed_manifold_edge(self) -> bool {
         let facts = &self.mesh.facts().edges[self.index];
-        facts.is_closed_manifold_edge()
+        facts.incident_faces == 2 && facts.directed_uses[0] == 1 && facts.directed_uses[1] == 1
     }
 
     /// Exact edge endpoints.
     pub fn vertices(self) -> Result<[&'a Point3; 2], ExactMeshError> {
-        let [a, b] = self.vertex_indices();
-        let start =
-            self.mesh.vertices().get(a).ok_or_else(|| {
-                retained_edge_endpoint_error(self.index, self.vertex_indices(), a)
-            })?;
-        let end =
-            self.mesh.vertices().get(b).ok_or_else(|| {
-                retained_edge_endpoint_error(self.index, self.vertex_indices(), b)
-            })?;
-        Ok([start, end])
+        let [a, b] = self.vertex_refs()?;
+        let vertices = self.mesh.vertices();
+        Ok([&vertices[a.index], &vertices[b.index]])
     }
 }
 
@@ -993,6 +1113,62 @@ fn missing_retained_face_bounds(face: usize) -> ExactMeshError {
         )
         .with_face(face),
     )
+}
+
+fn stale_retained_vertex_row_error(vertex: usize, retained_vertex_count: usize) -> ExactMeshError {
+    ExactMeshError::one(
+        ExactMeshBlocker::new(
+            ExactMeshBlockerKind::StaleFactReplay,
+            format!(
+                "retained mesh vertex {vertex} has a retained vertex row beyond summary vertex count {retained_vertex_count}"
+            ),
+        )
+        .with_vertex(vertex),
+    )
+}
+
+fn stale_retained_face_row_error(face: usize, retained_face_count: usize) -> ExactMeshError {
+    ExactMeshError::one(
+        ExactMeshBlocker::new(
+            ExactMeshBlockerKind::StaleFactReplay,
+            format!(
+                "retained mesh face {face} has a retained face row beyond summary face count {retained_face_count}"
+            ),
+        )
+        .with_face(face),
+    )
+}
+
+fn stale_retained_edge_row_error(
+    mesh: &ExactMesh,
+    edge: usize,
+    retained_edge_count: usize,
+) -> ExactMeshError {
+    let mut blocker = ExactMeshBlocker::new(
+        ExactMeshBlockerKind::StaleFactReplay,
+        format!(
+            "retained mesh edge {edge} has a retained edge row beyond summary edge count {retained_edge_count}"
+        ),
+    );
+    if let Some(facts) = mesh.facts().edges.get(edge) {
+        blocker = blocker.with_edge(facts.vertices);
+    }
+    ExactMeshError::one(blocker)
+}
+
+fn current_vertex_row_count(mesh: &ExactMesh) -> usize {
+    mesh.vertices()
+        .len()
+        .min(mesh.facts().vertices.len())
+        .min(mesh.facts().mesh.vertex_count)
+}
+
+fn current_face_row_count(mesh: &ExactMesh) -> usize {
+    mesh.facts().faces.len().min(mesh.facts().mesh.face_count)
+}
+
+fn current_edge_row_count(mesh: &ExactMesh) -> usize {
+    mesh.facts().edges.len().min(mesh.facts().mesh.edge_count)
 }
 
 fn retained_vertex_facts(
@@ -1022,6 +1198,18 @@ fn retained_face_facts(
             )
             .with_face(face),
         )
+    })
+}
+
+fn retained_edge_facts(
+    mesh: &ExactMesh,
+    edge: usize,
+) -> Result<&super::facts::EdgeFacts, ExactMeshError> {
+    mesh.facts().edges.get(edge).ok_or_else(|| {
+        ExactMeshError::one(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::StaleFactReplay,
+            format!("retained mesh edge {edge} has no retained edge fact row"),
+        ))
     })
 }
 
@@ -1075,6 +1263,175 @@ mod tests {
             SourceProvenance::exact("view test tetra"),
         )
         .unwrap()
+    }
+
+    #[test]
+    fn borrowed_view_rejects_missing_retained_vertex_row() {
+        let mut mesh = tetra([0, 0, 0]);
+        let stale_vertex = mesh.vertices().len() - 1;
+        mesh.facts.vertices.pop();
+
+        let view = mesh.view();
+
+        assert!(view.mesh_bounds().is_none());
+        assert_eq!(view.vertices().len(), stale_vertex);
+        assert_eq!(view.vertex_refs().count(), stale_vertex);
+        assert!(view.vertex(stale_vertex).is_none());
+        assert_eq!(
+            view.require_vertex(stale_vertex).unwrap_err().blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+    }
+
+    #[test]
+    fn borrowed_view_rejects_missing_retained_face_row() {
+        let mut mesh = tetra([0, 0, 0]);
+        let stale_face = mesh.facts().mesh.face_count - 1;
+        mesh.facts.faces.pop();
+
+        let view = mesh.view();
+
+        assert_eq!(view.triangles().len(), stale_face);
+        assert_eq!(view.faces().count(), stale_face);
+        assert!(view.triangle(stale_face).is_none());
+        assert!(view.face(stale_face).is_none());
+        assert_eq!(
+            view.require_face(stale_face).unwrap_err().blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+        assert_eq!(
+            view.require_triangle(stale_face).unwrap_err().blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+    }
+
+    #[test]
+    fn borrowed_view_rejects_missing_retained_edge_row() {
+        let mut mesh = tetra([0, 0, 0]);
+        let stale_edge = mesh.facts().mesh.edge_count - 1;
+        mesh.facts.edges.pop();
+
+        let view = mesh.view();
+
+        assert_eq!(view.edges().count(), stale_edge);
+        assert!(view.edge(stale_edge).is_none());
+        assert_eq!(
+            view.require_edge(stale_edge).unwrap_err().blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+    }
+
+    #[test]
+    fn borrowed_view_rejects_stale_retained_summary_counts() {
+        let mut mesh = tetra([0, 0, 0]);
+        let stale_vertex = mesh.facts.mesh.vertex_count - 1;
+        let stale_face = mesh.facts.mesh.face_count - 1;
+        let stale_edge = mesh.facts.mesh.edge_count - 1;
+        let face_with_stale_vertex = mesh
+            .facts()
+            .faces
+            .iter()
+            .take(stale_face)
+            .position(|face| face.triangle.vertices.contains(&stale_vertex))
+            .unwrap();
+        let edge_with_stale_vertex = mesh
+            .facts()
+            .edges
+            .iter()
+            .take(stale_edge)
+            .position(|edge| edge.vertices.contains(&stale_vertex))
+            .unwrap();
+        mesh.facts.mesh.vertex_count -= 1;
+        mesh.facts.mesh.face_count -= 1;
+        mesh.facts.mesh.edge_count -= 1;
+        mesh.facts.vertices[0].incident_face_indices = vec![stale_face];
+        mesh.facts.vertices[0].incident_edge_indices = vec![stale_edge];
+
+        let view = mesh.view();
+        let vertex = view.require_vertex(0).unwrap();
+
+        assert!(view.mesh_bounds().is_none());
+        assert_eq!(view.vertices().len(), stale_vertex);
+        assert_eq!(view.vertex_refs().count(), stale_vertex);
+        assert!(view.vertex(stale_vertex).is_none());
+        assert_eq!(
+            view.require_vertex(stale_vertex).unwrap_err().blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+        assert_eq!(
+            vertex.incident_face_indices().unwrap_err().blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+        assert_eq!(
+            vertex.incident_edge_indices().unwrap_err().blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+
+        assert_eq!(view.triangles().len(), stale_face);
+        assert_eq!(view.faces().count(), stale_face);
+        assert!(view.triangle(stale_face).is_none());
+        assert!(view.face_bounds(stale_face).is_none());
+        assert!(view.face(stale_face).is_none());
+        assert_eq!(
+            view.require_face(stale_face).unwrap_err().blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+        assert_eq!(
+            view.require_face_bounds(stale_face).unwrap_err().blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+        assert_eq!(
+            FaceRef {
+                mesh: &mesh,
+                index: stale_face,
+            }
+            .bounds()
+            .unwrap_err()
+            .blockers()[0]
+                .kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+        let face = view.require_face(face_with_stale_vertex).unwrap();
+        assert_eq!(
+            face.vertex_refs().unwrap_err().blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+        assert_eq!(
+            face.vertices().unwrap_err().blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+
+        assert_eq!(view.edges().count(), stale_edge);
+        assert!(view.edge_bounds(stale_edge).is_none());
+        assert!(view.edge(stale_edge).is_none());
+        assert_eq!(
+            view.require_edge(stale_edge).unwrap_err().blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+        assert_eq!(
+            view.require_edge_bounds(stale_edge).unwrap_err().blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+        assert_eq!(
+            EdgeRef {
+                mesh: &mesh,
+                index: stale_edge,
+            }
+            .bounds()
+            .unwrap_err()
+            .blockers()[0]
+                .kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+        let edge = view.require_edge(edge_with_stale_vertex).unwrap();
+        assert_eq!(
+            edge.vertex_refs().unwrap_err().blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+        assert_eq!(
+            edge.vertices().unwrap_err().blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
     }
 
     #[test]
@@ -1159,8 +1516,94 @@ mod tests {
         })
         .unwrap();
 
-        let intersection = left.view().intersection(right.view()).unwrap();
-        assert!(pair.retained_arrangement_for_reuse().is_some());
+        let intersection = materialize_closed_named_boolean_with_prepared_pair(
+            &pair,
+            ExactBooleanOperation::Intersection,
+        )
+        .unwrap();
+        assert!(pair.current_arrangement_for_reuse().unwrap().is_some());
         intersection.view().validate_retained_state().unwrap();
+    }
+
+    #[test]
+    fn prepared_pair_retained_pair_facts_reject_stale_source_stamp() {
+        let left = tetra([0, 0, 0]);
+        let right = tetra([1, 0, 0]);
+        let mut pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
+
+        pair.with_arrangement_view(|view| {
+            view.validate_retained_state().unwrap();
+        })
+        .unwrap();
+        pair.current_arrangement_cell_complex_shortcut_facts()
+            .unwrap();
+
+        pair.left_source.construction_version =
+            pair.left_source.construction_version.saturating_add(1);
+
+        let arrangement_error = pair.current_arrangement_for_reuse().unwrap_err();
+        assert_eq!(
+            arrangement_error.blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+
+        let shortcut_error = pair
+            .current_arrangement_cell_complex_shortcut_facts()
+            .unwrap_err();
+        assert_eq!(
+            shortcut_error.blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+    }
+
+    #[test]
+    fn prepared_pair_empty_retained_slots_reject_stale_source_stamp() {
+        let left = tetra([0, 0, 0]);
+        let right = tetra([1, 0, 0]);
+        let mut pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
+
+        pair.left_source.construction_version =
+            pair.left_source.construction_version.saturating_add(1);
+
+        let graph_error = pair.current_intersection_graph().unwrap_err();
+        assert_eq!(
+            graph_error.blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+
+        let validation_error = pair
+            .retained_intersection_graph_for_validation()
+            .unwrap_err();
+        assert_eq!(
+            validation_error.blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+
+        let arrangement_error = pair.current_arrangement_for_reuse().unwrap_err();
+        assert_eq!(
+            arrangement_error.blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
+    }
+
+    #[test]
+    fn prepared_pair_rejects_unretained_graph_certification() {
+        let left = tetra([0, 0, 0]);
+        let right = tetra([1, 0, 0]);
+        let pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
+        let graph = Rc::new(ExactIntersectionGraph::from_face_pairs(Vec::new()));
+
+        let error = pair
+            .validate_retained_intersection_graph_source_replay(&graph)
+            .unwrap_err();
+
+        assert_eq!(
+            error.blockers()[0].kind(),
+            ExactMeshBlockerKind::MissingRequiredEvidence
+        );
+        assert_eq!(
+            pair.current_intersection_graph().unwrap_err().blockers()[0].kind(),
+            ExactMeshBlockerKind::MissingRequiredEvidence
+        );
     }
 }

@@ -27,7 +27,7 @@ use hyperlimit::{
 use super::bounds::{ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT, try_visit_candidate_face_pairs_one_shot};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide};
 use super::view::PreparedMeshPair;
-use super::{ExactMesh, triangle_edges};
+use super::{ExactMesh, point3_exact_equal, triangle_edges};
 use hyperlimit::{CoplanarProjection, CoplanarTriangleClassification};
 use hyperreal::Real;
 use intersection::{
@@ -49,6 +49,13 @@ impl MeshSide {
         match self {
             Self::Left => left,
             Self::Right => right,
+        }
+    }
+
+    pub(crate) const fn sort_key(self) -> usize {
+        match self {
+            Self::Left => 0,
+            Self::Right => 1,
         }
     }
 }
@@ -626,7 +633,7 @@ impl CoplanarOverlapSplitGraph {
         for split in &self.edge_splits {
             let left_edge = edge_points(left, split.overlap.left_edge)?;
             let right_edge = edge_points(right, split.overlap.right_edge)?;
-            validate_coplanar_edge_split_against_edges(split, &left_edge, &right_edge)
+            validate_coplanar_edge_split_against_edges(split, left_edge, right_edge)
                 .map_err(coplanar_split_validation_mesh_error)?;
         }
         Ok(())
@@ -650,7 +657,7 @@ impl CoplanarOverlapSplitGraph {
                 .map_err(|_| CoplanarOverlapSplitValidationError::SourceReplayMismatch)?;
             let right_edge = edge_points(right, split.overlap.right_edge)
                 .map_err(|_| CoplanarOverlapSplitValidationError::SourceReplayMismatch)?;
-            validate_coplanar_edge_split_against_edges(split, &left_edge, &right_edge)?;
+            validate_coplanar_edge_split_against_edges(split, left_edge, right_edge)?;
         }
         let replay = build_unvalidated_intersection_graph(left, right)
             .and_then(|graph| graph.coplanar_overlap_split_plan(left, right))
@@ -720,24 +727,6 @@ pub(crate) struct FacePairEvents {
 }
 
 impl FacePairEvents {
-    /// Return whether the pair contains at least one event that can drive graph
-    /// construction.
-    #[cfg(test)]
-    pub fn has_constructive_events(&self) -> bool {
-        self.events.iter().any(|event| {
-            !matches!(
-                event,
-                IntersectionEvent::CoplanarEdge {
-                    relation: SegmentIntersection::Disjoint,
-                    ..
-                } | IntersectionEvent::CoplanarVertex {
-                    location: TriangleLocation::Outside | TriangleLocation::Degenerate,
-                    ..
-                }
-            )
-        })
-    }
-
     /// Validate one retained face-pair event record.
     ///
     /// This is a structural audit of the event graph object, not a recomputed
@@ -820,15 +809,19 @@ impl FacePairEvents {
     ) -> Result<(), IntersectionGraphValidationError> {
         self.validate()?;
         let left_tri = left
-            .triangles()
+            .facts()
+            .faces
             .get(self.left_face)
             .ok_or(IntersectionGraphValidationError::FaceIndexOutOfRange)?
-            .0;
+            .triangle
+            .vertices;
         let right_tri = right
-            .triangles()
+            .facts()
+            .faces
             .get(self.right_face)
             .ok_or(IntersectionGraphValidationError::FaceIndexOutOfRange)?
-            .0;
+            .triangle
+            .vertices;
         for event in &self.events {
             validate_intersection_event_sources(event, self, left, right, left_tri, right_tri)?;
         }
@@ -1170,17 +1163,17 @@ impl ExactIntersectionGraph {
     ) -> Result<ExactSplitTopologyPlan, SplitPlanValidationReport> {
         let edge_splits = self.edge_split_plan();
         let edge_report = edge_splits.validate();
-        if !edge_report.is_valid() {
+        if !edge_report.blockers.is_empty() {
             return Err(edge_report);
         }
         let graph_vertices = graph_vertex_plan(&edge_splits);
         let graph_report = graph_vertices.validate();
-        if !graph_report.is_valid() {
+        if !graph_report.blockers.is_empty() {
             return Err(graph_report);
         }
         let topology = split_topology_plan(&edge_splits, &graph_vertices);
         let topology_report = topology.validate();
-        if topology_report.is_valid() {
+        if topology_report.blockers.is_empty() {
             Ok(topology)
         } else {
             Err(topology_report)
@@ -1213,7 +1206,7 @@ impl ExactIntersectionGraph {
             .map_err(split_plan_report_to_mesh_error)?;
         let face_plan = face_split_plan(&topology);
         let face_report = face_plan.validate_against_topology(&topology);
-        if !face_report.is_valid() {
+        if !face_report.blockers.is_empty() {
             return Err(split_plan_report_to_mesh_error(face_report));
         }
         face_split_geometry_plan(left, right, &topology, &face_plan)
@@ -1270,9 +1263,10 @@ pub(crate) fn build_unvalidated_intersection_graph(
         )));
     }
     let face_pair_product = left
-        .triangles()
-        .len()
-        .saturating_mul(right.triangles().len());
+        .facts()
+        .mesh
+        .face_count
+        .saturating_mul(right.facts().mesh.face_count);
     if face_pair_product <= ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT {
         let mut face_pairs =
             Vec::with_capacity(if left.bounds().mesh_may_overlap(right.bounds()) {
@@ -1347,15 +1341,7 @@ pub(crate) fn build_validated_intersection_graph_from_prepared_pair(
     }
 
     let graph = build_unvalidated_intersection_graph_from_prepared_pair_rc(pair)?;
-    graph
-        .validate_against_sources(pair.left_mesh(), pair.right_mesh())
-        .map_err(|error| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::StaleFactReplay,
-                format!("exact intersection graph failed source replay: {error:?}"),
-            ))
-        })?;
-    pair.certify_intersection_graph_source_replay();
+    pair.validate_retained_intersection_graph_source_replay(&graph)?;
     Ok(graph)
 }
 
@@ -1808,13 +1794,6 @@ pub(crate) struct SplitPlanValidationReport {
     pub(crate) blockers: Vec<SplitPlanBlocker>,
 }
 
-impl SplitPlanValidationReport {
-    /// Return whether the checked split plan is ready for the next exact stage.
-    pub(crate) fn is_valid(&self) -> bool {
-        self.blockers.is_empty()
-    }
-}
-
 /// Exact boundary node for a split face.
 ///
 /// The variants distinguish original source vertices, retained intersection
@@ -1918,7 +1897,58 @@ impl ExactFaceSplitGeometryPlan {
     /// does not decide winding, ownership, or boolean output; those decisions
     /// computation separation.
     pub fn region_plan(&self, left: &ExactMesh, right: &ExactMesh) -> ExactFaceRegionPlan {
-        face_region_plan(self, left, right)
+        let mut regions = Vec::with_capacity(self.faces.len());
+        for face in &self.faces {
+            let mesh = face.side.mesh(left, right);
+            let triangle = face.triangle;
+            let mut chains = face
+                .boundary_chains
+                .iter()
+                .map(|chain| ((chain.edge[0], chain.edge[1]), chain))
+                .collect::<BTreeMap<_, _>>();
+            let mut boundary = Vec::new();
+
+            for edge in triangle_edges(triangle) {
+                let nodes = if let Some(chain) = chains.remove(&(edge[0], edge[1])) {
+                    chain.nodes.clone()
+                } else {
+                    vec![
+                        FaceSplitBoundaryNode::OriginalVertex {
+                            vertex: edge[0],
+                            point: mesh.vertices()[edge[0]].clone(),
+                        },
+                        FaceSplitBoundaryNode::OriginalVertex {
+                            vertex: edge[1],
+                            point: mesh.vertices()[edge[1]].clone(),
+                        },
+                    ]
+                };
+                for node in nodes {
+                    if boundary
+                        .last()
+                        .is_none_or(|last| boundary_nodes_equal(last, &node) != Some(true))
+                    {
+                        boundary.push(node);
+                    }
+                }
+            }
+            if boundary
+                .first()
+                .zip(boundary.last())
+                .is_some_and(|(first, last)| boundary_nodes_equal(first, last) == Some(true))
+            {
+                boundary.pop();
+            }
+
+            regions.push(FaceRegionBoundary {
+                side: face.side,
+                face: face.face,
+                triangle,
+                boundary,
+            });
+        }
+
+        ExactFaceRegionPlan { regions }
     }
 }
 
@@ -1977,8 +2007,12 @@ fn events_for_face_pair(
     right: &ExactMesh,
     classification: &MeshFacePairClassification,
 ) -> FacePairEvents {
-    let left_tri = left.triangles()[classification.left_face].0;
-    let right_tri = right.triangles()[classification.right_face].0;
+    let left_tri = left.facts().faces[classification.left_face]
+        .triangle
+        .vertices;
+    let right_tri = right.facts().faces[classification.right_face]
+        .triangle
+        .vertices;
     let left_edges = triangle_edges(left_tri);
     let right_edges = triangle_edges(right_tri);
     let mut event_capacity = usize::from(classification.relation == MeshFacePairRelation::Unknown);
@@ -2053,7 +2087,7 @@ fn events_for_face_pair(
 }
 
 fn edge_split_plan(graph: &ExactIntersectionGraph) -> ExactEdgeSplitPlan {
-    let mut grouped = BTreeMap::<(u8, usize, usize), EdgeSplit>::new();
+    let mut grouped = BTreeMap::<(usize, usize, usize), EdgeSplit>::new();
     for pair in &graph.face_pairs {
         for event in &pair.events {
             let IntersectionEvent::SegmentPlane {
@@ -2069,7 +2103,7 @@ fn edge_split_plan(graph: &ExactIntersectionGraph) -> ExactEdgeSplitPlan {
             else {
                 continue;
             };
-            let key = (side_key(*segment_side), edge[0], edge[1]);
+            let key = (segment_side.sort_key(), edge[0], edge[1]);
             grouped
                 .entry(key)
                 .or_insert_with(|| EdgeSplit {
@@ -2132,7 +2166,7 @@ fn graph_vertex_plan(split_plan: &ExactEdgeSplitPlan) -> ExactGraphVertexPlan {
                 if let Some(key) = point_key.as_ref() {
                     if let Some(bucket) = point_key_buckets.get(key) {
                         for &index in bucket {
-                            match points_equal(&point.point, &vertices[index].point) {
+                            match point3_exact_equal(&point.point, &vertices[index].point) {
                                 Some(true) => break 'matching_vertex Some(index),
                                 Some(false) => {}
                                 None => unresolved_equalities += 1,
@@ -2140,7 +2174,7 @@ fn graph_vertex_plan(split_plan: &ExactEdgeSplitPlan) -> ExactGraphVertexPlan {
                         }
                     }
                     for &index in &unkeyed_vertices {
-                        match points_equal(&point.point, &vertices[index].point) {
+                        match point3_exact_equal(&point.point, &vertices[index].point) {
                             Some(true) => break 'matching_vertex Some(index),
                             Some(false) => {}
                             None => unresolved_equalities += 1,
@@ -2150,7 +2184,7 @@ fn graph_vertex_plan(split_plan: &ExactEdgeSplitPlan) -> ExactGraphVertexPlan {
                 } else {
                     for bucket in point_key_buckets.values() {
                         for &index in bucket {
-                            match points_equal(&point.point, &vertices[index].point) {
+                            match point3_exact_equal(&point.point, &vertices[index].point) {
                                 Some(true) => break 'matching_vertex Some(index),
                                 Some(false) => {}
                                 None => unresolved_equalities += 1,
@@ -2158,7 +2192,7 @@ fn graph_vertex_plan(split_plan: &ExactEdgeSplitPlan) -> ExactGraphVertexPlan {
                         }
                     }
                     for &index in &unkeyed_vertices {
-                        match points_equal(&point.point, &vertices[index].point) {
+                        match point3_exact_equal(&point.point, &vertices[index].point) {
                             Some(true) => break 'matching_vertex Some(index),
                             Some(false) => {}
                             None => unresolved_equalities += 1,
@@ -2303,7 +2337,7 @@ fn validate_intersection_event_sources(
             if *plane_face != plane_pair_face {
                 return Err(IntersectionGraphValidationError::EventSourceMismatch);
             }
-            if plane_mesh.triangles().get(*plane_face).is_none() {
+            if plane_mesh.facts().faces.get(*plane_face).is_none() {
                 return Err(IntersectionGraphValidationError::EventSourceOutOfRange);
             }
             validate_vertex(*segment_side, edge[0], left, right)?;
@@ -2355,7 +2389,7 @@ fn validate_intersection_event_sources(
             if *triangle_face != expected_triangle_face {
                 return Err(IntersectionGraphValidationError::EventSourceMismatch);
             }
-            if triangle_mesh.triangles().get(*triangle_face).is_none() {
+            if triangle_mesh.facts().faces.get(*triangle_face).is_none() {
                 return Err(IntersectionGraphValidationError::EventSourceOutOfRange);
             }
             validate_vertex(*vertex_side, *vertex, left, right)?;
@@ -2504,7 +2538,7 @@ fn split_topology_plan(
             match graph_vertices
                 .vertices
                 .iter()
-                .position(|vertex| points_equal(&point.point, &vertex.point) == Some(true))
+                .position(|vertex| point3_exact_equal(&point.point, &vertex.point) == Some(true))
             {
                 Some(index) => nodes.push(SplitEdgeNode::GraphVertex {
                     graph_vertex: index,
@@ -2587,7 +2621,7 @@ fn validate_edge_split_plan_against_sources(
     right: &ExactMesh,
 ) -> SplitPlanValidationReport {
     let mut report = validate_edge_split_plan(split_plan);
-    if !report.is_valid() {
+    if !report.blockers.is_empty() {
         return report;
     }
 
@@ -2613,7 +2647,7 @@ fn validate_edge_split_plan_against_sources(
 }
 
 fn face_split_plan(topology: &ExactSplitTopologyPlan) -> ExactFaceSplitPlan {
-    let mut faces = BTreeMap::<(u8, usize), FaceSplitPlan>::new();
+    let mut faces = BTreeMap::<(usize, usize), FaceSplitPlan>::new();
     for chain in &topology.edge_chains {
         let graph_vertices = chain
             .nodes
@@ -2637,7 +2671,7 @@ fn face_split_plan(topology: &ExactSplitTopologyPlan) -> ExactFaceSplitPlan {
             .collect::<BTreeSet<_>>();
         for face in face_indices {
             faces
-                .entry((side_key(chain.side), face))
+                .entry((chain.side.sort_key(), face))
                 .or_insert_with(|| FaceSplitPlan {
                     side: chain.side,
                     face,
@@ -2898,7 +2932,7 @@ fn validate_face_split_plan_against_sources(
     };
 
     let mut report = validate_face_split_plan(face_plan, &topology);
-    if !report.is_valid() {
+    if !report.blockers.is_empty() {
         return report;
     }
 
@@ -2921,26 +2955,26 @@ fn face_split_geometry_plan(
     let chains = topology
         .edge_chains
         .iter()
-        .map(|chain| ((side_key(chain.side), chain.edge[0], chain.edge[1]), chain))
+        .map(|chain| ((chain.side.sort_key(), chain.edge[0], chain.edge[1]), chain))
         .collect::<BTreeMap<_, _>>();
 
     let mut faces = Vec::with_capacity(face_plan.faces.len());
     for face in &face_plan.faces {
         let mesh = face.side.mesh(left, right);
-        if face.face >= mesh.triangles().len() {
+        let Some(face_facts) = mesh.facts().faces.get(face.face) else {
             return Err(ExactMeshError::one(
                 ExactMeshBlocker::new(
                     ExactMeshBlockerKind::IndexOutOfBounds,
-                    "face split geometry references a missing face",
+                    "face split geometry references a missing retained face fact",
                 )
                 .with_face(face.face),
             ));
-        }
-        let triangle = mesh.triangles()[face.face].0;
+        };
+        let triangle = face_facts.triangle.vertices;
         let mut boundary_chains = Vec::with_capacity(face.edges.len());
         for edge in &face.edges {
             let chain = chains
-                .get(&(side_key(face.side), edge.edge[0], edge.edge[1]))
+                .get(&(face.side.sort_key(), edge.edge[0], edge.edge[1]))
                 .ok_or_else(|| {
                     ExactMeshError::one(
                         ExactMeshBlocker::new(
@@ -3036,19 +3070,19 @@ fn validate_face_split_geometry_incidence(
 
     for face in &geometry.faces {
         let mesh = face.side.mesh(left, right);
-        if face.face >= mesh.triangles().len() {
+        let Some(face_facts) = mesh.facts().faces.get(face.face) else {
             blockers.push(
                 SplitPlanBlocker::new(
                     SplitPlanBlockerKind::GraphVertexOutOfRange,
-                    "split-face geometry references a missing source face",
+                    "split-face geometry references a missing retained face fact",
                 )
                 .with_side(face.side)
                 .with_face(face.face),
             );
             continue;
-        }
+        };
 
-        let triangle = mesh.triangles()[face.face].0;
+        let triangle = face_facts.triangle.vertices;
         if face.triangle != triangle {
             blockers.push(
                 SplitPlanBlocker::new(
@@ -3215,7 +3249,7 @@ fn validate_face_split_boundary_chain_shape(
             );
             continue;
         };
-        if points_equal(point, source_point) != Some(true) {
+        if point3_exact_equal(point, source_point) != Some(true) {
             blockers.push(
                 SplitPlanBlocker::new(
                     SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch,
@@ -3236,7 +3270,7 @@ fn validate_face_split_geometry_against_sources(
     right: &ExactMesh,
 ) -> SplitPlanValidationReport {
     let mut report = validate_face_split_geometry_incidence(geometry, left, right);
-    if !report.is_valid() {
+    if !report.blockers.is_empty() {
         return report;
     }
 
@@ -3259,65 +3293,6 @@ fn validate_face_split_geometry_against_sources(
             report
         }
     }
-}
-
-fn face_region_plan(
-    geometry: &ExactFaceSplitGeometryPlan,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> ExactFaceRegionPlan {
-    let mut regions = Vec::with_capacity(geometry.faces.len());
-    for face in &geometry.faces {
-        let mesh = face.side.mesh(left, right);
-        let triangle = face.triangle;
-        let mut chains = face
-            .boundary_chains
-            .iter()
-            .map(|chain| ((chain.edge[0], chain.edge[1]), chain))
-            .collect::<BTreeMap<_, _>>();
-        let mut boundary = Vec::new();
-
-        for edge in triangle_edges(triangle) {
-            let nodes = if let Some(chain) = chains.remove(&(edge[0], edge[1])) {
-                chain.nodes.clone()
-            } else {
-                vec![
-                    FaceSplitBoundaryNode::OriginalVertex {
-                        vertex: edge[0],
-                        point: mesh.vertices()[edge[0]].clone(),
-                    },
-                    FaceSplitBoundaryNode::OriginalVertex {
-                        vertex: edge[1],
-                        point: mesh.vertices()[edge[1]].clone(),
-                    },
-                ]
-            };
-            for node in nodes {
-                if boundary
-                    .last()
-                    .is_none_or(|last| boundary_nodes_equal(last, &node) != Some(true))
-                {
-                    boundary.push(node);
-                }
-            }
-        }
-        if boundary
-            .first()
-            .zip(boundary.last())
-            .is_some_and(|(first, last)| boundary_nodes_equal(first, last) == Some(true))
-        {
-            boundary.pop();
-        }
-
-        regions.push(FaceRegionBoundary {
-            side: face.side,
-            face: face.face,
-            triangle,
-            boundary,
-        });
-    }
-
-    ExactFaceRegionPlan { regions }
 }
 
 fn validate_face_region_plan(
@@ -3367,19 +3342,19 @@ fn validate_face_region_plan(
         }
 
         let mesh = region.side.mesh(left, right);
-        if region.face >= mesh.triangles().len() {
+        let Some(face_facts) = mesh.facts().faces.get(region.face) else {
             blockers.push(
                 SplitPlanBlocker::new(
                     SplitPlanBlockerKind::GraphVertexOutOfRange,
-                    "face region references a missing source face",
+                    "face region references a missing retained face fact",
                 )
                 .with_side(region.side)
                 .with_face(region.face),
             );
             continue;
-        }
+        };
 
-        let triangle = mesh.triangles()[region.face].0;
+        let triangle = face_facts.triangle.vertices;
         if region.triangle != triangle {
             blockers.push(
                 SplitPlanBlocker::new(
@@ -3452,7 +3427,7 @@ fn validate_face_region_original_boundary_nodes(
                 .with_face(region.face),
             );
         }
-        if points_equal(point, source_point) != Some(true) {
+        if point3_exact_equal(point, source_point) != Some(true) {
             blockers.push(
                 SplitPlanBlocker::new(
                     SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch,
@@ -3472,7 +3447,7 @@ fn validate_face_region_plan_against_sources(
     right: &ExactMesh,
 ) -> SplitPlanValidationReport {
     let mut report = validate_face_region_plan(plan, left, right);
-    if !report.is_valid() {
+    if !report.blockers.is_empty() {
         return report;
     }
 
@@ -3528,17 +3503,17 @@ fn coplanar_edge_split_construction(
     let (points, interval_overlap, interval) = match overlap.relation {
         SegmentIntersection::Disjoint => (Vec::new(), false, None),
         SegmentIntersection::EndpointTouch => {
-            let point = endpoint_touch_split_point(&left_edge, &right_edge, projection);
+            let point = endpoint_touch_split_point(left_edge, right_edge, projection);
             (point.into_iter().collect(), false, None)
         }
         SegmentIntersection::Proper => {
-            let point = proper_coplanar_edge_split_point(&left_edge, &right_edge, projection);
+            let point = proper_coplanar_edge_split_point(left_edge, right_edge, projection);
             (point.into_iter().collect(), false, None)
         }
         SegmentIntersection::CollinearOverlap | SegmentIntersection::Identical => (
             Vec::new(),
             true,
-            coplanar_edge_interval(&left_edge, &right_edge, projection),
+            coplanar_edge_interval(left_edge, right_edge, projection),
         ),
     };
     let split = CoplanarEdgeSplitConstruction {
@@ -3547,7 +3522,7 @@ fn coplanar_edge_split_construction(
         interval_overlap,
         interval,
     };
-    validate_coplanar_edge_split_against_edges(&split, &left_edge, &right_edge)
+    validate_coplanar_edge_split_against_edges(&split, left_edge, right_edge)
         .map_err(coplanar_split_validation_mesh_error)?;
     Ok(split)
 }
@@ -3654,8 +3629,8 @@ fn validate_coplanar_edge_split(
 
 fn validate_coplanar_edge_split_against_edges(
     split: &CoplanarEdgeSplitConstruction,
-    left_edge: &[Point3; 2],
-    right_edge: &[Point3; 2],
+    left_edge: BorrowedEdgePoints<'_>,
+    right_edge: BorrowedEdgePoints<'_>,
 ) -> Result<(), CoplanarOverlapSplitValidationError> {
     validate_coplanar_edge_split(split)?;
 
@@ -3672,11 +3647,11 @@ fn validate_coplanar_edge_split_against_edges(
 
 fn validate_split_point_against_edges(
     point: &CoplanarEdgeSplitPoint,
-    left_edge: &[Point3; 2],
-    right_edge: &[Point3; 2],
+    left_edge: BorrowedEdgePoints<'_>,
+    right_edge: BorrowedEdgePoints<'_>,
 ) -> Result<(), CoplanarOverlapSplitValidationError> {
-    let left_replayed = interpolate_point3(&left_edge[0], &left_edge[1], &point.left_parameter);
-    match points_equal(&point.point, &left_replayed) {
+    let left_replayed = interpolate_point3(left_edge[0], left_edge[1], &point.left_parameter);
+    match point3_exact_equal(&point.point, &left_replayed) {
         Some(true) => {}
         Some(false) => {
             return Err(CoplanarOverlapSplitValidationError::SplitPointDoesNotMatchLeftParameter);
@@ -3684,8 +3659,8 @@ fn validate_split_point_against_edges(
         None => return Err(CoplanarOverlapSplitValidationError::UnknownSplitPointEquality),
     }
 
-    let right_replayed = interpolate_point3(&right_edge[0], &right_edge[1], &point.right_parameter);
-    match points_equal(&point.point, &right_replayed) {
+    let right_replayed = interpolate_point3(right_edge[0], right_edge[1], &point.right_parameter);
+    match point3_exact_equal(&point.point, &right_replayed) {
         Some(true) => Ok(()),
         Some(false) => {
             Err(CoplanarOverlapSplitValidationError::SplitPointDoesNotMatchRightParameter)
@@ -3741,7 +3716,12 @@ fn coplanar_split_validation_mesh_kind(
     }
 }
 
-fn edge_points(mesh: &ExactMesh, edge: [usize; 2]) -> Result<[Point3; 2], ExactMeshError> {
+type BorrowedEdgePoints<'a> = [&'a Point3; 2];
+
+fn edge_points(
+    mesh: &ExactMesh,
+    edge: [usize; 2],
+) -> Result<BorrowedEdgePoints<'_>, ExactMeshError> {
     let start = mesh.vertices().get(edge[0]).ok_or_else(|| {
         ExactMeshError::one(
             ExactMeshBlocker::new(
@@ -3760,51 +3740,51 @@ fn edge_points(mesh: &ExactMesh, edge: [usize; 2]) -> Result<[Point3; 2], ExactM
             .with_vertex(edge[1]),
         )
     })?;
-    Ok([start.clone(), end.clone()])
+    Ok([start, end])
 }
 
 fn endpoint_touch_split_point(
-    left: &[Point3; 2],
-    right: &[Point3; 2],
+    left: BorrowedEdgePoints<'_>,
+    right: BorrowedEdgePoints<'_>,
     projection: CoplanarProjection,
 ) -> Option<CoplanarEdgeSplitPoint> {
-    for (left_index, left_point) in left.iter().enumerate() {
-        for (right_index, right_point) in right.iter().enumerate() {
+    for (left_index, left_point) in left.into_iter().enumerate() {
+        for (right_index, right_point) in right.into_iter().enumerate() {
             if projected_points_equal(left_point, right_point, projection)? {
                 return Some(CoplanarEdgeSplitPoint {
-                    point: left_point.clone(),
+                    point: (*left_point).clone(),
                     left_parameter: Real::from(left_index as i64),
                     right_parameter: Real::from(right_index as i64),
                 });
             }
         }
     }
-    let right_start = project_point3(&right[0], projection);
-    let right_end = project_point3(&right[1], projection);
-    for (left_index, left_point) in left.iter().enumerate() {
+    let right_start = project_point3(right[0], projection);
+    let right_end = project_point3(right[1], projection);
+    for (left_index, left_point) in left.into_iter().enumerate() {
         let projected = project_point3(left_point, projection);
         if point_on_segment(&right_start, &right_end, &projected).value() == Some(true) {
             return Some(CoplanarEdgeSplitPoint {
-                point: left_point.clone(),
+                point: (*left_point).clone(),
                 left_parameter: Real::from(left_index as i64),
                 right_parameter: projected_segment_parameter3(
-                    left_point, &right[0], &right[1], projection,
+                    left_point, right[0], right[1], projection,
                 )?,
             });
         }
     }
 
-    let left_start = project_point3(&left[0], projection);
-    let left_end = project_point3(&left[1], projection);
-    for (right_index, right_point) in right.iter().enumerate() {
+    let left_start = project_point3(left[0], projection);
+    let left_end = project_point3(left[1], projection);
+    for (right_index, right_point) in right.into_iter().enumerate() {
         let projected = project_point3(right_point, projection);
         if point_on_segment(&left_start, &left_end, &projected).value() == Some(true) {
             return Some(CoplanarEdgeSplitPoint {
-                point: right_point.clone(),
+                point: (*right_point).clone(),
                 left_parameter: projected_segment_parameter3(
                     right_point,
-                    &left[0],
-                    &left[1],
+                    left[0],
+                    left[1],
                     projection,
                 )?,
                 right_parameter: Real::from(right_index as i64),
@@ -3815,19 +3795,19 @@ fn endpoint_touch_split_point(
 }
 
 fn coplanar_edge_interval(
-    left: &[Point3; 2],
-    right: &[Point3; 2],
+    left: BorrowedEdgePoints<'_>,
+    right: BorrowedEdgePoints<'_>,
     projection: CoplanarProjection,
 ) -> Option<CoplanarEdgeInterval> {
     let mut endpoints = Vec::new();
-    for (left_index, point) in left.iter().enumerate() {
+    for (left_index, point) in left.into_iter().enumerate() {
         if let Some(right_parameter) =
-            certified_endpoint_parameter_on_segment(point, &right[0], &right[1], projection)
+            certified_endpoint_parameter_on_segment(point, right[0], right[1], projection)
         {
             push_interval_endpoint(
                 &mut endpoints,
                 CoplanarEdgeSplitPoint {
-                    point: point.clone(),
+                    point: (*point).clone(),
                     left_parameter: Real::from(left_index as i64),
                     right_parameter,
                 },
@@ -3835,14 +3815,14 @@ fn coplanar_edge_interval(
             )?;
         }
     }
-    for (right_index, point) in right.iter().enumerate() {
+    for (right_index, point) in right.into_iter().enumerate() {
         if let Some(left_parameter) =
-            certified_endpoint_parameter_on_segment(point, &left[0], &left[1], projection)
+            certified_endpoint_parameter_on_segment(point, left[0], left[1], projection)
         {
             push_interval_endpoint(
                 &mut endpoints,
                 CoplanarEdgeSplitPoint {
-                    point: point.clone(),
+                    point: (*point).clone(),
                     left_parameter,
                     right_parameter: Real::from(right_index as i64),
                 },
@@ -3900,15 +3880,15 @@ fn push_interval_endpoint(
 }
 
 fn proper_coplanar_edge_split_point(
-    left: &[Point3; 2],
-    right: &[Point3; 2],
+    left: BorrowedEdgePoints<'_>,
+    right: BorrowedEdgePoints<'_>,
     projection: CoplanarProjection,
 ) -> Option<CoplanarEdgeSplitPoint> {
     let left_parameter =
-        projected_line_parameter3(&left[0], &left[1], &right[0], &right[1], projection)?;
+        projected_line_parameter3(left[0], left[1], right[0], right[1], projection)?;
     let right_parameter =
-        projected_line_parameter3(&right[0], &right[1], &left[0], &left[1], projection)?;
-    let point = interpolate_point3(&left[0], &left[1], &left_parameter);
+        projected_line_parameter3(right[0], right[1], left[0], left[1], projection)?;
+    let point = interpolate_point3(left[0], left[1], &left_parameter);
     Some(CoplanarEdgeSplitPoint {
         point,
         left_parameter,
@@ -3928,7 +3908,7 @@ fn boundary_nodes_equal(
     left: &FaceSplitBoundaryNode,
     right: &FaceSplitBoundaryNode,
 ) -> Option<bool> {
-    points_equal(boundary_node_point(left), boundary_node_point(right))
+    point3_exact_equal(boundary_node_point(left), boundary_node_point(right))
 }
 
 fn append_segment_plane_events(
@@ -4015,20 +3995,6 @@ fn append_coplanar_events(
             }
         }
     }
-}
-
-fn side_key(side: MeshSide) -> u8 {
-    match side {
-        MeshSide::Left => 0,
-        MeshSide::Right => 1,
-    }
-}
-
-fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
-    let x = compare_reals(&left.x, &right.x).value()?;
-    let y = compare_reals(&left.y, &right.y).value()?;
-    let z = compare_reals(&left.z, &right.z).value()?;
-    Some(x == Ordering::Equal && y == Ordering::Equal && z == Ordering::Equal)
 }
 
 fn projected_points_equal(

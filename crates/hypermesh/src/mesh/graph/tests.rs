@@ -1,6 +1,10 @@
 use super::*;
 use crate::mesh::ExactMesh;
-use crate::mesh::boolean::region::FaceRegionPlaneRelation;
+use crate::mesh::boolean::cells::triangulate_all_face_cells_with_cdt;
+use crate::mesh::boolean::region::{
+    FaceRegionPlaneRelation, checked_classify_face_regions_against_opposite_planes,
+    checked_triangulate_face_regions_with_earcut,
+};
 use crate::mesh::validation::ExactMeshValidationPolicy;
 
 fn q(numerator: i64, denominator: i64) -> Real {
@@ -53,10 +57,10 @@ fn face_region_stage_replays_from_internal_graph() {
     let geometry = graph.face_split_geometry_plan(&left, &right).unwrap();
     let regions = geometry.region_plan(&left, &right);
 
-    let classifications = regions
-        .classify_against_opposite_face_planes(&left, &right)
-        .unwrap();
-    let triangulations = regions.triangulate_with_earcut(&left, &right).unwrap();
+    let classifications =
+        checked_classify_face_regions_against_opposite_planes(&regions, &left, &right).unwrap();
+    let triangulations =
+        checked_triangulate_face_regions_with_earcut(&regions, &left, &right).unwrap();
 
     assert!(!classifications.is_empty());
     assert!(!triangulations.is_empty());
@@ -123,16 +127,16 @@ fn face_cell_cdt_replays_from_internal_graph() {
     reversed_graph
         .validate_against_sources(&left, &right)
         .unwrap();
-    let (cell_regions, cell_triangulations) = graph
-        .triangulate_face_cells_with_cdt(&left, &right)
-        .unwrap()
-        .expect("overlapping closed solids should expose exact CDT face cells");
+    let (cell_regions, cell_triangulations) =
+        triangulate_all_face_cells_with_cdt(&graph, &left, &right)
+            .unwrap()
+            .expect("overlapping closed solids should expose exact CDT face cells");
     assert_eq!(
         cell_regions.regions.len(),
         left.triangles().len() + right.triangles().len()
     );
     assert_eq!(cell_triangulations.len(), cell_regions.regions.len());
-    assert!(cell_regions.validate(&left, &right).is_valid());
+    assert!(cell_regions.validate(&left, &right).blockers.is_empty());
     graph
         .validate_face_cell_cdt_against_sources(&cell_regions, &cell_triangulations, &left, &right)
         .unwrap();
@@ -192,7 +196,18 @@ fn intersection_graph_retains_coplanar_face_pair_events_internal() {
         .find(|pair| pair.left_face == 0 && pair.right_face == 0)
         .expect("coplanar overlap should retain a graph face pair");
     assert!(retained_pair.projection.is_some());
-    assert!(retained_pair.has_constructive_events());
+    assert!(retained_pair.events.iter().any(|event| {
+        !matches!(
+            event,
+            IntersectionEvent::CoplanarEdge {
+                relation: SegmentIntersection::Disjoint,
+                ..
+            } | IntersectionEvent::CoplanarVertex {
+                location: TriangleLocation::Outside | TriangleLocation::Degenerate,
+                ..
+            }
+        )
+    }));
 
     let mut overlaps = graph.coplanar_overlap_graph_iter().collect::<Vec<_>>();
     let overlap = overlaps.pop().unwrap();
@@ -257,7 +272,9 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
     let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
     graph.validate_against_meshes(&left, &right).unwrap();
     let prepared_pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
-    let shortcut_facts = prepared_pair.arrangement_cell_complex_shortcut_facts();
+    let shortcut_facts = prepared_pair
+        .current_arrangement_cell_complex_shortcut_facts()
+        .unwrap();
     assert_eq!(
         shortcut_facts,
         crate::mesh::boolean::evidence::ExactArrangementCellComplexShortcutFacts::from_sources(
@@ -289,9 +306,19 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
             view.validate_retained_state().unwrap();
         })
         .unwrap();
-    assert!(prepared_pair.retained_arrangement_for_reuse().is_some());
+    assert!(
+        prepared_pair
+            .current_arrangement_for_reuse()
+            .unwrap()
+            .is_some()
+    );
     prepared_pair.retain_intersection_graph(ExactIntersectionGraph::from_face_pairs(Vec::new()));
-    assert!(prepared_pair.retained_arrangement_for_reuse().is_none());
+    assert!(
+        prepared_pair
+            .current_arrangement_for_reuse()
+            .unwrap()
+            .is_none()
+    );
     assert_eq!(
         prepared_pair
             .current_intersection_graph()
@@ -314,7 +341,18 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
         .expect("candidate pair should be retained in the graph");
     assert!(retained_pair.projection.is_none());
     assert!(!retained_pair.events.is_empty());
-    assert!(retained_pair.has_constructive_events());
+    assert!(retained_pair.events.iter().any(|event| {
+        !matches!(
+            event,
+            IntersectionEvent::CoplanarEdge {
+                relation: SegmentIntersection::Disjoint,
+                ..
+            } | IntersectionEvent::CoplanarVertex {
+                location: TriangleLocation::Outside | TriangleLocation::Degenerate,
+                ..
+            }
+        )
+    }));
     retained_pair
         .validate_against_meshes(&left, &right)
         .unwrap();

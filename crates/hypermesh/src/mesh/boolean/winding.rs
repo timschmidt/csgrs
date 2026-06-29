@@ -469,7 +469,7 @@ pub(crate) fn classify_point_against_closed_mesh_winding_report(
             relation: ClosedMeshWindingRelation::NotClosed,
             axis: None,
             tested_axes: 0,
-            triangle_count: mesh.triangles().len(),
+            triangle_count: mesh.facts().mesh.face_count,
             crossings: 0,
             boundary_hits: 0,
             degenerate_hits: 0,
@@ -479,14 +479,15 @@ pub(crate) fn classify_point_against_closed_mesh_winding_report(
     }
 
     let triangles = mesh
-        .triangles()
+        .facts()
+        .faces
         .iter()
-        .map(|triangle| {
-            let [a, b, c] = triangle.0;
+        .map(|face| {
+            let [a, b, c] = face.triangle.vertices;
             [
-                mesh.vertices()[a].clone(),
-                mesh.vertices()[b].clone(),
-                mesh.vertices()[c].clone(),
+                &mesh.vertices()[a],
+                &mesh.vertices()[b],
+                &mesh.vertices()[c],
             ]
         })
         .collect::<Vec<_>>();
@@ -495,7 +496,17 @@ pub(crate) fn classify_point_against_closed_mesh_winding_report(
     let mut last_unknown = 0_usize;
     let ray_candidates = winding_ray_candidates();
     for (tested, axis) in ray_candidates.iter().copied().enumerate() {
-        let axis_report = classify_axis(point, &triangles, axis);
+        let mut axis_report = AxisParityReport::default();
+        for triangle in &triangles {
+            match classify_ray_triangle(point, triangle, axis) {
+                RayTriangleRelation::Crossing => axis_report.crossings += 1,
+                RayTriangleRelation::Boundary => axis_report.boundary_hits += 1,
+                RayTriangleRelation::Degenerate => axis_report.degenerate_hits += 1,
+                RayTriangleRelation::Parallel => axis_report.parallel_faces += 1,
+                RayTriangleRelation::NoHit => {}
+                RayTriangleRelation::Unknown => axis_report.unknown_hits += 1,
+            }
+        }
         if axis_report.boundary_hits != 0 {
             return PointMeshWindingReport {
                 relation: ClosedMeshWindingRelation::Boundary,
@@ -530,9 +541,13 @@ pub(crate) fn classify_point_against_closed_mesh_winding_report(
         last_unknown += axis_report.unknown_hits;
     }
 
-    if let Some(boundary_hits) = exact_boundary_hits(point, &triangles)
-        && boundary_hits != 0
-    {
+    let mut boundary_hits = 0usize;
+    for triangle in &triangles {
+        if point_on_closed_triangle(point, triangle) == Some(true) {
+            boundary_hits += 1;
+        }
+    }
+    if boundary_hits != 0 {
         return PointMeshWindingReport {
             relation: ClosedMeshWindingRelation::Boundary,
             axis: Some(WindingRayAxis::X),
@@ -559,26 +574,7 @@ pub(crate) fn classify_point_against_closed_mesh_winding_report(
     }
 }
 
-fn exact_boundary_hits(point: &Point3, triangles: &[[Point3; 3]]) -> Option<usize> {
-    let mut hits = 0usize;
-    let mut unresolved = false;
-    for triangle in triangles {
-        match point_on_closed_triangle(point, triangle) {
-            Some(true) => hits += 1,
-            Some(false) => {}
-            None => unresolved = true,
-        }
-    }
-    if hits != 0 {
-        Some(hits)
-    } else if unresolved {
-        None
-    } else {
-        Some(0)
-    }
-}
-
-fn point_on_closed_triangle(point: &Point3, triangle: &[Point3; 3]) -> Option<bool> {
+fn point_on_closed_triangle(point: &Point3, triangle: &[&Point3; 3]) -> Option<bool> {
     match point_on_triangle_plane(point, triangle) {
         Some(true) => {}
         Some(false) => return Some(false),
@@ -619,7 +615,7 @@ pub(crate) fn classify_mesh_vertices_against_closed_mesh_winding_report(
     let mut unknown = 0_usize;
     let mut vertices = Vec::with_capacity(subject.vertices().len());
     for vertex in subject.vertices() {
-        let report = classify_point_against_closed_mesh_winding_report(&vertex.clone(), target);
+        let report = classify_point_against_closed_mesh_winding_report(vertex, target);
         match report.relation {
             ClosedMeshWindingRelation::Inside => inside += 1,
             ClosedMeshWindingRelation::Outside => outside += 1,
@@ -664,25 +660,6 @@ struct AxisParityReport {
     unknown_hits: usize,
 }
 
-fn classify_axis(
-    point: &Point3,
-    triangles: &[[Point3; 3]],
-    axis: WindingRayAxis,
-) -> AxisParityReport {
-    let mut report = AxisParityReport::default();
-    for triangle in triangles {
-        match classify_ray_triangle(point, triangle, axis) {
-            RayTriangleRelation::Crossing => report.crossings += 1,
-            RayTriangleRelation::Boundary => report.boundary_hits += 1,
-            RayTriangleRelation::Degenerate => report.degenerate_hits += 1,
-            RayTriangleRelation::Parallel => report.parallel_faces += 1,
-            RayTriangleRelation::NoHit => {}
-            RayTriangleRelation::Unknown => report.unknown_hits += 1,
-        }
-    }
-    report
-}
-
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum RayTriangleRelation {
     Crossing,
@@ -695,10 +672,10 @@ enum RayTriangleRelation {
 
 fn classify_ray_triangle(
     point: &Point3,
-    triangle: &[Point3; 3],
+    triangle: &[&Point3; 3],
     axis: WindingRayAxis,
 ) -> RayTriangleRelation {
-    let area = projected_orient(&triangle[0], &triangle[1], &triangle[2], axis);
+    let area = projected_orient(triangle[0], triangle[1], triangle[2], axis);
     let Some(area_sign) = sign(&area) else {
         return RayTriangleRelation::Unknown;
     };
@@ -747,10 +724,10 @@ enum ProjectedPointRelation {
 
 fn projected_point_relation(
     point: &Point3,
-    triangle: &[Point3; 3],
+    triangle: &[&Point3; 3],
     axis: WindingRayAxis,
 ) -> ProjectedPointRelation {
-    let area = projected_orient(&triangle[0], &triangle[1], &triangle[2], axis);
+    let area = projected_orient(triangle[0], triangle[1], triangle[2], axis);
     let Some(area_sign) = sign(&area) else {
         return ProjectedPointRelation::Unknown;
     };
@@ -758,9 +735,9 @@ fn projected_point_relation(
         return ProjectedPointRelation::Outside;
     }
     let signs = [
-        sign(&projected_orient(&triangle[0], &triangle[1], point, axis)),
-        sign(&projected_orient(&triangle[1], &triangle[2], point, axis)),
-        sign(&projected_orient(&triangle[2], &triangle[0], point, axis)),
+        sign(&projected_orient(triangle[0], triangle[1], point, axis)),
+        sign(&projected_orient(triangle[1], triangle[2], point, axis)),
+        sign(&projected_orient(triangle[2], triangle[0], point, axis)),
     ];
     if signs.iter().any(Option::is_none) {
         return ProjectedPointRelation::Unknown;
@@ -785,21 +762,24 @@ fn projected_point_relation(
     }
 }
 
-fn point_on_triangle_plane(point: &Point3, triangle: &[Point3; 3]) -> Option<bool> {
+fn point_on_triangle_plane(point: &Point3, triangle: &[&Point3; 3]) -> Option<bool> {
     let normal = normal(triangle);
-    let offset = dot_point(&normal, &triangle[0]);
+    let offset = dot_point(&normal, triangle[0]);
     let side = dot_point(&normal, point) - offset;
     sign(&side).map(|sign| sign == RealSign::Zero)
 }
 
 fn ray_parameter_sign(
     point: &Point3,
-    triangle: &[Point3; 3],
+    triangle: &[&Point3; 3],
     axis: WindingRayAxis,
 ) -> Option<RealSign> {
     let normal = normal(triangle);
-    let numerator = dot_point(&normal, &triangle[0]) - dot_point(&normal, point);
-    let denominator = dot_i64(&normal, axis.direction());
+    let numerator = dot_point(&normal, triangle[0]) - dot_point(&normal, point);
+    let [dx, dy, dz] = axis.direction();
+    let denominator = normal[0].clone() * Real::from(dx)
+        + normal[1].clone() * Real::from(dy)
+        + normal[2].clone() * Real::from(dz);
     let numerator_sign = sign(&numerator)?;
     let denominator_sign = sign(&denominator)?;
     match (numerator_sign, denominator_sign) {
@@ -832,7 +812,7 @@ fn project(point: &Point3, axis: WindingRayAxis) -> (Real, Real) {
     (dot_point_i64(point, basis_u), dot_point_i64(point, basis_v))
 }
 
-fn normal(triangle: &[Point3; 3]) -> [Real; 3] {
+fn normal(triangle: &[&Point3; 3]) -> [Real; 3] {
     let ax = triangle[0].x.clone();
     let ay = triangle[0].y.clone();
     let az = triangle[0].z.clone();
@@ -853,12 +833,6 @@ fn dot_point(normal: &[Real; 3], point: &Point3) -> Real {
     normal[0].clone() * point.x.clone()
         + normal[1].clone() * point.y.clone()
         + normal[2].clone() * point.z.clone()
-}
-
-fn dot_i64(left: &[Real; 3], right: [i64; 3]) -> Real {
-    left[0].clone() * Real::from(right[0])
-        + left[1].clone() * Real::from(right[1])
-        + left[2].clone() * Real::from(right[2])
 }
 
 fn dot_point_i64(point: &Point3, coeffs: [i64; 3]) -> Real {
@@ -952,9 +926,10 @@ mod tests {
     fn projected_boundary_hit_behind_ray_origin_does_not_reject_axis() {
         let point = p(0, 0, 0);
         let triangle = [p(-1, -1, -1), p(-1, 1, 1), p(-1, 1, -1)];
+        let triangle_ref = [&triangle[0], &triangle[1], &triangle[2]];
 
         assert_eq!(
-            classify_ray_triangle(&point, &triangle, WindingRayAxis::X),
+            classify_ray_triangle(&point, &triangle_ref, WindingRayAxis::X),
             RayTriangleRelation::NoHit
         );
     }
@@ -971,8 +946,9 @@ mod tests {
 
         let point = p(0, 0, 0);
         let triangle = [p(0, 1, 4), p(4, 0, 1), p(4, 4, 4)];
+        let triangle_ref = [&triangle[0], &triangle[1], &triangle[2]];
         assert_eq!(
-            classify_ray_triangle(&point, &triangle, generated),
+            classify_ray_triangle(&point, &triangle_ref, generated),
             RayTriangleRelation::Crossing
         );
     }

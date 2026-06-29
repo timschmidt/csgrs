@@ -181,8 +181,8 @@ fn classify_mesh_triangles_from_retained_plane_relations(
     right_against_left_plane: TrianglePlaneRelation,
     left_against_right_plane: TrianglePlaneRelation,
 ) -> TriangleTriangleClassification {
-    let left_tri = left.triangles()[left_face].0;
-    let right_tri = right.triangles()[right_face].0;
+    let left_tri = left.facts().faces[left_face].triangle.vertices;
+    let right_tri = right.facts().faces[right_face].triangle.vertices;
     classify_triangle_triangle_points_from_plane_relations(
         [
             &left.vertices()[left_tri[0]],
@@ -212,10 +212,13 @@ fn classify_mesh_triangle_against_retained_face_plane_unchecked(
     query_face: usize,
 ) -> TrianglePlaneClassification {
     let plane = &plane_mesh.facts().faces[plane_face].plane;
-    let query = query_mesh.triangles()[query_face].0;
+    let query = query_mesh.facts().faces[query_face].triangle.vertices;
     let mut sides = [None, None, None];
     for (side, vertex) in sides.iter_mut().zip(query) {
-        *side = retained_plane_side(plane, &query_mesh.vertices()[vertex]);
+        *side = retained_plane_side_from_value(&retained_point_plane_value(
+            plane,
+            &query_mesh.vertices()[vertex],
+        ));
     }
 
     TrianglePlaneClassification {
@@ -268,7 +271,8 @@ fn retained_triangle_edge_events(
     segment_face: usize,
 ) -> [SegmentPlaneIntersection; 3] {
     let plane = &plane_mesh.facts().faces[plane_face].plane;
-    triangle_edges(segment_mesh.triangles()[segment_face].0).map(|edge| {
+    let segment = segment_mesh.facts().faces[segment_face].triangle.vertices;
+    triangle_edges(segment).map(|edge| {
         intersect_segment_with_retained_face_plane(
             plane,
             &segment_mesh.vertices()[edge[0]],
@@ -303,10 +307,6 @@ fn retained_point_plane_value(plane: &FacePlaneFacts, point: &Point3) -> Real {
     let y_term = &plane.normal[1] * &point.y;
     let z_term = &plane.normal[2] * &point.z;
     &(&(&x_term + &y_term) + &z_term) + &plane.offset
-}
-
-fn retained_plane_side(plane: &FacePlaneFacts, point: &Point3) -> Option<PlaneSide> {
-    retained_plane_side_from_value(&retained_point_plane_value(plane, point))
 }
 
 fn retained_plane_side_from_value(value: &Real) -> Option<PlaneSide> {

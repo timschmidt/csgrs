@@ -12,16 +12,15 @@ pub(crate) mod loop_triangulation;
 pub(crate) mod regularization;
 
 use self::arrangement2d::{
-    ExactArrangement2d, ExactArrangement2dBlocker, ExactArrangement2dInputSegment,
-    ExactArrangement2dOverlay, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
-    ExactArrangement2dSegmentSource, ExactArrangement2dSetOperation, build_exact_arrangement2d,
-    build_exact_arrangement2d_overlay, exact_arrangement2d_face_witness,
+    ExactArrangement2d, ExactArrangement2dBlocker, ExactArrangement2dBoundaryPolicy,
+    ExactArrangement2dInputSegment, ExactArrangement2dOverlay, ExactArrangement2dRegion,
+    ExactArrangement2dRegionRing, ExactArrangement2dSegmentSource, ExactArrangement2dSetOperation,
+    build_exact_arrangement2d, build_exact_arrangement2d_overlay_with_boundary_policy,
+    exact_arrangement2d_face_witness,
 };
 use self::cell_complex::{
-    ExactCellComplex, ExactLabeledCellComplex, ExactLabeledCellComplexFreshness,
-    ExactRegionOwnershipReport, region_ownership_status,
+    ExactLabeledCellComplexFreshness, ExactRegionOwnershipReport, region_ownership_status,
 };
-use super::ExactMesh;
 use super::boolean::solid::{
     ClosedMeshOrientation, ConvexSolidPointClassification, ConvexSolidPointRelation,
     classify_point_against_convex_solid_report, exact_mesh_orientation,
@@ -41,6 +40,7 @@ use super::graph::{
     build_validated_intersection_graph,
 };
 use super::validation::ExactMeshValidationPolicy;
+use super::{ExactMesh, point3_exact_equal};
 use core::cmp::Ordering;
 use hyperlimit::CoplanarProjection;
 use hyperlimit::SourceProvenance;
@@ -56,8 +56,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use hyperlimit::{
     Point2, Point3, SegmentIntersection, TriangleLocation, classify_point_triangle,
     classify_segment_intersection, compare_point2_lexicographic, compare_reals, point_on_segment,
-    point_on_segment3, point2_equal, point3_equal, project_point3,
-    proper_segment_intersection_point,
+    point_on_segment3, point2_equal, project_point3, proper_segment_intersection_point,
 };
 use hyperreal::Real;
 
@@ -138,14 +137,6 @@ pub(crate) struct ArrangementOppositeClassification {
     pub(crate) convex_fallback: Option<ConvexSolidPointClassification>,
 }
 
-impl ArrangementOppositeClassification {
-    pub(crate) fn convex_certified_relation(&self) -> Option<ConvexSolidPointRelation> {
-        self.convex_fallback
-            .as_ref()
-            .and_then(|classification| certified_convex_point_relation(classification.relation))
-    }
-}
-
 /// Exact face cell in the retained arrangement.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ArrangementFaceCell {
@@ -164,15 +155,6 @@ pub(crate) fn validate_arrangement_face_cell(
 ) -> Result<(), ExactArrangementBlocker> {
     if cell.boundary.len() != cell.boundary_points.len() || cell.boundary.len() < 3 {
         return Err(ExactArrangementBlocker::NonManifoldCellComplex);
-    }
-    Ok(())
-}
-
-pub(crate) fn validate_arrangement_face_cells(
-    face_cells: &[ArrangementFaceCell],
-) -> Result<(), ExactArrangementBlocker> {
-    for cell in face_cells {
-        validate_arrangement_face_cell(cell)?;
     }
     Ok(())
 }
@@ -232,7 +214,12 @@ enum LowerDimensionalArtifactKind {
     Edge,
 }
 
-type LowerDimensionalArtifactBucketKey = (LowerDimensionalArtifactKind, usize, usize);
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+struct LowerDimensionalArtifactBucketKey {
+    kind: LowerDimensionalArtifactKind,
+    left_face: usize,
+    right_face: usize,
+}
 
 #[derive(Default)]
 struct LowerDimensionalArtifactBuildIndex {
@@ -297,7 +284,7 @@ pub(crate) fn validate_lower_dimensional_artifacts(
 ) -> Result<(), ExactArrangementBlocker> {
     for artifact in artifacts {
         if let ArrangementLowerDimensionalArtifact::EdgeContact { endpoints, .. } = artifact {
-            match point3_equal(&endpoints[0], &endpoints[1]).value() {
+            match point3_exact_equal(&endpoints[0], &endpoints[1]) {
                 Some(false) => {}
                 Some(true) => return Err(ExactArrangementBlocker::NonManifoldCellComplex),
                 None => return Err(ExactArrangementBlocker::UndecidableOrdering),
@@ -372,12 +359,20 @@ fn lower_dimensional_artifact_bucket_key(
             left_face,
             right_face,
             ..
-        } => (LowerDimensionalArtifactKind::Point, *left_face, *right_face),
+        } => LowerDimensionalArtifactBucketKey {
+            kind: LowerDimensionalArtifactKind::Point,
+            left_face: *left_face,
+            right_face: *right_face,
+        },
         ArrangementLowerDimensionalArtifact::EdgeContact {
             left_face,
             right_face,
             ..
-        } => (LowerDimensionalArtifactKind::Edge, *left_face, *right_face),
+        } => LowerDimensionalArtifactBucketKey {
+            kind: LowerDimensionalArtifactKind::Edge,
+            left_face: *left_face,
+            right_face: *right_face,
+        },
     }
 }
 
@@ -423,7 +418,7 @@ fn lower_dimensional_artifacts_duplicate(
                 point: right_point,
             },
         ) if left_left_face == right_left_face && left_right_face == right_right_face => {
-            match point3_equal(left_point, right_point).value() {
+            match point3_exact_equal(left_point, right_point) {
                 Some(duplicate) => Ok(duplicate),
                 None => Err(ExactArrangementBlocker::UndecidableOrdering),
             }
@@ -451,8 +446,8 @@ fn lower_dimensional_artifacts_duplicate(
                 } else {
                     &right_endpoints[1]
                 };
-                let first = point3_equal(&left_endpoints[0], right_first).value();
-                let second = point3_equal(&left_endpoints[1], right_second).value();
+                let first = point3_exact_equal(&left_endpoints[0], right_first);
+                let second = point3_exact_equal(&left_endpoints[1], right_second);
                 if first == Some(false) || second == Some(false) {
                     Some(false)
                 } else if first == Some(true) && second == Some(true) {
@@ -724,9 +719,6 @@ pub(crate) struct ExactArrangement3d {
     pub(crate) blockers: Vec<ExactArrangementBlocker>,
 }
 
-/// Public arrangement entry point for the exact Boolean pipeline.
-pub(crate) type ExactArrangement = ExactArrangement3d;
-
 /// Borrowed exact arrangement view.
 #[derive(Clone, Copy, Debug)]
 pub struct ArrangementView<'a> {
@@ -755,14 +747,9 @@ pub struct ArrangementFaceCellRef<'a> {
 }
 
 impl<'a> ArrangementView<'a> {
-    /// Borrow a retained exact arrangement as a query view.
-    pub(crate) const fn new(arrangement: &'a ExactArrangement3d) -> Self {
-        Self { arrangement }
-    }
-
     /// Return whether construction reached a blocker-free arrangement handoff.
     pub fn is_complete(self) -> bool {
-        self.arrangement.is_complete()
+        self.arrangement.blockers.is_empty()
     }
 
     /// Validate retained arrangement state without cloning arrangement storage.
@@ -1059,14 +1046,6 @@ pub(crate) enum ExactTopologyAssemblyStatus {
     ArrangementBlocked,
 }
 
-impl ExactTopologyAssemblyStatus {
-    /// Return whether retained arrangement topology completed the exact
-    /// graph/split/region bridge.
-    pub(crate) const fn is_complete(self) -> bool {
-        matches!(self, Self::Complete)
-    }
-}
-
 /// Compact retained-topology report connecting graph/split plans to arrangement
 /// topology.
 #[derive(Clone, Debug, PartialEq)]
@@ -1144,11 +1123,6 @@ pub(crate) struct ExactTopologyAssemblyReport {
 }
 
 impl ExactTopologyAssemblyReport {
-    /// Return whether this report represents a complete topology bridge.
-    pub(crate) fn is_complete(&self) -> bool {
-        self.status.is_complete()
-    }
-
     /// Validate local topology-assembly report shape without source replay.
     pub(crate) fn validate(&self) -> Result<(), ExactArrangementBlocker> {
         let has_non_ownership_blocker = self
@@ -1281,7 +1255,7 @@ impl ExactTopologyAssemblyReport {
 impl ExactArrangement3d {
     /// Borrow this exact arrangement through the lightweight query view API.
     pub(crate) const fn view(&self) -> ArrangementView<'_> {
-        ArrangementView::new(self)
+        ArrangementView { arrangement: self }
     }
 
     /// Build a retained exact arrangement from two meshes with explicit policy.
@@ -1351,13 +1325,13 @@ impl ExactArrangement3d {
             match graph.face_split_geometry_plan(left, right) {
                 Ok(geometry) => {
                     let report = geometry.validate_boundary_incidence(left, right);
-                    if !report.is_valid() {
+                    if !report.blockers.is_empty() {
                         extend_split_plan_blockers(&mut blockers, &report);
                         None
                     } else {
                         let regions = geometry.region_plan(left, right);
                         let region_report = regions.validate(left, right);
-                        if !region_report.is_valid() {
+                        if !region_report.blockers.is_empty() {
                             extend_split_plan_blockers(&mut blockers, &region_report);
                             None
                         } else {
@@ -1413,7 +1387,7 @@ impl ExactArrangement3d {
             &mut blockers,
         );
         let shells_or_regions = Some(arrangement_regions(&face_cells, &mut blockers));
-        let (volume_regions, volume_adjacencies) = arrangement_volume_graph(
+        let volume_graph = arrangement_volume_graph(
             shells_or_regions.as_ref().map_or(&[][..], Vec::as_slice),
             &face_cells,
             left,
@@ -1423,8 +1397,8 @@ impl ExactArrangement3d {
         validate_arrangement_volume_graph(
             shells_or_regions.as_ref().map_or(&[][..], Vec::as_slice),
             &face_cells,
-            volume_regions.as_deref(),
-            volume_adjacencies.as_deref(),
+            volume_graph.regions.as_deref(),
+            volume_graph.adjacencies.as_deref(),
             &mut blockers,
         );
         let has_mixed_source_open_sheet_complex =
@@ -1501,8 +1475,8 @@ impl ExactArrangement3d {
             face_plane_arrangements,
             lower_dimensional_artifacts,
             shells_or_regions,
-            volume_regions,
-            volume_adjacencies,
+            volume_regions: volume_graph.regions,
+            volume_adjacencies: volume_graph.adjacencies,
             graph,
             topology,
             region_plan,
@@ -1510,15 +1484,12 @@ impl ExactArrangement3d {
         })
     }
 
-    /// Return whether construction reached a blocker-free arrangement handoff.
-    pub(crate) fn is_complete(&self) -> bool {
-        self.blockers.is_empty()
-    }
-
     /// Validate arrangement-internal consistency without replaying source meshes.
     pub(crate) fn validate(&self) -> Result<(), ExactArrangementBlocker> {
         validate_lower_dimensional_artifacts(&self.lower_dimensional_artifacts)?;
-        validate_arrangement_face_cells(&self.face_cells)?;
+        for cell in &self.face_cells {
+            validate_arrangement_face_cell(cell)?;
+        }
         self.graph
             .validate()
             .map_err(|error| ExactArrangementBlocker::InvalidIntersectionGraph(error.into()))?;
@@ -1559,7 +1530,7 @@ impl ExactArrangement3d {
         }
         if let Some(topology) = &self.topology {
             let report = topology.validate();
-            if !report.is_valid() {
+            if !report.blockers.is_empty() {
                 let mut blockers = Vec::new();
                 extend_split_plan_blockers(&mut blockers, &report);
                 return Err(blockers
@@ -1787,14 +1758,6 @@ impl ExactArrangement3d {
         );
         Ok(report)
     }
-
-    /// Convert retained arrangement cells into a labeled cell complex.
-    pub(crate) fn label_regions(
-        &self,
-        policy: ExactRegularizationPolicy,
-    ) -> Result<ExactLabeledCellComplex, ExactArrangementBlocker> {
-        ExactCellComplex::from_arrangement(self.clone(), policy).label_regions(policy)
-    }
 }
 
 fn extend_split_plan_blockers(
@@ -1993,7 +1956,7 @@ fn find_matching_arrangement_vertex(
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<usize> {
     for &index in candidates {
-        match point3_equal(&vertices[index].point, point).value() {
+        match point3_exact_equal(&vertices[index].point, point) {
             Some(true) => return Some(index),
             Some(false) => {}
             None => blockers.push(ExactArrangementBlocker::UndecidableOrdering),
@@ -2058,7 +2021,15 @@ fn find_matching_arrangement_point(
     candidates
         .iter()
         .copied()
-        .find(|&index| point3_equal(&points[index], point).value() == Some(true))
+        .find(|&index| point3_exact_equal(&points[index], point) == Some(true))
+}
+
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+enum ArrangementVertexProvenanceKey {
+    SourceVertex { side_key: usize, vertex: usize },
+    GraphIntersection { graph_vertex: usize },
+    CarrierPlaneVertex { overlay: usize, vertex: usize },
+    FacePlaneVertex { arrangement: usize, vertex: usize },
 }
 
 fn arrangement_edges(
@@ -2074,18 +2045,29 @@ fn arrangement_edges(
         for provenance in &vertex.provenance {
             let key = match provenance {
                 ArrangementVertexProvenance::SourceVertex { side, vertex } => {
-                    (0, side_key(*side), *vertex)
+                    ArrangementVertexProvenanceKey::SourceVertex {
+                        side_key: side.sort_key(),
+                        vertex: *vertex,
+                    }
                 }
                 ArrangementVertexProvenance::GraphIntersection { graph_vertex } => {
-                    (1, 0, *graph_vertex)
+                    ArrangementVertexProvenanceKey::GraphIntersection {
+                        graph_vertex: *graph_vertex,
+                    }
                 }
                 ArrangementVertexProvenance::CarrierPlaneVertex { overlay, vertex } => {
-                    (2, *overlay, *vertex)
+                    ArrangementVertexProvenanceKey::CarrierPlaneVertex {
+                        overlay: *overlay,
+                        vertex: *vertex,
+                    }
                 }
                 ArrangementVertexProvenance::FacePlaneVertex {
                     arrangement,
                     vertex,
-                } => (3, *arrangement, *vertex),
+                } => ArrangementVertexProvenanceKey::FacePlaneVertex {
+                    arrangement: *arrangement,
+                    vertex: *vertex,
+                },
             };
             vertex_index.entry(key).or_insert(index);
         }
@@ -2093,18 +2075,29 @@ fn arrangement_edges(
     let find_vertex = |provenance: ArrangementVertexProvenance| {
         let key = match &provenance {
             ArrangementVertexProvenance::SourceVertex { side, vertex } => {
-                (0, side_key(*side), *vertex)
+                ArrangementVertexProvenanceKey::SourceVertex {
+                    side_key: side.sort_key(),
+                    vertex: *vertex,
+                }
             }
             ArrangementVertexProvenance::GraphIntersection { graph_vertex } => {
-                (1, 0, *graph_vertex)
+                ArrangementVertexProvenanceKey::GraphIntersection {
+                    graph_vertex: *graph_vertex,
+                }
             }
             ArrangementVertexProvenance::CarrierPlaneVertex { overlay, vertex } => {
-                (2, *overlay, *vertex)
+                ArrangementVertexProvenanceKey::CarrierPlaneVertex {
+                    overlay: *overlay,
+                    vertex: *vertex,
+                }
             }
             ArrangementVertexProvenance::FacePlaneVertex {
                 arrangement,
                 vertex,
-            } => (3, *arrangement, *vertex),
+            } => ArrangementVertexProvenanceKey::FacePlaneVertex {
+                arrangement: *arrangement,
+                vertex: *vertex,
+            },
         };
         vertex_index.get(&key).copied()
     };
@@ -2236,8 +2229,6 @@ fn push_arrangement_edge(
     }
 }
 
-type ArrangementVertexProvenanceKey = (usize, usize, usize);
-
 fn arrangement_face_cells(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2250,53 +2241,50 @@ fn arrangement_face_cells(
     let mut cells = Vec::new();
     let mut skipped_carriers = BTreeSet::new();
     for overlay in carrier_plane_overlays {
-        skipped_carriers.insert(carrier_key(MeshSide::Left, overlay.left_face));
-        skipped_carriers.insert(carrier_key(MeshSide::Right, overlay.right_face));
+        skipped_carriers.insert((MeshSide::Left.sort_key(), overlay.left_face));
+        skipped_carriers.insert((MeshSide::Right.sort_key(), overlay.right_face));
     }
     let mut skipped_face_arrangements = BTreeSet::new();
     for arrangement in face_plane_arrangements {
-        skipped_face_arrangements.insert(carrier_key(arrangement.side, arrangement.face));
+        skipped_face_arrangements.insert((arrangement.side.sort_key(), arrangement.face));
     }
 
     if let Some(region_plan) = region_plan
         && !region_plan.regions.is_empty()
     {
         cells.extend(region_plan.regions.iter().filter_map(|region| {
-            if skipped_carriers.contains(&carrier_key(region.side, region.face))
-                || skipped_face_arrangements.contains(&carrier_key(region.side, region.face))
-            {
+            let carrier = (region.side.sort_key(), region.face);
+            if skipped_carriers.contains(&carrier) || skipped_face_arrangements.contains(&carrier) {
                 None
             } else {
                 Some(face_cell_from_region(region, left, right, policy, blockers))
             }
         }));
     } else {
-        for (face, triangle) in left.triangles().iter().enumerate() {
-            if skipped_carriers.contains(&carrier_key(MeshSide::Left, face))
-                || skipped_face_arrangements.contains(&carrier_key(MeshSide::Left, face))
-            {
+        for (face, facts) in left.facts().faces.iter().enumerate() {
+            let carrier = (MeshSide::Left.sort_key(), face);
+            if skipped_carriers.contains(&carrier) || skipped_face_arrangements.contains(&carrier) {
                 continue;
             }
             cells.push(face_cell_from_original_triangle(
                 MeshSide::Left,
                 face,
-                triangle.0,
+                facts.triangle.vertices,
                 left,
                 right,
                 policy,
                 blockers,
             ));
         }
-        for (face, triangle) in right.triangles().iter().enumerate() {
-            if skipped_carriers.contains(&carrier_key(MeshSide::Right, face))
-                || skipped_face_arrangements.contains(&carrier_key(MeshSide::Right, face))
-            {
+        for (face, facts) in right.facts().faces.iter().enumerate() {
+            let carrier = (MeshSide::Right.sort_key(), face);
+            if skipped_carriers.contains(&carrier) || skipped_face_arrangements.contains(&carrier) {
                 continue;
             }
             cells.push(face_cell_from_original_triangle(
                 MeshSide::Right,
                 face,
-                triangle.0,
+                facts.triangle.vertices,
                 left,
                 right,
                 policy,
@@ -2356,12 +2344,6 @@ fn arrangement_face_cells(
     cells
 }
 
-type ArrangementCarrierKey = (usize, usize);
-
-fn carrier_key(side: MeshSide, face: usize) -> ArrangementCarrierKey {
-    (side_key(side), face)
-}
-
 fn face_plane_arrangements(
     topology: Option<&ExactSplitTopologyPlan>,
     left: &ExactMesh,
@@ -2374,8 +2356,8 @@ fn face_plane_arrangements(
     };
     let mut skipped_carriers = BTreeSet::new();
     for overlay in carrier_plane_overlays {
-        skipped_carriers.insert(carrier_key(MeshSide::Left, overlay.left_face));
-        skipped_carriers.insert(carrier_key(MeshSide::Right, overlay.right_face));
+        skipped_carriers.insert((MeshSide::Left.sort_key(), overlay.left_face));
+        skipped_carriers.insert((MeshSide::Right.sort_key(), overlay.right_face));
     }
     let mut pair_vertices = BTreeMap::<(usize, usize, usize, usize), BTreeSet<usize>>::new();
     for (graph_vertex, vertex) in topology.graph_vertices.iter().enumerate() {
@@ -2386,7 +2368,7 @@ fn face_plane_arrangements(
             };
             pair_vertices
                 .entry((
-                    side_key(source_use.side),
+                    source_use.side.sort_key(),
                     edge_carrier,
                     source_use.face_pair[0],
                     source_use.face_pair[1],
@@ -2400,7 +2382,7 @@ fn face_plane_arrangements(
             };
             pair_vertices
                 .entry((
-                    side_key(plane_side),
+                    plane_side.sort_key(),
                     source_use.plane_face,
                     source_use.face_pair[0],
                     source_use.face_pair[1],
@@ -2419,11 +2401,11 @@ fn face_plane_arrangements(
             0 => MeshSide::Left,
             _ => MeshSide::Right,
         };
-        if skipped_carriers.contains(&carrier_key(side, face)) {
+        if skipped_carriers.contains(&(side.sort_key(), face)) {
             continue;
         }
         per_face_groups
-            .entry((side_key(side), face))
+            .entry((side.sort_key(), face))
             .or_default()
             .push(vertices.into_iter().collect());
     }
@@ -2453,7 +2435,7 @@ fn face_plane_arrangement(
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFacePlaneArrangement> {
     let mesh = side.mesh(left, right);
-    let triangle = mesh.triangles().get(face)?.0;
+    let triangle = mesh.facts().faces.get(face)?.triangle.vertices;
     let projection = choose_triangle_projection(mesh, triangle, blockers)?;
     let mut segments = Vec::new();
     let mut next_source = 0usize;
@@ -2463,13 +2445,13 @@ fn face_plane_arrangement(
         [triangle[1], triangle[2]],
         [triangle[2], triangle[0]],
     ] {
-        segments.push(ExactArrangement2dInputSegment::new(
-            [
+        segments.push(ExactArrangement2dInputSegment {
+            endpoints: [
                 project_point3(&mesh.vertices()[edge[0]], projection),
                 project_point3(&mesh.vertices()[edge[1]], projection),
             ],
-            ExactArrangement2dSegmentSource::Anonymous(next_source),
-        ));
+            source: ExactArrangement2dSegmentSource::Anonymous(next_source),
+        });
         next_source += 1;
     }
 
@@ -2502,10 +2484,10 @@ fn face_plane_arrangement(
                     continue;
                 }
             }
-            segments.push(ExactArrangement2dInputSegment::new(
-                [start, end],
-                ExactArrangement2dSegmentSource::Anonymous(next_source),
-            ));
+            segments.push(ExactArrangement2dInputSegment {
+                endpoints: [start, end],
+                source: ExactArrangement2dSegmentSource::Anonymous(next_source),
+            });
             next_source += 1;
         }
     }
@@ -2546,9 +2528,9 @@ fn choose_triangle_projection(
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<CoplanarProjection> {
     let points = [
-        mesh.vertices()[triangle[0]].clone(),
-        mesh.vertices()[triangle[1]].clone(),
-        mesh.vertices()[triangle[2]].clone(),
+        &mesh.vertices()[triangle[0]],
+        &mesh.vertices()[triangle[1]],
+        &mesh.vertices()[triangle[2]],
     ];
     for projection in [
         CoplanarProjection::Xy,
@@ -2585,7 +2567,7 @@ fn face_plane_vertex_provenance(
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFaceCellNode> {
     let mesh = side.mesh(left, right);
-    let triangle = mesh.triangles()[face].0;
+    let triangle = mesh.facts().faces.get(face)?.triangle.vertices;
     for vertex in triangle {
         match point2_equal(&project_point3(&mesh.vertices()[vertex], projection), point).value() {
             Some(true) => return Some(ArrangementFaceCellNode::Source { side, vertex }),
@@ -2745,7 +2727,7 @@ fn non_coplanar_point_contact_artifact(
         return None;
     };
     let plane_mesh = plane_side.mesh(left, right);
-    let triangle = plane_mesh.triangles().get(*plane_face)?.0;
+    let triangle = plane_mesh.facts().faces.get(*plane_face)?.triangle.vertices;
     let projection = choose_triangle_projection(
         plane_mesh,
         triangle,
@@ -2794,7 +2776,7 @@ fn non_coplanar_edge_contact_artifact(
     let plane_mesh = plane_side.mesh(left, right);
     let start = segment_mesh.vertices().get(edge[0])?;
     let end = segment_mesh.vertices().get(edge[1])?;
-    let triangle = plane_mesh.triangles().get(*plane_face)?.0;
+    let triangle = plane_mesh.facts().faces.get(*plane_face)?.triangle.vertices;
     let projection = choose_triangle_projection(
         plane_mesh,
         triangle,
@@ -2883,7 +2865,7 @@ fn coplanar_segment_triangle_interval(
     }
     let first = points.first()?.clone();
     let last = points.last()?.clone();
-    (!point3_equal(&first, &last).value()?).then_some([first, last])
+    (!point3_exact_equal(&first, &last)?).then_some([first, last])
 }
 
 fn lift_projected_point_to_segment(
@@ -2953,7 +2935,7 @@ fn face_cell_from_face_plane_arrangement(
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFaceCell> {
     let mesh = arrangement.side.mesh(left, right);
-    let triangle = mesh.triangles().get(arrangement.face)?.0;
+    let triangle = mesh.facts().faces.get(arrangement.face)?.triangle.vertices;
     let arrangement_face = arrangement.arrangement.faces.get(face)?;
     let mut boundary = Vec::with_capacity(arrangement_face.vertices.len());
     let mut boundary_points = Vec::with_capacity(arrangement_face.vertices.len());
@@ -2985,7 +2967,7 @@ fn face_cell_from_face_plane_arrangement(
 
     let mut witness_blockers = Vec::new();
     let witness =
-        exact_arrangement2d_face_witness(&arrangement.arrangement, face, &mut witness_blockers);
+        exact_arrangement2d_face_witness(face, &arrangement.arrangement, &mut witness_blockers);
     extend_arrangement2d_blockers(&witness_blockers, blockers);
     let representative = lift_carrier_plane_point(
         mesh,
@@ -3031,7 +3013,7 @@ fn face_cell_from_carrier_plane_overlay(
         MeshSide::Right => overlay.right_face,
     };
     let mesh = side.mesh(left, right);
-    let triangle = mesh.triangles().get(carrier_face)?.0;
+    let triangle = mesh.facts().faces.get(carrier_face)?.triangle.vertices;
     let overlay_face = overlay.overlay.arrangement.faces.get(face)?;
     let mut boundary = Vec::with_capacity(overlay_face.vertices.len());
     let mut boundary_points = Vec::with_capacity(overlay_face.vertices.len());
@@ -3121,14 +3103,19 @@ fn orient_overlay_boundary_to_carrier(
     boundary_points: &mut [Point3],
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) {
-    let Some(triangle) = mesh.triangles().get(face).map(|triangle| triangle.0) else {
+    let Some(triangle) = mesh
+        .facts()
+        .faces
+        .get(face)
+        .map(|face| face.triangle.vertices)
+    else {
         blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
         return;
     };
     let points = [
-        mesh.vertices()[triangle[0]].clone(),
-        mesh.vertices()[triangle[1]].clone(),
-        mesh.vertices()[triangle[2]].clone(),
+        &mesh.vertices()[triangle[0]],
+        &mesh.vertices()[triangle[1]],
+        &mesh.vertices()[triangle[2]],
     ];
     match compare_reals(
         &projected_triangle_area2(&points, projection),
@@ -3160,19 +3147,20 @@ fn carrier_plane_overlay(
                                mesh: &ExactMesh,
                                face: usize|
      -> Option<ExactArrangement2dRegionRing> {
-        let triangle = mesh.triangles().get(face)?.0;
+        let triangle = mesh.facts().faces.get(face)?.triangle.vertices;
         let vertices = triangle
             .iter()
             .map(|vertex| project_point3(&mesh.vertices()[*vertex], overlap.projection))
             .collect::<Vec<Point2>>();
-        Some(ExactArrangement2dRegionRing::new(region, vertices))
+        Some(ExactArrangement2dRegionRing { region, vertices })
     };
     let left_ring = projected_face_ring(ExactArrangement2dRegion::Left, left, overlap.left_face)?;
     let right_ring =
         projected_face_ring(ExactArrangement2dRegion::Right, right, overlap.right_face)?;
-    let overlay = build_exact_arrangement2d_overlay(
+    let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
         &[left_ring, right_ring],
         ExactArrangement2dSetOperation::Union,
+        ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
     );
     if !overlay.blockers.is_empty() {
         blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
@@ -3382,7 +3370,7 @@ fn exact_boundary_loops_equivalent(left: &[Point3], right: &[Point3]) -> bool {
                 } else {
                     (offset + index) % right.len()
                 };
-                point3_equal(&left[index], &right[right_index]).value() == Some(true)
+                point3_exact_equal(&left[index], &right[right_index]) == Some(true)
             })
         })
     };
@@ -3395,16 +3383,16 @@ fn arrangement_volume_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     blockers: &mut Vec<ExactArrangementBlocker>,
-) -> (
-    Option<Vec<ArrangementVolumeRegion>>,
-    Option<Vec<ArrangementVolumeAdjacency>>,
-) {
+) -> ArrangementVolumeGraph {
     if shell_regions.is_empty()
         || shell_regions
             .iter()
             .any(|region| !region.closed || !region.manifold)
     {
-        return (None, None);
+        return ArrangementVolumeGraph {
+            regions: None,
+            adjacencies: None,
+        };
     }
 
     if let Some(nested) =
@@ -3439,7 +3427,10 @@ fn arrangement_volume_graph(
         });
     }
 
-    (Some(volume_regions), Some(volume_adjacencies))
+    ArrangementVolumeGraph {
+        regions: Some(volume_regions),
+        adjacencies: Some(volume_adjacencies),
+    }
 }
 
 fn validate_arrangement_volume_graph(
@@ -3743,10 +3734,10 @@ pub(crate) fn exact_node_loops_equivalent(
     matches(false) || matches(true)
 }
 
-type NestedVolumeGraph = (
-    Option<Vec<ArrangementVolumeRegion>>,
-    Option<Vec<ArrangementVolumeAdjacency>>,
-);
+struct ArrangementVolumeGraph {
+    regions: Option<Vec<ArrangementVolumeRegion>>,
+    adjacencies: Option<Vec<ArrangementVolumeAdjacency>>,
+}
 
 fn nested_shell_volume_graph(
     shell_regions: &[ArrangementRegion],
@@ -3754,7 +3745,7 @@ fn nested_shell_volume_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     blockers: &mut Vec<ExactArrangementBlocker>,
-) -> Option<NestedVolumeGraph> {
+) -> Option<ArrangementVolumeGraph> {
     if shell_regions
         .iter()
         .any(|region| region.source_sides.is_empty())
@@ -3898,7 +3889,10 @@ fn nested_shell_volume_graph(
         return None;
     }
 
-    Some((Some(volume_regions), Some(volume_adjacencies)))
+    Some(ArrangementVolumeGraph {
+        regions: Some(volume_regions),
+        adjacencies: Some(volume_adjacencies),
+    })
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -4269,7 +4263,19 @@ fn arrangement_edge_users(
         .collect()
 }
 
-type ArrangementBoundaryNodeKey = [(usize, usize, usize); 2];
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+enum ArrangementCellNodeKey {
+    Source { side_key: usize, vertex: usize },
+    Graph { graph_vertex: usize },
+    CarrierPlane { overlay: usize, vertex: usize },
+    FacePlane { arrangement: usize, vertex: usize },
+}
+
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+struct ArrangementBoundaryNodeKey {
+    start: ArrangementCellNodeKey,
+    end: ArrangementCellNodeKey,
+}
 
 #[derive(Default)]
 struct ArrangementEdgeUserIndex {
@@ -4281,7 +4287,10 @@ struct ArrangementEdgeUserIndex {
 
 impl ArrangementEdgeUserIndex {
     fn push(&mut self, edge: ArrangementFaceCellBoundaryEdge, cell: usize) {
-        let node_key = [cell_node_key(&edge.nodes[0]), cell_node_key(&edge.nodes[1])];
+        let node_key = ArrangementBoundaryNodeKey {
+            start: cell_node_key(&edge.nodes[0]),
+            end: cell_node_key(&edge.nodes[1]),
+        };
         let point_key = edge
             .points
             .as_ref()
@@ -4328,10 +4337,10 @@ impl ArrangementEdgeUserIndex {
                 existing.nodes == edge.nodes
                     || match (&existing.points, &edge.points) {
                         (Some(existing), Some(edge)) => {
-                            (point3_equal(&existing[0], &edge[0]).value() == Some(true)
-                                && point3_equal(&existing[1], &edge[1]).value() == Some(true))
-                                || (point3_equal(&existing[0], &edge[1]).value() == Some(true)
-                                    && point3_equal(&existing[1], &edge[0]).value() == Some(true))
+                            (point3_exact_equal(&existing[0], &edge[0]) == Some(true)
+                                && point3_exact_equal(&existing[1], &edge[1]) == Some(true))
+                                || (point3_exact_equal(&existing[0], &edge[1]) == Some(true)
+                                    && point3_exact_equal(&existing[1], &edge[0]) == Some(true))
                         }
                         _ => false,
                     }
@@ -4344,11 +4353,10 @@ impl ArrangementEdgeUserIndex {
                     existing.nodes == edge.nodes
                         || match (&existing.points, &edge.points) {
                             (Some(existing), Some(edge)) => {
-                                (point3_equal(&existing[0], &edge[0]).value() == Some(true)
-                                    && point3_equal(&existing[1], &edge[1]).value() == Some(true))
-                                    || (point3_equal(&existing[0], &edge[1]).value() == Some(true)
-                                        && point3_equal(&existing[1], &edge[0]).value()
-                                            == Some(true))
+                                (point3_exact_equal(&existing[0], &edge[0]) == Some(true)
+                                    && point3_exact_equal(&existing[1], &edge[1]) == Some(true))
+                                    || (point3_exact_equal(&existing[0], &edge[1]) == Some(true)
+                                        && point3_exact_equal(&existing[1], &edge[0]) == Some(true))
                             }
                             _ => false,
                         }
@@ -4440,7 +4448,7 @@ fn boundary_points_equal(
     left: &ArrangementFaceCellBoundaryPoint,
     right: &ArrangementFaceCellBoundaryPoint,
 ) -> bool {
-    point3_equal(&left.point, &right.point).value() == Some(true)
+    point3_exact_equal(&left.point, &right.point) == Some(true)
 }
 
 fn sort_boundary_points_along_segment(
@@ -4468,22 +4476,28 @@ fn sort_boundary_points_along_segment(
     Ok(())
 }
 
-fn cell_node_key(node: &ArrangementFaceCellNode) -> (usize, usize, usize) {
+fn cell_node_key(node: &ArrangementFaceCellNode) -> ArrangementCellNodeKey {
     match node {
-        ArrangementFaceCellNode::Source { side, vertex } => (0, side_key(*side), *vertex),
-        ArrangementFaceCellNode::Graph { graph_vertex } => (1, 0, *graph_vertex),
-        ArrangementFaceCellNode::CarrierPlane { overlay, vertex } => (2, *overlay, *vertex),
+        ArrangementFaceCellNode::Source { side, vertex } => ArrangementCellNodeKey::Source {
+            side_key: side.sort_key(),
+            vertex: *vertex,
+        },
+        ArrangementFaceCellNode::Graph { graph_vertex } => ArrangementCellNodeKey::Graph {
+            graph_vertex: *graph_vertex,
+        },
+        ArrangementFaceCellNode::CarrierPlane { overlay, vertex } => {
+            ArrangementCellNodeKey::CarrierPlane {
+                overlay: *overlay,
+                vertex: *vertex,
+            }
+        }
         ArrangementFaceCellNode::FacePlane {
             arrangement,
             vertex,
-        } => (3, *arrangement, *vertex),
-    }
-}
-
-const fn side_key(side: MeshSide) -> usize {
-    match side {
-        MeshSide::Left => 0,
-        MeshSide::Right => 1,
+        } => ArrangementCellNodeKey::FacePlane {
+            arrangement: *arrangement,
+            vertex: *vertex,
+        },
     }
 }
 
@@ -4593,7 +4607,7 @@ fn lift_carrier_plane_point(
     point: &Point2,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<Point3> {
-    let triangle = mesh.triangles().get(face)?.0;
+    let triangle = mesh.facts().faces.get(face)?.triangle.vertices;
     let a = mesh.vertices().get(triangle[0])?;
     let b = mesh.vertices().get(triangle[1])?;
     let c = mesh.vertices().get(triangle[2])?;
@@ -4665,10 +4679,10 @@ fn lift_carrier_plane_point(
     }
 }
 
-fn projected_triangle_area2(points: &[Point3; 3], projection: CoplanarProjection) -> Real {
-    let a = project_point3(&points[0], projection);
-    let b = project_point3(&points[1], projection);
-    let c = project_point3(&points[2], projection);
+fn projected_triangle_area2(points: &[&Point3; 3], projection: CoplanarProjection) -> Real {
+    let a = project_point3(points[0], projection);
+    let b = project_point3(points[1], projection);
+    let c = project_point3(points[2], projection);
     (b.x.clone() - &a.x) * &(c.y.clone() - &a.y) - &((b.y.clone() - &a.y) * &(c.x.clone() - &a.x))
 }
 

@@ -14,11 +14,12 @@ use hyperlimit::{Point3, compare_reals};
 
 use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::super::validation::ExactMeshValidationPolicy;
-use super::super::{ExactMesh, Triangle};
+use super::super::{ExactMesh, Triangle, reverse_triangle};
 use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, axis_aligned_orthogonal_solid_cell_plan,
     axis_aligned_orthogonal_solid_cell_selected_count, is_axis_aligned_orthogonal_solid,
 };
+use super::point3_exact_equal;
 use core::cmp::Ordering;
 use hyperlimit::SourceProvenance;
 use hyperreal::Real;
@@ -78,14 +79,15 @@ impl AffineOrthogonalSolidArrangement {
     /// replay is handled by the retained boolean result evidence.
     pub fn validate(&self) -> Result<(), ExactMeshError> {
         self.mesh.validate_retained_state().map_err(|error| {
-            affine_solid_replay_error(format!(
-                "affine orthogonal solid output mesh is stale: {error:?}"
+            ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::StaleFactReplay,
+                format!("affine orthogonal solid output mesh is stale: {error:?}"),
             ))
         })?;
         // Empty intersections are valid regularized solids in the retained
         // decision, but the local output audit must not demand nonempty
         // topology once replay has certified an empty selected cell set.
-        if self.mesh.vertices().is_empty() && self.mesh.triangles().is_empty() {
+        if self.mesh.vertices().is_empty() && self.mesh.facts().mesh.face_count == 0 {
             return Ok(());
         }
         let normalized = mesh_to_uvw(&self.mesh, &self.basis, self.mesh.validation_policy())
@@ -117,55 +119,52 @@ impl AffineOrthogonalSolidArrangement {
             self.mesh.validation_policy(),
         )?
         .ok_or_else(|| {
-            affine_solid_replay_error(
+            ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::StaleFactReplay,
                 "source replay did not reproduce affine orthogonal solid output",
-            )
+            ))
         })?;
         if self == &replay {
             Ok(())
         } else {
-            Err(affine_solid_replay_error(
+            Err(ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::StaleFactReplay,
                 "retained affine orthogonal solid output does not match source replay",
-            ))
+            )))
         }
     }
 }
 
-/// Return whether an affine orthogonal-solid operation is certified.
-pub(crate) fn has_affine_orthogonal_solid_cells(
+/// Return the exact count of selected cells for a certified affine-normalized
+/// orthogonal operation.
+pub(crate) fn affine_orthogonal_solid_cell_selected_count(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: AffineOrthogonalSolidOperation,
-) -> bool {
-    find_affine_orthogonal_solid_basis(left, right, |left_uvw, right_uvw| {
-        axis_aligned_orthogonal_solid_cell_selected_count(
-            &left_uvw,
-            &right_uvw,
-            operation.to_axis_aligned(),
-        )
-    })
-    .is_some()
-}
-
-/// Return whether exact affine-normalized occupancy certifies no shared
-/// positive-volume cells.
-///
-/// The affine frame is accepted only after both source meshes replay into exact
-/// axis-aligned orthogonal cell complexes in that frame. A zero selected
-/// intersection count is therefore an exact cell-complex fact, not a sampled
-/// winding or tolerance predicate.
-pub(crate) fn has_empty_affine_orthogonal_solid_cell_intersection(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> bool {
-    find_affine_orthogonal_solid_basis(left, right, |left_uvw, right_uvw| {
-        axis_aligned_orthogonal_solid_cell_selected_count(
-            &left_uvw,
-            &right_uvw,
-            AxisAlignedOrthogonalSolidOperation::Intersection,
-        )
-    })
-    .is_some_and(|(_basis, selected_count)| selected_count == 0)
+) -> Option<usize> {
+    if let Some((_basis, selected_count)) =
+        find_affine_orthogonal_solid_basis(left, right, |left_uvw, right_uvw| {
+            axis_aligned_orthogonal_solid_cell_selected_count(
+                &left_uvw,
+                &right_uvw,
+                match operation {
+                    AffineOrthogonalSolidOperation::Union => {
+                        AxisAlignedOrthogonalSolidOperation::Union
+                    }
+                    AffineOrthogonalSolidOperation::Intersection => {
+                        AxisAlignedOrthogonalSolidOperation::Intersection
+                    }
+                    AffineOrthogonalSolidOperation::Difference => {
+                        AxisAlignedOrthogonalSolidOperation::Difference
+                    }
+                },
+            )
+        })
+    {
+        Some(selected_count)
+    } else {
+        None
+    }
 }
 
 /// Certify and materialize one affine orthogonal-solid operation.
@@ -180,7 +179,17 @@ pub(crate) fn materialize_affine_orthogonal_solid_operation(
             axis_aligned_orthogonal_solid_cell_plan(
                 &left_uvw,
                 &right_uvw,
-                operation.to_axis_aligned(),
+                match operation {
+                    AffineOrthogonalSolidOperation::Union => {
+                        AxisAlignedOrthogonalSolidOperation::Union
+                    }
+                    AffineOrthogonalSolidOperation::Intersection => {
+                        AxisAlignedOrthogonalSolidOperation::Intersection
+                    }
+                    AffineOrthogonalSolidOperation::Difference => {
+                        AxisAlignedOrthogonalSolidOperation::Difference
+                    }
+                },
             )
         })
     else {
@@ -194,25 +203,43 @@ pub(crate) fn materialize_affine_orthogonal_solid_operation(
         .vertices()
         .iter()
         .map(|point| {
-            let point = point.clone();
             let lifted = point_from_uvw(&point.x, &point.y, &point.z, &basis);
             Point3::new(lifted.x, lifted.y, lifted.z)
         })
         .collect::<Vec<_>>();
-    let triangles =
-        if compare_reals(&basis.determinant(), &Real::from(0)).value() == Some(Ordering::Less) {
-            uvw_output
-                .triangles()
-                .iter()
-                .map(reverse_triangle)
-                .collect()
-        } else {
-            uvw_output.triangles().to_vec()
-        };
+    let triangles = if compare_reals(
+        &det3(&basis.basis_u, &basis.basis_v, &basis.basis_w),
+        &Real::from(0),
+    )
+    .value()
+        == Some(Ordering::Less)
+    {
+        uvw_output
+            .facts()
+            .faces
+            .iter()
+            .map(|face| reverse_triangle(&Triangle(face.triangle.vertices)))
+            .collect()
+    } else {
+        uvw_output
+            .facts()
+            .faces
+            .iter()
+            .map(|face| Triangle(face.triangle.vertices))
+            .collect()
+    };
     let mesh = ExactMesh::new_with_policy(
         vertices,
         triangles,
-        SourceProvenance::exact(operation.output_label()),
+        SourceProvenance::exact(match operation {
+            AffineOrthogonalSolidOperation::Union => "exact affine orthogonal solid cell union",
+            AffineOrthogonalSolidOperation::Intersection => {
+                "exact affine orthogonal solid cell intersection"
+            }
+            AffineOrthogonalSolidOperation::Difference => {
+                "exact affine orthogonal solid cell difference"
+            }
+        }),
         validation,
     )?;
     let arrangement = AffineOrthogonalSolidArrangement {
@@ -234,7 +261,12 @@ fn find_affine_orthogonal_solid_basis<T>(
     }
     let mut seen = Vec::new();
     let mut accept_basis = |basis: AffineBoxBasis| -> Option<(AffineBoxBasis, T)> {
-        if compare_reals(&basis.determinant(), &Real::from(0)).value() == Some(Ordering::Equal)
+        if compare_reals(
+            &det3(&basis.basis_u, &basis.basis_v, &basis.basis_w),
+            &Real::from(0),
+        )
+        .value()
+            == Some(Ordering::Equal)
             || seen.contains(&basis)
         {
             return None;
@@ -259,19 +291,30 @@ fn mesh_to_uvw(
     let vertices = mesh
         .vertices()
         .iter()
-        .map(|point| {
-            point_to_uvw_checked(&point.clone(), basis).map(|uvw| Point3::new(uvw.x, uvw.y, uvw.z))
-        })
+        .map(|point| point_to_uvw_checked(point, basis).map(|uvw| Point3::new(uvw.x, uvw.y, uvw.z)))
         .collect::<Option<Vec<_>>>()?;
     // A negative determinant reverses orientation under the exact affine
     // coordinate map. Reversing triangle order keeps the normalized shell
     // compatible with the orthogonal solid materializer.
-    let triangles =
-        if compare_reals(&basis.determinant(), &Real::from(0)).value()? == Ordering::Less {
-            mesh.triangles().iter().map(reverse_triangle).collect()
-        } else {
-            mesh.triangles().to_vec()
-        };
+    let triangles = if compare_reals(
+        &det3(&basis.basis_u, &basis.basis_v, &basis.basis_w),
+        &Real::from(0),
+    )
+    .value()?
+        == Ordering::Less
+    {
+        mesh.facts()
+            .faces
+            .iter()
+            .map(|face| reverse_triangle(&Triangle(face.triangle.vertices)))
+            .collect()
+    } else {
+        mesh.facts()
+            .faces
+            .iter()
+            .map(|face| Triangle(face.triangle.vertices))
+            .collect()
+    };
     ExactMesh::new_with_policy(
         vertices,
         triangles,
@@ -284,7 +327,7 @@ fn mesh_to_uvw(
 fn point_to_uvw_checked(point: &Point3, basis: &AffineBoxBasis) -> Option<Point3> {
     let uvw = point_to_uvw(point, basis)?;
     let replay = point_from_uvw(&uvw.x, &uvw.y, &uvw.z, basis);
-    if points_equal(&replay, point) {
+    if point3_exact_equal(&replay, point) == Some(true) {
         Some(uvw)
     } else {
         None
@@ -292,8 +335,12 @@ fn point_to_uvw_checked(point: &Point3, basis: &AffineBoxBasis) -> Option<Point3
 }
 
 fn point_to_uvw(point: &Point3, basis: &AffineBoxBasis) -> Option<Point3> {
-    let delta = sub3(point, &basis.origin);
-    let denominator = basis.determinant();
+    let delta = Point3::new(
+        &point.x - &basis.origin.x,
+        &point.y - &basis.origin.y,
+        &point.z - &basis.origin.z,
+    );
+    let denominator = det3(&basis.basis_u, &basis.basis_v, &basis.basis_w);
     if compare_reals(&denominator, &Real::from(0)).value()? == Ordering::Equal {
         return None;
     }
@@ -303,51 +350,28 @@ fn point_to_uvw(point: &Point3, basis: &AffineBoxBasis) -> Option<Point3> {
     Some(Point3::new(u, v, w))
 }
 
-fn reverse_triangle(triangle: &Triangle) -> Triangle {
-    let [a, b, c] = triangle.0;
-    Triangle([a, c, b])
-}
-
 fn point_from_uvw(u: &Real, v: &Real, w: &Real, basis: &AffineBoxBasis) -> Point3 {
     Point3::new(
-        add(
-            &basis.origin.x,
-            &add(
-                &mul(u, &basis.basis_u.x),
-                &add(&mul(v, &basis.basis_v.x), &mul(w, &basis.basis_w.x)),
-            ),
-        ),
-        add(
-            &basis.origin.y,
-            &add(
-                &mul(u, &basis.basis_u.y),
-                &add(&mul(v, &basis.basis_v.y), &mul(w, &basis.basis_w.y)),
-            ),
-        ),
-        add(
-            &basis.origin.z,
-            &add(
-                &mul(u, &basis.basis_u.z),
-                &add(&mul(v, &basis.basis_v.z), &mul(w, &basis.basis_w.z)),
-            ),
-        ),
+        basis.origin.x.clone()
+            + &(u.clone() * &basis.basis_u.x)
+            + &(v.clone() * &basis.basis_v.x)
+            + &(w.clone() * &basis.basis_w.x),
+        basis.origin.y.clone()
+            + &(u.clone() * &basis.basis_u.y)
+            + &(v.clone() * &basis.basis_v.y)
+            + &(w.clone() * &basis.basis_w.y),
+        basis.origin.z.clone()
+            + &(u.clone() * &basis.basis_u.z)
+            + &(v.clone() * &basis.basis_v.z)
+            + &(w.clone() * &basis.basis_w.z),
     )
-}
-
-impl AffineBoxBasis {
-    fn determinant(&self) -> Real {
-        det3(&self.basis_u, &self.basis_v, &self.basis_w)
-    }
 }
 
 fn det3(a: &Point3, b: &Point3, c: &Point3) -> Real {
-    let x_minor = sub(&mul(&b.y, &c.z), &mul(&b.z, &c.y));
-    let y_minor = sub(&mul(&b.x, &c.z), &mul(&b.z, &c.x));
-    let z_minor = sub(&mul(&b.x, &c.y), &mul(&b.y, &c.x));
-    add(
-        &sub(&mul(&a.x, &x_minor), &mul(&a.y, &y_minor)),
-        &mul(&a.z, &z_minor),
-    )
+    let x_minor = b.y.clone() * &c.z - &(b.z.clone() * &c.y);
+    let y_minor = b.x.clone() * &c.z - &(b.z.clone() * &c.x);
+    let z_minor = b.x.clone() * &c.y - &(b.y.clone() * &c.x);
+    (a.x.clone() * &x_minor - &(a.y.clone() * &y_minor)) + &(a.z.clone() * &z_minor)
 }
 
 /// Search exact affine bases from a single orthogonal-solid cell complex.
@@ -362,7 +386,7 @@ fn find_affine_cell_basis<T>(
     mesh: &ExactMesh,
     accept_basis: &mut impl FnMut(AffineBoxBasis) -> Option<T>,
 ) -> Option<T> {
-    if mesh.vertices().len() < 8 || mesh.triangles().len() < 12 {
+    if mesh.vertices().len() < 8 || mesh.facts().mesh.face_count < 12 {
         return None;
     }
     let adjacency = vertex_adjacency(mesh);
@@ -390,7 +414,11 @@ fn find_affine_cell_basis<T>(
                         basis_v: directions[v].clone(),
                         basis_w: directions[w].clone(),
                     };
-                    if compare_reals(&basis.determinant(), &Real::from(0)).value()
+                    if compare_reals(
+                        &det3(&basis.basis_u, &basis.basis_v, &basis.basis_w),
+                        &Real::from(0),
+                    )
+                    .value()
                         == Some(Ordering::Equal)
                     {
                         continue;
@@ -408,14 +436,17 @@ fn find_affine_cell_basis<T>(
 /// Count undirected exact triangle-edge directions in mesh space.
 fn mesh_direction_counts(mesh: &ExactMesh) -> Vec<(Point3, usize)> {
     let mut counts = Vec::<(Point3, usize)>::new();
-    for triangle in mesh.triangles() {
-        let [a, b, c] = triangle.0;
+    for face in &mesh.facts().faces {
+        let [a, b, c] = face.triangle.vertices;
         for [a, b] in [[a, b], [b, c], [c, a]] {
             let (Some(a), Some(b)) = (mesh.vertices().get(a), mesh.vertices().get(b)) else {
                 continue;
             };
-            let direction = sub3(&b.clone(), &a.clone());
-            if point_is_zero(&direction) {
+            let direction = Point3::new(&b.x - &a.x, &b.y - &a.y, &b.z - &a.z);
+            if compare_reals(&direction.x, &Real::from(0)).value() == Some(Ordering::Equal)
+                && compare_reals(&direction.y, &Real::from(0)).value() == Some(Ordering::Equal)
+                && compare_reals(&direction.z, &Real::from(0)).value() == Some(Ordering::Equal)
+            {
                 continue;
             }
             if let Some((_, count)) = counts
@@ -434,8 +465,8 @@ fn mesh_direction_counts(mesh: &ExactMesh) -> Vec<(Point3, usize)> {
 /// Build a unique undirected vertex adjacency list from retained triangles.
 fn vertex_adjacency(mesh: &ExactMesh) -> Vec<Vec<usize>> {
     let mut adjacency = vec![Vec::new(); mesh.vertices().len()];
-    for triangle in mesh.triangles() {
-        let [a, b, c] = triangle.0;
+    for face in &mesh.facts().faces {
+        let [a, b, c] = face.triangle.vertices;
         for [a, b] in [[a, b], [b, c], [c, a]] {
             if let Some(neighbors) = adjacency.get_mut(a)
                 && !neighbors.contains(&b)
@@ -454,14 +485,23 @@ fn vertex_adjacency(mesh: &ExactMesh) -> Vec<Vec<usize>> {
 
 /// Return unique outgoing exact edge directions at one origin vertex.
 fn unique_edge_directions(mesh: &ExactMesh, origin: usize, neighbors: &[usize]) -> Vec<Point3> {
-    let origin_point = mesh.vertices()[origin].clone();
+    let origin_point = &mesh.vertices()[origin];
     let mut directions = Vec::new();
     for &neighbor in neighbors {
         let Some(neighbor) = mesh.vertices().get(neighbor) else {
             continue;
         };
-        let direction = sub3(&neighbor.clone(), &origin_point);
-        if point_is_zero(&direction) || directions.iter().any(|seen| points_equal(seen, &direction))
+        let direction = Point3::new(
+            &neighbor.x - &origin_point.x,
+            &neighbor.y - &origin_point.y,
+            &neighbor.z - &origin_point.z,
+        );
+        if (compare_reals(&direction.x, &Real::from(0)).value() == Some(Ordering::Equal)
+            && compare_reals(&direction.y, &Real::from(0)).value() == Some(Ordering::Equal)
+            && compare_reals(&direction.z, &Real::from(0)).value() == Some(Ordering::Equal))
+            || directions
+                .iter()
+                .any(|seen| point3_exact_equal(seen, &direction) == Some(true))
         {
             continue;
         }
@@ -470,70 +510,10 @@ fn unique_edge_directions(mesh: &ExactMesh, origin: usize, neighbors: &[usize]) 
     directions
 }
 
-/// Subtract exact 3D points componentwise.
-fn sub3(left: &Point3, right: &Point3) -> Point3 {
-    Point3::new(
-        left.x.clone() - &right.x,
-        left.y.clone() - &right.y,
-        left.z.clone() - &right.z,
-    )
-}
-
-/// Return whether an exact point/vector is exactly zero.
-fn point_is_zero(point: &Point3) -> bool {
-    compare_reals(&point.x, &Real::from(0)).value() == Some(Ordering::Equal)
-        && compare_reals(&point.y, &Real::from(0)).value() == Some(Ordering::Equal)
-        && compare_reals(&point.z, &Real::from(0)).value() == Some(Ordering::Equal)
-}
-
-/// Compare exact points componentwise.
-fn points_equal(left: &Point3, right: &Point3) -> bool {
-    compare_reals(&left.x, &right.x).value() == Some(Ordering::Equal)
-        && compare_reals(&left.y, &right.y).value() == Some(Ordering::Equal)
-        && compare_reals(&left.z, &right.z).value() == Some(Ordering::Equal)
-}
-
 /// Compare exact directions up to sign.
 fn points_equal_or_opposite(left: &Point3, right: &Point3) -> bool {
-    points_equal(left, right)
+    point3_exact_equal(left, right) == Some(true)
         || (compare_reals(&left.x, &(-right.x.clone())).value() == Some(Ordering::Equal)
             && compare_reals(&left.y, &(-right.y.clone())).value() == Some(Ordering::Equal)
             && compare_reals(&left.z, &(-right.z.clone())).value() == Some(Ordering::Equal))
-}
-
-fn add(left: &Real, right: &Real) -> Real {
-    left.clone() + right
-}
-
-fn sub(left: &Real, right: &Real) -> Real {
-    left.clone() - right
-}
-
-fn mul(left: &Real, right: &Real) -> Real {
-    left.clone() * right
-}
-
-impl AffineOrthogonalSolidOperation {
-    const fn to_axis_aligned(self) -> AxisAlignedOrthogonalSolidOperation {
-        match self {
-            Self::Union => AxisAlignedOrthogonalSolidOperation::Union,
-            Self::Intersection => AxisAlignedOrthogonalSolidOperation::Intersection,
-            Self::Difference => AxisAlignedOrthogonalSolidOperation::Difference,
-        }
-    }
-
-    const fn output_label(self) -> &'static str {
-        match self {
-            Self::Union => "exact affine orthogonal solid cell union",
-            Self::Intersection => "exact affine orthogonal solid cell intersection",
-            Self::Difference => "exact affine orthogonal solid cell difference",
-        }
-    }
-}
-
-fn affine_solid_replay_error(message: impl Into<String>) -> ExactMeshError {
-    ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::StaleFactReplay,
-        message,
-    ))
 }
