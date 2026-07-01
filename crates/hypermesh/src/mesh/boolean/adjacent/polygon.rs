@@ -281,7 +281,7 @@ fn polygon_patch_candidate(
     let mut signed_area2 = Real::from(0);
     for &face in faces {
         let triangle = mesh.view().face(face).ok()?.vertex_indices();
-        let points = triangle_point_refs(mesh, triangle)?;
+        let points = triangle_point_refs(mesh, triangle).ok()?;
         if boundary_points.len() < 3 {
             return Some(None);
         }
@@ -438,8 +438,8 @@ fn faces_are_coplanar(mesh: &ExactMesh, left_face: usize, right_face: usize) -> 
     // to a planar disk candidate.
     let left_triangle = mesh.view().face(left_face).ok()?.vertex_indices();
     let right_triangle = mesh.view().face(right_face).ok()?.vertex_indices();
-    let left_points = triangle_point_refs(mesh, left_triangle)?;
-    let right_points = triangle_point_refs(mesh, right_triangle)?;
+    let left_points = triangle_point_refs(mesh, left_triangle).ok()?;
+    let right_points = triangle_point_refs(mesh, right_triangle).ok()?;
     for point in right_points {
         if orient3d_report(left_points[0], left_points[1], left_points[2], point).value()?
             != Sign::Zero
