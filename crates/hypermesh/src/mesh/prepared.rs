@@ -45,45 +45,6 @@ struct ExactMeshSourceStamp {
     face_count: usize,
 }
 
-/// Certificate state for retained facts inside a prepared mesh-pair session.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum PreparedMeshPairFactState {
-    /// The fact has not been computed for this session.
-    Missing,
-    /// The fact is retained but cannot be consumed by cheap certificate checks yet.
-    CertificateBlocked,
-    /// The fact is retained and its certificate is current for this session.
-    Current,
-}
-
-impl PreparedMeshPairFactState {
-    const fn from_retained(retained: bool, certificate_current: bool) -> Self {
-        match (retained, certificate_current) {
-            (false, _) => Self::Missing,
-            (true, false) => Self::CertificateBlocked,
-            (true, true) => Self::Current,
-        }
-    }
-
-    fn require_current(self, fact: &'static str) -> Result<(), ExactMeshError> {
-        let detail = match self {
-            Self::Missing => {
-                format!("prepared mesh-pair session is missing retained {fact} evidence")
-            }
-            Self::CertificateBlocked => {
-                format!(
-                    "prepared mesh-pair session retained {fact} evidence without a current certificate"
-                )
-            }
-            Self::Current => return Ok(()),
-        };
-        Err(ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::MissingRequiredEvidence,
-            detail,
-        )))
-    }
-}
-
 impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     pub(crate) fn new(
         left_view: MeshView<'left>,
@@ -168,18 +129,17 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
     ) -> Result<Rc<ExactIntersectionGraph>, ExactMeshError> {
         self.require_sources_current("intersection graph")?;
-        let retained = self.intersection_graph.borrow().clone();
-        let certificate_current = retained
-            .as_ref()
-            .is_some_and(|graph| graph.source_replay_validated);
-        PreparedMeshPairFactState::from_retained(retained.is_some(), certificate_current)
-            .require_current("intersection graph")?;
-        retained.ok_or_else(|| {
-            ExactMeshError::one(ExactMeshBlocker::new(
+        match self.intersection_graph.borrow().clone() {
+            Some(graph) if graph.source_replay_validated => Ok(graph),
+            Some(_) => Err(ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::MissingRequiredEvidence,
-                "prepared mesh-pair session retained intersection graph state without records",
-            ))
-        })
+                "prepared mesh-pair session retained intersection graph evidence without a current certificate",
+            ))),
+            None => Err(ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::MissingRequiredEvidence,
+                "prepared mesh-pair session is missing retained intersection graph evidence",
+            ))),
+        }
     }
 
     pub(crate) fn validated_intersection_graph(
@@ -209,13 +169,10 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
     ) -> Result<Rc<ExactArrangement3d>, ExactMeshError> {
         self.require_sources_current("arrangement")?;
-        let retained = self.arrangement.borrow().clone();
-        PreparedMeshPairFactState::from_retained(retained.is_some(), true)
-            .require_current("arrangement")?;
-        retained.ok_or_else(|| {
+        self.arrangement.borrow().clone().ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::MissingRequiredEvidence,
-                "prepared mesh-pair session retained arrangement state without records",
+                "prepared mesh-pair session is missing retained arrangement evidence",
             ))
         })
     }
