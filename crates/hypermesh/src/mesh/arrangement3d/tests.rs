@@ -1,4 +1,5 @@
 use super::*;
+use crate::mesh::arrangement3d::arrangement2d::{ExactArrangement2dFace, ExactArrangement2dVertex};
 use crate::mesh::arrangement3d::cell_complex::simplify::{
     simplify_selected_cell_complex, triangulate_simplified_cell_complex,
 };
@@ -12,6 +13,10 @@ use hyperlimit::{RingPointLocation, classify_point_ring_even_odd, projected_poly
 
 fn p3(x: i64, y: i64, z: i64) -> Point3 {
     Point3::new(Real::from(x), Real::from(y), Real::from(z))
+}
+
+fn p2(x: i64, y: i64) -> Point2 {
+    Point2::new(Real::from(x), Real::from(y))
 }
 
 fn q(numerator: i64, denominator: i64) -> Real {
@@ -133,6 +138,141 @@ fn lower_dimensional_contact_artifacts_report_stale_source_rows() {
         Err(ExactArrangementBlocker::InvalidIntersectionGraph(
             ExactArrangementGraphBlockerKind::EventSourceOutOfRange
         ))
+    );
+}
+
+fn simple_face_plane_arrangement(face: usize) -> ArrangementFacePlaneArrangement {
+    ArrangementFacePlaneArrangement {
+        side: MeshSide::Left,
+        face,
+        projection: CoplanarProjection::Xy,
+        arrangement: ExactArrangement2d {
+            vertices: vec![
+                ExactArrangement2dVertex {
+                    point: p2(0, 0),
+                    incident_edges: Vec::new(),
+                },
+                ExactArrangement2dVertex {
+                    point: p2(2, 0),
+                    incident_edges: Vec::new(),
+                },
+                ExactArrangement2dVertex {
+                    point: p2(0, 2),
+                    incident_edges: Vec::new(),
+                },
+            ],
+            edges: Vec::new(),
+            faces: vec![ExactArrangement2dFace {
+                vertices: vec![0, 1, 2],
+                edges: Vec::new(),
+                signed_area_twice: Real::from(4),
+            }],
+            blockers: Vec::new(),
+        },
+        vertex_provenance: vec![None, None, None],
+    }
+}
+
+fn simple_carrier_overlay(face: usize) -> ArrangementCarrierPlaneOverlay {
+    ArrangementCarrierPlaneOverlay {
+        left_face: face,
+        right_face: face,
+        projection: CoplanarProjection::Xy,
+        overlay: ExactArrangement2dOverlay {
+            arrangement: simple_face_plane_arrangement(face).arrangement,
+            faces: Vec::new(),
+            output_loops: Vec::new(),
+            output_components: Vec::new(),
+            blockers: Vec::new(),
+        },
+    }
+}
+
+#[test]
+fn face_cell_builders_report_stale_retained_rows() {
+    let mesh = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
+    let valid_arrangement = simple_face_plane_arrangement(0);
+
+    let mut missing_carrier_blockers = Vec::new();
+    assert!(
+        face_cell_from_face_plane_arrangement(
+            0,
+            &simple_face_plane_arrangement(usize::MAX),
+            0,
+            &mesh,
+            &mesh,
+            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+            &mut missing_carrier_blockers,
+        )
+        .is_none()
+    );
+    assert_eq!(
+        missing_carrier_blockers,
+        vec![ExactArrangementBlocker::InvalidIntersectionGraph(
+            ExactArrangementGraphBlockerKind::FaceIndexOutOfRange
+        )]
+    );
+
+    let mut stale_arrangement_vertex = valid_arrangement.clone();
+    stale_arrangement_vertex.arrangement.faces[0].vertices[2] = usize::MAX;
+    let mut stale_vertex_blockers = Vec::new();
+    assert!(
+        face_cell_from_face_plane_arrangement(
+            0,
+            &stale_arrangement_vertex,
+            0,
+            &mesh,
+            &mesh,
+            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+            &mut stale_vertex_blockers,
+        )
+        .is_none()
+    );
+    assert_eq!(
+        stale_vertex_blockers,
+        vec![ExactArrangementBlocker::NonManifoldCellComplex]
+    );
+
+    let mut stale_provenance = valid_arrangement;
+    stale_provenance.vertex_provenance.pop();
+    let mut stale_provenance_blockers = Vec::new();
+    assert!(
+        face_cell_from_face_plane_arrangement(
+            0,
+            &stale_provenance,
+            0,
+            &mesh,
+            &mesh,
+            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+            &mut stale_provenance_blockers,
+        )
+        .is_none()
+    );
+    assert_eq!(
+        stale_provenance_blockers,
+        vec![ExactArrangementBlocker::NonManifoldCellComplex]
+    );
+
+    let mut stale_overlay_vertex = simple_carrier_overlay(0);
+    stale_overlay_vertex.overlay.arrangement.faces[0].vertices[2] = usize::MAX;
+    let mut stale_overlay_blockers = Vec::new();
+    assert!(
+        face_cell_from_carrier_plane_overlay(
+            0,
+            &stale_overlay_vertex,
+            0,
+            &p2(1, 1),
+            MeshSide::Left,
+            &mesh,
+            &mesh,
+            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+            &mut stale_overlay_blockers,
+        )
+        .is_none()
+    );
+    assert_eq!(
+        stale_overlay_blockers,
+        vec![ExactArrangementBlocker::NonManifoldCellComplex]
     );
 }
 

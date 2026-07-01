@@ -2997,12 +2997,19 @@ fn face_cell_from_face_plane_arrangement(
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFaceCell> {
     let mesh = arrangement.side.mesh(left, right);
-    let triangle = mesh.view().face(arrangement.face)?.vertex_indices();
-    let arrangement_face = arrangement.arrangement.faces.get(face)?;
+    let (triangle, _) = retained_arrangement_face_vertices(mesh, arrangement.face, blockers)?;
+    let Some(arrangement_face) = arrangement.arrangement.faces.get(face) else {
+        blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
+        return None;
+    };
     let mut boundary = Vec::with_capacity(arrangement_face.vertices.len());
     let mut boundary_points = Vec::with_capacity(arrangement_face.vertices.len());
     for vertex in &arrangement_face.vertices {
-        let point2 = &arrangement.arrangement.vertices.get(*vertex)?.point;
+        let Some(arrangement_vertex) = arrangement.arrangement.vertices.get(*vertex) else {
+            blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
+            return None;
+        };
+        let point2 = &arrangement_vertex.point;
         let point3 = lift_carrier_plane_point(
             mesh,
             arrangement.face,
@@ -3010,12 +3017,18 @@ fn face_cell_from_face_plane_arrangement(
             point2,
             blockers,
         )?;
-        boundary.push(arrangement.vertex_provenance[*vertex].clone().unwrap_or(
-            ArrangementFaceCellNode::FacePlane {
+        let provenance = match arrangement.vertex_provenance.get(*vertex).cloned() {
+            Some(Some(provenance)) => provenance,
+            Some(None) => ArrangementFaceCellNode::FacePlane {
                 arrangement: arrangement_index,
                 vertex: *vertex,
             },
-        ));
+            None => {
+                blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
+                return None;
+            }
+        };
+        boundary.push(provenance);
         boundary_points.push(point3);
     }
     orient_overlay_boundary_to_carrier(
@@ -3075,12 +3088,19 @@ fn face_cell_from_carrier_plane_overlay(
         MeshSide::Right => overlay.right_face,
     };
     let mesh = side.mesh(left, right);
-    let triangle = mesh.view().face(carrier_face)?.vertex_indices();
-    let overlay_face = overlay.overlay.arrangement.faces.get(face)?;
+    let (triangle, _) = retained_arrangement_face_vertices(mesh, carrier_face, blockers)?;
+    let Some(overlay_face) = overlay.overlay.arrangement.faces.get(face) else {
+        blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
+        return None;
+    };
     let mut boundary = Vec::with_capacity(overlay_face.vertices.len());
     let mut boundary_points = Vec::with_capacity(overlay_face.vertices.len());
     for vertex in &overlay_face.vertices {
-        let point2 = &overlay.overlay.arrangement.vertices.get(*vertex)?.point;
+        let Some(overlay_vertex) = overlay.overlay.arrangement.vertices.get(*vertex) else {
+            blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
+            return None;
+        };
+        let point2 = &overlay_vertex.point;
         let point3 =
             lift_carrier_plane_point(mesh, carrier_face, overlay.projection, point2, blockers)?;
         boundary.push(ArrangementFaceCellNode::CarrierPlane {
