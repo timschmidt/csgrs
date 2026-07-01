@@ -431,8 +431,8 @@ fn certify_axis_aligned_orthogonal_solid_face_cells(
 
     let half = (Real::from(1) / &Real::from(2)).ok()?;
     let mut planes = Vec::<FacePlaneAccumulator>::new();
-    for face in &mesh.facts().faces {
-        let sample = triangle_face_cell_sample(mesh, face.triangle.vertices, &x, &y, &z)?;
+    for face in mesh.view().faces() {
+        let sample = triangle_face_cell_sample(mesh, face.vertex_indices(), &x, &y, &z)?;
         let accumulator = match planes
             .iter_mut()
             .find(|plane| plane.key == sample.key && plane.normal_sign == sample.normal_sign)
@@ -505,7 +505,11 @@ fn triangle_face_cell_sample(
     z: &[Real],
 ) -> Option<FaceTriangleSample> {
     let points = triangle
-        .map(|index| mesh.vertices().get(index).cloned())
+        .map(|index| {
+            mesh.view()
+                .vertex(index)
+                .map(|vertex| vertex.point().clone())
+        })
         .into_iter()
         .collect::<Option<Vec<_>>>()?;
     let points: [Point3; 3] = points.try_into().ok()?;
