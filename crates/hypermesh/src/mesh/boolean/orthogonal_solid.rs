@@ -241,7 +241,9 @@ pub(crate) fn materialize_axis_aligned_orthogonal_solid_cell_output(
 fn try_certify_axis_aligned_box(
     mesh: &ExactMesh,
 ) -> Result<Option<AxisAlignedBox>, ExactMeshError> {
-    if mesh.vertices().len() != 8 || mesh.facts().mesh.face_count != 12 {
+    let view = mesh.view();
+    let vertices = view.vertices();
+    if vertices.len() != 8 || view.faces().count() != 12 {
         return Ok(None);
     }
     mesh.validate_retained_bounds_certificate()?;
@@ -273,7 +275,7 @@ fn try_certify_axis_aligned_box(
         Point3::new(max.x.clone(), max.y.clone(), max.z.clone()),
         Point3::new(min.x.clone(), max.y.clone(), max.z.clone()),
     ];
-    for vertex in mesh.vertices() {
+    for vertex in vertices {
         let mut matches_corner = false;
         for corner in &corners {
             if exact_compare_axis(&corner.x, &vertex.x)? == Ordering::Equal
@@ -290,7 +292,7 @@ fn try_certify_axis_aligned_box(
     }
     for corner in &corners {
         let mut matches_vertex = false;
-        for vertex in mesh.vertices() {
+        for vertex in vertices {
             if exact_compare_axis(&corner.x, &vertex.x)? == Ordering::Equal
                 && exact_compare_axis(&corner.y, &vertex.y)? == Ordering::Equal
                 && exact_compare_axis(&corner.z, &vertex.z)? == Ordering::Equal
@@ -416,7 +418,8 @@ fn orthogonal_cell_selected(
 fn certify_axis_aligned_orthogonal_solid_face_cells(
     mesh: &ExactMesh,
 ) -> Option<AxisAlignedOrthogonalSolid> {
-    if mesh.vertices().is_empty() || mesh.facts().mesh.face_count == 0 {
+    let view = mesh.view();
+    if view.vertices().is_empty() || view.faces().count() == 0 {
         return None;
     }
     let x = collect_sorted_unique_axis_coords(mesh, Axis::X)?;
@@ -1418,6 +1421,7 @@ fn shared_grid_vertex_index(
 
 fn collect_sorted_unique_axis_coords(mesh: &ExactMesh, axis: Axis) -> Option<Vec<Real>> {
     let values = mesh
+        .view()
         .vertices()
         .iter()
         .map(|vertex| axis_coord(vertex, axis).clone())
