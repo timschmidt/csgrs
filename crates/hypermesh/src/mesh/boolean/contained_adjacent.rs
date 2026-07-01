@@ -583,7 +583,9 @@ fn materialize_contained_patch_difference(
     containing_mesh: &ExactMesh,
     contained_mesh: &ExactMesh,
 ) -> Option<(ExactMesh, CoplanarProjection)> {
-    let (_, projection) = coplanar_mesh_overlay_carrier(containing_mesh, contained_mesh)?;
+    let (_, projection) = coplanar_mesh_overlay_carrier(containing_mesh, contained_mesh)
+        .ok()
+        .flatten()?;
     for boundary_policy in [
         ExactArrangement2dBoundaryPolicy::PreserveCollinear,
         ExactArrangement2dBoundaryPolicy::SimplifyCollinear,

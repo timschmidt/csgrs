@@ -1988,7 +1988,9 @@ fn selected_overlay_faces_triangulate_simple_coplanar_difference_cells() {
         ExactMeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right).unwrap();
+    let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right)
+        .unwrap()
+        .unwrap();
     let boundary_policy =
         coplanar_mesh_overlay_plan(&left, &right, ExactBooleanOperation::Difference)
             .unwrap()
@@ -2089,7 +2091,9 @@ fn projected_boundary_rings_reject_stale_boundary_vertex() {
         ExactMeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let (_, projection) = coplanar_mesh_overlay_carrier(&left, &right).unwrap();
+    let (_, projection) = coplanar_mesh_overlay_carrier(&left, &right)
+        .unwrap()
+        .unwrap();
     let mut stale_left = left.clone();
     stale_left.vertices.pop();
 
@@ -2101,6 +2105,41 @@ fn projected_boundary_rings_reject_stale_boundary_vertex() {
         "{error:?}"
     );
     assert_eq!(error.blockers()[0].vertex(), Some(3));
+}
+
+#[test]
+fn projected_face_ring_rejects_stale_face_rows() {
+    let mesh = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let (_, projection) = coplanar_mesh_overlay_carrier(&mesh, &mesh)
+        .unwrap()
+        .unwrap();
+
+    let missing_face_error = projected_mesh_face_ring(
+        ExactArrangement2dRegion::Left,
+        &mesh,
+        usize::MAX,
+        projection,
+    )
+    .expect_err("missing retained face should return a typed blocker");
+    assert!(
+        missing_face_error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        "{missing_face_error:?}"
+    );
+    assert_eq!(missing_face_error.blockers()[0].face(), Some(usize::MAX));
+
+    let mut stale_vertex_mesh = mesh;
+    stale_vertex_mesh.vertices.pop();
+    let stale_vertex_error = coplanar_mesh_overlay_carrier(&stale_vertex_mesh, &stale_vertex_mesh)
+        .expect_err("stale carrier face vertex should return a typed blocker");
+    assert!(
+        stale_vertex_error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        "{stale_vertex_error:?}"
+    );
 }
 
 #[test]
@@ -2219,7 +2258,9 @@ fn selected_overlay_faces_recover_point_touching_hole_components() {
         ExactMeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right).unwrap();
+    let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right)
+        .unwrap()
+        .unwrap();
     let boundary_policy =
         coplanar_mesh_overlay_plan(&left, &right, ExactBooleanOperation::Difference)
             .unwrap()
@@ -2275,8 +2316,9 @@ fn selected_overlay_faces_absorb_contained_union_components() {
         ExactMeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let (carrier_points, projection) =
-        coplanar_mesh_overlay_carrier(&outer_square, &inner_square).unwrap();
+    let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&outer_square, &inner_square)
+        .unwrap()
+        .unwrap();
     let mut rings =
         projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &outer_square, projection)
             .unwrap()
@@ -2400,7 +2442,9 @@ fn selected_overlay_faces_recover_when_output_loop_ownership_is_blocked() {
         ExactMeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right).unwrap();
+    let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right)
+        .unwrap()
+        .unwrap();
     let boundary_policy =
         coplanar_mesh_overlay_plan(&left, &right, ExactBooleanOperation::Difference)
             .unwrap()
@@ -2466,7 +2510,9 @@ fn selected_overlay_faces_recover_selected_boundary_topology_blockers() {
         ExactMeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right).unwrap();
+    let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right)
+        .unwrap()
+        .unwrap();
     let mut rings =
         projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &left, projection)
             .unwrap()

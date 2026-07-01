@@ -6013,13 +6013,13 @@ fn materialize_simple_coplanar_overlay_arrangement(
         left,
         overlay.left_face,
         overlay.projection,
-    );
+    )?;
     let right_ring = projected_mesh_face_ring(
         ExactArrangement2dRegion::Right,
         right,
         overlay.right_face,
         overlay.projection,
-    );
+    )?;
     let (Some(left_ring), Some(right_ring)) = (left_ring, right_ring) else {
         return Ok(None);
     };
@@ -6176,7 +6176,7 @@ pub(crate) fn materialize_coplanar_mesh_overlay_mesh(
     provenance: &'static str,
     allow_empty: bool,
 ) -> Result<Option<ExactMesh>, ExactMeshError> {
-    let Some((carrier_points, projection)) = coplanar_mesh_overlay_carrier(left, right) else {
+    let Some((carrier_points, projection)) = coplanar_mesh_overlay_carrier(left, right)? else {
         return Ok(None);
     };
     let mut rings = Vec::with_capacity(left.triangles().len() + right.triangles().len());
@@ -6431,48 +6431,56 @@ fn lift_projected_points_to_carrier<'a>(
 pub(crate) fn coplanar_mesh_overlay_carrier(
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Option<([Point3; 3], CoplanarProjection)> {
+) -> Result<Option<([Point3; 3], CoplanarProjection)>, ExactMeshError> {
     let mut carrier_points = None;
     'meshes: for mesh in [left, right] {
         for triangle in mesh.view().triangles() {
-            let points = triangle.vertices().ok()?.map(|point| point.clone());
+            let points = triangle.vertices()?.map(|point| point.clone());
             if choose_nonzero_projected_polygon_area(&points).is_some() {
                 carrier_points = Some(points);
                 break 'meshes;
             }
         }
     }
-    let carrier_points = carrier_points?;
-    let projection = choose_nonzero_projected_polygon_area(&carrier_points)?;
+    let Some(carrier_points) = carrier_points else {
+        return Ok(None);
+    };
+    let Some(projection) = choose_nonzero_projected_polygon_area(&carrier_points) else {
+        return Ok(None);
+    };
     for mesh in [left, right] {
         for point in mesh.vertices() {
-            if orient3d_report(
+            match orient3d_report(
                 &carrier_points[0],
                 &carrier_points[1],
                 &carrier_points[2],
                 point,
             )
-            .value()?
-                != Sign::Zero
+            .value()
             {
-                return None;
+                Some(Sign::Zero) => {}
+                Some(Sign::Negative | Sign::Positive) | None => return Ok(None),
             }
         }
         for face in 0..mesh.triangles().len() {
-            let ring =
-                projected_mesh_face_ring(ExactArrangement2dRegion::Left, mesh, face, projection)?;
+            let Some(ring) =
+                projected_mesh_face_ring(ExactArrangement2dRegion::Left, mesh, face, projection)?
+            else {
+                return Ok(None);
+            };
             let mut area = Real::from(0);
             for index in 0..ring.vertices.len() {
                 let current = &ring.vertices[index];
                 let next = &ring.vertices[(index + 1) % ring.vertices.len()];
                 area += &(current.x.clone() * &next.y) - &(current.y.clone() * &next.x);
             }
-            if compare_reals(&area, &Real::from(0)).value()? == Ordering::Equal {
-                return None;
+            match compare_reals(&area, &Real::from(0)).value() {
+                Some(Ordering::Less | Ordering::Greater) => {}
+                Some(Ordering::Equal) | None => return Ok(None),
             }
         }
     }
-    Some((carrier_points, projection))
+    Ok(Some((carrier_points, projection)))
 }
 
 fn projected_mesh_boundary_rings(
@@ -6527,16 +6535,22 @@ fn projected_mesh_face_ring(
     mesh: &ExactMesh,
     face: usize,
     projection: CoplanarProjection,
-) -> Option<ExactArrangement2dRegionRing> {
-    let vertices = mesh
-        .view()
-        .face(face)?
-        .vertices()
-        .ok()?
+) -> Result<Option<ExactArrangement2dRegionRing>, ExactMeshError> {
+    let Some(face_ref) = mesh.view().face(face) else {
+        return Err(ExactMeshError::one(
+            ExactMeshBlocker::new(
+                ExactMeshBlockerKind::StaleFactReplay,
+                "exact coplanar overlay face ring references a missing face",
+            )
+            .with_face(face),
+        ));
+    };
+    let vertices = face_ref
+        .vertices()?
         .into_iter()
         .map(|vertex| project_point3(vertex, projection))
         .collect::<Vec<_>>();
-    Some(ExactArrangement2dRegionRing { region, vertices })
+    Ok(Some(ExactArrangement2dRegionRing { region, vertices }))
 }
 
 fn lift_projected_point_to_carrier(
