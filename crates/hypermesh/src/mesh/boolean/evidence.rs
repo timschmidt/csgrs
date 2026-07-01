@@ -3286,14 +3286,7 @@ fn arrangement_cell_complex_output_matches_sources(
     let left = source_replay.left;
     let right = source_replay.right;
     let mut retained_mismatch = false;
-    let solid_operation = match operation {
-        ExactBooleanOperation::Union => Some(AxisAlignedOrthogonalSolidOperation::Union),
-        ExactBooleanOperation::Intersection => {
-            Some(AxisAlignedOrthogonalSolidOperation::Intersection)
-        }
-        ExactBooleanOperation::Difference => Some(AxisAlignedOrthogonalSolidOperation::Difference),
-        ExactBooleanOperation::SelectedRegions(_) => None,
-    };
+    let solid_operation = operation.axis_aligned_orthogonal_solid_operation();
     if let Some(solid_operation) = solid_operation
         && let Some(replay) = materialize_axis_aligned_orthogonal_solid_cell_output(
             left,
@@ -3386,7 +3379,7 @@ fn arrangement_cell_complex_output_matches_sources(
     }
 
     if validation == ExactMeshValidationPolicy::CLOSED
-        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && !operation.is_selected_regions()
         && lower_dimensional_regularized_sources(left, right)
     {
         if mesh_output_is_empty(mesh) {
@@ -3395,11 +3388,8 @@ fn arrangement_cell_complex_output_matches_sources(
         retained_mismatch = true;
     }
 
-    let affine_operation = match operation {
-        ExactBooleanOperation::Union => AffineOrthogonalSolidOperation::Union,
-        ExactBooleanOperation::Intersection => AffineOrthogonalSolidOperation::Intersection,
-        ExactBooleanOperation::Difference => AffineOrthogonalSolidOperation::Difference,
-        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+    let Some(affine_operation) = operation.affine_orthogonal_solid_operation() else {
+        return Ok(None);
     };
     if let Some(replay) =
         materialize_affine_orthogonal_solid_operation(left, right, affine_operation, validation)
@@ -4434,11 +4424,8 @@ fn axis_aligned_orthogonal_solid_preflight_matches_sources(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<bool, ExactEvidenceValidationError> {
-    let solid_operation = match request.operation {
-        ExactBooleanOperation::Union => AxisAlignedOrthogonalSolidOperation::Union,
-        ExactBooleanOperation::Intersection => AxisAlignedOrthogonalSolidOperation::Intersection,
-        ExactBooleanOperation::Difference => AxisAlignedOrthogonalSolidOperation::Difference,
-        ExactBooleanOperation::SelectedRegions(_) => return Ok(false),
+    let Some(solid_operation) = request.operation.axis_aligned_orthogonal_solid_operation() else {
+        return Ok(false);
     };
     materialize_axis_aligned_orthogonal_solid_cell_output(
         left,

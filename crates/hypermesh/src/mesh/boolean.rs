@@ -412,6 +412,26 @@ impl ExactBooleanOperation {
             Self::SelectedRegions(_) => None,
         }
     }
+
+    fn axis_aligned_orthogonal_solid_operation(
+        self,
+    ) -> Option<AxisAlignedOrthogonalSolidOperation> {
+        match self {
+            Self::Union => Some(AxisAlignedOrthogonalSolidOperation::Union),
+            Self::Intersection => Some(AxisAlignedOrthogonalSolidOperation::Intersection),
+            Self::Difference => Some(AxisAlignedOrthogonalSolidOperation::Difference),
+            Self::SelectedRegions(_) => None,
+        }
+    }
+
+    fn affine_orthogonal_solid_operation(self) -> Option<AffineOrthogonalSolidOperation> {
+        match self {
+            Self::Union => Some(AffineOrthogonalSolidOperation::Union),
+            Self::Intersection => Some(AffineOrthogonalSolidOperation::Intersection),
+            Self::Difference => Some(AffineOrthogonalSolidOperation::Difference),
+            Self::SelectedRegions(_) => None,
+        }
+    }
 }
 
 /// Complete policy for an exact boolean request.
@@ -2059,11 +2079,8 @@ fn orthogonal_solid_cell_materializes_for_preflight(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<bool, ExactMeshError> {
-    let solid_operation = match operation {
-        ExactBooleanOperation::Union => AxisAlignedOrthogonalSolidOperation::Union,
-        ExactBooleanOperation::Intersection => AxisAlignedOrthogonalSolidOperation::Intersection,
-        ExactBooleanOperation::Difference => AxisAlignedOrthogonalSolidOperation::Difference,
-        ExactBooleanOperation::SelectedRegions(_) => return Ok(false),
+    let Some(solid_operation) = operation.axis_aligned_orthogonal_solid_operation() else {
+        return Ok(false);
     };
     let validation_policies: &[ExactMeshValidationPolicy] =
         if left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold {
@@ -6346,11 +6363,8 @@ fn boolean_arrangement_cell_complex_recovery(
     {
         return Ok(Some(result));
     }
-    let affine_operation = match operation {
-        ExactBooleanOperation::Union => AffineOrthogonalSolidOperation::Union,
-        ExactBooleanOperation::Intersection => AffineOrthogonalSolidOperation::Intersection,
-        ExactBooleanOperation::Difference => AffineOrthogonalSolidOperation::Difference,
-        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+    let Some(affine_operation) = operation.affine_orthogonal_solid_operation() else {
+        return Ok(None);
     };
     let Some(arrangement) =
         materialize_affine_orthogonal_solid_operation(left, right, affine_operation, validation)?
@@ -6376,11 +6390,8 @@ fn boolean_arrangement_orthogonal_solid_cell_recovery(
     operation: ExactBooleanOperation,
     validation: ExactMeshValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
-    let solid_operation = match operation {
-        ExactBooleanOperation::Union => AxisAlignedOrthogonalSolidOperation::Union,
-        ExactBooleanOperation::Intersection => AxisAlignedOrthogonalSolidOperation::Intersection,
-        ExactBooleanOperation::Difference => AxisAlignedOrthogonalSolidOperation::Difference,
-        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+    let Some(solid_operation) = operation.axis_aligned_orthogonal_solid_operation() else {
+        return Ok(None);
     };
     let label = match solid_operation {
         AxisAlignedOrthogonalSolidOperation::Union => {
