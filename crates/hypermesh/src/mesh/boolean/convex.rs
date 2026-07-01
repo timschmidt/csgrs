@@ -734,14 +734,9 @@ fn append_projected_polygon_triangles(
         Ok(indices) if !indices.is_empty() && indices.len() % 3 == 0 => indices,
         _ => return None,
     };
-    let lifted = projected_points
-        .iter()
-        .map(|point| lift_projected_point_to_carrier(point, carrier_points, projection))
-        .collect::<Option<Vec<_>>>()?;
-    let local_to_global = lifted
-        .iter()
-        .map(|point| Some(intern_point(vertices, point)))
-        .collect::<Option<Vec<_>>>()?;
+    let lifted =
+        lift_projected_points_to_carrier(projected_points.iter(), carrier_points, projection)?;
+    let local_to_global = intern_points(vertices, &lifted);
     append_oriented_earcut_triangles(&indices, &local_to_global, source_sign, triangles);
     Some(())
 }
@@ -769,10 +764,7 @@ fn append_projected_overlay_triangles(
             projected.extend(hole.points.iter().map(point2_for_hypertri));
             lifted.extend(lifted_output_loop_points(hole, carrier_points, projection)?);
         }
-        let local_to_global = lifted
-            .iter()
-            .map(|point| Some(intern_point(vertices, point)))
-            .collect::<Option<Vec<_>>>()?;
+        let local_to_global = intern_points(vertices, &lifted);
         let indices = match hypertri::earcut(&projected, &hole_indices) {
             Ok(indices) if !indices.is_empty() && indices.len() % 3 == 0 => indices,
             _ => return None,
@@ -787,9 +779,16 @@ fn lifted_output_loop_points(
     carrier_points: &[Point3],
     projection: CoplanarProjection,
 ) -> Option<Vec<Point3>> {
-    loop_
-        .points
-        .iter()
+    lift_projected_points_to_carrier(loop_.points.iter(), carrier_points, projection)
+}
+
+fn lift_projected_points_to_carrier<'a>(
+    points: impl IntoIterator<Item = &'a Point2>,
+    carrier_points: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    points
+        .into_iter()
         .map(|point| lift_projected_point_to_carrier(point, carrier_points, projection))
         .collect()
 }
@@ -1305,6 +1304,13 @@ fn intern_point(vertices: &mut Vec<Point3>, point: &Point3) -> usize {
         ));
         vertices.len() - 1
     }
+}
+
+fn intern_points(vertices: &mut Vec<Point3>, points: &[Point3]) -> Vec<usize> {
+    points
+        .iter()
+        .map(|point| intern_point(vertices, point))
+        .collect()
 }
 
 fn simplify_polygon(points: &mut Vec<Point3>) {
