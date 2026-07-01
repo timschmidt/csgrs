@@ -3197,14 +3197,9 @@ fn arrangement_cell_complex_result_is_certified_for_preflight(
         return Ok(false);
     }
     if let Err(error) = result.validate_against_sources(left, right) {
-        return if matches!(
-            result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-                ..
-            }
-        ) && attempt.materialized_shortcut
-            == Some(ExactBooleanShortcutKind::ArrangementCellComplex)
+        return if result.kind.is_arrangement_cell_complex_shortcut()
+            && attempt.materialized_shortcut
+                == Some(ExactBooleanShortcutKind::ArrangementCellComplex)
         {
             Ok(false)
         } else {

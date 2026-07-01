@@ -1193,13 +1193,8 @@ impl ExactBooleanResult {
             && self.volumetric_classifications == replay.volumetric_classifications
             && ((self.topology_assembly_report == replay.topology_assembly_report
                 && self.region_ownership_report == replay.region_ownership_report)
-                || (matches!(
-                    self.kind,
-                    ExactBooleanResultKind::CertifiedShortcut {
-                        shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-                        ..
-                    }
-                ) && self.topology_assembly_report.is_none()
+                || (self.kind.is_arrangement_cell_complex_shortcut()
+                    && self.topology_assembly_report.is_none()
                     && self.region_ownership_report.is_none()))
             && retained_output_mesh_matches(&self.mesh, &replay.mesh)
     }
@@ -1307,6 +1302,16 @@ pub(crate) enum ExactBooleanShortcutKind {
 }
 
 impl ExactBooleanResultKind {
+    pub(crate) fn is_arrangement_cell_complex_shortcut(self) -> bool {
+        matches!(
+            self,
+            ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+                ..
+            }
+        )
+    }
+
     pub(crate) fn arrangement_cell_complex_operation(self) -> Option<ExactBooleanOperation> {
         match self {
             ExactBooleanResultKind::CertifiedShortcut {
@@ -2114,13 +2119,9 @@ impl ExactBooleanResult {
                 && attempt.decline.is_none()
                 && attempt.materialized_shortcut.is_none()
             {
-                if !matches!(
-                    self.kind,
-                    ExactBooleanResultKind::CertifiedShortcut {
-                        operation,
-                        shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-                    } if operation == request.operation
-                ) || self.topology_assembly_report.is_some()
+                if !self.kind.is_arrangement_cell_complex_shortcut()
+                    || self.kind.arrangement_cell_complex_operation() != Some(request.operation)
+                    || self.topology_assembly_report.is_some()
                     || self.region_ownership_report.is_some()
                 {
                     let simplified = attempt
