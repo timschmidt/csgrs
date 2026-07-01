@@ -711,7 +711,7 @@ fn append_left_triangle_with_edge_splits(
             vertices,
             right_vertex,
         )?;
-        insert_triangle_edge_split(&mut splits[edge], vertices, mapped, point, parameter);
+        insert_triangle_edge_split(&mut splits[edge], vertices, mapped, point, parameter)?;
     }
     append_refined_triangle(mapped, splits, vertices, triangles)
 }
@@ -764,7 +764,7 @@ fn append_right_triangle_with_edge_splits(
             continue;
         };
         let mapped = map_left_vertex(left, left_vertex_map, vertices, left_vertex)?;
-        insert_triangle_edge_split(&mut splits[edge], vertices, mapped, point, parameter);
+        insert_triangle_edge_split(&mut splits[edge], vertices, mapped, point, parameter)?;
     }
     append_refined_triangle(mapped, splits, vertices, triangles)
 }
@@ -803,19 +803,22 @@ fn insert_triangle_edge_split(
     mapped_vertex: usize,
     point: &Point3,
     parameter: Real,
-) {
-    if splits.iter().any(|split| {
-        split.mapped_vertex == mapped_vertex
-            || vertices
-                .get(split.mapped_vertex)
-                .is_some_and(|existing| point3_exact_equal(existing, point) == Some(true))
-    }) {
-        return;
+) -> Option<()> {
+    for split in splits.iter() {
+        if split.mapped_vertex == mapped_vertex {
+            return Some(());
+        }
+        if let Some(existing) = vertices.get(split.mapped_vertex)
+            && point3_exact_equal(existing, point)?
+        {
+            return Some(());
+        }
     }
     splits.push(TriangleEdgeSplit {
         parameter,
         mapped_vertex,
     });
+    Some(())
 }
 
 fn append_refined_triangle(
@@ -936,13 +939,15 @@ fn fan_faces_cover_triangle(
         return Some(None);
     }
     for whole_point in whole_points {
-        if !boundary_vertices.iter().any(|&vertex| {
-            if let Some(vertex) = fan_mesh.view().vertex(vertex) {
-                point3_exact_equal(whole_point, vertex.point()) == Some(true)
-            } else {
-                false
+        let mut matches_boundary = false;
+        for &vertex in &boundary_vertices {
+            let vertex = fan_mesh.view().vertex(vertex)?;
+            if point3_exact_equal(whole_point, vertex.point())? {
+                matches_boundary = true;
+                break;
             }
-        }) {
+        }
+        if !matches_boundary {
             return Some(None);
         }
     }
@@ -1084,9 +1089,14 @@ fn reversed_whole_face_vertex_map(
     let right_points = triangle_point_refs(right, right_triangle)?;
     let mut labels = [usize::MAX; 3];
     for (right_corner, right_point) in right_points.iter().enumerate() {
-        let label = left_points
-            .iter()
-            .position(|left_point| point3_exact_equal(left_point, right_point) == Some(true))?;
+        let mut label = None;
+        for (left_corner, left_point) in left_points.iter().enumerate() {
+            if point3_exact_equal(left_point, right_point)? {
+                label = Some(left_corner);
+                break;
+            }
+        }
+        let label = label?;
         labels[right_corner] = label;
     }
     if !matches!(labels, [0, 2, 1] | [2, 1, 0] | [1, 0, 2]) {
