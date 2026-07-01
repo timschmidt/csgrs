@@ -320,6 +320,31 @@ fn arrangement_blocker_error(
     ))
 }
 
+fn arrangement_error_declines_or_replays_stale<T>(
+    error: ExactMeshError,
+) -> Result<Option<T>, ExactMeshError> {
+    if error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]) {
+        Err(error)
+    } else {
+        Ok(None)
+    }
+}
+
+fn arrangement_blocker_declines_or_replays_stale<T>(
+    context: &'static str,
+    blocker: ExactArrangementBlocker,
+) -> Result<Option<T>, ExactMeshError> {
+    if matches!(
+        blocker,
+        ExactArrangementBlocker::InvalidIntersectionGraph(_)
+            | ExactArrangementBlocker::InvalidSplitPlan(_)
+    ) {
+        Err(arrangement_blocker_error(context, blocker))
+    } else {
+        Ok(None)
+    }
+}
+
 /// Exact boolean operation request.
 ///
 /// Named booleans are represented now, but they intentionally do not fall back
@@ -837,6 +862,7 @@ fn replay_generic_arrangement_cell_complex_result(
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
+    validate_graph_source_replay(graph, left, right)?;
     let policy = ExactRegularizationPolicy::REGULARIZED_SOLID;
     let arrangement = match ExactArrangement3d::from_source_certified_intersection_graph_with_policy(
         graph.clone(),
@@ -845,16 +871,26 @@ fn replay_generic_arrangement_cell_complex_result(
         policy,
     ) {
         Ok(arrangement) => arrangement,
-        Err(_) => return Ok(None),
+        Err(error) => return arrangement_error_declines_or_replays_stale(error),
     };
     let selected = match select_arrangement_for_replay(arrangement, left, right, operation, policy)
     {
         Ok(selected) => selected,
-        Err(_) => return Ok(None),
+        Err(blocker) => {
+            return arrangement_blocker_declines_or_replays_stale(
+                "exact generic arrangement replay selection failed",
+                blocker,
+            );
+        }
     };
     let simplified = match simplify_selected_cell_complex(selected, policy) {
         Ok(simplified) => simplified,
-        Err(_) => return Ok(None),
+        Err(blocker) => {
+            return arrangement_blocker_declines_or_replays_stale(
+                "exact generic arrangement replay simplification failed",
+                blocker,
+            );
+        }
     };
     let Some(result) =
         rematerialize_simplified_arrangement_cell_complex(request, &simplified, false)?
@@ -3506,6 +3542,7 @@ fn certified_arrangement_cell_complex_result_from_graph(
     request: ExactBooleanRequest,
     regularize_unregularized_sheet_complex: bool,
 ) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
+    validate_graph_source_replay(graph, left, right)?;
     let arrangement = match ExactArrangement3d::from_source_certified_intersection_graph_with_policy(
         graph.clone(),
         left,
@@ -3513,7 +3550,7 @@ fn certified_arrangement_cell_complex_result_from_graph(
         ExactRegularizationPolicy::REGULARIZED_SOLID,
     ) {
         Ok(arrangement) => arrangement,
-        Err(_) => return Ok(None),
+        Err(error) => return arrangement_error_declines_or_replays_stale(error),
     };
     let outcome = run_arrangement_cell_complex_attempt_from_arrangement(
         &arrangement,

@@ -1684,6 +1684,40 @@ fn named_materialization_rejects_stale_retained_graph_before_ready_graph_use() {
 }
 
 #[test]
+fn generic_arrangement_replay_rejects_stale_retained_graph_indices() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, -1, -1, 1, 3, 1, 1, 3, -1],
+        &[0, 1, 2],
+        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let mut stale_graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
+    assert!(!stale_graph.face_pairs.is_empty());
+    stale_graph.face_pairs[0].left_face = usize::MAX;
+
+    let stale_error = replay_generic_arrangement_cell_complex_result(
+        &stale_graph,
+        &left,
+        &right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        ),
+    )
+    .expect_err("stale generic arrangement replay should return a typed blocker");
+    assert!(
+        stale_error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        "{stale_error:?}"
+    );
+}
+
+#[test]
 fn open_surface_disjoint_preflight_prefers_specific_support_over_cell_complex() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
