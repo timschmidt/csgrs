@@ -960,10 +960,16 @@ fn assembly_vertex_lies_strictly_on_projected_edge(
     let candidate_point = &assembly.vertices[candidate].point;
     let start_point = &assembly.vertices[start].point;
     let end_point = &assembly.vertices[end].point;
-    if point3_exact_equal(candidate_point, start_point) == Some(true)
-        || point3_exact_equal(candidate_point, end_point) == Some(true)
-    {
-        return Ok(false);
+    for endpoint in [start_point, end_point] {
+        match point3_exact_equal(candidate_point, endpoint) {
+            Some(true) => return Ok(false),
+            Some(false) => {}
+            None => {
+                return Err(hypertri::Error::PredicateUndecided {
+                    predicate: "assembly_refinement_endpoint_equality",
+                });
+            }
+        }
     }
     point_on_segment(
         &project_point3(start_point, projection),
