@@ -1908,17 +1908,21 @@ struct ArrangementPointUniquenessIndex {
 }
 
 impl ArrangementPointUniquenessIndex {
-    fn push_unique(&mut self, points: &mut Vec<Point3>, point: Point3) {
+    fn push_unique(
+        &mut self,
+        points: &mut Vec<Point3>,
+        point: Point3,
+    ) -> Result<(), ExactArrangementBlocker> {
         let point_key = exact_point3_key(&point);
-        if find_matching_keyed_point(
+        if try_find_matching_keyed_point(
             point_key.as_ref(),
             &self.point_key_buckets,
             &self.unkeyed_points,
             |candidates| find_matching_arrangement_point(&point, points, candidates),
-        )
+        )?
         .is_some()
         {
-            return;
+            return Ok(());
         }
         let index = points.len();
         if let Some(key) = point_key {
@@ -1927,6 +1931,7 @@ impl ArrangementPointUniquenessIndex {
             self.unkeyed_points.push(index);
         }
         points.push(point);
+        Ok(())
     }
 }
 
@@ -1970,11 +1975,15 @@ fn find_matching_arrangement_point(
     point: &Point3,
     points: &[Point3],
     candidates: &[usize],
-) -> Option<usize> {
-    candidates
-        .iter()
-        .copied()
-        .find(|&index| point3_exact_equal(&points[index], point) == Some(true))
+) -> Result<Option<usize>, ExactArrangementBlocker> {
+    for &index in candidates {
+        match point3_exact_equal(&points[index], point) {
+            Some(true) => return Ok(Some(index)),
+            Some(false) => {}
+            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+        }
+    }
+    Ok(None)
 }
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -2583,15 +2592,19 @@ fn lower_dimensional_artifacts(
             continue;
         }
         for event in &pair.events {
-            if let Some(artifact) = non_coplanar_edge_contact_artifact(
+            match non_coplanar_edge_contact_artifact(
                 pair.left_face,
                 pair.right_face,
                 event,
                 left,
                 right,
             ) {
-                artifact_index.push_unique(&mut artifacts, artifact);
-                continue;
+                Ok(Some(artifact)) => {
+                    artifact_index.push_unique(&mut artifacts, artifact);
+                    continue;
+                }
+                Ok(None) => {}
+                Err(blocker) => push_unique_blocker(blockers, blocker),
             }
             if let Some(artifact) = non_coplanar_point_contact_artifact(
                 pair.left_face,
@@ -2721,7 +2734,7 @@ fn non_coplanar_edge_contact_artifact(
     event: &super::graph::IntersectionEvent,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Option<ArrangementLowerDimensionalArtifact> {
+) -> Result<Option<ArrangementLowerDimensionalArtifact>, ExactArrangementBlocker> {
     let super::graph::IntersectionEvent::SegmentPlane {
         segment_side,
         edge,
@@ -2736,29 +2749,49 @@ fn non_coplanar_edge_contact_artifact(
         ..
     } = event
     else {
-        return None;
+        return Ok(None);
     };
     let segment_mesh = segment_side.mesh(left, right);
     let plane_mesh = plane_side.mesh(left, right);
-    let start = segment_mesh.view().vertex(edge[0])?.point();
-    let end = segment_mesh.view().vertex(edge[1])?.point();
-    let plane_face = plane_mesh.view().face(*plane_face)?;
+    let Some(start) = segment_mesh
+        .view()
+        .vertex(edge[0])
+        .map(|vertex| vertex.point())
+    else {
+        return Ok(None);
+    };
+    let Some(end) = segment_mesh
+        .view()
+        .vertex(edge[1])
+        .map(|vertex| vertex.point())
+    else {
+        return Ok(None);
+    };
+    let Some(plane_face) = plane_mesh.view().face(*plane_face) else {
+        return Ok(None);
+    };
     let triangle = plane_face.vertex_indices();
-    let [a3, b3, c3] = plane_face.vertices().ok()?;
+    let Ok([a3, b3, c3]) = plane_face.vertices() else {
+        return Ok(None);
+    };
     let projection = choose_triangle_projection(
         plane_mesh,
         triangle,
         &mut Vec::<ExactArrangementBlocker>::new(),
-    )?;
+    )
+    .ok_or(ExactArrangementBlocker::UndecidableOrdering)?;
     let a = project_point3(a3, projection);
     let b = project_point3(b3, projection);
     let c = project_point3(c3, projection);
-    let endpoints = coplanar_segment_triangle_interval(start, end, [&a, &b, &c], projection)?;
-    Some(ArrangementLowerDimensionalArtifact::EdgeContact {
+    let Some(endpoints) = coplanar_segment_triangle_interval(start, end, [&a, &b, &c], projection)?
+    else {
+        return Ok(None);
+    };
+    Ok(Some(ArrangementLowerDimensionalArtifact::EdgeContact {
         left_face,
         right_face,
         endpoints,
-    })
+    }))
 }
 
 fn coplanar_segment_triangle_interval(
@@ -2766,49 +2799,63 @@ fn coplanar_segment_triangle_interval(
     end: &Point3,
     triangle: [&Point2; 3],
     projection: CoplanarProjection,
-) -> Option<[Point3; 2]> {
+) -> Result<Option<[Point3; 2]>, ExactArrangementBlocker> {
     let segment_start = project_point3(start, projection);
     let segment_end = project_point3(end, projection);
     let mut points = Vec::<Point3>::new();
     let mut point_index = ArrangementPointUniquenessIndex::default();
     for (point, projected) in [(start, &segment_start), (end, &segment_end)] {
-        let location =
-            classify_point_triangle(triangle[0], triangle[1], triangle[2], projected).value()?;
+        let location = classify_point_triangle(triangle[0], triangle[1], triangle[2], projected)
+            .value()
+            .ok_or(ExactArrangementBlocker::UndecidableOrdering)?;
         if matches!(
             location,
             TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
         ) {
-            point_index.push_unique(&mut points, point.clone());
+            point_index.push_unique(&mut points, point.clone())?;
         }
     }
 
     for index in 0..3 {
         let a = triangle[index];
         let b = triangle[(index + 1) % 3];
-        match classify_segment_intersection(&segment_start, &segment_end, a, b).value()? {
+        match classify_segment_intersection(&segment_start, &segment_end, a, b)
+            .value()
+            .ok_or(ExactArrangementBlocker::UndecidableOrdering)?
+        {
             SegmentIntersection::Disjoint => {}
             SegmentIntersection::Proper => {
                 let point = proper_segment_intersection_point(&segment_start, &segment_end, a, b)
-                    .value()??;
+                    .value()
+                    .ok_or(ExactArrangementBlocker::UndecidableOrdering)?
+                    .ok_or(ExactArrangementBlocker::UnresolvedIntersection)?;
                 point_index.push_unique(
                     &mut points,
-                    lift_projected_point_to_segment(start, end, &point, projection)?,
-                );
+                    lift_projected_point_to_segment(start, end, &point, projection)
+                        .ok_or(ExactArrangementBlocker::UnresolvedIntersection)?,
+                )?;
             }
             SegmentIntersection::EndpointTouch
             | SegmentIntersection::CollinearOverlap
             | SegmentIntersection::Identical => {
                 for point in [a, b] {
-                    if point_on_segment(&segment_start, &segment_end, point).value()? {
+                    if point_on_segment(&segment_start, &segment_end, point)
+                        .value()
+                        .ok_or(ExactArrangementBlocker::UndecidableOrdering)?
+                    {
                         point_index.push_unique(
                             &mut points,
-                            lift_projected_point_to_segment(start, end, point, projection)?,
-                        );
+                            lift_projected_point_to_segment(start, end, point, projection)
+                                .ok_or(ExactArrangementBlocker::UnresolvedIntersection)?,
+                        )?;
                     }
                 }
                 for (point, projected) in [(start, &segment_start), (end, &segment_end)] {
-                    if point_on_segment(a, b, projected).value()? {
-                        point_index.push_unique(&mut points, point.clone());
+                    if point_on_segment(a, b, projected)
+                        .value()
+                        .ok_or(ExactArrangementBlocker::UndecidableOrdering)?
+                    {
+                        point_index.push_unique(&mut points, point.clone())?;
                     }
                 }
             }
@@ -2816,14 +2863,17 @@ fn coplanar_segment_triangle_interval(
     }
 
     if points.len() < 2 {
-        return None;
+        return Ok(None);
     }
-    let axis = segment_order_axis(start, end)?;
+    let Some(axis) = segment_order_axis(start, end) else {
+        return Err(ExactArrangementBlocker::UndecidableOrdering);
+    };
     for index in 1..points.len() {
         let mut current = index;
         while current > 0 {
             let ordering =
-                compare_point3_on_axis(&points[current - 1], &points[current], axis, start, end)?;
+                compare_point3_on_axis(&points[current - 1], &points[current], axis, start, end)
+                    .ok_or(ExactArrangementBlocker::UndecidableOrdering)?;
             if ordering != Ordering::Greater {
                 break;
             }
@@ -2831,9 +2881,17 @@ fn coplanar_segment_triangle_interval(
             current -= 1;
         }
     }
-    let first = points.first()?.clone();
-    let last = points.last()?.clone();
-    (!point3_exact_equal(&first, &last)?).then_some([first, last])
+    let Some(first) = points.first().cloned() else {
+        return Ok(None);
+    };
+    let Some(last) = points.last().cloned() else {
+        return Ok(None);
+    };
+    match point3_exact_equal(&first, &last) {
+        Some(false) => Ok(Some([first, last])),
+        Some(true) => Ok(None),
+        None => Err(ExactArrangementBlocker::UndecidableOrdering),
+    }
 }
 
 fn lift_projected_point_to_segment(
@@ -3726,7 +3784,13 @@ fn nested_shell_volume_graph(
     let mut contains = vec![vec![false; shell_regions.len()]; shell_regions.len()];
     for (contained, contained_by) in contains.iter_mut().enumerate() {
         let witnesses =
-            shell_region_witnesses(shell_regions.get(contained)?, face_cells, left, right);
+            match shell_region_witnesses(shell_regions.get(contained)?, face_cells, left, right) {
+                Ok(witnesses) => witnesses,
+                Err(blocker) => {
+                    push_unique_blocker(blockers, blocker);
+                    return None;
+                }
+            };
         if witnesses.is_empty() {
             push_unique_blocker(
                 blockers,
@@ -4007,7 +4071,7 @@ fn shell_region_witnesses(
     face_cells: &[ArrangementFaceCell],
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Vec<Point3> {
+) -> Result<Vec<Point3>, ExactArrangementBlocker> {
     let mut witnesses = Vec::new();
     let mut witness_index = ArrangementPointUniquenessIndex::default();
     for cell in shell
@@ -4016,7 +4080,7 @@ fn shell_region_witnesses(
         .filter_map(|&cell| face_cells.get(cell))
     {
         for point in &cell.boundary_points {
-            witness_index.push_unique(&mut witnesses, point.clone());
+            witness_index.push_unique(&mut witnesses, point.clone())?;
         }
         if cell.boundary_points.len() >= 3 {
             let mesh = cell.carrier.side.mesh(left, right);
@@ -4038,12 +4102,12 @@ fn shell_region_witnesses(
                         &mut blockers,
                     )
                 {
-                    witness_index.push_unique(&mut witnesses, point);
+                    witness_index.push_unique(&mut witnesses, point)?;
                 }
             }
         }
     }
-    witnesses
+    Ok(witnesses)
 }
 
 fn shell_region_mesh(

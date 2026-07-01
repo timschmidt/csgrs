@@ -91,9 +91,15 @@ fn arrangement_point_uniqueness_index_buckets_exact_rational_points() {
     let mut index = ArrangementPointUniquenessIndex::default();
     let point = rational_p3([1, 2], [-3, 4], [5, 6]);
 
-    index.push_unique(&mut points, point.clone());
-    index.push_unique(&mut points, point);
-    index.push_unique(&mut points, rational_p3([2, 3], [-3, 4], [5, 6]));
+    index
+        .push_unique(&mut points, point.clone())
+        .expect("first rational point should insert");
+    index
+        .push_unique(&mut points, point)
+        .expect("duplicate rational point should compare exactly");
+    index
+        .push_unique(&mut points, rational_p3([2, 3], [-3, 4], [5, 6]))
+        .expect("distinct rational point should compare exactly");
 
     assert_eq!(points.len(), 2);
     assert_eq!(index.point_key_buckets.len(), 2);
@@ -872,7 +878,8 @@ fn shell_region_witnesses_include_exact_face_interior_points() {
     )
     .unwrap();
     let shell = &arrangement.shells_or_regions.as_ref().unwrap()[0];
-    let witnesses = shell_region_witnesses(shell, &arrangement.face_cells, &left, &right);
+    let witnesses = shell_region_witnesses(shell, &arrangement.face_cells, &left, &right)
+        .expect("shell witnesses should be exactly deduplicated");
     let boundary_points = shell
         .face_cells
         .iter()
