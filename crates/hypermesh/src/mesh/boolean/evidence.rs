@@ -92,7 +92,7 @@ use super::{
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
     materialize_open_surface_disjoint_meshes,
     materialize_volumetric_coplanar_boundary_closure_output_from_graph,
-    no_materialized_boundary_output_report, open_surface_disjoint_report_from_graph,
+    open_surface_disjoint_report_from_graph,
     preflight_boolean_exact_request_from_graph_with_retained_attempt,
     rematerialize_simplified_arrangement_cell_complex,
     replay_generic_arrangement_cell_complex_result,
@@ -4184,7 +4184,7 @@ impl ExactVolumetricBoundaryClosureReport {
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         let replay = if self.operation.is_selected_regions() {
-            no_materialized_boundary_output_report(self.operation)
+            ExactVolumetricBoundaryClosureReport::no_materialized(self.operation)
         } else {
             let graph = validated_report_intersection_graph(left, right)?;
             volumetric_boundary_closure_report_from_graph(&graph, left, right, self.operation)

@@ -603,7 +603,9 @@ fn certification_set_from_graph_and_regularized_arrangement(
         {
             None
         } else if adjacent_union_completion_certified {
-            Some(no_materialized_boundary_output_report(request.operation))
+            Some(ExactVolumetricBoundaryClosureReport::no_materialized(
+                request.operation,
+            ))
         } else {
             let report = volumetric_boundary_closure_report_from_graph(
                 graph,

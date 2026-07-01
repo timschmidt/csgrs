@@ -1252,7 +1252,7 @@ fn test_volumetric_boundary_closure(
     right: &ExactMesh,
 ) -> ExactVolumetricBoundaryClosureReport {
     if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
-        return no_materialized_boundary_output_report(request.operation);
+        return ExactVolumetricBoundaryClosureReport::no_materialized(request.operation);
     }
     let graph = build_validated_intersection_graph(left, right).unwrap();
     volumetric_boundary_closure_report_from_graph(&graph, left, right, request.operation).unwrap()
