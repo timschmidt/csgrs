@@ -22,7 +22,7 @@ use hyperlimit::{
 };
 
 use super::super::super::{ExactMesh, sorted_edge};
-use super::super::point3_exact_equal;
+use super::super::{cloned_indexed_points, point3_exact_equal};
 use super::{point_on_triangle_plane, real_sign, triangle_point_refs};
 use hyperreal::Real;
 
@@ -252,14 +252,8 @@ fn polygon_patch_candidate(
     if boundary_vertices.len() != boundary_edges.len() {
         return Some(None);
     }
-    let boundary_points = boundary_vertices
-        .iter()
-        .map(|&vertex| {
-            mesh.view()
-                .vertex(vertex)
-                .map(|vertex| vertex.point().clone())
-        })
-        .collect::<Option<Vec<_>>>()?;
+    let boundary_points =
+        cloned_indexed_points(mesh.view().vertices(), boundary_vertices.iter().copied())?;
     let Some(projection) = [
         CoplanarProjection::Xy,
         CoplanarProjection::Xz,
