@@ -6574,10 +6574,36 @@ fn boolean_arrangement_cell_complex_recovery(
     operation: ExactBooleanOperation,
     validation: ExactMeshValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
-    if let Some(result) =
-        boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
-    {
-        return Ok(Some(result));
+    if let Some(solid_operation) = operation.axis_aligned_orthogonal_solid_operation() {
+        let label = match solid_operation {
+            AxisAlignedOrthogonalSolidOperation::Union => {
+                "exact arrangement orthogonal solid cell union recovery"
+            }
+            AxisAlignedOrthogonalSolidOperation::Intersection => {
+                "exact arrangement orthogonal solid cell intersection recovery"
+            }
+            AxisAlignedOrthogonalSolidOperation::Difference => {
+                "exact arrangement orthogonal solid cell difference recovery"
+            }
+        };
+        if let Some(mesh) = materialize_axis_aligned_orthogonal_solid_cell_output(
+            left,
+            right,
+            solid_operation,
+            label,
+            validation,
+        )? {
+            let result = certified_shortcut_result(
+                mesh,
+                operation,
+                ExactBooleanShortcutKind::ArrangementCellComplex,
+            );
+            validate_boolean_result(
+                &result,
+                "exact arrangement orthogonal solid recovery result validation failed",
+            )?;
+            return Ok(Some(result));
+        }
     }
     let Some(affine_operation) = operation.affine_orthogonal_solid_operation() else {
         return Ok(None);
@@ -6596,48 +6622,6 @@ fn boolean_arrangement_cell_complex_recovery(
     validate_boolean_result(
         &result,
         "exact arrangement affine orthogonal solid recovery result validation failed",
-    )?;
-    Ok(Some(result))
-}
-
-fn boolean_arrangement_orthogonal_solid_cell_recovery(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
-    let Some(solid_operation) = operation.axis_aligned_orthogonal_solid_operation() else {
-        return Ok(None);
-    };
-    let label = match solid_operation {
-        AxisAlignedOrthogonalSolidOperation::Union => {
-            "exact arrangement orthogonal solid cell union recovery"
-        }
-        AxisAlignedOrthogonalSolidOperation::Intersection => {
-            "exact arrangement orthogonal solid cell intersection recovery"
-        }
-        AxisAlignedOrthogonalSolidOperation::Difference => {
-            "exact arrangement orthogonal solid cell difference recovery"
-        }
-    };
-    let Some(mesh) = materialize_axis_aligned_orthogonal_solid_cell_output(
-        left,
-        right,
-        solid_operation,
-        label,
-        validation,
-    )?
-    else {
-        return Ok(None);
-    };
-    let result = certified_shortcut_result(
-        mesh,
-        operation,
-        ExactBooleanShortcutKind::ArrangementCellComplex,
-    );
-    validate_boolean_result(
-        &result,
-        "exact arrangement orthogonal solid recovery result validation failed",
     )?;
     Ok(Some(result))
 }
@@ -8390,12 +8374,10 @@ fn boolean_empty_operand(
                 validation,
             )?
         }
-        ExactBooleanOperation::Difference => ExactMesh::new_with_policy_and_version(
-            left.vertices().to_vec(),
-            left.triangles().to_vec(),
-            hyperlimit::SourceProvenance::exact("exact difference with empty right operand"),
+        ExactBooleanOperation::Difference => copy_mesh(
+            left,
+            "exact difference with empty right operand",
             validation,
-            1,
         )?,
         ExactBooleanOperation::SelectedRegions(_) => {
             return Err(ExactMeshError::one(ExactMeshBlocker::new(
@@ -8421,21 +8403,11 @@ fn boolean_identical_meshes(
 ) -> Result<ExactBooleanResult, ExactMeshError> {
     let mesh = match operation {
         ExactBooleanOperation::Union | ExactBooleanOperation::Intersection => {
-            ExactMesh::new_with_policy_and_version(
-                mesh.vertices().to_vec(),
-                mesh.triangles().to_vec(),
-                hyperlimit::SourceProvenance::exact("exact identical boolean result"),
-                validation,
-                1,
-            )?
+            copy_mesh(mesh, "exact identical boolean result", validation)?
         }
-        ExactBooleanOperation::Difference => ExactMesh::new_with_policy_and_version(
-            Vec::new(),
-            Vec::new(),
-            hyperlimit::SourceProvenance::exact("empty exact identical difference"),
-            validation,
-            1,
-        )?,
+        ExactBooleanOperation::Difference => {
+            empty_mesh("empty exact identical difference", validation)?
+        }
         ExactBooleanOperation::SelectedRegions(_) => {
             return Err(ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::UnsupportedExactOperation,

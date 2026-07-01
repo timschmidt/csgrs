@@ -2877,7 +2877,7 @@ fn axis_aligned_orthogonal_cell_booleans_materialize_from_shortcut_support() {
             .validate_against_sources_for_request(&left, &right, request)
             .unwrap();
 
-        let direct = boolean_arrangement_orthogonal_solid_cell_recovery(
+        let direct = boolean_arrangement_cell_complex_recovery(
             &left,
             &right,
             operation,
