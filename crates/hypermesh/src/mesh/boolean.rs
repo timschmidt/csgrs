@@ -5322,15 +5322,19 @@ fn close_exact_coplanar_boundary_loops_from_loops(
     let mut vertices = mesh.vertices().to_vec();
     let mut cap_triangles = Vec::new();
     for vertex_loops in cap_groups {
-        let Some(loops) = vertex_loops
+        let loops = vertex_loops
             .iter()
             .map(|boundary_loop| {
-                cloned_indexed_points(mesh_vertices, boundary_loop.iter().copied())
+                cloned_indexed_points(mesh_vertices, boundary_loop.iter().copied()).ok_or_else(
+                    || {
+                        ExactMeshError::one(ExactMeshBlocker::new(
+                            ExactMeshBlockerKind::StaleFactReplay,
+                            "exact coplanar boundary closure references a missing boundary vertex",
+                        ))
+                    },
+                )
             })
-            .collect::<Option<Vec<_>>>()
-        else {
-            return Ok(None);
-        };
+            .collect::<Result<Vec<_>, _>>()?;
         let mut group_vertices = Vec::new();
         let mut group_triangles = Vec::new();
         triangulate_exact_loop_group(&loops, &mut group_vertices, &mut group_triangles).map_err(
@@ -5341,14 +5345,12 @@ fn close_exact_coplanar_boundary_loops_from_loops(
                 )
             },
         )?;
-        let Some(local_to_global) = map_cap_vertices_to_boundary_or_insert(
+        let local_to_global = map_cap_vertices_to_boundary_or_insert(
             mesh,
             &vertex_loops,
             &mut vertices,
             group_vertices,
-        ) else {
-            return Ok(None);
-        };
+        )?;
         let triangles = group_triangles.into_iter().map(|triangle| {
             Triangle([
                 local_to_global[triangle.0[0]],
@@ -5434,7 +5436,7 @@ fn map_cap_vertices_to_boundary_or_insert(
     boundary_loops: &[Vec<usize>],
     vertices: &mut Vec<Point3>,
     cap_vertices: Vec<Point3>,
-) -> Option<Vec<usize>> {
+) -> Result<Vec<usize>, ExactMeshError> {
     let boundary_vertices = boundary_loops.iter().flatten().copied().collect::<Vec<_>>();
     let mut used_boundary_vertices = vec![false; boundary_vertices.len()];
     let source_vertices = mesh.view().vertices();
@@ -5445,26 +5447,41 @@ fn map_cap_vertices_to_boundary_or_insert(
                 if used_boundary_vertices[index] {
                     continue;
                 }
-                let existing = source_vertices.get(boundary_vertex)?;
+                let existing = source_vertices.get(boundary_vertex).ok_or_else(|| {
+                    ExactMeshError::one(ExactMeshBlocker::new(
+                        ExactMeshBlockerKind::StaleFactReplay,
+                        "exact coplanar boundary closure cap references a missing boundary vertex",
+                    ))
+                })?;
                 match point3_exact_equal(existing, &point) {
                     Some(true) => {
                         used_boundary_vertices[index] = true;
-                        return Some(boundary_vertex);
+                        return Ok(boundary_vertex);
                     }
                     Some(false) => {}
-                    None => return None,
+                    None => {
+                        return Err(ExactMeshError::one(ExactMeshBlocker::new(
+                            ExactMeshBlockerKind::ExactConstructionFailure,
+                            "exact coplanar boundary closure boundary vertex equality is undecidable",
+                        )));
+                    }
                 }
             }
             for (index, existing) in vertices.iter().enumerate() {
                 match point3_exact_equal(existing, &point) {
-                    Some(true) => return Some(index),
+                    Some(true) => return Ok(index),
                     Some(false) => {}
-                    None => return None,
+                    None => {
+                        return Err(ExactMeshError::one(ExactMeshBlocker::new(
+                            ExactMeshBlockerKind::ExactConstructionFailure,
+                            "exact coplanar boundary closure cap vertex equality is undecidable",
+                        )));
+                    }
                 }
             }
             let index = vertices.len();
             vertices.push(point);
-            Some(index)
+            Ok(index)
         })
         .collect()
 }
@@ -6262,14 +6279,14 @@ fn mesh_from_projected_overlay_selected_faces(
                     .vertices
                     .get(*vertex)
                     .map(|vertex| &vertex.point)
+                    .ok_or_else(|| {
+                        ExactMeshError::one(ExactMeshBlocker::new(
+                            ExactMeshBlockerKind::StaleFactReplay,
+                            "exact coplanar selected-face references a missing arrangement vertex",
+                        ))
+                    })
             })
-            .collect::<Option<Vec<_>>>()
-            .ok_or_else(|| {
-                ExactMeshError::one(ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::StaleFactReplay,
-                    "exact coplanar selected-face references a missing arrangement vertex",
-                ))
-            })?;
+            .collect::<Result<Vec<_>, _>>()?;
         let boundary =
             lift_projected_points_to_carrier(boundary_points, carrier_points, projection);
         let Some(boundary) = boundary else {

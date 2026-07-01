@@ -5622,6 +5622,18 @@ fn exact_coplanar_boundary_closer_can_append_cap_vertices() {
         )
     );
     assert_eq!(vertices.len(), 4);
+
+    let stale_error = map_cap_vertices_to_boundary_or_insert(
+        &mesh,
+        &[vec![0, usize::MAX, 2]],
+        &mut vertices,
+        vec![Point3::new(Real::from(4), Real::from(0), Real::from(0))],
+    )
+    .expect_err("stale cap boundary vertex should return a typed blocker");
+    assert!(
+        stale_error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        "{stale_error:?}"
+    );
 }
 
 #[test]
