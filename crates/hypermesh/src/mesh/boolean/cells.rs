@@ -854,12 +854,16 @@ fn push_coplanar_cell_edge_point(
             reason: "face-cell coplanar edge constraint references a non-triangle edge",
         });
     };
-    if entry
-        .points
-        .iter()
-        .any(|seen| point3_exact_equal(&seen.point, &point) == Some(true))
-    {
-        return Ok(());
+    for seen in &entry.points {
+        match point3_exact_equal(&seen.point, &point) {
+            Some(true) => return Ok(()),
+            Some(false) => {}
+            None => {
+                return Err(hypertri::Error::PredicateUndecided {
+                    predicate: "face-cell coplanar edge point equality",
+                });
+            }
+        }
     }
     entry
         .points
@@ -895,10 +899,22 @@ fn dedup_coplanar_cell_edge_points(
 ) -> hypertri::Result<()> {
     let mut deduped = Vec::<CoplanarCellEdgePoint>::with_capacity(points.len());
     for point in points.drain(..) {
-        if deduped
-            .iter()
-            .any(|seen| point3_exact_equal(&seen.point, &point.point) == Some(true))
-        {
+        let mut duplicate = false;
+        for seen in &deduped {
+            match point3_exact_equal(&seen.point, &point.point) {
+                Some(true) => {
+                    duplicate = true;
+                    break;
+                }
+                Some(false) => {}
+                None => {
+                    return Err(hypertri::Error::PredicateUndecided {
+                        predicate: "face-cell coplanar edge point dedup equality",
+                    });
+                }
+            }
+        }
+        if duplicate {
             continue;
         }
         deduped.push(point);
