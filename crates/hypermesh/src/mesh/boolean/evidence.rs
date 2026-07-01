@@ -1845,8 +1845,7 @@ impl ExactBooleanResult {
         } = self.kind
             && !certified_shortcut_output_matches_sources(
                 shortcut,
-                operation,
-                self.mesh.validation_policy(),
+                ExactBooleanRequest::new(operation, self.mesh.validation_policy()),
                 &self.mesh,
                 &mut source_replay,
             )?
@@ -1882,8 +1881,7 @@ impl ExactBooleanResult {
             shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
         } = self.kind
             && let Some(matches_output) = arrangement_cell_complex_output_matches_sources(
-                operation,
-                self.mesh.validation_policy(),
+                ExactBooleanRequest::new(operation, self.mesh.validation_policy()),
                 &self.mesh,
                 &mut source_replay,
             )
@@ -1963,8 +1961,7 @@ impl ExactBooleanResult {
             && {
                 let matches_sources = if let Some(true) =
                     arrangement_cell_complex_output_matches_sources(
-                        operation,
-                        self.mesh.validation_policy(),
+                        ExactBooleanRequest::new(operation, self.mesh.validation_policy()),
                         &self.mesh,
                         &mut source_replay,
                     )? {
@@ -2000,8 +1997,7 @@ impl ExactBooleanResult {
             && shortcut != ExactBooleanShortcutKind::ArrangementCellComplex
             && !certified_shortcut_sources_match(
                 shortcut,
-                operation,
-                self.mesh.validation_policy(),
+                ExactBooleanRequest::new(operation, self.mesh.validation_policy()),
                 &mut source_replay,
             )?
         {
@@ -2382,10 +2378,10 @@ impl ExactArrangementCellComplexShortcutFacts {
 
 fn certified_shortcut_sources_match(
     shortcut: ExactBooleanShortcutKind,
-    operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
+    request: ExactBooleanRequest,
     source_replay: &mut ExactBooleanSourceReplay<'_>,
 ) -> Result<bool, ExactEvidenceValidationError> {
+    let operation = request.operation;
     if !shortcut_operation_matches(shortcut, operation) {
         return Ok(false);
     }
@@ -2449,19 +2445,20 @@ fn certified_shortcut_sources_match(
             convex_shortcut_sources_match(shortcut, operation, source_replay)
         }
         ExactBooleanShortcutKind::ArrangementCellComplex => {
-            arrangement_cell_complex_sources_match(operation, validation, source_replay)
+            arrangement_cell_complex_sources_match(request, source_replay)
         }
     }
 }
 
 fn certified_shortcut_output_matches_sources(
     shortcut: ExactBooleanShortcutKind,
-    operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
+    request: ExactBooleanRequest,
     mesh: &ExactMesh,
     source_replay: &mut ExactBooleanSourceReplay<'_>,
 ) -> Result<bool, ExactEvidenceValidationError> {
-    if !certified_shortcut_sources_match(shortcut, operation, validation, source_replay)? {
+    let operation = request.operation;
+    let validation = request.validation;
+    if !certified_shortcut_sources_match(shortcut, request, source_replay)? {
         return Ok(false);
     }
     let left = source_replay.left;
@@ -2526,12 +2523,9 @@ fn certified_shortcut_output_matches_sources(
                 && identical_output_matches_sources(operation, validation, mesh, left, right)
         }
         ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid => {
-            if let Some(true) = arrangement_cell_complex_output_matches_sources(
-                operation,
-                validation,
-                mesh,
-                source_replay,
-            )? {
+            if let Some(true) =
+                arrangement_cell_complex_output_matches_sources(request, mesh, source_replay)?
+            {
                 return Ok(false);
             }
             if validation != ExactMeshValidationPolicy::CLOSED
@@ -2573,12 +2567,9 @@ fn certified_shortcut_output_matches_sources(
                     return Ok(false);
                 }
             }
-            if let Some(true) = arrangement_cell_complex_output_matches_sources(
-                operation,
-                validation,
-                mesh,
-                source_replay,
-            )? {
+            if let Some(true) =
+                arrangement_cell_complex_output_matches_sources(request, mesh, source_replay)?
+            {
                 return Ok(false);
             }
             validation == ExactMeshValidationPolicy::CLOSED
@@ -3251,10 +3242,11 @@ fn convex_shortcut_sources_match(
 }
 
 fn arrangement_cell_complex_sources_match(
-    operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
+    request: ExactBooleanRequest,
     source_replay: &mut ExactBooleanSourceReplay<'_>,
 ) -> Result<bool, ExactEvidenceValidationError> {
+    let operation = request.operation;
+    let validation = request.validation;
     let left = source_replay.left;
     let right = source_replay.right;
     if validation == ExactMeshValidationPolicy::CLOSED
@@ -3298,7 +3290,7 @@ fn arrangement_cell_complex_sources_match(
         &graph,
         left,
         right,
-        ExactBooleanRequest::new(operation, validation),
+        request,
         None,
         &shortcut_facts,
     )
@@ -3308,11 +3300,12 @@ fn arrangement_cell_complex_sources_match(
 }
 
 fn arrangement_cell_complex_output_matches_sources(
-    operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
+    request: ExactBooleanRequest,
     mesh: &ExactMesh,
     source_replay: &mut ExactBooleanSourceReplay<'_>,
 ) -> Result<Option<bool>, ExactEvidenceValidationError> {
+    let operation = request.operation;
+    let validation = request.validation;
     let left = source_replay.left;
     let right = source_replay.right;
     let mut retained_mismatch = false;
@@ -3358,13 +3351,9 @@ fn arrangement_cell_complex_output_matches_sources(
         retained_mismatch = true;
     }
 
-    if let Some(replay) = replay_generic_arrangement_cell_complex_result(
-        validated_graph,
-        left,
-        right,
-        ExactBooleanRequest::new(operation, validation),
-    )
-    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+    if let Some(replay) =
+        replay_generic_arrangement_cell_complex_result(validated_graph, left, right, request)
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
     {
         if mesh_output_matches(mesh, &replay.mesh) {
             return Ok(Some(true));
