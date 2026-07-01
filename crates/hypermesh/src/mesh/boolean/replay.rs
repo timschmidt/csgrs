@@ -577,12 +577,9 @@ fn certification_set_from_graph_and_regularized_arrangement(
         request.validation == ExactMeshValidationPolicy::ALLOW_BOUNDARY;
     let planar_arrangement =
         if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
-            planar_arrangement_report(
+            RetainedGraphCounts::empty().into_planar_arrangement_report(
                 request.operation,
                 ExactPlanarArrangementStatus::NotNamedOperation,
-                false,
-                0,
-                0,
                 ExactBooleanBlocker::default(),
                 None,
             )
@@ -598,12 +595,9 @@ fn certification_set_from_graph_and_regularized_arrangement(
                 retained_arrangement_attempt,
             )
             .unwrap_or_else(|_| {
-                planar_arrangement_report(
+                graph_counts.into_planar_arrangement_report(
                     request.operation,
                     ExactPlanarArrangementStatus::NoPositiveOverlap,
-                    graph_had_unknowns,
-                    graph_counts.retained_face_pairs,
-                    graph_counts.retained_events,
                     ExactBooleanBlocker::from_graph(graph, ExactBooleanBlockerKind::Winding),
                     None,
                 )
@@ -714,12 +708,9 @@ fn certification_set_from_graph_and_regularized_arrangement(
             let region_classifications =
                 checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
             let counts = ExactBooleanBlocker::from_graph(graph, ExactBooleanBlockerKind::Winding);
-            winding_evidence_report(
+            graph_counts.into_winding_evidence_report(
                 request.operation,
                 ExactWindingEvidenceStatus::VolumetricAssemblyRequired,
-                graph_had_unknowns,
-                graph_counts.retained_face_pairs,
-                graph_counts.retained_events,
                 region_plan.regions.len(),
                 region_classifications,
                 counts.into_blocker(ExactBooleanBlockerKind::Winding),

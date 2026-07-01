@@ -1264,12 +1264,9 @@ fn test_planar_arrangement_report(
     right: &ExactMesh,
 ) -> ExactPlanarArrangementReport {
     if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
-        return planar_arrangement_report(
+        return RetainedGraphCounts::empty().into_planar_arrangement_report(
             request.operation,
             ExactPlanarArrangementStatus::NotNamedOperation,
-            false,
-            0,
-            0,
             ExactBooleanBlocker::default(),
             None,
         );

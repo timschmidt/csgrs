@@ -1982,14 +1982,77 @@ impl RetainedGraphCounts {
             retained_events: 0,
         }
     }
+
+    fn from_graph(graph: &super::graph::ExactIntersectionGraph) -> Self {
+        Self {
+            graph_had_unknowns: graph.has_unknowns(),
+            retained_face_pairs: graph.face_pairs.len(),
+            retained_events: graph.event_count(),
+        }
+    }
+
+    const fn with_retained_face_pairs(self, retained_face_pairs: usize) -> Self {
+        Self {
+            retained_face_pairs,
+            ..self
+        }
+    }
+
+    fn into_planar_arrangement_report(
+        self,
+        operation: ExactBooleanOperation,
+        status: ExactPlanarArrangementStatus,
+        counts: ExactBooleanBlocker,
+        coplanar_arrangement_evidence: Option<super::graph::CoplanarArrangementEvidence>,
+    ) -> ExactPlanarArrangementReport {
+        let blocker_kind = match status {
+            ExactPlanarArrangementStatus::GraphUnknowns => ExactBooleanBlockerKind::Refinement,
+            ExactPlanarArrangementStatus::BoundaryOnlyContactRequired => {
+                ExactBooleanBlockerKind::BoundaryOnlyContact
+            }
+            ExactPlanarArrangementStatus::Required => ExactBooleanBlockerKind::PlanarArrangement,
+            ExactPlanarArrangementStatus::NotNamedOperation
+            | ExactPlanarArrangementStatus::AlreadyMaterialized
+            | ExactPlanarArrangementStatus::NoPositiveOverlap => counts.inferred_kind(),
+        };
+        ExactPlanarArrangementReport {
+            operation,
+            status,
+            graph_had_unknowns: self.graph_had_unknowns,
+            retained_face_pairs: self.retained_face_pairs,
+            retained_events: self.retained_events,
+            blocker: counts.into_blocker(blocker_kind),
+            coplanar_arrangement_evidence,
+        }
+    }
+
+    fn into_winding_evidence_report(
+        self,
+        operation: ExactBooleanOperation,
+        status: ExactWindingEvidenceStatus,
+        region_count: usize,
+        region_classifications: Vec<FaceRegionPlaneClassification>,
+        blocker: ExactBooleanBlocker,
+        coplanar_arrangement_evidence: Option<super::graph::CoplanarArrangementEvidence>,
+        coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
+    ) -> ExactWindingEvidenceReport {
+        ExactWindingEvidenceReport {
+            operation,
+            status,
+            graph_had_unknowns: self.graph_had_unknowns,
+            retained_face_pairs: self.retained_face_pairs,
+            retained_events: self.retained_events,
+            region_count,
+            region_classifications,
+            blocker,
+            coplanar_arrangement_evidence,
+            coplanar_volumetric_evidence,
+        }
+    }
 }
 
 fn retained_graph_counts(graph: &super::graph::ExactIntersectionGraph) -> RetainedGraphCounts {
-    RetainedGraphCounts {
-        graph_had_unknowns: graph.has_unknowns(),
-        retained_face_pairs: graph.face_pairs.len(),
-        retained_events: graph.event_count(),
-    }
+    RetainedGraphCounts::from_graph(graph)
 }
 
 fn certified_closed_boundary_only_contact_preflight(
@@ -6933,12 +6996,9 @@ fn winding_evidence_report_for_request_from_graph_and_attempt(
                 )));
             }
         };
-        winding_evidence_report(
+        RetainedGraphCounts::empty().into_winding_evidence_report(
             operation,
             status,
-            false,
-            0,
-            0,
             0,
             Vec::new(),
             ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::Winding),
@@ -6986,12 +7046,9 @@ fn arrangement_cell_complex_already_materialized_winding_evidence(
     let counts = ExactBooleanBlocker::from_graph(graph, ExactBooleanBlockerKind::Winding);
     let (blocker_kind, coplanar_evidence) =
         arrangement_materialized_evidence_blocker_kind_and_evidence(graph, left, right)?;
-    Ok(winding_evidence_report(
+    Ok(retained_graph_counts(graph).into_winding_evidence_report(
         operation,
         ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
-        graph.has_unknowns(),
-        graph.face_pairs.len(),
-        graph.event_count(),
         0,
         Vec::new(),
         counts.into_blocker(blocker_kind),
@@ -7037,7 +7094,6 @@ fn arrangement_cell_complex_preflight_materialized_winding_evidence(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-    graph_had_unknowns: bool,
     counts: ExactBooleanBlocker,
     arrangement_cell_complex_shortcut_materializes: bool,
 ) -> Result<ExactWindingEvidenceReport, ExactMeshError> {
@@ -7050,32 +7106,22 @@ fn arrangement_cell_complex_preflight_materialized_winding_evidence(
         blocker_kind
     };
     let blocker = counts.into_blocker(blocker_kind);
-    let (retained_face_pairs, retained_events, blocker, coplanar_evidence) = if coplanar_evidence
-        .is_some()
+    let (graph_counts, blocker, coplanar_evidence) = if coplanar_evidence.is_some()
         || blocker
             .validate_for_kind(ExactBooleanBlockerKind::Winding)
             .is_ok()
     {
-        (
-            graph.face_pairs.len(),
-            graph.event_count(),
-            blocker,
-            coplanar_evidence,
-        )
+        (retained_graph_counts(graph), blocker, coplanar_evidence)
     } else {
         (
-            0,
-            0,
+            RetainedGraphCounts::empty(),
             ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::Winding),
             None,
         )
     };
-    Ok(winding_evidence_report(
+    Ok(graph_counts.into_winding_evidence_report(
         operation,
         ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
-        graph_had_unknowns,
-        retained_face_pairs,
-        retained_events,
         0,
         Vec::new(),
         blocker,
@@ -7158,12 +7204,9 @@ fn planar_arrangement_report_from_graph_with_cell_complex_cache(
     retained_attempt: Option<&ExactArrangementBooleanAttempt>,
 ) -> Result<ExactPlanarArrangementReport, ExactMeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
-        return Ok(planar_arrangement_report(
+        return Ok(RetainedGraphCounts::empty().into_planar_arrangement_report(
             operation,
             ExactPlanarArrangementStatus::NotNamedOperation,
-            false,
-            0,
-            0,
             ExactBooleanBlocker::default(),
             None,
         ));
@@ -7218,45 +7261,12 @@ fn planar_arrangement_report_from_graph_with_cell_complex_cache(
     } else {
         ExactPlanarArrangementStatus::NoPositiveOverlap
     };
-    Ok(planar_arrangement_report(
+    Ok(graph_counts.into_planar_arrangement_report(
         operation,
         status,
-        graph_counts.graph_had_unknowns,
-        graph_counts.retained_face_pairs,
-        graph_counts.retained_events,
         counts,
         coplanar_arrangement_evidence,
     ))
-}
-
-fn planar_arrangement_report(
-    operation: ExactBooleanOperation,
-    status: ExactPlanarArrangementStatus,
-    graph_had_unknowns: bool,
-    retained_face_pairs: usize,
-    retained_events: usize,
-    counts: ExactBooleanBlocker,
-    coplanar_arrangement_evidence: Option<super::graph::CoplanarArrangementEvidence>,
-) -> ExactPlanarArrangementReport {
-    let blocker_kind = match status {
-        ExactPlanarArrangementStatus::GraphUnknowns => ExactBooleanBlockerKind::Refinement,
-        ExactPlanarArrangementStatus::BoundaryOnlyContactRequired => {
-            ExactBooleanBlockerKind::BoundaryOnlyContact
-        }
-        ExactPlanarArrangementStatus::Required => ExactBooleanBlockerKind::PlanarArrangement,
-        ExactPlanarArrangementStatus::NotNamedOperation
-        | ExactPlanarArrangementStatus::AlreadyMaterialized
-        | ExactPlanarArrangementStatus::NoPositiveOverlap => counts.inferred_kind(),
-    };
-    ExactPlanarArrangementReport {
-        operation,
-        status,
-        graph_had_unknowns,
-        retained_face_pairs,
-        retained_events,
-        blocker: counts.into_blocker(blocker_kind),
-        coplanar_arrangement_evidence,
-    }
 }
 
 fn winding_evidence_report_from_graph_with_facts(
@@ -7285,12 +7295,9 @@ fn winding_evidence_report_from_graph_with_facts(
             None
         };
         if let Some(status) = source_shortcut_status {
-            return Ok(winding_evidence_report(
+            return Ok(RetainedGraphCounts::empty().into_winding_evidence_report(
                 operation,
                 status,
-                false,
-                0,
-                0,
                 0,
                 Vec::new(),
                 ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::Winding),
@@ -7301,16 +7308,12 @@ fn winding_evidence_report_from_graph_with_facts(
     }
 
     let graph_counts = retained_graph_counts(graph);
-    let graph_had_unknowns = graph_counts.graph_had_unknowns;
     let counts = ExactBooleanBlocker::from_graph(graph, ExactBooleanBlockerKind::Winding);
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         let blocker_kind = counts.inferred_kind();
-        return Ok(winding_evidence_report(
+        return Ok(graph_counts.into_winding_evidence_report(
             operation,
             ExactWindingEvidenceStatus::NotNamedOperation,
-            graph_counts.graph_had_unknowns,
-            graph_counts.retained_face_pairs,
-            graph_counts.retained_events,
             0,
             Vec::new(),
             counts.into_blocker(blocker_kind),
@@ -7319,12 +7322,9 @@ fn winding_evidence_report_from_graph_with_facts(
         ));
     }
     if graph_counts.graph_had_unknowns {
-        return Ok(winding_evidence_report(
+        return Ok(graph_counts.into_winding_evidence_report(
             operation,
             ExactWindingEvidenceStatus::GraphUnknowns,
-            graph_counts.graph_had_unknowns,
-            graph_counts.retained_face_pairs,
-            graph_counts.retained_events,
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::Refinement),
@@ -7362,7 +7362,6 @@ fn winding_evidence_report_from_graph_with_facts(
         return Ok(winding_evidence_report_with_validated_winding_blocker(
             operation,
             ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized,
-            graph_had_unknowns,
             graph,
             counts,
         ));
@@ -7371,12 +7370,9 @@ fn winding_evidence_report_from_graph_with_facts(
         && !arrangement_cell_complex_shortcut_materializes
         && let Some(evidence) = coplanar_boundary_only_evidence_if_consumed(graph, left, right)?
     {
-        return Ok(winding_evidence_report(
+        return Ok(graph_counts.into_winding_evidence_report(
             operation,
             ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::BoundaryOnlyContact),
@@ -7402,7 +7398,6 @@ fn winding_evidence_report_from_graph_with_facts(
                 left,
                 right,
                 operation,
-                graph_had_unknowns,
                 counts,
                 arrangement_cell_complex_shortcut_materializes,
             )?,
@@ -7414,7 +7409,6 @@ fn winding_evidence_report_from_graph_with_facts(
         return Ok(winding_evidence_report_with_validated_winding_blocker(
             operation,
             ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized,
-            graph_had_unknowns,
             graph,
             counts,
         ));
@@ -7423,27 +7417,23 @@ fn winding_evidence_report_from_graph_with_facts(
         && open_surface_disjoint_report_from_graph(graph, left, right).status
             == ExactOpenSurfaceDisjointStatus::Certified
     {
-        return Ok(winding_evidence_report(
-            operation,
-            ExactWindingEvidenceStatus::OpenSurfaceDisjointAlreadyMaterialized,
-            graph_had_unknowns,
-            0,
-            graph.event_count(),
-            0,
-            Vec::new(),
-            counts.into_blocker(ExactBooleanBlockerKind::Winding),
-            None,
-            None,
-        ));
+        return Ok(graph_counts
+            .with_retained_face_pairs(0)
+            .into_winding_evidence_report(
+                operation,
+                ExactWindingEvidenceStatus::OpenSurfaceDisjointAlreadyMaterialized,
+                0,
+                Vec::new(),
+                counts.into_blocker(ExactBooleanBlockerKind::Winding),
+                None,
+                None,
+            ));
     }
     if let Some(plan) = open_surface_arrangement_plan_from_graph(graph, left, right, operation)? {
         let region_count = unique_classified_region_count(&plan.region_classifications);
-        return Ok(winding_evidence_report(
+        return Ok(graph_counts.into_winding_evidence_report(
             operation,
             ExactWindingEvidenceStatus::OpenSurfaceArrangementAlreadyMaterialized,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
             region_count,
             plan.region_classifications,
             counts.into_blocker(ExactBooleanBlockerKind::Winding),
@@ -7455,12 +7445,9 @@ fn winding_evidence_report_from_graph_with_facts(
         && closed_boundary_contact_evidence_from_graph(graph, left, right)?
             .is_some_and(|evidence| evidence.positive_area_coplanar_overlapping_pairs == 0)
     {
-        return Ok(winding_evidence_report(
+        return Ok(graph_counts.into_winding_evidence_report(
             operation,
             ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::BoundaryOnlyContact),
@@ -7475,12 +7462,9 @@ fn winding_evidence_report_from_graph_with_facts(
         )
         && closed_boundary_contact_evidence_from_graph(graph, left, right)?.is_some()
     {
-        return Ok(winding_evidence_report(
+        return Ok(graph_counts.into_winding_evidence_report(
             operation,
             ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::BoundaryOnlyContact),
@@ -7493,18 +7477,14 @@ fn winding_evidence_report_from_graph_with_facts(
         return Ok(winding_evidence_report_with_validated_winding_blocker(
             operation,
             ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized,
-            graph_had_unknowns,
             graph,
             counts,
         ));
     }
     if boundary_only_contact_required {
-        return Ok(winding_evidence_report(
+        return Ok(graph_counts.into_winding_evidence_report(
             operation,
             ExactWindingEvidenceStatus::BoundaryOnlyContactRequired,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::BoundaryOnlyContact),
@@ -7522,12 +7502,9 @@ fn winding_evidence_report_from_graph_with_facts(
         None,
     )?;
     if matches!(planar_report.status, ExactPlanarArrangementStatus::Required) {
-        return Ok(winding_evidence_report(
+        return Ok(graph_counts.into_winding_evidence_report(
             operation,
             ExactWindingEvidenceStatus::PlanarArrangementRequired,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::PlanarArrangement),
@@ -7542,12 +7519,9 @@ fn winding_evidence_report_from_graph_with_facts(
         planar_report.status,
         ExactPlanarArrangementStatus::AlreadyMaterialized
     ) {
-        return Ok(winding_evidence_report(
+        return Ok(graph_counts.into_winding_evidence_report(
             operation,
             ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::PlanarArrangement),
@@ -7571,7 +7545,7 @@ fn winding_evidence_report_from_graph_with_facts(
         left,
         right,
         operation,
-        graph_had_unknowns,
+        graph_counts,
         counts,
     )? {
         return Ok(report);
@@ -7590,12 +7564,9 @@ fn winding_evidence_report_from_graph_with_facts(
         )?
         .is_some()
         {
-            return Ok(winding_evidence_report(
+            return Ok(graph_counts.into_winding_evidence_report(
                 operation,
                 ExactWindingEvidenceStatus::CoplanarVolumetricCellsAlreadyMaterialized,
-                graph_had_unknowns,
-                graph.face_pairs.len(),
-                graph.event_count(),
                 0,
                 Vec::new(),
                 counts.into_blocker(ExactBooleanBlockerKind::CoplanarVolumetricCells),
@@ -7603,12 +7574,9 @@ fn winding_evidence_report_from_graph_with_facts(
                 Some(coplanar_volumetric_evidence),
             ));
         }
-        return Ok(winding_evidence_report(
+        return Ok(graph_counts.into_winding_evidence_report(
             operation,
             ExactWindingEvidenceStatus::CoplanarVolumetricCellsRequired,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::CoplanarVolumetricCells),
@@ -7622,18 +7590,17 @@ fn winding_evidence_report_from_graph_with_facts(
         && left_in_right == ClosedMeshWindingMeshRelation::Outside
         && right_in_left == ClosedMeshWindingMeshRelation::Outside
     {
-        return Ok(winding_evidence_report(
-            operation,
-            ExactWindingEvidenceStatus::ClosedWindingSeparatedAlreadyMaterialized,
-            graph_had_unknowns,
-            0,
-            graph.event_count(),
-            0,
-            Vec::new(),
-            counts.into_blocker(ExactBooleanBlockerKind::Winding),
-            None,
-            None,
-        ));
+        return Ok(graph_counts
+            .with_retained_face_pairs(0)
+            .into_winding_evidence_report(
+                operation,
+                ExactWindingEvidenceStatus::ClosedWindingSeparatedAlreadyMaterialized,
+                0,
+                Vec::new(),
+                counts.into_blocker(ExactBooleanBlockerKind::Winding),
+                None,
+                None,
+            ));
     }
     if graph.face_pairs.is_empty()
         && !meshes_are_certified_bounds_disjoint(left, right)
@@ -7657,44 +7624,39 @@ fn winding_evidence_report_from_graph_with_facts(
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && certified_closed_winding_containment_relation_from_graph(graph, left, right)?.is_some()
     {
-        return Ok(winding_evidence_report(
-            operation,
-            ExactWindingEvidenceStatus::ClosedWindingContainmentAlreadyMaterialized,
-            graph_had_unknowns,
-            0,
-            graph.event_count(),
-            0,
-            Vec::new(),
-            counts.into_blocker(ExactBooleanBlockerKind::Winding),
-            None,
-            None,
-        ));
+        return Ok(graph_counts
+            .with_retained_face_pairs(0)
+            .into_winding_evidence_report(
+                operation,
+                ExactWindingEvidenceStatus::ClosedWindingContainmentAlreadyMaterialized,
+                0,
+                Vec::new(),
+                counts.into_blocker(ExactBooleanBlockerKind::Winding),
+                None,
+                None,
+            ));
     }
     if graph.face_pairs.is_empty() {
-        return Ok(winding_evidence_report(
-            operation,
-            ExactWindingEvidenceStatus::NoNontrivialOverlap,
-            graph_had_unknowns,
-            0,
-            graph.event_count(),
-            0,
-            Vec::new(),
-            counts.into_blocker(ExactBooleanBlockerKind::Winding),
-            None,
-            None,
-        ));
+        return Ok(graph_counts
+            .with_retained_face_pairs(0)
+            .into_winding_evidence_report(
+                operation,
+                ExactWindingEvidenceStatus::NoNontrivialOverlap,
+                0,
+                Vec::new(),
+                counts.into_blocker(ExactBooleanBlockerKind::Winding),
+                None,
+                None,
+            ));
     }
 
     let geometry = graph.face_split_geometry_plan(left, right)?;
     let region_plan = geometry.region_plan(left, right);
     let region_classifications =
         checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
-    Ok(winding_evidence_report(
+    Ok(graph_counts.into_winding_evidence_report(
         operation,
         ExactWindingEvidenceStatus::Ready,
-        graph_had_unknowns,
-        graph.face_pairs.len(),
-        graph.event_count(),
         region_plan.regions.len(),
         region_classifications,
         counts.into_blocker(ExactBooleanBlockerKind::Winding),
@@ -7708,7 +7670,7 @@ fn volumetric_winding_region_plan_evidence_from_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-    graph_had_unknowns: bool,
+    graph_counts: RetainedGraphCounts,
     counts: ExactBooleanBlocker,
 ) -> Result<Option<ExactWindingEvidenceReport>, ExactMeshError> {
     let Some(plan) = volumetric_winding_region_plan_from_graph(graph, left, right)? else {
@@ -7735,12 +7697,9 @@ fn volumetric_winding_region_plan_evidence_from_graph(
         operation,
         ExactMeshValidationPolicy::CLOSED,
     )? {
-        return Ok(Some(winding_evidence_report(
+        return Ok(Some(graph_counts.into_winding_evidence_report(
             operation,
             ExactWindingEvidenceStatus::Ready,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
             materialized.triangulations.len(),
             materialized.region_classifications,
             counts.into_blocker(blocker_kind),
@@ -7780,12 +7739,9 @@ fn volumetric_winding_region_plan_evidence_from_graph(
         )
     }) {
         let region_count = unique_classified_region_count(&region_classifications);
-        return Ok(Some(winding_evidence_report(
+        return Ok(Some(graph_counts.into_winding_evidence_report(
             operation,
             ExactWindingEvidenceStatus::VolumetricAssemblyRequired,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
             region_count,
             region_classifications,
             counts.into_blocker(blocker_kind),
@@ -7797,64 +7753,25 @@ fn volumetric_winding_region_plan_evidence_from_graph(
     Ok(None)
 }
 
-fn winding_evidence_report(
-    operation: ExactBooleanOperation,
-    status: ExactWindingEvidenceStatus,
-    graph_had_unknowns: bool,
-    retained_face_pairs: usize,
-    retained_events: usize,
-    region_count: usize,
-    region_classifications: Vec<FaceRegionPlaneClassification>,
-    blocker: ExactBooleanBlocker,
-    coplanar_arrangement_evidence: Option<super::graph::CoplanarArrangementEvidence>,
-    coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
-) -> ExactWindingEvidenceReport {
-    ExactWindingEvidenceReport {
-        operation,
-        status,
-        graph_had_unknowns,
-        retained_face_pairs,
-        retained_events,
-        region_count,
-        region_classifications,
-        blocker,
-        coplanar_arrangement_evidence,
-        coplanar_volumetric_evidence,
-    }
-}
-
 fn winding_evidence_report_with_validated_winding_blocker(
     operation: ExactBooleanOperation,
     status: ExactWindingEvidenceStatus,
-    graph_had_unknowns: bool,
     graph: &super::graph::ExactIntersectionGraph,
     counts: ExactBooleanBlocker,
 ) -> ExactWindingEvidenceReport {
     let blocker = counts.into_blocker(ExactBooleanBlockerKind::Winding);
-    let (retained_face_pairs, retained_events, blocker) = if blocker
+    let (graph_counts, blocker) = if blocker
         .validate_for_kind(ExactBooleanBlockerKind::Winding)
         .is_ok()
     {
-        (graph.face_pairs.len(), graph.event_count(), blocker)
+        (retained_graph_counts(graph), blocker)
     } else {
         (
-            0,
-            0,
+            RetainedGraphCounts::empty(),
             ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::Winding),
         )
     };
-    winding_evidence_report(
-        operation,
-        status,
-        graph_had_unknowns,
-        retained_face_pairs,
-        retained_events,
-        0,
-        Vec::new(),
-        blocker,
-        None,
-        None,
-    )
+    graph_counts.into_winding_evidence_report(operation, status, 0, Vec::new(), blocker, None, None)
 }
 
 struct VolumetricWindingRegionPlan {
