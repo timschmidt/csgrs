@@ -3950,6 +3950,51 @@ pub(crate) enum ExactBooleanSupport {
 }
 
 impl ExactBooleanSupport {
+    fn certified_operation_matches(self, operation: ExactBooleanOperation) -> bool {
+        matches!(
+            (self, operation),
+            (
+                Self::CertifiedClosedBoundaryTouchingUnion | Self::CertifiedConvexUnion,
+                ExactBooleanOperation::Union,
+            ) | (
+                Self::CertifiedClosedBoundaryTouchingIntersection
+                    | Self::CertifiedConvexIntersection,
+                ExactBooleanOperation::Intersection,
+            ) | (
+                Self::CertifiedClosedBoundaryTouchingDifference | Self::CertifiedConvexDifference,
+                ExactBooleanOperation::Difference,
+            ) | (
+                Self::CertifiedEmptyOperand
+                    | Self::CertifiedBoundsDisjoint
+                    | Self::CertifiedIdentical
+                    | Self::CertifiedSameSurface
+                    | Self::CertifiedOpenSurfaceDisjoint
+                    | Self::CertifiedClosedWindingSeparated
+                    | Self::CertifiedClosedWindingContainment
+                    | Self::CertifiedMixedDimensionalRegularizedSolid
+                    | Self::CertifiedLowerDimensionalRegularizedSolid
+                    | Self::CertifiedConvexContainment
+                    | Self::CertifiedConvexSeparated,
+                ExactBooleanOperation::Union
+                    | ExactBooleanOperation::Intersection
+                    | ExactBooleanOperation::Difference,
+            )
+        )
+    }
+
+    fn open_surface_arrangement_operation(self) -> Option<ExactBooleanOperation> {
+        match self {
+            Self::CertifiedOpenSurfaceArrangementUnion => Some(ExactBooleanOperation::Union),
+            Self::CertifiedOpenSurfaceArrangementIntersection => {
+                Some(ExactBooleanOperation::Intersection)
+            }
+            Self::CertifiedOpenSurfaceArrangementDifference => {
+                Some(ExactBooleanOperation::Difference)
+            }
+            _ => None,
+        }
+    }
+
     /// Returns whether this support state represents an executable exact
     /// decision rather than a retained blocker.
     pub(crate) const fn is_certified(self) -> bool {
@@ -4494,37 +4539,8 @@ impl ExactBooleanPreflight {
         // keeps contradictions visible as structured state rather than hiding
         // them behind a boolean success/failure bit.
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
-        let certified_support_matches_operation = matches!(
-            (self.support, self.operation),
-            (
-                ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
-                    | ExactBooleanSupport::CertifiedConvexUnion,
-                ExactBooleanOperation::Union,
-            ) | (
-                ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
-                    | ExactBooleanSupport::CertifiedConvexIntersection,
-                ExactBooleanOperation::Intersection,
-            ) | (
-                ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
-                    | ExactBooleanSupport::CertifiedConvexDifference,
-                ExactBooleanOperation::Difference,
-            ) | (
-                ExactBooleanSupport::CertifiedEmptyOperand
-                    | ExactBooleanSupport::CertifiedBoundsDisjoint
-                    | ExactBooleanSupport::CertifiedIdentical
-                    | ExactBooleanSupport::CertifiedSameSurface
-                    | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
-                    | ExactBooleanSupport::CertifiedClosedWindingSeparated
-                    | ExactBooleanSupport::CertifiedClosedWindingContainment
-                    | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
-                    | ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid
-                    | ExactBooleanSupport::CertifiedConvexContainment
-                    | ExactBooleanSupport::CertifiedConvexSeparated,
-                ExactBooleanOperation::Union
-                    | ExactBooleanOperation::Intersection
-                    | ExactBooleanOperation::Difference,
-            )
-        );
+        let certified_support_matches_operation =
+            self.support.certified_operation_matches(self.operation);
         if self.coplanar_volumetric_evidence.is_some()
             && !matches!(
                 self.support,
@@ -4664,18 +4680,10 @@ impl ExactBooleanPreflight {
             ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
             | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
             | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
-                let expected_operation = match self.support {
-                    ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion => {
-                        ExactBooleanOperation::Union
-                    }
-                    ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection => {
-                        ExactBooleanOperation::Intersection
-                    }
-                    ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
-                        ExactBooleanOperation::Difference
-                    }
-                    _ => unreachable!("matched open-surface arrangement support"),
-                };
+                let expected_operation = self
+                    .support
+                    .open_surface_arrangement_operation()
+                    .expect("matched open-surface arrangement support");
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.operation != expected_operation
                     || self.graph_had_unknowns
