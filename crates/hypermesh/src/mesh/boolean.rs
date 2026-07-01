@@ -2019,6 +2019,50 @@ impl RetainedGraphCounts {
         }
     }
 
+    fn into_adjacent_union_completion_report(
+        self,
+        operation: ExactBooleanOperation,
+        status: ExactAdjacentUnionCompletionStatus,
+        left_closed: bool,
+        right_closed: bool,
+        axis_aligned_box_pair: bool,
+        stronger_kernel_available: bool,
+        counts: ExactBooleanBlocker,
+        full_face_shared_faces: usize,
+        full_face_shared_patches: usize,
+        contained_containing_side: Option<MeshSide>,
+        contained_faces: usize,
+        containing_faces: usize,
+    ) -> ExactAdjacentUnionCompletionReport {
+        let blocker_kind = match status {
+            ExactAdjacentUnionCompletionStatus::GraphUnresolved => {
+                ExactBooleanBlockerKind::Refinement
+            }
+            ExactAdjacentUnionCompletionStatus::CertifiedFullFace
+            | ExactAdjacentUnionCompletionStatus::CertifiedContainedFace => {
+                ExactBooleanBlockerKind::BoundaryOnlyContact
+            }
+            _ => counts.inferred_kind(),
+        };
+        ExactAdjacentUnionCompletionReport {
+            operation,
+            status,
+            left_closed,
+            right_closed,
+            axis_aligned_box_pair,
+            stronger_kernel_available,
+            graph_had_unknowns: self.graph_had_unknowns,
+            retained_face_pairs: self.retained_face_pairs,
+            retained_events: self.retained_events,
+            blocker: counts.into_blocker(blocker_kind),
+            full_face_shared_faces,
+            full_face_shared_patches,
+            contained_containing_side,
+            contained_faces,
+            containing_faces,
+        }
+    }
+
     fn into_planar_arrangement_report(
         self,
         operation: ExactBooleanOperation,
@@ -3865,50 +3909,6 @@ fn arrangement_cell_complex_gate_evidence_from_arrangement(
     }))
 }
 
-fn adjacent_union_completion_report(
-    operation: ExactBooleanOperation,
-    status: ExactAdjacentUnionCompletionStatus,
-    left_closed: bool,
-    right_closed: bool,
-    axis_aligned_box_pair: bool,
-    stronger_kernel_available: bool,
-    graph_had_unknowns: bool,
-    retained_face_pairs: usize,
-    retained_events: usize,
-    counts: ExactBooleanBlocker,
-    full_face_shared_faces: usize,
-    full_face_shared_patches: usize,
-    contained_containing_side: Option<MeshSide>,
-    contained_faces: usize,
-    containing_faces: usize,
-) -> ExactAdjacentUnionCompletionReport {
-    let blocker_kind = match status {
-        ExactAdjacentUnionCompletionStatus::GraphUnresolved => ExactBooleanBlockerKind::Refinement,
-        ExactAdjacentUnionCompletionStatus::CertifiedFullFace
-        | ExactAdjacentUnionCompletionStatus::CertifiedContainedFace => {
-            ExactBooleanBlockerKind::BoundaryOnlyContact
-        }
-        _ => counts.inferred_kind(),
-    };
-    ExactAdjacentUnionCompletionReport {
-        operation,
-        status,
-        left_closed,
-        right_closed,
-        axis_aligned_box_pair,
-        stronger_kernel_available,
-        graph_had_unknowns,
-        retained_face_pairs,
-        retained_events,
-        blocker: counts.into_blocker(blocker_kind),
-        full_face_shared_faces,
-        full_face_shared_patches,
-        contained_containing_side,
-        contained_faces,
-        containing_faces,
-    }
-}
-
 pub(crate) fn adjacent_union_completion_certification_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -3926,16 +3926,13 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
     let right_closed = right.facts().mesh.closed_manifold;
     if operation != ExactBooleanOperation::Union {
         return Ok((
-            adjacent_union_completion_report(
+            RetainedGraphCounts::empty().into_adjacent_union_completion_report(
                 operation,
                 ExactAdjacentUnionCompletionStatus::NotUnion,
                 left_closed,
                 right_closed,
                 false,
                 false,
-                false,
-                0,
-                0,
                 ExactBooleanBlocker::default(),
                 0,
                 0,
@@ -3948,16 +3945,13 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
     }
     if !left_closed || !right_closed {
         return Ok((
-            adjacent_union_completion_report(
+            RetainedGraphCounts::empty().into_adjacent_union_completion_report(
                 operation,
                 ExactAdjacentUnionCompletionStatus::NotClosedSolid,
                 left_closed,
                 right_closed,
                 false,
                 false,
-                false,
-                0,
-                0,
                 ExactBooleanBlocker::default(),
                 0,
                 0,
@@ -3971,16 +3965,13 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
     let axis_aligned_box_pair = orthogonal_solid::try_certified_axis_aligned_box_pair(left, right)?;
     if axis_aligned_box_pair {
         return Ok((
-            adjacent_union_completion_report(
+            RetainedGraphCounts::empty().into_adjacent_union_completion_report(
                 operation,
                 ExactAdjacentUnionCompletionStatus::AxisAlignedBoxPair,
                 left_closed,
                 right_closed,
                 true,
                 false,
-                false,
-                0,
-                0,
                 ExactBooleanBlocker::default(),
                 0,
                 0,
@@ -3992,22 +3983,17 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
         ));
     }
 
-    let graph_had_unknowns = graph.has_unknowns();
-    let retained_face_pairs = graph.face_pairs.len();
-    let retained_events = graph.event_count();
+    let graph_counts = retained_graph_counts(graph);
     let counts = ExactBooleanBlocker::from_graph(graph, ExactBooleanBlockerKind::Winding);
-    if graph_had_unknowns || counts.construction_failed_events != 0 {
+    if graph_counts.graph_had_unknowns || counts.construction_failed_events != 0 {
         return Ok((
-            adjacent_union_completion_report(
+            graph_counts.into_adjacent_union_completion_report(
                 operation,
                 ExactAdjacentUnionCompletionStatus::GraphUnresolved,
                 left_closed,
                 right_closed,
                 false,
                 false,
-                graph_had_unknowns,
-                retained_face_pairs,
-                retained_events,
                 counts,
                 0,
                 0,
@@ -4044,16 +4030,13 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
             None
         };
         return Ok((
-            adjacent_union_completion_report(
+            graph_counts.into_adjacent_union_completion_report(
                 operation,
                 ExactAdjacentUnionCompletionStatus::CertifiedFullFace,
                 left_closed,
                 right_closed,
                 false,
                 false,
-                graph_had_unknowns,
-                retained_face_pairs,
-                retained_events,
                 counts,
                 full_face_shared_faces,
                 full_face_shared_patches,
@@ -4088,16 +4071,13 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
         }
     {
         return Ok((
-            adjacent_union_completion_report(
+            graph_counts.into_adjacent_union_completion_report(
                 operation,
                 ExactAdjacentUnionCompletionStatus::StrongerKernelAvailable,
                 left_closed,
                 right_closed,
                 false,
                 true,
-                graph_had_unknowns,
-                retained_face_pairs,
-                retained_events,
                 counts,
                 0,
                 0,
@@ -4135,16 +4115,13 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
             None
         };
         return Ok((
-            adjacent_union_completion_report(
+            graph_counts.into_adjacent_union_completion_report(
                 operation,
                 ExactAdjacentUnionCompletionStatus::CertifiedContainedFace,
                 left_closed,
                 right_closed,
                 false,
                 false,
-                graph_had_unknowns,
-                retained_face_pairs,
-                retained_events,
                 counts,
                 0,
                 0,
@@ -4157,16 +4134,13 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
     }
 
     Ok((
-        adjacent_union_completion_report(
+        graph_counts.into_adjacent_union_completion_report(
             operation,
             ExactAdjacentUnionCompletionStatus::NoAdjacencyCertificate,
             left_closed,
             right_closed,
             false,
             false,
-            graph_had_unknowns,
-            retained_face_pairs,
-            retained_events,
             counts,
             0,
             0,
