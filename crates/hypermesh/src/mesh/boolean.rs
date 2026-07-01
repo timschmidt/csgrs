@@ -6649,12 +6649,10 @@ pub(crate) fn materialize_open_surface_disjoint_meshes(
             validation,
         )?,
         ExactBooleanOperation::SelectedRegions(_) => {
-            return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
-                format!(
-                    "open-surface disjoint materialization requires a named boolean operation: {operation:?}"
-                ),
-            )));
+            return Err(named_boolean_required_error(
+                "open-surface disjoint",
+                operation,
+            ));
         }
     };
 
@@ -6961,23 +6959,14 @@ pub(crate) fn boolean_same_surface_meshes(
     operation: ExactBooleanOperation,
     validation: ExactMeshValidationPolicy,
 ) -> Result<ExactBooleanResult, ExactMeshError> {
-    let mesh = match operation {
-        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection => {
-            copy_mesh(mesh, "exact same-surface boolean result", validation)?
-        }
-        ExactBooleanOperation::Difference => {
-            empty_mesh("empty exact same-surface difference", validation)?
-        }
-        ExactBooleanOperation::SelectedRegions(_) => {
-            return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
-                format!(
-                    "same-surface materialization requires a named boolean operation: {operation:?}"
-                ),
-            )));
-        }
-    };
-
+    let mesh = materialize_single_surface_boolean_mesh(
+        mesh,
+        operation,
+        validation,
+        "exact same-surface boolean result",
+        "empty exact same-surface difference",
+        "same-surface",
+    )?;
     Ok(certified_shortcut_result(
         mesh,
         operation,
@@ -8313,12 +8302,7 @@ fn boolean_disjoint_meshes(
             validation,
         )?,
         ExactBooleanOperation::SelectedRegions(_) => {
-            return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
-                format!(
-                    "bounds-disjoint materialization requires a named boolean operation: {operation:?}"
-                ),
-            )));
+            return Err(named_boolean_required_error("bounds-disjoint", operation));
         }
     };
     Ok(certified_shortcut_result(
@@ -8380,12 +8364,7 @@ fn boolean_empty_operand(
             validation,
         )?,
         ExactBooleanOperation::SelectedRegions(_) => {
-            return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
-                format!(
-                    "empty-operand materialization requires a named boolean operation: {operation:?}"
-                ),
-            )));
+            return Err(named_boolean_required_error("empty-operand", operation));
         }
     };
 
@@ -8401,28 +8380,38 @@ fn boolean_identical_meshes(
     operation: ExactBooleanOperation,
     validation: ExactMeshValidationPolicy,
 ) -> Result<ExactBooleanResult, ExactMeshError> {
-    let mesh = match operation {
-        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection => {
-            copy_mesh(mesh, "exact identical boolean result", validation)?
-        }
-        ExactBooleanOperation::Difference => {
-            empty_mesh("empty exact identical difference", validation)?
-        }
-        ExactBooleanOperation::SelectedRegions(_) => {
-            return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
-                format!(
-                    "identical-mesh materialization requires a named boolean operation: {operation:?}"
-                ),
-            )));
-        }
-    };
-
+    let mesh = materialize_single_surface_boolean_mesh(
+        mesh,
+        operation,
+        validation,
+        "exact identical boolean result",
+        "empty exact identical difference",
+        "identical-mesh",
+    )?;
     Ok(certified_shortcut_result(
         mesh,
         operation,
         ExactBooleanShortcutKind::Identical,
     ))
+}
+
+fn materialize_single_surface_boolean_mesh(
+    mesh: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ExactMeshValidationPolicy,
+    retained_label: &'static str,
+    difference_label: &'static str,
+    context: &'static str,
+) -> Result<ExactMesh, ExactMeshError> {
+    match operation {
+        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection => {
+            copy_mesh(mesh, retained_label, validation)
+        }
+        ExactBooleanOperation::Difference => empty_mesh(difference_label, validation),
+        ExactBooleanOperation::SelectedRegions(_) => {
+            Err(named_boolean_required_error(context, operation))
+        }
+    }
 }
 
 fn empty_mesh(
@@ -8436,6 +8425,16 @@ fn empty_mesh(
         validation,
         1,
     )
+}
+
+fn named_boolean_required_error(
+    context: &'static str,
+    operation: ExactBooleanOperation,
+) -> ExactMeshError {
+    ExactMeshError::one(ExactMeshBlocker::new(
+        ExactMeshBlockerKind::UnsupportedExactOperation,
+        format!("{context} materialization requires a named boolean operation: {operation:?}"),
+    ))
 }
 
 fn certified_shortcut_result(
