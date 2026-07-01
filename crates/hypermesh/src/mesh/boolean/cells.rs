@@ -166,15 +166,8 @@ fn triangulate_one_face_cell_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> hypertri::Result<Option<(FaceRegionBoundary, FaceRegionTriangulation)>> {
-    let source_triangle = mesh
-        .facts()
-        .faces
-        .get(face)
-        .ok_or(hypertri::Error::InvalidInput {
-            reason: "face cell references a missing source face",
-        })?
-        .triangle
-        .vertices;
+    let source_triangle =
+        source_face_vertices(mesh, face, "face cell references a missing source face")?;
     let projection = choose_region_projection(mesh, face)?;
     let mut boundary = Vec::new();
     let mut interior_constraints = Vec::new();
@@ -314,12 +307,14 @@ fn seed_source_triangle_face_cell_boundary(
     boundary: &mut Vec<FaceSplitBoundaryNode>,
 ) -> hypertri::Result<()> {
     for vertex in source_triangle {
+        let point = source_vertex_point(
+            mesh,
+            vertex,
+            "face-cell source triangle references a missing vertex",
+        )?;
         push_cell_node(
             boundary,
-            FaceSplitBoundaryNode::OriginalVertex {
-                vertex,
-                point: mesh.vertices()[vertex].clone(),
-            },
+            FaceSplitBoundaryNode::OriginalVertex { vertex, point },
         )?;
     }
     Ok(())
@@ -607,15 +602,11 @@ fn seed_source_boundary_vertices_on_coplanar_opposite_edges(
         MeshSide::Left => MeshSide::Right,
         MeshSide::Right => MeshSide::Left,
     };
-    let source_triangle = source_mesh
-        .facts()
-        .faces
-        .get(face)
-        .ok_or(hypertri::Error::InvalidInput {
-            reason: "face-cell coplanar split graph references a missing source face",
-        })?
-        .triangle
-        .vertices;
+    let source_triangle = source_face_vertices(
+        source_mesh,
+        face,
+        "face-cell coplanar split graph references a missing source face",
+    )?;
     let projection = choose_region_projection(source_mesh, face)?;
 
     let edge_keys = edges.iter().map(|edge| edge.edge).collect::<Vec<_>>();
@@ -625,13 +616,11 @@ fn seed_source_boundary_vertices_on_coplanar_opposite_edges(
         let projected_start = project_point3(&start, projection);
         let projected_end = project_point3(&end, projection);
         for vertex in source_triangle {
-            let point = source_mesh
-                .vertices()
-                .get(vertex)
-                .ok_or(hypertri::Error::InvalidInput {
-                    reason: "face-cell source triangle references a missing vertex",
-                })?
-                .clone();
+            let point = source_vertex_point(
+                source_mesh,
+                vertex,
+                "face-cell source triangle references a missing vertex",
+            )?;
             let projected_point = project_point3(&point, projection);
             match point_on_segment(&projected_start, &projected_end, &projected_point).value() {
                 Some(true) => {
@@ -676,15 +665,11 @@ fn seed_source_boundary_edge_crossings_on_coplanar_opposite_edges(
         MeshSide::Left => MeshSide::Right,
         MeshSide::Right => MeshSide::Left,
     };
-    let source_triangle = source_mesh
-        .facts()
-        .faces
-        .get(face)
-        .ok_or(hypertri::Error::InvalidInput {
-            reason: "face-cell coplanar split graph references a missing source face",
-        })?
-        .triangle
-        .vertices;
+    let source_triangle = source_face_vertices(
+        source_mesh,
+        face,
+        "face-cell coplanar split graph references a missing source face",
+    )?;
     let projection = choose_region_projection(source_mesh, face)?;
     let source_edges = triangle_edges(source_triangle);
 
@@ -695,15 +680,15 @@ fn seed_source_boundary_edge_crossings_on_coplanar_opposite_edges(
         let projected_opposite_start = project_point3(&opposite_start, projection);
         let projected_opposite_end = project_point3(&opposite_end, projection);
         for source_edge in source_edges {
-            let source_start = source_mesh.vertices().get(source_edge[0]).ok_or(
-                hypertri::Error::InvalidInput {
-                    reason: "face-cell source edge references a missing start vertex",
-                },
+            let source_start = source_vertex_ref(
+                source_mesh,
+                source_edge[0],
+                "face-cell source edge references a missing start vertex",
             )?;
-            let source_end = source_mesh.vertices().get(source_edge[1]).ok_or(
-                hypertri::Error::InvalidInput {
-                    reason: "face-cell source edge references a missing end vertex",
-                },
+            let source_end = source_vertex_ref(
+                source_mesh,
+                source_edge[1],
+                "face-cell source edge references a missing end vertex",
             )?;
             let projected_source_start = project_point3(source_start, projection);
             let projected_source_end = project_point3(source_end, projection);
@@ -774,15 +759,11 @@ fn coplanar_opposite_edges(
         MeshSide::Left => (right, right_face),
         MeshSide::Right => (left, left_face),
     };
-    let triangle = mesh
-        .facts()
-        .faces
-        .get(face)
-        .ok_or(hypertri::Error::InvalidInput {
-            reason: "face-cell coplanar split graph references a missing opposite face",
-        })?
-        .triangle
-        .vertices;
+    let triangle = source_face_vertices(
+        mesh,
+        face,
+        "face-cell coplanar split graph references a missing opposite face",
+    )?;
     Ok(triangle_edges(triangle)
         .into_iter()
         .map(|edge| CoplanarCellEdge {
@@ -812,12 +793,53 @@ fn vertex_point_for_side(
         MeshSide::Left => left,
         MeshSide::Right => right,
     };
-    mesh.vertices()
-        .get(vertex)
-        .cloned()
-        .ok_or(hypertri::Error::InvalidInput {
-            reason: "face-cell coplanar vertex overlap references a missing vertex",
-        })
+    source_vertex_point(
+        mesh,
+        vertex,
+        "face-cell coplanar vertex overlap references a missing vertex",
+    )
+}
+
+fn source_face_vertices(
+    mesh: &ExactMesh,
+    face: usize,
+    reason: &'static str,
+) -> hypertri::Result<[usize; 3]> {
+    mesh.view()
+        .face(face)
+        .map(|face| face.vertex_indices())
+        .ok_or(hypertri::Error::InvalidInput { reason })
+}
+
+fn source_face_points<'a>(
+    mesh: &'a ExactMesh,
+    face: usize,
+    reason: &'static str,
+) -> hypertri::Result<[&'a Point3; 3]> {
+    mesh.view()
+        .face(face)
+        .ok_or(hypertri::Error::InvalidInput { reason })?
+        .vertices()
+        .map_err(|_| hypertri::Error::InvalidInput { reason })
+}
+
+fn source_vertex_ref<'a>(
+    mesh: &'a ExactMesh,
+    vertex: usize,
+    reason: &'static str,
+) -> hypertri::Result<&'a Point3> {
+    mesh.view()
+        .vertex(vertex)
+        .map(|vertex| vertex.point())
+        .ok_or(hypertri::Error::InvalidInput { reason })
+}
+
+fn source_vertex_point(
+    mesh: &ExactMesh,
+    vertex: usize,
+    reason: &'static str,
+) -> hypertri::Result<Point3> {
+    source_vertex_ref(mesh, vertex, reason).cloned()
 }
 
 /// Insert one exact point on one opposite-face edge, deduplicating by point.
@@ -948,18 +970,11 @@ fn lift_projected_face_cell_point(
     projection: CoplanarProjection,
     point: &hypertri::ExactPoint,
 ) -> hypertri::Result<Point3> {
-    let triangle = mesh
-        .facts()
-        .faces
-        .get(face)
-        .ok_or(hypertri::Error::InvalidInput {
-            reason: "face cell lift references a missing source face",
-        })?
-        .triangle
-        .vertices;
-    let a = &mesh.vertices()[triangle[0]];
-    let b = &mesh.vertices()[triangle[1]];
-    let c = &mesh.vertices()[triangle[2]];
+    let [a, b, c] = source_face_points(
+        mesh,
+        face,
+        "face cell lift references a missing source face",
+    )?;
     let abx = &b.x - &a.x;
     let aby = &b.y - &a.y;
     let abz = &b.z - &a.z;
@@ -1538,20 +1553,11 @@ fn classify_point_on_mesh_face(
     point: &Point3,
 ) -> hypertri::Result<TriangleLocation> {
     let projection = choose_region_projection(mesh, face)?;
-    let triangle = mesh
-        .facts()
-        .faces
-        .get(face)
-        .ok_or(hypertri::Error::InvalidInput {
-            reason: "face cell point classification references a missing source face",
-        })?
-        .triangle
-        .vertices;
-    let vertices = [
-        &mesh.vertices()[triangle[0]],
-        &mesh.vertices()[triangle[1]],
-        &mesh.vertices()[triangle[2]],
-    ];
+    let vertices = source_face_points(
+        mesh,
+        face,
+        "face cell point classification references a missing source face",
+    )?;
     classify_point_triangle(
         &project_point3(vertices[0], projection),
         &project_point3(vertices[1], projection),
@@ -1588,13 +1594,14 @@ mod tests {
     }
 
     fn retained_source_boundary(mesh: &ExactMesh) -> Vec<FaceSplitBoundaryNode> {
-        mesh.facts().faces[0]
-            .triangle
-            .vertices
+        mesh.view()
+            .face(0)
+            .unwrap()
+            .vertex_indices()
             .into_iter()
             .map(|vertex| FaceSplitBoundaryNode::OriginalVertex {
                 vertex,
-                point: mesh.vertices()[vertex].clone(),
+                point: mesh.view().vertex(vertex).unwrap().point().clone(),
             })
             .collect()
     }
