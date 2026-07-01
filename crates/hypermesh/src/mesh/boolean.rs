@@ -514,8 +514,7 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
         graph,
         left,
         right,
-        operation,
-        validation,
+        request,
         retained_arrangement_attempt,
         shortcut_facts,
     )? {
@@ -2479,11 +2478,12 @@ fn materialize_arrangement_lower_dimensional_intersection_from_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
+    request: ExactBooleanRequest,
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
 ) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     if validation != ExactMeshValidationPolicy::CLOSED
         || operation != ExactBooleanOperation::Intersection
         || closed_regularized_operand_kind(left)
@@ -2493,7 +2493,6 @@ fn materialize_arrangement_lower_dimensional_intersection_from_graph(
     {
         return Ok(None);
     }
-    let request = ExactBooleanRequest::new(operation, validation);
     let evidence = winding_evidence_report_for_request_from_graph_and_attempt(
         graph,
         left,
@@ -2565,6 +2564,7 @@ pub(crate) fn materialize_boolean_operation(
         return boolean_disjoint_meshes(left, right, operation, validation);
     }
     let mut shortcut_facts = None;
+    let request = ExactBooleanRequest::new(operation, validation);
     if validation == ExactMeshValidationPolicy::CLOSED
         && operation == ExactBooleanOperation::Intersection
     {
@@ -2582,8 +2582,7 @@ pub(crate) fn materialize_boolean_operation(
             graph,
             left,
             right,
-            operation,
-            validation,
+            request,
             None,
             &shortcut_facts,
         )? {
@@ -2607,7 +2606,6 @@ pub(crate) fn materialize_boolean_operation(
     {
         return boolean_same_surface_meshes(left, operation, validation);
     }
-    let request = ExactBooleanRequest::new(operation, validation);
     let ready_graph = if let Some(graph) = retained_graph {
         validate_graph_source_replay(graph, left, right)?;
         Some(graph)
