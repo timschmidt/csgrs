@@ -1307,6 +1307,19 @@ pub(crate) enum ExactBooleanShortcutKind {
 }
 
 impl ExactBooleanResultKind {
+    pub(crate) fn arrangement_cell_complex_operation(self) -> Option<ExactBooleanOperation> {
+        match self {
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+            }
+            | ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
+                Some(operation)
+            }
+            _ => None,
+        }
+    }
+
     fn request(self, validation: ExactMeshValidationPolicy) -> ExactBooleanRequest {
         match self {
             ExactBooleanResultKind::SelectedRegions { selection } => ExactBooleanRequest::new(
@@ -1724,14 +1737,10 @@ impl ExactBooleanResult {
         if self.topology_assembly_report.is_none() && self.region_ownership_report.is_none() {
             return Ok(());
         }
-        let operation = match self.kind {
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation,
-                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-            }
-            | ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => operation,
-            _ => return Err(ExactEvidenceValidationError::StatusEvidenceMismatch),
-        };
+        let operation = self
+            .kind
+            .arrangement_cell_complex_operation()
+            .ok_or(ExactEvidenceValidationError::StatusEvidenceMismatch)?;
         let topology = self
             .topology_assembly_report
             .as_ref()
@@ -2033,16 +2042,7 @@ impl ExactBooleanResult {
             &arrangement,
             left,
             right,
-            match self.kind {
-                ExactBooleanResultKind::CertifiedShortcut {
-                    operation,
-                    shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-                }
-                | ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
-                    Some(operation)
-                }
-                _ => None,
-            },
+            self.kind.arrangement_cell_complex_operation(),
         )
     }
 
@@ -2100,14 +2100,7 @@ impl ExactBooleanResult {
         }
         let request_validation_satisfied =
             self.mesh.validation_policy().satisfies(request.validation);
-        let arrangement_result = matches!(
-            self.kind,
-            ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
-                | ExactBooleanResultKind::CertifiedShortcut {
-                    shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-                    ..
-                }
-        );
+        let arrangement_result = self.kind.arrangement_cell_complex_operation().is_some();
         if arrangement_result
             && request_validation_satisfied
             && let Some(attempt) = retained_arrangement_attempt

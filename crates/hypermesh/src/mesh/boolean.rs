@@ -2451,16 +2451,12 @@ fn request_replayable_result(
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
 ) -> Option<ExactBooleanResult> {
     let result = result?;
-    let retained_arrangement_attempt = matches!(
-        result.kind,
-        ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
-            | ExactBooleanResultKind::CertifiedShortcut {
-                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-                ..
-            }
-    )
-    .then_some(retained_arrangement_attempt)
-    .flatten();
+    let retained_arrangement_attempt = result
+        .kind
+        .arrangement_cell_complex_operation()
+        .is_some()
+        .then_some(retained_arrangement_attempt)
+        .flatten();
     result
         .validate_request_against_sources_with_retained_attempt(
             left,
@@ -3182,13 +3178,8 @@ fn arrangement_cell_complex_result_is_certified_for_preflight(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<bool, ExactMeshError> {
-    let operation = match result.kind {
-        ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation }
-        | ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-            operation,
-        } => operation,
-        _ => return Ok(false),
+    let Some(operation) = result.kind.arrangement_cell_complex_operation() else {
+        return Ok(false);
     };
     if attempt.operation != operation
         || attempt.policy != ExactRegularizationPolicy::REGULARIZED_SOLID
@@ -4359,15 +4350,7 @@ fn arrangement_difference_preserves_source_surface(
     source: &ExactMesh,
     source_side: MeshSide,
 ) -> Result<bool, ExactMeshError> {
-    if !matches!(
-        result.kind,
-        ExactBooleanResultKind::ArrangementCellComplexMaterialized {
-            operation: ExactBooleanOperation::Difference,
-        } | ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Difference,
-            shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-        }
-    ) {
+    if result.kind.arrangement_cell_complex_operation() != Some(ExactBooleanOperation::Difference) {
         return Ok(false);
     }
     validate_boolean_result(
