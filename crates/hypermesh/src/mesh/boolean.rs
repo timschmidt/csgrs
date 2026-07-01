@@ -2621,8 +2621,7 @@ pub(crate) fn materialize_boolean_operation(
             graph,
             left,
             right,
-            operation,
-            validation,
+            request,
             shortcut_facts,
         );
     }
@@ -2678,8 +2677,7 @@ pub(crate) fn materialize_boolean_operation(
             graph,
             left,
             right,
-            operation,
-            validation,
+            request,
             shortcut_facts,
         );
     }
@@ -2692,8 +2690,7 @@ pub(crate) fn materialize_boolean_operation(
                 &graph,
                 left,
                 right,
-                operation,
-                validation,
+                request,
                 shortcut_facts,
             )
         }
@@ -2737,10 +2734,11 @@ fn materialize_boolean_operation_from_ready_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
+    request: ExactBooleanRequest,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
 ) -> Result<ExactBooleanResult, ExactMeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     let prefer_boundary_or_no_volume = matches!(
         operation,
         ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
