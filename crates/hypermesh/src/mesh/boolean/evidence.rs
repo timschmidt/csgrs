@@ -1250,8 +1250,11 @@ pub(crate) struct ExactBooleanResult {
 }
 
 impl ExactBooleanResult {
-    pub(crate) fn matches_retained_replay(&self, replay: &Self) -> bool {
-        self.kind == replay.kind
+    pub(crate) fn matches_retained_replay(
+        &self,
+        replay: &Self,
+    ) -> Result<bool, ExactEvidenceValidationError> {
+        Ok(self.kind == replay.kind
             && self.graph_had_unknowns == replay.graph_had_unknowns
             && self.region_classifications == replay.region_classifications
             && self.triangulations == replay.triangulations
@@ -1262,7 +1265,7 @@ impl ExactBooleanResult {
                 || (self.kind.is_arrangement_cell_complex_shortcut()
                     && self.topology_assembly_report.is_none()
                     && self.region_ownership_report.is_none()))
-            && retained_output_mesh_matches(&self.mesh, &replay.mesh)
+            && retained_output_mesh_matches(&self.mesh, &replay.mesh)?)
     }
 }
 
@@ -1945,7 +1948,7 @@ impl ExactBooleanResult {
             ExactBooleanResultKind::CertifiedShortcut { .. } => None,
         };
         if let Some(replay) = retained_result_replay {
-            if !self.matches_retained_replay(&replay) {
+            if !self.matches_retained_replay(&replay)? {
                 return Err(ExactEvidenceValidationError::SourceReplayMismatch);
             }
             validate_assembly_source_face_incidence(&self.assembly, left, right)
@@ -2009,7 +2012,7 @@ impl ExactBooleanResult {
             let expected =
                 materialize_open_surface_disjoint_meshes(left, right, operation, validation)
                     .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
-            if !self.matches_retained_replay(&expected) {
+            if !self.matches_retained_replay(&expected)? {
                 return Err(ExactEvidenceValidationError::SourceReplayMismatch);
             }
         }
@@ -2038,7 +2041,7 @@ impl ExactBooleanResult {
                 boolean_coplanar_mesh_overlay_optional(left, right, operation, validation)
                     .ok()
                     .flatten()
-            && self.matches_retained_replay(&replay)
+            && self.matches_retained_replay(&replay)?
         {
             arrangement_cell_complex_output_replayed = true;
         }
@@ -2242,7 +2245,7 @@ impl ExactBooleanResult {
                     )
                     .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
                     .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?;
-                    if !retained_output_mesh_matches(&self.mesh, &replay.mesh)
+                    if !retained_output_mesh_matches(&self.mesh, &replay.mesh)?
                         || self.topology_assembly_report != replay.topology_assembly_report
                         || self.region_ownership_report != replay.region_ownership_report
                     {
@@ -2300,7 +2303,7 @@ impl ExactBooleanResult {
             None,
         )
         .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
-        if self.matches_retained_replay(&replay) {
+        if self.matches_retained_replay(&replay)? {
             Ok(())
         } else {
             Err(ExactEvidenceValidationError::SourceReplayMismatch)
@@ -2711,12 +2714,15 @@ fn identical_output_matches_sources(
     }
 }
 
-fn retained_output_mesh_matches(left: &ExactMesh, right: &ExactMesh) -> bool {
-    mesh_output_matches(left, right)
+fn retained_output_mesh_matches(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactEvidenceValidationError> {
+    Ok(mesh_output_matches_result(left, right)?
         && left.bounds() == right.bounds()
         && left.facts().mesh == right.facts().mesh
         && left.validation_policy() == right.validation_policy()
-        && left.provenance() == right.provenance()
+        && left.provenance() == right.provenance())
 }
 
 /// Replayable certification bundle for an exact boolean request.
@@ -3012,13 +3018,24 @@ fn certified_convex_relation_from_sources(
 }
 
 fn mesh_output_matches(left: &ExactMesh, right: &ExactMesh) -> bool {
-    left.vertices().len() == right.vertices().len()
-        && retained_face_rows_equal(left, right)
-        && left
-            .vertices()
-            .iter()
-            .zip(right.vertices())
-            .all(|(left, right)| point3_exact_equal(left, right) == Some(true))
+    mesh_output_matches_result(left, right).unwrap_or(false)
+}
+
+fn mesh_output_matches_result(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactEvidenceValidationError> {
+    if left.vertices().len() != right.vertices().len() || !retained_face_rows_equal(left, right) {
+        return Ok(false);
+    }
+    for (left, right) in left.vertices().iter().zip(right.vertices()) {
+        match point3_exact_equal(left, right) {
+            Some(true) => {}
+            Some(false) => return Ok(false),
+            None => return Err(ExactEvidenceValidationError::SourceReplayMismatch),
+        }
+    }
+    Ok(true)
 }
 
 fn mesh_output_is_empty(mesh: &ExactMesh) -> bool {
@@ -3031,6 +3048,15 @@ fn concatenated_mesh_output_matches(
     right: &ExactMesh,
     reverse_right: bool,
 ) -> bool {
+    concatenated_mesh_output_matches_result(mesh, left, right, reverse_right).unwrap_or(false)
+}
+
+fn concatenated_mesh_output_matches_result(
+    mesh: &ExactMesh,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    reverse_right: bool,
+) -> Result<bool, ExactEvidenceValidationError> {
     if mesh.vertices().len() != left.vertices().len() + right.vertices().len()
         || mesh.facts().mesh.face_count
             != left.facts().mesh.face_count + right.facts().mesh.face_count
@@ -3038,25 +3064,31 @@ fn concatenated_mesh_output_matches(
         || left.facts().faces.len() < left.facts().mesh.face_count
         || right.facts().faces.len() < right.facts().mesh.face_count
     {
-        return false;
+        return Ok(false);
     }
-    if !mesh
+    for (candidate, expected) in mesh
         .vertices()
         .iter()
         .take(left.vertices().len())
         .zip(left.vertices())
-        .all(|(candidate, expected)| point3_exact_equal(candidate, expected) == Some(true))
     {
-        return false;
+        match point3_exact_equal(candidate, expected) {
+            Some(true) => {}
+            Some(false) => return Ok(false),
+            None => return Err(ExactEvidenceValidationError::SourceReplayMismatch),
+        }
     }
-    if !mesh
+    for (candidate, expected) in mesh
         .vertices()
         .iter()
         .skip(left.vertices().len())
         .zip(right.vertices())
-        .all(|(candidate, expected)| point3_exact_equal(candidate, expected) == Some(true))
     {
-        return false;
+        match point3_exact_equal(candidate, expected) {
+            Some(true) => {}
+            Some(false) => return Ok(false),
+            None => return Err(ExactEvidenceValidationError::SourceReplayMismatch),
+        }
     }
     let left_face_count = left.facts().mesh.face_count;
     let mesh_faces = retained_face_rows(mesh).collect::<Vec<_>>();
@@ -3065,10 +3097,10 @@ fn concatenated_mesh_output_matches(
         .copied()
         .ne(retained_face_rows(left))
     {
-        return false;
+        return Ok(false);
     }
     let right_offset = left.vertices().len();
-    mesh_faces[left_face_count..]
+    Ok(mesh_faces[left_face_count..]
         .iter()
         .copied()
         .zip(retained_face_rows(right))
@@ -3080,7 +3112,7 @@ fn concatenated_mesh_output_matches(
                 [a + right_offset, b + right_offset, c + right_offset]
             };
             candidate == expected
-        })
+        }))
 }
 
 fn shortcut_operation_matches(

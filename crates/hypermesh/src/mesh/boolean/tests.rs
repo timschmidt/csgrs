@@ -1225,7 +1225,11 @@ fn test_materialized_result(
         .validate_with_missing_result_policy(false)
         .unwrap();
     if let Some(retained) = evaluation.result.as_ref() {
-        assert!(retained.matches_retained_replay(&result));
+        assert!(
+            retained
+                .matches_retained_replay(&result)
+                .expect("retained replay comparison should be decidable")
+        );
     }
     result.validate_against_sources(left, right).unwrap();
     result
