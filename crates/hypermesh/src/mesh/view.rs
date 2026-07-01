@@ -466,14 +466,7 @@ impl<'a> FaceRef<'a> {
 
     /// Borrow retained face bounds as exact min/max corners.
     pub fn bounds(self) -> Result<(&'a Point3, &'a Point3), ExactMeshError> {
-        if self.index >= current_row_count(self.mesh, RetainedRowKind::Face) {
-            return Err(stale_retained_row_error(
-                self.mesh,
-                RetainedRowKind::Face,
-                self.index,
-                self.mesh.facts().mesh.face_count,
-            ));
-        }
+        require_current_row(self.mesh, RetainedRowKind::Face, self.index)?;
         self.mesh
             .bounds()
             .faces
@@ -585,14 +578,7 @@ impl<'a> EdgeRef<'a> {
 
     /// Borrow retained edge bounds as exact min/max corners.
     pub fn bounds(self) -> Result<(&'a Point3, &'a Point3), ExactMeshError> {
-        if self.index >= current_row_count(self.mesh, RetainedRowKind::Edge) {
-            return Err(stale_retained_row_error(
-                self.mesh,
-                RetainedRowKind::Edge,
-                self.index,
-                self.mesh.facts().mesh.edge_count,
-            ));
-        }
+        require_current_row(self.mesh, RetainedRowKind::Edge, self.index)?;
         self.mesh
             .bounds()
             .edges
