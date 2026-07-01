@@ -102,7 +102,10 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(view.triangles().len(), 4);
     assert_eq!(view.face_count(), 4);
     assert_eq!(view.edge_count(), 6);
-    assert_eq!(view.mesh_bounds(), Some((&p(0, 0, 0), &p(1, 1, 1))));
+    assert_eq!(
+        view.mesh_bounds().unwrap(),
+        Some((&p(0, 0, 0), &p(1, 1, 1)))
+    );
     assert!(view.is_closed_manifold());
     assert_eq!(view.faces().count(), 4);
     assert_eq!(view.vertex_refs().count(), 4);
@@ -185,16 +188,9 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(triangle.index(), face.index());
     assert_eq!(triangle.vertex_indices(), face.vertex_indices());
     assert_eq!(face.vertex_indices(), [0, 2, 1]);
-    assert_eq!(view.face_bounds(0), Some((&p(0, 0, 0), &p(1, 1, 0))));
+    assert_eq!(view.face_bounds(0).unwrap(), (&p(0, 0, 0), &p(1, 1, 0)));
     assert_eq!(
-        view.require_face_bounds(0).unwrap(),
-        (&p(0, 0, 0), &p(1, 1, 0))
-    );
-    assert_eq!(
-        view.require_face_bounds(view.face_count())
-            .unwrap_err()
-            .blockers()[0]
-            .kind(),
+        view.face_bounds(view.face_count()).unwrap_err().blockers()[0].kind(),
         ExactMeshBlockerKind::IndexOutOfBounds
     );
     assert_eq!(face.bounds().unwrap(), (&p(0, 0, 0), &p(1, 1, 0)));
@@ -252,12 +248,8 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
 
     let edge: EdgeRef<'_> = view.edge(0).unwrap();
     assert_eq!(edge.index(), 0);
-    assert_eq!(view.edge_bounds(0), Some((&p(0, 0, 0), &p(1, 0, 0))));
-    assert_eq!(
-        view.require_edge_bounds(0).unwrap(),
-        (&p(0, 0, 0), &p(1, 0, 0))
-    );
-    let missing_edge_bounds = view.require_edge_bounds(view.edge_count()).unwrap_err();
+    assert_eq!(view.edge_bounds(0).unwrap(), (&p(0, 0, 0), &p(1, 0, 0)));
+    let missing_edge_bounds = view.edge_bounds(view.edge_count()).unwrap_err();
     assert_eq!(
         missing_edge_bounds.blockers()[0].kind(),
         ExactMeshBlockerKind::IndexOutOfBounds
@@ -274,7 +266,10 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(edge.vertices().unwrap().len(), 2);
 
     view.validate_retained_bounds_certificate().unwrap();
-    assert_eq!(view.mesh_bounds(), Some((&p(0, 0, 0), &p(1, 1, 1))));
+    assert_eq!(
+        view.mesh_bounds().unwrap(),
+        Some((&p(0, 0, 0), &p(1, 1, 1)))
+    );
 }
 
 #[test]
