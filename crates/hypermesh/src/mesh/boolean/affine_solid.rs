@@ -288,16 +288,15 @@ fn mesh_to_uvw(
     validation: ExactMeshValidationPolicy,
 ) -> Option<ExactMesh> {
     let view = mesh.view();
-    let vertices = view
-        .vertices()
-        .iter()
-        .map(|point| {
-            let uvw = point_to_uvw(point, basis)?;
-            let replay = point_from_uvw(&uvw.x, &uvw.y, &uvw.z, basis);
-            (point3_exact_equal(&replay, point) == Some(true))
-                .then(|| Point3::new(uvw.x, uvw.y, uvw.z))
-        })
-        .collect::<Option<Vec<_>>>()?;
+    let mut vertices = Vec::with_capacity(view.vertex_count());
+    for point in view.vertices() {
+        let uvw = point_to_uvw(point, basis)?;
+        let replay = point_from_uvw(&uvw.x, &uvw.y, &uvw.z, basis);
+        if point3_exact_equal(&replay, point) != Some(true) {
+            return None;
+        }
+        vertices.push(Point3::new(uvw.x, uvw.y, uvw.z));
+    }
     // A negative determinant reverses orientation under the exact affine
     // coordinate map. Reversing triangle order keeps the normalized shell
     // compatible with the orthogonal solid materializer.
