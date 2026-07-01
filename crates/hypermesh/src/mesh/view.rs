@@ -546,6 +546,10 @@ impl<'a> FaceRef<'a> {
         (&facts.plane.normal, &facts.plane.offset)
     }
 
+    pub(crate) fn plane(self) -> &'a super::facts::FacePlaneFacts {
+        &self.mesh.facts().faces[self.index].plane
+    }
+
     /// Exact face vertices.
     pub fn vertices(self) -> Result<[&'a Point3; 3], ExactMeshError> {
         let [a, b, c] = self.vertex_refs()?;

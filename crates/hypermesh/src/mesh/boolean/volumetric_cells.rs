@@ -426,7 +426,7 @@ fn classify_coplanar_overlap_sides(
     left_face: usize,
     right_face: usize,
 ) -> Option<CoplanarOverlapSideEvidence> {
-    let left_plane = &left.facts().faces.get(left_face)?.plane;
+    let left_plane = left.view().face(left_face)?.plane();
     let left_side = mesh_local_off_plane_side(left, left_face, left_plane)
         .or_else(|| mesh_oriented_face_interior_side(left, left_face, left_plane))
         .or_else(|| mesh_off_plane_side(left, left_plane))?;
@@ -592,7 +592,7 @@ fn mesh_oriented_face_interior_side(
         return None;
     }
     let orientation = exact_mesh_orientation(mesh);
-    let face_plane = &mesh.facts().faces.get(face)?.plane;
+    let face_plane = mesh.view().face(face)?.plane();
     let dot = &(&reference_plane.normal[0] * &face_plane.normal[0])
         + &(&reference_plane.normal[1] * &face_plane.normal[1])
         + &(&reference_plane.normal[2] * &face_plane.normal[2]);
@@ -926,7 +926,7 @@ mod tests {
             [[0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]],
             [[10, 0, -2], [12, 0, -2], [10, 2, -2], [10, 0, -4]],
         ]);
-        let plane = &mesh.facts().faces[0].plane;
+        let plane = mesh.view().face(0).unwrap().plane();
 
         assert_eq!(mesh_off_plane_side(&mesh, plane), None);
         assert_eq!(
@@ -938,7 +938,7 @@ mod tests {
     #[test]
     fn oriented_face_side_certifies_when_adjacent_vertices_are_mixed() {
         let mesh = skew_octahedron_i64();
-        let plane = &mesh.facts().faces[0].plane;
+        let plane = mesh.view().face(0).unwrap().plane();
 
         assert_eq!(mesh_local_off_plane_side(&mesh, 0, plane), None);
         assert!(matches!(
