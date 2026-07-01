@@ -755,11 +755,10 @@ fn append_triangle_with_existing_edge_splits(
 }
 
 fn map_point(vertices: &mut Vec<Point3>, point: &Point3) -> Option<usize> {
-    if let Some(existing) = vertices
-        .iter()
-        .position(|candidate| point3_exact_equal(candidate, point) == Some(true))
-    {
-        return Some(existing);
+    for (existing, candidate) in vertices.iter().enumerate() {
+        if point3_exact_equal(candidate, point)? {
+            return Some(existing);
+        }
     }
     let mapped = vertices.len();
     vertices.push(point.clone());
