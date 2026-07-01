@@ -457,20 +457,9 @@ fn retained_plane_crossing_is_not_inside_plane_face(
     // evidence for splitting, not for volume overlap; preserving the
     // shortcut consumes. Strict interior crossings remain blockers.
     let mesh = plane_side.mesh(left, right);
-    let Some(face) = mesh.facts().faces.get(*plane_face) else {
+    let Some(triangle) = face_point_refs(mesh, *plane_face) else {
         return false;
     };
-    let triangle_vertices = face.triangle.vertices;
-    let Some(a) = mesh.vertices().get(triangle_vertices[0]) else {
-        return false;
-    };
-    let Some(b) = mesh.vertices().get(triangle_vertices[1]) else {
-        return false;
-    };
-    let Some(c) = mesh.vertices().get(triangle_vertices[2]) else {
-        return false;
-    };
-    let triangle = [a, b, c];
     let Some(projection) = [
         CoplanarProjection::Xy,
         CoplanarProjection::Xz,
@@ -620,11 +609,11 @@ fn faces_mesh(mesh: &ExactMesh, faces: &[usize], label: &'static str) -> Option<
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
     for &face in faces {
-        let triangle = mesh.facts().faces.get(face)?.triangle.vertices;
+        let points = face_point_refs(mesh, face)?;
         triangles.push(Triangle([
-            map_point(&mut vertices, mesh.vertices().get(triangle[0])?)?,
-            map_point(&mut vertices, mesh.vertices().get(triangle[1])?)?,
-            map_point(&mut vertices, mesh.vertices().get(triangle[2])?)?,
+            map_point(&mut vertices, points[0])?,
+            map_point(&mut vertices, points[1])?,
+            map_point(&mut vertices, points[2])?,
         ]));
     }
     ExactMesh::new_with_policy_and_version(
@@ -638,20 +627,17 @@ fn faces_mesh(mesh: &ExactMesh, faces: &[usize], label: &'static str) -> Option<
 }
 
 fn connected_face_component_count(mesh: &ExactMesh) -> Option<usize> {
-    let face_count = mesh.facts().faces.len();
+    let face_count = mesh.view().faces().count();
     if face_count == 0 {
         return None;
     }
     let mut edge_faces = BTreeMap::<[usize; 2], Vec<usize>>::new();
-    for face in &mesh.facts().faces {
-        if face.triangle.face >= face_count {
-            return None;
-        }
-        for edge in face.oriented.directed_edges {
+    for face in mesh.view().faces() {
+        for edge in face.directed_edges() {
             edge_faces
                 .entry(sorted_edge(edge))
                 .or_default()
-                .push(face.triangle.face);
+                .push(face.index());
         }
     }
 
@@ -692,15 +678,15 @@ fn append_source_mesh_without_face(
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
 ) -> Option<()> {
-    for (face, face_facts) in mesh.facts().faces.iter().enumerate() {
-        if skip_faces.contains(&face) {
+    for face in mesh.view().faces() {
+        if skip_faces.contains(&face.index()) {
             continue;
         }
-        let triangle = face_facts.triangle.vertices;
+        let points = face.vertices().ok()?;
         triangles.push(Triangle([
-            map_point(vertices, mesh.vertices().get(triangle[0])?)?,
-            map_point(vertices, mesh.vertices().get(triangle[1])?)?,
-            map_point(vertices, mesh.vertices().get(triangle[2])?)?,
+            map_point(vertices, points[0])?,
+            map_point(vertices, points[1])?,
+            map_point(vertices, points[2])?,
         ]));
     }
     Some(())
@@ -715,17 +701,12 @@ fn append_holed_replacement(
 ) -> Option<()> {
     let source_sign = consistent_projected_mesh_triangle_sign(mesh, projection)?;
     let flip = source_sign != target_sign;
-    for face in &mesh.facts().faces {
-        let triangle = face.triangle.vertices;
-        let points = [
-            mesh.vertices().get(triangle[0])?.clone(),
-            mesh.vertices().get(triangle[1])?.clone(),
-            mesh.vertices().get(triangle[2])?.clone(),
-        ];
+    for face in mesh.view().faces() {
+        let points = face.vertices().ok()?;
         let mapped = [
-            map_point(vertices, &points[0])?,
-            map_point(vertices, &points[1])?,
-            map_point(vertices, &points[2])?,
+            map_point(vertices, points[0])?,
+            map_point(vertices, points[1])?,
+            map_point(vertices, points[2])?,
         ];
         let mapped_triangle = if flip {
             [mapped[0], mapped[2], mapped[1]]
@@ -785,6 +766,10 @@ fn map_point(vertices: &mut Vec<Point3>, point: &Point3) -> Option<usize> {
     Some(mapped)
 }
 
+fn face_point_refs(mesh: &ExactMesh, face: usize) -> Option<[&Point3; 3]> {
+    mesh.view().face(face)?.vertices().ok()
+}
+
 fn projected_triangle_sign(points: [&Point3; 3], projection: CoplanarProjection) -> Option<Sign> {
     let a = project_point3(points[0], projection);
     let b = project_point3(points[1], projection);
@@ -801,13 +786,8 @@ fn consistent_projected_mesh_triangle_sign(
     projection: CoplanarProjection,
 ) -> Option<Sign> {
     let mut sign = None;
-    for face in &mesh.facts().faces {
-        let triangle = face.triangle.vertices;
-        let points = [
-            mesh.vertices().get(triangle[0])?,
-            mesh.vertices().get(triangle[1])?,
-            mesh.vertices().get(triangle[2])?,
-        ];
+    for face in mesh.view().faces() {
+        let points = face.vertices().ok()?;
         let face_sign = projected_triangle_sign(points, projection)?;
         match sign {
             Some(expected) if expected != face_sign => return None,
