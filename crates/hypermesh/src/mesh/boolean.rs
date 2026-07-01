@@ -1804,14 +1804,14 @@ fn volumetric_boundary_closure_report_from_materialized_with_prevalidated_closur
     let output_vertices = materialized.mesh.view().vertices();
     let boundary_points = boundary_loops
         .iter()
-        .map(|boundary_loop| cloned_indexed_points(output_vertices, boundary_loop.iter().copied()))
-        .collect::<Option<Vec<_>>>()
-        .ok_or_else(|| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::IndexOutOfBounds,
+        .map(|boundary_loop| {
+            required_cloned_indexed_points(
+                output_vertices,
+                boundary_loop.iter().copied(),
                 "volumetric boundary closure report referenced a missing output vertex",
-            ))
-        })?;
+            )
+        })
+        .collect::<Result<Vec<_>, _>>()?;
     let boundary_points = boundary_points
         .into_iter()
         .map(|boundary| {
@@ -4521,7 +4521,7 @@ fn arrangement_difference_preserves_source_surface(
         let Ok(projection) = choose_region_projection(source, triangle.source_face) else {
             return Ok(false);
         };
-        let Some(points) = triangle
+        let points = triangle
             .vertices
             .iter()
             .map(|vertex| {
@@ -4530,11 +4530,17 @@ fn arrangement_difference_preserves_source_surface(
                     .vertices
                     .get(*vertex)
                     .map(|vertex| vertex.point.clone())
+                    .ok_or_else(|| {
+                        ExactMeshError::one(
+                            ExactMeshBlocker::new(
+                                ExactMeshBlockerKind::StaleFactReplay,
+                                "exact arrangement difference source-preservation assembly references a missing retained vertex",
+                            )
+                            .with_vertex(*vertex),
+                        )
+                    })
             })
-            .collect::<Option<Vec<_>>>()
-        else {
-            return Ok(false);
-        };
+            .collect::<Result<Vec<_>, _>>()?;
         let area = projected_polygon_area2_value(&points, projection);
         let Some(area) = (match compare_reals(&area, &Real::from(0)).value() {
             Some(Ordering::Less) => Some(Real::from(0) - area),
@@ -5132,6 +5138,24 @@ fn cloned_indexed_points(
     indices
         .into_iter()
         .map(|vertex| vertices.get(vertex).cloned())
+        .collect()
+}
+
+fn required_cloned_indexed_points(
+    vertices: &[Point3],
+    indices: impl IntoIterator<Item = usize>,
+    context: &'static str,
+) -> Result<Vec<Point3>, ExactMeshError> {
+    indices
+        .into_iter()
+        .map(|vertex| {
+            vertices.get(vertex).cloned().ok_or_else(|| {
+                ExactMeshError::one(
+                    ExactMeshBlocker::new(ExactMeshBlockerKind::IndexOutOfBounds, context)
+                        .with_vertex(vertex),
+                )
+            })
+        })
         .collect()
 }
 

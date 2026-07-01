@@ -2070,6 +2070,26 @@ fn projected_boundary_rings_reject_stale_boundary_vertex() {
 }
 
 #[test]
+fn required_indexed_points_reports_missing_vertex() {
+    let points = vec![
+        Point3::new(Real::from(0), Real::from(0), Real::from(0)),
+        Point3::new(Real::from(1), Real::from(0), Real::from(0)),
+    ];
+
+    let error = required_cloned_indexed_points(
+        &points,
+        [0, 2],
+        "test required indexed point lookup references a missing vertex",
+    )
+    .expect_err("missing required indexed point should return a typed blocker");
+    assert!(
+        error.has_only_blocker_kinds(&[ExactMeshBlockerKind::IndexOutOfBounds]),
+        "{error:?}"
+    );
+    assert_eq!(error.blockers()[0].vertex(), Some(2));
+}
+
+#[test]
 fn selected_region_winding_evidence_classifies_retained_graph_blocker() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
