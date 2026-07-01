@@ -1661,11 +1661,21 @@ impl ExactFaceSplitGeometryPlan {
                     vec![
                         FaceSplitBoundaryNode::OriginalVertex {
                             vertex: edge[0],
-                            point: mesh.vertices()[edge[0]].clone(),
+                            point: mesh
+                                .view()
+                                .vertex(edge[0])
+                                .expect("region plan references a missing source edge start")
+                                .point()
+                                .clone(),
                         },
                         FaceSplitBoundaryNode::OriginalVertex {
                             vertex: edge[1],
-                            point: mesh.vertices()[edge[1]].clone(),
+                            point: mesh
+                                .view()
+                                .vertex(edge[1])
+                                .expect("region plan references a missing source edge end")
+                                .point()
+                                .clone(),
                         },
                     ]
                 };
@@ -1724,12 +1734,16 @@ fn events_for_face_pair(
     right: &ExactMesh,
     classification: &MeshFacePairClassification,
 ) -> FacePairEvents {
-    let left_tri = left.facts().faces[classification.left_face]
-        .triangle
-        .vertices;
-    let right_tri = right.facts().faces[classification.right_face]
-        .triangle
-        .vertices;
+    let left_tri = left
+        .view()
+        .face(classification.left_face)
+        .expect("face-pair event generation references a missing left face")
+        .vertex_indices();
+    let right_tri = right
+        .view()
+        .face(classification.right_face)
+        .expect("face-pair event generation references a missing right face")
+        .vertex_indices();
     let left_edges = triangle_edges(left_tri);
     let right_edges = triangle_edges(right_tri);
     let mut event_capacity = usize::from(classification.relation == MeshFacePairRelation::Unknown);
@@ -2058,7 +2072,7 @@ fn validate_intersection_event_sources(
             if *plane_face != plane_pair_face {
                 return Err(IntersectionGraphValidationError::EventSourceMismatch);
             }
-            if plane_mesh.facts().faces.get(*plane_face).is_none() {
+            if plane_mesh.view().face(*plane_face).is_none() {
                 return Err(IntersectionGraphValidationError::EventSourceOutOfRange);
             }
             validate_vertex(*segment_side, edge[0], left, right)?;
@@ -2110,7 +2124,7 @@ fn validate_intersection_event_sources(
             if *triangle_face != expected_triangle_face {
                 return Err(IntersectionGraphValidationError::EventSourceMismatch);
             }
-            if triangle_mesh.facts().faces.get(*triangle_face).is_none() {
+            if triangle_mesh.view().face(*triangle_face).is_none() {
                 return Err(IntersectionGraphValidationError::EventSourceOutOfRange);
             }
             validate_vertex(*vertex_side, *vertex, left, right)?;
@@ -2129,11 +2143,8 @@ fn validate_vertex(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<(), IntersectionGraphValidationError> {
-    let vertex_count = match side {
-        MeshSide::Left => left.vertices().len(),
-        MeshSide::Right => right.vertices().len(),
-    };
-    if vertex < vertex_count {
+    let mesh = side.mesh(left, right);
+    if mesh.view().vertex(vertex).is_some() {
         Ok(())
     } else {
         Err(IntersectionGraphValidationError::EventSourceOutOfRange)
@@ -2687,7 +2698,7 @@ fn face_split_geometry_plan(
     let mut faces = Vec::with_capacity(face_plan.faces.len());
     for face in &face_plan.faces {
         let mesh = face.side.mesh(left, right);
-        let Some(face_facts) = mesh.facts().faces.get(face.face) else {
+        let Some(source_face) = mesh.view().face(face.face) else {
             return Err(ExactMeshError::one(
                 ExactMeshBlocker::new(
                     ExactMeshBlockerKind::IndexOutOfBounds,
@@ -2696,7 +2707,7 @@ fn face_split_geometry_plan(
                 .with_face(face.face),
             ));
         };
-        let triangle = face_facts.triangle.vertices;
+        let triangle = source_face.vertex_indices();
         let mut boundary_chains = Vec::with_capacity(face.edges.len());
         for edge in &face.edges {
             let chain = chains
@@ -2730,7 +2741,7 @@ fn face_split_geometry_plan(
                         side: vertex_side,
                         vertex,
                     } if *vertex_side == face.side => {
-                        let point = mesh.vertices().get(*vertex).ok_or_else(|| {
+                        let point = mesh.view().vertex(*vertex).ok_or_else(|| {
                             ExactMeshError::one(
                                 ExactMeshBlocker::new(
                                     ExactMeshBlockerKind::IndexOutOfBounds,
@@ -2741,7 +2752,7 @@ fn face_split_geometry_plan(
                         })?;
                         FaceSplitBoundaryNode::OriginalVertex {
                             vertex: *vertex,
-                            point: point.clone(),
+                            point: point.point().clone(),
                         }
                     }
                     SplitEdgeNode::GraphVertex { graph_vertex } => {
@@ -2796,7 +2807,7 @@ pub(crate) fn validate_face_split_geometry_incidence(
 
     for face in &geometry.faces {
         let mesh = face.side.mesh(left, right);
-        let Some(face_facts) = mesh.facts().faces.get(face.face) else {
+        let Some(source_face) = mesh.view().face(face.face) else {
             blockers.push(SplitPlanBlocker {
                 side: Some(face.side),
                 face: Some(face.face),
@@ -2808,7 +2819,7 @@ pub(crate) fn validate_face_split_geometry_incidence(
             continue;
         };
 
-        let triangle = face_facts.triangle.vertices;
+        let triangle = source_face.vertex_indices();
         if face.triangle != triangle {
             blockers.push(SplitPlanBlocker {
                 side: Some(face.side),
@@ -2836,9 +2847,17 @@ pub(crate) fn validate_face_split_geometry_incidence(
             .into_iter()
             .collect::<BTreeSet<_>>();
         let mut seen_edges = BTreeSet::new();
-        let a = mesh.vertices()[triangle[0]].clone();
-        let b = mesh.vertices()[triangle[1]].clone();
-        let c = mesh.vertices()[triangle[2]].clone();
+        let Ok([a, b, c]) = source_face.vertices() else {
+            blockers.push(SplitPlanBlocker {
+                side: Some(face.side),
+                face: Some(face.face),
+                ..SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::SourceTriangleMismatch,
+                    "split-face geometry source triangle references a missing source vertex",
+                )
+            });
+            continue;
+        };
         for chain in &face.boundary_chains {
             if !seen_edges.insert(chain.edge) {
                 blockers.push(SplitPlanBlocker {
@@ -2872,7 +2891,7 @@ pub(crate) fn validate_face_split_geometry_incidence(
             );
             for node in &chain.nodes {
                 let point = boundary_node_point(node);
-                match orient3d_report(&a, &b, &c, point).value() {
+                match orient3d_report(a, b, c, point).value() {
                     Some(Sign::Zero) => {}
                     Some(Sign::Negative | Sign::Positive) => blockers.push(SplitPlanBlocker {
                         side: Some(face.side),
@@ -2963,7 +2982,7 @@ fn validate_face_split_boundary_chain_shape(
         let FaceSplitBoundaryNode::OriginalVertex { vertex, point } = node else {
             continue;
         };
-        let Some(source_point) = mesh.vertices().get(*vertex) else {
+        let Some(source_point) = mesh.view().vertex(*vertex).map(|vertex| vertex.point()) else {
             blockers.push(SplitPlanBlocker {
                 side: Some(side),
                 face: Some(face),
@@ -3068,7 +3087,7 @@ pub(crate) fn validate_face_region_plan(
         }
 
         let mesh = region.side.mesh(left, right);
-        let Some(face_facts) = mesh.facts().faces.get(region.face) else {
+        let Some(source_face) = mesh.view().face(region.face) else {
             blockers.push(SplitPlanBlocker {
                 side: Some(region.side),
                 face: Some(region.face),
@@ -3080,7 +3099,7 @@ pub(crate) fn validate_face_region_plan(
             continue;
         };
 
-        let triangle = face_facts.triangle.vertices;
+        let triangle = source_face.vertex_indices();
         if region.triangle != triangle {
             blockers.push(SplitPlanBlocker {
                 side: Some(region.side),
@@ -3093,12 +3112,20 @@ pub(crate) fn validate_face_region_plan(
             continue;
         }
         validate_face_region_original_boundary_nodes(&mut blockers, mesh, region);
-        let a = mesh.vertices()[triangle[0]].clone();
-        let b = mesh.vertices()[triangle[1]].clone();
-        let c = mesh.vertices()[triangle[2]].clone();
+        let Ok([a, b, c]) = source_face.vertices() else {
+            blockers.push(SplitPlanBlocker {
+                side: Some(region.side),
+                face: Some(region.face),
+                ..SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::SourceTriangleMismatch,
+                    "face region source triangle references a missing source vertex",
+                )
+            });
+            continue;
+        };
         for node in &region.boundary {
             let point = boundary_node_point(node);
-            match orient3d_report(&a, &b, &c, point).value() {
+            match orient3d_report(a, b, c, point).value() {
                 Some(Sign::Zero) => {}
                 Some(Sign::Negative | Sign::Positive) => blockers.push(SplitPlanBlocker {
                     side: Some(region.side),
@@ -3132,7 +3159,7 @@ fn validate_face_region_original_boundary_nodes(
         let FaceSplitBoundaryNode::OriginalVertex { vertex, point } = node else {
             continue;
         };
-        let Some(source_point) = mesh.vertices().get(*vertex) else {
+        let Some(source_point) = mesh.view().vertex(*vertex).map(|vertex| vertex.point()) else {
             blockers.push(SplitPlanBlocker {
                 side: Some(region.side),
                 face: Some(region.face),
@@ -3443,7 +3470,7 @@ fn edge_points(
     mesh: &ExactMesh,
     edge: [usize; 2],
 ) -> Result<BorrowedEdgePoints<'_>, ExactMeshError> {
-    let start = mesh.vertices().get(edge[0]).ok_or_else(|| {
+    let start = mesh.view().vertex(edge[0]).ok_or_else(|| {
         ExactMeshError::one(
             ExactMeshBlocker::new(
                 ExactMeshBlockerKind::IndexOutOfBounds,
@@ -3452,7 +3479,7 @@ fn edge_points(
             .with_vertex(edge[0]),
         )
     })?;
-    let end = mesh.vertices().get(edge[1]).ok_or_else(|| {
+    let end = mesh.view().vertex(edge[1]).ok_or_else(|| {
         ExactMeshError::one(
             ExactMeshBlocker::new(
                 ExactMeshBlockerKind::IndexOutOfBounds,
@@ -3461,7 +3488,7 @@ fn edge_points(
             .with_vertex(edge[1]),
         )
     })?;
-    Ok([start, end])
+    Ok([start.point(), end.point()])
 }
 
 fn endpoint_touch_split_point(
