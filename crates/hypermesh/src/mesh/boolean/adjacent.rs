@@ -628,14 +628,15 @@ fn insert_patch_seam_map(
     let mut pairs = Vec::new();
     for right_vertex in right_vertices {
         let right_point = right.view().vertex(right_vertex)?.point();
-        if let Some(left_vertex) = left_vertices.iter().copied().find(|&left_vertex| {
-            match left.view().vertex(left_vertex) {
-                Some(left_vertex) => {
-                    point3_exact_equal(left_vertex.point(), right_point) == Some(true)
-                }
-                None => false,
+        let mut matching_left_vertex = None;
+        for left_vertex in left_vertices.iter().copied() {
+            let left_point = left.view().vertex(left_vertex)?.point();
+            if point3_exact_equal(left_point, right_point)? {
+                matching_left_vertex = Some(left_vertex);
+                break;
             }
-        }) {
+        }
+        if let Some(left_vertex) = matching_left_vertex {
             pairs.push((right_vertex, left_vertex));
         }
     }
