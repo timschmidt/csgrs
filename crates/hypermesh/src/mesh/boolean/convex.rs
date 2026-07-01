@@ -257,21 +257,21 @@ fn union_from_difference_and_operand(
     let Some(difference) = subtract_closed_convex_solids(left, right)? else {
         return Ok(None);
     };
-    let mut vertices = difference.mesh.vertices().to_vec();
+    let mut vertices = difference.mesh.view().vertices().to_vec();
     let mut triangles = difference
         .mesh
-        .facts()
-        .faces
-        .iter()
-        .map(|face| Triangle(face.triangle.vertices))
+        .view()
+        .faces()
+        .map(|face| Triangle(face.vertex_indices()))
         .collect::<Vec<_>>();
     let right_vertex_map = right
+        .view()
         .vertices()
         .iter()
         .map(|point| intern_point(&mut vertices, point))
         .collect::<Vec<_>>();
-    triangles.extend(right.facts().faces.iter().map(|face| {
-        let vertices = face.triangle.vertices;
+    triangles.extend(right.view().faces().map(|face| {
+        let vertices = face.vertex_indices();
         Triangle([
             right_vertex_map[vertices[0]],
             right_vertex_map[vertices[1]],
@@ -437,19 +437,11 @@ pub(crate) fn intersect_closed_convex_solids(
 /// only after an exact predicate, here the signed tetrahedral volume sum,
 /// proves the result is a solid instead of a lower-dimensional boundary.
 fn mesh_has_nonzero_signed_volume(mesh: &ExactMesh) -> Result<bool, ExactMeshError> {
-    let signed_volume = mesh
-        .facts()
-        .faces
-        .iter()
-        .map(|face| {
-            let tri = face.triangle.vertices;
-            determinant_from_origin(
-                &mesh.vertices()[tri[0]],
-                &mesh.vertices()[tri[1]],
-                &mesh.vertices()[tri[2]],
-            )
-        })
-        .fold(Real::from(0), |sum, det| &sum + &det);
+    let mut signed_volume = Real::from(0);
+    for face in mesh.view().faces() {
+        let [a, b, c] = face.vertices()?;
+        signed_volume = &signed_volume + &determinant_from_origin(a, b, c);
+    }
 
     let Some(ordering) = compare_reals(&signed_volume, &Real::from(0)).value() else {
         return Err(ExactMeshError::one(ExactMeshBlocker::new(
@@ -469,9 +461,8 @@ fn clipped_source_faces(
     for source_triangle in source.view().triangles() {
         let [a, b, c] = source_triangle.vertices().ok()?;
         let mut polygon = vec![a.clone(), b.clone(), c.clone()];
-        for clip_face in &clip.facts().faces {
-            polygon =
-                clip_polygon_by_face(&polygon, clip, clip_face.triangle.vertices, clip_facts)?;
+        for clip_face in clip.view().faces() {
+            polygon = clip_polygon_by_face(&polygon, clip_face.vertices().ok()?, clip_facts)?;
             if polygon.len() < 3 {
                 break;
             }
@@ -486,16 +477,13 @@ fn clipped_source_faces(
 
 fn clip_polygon_by_face(
     polygon: &[Point3],
-    clip: &ExactMesh,
-    face: [usize; 3],
+    face: [&Point3; 3],
     clip_facts: &ConvexSolidFacts,
 ) -> Option<Vec<Point3>> {
     if polygon.is_empty() {
         return Some(Vec::new());
     }
-    let a = &clip.vertices()[face[0]];
-    let b = &clip.vertices()[face[1]];
-    let c = &clip.vertices()[face[2]];
+    let [a, b, c] = face;
 
     let mut output = Vec::new();
     let orientation = clip_facts.orientation;
@@ -613,8 +601,8 @@ fn append_source_face_minus_convex_inside(
     }
 
     let mut inside = source_points.to_vec();
-    for clip_face in &clip.facts().faces {
-        inside = clip_polygon_by_face(&inside, clip, clip_face.triangle.vertices, clip_facts)?;
+    for clip_face in clip.view().faces() {
+        inside = clip_polygon_by_face(&inside, clip_face.vertices().ok()?, clip_facts)?;
         if inside.len() < 3 {
             break;
         }
@@ -675,8 +663,8 @@ fn append_source_face_convex_inside_reversed(
     }
 
     let mut inside = source_points.to_vec();
-    for clip_face in &clip.facts().faces {
-        inside = clip_polygon_by_face(&inside, clip, clip_face.triangle.vertices, clip_facts)?;
+    for clip_face in clip.view().faces() {
+        inside = clip_polygon_by_face(&inside, clip_face.vertices().ok()?, clip_facts)?;
         if inside.len() < 3 {
             break;
         }
@@ -685,7 +673,7 @@ fn append_source_face_convex_inside_reversed(
     if inside.len() < 3 || polygon_is_degenerate(&inside) {
         return Some(());
     }
-    if polygon_lies_on_any_clip_boundary_face(&inside, clip) {
+    if polygon_lies_on_any_clip_boundary_face(&inside, clip)? {
         return Some(());
     }
 
@@ -717,18 +705,17 @@ fn append_source_face_convex_inside_reversed(
     )
 }
 
-fn polygon_lies_on_any_clip_boundary_face(polygon: &[Point3], clip: &ExactMesh) -> bool {
-    clip.facts().faces.iter().any(|face| {
-        let [a, b, c] = face.triangle.vertices;
-        polygon.iter().all(|point| {
-            point_side(
-                &clip.vertices()[a],
-                &clip.vertices()[b],
-                &clip.vertices()[c],
-                point,
-            ) == Some(PlaneSide::On)
-        })
-    })
+fn polygon_lies_on_any_clip_boundary_face(polygon: &[Point3], clip: &ExactMesh) -> Option<bool> {
+    for face in clip.view().faces() {
+        let [a, b, c] = face.vertices().ok()?;
+        if polygon
+            .iter()
+            .all(|point| point_side(a, b, c, point) == Some(PlaneSide::On))
+        {
+            return Some(true);
+        }
+    }
+    Some(false)
 }
 
 fn append_projected_polygon_triangles(

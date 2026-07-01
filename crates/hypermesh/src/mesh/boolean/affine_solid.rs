@@ -215,17 +215,15 @@ pub(crate) fn materialize_affine_orthogonal_solid_operation(
         == Some(Ordering::Less)
     {
         uvw_output
-            .facts()
-            .faces
-            .iter()
-            .map(|face| reverse_triangle(&Triangle(face.triangle.vertices)))
+            .view()
+            .faces()
+            .map(|face| reverse_triangle(&Triangle(face.vertex_indices())))
             .collect()
     } else {
         uvw_output
-            .facts()
-            .faces
-            .iter()
-            .map(|face| Triangle(face.triangle.vertices))
+            .view()
+            .faces()
+            .map(|face| Triangle(face.vertex_indices()))
             .collect()
     };
     let mesh = ExactMesh::new_with_policy_and_version(
