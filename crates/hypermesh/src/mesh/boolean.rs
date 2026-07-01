@@ -3640,11 +3640,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         }
         Ok(selected) => {
             let counts = selected.counts();
-            attempt.selected_faces = counts.selected_faces;
-            attempt.selected_volume_regions = counts.selected_volume_regions;
-            attempt.reversed_selected_faces = counts.reversed_selected_faces;
-            attempt.volume_oriented_selected_faces = counts.volume_oriented_selected_faces;
-            attempt.label_oriented_selected_faces = counts.label_oriented_selected_faces;
+            attempt.retain_selected_counts(counts);
             return arrangement_cell_complex_decline_after_recovery(
                 &recovery,
                 attempt,
@@ -3661,11 +3657,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
     };
     attempt.stage = ExactArrangementBooleanStage::Selected;
     let counts = selected.counts();
-    attempt.selected_faces = counts.selected_faces;
-    attempt.selected_volume_regions = counts.selected_volume_regions;
-    attempt.reversed_selected_faces = counts.reversed_selected_faces;
-    attempt.volume_oriented_selected_faces = counts.volume_oriented_selected_faces;
-    attempt.label_oriented_selected_faces = counts.label_oriented_selected_faces;
+    attempt.retain_selected_counts(counts);
     attempt.selected_cell_complex = Some(selected.clone());
     let simplified = match simplify_selected_cell_complex(selected, policy) {
         Ok(simplified) if simplified.blockers.is_empty() => simplified,

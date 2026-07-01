@@ -20,7 +20,8 @@ use super::super::ExactMesh;
 use super::super::arrangement3d::cell_complex::simplify::ExactSimplifiedCellComplex;
 use super::super::arrangement3d::cell_complex::{
     ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
-    arrangement_cell_complex_labeling_policy, validate_selected_gate_reports,
+    ExactSelectedCellComplexCounts, arrangement_cell_complex_labeling_policy,
+    validate_selected_gate_reports,
 };
 use super::super::arrangement3d::regularization::ExactArrangementBlocker;
 use super::super::arrangement3d::regularization::ExactRegularizationPolicy;
@@ -388,6 +389,14 @@ pub(crate) struct ExactArrangementBooleanAttempt {
 }
 
 impl ExactArrangementBooleanAttempt {
+    pub(crate) fn retain_selected_counts(&mut self, counts: ExactSelectedCellComplexCounts) {
+        self.selected_faces = counts.selected_faces;
+        self.selected_volume_regions = counts.selected_volume_regions;
+        self.reversed_selected_faces = counts.reversed_selected_faces;
+        self.volume_oriented_selected_faces = counts.volume_oriented_selected_faces;
+        self.label_oriented_selected_faces = counts.label_oriented_selected_faces;
+    }
+
     pub(crate) fn retained_gate_reports(
         &self,
     ) -> Option<(&ExactTopologyAssemblyReport, &ExactRegionOwnershipReport)> {
