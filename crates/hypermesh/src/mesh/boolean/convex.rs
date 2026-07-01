@@ -146,7 +146,7 @@ pub(crate) fn union_closed_convex_solids(
     if triangles.is_empty() {
         return Ok(None);
     }
-    if refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles).is_none() {
+    if !refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles)? {
         return Ok(None);
     }
     remove_duplicate_triangle_vertex_sets(&mut triangles);
@@ -219,7 +219,7 @@ pub(crate) fn subtract_closed_convex_solids(
     if triangles.is_empty() {
         return Ok(None);
     }
-    if refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles).is_none() {
+    if !refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles)? {
         return Ok(None);
     }
     remove_duplicate_triangle_vertex_sets(&mut triangles);
@@ -278,7 +278,7 @@ fn union_from_difference_and_operand(
             right_vertex_map[vertices[2]],
         ])
     }));
-    if refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles).is_none() {
+    if !refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles)? {
         return Ok(None);
     }
     remove_duplicate_triangle_vertex_sets(&mut triangles);
@@ -1328,7 +1328,7 @@ fn polygons_to_closed_mesh(
 fn refine_triangles_at_existing_edge_vertices(
     vertices: &[Point3],
     triangles: &mut Vec<Triangle>,
-) -> Option<()> {
+) -> Result<bool, ExactMeshError> {
     let mut guard = 0usize;
     loop {
         guard += 1;
@@ -1337,14 +1337,21 @@ fn refine_triangles_at_existing_edge_vertices(
                 .len()
                 .saturating_mul(triangles.len().saturating_add(1))
         {
-            return None;
+            return Ok(false);
         }
-        let Some((triangle_index, edge, vertex)) =
-            find_triangle_edge_split(vertices, triangles.as_slice())?
-        else {
-            return Some(());
+        let (triangle_index, edge, vertex) =
+            match find_triangle_edge_split(vertices, triangles.as_slice())? {
+                TriangleEdgeSplitSearch::Split {
+                    triangle_index,
+                    edge,
+                    vertex,
+                } => (triangle_index, edge, vertex),
+                TriangleEdgeSplitSearch::Complete => return Ok(true),
+                TriangleEdgeSplitSearch::Unsupported => return Ok(false),
+            };
+        let Some(original) = triangles.get(triangle_index).copied() else {
+            return Ok(false);
         };
-        let original = triangles[triangle_index];
         let a = original.0[edge];
         let b = original.0[(edge + 1) % 3];
         let c = original.0[(edge + 2) % 3];
@@ -1355,16 +1362,28 @@ fn refine_triangles_at_existing_edge_vertices(
     }
 }
 
+enum TriangleEdgeSplitSearch {
+    Split {
+        triangle_index: usize,
+        edge: usize,
+        vertex: usize,
+    },
+    Complete,
+    Unsupported,
+}
+
 fn find_triangle_edge_split(
     vertices: &[Point3],
     triangles: &[Triangle],
-) -> Option<Option<(usize, usize, usize)>> {
+) -> Result<TriangleEdgeSplitSearch, ExactMeshError> {
     for (triangle_index, triangle) in triangles.iter().enumerate() {
-        let projection = choose_nonzero_projected_polygon_area(&[
+        let Some(projection) = choose_nonzero_projected_polygon_area(&[
             vertices[triangle.0[0]].clone(),
             vertices[triangle.0[1]].clone(),
             vertices[triangle.0[2]].clone(),
-        ])?;
+        ]) else {
+            return Ok(TriangleEdgeSplitSearch::Unsupported);
+        };
         let [ta, tb, tc] = triangle.0;
         for edge in 0..3 {
             let start = triangle.0[edge];
@@ -1373,36 +1392,69 @@ fn find_triangle_edge_split(
                 if candidate == ta || candidate == tb || candidate == tc {
                     continue;
                 }
-                if PlaneSide::from(
-                    orient3d_report(
-                        &vertices[ta],
-                        &vertices[tb],
-                        &vertices[tc],
-                        &vertices[candidate],
-                    )
-                    .value()?,
-                ) != PlaneSide::On
-                {
+                let Some(side) = orient3d_report(
+                    &vertices[ta],
+                    &vertices[tb],
+                    &vertices[tc],
+                    &vertices[candidate],
+                )
+                .value() else {
+                    return Err(ExactMeshError::one(ExactMeshBlocker::new(
+                        ExactMeshBlockerKind::ExactConstructionFailure,
+                        "convex triangle refinement plane-side predicate is undecidable",
+                    )));
+                };
+                if PlaneSide::from(side) != PlaneSide::On {
                     continue;
                 }
-                if point3_exact_equal(&vertices[candidate], &vertices[start]) == Some(true)
-                    || point3_exact_equal(&vertices[candidate], &vertices[end]) == Some(true)
-                {
+                if point_equals_either_endpoint(
+                    &vertices[candidate],
+                    &vertices[start],
+                    &vertices[end],
+                )? {
                     continue;
                 }
-                if point_on_segment(
+                let Some(on_segment) = point_on_segment(
                     &project_point3(&vertices[start], projection),
                     &project_point3(&vertices[end], projection),
                     &project_point3(&vertices[candidate], projection),
                 )
-                .value()?
-                {
-                    return Some(Some((triangle_index, edge, candidate)));
+                .value() else {
+                    return Err(ExactMeshError::one(ExactMeshBlocker::new(
+                        ExactMeshBlockerKind::ExactConstructionFailure,
+                        "convex triangle refinement segment predicate is undecidable",
+                    )));
+                };
+                if on_segment {
+                    return Ok(TriangleEdgeSplitSearch::Split {
+                        triangle_index,
+                        edge,
+                        vertex: candidate,
+                    });
                 }
             }
         }
     }
-    Some(None)
+    Ok(TriangleEdgeSplitSearch::Complete)
+}
+
+fn point_equals_either_endpoint(
+    point: &Point3,
+    start: &Point3,
+    end: &Point3,
+) -> Result<bool, ExactMeshError> {
+    let start_equal = point3_exact_equal(point, start);
+    let end_equal = point3_exact_equal(point, end);
+    if start_equal == Some(true) || end_equal == Some(true) {
+        return Ok(true);
+    }
+    if start_equal == Some(false) && end_equal == Some(false) {
+        return Ok(false);
+    }
+    Err(ExactMeshError::one(ExactMeshBlocker::new(
+        ExactMeshBlockerKind::ExactConstructionFailure,
+        "convex triangle refinement endpoint equality is undecidable",
+    )))
 }
 
 fn intern_point(vertices: &mut Vec<Point3>, point: &Point3) -> usize {
@@ -1545,6 +1597,15 @@ mod tests {
         assert_eq!(segments.len(), 1);
         push_unique_segment(&mut segments, [p3(0, 0, 0), c]).unwrap();
         assert_eq!(segments.len(), 2);
+    }
+
+    #[test]
+    fn convex_triangle_refinement_splits_existing_edge_vertex() {
+        let vertices = vec![p3(0, 0, 0), p3(2, 0, 0), p3(0, 2, 0), p3(1, 0, 0)];
+        let mut triangles = vec![Triangle([0, 1, 2])];
+
+        assert!(refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles).unwrap());
+        assert_eq!(triangles, vec![Triangle([0, 3, 2]), Triangle([3, 1, 2])]);
     }
 
     #[test]
