@@ -254,7 +254,11 @@ fn polygon_patch_candidate(
     }
     let boundary_points = boundary_vertices
         .iter()
-        .map(|&vertex| mesh.vertices().get(vertex).cloned())
+        .map(|&vertex| {
+            mesh.view()
+                .vertex(vertex)
+                .map(|vertex| vertex.point().clone())
+        })
         .collect::<Option<Vec<_>>>()?;
     let Some(projection) = [
         CoplanarProjection::Xy,
@@ -279,7 +283,7 @@ fn polygon_patch_candidate(
     let mut area_sign = None;
     let mut signed_area2 = Real::from(0);
     for &face in faces {
-        let triangle = mesh.facts().faces.get(face)?.triangle.vertices;
+        let triangle = mesh.view().face(face)?.vertex_indices();
         let points = triangle_point_refs(mesh, triangle)?;
         if boundary_points.len() < 3 {
             return Some(None);
@@ -430,8 +434,8 @@ fn faces_are_coplanar(mesh: &ExactMesh, left_face: usize, right_face: usize) -> 
     // Source-disk discovery is a planar certificate, not a shell-connectivity
     // topology by exact retained planes before promoting a connected component
     // to a planar disk candidate.
-    let left_triangle = mesh.facts().faces.get(left_face)?.triangle.vertices;
-    let right_triangle = mesh.facts().faces.get(right_face)?.triangle.vertices;
+    let left_triangle = mesh.view().face(left_face)?.vertex_indices();
+    let right_triangle = mesh.view().face(right_face)?.vertex_indices();
     let left_points = triangle_point_refs(mesh, left_triangle)?;
     let right_points = triangle_point_refs(mesh, right_triangle)?;
     for point in right_points {

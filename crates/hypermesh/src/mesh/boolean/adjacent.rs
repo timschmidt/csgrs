@@ -328,18 +328,16 @@ fn same_whole_face_any_orientation(
     right_face: usize,
 ) -> Result<bool, ExactMeshError> {
     let Some(left_triangle) = left
-        .facts()
-        .faces
-        .get(left_face)
-        .map(|face| face.triangle.vertices)
+        .view()
+        .face(left_face)
+        .map(|face| face.vertex_indices())
     else {
         return Ok(false);
     };
     let Some(right_triangle) = right
-        .facts()
-        .faces
-        .get(right_face)
-        .map(|face| face.triangle.vertices)
+        .view()
+        .face(right_face)
+        .map(|face| face.vertex_indices())
     else {
         return Ok(false);
     };
@@ -480,18 +478,16 @@ fn merged_union_mesh(
 
     for pair in &certificate.shared_faces {
         let Some(left_triangle) = left
-            .facts()
-            .faces
-            .get(pair.left_face)
-            .map(|face| face.triangle.vertices)
+            .view()
+            .face(pair.left_face)
+            .map(|face| face.vertex_indices())
         else {
             return Ok(None);
         };
         let Some(right_triangle) = right
-            .facts()
-            .faces
-            .get(pair.right_face)
-            .map(|face| face.triangle.vertices)
+            .view()
+            .face(pair.right_face)
+            .map(|face| face.vertex_indices())
         else {
             return Ok(None);
         };
