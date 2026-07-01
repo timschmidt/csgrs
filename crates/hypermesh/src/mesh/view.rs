@@ -5,7 +5,7 @@ use super::boolean::{ExactBooleanOperation, materialize_boolean_operation};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::prepared::PreparedMeshPair;
 use super::validation::ExactMeshValidationPolicy;
-use super::{ExactAffineTransform3, ExactMesh, reverse_triangle};
+use super::{ExactAffineTransform3, ExactMesh, Triangle, reverse_triangle};
 use hyperlimit::{Point3, PredicateUse, SourceProvenance};
 use hyperreal::Real;
 use std::cmp::Ordering;
@@ -305,14 +305,19 @@ impl<'a> MeshView<'a> {
     pub fn transform(self, matrix: [[Real; 4]; 4]) -> Result<ExactMesh, ExactMeshError> {
         let transform = ExactAffineTransform3::from_homogeneous_rows(matrix)?;
         let vertices = self
-            .mesh
             .vertices()
             .iter()
             .map(|point| transform.transform_point(point))
             .collect::<Vec<_>>();
         let triangles = match transform.orientation()? {
-            Ordering::Less => self.mesh.triangles().iter().map(reverse_triangle).collect(),
-            Ordering::Equal | Ordering::Greater => self.mesh.triangles().to_vec(),
+            Ordering::Less => self
+                .triangles()
+                .map(|triangle| reverse_triangle(&Triangle(triangle.vertex_indices())))
+                .collect(),
+            Ordering::Equal | Ordering::Greater => self
+                .triangles()
+                .map(|triangle| Triangle(triangle.vertex_indices()))
+                .collect(),
         };
         ExactMesh::new_with_policy_and_version(
             vertices,
@@ -326,8 +331,10 @@ impl<'a> MeshView<'a> {
     /// Materialize this view with every triangle orientation reversed.
     pub fn inverse(self) -> Result<ExactMesh, ExactMeshError> {
         ExactMesh::new_with_policy_and_version(
-            self.mesh.vertices().to_vec(),
-            self.mesh.triangles().iter().map(reverse_triangle).collect(),
+            self.vertices().to_vec(),
+            self.triangles()
+                .map(|triangle| reverse_triangle(&Triangle(triangle.vertex_indices())))
+                .collect(),
             SourceProvenance::exact("exact inverse mesh orientation"),
             self.mesh.validation_policy(),
             self.mesh.next_construction_version(),
@@ -1020,6 +1027,16 @@ mod tests {
         assert_eq!(
             view.require_vertex(stale_vertex).unwrap_err().blockers()[0].kind(),
             ExactMeshBlockerKind::StaleFactReplay
+        );
+        assert!(view.inverse().is_err());
+        assert!(
+            view.transform([
+                [Real::from(1), Real::from(0), Real::from(0), Real::from(0)],
+                [Real::from(0), Real::from(1), Real::from(0), Real::from(0)],
+                [Real::from(0), Real::from(0), Real::from(1), Real::from(0)],
+                [Real::from(0), Real::from(0), Real::from(0), Real::from(1)],
+            ])
+            .is_err()
         );
         let stale_incident_face_error = vertex.incident_face_indices().unwrap_err();
         let stale_incident_face = &stale_incident_face_error.blockers()[0];
