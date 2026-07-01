@@ -566,9 +566,6 @@ impl CoplanarOverlapSplitPlan {
         right: &ExactMesh,
     ) -> Result<(), CoplanarOverlapSplitValidationError> {
         self.validate()?;
-        for graph in &self.graphs {
-            graph.validate_against_sources(left, right)?;
-        }
         let replay = build_unvalidated_intersection_graph(left, right)
             .and_then(|graph| graph.coplanar_overlap_split_plan(left, right))
             .map_err(|_| CoplanarOverlapSplitValidationError::SourceReplayMismatch)?;
@@ -615,36 +612,6 @@ impl CoplanarOverlapSplitGraph {
                 .map_err(coplanar_split_validation_mesh_error)?;
         }
         Ok(())
-    }
-
-    /// Validate this split graph by replaying it from source operands.
-    ///
-    /// This combines exact source-edge interpolation checks with a full replay
-    /// of the coplanar split plan, then requires this graph to appear
-    /// unchanged. It keeps interval and point-split construction records as
-    /// certified objects rather than detachable projected labels, matching the
-    #[cfg(test)]
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), CoplanarOverlapSplitValidationError> {
-        self.validate()?;
-        for split in &self.edge_splits {
-            let left_edge = edge_points(left, split.overlap.left_edge)
-                .map_err(|_| CoplanarOverlapSplitValidationError::SourceReplayMismatch)?;
-            let right_edge = edge_points(right, split.overlap.right_edge)
-                .map_err(|_| CoplanarOverlapSplitValidationError::SourceReplayMismatch)?;
-            validate_coplanar_edge_split_against_edges(split, left_edge, right_edge)?;
-        }
-        let replay = build_unvalidated_intersection_graph(left, right)
-            .and_then(|graph| graph.coplanar_overlap_split_plan(left, right))
-            .map_err(|_| CoplanarOverlapSplitValidationError::SourceReplayMismatch)?;
-        if replay.graphs.iter().any(|graph| graph == self) {
-            Ok(())
-        } else {
-            Err(CoplanarOverlapSplitValidationError::SourceReplayMismatch)
-        }
     }
 }
 
