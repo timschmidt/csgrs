@@ -566,7 +566,7 @@ fn coplanar_pair_has_positive_area_overlap(events: &[IntersectionEvent]) -> bool
 
 fn mesh_off_plane_side(mesh: &ExactMesh, plane: &FacePlaneFacts) -> Option<PlaneSide> {
     let mut side = None;
-    for vertex in mesh.vertices() {
+    for vertex in mesh.view().vertices() {
         match retained_plane_side(plane, vertex)? {
             PlaneSide::On => {}
             candidate => {

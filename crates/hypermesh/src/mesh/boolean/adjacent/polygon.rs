@@ -95,7 +95,10 @@ fn polygon_patch_candidates(
     consumed_faces: &BTreeSet<usize>,
 ) -> Option<Vec<PolygonPatchCandidate>> {
     let mut candidates = Vec::new();
-    let available = (0..mesh.triangles().len())
+    let available = mesh
+        .view()
+        .faces()
+        .map(|face| face.index())
         .filter(|face| !consumed_faces.contains(face))
         .collect::<Vec<_>>();
     if available.is_empty() {
