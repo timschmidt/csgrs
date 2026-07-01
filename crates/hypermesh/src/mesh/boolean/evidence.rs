@@ -1794,8 +1794,7 @@ impl ExactBooleanResult {
                     graph,
                     left,
                     right,
-                    operation,
-                    self.mesh.validation_policy(),
+                    ExactBooleanRequest::new(operation, self.mesh.validation_policy()),
                 )
                 .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
                 .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?;
@@ -3363,8 +3362,7 @@ fn arrangement_cell_complex_output_matches_sources(
         validated_graph,
         left,
         right,
-        operation,
-        validation,
+        ExactBooleanRequest::new(operation, validation),
     )
     .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
     {

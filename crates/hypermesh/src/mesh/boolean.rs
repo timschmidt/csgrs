@@ -506,7 +506,7 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
         return Ok(Some(result));
     }
     if let Some(result) =
-        replay_generic_arrangement_cell_complex_result(graph, left, right, operation, validation)?
+        replay_generic_arrangement_cell_complex_result(graph, left, right, request)?
     {
         return Ok(Some(result));
     }
@@ -721,9 +721,9 @@ fn replay_generic_arrangement_cell_complex_result(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
+    let operation = request.operation;
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
@@ -746,7 +746,6 @@ fn replay_generic_arrangement_cell_complex_result(
         Ok(simplified) => simplified,
         Err(_) => return Ok(None),
     };
-    let request = ExactBooleanRequest::new(operation, validation);
     let Some(result) =
         rematerialize_simplified_arrangement_cell_complex(request, &simplified, false)?
     else {
