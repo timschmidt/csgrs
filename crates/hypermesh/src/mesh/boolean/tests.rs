@@ -13,6 +13,7 @@ use crate::mesh::boolean::evidence::{
 use crate::mesh::boolean::replay::{
     ExactBooleanEvaluation, exact_boolean_evaluation_for_replay_result_with_materialization,
     replay_regularized_arrangement_attempt,
+    try_materialize_certified_boolean_support_with_artifacts,
 };
 
 impl ExactBooleanCertificationSet {
