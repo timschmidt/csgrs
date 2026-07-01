@@ -2,7 +2,6 @@
 
 use std::{cell::RefCell, rc::Rc};
 
-use super::ExactMesh;
 use super::arrangement3d::regularization::ExactRegularizationPolicy;
 use super::arrangement3d::{ArrangementView, ExactArrangement3d};
 use super::boolean::evidence::ExactArrangementCellComplexShortcutFacts;
@@ -317,7 +316,7 @@ fn source_stamp(view: MeshView<'_>) -> ExactMeshSourceStamp {
     ExactMeshSourceStamp {
         source: provenance.source.source,
         approximation: provenance.source.approximation,
-        source_identity: exact_mesh_source_identity(view.mesh),
+        source_identity: exact_mesh_source_identity(view),
         construction_version: provenance.construction_version,
         vertex_count: view.mesh.facts().mesh.vertex_count,
         edge_count: view.mesh.facts().mesh.edge_count,
@@ -325,9 +324,9 @@ fn source_stamp(view: MeshView<'_>) -> ExactMeshSourceStamp {
     }
 }
 
-fn exact_mesh_source_identity(mesh: &ExactMesh) -> u64 {
-    let facts = &mesh.facts().mesh;
-    let provenance = mesh.provenance();
+fn exact_mesh_source_identity(view: MeshView<'_>) -> u64 {
+    let facts = &view.mesh.facts().mesh;
+    let provenance = view.mesh.provenance();
     let mut hash = 0xcbf29ce484222325u64;
     hash = fnv1a_u64(
         hash,
@@ -360,13 +359,13 @@ fn exact_mesh_source_identity(mesh: &ExactMesh) -> u64 {
     hash = fnv1a_u64(hash, facts.closed_manifold as u64);
     hash = fnv1a_u64(hash, facts.fixed_coordinates_exact_rational as u64);
 
-    for vertex in mesh.vertices() {
+    for vertex in view.vertices() {
         hash = fnv1a_real(hash, &vertex.x);
         hash = fnv1a_real(hash, &vertex.y);
         hash = fnv1a_real(hash, &vertex.z);
     }
-    for face in &mesh.facts().faces {
-        let triangle = face.triangle.vertices;
+    for face in view.faces() {
+        let triangle = face.vertex_indices();
         hash = fnv1a_u64(hash, triangle[0] as u64);
         hash = fnv1a_u64(hash, triangle[1] as u64);
         hash = fnv1a_u64(hash, triangle[2] as u64);
@@ -405,6 +404,7 @@ const fn fnv1a_u64(mut hash: u64, value: u64) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ExactMesh;
     use hyperlimit::{Point3, SourceProvenance};
 
     fn p(x: i64, y: i64, z: i64) -> Point3 {

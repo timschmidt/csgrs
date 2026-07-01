@@ -181,19 +181,9 @@ fn classify_mesh_triangles_from_retained_plane_relations(
     right_against_left_plane: TrianglePlaneRelation,
     left_against_right_plane: TrianglePlaneRelation,
 ) -> TriangleTriangleClassification {
-    let left_tri = left.facts().faces[left_face].triangle.vertices;
-    let right_tri = right.facts().faces[right_face].triangle.vertices;
     classify_triangle_triangle_points_from_plane_relations(
-        [
-            &left.vertices()[left_tri[0]],
-            &left.vertices()[left_tri[1]],
-            &left.vertices()[left_tri[2]],
-        ],
-        [
-            &right.vertices()[right_tri[0]],
-            &right.vertices()[right_tri[1]],
-            &right.vertices()[right_tri[2]],
-        ],
+        retained_face_vertices_unchecked(left, left_face),
+        retained_face_vertices_unchecked(right, right_face),
         right_against_left_plane,
         left_against_right_plane,
     )
@@ -211,13 +201,13 @@ fn classify_mesh_triangle_against_retained_face_plane_unchecked(
     query_mesh: &ExactMesh,
     query_face: usize,
 ) -> TrianglePlaneClassification {
-    let plane = &plane_mesh.facts().faces[plane_face].plane;
-    let query = query_mesh.facts().faces[query_face].triangle.vertices;
+    let plane = retained_face_plane_unchecked(plane_mesh, plane_face);
+    let query = retained_face_vertex_indices_unchecked(query_mesh, query_face);
     let mut sides = [None, None, None];
     for (side, vertex) in sides.iter_mut().zip(query) {
         *side = retained_plane_side_from_value(&retained_point_plane_value(
             plane,
-            &query_mesh.vertices()[vertex],
+            retained_vertex_point_unchecked(query_mesh, vertex),
         ));
     }
 
@@ -270,15 +260,44 @@ fn retained_triangle_edge_events(
     segment_mesh: &ExactMesh,
     segment_face: usize,
 ) -> [SegmentPlaneIntersection; 3] {
-    let plane = &plane_mesh.facts().faces[plane_face].plane;
-    let segment = segment_mesh.facts().faces[segment_face].triangle.vertices;
+    let plane = retained_face_plane_unchecked(plane_mesh, plane_face);
+    let segment = retained_face_vertex_indices_unchecked(segment_mesh, segment_face);
     triangle_edges(segment).map(|edge| {
         intersect_segment_with_retained_face_plane(
             plane,
-            &segment_mesh.vertices()[edge[0]],
-            &segment_mesh.vertices()[edge[1]],
+            retained_vertex_point_unchecked(segment_mesh, edge[0]),
+            retained_vertex_point_unchecked(segment_mesh, edge[1]),
         )
     })
+}
+
+fn retained_face_vertices_unchecked(mesh: &ExactMesh, face: usize) -> [&Point3; 3] {
+    mesh.view()
+        .face(face)
+        .expect("retained face-pair classification references a missing face")
+        .vertices()
+        .expect("retained face-pair classification references a missing vertex")
+}
+
+fn retained_face_vertex_indices_unchecked(mesh: &ExactMesh, face: usize) -> [usize; 3] {
+    mesh.view()
+        .face(face)
+        .expect("retained face-pair classification references a missing face")
+        .vertex_indices()
+}
+
+fn retained_face_plane_unchecked(mesh: &ExactMesh, face: usize) -> &FacePlaneFacts {
+    mesh.view()
+        .face(face)
+        .expect("retained face-pair classification references a missing face")
+        .plane()
+}
+
+fn retained_vertex_point_unchecked(mesh: &ExactMesh, vertex: usize) -> &Point3 {
+    mesh.view()
+        .vertex(vertex)
+        .expect("retained face-pair classification references a missing vertex")
+        .point()
 }
 
 /// Intersect a closed segment with a retained exact face plane.
