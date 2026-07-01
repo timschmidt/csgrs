@@ -5,10 +5,8 @@
 //! kernel artifacts instead of collapsing exact topology decisions to `bool`.
 //! Downstream policy layers should consume narrower borrowed kernel views.
 
-#[cfg(test)]
-use hyperlimit::Point3;
 use hyperlimit::{
-    Aabb3Intersection, ApproximationPolicy, MeshSource, TriangleLocation,
+    Aabb3Intersection, ApproximationPolicy, MeshSource, Point3, TriangleLocation,
     classify_aabb3_intersection, classify_point_triangle, compare_reals, compare_reals_report,
     project_point3, projected_polygon_area2_value,
 };
@@ -3713,11 +3711,7 @@ fn output_triangles_cover_triangulated_cell<'a>(
     triangulation: &FaceRegionTriangulation,
     triangle: [usize; 3],
 ) -> bool {
-    let Some(cell_points) = triangle
-        .iter()
-        .map(|&vertex| triangulation.boundary.get(vertex).map(boundary_node_point))
-        .collect::<Option<Vec<_>>>()
-    else {
+    let Some(cell_points) = triangulation_cell_triangle_points(triangulation, triangle) else {
         return false;
     };
     let cell_area = projected_polygon_area2_value(
@@ -3738,12 +3732,7 @@ fn output_triangles_cover_triangulated_cell<'a>(
     let mut output_area = Real::from(0);
     let mut found = false;
     for output in outputs {
-        let Some(points) = output
-            .vertices
-            .iter()
-            .map(|&vertex| assembly.vertices.get(vertex).map(|vertex| &vertex.point))
-            .collect::<Option<Vec<_>>>()
-        else {
+        let Some(points) = output_triangle_points(output, assembly) else {
             return false;
         };
         let area = projected_polygon_area2_value(
@@ -3769,11 +3758,7 @@ fn output_triangle_lies_in_triangulated_cell(
     triangulation: &FaceRegionTriangulation,
     triangle: [usize; 3],
 ) -> bool {
-    let Some(cell_points) = triangle
-        .iter()
-        .map(|&vertex| triangulation.boundary.get(vertex).map(boundary_node_point))
-        .collect::<Option<Vec<_>>>()
-    else {
+    let Some(cell_points) = triangulation_cell_triangle_points(triangulation, triangle) else {
         return false;
     };
     output.vertices.iter().all(|&vertex| {
@@ -3833,25 +3818,13 @@ fn output_triangle_matches_triangulated_cell(
     triangulation: &FaceRegionTriangulation,
     triangle: [usize; 3],
 ) -> bool {
-    let Some(output_points) = output
-        .vertices
-        .iter()
-        .map(|&vertex| assembly.vertices.get(vertex).map(|vertex| &vertex.point))
-        .collect::<Option<Vec<_>>>()
-    else {
+    let Some(output_points) = output_triangle_points(output, assembly) else {
         return false;
     };
-    let Some(cell_points) = triangle
-        .iter()
-        .map(|&vertex| triangulation.boundary.get(vertex).map(boundary_node_point))
-        .collect::<Option<Vec<_>>>()
-    else {
+    let Some(cell_points) = triangulation_cell_triangle_points(triangulation, triangle) else {
         return false;
     };
-    if output_points.len() != cell_points.len() {
-        return false;
-    }
-    let mut matched = vec![false; cell_points.len()];
+    let mut matched = [false; 3];
     for output_point in output_points {
         let Some(index) = cell_points
             .iter()
@@ -3865,6 +3838,28 @@ fn output_triangle_matches_triangulated_cell(
         matched[index] = true;
     }
     true
+}
+
+fn triangulation_cell_triangle_points(
+    triangulation: &FaceRegionTriangulation,
+    triangle: [usize; 3],
+) -> Option<[&Point3; 3]> {
+    Some([
+        boundary_node_point(triangulation.boundary.get(triangle[0])?),
+        boundary_node_point(triangulation.boundary.get(triangle[1])?),
+        boundary_node_point(triangulation.boundary.get(triangle[2])?),
+    ])
+}
+
+fn output_triangle_points<'a>(
+    output: &ExactOutputTriangle,
+    assembly: &'a ExactBooleanAssemblyPlan,
+) -> Option<[&'a Point3; 3]> {
+    Some([
+        &assembly.vertices.get(output.vertices[0])?.point,
+        &assembly.vertices.get(output.vertices[1])?.point,
+        &assembly.vertices.get(output.vertices[2])?.point,
+    ])
 }
 
 fn validate_output_mesh_matches_assembly(
