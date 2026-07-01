@@ -6210,13 +6210,22 @@ fn mesh_from_projected_overlay_output_components(
         let lifted_loops = loop_indices
             .into_iter()
             .map(|loop_index| {
-                let loop_ = overlay.output_loops.get(loop_index)?;
+                let loop_ = overlay.output_loops.get(loop_index).ok_or_else(|| {
+                    ExactMeshError::one(ExactMeshBlocker::new(
+                        ExactMeshBlockerKind::StaleFactReplay,
+                        "exact coplanar output component references a missing output loop",
+                    ))
+                })?;
                 if loop_.points.len() < 3 {
-                    return None;
+                    return Ok(None);
                 }
-                lift_projected_points_to_carrier(loop_.points.iter(), carrier_points, projection)
+                Ok(lift_projected_points_to_carrier(
+                    loop_.points.iter(),
+                    carrier_points,
+                    projection,
+                ))
             })
-            .collect::<Option<Vec<_>>>();
+            .collect::<Result<Option<Vec<_>>, _>>()?;
         let Some(lifted_loops) = lifted_loops else {
             return Ok(None);
         };

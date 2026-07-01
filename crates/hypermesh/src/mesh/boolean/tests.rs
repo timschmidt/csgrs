@@ -2275,6 +2275,20 @@ fn projected_overlay_mesh_uses_certified_output_components() {
         .expect("stale certified output components should not fail")
         .is_none()
     );
+
+    let mut stale_loop_index_overlay = output_only_overlay;
+    stale_loop_index_overlay.output_components[0].outer_loop = usize::MAX;
+    let stale_loop_error = mesh_from_selected_projected_overlay_faces(
+        &stale_loop_index_overlay,
+        &carrier_points,
+        projection,
+        "test stale certified output-component loop index",
+    )
+    .expect_err("stale certified output component should return a typed blocker");
+    assert!(
+        stale_loop_error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        "{stale_loop_error:?}"
+    );
 }
 
 #[test]
