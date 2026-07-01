@@ -2063,6 +2063,20 @@ impl RetainedGraphCounts {
         }
     }
 
+    fn into_boundary_touching_report(
+        self,
+        status: ExactBoundaryTouchingStatus,
+        blocker: ExactBooleanBlocker,
+    ) -> ExactBoundaryTouchingReport {
+        ExactBoundaryTouchingReport {
+            status,
+            graph_had_unknowns: self.graph_had_unknowns,
+            retained_face_pairs: self.retained_face_pairs,
+            retained_events: self.retained_events,
+            blocker,
+        }
+    }
+
     fn into_planar_arrangement_report(
         self,
         operation: ExactBooleanOperation,
@@ -2088,6 +2102,23 @@ impl RetainedGraphCounts {
             retained_events: self.retained_events,
             blocker: counts.into_blocker(blocker_kind),
             coplanar_arrangement_evidence,
+        }
+    }
+
+    #[cfg(test)]
+    fn into_refinement_report(
+        self,
+        operation: ExactBooleanOperation,
+        status: evidence::ExactRefinementStatus,
+        blocker: Option<ExactBooleanBlocker>,
+    ) -> evidence::ExactRefinementReport {
+        evidence::ExactRefinementReport {
+            operation,
+            status,
+            graph_had_unknowns: self.graph_had_unknowns,
+            retained_face_pairs: self.retained_face_pairs,
+            retained_events: self.retained_events,
+            blocker,
         }
     }
 
@@ -7180,13 +7211,7 @@ pub(crate) fn boundary_touching_report_from_graph(
         ExactBoundaryTouchingStatus::Certified => ExactBooleanBlockerKind::BoundaryOnlyContact,
         ExactBoundaryTouchingStatus::NotBoundaryOnly => counts.inferred_kind(),
     };
-    Ok(ExactBoundaryTouchingReport {
-        status,
-        graph_had_unknowns: graph_counts.graph_had_unknowns,
-        retained_face_pairs: graph_counts.retained_face_pairs,
-        retained_events: graph_counts.retained_events,
-        blocker: counts.into_blocker(blocker_kind),
-    })
+    Ok(graph_counts.into_boundary_touching_report(status, counts.into_blocker(blocker_kind)))
 }
 
 fn planar_arrangement_report_from_graph_with_cell_complex_cache(

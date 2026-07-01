@@ -1,6 +1,6 @@
 use super::evidence::{
-    ExactBooleanCertificationSet, ExactConvexBooleanCapabilityFacts, ExactRefinementReport,
-    ExactRefinementStatus, ExactRegularizedSolidBooleanFacts, ExactTrivialBooleanFacts,
+    ExactBooleanCertificationSet, ExactConvexBooleanCapabilityFacts, ExactRefinementStatus,
+    ExactRegularizedSolidBooleanFacts, ExactTrivialBooleanFacts,
     identical_mesh_report_from_sources, same_surface_report_from_sources,
 };
 use super::*;
@@ -505,29 +505,23 @@ fn certification_set_from_graph_and_regularized_arrangement(
     let graph_counts = retained_graph_counts(graph);
     let graph_had_unknowns = graph_counts.graph_had_unknowns;
     let needs_refinement = graph_had_unknowns || counts.construction_failed_events > 0;
-    let refinement = ExactRefinementReport {
-        operation: request.operation,
-        status: if needs_refinement {
+    let refinement = graph_counts.into_refinement_report(
+        request.operation,
+        if needs_refinement {
             ExactRefinementStatus::Required
         } else {
             ExactRefinementStatus::NotRequired
         },
-        graph_had_unknowns,
-        retained_face_pairs: graph_counts.retained_face_pairs,
-        retained_events: graph_counts.retained_events,
-        blocker: needs_refinement.then(|| counts.into_blocker(ExactBooleanBlockerKind::Refinement)),
-    };
+        needs_refinement.then(|| counts.into_blocker(ExactBooleanBlockerKind::Refinement)),
+    );
     let boundary_touching =
         boundary_touching_report_from_graph(graph, left, right).unwrap_or_else(|_| {
             let counts = ExactBooleanBlocker::from_graph(graph, ExactBooleanBlockerKind::Winding);
             let blocker_kind = counts.inferred_kind();
-            ExactBoundaryTouchingReport {
-                status: ExactBoundaryTouchingStatus::NotBoundaryOnly,
-                graph_had_unknowns,
-                retained_face_pairs: graph_counts.retained_face_pairs,
-                retained_events: graph_counts.retained_events,
-                blocker: counts.into_blocker(blocker_kind),
-            }
+            graph_counts.into_boundary_touching_report(
+                ExactBoundaryTouchingStatus::NotBoundaryOnly,
+                counts.into_blocker(blocker_kind),
+            )
         });
     let open_surface_disjoint = open_surface_disjoint_report_from_graph(graph, left, right);
     let adjacent_union_completion = adjacent_union_completion_certification_from_graph(
