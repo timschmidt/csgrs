@@ -1878,10 +1878,7 @@ impl ExactBooleanResult {
                 self.mesh.validation_policy(),
             )
             .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
-            expected
-                .validate()
-                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
-            if self != &expected {
+            if !self.matches_retained_replay(&expected) {
                 return Err(ExactEvidenceValidationError::SourceReplayMismatch);
             }
         }
