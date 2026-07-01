@@ -90,7 +90,7 @@ impl AffineOrthogonalSolidArrangement {
         if self.mesh.vertices().is_empty() && self.mesh.facts().mesh.face_count == 0 {
             return Ok(());
         }
-        let normalized = mesh_to_uvw(&self.mesh, &self.basis, self.mesh.validation_policy())
+        let normalized = mesh_to_uvw(&self.mesh, &self.basis, self.mesh.validation_policy())?
             .ok_or_else(|| {
                 ExactMeshError::one(ExactMeshBlocker::new(
                     ExactMeshBlockerKind::UnsupportedExactOperation,
@@ -160,6 +160,8 @@ pub(crate) fn affine_orthogonal_solid_cell_selected_count(
                 },
             )
         })
+        .ok()
+        .flatten()
     {
         Some(selected_count)
     } else {
@@ -191,7 +193,7 @@ pub(crate) fn materialize_affine_orthogonal_solid_operation(
                     }
                 },
             )
-        })
+        })?
     else {
         return Ok(None);
     };
@@ -254,12 +256,16 @@ fn find_affine_orthogonal_solid_basis<T>(
     left: &ExactMesh,
     right: &ExactMesh,
     mut accept: impl FnMut(ExactMesh, ExactMesh) -> Option<T>,
-) -> Option<(AffineBoxBasis, T)> {
+) -> Result<Option<(AffineBoxBasis, T)>, ExactMeshError> {
     if is_axis_aligned_orthogonal_solid(left) && is_axis_aligned_orthogonal_solid(right) {
-        return None;
+        return Ok(None);
     }
     let mut seen = Vec::new();
+    let blocker = std::cell::RefCell::new(None);
     let mut accept_basis = |basis: AffineBoxBasis| -> Option<(AffineBoxBasis, T)> {
+        if blocker.borrow().is_some() {
+            return None;
+        }
         if compare_reals(
             &det3(&basis.basis_u, &basis.basis_v, &basis.basis_w),
             &Real::from(0),
@@ -271,29 +277,59 @@ fn find_affine_orthogonal_solid_basis<T>(
             return None;
         }
         seen.push(basis.clone());
-        let left_uvw = mesh_to_uvw(left, &basis, ExactMeshValidationPolicy::CLOSED)?;
-        let right_uvw = mesh_to_uvw(right, &basis, ExactMeshValidationPolicy::CLOSED)?;
+        let left_uvw = match mesh_to_uvw(left, &basis, ExactMeshValidationPolicy::CLOSED) {
+            Ok(Some(mesh)) => mesh,
+            Ok(None) => return None,
+            Err(error) => {
+                *blocker.borrow_mut() = Some(error);
+                return None;
+            }
+        };
+        let right_uvw = match mesh_to_uvw(right, &basis, ExactMeshValidationPolicy::CLOSED) {
+            Ok(Some(mesh)) => mesh,
+            Ok(None) => return None,
+            Err(error) => {
+                *blocker.borrow_mut() = Some(error);
+                return None;
+            }
+        };
         accept(left_uvw, right_uvw).map(|accepted| (basis, accepted))
     };
 
     if let Some(accepted) = find_affine_cell_basis(left, &mut accept_basis) {
-        return Some(accepted);
+        return Ok(Some(accepted));
     }
-    find_affine_cell_basis(right, &mut accept_basis)
+    if let Some(error) = blocker.borrow_mut().take() {
+        return Err(error);
+    }
+    let accepted = find_affine_cell_basis(right, &mut accept_basis);
+    if let Some(error) = blocker.into_inner() {
+        return Err(error);
+    }
+    Ok(accepted)
 }
 
 fn mesh_to_uvw(
     mesh: &ExactMesh,
     basis: &AffineBoxBasis,
     validation: ExactMeshValidationPolicy,
-) -> Option<ExactMesh> {
+) -> Result<Option<ExactMesh>, ExactMeshError> {
     let view = mesh.view();
     let mut vertices = Vec::with_capacity(view.vertex_count());
     for point in view.vertices() {
-        let uvw = point_to_uvw(point, basis)?;
+        let Some(uvw) = point_to_uvw(point, basis) else {
+            return Ok(None);
+        };
         let replay = point_from_uvw(&uvw.x, &uvw.y, &uvw.z, basis);
-        if point3_exact_equal(&replay, point) != Some(true) {
-            return None;
+        match point3_exact_equal(&replay, point) {
+            Some(true) => {}
+            Some(false) => return Ok(None),
+            None => {
+                return Err(ExactMeshError::one(ExactMeshBlocker::new(
+                    ExactMeshBlockerKind::ExactConstructionFailure,
+                    "affine normalization replay equality is undecidable",
+                )));
+            }
         }
         vertices.push(Point3::new(uvw.x, uvw.y, uvw.z));
     }
@@ -304,8 +340,13 @@ fn mesh_to_uvw(
         &det3(&basis.basis_u, &basis.basis_v, &basis.basis_w),
         &Real::from(0),
     )
-    .value()?
-        == Ordering::Less
+    .value()
+    .ok_or_else(|| {
+        ExactMeshError::one(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::ExactConstructionFailure,
+            "affine normalization determinant sign is undecidable",
+        ))
+    })? == Ordering::Less
     {
         view.faces()
             .map(|face| reverse_triangle(&Triangle(face.vertex_indices())))
@@ -322,7 +363,7 @@ fn mesh_to_uvw(
         validation,
         1,
     )
-    .ok()
+    .map(Some)
 }
 
 fn point_to_uvw(point: &Point3, basis: &AffineBoxBasis) -> Option<Point3> {
