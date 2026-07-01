@@ -3361,8 +3361,9 @@ fn coplanar_edge_split_construction(
     let (points, interval_overlap, interval) = match overlap.relation {
         SegmentIntersection::Disjoint => (Vec::new(), false, None),
         SegmentIntersection::EndpointTouch => {
-            let point = endpoint_touch_split_point(left_edge, right_edge, projection);
-            (point.into_iter().collect(), false, None)
+            let point = endpoint_touch_split_point(left_edge, right_edge, projection)
+                .map_err(coplanar_split_validation_mesh_error)?;
+            (vec![point], false, None)
         }
         SegmentIntersection::Proper => {
             let point = proper_coplanar_edge_split_point(left_edge, right_edge, projection);
@@ -3600,11 +3601,13 @@ fn endpoint_touch_split_point(
     left: BorrowedEdgePoints<'_>,
     right: BorrowedEdgePoints<'_>,
     projection: CoplanarProjection,
-) -> Option<CoplanarEdgeSplitPoint> {
+) -> Result<CoplanarEdgeSplitPoint, CoplanarOverlapSplitValidationError> {
     for (left_index, left_point) in left.into_iter().enumerate() {
         for (right_index, right_point) in right.into_iter().enumerate() {
-            if projected_points_equal(left_point, right_point, projection)? {
-                return Some(CoplanarEdgeSplitPoint {
+            let equal = projected_points_equal(left_point, right_point, projection)
+                .ok_or(CoplanarOverlapSplitValidationError::UnknownSplitPointEquality)?;
+            if equal {
+                return Ok(CoplanarEdgeSplitPoint {
                     point: (*left_point).clone(),
                     left_parameter: Real::from(left_index as i64),
                     right_parameter: Real::from(right_index as i64),
@@ -3616,14 +3619,19 @@ fn endpoint_touch_split_point(
     let right_end = project_point3(right[1], projection);
     for (left_index, left_point) in left.into_iter().enumerate() {
         let projected = project_point3(left_point, projection);
-        if point_on_segment(&right_start, &right_end, &projected).value() == Some(true) {
-            return Some(CoplanarEdgeSplitPoint {
-                point: (*left_point).clone(),
-                left_parameter: Real::from(left_index as i64),
-                right_parameter: projected_segment_parameter3(
-                    left_point, right[0], right[1], projection,
-                )?,
-            });
+        match point_on_segment(&right_start, &right_end, &projected).value() {
+            Some(true) => {
+                let right_parameter =
+                    projected_segment_parameter3(left_point, right[0], right[1], projection)
+                        .ok_or(CoplanarOverlapSplitValidationError::UnknownSplitParameterOrder)?;
+                return Ok(CoplanarEdgeSplitPoint {
+                    point: (*left_point).clone(),
+                    left_parameter: Real::from(left_index as i64),
+                    right_parameter,
+                });
+            }
+            Some(false) => {}
+            None => return Err(CoplanarOverlapSplitValidationError::UnknownSplitParameterOrder),
         }
     }
 
@@ -3631,20 +3639,22 @@ fn endpoint_touch_split_point(
     let left_end = project_point3(left[1], projection);
     for (right_index, right_point) in right.into_iter().enumerate() {
         let projected = project_point3(right_point, projection);
-        if point_on_segment(&left_start, &left_end, &projected).value() == Some(true) {
-            return Some(CoplanarEdgeSplitPoint {
-                point: (*right_point).clone(),
-                left_parameter: projected_segment_parameter3(
-                    right_point,
-                    left[0],
-                    left[1],
-                    projection,
-                )?,
-                right_parameter: Real::from(right_index as i64),
-            });
+        match point_on_segment(&left_start, &left_end, &projected).value() {
+            Some(true) => {
+                let left_parameter =
+                    projected_segment_parameter3(right_point, left[0], left[1], projection)
+                        .ok_or(CoplanarOverlapSplitValidationError::UnknownSplitParameterOrder)?;
+                return Ok(CoplanarEdgeSplitPoint {
+                    point: (*right_point).clone(),
+                    left_parameter,
+                    right_parameter: Real::from(right_index as i64),
+                });
+            }
+            Some(false) => {}
+            None => return Err(CoplanarOverlapSplitValidationError::UnknownSplitParameterOrder),
         }
     }
-    None
+    Err(CoplanarOverlapSplitValidationError::MissingPointConstruction)
 }
 
 fn coplanar_edge_interval(
