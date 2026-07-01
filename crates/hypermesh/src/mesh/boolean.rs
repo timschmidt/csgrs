@@ -63,6 +63,7 @@ use super::graph::{
 };
 use super::prepared::PreparedMeshPair;
 use super::validation::ExactMeshValidationPolicy;
+use super::view::MeshView;
 use super::{ExactMesh, Triangle, point3_exact_equal};
 use adjacent::{
     full_face_adjacent_certificate_from_graph,
@@ -1785,7 +1786,7 @@ fn volumetric_boundary_closure_report_from_materialized_with_prevalidated_closur
         boundary_edges,
         ..retained_output
     };
-    let boundary_loops = match directed_boundary_loops(&materialized.mesh) {
+    let boundary_loops = match directed_boundary_loops(materialized.mesh.view()) {
         Ok(boundary_loops) => boundary_loops,
         Err(boundary_topology) => {
             retained_boundary.boundary_vertices_with_invalid_outgoing_degree =
@@ -5119,7 +5120,7 @@ fn close_exact_coplanar_boundary_loops(
     if mesh.facts().mesh.closed_manifold || mesh.facts().mesh.boundary_edges == 0 {
         return Ok(None);
     }
-    let Ok(boundary_loops) = directed_boundary_loops(mesh) else {
+    let Ok(boundary_loops) = directed_boundary_loops(mesh.view()) else {
         return Ok(None);
     };
     if !boundary_loops_are_exactly_coplanar_without_self_contact(mesh, &boundary_loops)? {
@@ -5232,7 +5233,7 @@ fn close_exact_coplanar_boundary_loops_from_loops(
         return Ok(None);
     }
 
-    let boundary_edges = directed_boundary_edges(mesh);
+    let boundary_edges = directed_boundary_edges(mesh.view());
     let mut split_boundary_loops = Vec::new();
     for boundary_loop in boundary_loops {
         let split = split_cyclic_self_contact_cycles(boundary_loop, &|left, right| {
@@ -5767,10 +5768,10 @@ struct BoundaryTopologyEvidence {
     overused_edges: usize,
 }
 
-fn directed_boundary_edges(mesh: &ExactMesh) -> BTreeMap<[usize; 2], (usize, usize)> {
+fn retained_triangle_edge_uses(mesh: MeshView<'_>) -> BTreeMap<[usize; 2], Vec<(usize, usize)>> {
     let mut edge_uses: BTreeMap<[usize; 2], Vec<(usize, usize)>> = BTreeMap::new();
     for triangle in mesh.triangles() {
-        let [a, b, c] = triangle.0;
+        let [a, b, c] = triangle.vertex_indices();
         for (start, end) in [(a, b), (b, c), (c, a)] {
             let key = if start < end {
                 [start, end]
@@ -5780,8 +5781,11 @@ fn directed_boundary_edges(mesh: &ExactMesh) -> BTreeMap<[usize; 2], (usize, usi
             edge_uses.entry(key).or_default().push((start, end));
         }
     }
-
     edge_uses
+}
+
+fn directed_boundary_edges(mesh: MeshView<'_>) -> BTreeMap<[usize; 2], (usize, usize)> {
+    retained_triangle_edge_uses(mesh)
         .into_iter()
         .filter_map(|(key, uses)| (uses.len() == 1).then(|| uses[0]).map(|edge| (key, edge)))
         .collect::<BTreeMap<_, _>>()
@@ -5838,20 +5842,10 @@ fn orient_cap_group_against_mesh_boundary(
     }
 }
 
-fn directed_boundary_loops(mesh: &ExactMesh) -> Result<Vec<Vec<usize>>, BoundaryTopologyEvidence> {
-    let mut edge_uses: BTreeMap<[usize; 2], Vec<(usize, usize)>> = BTreeMap::new();
-    for triangle in mesh.triangles() {
-        let [a, b, c] = triangle.0;
-        for (start, end) in [(a, b), (b, c), (c, a)] {
-            let key = if start < end {
-                [start, end]
-            } else {
-                [end, start]
-            };
-            edge_uses.entry(key).or_default().push((start, end));
-        }
-    }
-
+fn directed_boundary_loops(
+    mesh: MeshView<'_>,
+) -> Result<Vec<Vec<usize>>, BoundaryTopologyEvidence> {
+    let edge_uses = retained_triangle_edge_uses(mesh);
     let mut next_by_start = BTreeMap::new();
     let mut outgoing = BTreeMap::<usize, usize>::new();
     let mut incoming = BTreeMap::<usize, usize>::new();
@@ -6396,7 +6390,7 @@ fn projected_mesh_boundary_rings(
     mesh: &ExactMesh,
     projection: CoplanarProjection,
 ) -> Option<Vec<ExactArrangement2dRegionRing>> {
-    directed_boundary_loops(mesh)
+    directed_boundary_loops(mesh.view())
         .ok()?
         .into_iter()
         .map(|loop_vertices| {
