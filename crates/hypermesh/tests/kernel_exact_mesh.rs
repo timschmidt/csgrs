@@ -286,16 +286,16 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
             assert_eq!(view.face_cells().count(), view.face_cell_count());
             assert_eq!(view.blocker_count(), 0);
             if view.vertex_count() > 0 {
-                assert_eq!(view.require_vertex(0).unwrap().index(), 0);
+                assert_eq!(view.vertex(0).unwrap().index(), 0);
             }
             if view.edge_count() > 0 {
-                assert_eq!(view.require_edge(0).unwrap().index(), 0);
+                assert_eq!(view.edge(0).unwrap().index(), 0);
             }
             if view.face_cell_count() > 0 {
-                assert_eq!(view.require_face_cell(0).unwrap().index(), 0);
+                assert_eq!(view.face_cell(0).unwrap().index(), 0);
             }
 
-            let missing_vertex = view.require_vertex(view.vertex_count()).unwrap_err();
+            let missing_vertex = view.vertex(view.vertex_count()).unwrap_err();
             assert_eq!(
                 missing_vertex.blockers()[0].kind(),
                 ExactMeshBlockerKind::IndexOutOfBounds
@@ -304,27 +304,27 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
                 missing_vertex.blockers()[0].vertex(),
                 Some(view.vertex_count())
             );
-            let missing_edge = view.require_edge(view.edge_count()).unwrap_err();
+            let missing_edge = view.edge(view.edge_count()).unwrap_err();
             assert_eq!(
                 missing_edge.blockers()[0].kind(),
                 ExactMeshBlockerKind::IndexOutOfBounds
             );
-            let missing_face_cell = view.require_face_cell(view.face_cell_count()).unwrap_err();
+            let missing_face_cell = view.face_cell(view.face_cell_count()).unwrap_err();
             assert_eq!(
                 missing_face_cell.blockers()[0].kind(),
                 ExactMeshBlockerKind::IndexOutOfBounds
             );
 
-            if let Some(vertex) = view.vertex(0) {
+            if let Ok(vertex) = view.vertex(0) {
                 assert_eq!(vertex.index(), 0);
                 assert!(vertex.provenance_count() > 0);
                 let _ = vertex.point();
             }
-            if let Some(edge) = view.edge(0) {
+            if let Ok(edge) = view.edge(0) {
                 assert_eq!(edge.index(), 0);
                 assert_eq!(edge.vertices().len(), 2);
             }
-            if let Some(face_cell) = view.face_cell(0) {
+            if let Ok(face_cell) = view.face_cell(0) {
                 assert_eq!(face_cell.index(), 0);
                 assert_eq!(
                     face_cell.boundary_node_count(),

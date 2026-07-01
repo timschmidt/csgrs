@@ -811,15 +811,7 @@ impl<'a> ArrangementView<'a> {
     }
 
     /// Borrow one arrangement vertex by index.
-    pub fn vertex(self, index: usize) -> Option<ArrangementVertexRef<'a>> {
-        (index < self.arrangement.vertices.len()).then_some(ArrangementVertexRef {
-            arrangement: self.arrangement,
-            index,
-        })
-    }
-
-    /// Borrow one arrangement vertex by index, returning a typed blocker when absent.
-    pub fn require_vertex(self, index: usize) -> Result<ArrangementVertexRef<'a>, ExactMeshError> {
+    pub fn vertex(self, index: usize) -> Result<ArrangementVertexRef<'a>, ExactMeshError> {
         if index >= self.arrangement.vertices.len() {
             return Err(ExactMeshError::one(
                 ExactMeshBlocker::new(
@@ -839,15 +831,7 @@ impl<'a> ArrangementView<'a> {
     }
 
     /// Borrow one arrangement edge by index.
-    pub fn edge(self, index: usize) -> Option<ArrangementEdgeRef<'a>> {
-        (index < self.arrangement.edges.len()).then_some(ArrangementEdgeRef {
-            arrangement: self.arrangement,
-            index,
-        })
-    }
-
-    /// Borrow one arrangement edge by index, returning a typed blocker when absent.
-    pub fn require_edge(self, index: usize) -> Result<ArrangementEdgeRef<'a>, ExactMeshError> {
+    pub fn edge(self, index: usize) -> Result<ArrangementEdgeRef<'a>, ExactMeshError> {
         if index >= self.arrangement.edges.len() {
             return Err(ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::IndexOutOfBounds,
@@ -864,18 +848,7 @@ impl<'a> ArrangementView<'a> {
     }
 
     /// Borrow one arrangement face cell by index.
-    pub fn face_cell(self, index: usize) -> Option<ArrangementFaceCellRef<'a>> {
-        (index < self.arrangement.face_cells.len()).then_some(ArrangementFaceCellRef {
-            arrangement: self.arrangement,
-            index,
-        })
-    }
-
-    /// Borrow one arrangement face cell by index, returning a typed blocker when absent.
-    pub fn require_face_cell(
-        self,
-        index: usize,
-    ) -> Result<ArrangementFaceCellRef<'a>, ExactMeshError> {
+    pub fn face_cell(self, index: usize) -> Result<ArrangementFaceCellRef<'a>, ExactMeshError> {
         if index >= self.arrangement.face_cells.len() {
             return Err(ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::IndexOutOfBounds,
