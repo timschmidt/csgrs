@@ -50,7 +50,8 @@ use loop_triangulation::{
     group_exact_coplanar_loops, projected_loop_interior_witness, triangulate_exact_loop_group,
 };
 use regularization::{
-    ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
+    ExactArrangementBlocker, ExactArrangementGraphBlockerKind,
+    ExactArrangementSplitPlanBlockerKind, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
     ExactUnresolvedPolicy,
 };
 use std::collections::{BTreeMap, BTreeSet};
@@ -2385,6 +2386,29 @@ fn face_plane_arrangements(
     arrangements
 }
 
+fn retained_arrangement_face_vertices<'a>(
+    mesh: &'a ExactMesh,
+    face: usize,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Option<([usize; 3], [&'a Point3; 3])> {
+    let Some(face_ref) = mesh.view().face(face) else {
+        blockers.push(ExactArrangementBlocker::InvalidIntersectionGraph(
+            ExactArrangementGraphBlockerKind::FaceIndexOutOfRange,
+        ));
+        return None;
+    };
+    let triangle = face_ref.vertex_indices();
+    match face_ref.vertices() {
+        Ok(points) => Some((triangle, points)),
+        Err(_) => {
+            blockers.push(ExactArrangementBlocker::InvalidSplitPlan(
+                ExactArrangementSplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange,
+            ));
+            None
+        }
+    }
+}
+
 fn face_plane_arrangement(
     side: MeshSide,
     face: usize,
@@ -2395,9 +2419,7 @@ fn face_plane_arrangement(
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFacePlaneArrangement> {
     let mesh = side.mesh(left, right);
-    let face_ref = mesh.view().face(face)?;
-    let triangle = face_ref.vertex_indices();
-    let triangle_points = face_ref.vertices().ok()?;
+    let (triangle, triangle_points) = retained_arrangement_face_vertices(mesh, face, blockers)?;
     let projection = choose_triangle_projection(mesh, triangle, blockers)?;
     let mut segments = Vec::new();
     let mut next_source = 0usize;
@@ -2534,9 +2556,7 @@ fn face_plane_vertex_provenance(
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFaceCellNode> {
     let mesh = side.mesh(left, right);
-    let face_ref = mesh.view().face(face)?;
-    let triangle = face_ref.vertex_indices();
-    let points = face_ref.vertices().ok()?;
+    let (triangle, points) = retained_arrangement_face_vertices(mesh, face, blockers)?;
     for (vertex, source_point) in triangle.into_iter().zip(points) {
         match point2_equal(&project_point3(source_point, projection), point).value() {
             Some(true) => return Some(ArrangementFaceCellNode::Source { side, vertex }),
@@ -3163,15 +3183,12 @@ fn carrier_plane_overlay(
         blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
         return None;
     }
-    let projected_face_ring = |region: ExactArrangement2dRegion,
-                               mesh: &ExactMesh,
-                               face: usize|
+    let mut projected_face_ring = |region: ExactArrangement2dRegion,
+                                   mesh: &ExactMesh,
+                                   face: usize|
      -> Option<ExactArrangement2dRegionRing> {
-        let vertices = mesh
-            .view()
-            .face(face)?
-            .vertices()
-            .ok()?
+        let (_, points) = retained_arrangement_face_vertices(mesh, face, blockers)?;
+        let vertices = points
             .iter()
             .map(|vertex| project_point3(vertex, overlap.projection))
             .collect::<Vec<Point2>>();
@@ -4670,7 +4687,7 @@ fn lift_carrier_plane_point(
     point: &Point2,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<Point3> {
-    let [a, b, c] = mesh.view().face(face)?.vertices().ok()?;
+    let (_, [a, b, c]) = retained_arrangement_face_vertices(mesh, face, blockers)?;
     let ab = Point3::new(b.x.clone() - &a.x, b.y.clone() - &a.y, b.z.clone() - &a.z);
     let ac = Point3::new(c.x.clone() - &a.x, c.y.clone() - &a.y, c.z.clone() - &a.z);
     let normal = Point3::new(

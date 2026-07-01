@@ -22,6 +22,41 @@ fn rational_p3(x: [i64; 2], y: [i64; 2], z: [i64; 2]) -> Point3 {
     Point3::new(q(x[0], x[1]), q(y[0], y[1]), q(z[0], z[1]))
 }
 
+#[test]
+fn retained_arrangement_face_vertices_reports_stale_rows() {
+    let mesh = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let mut missing_face_blockers = Vec::new();
+    assert!(
+        retained_arrangement_face_vertices(&mesh, usize::MAX, &mut missing_face_blockers).is_none()
+    );
+    assert_eq!(
+        missing_face_blockers,
+        vec![ExactArrangementBlocker::InvalidIntersectionGraph(
+            ExactArrangementGraphBlockerKind::FaceIndexOutOfRange
+        )]
+    );
+
+    let mut stale_vertex_mesh = mesh.clone();
+    stale_vertex_mesh.vertices.pop();
+    let mut stale_vertex_blockers = Vec::new();
+    assert!(
+        retained_arrangement_face_vertices(&stale_vertex_mesh, 0, &mut stale_vertex_blockers)
+            .is_none()
+    );
+    assert_eq!(
+        stale_vertex_blockers,
+        vec![ExactArrangementBlocker::InvalidSplitPlan(
+            ExactArrangementSplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange
+        )]
+    );
+}
+
 fn test_face_cell(face: usize, points: Vec<Point3>) -> ArrangementFaceCell {
     ArrangementFaceCell {
         carrier: ArrangementFaceCarrier {
