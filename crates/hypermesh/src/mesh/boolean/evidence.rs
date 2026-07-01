@@ -1585,14 +1585,12 @@ impl ExactBooleanResult {
 
         let selection = match self.kind {
             ExactBooleanResultKind::SelectedRegions { selection } => Some(selection),
-            ExactBooleanResultKind::OpenSurfaceArrangement { operation } => Some(match operation {
-                ExactBooleanOperation::Intersection => ExactRegionSelection::KeepNone,
-                ExactBooleanOperation::Union => ExactRegionSelection::KeepAll,
-                ExactBooleanOperation::Difference => ExactRegionSelection::KeepLeft,
-                ExactBooleanOperation::SelectedRegions(_) => {
+            ExactBooleanResultKind::OpenSurfaceArrangement { operation } => {
+                let Some(selection) = operation.open_surface_region_selection() else {
                     return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
-                }
-            }),
+                };
+                Some(selection)
+            }
             _ => None,
         };
         let Some(selection) = selection else {

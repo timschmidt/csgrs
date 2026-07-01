@@ -432,6 +432,28 @@ impl ExactBooleanOperation {
             Self::SelectedRegions(_) => None,
         }
     }
+
+    fn open_surface_region_selection(self) -> Option<ExactRegionSelection> {
+        match self {
+            Self::Union => Some(ExactRegionSelection::KeepAll),
+            Self::Intersection => Some(ExactRegionSelection::KeepNone),
+            Self::Difference => Some(ExactRegionSelection::KeepLeft),
+            Self::SelectedRegions(_) => None,
+        }
+    }
+
+    fn open_surface_arrangement_support(self) -> Option<ExactBooleanSupport> {
+        match self {
+            Self::Union => Some(ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion),
+            Self::Intersection => {
+                Some(ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection)
+            }
+            Self::Difference => {
+                Some(ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference)
+            }
+            Self::SelectedRegions(_) => None,
+        }
+    }
 }
 
 /// Complete policy for an exact boolean request.
@@ -6657,11 +6679,8 @@ fn materialize_open_surface_arrangement_plan(
         region_classifications,
         triangulations,
     } = plan;
-    let selection = match operation {
-        ExactBooleanOperation::Union => ExactRegionSelection::KeepAll,
-        ExactBooleanOperation::Intersection => ExactRegionSelection::KeepNone,
-        ExactBooleanOperation::Difference => ExactRegionSelection::KeepLeft,
-        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+    let Some(selection) = operation.open_surface_region_selection() else {
+        return Ok(None);
     };
     // Open-surface arrangement is not a closed-volumetric inside/outside
     // split regions are retained by surface operation, and no winding label is
@@ -6727,17 +6746,8 @@ fn open_surface_arrangement_plan_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<Option<OpenSurfaceArrangementPlan>, ExactMeshError> {
-    let support = match operation {
-        ExactBooleanOperation::Union => ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion,
-        ExactBooleanOperation::Intersection => {
-            ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
-        }
-        ExactBooleanOperation::Difference => {
-            ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference
-        }
-        ExactBooleanOperation::SelectedRegions(_) => {
-            return Ok(None);
-        }
+    let Some(support) = operation.open_surface_arrangement_support() else {
+        return Ok(None);
     };
     if !mesh_is_open_surface(left) || !mesh_is_open_surface(right) {
         return Ok(None);
