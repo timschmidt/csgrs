@@ -3366,8 +3366,9 @@ fn coplanar_edge_split_construction(
             (vec![point], false, None)
         }
         SegmentIntersection::Proper => {
-            let point = proper_coplanar_edge_split_point(left_edge, right_edge, projection);
-            (point.into_iter().collect(), false, None)
+            let point = proper_coplanar_edge_split_point(left_edge, right_edge, projection)
+                .map_err(coplanar_split_validation_mesh_error)?;
+            (vec![point], false, None)
         }
         SegmentIntersection::CollinearOverlap | SegmentIntersection::Identical => {
             let interval = coplanar_edge_interval(left_edge, right_edge, projection)
@@ -3745,13 +3746,15 @@ fn proper_coplanar_edge_split_point(
     left: BorrowedEdgePoints<'_>,
     right: BorrowedEdgePoints<'_>,
     projection: CoplanarProjection,
-) -> Option<CoplanarEdgeSplitPoint> {
+) -> Result<CoplanarEdgeSplitPoint, CoplanarOverlapSplitValidationError> {
     let left_parameter =
-        projected_line_parameter3(left[0], left[1], right[0], right[1], projection)?;
+        projected_line_parameter3(left[0], left[1], right[0], right[1], projection)
+            .ok_or(CoplanarOverlapSplitValidationError::UnknownSplitParameterOrder)?;
     let right_parameter =
-        projected_line_parameter3(right[0], right[1], left[0], left[1], projection)?;
+        projected_line_parameter3(right[0], right[1], left[0], left[1], projection)
+            .ok_or(CoplanarOverlapSplitValidationError::UnknownSplitParameterOrder)?;
     let point = interpolate_point3(left[0], left[1], &left_parameter);
-    Some(CoplanarEdgeSplitPoint {
+    Ok(CoplanarEdgeSplitPoint {
         point,
         left_parameter,
         right_parameter,

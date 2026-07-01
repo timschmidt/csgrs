@@ -778,6 +778,23 @@ fn endpoint_touch_split_point_reports_missing_and_parameters() {
 }
 
 #[test]
+fn proper_coplanar_edge_split_point_reports_parameters() {
+    let left_start = p(0, 0, 0);
+    let left_end = p(4, 0, 0);
+    let right_start = p(2, -2, 0);
+    let right_end = p(2, 2, 0);
+    let split = proper_coplanar_edge_split_point(
+        [&left_start, &left_end],
+        [&right_start, &right_end],
+        CoplanarProjection::Xy,
+    )
+    .unwrap();
+    assert_eq!(split.point, p(2, 0, 0));
+    assert_eq!(split.left_parameter, q(1, 2));
+    assert_eq!(split.right_parameter, q(1, 2));
+}
+
+#[test]
 fn coplanar_arrangement_evidence_rejects_overflowing_counts() {
     let graph_overflow = CoplanarArrangementEvidence {
         status: CoplanarArrangementEvidenceStatus::NeedsPlanarCells,
