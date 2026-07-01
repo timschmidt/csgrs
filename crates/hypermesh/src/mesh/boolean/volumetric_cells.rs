@@ -446,28 +446,22 @@ fn mesh_local_off_plane_side(
     plane: &FacePlaneFacts,
 ) -> Option<PlaneSide> {
     let face_is_coplanar_with_plane = |face: usize| {
-        if let Some(face) = mesh.facts().faces.get(face) {
-            face.triangle.vertices.iter().all(|&vertex| {
-                mesh.vertices()
-                    .get(vertex)
-                    .and_then(|point| retained_plane_side(plane, point))
-                    == Some(PlaneSide::On)
+        face_point_refs(mesh, face)
+            .map(|points| {
+                points
+                    .iter()
+                    .all(|point| retained_plane_side(plane, point) == Some(PlaneSide::On))
             })
-        } else {
-            false
-        }
+            .unwrap_or(false)
     };
 
-    if mesh.facts().faces.get(face).is_none() || !face_is_coplanar_with_plane(face) {
+    if mesh.view().face(face).is_none() || !face_is_coplanar_with_plane(face) {
         return None;
     }
     let mut edge_to_faces = HashMap::<[usize; 2], Vec<usize>>::new();
-    for face in &mesh.facts().faces {
-        for edge in face.oriented.directed_edges.map(sorted_edge) {
-            edge_to_faces
-                .entry(edge)
-                .or_default()
-                .push(face.triangle.face);
+    for face in mesh.view().faces() {
+        for edge in face.directed_edges().map(sorted_edge) {
+            edge_to_faces.entry(edge).or_default().push(face.index());
         }
     }
 
@@ -477,14 +471,7 @@ fn mesh_local_off_plane_side(
         if !patch.insert(current) {
             continue;
         }
-        for edge in mesh
-            .facts()
-            .faces
-            .get(current)?
-            .oriented
-            .directed_edges
-            .map(sorted_edge)
-        {
+        for edge in mesh.view().face(current)?.directed_edges().map(sorted_edge) {
             for &neighbor in edge_to_faces
                 .get(&edge)
                 .into_iter()
@@ -500,11 +487,9 @@ fn mesh_local_off_plane_side(
     let mut side = None;
     for &patch_face in &patch {
         for edge in mesh
-            .facts()
-            .faces
-            .get(patch_face)?
-            .oriented
-            .directed_edges
+            .view()
+            .face(patch_face)?
+            .directed_edges()
             .map(sorted_edge)
         {
             for &neighbor in edge_to_faces
@@ -515,11 +500,11 @@ fn mesh_local_off_plane_side(
                 if patch.contains(&neighbor) {
                     continue;
                 }
-                for vertex in mesh.facts().faces.get(neighbor)?.triangle.vertices {
+                for vertex in mesh.view().face(neighbor)?.vertex_indices() {
                     if edge.contains(&vertex) {
                         continue;
                     }
-                    match retained_plane_side(plane, mesh.vertices().get(vertex)?)? {
+                    match retained_plane_side(plane, mesh.view().vertex(vertex)?.point())? {
                         PlaneSide::On => {}
                         candidate => {
                             if let Some(existing) = side {
@@ -536,6 +521,10 @@ fn mesh_local_off_plane_side(
         }
     }
     side
+}
+
+fn face_point_refs(mesh: &ExactMesh, face: usize) -> Option<[&hyperlimit::Point3; 3]> {
+    mesh.view().face(face)?.vertices().ok()
 }
 
 fn coplanar_pair_has_positive_area_overlap(events: &[IntersectionEvent]) -> bool {
@@ -649,20 +638,14 @@ fn proper_crossing_event(event: &IntersectionEvent, left: &ExactMesh, right: &Ex
         );
     };
     let mesh = plane_side.mesh(left, right);
-    let Some(face) = mesh.facts().faces.get(*plane_face) else {
+    let Some(triangle) = face_point_refs(mesh, *plane_face) else {
         return true;
     };
-    let triangle = face.triangle.vertices;
-    let Some(a) = mesh.vertices().get(triangle[0]) else {
-        return true;
-    };
-    let Some(b) = mesh.vertices().get(triangle[1]) else {
-        return true;
-    };
-    let Some(c) = mesh.vertices().get(triangle[2]) else {
-        return true;
-    };
-    let points = [a.clone(), b.clone(), c.clone()];
+    let points = [
+        triangle[0].clone(),
+        triangle[1].clone(),
+        triangle[2].clone(),
+    ];
     let Some(projection) = choose_nonzero_projected_polygon_area(&points) else {
         return true;
     };
