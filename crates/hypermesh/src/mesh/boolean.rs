@@ -342,6 +342,12 @@ pub(crate) enum ExactBooleanOperation {
     Difference,
 }
 
+impl ExactBooleanOperation {
+    pub(crate) const fn is_selected_regions(self) -> bool {
+        matches!(self, Self::SelectedRegions(_))
+    }
+}
+
 /// Complete policy for an exact boolean request.
 ///
 /// The request keeps operation semantics and output validation together so
