@@ -1806,7 +1806,13 @@ fn volumetric_boundary_closure_report_from_materialized_with_prevalidated_closur
         .map(|boundary_loop| {
             boundary_loop
                 .iter()
-                .map(|&vertex| materialized.mesh.vertices().get(vertex).cloned())
+                .map(|&vertex| {
+                    materialized
+                        .mesh
+                        .view()
+                        .vertex(vertex)
+                        .map(|vertex| vertex.point().clone())
+                })
                 .collect::<Option<Vec<_>>>()
         })
         .collect::<Option<Vec<_>>>()
@@ -5137,7 +5143,11 @@ fn boundary_loops_are_exactly_coplanar_without_self_contact(
     for boundary_loop in boundary_loops {
         let Some(points) = boundary_loop
             .iter()
-            .map(|&vertex| mesh.vertices().get(vertex).cloned())
+            .map(|&vertex| {
+                mesh.view()
+                    .vertex(vertex)
+                    .map(|vertex| vertex.point().clone())
+            })
             .collect::<Option<Vec<_>>>()
         else {
             return Ok(false);
@@ -5238,12 +5248,14 @@ fn close_exact_coplanar_boundary_loops_from_loops(
     for boundary_loop in boundary_loops {
         let split = split_cyclic_self_contact_cycles(boundary_loop, &|left, right| {
             let left = mesh
-                .vertices()
-                .get(*left)
+                .view()
+                .vertex(*left)
+                .map(|vertex| vertex.point())
                 .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
             let right = mesh
-                .vertices()
-                .get(*right)
+                .view()
+                .vertex(*right)
+                .map(|vertex| vertex.point())
                 .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
             point3_exact_equal(left, right).ok_or(ExactArrangementBlocker::UndecidableOrdering)
         })
@@ -5266,7 +5278,11 @@ fn close_exact_coplanar_boundary_loops_from_loops(
         for boundary_loop in &split_boundary_loops {
             let Some(points) = boundary_loop
                 .iter()
-                .map(|&vertex| mesh.vertices().get(vertex).cloned())
+                .map(|&vertex| {
+                    mesh.view()
+                        .vertex(vertex)
+                        .map(|vertex| vertex.point().clone())
+                })
                 .collect::<Option<Vec<_>>>()
             else {
                 return Ok(None);
@@ -5328,7 +5344,11 @@ fn close_exact_coplanar_boundary_loops_from_loops(
             .map(|boundary_loop| {
                 boundary_loop
                     .iter()
-                    .map(|&vertex| mesh.vertices().get(vertex).cloned())
+                    .map(|&vertex| {
+                        mesh.view()
+                            .vertex(vertex)
+                            .map(|vertex| vertex.point().clone())
+                    })
                     .collect::<Option<Vec<_>>>()
             })
             .collect::<Option<Vec<_>>>()
@@ -5398,9 +5418,9 @@ fn group_exact_coplanar_vertex_loops(
         let points = boundary
             .iter()
             .map(|&vertex| {
-                mesh.vertices()
-                    .get(vertex)
-                    .cloned()
+                mesh.view()
+                    .vertex(vertex)
+                    .map(|vertex| vertex.point().clone())
                     .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)
             })
             .collect::<Result<Vec<_>, _>>()?;
@@ -5455,7 +5475,7 @@ fn map_cap_vertices_to_boundary_or_insert(
                 if used_boundary_vertices[index] {
                     continue;
                 }
-                let existing = mesh.vertices().get(boundary_vertex)?;
+                let existing = mesh.view().vertex(boundary_vertex)?.point();
                 match point3_exact_equal(existing, &point) {
                     Some(true) => {
                         used_boundary_vertices[index] = true;
@@ -6340,12 +6360,8 @@ pub(crate) fn coplanar_mesh_overlay_carrier(
 ) -> Option<([Point3; 3], CoplanarProjection)> {
     let mut carrier_points = None;
     'meshes: for mesh in [left, right] {
-        for triangle in mesh.triangles() {
-            let points = [
-                mesh.vertices().get(triangle.0[0])?.clone(),
-                mesh.vertices().get(triangle.0[1])?.clone(),
-                mesh.vertices().get(triangle.0[2])?.clone(),
-            ];
+        for triangle in mesh.view().triangles() {
+            let points = triangle.vertices().ok()?.map(|point| point.clone());
             if choose_nonzero_projected_polygon_area(&points).is_some() {
                 carrier_points = Some(points);
                 break 'meshes;
@@ -6396,7 +6412,12 @@ fn projected_mesh_boundary_rings(
         .map(|loop_vertices| {
             let vertices = loop_vertices
                 .into_iter()
-                .map(|vertex| Some(project_point3(mesh.vertices().get(vertex)?, projection)))
+                .map(|vertex| {
+                    Some(project_point3(
+                        mesh.view().vertex(vertex)?.point(),
+                        projection,
+                    ))
+                })
                 .collect::<Option<Vec<_>>>()?;
             Some(ExactArrangement2dRegionRing { region, vertices })
         })
@@ -6409,11 +6430,14 @@ fn projected_mesh_face_ring(
     face: usize,
     projection: CoplanarProjection,
 ) -> Option<ExactArrangement2dRegionRing> {
-    let triangle = mesh.facts().faces.get(face)?.triangle.vertices;
-    let vertices = triangle
-        .iter()
-        .map(|vertex| Some(project_point3(mesh.vertices().get(*vertex)?, projection)))
-        .collect::<Option<Vec<_>>>()?;
+    let vertices = mesh
+        .view()
+        .face(face)?
+        .vertices()
+        .ok()?
+        .into_iter()
+        .map(|vertex| project_point3(vertex, projection))
+        .collect::<Vec<_>>();
     Some(ExactArrangement2dRegionRing { region, vertices })
 }
 
