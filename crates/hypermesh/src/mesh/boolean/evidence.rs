@@ -1752,66 +1752,62 @@ impl ExactBooleanResult {
                 graph, left, right,
             )?;
         }
-        if let ExactBooleanResultKind::SelectedRegions { selection } = self.kind {
-            let graph = source_replay.validated_graph()?;
-            let replay = replay_selected_region_boolean_result_from_graph(
-                graph,
-                left,
-                right,
-                selection,
-                self.mesh.validation_policy(),
-            )
-            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
+        let retained_result_replay = match self.kind {
+            ExactBooleanResultKind::SelectedRegions { selection } => {
+                let graph = source_replay.validated_graph()?;
+                Some(
+                    replay_selected_region_boolean_result_from_graph(
+                        graph,
+                        left,
+                        right,
+                        selection,
+                        self.mesh.validation_policy(),
+                    )
+                    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?,
+                )
+            }
+            ExactBooleanResultKind::OpenSurfaceArrangement { operation } => {
+                let graph = source_replay.validated_graph()?;
+                Some(
+                    super::open_surface_arrangement_result_from_graph(
+                        graph,
+                        left,
+                        right,
+                        operation,
+                        self.mesh.validation_policy(),
+                    )
+                    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+                    .filter(|replay| {
+                        matches!(
+                            replay.kind,
+                            ExactBooleanResultKind::OpenSurfaceArrangement {
+                                operation: result_operation,
+                            } if result_operation == operation
+                        ) && replay.mesh.validation_policy() == self.mesh.validation_policy()
+                    })
+                    .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?,
+                )
+            }
+            ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
+                let graph = source_replay.validated_graph()?;
+                let mut replay = replay_generic_arrangement_cell_complex_result(
+                    graph,
+                    left,
+                    right,
+                    operation,
+                    self.mesh.validation_policy(),
+                )
+                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
+                .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?;
+                replay.kind = self.kind;
+                Some(replay)
+            }
+            ExactBooleanResultKind::CertifiedShortcut { .. } => None,
+        };
+        if let Some(replay) = retained_result_replay {
             if !self.matches_retained_replay(&replay) {
                 return Err(ExactEvidenceValidationError::SourceReplayMismatch);
             }
-        }
-        if let ExactBooleanResultKind::OpenSurfaceArrangement { operation } = self.kind {
-            let graph = source_replay.validated_graph()?;
-            let replay = super::open_surface_arrangement_result_from_graph(
-                graph,
-                left,
-                right,
-                operation,
-                self.mesh.validation_policy(),
-            )
-            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
-            .filter(|replay| {
-                matches!(
-                    replay.kind,
-                    ExactBooleanResultKind::OpenSurfaceArrangement {
-                        operation: result_operation,
-                    } if result_operation == operation
-                ) && replay.mesh.validation_policy() == self.mesh.validation_policy()
-            })
-            .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?;
-            if !self.matches_retained_replay(&replay) {
-                return Err(ExactEvidenceValidationError::SourceReplayMismatch);
-            }
-        }
-        if let ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } = self.kind
-        {
-            let graph = source_replay.validated_graph()?;
-            let mut replay = replay_generic_arrangement_cell_complex_result(
-                graph,
-                left,
-                right,
-                operation,
-                self.mesh.validation_policy(),
-            )
-            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
-            .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?;
-            replay.kind = self.kind;
-            if !self.matches_retained_replay(&replay) {
-                return Err(ExactEvidenceValidationError::SourceReplayMismatch);
-            }
-        }
-        if matches!(
-            self.kind,
-            ExactBooleanResultKind::SelectedRegions { .. }
-                | ExactBooleanResultKind::OpenSurfaceArrangement { .. }
-                | ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
-        ) {
             validate_assembly_source_face_incidence(&self.assembly, left, right)
                 .map_err(|_| ExactEvidenceValidationError::OutputSourceReplayMismatch)?;
         }
