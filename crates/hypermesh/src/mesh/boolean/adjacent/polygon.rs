@@ -297,9 +297,14 @@ fn polygon_patch_candidate(
             return Some(None);
         }
         for point in &points {
-            if !boundary_points
-                .iter()
-                .any(|boundary_point| point3_exact_equal(boundary_point, point) == Some(true))
+            let mut matches_boundary = false;
+            for boundary_point in &boundary_points {
+                if point3_exact_equal(boundary_point, point)? {
+                    matches_boundary = true;
+                    break;
+                }
+            }
+            if !matches_boundary
                 && !point_strictly_inside_simple_loop(point, &boundary_ring, projection)?
             {
                 return Some(None);
