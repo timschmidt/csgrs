@@ -7,6 +7,7 @@ use crate::mesh::boolean::region::{
     FaceRegionPlaneRelation, checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut,
 };
+use crate::mesh::error::ExactMeshBlockerKind;
 use crate::mesh::validation::ExactMeshValidationPolicy;
 
 fn q(numerator: i64, denominator: i64) -> Real {
@@ -215,7 +216,7 @@ fn intersection_graph_retains_coplanar_face_pair_events_internal() {
         )
     }));
 
-    let mut overlaps = graph.coplanar_overlap_graph_iter().collect::<Vec<_>>();
+    let mut overlaps = graph.coplanar_overlap_graphs().unwrap();
     let overlap = overlaps.pop().unwrap();
     assert!(graph.summary.coplanar_overlap_graph_count >= overlaps.len());
     overlap.validate_against_sources(&left, &right).unwrap();
@@ -257,6 +258,46 @@ fn intersection_graph_retains_coplanar_face_pair_events_internal() {
         evidence
             .validate_against_sources(&left, &separated_right)
             .is_err()
+    );
+}
+
+#[test]
+fn coplanar_overlap_extraction_rejects_missing_projection() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+        &[0, 1, 2],
+        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 1, 0, 0, 0, 1, 0],
+        &[0, 1, 2],
+        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let mut graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
+    let retained_pair = graph
+        .face_pairs
+        .iter_mut()
+        .find(|pair| {
+            matches!(
+                pair.relation,
+                MeshFacePairRelation::CoplanarTouching | MeshFacePairRelation::CoplanarOverlapping
+            )
+        })
+        .expect("coplanar pair should be retained");
+    retained_pair.projection = None;
+
+    assert_eq!(
+        graph.coplanar_overlap_graphs(),
+        Err(IntersectionGraphValidationError::CoplanarPairMissingProjection)
+    );
+    let split_error = graph
+        .coplanar_overlap_split_plan(&left, &right)
+        .unwrap_err();
+    assert!(
+        split_error.has_only_blocker_kinds(&[ExactMeshBlockerKind::MissingRequiredEvidence]),
+        "{split_error:?}"
     );
 }
 

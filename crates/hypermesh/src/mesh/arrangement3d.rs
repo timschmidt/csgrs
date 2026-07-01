@@ -1295,9 +1295,20 @@ impl ExactArrangement3d {
         };
 
         let mut carrier_plane_overlays = Vec::new();
-        for overlap in graph.coplanar_overlap_graph_iter() {
-            if let Some(overlay) = carrier_plane_overlay(&overlap, left, right, &mut blockers) {
-                carrier_plane_overlays.push(overlay);
+        match graph.coplanar_overlap_graphs() {
+            Ok(overlap_graphs) => {
+                for overlap in overlap_graphs {
+                    if let Some(overlay) =
+                        carrier_plane_overlay(&overlap, left, right, &mut blockers)
+                    {
+                        carrier_plane_overlays.push(overlay);
+                    }
+                }
+            }
+            Err(error) => {
+                blockers.push(ExactArrangementBlocker::InvalidIntersectionGraph(
+                    error.into(),
+                ));
             }
         }
         let lower_dimensional_artifacts =
@@ -2648,13 +2659,22 @@ fn lower_dimensional_artifacts(
             }
         }
     }
-    let touching_pairs = graph
-        .coplanar_overlap_graph_iter()
-        .filter(|overlap| {
-            overlap.relation == super::graph::intersection::MeshFacePairRelation::CoplanarTouching
-        })
-        .map(|overlap| ((overlap.left_face, overlap.right_face), overlap))
-        .collect::<BTreeMap<_, _>>();
+    let touching_pairs = match graph.coplanar_overlap_graphs() {
+        Ok(overlap_graphs) => overlap_graphs
+            .into_iter()
+            .filter(|overlap| {
+                overlap.relation
+                    == super::graph::intersection::MeshFacePairRelation::CoplanarTouching
+            })
+            .map(|overlap| ((overlap.left_face, overlap.right_face), overlap))
+            .collect::<BTreeMap<_, _>>(),
+        Err(error) => {
+            blockers.push(ExactArrangementBlocker::InvalidIntersectionGraph(
+                error.into(),
+            ));
+            BTreeMap::new()
+        }
+    };
 
     if !touching_pairs.is_empty() {
         let split_plan = match graph.coplanar_overlap_split_plan(left, right) {
