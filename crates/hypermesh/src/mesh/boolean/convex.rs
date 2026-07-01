@@ -136,10 +136,14 @@ pub(crate) fn union_closed_convex_solids(
 
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
-    if append_convex_union_source_faces(left, right, &right_facts, &mut vertices, &mut triangles)
-        .is_none()
-        || append_convex_union_source_faces(right, left, &left_facts, &mut vertices, &mut triangles)
-            .is_none()
+    if !append_convex_union_source_faces(left, right, &right_facts, &mut vertices, &mut triangles)?
+        || !append_convex_union_source_faces(
+            right,
+            left,
+            &left_facts,
+            &mut vertices,
+            &mut triangles,
+        )?
     {
         return Ok(None);
     }
@@ -203,16 +207,14 @@ pub(crate) fn subtract_closed_convex_solids(
 
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
-    if append_convex_union_source_faces(left, right, &right_facts, &mut vertices, &mut triangles)
-        .is_none()
-        || append_convex_difference_right_faces(
+    if !append_convex_union_source_faces(left, right, &right_facts, &mut vertices, &mut triangles)?
+        || !append_convex_difference_right_faces(
             right,
             left,
             &left_facts,
             &mut vertices,
             &mut triangles,
-        )
-        .is_none()
+        )?
     {
         return Ok(None);
     }
@@ -269,7 +271,7 @@ fn union_from_difference_and_operand(
         .vertices()
         .iter()
         .map(|point| intern_point(&mut vertices, point))
-        .collect::<Vec<_>>();
+        .collect::<Result<Vec<_>, _>>()?;
     triangles.extend(right.view().faces().map(|face| {
         let vertices = face.vertex_indices();
         Triangle([
@@ -395,8 +397,8 @@ pub(crate) fn intersect_closed_convex_solids(
     }
 
     let mut polygons = Vec::new();
-    if clipped_source_faces(left, right, &right_facts, &mut polygons).is_none()
-        || clipped_source_faces(right, left, &left_facts, &mut polygons).is_none()
+    if !clipped_source_faces(left, right, &right_facts, &mut polygons)?
+        || !clipped_source_faces(right, left, &left_facts, &mut polygons)?
     {
         return Ok(None);
     }
@@ -411,7 +413,8 @@ pub(crate) fn intersect_closed_convex_solids(
         &hull_polygons,
         "exact closed-convex solid intersection",
         ExactMeshValidationPolicy::CLOSED,
-    ) else {
+    )?
+    else {
         return Ok(None);
     };
     if !mesh_has_nonzero_signed_volume(&mesh)? {
@@ -457,55 +460,85 @@ fn clipped_source_faces(
     clip: &ExactMesh,
     clip_facts: &ConvexSolidFacts,
     polygons: &mut Vec<Vec<Point3>>,
-) -> Option<()> {
+) -> Result<bool, ExactMeshError> {
     for source_triangle in source.view().triangles() {
-        let [a, b, c] = source_triangle.vertices().ok()?;
+        let Ok([a, b, c]) = source_triangle.vertices() else {
+            return Ok(false);
+        };
         let mut polygon = vec![a.clone(), b.clone(), c.clone()];
         for clip_face in clip.view().faces() {
-            polygon = clip_polygon_by_face(&polygon, clip_face.vertices().ok()?, clip_facts)?;
+            let Ok(vertices) = clip_face.vertices() else {
+                return Ok(false);
+            };
+            let Some(clipped) = clip_polygon_by_face(&polygon, vertices, clip_facts)? else {
+                return Ok(false);
+            };
+            polygon = clipped;
             if polygon.len() < 3 {
                 break;
             }
         }
-        simplify_polygon(&mut polygon);
+        simplify_polygon(&mut polygon)?;
         if polygon.len() >= 3 && !polygon_is_degenerate(&polygon) {
             polygons.push(polygon);
         }
     }
-    Some(())
+    Ok(true)
 }
 
 fn clip_polygon_by_face(
     polygon: &[Point3],
     face: [&Point3; 3],
     clip_facts: &ConvexSolidFacts,
-) -> Option<Vec<Point3>> {
+) -> Result<Option<Vec<Point3>>, ExactMeshError> {
     if polygon.is_empty() {
-        return Some(Vec::new());
+        return Ok(Some(Vec::new()));
     }
     let [a, b, c] = face;
 
     let mut output = Vec::new();
     let orientation = clip_facts.orientation;
-    let mut previous = polygon.last()?.clone();
+    let Some(mut previous) = polygon.last().cloned() else {
+        return Ok(None);
+    };
+    let Some(previous_side) = point_side(a, b, c, &previous) else {
+        return Err(ExactMeshError::one(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::ExactConstructionFailure,
+            "convex clipping plane-side predicate is undecidable",
+        )));
+    };
     let mut previous_inside = !matches!(
-        (orientation, point_side(a, b, c, &previous)?),
+        (orientation, previous_side),
         (ClosedMeshOrientation::Positive, PlaneSide::Below)
             | (ClosedMeshOrientation::Negative, PlaneSide::Above)
     );
     for current in polygon {
+        let Some(current_side) = point_side(a, b, c, current) else {
+            return Err(ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::ExactConstructionFailure,
+                "convex clipping plane-side predicate is undecidable",
+            )));
+        };
         let current_inside = !matches!(
-            (orientation, point_side(a, b, c, current)?),
+            (orientation, current_side),
             (ClosedMeshOrientation::Positive, PlaneSide::Below)
                 | (ClosedMeshOrientation::Negative, PlaneSide::Above)
         );
         match (previous_inside, current_inside) {
             (true, true) => output.push(current.clone()),
             (true, false) => {
-                output.push(intersect_segment_with_plane(&previous, current, a, b, c)?);
+                let Some(intersection) = intersect_segment_with_plane(&previous, current, a, b, c)
+                else {
+                    return Ok(None);
+                };
+                output.push(intersection);
             }
             (false, true) => {
-                output.push(intersect_segment_with_plane(&previous, current, a, b, c)?);
+                let Some(intersection) = intersect_segment_with_plane(&previous, current, a, b, c)
+                else {
+                    return Ok(None);
+                };
+                output.push(intersection);
                 output.push(current.clone());
             }
             (false, false) => {}
@@ -513,8 +546,8 @@ fn clip_polygon_by_face(
         previous = current.clone();
         previous_inside = current_inside;
     }
-    simplify_polygon(&mut output);
-    Some(output)
+    simplify_polygon(&mut output)?;
+    Ok(Some(output))
 }
 
 fn polygon_centroid(points: &[Point3]) -> Option<Point3> {
@@ -540,19 +573,23 @@ fn append_convex_union_source_faces(
     clip_facts: &ConvexSolidFacts,
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
-) -> Option<()> {
+) -> Result<bool, ExactMeshError> {
     for source_triangle in source.view().triangles() {
-        let [a, b, c] = source_triangle.vertices().ok()?;
+        let Ok([a, b, c]) = source_triangle.vertices() else {
+            return Ok(false);
+        };
         let source_points = [a.clone(), b.clone(), c.clone()];
-        append_source_face_minus_convex_inside(
+        if !append_source_face_minus_convex_inside(
             &source_points,
             clip,
             clip_facts,
             vertices,
             triangles,
-        )?;
+        )? {
+            return Ok(false);
+        }
     }
-    Some(())
+    Ok(true)
 }
 
 fn append_convex_difference_right_faces(
@@ -561,19 +598,23 @@ fn append_convex_difference_right_faces(
     left_facts: &ConvexSolidFacts,
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
-) -> Option<()> {
+) -> Result<bool, ExactMeshError> {
     for right_triangle in right.view().triangles() {
-        let [a, b, c] = right_triangle.vertices().ok()?;
+        let Ok([a, b, c]) = right_triangle.vertices() else {
+            return Ok(false);
+        };
         let source_points = [a.clone(), b.clone(), c.clone()];
-        append_source_face_convex_inside_reversed(
+        if !append_source_face_convex_inside_reversed(
             &source_points,
             left,
             left_facts,
             vertices,
             triangles,
-        )?;
+        )? {
+            return Ok(false);
+        }
     }
-    Some(())
+    Ok(true)
 }
 
 fn append_source_face_minus_convex_inside(
@@ -582,42 +623,51 @@ fn append_source_face_minus_convex_inside(
     clip_facts: &ConvexSolidFacts,
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
-) -> Option<()> {
+) -> Result<bool, ExactMeshError> {
     if source_points.len() < 3 || polygon_is_degenerate(source_points) {
-        return Some(());
+        return Ok(true);
     }
-    let projection = choose_nonzero_projected_polygon_area(source_points)?;
+    let Some(projection) = choose_nonzero_projected_polygon_area(source_points) else {
+        return Ok(false);
+    };
     let source_projected = source_points
         .iter()
         .map(|point| project_point3(point, projection))
         .collect::<Vec<_>>();
-    let source_sign = compare_reals(
+    let Some(source_sign) = compare_reals(
         &projected_polygon_area2_value(source_points, projection),
         &Real::from(0),
     )
-    .value()?;
+    .value() else {
+        return Ok(false);
+    };
     if source_sign == Ordering::Equal {
-        return None;
+        return Ok(false);
     }
 
     let mut inside = source_points.to_vec();
     for clip_face in clip.view().faces() {
-        inside = clip_polygon_by_face(&inside, clip_face.vertices().ok()?, clip_facts)?;
+        let Ok(vertices) = clip_face.vertices() else {
+            return Ok(false);
+        };
+        let Some(clipped) = clip_polygon_by_face(&inside, vertices, clip_facts)? else {
+            return Ok(false);
+        };
+        inside = clipped;
         if inside.len() < 3 {
             break;
         }
     }
-    simplify_polygon(&mut inside);
+    simplify_polygon(&mut inside)?;
     if inside.len() < 3 || polygon_is_degenerate(&inside) {
-        append_projected_polygon_triangles(
+        return append_projected_polygon_triangles(
             &source_projected,
             source_points,
             projection,
             source_sign,
             vertices,
             triangles,
-        )?;
-        return Some(());
+        );
     }
 
     let inside_projected = inside
@@ -639,7 +689,7 @@ fn append_source_face_minus_convex_inside(
         ExactArrangement2dBoundaryPolicy::PreserveCollinear,
     );
     if !overlay.blockers.is_empty() {
-        return None;
+        return Ok(false);
     }
     append_projected_overlay_triangles(
         &overlay,
@@ -657,34 +707,47 @@ fn append_source_face_convex_inside_reversed(
     clip_facts: &ConvexSolidFacts,
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
-) -> Option<()> {
+) -> Result<bool, ExactMeshError> {
     if source_points.len() < 3 || polygon_is_degenerate(source_points) {
-        return Some(());
+        return Ok(true);
     }
 
     let mut inside = source_points.to_vec();
     for clip_face in clip.view().faces() {
-        inside = clip_polygon_by_face(&inside, clip_face.vertices().ok()?, clip_facts)?;
+        let Ok(vertices) = clip_face.vertices() else {
+            return Ok(false);
+        };
+        let Some(clipped) = clip_polygon_by_face(&inside, vertices, clip_facts)? else {
+            return Ok(false);
+        };
+        inside = clipped;
         if inside.len() < 3 {
             break;
         }
     }
-    simplify_polygon(&mut inside);
+    simplify_polygon(&mut inside)?;
     if inside.len() < 3 || polygon_is_degenerate(&inside) {
-        return Some(());
+        return Ok(true);
     }
-    if polygon_lies_on_any_clip_boundary_face(&inside, clip)? {
-        return Some(());
+    let Some(lies_on_boundary) = polygon_lies_on_any_clip_boundary_face(&inside, clip) else {
+        return Ok(false);
+    };
+    if lies_on_boundary {
+        return Ok(true);
     }
 
-    let projection = choose_nonzero_projected_polygon_area(&inside)?;
-    let source_sign = compare_reals(
+    let Some(projection) = choose_nonzero_projected_polygon_area(&inside) else {
+        return Ok(false);
+    };
+    let Some(source_sign) = compare_reals(
         &projected_polygon_area2_value(&inside, projection),
         &Real::from(0),
     )
-    .value()?;
+    .value() else {
+        return Ok(false);
+    };
     if source_sign == Ordering::Equal {
-        return None;
+        return Ok(false);
     }
     let reversed_sign = match source_sign {
         Ordering::Less => Ordering::Greater,
@@ -725,20 +788,23 @@ fn append_projected_polygon_triangles(
     source_sign: Ordering,
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
-) -> Option<()> {
+) -> Result<bool, ExactMeshError> {
     let projected = projected_points
         .iter()
         .map(point2_for_hypertri)
         .collect::<Vec<_>>();
     let indices = match hypertri::earcut(&projected, &[]) {
         Ok(indices) if !indices.is_empty() && indices.len() % 3 == 0 => indices,
-        _ => return None,
+        _ => return Ok(false),
     };
-    let lifted =
-        lift_projected_points_to_carrier(projected_points.iter(), carrier_points, projection)?;
-    let local_to_global = intern_points(vertices, &lifted);
+    let Some(lifted) =
+        lift_projected_points_to_carrier(projected_points.iter(), carrier_points, projection)
+    else {
+        return Ok(false);
+    };
+    let local_to_global = intern_points(vertices, &lifted)?;
     append_oriented_earcut_triangles(&indices, &local_to_global, source_sign, triangles);
-    Some(())
+    Ok(true)
 }
 
 fn append_projected_overlay_triangles(
@@ -748,30 +814,40 @@ fn append_projected_overlay_triangles(
     source_sign: Ordering,
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
-) -> Option<()> {
+) -> Result<bool, ExactMeshError> {
     for component in &overlay.output_components {
-        let outer = overlay.output_loops.get(component.outer_loop)?;
+        let Some(outer) = overlay.output_loops.get(component.outer_loop) else {
+            return Ok(false);
+        };
         let mut projected = outer
             .points
             .iter()
             .map(point2_for_hypertri)
             .collect::<Vec<_>>();
-        let mut lifted = lifted_output_loop_points(outer, carrier_points, projection)?;
+        let Some(mut lifted) = lifted_output_loop_points(outer, carrier_points, projection) else {
+            return Ok(false);
+        };
         let mut hole_indices = Vec::with_capacity(component.hole_loops.len());
         for &hole_loop in &component.hole_loops {
-            let hole = overlay.output_loops.get(hole_loop)?;
+            let Some(hole) = overlay.output_loops.get(hole_loop) else {
+                return Ok(false);
+            };
             hole_indices.push(projected.len());
             projected.extend(hole.points.iter().map(point2_for_hypertri));
-            lifted.extend(lifted_output_loop_points(hole, carrier_points, projection)?);
+            let Some(hole_lifted) = lifted_output_loop_points(hole, carrier_points, projection)
+            else {
+                return Ok(false);
+            };
+            lifted.extend(hole_lifted);
         }
-        let local_to_global = intern_points(vertices, &lifted);
+        let local_to_global = intern_points(vertices, &lifted)?;
         let indices = match hypertri::earcut(&projected, &hole_indices) {
             Ok(indices) if !indices.is_empty() && indices.len() % 3 == 0 => indices,
-            _ => return None,
+            _ => return Ok(false),
         };
         append_oriented_earcut_triangles(&indices, &local_to_global, source_sign, triangles);
     }
-    Some(())
+    Ok(true)
 }
 
 fn lifted_output_loop_points(
@@ -856,7 +932,7 @@ fn convex_hull_polygons_from_clipped_faces(
     let mut points = Vec::new();
     for polygon in polygons {
         for point in polygon {
-            intern_point_checked(&mut points, point)?;
+            intern_point(&mut points, point)?;
         }
     }
     if points.len() < 4 {
@@ -1244,7 +1320,7 @@ fn chain_segments_to_polygon(
         return Ok(None);
     }
     polygon.pop();
-    simplify_polygon_checked(&mut polygon)?;
+    simplify_polygon(&mut polygon)?;
     if polygon.len() >= 3 && !polygon_is_degenerate(&polygon) {
         Ok(Some(polygon))
     } else {
@@ -1298,14 +1374,14 @@ fn polygons_to_closed_mesh(
     polygons: &[Vec<Point3>],
     label: &str,
     validation: ExactMeshValidationPolicy,
-) -> Option<ExactMesh> {
+) -> Result<Option<ExactMesh>, ExactMeshError> {
     let mut vertices: Vec<Point3> = Vec::new();
     let mut triangles = Vec::new();
     for polygon in polygons {
-        let base = intern_point(&mut vertices, &polygon[0]);
+        let base = intern_point(&mut vertices, &polygon[0])?;
         for index in 1..polygon.len() - 1 {
-            let b = intern_point(&mut vertices, &polygon[index]);
-            let c = intern_point(&mut vertices, &polygon[index + 1]);
+            let b = intern_point(&mut vertices, &polygon[index])?;
+            let c = intern_point(&mut vertices, &polygon[index + 1])?;
             if base != b && b != c && c != base {
                 triangles.push(Triangle([base, b, c]));
             }
@@ -1313,7 +1389,7 @@ fn polygons_to_closed_mesh(
     }
     remove_duplicate_triangle_vertex_sets(&mut triangles);
     if triangles.is_empty() {
-        return None;
+        return Ok(None);
     }
     ExactMesh::new_with_policy_and_version(
         vertices,
@@ -1322,7 +1398,7 @@ fn polygons_to_closed_mesh(
         validation,
         1,
     )
-    .ok()
+    .map(Some)
 }
 
 fn refine_triangles_at_existing_edge_vertices(
@@ -1457,28 +1533,9 @@ fn point_equals_either_endpoint(
     )))
 }
 
-fn intern_point(vertices: &mut Vec<Point3>, point: &Point3) -> usize {
-    if let Some(index) = vertices
-        .iter()
-        .position(|existing| point3_exact_equal(existing, point) == Some(true))
-    {
-        index
-    } else {
-        vertices.push(Point3::new(
-            point.x.clone(),
-            point.y.clone(),
-            point.z.clone(),
-        ));
-        vertices.len() - 1
-    }
-}
-
-fn intern_point_checked(
-    vertices: &mut Vec<Point3>,
-    point: &Point3,
-) -> Result<usize, ExactMeshError> {
+fn intern_point(vertices: &mut Vec<Point3>, point: &Point3) -> Result<usize, ExactMeshError> {
     for (index, existing) in vertices.iter().enumerate() {
-        if convex_points_equal(existing, point, "convex hull point interning equality")? {
+        if convex_points_equal(existing, point, "convex point interning equality")? {
             return Ok(index);
         }
     }
@@ -1490,27 +1547,23 @@ fn intern_point_checked(
     Ok(vertices.len() - 1)
 }
 
-fn intern_points(vertices: &mut Vec<Point3>, points: &[Point3]) -> Vec<usize> {
+fn intern_points(
+    vertices: &mut Vec<Point3>,
+    points: &[Point3],
+) -> Result<Vec<usize>, ExactMeshError> {
     points
         .iter()
         .map(|point| intern_point(vertices, point))
         .collect()
 }
 
-fn simplify_polygon(points: &mut Vec<Point3>) {
-    points.dedup_by(|right, left| point3_exact_equal(left, right) == Some(true));
-    if points.len() > 1 && point3_exact_equal(&points[0], &points[points.len() - 1]) == Some(true) {
-        points.pop();
-    }
-}
-
-fn simplify_polygon_checked(points: &mut Vec<Point3>) -> Result<(), ExactMeshError> {
+fn simplify_polygon(points: &mut Vec<Point3>) -> Result<(), ExactMeshError> {
     let mut index = 0;
     while index + 1 < points.len() {
         if convex_points_equal(
             &points[index],
             &points[index + 1],
-            "convex hull polygon duplicate vertex equality",
+            "convex polygon duplicate vertex equality",
         )? {
             points.remove(index + 1);
         } else {
@@ -1521,7 +1574,7 @@ fn simplify_polygon_checked(points: &mut Vec<Point3>) -> Result<(), ExactMeshErr
         && convex_points_equal(
             &points[0],
             &points[points.len() - 1],
-            "convex hull polygon duplicate endpoint equality",
+            "convex polygon duplicate endpoint equality",
         )?
     {
         points.pop();
@@ -1606,6 +1659,23 @@ mod tests {
 
         assert!(refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles).unwrap());
         assert_eq!(triangles, vec![Triangle([0, 3, 2]), Triangle([3, 1, 2])]);
+    }
+
+    #[test]
+    fn convex_materialization_interning_and_simplification_merge_exact_duplicates() {
+        let a = p3(0, 0, 0);
+        let b = p3(1, 0, 0);
+        let c = p3(0, 1, 0);
+        let mut vertices = Vec::new();
+
+        assert_eq!(intern_point(&mut vertices, &a).unwrap(), 0);
+        assert_eq!(intern_point(&mut vertices, &b).unwrap(), 1);
+        assert_eq!(intern_point(&mut vertices, &a).unwrap(), 0);
+        assert_eq!(vertices.len(), 2);
+
+        let mut polygon = vec![a.clone(), a.clone(), b, c, a.clone()];
+        simplify_polygon(&mut polygon).unwrap();
+        assert_eq!(polygon, vec![a, p3(1, 0, 0), p3(0, 1, 0)]);
     }
 
     #[test]
