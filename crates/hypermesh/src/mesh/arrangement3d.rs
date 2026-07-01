@@ -4265,38 +4265,30 @@ impl ArrangementEdgeUserIndex {
         edge: &ArrangementFaceCellBoundaryEdge,
         has_point_key: bool,
     ) -> Option<usize> {
-        if has_point_key {
-            self.unkeyed_edges.iter().copied().find(|&index| {
-                let existing = &self.edge_users[index].0;
-                existing.nodes == edge.nodes
-                    || match (&existing.points, &edge.points) {
-                        (Some(existing), Some(edge)) => {
-                            (point3_exact_equal(&existing[0], &edge[0]) == Some(true)
-                                && point3_exact_equal(&existing[1], &edge[1]) == Some(true))
-                                || (point3_exact_equal(&existing[0], &edge[1]) == Some(true)
-                                    && point3_exact_equal(&existing[1], &edge[0]) == Some(true))
-                        }
-                        _ => false,
+        let edge_matches = |existing: &ArrangementFaceCellBoundaryEdge| {
+            existing.nodes == edge.nodes
+                || match (&existing.points, &edge.points) {
+                    (Some(existing), Some(edge)) => {
+                        (point3_exact_equal(&existing[0], &edge[0]) == Some(true)
+                            && point3_exact_equal(&existing[1], &edge[1]) == Some(true))
+                            || (point3_exact_equal(&existing[0], &edge[1]) == Some(true)
+                                && point3_exact_equal(&existing[1], &edge[0]) == Some(true))
                     }
-            })
-        } else {
-            self.edge_users
+                    _ => false,
+                }
+        };
+        if has_point_key {
+            return self
+                .unkeyed_edges
                 .iter()
-                .enumerate()
-                .find(|(_, (existing, _))| {
-                    existing.nodes == edge.nodes
-                        || match (&existing.points, &edge.points) {
-                            (Some(existing), Some(edge)) => {
-                                (point3_exact_equal(&existing[0], &edge[0]) == Some(true)
-                                    && point3_exact_equal(&existing[1], &edge[1]) == Some(true))
-                                    || (point3_exact_equal(&existing[0], &edge[1]) == Some(true)
-                                        && point3_exact_equal(&existing[1], &edge[0]) == Some(true))
-                            }
-                            _ => false,
-                        }
-                })
-                .map(|(index, _)| index)
+                .copied()
+                .find(|&index| edge_matches(&self.edge_users[index].0));
         }
+
+        self.edge_users
+            .iter()
+            .enumerate()
+            .find_map(|(index, (existing, _))| edge_matches(existing).then_some(index))
     }
 }
 
