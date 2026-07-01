@@ -3368,11 +3368,11 @@ fn coplanar_edge_split_construction(
             let point = proper_coplanar_edge_split_point(left_edge, right_edge, projection);
             (point.into_iter().collect(), false, None)
         }
-        SegmentIntersection::CollinearOverlap | SegmentIntersection::Identical => (
-            Vec::new(),
-            true,
-            coplanar_edge_interval(left_edge, right_edge, projection),
-        ),
+        SegmentIntersection::CollinearOverlap | SegmentIntersection::Identical => {
+            let interval = coplanar_edge_interval(left_edge, right_edge, projection)
+                .map_err(coplanar_split_validation_mesh_error)?;
+            (Vec::new(), true, Some(interval))
+        }
     };
     let split = CoplanarEdgeSplitConstruction {
         overlap: overlap.clone(),
@@ -3651,7 +3651,7 @@ fn coplanar_edge_interval(
     left: BorrowedEdgePoints<'_>,
     right: BorrowedEdgePoints<'_>,
     projection: CoplanarProjection,
-) -> Option<CoplanarEdgeInterval> {
+) -> Result<CoplanarEdgeInterval, CoplanarOverlapSplitValidationError> {
     let mut endpoints = Vec::new();
     for (left_index, point) in left.into_iter().enumerate() {
         if let Some(right_parameter) =
@@ -3684,20 +3684,17 @@ fn coplanar_edge_interval(
         }
     }
     if endpoints.len() != 2 {
-        return None;
+        return Err(CoplanarOverlapSplitValidationError::MissingIntervalEndpoints);
     }
-    endpoints.sort_by(
-        |a, b| match compare_reals(&a.left_parameter, &b.left_parameter).value() {
-            Some(ordering) => ordering,
-            None => Ordering::Equal,
-        },
-    );
-    if compare_reals(&endpoints[0].left_parameter, &endpoints[1].left_parameter).value()
-        != Some(Ordering::Less)
-    {
-        return None;
+    let order = compare_reals(&endpoints[0].left_parameter, &endpoints[1].left_parameter)
+        .value()
+        .ok_or(CoplanarOverlapSplitValidationError::UnknownIntervalOrder)?;
+    if order == Ordering::Greater {
+        endpoints.swap(0, 1);
+    } else if order == Ordering::Equal {
+        return Err(CoplanarOverlapSplitValidationError::DegenerateInterval);
     }
-    Some(CoplanarEdgeInterval {
+    Ok(CoplanarEdgeInterval {
         endpoints: [endpoints.remove(0), endpoints.remove(0)],
     })
 }
@@ -3722,14 +3719,16 @@ fn push_interval_endpoint(
     endpoints: &mut Vec<CoplanarEdgeSplitPoint>,
     candidate: CoplanarEdgeSplitPoint,
     projection: CoplanarProjection,
-) -> Option<()> {
+) -> Result<(), CoplanarOverlapSplitValidationError> {
     for endpoint in endpoints.iter_mut() {
-        if projected_points_equal(&endpoint.point, &candidate.point, projection)? {
-            return Some(());
+        let equal = projected_points_equal(&endpoint.point, &candidate.point, projection)
+            .ok_or(CoplanarOverlapSplitValidationError::UnknownSplitPointEquality)?;
+        if equal {
+            return Ok(());
         }
     }
     endpoints.push(candidate);
-    Some(())
+    Ok(())
 }
 
 fn proper_coplanar_edge_split_point(

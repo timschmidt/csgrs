@@ -723,6 +723,33 @@ fn coplanar_split_validation_rejects_invalid_vertex_overlap_facts() {
 }
 
 #[test]
+fn coplanar_edge_interval_reports_missing_and_orders_endpoints() {
+    let left_start = p(0, 0, 0);
+    let left_end = p(4, 0, 0);
+    let right_start = p(6, 0, 0);
+    let right_end = p(8, 0, 0);
+    assert_eq!(
+        coplanar_edge_interval(
+            [&left_start, &left_end],
+            [&right_start, &right_end],
+            CoplanarProjection::Xy,
+        ),
+        Err(CoplanarOverlapSplitValidationError::MissingIntervalEndpoints)
+    );
+
+    let reversed_start = p(3, 0, 0);
+    let reversed_end = p(1, 0, 0);
+    let interval = coplanar_edge_interval(
+        [&left_start, &left_end],
+        [&reversed_start, &reversed_end],
+        CoplanarProjection::Xy,
+    )
+    .unwrap();
+    assert_eq!(interval.endpoints[0].left_parameter, q(1, 4));
+    assert_eq!(interval.endpoints[1].left_parameter, q(3, 4));
+}
+
+#[test]
 fn coplanar_arrangement_evidence_rejects_overflowing_counts() {
     let graph_overflow = CoplanarArrangementEvidence {
         status: CoplanarArrangementEvidenceStatus::NeedsPlanarCells,
