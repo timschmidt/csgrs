@@ -937,18 +937,11 @@ fn assembly_vertex_lies_on_source_face(
         MeshSide::Left => left,
         MeshSide::Right => right,
     };
-    let source_triangle = mesh
-        .facts()
-        .faces
-        .get(triangle.source_face)
-        .ok_or(hypertri::Error::InvalidInput {
-            reason: "assembly triangle references a missing source face",
-        })?
-        .triangle
-        .vertices;
-    let a = &mesh.vertices()[source_triangle[0]];
-    let b = &mesh.vertices()[source_triangle[1]];
-    let c = &mesh.vertices()[source_triangle[2]];
+    let [a, b, c] = retained_source_face_points(
+        mesh,
+        triangle.source_face,
+        "assembly triangle references a missing source face",
+    )?;
     orient3d_report(a, b, c, &assembly.vertices[vertex].point)
         .value()
         .map(|sign| sign == Sign::Zero)
@@ -1051,14 +1044,11 @@ pub(crate) fn validate_assembly_source_face_incidence(
             MeshSide::Left => left,
             MeshSide::Right => right,
         };
-        let source_triangle = retained_source_face_vertices(
+        let [a, b, c] = retained_source_face_points(
             mesh,
             triangle.source_face,
             "assembled output triangle references a missing source face",
         )?;
-        let a = &mesh.vertices()[source_triangle[0]];
-        let b = &mesh.vertices()[source_triangle[1]];
-        let c = &mesh.vertices()[source_triangle[2]];
         for &vertex in &triangle.vertices {
             let Some(output_vertex) = assembly.vertices.get(vertex) else {
                 return Err(hypertri::Error::InvalidInput {
@@ -1090,7 +1080,7 @@ pub(crate) fn validate_assembly_source_face_incidence(
                 }
             }
         }
-        validate_output_triangle_source_orientation(assembly, triangle, mesh, source_triangle)?;
+        validate_output_triangle_source_orientation(assembly, triangle, mesh)?;
     }
     Ok(())
 }
@@ -1109,7 +1099,11 @@ fn validate_assembly_output_vertex_source_against_sources(
             let mut saw_source_vertex = false;
             let mut saw_unknown_equality = false;
             for mesh in [left, right] {
-                let Some(source_point) = mesh.vertices().get(*source_vertex) else {
+                let Some(source_point) = mesh
+                    .view()
+                    .vertex(*source_vertex)
+                    .map(|vertex| vertex.point())
+                else {
                     continue;
                 };
                 saw_source_vertex = true;
@@ -1203,20 +1197,15 @@ fn validate_assembly_face_interior_source_against_face(
         return Ok(());
     };
     let projection = choose_region_projection(mesh, source_face)?;
-    let Some(source_triangle) = mesh
-        .facts()
-        .faces
-        .get(source_face)
-        .map(|face| face.triangle.vertices)
-    else {
-        return Err(hypertri::Error::InvalidInput {
-            reason: "assembled output triangle references a missing source face",
-        });
-    };
+    let [a, b, c] = retained_source_face_points(
+        mesh,
+        source_face,
+        "assembled output triangle references a missing source face",
+    )?;
     let location = classify_point_triangle(
-        &project_point3(&mesh.vertices()[source_triangle[0]], projection),
-        &project_point3(&mesh.vertices()[source_triangle[1]], projection),
-        &project_point3(&mesh.vertices()[source_triangle[2]], projection),
+        &project_point3(a, projection),
+        &project_point3(b, projection),
+        &project_point3(c, projection),
         &project_point3(point, projection),
     )
     .value()
@@ -1246,14 +1235,13 @@ fn validate_output_triangle_source_orientation(
     assembly: &ExactBooleanAssemblyPlan,
     triangle: &ExactOutputTriangle,
     mesh: &ExactMesh,
-    source_triangle: [usize; 3],
 ) -> hypertri::Result<()> {
     let projection = choose_region_projection(mesh, triangle.source_face)?;
-    let source_points = [
-        &mesh.vertices()[source_triangle[0]],
-        &mesh.vertices()[source_triangle[1]],
-        &mesh.vertices()[source_triangle[2]],
-    ];
+    let source_points = retained_source_face_points(
+        mesh,
+        triangle.source_face,
+        "assembled output triangle references a missing source face",
+    )?;
     let source_sign = orient2d_report(
         &project_point3(source_points[0], projection),
         &project_point3(source_points[1], projection),
@@ -1439,16 +1427,11 @@ fn orient_output_triangle_for_source(
         MeshSide::Left => left,
         MeshSide::Right => right,
     };
-    let source_triangle = retained_source_face_vertices(
+    let source_points = retained_source_face_points(
         source_mesh,
         triangulation.face,
         "region triangulation references a missing source face",
     )?;
-    let source_points = [
-        &source_mesh.vertices()[source_triangle[0]],
-        &source_mesh.vertices()[source_triangle[1]],
-        &source_mesh.vertices()[source_triangle[2]],
-    ];
     let source_sign = orient2d_report(
         &project_point3(source_points[0], triangulation.projection),
         &project_point3(source_points[1], triangulation.projection),
@@ -1610,12 +1593,7 @@ fn classify_region_against_face_plane(
     plane_mesh: &ExactMesh,
     plane_face: usize,
 ) -> FaceRegionPlaneClassification {
-    let Some(tri) = plane_mesh
-        .facts()
-        .faces
-        .get(plane_face)
-        .map(|face| face.triangle.vertices)
-    else {
+    let Some(face) = plane_mesh.view().face(plane_face) else {
         return FaceRegionPlaneClassification {
             region_side,
             region_face,
@@ -1626,9 +1604,17 @@ fn classify_region_against_face_plane(
             predicates: Vec::new(),
         };
     };
-    let a = &plane_mesh.vertices()[tri[0]];
-    let b = &plane_mesh.vertices()[tri[1]];
-    let c = &plane_mesh.vertices()[tri[2]];
+    let Ok([a, b, c]) = face.vertices() else {
+        return FaceRegionPlaneClassification {
+            region_side,
+            region_face,
+            plane_side,
+            plane_face,
+            relation: FaceRegionPlaneRelation::Unknown,
+            node_sides: vec![None; boundary.len()],
+            predicates: Vec::new(),
+        };
+    };
     let mut predicates = Vec::with_capacity(boundary.len());
     let mut node_sides = Vec::with_capacity(boundary.len());
 
@@ -1654,14 +1640,11 @@ pub(crate) fn choose_region_projection(
     mesh: &ExactMesh,
     face: usize,
 ) -> hypertri::Result<CoplanarProjection> {
-    let triangle = retained_source_face_vertices(
+    let [a, b, c] = retained_source_face_points(
         mesh,
         face,
         "face region projection references a missing source face",
     )?;
-    let a = &mesh.vertices()[triangle[0]];
-    let b = &mesh.vertices()[triangle[1]];
-    let c = &mesh.vertices()[triangle[2]];
     for projection in [
         CoplanarProjection::Xy,
         CoplanarProjection::Xz,
@@ -1684,16 +1667,16 @@ pub(crate) fn choose_region_projection(
     })
 }
 
-fn retained_source_face_vertices(
-    mesh: &ExactMesh,
+fn retained_source_face_points<'a>(
+    mesh: &'a ExactMesh,
     face: usize,
     reason: &'static str,
-) -> hypertri::Result<[usize; 3]> {
-    mesh.facts()
-        .faces
-        .get(face)
-        .map(|face| face.triangle.vertices)
-        .ok_or(hypertri::Error::InvalidInput { reason })
+) -> hypertri::Result<[&'a Point3; 3]> {
+    mesh.view()
+        .face(face)
+        .ok_or(hypertri::Error::InvalidInput { reason })?
+        .vertices()
+        .map_err(|_| hypertri::Error::InvalidInput { reason })
 }
 
 pub(crate) fn project_for_hypertri(
