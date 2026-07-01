@@ -647,14 +647,10 @@ fn certify_axis_aligned_orthogonal_solid_from_faces(
             nz,
         )?;
     }
-    if component_occupancy.iter().any(Option::is_none) {
-        return None;
+    let mut occupied = Vec::with_capacity(components.len());
+    for &component in &components {
+        occupied.push(component_occupancy.get(component).copied().flatten()?);
     }
-
-    let occupied = components
-        .iter()
-        .map(|component| component_occupancy.get(*component).copied().flatten())
-        .collect::<Option<Vec<_>>>()?;
     if !occupied.iter().any(|occupied| *occupied) {
         return None;
     }
