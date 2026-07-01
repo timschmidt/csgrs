@@ -7102,11 +7102,9 @@ fn boolean_open_surface_disjoint_meshes_from_graph(
     }
     let disjoint_report = open_surface_disjoint_report_from_graph(graph, left, right);
     if disjoint_report.status == ExactOpenSurfaceDisjointStatus::Certified {
-        if !graph.source_replay_validated {
-            validate_graph_source_replay(graph, left, right)?;
+        if !graph_source_replay_certificate_is_current(graph, left, right)? {
             return Ok(None);
         }
-        validate_graph_source_replay(graph, left, right)?;
         let result = materialize_open_surface_disjoint_meshes(left, right, operation, validation)?;
         disjoint_report
             .validate_against_sources(left, right)
@@ -7778,6 +7776,20 @@ fn validate_graph_source_replay(
                 error,
             )
         })
+}
+
+/// Return whether a retained graph carries a current source-replay certificate.
+///
+/// The source handles are still audited first. A graph that replays but lacks
+/// the cheap current certificate may be used for evidence collection, but
+/// shortcut materializers that require pre-certified retained facts must decline.
+fn graph_source_replay_certificate_is_current(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactMeshError> {
+    validate_graph_source_replay(graph, left, right)?;
+    Ok(graph.source_replay_validated)
 }
 
 pub(crate) fn boundary_touching_report_from_graph(
