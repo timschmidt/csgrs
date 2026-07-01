@@ -196,7 +196,7 @@ impl ExactAffineTransform3 {
         )
     }
 
-    fn orientation(&self) -> Result<Ordering, ExactMeshError> {
+    pub(crate) fn orientation(&self) -> Result<Ordering, ExactMeshError> {
         compare_reals(&det3_rows(&self.linear), &Real::zero())
             .value()
             .ok_or_else(|| {
@@ -782,26 +782,10 @@ impl ExactMesh {
     /// determinant reverses triangle winding so transformed closed shells keep
     /// their outside orientation.
     pub fn transform(&self, matrix: [[Real; 4]; 4]) -> Result<ExactMesh, ExactMeshError> {
-        let transform = ExactAffineTransform3::from_homogeneous_rows(matrix)?;
-        let vertices = self
-            .vertices
-            .iter()
-            .map(|point| transform.transform_point(point))
-            .collect::<Vec<_>>();
-        let triangles = match transform.orientation()? {
-            Ordering::Less => self.triangles.iter().map(reverse_triangle).collect(),
-            Ordering::Equal | Ordering::Greater => self.triangles.clone(),
-        };
-        ExactMesh::new_with_policy_and_version(
-            vertices,
-            triangles,
-            SourceProvenance::exact("exact affine mesh transform"),
-            self.validation_policy,
-            self.next_construction_version(),
-        )
+        self.view().transform(matrix)
     }
 
-    fn next_construction_version(&self) -> u64 {
+    pub(crate) fn next_construction_version(&self) -> u64 {
         self.provenance
             .construction_version
             .saturating_add(1)
@@ -810,13 +794,7 @@ impl ExactMesh {
 
     /// Materialize this mesh with every triangle orientation reversed.
     pub fn inverse(&self) -> Result<ExactMesh, ExactMeshError> {
-        ExactMesh::new_with_policy_and_version(
-            self.vertices.clone(),
-            self.triangles.iter().map(reverse_triangle).collect(),
-            SourceProvenance::exact("exact inverse mesh orientation"),
-            self.validation_policy,
-            self.next_construction_version(),
-        )
+        self.view().inverse()
     }
 
     /// Materialize the exact closed union of this mesh and `right`.

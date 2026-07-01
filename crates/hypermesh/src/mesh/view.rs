@@ -1,13 +1,14 @@
 //! Borrowed exact views of retained mesh data.
 
-use super::ExactMesh;
 use super::arrangement3d::ArrangementView;
 use super::boolean::{ExactBooleanOperation, materialize_boolean_operation};
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::prepared::PreparedMeshPair;
 use super::validation::ExactMeshValidationPolicy;
-use hyperlimit::{Point3, PredicateUse};
+use super::{ExactAffineTransform3, ExactMesh, reverse_triangle};
+use hyperlimit::{Point3, PredicateUse, SourceProvenance};
 use hyperreal::Real;
+use std::cmp::Ordering;
 
 /// Borrowed exact view of an [`ExactMesh`].
 #[derive(Clone, Copy, Debug)]
@@ -302,12 +303,35 @@ impl<'a> MeshView<'a> {
 
     /// Materialize this view after a row-major exact homogeneous affine transform.
     pub fn transform(self, matrix: [[Real; 4]; 4]) -> Result<ExactMesh, ExactMeshError> {
-        self.mesh.transform(matrix)
+        let transform = ExactAffineTransform3::from_homogeneous_rows(matrix)?;
+        let vertices = self
+            .mesh
+            .vertices()
+            .iter()
+            .map(|point| transform.transform_point(point))
+            .collect::<Vec<_>>();
+        let triangles = match transform.orientation()? {
+            Ordering::Less => self.mesh.triangles().iter().map(reverse_triangle).collect(),
+            Ordering::Equal | Ordering::Greater => self.mesh.triangles().to_vec(),
+        };
+        ExactMesh::new_with_policy_and_version(
+            vertices,
+            triangles,
+            SourceProvenance::exact("exact affine mesh transform"),
+            self.mesh.validation_policy(),
+            self.mesh.next_construction_version(),
+        )
     }
 
     /// Materialize this view with every triangle orientation reversed.
     pub fn inverse(self) -> Result<ExactMesh, ExactMeshError> {
-        self.mesh.inverse()
+        ExactMesh::new_with_policy_and_version(
+            self.mesh.vertices().to_vec(),
+            self.mesh.triangles().iter().map(reverse_triangle).collect(),
+            SourceProvenance::exact("exact inverse mesh orientation"),
+            self.mesh.validation_policy(),
+            self.mesh.next_construction_version(),
+        )
     }
 
     /// Materialize the exact closed union of this view and `right`.
@@ -1108,5 +1132,35 @@ mod tests {
             missing_bounds_blocker.edge(),
             Some(mesh.facts().edges[0].vertices)
         );
+    }
+
+    #[test]
+    fn borrowed_view_materializes_transform_and_inverse() {
+        let mesh = tetra([0, 0, 0]);
+        let translated = mesh
+            .view()
+            .transform([
+                [Real::one(), Real::zero(), Real::zero(), Real::from(2)],
+                [Real::zero(), Real::one(), Real::zero(), Real::from(3)],
+                [Real::zero(), Real::zero(), Real::one(), Real::from(4)],
+                [Real::zero(), Real::zero(), Real::zero(), Real::one()],
+            ])
+            .unwrap();
+
+        assert_eq!(translated.vertices()[0], p(2, 3, 4));
+        assert_eq!(
+            translated.provenance().construction_version,
+            mesh.provenance().construction_version + 1
+        );
+        translated.view().validate_retained_state().unwrap();
+
+        let inverted = mesh.view().inverse().unwrap();
+
+        assert_eq!(inverted.triangles()[0].0, [0, 1, 2]);
+        assert_eq!(
+            inverted.provenance().construction_version,
+            mesh.provenance().construction_version + 1
+        );
+        inverted.view().validate_retained_state().unwrap();
     }
 }
