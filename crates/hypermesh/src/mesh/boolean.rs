@@ -6197,11 +6197,7 @@ fn mesh_from_projected_overlay_output_components(
                 if loop_.points.len() < 3 {
                     return None;
                 }
-                loop_
-                    .points
-                    .iter()
-                    .map(|point| lift_projected_point_to_carrier(point, carrier_points, projection))
-                    .collect::<Option<Vec<_>>>()
+                lift_projected_points_to_carrier(loop_.points.iter(), carrier_points, projection)
             })
             .collect::<Option<Vec<_>>>();
         let Some(lifted_loops) = lifted_loops else {
@@ -6261,10 +6257,16 @@ fn mesh_from_projected_overlay_selected_faces(
             .vertices
             .iter()
             .map(|vertex| {
-                let point = &overlay.arrangement.vertices.get(*vertex)?.point;
-                lift_projected_point_to_carrier(point, carrier_points, projection)
+                overlay
+                    .arrangement
+                    .vertices
+                    .get(*vertex)
+                    .map(|vertex| &vertex.point)
             })
-            .collect::<Option<Vec<_>>>();
+            .collect::<Option<Vec<_>>>()
+            .and_then(|points| {
+                lift_projected_points_to_carrier(points, carrier_points, projection)
+            });
         let Some(boundary) = boundary else {
             return Ok(None);
         };
@@ -6322,6 +6324,17 @@ fn mesh_from_projected_overlay_selected_faces(
         1,
     )
     .map(Some)
+}
+
+fn lift_projected_points_to_carrier<'a>(
+    points: impl IntoIterator<Item = &'a Point2>,
+    carrier_points: &[Point3; 3],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    points
+        .into_iter()
+        .map(|point| lift_projected_point_to_carrier(point, carrier_points, projection))
+        .collect()
 }
 
 pub(crate) fn coplanar_mesh_overlay_carrier(
