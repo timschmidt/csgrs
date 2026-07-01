@@ -154,8 +154,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         }
 
         let graph = build_unvalidated_intersection_graph_from_prepared_pair_rc(self)?;
-        self.validate_retained_intersection_graph_source_replay(&graph)?;
-        self.current_intersection_graph()
+        self.certify_retained_intersection_graph_source_replay(&graph)
     }
 
     pub(crate) fn retained_intersection_graph_for_validation(
@@ -188,10 +187,10 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         graph
     }
 
-    pub(crate) fn validate_retained_intersection_graph_source_replay(
+    pub(crate) fn certify_retained_intersection_graph_source_replay(
         &self,
         graph: &Rc<ExactIntersectionGraph>,
-    ) -> Result<(), ExactMeshError> {
+    ) -> Result<Rc<ExactIntersectionGraph>, ExactMeshError> {
         self.require_sources_current("intersection graph")?;
         let retained = self.intersection_graph.borrow().clone().ok_or_else(|| {
             ExactMeshError::one(ExactMeshBlocker::new(
@@ -206,7 +205,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             )));
         }
         if graph.source_replay_validated {
-            return Ok(());
+            return Ok(Rc::clone(graph));
         }
         graph
             .validate_against_sources(self.left_view.mesh, self.right_view.mesh)
@@ -218,8 +217,9 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             })?;
         let mut validated = graph.as_ref().clone();
         validated.source_replay_validated = true;
-        *self.intersection_graph.borrow_mut() = Some(Rc::new(validated));
-        Ok(())
+        let validated = Rc::new(validated);
+        *self.intersection_graph.borrow_mut() = Some(Rc::clone(&validated));
+        Ok(validated)
     }
 
     pub(crate) fn prepare_arrangement_cell_complex_shortcut_facts(
@@ -703,7 +703,7 @@ mod tests {
         let graph = Rc::new(ExactIntersectionGraph::from_face_pairs(Vec::new()));
 
         let error = pair
-            .validate_retained_intersection_graph_source_replay(&graph)
+            .certify_retained_intersection_graph_source_replay(&graph)
             .unwrap_err();
 
         assert_eq!(
