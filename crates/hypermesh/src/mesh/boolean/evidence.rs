@@ -1302,6 +1302,22 @@ pub(crate) enum ExactBooleanShortcutKind {
 }
 
 impl ExactBooleanResultKind {
+    fn retains_region_artifacts(self) -> bool {
+        matches!(
+            self,
+            ExactBooleanResultKind::SelectedRegions { .. }
+                | ExactBooleanResultKind::OpenSurfaceArrangement { .. }
+                | ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
+        )
+    }
+
+    fn retains_volumetric_artifacts(self) -> bool {
+        matches!(
+            self,
+            ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
+        )
+    }
+
     pub(crate) fn is_arrangement_cell_complex_shortcut(self) -> bool {
         matches!(
             self,
@@ -1380,16 +1396,8 @@ impl ExactBooleanResult {
     /// topology handoff is the exact set consumed by mesh materialization. That
     /// rather than an opaque output mesh.
     pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
-        let retains_region_artifacts = matches!(
-            self.kind,
-            ExactBooleanResultKind::SelectedRegions { .. }
-                | ExactBooleanResultKind::OpenSurfaceArrangement { .. }
-                | ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
-        );
-        let retains_volumetric_artifacts = matches!(
-            self.kind,
-            ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
-        );
+        let retains_region_artifacts = self.kind.retains_region_artifacts();
+        let retains_volumetric_artifacts = self.kind.retains_volumetric_artifacts();
         if !retains_region_artifacts
             && (!self.region_classifications.is_empty()
                 || !self.triangulations.is_empty()
@@ -1520,11 +1528,7 @@ impl ExactBooleanResult {
             || output_source.label.contains("orthogonal solid cell")
             || output_source.label.contains("full-face adjacent")
             || output_source.label.contains("contained-face adjacent");
-        let label_matches_kind = if let ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-            ..
-        } = self.kind
-        {
+        let label_matches_kind = if self.kind.is_arrangement_cell_complex_shortcut() {
             has_exact_boolean_label && has_arrangement_label
         } else {
             has_exact_boolean_label
