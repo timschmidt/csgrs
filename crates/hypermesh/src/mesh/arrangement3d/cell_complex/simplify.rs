@@ -281,18 +281,30 @@ pub(crate) fn simplify_selected_cell_complex(
         &gate_counts,
     )?;
     let selected_counts = selected.counts();
-    let mut blockers = selected.blockers;
+    let ExactSelectedCellComplex {
+        faces: cell_faces,
+        volume_regions: _,
+        volume_adjacencies,
+        lower_dimensional_artifacts,
+        topology_assembly_report,
+        region_ownership_report,
+        selected_faces: selected_face_indices,
+        selected_face_orientations,
+        selected_volume_regions: _,
+        operation,
+        blockers,
+    } = selected;
+    let mut blockers = blockers;
     let mut faces = Vec::new();
     let mut duplicate_cells_removed = 0;
     let mut duplicate_boundary_nodes_removed = 0;
     let mut collinear_boundary_nodes_removed = 0;
     let mut zero_area_cells_removed = 0;
     let mut interior_edges_removed = 0;
-    let selected_face_orientations = selected.selected_face_orientations.clone();
     let selected_faces_before_simplification = selected_counts.selected_faces;
     let mut selected_boundary_nodes_before_simplification = 0usize;
-    for &source_face in &selected.selected_faces {
-        if let Some(face) = selected.faces.get(source_face) {
+    for &source_face in &selected_face_indices {
+        if let Some(face) = cell_faces.get(source_face) {
             let Some(next_count) =
                 selected_boundary_nodes_before_simplification.checked_add(face.cell.boundary.len())
             else {
@@ -308,14 +320,13 @@ pub(crate) fn simplify_selected_cell_complex(
         selected_counts.volume_oriented_selected_faces;
     let label_oriented_selected_faces_before_simplification =
         selected_counts.label_oriented_selected_faces;
-    let require_volume_orientations = !matches!(
-        selected.operation,
-        ExactBooleanOperation::SelectedRegions(_)
-    ) && !selected.volume_adjacencies.is_empty();
-    let mut volume_adjacency_faces = vec![false; selected.faces.len()];
+    let require_volume_orientations =
+        !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+            && !volume_adjacencies.is_empty();
+    let mut volume_adjacency_faces = vec![false; cell_faces.len()];
     if require_volume_orientations {
-        for adjacency in &selected.volume_adjacencies {
-            if validate_volume_adjacency_face_provenance(&selected.faces, adjacency).is_err() {
+        for adjacency in &volume_adjacencies {
+            if validate_volume_adjacency_face_provenance(&cell_faces, adjacency).is_err() {
                 blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
                 continue;
             }
@@ -327,12 +338,9 @@ pub(crate) fn simplify_selected_cell_complex(
             }
         }
     }
-    let remove_collinear_nodes = matches!(
-        selected.operation,
-        ExactBooleanOperation::SelectedRegions(_)
-    );
-    let mut selected_face_set = vec![false; selected.faces.len()];
-    for &face in &selected.selected_faces {
+    let remove_collinear_nodes = matches!(operation, ExactBooleanOperation::SelectedRegions(_));
+    let mut selected_face_set = vec![false; cell_faces.len()];
+    for &face in &selected_face_indices {
         match selected_face_set.get_mut(face) {
             Some(member) if *member => {
                 blockers.push(ExactArrangementBlocker::NonManifoldCellComplex)
@@ -342,7 +350,7 @@ pub(crate) fn simplify_selected_cell_complex(
         }
     }
     for orientation in &selected_face_orientations {
-        if orientation.face >= selected.faces.len() {
+        if orientation.face >= cell_faces.len() {
             blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
             continue;
         }
@@ -352,8 +360,8 @@ pub(crate) fn simplify_selected_cell_complex(
         }
     }
 
-    for source_face in selected.selected_faces {
-        let Some(mut face) = selected.faces.get(source_face).cloned() else {
+    for source_face in selected_face_indices {
+        let Some(mut face) = cell_faces.get(source_face).cloned() else {
             blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
             continue;
         };
@@ -366,7 +374,7 @@ pub(crate) fn simplify_selected_cell_complex(
             &selected_face_orientations,
             source_face,
             face.source,
-            selected.operation,
+            operation,
             require_volume_orientation,
         );
         match reverse_orientation {
@@ -461,10 +469,7 @@ pub(crate) fn simplify_selected_cell_complex(
     interior_edges_removed += merged.interior_edges_removed;
     collinear_boundary_nodes_removed += merged.collinear_boundary_nodes_removed;
     zero_area_cells_removed += merged.zero_area_cells_removed;
-    if !matches!(
-        selected.operation,
-        ExactBooleanOperation::SelectedRegions(_)
-    ) {
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         let merged = merge_coplanar_face_pairs(
             faces,
             &mut blockers,
@@ -499,11 +504,11 @@ pub(crate) fn simplify_selected_cell_complex(
     }
 
     Ok(ExactSimplifiedCellComplex {
-        operation: selected.operation,
+        operation,
         faces,
-        lower_dimensional_artifacts: selected.lower_dimensional_artifacts,
-        topology_assembly_report: selected.topology_assembly_report,
-        region_ownership_report: selected.region_ownership_report,
+        lower_dimensional_artifacts,
+        topology_assembly_report,
+        region_ownership_report,
         selected_faces_before_simplification,
         selected_boundary_nodes_before_simplification,
         oriented_selected_faces_before_simplification,
