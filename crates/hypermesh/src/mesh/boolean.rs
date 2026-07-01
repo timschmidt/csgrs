@@ -894,34 +894,15 @@ fn replay_selected_region_boolean_result_from_graph(
                 format!("exact region triangulation failed: {error}"),
             ))
         })?;
-    let mut assembly =
-        ExactBooleanAssemblyPlan::from_region_triangulations_with_triangle_retention_and_sources(
-            &triangulations,
-            left,
-            right,
-            |triangulation, _triangle| {
-                if selection.keeps(triangulation.side) {
-                    ExactRegionRetention::Keep
-                } else {
-                    ExactRegionRetention::Drop
-                }
-            },
-        )
-        .map_err(|error| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::IndexOutOfBounds,
-                format!("exact boolean assembly failed: {error}"),
-            ))
-        })?;
-    assembly
-        .canonicalize_for_mesh_with_sources(left, right)
-        .map_err(|error| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::IndexOutOfBounds,
-                format!("exact boolean assembly canonicalization failed: {error}"),
-            ))
-        })?;
-    let mesh = assembly.checked_to_exact_mesh_with_sources(left, right, validation)?;
+    let (assembly, mesh) = assemble_region_selection_mesh(
+        &triangulations,
+        left,
+        right,
+        selection,
+        validation,
+        "exact boolean assembly failed",
+        "exact boolean assembly canonicalization failed",
+    )?;
 
     let result = ExactBooleanResult {
         kind: ExactBooleanResultKind::SelectedRegions { selection },
@@ -954,6 +935,46 @@ fn replay_selected_region_boolean_result_from_graph(
         )));
     }
     Ok(result)
+}
+
+fn assemble_region_selection_mesh(
+    triangulations: &[FaceRegionTriangulation],
+    left: &ExactMesh,
+    right: &ExactMesh,
+    selection: ExactRegionSelection,
+    validation: ExactMeshValidationPolicy,
+    assembly_error_label: &'static str,
+    canonicalization_error_label: &'static str,
+) -> Result<(ExactBooleanAssemblyPlan, ExactMesh), ExactMeshError> {
+    let mut assembly =
+        ExactBooleanAssemblyPlan::from_region_triangulations_with_triangle_retention_and_sources(
+            triangulations,
+            left,
+            right,
+            |triangulation, _triangle| {
+                if selection.keeps(triangulation.side) {
+                    ExactRegionRetention::Keep
+                } else {
+                    ExactRegionRetention::Drop
+                }
+            },
+        )
+        .map_err(|error| {
+            ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::IndexOutOfBounds,
+                format!("{assembly_error_label}: {error}"),
+            ))
+        })?;
+    assembly
+        .canonicalize_for_mesh_with_sources(left, right)
+        .map_err(|error| {
+            ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::IndexOutOfBounds,
+                format!("{canonicalization_error_label}: {error}"),
+            ))
+        })?;
+    let mesh = assembly.checked_to_exact_mesh_with_sources(left, right, validation)?;
+    Ok((assembly, mesh))
 }
 
 /// Preflight an exact boolean operation without materializing output topology.
@@ -6720,34 +6741,15 @@ fn materialize_open_surface_arrangement_plan(
     // Open-surface arrangement is not a closed-volumetric inside/outside
     // split regions are retained by surface operation, and no winding label is
     // invented for a mesh that has no closed volume.
-    let mut assembly =
-        ExactBooleanAssemblyPlan::from_region_triangulations_with_triangle_retention_and_sources(
-            &triangulations,
-            left,
-            right,
-            |triangulation, _triangle| {
-                if selection.keeps(triangulation.side) {
-                    ExactRegionRetention::Keep
-                } else {
-                    ExactRegionRetention::Drop
-                }
-            },
-        )
-        .map_err(|error| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::IndexOutOfBounds,
-                format!("open-surface arrangement assembly failed: {error}"),
-            ))
-        })?;
-    assembly
-        .canonicalize_for_mesh_with_sources(left, right)
-        .map_err(|error| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::IndexOutOfBounds,
-                format!("open-surface arrangement assembly canonicalization failed: {error}"),
-            ))
-        })?;
-    let Ok(mesh) = assembly.checked_to_exact_mesh_with_sources(left, right, validation) else {
+    let Ok((assembly, mesh)) = assemble_region_selection_mesh(
+        &triangulations,
+        left,
+        right,
+        selection,
+        validation,
+        "open-surface arrangement assembly failed",
+        "open-surface arrangement assembly canonicalization failed",
+    ) else {
         return Ok(None);
     };
     let result = ExactBooleanResult {
