@@ -6253,7 +6253,7 @@ fn mesh_from_projected_overlay_selected_faces(
         let Some(face) = overlay.arrangement.faces.get(overlay_face.face) else {
             return Ok(None);
         };
-        let boundary = face
+        let boundary_points = face
             .vertices
             .iter()
             .map(|vertex| {
@@ -6264,9 +6264,14 @@ fn mesh_from_projected_overlay_selected_faces(
                     .map(|vertex| &vertex.point)
             })
             .collect::<Option<Vec<_>>>()
-            .and_then(|points| {
-                lift_projected_points_to_carrier(points, carrier_points, projection)
-            });
+            .ok_or_else(|| {
+                ExactMeshError::one(ExactMeshBlocker::new(
+                    ExactMeshBlockerKind::StaleFactReplay,
+                    "exact coplanar selected-face references a missing arrangement vertex",
+                ))
+            })?;
+        let boundary =
+            lift_projected_points_to_carrier(boundary_points, carrier_points, projection);
         let Some(boundary) = boundary else {
             return Ok(None);
         };
@@ -6281,30 +6286,8 @@ fn mesh_from_projected_overlay_selected_faces(
             })?;
         let face_to_mesh = face_vertices
             .into_iter()
-            .map(|point| {
-                let mut existing_vertex = None;
-                for (index, existing) in vertices.iter().enumerate() {
-                    match point3_exact_equal(existing, &point) {
-                        Some(true) => {
-                            existing_vertex = Some(index);
-                            break;
-                        }
-                        Some(false) => {}
-                        None => break,
-                    }
-                }
-                if let Some(existing) = existing_vertex {
-                    Some(existing)
-                } else {
-                    let index = vertices.len();
-                    vertices.push(point);
-                    Some(index)
-                }
-            })
-            .collect::<Option<Vec<_>>>();
-        let Some(face_to_mesh) = face_to_mesh else {
-            return Ok(None);
-        };
+            .map(|point| intern_coplanar_output_vertex(&mut vertices, point))
+            .collect::<Result<Vec<_>, _>>()?;
         triangles.extend(face_triangles.into_iter().map(|triangle| {
             Triangle([
                 face_to_mesh[triangle.0[0]],
@@ -6324,6 +6307,27 @@ fn mesh_from_projected_overlay_selected_faces(
         1,
     )
     .map(Some)
+}
+
+fn intern_coplanar_output_vertex(
+    vertices: &mut Vec<Point3>,
+    point: Point3,
+) -> Result<usize, ExactMeshError> {
+    for (index, existing) in vertices.iter().enumerate() {
+        match point3_exact_equal(existing, &point) {
+            Some(true) => return Ok(index),
+            Some(false) => {}
+            None => {
+                return Err(ExactMeshError::one(ExactMeshBlocker::new(
+                    ExactMeshBlockerKind::ExactConstructionFailure,
+                    "exact coplanar output vertex equality is undecidable",
+                )));
+            }
+        }
+    }
+    let index = vertices.len();
+    vertices.push(point);
+    Ok(index)
 }
 
 fn lift_projected_points_to_carrier<'a>(

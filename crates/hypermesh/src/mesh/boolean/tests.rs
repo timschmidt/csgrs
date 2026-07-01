@@ -1994,6 +1994,32 @@ fn selected_overlay_faces_triangulate_simple_coplanar_difference_cells() {
         canonical.facts().mesh.boundary_edges
     );
 
+    let mut stale_overlay = overlay.clone();
+    stale_overlay.output_components.clear();
+    let selected_face = stale_overlay
+        .faces
+        .iter()
+        .find(|face| face.selected)
+        .expect("test overlay has a selected face")
+        .face;
+    let stale_face = stale_overlay
+        .arrangement
+        .faces
+        .get_mut(selected_face)
+        .expect("selected face references an arrangement face");
+    stale_face.vertices[0] = usize::MAX;
+    let stale_error = mesh_from_selected_projected_overlay_faces(
+        &stale_overlay,
+        &carrier_points,
+        projection,
+        "test stale selected-face coplanar overlay difference",
+    )
+    .expect_err("stale selected-face arrangement vertex should return a typed blocker");
+    assert!(
+        stale_error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        "{stale_error:?}"
+    );
+
     let evidence = test_winding_evidence(
         ExactBooleanRequest::new(
             ExactBooleanOperation::Difference,
