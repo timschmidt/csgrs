@@ -289,7 +289,8 @@ fn mesh_to_uvw(
     basis: &AffineBoxBasis,
     validation: ExactMeshValidationPolicy,
 ) -> Option<ExactMesh> {
-    let vertices = mesh
+    let view = mesh.view();
+    let vertices = view
         .vertices()
         .iter()
         .map(|point| {
@@ -309,16 +310,12 @@ fn mesh_to_uvw(
     .value()?
         == Ordering::Less
     {
-        mesh.facts()
-            .faces
-            .iter()
-            .map(|face| reverse_triangle(&Triangle(face.triangle.vertices)))
+        view.faces()
+            .map(|face| reverse_triangle(&Triangle(face.vertex_indices())))
             .collect()
     } else {
-        mesh.facts()
-            .faces
-            .iter()
-            .map(|face| Triangle(face.triangle.vertices))
+        view.faces()
+            .map(|face| Triangle(face.vertex_indices()))
             .collect()
     };
     ExactMesh::new_with_policy_and_version(
@@ -392,7 +389,13 @@ fn find_affine_cell_basis<T>(
     origins.sort_by_key(|&origin| adjacency[origin].len());
     for origin in origins {
         let neighbors = &adjacency[origin];
-        let origin_point = mesh.vertices()[origin].clone();
+        let Some(origin_point) = mesh
+            .view()
+            .vertex(origin)
+            .map(|vertex| vertex.point().clone())
+        else {
+            continue;
+        };
         let mut directions = unique_edge_directions(mesh, origin, neighbors);
         directions.sort_by_key(|direction| {
             let weight = direction_counts
@@ -433,12 +436,14 @@ fn find_affine_cell_basis<T>(
 /// Count undirected exact triangle-edge directions in mesh space.
 fn mesh_direction_counts(mesh: &ExactMesh) -> Vec<(Point3, usize)> {
     let mut counts = Vec::<(Point3, usize)>::new();
-    for face in &mesh.facts().faces {
-        let [a, b, c] = face.triangle.vertices;
+    let view = mesh.view();
+    for face in view.faces() {
+        let [a, b, c] = face.vertex_indices();
         for [a, b] in [[a, b], [b, c], [c, a]] {
-            let (Some(a), Some(b)) = (mesh.vertices().get(a), mesh.vertices().get(b)) else {
+            let (Some(a), Some(b)) = (view.vertex(a), view.vertex(b)) else {
                 continue;
             };
+            let (a, b) = (a.point(), b.point());
             let direction = Point3::new(&b.x - &a.x, &b.y - &a.y, &b.z - &a.z);
             if compare_reals(&direction.x, &Real::from(0)).value() == Some(Ordering::Equal)
                 && compare_reals(&direction.y, &Real::from(0)).value() == Some(Ordering::Equal)
@@ -461,9 +466,9 @@ fn mesh_direction_counts(mesh: &ExactMesh) -> Vec<(Point3, usize)> {
 
 /// Build a unique undirected vertex adjacency list from retained triangles.
 fn vertex_adjacency(mesh: &ExactMesh) -> Vec<Vec<usize>> {
-    let mut adjacency = vec![Vec::new(); mesh.vertices().len()];
-    for face in &mesh.facts().faces {
-        let [a, b, c] = face.triangle.vertices;
+    let mut adjacency = vec![Vec::new(); mesh.view().vertices().len()];
+    for face in mesh.view().faces() {
+        let [a, b, c] = face.vertex_indices();
         for [a, b] in [[a, b], [b, c], [c, a]] {
             if let Some(neighbors) = adjacency.get_mut(a)
                 && !neighbors.contains(&b)
@@ -482,10 +487,12 @@ fn vertex_adjacency(mesh: &ExactMesh) -> Vec<Vec<usize>> {
 
 /// Return unique outgoing exact edge directions at one origin vertex.
 fn unique_edge_directions(mesh: &ExactMesh, origin: usize, neighbors: &[usize]) -> Vec<Point3> {
-    let origin_point = &mesh.vertices()[origin];
+    let Some(origin_point) = mesh.view().vertex(origin).map(|vertex| vertex.point()) else {
+        return Vec::new();
+    };
     let mut directions = Vec::new();
     for &neighbor in neighbors {
-        let Some(neighbor) = mesh.vertices().get(neighbor) else {
+        let Some(neighbor) = mesh.view().vertex(neighbor).map(|vertex| vertex.point()) else {
             continue;
         };
         let direction = Point3::new(
