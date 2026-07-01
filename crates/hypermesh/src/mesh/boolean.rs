@@ -579,16 +579,16 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
         );
         return Ok(Some(arrangement_result));
     }
-    if let Some(result) = certified_arrangement_cell_complex_result_from_graph(
-        graph, left, right, operation, validation, true,
-    )? {
+    if let Some(result) =
+        certified_arrangement_cell_complex_result_from_graph(graph, left, right, request, true)?
+    {
         return Ok(Some(result));
     }
     if let Some(result) = request_replayable_result(
         boolean_arrangement_cell_complex_recovery(left, right, operation, validation)?,
         left,
         right,
-        ExactBooleanRequest::new(operation, validation),
+        request,
         retained_arrangement_attempt,
     ) {
         return Ok(Some(result));
@@ -1980,8 +1980,7 @@ fn certified_arrangement_cell_complex_preflight_if_materialized(
                     graph,
                     left,
                     right,
-                    operation,
-                    validation,
+                    ExactBooleanRequest::new(operation, validation),
                     regularize_sheet_complex,
                 )?
                 .is_some()
@@ -2751,9 +2750,9 @@ fn materialize_boolean_operation_from_ready_graph(
     {
         return Ok(result);
     }
-    if let Some(result) = certified_arrangement_cell_complex_result_from_graph(
-        graph, left, right, operation, validation, true,
-    )? {
+    if let Some(result) =
+        certified_arrangement_cell_complex_result_from_graph(graph, left, right, request, true)?
+    {
         return Ok(result);
     }
     if let Some(result) = boolean_closed_winding_containment_meshes_from_graph(
@@ -3247,8 +3246,7 @@ fn certified_arrangement_cell_complex_result_from_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
+    request: ExactBooleanRequest,
     regularize_unregularized_sheet_complex: bool,
 ) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
     let arrangement = match ExactArrangement3d::from_source_certified_intersection_graph_with_policy(
@@ -3264,7 +3262,7 @@ fn certified_arrangement_cell_complex_result_from_graph(
         &arrangement,
         left,
         right,
-        ExactBooleanRequest::new(operation, validation),
+        request,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
         regularize_unregularized_sheet_complex,
     )?;
