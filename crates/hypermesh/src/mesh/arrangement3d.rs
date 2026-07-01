@@ -596,7 +596,7 @@ pub(crate) fn validate_arrangement_regions(
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             }
             let incident_count =
-                regularized_incident_sheet_count(&incidence.face_cells, face_cells);
+                regularized_incident_sheet_count(&incidence.face_cells, face_cells)?;
             if incidence.boundary != (incident_count == 1)
                 || incidence.non_manifold != (incident_count > 2)
             {
@@ -3257,7 +3257,7 @@ fn arrangement_regions(
             .filter(|[left, right]| membership[*left] && membership[*right])
             .collect::<Vec<_>>();
         let edge_incidences =
-            arrangement_region_edge_incidences(&membership, &edge_users, face_cells);
+            arrangement_region_edge_incidences(&membership, &edge_users, face_cells, blockers);
         let non_manifold_edges = edge_incidences
             .iter()
             .filter(|incidence| incidence.non_manifold)
@@ -3311,6 +3311,7 @@ fn arrangement_region_edge_incidences(
     membership: &[bool],
     edge_users: &[([ArrangementFaceCellNode; 2], Vec<usize>)],
     face_cells: &[ArrangementFaceCell],
+    blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Vec<ArrangementRegionEdgeIncidence> {
     edge_users
         .iter()
@@ -3324,7 +3325,14 @@ fn arrangement_region_edge_incidences(
                 return None;
             }
             incident_face_cells.sort_unstable();
-            let incident_count = regularized_incident_sheet_count(&incident_face_cells, face_cells);
+            let incident_count =
+                match regularized_incident_sheet_count(&incident_face_cells, face_cells) {
+                    Ok(count) => count,
+                    Err(blocker) => {
+                        push_unique_blocker(blockers, blocker);
+                        incident_face_cells.len()
+                    }
+                };
             Some(ArrangementRegionEdgeIncidence {
                 edge: edge.clone(),
                 face_cells: incident_face_cells,
@@ -3338,7 +3346,7 @@ fn arrangement_region_edge_incidences(
 fn regularized_incident_sheet_count(
     incident_cells: &[usize],
     all_face_cells: &[ArrangementFaceCell],
-) -> usize {
+) -> Result<usize, ExactArrangementBlocker> {
     let mut representatives = Vec::<usize>::new();
     'incident: for &cell in incident_cells {
         for &representative in &representatives {
@@ -3348,34 +3356,50 @@ fn regularized_incident_sheet_count(
             let Some(right) = all_face_cells.get(representative) else {
                 continue;
             };
-            if exact_point_loops_match(&left.boundary_points, &right.boundary_points, false)
-                || exact_point_loops_match(&left.boundary_points, &right.boundary_points, true)
+            if exact_point_loops_match(&left.boundary_points, &right.boundary_points, false)?
+                || exact_point_loops_match(&left.boundary_points, &right.boundary_points, true)?
             {
                 continue 'incident;
             }
         }
         representatives.push(cell);
     }
-    representatives.len()
+    Ok(representatives.len())
 }
 
-pub(crate) fn exact_point_loops_match(left: &[Point3], right: &[Point3], reverse: bool) -> bool {
+pub(crate) fn exact_point_loops_match(
+    left: &[Point3],
+    right: &[Point3],
+    reverse: bool,
+) -> Result<bool, ExactArrangementBlocker> {
     if left.len() != right.len() {
-        return false;
+        return Ok(false);
     }
     if left.is_empty() {
-        return true;
+        return Ok(true);
     }
-    (0..right.len()).any(|offset| {
-        (0..left.len()).all(|index| {
+    for offset in 0..right.len() {
+        let mut matches = true;
+        for index in 0..left.len() {
             let right_index = if reverse {
                 (offset + right.len() - index) % right.len()
             } else {
                 (offset + index) % right.len()
             };
-            point3_exact_equal(&left[index], &right[right_index]) == Some(true)
-        })
-    })
+            match point3_exact_equal(&left[index], &right[right_index]) {
+                Some(true) => {}
+                Some(false) => {
+                    matches = false;
+                    break;
+                }
+                None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+            }
+        }
+        if matches {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 fn arrangement_volume_graph(
@@ -4122,10 +4146,16 @@ fn shell_region_mesh(
         if cell.boundary_points.len() < 3 {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
-        if boundary_loops.iter().any(|existing| {
-            exact_point_loops_match(existing, &cell.boundary_points, false)
-                || exact_point_loops_match(existing, &cell.boundary_points, true)
-        }) {
+        let mut duplicate = false;
+        for existing in &boundary_loops {
+            if exact_point_loops_match(existing, &cell.boundary_points, false)?
+                || exact_point_loops_match(existing, &cell.boundary_points, true)?
+            {
+                duplicate = true;
+                break;
+            }
+        }
+        if duplicate {
             continue;
         }
         boundary_loops.push(cell.boundary_points.clone());

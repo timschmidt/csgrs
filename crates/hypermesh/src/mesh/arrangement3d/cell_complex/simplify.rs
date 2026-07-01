@@ -168,18 +168,18 @@ impl ExactSimplifiedCellComplex {
             }
         }
         for (index, face) in self.faces.iter().enumerate() {
-            if self.faces[index + 1..].iter().any(|other| {
-                exact_point_loops_match(
+            for other in &self.faces[index + 1..] {
+                if exact_point_loops_match(
                     &face.face.cell.boundary_points,
                     &other.face.cell.boundary_points,
                     false,
-                ) || exact_point_loops_match(
+                )? || exact_point_loops_match(
                     &face.face.cell.boundary_points,
                     &other.face.cell.boundary_points,
                     true,
-                )
-            }) {
-                return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+                )? {
+                    return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+                }
             }
         }
         Ok(())
@@ -295,7 +295,7 @@ pub(crate) fn simplify_selected_cell_complex(
         blockers,
     } = selected;
     let mut blockers = blockers;
-    let mut faces = Vec::new();
+    let mut faces = Vec::<ExactSimplifiedFaceCell>::new();
     let mut duplicate_cells_removed = 0;
     let mut duplicate_boundary_nodes_removed = 0;
     let mut collinear_boundary_nodes_removed = 0;
@@ -410,24 +410,45 @@ pub(crate) fn simplify_selected_cell_complex(
             }
         }
         canonicalize_boundary_start(&mut face);
-        if faces.iter().any(|existing: &ExactSimplifiedFaceCell| {
-            existing.face == face
-                || exact_point_loops_match(
-                    &existing.face.cell.boundary_points,
-                    &face.cell.boundary_points,
-                    false,
-                )
-        }) {
+        let mut duplicate = false;
+        for existing in &faces {
+            if existing.face == face {
+                duplicate = true;
+                break;
+            }
+            match exact_point_loops_match(
+                &existing.face.cell.boundary_points,
+                &face.cell.boundary_points,
+                false,
+            ) {
+                Ok(true) => {
+                    duplicate = true;
+                    break;
+                }
+                Ok(false) => {}
+                Err(blocker) => blockers.push(blocker),
+            }
+        }
+        if duplicate {
             duplicate_cells_removed += 1;
             continue;
         }
-        if let Some(opposite) = faces.iter().position(|existing: &ExactSimplifiedFaceCell| {
-            exact_point_loops_match(
+        let mut opposite = None;
+        for (index, existing) in faces.iter().enumerate() {
+            match exact_point_loops_match(
                 &existing.face.cell.boundary_points,
                 &face.cell.boundary_points,
                 true,
-            )
-        }) {
+            ) {
+                Ok(true) => {
+                    opposite = Some(index);
+                    break;
+                }
+                Ok(false) => {}
+                Err(blocker) => blockers.push(blocker),
+            }
+        }
+        if let Some(opposite) = opposite {
             faces.remove(opposite);
             duplicate_cells_removed += 2;
             continue;
