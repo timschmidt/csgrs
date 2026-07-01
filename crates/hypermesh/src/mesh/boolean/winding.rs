@@ -328,22 +328,29 @@ pub(crate) struct ClosedMeshWindingMeshReport {
 }
 
 impl ClosedMeshWindingMeshReport {
-    /// Return whether every retained vertex is outside or on the target boundary.
-    pub(crate) fn vertices_are_boundary_or_outside(&self) -> bool {
-        self.target_closed
-            && self.vertices.iter().all(|vertex| {
-                matches!(
-                    vertex.relation,
-                    ClosedMeshWindingRelation::Outside | ClosedMeshWindingRelation::Boundary
-                )
-            })
-    }
-
-    /// Return whether at least one retained vertex lies on the target boundary.
-    pub(crate) fn vertices_touch_boundary(&self) -> bool {
-        self.vertices
-            .iter()
-            .any(|vertex| vertex.relation == ClosedMeshWindingRelation::Boundary)
+    /// Return whether retained vertices certify boundary-only contact with the
+    /// closed target. `None` means at least one vertex is inside, unknown, or
+    /// the target is not closed; `Some(true)` additionally records that a
+    /// retained vertex lies on the target boundary.
+    pub(crate) fn boundary_or_outside_touch(&self) -> Option<bool> {
+        if !self.target_closed {
+            return None;
+        }
+        let mut touches_boundary = false;
+        for vertex in &self.vertices {
+            match vertex.relation {
+                ClosedMeshWindingRelation::Outside => {}
+                ClosedMeshWindingRelation::Boundary => {
+                    touches_boundary = true;
+                }
+                ClosedMeshWindingRelation::Inside
+                | ClosedMeshWindingRelation::Unknown
+                | ClosedMeshWindingRelation::NotClosed => {
+                    return None;
+                }
+            }
+        }
+        Some(touches_boundary)
     }
 
     /// Validate that the summary relation follows from retained vertex reports.

@@ -22,6 +22,8 @@ use hyperlimit::{
 };
 use hyperreal::Real;
 
+use super::super::sorted_edge;
+
 /// Region role for a 2D arrangement overlay.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) enum ExactArrangement2dRegion {
@@ -340,7 +342,7 @@ pub(crate) fn build_exact_arrangement2d(
             if pair[0] == pair[1] {
                 continue;
             }
-            let key = canonical_edge_key(pair[0], pair[1]);
+            let key = sorted_edge([pair[0], pair[1]]);
             match edge_by_vertices.get(&key).copied() {
                 Some(edge_index) => {
                     let source = segments[segment_index].source;
@@ -882,14 +884,6 @@ fn sort_split_points(
     *points = sorted;
 }
 
-fn canonical_edge_key(left: usize, right: usize) -> [usize; 2] {
-    if left < right {
-        [left, right]
-    } else {
-        [right, left]
-    }
-}
-
 fn extract_bounded_faces(
     vertices: &[ExactArrangement2dVertex],
     edges: &[ExactArrangement2dEdge],
@@ -1144,7 +1138,7 @@ pub(crate) fn exact_arrangement2d_face_witness(
             }
         }
         if is_ear {
-            let third = rational_real(1, 3)?;
+            let third = (Real::from(1) / &Real::from(3)).ok()?;
             let candidate = Point2::new(
                 (a.x.clone() + &b.x + &c.x) * &third,
                 (a.y.clone() + &b.y + &c.y) * &third,
@@ -1176,20 +1170,18 @@ fn edge_center_witness(
         center_y += &arrangement.vertices[*vertex].point.y;
     }
     let center = Point2::new(center_x * &inv, center_y * &inv);
+    let half = (Real::from(1) / &Real::from(2)).ok()?;
     let ratios = [
-        rational_real(1, 4)?,
-        rational_real(1, 8)?,
-        rational_real(1, 16)?,
-        rational_real(1, 32)?,
-        rational_real(1, 2)?,
+        (Real::from(1) / &Real::from(4)).ok()?,
+        (Real::from(1) / &Real::from(8)).ok()?,
+        (Real::from(1) / &Real::from(16)).ok()?,
+        (Real::from(1) / &Real::from(32)).ok()?,
+        half.clone(),
     ];
     for edge in 0..face.vertices.len() {
         let a = &arrangement.vertices[face.vertices[edge]].point;
         let b = &arrangement.vertices[face.vertices[(edge + 1) % face.vertices.len()]].point;
-        let midpoint = Point2::new(
-            (a.x.clone() + &b.x) * &rational_real(1, 2)?,
-            (a.y.clone() + &b.y) * &rational_real(1, 2)?,
-        );
+        let midpoint = Point2::new((a.x.clone() + &b.x) * &half, (a.y.clone() + &b.y) * &half);
         for ratio in &ratios {
             let one_minus = Real::from(1) - ratio;
             let candidate = Point2::new(
@@ -1258,10 +1250,6 @@ fn witness_inside_face_without_child_cycle(
     Some(true)
 }
 
-fn rational_real(numerator: i64, denominator: i64) -> Option<Real> {
-    (Real::from(numerator) / &Real::from(denominator)).ok()
-}
-
 fn selected_output_loops(
     arrangement: &ExactArrangement2d,
     faces: &[ExactArrangement2dOverlayFace],
@@ -1285,10 +1273,10 @@ fn selected_output_loops(
             continue;
         }
         for index in 0..face.vertices.len() {
-            let edge = canonical_edge_key(
+            let edge = sorted_edge([
                 face.vertices[index],
                 face.vertices[(index + 1) % face.vertices.len()],
-            );
+            ]);
             *selected_edge_counts.entry(edge).or_insert(0) += 1;
         }
     }
@@ -1301,7 +1289,7 @@ fn selected_output_loops(
         for index in 0..face.vertices.len() {
             let start = face.vertices[index];
             let end = face.vertices[(index + 1) % face.vertices.len()];
-            let edge = canonical_edge_key(start, end);
+            let edge = sorted_edge([start, end]);
             match selected_edge_counts.get(&edge).copied().unwrap_or(0) {
                 1 => fragments.push([start, end]),
                 2 => {}

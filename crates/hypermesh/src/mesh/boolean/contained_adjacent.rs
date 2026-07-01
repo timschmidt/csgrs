@@ -17,7 +17,7 @@
 
 use hyperlimit::{
     CoplanarProjection, Point3, SegmentIntersection, SegmentPlaneRelation, Sign, TriangleLocation,
-    classify_point_triangle, compare_reals, project_point3, projected_polygon_area2_value,
+    classify_point_triangle, orient2d_report, project_point3,
 };
 
 use super::super::arrangement3d::arrangement2d::{
@@ -31,12 +31,10 @@ use super::super::{ExactMesh, ExactMeshValidationError, Triangle, sorted_edge};
 use super::closed_boundary_contact_only;
 use super::{
     DisjointSets, coplanar_mesh_overlay_carrier, materialize_coplanar_mesh_overlay_mesh,
-    point3_exact_equal, point3_lies_strictly_on_segment,
+    point3_exact_equal, point3_lies_strictly_on_segment, split_output_triangle_edge,
 };
 use hyperlimit::SourceProvenance;
-use hyperreal::Real;
 
-use std::cmp::Ordering;
 use std::collections::BTreeMap;
 
 /// Exact materialization of a closed-solid union across contained boundary caps.
@@ -303,13 +301,19 @@ fn overlap_face_components(overlapping: &[&FacePairEvents]) -> Option<Vec<Overla
     if overlapping.is_empty() {
         return None;
     }
-    let mut components = DisjointSets::new(overlapping.len());
+    let mut components = DisjointSets {
+        parent: (0..overlapping.len()).collect(),
+    };
     for left in 0..overlapping.len() {
         for right in left + 1..overlapping.len() {
             if overlapping[left].left_face == overlapping[right].left_face
                 || overlapping[left].right_face == overlapping[right].right_face
             {
-                components.union(left, right);
+                let left_root = components.find(left);
+                let right_root = components.find(right);
+                if left_root != right_root {
+                    components.parent[right_root] = left_root;
+                }
             }
         }
     }
@@ -363,17 +367,15 @@ fn component_contained_adjacency_for_side(
     }
     let (_, arrangement_projection) =
         materialize_contained_patch_difference(&containing_mesh, &contained_mesh)?;
-    let sign = first_projected_mesh_triangle_sign(&containing_mesh, arrangement_projection)?;
-    if !mesh_projected_triangle_signs_match(&containing_mesh, arrangement_projection, sign)?
-        || !mesh_projected_triangle_signs_match(
-            &contained_mesh,
-            arrangement_projection,
-            match sign {
-                Sign::Negative => Sign::Positive,
-                Sign::Positive => Sign::Negative,
-                Sign::Zero => Sign::Zero,
-            },
-        )?
+    let sign = consistent_projected_mesh_triangle_sign(&containing_mesh, arrangement_projection)?;
+    let contained_sign =
+        consistent_projected_mesh_triangle_sign(&contained_mesh, arrangement_projection)?;
+    if contained_sign
+        != match sign {
+            Sign::Negative => Sign::Positive,
+            Sign::Positive => Sign::Negative,
+            Sign::Zero => return None,
+        }
     {
         return None;
     }
@@ -468,14 +470,14 @@ fn retained_plane_crossing_is_not_inside_plane_face(
     let Some(c) = mesh.vertices().get(triangle_vertices[2]) else {
         return false;
     };
-    let triangle = [a.clone(), b.clone(), c.clone()];
+    let triangle = [a, b, c];
     let Some(projection) = [
         CoplanarProjection::Xy,
         CoplanarProjection::Xz,
         CoplanarProjection::Yz,
     ]
     .into_iter()
-    .find(|&projection| projected_triangle_sign(&triangle, projection).is_some()) else {
+    .find(|&projection| projected_triangle_sign(triangle, projection).is_some()) else {
         return false;
     };
     match classify_point_triangle(
@@ -537,11 +539,12 @@ fn contained_face_union_mesh(
         seen.insert(key)
     });
 
-    let mesh = ExactMesh::new_with_policy(
+    let mesh = ExactMesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact contained-face adjacent closed-solid union"),
         validation,
+        1,
     )?;
     Ok(Some(mesh))
 }
@@ -624,11 +627,12 @@ fn faces_mesh(mesh: &ExactMesh, faces: &[usize], label: &'static str) -> Option<
             map_point(&mut vertices, mesh.vertices().get(triangle[2])?)?,
         ]));
     }
-    ExactMesh::new_with_policy(
+    ExactMesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact(label),
         ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        1,
     )
     .ok()
 }
@@ -651,7 +655,9 @@ fn connected_face_component_count(mesh: &ExactMesh) -> Option<usize> {
         }
     }
 
-    let mut components = DisjointSets::new(face_count);
+    let mut components = DisjointSets {
+        parent: (0..face_count).collect(),
+    };
     for faces in edge_faces.values() {
         for left in 0..faces.len() {
             for right in left + 1..faces.len() {
@@ -660,7 +666,11 @@ fn connected_face_component_count(mesh: &ExactMesh) -> Option<usize> {
                 if left_face >= face_count || right_face >= face_count {
                     return None;
                 }
-                components.union(left_face, right_face);
+                let left_root = components.find(left_face);
+                let right_root = components.find(right_face);
+                if left_root != right_root {
+                    components.parent[right_root] = left_root;
+                }
             }
         }
     }
@@ -703,7 +713,7 @@ fn append_holed_replacement(
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
 ) -> Option<()> {
-    let source_sign = first_projected_mesh_triangle_sign(mesh, projection)?;
+    let source_sign = consistent_projected_mesh_triangle_sign(mesh, projection)?;
     let flip = source_sign != target_sign;
     for face in &mesh.facts().faces {
         let triangle = face.triangle.vertices;
@@ -763,41 +773,6 @@ fn append_triangle_with_existing_edge_splits(
     Some(())
 }
 
-fn split_output_triangle_edge(
-    vertices: &[Point3],
-    triangles: &mut Vec<Triangle>,
-    split_vertex: usize,
-) -> Option<()> {
-    let split_point = vertices.get(split_vertex)?;
-    let mut triangle_index = 0;
-    while triangle_index < triangles.len() {
-        let triangle = triangles[triangle_index].0;
-        if triangle.contains(&split_vertex) {
-            triangle_index += 1;
-            continue;
-        }
-        for edge in 0..3 {
-            let a = triangle[edge];
-            let b = triangle[(edge + 1) % 3];
-            let opposite = triangle[(edge + 2) % 3];
-            let a_point = vertices.get(a)?;
-            let b_point = vertices.get(b)?;
-            if point3_lies_strictly_on_segment(a_point, b_point, split_point)? {
-                triangles.splice(
-                    triangle_index..triangle_index + 1,
-                    [
-                        Triangle([a, split_vertex, opposite]),
-                        Triangle([split_vertex, b, opposite]),
-                    ],
-                );
-                return Some(());
-            }
-        }
-        triangle_index += 1;
-    }
-    None
-}
-
 fn map_point(vertices: &mut Vec<Point3>, point: &Point3) -> Option<usize> {
     if let Some(existing) = vertices
         .iter()
@@ -810,45 +785,35 @@ fn map_point(vertices: &mut Vec<Point3>, point: &Point3) -> Option<usize> {
     Some(mapped)
 }
 
-fn projected_triangle_sign(points: &[Point3; 3], projection: CoplanarProjection) -> Option<Sign> {
-    let area = projected_polygon_area2_value(points, projection);
-    match compare_reals(&area, &Real::from(0)).value()? {
-        Ordering::Less => Some(Sign::Negative),
-        Ordering::Equal => None,
-        Ordering::Greater => Some(Sign::Positive),
+fn projected_triangle_sign(points: [&Point3; 3], projection: CoplanarProjection) -> Option<Sign> {
+    let a = project_point3(points[0], projection);
+    let b = project_point3(points[1], projection);
+    let c = project_point3(points[2], projection);
+    match orient2d_report(&a, &b, &c).value()? {
+        Sign::Negative => Some(Sign::Negative),
+        Sign::Zero => None,
+        Sign::Positive => Some(Sign::Positive),
     }
 }
 
-fn first_projected_mesh_triangle_sign(
+fn consistent_projected_mesh_triangle_sign(
     mesh: &ExactMesh,
     projection: CoplanarProjection,
 ) -> Option<Sign> {
-    mesh.facts().faces.iter().find_map(|face| {
-        let triangle = face.triangle.vertices;
-        let points = [
-            mesh.vertices().get(triangle[0])?.clone(),
-            mesh.vertices().get(triangle[1])?.clone(),
-            mesh.vertices().get(triangle[2])?.clone(),
-        ];
-        projected_triangle_sign(&points, projection)
-    })
-}
-
-fn mesh_projected_triangle_signs_match(
-    mesh: &ExactMesh,
-    projection: CoplanarProjection,
-    expected: Sign,
-) -> Option<bool> {
+    let mut sign = None;
     for face in &mesh.facts().faces {
         let triangle = face.triangle.vertices;
         let points = [
-            mesh.vertices().get(triangle[0])?.clone(),
-            mesh.vertices().get(triangle[1])?.clone(),
-            mesh.vertices().get(triangle[2])?.clone(),
+            mesh.vertices().get(triangle[0])?,
+            mesh.vertices().get(triangle[1])?,
+            mesh.vertices().get(triangle[2])?,
         ];
-        if projected_triangle_sign(&points, projection)? != expected {
-            return Some(false);
+        let face_sign = projected_triangle_sign(points, projection)?;
+        match sign {
+            Some(expected) if expected != face_sign => return None,
+            Some(_) => {}
+            None => sign = Some(face_sign),
         }
     }
-    Some(true)
+    sign
 }

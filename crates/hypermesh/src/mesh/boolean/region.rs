@@ -19,11 +19,13 @@ use hyperlimit::{
 use hyperlimit::{Point2 as PredicatePoint2, Sign, compare_reals, orient2d_report, project_point3};
 
 use super::super::ExactMesh;
-use super::super::Triangle;
 use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
 use super::super::graph::SplitPlanBlockerKind;
-use super::super::graph::{ExactFaceRegionPlan, FaceSplitBoundaryNode, MeshSide};
+use super::super::graph::{
+    ExactFaceRegionPlan, FaceSplitBoundaryNode, MeshSide, validate_face_region_plan,
+};
 use super::super::validation::ExactMeshValidationPolicy;
+use super::super::{Triangle, paired_triangle_orientation_flips};
 use hyperlimit::CoplanarProjection;
 use hyperlimit::PredicateUse;
 use hyperlimit::SourceProvenance;
@@ -203,7 +205,7 @@ pub(crate) fn checked_classify_face_regions_against_opposite_planes(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Vec<FaceRegionPlaneClassification>, ExactMeshError> {
-    let report = regions.validate(left, right);
+    let report = validate_face_region_plan(regions, left, right);
     if report.blockers.is_empty() {
         Ok(classify_face_regions_against_opposite_planes(
             regions, left, right,
@@ -493,37 +495,6 @@ pub(crate) struct ExactBooleanAssemblyPlan {
 }
 
 impl ExactBooleanAssemblyPlan {
-    /// Assemble exact output triangles with source-face orientation replay.
-    ///
-    /// `hypertri` correctly triangulates the projected region, but the index
-    /// order it returns is a polygon-local convention. Boolean output topology
-    /// needs a stronger contract: each kept triangle must preserve or reverse
-    /// its original source-face orientation according to the operation policy.
-    /// This source-aware entry point compares exact projected orientation
-    /// predicates and flips individual emitted triangles as needed. That keeps
-    /// model: representation changes are allowed only when the predicate facts
-    /// needed to justify their combinatorics are retained and replayable. See
-    pub(crate) fn from_region_triangulations_with_sources(
-        triangulations: &[FaceRegionTriangulation],
-        selection: ExactRegionSelection,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> hypertri::Result<Self> {
-        let should_keep =
-            move |triangulation: &FaceRegionTriangulation| selection.keeps(triangulation.side);
-        assemble_region_triangulations_with_triangle_retention(
-            triangulations,
-            Some((left, right)),
-            &mut |triangulation, _triangle| {
-                if should_keep(triangulation) {
-                    ExactRegionRetention::Keep
-                } else {
-                    ExactRegionRetention::Drop
-                }
-            },
-        )
-    }
-
     /// Assemble exact output triangles with per-cell retention policy.
     ///
     /// Constrained planar-cell extraction can emit several independently
@@ -624,11 +595,12 @@ impl ExactBooleanAssemblyPlan {
             .iter()
             .map(|triangle| Triangle(triangle.vertices))
             .collect::<Vec<_>>();
-        ExactMesh::new_with_policy(
+        ExactMesh::new_with_policy_and_version(
             vertices,
             triangles,
             SourceProvenance::exact("exact boolean assembly plan"),
             policy,
+            1,
         )
     }
 
@@ -702,7 +674,17 @@ impl ExactBooleanAssemblyPlan {
         let original_vertex_count = self.vertices.len();
         let mut cloned_vertices = 0;
         for vertex in 0..original_vertex_count {
-            let incident = incident_triangles(self, vertex);
+            let incident = self
+                .triangles
+                .iter()
+                .enumerate()
+                .filter_map(|(triangle_index, triangle)| {
+                    triangle
+                        .vertices
+                        .contains(&vertex)
+                        .then_some(triangle_index)
+                })
+                .collect::<Vec<_>>();
             if incident.len() <= 1 {
                 continue;
             }
@@ -715,7 +697,11 @@ impl ExactBooleanAssemblyPlan {
                 let clone_index = self.vertices.len();
                 self.vertices.push(clone);
                 for triangle in component {
-                    replace_triangle_vertex(&mut self.triangles[triangle], vertex, clone_index);
+                    for triangle_vertex in &mut self.triangles[triangle].vertices {
+                        if *triangle_vertex == vertex {
+                            *triangle_vertex = clone_index;
+                        }
+                    }
                 }
                 cloned_vertices += 1;
             }
@@ -735,72 +721,26 @@ impl ExactBooleanAssemblyPlan {
     /// later mesh validation; contradictory parity means the selected complex
     /// is not orientable as a triangle manifold.
     pub(crate) fn orient_paired_edge_uses(&mut self) -> hypertri::Result<usize> {
-        let mut edge_uses = BTreeMap::<[usize; 2], Vec<AssemblyEdgeUse>>::new();
-        for (triangle_index, triangle) in self.triangles.iter().enumerate() {
-            for edge in [
-                [triangle.vertices[0], triangle.vertices[1]],
-                [triangle.vertices[1], triangle.vertices[2]],
-                [triangle.vertices[2], triangle.vertices[0]],
-            ] {
-                let mut key = edge;
-                key.sort_unstable();
-                edge_uses.entry(key).or_default().push(AssemblyEdgeUse {
-                    triangle: triangle_index,
-                    forward_with_key: edge == key,
-                });
-            }
-        }
-
-        let mut adjacency = vec![Vec::<TriangleOrientationConstraint>::new(); self.triangles.len()];
-        for uses in edge_uses.values() {
-            let [left, right] = uses.as_slice() else {
-                continue;
-            };
-            let same_direction = left.forward_with_key == right.forward_with_key;
-            adjacency[left.triangle].push(TriangleOrientationConstraint {
-                triangle: right.triangle,
-                flip_relative_to_current: same_direction,
-            });
-            adjacency[right.triangle].push(TriangleOrientationConstraint {
-                triangle: left.triangle,
-                flip_relative_to_current: same_direction,
-            });
-        }
-
-        let mut flips = vec![None; self.triangles.len()];
-        for start in 0..self.triangles.len() {
-            if flips[start].is_some() {
-                continue;
-            }
-            flips[start] = Some(false);
-            let mut stack = vec![start];
-            while let Some(triangle) = stack.pop() {
-                let current_flip = flips[triangle].ok_or(hypertri::Error::InvalidInput {
-                    reason: "triangle orientation traversal lost assigned parity",
-                })?;
-                for constraint in &adjacency[triangle] {
-                    let required = current_flip ^ constraint.flip_relative_to_current;
-                    match flips[constraint.triangle] {
-                        Some(existing) if existing != required => {
-                            return Err(hypertri::Error::InvalidInput {
-                                reason: "selected triangle component has contradictory edge orientation",
-                            });
-                        }
-                        Some(_) => {}
-                        None => {
-                            flips[constraint.triangle] = Some(required);
-                            stack.push(constraint.triangle);
-                        }
-                    }
-                }
-            }
-        }
+        let flips = paired_triangle_orientation_flips(
+            self.triangles.iter().map(|triangle| triangle.vertices),
+            self.triangles.len(),
+        )
+        .ok_or(hypertri::Error::InvalidInput {
+            reason: "selected triangle component has contradictory edge orientation",
+        })?;
 
         let mut flipped = 0;
         for (triangle, flip) in self.triangles.iter_mut().zip(flips) {
-            if flip == Some(true) {
+            if flip {
                 triangle.vertices.swap(1, 2);
-                triangle.orientation = toggled_output_orientation(triangle.orientation);
+                triangle.orientation = match triangle.orientation {
+                    ExactOutputTriangleOrientation::PreserveSource => {
+                        ExactOutputTriangleOrientation::ReverseSource
+                    }
+                    ExactOutputTriangleOrientation::ReverseSource => {
+                        ExactOutputTriangleOrientation::PreserveSource
+                    }
+                };
                 flipped += 1;
             }
         }
@@ -824,12 +764,89 @@ impl ExactBooleanAssemblyPlan {
     ) -> hypertri::Result<usize> {
         let mut splits = 0;
         loop {
-            let Some(split) = find_existing_vertex_edge_split(self, left, right)? else {
+            let mut split = None;
+            'search: for (triangle_index, triangle) in self.triangles.iter().enumerate() {
+                let mesh = match triangle.source_side {
+                    MeshSide::Left => left,
+                    MeshSide::Right => right,
+                };
+                let projection = choose_region_projection(mesh, triangle.source_face)?;
+                for edge in 0..3 {
+                    let start = triangle.vertices[edge];
+                    let end = triangle.vertices[(edge + 1) % 3];
+                    for candidate in 0..self.vertices.len() {
+                        if triangle.vertices.contains(&candidate) {
+                            continue;
+                        }
+                        if !assembly_vertex_lies_on_source_face(
+                            self, triangle, candidate, left, right,
+                        )? {
+                            continue;
+                        }
+                        if assembly_vertex_lies_strictly_on_projected_edge(
+                            self, candidate, start, end, projection,
+                        )? {
+                            split = Some((triangle_index, edge, candidate));
+                            break 'search;
+                        }
+                    }
+                }
+            }
+            let Some((triangle, edge, vertex)) = split else {
                 self.validate()?;
                 return Ok(splits);
             };
             let prior_triangle_count = self.triangles.len();
-            apply_existing_vertex_edge_split(self, split, left, right)?;
+            let original = self.triangles[triangle].clone();
+            let a = original.vertices[edge];
+            let b = original.vertices[(edge + 1) % 3];
+            let c = original.vertices[(edge + 2) % 3];
+            let mut first_vertices = [a, vertex, c];
+            let mut second_vertices = [vertex, b, c];
+            let source_mesh = match original.source_side {
+                MeshSide::Left => left,
+                MeshSide::Right => right,
+            };
+            let triangulation = FaceRegionTriangulation {
+                side: original.source_side,
+                face: original.source_face,
+                projection: choose_region_projection(source_mesh, original.source_face)?,
+                boundary: Vec::new(),
+                vertices: Vec::new(),
+                triangles: Vec::new(),
+            };
+            orient_output_triangle_for_source(
+                &triangulation,
+                &self.vertices,
+                &mut first_vertices,
+                original.orientation,
+                left,
+                right,
+            )?;
+            orient_output_triangle_for_source(
+                &triangulation,
+                &self.vertices,
+                &mut second_vertices,
+                original.orientation,
+                left,
+                right,
+            )?;
+            let first = ExactOutputTriangle {
+                vertices: first_vertices,
+                source_side: original.source_side,
+                source_face: original.source_face,
+                orientation: original.orientation,
+            };
+            let second = ExactOutputTriangle {
+                vertices: second_vertices,
+                source_side: original.source_side,
+                source_face: original.source_face,
+                orientation: original.orientation,
+            };
+            validate_output_triangle_distinct_points(self, &first)?;
+            validate_output_triangle_distinct_points(self, &second)?;
+            self.triangles
+                .splice(triangle..triangle + 1, [first, second]);
             if self.triangles.len() <= prior_triangle_count {
                 return Err(hypertri::Error::InvalidInput {
                     reason: "assembly edge refinement did not make progress",
@@ -886,11 +903,17 @@ impl ExactBooleanAssemblyPlan {
                     reason: "assembly source replay could not triangulate region plan",
                 },
             )?;
-        let mut replay = ExactBooleanAssemblyPlan::from_region_triangulations_with_sources(
+        let mut replay = ExactBooleanAssemblyPlan::from_region_triangulations_with_triangle_retention_and_sources(
             &triangulations,
-            selection,
             left,
             right,
+            |triangulation, _triangle| {
+                if selection.keeps(triangulation.side) {
+                    ExactRegionRetention::Keep
+                } else {
+                    ExactRegionRetention::Drop
+                }
+            },
         )?;
         replay.canonicalize_for_mesh_with_sources(left, right)?;
         if self == &replay {
@@ -901,126 +924,6 @@ impl ExactBooleanAssemblyPlan {
             })
         }
     }
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct AssemblyEdgeUse {
-    triangle: usize,
-    forward_with_key: bool,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct TriangleOrientationConstraint {
-    triangle: usize,
-    flip_relative_to_current: bool,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct ExistingVertexEdgeSplit {
-    triangle: usize,
-    edge: usize,
-    vertex: usize,
-}
-
-fn find_existing_vertex_edge_split(
-    assembly: &ExactBooleanAssemblyPlan,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> hypertri::Result<Option<ExistingVertexEdgeSplit>> {
-    for (triangle_index, triangle) in assembly.triangles.iter().enumerate() {
-        let projection = assembly_triangle_projection(triangle, left, right)?;
-        for edge in 0..3 {
-            let start = triangle.vertices[edge];
-            let end = triangle.vertices[(edge + 1) % 3];
-            for candidate in 0..assembly.vertices.len() {
-                if triangle.vertices.contains(&candidate) {
-                    continue;
-                }
-                if !assembly_vertex_lies_on_source_face(assembly, triangle, candidate, left, right)?
-                {
-                    continue;
-                }
-                if assembly_vertex_lies_strictly_on_projected_edge(
-                    assembly, candidate, start, end, projection,
-                )? {
-                    return Ok(Some(ExistingVertexEdgeSplit {
-                        triangle: triangle_index,
-                        edge,
-                        vertex: candidate,
-                    }));
-                }
-            }
-        }
-    }
-    Ok(None)
-}
-
-fn apply_existing_vertex_edge_split(
-    assembly: &mut ExactBooleanAssemblyPlan,
-    split: ExistingVertexEdgeSplit,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> hypertri::Result<()> {
-    let original = assembly.triangles[split.triangle].clone();
-    let a = original.vertices[split.edge];
-    let b = original.vertices[(split.edge + 1) % 3];
-    let c = original.vertices[(split.edge + 2) % 3];
-    let mut first_vertices = [a, split.vertex, c];
-    let mut second_vertices = [split.vertex, b, c];
-    let triangulation = FaceRegionTriangulation {
-        side: original.source_side,
-        face: original.source_face,
-        projection: assembly_triangle_projection(&original, left, right)?,
-        boundary: Vec::new(),
-        vertices: Vec::new(),
-        triangles: Vec::new(),
-    };
-    orient_output_triangle_for_source(
-        &triangulation,
-        &assembly.vertices,
-        &mut first_vertices,
-        original.orientation,
-        left,
-        right,
-    )?;
-    orient_output_triangle_for_source(
-        &triangulation,
-        &assembly.vertices,
-        &mut second_vertices,
-        original.orientation,
-        left,
-        right,
-    )?;
-    let first = ExactOutputTriangle {
-        vertices: first_vertices,
-        source_side: original.source_side,
-        source_face: original.source_face,
-        orientation: original.orientation,
-    };
-    let second = ExactOutputTriangle {
-        vertices: second_vertices,
-        source_side: original.source_side,
-        source_face: original.source_face,
-        orientation: original.orientation,
-    };
-    validate_output_triangle_distinct_points(assembly, &first)?;
-    validate_output_triangle_distinct_points(assembly, &second)?;
-    assembly
-        .triangles
-        .splice(split.triangle..split.triangle + 1, [first, second]);
-    Ok(())
-}
-
-fn assembly_triangle_projection(
-    triangle: &ExactOutputTriangle,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> hypertri::Result<CoplanarProjection> {
-    let mesh = match triangle.source_side {
-        MeshSide::Left => left,
-        MeshSide::Right => right,
-    };
-    choose_region_projection(mesh, triangle.source_face)
 }
 
 fn assembly_vertex_lies_on_source_face(
@@ -1070,27 +973,14 @@ fn assembly_vertex_lies_strictly_on_projected_edge(
         return Ok(false);
     }
     point_on_segment(
-        &project_for_predicate(start_point, projection),
-        &project_for_predicate(end_point, projection),
-        &project_for_predicate(candidate_point, projection),
+        &project_point3(start_point, projection),
+        &project_point3(end_point, projection),
+        &project_point3(candidate_point, projection),
     )
     .value()
     .ok_or(hypertri::Error::PredicateUndecided {
         predicate: "assembly_refinement_point_on_edge",
     })
-}
-
-const fn toggled_output_orientation(
-    orientation: ExactOutputTriangleOrientation,
-) -> ExactOutputTriangleOrientation {
-    match orientation {
-        ExactOutputTriangleOrientation::PreserveSource => {
-            ExactOutputTriangleOrientation::ReverseSource
-        }
-        ExactOutputTriangleOrientation::ReverseSource => {
-            ExactOutputTriangleOrientation::PreserveSource
-        }
-    }
 }
 
 fn validate_output_vertex_source(vertex: &ExactOutputVertex) -> hypertri::Result<()> {
@@ -1324,10 +1214,10 @@ fn validate_assembly_face_interior_source_against_face(
         });
     };
     let location = classify_point_triangle(
-        &project_for_predicate(&mesh.vertices()[source_triangle[0]], projection),
-        &project_for_predicate(&mesh.vertices()[source_triangle[1]], projection),
-        &project_for_predicate(&mesh.vertices()[source_triangle[2]], projection),
-        &project_for_predicate(point, projection),
+        &project_point3(&mesh.vertices()[source_triangle[0]], projection),
+        &project_point3(&mesh.vertices()[source_triangle[1]], projection),
+        &project_point3(&mesh.vertices()[source_triangle[2]], projection),
+        &project_point3(point, projection),
     )
     .value()
     .ok_or(hypertri::Error::PredicateUndecided {
@@ -1365,18 +1255,18 @@ fn validate_output_triangle_source_orientation(
         &mesh.vertices()[source_triangle[2]],
     ];
     let source_sign = orient2d_report(
-        &project_for_predicate(source_points[0], projection),
-        &project_for_predicate(source_points[1], projection),
-        &project_for_predicate(source_points[2], projection),
+        &project_point3(source_points[0], projection),
+        &project_point3(source_points[1], projection),
+        &project_point3(source_points[2], projection),
     )
     .value()
     .ok_or(hypertri::Error::PredicateUndecided {
         predicate: "assembly_source_orientation",
     })?;
     let output_sign = orient2d_report(
-        &project_for_predicate(&assembly.vertices[triangle.vertices[0]].point, projection),
-        &project_for_predicate(&assembly.vertices[triangle.vertices[1]].point, projection),
-        &project_for_predicate(&assembly.vertices[triangle.vertices[2]].point, projection),
+        &project_point3(&assembly.vertices[triangle.vertices[0]].point, projection),
+        &project_point3(&assembly.vertices[triangle.vertices[1]].point, projection),
+        &project_point3(&assembly.vertices[triangle.vertices[2]].point, projection),
     )
     .value()
     .ok_or(hypertri::Error::PredicateUndecided {
@@ -1447,14 +1337,14 @@ pub(crate) fn triangulate_face_regions_with_earcut(
 ///
 /// This is the checked handoff from exact graph geometry into triangulation:
 /// region loops must first satisfy the structural and face-incidence
-/// invariants enforced by [`ExactFaceRegionPlan::validate`]. Only then are
+/// invariants enforced by [`validate_face_region_plan`]. Only then are
 /// them into downstream combinatorics.
 pub(crate) fn checked_triangulate_face_regions_with_earcut(
     regions: &ExactFaceRegionPlan,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> hypertri::Result<Vec<FaceRegionTriangulation>> {
-    let report = regions.validate(left, right);
+    let report = validate_face_region_plan(regions, left, right);
     if !report.blockers.is_empty() {
         if report
             .blockers
@@ -1560,9 +1450,9 @@ fn orient_output_triangle_for_source(
         &source_mesh.vertices()[source_triangle[2]],
     ];
     let source_sign = orient2d_report(
-        &project_for_predicate(source_points[0], triangulation.projection),
-        &project_for_predicate(source_points[1], triangulation.projection),
-        &project_for_predicate(source_points[2], triangulation.projection),
+        &project_point3(source_points[0], triangulation.projection),
+        &project_point3(source_points[1], triangulation.projection),
+        &project_point3(source_points[2], triangulation.projection),
     )
     .value()
     .ok_or(hypertri::Error::PredicateUndecided {
@@ -1590,9 +1480,9 @@ fn orient_output_triangle_for_source(
         });
     };
     let output_sign = orient2d_report(
-        &project_for_predicate(&a.point, triangulation.projection),
-        &project_for_predicate(&b.point, triangulation.projection),
-        &project_for_predicate(&c.point, triangulation.projection),
+        &project_point3(&a.point, triangulation.projection),
+        &project_point3(&b.point, triangulation.projection),
+        &project_point3(&c.point, triangulation.projection),
     )
     .value()
     .ok_or(hypertri::Error::PredicateUndecided {
@@ -1652,26 +1542,14 @@ fn remap_region_vertex(
     Ok(index)
 }
 
-fn incident_triangles(assembly: &ExactBooleanAssemblyPlan, vertex: usize) -> Vec<usize> {
-    assembly
-        .triangles
-        .iter()
-        .enumerate()
-        .filter_map(|(triangle_index, triangle)| {
-            triangle
-                .vertices
-                .contains(&vertex)
-                .then_some(triangle_index)
-        })
-        .collect()
-}
-
 fn vertex_fan_components(
     assembly: &ExactBooleanAssemblyPlan,
     vertex: usize,
     incident: &[usize],
 ) -> Vec<Vec<usize>> {
-    let mut fan = DisjointSets::new(incident.len());
+    let mut fan = DisjointSets {
+        parent: (0..incident.len()).collect(),
+    };
     let mut edge_uses = BTreeMap::<usize, Vec<VertexFanEdgeUse>>::new();
     for (local_triangle, &triangle_index) in incident.iter().enumerate() {
         let triangle = assembly.triangles[triangle_index].vertices;
@@ -1699,7 +1577,11 @@ fn vertex_fan_components(
             // validation, otherwise they materialize as duplicate directed
             // edges.
             if left.forward_from_vertex != right.forward_from_vertex {
-                fan.union(left.local_triangle, right.local_triangle);
+                let left_root = fan.find(left.local_triangle);
+                let right_root = fan.find(right.local_triangle);
+                if left_root != right_root {
+                    fan.parent[right_root] = left_root;
+                }
             }
         }
     }
@@ -1718,14 +1600,6 @@ fn vertex_fan_components(
 struct VertexFanEdgeUse {
     local_triangle: usize,
     forward_from_vertex: bool,
-}
-
-fn replace_triangle_vertex(triangle: &mut ExactOutputTriangle, old: usize, new: usize) {
-    for vertex in &mut triangle.vertices {
-        if *vertex == old {
-            *vertex = new;
-        }
-    }
 }
 
 fn classify_region_against_face_plane(
@@ -1794,9 +1668,9 @@ pub(crate) fn choose_region_projection(
         CoplanarProjection::Yz,
     ] {
         let [pa, pb, pc] = [
-            project_for_predicate(a, projection),
-            project_for_predicate(b, projection),
-            project_for_predicate(c, projection),
+            project_point3(a, projection),
+            project_point3(b, projection),
+            project_point3(c, projection),
         ];
         if matches!(
             orient2d_report(&pa, &pb, &pc).value(),
@@ -1820,13 +1694,6 @@ fn retained_source_face_vertices(
         .get(face)
         .map(|face| face.triangle.vertices)
         .ok_or(hypertri::Error::InvalidInput { reason })
-}
-
-pub(crate) fn project_for_predicate(
-    point: &Point3,
-    projection: CoplanarProjection,
-) -> PredicatePoint2 {
-    project_point3(point, projection)
 }
 
 pub(crate) fn project_for_hypertri(

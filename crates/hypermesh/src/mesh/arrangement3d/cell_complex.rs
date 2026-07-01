@@ -256,13 +256,33 @@ impl ExactRegionOwnershipReport {
         }
     }
 
-    /// Return whether retained ownership evidence can select the requested
-    /// operation without falling back to winding.
+    /// Return whether retained ownership evidence can drive face selection for
+    /// this operation without another winding decision.
     pub(crate) fn resolves_operation_selection(&self, operation: ExactBooleanOperation) -> bool {
-        matches!(
-            self.status,
-            ExactRegionOwnershipStatus::VolumeResolved | ExactRegionOwnershipStatus::FaceResolved
-        ) || self.volume_selection_resolves_operation(operation)
+        matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+            || matches!(
+                self.status,
+                ExactRegionOwnershipStatus::VolumeResolved
+                    | ExactRegionOwnershipStatus::FaceResolved
+            )
+            || self.volume_selection_resolves_operation(operation)
+    }
+
+    /// Return whether retained ownership evidence resolves the requested named
+    /// volume ownership. Selected-region requests only count when the retained
+    /// ownership is globally resolved.
+    pub(crate) fn resolves_requested_volume_ownership(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> bool {
+        if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+            return matches!(
+                self.status,
+                ExactRegionOwnershipStatus::VolumeResolved
+                    | ExactRegionOwnershipStatus::FaceResolved
+            );
+        }
+        self.resolves_operation_selection(operation)
     }
 
     /// Return whether this ownership report matches selected-cell gate counts.
@@ -972,9 +992,7 @@ pub(crate) fn select_arrangement_for_replay(
     let mut selected = if ownership_report.volume_selection_resolves_operation(operation) {
         labeled.select_volume_resolved(operation)
     } else {
-        if !ownership_report.resolves_operation_selection(operation)
-            && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        {
+        if !ownership_report.resolves_operation_selection(operation) {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
         labeled.select_with_policy(operation, policy)
@@ -1003,9 +1021,7 @@ pub(crate) fn validate_selected_gate_reports(
         if topology_assembly_report.is_none() {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
-        if !ownership_report.resolves_operation_selection(operation)
-            && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        {
+        if !ownership_report.resolves_operation_selection(operation) {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
     }
@@ -1155,27 +1171,6 @@ fn arrangement_volume_evidence(
     Some((faces, volume_regions, volume_adjacencies))
 }
 
-fn arrangement_volume_evidence_resolves_named_operation(
-    arrangement: &ExactArrangement3d,
-    operation: ExactBooleanOperation,
-) -> bool {
-    if !arrangement.retained_volume_graph_blockers().is_empty() {
-        return false;
-    }
-    let Some((faces, volume_regions, volume_adjacencies)) =
-        arrangement_volume_evidence(arrangement)
-    else {
-        return false;
-    };
-    checked_volume_evidence_resolves_named_operation(
-        &faces,
-        &volume_regions,
-        volume_adjacencies,
-        operation,
-    )
-    .unwrap_or_default()
-}
-
 fn checked_volume_evidence_resolves_named_operation(
     faces: &[ExactCellComplexFace],
     volume_regions: &[ExactCellComplexVolumeRegion],
@@ -1273,7 +1268,18 @@ pub(crate) fn arrangement_region_classification_blockers_resolve_operation(
             .blockers
             .iter()
             .all(|blocker| *blocker == ExactArrangementBlocker::UnresolvedRegionClassification)
-        && arrangement_volume_evidence_resolves_named_operation(arrangement, operation)
+        && arrangement.retained_volume_graph_blockers().is_empty()
+        && arrangement_volume_evidence(arrangement).is_some_and(
+            |(faces, volume_regions, volume_adjacencies)| {
+                checked_volume_evidence_resolves_named_operation(
+                    &faces,
+                    &volume_regions,
+                    volume_adjacencies,
+                    operation,
+                )
+                .unwrap_or_default()
+            },
+        )
 }
 
 pub(crate) fn arrangement_cell_complex_labeling_policy(
@@ -2564,8 +2570,6 @@ mod tests {
             lower_dimensional_edge_endpoints: 0,
         };
         report.validate().unwrap();
-        assert!(report.resolves_operation_selection(ExactBooleanOperation::Difference));
-        assert!(!report.resolves_operation_selection(ExactBooleanOperation::Union));
         assert!(report.volume_selection_resolves_operation(ExactBooleanOperation::Difference));
         assert!(!report.volume_selection_resolves_operation(ExactBooleanOperation::Union));
     }
@@ -2705,7 +2709,7 @@ mod tests {
             .as_ref()
             .expect("replay-selected cells should retain region ownership");
         ownership.validate().unwrap();
-        assert!(ownership.resolves_operation_selection(ExactBooleanOperation::Union));
+        assert!(ownership.resolves_requested_volume_ownership(ExactBooleanOperation::Union));
         selected.validate().unwrap();
         selected
             .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)

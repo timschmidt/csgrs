@@ -24,10 +24,10 @@ use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError
 use super::super::graph::intersection::MeshFacePairRelation;
 use super::super::graph::{ExactIntersectionGraph, FacePairEvents, IntersectionEvent};
 use super::super::validation::ExactMeshValidationPolicy;
-use super::super::{ExactMesh, ExactMeshValidationError, Triangle};
+use super::super::{ExactMesh, ExactMeshValidationError, Triangle, sorted_edge};
 use super::{
     choose_nonzero_projected_polygon_area, closed_boundary_contact_only, point3_exact_equal,
-    point3_lies_strictly_on_segment,
+    point3_lies_strictly_on_segment, split_output_triangle_edge,
 };
 use hyperlimit::SourceProvenance;
 use hyperlimit::{
@@ -343,8 +343,33 @@ fn same_whole_face_any_orientation(
     else {
         return Ok(false);
     };
-    same_whole_face_vertices_decided(left, left_triangle, right, right_triangle)
-        .ok_or_else(|| undecidable_shared_face_equality(left_face, right_face))
+    let Some(left_points) = triangle_point_refs(left, left_triangle) else {
+        return Ok(false);
+    };
+    let Some(right_points) = triangle_point_refs(right, right_triangle) else {
+        return Ok(false);
+    };
+    for right_point in &right_points {
+        let mut matched = false;
+        let mut undecided = false;
+        for left_point in &left_points {
+            match point3_exact_equal(left_point, right_point) {
+                Some(true) => {
+                    matched = true;
+                    break;
+                }
+                Some(false) => {}
+                None => undecided = true,
+            }
+        }
+        if !matched {
+            if undecided {
+                return Err(undecidable_shared_face_equality(left_face, right_face));
+            }
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 fn full_face_adjacency_certificate(
@@ -561,11 +586,12 @@ fn merged_union_mesh(
         seen.insert(key)
     });
 
-    let mesh = ExactMesh::new_with_policy(
+    let mesh = ExactMesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact full-face adjacent closed-solid union"),
         validation,
+        1,
     )?;
     Ok(Some(mesh))
 }
@@ -815,41 +841,6 @@ fn append_refined_triangle(
     Some(())
 }
 
-fn split_output_triangle_edge(
-    vertices: &[Point3],
-    triangles: &mut Vec<Triangle>,
-    split_vertex: usize,
-) -> Option<()> {
-    let split_point = vertices.get(split_vertex)?;
-    let mut triangle_index = 0;
-    while triangle_index < triangles.len() {
-        let triangle = triangles[triangle_index].0;
-        if triangle.contains(&split_vertex) {
-            triangle_index += 1;
-            continue;
-        }
-        for edge in 0..3 {
-            let a = triangle[edge];
-            let b = triangle[(edge + 1) % 3];
-            let opposite = triangle[(edge + 2) % 3];
-            let a_point = vertices.get(a)?;
-            let b_point = vertices.get(b)?;
-            if point3_lies_strictly_on_segment(a_point, b_point, split_point)? {
-                triangles.splice(
-                    triangle_index..triangle_index + 1,
-                    [
-                        Triangle([a, split_vertex, opposite]),
-                        Triangle([split_vertex, b, opposite]),
-                    ],
-                );
-                return Some(());
-            }
-        }
-        triangle_index += 1;
-    }
-    None
-}
-
 fn sort_edge_splits(splits: &mut Vec<TriangleEdgeSplit>) -> Option<()> {
     let mut ordered = Vec::<TriangleEdgeSplit>::with_capacity(splits.len());
     for split in splits.drain(..) {
@@ -891,7 +882,7 @@ fn fan_faces_cover_triangle(
     let whole_sign = real_sign(&whole_area)?;
 
     let mut fan_faces = Vec::new();
-    let mut edge_counts = BTreeMap::<(usize, usize), usize>::new();
+    let mut edge_counts = BTreeMap::<[usize; 2], usize>::new();
     let mut area_sum = Real::from(0);
 
     for (fan_face, fan_facts) in fan_mesh.facts().faces.iter().enumerate() {
@@ -911,9 +902,9 @@ fn fan_faces_cover_triangle(
         };
 
         for edge in [
-            normalized_edge(fan_triangle[0], fan_triangle[1]),
-            normalized_edge(fan_triangle[1], fan_triangle[2]),
-            normalized_edge(fan_triangle[2], fan_triangle[0]),
+            sorted_edge([fan_triangle[0], fan_triangle[1]]),
+            sorted_edge([fan_triangle[1], fan_triangle[2]]),
+            sorted_edge([fan_triangle[2], fan_triangle[0]]),
         ] {
             let count = edge_counts.entry(edge).or_default();
             *count += 1;
@@ -974,9 +965,9 @@ fn fan_faces_cover_triangle(
     Some(Some(fan_faces))
 }
 
-fn order_fan_boundary_cycle(edges: &[(usize, usize)]) -> Option<Vec<usize>> {
+fn order_fan_boundary_cycle(edges: &[[usize; 2]]) -> Option<Vec<usize>> {
     let mut adjacency = BTreeMap::<usize, Vec<usize>>::new();
-    for &(a, b) in edges {
+    for &[a, b] in edges {
         adjacency.entry(a).or_default().push(b);
         adjacency.entry(b).or_default().push(a);
     }
@@ -1017,10 +1008,10 @@ fn fan_triangle_in_whole_triangle(
     fan_triangle: [usize; 3],
 ) -> Option<Option<Real>> {
     let fan_points = triangle_point_refs(fan_mesh, fan_triangle)?;
-    if !fan_points
-        .iter()
-        .all(|point| point_on_triangle_plane(whole_points, point) == Some(true))
-    {
+    if !fan_points.iter().all(|point| {
+        point_on_triangle_plane(whole_points[0], whole_points[1], whole_points[2], point)
+            == Some(true)
+    }) {
         return Some(None);
     }
 
@@ -1058,12 +1049,13 @@ fn fan_triangle_in_whole_triangle(
     Some(Some(area_abs))
 }
 
-const fn normalized_edge(a: usize, b: usize) -> (usize, usize) {
-    if a < b { (a, b) } else { (b, a) }
-}
-
-fn point_on_triangle_plane(triangle: [&Point3; 3], point: &Point3) -> Option<bool> {
-    Some(orient3d_report(triangle[0], triangle[1], triangle[2], point).value()? == Sign::Zero)
+pub(super) fn point_on_triangle_plane(
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    point: &Point3,
+) -> Option<bool> {
+    Some(orient3d_report(a, b, c, point).value()? == Sign::Zero)
 }
 
 fn real_abs(value: &Real) -> Option<Real> {
@@ -1104,37 +1096,6 @@ fn reversed_whole_face_vertex_map(
         left_triangle[labels[1]],
         left_triangle[labels[2]],
     ])
-}
-
-fn same_whole_face_vertices_decided(
-    left: &ExactMesh,
-    left_triangle: [usize; 3],
-    right: &ExactMesh,
-    right_triangle: [usize; 3],
-) -> Option<bool> {
-    let left_points = triangle_point_refs(left, left_triangle)?;
-    let right_points = triangle_point_refs(right, right_triangle)?;
-    for right_point in &right_points {
-        let mut matched = false;
-        let mut undecided = false;
-        for left_point in &left_points {
-            match point3_exact_equal(left_point, right_point) {
-                Some(true) => {
-                    matched = true;
-                    break;
-                }
-                Some(false) => {}
-                None => undecided = true,
-            }
-        }
-        if !matched {
-            if undecided {
-                return None;
-            }
-            return Some(false);
-        }
-    }
-    Some(true)
 }
 
 fn triangle_point_refs(mesh: &ExactMesh, triangle: [usize; 3]) -> Option<[&Point3; 3]> {

@@ -80,15 +80,15 @@ pub(crate) enum CoplanarVolumetricCellEvidenceError {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct CoplanarVolumetricCellEvidenceReport {
     /// Whether the left operand is a closed two-manifold.
-    left_closed_manifold: bool,
+    pub(super) left_closed_manifold: bool,
     /// Whether the right operand is a closed two-manifold.
-    right_closed_manifold: bool,
+    pub(super) right_closed_manifold: bool,
     /// Retained constructive face pairs in the exact intersection graph.
     pub(super) retained_face_pair_count: usize,
     /// Retained candidate face pairs requiring graph events.
     pub(super) candidate_pairs: usize,
     /// Candidate pairs that retain at least one proper segment/plane crossing.
-    proper_crossing_candidate_pairs: usize,
+    pub(super) proper_crossing_candidate_pairs: usize,
     /// Retained coplanar touching face pairs.
     pub(super) coplanar_touching_pairs: usize,
     /// Retained positive-area coplanar overlap face pairs.
@@ -105,95 +105,38 @@ pub(crate) struct CoplanarVolumetricCellEvidenceReport {
     /// closed operand against the retained shared face plane. That distinction
     /// coplanar face-pair blocker should not be inferred from a sampled point
     /// near the shared face.
-    opposite_side_coplanar_overlapping_pairs: usize,
+    pub(super) opposite_side_coplanar_overlapping_pairs: usize,
     /// Positive-area coplanar face overlaps whose adjacent solids lie on the
     /// same side of the shared plane and therefore still require coplanar
     /// volumetric-cell ownership.
-    same_side_coplanar_overlapping_pairs: usize,
+    pub(super) same_side_coplanar_overlapping_pairs: usize,
     /// Positive-area coplanar face overlaps whose side ownership could not be
     /// certified from exact retained plane and orientation evidence.
-    undecided_side_coplanar_overlapping_pairs: usize,
+    pub(super) undecided_side_coplanar_overlapping_pairs: usize,
     /// Retained unknown face pairs.
     pub(super) unknown_pairs: usize,
     /// Retained segment/plane events.
-    segment_plane_events: usize,
+    pub(super) segment_plane_events: usize,
     /// Segment/plane events certified as proper crossings.
-    proper_crossing_events: usize,
+    pub(super) proper_crossing_events: usize,
     /// Segment/plane events that are exact boundary contacts or disjoint.
-    boundary_segment_events: usize,
+    pub(super) boundary_segment_events: usize,
     /// Segment/plane events whose construction failed after predicate
     /// classification.
     pub(super) construction_failed_events: usize,
     /// Segment/plane events whose endpoint-side relation stayed unknown.
-    unknown_segment_plane_events: usize,
+    pub(super) unknown_segment_plane_events: usize,
     /// Retained unknown graph events.
-    unknown_events: usize,
+    pub(super) unknown_events: usize,
     /// Retained non-disjoint coplanar edge events.
-    coplanar_edge_events: usize,
+    pub(super) coplanar_edge_events: usize,
     /// Retained constructive coplanar vertex/triangle events.
-    coplanar_vertex_events: usize,
+    pub(super) coplanar_vertex_events: usize,
     /// Most specific obstacle exposed by the retained evidence.
     pub(super) obstacle: CoplanarVolumetricCellObstacle,
 }
 
-#[cfg(test)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) struct CoplanarVolumetricCellEvidenceTestCounts {
-    pub(crate) left_closed_manifold: bool,
-    pub(crate) right_closed_manifold: bool,
-    pub(crate) retained_face_pair_count: usize,
-    pub(crate) candidate_pairs: usize,
-    pub(crate) proper_crossing_candidate_pairs: usize,
-    pub(crate) coplanar_touching_pairs: usize,
-    pub(crate) coplanar_overlapping_pairs: usize,
-    pub(crate) positive_area_coplanar_overlapping_pairs: usize,
-    pub(crate) opposite_side_coplanar_overlapping_pairs: usize,
-    pub(crate) same_side_coplanar_overlapping_pairs: usize,
-    pub(crate) undecided_side_coplanar_overlapping_pairs: usize,
-    pub(crate) unknown_pairs: usize,
-    pub(crate) segment_plane_events: usize,
-    pub(crate) proper_crossing_events: usize,
-    pub(crate) boundary_segment_events: usize,
-    pub(crate) construction_failed_events: usize,
-    pub(crate) unknown_segment_plane_events: usize,
-    pub(crate) unknown_events: usize,
-    pub(crate) coplanar_edge_events: usize,
-    pub(crate) coplanar_vertex_events: usize,
-}
-
 impl CoplanarVolumetricCellEvidenceReport {
-    #[cfg(test)]
-    pub(crate) fn from_test_counts(counts: CoplanarVolumetricCellEvidenceTestCounts) -> Self {
-        let mut report = Self {
-            left_closed_manifold: counts.left_closed_manifold,
-            right_closed_manifold: counts.right_closed_manifold,
-            retained_face_pair_count: counts.retained_face_pair_count,
-            candidate_pairs: counts.candidate_pairs,
-            proper_crossing_candidate_pairs: counts.proper_crossing_candidate_pairs,
-            coplanar_touching_pairs: counts.coplanar_touching_pairs,
-            coplanar_overlapping_pairs: counts.coplanar_overlapping_pairs,
-            positive_area_coplanar_overlapping_pairs: counts
-                .positive_area_coplanar_overlapping_pairs,
-            opposite_side_coplanar_overlapping_pairs: counts
-                .opposite_side_coplanar_overlapping_pairs,
-            same_side_coplanar_overlapping_pairs: counts.same_side_coplanar_overlapping_pairs,
-            undecided_side_coplanar_overlapping_pairs: counts
-                .undecided_side_coplanar_overlapping_pairs,
-            unknown_pairs: counts.unknown_pairs,
-            segment_plane_events: counts.segment_plane_events,
-            proper_crossing_events: counts.proper_crossing_events,
-            boundary_segment_events: counts.boundary_segment_events,
-            construction_failed_events: counts.construction_failed_events,
-            unknown_segment_plane_events: counts.unknown_segment_plane_events,
-            unknown_events: counts.unknown_events,
-            coplanar_edge_events: counts.coplanar_edge_events,
-            coplanar_vertex_events: counts.coplanar_vertex_events,
-            obstacle: CoplanarVolumetricCellObstacle::NoRetainedOverlap,
-        };
-        report.obstacle = derive_obstacle(&report);
-        report
-    }
-
     /// Build a report from a validated exact intersection graph.
     ///
     /// The graph is only counted here; source replay remains the job of
@@ -315,17 +258,6 @@ impl CoplanarVolumetricCellEvidenceReport {
 
         report.obstacle = derive_obstacle(&report);
         report
-    }
-
-    /// Return retained event count represented by this compact evidence.
-    pub(crate) fn retained_event_count(&self) -> Option<usize> {
-        let explicit_unknown_events = self
-            .unknown_events
-            .checked_sub(self.unknown_segment_plane_events)?;
-        self.segment_plane_events
-            .checked_add(self.coplanar_edge_events)
-            .and_then(|count| count.checked_add(self.coplanar_vertex_events))
-            .and_then(|count| count.checked_add(explicit_unknown_events))
     }
 
     /// Validate the compact report without source meshes.

@@ -19,12 +19,14 @@ use std::{cmp::Ordering, collections::BTreeSet};
 use hyperlimit::{
     Point2, Point3, SegmentIntersection, SegmentPlaneRelation, TriangleLocation,
     classify_point_triangle, classify_segment_intersection, compare_reals, point_on_segment,
-    projected_segment_parameter3, proper_segment_intersection_point,
+    project_point3, projected_segment_parameter3, proper_segment_intersection_point,
 };
 use hypertri::Constraint;
 
 use super::super::ExactMesh;
 use super::super::graph::intersection::MeshFacePairRelation;
+#[cfg(test)]
+use super::super::graph::validate_face_region_plan;
 use super::super::graph::{
     CoplanarOverlapSplitPlan, ExactFaceRegionPlan, ExactIntersectionGraph, ExactSplitTopologyPlan,
     FacePairEvents, FaceRegionBoundary, FaceSplitBoundaryNode, IntersectionEvent, MeshSide,
@@ -33,28 +35,9 @@ use super::super::triangle_edges;
 use super::point3_exact_equal;
 use super::region::{
     FaceRegionTriangulation, boundary_node_point, choose_region_projection, project_for_hypertri,
-    project_for_predicate,
 };
 use hyperlimit::CoplanarProjection;
 use hyperreal::Real;
-
-impl ExactIntersectionGraph {
-    /// Validate a retained constrained face-cell triangulation by source replay.
-    #[cfg(test)]
-    pub(crate) fn validate_face_cell_cdt_against_sources(
-        &self,
-        regions: &ExactFaceRegionPlan,
-        triangulations: &[FaceRegionTriangulation],
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> hypertri::Result<()> {
-        self.validate_against_sources(left, right)
-            .map_err(|_| hypertri::Error::InvalidInput {
-                reason: "face-cell CDT source graph replay mismatch",
-            })?;
-        validate_face_cell_cdt_against_sources(self, regions, triangulations, left, right)
-    }
-}
 
 /// Candidate constraint edge from the opposite coplanar triangle boundary.
 ///
@@ -90,14 +73,10 @@ pub(crate) fn triangulate_all_face_cells_with_cdt(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> hypertri::Result<Option<(ExactFaceRegionPlan, Vec<FaceRegionTriangulation>)>> {
-    let topology = graph.split_topology_plan();
-    if topology.unresolved_equalities != 0
-        || topology.unresolved_vertex_lookups != 0
-        || topology.unknown_orderings != 0
-        || !topology.validate().blockers.is_empty()
-    {
-        return Ok(None);
-    }
+    let topology = match graph.checked_split_topology_plan() {
+        Ok(topology) => topology,
+        Err(_) => return Ok(None),
+    };
     let coplanar_splits = graph
         .coplanar_overlap_split_plan(left, right)
         .map_err(|_| hypertri::Error::InvalidInput {
@@ -146,7 +125,10 @@ pub(crate) fn validate_face_cell_cdt_against_sources(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> hypertri::Result<()> {
-    if !regions.validate(left, right).blockers.is_empty() {
+    if !validate_face_region_plan(regions, left, right)
+        .blockers
+        .is_empty()
+    {
         return Err(hypertri::Error::InvalidInput {
             reason: "face-cell CDT region plan failed exact validation",
         });
@@ -640,8 +622,8 @@ fn seed_source_boundary_vertices_on_coplanar_opposite_edges(
     for edge in edge_keys {
         let start = vertex_point_for_side(opposite_side, edge[0], left, right)?;
         let end = vertex_point_for_side(opposite_side, edge[1], left, right)?;
-        let projected_start = project_for_predicate(&start, projection);
-        let projected_end = project_for_predicate(&end, projection);
+        let projected_start = project_point3(&start, projection);
+        let projected_end = project_point3(&end, projection);
         for vertex in source_triangle {
             let point = source_mesh
                 .vertices()
@@ -650,7 +632,7 @@ fn seed_source_boundary_vertices_on_coplanar_opposite_edges(
                     reason: "face-cell source triangle references a missing vertex",
                 })?
                 .clone();
-            let projected_point = project_for_predicate(&point, projection);
+            let projected_point = project_point3(&point, projection);
             match point_on_segment(&projected_start, &projected_end, &projected_point).value() {
                 Some(true) => {
                     let parameter = projected_segment_parameter3(&point, &start, &end, projection)
@@ -710,8 +692,8 @@ fn seed_source_boundary_edge_crossings_on_coplanar_opposite_edges(
     for edge in edge_keys {
         let opposite_start = vertex_point_for_side(opposite_side, edge[0], left, right)?;
         let opposite_end = vertex_point_for_side(opposite_side, edge[1], left, right)?;
-        let projected_opposite_start = project_for_predicate(&opposite_start, projection);
-        let projected_opposite_end = project_for_predicate(&opposite_end, projection);
+        let projected_opposite_start = project_point3(&opposite_start, projection);
+        let projected_opposite_end = project_point3(&opposite_end, projection);
         for source_edge in source_edges {
             let source_start = source_mesh.vertices().get(source_edge[0]).ok_or(
                 hypertri::Error::InvalidInput {
@@ -723,8 +705,8 @@ fn seed_source_boundary_edge_crossings_on_coplanar_opposite_edges(
                     reason: "face-cell source edge references a missing end vertex",
                 },
             )?;
-            let projected_source_start = project_for_predicate(source_start, projection);
-            let projected_source_end = project_for_predicate(source_end, projection);
+            let projected_source_start = project_point3(source_start, projection);
+            let projected_source_end = project_point3(source_end, projection);
             match classify_segment_intersection(
                 &projected_source_start,
                 &projected_source_end,
@@ -1571,10 +1553,10 @@ fn classify_point_on_mesh_face(
         &mesh.vertices()[triangle[2]],
     ];
     classify_point_triangle(
-        &project_for_predicate(vertices[0], projection),
-        &project_for_predicate(vertices[1], projection),
-        &project_for_predicate(vertices[2], projection),
-        &project_for_predicate(point, projection),
+        &project_point3(vertices[0], projection),
+        &project_point3(vertices[1], projection),
+        &project_point3(vertices[2], projection),
+        &project_point3(point, projection),
     )
     .value()
     .ok_or(hypertri::Error::PredicateUndecided {

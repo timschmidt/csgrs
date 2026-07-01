@@ -8,9 +8,7 @@
 use std::cmp::Ordering;
 use std::sync::OnceLock;
 
-use hyperlimit::{
-    Aabb3Intersection, Point3, PredicateOutcome, classify_aabb3_intersection, compare_reals,
-};
+use hyperlimit::{Point3, PredicateOutcome, classify_aabb3_intersection, compare_reals};
 use hyperreal::Real;
 
 use super::sorted_edge;
@@ -48,56 +46,52 @@ pub(crate) struct ExactAabb3 {
 }
 
 impl ExactAabb3 {
-    /// Build an exact box around one point.
-    pub(crate) fn point(point: &Point3) -> Self {
-        Self {
-            min: point.clone(),
-            max: point.clone(),
-        }
-    }
-
     /// Build an exact box around a nonempty point slice.
     pub(crate) fn from_points(points: &[Point3]) -> Option<Self> {
         let first = points.first()?;
-        let mut bounds = Self::point(first);
+        let mut bounds = Self::from_first_point(first);
         for point in &points[1..] {
-            bounds.include(point);
+            bounds.include_point(point);
         }
         Some(bounds)
     }
 
     /// Build an exact box around one triangle.
     pub(crate) fn from_triangle(points: [&Point3; 3]) -> Self {
-        let mut bounds = Self::point(points[0]);
-        bounds.include(points[1]);
-        bounds.include(points[2]);
+        let mut bounds = Self::from_first_point(points[0]);
+        for point in &points[1..] {
+            bounds.include_point(point);
+        }
         bounds
     }
 
     /// Build an exact box around one edge segment.
     pub(crate) fn from_segment(points: [&Point3; 2]) -> Self {
-        let mut bounds = Self::point(points[0]);
-        bounds.include(points[1]);
+        let mut bounds = Self::from_first_point(points[0]);
+        bounds.include_point(points[1]);
         bounds
     }
 
-    /// Expand the box to include one point.
-    pub(crate) fn include(&mut self, point: &Point3) {
-        include_axis(&mut self.min.x, &mut self.max.x, &point.x);
-        include_axis(&mut self.min.y, &mut self.max.y, &point.y);
-        include_axis(&mut self.min.z, &mut self.max.z, &point.z);
+    fn from_first_point(point: &Point3) -> Self {
+        Self {
+            min: point.clone(),
+            max: point.clone(),
+        }
     }
 
-    /// Classify this box against another exact box.
-    ///
-    /// `Disjoint` is a certified broad-phase rejection. `Touching`,
-    /// `Overlapping`, and [`PredicateOutcome::Unknown`] must be treated as
-    /// candidates for exact narrow-phase predicates before topology changes.
-    pub(crate) fn classify_intersection(
-        &self,
-        other: &Self,
-    ) -> PredicateOutcome<Aabb3Intersection> {
-        classify_aabb3_intersection(&self.min, &self.max, &other.min, &other.max)
+    fn include_point(&mut self, point: &Point3) {
+        for (min, max, value) in [
+            (&mut self.min.x, &mut self.max.x, &point.x),
+            (&mut self.min.y, &mut self.max.y, &point.y),
+            (&mut self.min.z, &mut self.max.z, &point.z),
+        ] {
+            if matches!(compare(value, min), Some(Ordering::Less)) {
+                *min = value.clone();
+            }
+            if matches!(compare(value, max), Some(Ordering::Greater)) {
+                *max = value.clone();
+            }
+        }
     }
 
     /// Validate that each retained axis interval is ordered.
@@ -125,11 +119,11 @@ impl ExactAabb3 {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct MeshBounds {
     /// Whole-mesh bounds, or `None` for an empty mesh.
-    mesh: Option<ExactAabb3>,
+    pub(crate) mesh: Option<ExactAabb3>,
     /// Per-edge bounds in retained canonical edge-fact order.
-    edges: Vec<ExactAabb3>,
+    pub(crate) edges: Vec<ExactAabb3>,
     /// Per-face bounds in face order.
-    faces: Vec<ExactAabb3>,
+    pub(crate) faces: Vec<ExactAabb3>,
 }
 
 /// Exact broad-phase face ordering prepared for repeated pair queries.
@@ -212,31 +206,9 @@ pub(crate) enum CandidateFacePairPlan {
         active_face_capacity_hint: usize,
         candidate_pair_capacity_hint: usize,
     },
-    Quadratic,
-}
-
-impl CandidateFacePairPlan {
-    pub(crate) fn bounded_capacity_hint(
-        self,
-        left_face_count: usize,
-        right_face_count: usize,
-    ) -> usize {
-        let hint = match self {
-            Self::Empty => 0,
-            Self::Sweep {
-                candidate_pair_capacity_hint,
-                ..
-            } => candidate_pair_capacity_hint,
-            Self::Quadratic
-                if left_face_count.saturating_mul(right_face_count)
-                    <= ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT =>
-            {
-                left_face_count.saturating_mul(right_face_count)
-            }
-            Self::Quadratic => 0,
-        };
-        hint.min(MAX_CANDIDATE_FACE_PAIR_RESERVE)
-    }
+    Quadratic {
+        candidate_pair_capacity_hint: usize,
+    },
 }
 
 const MAX_CANDIDATE_FACE_PAIR_RESERVE: usize = 4096;
@@ -280,8 +252,21 @@ pub(crate) fn try_visit_candidate_face_pairs_one_shot<E>(
     right: &MeshBounds,
     visit: &mut impl FnMut([usize; 2]) -> Result<(), E>,
 ) -> Result<(), E> {
-    if !left.mesh_may_overlap(right) {
-        return Ok(());
+    match (&left.mesh, &right.mesh) {
+        (Some(left_box), Some(right_box)) => {
+            match classify_aabb3_intersection(
+                &left_box.min,
+                &left_box.max,
+                &right_box.min,
+                &right_box.max,
+            ) {
+                PredicateOutcome::Decided { value, .. } if !value.needs_narrow_phase() => {
+                    return Ok(());
+                }
+                PredicateOutcome::Decided { .. } | PredicateOutcome::Unknown { .. } => {}
+            }
+        }
+        _ => return Ok(()),
     }
     if left.faces.len().saturating_mul(right.faces.len()) <= ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT {
         return left.try_visit_candidate_face_pairs_quadratic(right, visit);
@@ -298,59 +283,45 @@ impl MeshBounds {
     #[cfg(test)]
     pub(crate) fn from_triangles(points: &[Point3], triangles: &[[usize; 3]]) -> Self {
         Self::from_triangle_rows(points, triangles.len(), triangles.iter().copied())
+            .expect("test triangle rows should reference retained points")
     }
 
     pub(crate) fn from_triangle_rows(
         points: &[Point3],
         triangle_count: usize,
         triangles: impl IntoIterator<Item = [usize; 3]>,
-    ) -> Self {
-        let mesh = ExactAabb3::from_points(points);
+    ) -> Result<Self, BoundsValidationError> {
+        let triangles = triangles.into_iter().collect::<Vec<_>>();
+        let edge_keys = canonical_edge_keys(triangle_count, triangles.iter().copied());
+        Self::from_triangle_rows_and_edges(points, triangle_count, triangles, edge_keys)
+    }
+
+    fn from_triangle_rows_and_edges(
+        points: &[Point3],
+        triangle_count: usize,
+        triangles: Vec<[usize; 3]>,
+        edge_keys: Vec<[usize; 2]>,
+    ) -> Result<Self, BoundsValidationError> {
         let mut faces = Vec::with_capacity(triangle_count);
-        let mut edge_keys = Vec::<[usize; 2]>::with_capacity(triangle_count.saturating_mul(3));
-        for tri in triangles {
+        for triangle in triangles {
+            if triangle.iter().any(|&vertex| vertex >= points.len()) {
+                return Err(BoundsValidationError::SourceReplayMismatch);
+            }
             faces.push(ExactAabb3::from_triangle([
-                &points[tri[0]],
-                &points[tri[1]],
-                &points[tri[2]],
+                &points[triangle[0]],
+                &points[triangle[1]],
+                &points[triangle[2]],
             ]));
-            edge_keys.push(sorted_edge([tri[0], tri[1]]));
-            edge_keys.push(sorted_edge([tri[1], tri[2]]));
-            edge_keys.push(sorted_edge([tri[2], tri[0]]));
         }
-        edge_keys.sort_unstable();
-        edge_keys.dedup();
         let edges = edge_keys
             .into_iter()
             .map(|edge| ExactAabb3::from_segment([&points[edge[0]], &points[edge[1]]]))
             .collect();
-        Self { mesh, edges, faces }
-    }
-
-    /// Return retained whole-mesh bounds, or `None` for an empty mesh.
-    pub(crate) fn mesh(&self) -> Option<&ExactAabb3> {
-        self.mesh.as_ref()
-    }
-
-    /// Return retained bounds for one face.
-    pub(crate) fn face(&self, index: usize) -> Option<&ExactAabb3> {
-        self.faces.get(index)
-    }
-
-    /// Return retained bounds for one canonical edge-fact row.
-    pub(crate) fn edge(&self, index: usize) -> Option<&ExactAabb3> {
-        self.edges.get(index)
-    }
-
-    /// Return whether retained whole-mesh bounds require face-pair scheduling.
-    pub(crate) fn mesh_may_overlap(&self, other: &Self) -> bool {
-        match (&self.mesh, &other.mesh) {
-            (Some(left), Some(right)) => match left.classify_intersection(right) {
-                PredicateOutcome::Decided { value, .. } => value.needs_narrow_phase(),
-                PredicateOutcome::Unknown { .. } => true,
-            },
-            _ => false,
-        }
+        Ok(Self {
+            mesh: ExactAabb3::from_points(points),
+            edges,
+            faces,
+        })
     }
 
     fn try_visit_candidate_face_pairs_quadratic<E>(
@@ -360,7 +331,12 @@ impl MeshBounds {
     ) -> Result<(), E> {
         for (left, left_box) in self.faces.iter().enumerate() {
             for (right, right_box) in other.faces.iter().enumerate() {
-                let keep_candidate = match left_box.classify_intersection(right_box) {
+                let keep_candidate = match classify_aabb3_intersection(
+                    &left_box.min,
+                    &left_box.max,
+                    &right_box.min,
+                    &right_box.max,
+                ) {
                     PredicateOutcome::Decided { value, .. } => value.needs_narrow_phase(),
                     PredicateOutcome::Unknown { .. } => true,
                 };
@@ -393,8 +369,21 @@ impl<'a> PreparedMeshBounds<'a> {
         &self,
         other: &PreparedMeshBounds<'_>,
     ) -> CandidateFacePairPlan {
-        if !self.bounds.mesh_may_overlap(other.bounds) {
-            return CandidateFacePairPlan::Empty;
+        match (&self.bounds.mesh, &other.bounds.mesh) {
+            (Some(left_box), Some(right_box)) => {
+                match classify_aabb3_intersection(
+                    &left_box.min,
+                    &left_box.max,
+                    &right_box.min,
+                    &right_box.max,
+                ) {
+                    PredicateOutcome::Decided { value, .. } if !value.needs_narrow_phase() => {
+                        return CandidateFacePairPlan::Empty;
+                    }
+                    PredicateOutcome::Decided { .. } | PredicateOutcome::Unknown { .. } => {}
+                }
+            }
+            _ => return CandidateFacePairPlan::Empty,
         }
         if let Some(sweep) = self.sweep_plan(other) {
             if sweep.axis_pair_count == 0 {
@@ -403,10 +392,23 @@ impl<'a> PreparedMeshBounds<'a> {
             return CandidateFacePairPlan::Sweep {
                 plan: sweep.plan,
                 active_face_capacity_hint: sweep.active_face_capacity_hint,
-                candidate_pair_capacity_hint: sweep.axis_pair_count,
+                candidate_pair_capacity_hint: sweep
+                    .axis_pair_count
+                    .min(MAX_CANDIDATE_FACE_PAIR_RESERVE),
             };
         }
-        CandidateFacePairPlan::Quadratic
+        let face_pair_count = self
+            .bounds
+            .faces
+            .len()
+            .saturating_mul(other.bounds.faces.len());
+        CandidateFacePairPlan::Quadratic {
+            candidate_pair_capacity_hint: if face_pair_count <= ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT {
+                face_pair_count.min(MAX_CANDIDATE_FACE_PAIR_RESERVE)
+            } else {
+                0
+            },
+        }
     }
 
     pub(crate) fn try_visit_candidate_face_pairs_with_plan_and_scratch<E>(
@@ -418,7 +420,7 @@ impl<'a> PreparedMeshBounds<'a> {
     ) -> Result<(), E> {
         let (sweep_plan, active_face_capacity_hint) = match plan {
             CandidateFacePairPlan::Empty => return Ok(()),
-            CandidateFacePairPlan::Quadratic => {
+            CandidateFacePairPlan::Quadratic { .. } => {
                 return self
                     .bounds
                     .try_visit_candidate_face_pairs_quadratic(other.bounds, visit);
@@ -822,35 +824,11 @@ impl MeshBounds {
         triangles: impl IntoIterator<Item = [usize; 3]>,
     ) -> Result<(), BoundsValidationError> {
         let triangles = triangles.into_iter().collect::<Vec<_>>();
-        let mut edge_keys = Vec::<[usize; 2]>::with_capacity(triangle_count.saturating_mul(3));
-        for triangle in &triangles {
-            edge_keys.push(sorted_edge([triangle[0], triangle[1]]));
-            edge_keys.push(sorted_edge([triangle[1], triangle[2]]));
-            edge_keys.push(sorted_edge([triangle[2], triangle[0]]));
-        }
-        edge_keys.sort_unstable();
-        edge_keys.dedup();
+        let edge_keys = canonical_edge_keys(triangle_count, triangles.iter().copied());
         let edge_count = edge_keys.len();
         self.validate(points.len(), edge_count, triangle_count)?;
-        let mut replay = Self {
-            mesh: ExactAabb3::from_points(points),
-            edges: Vec::with_capacity(edge_count),
-            faces: Vec::with_capacity(triangle_count),
-        };
-        for triangle in triangles {
-            if triangle.iter().any(|&vertex| vertex >= points.len()) {
-                return Err(BoundsValidationError::SourceReplayMismatch);
-            }
-            replay.faces.push(ExactAabb3::from_triangle([
-                &points[triangle[0]],
-                &points[triangle[1]],
-                &points[triangle[2]],
-            ]));
-        }
-        replay.edges = edge_keys
-            .into_iter()
-            .map(|edge| ExactAabb3::from_segment([&points[edge[0]], &points[edge[1]]]))
-            .collect();
+        let replay =
+            Self::from_triangle_rows_and_edges(points, triangle_count, triangles, edge_keys)?;
         if self == &replay {
             Ok(())
         } else {
@@ -863,6 +841,21 @@ impl MeshBounds {
 enum AxisBound {
     Min,
     Max,
+}
+
+fn canonical_edge_keys(
+    triangle_count: usize,
+    triangles: impl IntoIterator<Item = [usize; 3]>,
+) -> Vec<[usize; 2]> {
+    let mut edge_keys = Vec::<[usize; 2]>::with_capacity(triangle_count.saturating_mul(3));
+    for triangle in triangles {
+        edge_keys.push(sorted_edge([triangle[0], triangle[1]]));
+        edge_keys.push(sorted_edge([triangle[1], triangle[2]]));
+        edge_keys.push(sorted_edge([triangle[2], triangle[0]]));
+    }
+    edge_keys.sort_unstable();
+    edge_keys.dedup();
+    edge_keys
 }
 
 fn sorted_face_indices_by_axis_bound(
@@ -895,15 +888,6 @@ fn axis_bound(bounds: &ExactAabb3, axis: Axis, bound: AxisBound) -> &Real {
         (Axis::Y, AxisBound::Max) => &bounds.max.y,
         (Axis::Z, AxisBound::Min) => &bounds.min.z,
         (Axis::Z, AxisBound::Max) => &bounds.max.z,
-    }
-}
-
-fn include_axis(min: &mut Real, max: &mut Real, value: &Real) {
-    if matches!(compare(value, min), Some(Ordering::Less)) {
-        *min = value.clone();
-    }
-    if matches!(compare(value, max), Some(Ordering::Greater)) {
-        *max = value.clone();
     }
 }
 
@@ -995,30 +979,39 @@ mod tests {
         let bounds = MeshBounds::from_triangles(&points, &triangles);
 
         assert_eq!(
-            bounds.edge(0),
+            bounds.edges.get(0),
             Some(&ExactAabb3::from_segment([&points[0], &points[1]]))
         );
         assert_eq!(
-            bounds.edge(1),
+            bounds.edges.get(1),
             Some(&ExactAabb3::from_segment([&points[0], &points[2]]))
         );
         assert_eq!(
-            bounds.edge(2),
+            bounds.edges.get(2),
             Some(&ExactAabb3::from_segment([&points[1], &points[2]]))
         );
         assert_eq!(
-            bounds.edge(3),
+            bounds.edges.get(3),
             Some(&ExactAabb3::from_segment([&points[1], &points[3]]))
         );
         assert_eq!(
-            bounds.edge(4),
+            bounds.edges.get(4),
             Some(&ExactAabb3::from_segment([&points[2], &points[3]]))
         );
-        assert_eq!(bounds.edge(5), None);
+        assert_eq!(bounds.edges.get(5), None);
         assert_eq!(bounds.validate(points.len(), 5, triangles.len()), Ok(()));
         assert_eq!(
             bounds.validate(points.len(), 4, triangles.len()),
             Err(BoundsValidationError::EdgeBoundsCountMismatch)
+        );
+    }
+
+    #[test]
+    fn mesh_bounds_builder_rejects_source_rows_with_stale_vertex_indices() {
+        let points = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+        assert_eq!(
+            MeshBounds::from_triangle_rows(&points, 1, [[0, 1, 3]]),
+            Err(BoundsValidationError::SourceReplayMismatch)
         );
     }
 
@@ -1141,7 +1134,6 @@ mod tests {
         let triangles = [[0, 1, 2], [3, 4, 5]];
         let left_bounds = MeshBounds::from_triangles(&left_points, &triangles);
         let right_bounds = MeshBounds::from_triangles(&right_points, &triangles);
-        assert!(left_bounds.mesh_may_overlap(&right_bounds));
 
         let left = left_bounds.prepare();
         let right = right_bounds.prepare();
@@ -1336,23 +1328,41 @@ mod tests {
         let right = MeshBounds::from_triangles(&right_points, &triangles);
         let plan = left.prepare().candidate_face_pair_plan(&right.prepare());
 
-        assert_eq!(plan.bounded_capacity_hint(2, 2), 1);
+        let CandidateFacePairPlan::Sweep {
+            candidate_pair_capacity_hint,
+            ..
+        } = plan
+        else {
+            panic!("expected sweep plan");
+        };
+        assert_eq!(candidate_pair_capacity_hint, 1);
     }
 
     #[test]
-    fn quadratic_capacity_hint_is_limited_to_small_one_shot_pairs() {
-        assert_eq!(
-            CandidateFacePairPlan::Quadratic.bounded_capacity_hint(8, 8),
-            64
-        );
-        assert_eq!(
-            CandidateFacePairPlan::Quadratic.bounded_capacity_hint(1, 64),
-            64
-        );
-        assert_eq!(
-            CandidateFacePairPlan::Quadratic.bounded_capacity_hint(9, 8),
-            0
-        );
+    fn quadratic_plan_retains_bounded_candidate_capacity_hint() {
+        for (plan, expected) in [
+            (
+                CandidateFacePairPlan::Quadratic {
+                    candidate_pair_capacity_hint: ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT,
+                },
+                64,
+            ),
+            (
+                CandidateFacePairPlan::Quadratic {
+                    candidate_pair_capacity_hint: 0,
+                },
+                0,
+            ),
+        ] {
+            match plan {
+                CandidateFacePairPlan::Quadratic {
+                    candidate_pair_capacity_hint,
+                } => assert_eq!(candidate_pair_capacity_hint, expected),
+                CandidateFacePairPlan::Empty | CandidateFacePairPlan::Sweep { .. } => {
+                    panic!("expected quadratic plan")
+                }
+            }
+        }
     }
 
     #[test]

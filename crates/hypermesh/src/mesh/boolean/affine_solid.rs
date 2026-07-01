@@ -228,7 +228,7 @@ pub(crate) fn materialize_affine_orthogonal_solid_operation(
             .map(|face| Triangle(face.triangle.vertices))
             .collect()
     };
-    let mesh = ExactMesh::new_with_policy(
+    let mesh = ExactMesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact(match operation {
@@ -241,6 +241,7 @@ pub(crate) fn materialize_affine_orthogonal_solid_operation(
             }
         }),
         validation,
+        1,
     )?;
     let arrangement = AffineOrthogonalSolidArrangement {
         basis,
@@ -291,7 +292,12 @@ fn mesh_to_uvw(
     let vertices = mesh
         .vertices()
         .iter()
-        .map(|point| point_to_uvw_checked(point, basis).map(|uvw| Point3::new(uvw.x, uvw.y, uvw.z)))
+        .map(|point| {
+            let uvw = point_to_uvw(point, basis)?;
+            let replay = point_from_uvw(&uvw.x, &uvw.y, &uvw.z, basis);
+            (point3_exact_equal(&replay, point) == Some(true))
+                .then(|| Point3::new(uvw.x, uvw.y, uvw.z))
+        })
         .collect::<Option<Vec<_>>>()?;
     // A negative determinant reverses orientation under the exact affine
     // coordinate map. Reversing triangle order keeps the normalized shell
@@ -315,23 +321,14 @@ fn mesh_to_uvw(
             .map(|face| Triangle(face.triangle.vertices))
             .collect()
     };
-    ExactMesh::new_with_policy(
+    ExactMesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact affine-normalized box solid"),
         validation,
+        1,
     )
     .ok()
-}
-
-fn point_to_uvw_checked(point: &Point3, basis: &AffineBoxBasis) -> Option<Point3> {
-    let uvw = point_to_uvw(point, basis)?;
-    let replay = point_from_uvw(&uvw.x, &uvw.y, &uvw.z, basis);
-    if point3_exact_equal(&replay, point) == Some(true) {
-        Some(uvw)
-    } else {
-        None
-    }
 }
 
 fn point_to_uvw(point: &Point3, basis: &AffineBoxBasis) -> Option<Point3> {

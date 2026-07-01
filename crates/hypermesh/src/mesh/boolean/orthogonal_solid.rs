@@ -177,9 +177,18 @@ pub(crate) fn axis_aligned_orthogonal_solid_cell_selected_count(
     right: &ExactMesh,
     operation: AxisAlignedOrthogonalSolidOperation,
 ) -> Option<usize> {
-    certify_orthogonal_cell_inputs(left, right)
-        .as_ref()
-        .and_then(|inputs| orthogonal_cell_selected_count(inputs, operation))
+    let inputs = certify_orthogonal_cell_inputs(left, right)?;
+    let mut selected_count = 0usize;
+    for i in 0..inputs.nx {
+        for j in 0..inputs.ny {
+            for k in 0..inputs.nz {
+                if orthogonal_cell_selected(&inputs, i, j, k, operation)? {
+                    selected_count += 1;
+                }
+            }
+        }
+    }
+    Some(selected_count)
 }
 
 /// Return whether one mesh certifies as an exact orthogonal solid cell complex.
@@ -236,7 +245,7 @@ fn try_certify_axis_aligned_box(
         return Ok(None);
     }
     mesh.validate_retained_bounds_certificate()?;
-    let Some(bounds) = mesh.bounds().mesh() else {
+    let Some(bounds) = mesh.bounds().mesh.as_ref() else {
         return Ok(None);
     };
     let box_bounds = AxisAlignedBox {
@@ -252,7 +261,18 @@ fn try_certify_axis_aligned_box(
             return Ok(None);
         }
     }
-    let corners = box_bounds.corners();
+    let min = &box_bounds.min;
+    let max = &box_bounds.max;
+    let corners = [
+        Point3::new(min.x.clone(), min.y.clone(), min.z.clone()),
+        Point3::new(max.x.clone(), min.y.clone(), min.z.clone()),
+        Point3::new(max.x.clone(), max.y.clone(), min.z.clone()),
+        Point3::new(min.x.clone(), max.y.clone(), min.z.clone()),
+        Point3::new(min.x.clone(), min.y.clone(), max.z.clone()),
+        Point3::new(max.x.clone(), min.y.clone(), max.z.clone()),
+        Point3::new(max.x.clone(), max.y.clone(), max.z.clone()),
+        Point3::new(min.x.clone(), max.y.clone(), max.z.clone()),
+    ];
     for vertex in mesh.vertices() {
         let mut matches_corner = false;
         for corner in &corners {
@@ -314,23 +334,6 @@ fn certify_orthogonal_cell_inputs(
         ny,
         nz,
     })
-}
-
-fn orthogonal_cell_selected_count(
-    inputs: &OrthogonalCellInputs,
-    operation: AxisAlignedOrthogonalSolidOperation,
-) -> Option<usize> {
-    let mut selected_count = 0usize;
-    for i in 0..inputs.nx {
-        for j in 0..inputs.ny {
-            for k in 0..inputs.nz {
-                if orthogonal_cell_selected(inputs, i, j, k, operation)? {
-                    selected_count += 1;
-                }
-            }
-        }
-    }
-    Some(selected_count)
 }
 
 fn orthogonal_cell_plan_from_inputs(
@@ -933,7 +936,7 @@ impl AxisAlignedOrthogonalSolid {
 }
 
 impl OrthogonalCellPlan {
-    fn selected_index(&self, i: usize, j: usize, k: usize) -> Result<usize, ExactMeshError> {
+    fn is_selected(&self, i: usize, j: usize, k: usize) -> Result<bool, ExactMeshError> {
         let Some(index) = cell_index(i, j, k, self.ny, self.nz) else {
             return Err(ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::StaleFactReplay,
@@ -948,11 +951,7 @@ impl OrthogonalCellPlan {
                 ),
             )));
         }
-        Ok(index)
-    }
-
-    fn is_selected(&self, i: usize, j: usize, k: usize) -> Result<bool, ExactMeshError> {
-        Ok(self.selected[self.selected_index(i, j, k)?])
+        Ok(self.selected[index])
     }
 
     pub(crate) fn to_mesh(
@@ -961,11 +960,12 @@ impl OrthogonalCellPlan {
         validation: ExactMeshValidationPolicy,
     ) -> Result<ExactMesh, ExactMeshError> {
         if self.selected_count == 0 {
-            return ExactMesh::new_with_policy(
+            return ExactMesh::new_with_policy_and_version(
                 Vec::new(),
                 Vec::new(),
                 SourceProvenance::exact(label),
                 validation,
+                1,
             );
         }
         let mut vertices = Vec::new();
@@ -1145,11 +1145,12 @@ impl OrthogonalCellPlan {
                 }
             }
         }
-        ExactMesh::new_with_policy(
+        ExactMesh::new_with_policy_and_version(
             vertices,
             triangles,
             SourceProvenance::exact(label),
             validation,
+            1,
         )
     }
 
@@ -1507,23 +1508,6 @@ fn axis_coord(point: &Point3, axis: Axis) -> &Real {
         Axis::X => &point.x,
         Axis::Y => &point.y,
         Axis::Z => &point.z,
-    }
-}
-
-impl AxisAlignedBox {
-    fn corners(&self) -> [Point3; 8] {
-        let min = &self.min;
-        let max = &self.max;
-        [
-            Point3::new(min.x.clone(), min.y.clone(), min.z.clone()),
-            Point3::new(max.x.clone(), min.y.clone(), min.z.clone()),
-            Point3::new(max.x.clone(), max.y.clone(), min.z.clone()),
-            Point3::new(min.x.clone(), max.y.clone(), min.z.clone()),
-            Point3::new(min.x.clone(), min.y.clone(), max.z.clone()),
-            Point3::new(max.x.clone(), min.y.clone(), max.z.clone()),
-            Point3::new(max.x.clone(), max.y.clone(), max.z.clone()),
-            Point3::new(min.x.clone(), max.y.clone(), max.z.clone()),
-        ]
     }
 }
 

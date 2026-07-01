@@ -36,8 +36,10 @@ use super::graph::key::{
 };
 use super::graph::{
     CoplanarOverlapGraph, ExactFaceRegionPlan, ExactIntersectionGraph, ExactSplitTopologyPlan,
-    FaceRegionBoundary, FaceSplitBoundaryNode, MeshSide, SplitEdgeNode, SplitPlanValidationReport,
-    build_validated_intersection_graph,
+    FaceRegionBoundary, FaceSplitBoundaryNode, IntersectionGraphValidationError, MeshSide,
+    SplitEdgeNode, SplitPlanValidationReport, build_validated_intersection_graph,
+    validate_face_region_plan, validate_face_split_geometry_incidence,
+    validate_split_topology_plan,
 };
 use super::validation::ExactMeshValidationPolicy;
 use super::{ExactMesh, point3_exact_equal};
@@ -569,17 +571,16 @@ pub(crate) fn validate_arrangement_regions(
         {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
-        let Some(region_membership) =
-            ArrangementRegionComponentMembership::new(&region_faces, face_cell_count)
-        else {
-            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
-        };
+        let mut region_membership = vec![false; face_cell_count];
+        for &face in &region_faces {
+            region_membership[face] = true;
+        }
         for pair in &region.adjacent_face_cells {
             if pair[0] == pair[1]
                 || pair[0] >= face_cell_count
                 || pair[1] >= face_cell_count
-                || !region_membership.contains(pair[0])
-                || !region_membership.contains(pair[1])
+                || !region_membership[pair[0]]
+                || !region_membership[pair[1]]
             {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             }
@@ -590,7 +591,7 @@ pub(crate) fn validate_arrangement_regions(
             };
             if incidence_faces
                 .iter()
-                .any(|&face| !region_membership.contains(face))
+                .any(|&face| region_membership.get(face).copied() != Some(true))
             {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             }
@@ -603,7 +604,7 @@ pub(crate) fn validate_arrangement_regions(
             }
         }
         for side in &region.oriented_sides {
-            if !region_membership.contains(side.face_cell) {
+            if region_membership.get(side.face_cell).copied() != Some(true) {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             }
         }
@@ -818,17 +819,21 @@ impl<'a> ArrangementView<'a> {
 
     /// Borrow one arrangement vertex by index, returning a typed blocker when absent.
     pub fn require_vertex(self, index: usize) -> Result<ArrangementVertexRef<'a>, ExactMeshError> {
-        self.vertex(index).ok_or_else(|| {
-            ExactMeshError::one(
+        if index >= self.arrangement.vertices.len() {
+            return Err(ExactMeshError::one(
                 ExactMeshBlocker::new(
                     ExactMeshBlockerKind::IndexOutOfBounds,
                     format!(
                         "arrangement vertex index {index} is out of bounds for {} retained vertices",
-                        self.vertex_count()
+                        self.arrangement.vertices.len()
                     ),
                 )
                 .with_vertex(index),
-            )
+            ));
+        }
+        Ok(ArrangementVertexRef {
+            arrangement: self.arrangement,
+            index,
         })
     }
 
@@ -842,14 +847,18 @@ impl<'a> ArrangementView<'a> {
 
     /// Borrow one arrangement edge by index, returning a typed blocker when absent.
     pub fn require_edge(self, index: usize) -> Result<ArrangementEdgeRef<'a>, ExactMeshError> {
-        self.edge(index).ok_or_else(|| {
-            ExactMeshError::one(ExactMeshBlocker::new(
+        if index >= self.arrangement.edges.len() {
+            return Err(ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::IndexOutOfBounds,
                 format!(
                     "arrangement edge index {index} is out of bounds for {} retained edges",
-                    self.edge_count()
+                    self.arrangement.edges.len()
                 ),
-            ))
+            )));
+        }
+        Ok(ArrangementEdgeRef {
+            arrangement: self.arrangement,
+            index,
         })
     }
 
@@ -866,14 +875,18 @@ impl<'a> ArrangementView<'a> {
         self,
         index: usize,
     ) -> Result<ArrangementFaceCellRef<'a>, ExactMeshError> {
-        self.face_cell(index).ok_or_else(|| {
-            ExactMeshError::one(ExactMeshBlocker::new(
+        if index >= self.arrangement.face_cells.len() {
+            return Err(ExactMeshError::one(ExactMeshBlocker::new(
                 ExactMeshBlockerKind::IndexOutOfBounds,
                 format!(
                     "arrangement face-cell index {index} is out of bounds for {} retained face cells",
-                    self.face_cell_count()
+                    self.arrangement.face_cells.len()
                 ),
-            ))
+            )));
+        }
+        Ok(ArrangementFaceCellRef {
+            arrangement: self.arrangement,
+            index,
         })
     }
 
@@ -909,14 +922,13 @@ impl<'a> ArrangementVertexRef<'a> {
     }
 
     /// Exact retained vertex coordinate.
-    pub fn point(self) -> Result<&'a Point3, ExactMeshError> {
-        retained_arrangement_vertex(self.arrangement, self.index).map(|vertex| &vertex.point)
+    pub fn point(self) -> &'a Point3 {
+        &self.arrangement.vertices[self.index].point
     }
 
     /// Number of retained source/construction provenance records.
-    pub fn provenance_count(self) -> Result<usize, ExactMeshError> {
-        retained_arrangement_vertex(self.arrangement, self.index)
-            .map(|vertex| vertex.provenance.len())
+    pub fn provenance_count(self) -> usize {
+        self.arrangement.vertices[self.index].provenance.len()
     }
 }
 
@@ -927,13 +939,13 @@ impl<'a> ArrangementEdgeRef<'a> {
     }
 
     /// Endpoint arrangement vertex indices.
-    pub fn vertices(self) -> Result<[usize; 2], ExactMeshError> {
-        retained_arrangement_edge(self.arrangement, self.index).map(|edge| edge.vertices)
+    pub fn vertices(self) -> [usize; 2] {
+        self.arrangement.edges[self.index].vertices
     }
 
     /// Number of retained source/construction provenance records.
-    pub fn provenance_count(self) -> Result<usize, ExactMeshError> {
-        retained_arrangement_edge(self.arrangement, self.index).map(|edge| edge.provenance.len())
+    pub fn provenance_count(self) -> usize {
+        self.arrangement.edges[self.index].provenance.len()
     }
 }
 
@@ -944,86 +956,43 @@ impl<'a> ArrangementFaceCellRef<'a> {
     }
 
     /// Source carrier face index.
-    pub fn carrier_face(self) -> Result<usize, ExactMeshError> {
-        retained_arrangement_face_cell(self.arrangement, self.index)
-            .map(|face_cell| face_cell.carrier.face)
+    pub fn carrier_face(self) -> usize {
+        self.arrangement.face_cells[self.index].carrier.face
     }
 
     /// Boundary node count in carrier-face order.
-    pub fn boundary_node_count(self) -> Result<usize, ExactMeshError> {
-        retained_arrangement_face_cell(self.arrangement, self.index)
-            .map(|face_cell| face_cell.boundary.len())
+    pub fn boundary_node_count(self) -> usize {
+        self.arrangement.face_cells[self.index].boundary.len()
     }
 
     /// Boundary point count in carrier-face order.
-    pub fn boundary_point_count(self) -> Result<usize, ExactMeshError> {
-        retained_arrangement_face_cell(self.arrangement, self.index)
-            .map(|face_cell| face_cell.boundary_points.len())
+    pub fn boundary_point_count(self) -> usize {
+        self.arrangement.face_cells[self.index]
+            .boundary_points
+            .len()
     }
 
     /// Iterate exact boundary coordinates in carrier-face order.
-    pub fn boundary_points(self) -> Result<impl Iterator<Item = &'a Point3> + 'a, ExactMeshError> {
-        retained_arrangement_face_cell(self.arrangement, self.index)
-            .map(|face_cell| face_cell.boundary_points.iter())
+    pub fn boundary_points(self) -> impl Iterator<Item = &'a Point3> + 'a {
+        self.arrangement.face_cells[self.index]
+            .boundary_points
+            .iter()
     }
 
     /// Return whether this face-cell retained an opposite-mesh classification.
-    pub fn has_opposite_classification(self) -> Result<bool, ExactMeshError> {
-        retained_arrangement_face_cell(self.arrangement, self.index)
-            .map(|face_cell| face_cell.opposite.is_some())
+    pub fn has_opposite_classification(self) -> bool {
+        self.arrangement.face_cells[self.index].opposite.is_some()
     }
-}
-
-fn retained_arrangement_vertex(
-    arrangement: &ExactArrangement3d,
-    vertex: usize,
-) -> Result<&ArrangementVertex, ExactMeshError> {
-    arrangement.vertices.get(vertex).ok_or_else(|| {
-        ExactMeshError::one(
-            ExactMeshBlocker::new(
-                ExactMeshBlockerKind::StaleFactReplay,
-                format!("retained arrangement vertex {vertex} has no vertex row"),
-            )
-            .with_vertex(vertex),
-        )
-    })
-}
-
-fn retained_arrangement_edge(
-    arrangement: &ExactArrangement3d,
-    edge: usize,
-) -> Result<&ArrangementEdge, ExactMeshError> {
-    arrangement.edges.get(edge).ok_or_else(|| {
-        ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::StaleFactReplay,
-            format!("retained arrangement edge {edge} has no edge row"),
-        ))
-    })
-}
-
-fn retained_arrangement_face_cell(
-    arrangement: &ExactArrangement3d,
-    face_cell: usize,
-) -> Result<&ArrangementFaceCell, ExactMeshError> {
-    arrangement.face_cells.get(face_cell).ok_or_else(|| {
-        ExactMeshError::one(
-            ExactMeshBlocker::new(
-                ExactMeshBlockerKind::StaleFactReplay,
-                format!("retained arrangement face-cell {face_cell} has no face-cell row"),
-            )
-            .with_face(face_cell),
-        )
-    })
 }
 
 /// Freshness status for a retained exact 3D arrangement.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ExactArrangementFreshness {
-    /// The arrangement replays exactly from the current source operands.
+    /// The retained arrangement facts are current for the source operands.
     Current,
-    /// Rebuilding the arrangement from the source operands is currently blocked.
+    /// Source certification for retained arrangement evidence is blocked.
     SourceReplayBlocked,
-    /// The source operands rebuild, but the retained arrangement no longer matches.
+    /// Retained arrangement evidence no longer matches the source operands.
     StaleArrangement,
 }
 
@@ -1265,30 +1234,6 @@ impl ExactArrangement3d {
         policy: ExactRegularizationPolicy,
     ) -> Result<Self, ExactMeshError> {
         let graph = build_validated_intersection_graph(left, right)?;
-        Self::from_intersection_graph_with_policy(graph, left, right, policy)
-    }
-
-    /// Build a retained exact arrangement from an already retained
-    /// intersection graph.
-    ///
-    /// This validates the graph's source handles against `left` and `right`,
-    /// then consumes it directly without replay-building the graph. Public
-    /// exact-computation boundaries that require full source replay should
-    /// perform that check before calling this constructor.
-    pub(crate) fn from_intersection_graph_with_policy(
-        graph: ExactIntersectionGraph,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        policy: ExactRegularizationPolicy,
-    ) -> Result<Self, ExactMeshError> {
-        graph
-            .validate_against_meshes(left, right)
-            .map_err(|error| {
-                ExactMeshError::one(ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::StaleFactReplay,
-                    format!("retained exact intersection graph failed mesh handoff: {error:?}"),
-                ))
-            })?;
         Self::from_source_certified_intersection_graph_with_policy(graph, left, right, policy)
     }
 
@@ -1324,13 +1269,13 @@ impl ExactArrangement3d {
         let region_plan = if topology.is_some() {
             match graph.face_split_geometry_plan(left, right) {
                 Ok(geometry) => {
-                    let report = geometry.validate_boundary_incidence(left, right);
+                    let report = validate_face_split_geometry_incidence(&geometry, left, right);
                     if !report.blockers.is_empty() {
                         extend_split_plan_blockers(&mut blockers, &report);
                         None
                     } else {
                         let regions = geometry.region_plan(left, right);
-                        let region_report = regions.validate(left, right);
+                        let region_report = validate_face_region_plan(&regions, left, right);
                         if !region_report.blockers.is_empty() {
                             extend_split_plan_blockers(&mut blockers, &region_report);
                             None
@@ -1529,7 +1474,7 @@ impl ExactArrangement3d {
             return Err(ExactArrangementBlocker::UnresolvedIntersection);
         }
         if let Some(topology) = &self.topology {
-            let report = topology.validate();
+            let report = validate_split_topology_plan(topology);
             if !report.blockers.is_empty() {
                 let mut blockers = Vec::new();
                 extend_split_plan_blockers(&mut blockers, &report);
@@ -1576,7 +1521,7 @@ impl ExactArrangement3d {
         blockers
     }
 
-    /// Classify arrangement freshness under an explicit regularization policy.
+    /// Classify retained arrangement freshness under an explicit regularization policy.
     pub(crate) fn freshness_against_sources_with_policy(
         &self,
         left: &ExactMesh,
@@ -1586,7 +1531,19 @@ impl ExactArrangement3d {
         if self.validate().is_err() {
             return ExactArrangementFreshness::StaleArrangement;
         }
-        match Self::from_meshes_with_policy(left, right, policy) {
+        match self.graph.validate_against_sources(left, right) {
+            Ok(()) => {}
+            Err(IntersectionGraphValidationError::SourceReplayMismatch) => {
+                return ExactArrangementFreshness::StaleArrangement;
+            }
+            Err(_) => return ExactArrangementFreshness::SourceReplayBlocked,
+        }
+        match Self::from_source_certified_intersection_graph_with_policy(
+            self.graph.clone(),
+            left,
+            right,
+            policy,
+        ) {
             Ok(replay) if replay == *self => ExactArrangementFreshness::Current,
             Ok(_) => ExactArrangementFreshness::StaleArrangement,
             Err(_) => ExactArrangementFreshness::SourceReplayBlocked,
@@ -1638,7 +1595,12 @@ impl ExactArrangement3d {
                 (
                     topology.graph_vertices.len(),
                     topology.edge_chains.len(),
-                    topology.referenced_graph_vertices(),
+                    topology
+                        .edge_chains
+                        .iter()
+                        .flat_map(|chain| chain.nodes.iter())
+                        .filter(|node| matches!(node, SplitEdgeNode::GraphVertex { .. }))
+                        .count(),
                     topology.unresolved_vertex_lookups,
                     topology.unresolved_equalities,
                     topology.unknown_orderings,
@@ -1885,7 +1847,12 @@ fn push_arrangement_vertex(
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) {
     let point_key = exact_point3_key(&point);
-    if let Some(existing) = index.find_matching(&point, point_key.as_ref(), vertices, blockers) {
+    if let Some(existing) = find_matching_keyed_point(
+        point_key.as_ref(),
+        &index.point_key_buckets,
+        &index.unkeyed_vertices,
+        |candidates| find_matching_arrangement_vertex(&point, vertices, candidates, blockers),
+    ) {
         if !vertices[existing].provenance.contains(&provenance) {
             vertices[existing].provenance.push(provenance);
         }
@@ -1916,37 +1883,6 @@ impl ArrangementVertexMergeIndex {
             self.unkeyed_vertices.push(vertex_index);
         }
     }
-
-    fn find_matching(
-        &self,
-        point: &Point3,
-        point_key: Option<&ExactPoint3Key>,
-        vertices: &[ArrangementVertex],
-        blockers: &mut Vec<ExactArrangementBlocker>,
-    ) -> Option<usize> {
-        if let Some(key) = point_key {
-            if let Some(bucket) = self.point_key_buckets.get(key)
-                && let Some(index) =
-                    find_matching_arrangement_vertex(point, vertices, bucket, blockers)
-            {
-                return Some(index);
-            }
-            return find_matching_arrangement_vertex(
-                point,
-                vertices,
-                &self.unkeyed_vertices,
-                blockers,
-            );
-        }
-
-        for bucket in self.point_key_buckets.values() {
-            if let Some(index) = find_matching_arrangement_vertex(point, vertices, bucket, blockers)
-            {
-                return Some(index);
-            }
-        }
-        find_matching_arrangement_vertex(point, vertices, &self.unkeyed_vertices, blockers)
-    }
 }
 
 fn find_matching_arrangement_vertex(
@@ -1974,9 +1910,13 @@ struct ArrangementPointUniquenessIndex {
 impl ArrangementPointUniquenessIndex {
     fn push_unique(&mut self, points: &mut Vec<Point3>, point: Point3) {
         let point_key = exact_point3_key(&point);
-        if self
-            .find_matching(&point, point_key.as_ref(), points)
-            .is_some()
+        if find_matching_keyed_point(
+            point_key.as_ref(),
+            &self.point_key_buckets,
+            &self.unkeyed_points,
+            |candidates| find_matching_arrangement_point(&point, points, candidates),
+        )
+        .is_some()
         {
             return;
         }
@@ -1988,29 +1928,42 @@ impl ArrangementPointUniquenessIndex {
         }
         points.push(point);
     }
+}
 
-    fn find_matching(
-        &self,
-        point: &Point3,
-        point_key: Option<&ExactPoint3Key>,
-        points: &[Point3],
-    ) -> Option<usize> {
-        if let Some(key) = point_key {
-            if let Some(bucket) = self.point_key_buckets.get(key)
-                && let Some(index) = find_matching_arrangement_point(point, points, bucket)
-            {
-                return Some(index);
-            }
-            return find_matching_arrangement_point(point, points, &self.unkeyed_points);
-        }
+fn find_matching_keyed_point(
+    point_key: Option<&ExactPoint3Key>,
+    point_key_buckets: &BTreeMap<ExactPoint3Key, Vec<usize>>,
+    unkeyed_points: &[usize],
+    mut find_in_candidates: impl FnMut(&[usize]) -> Option<usize>,
+) -> Option<usize> {
+    try_find_matching_keyed_point(point_key, point_key_buckets, unkeyed_points, |candidates| {
+        Ok::<Option<usize>, ()>(find_in_candidates(candidates))
+    })
+    .ok()
+    .flatten()
+}
 
-        for bucket in self.point_key_buckets.values() {
-            if let Some(index) = find_matching_arrangement_point(point, points, bucket) {
-                return Some(index);
-            }
+pub(super) fn try_find_matching_keyed_point<E>(
+    point_key: Option<&ExactPoint3Key>,
+    point_key_buckets: &BTreeMap<ExactPoint3Key, Vec<usize>>,
+    unkeyed_points: &[usize],
+    mut find_in_candidates: impl FnMut(&[usize]) -> Result<Option<usize>, E>,
+) -> Result<Option<usize>, E> {
+    if let Some(key) = point_key {
+        if let Some(bucket) = point_key_buckets.get(key)
+            && let Some(index) = find_in_candidates(bucket)?
+        {
+            return Ok(Some(index));
         }
-        find_matching_arrangement_point(point, points, &self.unkeyed_points)
+        return find_in_candidates(unkeyed_points);
     }
+
+    for bucket in point_key_buckets.values() {
+        if let Some(index) = find_in_candidates(bucket)? {
+            return Ok(Some(index));
+        }
+    }
+    find_in_candidates(unkeyed_points)
 }
 
 fn find_matching_arrangement_point(
@@ -2026,7 +1979,7 @@ fn find_matching_arrangement_point(
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 enum ArrangementVertexProvenanceKey {
-    SourceVertex { side_key: usize, vertex: usize },
+    SourceVertex { side: MeshSide, vertex: usize },
     GraphIntersection { graph_vertex: usize },
     CarrierPlaneVertex { overlay: usize, vertex: usize },
     FacePlaneVertex { arrangement: usize, vertex: usize },
@@ -2046,7 +1999,7 @@ fn arrangement_edges(
             let key = match provenance {
                 ArrangementVertexProvenance::SourceVertex { side, vertex } => {
                     ArrangementVertexProvenanceKey::SourceVertex {
-                        side_key: side.sort_key(),
+                        side: *side,
                         vertex: *vertex,
                     }
                 }
@@ -2076,7 +2029,7 @@ fn arrangement_edges(
         let key = match &provenance {
             ArrangementVertexProvenance::SourceVertex { side, vertex } => {
                 ArrangementVertexProvenanceKey::SourceVertex {
-                    side_key: side.sort_key(),
+                    side: *side,
                     vertex: *vertex,
                 }
             }
@@ -2241,19 +2194,19 @@ fn arrangement_face_cells(
     let mut cells = Vec::new();
     let mut skipped_carriers = BTreeSet::new();
     for overlay in carrier_plane_overlays {
-        skipped_carriers.insert((MeshSide::Left.sort_key(), overlay.left_face));
-        skipped_carriers.insert((MeshSide::Right.sort_key(), overlay.right_face));
+        skipped_carriers.insert((MeshSide::Left, overlay.left_face));
+        skipped_carriers.insert((MeshSide::Right, overlay.right_face));
     }
     let mut skipped_face_arrangements = BTreeSet::new();
     for arrangement in face_plane_arrangements {
-        skipped_face_arrangements.insert((arrangement.side.sort_key(), arrangement.face));
+        skipped_face_arrangements.insert((arrangement.side, arrangement.face));
     }
 
     if let Some(region_plan) = region_plan
         && !region_plan.regions.is_empty()
     {
         cells.extend(region_plan.regions.iter().filter_map(|region| {
-            let carrier = (region.side.sort_key(), region.face);
+            let carrier = (region.side, region.face);
             if skipped_carriers.contains(&carrier) || skipped_face_arrangements.contains(&carrier) {
                 None
             } else {
@@ -2262,7 +2215,7 @@ fn arrangement_face_cells(
         }));
     } else {
         for (face, facts) in left.facts().faces.iter().enumerate() {
-            let carrier = (MeshSide::Left.sort_key(), face);
+            let carrier = (MeshSide::Left, face);
             if skipped_carriers.contains(&carrier) || skipped_face_arrangements.contains(&carrier) {
                 continue;
             }
@@ -2277,7 +2230,7 @@ fn arrangement_face_cells(
             ));
         }
         for (face, facts) in right.facts().faces.iter().enumerate() {
-            let carrier = (MeshSide::Right.sort_key(), face);
+            let carrier = (MeshSide::Right, face);
             if skipped_carriers.contains(&carrier) || skipped_face_arrangements.contains(&carrier) {
                 continue;
             }
@@ -2356,10 +2309,10 @@ fn face_plane_arrangements(
     };
     let mut skipped_carriers = BTreeSet::new();
     for overlay in carrier_plane_overlays {
-        skipped_carriers.insert((MeshSide::Left.sort_key(), overlay.left_face));
-        skipped_carriers.insert((MeshSide::Right.sort_key(), overlay.right_face));
+        skipped_carriers.insert((MeshSide::Left, overlay.left_face));
+        skipped_carriers.insert((MeshSide::Right, overlay.right_face));
     }
-    let mut pair_vertices = BTreeMap::<(usize, usize, usize, usize), BTreeSet<usize>>::new();
+    let mut pair_vertices = BTreeMap::<(MeshSide, usize, usize, usize), BTreeSet<usize>>::new();
     for (graph_vertex, vertex) in topology.graph_vertices.iter().enumerate() {
         for source_use in &vertex.uses {
             let edge_carrier = match source_use.side {
@@ -2368,7 +2321,7 @@ fn face_plane_arrangements(
             };
             pair_vertices
                 .entry((
-                    source_use.side.sort_key(),
+                    source_use.side,
                     edge_carrier,
                     source_use.face_pair[0],
                     source_use.face_pair[1],
@@ -2382,7 +2335,7 @@ fn face_plane_arrangements(
             };
             pair_vertices
                 .entry((
-                    plane_side.sort_key(),
+                    plane_side,
                     source_use.plane_face,
                     source_use.face_pair[0],
                     source_use.face_pair[1],
@@ -2392,30 +2345,22 @@ fn face_plane_arrangements(
         }
     }
 
-    let mut per_face_groups = BTreeMap::<(usize, usize), Vec<Vec<usize>>>::new();
+    let mut per_face_groups = BTreeMap::<(MeshSide, usize), Vec<Vec<usize>>>::new();
     for ((side, face, _, _), vertices) in pair_vertices {
         if vertices.len() < 2 {
             continue;
         }
-        let side = match side {
-            0 => MeshSide::Left,
-            _ => MeshSide::Right,
-        };
-        if skipped_carriers.contains(&(side.sort_key(), face)) {
+        if skipped_carriers.contains(&(side, face)) {
             continue;
         }
         per_face_groups
-            .entry((side.sort_key(), face))
+            .entry((side, face))
             .or_default()
             .push(vertices.into_iter().collect());
     }
 
     let mut arrangements = Vec::new();
     for ((side, face), groups) in per_face_groups {
-        let side = match side {
-            0 => MeshSide::Left,
-            _ => MeshSide::Right,
-        };
         if let Some(arrangement) =
             face_plane_arrangement(side, face, groups, topology, left, right, blockers)
         {
@@ -3224,16 +3169,14 @@ fn arrangement_regions(
             }
         }
         component.sort_unstable();
-        let Some(membership) =
-            ArrangementRegionComponentMembership::new(&component, face_cells.len())
-        else {
-            push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
-            continue;
-        };
+        let mut membership = vec![false; face_cells.len()];
+        for &face_cell in &component {
+            membership[face_cell] = true;
+        }
         let adjacent_face_cells = adjacent_pairs
             .iter()
             .copied()
-            .filter(|[left, right]| membership.contains(*left) && membership.contains(*right))
+            .filter(|[left, right]| membership[*left] && membership[*right])
             .collect::<Vec<_>>();
         let edge_incidences =
             arrangement_region_edge_incidences(&membership, &edge_users, face_cells);
@@ -3286,27 +3229,8 @@ fn arrangement_regions(
     regions
 }
 
-struct ArrangementRegionComponentMembership {
-    members: Vec<bool>,
-}
-
-impl ArrangementRegionComponentMembership {
-    fn new(component: &[usize], face_cell_count: usize) -> Option<Self> {
-        let mut members = vec![false; face_cell_count];
-        for &cell in component {
-            let member = members.get_mut(cell)?;
-            *member = true;
-        }
-        Some(Self { members })
-    }
-
-    fn contains(&self, face_cell: usize) -> bool {
-        self.members.get(face_cell).copied() == Some(true)
-    }
-}
-
 fn arrangement_region_edge_incidences(
-    membership: &ArrangementRegionComponentMembership,
+    membership: &[bool],
     edge_users: &[([ArrangementFaceCellNode; 2], Vec<usize>)],
     face_cells: &[ArrangementFaceCell],
 ) -> Vec<ArrangementRegionEdgeIncidence> {
@@ -3316,7 +3240,7 @@ fn arrangement_region_edge_incidences(
             let mut incident_face_cells = users
                 .iter()
                 .copied()
-                .filter(|&cell| membership.contains(cell))
+                .filter(|&cell| membership.get(cell).copied() == Some(true))
                 .collect::<Vec<_>>();
             if incident_face_cells.is_empty() {
                 return None;
@@ -3346,7 +3270,9 @@ fn regularized_incident_sheet_count(
             let Some(right) = all_face_cells.get(representative) else {
                 continue;
             };
-            if exact_boundary_loops_equivalent(&left.boundary_points, &right.boundary_points) {
+            if exact_point_loops_match(&left.boundary_points, &right.boundary_points, false)
+                || exact_point_loops_match(&left.boundary_points, &right.boundary_points, true)
+            {
                 continue 'incident;
             }
         }
@@ -3355,26 +3281,23 @@ fn regularized_incident_sheet_count(
     representatives.len()
 }
 
-fn exact_boundary_loops_equivalent(left: &[Point3], right: &[Point3]) -> bool {
+pub(crate) fn exact_point_loops_match(left: &[Point3], right: &[Point3], reverse: bool) -> bool {
     if left.len() != right.len() {
         return false;
     }
     if left.is_empty() {
         return true;
     }
-    let matches = |reverse| {
-        (0..right.len()).any(|offset| {
-            (0..left.len()).all(|index| {
-                let right_index = if reverse {
-                    (offset + right.len() - index) % right.len()
-                } else {
-                    (offset + index) % right.len()
-                };
-                point3_exact_equal(&left[index], &right[right_index]) == Some(true)
-            })
+    (0..right.len()).any(|offset| {
+        (0..left.len()).all(|index| {
+            let right_index = if reverse {
+                (offset + right.len() - index) % right.len()
+            } else {
+                (offset + index) % right.len()
+            };
+            point3_exact_equal(&left[index], &right[right_index]) == Some(true)
         })
-    };
-    matches(false) || matches(true)
+    })
 }
 
 fn arrangement_volume_graph(
@@ -3910,7 +3833,16 @@ fn classify_shell_witnesses_against_container(
     let mut decided = None;
     let mut saw_boundary = false;
     for witness in witnesses {
-        match classify_shell_witness_against_container(witness, container) {
+        let convex = classify_point_against_convex_solid_report(witness, container);
+        let relation = match convex.relation {
+            ConvexSolidPointRelation::Inside => ShellContainmentRelation::Inside,
+            ConvexSolidPointRelation::Outside => ShellContainmentRelation::Outside,
+            ConvexSolidPointRelation::Boundary => ShellContainmentRelation::Boundary,
+            ConvexSolidPointRelation::Unknown | ConvexSolidPointRelation::NotCertifiedConvex => {
+                ShellContainmentRelation::Unknown
+            }
+        };
+        match relation {
             ShellContainmentRelation::Boundary => saw_boundary = true,
             ShellContainmentRelation::Unknown => {}
             relation @ (ShellContainmentRelation::Inside | ShellContainmentRelation::Outside) => {
@@ -3929,25 +3861,6 @@ fn classify_shell_witnesses_against_container(
     } else {
         ShellContainmentRelation::Unknown
     })
-}
-
-fn classify_shell_witness_against_container(
-    witness: &Point3,
-    container: &ExactMesh,
-) -> ShellContainmentRelation {
-    let convex = classify_point_against_convex_solid_report(witness, container);
-    if let Some(relation) = certified_convex_point_relation(convex.relation) {
-        return match relation {
-            ConvexSolidPointRelation::Inside => ShellContainmentRelation::Inside,
-            ConvexSolidPointRelation::Outside => ShellContainmentRelation::Outside,
-            ConvexSolidPointRelation::Boundary => ShellContainmentRelation::Boundary,
-            ConvexSolidPointRelation::Unknown | ConvexSolidPointRelation::NotCertifiedConvex => {
-                ShellContainmentRelation::Unknown
-            }
-        };
-    }
-
-    ShellContainmentRelation::Unknown
 }
 
 fn diagnose_same_source_same_orientation_nesting(
@@ -4125,10 +4038,10 @@ fn shell_region_mesh(
         if cell.boundary_points.len() < 3 {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
-        if boundary_loops
-            .iter()
-            .any(|existing| exact_boundary_loops_equivalent(existing, &cell.boundary_points))
-        {
+        if boundary_loops.iter().any(|existing| {
+            exact_point_loops_match(existing, &cell.boundary_points, false)
+                || exact_point_loops_match(existing, &cell.boundary_points, true)
+        }) {
             continue;
         }
         boundary_loops.push(cell.boundary_points.clone());
@@ -4139,11 +4052,12 @@ fn shell_region_mesh(
     for boundary_group in &boundary_loop_groups {
         triangulate_exact_loop_group(boundary_group, &mut vertices, &mut triangles)?;
     }
-    ExactMesh::new_with_policy(
+    ExactMesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact arrangement shell replay"),
         ExactMeshValidationPolicy::CLOSED,
+        1,
     )
     .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)
 }
@@ -4265,7 +4179,7 @@ fn arrangement_edge_users(
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 enum ArrangementCellNodeKey {
-    Source { side_key: usize, vertex: usize },
+    Source { side: MeshSide, vertex: usize },
     Graph { graph_vertex: usize },
     CarrierPlane { overlay: usize, vertex: usize },
     FacePlane { arrangement: usize, vertex: usize },
@@ -4387,7 +4301,12 @@ impl ArrangementBoundaryPointUniquenessIndex {
         point: ArrangementFaceCellBoundaryPoint,
     ) {
         let point_key = exact_point3_key(&point.point);
-        if let Some(existing) = self.find_matching(&point, point_key.as_ref(), points) {
+        if let Some(existing) = find_matching_keyed_point(
+            point_key.as_ref(),
+            &self.point_key_buckets,
+            &self.unkeyed_points,
+            |candidates| find_matching_boundary_point(&point, points, candidates),
+        ) {
             if cell_node_key(&point.node) < cell_node_key(&points[existing].node) {
                 points[existing].node = point.node;
             }
@@ -4407,29 +4326,6 @@ impl ArrangementBoundaryPointUniquenessIndex {
         } else {
             self.unkeyed_points.push(point_index);
         }
-    }
-
-    fn find_matching(
-        &self,
-        point: &ArrangementFaceCellBoundaryPoint,
-        point_key: Option<&ExactPoint3Key>,
-        points: &[ArrangementFaceCellBoundaryPoint],
-    ) -> Option<usize> {
-        if let Some(key) = point_key {
-            if let Some(bucket) = self.point_key_buckets.get(key)
-                && let Some(index) = find_matching_boundary_point(point, points, bucket)
-            {
-                return Some(index);
-            }
-            return find_matching_boundary_point(point, points, &self.unkeyed_points);
-        }
-
-        for bucket in self.point_key_buckets.values() {
-            if let Some(index) = find_matching_boundary_point(point, points, bucket) {
-                return Some(index);
-            }
-        }
-        find_matching_boundary_point(point, points, &self.unkeyed_points)
     }
 }
 
@@ -4479,7 +4375,7 @@ fn sort_boundary_points_along_segment(
 fn cell_node_key(node: &ArrangementFaceCellNode) -> ArrangementCellNodeKey {
     match node {
         ArrangementFaceCellNode::Source { side, vertex } => ArrangementCellNodeKey::Source {
-            side_key: side.sort_key(),
+            side: *side,
             vertex: *vertex,
         },
         ArrangementFaceCellNode::Graph { graph_vertex } => ArrangementCellNodeKey::Graph {
@@ -4752,7 +4648,12 @@ fn classify_opposite(
         MeshSide::Right => left,
     };
     let convex = classify_point_against_convex_solid_report(&point, target);
-    let convex_certification = if certified_convex_point_relation(convex.relation).is_some() {
+    let convex_certification = if matches!(
+        convex.relation,
+        ConvexSolidPointRelation::Inside
+            | ConvexSolidPointRelation::Boundary
+            | ConvexSolidPointRelation::Outside
+    ) {
         Some(convex)
     } else {
         None
@@ -4770,17 +4671,6 @@ fn classify_opposite(
         representative: point,
         winding,
         convex_fallback: convex_certification,
-    }
-}
-
-fn certified_convex_point_relation(
-    relation: ConvexSolidPointRelation,
-) -> Option<ConvexSolidPointRelation> {
-    match relation {
-        ConvexSolidPointRelation::Inside
-        | ConvexSolidPointRelation::Boundary
-        | ConvexSolidPointRelation::Outside => Some(relation),
-        ConvexSolidPointRelation::Unknown | ConvexSolidPointRelation::NotCertifiedConvex => None,
     }
 }
 

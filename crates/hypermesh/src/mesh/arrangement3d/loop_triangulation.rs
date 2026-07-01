@@ -15,8 +15,8 @@ use hyperlimit::{
 };
 use hyperreal::Real;
 
-use super::super::Triangle;
 use super::super::graph::key::{ExactPoint3Key, exact_point3_key};
+use super::super::{Triangle, exact_points_are_collinear};
 use super::arrangement2d::{
     ExactArrangement2dBlocker, ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion,
     ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
@@ -24,6 +24,7 @@ use super::arrangement2d::{
     build_exact_arrangement2d_ring_union_overlay_with_boundary_policy,
 };
 use super::regularization::ExactArrangementBlocker;
+use super::try_find_matching_keyed_point;
 use hyperlimit::CoplanarProjection;
 
 #[derive(Clone)]
@@ -102,23 +103,6 @@ fn point_loop_is_exactly_coplanar(
     Ok(true)
 }
 
-fn exact_points_are_collinear(a: &Point3, b: &Point3, c: &Point3) -> Option<bool> {
-    let abx = b.x.clone() - &a.x;
-    let aby = b.y.clone() - &a.y;
-    let abz = b.z.clone() - &a.z;
-    let acx = c.x.clone() - &a.x;
-    let acy = c.y.clone() - &a.y;
-    let acz = c.z.clone() - &a.z;
-    let cross_x = aby.clone() * &acz - &(abz.clone() * &acy);
-    let cross_y = abz * &acx - &(abx.clone() * &acz);
-    let cross_z = abx * &acy - &(aby * &acx);
-    Some(
-        compare_reals(&cross_x, &Real::from(0)).value()? == Ordering::Equal
-            && compare_reals(&cross_y, &Real::from(0)).value()? == Ordering::Equal
-            && compare_reals(&cross_z, &Real::from(0)).value()? == Ordering::Equal,
-    )
-}
-
 pub(crate) fn triangulate_exact_loop_group(
     boundaries: &[Vec<Point3>],
     vertices: &mut Vec<Point3>,
@@ -143,7 +127,10 @@ pub(crate) fn triangulate_exact_loop_group(
             depth: 0,
         });
     }
-    let mut vertex_index = ExactVertexInsertIndex::from_vertices(vertices);
+    let mut vertex_index = ExactVertexInsertIndex::default();
+    for (vertex, point) in vertices.iter().enumerate() {
+        vertex_index.insert_with_key(vertex, exact_point3_key(point));
+    }
     if let Err(error) = compute_loop_depths(&mut loops) {
         return triangulate_loop_group_union_via_arrangement(
             &loops,
@@ -844,7 +831,7 @@ fn append_component_local_vertices(
     }
     for point in component_vertices {
         let index = vertices.len();
-        vertex_index.insert_known(index, &point);
+        vertex_index.insert_with_key(index, exact_point3_key(&point));
         vertices.push(point);
     }
     Ok(local_to_global)
@@ -948,31 +935,33 @@ struct ExactVertexInsertIndex {
 }
 
 impl ExactVertexInsertIndex {
-    fn from_vertices(vertices: &[Point3]) -> Self {
-        let mut index = Self::default();
-        for (vertex, point) in vertices.iter().enumerate() {
-            index.insert_known(vertex, point);
-        }
-        index
-    }
-
     fn find_or_insert(
         &mut self,
         vertices: &mut Vec<Point3>,
         point: Point3,
     ) -> Result<usize, ExactArrangementBlocker> {
         let point_key = exact_point3_key(&point);
-        if let Some(index) = self.find_matching(&point, point_key.as_ref(), vertices)? {
+        if let Some(index) = try_find_matching_keyed_point(
+            point_key.as_ref(),
+            &self.point_key_buckets,
+            &self.unkeyed_vertices,
+            |candidates| {
+                for &index in candidates {
+                    match point3_equal(&vertices[index], &point).value() {
+                        Some(true) => return Ok(Some(index)),
+                        Some(false) => {}
+                        None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+                    }
+                }
+                Ok(None)
+            },
+        )? {
             return Ok(index);
         }
         let vertex = vertices.len();
         self.insert_with_key(vertex, point_key);
         vertices.push(point);
         Ok(vertex)
-    }
-
-    fn insert_known(&mut self, vertex: usize, point: &Point3) {
-        self.insert_with_key(vertex, exact_point3_key(point));
     }
 
     fn insert_with_key(&mut self, vertex: usize, point_key: Option<ExactPoint3Key>) {
@@ -982,44 +971,6 @@ impl ExactVertexInsertIndex {
             self.unkeyed_vertices.push(vertex);
         }
     }
-
-    fn find_matching(
-        &self,
-        point: &Point3,
-        point_key: Option<&ExactPoint3Key>,
-        vertices: &[Point3],
-    ) -> Result<Option<usize>, ExactArrangementBlocker> {
-        if let Some(key) = point_key {
-            if let Some(bucket) = self.point_key_buckets.get(key)
-                && let Some(index) = find_matching_vertex_in_indices(point, vertices, bucket)?
-            {
-                return Ok(Some(index));
-            }
-            return find_matching_vertex_in_indices(point, vertices, &self.unkeyed_vertices);
-        }
-
-        for bucket in self.point_key_buckets.values() {
-            if let Some(index) = find_matching_vertex_in_indices(point, vertices, bucket)? {
-                return Ok(Some(index));
-            }
-        }
-        find_matching_vertex_in_indices(point, vertices, &self.unkeyed_vertices)
-    }
-}
-
-fn find_matching_vertex_in_indices(
-    point: &Point3,
-    vertices: &[Point3],
-    candidates: &[usize],
-) -> Result<Option<usize>, ExactArrangementBlocker> {
-    for &index in candidates {
-        match point3_equal(&vertices[index], point).value() {
-            Some(true) => return Ok(Some(index)),
-            Some(false) => {}
-            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
-        }
-    }
-    Ok(None)
 }
 
 pub(crate) fn choose_polygon_projection(

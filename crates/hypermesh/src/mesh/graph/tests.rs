@@ -1,6 +1,8 @@
 use super::*;
 use crate::mesh::ExactMesh;
-use crate::mesh::boolean::cells::triangulate_all_face_cells_with_cdt;
+use crate::mesh::boolean::cells::{
+    triangulate_all_face_cells_with_cdt, validate_face_cell_cdt_against_sources,
+};
 use crate::mesh::boolean::region::{
     FaceRegionPlaneRelation, checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut,
@@ -136,18 +138,22 @@ fn face_cell_cdt_replays_from_internal_graph() {
         left.triangles().len() + right.triangles().len()
     );
     assert_eq!(cell_triangulations.len(), cell_regions.regions.len());
-    assert!(cell_regions.validate(&left, &right).blockers.is_empty());
-    graph
-        .validate_face_cell_cdt_against_sources(&cell_regions, &cell_triangulations, &left, &right)
-        .unwrap();
+    assert!(
+        validate_face_region_plan(&cell_regions, &left, &right)
+            .blockers
+            .is_empty()
+    );
+    validate_face_cell_cdt_against_sources(
+        &graph,
+        &cell_regions,
+        &cell_triangulations,
+        &left,
+        &right,
+    )
+    .unwrap();
     assert!(
         graph
-            .validate_face_cell_cdt_against_sources(
-                &cell_regions,
-                &cell_triangulations,
-                &left,
-                &separated_right
-            )
+            .validate_against_sources(&left, &separated_right)
             .is_err()
     );
 }
@@ -273,7 +279,7 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
     graph.validate_against_meshes(&left, &right).unwrap();
     let prepared_pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
     let shortcut_facts = prepared_pair
-        .current_arrangement_cell_complex_shortcut_facts()
+        .prepare_arrangement_cell_complex_shortcut_facts()
         .unwrap();
     assert_eq!(
         shortcut_facts,
@@ -288,13 +294,15 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
         &graph
     );
     assert_eq!(
-        build_validated_intersection_graph_from_prepared_pair(&prepared_pair)
+        prepared_pair
+            .validated_intersection_graph()
             .unwrap()
             .as_ref(),
         &graph
     );
     assert_eq!(
-        build_validated_intersection_graph_from_prepared_pair(&prepared_pair)
+        prepared_pair
+            .validated_intersection_graph()
             .unwrap()
             .as_ref(),
         &graph
@@ -306,18 +314,15 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
             view.validate_retained_state().unwrap();
         })
         .unwrap();
-    assert!(
-        prepared_pair
-            .current_arrangement_for_reuse()
-            .unwrap()
-            .is_some()
-    );
+    prepared_pair.current_arrangement_for_reuse().unwrap();
     prepared_pair.retain_intersection_graph(ExactIntersectionGraph::from_face_pairs(Vec::new()));
-    assert!(
+    assert_eq!(
         prepared_pair
             .current_arrangement_for_reuse()
-            .unwrap()
-            .is_none()
+            .unwrap_err()
+            .blockers()[0]
+            .kind(),
+        ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         prepared_pair
@@ -328,7 +333,8 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
         ExactMeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
-        build_validated_intersection_graph_from_prepared_pair(&prepared_pair)
+        prepared_pair
+            .validated_intersection_graph()
             .unwrap_err()
             .blockers()[0]
             .kind(),
@@ -372,34 +378,35 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
             .validate_against_sources(&left, &separated_right)
             .is_err()
     );
-    let edge_splits = graph.edge_split_plan();
-    assert!(edge_splits.validate().blockers.is_empty());
+    let edge_splits = edge_split_plan(&graph);
+    assert!(validate_edge_split_plan(&edge_splits).blockers.is_empty());
     assert!(
-        edge_splits
-            .validate_against_sources(&left, &separated_right)
+        validate_edge_split_plan_against_sources(&edge_splits, &left, &separated_right)
             .blockers
             .iter()
             .any(|blocker| blocker.kind == SplitPlanBlockerKind::SourceReplayMismatch)
     );
     let mut stale_edge_splits = edge_splits.clone();
     stale_edge_splits.unknown_orderings += 1;
-    assert!(!stale_edge_splits.validate().blockers.is_empty());
-
-    let graph_vertices = graph.graph_vertex_plan();
-    assert!(graph_vertices.validate().blockers.is_empty());
-    let topology = graph.split_topology_plan();
-    assert!(topology.validate().blockers.is_empty());
-    let face_plan = graph.face_split_plan();
     assert!(
-        face_plan
-            .validate_against_sources(&left, &right)
+        !validate_edge_split_plan(&stale_edge_splits)
+            .blockers
+            .is_empty()
+    );
+
+    let graph_vertices = graph_vertex_plan(&edge_splits);
+    assert!(graph.checked_split_topology_plan().is_ok());
+    let topology = split_topology_plan(&edge_splits, &graph_vertices);
+    assert!(validate_split_topology_plan(&topology).blockers.is_empty());
+    let face_plan = face_split_plan(&topology);
+    assert!(
+        validate_face_split_plan_against_sources(&face_plan, &left, &right)
             .blockers
             .is_empty()
     );
     let geometry = graph.face_split_geometry_plan(&left, &right).unwrap();
     assert!(
-        geometry
-            .validate_against_sources(&left, &right)
+        validate_face_split_geometry_against_sources(&geometry, &left, &right)
             .blockers
             .is_empty()
     );
@@ -408,7 +415,7 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
         .nodes
         .rotate_left(1);
     let noncanonical_chain_report =
-        noncanonical_chain_geometry.validate_boundary_incidence(&left, &right);
+        validate_face_split_geometry_incidence(&noncanonical_chain_geometry, &left, &right);
     assert!(
         noncanonical_chain_report
             .blockers
@@ -432,7 +439,7 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
         .boundary_chains
         .push(duplicate_chain);
     let duplicate_chain_report =
-        duplicate_chain_geometry.validate_boundary_incidence(&left, &right);
+        validate_face_split_geometry_incidence(&duplicate_chain_geometry, &left, &right);
     assert!(
         duplicate_chain_report
             .blockers
@@ -448,7 +455,7 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
         *point = p(2, 0, 0);
     }
     let stale_original_point_report =
-        stale_original_point_geometry.validate_boundary_incidence(&left, &right);
+        validate_face_split_geometry_incidence(&stale_original_point_geometry, &left, &right);
     assert!(
         stale_original_point_report.blockers.iter().any(|blocker| {
             blocker.kind == SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch
@@ -458,7 +465,8 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
     assert!(!stale_original_point_report.blockers.is_empty());
     let mut relabeled_geometry = geometry.clone();
     relabeled_geometry.faces[0].triangle.swap(0, 1);
-    let geometry_report = relabeled_geometry.validate_boundary_incidence(&left, &right);
+    let geometry_report =
+        validate_face_split_geometry_incidence(&relabeled_geometry, &left, &right);
     assert!(
         geometry_report
             .blockers
@@ -469,8 +477,7 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
     assert!(!geometry_report.blockers.is_empty());
     let regions = geometry.region_plan(&left, &right);
     assert!(
-        regions
-            .validate_against_sources(&left, &right)
+        validate_face_region_plan_against_sources(&regions, &left, &right)
             .blockers
             .is_empty()
     );
@@ -479,7 +486,8 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
     closed_duplicate_regions.regions[0]
         .boundary
         .push(first_region_node);
-    let closed_duplicate_report = closed_duplicate_regions.validate(&left, &right);
+    let closed_duplicate_report =
+        validate_face_region_plan(&closed_duplicate_regions, &left, &right);
     assert!(
         closed_duplicate_report.blockers.iter().any(|blocker| {
             blocker.kind == SplitPlanBlockerKind::DuplicateConsecutiveRegionNode
@@ -493,7 +501,7 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
     {
         *point = p(2, 0, 0);
     }
-    let stale_region_point_report = stale_region_point.validate(&left, &right);
+    let stale_region_point_report = validate_face_region_plan(&stale_region_point, &left, &right);
     assert!(
         stale_region_point_report.blockers.iter().any(|blocker| {
             blocker.kind == SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch
@@ -507,7 +515,8 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
     {
         *vertex = usize::MAX;
     }
-    let missing_region_vertex_report = missing_region_vertex.validate(&left, &right);
+    let missing_region_vertex_report =
+        validate_face_region_plan(&missing_region_vertex, &left, &right);
     assert!(
         missing_region_vertex_report.blockers.iter().any(|blocker| {
             blocker.kind == SplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange
@@ -517,7 +526,7 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
     assert!(!missing_region_vertex_report.blockers.is_empty());
     let mut relabeled_regions = regions.clone();
     relabeled_regions.regions[0].triangle.swap(0, 1);
-    let region_report = relabeled_regions.validate(&left, &right);
+    let region_report = validate_face_region_plan(&relabeled_regions, &left, &right);
     assert!(
         region_report
             .blockers

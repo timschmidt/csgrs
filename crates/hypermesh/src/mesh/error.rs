@@ -178,6 +178,16 @@ impl ExactMeshError {
     pub fn blockers(&self) -> &[ExactMeshBlocker] {
         &self.blockers
     }
+
+    /// Whether this error contains at least one blocker and every blocker has
+    /// one of the requested kinds.
+    pub(crate) fn has_only_blocker_kinds(&self, kinds: &[ExactMeshBlockerKind]) -> bool {
+        !self.blockers.is_empty()
+            && self
+                .blockers
+                .iter()
+                .all(|blocker| kinds.contains(&blocker.kind))
+    }
 }
 
 impl fmt::Display for ExactMeshError {

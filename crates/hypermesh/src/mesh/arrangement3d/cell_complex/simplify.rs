@@ -8,8 +8,12 @@
 use std::cmp::Ordering;
 
 use super::super::super::boolean::ExactBooleanOperation;
+use super::super::super::graph::MeshSide;
 use super::super::super::validation::ExactMeshValidationPolicy;
-use super::super::super::{ExactMesh, Triangle, point3_exact_equal};
+use super::super::super::{
+    ExactMesh, Triangle, orient_paired_triangle_edges, point3_exact_equal,
+    remove_duplicate_triangle_vertex_sets,
+};
 #[cfg(test)]
 use super::super::ExactArrangement3d;
 use super::super::loop_triangulation::{
@@ -18,7 +22,7 @@ use super::super::loop_triangulation::{
 use super::super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::super::{
     ArrangementFaceCellNode, ArrangementLowerDimensionalArtifact, ExactTopologyAssemblyReport,
-    validate_lower_dimensional_artifacts,
+    exact_point_loops_match, validate_lower_dimensional_artifacts,
 };
 #[cfg(test)]
 use super::select_arrangement_for_replay;
@@ -150,12 +154,12 @@ impl ExactSimplifiedCellComplex {
         }
         for pair in self.faces.windows(2) {
             let left = (
-                pair[0].face.cell.carrier.side.sort_key(),
+                pair[0].face.cell.carrier.side,
                 pair[0].face.cell.carrier.face,
                 pair[0].source_face,
             );
             let right = (
-                pair[1].face.cell.carrier.side.sort_key(),
+                pair[1].face.cell.carrier.side,
                 pair[1].face.cell.carrier.face,
                 pair[1].source_face,
             );
@@ -165,12 +169,14 @@ impl ExactSimplifiedCellComplex {
         }
         for (index, face) in self.faces.iter().enumerate() {
             if self.faces[index + 1..].iter().any(|other| {
-                exact_boundary_loops_same_orientation(
+                exact_point_loops_match(
                     &face.face.cell.boundary_points,
                     &other.face.cell.boundary_points,
-                ) || exact_boundary_loops_opposite_orientation(
+                    false,
+                ) || exact_point_loops_match(
                     &face.face.cell.boundary_points,
                     &other.face.cell.boundary_points,
+                    true,
                 )
             }) {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
@@ -452,18 +458,20 @@ pub(crate) fn simplify_selected_cell_complex(
         canonicalize_boundary_start(&mut face);
         if faces.iter().any(|existing: &ExactSimplifiedFaceCell| {
             existing.face == face
-                || exact_boundary_loops_same_orientation(
+                || exact_point_loops_match(
                     &existing.face.cell.boundary_points,
                     &face.cell.boundary_points,
+                    false,
                 )
         }) {
             duplicate_cells_removed += 1;
             continue;
         }
         if let Some(opposite) = faces.iter().position(|existing: &ExactSimplifiedFaceCell| {
-            exact_boundary_loops_opposite_orientation(
+            exact_point_loops_match(
                 &existing.face.cell.boundary_points,
                 &face.cell.boundary_points,
+                true,
             )
         }) {
             faces.remove(opposite);
@@ -478,10 +486,30 @@ pub(crate) fn simplify_selected_cell_complex(
     interior_edges_removed += merged.interior_edges_removed;
     collinear_boundary_nodes_removed += merged.collinear_boundary_nodes_removed;
     zero_area_cells_removed += merged.zero_area_cells_removed;
-    let merged = merge_coplanar_same_label_faces_across_carriers(
+    let merged = merge_coplanar_face_pairs(
         faces,
         &mut blockers,
         remove_collinear_nodes,
+        |left, right, blockers| {
+            let left_label = (
+                left.face.cell.carrier.side,
+                region_label_key(left.face.source),
+                opposite_label_key(left.face.opposite),
+            );
+            let right_label = (
+                right.face.cell.carrier.side,
+                region_label_key(right.face.source),
+                opposite_label_key(right.face.opposite),
+            );
+            left_label == right_label
+                && left.face.cell.carrier.face != right.face.cell.carrier.face
+                && faces_share_reversed_exact_edge(left, right)
+                && face_boundaries_are_coplanar(
+                    &left.face.cell.boundary_points,
+                    &right.face.cell.boundary_points,
+                    blockers,
+                )
+        },
     );
     faces = merged.faces;
     interior_edges_removed += merged.interior_edges_removed;
@@ -491,8 +519,19 @@ pub(crate) fn simplify_selected_cell_complex(
         selected.operation,
         ExactBooleanOperation::SelectedRegions(_)
     ) {
-        let merged =
-            merge_coplanar_selected_output_faces(faces, &mut blockers, remove_collinear_nodes);
+        let merged = merge_coplanar_face_pairs(
+            faces,
+            &mut blockers,
+            remove_collinear_nodes,
+            |left, right, blockers| {
+                faces_share_reversed_exact_edge(left, right)
+                    && face_boundaries_are_coplanar(
+                        &left.face.cell.boundary_points,
+                        &right.face.cell.boundary_points,
+                        blockers,
+                    )
+            },
+        );
         faces = merged.faces;
         interior_edges_removed += merged.interior_edges_removed;
         collinear_boundary_nodes_removed += merged.collinear_boundary_nodes_removed;
@@ -501,7 +540,7 @@ pub(crate) fn simplify_selected_cell_complex(
 
     faces.sort_by_key(|face| {
         (
-            face.face.cell.carrier.side.sort_key(),
+            face.face.cell.carrier.side,
             face.face.cell.carrier.face,
             face.source_face,
         )
@@ -549,6 +588,11 @@ struct MergeSameLabelResult {
     zero_area_cells_removed: usize,
 }
 
+struct RetainedMergedFaceCounts {
+    collinear_boundary_nodes_removed: usize,
+    zero_area_cells_removed: usize,
+}
+
 fn merge_same_label_adjacent_faces(
     faces: Vec<ExactSimplifiedFaceCell>,
     blockers: &mut Vec<ExactArrangementBlocker>,
@@ -572,22 +616,16 @@ fn merge_same_label_adjacent_faces(
             continue;
         }
         match merge_same_label_group(group.clone()) {
-            Ok((mut merged, removed)) if removed > 0 => {
+            Ok((merged, removed)) if removed > 0 => {
                 interior_edges_removed += removed;
-                for mut face in merged.drain(..) {
-                    if remove_collinear_nodes {
-                        collinear_boundary_nodes_removed +=
-                            remove_collinear_boundary_nodes(&mut face.face, blockers);
-                    }
-                    match boundary_has_nonzero_area(&face.face.cell.boundary_points) {
-                        Ok(true) => {
-                            canonicalize_boundary_start(&mut face.face);
-                            merged_faces.push(face);
-                        }
-                        Ok(false) => zero_area_cells_removed += 1,
-                        Err(blocker) => blockers.push(blocker),
-                    }
-                }
+                let retained = retain_merged_faces(
+                    &mut merged_faces,
+                    merged,
+                    blockers,
+                    remove_collinear_nodes,
+                );
+                collinear_boundary_nodes_removed += retained.collinear_boundary_nodes_removed;
+                zero_area_cells_removed += retained.zero_area_cells_removed;
             }
             Ok((group, _)) => merged_faces.extend(group),
             Err(blocker) => {
@@ -605,19 +643,24 @@ fn merge_same_label_adjacent_faces(
     }
 }
 
-fn simplified_group_key(face: &ExactSimplifiedFaceCell) -> (usize, usize, usize, usize) {
+fn simplified_group_key(face: &ExactSimplifiedFaceCell) -> (MeshSide, usize, usize, usize) {
     (
-        face.face.cell.carrier.side.sort_key(),
+        face.face.cell.carrier.side,
         face.face.cell.carrier.face,
         region_label_key(face.face.source),
         opposite_label_key(face.face.opposite),
     )
 }
 
-fn merge_coplanar_same_label_faces_across_carriers(
+fn merge_coplanar_face_pairs(
     mut faces: Vec<ExactSimplifiedFaceCell>,
     blockers: &mut Vec<ExactArrangementBlocker>,
     remove_collinear_nodes: bool,
+    mut eligible: impl FnMut(
+        &ExactSimplifiedFaceCell,
+        &ExactSimplifiedFaceCell,
+        &mut Vec<ExactArrangementBlocker>,
+    ) -> bool,
 ) -> MergeSameLabelResult {
     let mut interior_edges_removed = 0;
     let mut collinear_boundary_nodes_removed = 0;
@@ -627,48 +670,24 @@ fn merge_coplanar_same_label_faces_across_carriers(
         changed = false;
         'pairs: for left in 0..faces.len() {
             for right in (left + 1)..faces.len() {
-                let left_label = (
-                    faces[left].face.cell.carrier.side.sort_key(),
-                    region_label_key(faces[left].face.source),
-                    opposite_label_key(faces[left].face.opposite),
-                );
-                let right_label = (
-                    faces[right].face.cell.carrier.side.sort_key(),
-                    region_label_key(faces[right].face.source),
-                    opposite_label_key(faces[right].face.opposite),
-                );
-                if left_label != right_label
-                    || faces[left].face.cell.carrier.face == faces[right].face.cell.carrier.face
-                    || !faces_share_reversed_exact_edge(&faces[left], &faces[right])
-                    || !face_boundaries_are_coplanar(
-                        &faces[left].face.cell.boundary_points,
-                        &faces[right].face.cell.boundary_points,
-                        blockers,
-                    )
-                {
+                if !eligible(&faces[left], &faces[right], blockers) {
                     continue;
                 }
                 let pair = vec![faces[left].clone(), faces[right].clone()];
                 match merge_same_label_group(pair) {
-                    Ok((mut merged, removed)) if removed > 0 => {
-                        let right_face = faces.remove(right);
-                        let left_face = faces.remove(left);
-                        let _ = (left_face, right_face);
+                    Ok((merged, removed)) if removed > 0 => {
+                        faces.remove(right);
+                        faces.remove(left);
                         interior_edges_removed += removed;
-                        for mut face in merged.drain(..) {
-                            if remove_collinear_nodes {
-                                collinear_boundary_nodes_removed +=
-                                    remove_collinear_boundary_nodes(&mut face.face, blockers);
-                            }
-                            match boundary_has_nonzero_area(&face.face.cell.boundary_points) {
-                                Ok(true) => {
-                                    canonicalize_boundary_start(&mut face.face);
-                                    faces.push(face);
-                                }
-                                Ok(false) => zero_area_cells_removed += 1,
-                                Err(blocker) => blockers.push(blocker),
-                            }
-                        }
+                        let retained = retain_merged_faces(
+                            &mut faces,
+                            merged,
+                            blockers,
+                            remove_collinear_nodes,
+                        );
+                        collinear_boundary_nodes_removed +=
+                            retained.collinear_boundary_nodes_removed;
+                        zero_area_cells_removed += retained.zero_area_cells_removed;
                         changed = true;
                         break 'pairs;
                     }
@@ -686,61 +705,29 @@ fn merge_coplanar_same_label_faces_across_carriers(
     }
 }
 
-fn merge_coplanar_selected_output_faces(
-    mut faces: Vec<ExactSimplifiedFaceCell>,
+fn retain_merged_faces(
+    output: &mut Vec<ExactSimplifiedFaceCell>,
+    merged: Vec<ExactSimplifiedFaceCell>,
     blockers: &mut Vec<ExactArrangementBlocker>,
     remove_collinear_nodes: bool,
-) -> MergeSameLabelResult {
-    let mut interior_edges_removed = 0;
+) -> RetainedMergedFaceCounts {
     let mut collinear_boundary_nodes_removed = 0;
     let mut zero_area_cells_removed = 0;
-    let mut changed = true;
-    while changed {
-        changed = false;
-        'pairs: for left in 0..faces.len() {
-            for right in (left + 1)..faces.len() {
-                if !faces_share_reversed_exact_edge(&faces[left], &faces[right])
-                    || !face_boundaries_are_coplanar(
-                        &faces[left].face.cell.boundary_points,
-                        &faces[right].face.cell.boundary_points,
-                        blockers,
-                    )
-                {
-                    continue;
-                }
-                let pair = vec![faces[left].clone(), faces[right].clone()];
-                match merge_same_label_group(pair) {
-                    Ok((mut merged, removed)) if removed > 0 => {
-                        let right_face = faces.remove(right);
-                        let left_face = faces.remove(left);
-                        let _ = (left_face, right_face);
-                        interior_edges_removed += removed;
-                        for mut face in merged.drain(..) {
-                            if remove_collinear_nodes {
-                                collinear_boundary_nodes_removed +=
-                                    remove_collinear_boundary_nodes(&mut face.face, blockers);
-                            }
-                            match boundary_has_nonzero_area(&face.face.cell.boundary_points) {
-                                Ok(true) => {
-                                    canonicalize_boundary_start(&mut face.face);
-                                    faces.push(face);
-                                }
-                                Ok(false) => zero_area_cells_removed += 1,
-                                Err(blocker) => blockers.push(blocker),
-                            }
-                        }
-                        changed = true;
-                        break 'pairs;
-                    }
-                    Ok(_) => {}
-                    Err(blocker) => blockers.push(blocker),
-                }
+    for mut face in merged {
+        if remove_collinear_nodes {
+            collinear_boundary_nodes_removed +=
+                remove_collinear_boundary_nodes(&mut face.face, blockers);
+        }
+        match boundary_has_nonzero_area(&face.face.cell.boundary_points) {
+            Ok(true) => {
+                canonicalize_boundary_start(&mut face.face);
+                output.push(face);
             }
+            Ok(false) => zero_area_cells_removed += 1,
+            Err(blocker) => blockers.push(blocker),
         }
     }
-    MergeSameLabelResult {
-        faces,
-        interior_edges_removed,
+    RetainedMergedFaceCounts {
         collinear_boundary_nodes_removed,
         zero_area_cells_removed,
     }
@@ -1005,35 +992,6 @@ fn canonicalize_boundary_start(face: &mut ExactCellComplexFace) {
     }
 }
 
-fn exact_boundary_loops_same_orientation(left: &[Point3], right: &[Point3]) -> bool {
-    if left.len() != right.len() {
-        return false;
-    }
-    if left.is_empty() {
-        return true;
-    }
-    (0..right.len()).any(|offset| {
-        (0..left.len()).all(|index| {
-            point3_exact_equal(&left[index], &right[(offset + index) % right.len()]) == Some(true)
-        })
-    })
-}
-
-fn exact_boundary_loops_opposite_orientation(left: &[Point3], right: &[Point3]) -> bool {
-    if left.len() != right.len() {
-        return false;
-    }
-    if left.is_empty() {
-        return true;
-    }
-    (0..right.len()).any(|offset| {
-        (0..left.len()).all(|index| {
-            let right_index = (offset + right.len() - index) % right.len();
-            point3_exact_equal(&left[index], &right[right_index]) == Some(true)
-        })
-    })
-}
-
 /// Triangulate selected cells into an exact mesh.
 ///
 /// The retained boundary of each selected face-cell is projected through a
@@ -1182,14 +1140,11 @@ pub(crate) fn triangulate_simplified_cell_complex(
         }
         triangles = split;
     }
-    orient_paired_triangle_edges(&mut triangles)?;
-    let mut seen_triangle_vertex_sets = std::collections::BTreeSet::<[usize; 3]>::new();
-    triangles.retain(|triangle| {
-        let mut key = triangle.0;
-        key.sort_unstable();
-        seen_triangle_vertex_sets.insert(key)
-    });
-    orient_paired_triangle_edges(&mut triangles)?;
+    orient_paired_triangle_edges(&mut triangles)
+        .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+    remove_duplicate_triangle_vertex_sets(&mut triangles);
+    orient_paired_triangle_edges(&mut triangles)
+        .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
     let original_vertex_count = vertices.len();
     for vertex in 0..original_vertex_count {
         let incident = triangles
@@ -1266,13 +1221,15 @@ pub(crate) fn triangulate_simplified_cell_complex(
             }
         }
     }
-    orient_paired_triangle_edges(&mut triangles)?;
+    orient_paired_triangle_edges(&mut triangles)
+        .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
 
-    ExactMesh::new_with_policy(
+    ExactMesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact simplified arrangement cell complex"),
         ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        1,
     )
     .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)
 }
@@ -1388,93 +1345,6 @@ fn point3_axis_value(point: &Point3, axis: Point3CoordinateAxis) -> &Real {
         Point3CoordinateAxis::Y => &point.y,
         Point3CoordinateAxis::Z => &point.z,
     }
-}
-
-#[derive(Clone, Copy)]
-struct SimplifiedTriangleEdgeUse {
-    triangle: usize,
-    forward_with_key: bool,
-}
-
-#[derive(Clone, Copy)]
-struct SimplifiedTriangleOrientationConstraint {
-    triangle: usize,
-    flip_relative_to_current: bool,
-}
-
-fn orient_paired_triangle_edges(
-    triangles: &mut [Triangle],
-) -> Result<usize, ExactArrangementBlocker> {
-    let mut edge_uses =
-        std::collections::BTreeMap::<[usize; 2], Vec<SimplifiedTriangleEdgeUse>>::new();
-    for (triangle_index, triangle) in triangles.iter().enumerate() {
-        for edge in [
-            [triangle.0[0], triangle.0[1]],
-            [triangle.0[1], triangle.0[2]],
-            [triangle.0[2], triangle.0[0]],
-        ] {
-            let mut key = edge;
-            key.sort_unstable();
-            edge_uses
-                .entry(key)
-                .or_default()
-                .push(SimplifiedTriangleEdgeUse {
-                    triangle: triangle_index,
-                    forward_with_key: edge == key,
-                });
-        }
-    }
-    let mut adjacency =
-        vec![Vec::<SimplifiedTriangleOrientationConstraint>::new(); triangles.len()];
-    for uses in edge_uses.values() {
-        let [left, right] = uses.as_slice() else {
-            continue;
-        };
-        let same_direction = left.forward_with_key == right.forward_with_key;
-        adjacency[left.triangle].push(SimplifiedTriangleOrientationConstraint {
-            triangle: right.triangle,
-            flip_relative_to_current: same_direction,
-        });
-        adjacency[right.triangle].push(SimplifiedTriangleOrientationConstraint {
-            triangle: left.triangle,
-            flip_relative_to_current: same_direction,
-        });
-    }
-
-    let mut flips = vec![None; triangles.len()];
-    for start in 0..triangles.len() {
-        if flips[start].is_some() {
-            continue;
-        }
-        flips[start] = Some(false);
-        let mut stack = vec![start];
-        while let Some(triangle) = stack.pop() {
-            let current_flip =
-                flips[triangle].ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
-            for constraint in &adjacency[triangle] {
-                let required = current_flip ^ constraint.flip_relative_to_current;
-                match flips[constraint.triangle] {
-                    Some(existing) if existing != required => {
-                        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
-                    }
-                    Some(_) => {}
-                    None => {
-                        flips[constraint.triangle] = Some(required);
-                        stack.push(constraint.triangle);
-                    }
-                }
-            }
-        }
-    }
-
-    let mut flipped = 0;
-    for (triangle, flip) in triangles.iter_mut().zip(flips) {
-        if flip == Some(true) {
-            triangle.0.swap(1, 2);
-            flipped += 1;
-        }
-    }
-    Ok(flipped)
 }
 
 #[cfg(test)]

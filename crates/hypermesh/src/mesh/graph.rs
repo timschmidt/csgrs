@@ -24,9 +24,9 @@ use hyperlimit::{
     project_point3, projected_line_parameter3, projected_segment_parameter3,
 };
 
-use super::bounds::{ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT, try_visit_candidate_face_pairs_one_shot};
+use super::bounds::try_visit_candidate_face_pairs_one_shot;
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide};
-use super::view::PreparedMeshPair;
+use super::prepared::PreparedMeshPair;
 use super::{ExactMesh, point3_exact_equal, triangle_edges};
 use hyperlimit::{CoplanarProjection, CoplanarTriangleClassification};
 use hyperreal::Real;
@@ -36,7 +36,7 @@ use intersection::{
 use key::{ExactPoint3Key, exact_point3_key};
 
 /// Side of a two-mesh graph event.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub(crate) enum MeshSide {
     /// The first mesh passed to graph construction.
     Left,
@@ -49,13 +49,6 @@ impl MeshSide {
         match self {
             Self::Left => left,
             Self::Right => right,
-        }
-    }
-
-    pub(crate) const fn sort_key(self) -> usize {
-        match self {
-            Self::Left => 0,
-            Self::Right => 1,
         }
     }
 }
@@ -449,21 +442,6 @@ impl CoplanarOverlapGraph {
         } else {
             Err(CoplanarOverlapGraphValidationError::SourceReplayMismatch)
         }
-    }
-
-    /// Construct exact point/interval records for this coplanar overlap graph.
-    ///
-    /// This is still a pre-topology artifact. It constructs point events for
-    /// proper crossings and endpoint touches, and explicitly marks collinear
-    /// interval contacts as interval topology for a later exact planar
-    /// discipline: keep construction evidence with the graph instead of using
-    /// projected predicate labels as if they were enough to mutate topology.
-    pub fn split_constructions(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<CoplanarOverlapSplitGraph, ExactMeshError> {
-        coplanar_overlap_split_graph(self, left, right)
     }
 }
 
@@ -889,11 +867,19 @@ impl FacePairEvents {
 }
 
 /// Exact intersection event graph for two meshes.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub(crate) struct ExactIntersectionGraph {
     /// Retained face-pair event records.
     pub face_pairs: Vec<FacePairEvents>,
+    /// Whether this graph has replayed successfully against its source meshes.
+    pub(crate) source_replay_validated: bool,
     summary: ExactIntersectionGraphSummary,
+}
+
+impl PartialEq for ExactIntersectionGraph {
+    fn eq(&self, other: &Self) -> bool {
+        self.face_pairs == other.face_pairs && self.summary == other.summary
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -926,6 +912,7 @@ impl ExactIntersectionGraph {
 
         Self {
             face_pairs,
+            source_replay_validated: false,
             summary: ExactIntersectionGraphSummary {
                 event_count,
                 has_unknowns,
@@ -1014,7 +1001,7 @@ impl ExactIntersectionGraph {
     ) -> Result<CoplanarOverlapSplitPlan, ExactMeshError> {
         let mut split_graphs = Vec::with_capacity(self.summary.coplanar_overlap_graph_count);
         for graph in self.coplanar_overlap_graph_iter() {
-            split_graphs.push(graph.split_constructions(left, right)?);
+            split_graphs.push(coplanar_overlap_split_graph(&graph, left, right)?);
         }
         Ok(CoplanarOverlapSplitPlan {
             graphs: split_graphs,
@@ -1069,7 +1056,7 @@ impl ExactIntersectionGraph {
             edge_overlap_count += graph.edge_overlaps.len();
             vertex_overlap_count += graph.vertex_overlaps.len();
 
-            let split = graph.split_constructions(left, right)?;
+            let split = coplanar_overlap_split_graph(&graph, left, right)?;
             split
                 .validate_against_meshes(left, right)
                 .map_err(|error| {
@@ -1118,38 +1105,6 @@ impl ExactIntersectionGraph {
         Ok(report)
     }
 
-    /// Extract exact edge split parameters from segment/plane events.
-    ///
-    /// The plan keeps split points grouped by directed mesh edge. Parameters
-    /// are sorted only through `hyperlimit::compare_reals`; unresolved
-    /// comparisons are counted rather than replaced with a primitive-float
-    /// fallback.
-    pub fn edge_split_plan(&self) -> ExactEdgeSplitPlan {
-        edge_split_plan(self)
-    }
-
-    /// Merge coincident exact split points into graph vertices.
-    ///
-    /// Equality is tested coordinate-by-coordinate through
-    /// `hyperlimit::compare_reals`. Unknown comparisons do not merge points;
-    /// they increment [`ExactGraphVertexPlan::unresolved_equalities`] so a
-    /// caller can choose a refinement or unsupported-degeneracy policy.
-    #[cfg(test)]
-    pub fn graph_vertex_plan(&self) -> ExactGraphVertexPlan {
-        graph_vertex_plan(&self.edge_split_plan())
-    }
-
-    /// Build a non-mutating split-topology plan.
-    ///
-    /// The plan maps each split edge to an ordered chain from the original
-    /// start vertex through merged exact graph vertices to the original end
-    /// vertex. It is deliberately still a plan, not a halfedge mutation.
-    pub fn split_topology_plan(&self) -> ExactSplitTopologyPlan {
-        let edge_splits = self.edge_split_plan();
-        let graph_vertices = graph_vertex_plan(&edge_splits);
-        split_topology_plan(&edge_splits, &graph_vertices)
-    }
-
     /// Build a non-mutating split-topology plan after validating split events.
     ///
     /// This checked entry point enforces the edge-split handoff contract before
@@ -1161,33 +1116,55 @@ impl ExactIntersectionGraph {
     pub fn checked_split_topology_plan(
         &self,
     ) -> Result<ExactSplitTopologyPlan, SplitPlanValidationReport> {
-        let edge_splits = self.edge_split_plan();
-        let edge_report = edge_splits.validate();
+        let edge_splits = edge_split_plan(self);
+        let edge_report = validate_edge_split_plan(&edge_splits);
         if !edge_report.blockers.is_empty() {
             return Err(edge_report);
         }
         let graph_vertices = graph_vertex_plan(&edge_splits);
-        let graph_report = graph_vertices.validate();
+        let graph_report = {
+            let mut blockers = Vec::new();
+            for _ in 0..graph_vertices.unresolved_equalities {
+                blockers.push(SplitPlanBlocker::new(
+                    SplitPlanBlockerKind::UnresolvedEquality,
+                    "graph-vertex equality could not be certified",
+                ));
+            }
+            for index in 0..graph_vertices.vertices.len() {
+                let vertex = &graph_vertices.vertices[index];
+                if vertex.uses.is_empty() {
+                    blockers.push(SplitPlanBlocker {
+                        graph_vertex: Some(index),
+                        ..SplitPlanBlocker::new(
+                            SplitPlanBlockerKind::EmptyGraphVertexUses,
+                            "graph vertex has no exact source uses",
+                        )
+                    });
+                    continue;
+                }
+                for vertex_use in &vertex.uses {
+                    push_graph_vertex_source_use_blockers(
+                        &mut blockers,
+                        index,
+                        vertex_use,
+                        "graph vertex source use determinant ratio does not match its parameter",
+                        "graph vertex source use was not certified by opposite strict endpoint sides",
+                        "graph vertex source use is missing endpoint side facts",
+                    );
+                }
+            }
+            SplitPlanValidationReport { blockers }
+        };
         if !graph_report.blockers.is_empty() {
             return Err(graph_report);
         }
         let topology = split_topology_plan(&edge_splits, &graph_vertices);
-        let topology_report = topology.validate();
+        let topology_report = validate_split_topology_plan(&topology);
         if topology_report.blockers.is_empty() {
             Ok(topology)
         } else {
             Err(topology_report)
         }
-    }
-
-    /// Build face-local split work items from the split topology plan.
-    ///
-    /// The result tells later triangulation which original face boundary edges
-    /// gained graph vertices. It does not infer a polygonization or winding
-    /// decision; those remain exact downstream steps.
-    #[cfg(test)]
-    pub fn face_split_plan(&self) -> ExactFaceSplitPlan {
-        face_split_plan(&self.split_topology_plan())
     }
 
     /// Build exact face-boundary geometry for later triangulation.
@@ -1205,7 +1182,7 @@ impl ExactIntersectionGraph {
             .checked_split_topology_plan()
             .map_err(split_plan_report_to_mesh_error)?;
         let face_plan = face_split_plan(&topology);
-        let face_report = face_plan.validate_against_topology(&topology);
+        let face_report = validate_face_split_plan(&face_plan, &topology);
         if !face_report.blockers.is_empty() {
             return Err(split_plan_report_to_mesh_error(face_report));
         }
@@ -1262,35 +1239,18 @@ pub(crate) fn build_unvalidated_intersection_graph(
             format!("exact mesh retained broad-phase certificate failed: {error:?}"),
         )));
     }
-    let face_pair_product = left
-        .facts()
-        .mesh
-        .face_count
-        .saturating_mul(right.facts().mesh.face_count);
-    if face_pair_product <= ONE_SHOT_QUADRATIC_FACE_PAIR_LIMIT {
-        let mut face_pairs =
-            Vec::with_capacity(if left.bounds().mesh_may_overlap(right.bounds()) {
-                face_pair_product
-            } else {
-                0
-            });
-        try_visit_candidate_face_pairs_one_shot(left.bounds(), right.bounds(), &mut |[
-            left_face,
-            right_face,
-        ]| {
-            let classification =
-                classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
-            if classification.needs_graph_construction() {
-                face_pairs.push(events_for_face_pair(left, right, &classification));
-            }
-            Ok::<(), ExactMeshError>(())
-        })?;
-        return Ok(ExactIntersectionGraph::from_face_pairs(face_pairs));
-    }
-
-    let pair = left.view().prepare_broad_phase_pair(right.view())?;
-    let graph = build_unvalidated_intersection_graph_from_prepared_pair_rc(&pair)?;
-    Ok(graph.as_ref().clone())
+    let mut face_pairs = Vec::new();
+    try_visit_candidate_face_pairs_one_shot(left.bounds(), right.bounds(), &mut |[
+        left_face,
+        right_face,
+    ]| {
+        let classification = classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
+        if classification.needs_graph_construction() {
+            face_pairs.push(events_for_face_pair(left, right, &classification));
+        }
+        Ok::<(), ExactMeshError>(())
+    })?;
+    Ok(ExactIntersectionGraph::from_face_pairs(face_pairs))
 }
 
 /// Build an exact event graph and replay it against the source meshes before use.
@@ -1298,7 +1258,7 @@ pub(crate) fn build_validated_intersection_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, ExactMeshError> {
-    let graph = build_unvalidated_intersection_graph(left, right)?;
+    let mut graph = build_unvalidated_intersection_graph(left, right)?;
     graph
         .validate_against_meshes(left, right)
         .map_err(|error| {
@@ -1307,6 +1267,7 @@ pub(crate) fn build_validated_intersection_graph(
                 format!("exact intersection graph failed source replay: {error:?}"),
             ))
         })?;
+    graph.source_replay_validated = true;
     Ok(graph)
 }
 
@@ -1318,9 +1279,9 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
         return Ok(graph);
     }
 
-    let left = pair.left_mesh();
-    let right = pair.right_mesh();
-    let mut face_pairs = Vec::with_capacity(pair.candidate_pair_capacity_hint());
+    let left = pair.left_view.mesh;
+    let right = pair.right_view.mesh;
+    let mut face_pairs = Vec::with_capacity(pair.candidate_pair_capacity_hint);
     pair.try_visit_candidate_face_pairs_uncached(&mut |[left_face, right_face]| {
         let classification = classify_mesh_face_pair_unchecked(left, left_face, right, right_face);
         if classification.needs_graph_construction() {
@@ -1330,19 +1291,6 @@ pub(crate) fn build_unvalidated_intersection_graph_from_prepared_pair_rc(
     })?;
     let graph = ExactIntersectionGraph::from_face_pairs(face_pairs);
     Ok(pair.retain_intersection_graph(graph))
-}
-
-/// Build an exact event graph from a retained prepared pair and validate retained source replay.
-pub(crate) fn build_validated_intersection_graph_from_prepared_pair(
-    pair: &PreparedMeshPair<'_, '_>,
-) -> Result<Rc<ExactIntersectionGraph>, ExactMeshError> {
-    if let Ok(graph) = pair.current_intersection_graph() {
-        return Ok(graph);
-    }
-
-    let graph = build_unvalidated_intersection_graph_from_prepared_pair_rc(pair)?;
-    pair.validate_retained_intersection_graph_source_replay(&graph)?;
-    Ok(graph)
 }
 
 /// Exact split points for one directed mesh edge.
@@ -1382,36 +1330,6 @@ pub(crate) struct ExactEdgeSplitPlan {
     pub unknown_orderings: usize,
 }
 
-impl ExactEdgeSplitPlan {
-    fn split_point_count(&self) -> usize {
-        self.splits.iter().map(|split| split.points.len()).sum()
-    }
-
-    /// Validate exact edge split events before graph-vertex merging.
-    ///
-    /// This is the first handoff after segment/plane construction. It keeps
-    /// point still carries certified opposite endpoint-side facts before later
-    /// stages collapse points into graph vertices and topology chains. See
-    pub fn validate(&self) -> SplitPlanValidationReport {
-        validate_edge_split_plan(self)
-    }
-
-    /// Validate edge split extraction by replaying from source operands.
-    ///
-    /// This rebuilds the exact intersection graph from `left` and `right`,
-    /// extracts its edge split plan, and compares it with this artifact after
-    /// local construction-fact validation. Replaying the first split handoff
-    /// keeps segment/plane certificates attached to their original operands,
-    #[cfg(test)]
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> SplitPlanValidationReport {
-        validate_edge_split_plan_against_sources(self, left, right)
-    }
-}
-
 /// One merged exact graph vertex.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ExactGraphVertex {
@@ -1447,49 +1365,6 @@ pub(crate) struct ExactGraphVertexPlan {
     pub vertices: Vec<ExactGraphVertex>,
     /// Equality checks that could not be certified.
     pub unresolved_equalities: usize,
-}
-
-impl ExactGraphVertexPlan {
-    /// Validate merged graph vertices before topology consumes them.
-    ///
-    /// The graph-vertex plan is the first place where multiple exact
-    /// facts instead of trusting the representative coordinate alone.
-    pub fn validate(&self) -> SplitPlanValidationReport {
-        let mut blockers = Vec::new();
-
-        for _ in 0..self.unresolved_equalities {
-            blockers.push(SplitPlanBlocker::new(
-                SplitPlanBlockerKind::UnresolvedEquality,
-                "graph-vertex equality could not be certified",
-            ));
-        }
-
-        for index in 0..self.vertices.len() {
-            let vertex = &self.vertices[index];
-            if vertex.uses.is_empty() {
-                let mut blocker = SplitPlanBlocker::new(
-                    SplitPlanBlockerKind::EmptyGraphVertexUses,
-                    "graph vertex has no exact source uses",
-                );
-                blocker.graph_vertex = Some(index);
-                blockers.push(blocker);
-                continue;
-            }
-
-            for vertex_use in &vertex.uses {
-                push_graph_vertex_source_use_blockers(
-                    &mut blockers,
-                    index,
-                    vertex_use,
-                    "graph vertex source use determinant ratio does not match its parameter",
-                    "graph vertex source use was not certified by opposite strict endpoint sides",
-                    "graph vertex source use is missing endpoint side facts",
-                );
-            }
-        }
-
-        SplitPlanValidationReport { blockers }
-    }
 }
 
 /// One node in an ordered split-edge chain.
@@ -1535,25 +1410,6 @@ pub(crate) struct ExactSplitTopologyPlan {
     pub unknown_orderings: usize,
 }
 
-impl ExactSplitTopologyPlan {
-    /// Count new graph vertices referenced by all split edge chains.
-    pub fn referenced_graph_vertices(&self) -> usize {
-        self.edge_chains
-            .iter()
-            .flat_map(|chain| chain.nodes.iter())
-            .filter(|node| matches!(node, SplitEdgeNode::GraphVertex { .. }))
-            .count()
-    }
-
-    /// Validate the non-mutating split-topology contract.
-    ///
-    /// events from combinatorial edits. This report is the handoff check: it
-    /// rejects unresolved exact comparisons and malformed chain references
-    pub fn validate(&self) -> SplitPlanValidationReport {
-        validate_split_topology_plan(self)
-    }
-}
-
 /// One split edge chain as used by an affected face.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct FaceSplitEdge {
@@ -1579,39 +1435,6 @@ pub(crate) struct FaceSplitPlan {
 pub(crate) struct ExactFaceSplitPlan {
     /// Per-face split work items.
     pub faces: Vec<FaceSplitPlan>,
-}
-
-impl ExactFaceSplitPlan {
-    /// Validate face-local split work items against a split-topology plan.
-    ///
-    /// The face plan is still deliberately pre-triangulation: it only says
-    /// which original face boundary edges were split by exact graph vertices.
-    /// Validation keeps that narrow API honest by checking graph-vertex ranges,
-    /// duplicate face-edge instructions, and that each referenced graph vertex
-    /// has an exact source use on the requested face edge whose retained
-    /// construction facts are still valid.
-    pub fn validate_against_topology(
-        &self,
-        topology: &ExactSplitTopologyPlan,
-    ) -> SplitPlanValidationReport {
-        validate_face_split_plan(self, topology)
-    }
-
-    /// Validate face-local split work items by replaying from source operands.
-    ///
-    /// [`Self::validate_against_topology`] is useful when a caller already has
-    /// a checked topology handoff. This source replay rebuilds the exact graph,
-    /// topology, and face-local work items from `left` and `right`, then
-    /// compares the rebuilt plan with this public artifact. That keeps the
-    /// copied face work list tied to the certified predicate/construction
-    #[cfg(test)]
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> SplitPlanValidationReport {
-        validate_face_split_plan_against_sources(self, left, right)
-    }
 }
 
 /// Stable category for split-plan validation blockers.
@@ -1702,26 +1525,6 @@ impl SplitPlanBlocker {
             edge: None,
             graph_vertex: None,
         }
-    }
-
-    const fn with_side(mut self, side: MeshSide) -> Self {
-        self.side = Some(side);
-        self
-    }
-
-    const fn with_face(mut self, face: usize) -> Self {
-        self.face = Some(face);
-        self
-    }
-
-    const fn with_edge(mut self, edge: [usize; 2]) -> Self {
-        self.edge = Some(edge);
-        self
-    }
-
-    const fn with_graph_vertex(mut self, graph_vertex: usize) -> Self {
-        self.graph_vertex = Some(graph_vertex);
-        self
     }
 }
 
@@ -1859,36 +1662,6 @@ pub(crate) struct ExactFaceSplitGeometryPlan {
 }
 
 impl ExactFaceSplitGeometryPlan {
-    /// Validate that every split boundary node lies on its original face plane.
-    ///
-    /// Segment/plane crossings create points that should be incident to the
-    /// face whose boundary they are splitting. This check replays that
-    /// incidence as exact `hyperlimit::orient3d_report` predicates rather than
-    pub fn validate_boundary_incidence(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> SplitPlanValidationReport {
-        validate_face_split_geometry_incidence(self, left, right)
-    }
-
-    /// Validate split-boundary geometry by replaying it from source operands.
-    ///
-    /// Boundary incidence proves that each retained point lies on the source
-    /// face plane. This check also rebuilds the exact intersection graph,
-    /// topology, and split-boundary geometry from `left` and `right`, then
-    /// compares the rebuilt artifact with this value. The replay boundary is
-    /// combinatorics are consumed only with their certified construction
-    /// history still attached to the original operands.
-    #[cfg(test)]
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> SplitPlanValidationReport {
-        validate_face_split_geometry_against_sources(self, left, right)
-    }
-
     /// Build full face-region boundary loops for downstream exact triangulation.
     ///
     /// The geometry handoff stores only split edge chains. This method expands
@@ -1971,35 +1744,6 @@ pub(crate) struct FaceRegionBoundary {
 pub(crate) struct ExactFaceRegionPlan {
     /// One boundary loop per affected source face.
     pub regions: Vec<FaceRegionBoundary>,
-}
-
-impl ExactFaceRegionPlan {
-    /// Validate boundary-loop structure and original-face incidence.
-    ///
-    /// Region loops are the direct input expected by exact triangulation. This
-    /// check rejects malformed loops and reuses exact plane-incidence
-    /// predicates so downstream triangulation does not inherit unchecked
-    /// construction assumptions.
-    pub fn validate(&self, left: &ExactMesh, right: &ExactMesh) -> SplitPlanValidationReport {
-        validate_face_region_plan(self, left, right)
-    }
-
-    /// Validate this region plan by replaying it from its source operands.
-    ///
-    /// Local loop validation proves that boundary nodes are structurally usable
-    /// and incident to their source face planes. This stronger check rebuilds
-    /// the exact intersection graph, split topology, split boundary geometry,
-    /// and final region loops from `left` and `right`, then requires the public
-    /// algorithms should pass certified algebraic artifacts across topology
-    /// boundaries instead of trusting copied combinatorial state.
-    #[cfg(test)]
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> SplitPlanValidationReport {
-        validate_face_region_plan_against_sources(self, left, right)
-    }
 }
 
 fn events_for_face_pair(
@@ -2087,7 +1831,7 @@ fn events_for_face_pair(
 }
 
 fn edge_split_plan(graph: &ExactIntersectionGraph) -> ExactEdgeSplitPlan {
-    let mut grouped = BTreeMap::<(usize, usize, usize), EdgeSplit>::new();
+    let mut grouped = BTreeMap::<(MeshSide, usize, usize), EdgeSplit>::new();
     for pair in &graph.face_pairs {
         for event in &pair.events {
             let IntersectionEvent::SegmentPlane {
@@ -2103,7 +1847,7 @@ fn edge_split_plan(graph: &ExactIntersectionGraph) -> ExactEdgeSplitPlan {
             else {
                 continue;
             };
-            let key = (segment_side.sort_key(), edge[0], edge[1]);
+            let key = (*segment_side, edge[0], edge[1]);
             grouped
                 .entry(key)
                 .or_insert_with(|| EdgeSplit {
@@ -2143,7 +1887,11 @@ fn edge_split_plan(graph: &ExactIntersectionGraph) -> ExactEdgeSplitPlan {
 }
 
 fn graph_vertex_plan(split_plan: &ExactEdgeSplitPlan) -> ExactGraphVertexPlan {
-    let split_point_count = split_plan.split_point_count();
+    let split_point_count = split_plan
+        .splits
+        .iter()
+        .map(|split| split.points.len())
+        .sum();
     let mut vertices = Vec::<ExactGraphVertex>::with_capacity(split_point_count);
     let mut point_key_buckets = BTreeMap::<ExactPoint3Key, Vec<usize>>::new();
     let mut unkeyed_vertices = Vec::<usize>::with_capacity(split_point_count);
@@ -2236,38 +1984,38 @@ fn push_graph_vertex_source_use_blockers(
     // construction object, not only the rounded coordinate it produced. Every
     // later graph/topology handoff therefore rechecks the determinant ratio and
     if !ratio_matches_parameter(&vertex_use.parameter_ratio, &vertex_use.parameter) {
-        blockers.push(
-            SplitPlanBlocker::new(
+        blockers.push(SplitPlanBlocker {
+            graph_vertex: Some(graph_vertex),
+            side: Some(vertex_use.side),
+            edge: Some(vertex_use.edge),
+            ..SplitPlanBlocker::new(
                 SplitPlanBlockerKind::InvalidConstructionRatio,
                 ratio_message,
             )
-            .with_side(vertex_use.side)
-            .with_edge(vertex_use.edge)
-            .with_graph_vertex(graph_vertex),
-        );
+        });
     }
 
     match vertex_use.endpoint_sides {
         [Some(PlaneSide::Above), Some(PlaneSide::Below)]
         | [Some(PlaneSide::Below), Some(PlaneSide::Above)] => {}
-        [Some(_), Some(_)] => blockers.push(
-            SplitPlanBlocker::new(
+        [Some(_), Some(_)] => blockers.push(SplitPlanBlocker {
+            graph_vertex: Some(graph_vertex),
+            side: Some(vertex_use.side),
+            edge: Some(vertex_use.edge),
+            ..SplitPlanBlocker::new(
                 SplitPlanBlockerKind::NonCrossingEndpointSideFacts,
                 non_crossing_message,
             )
-            .with_side(vertex_use.side)
-            .with_edge(vertex_use.edge)
-            .with_graph_vertex(graph_vertex),
-        ),
-        _ => blockers.push(
-            SplitPlanBlocker::new(
+        }),
+        _ => blockers.push(SplitPlanBlocker {
+            graph_vertex: Some(graph_vertex),
+            side: Some(vertex_use.side),
+            edge: Some(vertex_use.edge),
+            ..SplitPlanBlocker::new(
                 SplitPlanBlockerKind::MissingEndpointSideFacts,
                 missing_message,
             )
-            .with_side(vertex_use.side)
-            .with_edge(vertex_use.edge)
-            .with_graph_vertex(graph_vertex),
-        ),
+        }),
     }
 }
 
@@ -2566,7 +2314,9 @@ fn split_topology_plan(
     }
 }
 
-fn validate_edge_split_plan(split_plan: &ExactEdgeSplitPlan) -> SplitPlanValidationReport {
+pub(crate) fn validate_edge_split_plan(
+    split_plan: &ExactEdgeSplitPlan,
+) -> SplitPlanValidationReport {
     let mut blockers = Vec::new();
 
     for _ in 0..split_plan.unknown_orderings {
@@ -2579,34 +2329,34 @@ fn validate_edge_split_plan(split_plan: &ExactEdgeSplitPlan) -> SplitPlanValidat
     for split in &split_plan.splits {
         for point in &split.points {
             if !ratio_matches_parameter(&point.parameter_ratio, &point.parameter) {
-                blockers.push(
-                    SplitPlanBlocker::new(
+                blockers.push(SplitPlanBlocker {
+                    side: Some(split.side),
+                    edge: Some(split.edge),
+                    ..SplitPlanBlocker::new(
                         SplitPlanBlockerKind::InvalidConstructionRatio,
                         "edge split point determinant ratio does not match its parameter",
                     )
-                    .with_side(split.side)
-                    .with_edge(split.edge),
-                );
+                });
             }
             match point.endpoint_sides {
                 [Some(PlaneSide::Above), Some(PlaneSide::Below)]
                 | [Some(PlaneSide::Below), Some(PlaneSide::Above)] => {}
-                [Some(_), Some(_)] => blockers.push(
-                    SplitPlanBlocker::new(
+                [Some(_), Some(_)] => blockers.push(SplitPlanBlocker {
+                    side: Some(split.side),
+                    edge: Some(split.edge),
+                    ..SplitPlanBlocker::new(
                         SplitPlanBlockerKind::NonCrossingEndpointSideFacts,
                         "edge split point was not certified by opposite strict endpoint sides",
                     )
-                    .with_side(split.side)
-                    .with_edge(split.edge),
-                ),
-                _ => blockers.push(
-                    SplitPlanBlocker::new(
+                }),
+                _ => blockers.push(SplitPlanBlocker {
+                    side: Some(split.side),
+                    edge: Some(split.edge),
+                    ..SplitPlanBlocker::new(
                         SplitPlanBlockerKind::MissingEndpointSideFacts,
                         "edge split point is missing endpoint side facts",
                     )
-                    .with_side(split.side)
-                    .with_edge(split.edge),
-                ),
+                }),
             }
         }
     }
@@ -2626,7 +2376,7 @@ fn validate_edge_split_plan_against_sources(
     }
 
     let replay =
-        build_unvalidated_intersection_graph(left, right).map(|graph| graph.edge_split_plan());
+        build_unvalidated_intersection_graph(left, right).map(|graph| edge_split_plan(&graph));
     match replay {
         Ok(replay) if replay == *split_plan => report,
         Ok(_) => {
@@ -2647,7 +2397,7 @@ fn validate_edge_split_plan_against_sources(
 }
 
 fn face_split_plan(topology: &ExactSplitTopologyPlan) -> ExactFaceSplitPlan {
-    let mut faces = BTreeMap::<(usize, usize), FaceSplitPlan>::new();
+    let mut faces = BTreeMap::<(MeshSide, usize), FaceSplitPlan>::new();
     for chain in &topology.edge_chains {
         let graph_vertices = chain
             .nodes
@@ -2671,7 +2421,7 @@ fn face_split_plan(topology: &ExactSplitTopologyPlan) -> ExactFaceSplitPlan {
             .collect::<BTreeSet<_>>();
         for face in face_indices {
             faces
-                .entry((chain.side.sort_key(), face))
+                .entry((chain.side, face))
                 .or_insert_with(|| FaceSplitPlan {
                     side: chain.side,
                     face,
@@ -2689,7 +2439,9 @@ fn face_split_plan(topology: &ExactSplitTopologyPlan) -> ExactFaceSplitPlan {
     }
 }
 
-fn validate_split_topology_plan(topology: &ExactSplitTopologyPlan) -> SplitPlanValidationReport {
+pub(crate) fn validate_split_topology_plan(
+    topology: &ExactSplitTopologyPlan,
+) -> SplitPlanValidationReport {
     let mut blockers = Vec::new();
 
     for _ in 0..topology.unknown_orderings {
@@ -2713,13 +2465,13 @@ fn validate_split_topology_plan(topology: &ExactSplitTopologyPlan) -> SplitPlanV
 
     for (index, vertex) in topology.graph_vertices.iter().enumerate() {
         if vertex.uses.is_empty() {
-            blockers.push(
-                SplitPlanBlocker::new(
+            blockers.push(SplitPlanBlocker {
+                graph_vertex: Some(index),
+                ..SplitPlanBlocker::new(
                     SplitPlanBlockerKind::EmptyGraphVertexUses,
                     "graph vertex has no exact source uses",
                 )
-                .with_graph_vertex(index),
-            );
+            });
         }
 
         for vertex_use in &vertex.uses {
@@ -2736,14 +2488,14 @@ fn validate_split_topology_plan(topology: &ExactSplitTopologyPlan) -> SplitPlanV
 
     for chain in &topology.edge_chains {
         if chain.nodes.len() < 2 {
-            blockers.push(
-                SplitPlanBlocker::new(
+            blockers.push(SplitPlanBlocker {
+                side: Some(chain.side),
+                edge: Some(chain.edge),
+                ..SplitPlanBlocker::new(
                     SplitPlanBlockerKind::EmptyOrShortEdgeChain,
                     "split edge chain does not connect both original endpoints",
                 )
-                .with_side(chain.side)
-                .with_edge(chain.edge),
-            );
+            });
             continue;
         }
 
@@ -2753,14 +2505,14 @@ fn validate_split_topology_plan(topology: &ExactSplitTopologyPlan) -> SplitPlanV
                 vertex: chain.edge[0],
             })
         {
-            blockers.push(
-                SplitPlanBlocker::new(
+            blockers.push(SplitPlanBlocker {
+                side: Some(chain.side),
+                edge: Some(chain.edge),
+                ..SplitPlanBlocker::new(
                     SplitPlanBlockerKind::WrongChainStart,
                     "split edge chain does not start at the directed edge start",
                 )
-                .with_side(chain.side)
-                .with_edge(chain.edge),
-            );
+            });
         }
 
         if chain.nodes.last()
@@ -2769,40 +2521,40 @@ fn validate_split_topology_plan(topology: &ExactSplitTopologyPlan) -> SplitPlanV
                 vertex: chain.edge[1],
             })
         {
-            blockers.push(
-                SplitPlanBlocker::new(
+            blockers.push(SplitPlanBlocker {
+                side: Some(chain.side),
+                edge: Some(chain.edge),
+                ..SplitPlanBlocker::new(
                     SplitPlanBlockerKind::WrongChainEnd,
                     "split edge chain does not end at the directed edge end",
                 )
-                .with_side(chain.side)
-                .with_edge(chain.edge),
-            );
+            });
         }
 
         for node in &chain.nodes {
             match node {
                 SplitEdgeNode::OriginalVertex { side, .. } if *side != chain.side => {
-                    blockers.push(
-                        SplitPlanBlocker::new(
+                    blockers.push(SplitPlanBlocker {
+                        side: Some(chain.side),
+                        edge: Some(chain.edge),
+                        ..SplitPlanBlocker::new(
                             SplitPlanBlockerKind::ChainSideMismatch,
                             "original vertex node is on a different mesh side from its chain",
                         )
-                        .with_side(chain.side)
-                        .with_edge(chain.edge),
-                    );
+                    });
                 }
                 SplitEdgeNode::GraphVertex { graph_vertex }
                     if *graph_vertex >= topology.graph_vertices.len() =>
                 {
-                    blockers.push(
-                        SplitPlanBlocker::new(
+                    blockers.push(SplitPlanBlocker {
+                        graph_vertex: Some(*graph_vertex),
+                        side: Some(chain.side),
+                        edge: Some(chain.edge),
+                        ..SplitPlanBlocker::new(
                             SplitPlanBlockerKind::GraphVertexOutOfRange,
                             "split edge chain references a missing graph vertex",
                         )
-                        .with_side(chain.side)
-                        .with_edge(chain.edge)
-                        .with_graph_vertex(*graph_vertex),
-                    );
+                    });
                 }
                 _ => {}
             }
@@ -2812,7 +2564,7 @@ fn validate_split_topology_plan(topology: &ExactSplitTopologyPlan) -> SplitPlanV
     SplitPlanValidationReport { blockers }
 }
 
-fn validate_face_split_plan(
+pub(crate) fn validate_face_split_plan(
     face_plan: &ExactFaceSplitPlan,
     topology: &ExactSplitTopologyPlan,
 ) -> SplitPlanValidationReport {
@@ -2820,54 +2572,54 @@ fn validate_face_split_plan(
 
     for face in &face_plan.faces {
         if face.edges.is_empty() {
-            blockers.push(
-                SplitPlanBlocker::new(
+            blockers.push(SplitPlanBlocker {
+                side: Some(face.side),
+                face: Some(face.face),
+                ..SplitPlanBlocker::new(
                     SplitPlanBlockerKind::EmptyFaceSplit,
                     "face split work item has no split edges",
                 )
-                .with_side(face.side)
-                .with_face(face.face),
-            );
+            });
         }
 
         let mut seen_edges = BTreeSet::new();
         for edge in &face.edges {
             if !seen_edges.insert(edge.edge) {
-                blockers.push(
-                    SplitPlanBlocker::new(
+                blockers.push(SplitPlanBlocker {
+                    side: Some(face.side),
+                    face: Some(face.face),
+                    edge: Some(edge.edge),
+                    ..SplitPlanBlocker::new(
                         SplitPlanBlockerKind::DuplicateFaceSplitEdge,
                         "face split work item repeats an original edge",
                     )
-                    .with_side(face.side)
-                    .with_face(face.face)
-                    .with_edge(edge.edge),
-                );
+                });
             }
 
             if edge.graph_vertices.is_empty() {
-                blockers.push(
-                    SplitPlanBlocker::new(
+                blockers.push(SplitPlanBlocker {
+                    side: Some(face.side),
+                    face: Some(face.face),
+                    edge: Some(edge.edge),
+                    ..SplitPlanBlocker::new(
                         SplitPlanBlockerKind::EmptyFaceSplitEdge,
                         "face split edge has no graph vertices",
                     )
-                    .with_side(face.side)
-                    .with_face(face.face)
-                    .with_edge(edge.edge),
-                );
+                });
             }
 
             for &graph_vertex in &edge.graph_vertices {
                 let Some(vertex) = topology.graph_vertices.get(graph_vertex) else {
-                    blockers.push(
-                        SplitPlanBlocker::new(
+                    blockers.push(SplitPlanBlocker {
+                        graph_vertex: Some(graph_vertex),
+                        side: Some(face.side),
+                        face: Some(face.face),
+                        edge: Some(edge.edge),
+                        ..SplitPlanBlocker::new(
                             SplitPlanBlockerKind::GraphVertexOutOfRange,
                             "face split edge references a missing graph vertex",
                         )
-                        .with_side(face.side)
-                        .with_face(face.face)
-                        .with_edge(edge.edge)
-                        .with_graph_vertex(graph_vertex),
-                    );
+                    });
                     continue;
                 };
 
@@ -2893,16 +2645,16 @@ fn validate_face_split_plan(
                 }
 
                 if !matched_source {
-                    blockers.push(
-                        SplitPlanBlocker::new(
+                    blockers.push(SplitPlanBlocker {
+                        graph_vertex: Some(graph_vertex),
+                        side: Some(face.side),
+                        face: Some(face.face),
+                        edge: Some(edge.edge),
+                        ..SplitPlanBlocker::new(
                             SplitPlanBlockerKind::MissingFaceSplitSourceUse,
                             "face split edge graph vertex has no exact source use on this face edge",
                         )
-                        .with_side(face.side)
-                        .with_face(face.face)
-                        .with_edge(edge.edge)
-                        .with_graph_vertex(graph_vertex),
-                    );
+                    });
                 }
             }
         }
@@ -2917,10 +2669,11 @@ fn validate_face_split_plan_against_sources(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> SplitPlanValidationReport {
-    let topology = match build_unvalidated_intersection_graph(left, right)
-        .map(|graph| graph.split_topology_plan())
-    {
-        Ok(topology) => topology,
+    let topology = match build_unvalidated_intersection_graph(left, right) {
+        Ok(graph) => match graph.checked_split_topology_plan() {
+            Ok(topology) => topology,
+            Err(report) => return report,
+        },
         Err(error) => {
             return SplitPlanValidationReport {
                 blockers: vec![SplitPlanBlocker::new(
@@ -2955,7 +2708,7 @@ fn face_split_geometry_plan(
     let chains = topology
         .edge_chains
         .iter()
-        .map(|chain| ((chain.side.sort_key(), chain.edge[0], chain.edge[1]), chain))
+        .map(|chain| ((chain.side, chain.edge[0], chain.edge[1]), chain))
         .collect::<BTreeMap<_, _>>();
 
     let mut faces = Vec::with_capacity(face_plan.faces.len());
@@ -2974,7 +2727,7 @@ fn face_split_geometry_plan(
         let mut boundary_chains = Vec::with_capacity(face.edges.len());
         for edge in &face.edges {
             let chain = chains
-                .get(&(face.side.sort_key(), edge.edge[0], edge.edge[1]))
+                .get(&(face.side, edge.edge[0], edge.edge[1]))
                 .ok_or_else(|| {
                     ExactMeshError::one(
                         ExactMeshBlocker::new(
@@ -3061,7 +2814,7 @@ fn face_split_geometry_plan(
     Ok(ExactFaceSplitGeometryPlan { faces })
 }
 
-fn validate_face_split_geometry_incidence(
+pub(crate) fn validate_face_split_geometry_incidence(
     geometry: &ExactFaceSplitGeometryPlan,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3071,39 +2824,39 @@ fn validate_face_split_geometry_incidence(
     for face in &geometry.faces {
         let mesh = face.side.mesh(left, right);
         let Some(face_facts) = mesh.facts().faces.get(face.face) else {
-            blockers.push(
-                SplitPlanBlocker::new(
+            blockers.push(SplitPlanBlocker {
+                side: Some(face.side),
+                face: Some(face.face),
+                ..SplitPlanBlocker::new(
                     SplitPlanBlockerKind::GraphVertexOutOfRange,
                     "split-face geometry references a missing retained face fact",
                 )
-                .with_side(face.side)
-                .with_face(face.face),
-            );
+            });
             continue;
         };
 
         let triangle = face_facts.triangle.vertices;
         if face.triangle != triangle {
-            blockers.push(
-                SplitPlanBlocker::new(
+            blockers.push(SplitPlanBlocker {
+                side: Some(face.side),
+                face: Some(face.face),
+                ..SplitPlanBlocker::new(
                     SplitPlanBlockerKind::SourceTriangleMismatch,
                     "split-face geometry source triangle does not match its source face",
                 )
-                .with_side(face.side)
-                .with_face(face.face),
-            );
+            });
             continue;
         }
 
         if face.boundary_chains.is_empty() {
-            blockers.push(
-                SplitPlanBlocker::new(
+            blockers.push(SplitPlanBlocker {
+                side: Some(face.side),
+                face: Some(face.face),
+                ..SplitPlanBlocker::new(
                     SplitPlanBlockerKind::EmptyFaceSplit,
                     "split-face geometry has no retained boundary chains",
                 )
-                .with_side(face.side)
-                .with_face(face.face),
-            );
+            });
         }
 
         let triangle_edge_set = triangle_edges(triangle)
@@ -3115,26 +2868,26 @@ fn validate_face_split_geometry_incidence(
         let c = mesh.vertices()[triangle[2]].clone();
         for chain in &face.boundary_chains {
             if !seen_edges.insert(chain.edge) {
-                blockers.push(
-                    SplitPlanBlocker::new(
+                blockers.push(SplitPlanBlocker {
+                    side: Some(face.side),
+                    face: Some(face.face),
+                    edge: Some(chain.edge),
+                    ..SplitPlanBlocker::new(
                         SplitPlanBlockerKind::DuplicateFaceSplitEdge,
                         "split-face geometry repeats a retained boundary chain edge",
                     )
-                    .with_side(face.side)
-                    .with_face(face.face)
-                    .with_edge(chain.edge),
-                );
+                });
             }
             if !triangle_edge_set.contains(&chain.edge) {
-                blockers.push(
-                    SplitPlanBlocker::new(
+                blockers.push(SplitPlanBlocker {
+                    side: Some(face.side),
+                    face: Some(face.face),
+                    edge: Some(chain.edge),
+                    ..SplitPlanBlocker::new(
                         SplitPlanBlockerKind::BoundaryChainEdgeNotOnTriangle,
                         "split-face geometry boundary chain edge is not on its source triangle",
                     )
-                    .with_side(face.side)
-                    .with_face(face.face)
-                    .with_edge(chain.edge),
-                );
+                });
                 continue;
             }
             validate_face_split_boundary_chain_shape(
@@ -3148,24 +2901,24 @@ fn validate_face_split_geometry_incidence(
                 let point = boundary_node_point(node);
                 match orient3d_report(&a, &b, &c, point).value() {
                     Some(Sign::Zero) => {}
-                    Some(Sign::Negative | Sign::Positive) => blockers.push(
-                        SplitPlanBlocker::new(
+                    Some(Sign::Negative | Sign::Positive) => blockers.push(SplitPlanBlocker {
+                        side: Some(face.side),
+                        face: Some(face.face),
+                        edge: Some(chain.edge),
+                        ..SplitPlanBlocker::new(
                             SplitPlanBlockerKind::BoundaryNodeOffFacePlane,
                             "split boundary node is not incident to its original face plane",
                         )
-                        .with_side(face.side)
-                        .with_face(face.face)
-                        .with_edge(chain.edge),
-                    ),
-                    None => blockers.push(
-                        SplitPlanBlocker::new(
+                    }),
+                    None => blockers.push(SplitPlanBlocker {
+                        side: Some(face.side),
+                        face: Some(face.face),
+                        edge: Some(chain.edge),
+                        ..SplitPlanBlocker::new(
                             SplitPlanBlockerKind::UnknownBoundaryIncidence,
                             "split boundary node incidence could not be certified",
                         )
-                        .with_side(face.side)
-                        .with_face(face.face)
-                        .with_edge(chain.edge),
-                    ),
+                    }),
                 }
             }
         }
@@ -3182,15 +2935,15 @@ fn validate_face_split_boundary_chain_shape(
     chain: &FaceSplitBoundaryChain,
 ) {
     if chain.nodes.len() < 2 {
-        blockers.push(
-            SplitPlanBlocker::new(
+        blockers.push(SplitPlanBlocker {
+            side: Some(side),
+            face: Some(face),
+            edge: Some(chain.edge),
+            ..SplitPlanBlocker::new(
                 SplitPlanBlockerKind::EmptyOrShortEdgeChain,
                 "split-face geometry boundary chain does not connect both edge endpoints",
             )
-            .with_side(side)
-            .with_face(face)
-            .with_edge(chain.edge),
-        );
+        });
         return;
     }
 
@@ -3204,15 +2957,15 @@ fn validate_face_split_boundary_chain_shape(
         | None => None,
     };
     if actual_start != expected_start {
-        blockers.push(
-            SplitPlanBlocker::new(
+        blockers.push(SplitPlanBlocker {
+            side: Some(side),
+            face: Some(face),
+            edge: Some(chain.edge),
+            ..SplitPlanBlocker::new(
                 SplitPlanBlockerKind::WrongChainStart,
                 "split-face geometry boundary chain does not start at its source edge start",
             )
-            .with_side(side)
-            .with_face(face)
-            .with_edge(chain.edge),
-        );
+        });
     }
     let actual_end = match chain.nodes.last() {
         Some(FaceSplitBoundaryNode::OriginalVertex { vertex, .. }) => Some(*vertex),
@@ -3222,15 +2975,15 @@ fn validate_face_split_boundary_chain_shape(
         | None => None,
     };
     if actual_end != expected_end {
-        blockers.push(
-            SplitPlanBlocker::new(
+        blockers.push(SplitPlanBlocker {
+            side: Some(side),
+            face: Some(face),
+            edge: Some(chain.edge),
+            ..SplitPlanBlocker::new(
                 SplitPlanBlockerKind::WrongChainEnd,
                 "split-face geometry boundary chain does not end at its source edge end",
             )
-            .with_side(side)
-            .with_face(face)
-            .with_edge(chain.edge),
-        );
+        });
     }
 
     for node in &chain.nodes {
@@ -3238,27 +2991,27 @@ fn validate_face_split_boundary_chain_shape(
             continue;
         };
         let Some(source_point) = mesh.vertices().get(*vertex) else {
-            blockers.push(
-                SplitPlanBlocker::new(
+            blockers.push(SplitPlanBlocker {
+                side: Some(side),
+                face: Some(face),
+                edge: Some(chain.edge),
+                ..SplitPlanBlocker::new(
                     SplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange,
                     "split-face geometry boundary node references a missing source vertex",
                 )
-                .with_side(side)
-                .with_face(face)
-                .with_edge(chain.edge),
-            );
+            });
             continue;
         };
         if point3_exact_equal(point, source_point) != Some(true) {
-            blockers.push(
-                SplitPlanBlocker::new(
+            blockers.push(SplitPlanBlocker {
+                side: Some(side),
+                face: Some(face),
+                edge: Some(chain.edge),
+                ..SplitPlanBlocker::new(
                     SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch,
                     "split-face geometry original boundary node point does not match its source vertex",
                 )
-                .with_side(side)
-                .with_face(face)
-                .with_edge(chain.edge),
-            );
+            });
         }
     }
 }
@@ -3295,7 +3048,7 @@ fn validate_face_split_geometry_against_sources(
     }
 }
 
-fn validate_face_region_plan(
+pub(crate) fn validate_face_region_plan(
     plan: &ExactFaceRegionPlan,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3303,26 +3056,26 @@ fn validate_face_region_plan(
     let mut blockers = Vec::new();
     for region in &plan.regions {
         if region.boundary.len() < 3 {
-            blockers.push(
-                SplitPlanBlocker::new(
+            blockers.push(SplitPlanBlocker {
+                side: Some(region.side),
+                face: Some(region.face),
+                ..SplitPlanBlocker::new(
                     SplitPlanBlockerKind::EmptyOrShortRegionBoundary,
                     "face region boundary has fewer than three nodes",
                 )
-                .with_side(region.side)
-                .with_face(region.face),
-            );
+            });
         }
 
         for window in region.boundary.windows(2) {
             if boundary_nodes_equal(&window[0], &window[1]) == Some(true) {
-                blockers.push(
-                    SplitPlanBlocker::new(
+                blockers.push(SplitPlanBlocker {
+                    side: Some(region.side),
+                    face: Some(region.face),
+                    ..SplitPlanBlocker::new(
                         SplitPlanBlockerKind::DuplicateConsecutiveRegionNode,
                         "face region boundary contains consecutive duplicate nodes",
                     )
-                    .with_side(region.side)
-                    .with_face(region.face),
-                );
+                });
             }
         }
         if region
@@ -3331,39 +3084,39 @@ fn validate_face_region_plan(
             .zip(region.boundary.last())
             .is_some_and(|(first, last)| boundary_nodes_equal(first, last) == Some(true))
         {
-            blockers.push(
-                SplitPlanBlocker::new(
+            blockers.push(SplitPlanBlocker {
+                side: Some(region.side),
+                face: Some(region.face),
+                ..SplitPlanBlocker::new(
                     SplitPlanBlockerKind::DuplicateConsecutiveRegionNode,
                     "face region boundary repeats its first node at the end",
                 )
-                .with_side(region.side)
-                .with_face(region.face),
-            );
+            });
         }
 
         let mesh = region.side.mesh(left, right);
         let Some(face_facts) = mesh.facts().faces.get(region.face) else {
-            blockers.push(
-                SplitPlanBlocker::new(
+            blockers.push(SplitPlanBlocker {
+                side: Some(region.side),
+                face: Some(region.face),
+                ..SplitPlanBlocker::new(
                     SplitPlanBlockerKind::GraphVertexOutOfRange,
                     "face region references a missing retained face fact",
                 )
-                .with_side(region.side)
-                .with_face(region.face),
-            );
+            });
             continue;
         };
 
         let triangle = face_facts.triangle.vertices;
         if region.triangle != triangle {
-            blockers.push(
-                SplitPlanBlocker::new(
+            blockers.push(SplitPlanBlocker {
+                side: Some(region.side),
+                face: Some(region.face),
+                ..SplitPlanBlocker::new(
                     SplitPlanBlockerKind::SourceTriangleMismatch,
                     "face region source triangle does not match its source face",
                 )
-                .with_side(region.side)
-                .with_face(region.face),
-            );
+            });
             continue;
         }
         validate_face_region_original_boundary_nodes(&mut blockers, mesh, region);
@@ -3374,22 +3127,22 @@ fn validate_face_region_plan(
             let point = boundary_node_point(node);
             match orient3d_report(&a, &b, &c, point).value() {
                 Some(Sign::Zero) => {}
-                Some(Sign::Negative | Sign::Positive) => blockers.push(
-                    SplitPlanBlocker::new(
+                Some(Sign::Negative | Sign::Positive) => blockers.push(SplitPlanBlocker {
+                    side: Some(region.side),
+                    face: Some(region.face),
+                    ..SplitPlanBlocker::new(
                         SplitPlanBlockerKind::BoundaryNodeOffFacePlane,
                         "face region boundary node is not incident to its source face plane",
                     )
-                    .with_side(region.side)
-                    .with_face(region.face),
-                ),
-                None => blockers.push(
-                    SplitPlanBlocker::new(
+                }),
+                None => blockers.push(SplitPlanBlocker {
+                    side: Some(region.side),
+                    face: Some(region.face),
+                    ..SplitPlanBlocker::new(
                         SplitPlanBlockerKind::UnknownBoundaryIncidence,
                         "face region boundary incidence could not be certified",
                     )
-                    .with_side(region.side)
-                    .with_face(region.face),
-                ),
+                }),
             }
         }
     }
@@ -3407,35 +3160,35 @@ fn validate_face_region_original_boundary_nodes(
             continue;
         };
         let Some(source_point) = mesh.vertices().get(*vertex) else {
-            blockers.push(
-                SplitPlanBlocker::new(
+            blockers.push(SplitPlanBlocker {
+                side: Some(region.side),
+                face: Some(region.face),
+                ..SplitPlanBlocker::new(
                     SplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange,
                     "face region original boundary node references a missing source vertex",
                 )
-                .with_side(region.side)
-                .with_face(region.face),
-            );
+            });
             continue;
         };
         if !region.triangle.contains(vertex) {
-            blockers.push(
-                SplitPlanBlocker::new(
+            blockers.push(SplitPlanBlocker {
+                side: Some(region.side),
+                face: Some(region.face),
+                ..SplitPlanBlocker::new(
                     SplitPlanBlockerKind::BoundaryNodeSourceVertexNotOnTriangle,
                     "face region original boundary node is not part of its source triangle",
                 )
-                .with_side(region.side)
-                .with_face(region.face),
-            );
+            });
         }
         if point3_exact_equal(point, source_point) != Some(true) {
-            blockers.push(
-                SplitPlanBlocker::new(
+            blockers.push(SplitPlanBlocker {
+                side: Some(region.side),
+                face: Some(region.face),
+                ..SplitPlanBlocker::new(
                     SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch,
                     "face region original boundary node point does not match its source vertex",
                 )
-                .with_side(region.side)
-                .with_face(region.face),
-            );
+            });
         }
     }
 }
@@ -3672,20 +3425,7 @@ fn validate_split_point_against_edges(
 fn coplanar_split_validation_mesh_error(
     error: CoplanarOverlapSplitValidationError,
 ) -> ExactMeshError {
-    ExactMeshError {
-        blockers: vec![ExactMeshBlocker::new(
-            coplanar_split_validation_mesh_kind(error),
-            format!(
-                "retained coplanar split construction failed source-edge validation: {error:?}"
-            ),
-        )],
-    }
-}
-
-fn coplanar_split_validation_mesh_kind(
-    error: CoplanarOverlapSplitValidationError,
-) -> ExactMeshBlockerKind {
-    match error {
+    let kind = match error {
         CoplanarOverlapSplitValidationError::UnknownSplitParameterOrder
         | CoplanarOverlapSplitValidationError::UnknownIntervalOrder
         | CoplanarOverlapSplitValidationError::UnknownSplitPointEquality => {
@@ -3713,6 +3453,14 @@ fn coplanar_split_validation_mesh_kind(
         | CoplanarOverlapSplitValidationError::DegenerateInterval => {
             ExactMeshBlockerKind::ExactConstructionFailure
         }
+    };
+    ExactMeshError {
+        blockers: vec![ExactMeshBlocker::new(
+            kind,
+            format!(
+                "retained coplanar split construction failed source-edge validation: {error:?}"
+            ),
+        )],
     }
 }
 

@@ -556,7 +556,7 @@ pub(crate) fn exact_mesh_orientation(mesh: &ExactMesh) -> ClosedMeshOrientation 
     }
 }
 
-fn determinant_from_origin(a: &Point3, b: &Point3, c: &Point3) -> Real {
+pub(crate) fn determinant_from_origin(a: &Point3, b: &Point3, c: &Point3) -> Real {
     let by_cz = &b.y * &c.z;
     let bz_cy = &b.z * &c.y;
     let bx_cz = &b.x * &c.z;

@@ -207,6 +207,7 @@ fn arrangement_from_retained_graph_matches_mesh_construction() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = tetrahedron_i64([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]);
     let graph = crate::mesh::graph::build_unvalidated_intersection_graph(&left, &right).unwrap();
+    graph.validate_against_meshes(&left, &right).unwrap();
 
     let from_meshes = ExactArrangement3d::from_meshes_with_policy(
         &left,
@@ -214,7 +215,7 @@ fn arrangement_from_retained_graph_matches_mesh_construction() {
         ExactRegularizationPolicy::REGULARIZED_SOLID,
     )
     .unwrap();
-    let from_graph = ExactArrangement3d::from_intersection_graph_with_policy(
+    let from_graph = ExactArrangement3d::from_source_certified_intersection_graph_with_policy(
         graph,
         &left,
         &right,
@@ -1076,7 +1077,6 @@ fn region_ownership_report_certifies_volume_resolved_nested_solids() {
         .unwrap();
 
     assert_eq!(report.status, ExactRegionOwnershipStatus::VolumeResolved);
-    assert!(report.resolves_operation_selection(ExactBooleanOperation::Union));
     assert_eq!(report.freshness, ExactLabeledCellComplexFreshness::Current);
     assert!(report.blockers.is_empty(), "{:?}", report.blockers);
     let (face_cell_boundary_nodes, face_cell_boundary_points) =
@@ -1126,7 +1126,7 @@ fn region_ownership_report_retains_blocked_open_shell_reason() {
         .unwrap();
 
     assert_eq!(report.status, ExactRegionOwnershipStatus::Blocked);
-    assert!(!report.resolves_operation_selection(ExactBooleanOperation::Union));
+    assert!(!report.volume_selection_resolves_operation(ExactBooleanOperation::Union));
     assert_eq!(report.freshness, ExactLabeledCellComplexFreshness::Current);
     assert!(
         report

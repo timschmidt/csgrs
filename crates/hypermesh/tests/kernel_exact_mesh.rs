@@ -144,10 +144,10 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let vertex: VertexRef<'_> = view.vertex(0).unwrap();
     assert_eq!(vertex.index(), 0);
     assert_eq!(vertex.point(), &p(0, 0, 0));
-    assert!(vertex.has_exact_rational_coordinates().unwrap());
-    assert!(vertex.has_sparse_coordinate_support().unwrap());
-    assert_eq!(vertex.incident_face_count().unwrap(), 3);
-    assert_eq!(vertex.incident_edge_count().unwrap(), 3);
+    assert!(vertex.has_exact_rational_coordinates());
+    assert!(vertex.has_sparse_coordinate_support());
+    assert_eq!(vertex.incident_face_count(), 3);
+    assert_eq!(vertex.incident_edge_count(), 3);
     assert_eq!(vertex.incident_face_indices().unwrap(), &[0, 1, 3]);
     assert_eq!(vertex.incident_edge_indices().unwrap(), &[0, 1, 2]);
     assert_eq!(
@@ -166,10 +166,10 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
             .collect::<Vec<_>>(),
         vec![0, 1, 2]
     );
-    assert!(vertex.has_circle_link().unwrap());
-    assert!(!vertex.has_disk_link().unwrap());
-    assert!(!vertex.has_isolated_link().unwrap());
-    assert!(!vertex.has_non_manifold_link().unwrap());
+    assert!(vertex.has_circle_link());
+    assert!(!vertex.has_disk_link());
+    assert!(!vertex.has_isolated_link());
+    assert!(!vertex.has_non_manifold_link());
 
     assert_eq!(view.require_face(0).unwrap().index(), 0);
     let missing_face = view.require_face(view.face_count()).unwrap_err();
@@ -195,19 +195,19 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::IndexOutOfBounds
     );
     assert_eq!(face.bounds().unwrap(), (&p(0, 0, 0), &p(1, 1, 0)));
     assert_eq!(
         face.vertex_refs().unwrap().map(VertexRef::index),
         face.vertex_indices()
     );
-    assert_eq!(face.directed_edges().unwrap(), [[0, 2], [2, 1], [1, 0]]);
-    assert!(face.is_non_degenerate().unwrap());
-    assert!(!face.degeneracy_predicates().unwrap().is_empty());
+    assert_eq!(face.directed_edges(), [[0, 2], [2, 1], [1, 0]]);
+    assert!(face.is_non_degenerate());
+    assert!(!face.degeneracy_predicates().is_empty());
     assert_eq!(
-        face.plane_coefficients().unwrap(),
-        (face.plane_normal().unwrap(), face.plane_offset().unwrap())
+        face.plane_coefficients(),
+        (face.plane_normal(), face.plane_offset())
     );
     assert_eq!(face.vertices().unwrap().len(), 3);
 
@@ -230,18 +230,12 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
         second_face.vertex_refs().unwrap().map(VertexRef::index),
         second_face.vertex_indices()
     );
+    assert_eq!(second_face.directed_edges(), [[0, 1], [1, 3], [3, 0]]);
+    assert!(second_face.is_non_degenerate());
+    assert!(!second_face.degeneracy_predicates().is_empty());
     assert_eq!(
-        second_face.directed_edges().unwrap(),
-        [[0, 1], [1, 3], [3, 0]]
-    );
-    assert!(second_face.is_non_degenerate().unwrap());
-    assert!(!second_face.degeneracy_predicates().unwrap().is_empty());
-    assert_eq!(
-        second_face.plane_coefficients().unwrap(),
-        (
-            second_face.plane_normal().unwrap(),
-            second_face.plane_offset().unwrap()
-        )
+        second_face.plane_coefficients(),
+        (second_face.plane_normal(), second_face.plane_offset())
     );
     assert_eq!(
         second_face.vertices().unwrap(),
@@ -266,7 +260,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let missing_edge_bounds = view.require_edge_bounds(view.edge_count()).unwrap_err();
     assert_eq!(
         missing_edge_bounds.blockers()[0].kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
+        ExactMeshBlockerKind::IndexOutOfBounds
     );
     assert_eq!(missing_edge_bounds.blockers()[0].edge(), None);
     assert_eq!(edge.incident_face_count(), 2);
@@ -328,22 +322,22 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
 
             if let Some(vertex) = view.vertex(0) {
                 assert_eq!(vertex.index(), 0);
-                assert!(vertex.provenance_count().unwrap() > 0);
-                let _ = vertex.point().unwrap();
+                assert!(vertex.provenance_count() > 0);
+                let _ = vertex.point();
             }
             if let Some(edge) = view.edge(0) {
                 assert_eq!(edge.index(), 0);
-                assert_eq!(edge.vertices().unwrap().len(), 2);
+                assert_eq!(edge.vertices().len(), 2);
             }
             if let Some(face_cell) = view.face_cell(0) {
                 assert_eq!(face_cell.index(), 0);
                 assert_eq!(
-                    face_cell.boundary_node_count().unwrap(),
-                    face_cell.boundary_point_count().unwrap()
+                    face_cell.boundary_node_count(),
+                    face_cell.boundary_point_count()
                 );
                 assert_eq!(
-                    face_cell.boundary_points().unwrap().count(),
-                    face_cell.boundary_point_count().unwrap()
+                    face_cell.boundary_points().count(),
+                    face_cell.boundary_point_count()
                 );
             }
 

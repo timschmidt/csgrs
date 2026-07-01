@@ -23,7 +23,7 @@ use hyperlimit::{
 
 use super::super::super::{ExactMesh, sorted_edge};
 use super::super::point3_exact_equal;
-use super::{real_sign, triangle_point_refs};
+use super::{point_on_triangle_plane, real_sign, triangle_point_refs};
 use hyperreal::Real;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -281,9 +281,17 @@ fn polygon_patch_candidate(
     for &face in faces {
         let triangle = mesh.facts().faces.get(face)?.triangle.vertices;
         let points = triangle_point_refs(mesh, triangle)?;
+        if boundary_points.len() < 3 {
+            return Some(None);
+        }
+        let (a, b, c) = (
+            &boundary_points[0],
+            &boundary_points[1],
+            &boundary_points[2],
+        );
         if !points
             .iter()
-            .all(|point| point_on_triangle_plane_vec(&boundary_points, point) == Some(true))
+            .all(|point| point_on_triangle_plane(a, b, c, point) == Some(true))
         {
             return Some(None);
         }
@@ -614,13 +622,6 @@ fn point_on_boundary_loop(point: &Point3, boundary: &[Point3]) -> Option<bool> {
         }
     }
     Some(false)
-}
-
-fn point_on_triangle_plane_vec(points: &[Point3], point: &Point3) -> Option<bool> {
-    let [a, b, c, ..] = points else {
-        return Some(false);
-    };
-    Some(orient3d_report(a, b, c, point).value()? == Sign::Zero)
 }
 
 #[cfg(test)]

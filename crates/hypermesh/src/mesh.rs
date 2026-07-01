@@ -16,9 +16,10 @@ use hyperlimit::{
     SourceProvenance, compare_reals,
 };
 use hyperreal::Real;
-use std::cmp::Ordering;
-
-pub use arrangement3d::ArrangementView;
+use std::{
+    cmp::Ordering,
+    collections::{BTreeMap, BTreeSet},
+};
 
 pub(crate) mod arrangement3d;
 pub(crate) mod boolean;
@@ -26,6 +27,7 @@ pub(crate) mod bounds;
 pub(crate) mod error;
 pub(crate) mod facts;
 pub(crate) mod graph;
+pub(crate) mod prepared;
 pub(crate) mod validation;
 pub(crate) mod view;
 
@@ -49,11 +51,110 @@ pub(crate) fn sorted_edge(edge: [usize; 2]) -> [usize; 2] {
     }
 }
 
+pub(crate) fn paired_triangle_orientation_flips(
+    triangles: impl IntoIterator<Item = [usize; 3]>,
+    triangle_count: usize,
+) -> Option<Vec<bool>> {
+    let mut edge_uses = BTreeMap::<[usize; 2], Vec<(usize, bool)>>::new();
+    for (triangle, vertices) in triangles.into_iter().enumerate() {
+        for edge in triangle_edges(vertices) {
+            let key = sorted_edge(edge);
+            edge_uses
+                .entry(key)
+                .or_default()
+                .push((triangle, edge == key));
+        }
+    }
+
+    let mut adjacency = vec![Vec::<(usize, bool)>::new(); triangle_count];
+    for uses in edge_uses.values() {
+        let [
+            (left_triangle, left_forward),
+            (right_triangle, right_forward),
+        ] = uses.as_slice()
+        else {
+            continue;
+        };
+        let same_direction = left_forward == right_forward;
+        adjacency[*left_triangle].push((*right_triangle, same_direction));
+        adjacency[*right_triangle].push((*left_triangle, same_direction));
+    }
+
+    let mut flips = vec![None; triangle_count];
+    for start in 0..triangle_count {
+        if flips[start].is_some() {
+            continue;
+        }
+        flips[start] = Some(false);
+        let mut stack = vec![start];
+        while let Some(triangle) = stack.pop() {
+            let current_flip = flips[triangle]?;
+            for &(neighbor, flip_relative_to_current) in &adjacency[triangle] {
+                let required = current_flip ^ flip_relative_to_current;
+                match flips[neighbor] {
+                    Some(existing) if existing != required => return None,
+                    Some(_) => {}
+                    None => {
+                        flips[neighbor] = Some(required);
+                        stack.push(neighbor);
+                    }
+                }
+            }
+        }
+    }
+
+    flips.into_iter().collect()
+}
+
+pub(crate) fn orient_paired_triangle_edges(triangles: &mut [Triangle]) -> Option<usize> {
+    let flips = paired_triangle_orientation_flips(
+        triangles.iter().map(|triangle| triangle.0),
+        triangles.len(),
+    )?;
+
+    let mut flipped = 0;
+    for (triangle, flip) in triangles.iter_mut().zip(flips) {
+        if flip {
+            triangle.0.swap(1, 2);
+            flipped += 1;
+        }
+    }
+    Some(flipped)
+}
+
+pub(crate) fn remove_duplicate_triangle_vertex_sets(triangles: &mut Vec<Triangle>) -> usize {
+    let before = triangles.len();
+    let mut seen = BTreeSet::new();
+    triangles.retain(|triangle| {
+        let mut key = triangle.0;
+        key.sort_unstable();
+        seen.insert(key)
+    });
+    before - triangles.len()
+}
+
 pub(crate) fn point3_exact_equal(left: &Point3, right: &Point3) -> Option<bool> {
     Some(
         compare_reals(&left.x, &right.x).value()? == Ordering::Equal
             && compare_reals(&left.y, &right.y).value()? == Ordering::Equal
             && compare_reals(&left.z, &right.z).value()? == Ordering::Equal,
+    )
+}
+
+pub(crate) fn exact_points_are_collinear(a: &Point3, b: &Point3, c: &Point3) -> Option<bool> {
+    let abx = &b.x - &a.x;
+    let aby = &b.y - &a.y;
+    let abz = &b.z - &a.z;
+    let acx = &c.x - &a.x;
+    let acy = &c.y - &a.y;
+    let acz = &c.z - &a.z;
+    let cross_x = &(&aby * &acz) - &(&abz * &acy);
+    let cross_y = &(&abz * &acx) - &(&abx * &acz);
+    let cross_z = &(&abx * &acy) - &(&aby * &acx);
+    Some(
+        compare_reals(&cross_x, &Real::zero()).value()? == Ordering::Equal
+            && compare_reals(&cross_y, &Real::zero()).value()? == Ordering::Equal
+            && compare_reals(&cross_z, &Real::zero()).value()? == Ordering::Equal,
     )
 }
 
@@ -357,22 +458,13 @@ impl ExactMesh {
         triangles: Vec<[usize; 3]>,
         source: SourceProvenance,
     ) -> Result<Self, ExactMeshError> {
-        Self::new_with_policy(
+        Self::new_with_policy_and_version(
             vertices,
             triangles.into_iter().map(Triangle).collect(),
             source,
             ExactMeshValidationPolicy::CLOSED,
+            1,
         )
-    }
-
-    /// Construct an exact mesh with an explicit validation policy.
-    pub(crate) fn new_with_policy(
-        vertices: Vec<Point3>,
-        triangles: Vec<Triangle>,
-        source: SourceProvenance,
-        policy: ExactMeshValidationPolicy,
-    ) -> Result<Self, ExactMeshError> {
-        Self::new_with_policy_and_version(vertices, triangles, source, policy, 1)
     }
 
     pub(crate) fn new_with_policy_and_version(
@@ -395,7 +487,11 @@ impl ExactMesh {
             &vertices,
             triangles.len(),
             triangles.iter().map(|tri| tri.0),
-        );
+        )
+        .map_err(retained_bounds_validation_error)
+        .map_err(|error| {
+            retained_validation_mesh_error("exact mesh bounds construction failed", error)
+        })?;
 
         let mut provenance =
             ConstructionProvenance::with_version(source, construction_version.max(1));
@@ -452,11 +548,12 @@ impl ExactMesh {
             .map(|coords| Point3::new(coords[0].clone(), coords[1].clone(), coords[2].clone()))
             .collect::<Vec<_>>();
 
-        Self::new_with_policy(
+        Self::new_with_policy_and_version(
             vertices,
             flat_triangles(idx),
             SourceProvenance::exact("flat hyperreal triangle mesh"),
             policy,
+            1,
         )
     }
 
@@ -475,11 +572,12 @@ impl ExactMesh {
             vertices.push(point);
         }
 
-        Self::new_with_policy(
+        Self::new_with_policy_and_version(
             vertices,
             flat_triangles(idx),
             SourceProvenance::lossy_f64("flat f64 triangle mesh"),
             policy,
+            1,
         )
     }
 
@@ -512,11 +610,12 @@ impl ExactMesh {
             })
             .collect::<Vec<_>>();
 
-        Self::new_with_policy(
+        Self::new_with_policy_and_version(
             vertices,
             flat_triangles(idx),
             SourceProvenance::exact("flat i64 triangle mesh"),
             policy,
+            1,
         )
     }
 
@@ -995,6 +1094,18 @@ pub(crate) fn reverse_triangle(triangle: &Triangle) -> Triangle {
 mod tests {
     use super::*;
     use crate::mesh::facts::EdgeFacts;
+
+    #[test]
+    fn paired_triangle_orientation_flips_follow_shared_edge_parity() {
+        assert_eq!(
+            paired_triangle_orientation_flips([[0, 1, 2], [0, 1, 3]], 2),
+            Some(vec![false, true])
+        );
+        assert_eq!(
+            paired_triangle_orientation_flips([[0, 1, 2], [1, 0, 3]], 2),
+            Some(vec![false, false])
+        );
+    }
 
     #[test]
     fn retained_facts_reject_unexpected_zero_use_edge() {
