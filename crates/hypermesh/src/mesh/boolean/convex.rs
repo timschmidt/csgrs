@@ -404,7 +404,7 @@ pub(crate) fn intersect_closed_convex_solids(
         return Ok(None);
     }
 
-    let Some(hull_polygons) = convex_hull_polygons_from_clipped_faces(&polygons) else {
+    let Some(hull_polygons) = convex_hull_polygons_from_clipped_faces(&polygons)? else {
         return Ok(None);
     };
     let Some(mesh) = polygons_to_closed_mesh(
@@ -850,17 +850,21 @@ fn lift_projected_point_to_carrier(
     ))
 }
 
-fn convex_hull_polygons_from_clipped_faces(polygons: &[Vec<Point3>]) -> Option<Vec<Vec<Point3>>> {
+fn convex_hull_polygons_from_clipped_faces(
+    polygons: &[Vec<Point3>],
+) -> Result<Option<Vec<Vec<Point3>>>, ExactMeshError> {
     let mut points = Vec::new();
     for polygon in polygons {
         for point in polygon {
-            intern_point(&mut points, point);
+            intern_point_checked(&mut points, point)?;
         }
     }
     if points.len() < 4 {
-        return None;
+        return Ok(None);
     }
-    let interior = polygon_centroid(&points)?;
+    let Some(interior) = polygon_centroid(&points) else {
+        return Ok(None);
+    };
     let mut seen_faces = BTreeSet::new();
     let mut hull_faces = Vec::new();
     for a in 0..points.len() {
@@ -873,7 +877,10 @@ fn convex_hull_polygons_from_clipped_faces(polygons: &[Vec<Point3>]) -> Option<V
                 let mut saw_below = false;
                 let mut coplanar = Vec::new();
                 for (index, point) in points.iter().enumerate() {
-                    match point_side(&points[a], &points[b], &points[c], point)? {
+                    let Some(side) = point_side(&points[a], &points[b], &points[c], point) else {
+                        return Ok(None);
+                    };
+                    match side {
                         PlaneSide::On => coplanar.push(index),
                         PlaneSide::Above => saw_above = true,
                         PlaneSide::Below => saw_below = true,
@@ -889,38 +896,56 @@ fn convex_hull_polygons_from_clipped_faces(polygons: &[Vec<Point3>]) -> Option<V
                 if coplanar.len() < 3 || !seen_faces.insert(coplanar.clone()) {
                     continue;
                 }
-                let mut face = convex_face_polygon_from_indices(&points, &coplanar)?;
-                orient_face_polygon_outward(&mut face, &interior)?;
+                let Some(mut face) = convex_face_polygon_from_indices(&points, &coplanar)? else {
+                    return Ok(None);
+                };
+                if orient_face_polygon_outward(&mut face, &interior).is_none() {
+                    return Ok(None);
+                }
                 hull_faces.push(face);
             }
         }
     }
     if hull_faces.len() >= 4 {
-        Some(hull_faces)
+        Ok(Some(hull_faces))
     } else {
-        None
+        Ok(None)
     }
 }
 
-fn convex_face_polygon_from_indices(points: &[Point3], indices: &[usize]) -> Option<Vec<Point3>> {
+fn convex_face_polygon_from_indices(
+    points: &[Point3],
+    indices: &[usize],
+) -> Result<Option<Vec<Point3>>, ExactMeshError> {
     if indices.len() == 3 {
-        return Some(indices.iter().map(|&index| points[index].clone()).collect());
+        return Ok(Some(
+            indices.iter().map(|&index| points[index].clone()).collect(),
+        ));
     }
-    let projection = choose_face_projection(points, indices)?;
+    let Some(projection) = choose_face_projection(points, indices) else {
+        return Ok(None);
+    };
     let mut segments = Vec::new();
     for (left_offset, &left) in indices.iter().enumerate() {
         for &right in &indices[left_offset + 1..] {
-            if convex_face_pair_is_boundary_edge(points, indices, left, right, projection)? {
-                push_unique_segment(&mut segments, [points[left].clone(), points[right].clone()]);
+            let Some(is_boundary) =
+                convex_face_pair_is_boundary_edge(points, indices, left, right, projection)
+            else {
+                return Ok(None);
+            };
+            if is_boundary {
+                push_unique_segment(&mut segments, [points[left].clone(), points[right].clone()])?;
             }
         }
     }
-    let mut polygon = chain_segments_to_polygon(segments)?;
+    let Some(mut polygon) = chain_segments_to_polygon(segments)? else {
+        return Ok(None);
+    };
     remove_collinear_polygon_vertices(&mut polygon, projection);
     if polygon.len() >= 3 && !polygon_is_degenerate(&polygon) {
-        Some(polygon)
+        Ok(Some(polygon))
     } else {
-        None
+        Ok(None)
     }
 }
 
@@ -1089,35 +1114,117 @@ fn remove_collinear_polygon_vertices(points: &mut Vec<Point3>, projection: Copla
     }
 }
 
-fn push_unique_segment(segments: &mut Vec<[Point3; 2]>, segment: [Point3; 2]) {
-    if segments.iter().any(|existing| {
-        (point3_exact_equal(&existing[0], &segment[0]) == Some(true)
-            && point3_exact_equal(&existing[1], &segment[1]) == Some(true))
-            || (point3_exact_equal(&existing[0], &segment[1]) == Some(true)
-                && point3_exact_equal(&existing[1], &segment[0]) == Some(true))
-    }) {
-        return;
-    }
-    segments.push(segment);
+fn convex_points_equal(
+    left: &Point3,
+    right: &Point3,
+    context: &'static str,
+) -> Result<bool, ExactMeshError> {
+    point3_exact_equal(left, right).ok_or_else(|| {
+        ExactMeshError::one(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::ExactConstructionFailure,
+            context,
+        ))
+    })
 }
 
-fn chain_segments_to_polygon(mut segments: Vec<[Point3; 2]>) -> Option<Vec<Point3>> {
-    let first = segments.pop()?;
+fn ordered_segments_equal(left: &[Point3; 2], right: &[Point3; 2]) -> Option<bool> {
+    let start = point3_exact_equal(&left[0], &right[0]);
+    let end = point3_exact_equal(&left[1], &right[1]);
+    if start == Some(false) || end == Some(false) {
+        return Some(false);
+    }
+    if start == Some(true) && end == Some(true) {
+        return Some(true);
+    }
+    None
+}
+
+fn unordered_segments_equal(
+    left: &[Point3; 2],
+    right: &[Point3; 2],
+) -> Result<bool, ExactMeshError> {
+    let forward = ordered_segments_equal(left, right);
+    if forward == Some(true) {
+        return Ok(true);
+    }
+    let reversed = [right[1].clone(), right[0].clone()];
+    let reverse = ordered_segments_equal(left, &reversed);
+    if reverse == Some(true) {
+        return Ok(true);
+    }
+    if forward == Some(false) && reverse == Some(false) {
+        return Ok(false);
+    }
+    Err(ExactMeshError::one(ExactMeshBlocker::new(
+        ExactMeshBlockerKind::ExactConstructionFailure,
+        "convex hull duplicate segment equality is undecidable",
+    )))
+}
+
+fn push_unique_segment(
+    segments: &mut Vec<[Point3; 2]>,
+    segment: [Point3; 2],
+) -> Result<(), ExactMeshError> {
+    for existing in segments.iter() {
+        if unordered_segments_equal(existing, &segment)? {
+            return Ok(());
+        }
+    }
+    segments.push(segment);
+    Ok(())
+}
+
+fn connecting_segment(
+    segments: &[[Point3; 2]],
+    point: &Point3,
+) -> Result<Option<(usize, bool)>, ExactMeshError> {
+    let mut saw_undecidable = false;
+    for (index, segment) in segments.iter().enumerate() {
+        match point3_exact_equal(&segment[0], point) {
+            Some(true) => return Ok(Some((index, false))),
+            Some(false) => {}
+            None => saw_undecidable = true,
+        }
+        match point3_exact_equal(&segment[1], point) {
+            Some(true) => return Ok(Some((index, true))),
+            Some(false) => {}
+            None => saw_undecidable = true,
+        }
+    }
+    if saw_undecidable {
+        Err(ExactMeshError::one(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::ExactConstructionFailure,
+            "convex hull segment chain endpoint equality is undecidable",
+        )))
+    } else {
+        Ok(None)
+    }
+}
+
+fn chain_segments_to_polygon(
+    mut segments: Vec<[Point3; 2]>,
+) -> Result<Option<Vec<Point3>>, ExactMeshError> {
+    let Some(first) = segments.pop() else {
+        return Ok(None);
+    };
     let mut polygon = vec![first[0].clone(), first[1].clone()];
     while !segments.is_empty() {
-        let last = polygon.last()?.clone();
-        if point3_exact_equal(&last, &polygon[0]) == Some(true) {
+        let Some(last) = polygon.last().cloned() else {
+            return Ok(None);
+        };
+        let closure = point3_exact_equal(&last, &polygon[0]);
+        if closure == Some(true) {
             break;
         }
-        let (index, reverse) = segments.iter().enumerate().find_map(|(index, segment)| {
-            if point3_exact_equal(&segment[0], &last) == Some(true) {
-                Some((index, false))
-            } else if point3_exact_equal(&segment[1], &last) == Some(true) {
-                Some((index, true))
-            } else {
-                None
+        let Some((index, reverse)) = connecting_segment(&segments, &last)? else {
+            if closure.is_none() {
+                return Err(ExactMeshError::one(ExactMeshBlocker::new(
+                    ExactMeshBlockerKind::ExactConstructionFailure,
+                    "convex hull polygon closure equality is undecidable",
+                )));
             }
-        })?;
+            return Ok(None);
+        };
         let segment = segments.swap_remove(index);
         polygon.push(if reverse {
             segment[0].clone()
@@ -1125,15 +1232,23 @@ fn chain_segments_to_polygon(mut segments: Vec<[Point3; 2]>) -> Option<Vec<Point
             segment[1].clone()
         });
     }
-    if !segments.is_empty() || point3_exact_equal(polygon.first()?, polygon.last()?) != Some(true) {
-        return None;
+    let Some(first) = polygon.first() else {
+        return Ok(None);
+    };
+    let Some(last) = polygon.last() else {
+        return Ok(None);
+    };
+    if !segments.is_empty()
+        || !convex_points_equal(first, last, "convex hull polygon final closure equality")?
+    {
+        return Ok(None);
     }
     polygon.pop();
-    simplify_polygon(&mut polygon);
+    simplify_polygon_checked(&mut polygon)?;
     if polygon.len() >= 3 && !polygon_is_degenerate(&polygon) {
-        Some(polygon)
+        Ok(Some(polygon))
     } else {
-        None
+        Ok(None)
     }
 }
 
@@ -1306,6 +1421,23 @@ fn intern_point(vertices: &mut Vec<Point3>, point: &Point3) -> usize {
     }
 }
 
+fn intern_point_checked(
+    vertices: &mut Vec<Point3>,
+    point: &Point3,
+) -> Result<usize, ExactMeshError> {
+    for (index, existing) in vertices.iter().enumerate() {
+        if convex_points_equal(existing, point, "convex hull point interning equality")? {
+            return Ok(index);
+        }
+    }
+    vertices.push(Point3::new(
+        point.x.clone(),
+        point.y.clone(),
+        point.z.clone(),
+    ));
+    Ok(vertices.len() - 1)
+}
+
 fn intern_points(vertices: &mut Vec<Point3>, points: &[Point3]) -> Vec<usize> {
     points
         .iter()
@@ -1318,6 +1450,31 @@ fn simplify_polygon(points: &mut Vec<Point3>) {
     if points.len() > 1 && point3_exact_equal(&points[0], &points[points.len() - 1]) == Some(true) {
         points.pop();
     }
+}
+
+fn simplify_polygon_checked(points: &mut Vec<Point3>) -> Result<(), ExactMeshError> {
+    let mut index = 0;
+    while index + 1 < points.len() {
+        if convex_points_equal(
+            &points[index],
+            &points[index + 1],
+            "convex hull polygon duplicate vertex equality",
+        )? {
+            points.remove(index + 1);
+        } else {
+            index += 1;
+        }
+    }
+    if points.len() > 1
+        && convex_points_equal(
+            &points[0],
+            &points[points.len() - 1],
+            "convex hull polygon duplicate endpoint equality",
+        )?
+    {
+        points.pop();
+    }
+    Ok(())
 }
 
 fn polygon_is_degenerate(points: &[Point3]) -> bool {
@@ -1364,6 +1521,30 @@ mod tests {
             &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
         )
         .unwrap()
+    }
+
+    fn p3(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    #[test]
+    fn convex_hull_segment_equality_accepts_reversed_duplicate() {
+        let a = p3(0, 0, 0);
+        let b = p3(1, 0, 0);
+        let c = p3(0, 1, 0);
+
+        assert!(
+            unordered_segments_equal(&[a.clone(), b.clone()], &[b.clone(), a.clone()]).unwrap()
+        );
+        assert!(
+            !unordered_segments_equal(&[a.clone(), b.clone()], &[a.clone(), c.clone()]).unwrap()
+        );
+
+        let mut segments = vec![[a.clone(), b.clone()]];
+        push_unique_segment(&mut segments, [b, a]).unwrap();
+        assert_eq!(segments.len(), 1);
+        push_unique_segment(&mut segments, [p3(0, 0, 0), c]).unwrap();
+        assert_eq!(segments.len(), 2);
     }
 
     #[test]
