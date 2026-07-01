@@ -88,35 +88,32 @@ impl<'a> MeshView<'a> {
 
     /// Borrow retained whole-mesh bounds as exact min/max corners.
     pub fn mesh_bounds(self) -> Result<Option<(&'a Point3, &'a Point3)>, ExactMeshError> {
-        require_current_row_count(self.mesh, RetainedRowKind::Vertex)?;
-        Ok(self
-            .mesh
-            .bounds()
-            .mesh
-            .as_ref()
-            .map(|bounds| (&bounds.min, &bounds.max)))
+        require_current_vertex_count(self.mesh)?;
+        match (
+            self.mesh.vertices().is_empty(),
+            self.mesh.bounds().mesh.as_ref(),
+        ) {
+            (true, None) => Ok(None),
+            (true, Some(_)) => Err(ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::StaleFactReplay,
+                "empty mesh has retained whole-mesh bounds",
+            ))),
+            (false, Some(bounds)) => Ok(Some((&bounds.min, &bounds.max))),
+            (false, None) => Err(ExactMeshError::one(ExactMeshBlocker::new(
+                ExactMeshBlockerKind::MissingRequiredEvidence,
+                "nonempty mesh has no retained whole-mesh bounds",
+            ))),
+        }
     }
 
     /// Borrow retained bounds for one face as exact min/max corners.
     pub fn face_bounds(self, index: usize) -> Result<(&'a Point3, &'a Point3), ExactMeshError> {
-        require_current_row(self.mesh, RetainedRowKind::Face, index)?;
-        self.mesh
-            .bounds()
-            .faces
-            .get(index)
-            .map(|bounds| (&bounds.min, &bounds.max))
-            .ok_or_else(|| missing_retained_face_bounds(index))
+        self.require_face(index)?.bounds()
     }
 
     /// Borrow retained bounds for one edge as exact min/max corners.
     pub fn edge_bounds(self, index: usize) -> Result<(&'a Point3, &'a Point3), ExactMeshError> {
-        require_current_row(self.mesh, RetainedRowKind::Edge, index)?;
-        self.mesh
-            .bounds()
-            .edges
-            .get(index)
-            .map(|bounds| (&bounds.min, &bounds.max))
-            .ok_or_else(|| missing_retained_edge_bounds(self.mesh, index, "exact bounds"))
+        self.require_edge(index)?.bounds()
     }
 
     /// Borrow one vertex by index.
@@ -771,60 +768,27 @@ fn current_row_count(mesh: &ExactMesh, kind: RetainedRowKind) -> usize {
     }
 }
 
-fn require_current_row_count(
-    mesh: &ExactMesh,
-    kind: RetainedRowKind,
-) -> Result<(), ExactMeshError> {
-    match kind {
-        RetainedRowKind::Vertex => {
-            let source_rows = mesh.vertices().len();
-            let retained_rows = mesh.facts().vertices.len();
-            let summary_rows = mesh.facts().mesh.vertex_count;
-            if retained_rows < source_rows {
-                return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::StaleFactReplay,
-                    format!(
-                        "retained mesh has {retained_rows} vertex fact rows for {source_rows} source vertices"
-                    ),
-                )));
-            }
-            if summary_rows < source_rows {
-                return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::StaleFactReplay,
-                    format!(
-                        "retained mesh summary has {summary_rows} vertices for {source_rows} source vertices"
-                    ),
-                )));
-            }
-            Ok(())
-        }
-        RetainedRowKind::Face => {
-            let retained_rows = mesh.facts().faces.len();
-            let summary_rows = mesh.facts().mesh.face_count;
-            if retained_rows != summary_rows {
-                return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::StaleFactReplay,
-                    format!(
-                        "retained mesh has {retained_rows} face fact rows but summary records {summary_rows}"
-                    ),
-                )));
-            }
-            Ok(())
-        }
-        RetainedRowKind::Edge => {
-            let retained_rows = mesh.facts().edges.len();
-            let summary_rows = mesh.facts().mesh.edge_count;
-            if retained_rows != summary_rows {
-                return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::StaleFactReplay,
-                    format!(
-                        "retained mesh has {retained_rows} edge fact rows but summary records {summary_rows}"
-                    ),
-                )));
-            }
-            Ok(())
-        }
+fn require_current_vertex_count(mesh: &ExactMesh) -> Result<(), ExactMeshError> {
+    let source_rows = mesh.vertices().len();
+    let retained_rows = mesh.facts().vertices.len();
+    let summary_rows = mesh.facts().mesh.vertex_count;
+    if retained_rows != source_rows {
+        return Err(ExactMeshError::one(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::StaleFactReplay,
+            format!(
+                "retained mesh has {retained_rows} vertex fact rows for {source_rows} source vertices"
+            ),
+        )));
     }
+    if summary_rows != source_rows {
+        return Err(ExactMeshError::one(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::StaleFactReplay,
+            format!(
+                "retained mesh summary has {summary_rows} vertices for {source_rows} source vertices"
+            ),
+        )));
+    }
+    Ok(())
 }
 
 fn require_current_row(
@@ -990,6 +954,26 @@ mod tests {
         assert_eq!(
             view.require_vertex(stale_vertex).unwrap_err().blockers()[0].kind(),
             ExactMeshBlockerKind::StaleFactReplay
+        );
+    }
+
+    #[test]
+    fn borrowed_view_reports_missing_retained_mesh_bounds() {
+        let empty = ExactMesh::new(
+            Vec::new(),
+            Vec::new(),
+            SourceProvenance::exact("empty view test mesh"),
+        )
+        .unwrap();
+        assert_eq!(empty.view().mesh_bounds().unwrap(), None);
+
+        let mut mesh = tetra([0, 0, 0]);
+        mesh.bounds.mesh = None;
+
+        let error = mesh.view().mesh_bounds().unwrap_err();
+        assert_eq!(
+            error.blockers()[0].kind(),
+            ExactMeshBlockerKind::MissingRequiredEvidence
         );
     }
 
