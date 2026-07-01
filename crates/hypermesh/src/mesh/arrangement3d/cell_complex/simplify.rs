@@ -1063,101 +1063,9 @@ pub(crate) fn triangulate_simplified_cell_complex(
     }
 
     if !matches!(complex.operation, ExactBooleanOperation::SelectedRegions(_)) {
-        let mut unique = Vec::<Point3>::new();
-        let mut remap = Vec::<usize>::with_capacity(vertices.len());
-        for vertex in &vertices {
-            if let Some(existing) = unique
-                .iter()
-                .position(|point| point3_exact_equal(point, vertex) == Some(true))
-            {
-                remap.push(existing);
-            } else {
-                remap.push(unique.len());
-                unique.push(vertex.clone());
-            }
-        }
-        for triangle in &mut triangles {
-            for vertex in &mut triangle.0 {
-                if let Some(&mapped) = remap.get(*vertex) {
-                    *vertex = mapped;
-                }
-            }
-        }
-        vertices = unique;
-        let original = triangles.clone();
-        let mut split = Vec::new();
-        for triangle in original {
-            let [a, b, c] = triangle.0;
-            let mut boundary = Vec::new();
-            for (start, end) in [(a, b), (b, c), (c, a)] {
-                boundary.push(start);
-                let mut interior = Vec::new();
-                for (candidate, point) in vertices.iter().enumerate() {
-                    if candidate == start
-                        || candidate == end
-                        || interior.contains(&candidate)
-                        || point3_exact_equal(point, &vertices[start]) == Some(true)
-                        || point3_exact_equal(point, &vertices[end]) == Some(true)
-                    {
-                        continue;
-                    }
-                    match point_on_segment3(&vertices[start], &vertices[end], point).value() {
-                        Some(true) => interior.push(candidate),
-                        Some(false) => {}
-                        None => return Err(ExactArrangementBlocker::UndecidableOrdering),
-                    }
-                }
-                let (axis, forward) = segment_order_axis(&vertices[start], &vertices[end])?;
-                let mut ordered = Vec::<usize>::new();
-                'interior: for vertex in interior {
-                    for ordered_index in 0..ordered.len() {
-                        let precedes = match compare_reals(
-                            point3_axis_value(&vertices[vertex], axis),
-                            point3_axis_value(&vertices[ordered[ordered_index]], axis),
-                        )
-                        .value()
-                        {
-                            Some(Ordering::Less) => forward,
-                            Some(Ordering::Greater) => !forward,
-                            Some(Ordering::Equal) => false,
-                            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
-                        };
-                        if precedes {
-                            ordered.insert(ordered_index, vertex);
-                            continue 'interior;
-                        }
-                    }
-                    ordered.push(vertex);
-                }
-                boundary.extend(ordered);
-            }
-            let mut deduped = Vec::<usize>::new();
-            for vertex in boundary {
-                if deduped.last().copied() != Some(vertex) {
-                    deduped.push(vertex);
-                }
-            }
-            if deduped.len() > 1 && deduped.first() == deduped.last() {
-                deduped.pop();
-            }
-            let boundary = deduped;
-            if boundary.len() == 3 {
-                split.push(triangle);
-                continue;
-            }
-            for index in 1..boundary.len() - 1 {
-                let candidate = Triangle([boundary[0], boundary[index], boundary[index + 1]]);
-                let points = [
-                    vertices[candidate.0[0]].clone(),
-                    vertices[candidate.0[1]].clone(),
-                    vertices[candidate.0[2]].clone(),
-                ];
-                if boundary_has_nonzero_area(&points)? {
-                    split.push(candidate);
-                }
-            }
-        }
-        triangles = split;
+        deduplicate_output_vertices(&mut vertices, &mut triangles);
+        let original = std::mem::take(&mut triangles);
+        triangles = split_triangles_at_collinear_vertices(&vertices, original)?;
     }
     orient_paired_triangle_edges(&mut triangles)
         .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
@@ -1251,6 +1159,109 @@ pub(crate) fn triangulate_simplified_cell_complex(
         1,
     )
     .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)
+}
+
+fn deduplicate_output_vertices(vertices: &mut Vec<Point3>, triangles: &mut [Triangle]) {
+    let mut unique = Vec::<Point3>::new();
+    let mut remap = Vec::<usize>::with_capacity(vertices.len());
+    for vertex in std::mem::take(vertices) {
+        if let Some(existing) = unique
+            .iter()
+            .position(|point| point3_exact_equal(point, &vertex) == Some(true))
+        {
+            remap.push(existing);
+        } else {
+            remap.push(unique.len());
+            unique.push(vertex);
+        }
+    }
+    for triangle in triangles {
+        for vertex in &mut triangle.0 {
+            if let Some(&mapped) = remap.get(*vertex) {
+                *vertex = mapped;
+            }
+        }
+    }
+    *vertices = unique;
+}
+
+fn split_triangles_at_collinear_vertices(
+    vertices: &[Point3],
+    triangles: Vec<Triangle>,
+) -> Result<Vec<Triangle>, ExactArrangementBlocker> {
+    let mut split = Vec::new();
+    for triangle in triangles {
+        let [a, b, c] = triangle.0;
+        let mut boundary = Vec::new();
+        for (start, end) in [(a, b), (b, c), (c, a)] {
+            boundary.push(start);
+            let mut interior = Vec::new();
+            for (candidate, point) in vertices.iter().enumerate() {
+                if candidate == start
+                    || candidate == end
+                    || interior.contains(&candidate)
+                    || point3_exact_equal(point, &vertices[start]) == Some(true)
+                    || point3_exact_equal(point, &vertices[end]) == Some(true)
+                {
+                    continue;
+                }
+                match point_on_segment3(&vertices[start], &vertices[end], point).value() {
+                    Some(true) => interior.push(candidate),
+                    Some(false) => {}
+                    None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+                }
+            }
+            let (axis, forward) = segment_order_axis(&vertices[start], &vertices[end])?;
+            let mut ordered = Vec::<usize>::new();
+            'interior: for vertex in interior {
+                for ordered_index in 0..ordered.len() {
+                    let precedes = match compare_reals(
+                        point3_axis_value(&vertices[vertex], axis),
+                        point3_axis_value(&vertices[ordered[ordered_index]], axis),
+                    )
+                    .value()
+                    {
+                        Some(Ordering::Less) => forward,
+                        Some(Ordering::Greater) => !forward,
+                        Some(Ordering::Equal) => false,
+                        None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+                    };
+                    if precedes {
+                        ordered.insert(ordered_index, vertex);
+                        continue 'interior;
+                    }
+                }
+                ordered.push(vertex);
+            }
+            boundary.extend(ordered);
+        }
+        let mut deduped = Vec::<usize>::new();
+        for vertex in boundary {
+            if deduped.last().copied() != Some(vertex) {
+                deduped.push(vertex);
+            }
+        }
+        if deduped.len() > 1 && deduped.first() == deduped.last() {
+            deduped.pop();
+        }
+        let boundary = deduped;
+        if boundary.len() == 3 {
+            split.push(triangle);
+            continue;
+        }
+        for index in 1..boundary.len() - 1 {
+            let candidate = Triangle([boundary[0], boundary[index], boundary[index + 1]]);
+            let points = [
+                vertices[candidate.0[0]].clone(),
+                vertices[candidate.0[1]].clone(),
+                vertices[candidate.0[2]].clone(),
+            ];
+            if boundary_has_nonzero_area(&points)? {
+                split.push(candidate);
+            }
+        }
+    }
+    Ok(split)
 }
 
 #[derive(Clone, Copy)]
