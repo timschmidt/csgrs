@@ -1302,6 +1302,16 @@ pub(crate) enum ExactBooleanShortcutKind {
 }
 
 impl ExactBooleanResultKind {
+    fn certified_shortcut(self) -> Option<(ExactBooleanOperation, ExactBooleanShortcutKind)> {
+        match self {
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut,
+            } => Some((operation, shortcut)),
+            _ => None,
+        }
+    }
+
     fn retains_region_artifacts(self) -> bool {
         matches!(
             self,
@@ -1415,19 +1425,10 @@ impl ExactBooleanResult {
         if !retains_region_artifacts && self.graph_had_unknowns {
             return Err(ExactEvidenceValidationError::ShortcutResultHasUnknownGraph);
         }
-        if let ExactBooleanResultKind::CertifiedShortcut {
-            operation,
-            shortcut,
-        } = self.kind
-            && !shortcut_operation_matches(shortcut, operation)
-        {
-            return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
-        }
-        if let ExactBooleanResultKind::CertifiedShortcut {
-            operation,
-            shortcut,
-        } = self.kind
-        {
+        if let Some((operation, shortcut)) = self.kind.certified_shortcut() {
+            if !shortcut_operation_matches(shortcut, operation) {
+                return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
+            }
             validate_shortcut_output_shape(shortcut, operation, &self.mesh)?;
         }
         if let ExactBooleanResultKind::OpenSurfaceArrangement { operation }
