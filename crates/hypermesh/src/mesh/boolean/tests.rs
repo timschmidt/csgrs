@@ -1960,9 +1960,13 @@ fn selected_overlay_faces_triangulate_simple_coplanar_difference_cells() {
             .unwrap()
             .boundary_policy;
     let mut rings =
-        projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &left, projection).unwrap();
+        projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &left, projection)
+            .unwrap()
+            .unwrap();
     rings.extend(
-        projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, &right, projection).unwrap(),
+        projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, &right, projection)
+            .unwrap()
+            .unwrap(),
     );
     let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
         &rings,
@@ -2035,6 +2039,34 @@ fn selected_overlay_faces_triangulate_simple_coplanar_difference_cells() {
     );
     assert_eq!(evidence.blocker.kind, ExactBooleanBlockerKind::Winding);
     evidence.validate_against_sources(&left, &right).unwrap();
+}
+
+#[test]
+fn projected_boundary_rings_reject_stale_boundary_vertex() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let (_, projection) = coplanar_mesh_overlay_carrier(&left, &right).unwrap();
+    let mut stale_left = left.clone();
+    stale_left.vertices.pop();
+
+    let error =
+        projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &stale_left, projection)
+            .expect_err("stale retained boundary vertex should return a typed blocker");
+    assert!(
+        error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        "{error:?}"
+    );
+    assert_eq!(error.blockers()[0].vertex(), Some(3));
 }
 
 #[test]
@@ -2139,9 +2171,13 @@ fn selected_overlay_faces_recover_point_touching_hole_components() {
             .unwrap()
             .boundary_policy;
     let mut rings =
-        projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &left, projection).unwrap();
+        projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &left, projection)
+            .unwrap()
+            .unwrap();
     rings.extend(
-        projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, &right, projection).unwrap(),
+        projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, &right, projection)
+            .unwrap()
+            .unwrap(),
     );
     let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
         &rings,
@@ -2189,9 +2225,11 @@ fn selected_overlay_faces_absorb_contained_union_components() {
         coplanar_mesh_overlay_carrier(&outer_square, &inner_square).unwrap();
     let mut rings =
         projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &outer_square, projection)
+            .unwrap()
             .unwrap();
     rings.extend(
         projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, &inner_square, projection)
+            .unwrap()
             .unwrap(),
     );
     let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
@@ -2314,9 +2352,13 @@ fn selected_overlay_faces_recover_when_output_loop_ownership_is_blocked() {
             .unwrap()
             .boundary_policy;
     let mut rings =
-        projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &left, projection).unwrap();
+        projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &left, projection)
+            .unwrap()
+            .unwrap();
     rings.extend(
-        projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, &right, projection).unwrap(),
+        projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, &right, projection)
+            .unwrap()
+            .unwrap(),
     );
     let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
         &rings,
@@ -2372,9 +2414,13 @@ fn selected_overlay_faces_recover_selected_boundary_topology_blockers() {
     .unwrap();
     let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right).unwrap();
     let mut rings =
-        projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &left, projection).unwrap();
+        projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &left, projection)
+            .unwrap()
+            .unwrap();
     rings.extend(
-        projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, &right, projection).unwrap(),
+        projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, &right, projection)
+            .unwrap()
+            .unwrap(),
     );
     let mut overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
         &rings,

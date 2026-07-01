@@ -6120,13 +6120,13 @@ pub(crate) fn materialize_coplanar_mesh_overlay_mesh(
     };
     let mut rings = Vec::with_capacity(left.triangles().len() + right.triangles().len());
     let Some(left_rings) =
-        projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, left, projection)
+        projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, left, projection)?
     else {
         return Ok(None);
     };
     rings.extend(left_rings);
     let Some(right_rings) =
-        projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, right, projection)
+        projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, right, projection)?
     else {
         return Ok(None);
     };
@@ -6418,19 +6418,47 @@ fn projected_mesh_boundary_rings(
     region: ExactArrangement2dRegion,
     mesh: &ExactMesh,
     projection: CoplanarProjection,
-) -> Option<Vec<ExactArrangement2dRegionRing>> {
+) -> Result<Option<Vec<ExactArrangement2dRegionRing>>, ExactMeshError> {
     let vertices = mesh.view().vertices();
-    directed_boundary_loops(mesh.view())
-        .ok()?
+    if mesh.facts().mesh.boundary_edges == 0 {
+        return Ok(None);
+    }
+    let boundary_loops = directed_boundary_loops(mesh.view()).map_err(|topology| {
+        ExactMeshError::one(ExactMeshBlocker::new(
+            ExactMeshBlockerKind::StaleFactReplay,
+            format!(
+                "exact coplanar overlay retained boundary topology is not loop-shaped: \
+                 invalid_outgoing={}, invalid_incoming={}, overused_edges={}",
+                topology.invalid_outgoing_degree_vertices,
+                topology.invalid_incoming_degree_vertices,
+                topology.overused_edges
+            ),
+        ))
+    })?;
+    boundary_loops
         .into_iter()
         .map(|loop_vertices| {
             let vertices = loop_vertices
                 .into_iter()
-                .map(|vertex| Some(project_point3(vertices.get(vertex)?, projection)))
-                .collect::<Option<Vec<_>>>()?;
-            Some(ExactArrangement2dRegionRing { region, vertices })
+                .map(|vertex| {
+                    vertices
+                        .get(vertex)
+                        .map(|point| project_point3(point, projection))
+                        .ok_or_else(|| {
+                            ExactMeshError::one(
+                                ExactMeshBlocker::new(
+                                    ExactMeshBlockerKind::StaleFactReplay,
+                                    "exact coplanar overlay boundary references a missing vertex",
+                                )
+                                .with_vertex(vertex),
+                            )
+                        })
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok(ExactArrangement2dRegionRing { region, vertices })
         })
-        .collect()
+        .collect::<Result<Vec<_>, _>>()
+        .map(Some)
 }
 
 fn projected_mesh_face_ring(

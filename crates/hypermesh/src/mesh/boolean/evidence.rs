@@ -2615,11 +2615,6 @@ fn certified_shortcut_output_matches_sources(
                 && identical_output_matches_sources(operation, validation, mesh, left, right)
         }
         ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid => {
-            if let Some(true) =
-                arrangement_cell_complex_output_matches_sources(request, mesh, source_replay)?
-            {
-                return Ok(false);
-            }
             if validation != ExactMeshValidationPolicy::CLOSED
                 && meshes_are_certified_bounds_disjoint(left, right)
             {
