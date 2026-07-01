@@ -1306,6 +1306,26 @@ pub(crate) enum ExactBooleanShortcutKind {
     ArrangementCellComplex,
 }
 
+impl ExactBooleanResultKind {
+    fn request(self, validation: ExactMeshValidationPolicy) -> ExactBooleanRequest {
+        match self {
+            ExactBooleanResultKind::SelectedRegions { selection } => ExactBooleanRequest::new(
+                ExactBooleanOperation::SelectedRegions(selection),
+                validation,
+            ),
+            ExactBooleanResultKind::CertifiedShortcut { operation, .. }
+            | ExactBooleanResultKind::OpenSurfaceArrangement { operation }
+            | ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
+                ExactBooleanRequest::new(operation, validation)
+            }
+        }
+    }
+
+    fn matches_request(self, request: ExactBooleanRequest) -> bool {
+        self.request(request.validation).operation == request.operation
+    }
+}
+
 impl ExactBooleanResult {
     /// Validate the retained artifacts in this selected-region or shortcut
     /// boolean result.
@@ -1747,17 +1767,7 @@ impl ExactBooleanResult {
         let mut arrangement_cell_complex_output_replayed = false;
         let mut source_replay = ExactBooleanSourceReplay::new(left, right);
         let validation = self.mesh.validation_policy();
-        let result_request = match self.kind {
-            ExactBooleanResultKind::SelectedRegions { selection } => ExactBooleanRequest::new(
-                ExactBooleanOperation::SelectedRegions(selection),
-                validation,
-            ),
-            ExactBooleanResultKind::CertifiedShortcut { operation, .. }
-            | ExactBooleanResultKind::OpenSurfaceArrangement { operation }
-            | ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
-                ExactBooleanRequest::new(operation, validation)
-            }
-        };
+        let result_request = self.kind.request(validation);
         if self.topology_assembly_report.is_some() || self.region_ownership_report.is_some() {
             let graph = source_replay.validated_graph()?;
             self.validate_arrangement_cell_complex_gate_reports_against_sources(
@@ -2085,17 +2095,7 @@ impl ExactBooleanResult {
         request: ExactBooleanRequest,
         retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     ) -> Result<(), ExactEvidenceValidationError> {
-        let request_operation_matches = match self.kind {
-            ExactBooleanResultKind::SelectedRegions { selection } => {
-                request.operation == ExactBooleanOperation::SelectedRegions(selection)
-            }
-            ExactBooleanResultKind::CertifiedShortcut { operation, .. }
-            | ExactBooleanResultKind::OpenSurfaceArrangement { operation }
-            | ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
-                operation == request.operation
-            }
-        };
-        if !request_operation_matches {
+        if !self.kind.matches_request(request) {
             return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
         let request_validation_satisfied =
