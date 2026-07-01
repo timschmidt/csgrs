@@ -138,7 +138,7 @@ pub(crate) fn contained_face_adjacent_certificate_from_graph(
     }
 
     Ok(
-        contained_face_adjacency_certificate(left, right, &graph.face_pairs)
+        contained_face_adjacency_certificate(left, right, &graph.face_pairs)?
             .map(|inner| ContainedFaceAdjacentCertificate { inner }),
     )
 }
@@ -218,12 +218,16 @@ fn contained_face_adjacency_certificate(
     left: &ExactMesh,
     right: &ExactMesh,
     pairs: &[FacePairEvents],
-) -> Option<ContainedFaceAdjacencyCertificate> {
-    component_contained_adjacency_certificate(left, right, pairs).filter(|certificate| {
-        pairs
-            .iter()
-            .all(|pair| contained_adjacency_contact_pair(left, right, pair, certificate))
-    })
+) -> Result<Option<ContainedFaceAdjacencyCertificate>, ExactMeshError> {
+    let Some(certificate) = component_contained_adjacency_certificate(left, right, pairs)? else {
+        return Ok(None);
+    };
+    for pair in pairs {
+        if !contained_adjacency_contact_pair(left, right, pair, &certificate)? {
+            return Ok(None);
+        }
+    }
+    Ok(Some(certificate))
 }
 
 /// Certify one connected coplanar containing component with one or more
@@ -239,16 +243,18 @@ fn component_contained_adjacency_certificate(
     left: &ExactMesh,
     right: &ExactMesh,
     pairs: &[FacePairEvents],
-) -> Option<ContainedFaceAdjacencyCertificate> {
+) -> Result<Option<ContainedFaceAdjacencyCertificate>, ExactMeshError> {
     let overlapping = pairs
         .iter()
         .filter(|pair| pair.relation == MeshFacePairRelation::CoplanarOverlapping)
         .collect::<Vec<_>>();
     if overlapping.is_empty() {
-        return None;
+        return Ok(None);
     }
 
-    let components = overlap_face_components(&overlapping)?;
+    let Some(components) = overlap_face_components(&overlapping) else {
+        return Ok(None);
+    };
     'sides: for (containing_side, containing_source, contained_source) in [
         (MeshSide::Left, left, right),
         (MeshSide::Right, right, left),
@@ -271,17 +277,18 @@ fn component_contained_adjacency_certificate(
                 contained_source,
                 containing_faces,
                 contained_faces,
-            ) else {
+            )?
+            else {
                 continue 'sides;
             };
             patches.extend(certificate.patches);
         }
-        return Some(ContainedFaceAdjacencyCertificate {
+        return Ok(Some(ContainedFaceAdjacencyCertificate {
             containing_side,
             patches,
-        });
+        }));
     }
-    None
+    Ok(None)
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -348,38 +355,57 @@ fn component_contained_adjacency_for_side(
     contained_source: &ExactMesh,
     containing_faces: &[usize],
     contained_faces: &[usize],
-) -> Option<ContainedFaceAdjacencyCertificate> {
+) -> Result<Option<ContainedFaceAdjacencyCertificate>, ExactMeshError> {
     if containing_faces.is_empty() || contained_faces.is_empty() {
-        return None;
+        return Ok(None);
     }
-    let containing_mesh = faces_mesh(
+    let Some(containing_mesh) = faces_mesh(
         containing_source,
         &containing_faces,
         "exact contained-face adjacency containing component",
-    )?;
-    let contained_mesh = faces_mesh(
+    )?
+    else {
+        return Ok(None);
+    };
+    let Some(contained_mesh) = faces_mesh(
         contained_source,
         &contained_faces,
         "exact contained-face adjacency contained component",
-    )?;
-    if connected_face_component_count(&containing_mesh)? != 1 {
-        return None;
+    )?
+    else {
+        return Ok(None);
+    };
+    let Some(component_count) = connected_face_component_count(&containing_mesh) else {
+        return Ok(None);
+    };
+    if component_count != 1 {
+        return Ok(None);
     }
     let (_, arrangement_projection) =
-        materialize_contained_patch_difference(&containing_mesh, &contained_mesh)?;
-    let sign = consistent_projected_mesh_triangle_sign(&containing_mesh, arrangement_projection)?;
-    let contained_sign =
-        consistent_projected_mesh_triangle_sign(&contained_mesh, arrangement_projection)?;
+        match materialize_contained_patch_difference(&containing_mesh, &contained_mesh) {
+            Some(materialized) => materialized,
+            None => return Ok(None),
+        };
+    let Some(sign) =
+        consistent_projected_mesh_triangle_sign(&containing_mesh, arrangement_projection)?
+    else {
+        return Ok(None);
+    };
+    let Some(contained_sign) =
+        consistent_projected_mesh_triangle_sign(&contained_mesh, arrangement_projection)?
+    else {
+        return Ok(None);
+    };
     if contained_sign
         != match sign {
             Sign::Negative => Sign::Positive,
             Sign::Positive => Sign::Negative,
-            Sign::Zero => return None,
+            Sign::Zero => return Ok(None),
         }
     {
-        return None;
+        return Ok(None);
     }
-    Some(ContainedFaceAdjacencyCertificate {
+    Ok(Some(ContainedFaceAdjacencyCertificate {
         containing_side,
         patches: vec![ContainedFacePatch {
             containing_faces: containing_faces.to_vec(),
@@ -387,7 +413,7 @@ fn component_contained_adjacency_for_side(
             projection: arrangement_projection,
             containing_projected_sign: sign,
         }],
-    })
+    }))
 }
 
 fn contained_adjacency_contact_pair(
@@ -395,7 +421,7 @@ fn contained_adjacency_contact_pair(
     right: &ExactMesh,
     pair: &FacePairEvents,
     certificate: &ContainedFaceAdjacencyCertificate,
-) -> bool {
+) -> Result<bool, ExactMeshError> {
     let certificate_contains_pair = match certificate.containing_side {
         MeshSide::Left => certificate.patches.iter().any(|patch| {
             patch.containing_faces.contains(&pair.left_face)
@@ -407,32 +433,44 @@ fn contained_adjacency_contact_pair(
         }),
     };
     if certificate_contains_pair {
-        return pair.relation == MeshFacePairRelation::CoplanarOverlapping;
+        return Ok(pair.relation == MeshFacePairRelation::CoplanarOverlapping);
     }
 
     match pair.relation {
-        MeshFacePairRelation::CoplanarTouching => true,
-        MeshFacePairRelation::Candidate => pair.events.iter().all(|event| match event {
-            IntersectionEvent::SegmentPlane { relation, .. } => {
-                matches!(
-                    relation,
-                    SegmentPlaneRelation::Disjoint
-                        | SegmentPlaneRelation::Coplanar
-                        | SegmentPlaneRelation::EndpointOnPlane
-                ) || (*relation == SegmentPlaneRelation::ProperCrossing
-                    && retained_plane_crossing_is_not_inside_plane_face(left, right, event))
+        MeshFacePairRelation::CoplanarTouching => Ok(true),
+        MeshFacePairRelation::Candidate => {
+            for event in &pair.events {
+                let contact = match event {
+                    IntersectionEvent::SegmentPlane { relation, .. } => {
+                        matches!(
+                            relation,
+                            SegmentPlaneRelation::Disjoint
+                                | SegmentPlaneRelation::Coplanar
+                                | SegmentPlaneRelation::EndpointOnPlane
+                        ) || (*relation == SegmentPlaneRelation::ProperCrossing
+                            && retained_plane_crossing_is_not_inside_plane_face(
+                                left, right, event,
+                            )?)
+                    }
+                    IntersectionEvent::CoplanarEdge { relation, .. } => {
+                        *relation != SegmentIntersection::Disjoint
+                    }
+                    IntersectionEvent::CoplanarVertex { location, .. } => matches!(
+                        location,
+                        TriangleLocation::Inside
+                            | TriangleLocation::OnEdge
+                            | TriangleLocation::OnVertex
+                    ),
+                    IntersectionEvent::Unknown => false,
+                };
+                if !contact {
+                    return Ok(false);
+                }
             }
-            IntersectionEvent::CoplanarEdge { relation, .. } => {
-                *relation != SegmentIntersection::Disjoint
-            }
-            IntersectionEvent::CoplanarVertex { location, .. } => matches!(
-                location,
-                TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
-            ),
-            IntersectionEvent::Unknown => false,
-        }),
-        MeshFacePairRelation::PlaneSeparated => true,
-        MeshFacePairRelation::CoplanarOverlapping | MeshFacePairRelation::Unknown => false,
+            Ok(true)
+        }
+        MeshFacePairRelation::PlaneSeparated => Ok(true),
+        MeshFacePairRelation::CoplanarOverlapping | MeshFacePairRelation::Unknown => Ok(false),
     }
 }
 
@@ -440,7 +478,7 @@ fn retained_plane_crossing_is_not_inside_plane_face(
     left: &ExactMesh,
     right: &ExactMesh,
     event: &IntersectionEvent,
-) -> bool {
+) -> Result<bool, ExactMeshError> {
     let IntersectionEvent::SegmentPlane {
         relation: SegmentPlaneRelation::ProperCrossing,
         plane_side,
@@ -449,7 +487,7 @@ fn retained_plane_crossing_is_not_inside_plane_face(
         ..
     } = event
     else {
-        return false;
+        return Ok(false);
     };
     // The graph may retain a source edge crossing the opposite face's
     // supporting plane even when the constructed point lies outside that
@@ -457,9 +495,7 @@ fn retained_plane_crossing_is_not_inside_plane_face(
     // evidence for splitting, not for volume overlap; preserving the
     // shortcut consumes. Strict interior crossings remain blockers.
     let mesh = plane_side.mesh(left, right);
-    let Some(triangle) = face_point_refs(mesh, *plane_face) else {
-        return false;
-    };
+    let triangle = face_point_refs(mesh, *plane_face)?;
     let Some(projection) = [
         CoplanarProjection::Xy,
         CoplanarProjection::Xz,
@@ -467,19 +503,21 @@ fn retained_plane_crossing_is_not_inside_plane_face(
     ]
     .into_iter()
     .find(|&projection| projected_triangle_sign(triangle, projection).is_some()) else {
-        return false;
+        return Ok(false);
     };
-    match classify_point_triangle(
-        &project_point3(&triangle[0], projection),
-        &project_point3(&triangle[1], projection),
-        &project_point3(&triangle[2], projection),
-        &project_point3(point, projection),
+    Ok(
+        match classify_point_triangle(
+            &project_point3(&triangle[0], projection),
+            &project_point3(&triangle[1], projection),
+            &project_point3(&triangle[2], projection),
+            &project_point3(point, projection),
+        )
+        .value()
+        {
+            Some(location) => location != TriangleLocation::Inside,
+            None => false,
+        },
     )
-    .value()
-    {
-        Some(location) => location != TriangleLocation::Inside,
-        None => false,
-    }
 }
 
 fn contained_face_union_mesh(
@@ -497,12 +535,12 @@ fn contained_face_union_mesh(
         MeshSide::Left => (containing_faces, contained_faces),
         MeshSide::Right => (contained_faces, containing_faces),
     };
-    if append_source_mesh_without_face(left, left_skip_faces, &mut vertices, &mut triangles)
+    if append_source_mesh_without_face(left, left_skip_faces, &mut vertices, &mut triangles)?
         .is_none()
     {
         return Ok(None);
     }
-    if append_source_mesh_without_face(right, right_skip_faces, &mut vertices, &mut triangles)
+    if append_source_mesh_without_face(right, right_skip_faces, &mut vertices, &mut triangles)?
         .is_none()
     {
         return Ok(None);
@@ -515,7 +553,7 @@ fn contained_face_union_mesh(
             patch,
             &mut vertices,
             &mut triangles,
-        )
+        )?
         .is_none()
         {
             return Ok(None);
@@ -553,23 +591,32 @@ fn append_contained_face_patch_group(
     patch: &ContainedFacePatch,
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
-) -> Option<()> {
-    let containing_mesh = faces_mesh(
+) -> Result<Option<()>, ExactMeshError> {
+    let Some(containing_mesh) = faces_mesh(
         containing_side.mesh(left, right),
         &patch.containing_faces,
         "exact contained-face adjacency containing faces",
-    )?;
+    )?
+    else {
+        return Ok(None);
+    };
     let contained_side = match containing_side {
         MeshSide::Left => MeshSide::Right,
         MeshSide::Right => MeshSide::Left,
     };
-    let contained_mesh = faces_mesh(
+    let Some(contained_mesh) = faces_mesh(
         contained_side.mesh(left, right),
         &patch.contained_faces,
         "exact contained-face adjacency contained faces",
-    )?;
-    let (replacement, _) =
-        materialize_contained_patch_difference(&containing_mesh, &contained_mesh)?;
+    )?
+    else {
+        return Ok(None);
+    };
+    let Some((replacement, _)) =
+        materialize_contained_patch_difference(&containing_mesh, &contained_mesh)
+    else {
+        return Ok(None);
+    };
     append_holed_replacement(
         &replacement,
         patch.projection,
@@ -607,25 +654,27 @@ fn materialize_contained_patch_difference(
     None
 }
 
-fn faces_mesh(mesh: &ExactMesh, faces: &[usize], label: &'static str) -> Option<ExactMesh> {
+fn faces_mesh(
+    mesh: &ExactMesh,
+    faces: &[usize],
+    label: &'static str,
+) -> Result<Option<ExactMesh>, ExactMeshError> {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
     for &face in faces {
         let points = face_point_refs(mesh, face)?;
-        triangles.push(Triangle([
-            map_point(&mut vertices, points[0])?,
-            map_point(&mut vertices, points[1])?,
-            map_point(&mut vertices, points[2])?,
-        ]));
+        let Some(mapped) = map_triangle_points(&mut vertices, points) else {
+            return Ok(None);
+        };
+        triangles.push(Triangle(mapped));
     }
-    ExactMesh::new_with_policy_and_version(
+    Ok(Some(ExactMesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact(label),
         ExactMeshValidationPolicy::ALLOW_BOUNDARY,
         1,
-    )
-    .ok()
+    )?))
 }
 
 fn connected_face_component_count(mesh: &ExactMesh) -> Option<usize> {
@@ -679,19 +728,18 @@ fn append_source_mesh_without_face(
     skip_faces: &[usize],
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
-) -> Option<()> {
+) -> Result<Option<()>, ExactMeshError> {
     for face in mesh.view().faces() {
         if skip_faces.contains(&face.index()) {
             continue;
         }
-        let points = face.vertices().ok()?;
-        triangles.push(Triangle([
-            map_point(vertices, points[0])?,
-            map_point(vertices, points[1])?,
-            map_point(vertices, points[2])?,
-        ]));
+        let points = face.vertices()?;
+        let Some(mapped) = map_triangle_points(vertices, points) else {
+            return Ok(None);
+        };
+        triangles.push(Triangle(mapped));
     }
-    Some(())
+    Ok(Some(()))
 }
 
 fn append_holed_replacement(
@@ -700,24 +748,27 @@ fn append_holed_replacement(
     target_sign: Sign,
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
-) -> Option<()> {
-    let source_sign = consistent_projected_mesh_triangle_sign(mesh, projection)?;
+) -> Result<Option<()>, ExactMeshError> {
+    let Some(source_sign) = consistent_projected_mesh_triangle_sign(mesh, projection)? else {
+        return Ok(None);
+    };
     let flip = source_sign != target_sign;
     for face in mesh.view().faces() {
-        let points = face.vertices().ok()?;
-        let mapped = [
-            map_point(vertices, points[0])?,
-            map_point(vertices, points[1])?,
-            map_point(vertices, points[2])?,
-        ];
+        let points = face.vertices()?;
+        let Some(mapped) = map_triangle_points(vertices, points) else {
+            return Ok(None);
+        };
         let mapped_triangle = if flip {
             [mapped[0], mapped[2], mapped[1]]
         } else {
             mapped
         };
-        append_triangle_with_existing_edge_splits(mapped_triangle, vertices, triangles)?;
+        if append_triangle_with_existing_edge_splits(mapped_triangle, vertices, triangles).is_none()
+        {
+            return Ok(None);
+        }
     }
-    Some(())
+    Ok(Some(()))
 }
 
 fn append_triangle_with_existing_edge_splits(
@@ -767,8 +818,16 @@ fn map_point(vertices: &mut Vec<Point3>, point: &Point3) -> Option<usize> {
     Some(mapped)
 }
 
-fn face_point_refs(mesh: &ExactMesh, face: usize) -> Option<[&Point3; 3]> {
-    mesh.view().face(face).ok()?.vertices().ok()
+fn map_triangle_points(vertices: &mut Vec<Point3>, points: [&Point3; 3]) -> Option<[usize; 3]> {
+    Some([
+        map_point(vertices, points[0])?,
+        map_point(vertices, points[1])?,
+        map_point(vertices, points[2])?,
+    ])
+}
+
+fn face_point_refs(mesh: &ExactMesh, face: usize) -> Result<[&Point3; 3], ExactMeshError> {
+    mesh.view().face(face)?.vertices()
 }
 
 fn projected_triangle_sign(points: [&Point3; 3], projection: CoplanarProjection) -> Option<Sign> {
@@ -785,16 +844,47 @@ fn projected_triangle_sign(points: [&Point3; 3], projection: CoplanarProjection)
 fn consistent_projected_mesh_triangle_sign(
     mesh: &ExactMesh,
     projection: CoplanarProjection,
-) -> Option<Sign> {
+) -> Result<Option<Sign>, ExactMeshError> {
     let mut sign = None;
     for face in mesh.view().faces() {
-        let points = face.vertices().ok()?;
-        let face_sign = projected_triangle_sign(points, projection)?;
+        let points = face.vertices()?;
+        let Some(face_sign) = projected_triangle_sign(points, projection) else {
+            return Ok(None);
+        };
         match sign {
-            Some(expected) if expected != face_sign => return None,
+            Some(expected) if expected != face_sign => return Ok(None),
             Some(_) => {}
             None => sign = Some(face_sign),
         }
     }
-    sign
+    Ok(sign)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn contained_face_component_rejects_stale_retained_face_rows() {
+        let mut mesh = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+            &[0, 1, 2],
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        mesh.facts.faces.pop();
+
+        let error = faces_mesh(
+            &mesh,
+            &[0],
+            "test contained-face component with stale retained face row",
+        )
+        .expect_err("stale retained face rows should return a typed blocker");
+
+        assert!(
+            error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+            "{error:?}"
+        );
+        assert_eq!(error.blockers()[0].face(), Some(0));
+    }
 }
