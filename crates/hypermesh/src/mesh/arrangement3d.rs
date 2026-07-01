@@ -2504,7 +2504,7 @@ fn choose_triangle_projection(
     triangle: [usize; 3],
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<CoplanarProjection> {
-    let Some(points) = mesh.view().vertex(triangle[0]).and_then(|a| {
+    let Ok(points) = mesh.view().vertex(triangle[0]).and_then(|a| {
         mesh.view().vertex(triangle[1]).and_then(|b| {
             mesh.view()
                 .vertex(triangle[2])
@@ -2689,7 +2689,7 @@ fn lower_dimensional_artifacts(
             }
             for vertex_overlap in &split_graph.vertex_overlaps {
                 let mesh = vertex_overlap.vertex_side.mesh(left, right);
-                if let Some(point) = mesh
+                if let Ok(point) = mesh
                     .view()
                     .vertex(vertex_overlap.vertex)
                     .map(|vertex| vertex.point())
@@ -2781,7 +2781,7 @@ fn non_coplanar_edge_contact_artifact(
     };
     let segment_mesh = segment_side.mesh(left, right);
     let plane_mesh = plane_side.mesh(left, right);
-    let Some(start) = segment_mesh
+    let Ok(start) = segment_mesh
         .view()
         .vertex(edge[0])
         .map(|vertex| vertex.point())
@@ -2790,7 +2790,7 @@ fn non_coplanar_edge_contact_artifact(
             ExactArrangementGraphBlockerKind::EventSourceOutOfRange,
         ));
     };
-    let Some(end) = segment_mesh
+    let Ok(end) = segment_mesh
         .view()
         .vertex(edge[1])
         .map(|vertex| vertex.point())
@@ -4671,7 +4671,7 @@ fn face_cell_from_original_triangle(
         .collect();
     let mut boundary_points = Vec::with_capacity(3);
     for vertex in triangle {
-        let Some(point) = mesh
+        let Ok(point) = mesh
             .view()
             .vertex(vertex)
             .map(|vertex| vertex.point().clone())

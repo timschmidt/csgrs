@@ -511,7 +511,7 @@ fn mesh_local_off_plane_side(
                     if edge.contains(&vertex) {
                         continue;
                     }
-                    match retained_plane_side(plane, mesh.view().vertex(vertex)?.point())? {
+                    match retained_plane_side(plane, mesh.view().vertex(vertex).ok()?.point())? {
                         PlaneSide::On => {}
                         candidate => {
                             if let Some(existing) = side {

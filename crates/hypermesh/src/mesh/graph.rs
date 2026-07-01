@@ -2195,7 +2195,7 @@ fn validate_vertex(
     right: &ExactMesh,
 ) -> Result<(), IntersectionGraphValidationError> {
     let mesh = side.mesh(left, right);
-    if mesh.view().vertex(vertex).is_some() {
+    if mesh.view().vertex(vertex).is_ok() {
         Ok(())
     } else {
         Err(IntersectionGraphValidationError::EventSourceOutOfRange)
@@ -2814,7 +2814,7 @@ fn face_split_geometry_plan(
                         side: vertex_side,
                         vertex,
                     } if *vertex_side == face.side => {
-                        let point = mesh.view().vertex(*vertex).ok_or_else(|| {
+                        let point = mesh.view().vertex(*vertex).map_err(|_| {
                             ExactMeshError::one(
                                 ExactMeshBlocker::new(
                                     ExactMeshBlockerKind::IndexOutOfBounds,
@@ -3055,7 +3055,7 @@ fn validate_face_split_boundary_chain_shape(
         let FaceSplitBoundaryNode::OriginalVertex { vertex, point } = node else {
             continue;
         };
-        let Some(source_point) = mesh.view().vertex(*vertex).map(|vertex| vertex.point()) else {
+        let Ok(source_point) = mesh.view().vertex(*vertex).map(|vertex| vertex.point()) else {
             blockers.push(SplitPlanBlocker {
                 side: Some(side),
                 face: Some(face),
@@ -3231,7 +3231,7 @@ fn validate_face_region_original_boundary_nodes(
         let FaceSplitBoundaryNode::OriginalVertex { vertex, point } = node else {
             continue;
         };
-        let Some(source_point) = mesh.view().vertex(*vertex).map(|vertex| vertex.point()) else {
+        let Ok(source_point) = mesh.view().vertex(*vertex).map(|vertex| vertex.point()) else {
             blockers.push(SplitPlanBlocker {
                 side: Some(region.side),
                 face: Some(region.face),
@@ -3577,7 +3577,7 @@ fn edge_points(
     mesh: &ExactMesh,
     edge: [usize; 2],
 ) -> Result<BorrowedEdgePoints<'_>, ExactMeshError> {
-    let start = mesh.view().vertex(edge[0]).ok_or_else(|| {
+    let start = mesh.view().vertex(edge[0]).map_err(|_| {
         ExactMeshError::one(
             ExactMeshBlocker::new(
                 ExactMeshBlockerKind::IndexOutOfBounds,
@@ -3586,7 +3586,7 @@ fn edge_points(
             .with_vertex(edge[0]),
         )
     })?;
-    let end = mesh.view().vertex(edge[1]).ok_or_else(|| {
+    let end = mesh.view().vertex(edge[1]).map_err(|_| {
         ExactMeshError::one(
             ExactMeshBlocker::new(
                 ExactMeshBlockerKind::IndexOutOfBounds,

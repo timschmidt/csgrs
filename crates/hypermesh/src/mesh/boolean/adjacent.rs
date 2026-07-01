@@ -627,10 +627,10 @@ fn insert_patch_seam_map(
 
     let mut pairs = Vec::new();
     for right_vertex in right_vertices {
-        let right_point = right.view().vertex(right_vertex)?.point();
+        let right_point = right.view().vertex(right_vertex).ok()?.point();
         let mut matching_left_vertex = None;
         for left_vertex in left_vertices.iter().copied() {
-            let left_point = left.view().vertex(left_vertex)?.point();
+            let left_point = left.view().vertex(left_vertex).ok()?.point();
             if point3_exact_equal(left_point, right_point)? {
                 matching_left_vertex = Some(left_vertex);
                 break;
@@ -653,7 +653,7 @@ fn map_left_vertex(
         return Some(mapped);
     }
     let mapped = vertices.len();
-    vertices.push(left.view().vertex(vertex)?.point().clone());
+    vertices.push(left.view().vertex(vertex).ok()?.point().clone());
     *left_vertex_map.get_mut(vertex)? = Some(mapped);
     Some(mapped)
 }
@@ -674,7 +674,7 @@ fn map_right_vertex(
         return Some(mapped);
     }
     let mapped = vertices.len();
-    vertices.push(right.view().vertex(vertex)?.point().clone());
+    vertices.push(right.view().vertex(vertex).ok()?.point().clone());
     *right_vertex_map.get_mut(vertex)? = Some(mapped);
     Some(mapped)
 }
@@ -698,7 +698,7 @@ fn append_left_triangle_with_edge_splits(
     let points = triangle_point_refs(left, triangle)?;
     let mut splits = [Vec::new(), Vec::new(), Vec::new()];
     for &right_vertex in right_candidates {
-        let point = right.view().vertex(right_vertex)?.point();
+        let point = right.view().vertex(right_vertex).ok()?.point();
         let Some((edge, parameter)) = triangle_edge_split_parameter(&points, point)? else {
             continue;
         };
@@ -759,7 +759,7 @@ fn append_right_triangle_with_edge_splits(
     let points = triangle_point_refs(right, triangle)?;
     let mut splits = [Vec::new(), Vec::new(), Vec::new()];
     for &left_vertex in left_candidates {
-        let point = left.view().vertex(left_vertex)?.point();
+        let point = left.view().vertex(left_vertex).ok()?.point();
         let Some((edge, parameter)) = triangle_edge_split_parameter(&points, point)? else {
             continue;
         };
@@ -941,7 +941,7 @@ fn fan_faces_cover_triangle(
     for whole_point in whole_points {
         let mut matches_boundary = false;
         for &vertex in &boundary_vertices {
-            let vertex = fan_mesh.view().vertex(vertex)?;
+            let vertex = fan_mesh.view().vertex(vertex).ok()?;
             if point3_exact_equal(whole_point, vertex.point())? {
                 matches_boundary = true;
                 break;
@@ -952,7 +952,7 @@ fn fan_faces_cover_triangle(
         }
     }
     for vertex in boundary_vertices {
-        let point = fan_mesh.view().vertex(vertex)?.point();
+        let point = fan_mesh.view().vertex(vertex).ok()?.point();
         let projected = project_point3(point, projection);
         let location = classify_point_triangle(
             &project_point3(whole_points[0], projection),
@@ -1111,8 +1111,8 @@ fn reversed_whole_face_vertex_map(
 
 fn triangle_point_refs(mesh: &ExactMesh, triangle: [usize; 3]) -> Option<[&Point3; 3]> {
     Some([
-        mesh.view().vertex(triangle[0])?.point(),
-        mesh.view().vertex(triangle[1])?.point(),
-        mesh.view().vertex(triangle[2])?.point(),
+        mesh.view().vertex(triangle[0]).ok()?.point(),
+        mesh.view().vertex(triangle[1]).ok()?.point(),
+        mesh.view().vertex(triangle[2]).ok()?.point(),
     ])
 }

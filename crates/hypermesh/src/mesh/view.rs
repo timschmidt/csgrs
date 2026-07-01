@@ -49,10 +49,6 @@ impl<'a> MeshView<'a> {
         current_row_count(self.mesh, kind)
     }
 
-    fn has_current_row(self, kind: RetainedRowKind, index: usize) -> bool {
-        index < self.current_row_count(kind)
-    }
-
     const fn vertex_ref(self, index: usize) -> VertexRef<'a> {
         VertexRef {
             mesh: self.mesh,
@@ -113,17 +109,11 @@ impl<'a> MeshView<'a> {
 
     /// Borrow retained bounds for one edge as exact min/max corners.
     pub fn edge_bounds(self, index: usize) -> Result<(&'a Point3, &'a Point3), ExactMeshError> {
-        self.require_edge(index)?.bounds()
+        self.edge(index)?.bounds()
     }
 
     /// Borrow one vertex by index.
-    pub fn vertex(self, index: usize) -> Option<VertexRef<'a>> {
-        self.has_current_row(RetainedRowKind::Vertex, index)
-            .then(|| self.vertex_ref(index))
-    }
-
-    /// Borrow one vertex by index, returning a typed blocker when absent.
-    pub fn require_vertex(self, index: usize) -> Result<VertexRef<'a>, ExactMeshError> {
+    pub fn vertex(self, index: usize) -> Result<VertexRef<'a>, ExactMeshError> {
         require_current_row(self.mesh, RetainedRowKind::Vertex, index)?;
         Ok(self.vertex_ref(index))
     }
@@ -205,13 +195,7 @@ impl<'a> MeshView<'a> {
     }
 
     /// Borrow one retained edge by index.
-    pub fn edge(self, index: usize) -> Option<EdgeRef<'a>> {
-        self.has_current_row(RetainedRowKind::Edge, index)
-            .then(|| self.edge_ref(index))
-    }
-
-    /// Borrow one retained edge by index, returning a typed blocker when absent.
-    pub fn require_edge(self, index: usize) -> Result<EdgeRef<'a>, ExactMeshError> {
+    pub fn edge(self, index: usize) -> Result<EdgeRef<'a>, ExactMeshError> {
         require_current_row(self.mesh, RetainedRowKind::Edge, index)?;
         Ok(self.edge_ref(index))
     }
@@ -938,9 +922,8 @@ mod tests {
         );
         assert_eq!(view.vertices().len(), stale_vertex);
         assert_eq!(view.vertex_refs().count(), stale_vertex);
-        assert!(view.vertex(stale_vertex).is_none());
         assert_eq!(
-            view.require_vertex(stale_vertex).unwrap_err().blockers()[0].kind(),
+            view.vertex(stale_vertex).unwrap_err().blockers()[0].kind(),
             ExactMeshBlockerKind::StaleFactReplay
         );
     }
@@ -994,9 +977,8 @@ mod tests {
         let view = mesh.view();
 
         assert_eq!(view.edges().count(), stale_edge);
-        assert!(view.edge(stale_edge).is_none());
         assert_eq!(
-            view.require_edge(stale_edge).unwrap_err().blockers()[0].kind(),
+            view.edge(stale_edge).unwrap_err().blockers()[0].kind(),
             ExactMeshBlockerKind::StaleFactReplay
         );
     }
@@ -1028,7 +1010,7 @@ mod tests {
         mesh.facts.vertices[0].incident_edge_indices = vec![stale_edge];
 
         let view = mesh.view();
-        let vertex = view.require_vertex(0).unwrap();
+        let vertex = view.vertex(0).unwrap();
 
         assert_eq!(
             view.mesh_bounds().unwrap_err().blockers()[0].kind(),
@@ -1036,9 +1018,8 @@ mod tests {
         );
         assert_eq!(view.vertices().len(), stale_vertex);
         assert_eq!(view.vertex_refs().count(), stale_vertex);
-        assert!(view.vertex(stale_vertex).is_none());
         assert_eq!(
-            view.require_vertex(stale_vertex).unwrap_err().blockers()[0].kind(),
+            view.vertex(stale_vertex).unwrap_err().blockers()[0].kind(),
             ExactMeshBlockerKind::StaleFactReplay
         );
         assert!(view.inverse().is_err());
@@ -1111,9 +1092,8 @@ mod tests {
             view.edge_bounds(stale_edge).unwrap_err().blockers()[0].kind(),
             ExactMeshBlockerKind::StaleFactReplay
         );
-        assert!(view.edge(stale_edge).is_none());
         assert_eq!(
-            view.require_edge(stale_edge).unwrap_err().blockers()[0].kind(),
+            view.edge(stale_edge).unwrap_err().blockers()[0].kind(),
             ExactMeshBlockerKind::StaleFactReplay
         );
         assert_eq!(
@@ -1131,7 +1111,7 @@ mod tests {
                 .kind(),
             ExactMeshBlockerKind::StaleFactReplay
         );
-        let edge = view.require_edge(edge_with_stale_vertex).unwrap();
+        let edge = view.edge(edge_with_stale_vertex).unwrap();
         assert_eq!(
             edge.vertex_refs().unwrap_err().blockers()[0].kind(),
             ExactMeshBlockerKind::StaleFactReplay
@@ -1147,7 +1127,7 @@ mod tests {
         let mesh = tetra([0, 0, 0]);
         let view = mesh.view();
 
-        let vertex_error = view.require_vertex(mesh.vertices().len()).unwrap_err();
+        let vertex_error = view.vertex(mesh.vertices().len()).unwrap_err();
         let vertex_blocker = &vertex_error.blockers()[0];
         assert_eq!(
             vertex_blocker.kind(),
@@ -1160,7 +1140,7 @@ mod tests {
         assert_eq!(face_blocker.kind(), ExactMeshBlockerKind::IndexOutOfBounds);
         assert_eq!(face_blocker.face(), Some(mesh.facts().faces.len()));
 
-        let edge_error = view.require_edge(mesh.facts().edges.len()).unwrap_err();
+        let edge_error = view.edge(mesh.facts().edges.len()).unwrap_err();
         let edge_blocker = &edge_error.blockers()[0];
         assert_eq!(edge_blocker.kind(), ExactMeshBlockerKind::IndexOutOfBounds);
 

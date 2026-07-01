@@ -428,7 +428,7 @@ fn find_affine_cell_basis<T>(
     origins.sort_by_key(|&origin| adjacency[origin].len());
     for origin in origins {
         let neighbors = &adjacency[origin];
-        let Some(origin_point) = mesh
+        let Ok(origin_point) = mesh
             .view()
             .vertex(origin)
             .map(|vertex| vertex.point().clone())
@@ -486,7 +486,7 @@ fn mesh_direction_counts(mesh: &ExactMesh) -> Option<Vec<(Point3, usize)>> {
     for face in view.faces() {
         let [a, b, c] = face.vertex_indices();
         for [a, b] in [[a, b], [b, c], [c, a]] {
-            let (Some(a), Some(b)) = (view.vertex(a), view.vertex(b)) else {
+            let (Ok(a), Ok(b)) = (view.vertex(a), view.vertex(b)) else {
                 continue;
             };
             let (a, b) = (a.point(), b.point());
@@ -541,12 +541,12 @@ fn unique_edge_directions(
     origin: usize,
     neighbors: &[usize],
 ) -> Option<Vec<Point3>> {
-    let Some(origin_point) = mesh.view().vertex(origin).map(|vertex| vertex.point()) else {
+    let Ok(origin_point) = mesh.view().vertex(origin).map(|vertex| vertex.point()) else {
         return Some(Vec::new());
     };
     let mut directions = Vec::new();
     for &neighbor in neighbors {
-        let Some(neighbor) = mesh.view().vertex(neighbor).map(|vertex| vertex.point()) else {
+        let Ok(neighbor) = mesh.view().vertex(neighbor).map(|vertex| vertex.point()) else {
             continue;
         };
         let direction = Point3::new(

@@ -831,7 +831,7 @@ fn source_vertex_ref<'a>(
     mesh.view()
         .vertex(vertex)
         .map(|vertex| vertex.point())
-        .ok_or(hypertri::Error::InvalidInput { reason })
+        .map_err(|_| hypertri::Error::InvalidInput { reason })
 }
 
 fn source_vertex_point(

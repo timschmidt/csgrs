@@ -1105,7 +1105,7 @@ fn validate_assembly_output_vertex_source_against_sources(
             let mut saw_source_vertex = false;
             let mut saw_unknown_equality = false;
             for mesh in [left, right] {
-                let Some(source_point) = mesh
+                let Ok(source_point) = mesh
                     .view()
                     .vertex(*source_vertex)
                     .map(|vertex| vertex.point())

@@ -130,8 +130,8 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     );
     assert_eq!(view.triangle(0).unwrap().vertices().unwrap().len(), 3);
 
-    assert_eq!(view.require_vertex(0).unwrap().index(), 0);
-    let missing_vertex = view.require_vertex(view.vertex_count()).unwrap_err();
+    assert_eq!(view.vertex(0).unwrap().index(), 0);
+    let missing_vertex = view.vertex(view.vertex_count()).unwrap_err();
     assert_eq!(
         missing_vertex.blockers()[0].kind(),
         ExactMeshBlockerKind::IndexOutOfBounds
@@ -235,8 +235,8 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
         [&p(0, 0, 0), &p(1, 0, 0), &p(0, 0, 1)]
     );
 
-    assert_eq!(view.require_edge(0).unwrap().index(), 0);
-    let missing_edge = view.require_edge(view.edge_count()).unwrap_err();
+    assert_eq!(view.edge(0).unwrap().index(), 0);
+    let missing_edge = view.edge(view.edge_count()).unwrap_err();
     assert_eq!(
         missing_edge.blockers()[0].kind(),
         ExactMeshBlockerKind::IndexOutOfBounds
