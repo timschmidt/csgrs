@@ -1067,9 +1067,10 @@ fn preflight_boolean_exact_request_from_graph_core(
             Some(evidence),
         ));
     }
-    let graph_had_unknowns = graph.has_unknowns();
-    let retained_face_pairs = graph.face_pairs.len();
-    let retained_events = graph.event_count();
+    let graph_counts = retained_graph_counts(graph);
+    let graph_had_unknowns = graph_counts.graph_had_unknowns;
+    let retained_face_pairs = graph_counts.retained_face_pairs;
+    let retained_events = graph_counts.retained_events;
     let relation_counts = ExactBooleanBlocker::from_graph(graph, ExactBooleanBlockerKind::Winding);
     let coplanar_volumetric_evidence =
         coplanar_volumetric_evidence_if_required(graph, left, right)?;
@@ -1210,9 +1211,9 @@ fn preflight_boolean_exact_request_from_graph_core(
         return Ok(ExactBooleanPreflight {
             operation,
             support: plan.support,
-            graph_had_unknowns: graph.has_unknowns(),
-            retained_face_pairs: graph.face_pairs.len(),
-            retained_events: graph.event_count(),
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
             region_count,
             region_classifications: plan.region_classifications,
             blocker: None,
@@ -1909,20 +1910,13 @@ fn certified_preflight(
     graph: Option<&super::graph::ExactIntersectionGraph>,
     coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 ) -> ExactBooleanPreflight {
-    let (graph_had_unknowns, retained_face_pairs, retained_events) =
-        graph.map_or((false, 0, 0), |graph| {
-            (
-                graph.has_unknowns(),
-                graph.face_pairs.len(),
-                graph.event_count(),
-            )
-        });
+    let graph_counts = graph.map_or_else(RetainedGraphCounts::empty, retained_graph_counts);
     ExactBooleanPreflight {
         operation,
         support,
-        graph_had_unknowns,
-        retained_face_pairs,
-        retained_events,
+        graph_had_unknowns: graph_counts.graph_had_unknowns,
+        retained_face_pairs: graph_counts.retained_face_pairs,
+        retained_events: graph_counts.retained_events,
         region_count: 0,
         region_classifications: Vec::new(),
         blocker: None,
@@ -1958,18 +1952,44 @@ fn region_plan_preflight_from_graph(
     let region_plan = geometry.region_plan(left, right);
     let region_classifications =
         checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
+    let graph_counts = retained_graph_counts(graph);
     Ok(ExactBooleanPreflight {
         operation,
         support,
-        graph_had_unknowns: graph.has_unknowns(),
-        retained_face_pairs: graph.face_pairs.len(),
-        retained_events: graph.event_count(),
+        graph_had_unknowns: graph_counts.graph_had_unknowns,
+        retained_face_pairs: graph_counts.retained_face_pairs,
+        retained_events: graph_counts.retained_events,
         region_count: region_plan.regions.len(),
         region_classifications,
         blocker,
         coplanar_arrangement_evidence: None,
         coplanar_volumetric_evidence,
     })
+}
+
+#[derive(Clone, Copy)]
+struct RetainedGraphCounts {
+    graph_had_unknowns: bool,
+    retained_face_pairs: usize,
+    retained_events: usize,
+}
+
+impl RetainedGraphCounts {
+    const fn empty() -> Self {
+        Self {
+            graph_had_unknowns: false,
+            retained_face_pairs: 0,
+            retained_events: 0,
+        }
+    }
+}
+
+fn retained_graph_counts(graph: &super::graph::ExactIntersectionGraph) -> RetainedGraphCounts {
+    RetainedGraphCounts {
+        graph_had_unknowns: graph.has_unknowns(),
+        retained_face_pairs: graph.face_pairs.len(),
+        retained_events: graph.event_count(),
+    }
 }
 
 fn certified_closed_boundary_only_contact_preflight(
@@ -7173,9 +7193,9 @@ pub(crate) fn boundary_touching_report_from_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactBoundaryTouchingReport, ExactMeshError> {
-    let graph_had_unknowns = graph.has_unknowns();
+    let graph_counts = retained_graph_counts(graph);
     let counts = ExactBooleanBlocker::from_graph(graph, ExactBooleanBlockerKind::Winding);
-    let status = if graph_had_unknowns {
+    let status = if graph_counts.graph_had_unknowns {
         ExactBoundaryTouchingStatus::GraphUnknowns
     } else if graph_requires_boundary_only_contact(graph, left, right)? {
         ExactBoundaryTouchingStatus::Certified
@@ -7189,9 +7209,9 @@ pub(crate) fn boundary_touching_report_from_graph(
     };
     Ok(ExactBoundaryTouchingReport {
         status,
-        graph_had_unknowns,
-        retained_face_pairs: graph.face_pairs.len(),
-        retained_events: graph.event_count(),
+        graph_had_unknowns: graph_counts.graph_had_unknowns,
+        retained_face_pairs: graph_counts.retained_face_pairs,
+        retained_events: graph_counts.retained_events,
         blocker: counts.into_blocker(blocker_kind),
     })
 }
@@ -7217,9 +7237,9 @@ fn planar_arrangement_report_from_graph_with_cell_complex_cache(
         ));
     }
 
-    let graph_had_unknowns = graph.has_unknowns();
+    let graph_counts = retained_graph_counts(graph);
     let counts = ExactBooleanBlocker::from_graph(graph, ExactBooleanBlockerKind::Winding);
-    let coplanar_arrangement_evidence = if graph_had_unknowns {
+    let coplanar_arrangement_evidence = if graph_counts.graph_had_unknowns {
         None
     } else {
         Some(graph.coplanar_arrangement_evidence(left, right)?)
@@ -7235,7 +7255,7 @@ fn planar_arrangement_report_from_graph_with_cell_complex_cache(
             .face_pairs
             .iter()
             .any(|pair| pair.relation == MeshFacePairRelation::CoplanarOverlapping);
-    let status = if graph_had_unknowns {
+    let status = if graph_counts.graph_had_unknowns {
         ExactPlanarArrangementStatus::GraphUnknowns
     } else if boolean_coplanar_mesh_overlay_optional(
         left,
@@ -7269,9 +7289,9 @@ fn planar_arrangement_report_from_graph_with_cell_complex_cache(
     Ok(planar_arrangement_report(
         operation,
         status,
-        graph_had_unknowns,
-        graph.face_pairs.len(),
-        graph.event_count(),
+        graph_counts.graph_had_unknowns,
+        graph_counts.retained_face_pairs,
+        graph_counts.retained_events,
         counts,
         coplanar_arrangement_evidence,
     ))
@@ -7348,16 +7368,17 @@ fn winding_evidence_report_from_graph_with_facts(
         }
     }
 
-    let graph_had_unknowns = graph.has_unknowns();
+    let graph_counts = retained_graph_counts(graph);
+    let graph_had_unknowns = graph_counts.graph_had_unknowns;
     let counts = ExactBooleanBlocker::from_graph(graph, ExactBooleanBlockerKind::Winding);
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         let blocker_kind = counts.inferred_kind();
         return Ok(winding_evidence_report(
             operation,
             ExactWindingEvidenceStatus::NotNamedOperation,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
+            graph_counts.graph_had_unknowns,
+            graph_counts.retained_face_pairs,
+            graph_counts.retained_events,
             0,
             Vec::new(),
             counts.into_blocker(blocker_kind),
@@ -7365,13 +7386,13 @@ fn winding_evidence_report_from_graph_with_facts(
             None,
         ));
     }
-    if graph_had_unknowns {
+    if graph_counts.graph_had_unknowns {
         return Ok(winding_evidence_report(
             operation,
             ExactWindingEvidenceStatus::GraphUnknowns,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
+            graph_counts.graph_had_unknowns,
+            graph_counts.retained_face_pairs,
+            graph_counts.retained_events,
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::Refinement),
