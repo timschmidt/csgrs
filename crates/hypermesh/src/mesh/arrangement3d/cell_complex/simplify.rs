@@ -1142,7 +1142,7 @@ pub(crate) fn triangulate_simplified_cell_complex(
     }
 
     if !matches!(complex.operation, ExactBooleanOperation::SelectedRegions(_)) {
-        deduplicate_output_vertices(&mut vertices, &mut triangles);
+        deduplicate_output_vertices(&mut vertices, &mut triangles)?;
         let original = std::mem::take(&mut triangles);
         triangles = split_triangles_at_collinear_vertices(&vertices, original)?;
     }
@@ -1165,14 +1165,25 @@ pub(crate) fn triangulate_simplified_cell_complex(
     .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)
 }
 
-fn deduplicate_output_vertices(vertices: &mut Vec<Point3>, triangles: &mut [Triangle]) {
+fn exact_points_equal(left: &Point3, right: &Point3) -> Result<bool, ExactArrangementBlocker> {
+    point3_exact_equal(left, right).ok_or(ExactArrangementBlocker::UndecidableOrdering)
+}
+
+fn deduplicate_output_vertices(
+    vertices: &mut Vec<Point3>,
+    triangles: &mut [Triangle],
+) -> Result<(), ExactArrangementBlocker> {
     let mut unique = Vec::<Point3>::new();
     let mut remap = Vec::<usize>::with_capacity(vertices.len());
     for vertex in std::mem::take(vertices) {
-        if let Some(existing) = unique
-            .iter()
-            .position(|point| point3_exact_equal(point, &vertex) == Some(true))
-        {
+        let mut existing = None;
+        for (index, point) in unique.iter().enumerate() {
+            if exact_points_equal(point, &vertex)? {
+                existing = Some(index);
+                break;
+            }
+        }
+        if let Some(existing) = existing {
             remap.push(existing);
         } else {
             remap.push(unique.len());
@@ -1187,6 +1198,7 @@ fn deduplicate_output_vertices(vertices: &mut Vec<Point3>, triangles: &mut [Tria
         }
     }
     *vertices = unique;
+    Ok(())
 }
 
 fn split_triangles_at_collinear_vertices(
@@ -1201,11 +1213,11 @@ fn split_triangles_at_collinear_vertices(
             boundary.push(start);
             let mut interior = Vec::new();
             for (candidate, point) in vertices.iter().enumerate() {
-                if candidate == start
-                    || candidate == end
-                    || interior.contains(&candidate)
-                    || point3_exact_equal(point, &vertices[start]) == Some(true)
-                    || point3_exact_equal(point, &vertices[end]) == Some(true)
+                if candidate == start || candidate == end || interior.contains(&candidate) {
+                    continue;
+                }
+                if exact_points_equal(point, &vertices[start])?
+                    || exact_points_equal(point, &vertices[end])?
                 {
                     continue;
                 }
@@ -1381,12 +1393,17 @@ fn refine_boundary_segments_with_collinear_points(
             refined_boundary.push(start.clone());
             let mut candidates = Vec::new();
             for point in &all_points {
-                if point3_exact_equal(point, start) == Some(true)
-                    || point3_exact_equal(point, end) == Some(true)
-                    || candidates
-                        .iter()
-                        .any(|candidate| point3_exact_equal(candidate, point) == Some(true))
-                {
+                if exact_points_equal(point, start)? || exact_points_equal(point, end)? {
+                    continue;
+                }
+                let mut duplicate = false;
+                for candidate in &candidates {
+                    if exact_points_equal(candidate, point)? {
+                        duplicate = true;
+                        break;
+                    }
+                }
+                if duplicate {
                     continue;
                 }
                 match point_on_segment3(start, end, point).value() {
@@ -1421,20 +1438,17 @@ fn refine_boundary_segments_with_collinear_points(
         }
         let mut deduped = Vec::<Point3>::new();
         for point in refined_boundary {
-            if deduped
-                .last()
-                .is_none_or(|last| point3_exact_equal(last, &point) != Some(true))
-            {
-                deduped.push(point);
+            match deduped.last() {
+                Some(last) if exact_points_equal(last, &point)? => {}
+                _ => deduped.push(point),
             }
         }
-        if deduped.len() > 1
-            && deduped
-                .first()
-                .zip(deduped.last())
-                .is_some_and(|(first, last)| point3_exact_equal(first, last) == Some(true))
-        {
-            deduped.pop();
+        if deduped.len() > 1 {
+            let first = deduped.first().expect("checked non-empty deduped boundary");
+            let last = deduped.last().expect("checked non-empty deduped boundary");
+            if exact_points_equal(first, last)? {
+                deduped.pop();
+            }
         }
         refined.push(deduped);
     }
