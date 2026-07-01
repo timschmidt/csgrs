@@ -1567,18 +1567,34 @@ impl ExactBooleanResult {
                     let Some(assembly_vertex) = self.assembly.vertices.get(vertex) else {
                         return Err(ExactEvidenceValidationError::InvalidAssembly);
                     };
-                    if !retains_volumetric_artifacts
-                        && !triangulation.boundary.iter().any(|source| {
-                            source == &assembly_vertex.source
-                                || point3_exact_equal(
-                                    &assembly_vertex.point,
-                                    boundary_node_point(source),
-                                ) == Some(true)
-                        })
-                    {
-                        return Err(
-                            ExactEvidenceValidationError::AssemblyVertexOutsideTriangulation,
-                        );
+                    if !retains_volumetric_artifacts {
+                        let mut inside_triangulation = false;
+                        for source in &triangulation.boundary {
+                            if source == &assembly_vertex.source {
+                                inside_triangulation = true;
+                                break;
+                            }
+                            match point3_exact_equal(
+                                &assembly_vertex.point,
+                                boundary_node_point(source),
+                            ) {
+                                Some(true) => {
+                                    inside_triangulation = true;
+                                    break;
+                                }
+                                Some(false) => {}
+                                None => {
+                                    return Err(
+                                        ExactEvidenceValidationError::AssemblyVertexOutsideTriangulation,
+                                    );
+                                }
+                            }
+                        }
+                        if !inside_triangulation {
+                            return Err(
+                                ExactEvidenceValidationError::AssemblyVertexOutsideTriangulation,
+                            );
+                        }
                     }
                 }
             }
@@ -3593,20 +3609,20 @@ fn validate_volumetric_materialized_assembly_matches_operation(
                 triangle,
                 classifications,
             );
-            let retained_source_cells = assembly
-                .triangles
-                .iter()
-                .filter(|output| {
-                    output.source_side == triangulation.side
-                        && output.source_face == triangulation.face
-                        && output_triangle_matches_triangulated_cell(
-                            output,
-                            assembly,
-                            triangulation,
-                            triangle,
-                        )
-                })
-                .count();
+            let mut retained_source_cells = 0usize;
+            for output in &assembly.triangles {
+                if output.source_side == triangulation.side
+                    && output.source_face == triangulation.face
+                    && output_triangle_matches_triangulated_cell(
+                        output,
+                        assembly,
+                        triangulation,
+                        triangle,
+                    )?
+                {
+                    retained_source_cells += 1;
+                }
+            }
             let retained_source_subcells = assembly
                 .triangles
                 .iter()
@@ -3621,20 +3637,20 @@ fn validate_volumetric_materialized_assembly_matches_operation(
                         )
                 })
                 .count();
-            let retained_duplicate_cells = assembly
-                .triangles
-                .iter()
-                .filter(|output| {
-                    (output.source_side != triangulation.side
-                        || output.source_face != triangulation.face)
-                        && output_triangle_matches_triangulated_cell(
-                            output,
-                            assembly,
-                            triangulation,
-                            triangle,
-                        )
-                })
-                .count();
+            let mut retained_duplicate_cells = 0usize;
+            for output in &assembly.triangles {
+                if (output.source_side != triangulation.side
+                    || output.source_face != triangulation.face)
+                    && output_triangle_matches_triangulated_cell(
+                        output,
+                        assembly,
+                        triangulation,
+                        triangle,
+                    )?
+                {
+                    retained_duplicate_cells += 1;
+                }
+            }
             let expected_orientation = match expected {
                 ExactRegionRetention::Keep => Some(ExactOutputTriangleOrientation::PreserveSource),
                 ExactRegionRetention::KeepReversed => {
@@ -3798,12 +3814,26 @@ fn validate_selected_region_assembly_covers_selection(
         // evidence proving coincidence. Every selected cell must still be
         // represented either by its own source label or by an exact duplicate
         // retained from the opposite side.
-        let selected_cells_retained = triangulation.triangles.chunks_exact(3).all(|triangle| {
+        let mut selected_cells_retained = true;
+        for triangle in triangulation.triangles.chunks_exact(3) {
             let triangle = [triangle[0], triangle[1], triangle[2]];
-            assembly.triangles.iter().any(|output| {
-                output_triangle_matches_triangulated_cell(output, assembly, triangulation, triangle)
-            })
-        });
+            let mut retained = false;
+            for output in &assembly.triangles {
+                if output_triangle_matches_triangulated_cell(
+                    output,
+                    assembly,
+                    triangulation,
+                    triangle,
+                )? {
+                    retained = true;
+                    break;
+                }
+            }
+            if !retained {
+                selected_cells_retained = false;
+                break;
+            }
+        }
         if !selected_cells_retained {
             return Err(ExactEvidenceValidationError::SelectedRegionAssemblyMissingSelectedRegion);
         }
@@ -3817,27 +3847,35 @@ fn output_triangle_matches_triangulated_cell(
     assembly: &ExactBooleanAssemblyPlan,
     triangulation: &FaceRegionTriangulation,
     triangle: [usize; 3],
-) -> bool {
+) -> Result<bool, ExactEvidenceValidationError> {
     let Some(output_points) = output_triangle_points(output, assembly) else {
-        return false;
+        return Ok(false);
     };
     let Some(cell_points) = triangulation_cell_triangle_points(triangulation, triangle) else {
-        return false;
+        return Ok(false);
     };
     let mut matched = [false; 3];
     for output_point in output_points {
-        let Some(index) = cell_points
-            .iter()
-            .enumerate()
-            .position(|(index, cell_point)| {
-                !matched[index] && point3_exact_equal(output_point, cell_point) == Some(true)
-            })
-        else {
-            return false;
+        let mut index = None;
+        for (cell_index, cell_point) in cell_points.iter().enumerate() {
+            if matched[cell_index] {
+                continue;
+            }
+            match point3_exact_equal(output_point, cell_point) {
+                Some(true) => {
+                    index = Some(cell_index);
+                    break;
+                }
+                Some(false) => {}
+                None => return Err(ExactEvidenceValidationError::InvalidAssembly),
+            }
+        }
+        let Some(index) = index else {
+            return Ok(false);
         };
         matched[index] = true;
     }
-    true
+    Ok(true)
 }
 
 fn triangulation_cell_triangle_points(
@@ -3877,8 +3915,11 @@ fn validate_output_mesh_matches_assembly(
     // soup returned to callers must replay exactly from the audited assembly
     // plan for both selected-region and arrangement-materialized outputs.
     for (assembly_vertex, mesh_vertex) in assembly.vertices.iter().zip(mesh.vertices()) {
-        if point3_exact_equal(&assembly_vertex.point, mesh_vertex) != Some(true) {
-            return Err(ExactEvidenceValidationError::OutputMeshAssemblyMismatch);
+        match point3_exact_equal(&assembly_vertex.point, mesh_vertex) {
+            Some(true) => {}
+            Some(false) | None => {
+                return Err(ExactEvidenceValidationError::OutputMeshAssemblyMismatch);
+            }
         }
     }
     for (assembly_triangle, mesh_triangle) in
