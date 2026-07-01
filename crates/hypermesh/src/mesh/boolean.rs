@@ -1069,26 +1069,21 @@ fn preflight_boolean_exact_request_from_graph_core(
     }
     let graph_counts = retained_graph_counts(graph);
     let graph_had_unknowns = graph_counts.graph_had_unknowns;
-    let retained_face_pairs = graph_counts.retained_face_pairs;
-    let retained_events = graph_counts.retained_events;
     let relation_counts = ExactBooleanBlocker::from_graph(graph, ExactBooleanBlockerKind::Winding);
     let coplanar_volumetric_evidence =
         coplanar_volumetric_evidence_if_required(graph, left, right)?;
     let requires_coplanar_volumetric_cells = coplanar_volumetric_evidence.is_some();
     let mut certified_arrangement_preflight = None;
     if graph_had_unknowns || relation_counts.construction_failed_events > 0 {
-        return Ok(ExactBooleanPreflight {
+        return Ok(graph_counts.into_preflight(
             operation,
-            support: ExactBooleanSupport::UnresolvedGraph,
-            graph_had_unknowns,
-            retained_face_pairs,
-            retained_events,
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: Some(relation_counts.into_blocker(ExactBooleanBlockerKind::Refinement)),
-            coplanar_arrangement_evidence: None,
-            coplanar_volumetric_evidence: None,
-        });
+            ExactBooleanSupport::UnresolvedGraph,
+            0,
+            Vec::new(),
+            Some(relation_counts.into_blocker(ExactBooleanBlockerKind::Refinement)),
+            None,
+            None,
+        ));
     }
     if operation.is_selected_regions() {
         return region_plan_preflight_from_graph(
@@ -1208,35 +1203,31 @@ fn preflight_boolean_exact_request_from_graph_core(
     }
     if let Some(plan) = open_surface_arrangement_plan {
         let region_count = unique_classified_region_count(&plan.region_classifications);
-        return Ok(ExactBooleanPreflight {
+        return Ok(graph_counts.into_preflight(
             operation,
-            support: plan.support,
-            graph_had_unknowns,
-            retained_face_pairs,
-            retained_events,
+            plan.support,
             region_count,
-            region_classifications: plan.region_classifications,
-            blocker: None,
-            coplanar_arrangement_evidence: None,
-            coplanar_volumetric_evidence: None,
-        });
+            plan.region_classifications,
+            None,
+            None,
+            None,
+        ));
     }
     let boundary_report = boundary_touching_report_from_graph(graph, left, right).ok();
     if let Some(boundary_report) = boundary_report
         && boundary_report.status == ExactBoundaryTouchingStatus::Certified
     {
-        return Ok(ExactBooleanPreflight {
-            operation,
-            support: ExactBooleanSupport::RequiresBoundaryOnlyContact,
-            graph_had_unknowns: boundary_report.graph_had_unknowns,
-            retained_face_pairs: boundary_report.retained_face_pairs,
-            retained_events: boundary_report.retained_events,
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: Some(boundary_report.blocker),
-            coplanar_arrangement_evidence: None,
-            coplanar_volumetric_evidence: None,
-        });
+        return Ok(
+            RetainedGraphCounts::from_boundary_touching_report(&boundary_report).into_preflight(
+                operation,
+                ExactBooleanSupport::RequiresBoundaryOnlyContact,
+                0,
+                Vec::new(),
+                Some(boundary_report.blocker),
+                None,
+                None,
+            ),
+        );
     }
     let planar_report = planar_arrangement_report_from_graph_with_cell_complex_cache(
         graph,
@@ -1262,21 +1253,20 @@ fn preflight_boolean_exact_request_from_graph_core(
         )? {
             return Ok(preflight);
         }
-        return Ok(ExactBooleanPreflight {
-            operation,
-            support: ExactBooleanSupport::RequiresPlanarArrangement,
-            graph_had_unknowns: planar_report.graph_had_unknowns,
-            retained_face_pairs: planar_report.retained_face_pairs,
-            retained_events: planar_report.retained_events,
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: Some(planar_report.blocker),
-            coplanar_arrangement_evidence: planar_report
-                .coplanar_arrangement_evidence
-                .as_ref()
-                .cloned(),
-            coplanar_volumetric_evidence: None,
-        });
+        return Ok(
+            RetainedGraphCounts::from_planar_arrangement_report(planar_report).into_preflight(
+                operation,
+                ExactBooleanSupport::RequiresPlanarArrangement,
+                0,
+                Vec::new(),
+                Some(planar_report.blocker.clone()),
+                planar_report
+                    .coplanar_arrangement_evidence
+                    .as_ref()
+                    .cloned(),
+                None,
+            ),
+        );
     }
     let planar_arrangement_already_materialized = if let Some(report) = planar_report.as_ref() {
         matches!(
@@ -1366,49 +1356,39 @@ fn preflight_boolean_exact_request_from_graph_core(
                 | ExactWindingEvidenceStatus::VolumetricAssemblyRequired
         ) && winding_evidence.blocker.kind == ExactBooleanBlockerKind::CoplanarVolumetricCells
         {
-            return Ok(ExactBooleanPreflight {
-                operation: winding_evidence.operation,
-                support: ExactBooleanSupport::RequiresCertifiedWinding,
-                graph_had_unknowns: winding_evidence.graph_had_unknowns,
-                retained_face_pairs: winding_evidence.retained_face_pairs,
-                retained_events: winding_evidence.retained_events,
-                region_count: winding_evidence.region_count,
-                region_classifications: winding_evidence.region_classifications,
-                blocker: Some(winding_evidence.blocker),
-                coplanar_arrangement_evidence: winding_evidence.coplanar_arrangement_evidence,
-                coplanar_volumetric_evidence: winding_evidence.coplanar_volumetric_evidence,
-            });
+            return Ok(
+                RetainedGraphCounts::from_winding_evidence_report(&winding_evidence)
+                    .into_preflight(
+                        winding_evidence.operation,
+                        ExactBooleanSupport::RequiresCertifiedWinding,
+                        winding_evidence.region_count,
+                        winding_evidence.region_classifications,
+                        Some(winding_evidence.blocker),
+                        winding_evidence.coplanar_arrangement_evidence,
+                        winding_evidence.coplanar_volumetric_evidence,
+                    ),
+            );
         }
-        return Ok(ExactBooleanPreflight {
+        return Ok(graph_counts.into_preflight(
             operation,
-            support: ExactBooleanSupport::RequiresCoplanarVolumetricCells,
-            graph_had_unknowns,
-            retained_face_pairs,
-            retained_events,
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: Some(
-                relation_counts.into_blocker(ExactBooleanBlockerKind::CoplanarVolumetricCells),
-            ),
-            coplanar_arrangement_evidence: None,
-            coplanar_volumetric_evidence: coplanar_volumetric_evidence.clone(),
-        });
+            ExactBooleanSupport::RequiresCoplanarVolumetricCells,
+            0,
+            Vec::new(),
+            Some(relation_counts.into_blocker(ExactBooleanBlockerKind::CoplanarVolumetricCells)),
+            None,
+            coplanar_volumetric_evidence.clone(),
+        ));
     }
     if support == ExactBooleanSupport::RequiresBoundaryOnlyContact {
-        return Ok(ExactBooleanPreflight {
+        return Ok(graph_counts.into_preflight(
             operation,
             support,
-            graph_had_unknowns,
-            retained_face_pairs,
-            retained_events,
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: Some(
-                relation_counts.into_blocker(ExactBooleanBlockerKind::BoundaryOnlyContact),
-            ),
-            coplanar_arrangement_evidence: None,
-            coplanar_volumetric_evidence: None,
-        });
+            0,
+            Vec::new(),
+            Some(relation_counts.into_blocker(ExactBooleanBlockerKind::BoundaryOnlyContact)),
+            None,
+            None,
+        ));
     }
 
     let winding_report = match winding_evidence_report_from_graph_with_facts(
@@ -1478,18 +1458,17 @@ fn preflight_boolean_exact_request_from_graph_core(
         )?);
     }
 
-    Ok(ExactBooleanPreflight {
-        operation: winding_report.operation,
-        support,
-        graph_had_unknowns: winding_report.graph_had_unknowns,
-        retained_face_pairs: winding_report.retained_face_pairs,
-        retained_events: winding_report.retained_events,
-        region_count: winding_report.region_count,
-        region_classifications: winding_report.region_classifications,
-        blocker: Some(winding_report.blocker),
-        coplanar_arrangement_evidence: None,
-        coplanar_volumetric_evidence: winding_report.coplanar_volumetric_evidence,
-    })
+    Ok(
+        RetainedGraphCounts::from_winding_evidence_report(&winding_report).into_preflight(
+            winding_report.operation,
+            support,
+            winding_report.region_count,
+            winding_report.region_classifications,
+            Some(winding_report.blocker),
+            None,
+            winding_report.coplanar_volumetric_evidence,
+        ),
+    )
 }
 
 fn certified_winding_shortcut_preflight_from_graph(
@@ -1911,18 +1890,15 @@ fn certified_preflight(
     coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 ) -> ExactBooleanPreflight {
     let graph_counts = graph.map_or_else(RetainedGraphCounts::empty, retained_graph_counts);
-    ExactBooleanPreflight {
+    graph_counts.into_preflight(
         operation,
         support,
-        graph_had_unknowns: graph_counts.graph_had_unknowns,
-        retained_face_pairs: graph_counts.retained_face_pairs,
-        retained_events: graph_counts.retained_events,
-        region_count: 0,
-        region_classifications: Vec::new(),
-        blocker: None,
-        coplanar_arrangement_evidence: None,
+        0,
+        Vec::new(),
+        None,
+        None,
         coplanar_volumetric_evidence,
-    }
+    )
 }
 
 fn certified_arrangement_cell_complex_preflight(
@@ -1953,18 +1929,15 @@ fn region_plan_preflight_from_graph(
     let region_classifications =
         checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
     let graph_counts = retained_graph_counts(graph);
-    Ok(ExactBooleanPreflight {
+    Ok(graph_counts.into_preflight(
         operation,
         support,
-        graph_had_unknowns: graph_counts.graph_had_unknowns,
-        retained_face_pairs: graph_counts.retained_face_pairs,
-        retained_events: graph_counts.retained_events,
-        region_count: region_plan.regions.len(),
+        region_plan.regions.len(),
         region_classifications,
         blocker,
-        coplanar_arrangement_evidence: None,
+        None,
         coplanar_volumetric_evidence,
-    })
+    ))
 }
 
 #[derive(Clone, Copy)]
@@ -1991,10 +1964,58 @@ impl RetainedGraphCounts {
         }
     }
 
+    const fn from_boundary_touching_report(report: &ExactBoundaryTouchingReport) -> Self {
+        Self {
+            graph_had_unknowns: report.graph_had_unknowns,
+            retained_face_pairs: report.retained_face_pairs,
+            retained_events: report.retained_events,
+        }
+    }
+
+    const fn from_planar_arrangement_report(report: &ExactPlanarArrangementReport) -> Self {
+        Self {
+            graph_had_unknowns: report.graph_had_unknowns,
+            retained_face_pairs: report.retained_face_pairs,
+            retained_events: report.retained_events,
+        }
+    }
+
+    const fn from_winding_evidence_report(report: &ExactWindingEvidenceReport) -> Self {
+        Self {
+            graph_had_unknowns: report.graph_had_unknowns,
+            retained_face_pairs: report.retained_face_pairs,
+            retained_events: report.retained_events,
+        }
+    }
+
     const fn with_retained_face_pairs(self, retained_face_pairs: usize) -> Self {
         Self {
             retained_face_pairs,
             ..self
+        }
+    }
+
+    fn into_preflight(
+        self,
+        operation: ExactBooleanOperation,
+        support: ExactBooleanSupport,
+        region_count: usize,
+        region_classifications: Vec<FaceRegionPlaneClassification>,
+        blocker: Option<ExactBooleanBlocker>,
+        coplanar_arrangement_evidence: Option<super::graph::CoplanarArrangementEvidence>,
+        coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
+    ) -> ExactBooleanPreflight {
+        ExactBooleanPreflight {
+            operation,
+            support,
+            graph_had_unknowns: self.graph_had_unknowns,
+            retained_face_pairs: self.retained_face_pairs,
+            retained_events: self.retained_events,
+            region_count,
+            region_classifications,
+            blocker,
+            coplanar_arrangement_evidence,
+            coplanar_volumetric_evidence,
         }
     }
 
