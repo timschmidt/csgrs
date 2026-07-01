@@ -119,14 +119,18 @@ fn arrangement_boundary_point_index_buckets_exact_rational_points() {
     ];
     let mut index = ArrangementBoundaryPointUniquenessIndex::from_points(&points);
 
-    index.push_unique(
-        &mut points,
-        boundary_point(MeshSide::Left, 0, point.clone()),
-    );
-    index.push_unique(
-        &mut points,
-        boundary_point(MeshSide::Right, 2, rational_p3([3, 4], [-3, 4], [5, 6])),
-    );
+    index
+        .push_unique(
+            &mut points,
+            boundary_point(MeshSide::Left, 0, point.clone()),
+        )
+        .expect("duplicate boundary point should compare exactly");
+    index
+        .push_unique(
+            &mut points,
+            boundary_point(MeshSide::Right, 2, rational_p3([3, 4], [-3, 4], [5, 6])),
+        )
+        .expect("distinct boundary point should compare exactly");
 
     assert_eq!(points.len(), 3);
     assert_eq!(
@@ -162,8 +166,12 @@ fn arrangement_edge_user_index_buckets_exact_rational_edges() {
     };
     let mut index = ArrangementEdgeUserIndex::default();
 
-    index.push(left_edge, 0);
-    index.push(right_edge, 1);
+    index
+        .push(left_edge, 0)
+        .expect("first exact edge should insert");
+    index
+        .push(right_edge, 1)
+        .expect("reversed exact edge should merge");
 
     assert_eq!(index.edge_users.len(), 1);
     assert_eq!(index.edge_users[0].1, vec![0, 1]);

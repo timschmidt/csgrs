@@ -4201,14 +4201,24 @@ fn arrangement_edge_users(
         let mut split_point_index =
             ArrangementBoundaryPointUniquenessIndex::from_points(&split_points);
         for endpoint in &endpoints {
-            if boundary_points_equal(endpoint, &edge.start)
-                || boundary_points_equal(endpoint, &edge.end)
-            {
-                continue;
+            match (
+                boundary_points_equal(endpoint, &edge.start),
+                boundary_points_equal(endpoint, &edge.end),
+            ) {
+                (Ok(true), _) | (_, Ok(true)) => continue,
+                (Ok(false), Ok(false)) => {}
+                _ => {
+                    push_unique_blocker(blockers, ExactArrangementBlocker::UndecidableOrdering);
+                    continue;
+                }
             }
             match point_on_segment3(&edge.start.point, &edge.end.point, &endpoint.point).value() {
                 Some(true) => {
-                    split_point_index.push_unique(&mut split_points, endpoint.clone());
+                    if let Err(blocker) =
+                        split_point_index.push_unique(&mut split_points, endpoint.clone())
+                    {
+                        push_unique_blocker(blockers, blocker);
+                    }
                 }
                 Some(false) => {}
                 None => push_unique_blocker(blockers, ExactArrangementBlocker::UndecidableOrdering),
@@ -4225,18 +4235,25 @@ fn arrangement_edge_users(
             } else {
                 [right, left]
             };
-            edge_users.push(
+            if let Err(blocker) = edge_users.push(
                 ArrangementFaceCellBoundaryEdge {
                     nodes,
                     points: Some([edge.start.point.clone(), edge.end.point.clone()]),
                 },
                 edge.cell,
-            );
+            ) {
+                push_unique_blocker(blockers, blocker);
+            }
             continue;
         }
         for pair in split_points.windows(2) {
-            if boundary_points_equal(&pair[0], &pair[1]) {
-                continue;
+            match boundary_points_equal(&pair[0], &pair[1]) {
+                Ok(true) => continue,
+                Ok(false) => {}
+                Err(blocker) => {
+                    push_unique_blocker(blockers, blocker);
+                    continue;
+                }
             }
             let left = pair[0].node.clone();
             let right = pair[1].node.clone();
@@ -4245,13 +4262,15 @@ fn arrangement_edge_users(
             } else {
                 [right, left]
             };
-            edge_users.push(
+            if let Err(blocker) = edge_users.push(
                 ArrangementFaceCellBoundaryEdge {
                     nodes,
                     points: Some([pair[0].point.clone(), pair[1].point.clone()]),
                 },
                 edge.cell,
-            );
+            ) {
+                push_unique_blocker(blockers, blocker);
+            }
         }
     }
     edge_users
@@ -4284,7 +4303,11 @@ struct ArrangementEdgeUserIndex {
 }
 
 impl ArrangementEdgeUserIndex {
-    fn push(&mut self, edge: ArrangementFaceCellBoundaryEdge, cell: usize) {
+    fn push(
+        &mut self,
+        edge: ArrangementFaceCellBoundaryEdge,
+        cell: usize,
+    ) -> Result<(), ExactArrangementBlocker> {
         let node_key = ArrangementBoundaryNodeKey {
             start: cell_node_key(&edge.nodes[0]),
             end: cell_node_key(&edge.nodes[1]),
@@ -4293,17 +4316,16 @@ impl ArrangementEdgeUserIndex {
             .points
             .as_ref()
             .and_then(exact_undirected_point3_edge_key);
-        if let Some(index) = self
-            .node_key_buckets
-            .get(&node_key)
-            .copied()
-            .or_else(|| {
-                point_key
-                    .as_ref()
-                    .and_then(|key| self.point_key_buckets.get(key).copied())
-            })
-            .or_else(|| self.find_fallback(&edge, point_key.is_some()))
-        {
+        let exact_index = self.node_key_buckets.get(&node_key).copied().or_else(|| {
+            point_key
+                .as_ref()
+                .and_then(|key| self.point_key_buckets.get(key).copied())
+        });
+        let index = match exact_index {
+            Some(index) => Some(index),
+            None => self.find_fallback(&edge, point_key.is_some())?,
+        };
+        if let Some(index) = index {
             self.node_key_buckets.entry(node_key).or_insert(index);
             if let Some(key) = point_key {
                 self.point_key_buckets.entry(key).or_insert(index);
@@ -4311,7 +4333,7 @@ impl ArrangementEdgeUserIndex {
             if !self.edge_users[index].1.contains(&cell) {
                 self.edge_users[index].1.push(cell);
             }
-            return;
+            return Ok(());
         }
 
         let index = self.edge_users.len();
@@ -4322,37 +4344,64 @@ impl ArrangementEdgeUserIndex {
             self.unkeyed_edges.push(index);
         }
         self.edge_users.push((edge, vec![cell]));
+        Ok(())
     }
 
     fn find_fallback(
         &self,
         edge: &ArrangementFaceCellBoundaryEdge,
         has_point_key: bool,
-    ) -> Option<usize> {
-        let edge_matches = |existing: &ArrangementFaceCellBoundaryEdge| {
-            existing.nodes == edge.nodes
-                || match (&existing.points, &edge.points) {
-                    (Some(existing), Some(edge)) => {
-                        (point3_exact_equal(&existing[0], &edge[0]) == Some(true)
-                            && point3_exact_equal(&existing[1], &edge[1]) == Some(true))
-                            || (point3_exact_equal(&existing[0], &edge[1]) == Some(true)
-                                && point3_exact_equal(&existing[1], &edge[0]) == Some(true))
-                    }
-                    _ => false,
-                }
-        };
+    ) -> Result<Option<usize>, ExactArrangementBlocker> {
         if has_point_key {
-            return self
-                .unkeyed_edges
-                .iter()
-                .copied()
-                .find(|&index| edge_matches(&self.edge_users[index].0));
+            for &index in &self.unkeyed_edges {
+                if arrangement_boundary_edges_equal(&self.edge_users[index].0, edge)? {
+                    return Ok(Some(index));
+                }
+            }
+            return Ok(None);
         }
 
-        self.edge_users
-            .iter()
-            .enumerate()
-            .find_map(|(index, (existing, _))| edge_matches(existing).then_some(index))
+        for (index, (existing, _)) in self.edge_users.iter().enumerate() {
+            if arrangement_boundary_edges_equal(existing, edge)? {
+                return Ok(Some(index));
+            }
+        }
+        Ok(None)
+    }
+}
+
+fn arrangement_boundary_edges_equal(
+    left: &ArrangementFaceCellBoundaryEdge,
+    right: &ArrangementFaceCellBoundaryEdge,
+) -> Result<bool, ExactArrangementBlocker> {
+    if left.nodes == right.nodes {
+        return Ok(true);
+    }
+    let (Some(left_points), Some(right_points)) = (&left.points, &right.points) else {
+        return Ok(false);
+    };
+    let same = point3_edge_endpoints_equal(left_points, right_points, false);
+    let reversed = point3_edge_endpoints_equal(left_points, right_points, true);
+    match (same, reversed) {
+        (Some(true), _) | (_, Some(true)) => Ok(true),
+        (Some(false), Some(false)) => Ok(false),
+        _ => Err(ExactArrangementBlocker::UndecidableOrdering),
+    }
+}
+
+fn point3_edge_endpoints_equal(
+    left: &[Point3; 2],
+    right: &[Point3; 2],
+    reverse_right: bool,
+) -> Option<bool> {
+    let right_first = if reverse_right { &right[1] } else { &right[0] };
+    let right_second = if reverse_right { &right[0] } else { &right[1] };
+    let first = point3_exact_equal(&left[0], right_first);
+    let second = point3_exact_equal(&left[1], right_second);
+    match (first, second) {
+        (Some(true), Some(true)) => Some(true),
+        (Some(false), _) | (_, Some(false)) => Some(false),
+        _ => None,
     }
 }
 
@@ -4375,22 +4424,23 @@ impl ArrangementBoundaryPointUniquenessIndex {
         &mut self,
         points: &mut Vec<ArrangementFaceCellBoundaryPoint>,
         point: ArrangementFaceCellBoundaryPoint,
-    ) {
+    ) -> Result<(), ExactArrangementBlocker> {
         let point_key = exact_point3_key(&point.point);
-        if let Some(existing) = find_matching_keyed_point(
+        if let Some(existing) = try_find_matching_keyed_point(
             point_key.as_ref(),
             &self.point_key_buckets,
             &self.unkeyed_points,
             |candidates| find_matching_boundary_point(&point, points, candidates),
-        ) {
+        )? {
             if cell_node_key(&point.node) < cell_node_key(&points[existing].node) {
                 points[existing].node = point.node;
             }
-            return;
+            return Ok(());
         }
         let point_index = points.len();
         self.insert(point_index, point_key);
         points.push(point);
+        Ok(())
     }
 
     fn insert(&mut self, point_index: usize, point_key: Option<ExactPoint3Key>) {
@@ -4409,18 +4459,21 @@ fn find_matching_boundary_point(
     point: &ArrangementFaceCellBoundaryPoint,
     points: &[ArrangementFaceCellBoundaryPoint],
     candidates: &[usize],
-) -> Option<usize> {
-    candidates
-        .iter()
-        .copied()
-        .find(|&index| boundary_points_equal(&points[index], point))
+) -> Result<Option<usize>, ExactArrangementBlocker> {
+    for &index in candidates {
+        if boundary_points_equal(&points[index], point)? {
+            return Ok(Some(index));
+        }
+    }
+    Ok(None)
 }
 
 fn boundary_points_equal(
     left: &ArrangementFaceCellBoundaryPoint,
     right: &ArrangementFaceCellBoundaryPoint,
-) -> bool {
-    point3_exact_equal(&left.point, &right.point) == Some(true)
+) -> Result<bool, ExactArrangementBlocker> {
+    point3_exact_equal(&left.point, &right.point)
+        .ok_or(ExactArrangementBlocker::UndecidableOrdering)
 }
 
 fn sort_boundary_points_along_segment(
