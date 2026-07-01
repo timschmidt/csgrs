@@ -1781,8 +1781,9 @@ fn coplanar_volumetric_gate_uses_source_side_evidence() {
         MeshFacePairRelation::CoplanarTouching | MeshFacePairRelation::CoplanarOverlapping
     )));
     assert!(
-        coplanar_volumetric_evidence_if_required(&boundary_graph, &boundary_left, &boundary_right)
+        coplanar_volumetric_evidence_from_graph(&boundary_graph, &boundary_left, &boundary_right)
             .unwrap()
+            .filter(coplanar_evidence_requires_volumetric_cells)
             .is_none()
     );
 
@@ -1791,12 +1792,13 @@ fn coplanar_volumetric_gate_uses_source_side_evidence() {
     let same_side_graph =
         build_validated_intersection_graph(&same_side_left, &same_side_right).unwrap();
     assert!(
-        coplanar_volumetric_evidence_if_required(
+        coplanar_volumetric_evidence_from_graph(
             &same_side_graph,
             &same_side_left,
             &same_side_right
         )
         .unwrap()
+        .filter(coplanar_evidence_requires_volumetric_cells)
         .is_some()
     );
 }
@@ -1808,13 +1810,11 @@ fn arrangement_coplanar_evidence_retains_source_handoff() {
     let boundary_graph =
         build_unvalidated_intersection_graph(&boundary_left, &boundary_right).unwrap();
     validate_graph_source_replay(&boundary_graph, &boundary_left, &boundary_right).unwrap();
-    let evidence = certified_arrangement_cell_complex_coplanar_evidence(
-        &boundary_graph,
-        &boundary_left,
-        &boundary_right,
-    )
-    .unwrap()
-    .expect("fresh boundary-only graph should retain coplanar arrangement evidence");
+    let evidence =
+        coplanar_volumetric_evidence_from_graph(&boundary_graph, &boundary_left, &boundary_right)
+            .unwrap()
+            .filter(coplanar_evidence_certifies_arrangement_cell_complex)
+            .expect("fresh boundary-only graph should retain coplanar arrangement evidence");
     assert!(
         matches!(
             evidence.obstacle,
@@ -1824,33 +1824,19 @@ fn arrangement_coplanar_evidence_retains_source_handoff() {
 
     let stale_right = axis_aligned_box_i64([4, 0, 0], [6, 2, 2]);
     assert_eq!(
-        certified_arrangement_cell_complex_coplanar_evidence(
-            &boundary_graph,
-            &boundary_left,
-            &stale_right,
-        )
-        .unwrap_err()
-        .blockers()[0]
+        coplanar_volumetric_evidence_from_graph(&boundary_graph, &boundary_left, &stale_right,)
+            .unwrap_err()
+            .blockers()[0]
             .kind(),
         ExactMeshBlockerKind::StaleFactReplay,
         "coplanar arrangement evidence must not survive stale source replay"
     );
     assert_eq!(
-        coplanar_volumetric_evidence_if_required(&boundary_graph, &boundary_left, &stale_right)
+        coplanar_volumetric_evidence_from_graph(&boundary_graph, &boundary_left, &stale_right)
             .unwrap_err()
             .blockers()[0]
             .kind(),
         ExactMeshBlockerKind::StaleFactReplay
-    );
-    assert!(
-        coplanar_boundary_only_evidence_if_consumed(&boundary_graph, &boundary_left, &stale_right,)
-            .is_err(),
-        "boundary-only coplanar evidence must reject stale graph/source replay"
-    );
-    assert!(
-        closed_boundary_contact_evidence_from_graph(&boundary_graph, &boundary_left, &stale_right,)
-            .is_err(),
-        "closed boundary-only contact certification must reject stale graph/source replay"
     );
 }
 

@@ -1116,7 +1116,8 @@ fn preflight_boolean_exact_request_from_graph_core(
         )?);
     }
     if operation == ExactBooleanOperation::Difference
-        && let Some(evidence) = coplanar_boundary_only_evidence_if_consumed(graph, left, right)?
+        && let Some(evidence) = coplanar_volumetric_evidence_from_graph(graph, left, right)?
+            .filter(coplanar_evidence_is_positive_area_boundary_only)
     {
         return Ok(certified_preflight(
             operation,
@@ -1128,8 +1129,8 @@ fn preflight_boolean_exact_request_from_graph_core(
     let graph_counts = retained_graph_counts(graph);
     let graph_had_unknowns = graph_counts.graph_had_unknowns;
     let relation_counts = ExactBooleanBlocker::from_graph(graph, ExactBooleanBlockerKind::Winding);
-    let coplanar_volumetric_evidence =
-        coplanar_volumetric_evidence_if_required(graph, left, right)?;
+    let coplanar_volumetric_evidence = coplanar_volumetric_evidence_from_graph(graph, left, right)?
+        .filter(coplanar_evidence_requires_volumetric_cells);
     let requires_coplanar_volumetric_cells = coplanar_volumetric_evidence.is_some();
     let mut certified_arrangement_preflight = None;
     if graph_had_unknowns || relation_counts.construction_failed_events > 0 {
@@ -1194,7 +1195,8 @@ fn preflight_boolean_exact_request_from_graph_core(
         return Ok(preflight);
     }
     let boundary_only_coplanar_evidence =
-        coplanar_boundary_only_evidence_if_consumed(graph, left, right)?;
+        coplanar_volumetric_evidence_from_graph(graph, left, right)?
+            .filter(coplanar_evidence_is_positive_area_boundary_only);
     if requires_certified_winding && boundary_only_coplanar_evidence.is_none() {
         let boundary_or_no_volume_materialized =
             if materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
@@ -1605,8 +1607,10 @@ fn certified_winding_shortcut_preflight_from_graph(
         )));
     }
     if !operation.is_selected_regions()
-        && closed_boundary_contact_evidence_from_graph(graph, left, right)?
-            .is_some_and(|evidence| evidence.positive_area_coplanar_overlapping_pairs == 0)
+        && left.facts().mesh.closed_manifold
+        && right.facts().mesh.closed_manifold
+        && coplanar_volumetric_evidence_from_graph(graph, left, right)?
+            .is_some_and(|evidence| coplanar_evidence_is_zero_area_boundary_only(&evidence))
     {
         let Some(boundary_support) = operation.closed_boundary_touching_support() else {
             return Ok(None);
@@ -1972,7 +1976,8 @@ fn certified_arrangement_cell_complex_preflight(
         operation,
         ExactBooleanSupport::CertifiedArrangementCellComplex,
         Some(graph),
-        certified_arrangement_cell_complex_coplanar_evidence(graph, left, right)?,
+        coplanar_volumetric_evidence_from_graph(graph, left, right)?
+            .filter(coplanar_evidence_certifies_arrangement_cell_complex),
     ))
 }
 
@@ -2239,7 +2244,12 @@ fn certified_closed_boundary_only_contact_preflight(
     let Some(boundary_support) = operation.closed_boundary_touching_support() else {
         return Ok(None);
     };
-    let Some(evidence) = closed_boundary_contact_evidence_from_graph(graph, left, right)? else {
+    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        return Ok(None);
+    }
+    let Some(evidence) = coplanar_volumetric_evidence_from_graph(graph, left, right)?
+        .filter(coplanar_evidence_is_boundary_only_contact)
+    else {
         return Ok(None);
     };
     if evidence.positive_area_coplanar_overlapping_pairs != 0 {
@@ -2253,7 +2263,8 @@ fn certified_closed_boundary_only_contact_preflight(
     let consumed_evidence = if operation == ExactBooleanOperation::Union {
         None
     } else {
-        coplanar_boundary_only_evidence_if_consumed(graph, left, right)?
+        coplanar_volumetric_evidence_from_graph(graph, left, right)?
+            .filter(coplanar_evidence_is_positive_area_boundary_only)
     };
     Ok(Some(certified_preflight(
         operation,
@@ -2263,7 +2274,7 @@ fn certified_closed_boundary_only_contact_preflight(
     )))
 }
 
-fn certified_arrangement_cell_complex_coplanar_evidence(
+fn coplanar_volumetric_evidence_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2272,24 +2283,56 @@ fn certified_arrangement_cell_complex_coplanar_evidence(
     if counts.coplanar_overlapping_pairs == 0 && counts.coplanar_touching_pairs == 0 {
         return Ok(None);
     }
-    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)?;
     validate_graph_source_replay(graph, left, right)?;
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)?;
     evidence.validate().map_err(|error| {
         boolean_validation_error(
             ExactMeshBlockerKind::ExactConstructionFailure,
-            "exact arrangement cell-complex coplanar evidence validation failed",
+            "exact coplanar volumetric evidence validation failed",
             error,
         )
     })?;
-    Ok((matches!(
+    Ok(Some(evidence))
+}
+
+fn coplanar_evidence_requires_volumetric_cells(
+    evidence: &CoplanarVolumetricCellEvidenceReport,
+) -> bool {
+    matches!(
         evidence.obstacle,
         CoplanarVolumetricCellObstacle::NeedsCoplanarVolumetricCells
             | CoplanarVolumetricCellObstacle::MixedCoplanarAndCrossingCells
-    ) || (matches!(
+    )
+}
+
+fn coplanar_evidence_is_boundary_only_contact(
+    evidence: &CoplanarVolumetricCellEvidenceReport,
+) -> bool {
+    matches!(
         evidence.obstacle,
         CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-    ) && evidence.positive_area_coplanar_overlapping_pairs != 0))
-        .then_some(evidence))
+    )
+}
+
+fn coplanar_evidence_is_positive_area_boundary_only(
+    evidence: &CoplanarVolumetricCellEvidenceReport,
+) -> bool {
+    coplanar_evidence_is_boundary_only_contact(evidence)
+        && evidence.positive_area_coplanar_overlapping_pairs != 0
+}
+
+fn coplanar_evidence_is_zero_area_boundary_only(
+    evidence: &CoplanarVolumetricCellEvidenceReport,
+) -> bool {
+    coplanar_evidence_is_boundary_only_contact(evidence)
+        && evidence.positive_area_coplanar_overlapping_pairs == 0
+}
+
+fn coplanar_evidence_certifies_arrangement_cell_complex(
+    evidence: &CoplanarVolumetricCellEvidenceReport,
+) -> bool {
+    coplanar_evidence_requires_volumetric_cells(evidence)
+        || coplanar_evidence_is_positive_area_boundary_only(evidence)
 }
 
 fn certified_arrangement_cell_complex_preflight_if_materialized(
@@ -2497,53 +2540,6 @@ fn graph_requires_boundary_only_contact(
         return Ok(false);
     };
     Ok(left_touches_right_boundary || right_touches_left_boundary)
-}
-
-fn coplanar_volumetric_evidence_if_required(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<Option<CoplanarVolumetricCellEvidenceReport>, ExactMeshError> {
-    let counts = ExactBooleanBlocker::from_graph(graph, ExactBooleanBlockerKind::Winding);
-    if counts.coplanar_overlapping_pairs == 0 && counts.coplanar_touching_pairs == 0 {
-        return Ok(None);
-    }
-    validate_graph_source_replay(graph, left, right)?;
-    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)?;
-    evidence.validate().map_err(|error| {
-        boolean_validation_error(
-            ExactMeshBlockerKind::ExactConstructionFailure,
-            "exact coplanar volumetric evidence validation failed",
-            error,
-        )
-    })?;
-    Ok(matches!(
-        evidence.obstacle,
-        CoplanarVolumetricCellObstacle::NeedsCoplanarVolumetricCells
-            | CoplanarVolumetricCellObstacle::MixedCoplanarAndCrossingCells
-    )
-    .then_some(evidence))
-}
-
-fn coplanar_boundary_only_evidence_if_consumed(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<Option<CoplanarVolumetricCellEvidenceReport>, ExactMeshError> {
-    validate_graph_source_replay(graph, left, right)?;
-    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)?;
-    evidence.validate().map_err(|error| {
-        boolean_validation_error(
-            ExactMeshBlockerKind::ExactConstructionFailure,
-            "exact boundary-only coplanar evidence validation failed",
-            error,
-        )
-    })?;
-    Ok((matches!(
-        evidence.obstacle,
-        CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-    ) && evidence.positive_area_coplanar_overlapping_pairs != 0)
-        .then_some(evidence))
 }
 
 fn graph_has_only_boundary_contact_pairs(
@@ -3657,7 +3653,12 @@ fn certified_arrangement_regularized_boundary_contact_from_graph(
     {
         return Ok(report.validate_against_sources(left, right).is_ok());
     }
-    if closed_boundary_contact_evidence_from_graph(graph, left, right)?.is_none() {
+    if !left.facts().mesh.closed_manifold
+        || !right.facts().mesh.closed_manifold
+        || coplanar_volumetric_evidence_from_graph(graph, left, right)?
+            .filter(coplanar_evidence_is_boundary_only_contact)
+            .is_none()
+    {
         return Ok(false);
     }
     Ok(true)
@@ -4342,27 +4343,11 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
     {
         return Ok(None);
     }
-    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)?;
-    evidence.validate().map_err(|error| {
-        boolean_validation_error(
-            ExactMeshBlockerKind::ExactConstructionFailure,
-            "exact no-volume-overlap evidence validation failed",
-            error,
-        )
-    })?;
-    validate_coplanar_volumetric_evidence_against_sources(
-        &evidence,
-        left,
-        right,
-        "exact no-volume-overlap evidence failed source replay",
-    )?;
-    if !matches!(
-        evidence.obstacle,
-        CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-    ) || evidence.positive_area_coplanar_overlapping_pairs == 0
-    {
+    let Some(_evidence) = coplanar_volumetric_evidence_from_graph(graph, left, right)?
+        .filter(coplanar_evidence_is_positive_area_boundary_only)
+    else {
         return Ok(None);
-    }
+    };
     if operation == ExactBooleanOperation::Union {
         let mesh = concatenate_meshes_with_options(
             left,
@@ -4455,21 +4440,11 @@ pub(crate) fn materialize_closed_no_volume_overlap_regularized_boolean_with_evid
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
-    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)?;
-    evidence.validate().map_err(|error| {
-        boolean_validation_error(
-            ExactMeshBlockerKind::ExactConstructionFailure,
-            "exact no-volume-overlap evidence validation failed",
-            error,
-        )
-    })?;
-    if !matches!(
-        evidence.obstacle,
-        CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-    ) || evidence.positive_area_coplanar_overlapping_pairs == 0
-    {
+    let Some(evidence) = coplanar_volumetric_evidence_from_graph(graph, left, right)?
+        .filter(coplanar_evidence_is_positive_area_boundary_only)
+    else {
         return Ok(None);
-    }
+    };
     let result = match operation {
         ExactBooleanOperation::Union => {
             let Some(result) = boolean_arrangement_regularized_no_volume_overlap_from_graph(
@@ -7039,30 +7014,6 @@ fn certified_closed_boundary_touching_regularized_report_from_graph(
     Ok(Some(report))
 }
 
-fn closed_boundary_contact_evidence_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<Option<CoplanarVolumetricCellEvidenceReport>, ExactMeshError> {
-    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
-        return Ok(None);
-    }
-    validate_graph_source_replay(graph, left, right)?;
-    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)?;
-    evidence.validate().map_err(|error| {
-        boolean_validation_error(
-            ExactMeshBlockerKind::ExactConstructionFailure,
-            "exact boundary-contact coplanar evidence validation failed",
-            error,
-        )
-    })?;
-    Ok(matches!(
-        evidence.obstacle,
-        CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-    )
-    .then_some(evidence))
-}
-
 pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -7070,8 +7021,11 @@ pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evid
     operation: ExactBooleanOperation,
     validation: ExactMeshValidationPolicy,
 ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, ExactMeshError> {
-    let Some(evidence) = closed_boundary_contact_evidence_from_graph(graph, left, right)?
-        .filter(|evidence| evidence.positive_area_coplanar_overlapping_pairs == 0)
+    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        return Ok(None);
+    }
+    let Some(evidence) = coplanar_volumetric_evidence_from_graph(graph, left, right)?
+        .filter(coplanar_evidence_is_zero_area_boundary_only)
     else {
         return Ok(None);
     };
@@ -7244,8 +7198,8 @@ fn arrangement_materialized_evidence_blocker_kind_and_evidence(
     ),
     ExactMeshError,
 > {
-    let coplanar_evidence =
-        certified_arrangement_cell_complex_coplanar_evidence(graph, left, right)?;
+    let coplanar_evidence = coplanar_volumetric_evidence_from_graph(graph, left, right)?
+        .filter(coplanar_evidence_certifies_arrangement_cell_complex);
     let blocker_kind = match coplanar_evidence.as_ref().map(|evidence| evidence.obstacle) {
         Some(CoplanarVolumetricCellObstacle::BoundaryOnlyContact) => {
             ExactBooleanBlockerKind::BoundaryOnlyContact
@@ -7257,7 +7211,9 @@ fn arrangement_materialized_evidence_blocker_kind_and_evidence(
         _ if graph_has_only_boundary_contact_pairs(graph, left, right) => {
             ExactBooleanBlockerKind::BoundaryOnlyContact
         }
-        _ if coplanar_volumetric_evidence_if_required(graph, left, right)?.is_some() => {
+        _ if coplanar_volumetric_evidence_from_graph(graph, left, right)?
+            .is_some_and(|evidence| coplanar_evidence_requires_volumetric_cells(&evidence)) =>
+        {
             ExactBooleanBlockerKind::CoplanarVolumetricCells
         }
         _ => ExactBooleanBlockerKind::Winding,
@@ -7506,7 +7462,8 @@ fn winding_evidence_report_from_graph_with_facts(
         shortcut_facts.materializes_operation(operation);
     let mut arrangement_cell_complex_preflight = None;
     if !arrangement_cell_complex_shortcut_materializes
-        && coplanar_volumetric_evidence_if_required(graph, left, right)?.is_some()
+        && coplanar_volumetric_evidence_from_graph(graph, left, right)?
+            .is_some_and(|evidence| coplanar_evidence_requires_volumetric_cells(&evidence))
         && coplanar_boundary_closure_available_from_graph(graph, left, right, operation)?
     {
         return Ok(
@@ -7538,7 +7495,8 @@ fn winding_evidence_report_from_graph_with_facts(
     }
     if operation == ExactBooleanOperation::Difference
         && !arrangement_cell_complex_shortcut_materializes
-        && let Some(evidence) = coplanar_boundary_only_evidence_if_consumed(graph, left, right)?
+        && let Some(evidence) = coplanar_volumetric_evidence_from_graph(graph, left, right)?
+            .filter(coplanar_evidence_is_positive_area_boundary_only)
     {
         return Ok(graph_counts.into_winding_evidence_report(
             operation,
@@ -7612,8 +7570,10 @@ fn winding_evidence_report_from_graph_with_facts(
         ));
     }
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && closed_boundary_contact_evidence_from_graph(graph, left, right)?
-            .is_some_and(|evidence| evidence.positive_area_coplanar_overlapping_pairs == 0)
+        && left.facts().mesh.closed_manifold
+        && right.facts().mesh.closed_manifold
+        && coplanar_volumetric_evidence_from_graph(graph, left, right)?
+            .is_some_and(|evidence| coplanar_evidence_is_zero_area_boundary_only(&evidence))
     {
         return Ok(graph_counts.into_winding_evidence_report(
             operation,
@@ -7630,7 +7590,10 @@ fn winding_evidence_report_from_graph_with_facts(
             operation,
             ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
         )
-        && closed_boundary_contact_evidence_from_graph(graph, left, right)?.is_some()
+        && left.facts().mesh.closed_manifold
+        && right.facts().mesh.closed_manifold
+        && coplanar_volumetric_evidence_from_graph(graph, left, right)?
+            .is_some_and(|evidence| coplanar_evidence_is_boundary_only_contact(&evidence))
     {
         return Ok(graph_counts.into_winding_evidence_report(
             operation,
@@ -7639,7 +7602,8 @@ fn winding_evidence_report_from_graph_with_facts(
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::BoundaryOnlyContact),
             None,
-            coplanar_boundary_only_evidence_if_consumed(graph, left, right)?,
+            coplanar_volumetric_evidence_from_graph(graph, left, right)?
+                .filter(coplanar_evidence_is_positive_area_boundary_only),
         ));
     }
     let boundary_only_contact_required = graph_requires_boundary_only_contact(graph, left, right)?;
@@ -7721,7 +7685,8 @@ fn winding_evidence_report_from_graph_with_facts(
         return Ok(report);
     }
     if let Some(coplanar_volumetric_evidence) =
-        coplanar_volumetric_evidence_if_required(graph, left, right)?
+        coplanar_volumetric_evidence_from_graph(graph, left, right)?
+            .filter(coplanar_evidence_requires_volumetric_cells)
     {
         if cached_certified_arrangement_cell_complex_preflight(
             &mut arrangement_cell_complex_preflight,
@@ -7852,8 +7817,8 @@ fn volumetric_winding_region_plan_evidence_from_graph(
         volumetric_classifications,
     } = plan;
 
-    let coplanar_volumetric_evidence =
-        coplanar_volumetric_evidence_if_required(graph, left, right)?;
+    let coplanar_volumetric_evidence = coplanar_volumetric_evidence_from_graph(graph, left, right)?
+        .filter(coplanar_evidence_requires_volumetric_cells);
     let blocker_kind = match &coplanar_volumetric_evidence {
         Some(_) => ExactBooleanBlockerKind::CoplanarVolumetricCells,
         None => ExactBooleanBlockerKind::Winding,
@@ -8089,7 +8054,10 @@ fn volumetric_winding_region_plan_from_graph(
 
     let cell_plan = match triangulate_all_face_cells_with_cdt(graph, left, right) {
         Ok(plan) => plan,
-        Err(_error) if coplanar_volumetric_evidence_if_required(graph, left, right)?.is_some() => {
+        Err(_error)
+            if coplanar_volumetric_evidence_from_graph(graph, left, right)?
+                .is_some_and(|evidence| coplanar_evidence_requires_volumetric_cells(&evidence)) =>
+        {
             // Coplanar source-face overlaps can expose constraint-normalization
             // cases that are not part of the current bounded volumetric cell
             // receives `RequiresCoplanarVolumetricCells` instead of a generic

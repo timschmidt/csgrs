@@ -711,7 +711,8 @@ fn certification_set_from_graph_and_regularized_arrangement(
                 region_classifications,
                 counts.into_blocker(ExactBooleanBlockerKind::Winding),
                 None,
-                coplanar_volumetric_evidence_if_required(graph, left, right)?,
+                coplanar_volumetric_evidence_from_graph(graph, left, right)?
+                    .filter(coplanar_evidence_requires_volumetric_cells),
             )
         }
     };
