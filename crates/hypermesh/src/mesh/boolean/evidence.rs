@@ -423,15 +423,29 @@ impl ExactArrangementBooleanAttempt {
     /// output, either through the generic path or through a certified
     /// arrangement shortcut/recovery path.
     pub(crate) fn materialized_arrangement_cell_complex_output(&self) -> bool {
+        self.materialized_arrangement_cell_complex_shortcut_output()
+            || self.materialized_generic_arrangement_cell_complex_output()
+    }
+
+    /// Return whether this attempt materialized through the certified
+    /// arrangement cell-complex shortcut/recovery path.
+    pub(crate) fn materialized_arrangement_cell_complex_shortcut_output(&self) -> bool {
+        self.stage == ExactArrangementBooleanStage::Materialized
+            && self.decline.is_none()
+            && self.materialized_shortcut == Some(ExactBooleanShortcutKind::ArrangementCellComplex)
+    }
+
+    /// Return whether this attempt materialized through the generic retained
+    /// arrangement/cell-complex path.
+    pub(crate) fn materialized_generic_arrangement_cell_complex_output(&self) -> bool {
         if self.stage != ExactArrangementBooleanStage::Materialized || self.decline.is_some() {
             return false;
         }
         match self.materialized_shortcut {
-            Some(ExactBooleanShortcutKind::ArrangementCellComplex) => true,
-            Some(_) => false,
             None => {
                 self.retained_gate_reports().is_some() && self.resolves_requested_volume_ownership()
             }
+            Some(_) => false,
         }
     }
 
@@ -467,14 +481,8 @@ impl ExactArrangementBooleanAttempt {
         {
             return true;
         }
-        self.stage == ExactArrangementBooleanStage::Materialized
-            && self.decline.is_none()
-            && self.materialized_shortcut.is_none()
-            && self.retained_gate_reports().is_some()
-            && replay.stage == ExactArrangementBooleanStage::Materialized
-            && replay.decline.is_none()
-            && replay.materialized_shortcut
-                == Some(ExactBooleanShortcutKind::ArrangementCellComplex)
+        self.materialized_generic_arrangement_cell_complex_output()
+            && replay.materialized_arrangement_cell_complex_shortcut_output()
             && replay.retained_gate_reports().is_none()
     }
 
@@ -746,10 +754,7 @@ impl ExactArrangementBooleanAttempt {
         if self.decline.is_none()
             && !self.operation.is_selected_regions()
             && self.region_ownership.is_some()
-            && !(self.stage == ExactArrangementBooleanStage::Materialized
-                && self.decline.is_none()
-                && self.materialized_shortcut
-                    == Some(ExactBooleanShortcutKind::ArrangementCellComplex))
+            && !self.materialized_arrangement_cell_complex_shortcut_output()
             && !self.resolves_requested_volume_ownership()
         {
             return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
@@ -2146,10 +2151,7 @@ impl ExactBooleanResult {
             && attempt.materialized_arrangement_cell_complex_output()
         {
             self.validate()?;
-            if attempt.stage == ExactArrangementBooleanStage::Materialized
-                && attempt.decline.is_none()
-                && attempt.materialized_shortcut.is_none()
-            {
+            if attempt.materialized_generic_arrangement_cell_complex_output() {
                 if !self.kind.is_arrangement_cell_complex_shortcut()
                     || self.kind.arrangement_cell_complex_operation() != Some(request.operation)
                     || self.topology_assembly_report.is_some()
@@ -2170,11 +2172,7 @@ impl ExactBooleanResult {
                         return Err(ExactEvidenceValidationError::SourceReplayMismatch);
                     }
                 }
-            } else if attempt.stage == ExactArrangementBooleanStage::Materialized
-                && attempt.decline.is_none()
-                && attempt.materialized_shortcut
-                    == Some(ExactBooleanShortcutKind::ArrangementCellComplex)
-            {
+            } else if attempt.materialized_arrangement_cell_complex_shortcut_output() {
                 if let Some((topology, ownership)) = attempt.retained_gate_reports() {
                     if self.topology_assembly_report.as_ref() != Some(topology)
                         || self.region_ownership_report.as_ref() != Some(ownership)

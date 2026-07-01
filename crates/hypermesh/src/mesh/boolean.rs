@@ -187,9 +187,7 @@ impl ExactArrangementBooleanAttempt {
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
-        if self.stage == ExactArrangementBooleanStage::Materialized
-            && self.decline.is_none()
-            && self.materialized_shortcut == Some(ExactBooleanShortcutKind::ArrangementCellComplex)
+        if self.materialized_arrangement_cell_complex_shortcut_output()
             && orthogonal_solid_cell_materializes_for_preflight(left, right, request.operation)
                 .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             && let Some(replay) = arrangement_cell_complex_shortcut_attempt_with_facts(
@@ -742,10 +740,7 @@ fn materialize_retained_arrangement_cell_complex_attempt(
                 error,
             )
         })?;
-    if attempt.stage == ExactArrangementBooleanStage::Materialized
-        && attempt.decline.is_none()
-        && attempt.materialized_shortcut == Some(ExactBooleanShortcutKind::ArrangementCellComplex)
-    {
+    if attempt.materialized_arrangement_cell_complex_shortcut_output() {
         let Some(result) = boolean_arrangement_cell_complex_recovery(
             left,
             right,
@@ -3281,8 +3276,7 @@ fn arrangement_cell_complex_result_is_certified_for_preflight(
     }
     if let Err(error) = result.validate_against_sources(left, right) {
         return if result.kind.is_arrangement_cell_complex_shortcut()
-            && attempt.materialized_shortcut
-                == Some(ExactBooleanShortcutKind::ArrangementCellComplex)
+            && attempt.materialized_arrangement_cell_complex_shortcut_output()
         {
             Ok(false)
         } else {
