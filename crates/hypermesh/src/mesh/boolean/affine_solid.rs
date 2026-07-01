@@ -377,11 +377,12 @@ fn find_affine_cell_basis<T>(
     mesh: &ExactMesh,
     accept_basis: &mut impl FnMut(AffineBoxBasis) -> Option<T>,
 ) -> Option<T> {
-    if mesh.vertices().len() < 8 || mesh.facts().mesh.face_count < 12 {
+    let view = mesh.view();
+    if view.vertices().len() < 8 || view.faces().count() < 12 {
         return None;
     }
     let adjacency = vertex_adjacency(mesh);
-    let direction_counts = mesh_direction_counts(mesh);
+    let direction_counts = mesh_direction_counts(mesh)?;
     let mut origins = (0..adjacency.len()).collect::<Vec<_>>();
     origins.sort_by_key(|&origin| adjacency[origin].len());
     for origin in origins {
@@ -393,15 +394,22 @@ fn find_affine_cell_basis<T>(
         else {
             continue;
         };
-        let mut directions = unique_edge_directions(mesh, origin, neighbors);
-        directions.sort_by_key(|direction| {
-            let weight = direction_counts
-                .iter()
-                .find(|(seen, _)| points_equal_or_opposite(seen, direction))
-                .map(|(_, count)| *count)
-                .unwrap_or(0);
-            core::cmp::Reverse(weight)
-        });
+        let mut weighted_directions = Vec::new();
+        for direction in unique_edge_directions(mesh, origin, neighbors)? {
+            let mut weight = 0;
+            for (seen, count) in &direction_counts {
+                if points_equal_or_opposite(seen, &direction)? {
+                    weight = *count;
+                    break;
+                }
+            }
+            weighted_directions.push((weight, direction));
+        }
+        weighted_directions.sort_by_key(|(weight, _)| core::cmp::Reverse(*weight));
+        let directions = weighted_directions
+            .into_iter()
+            .map(|(_, direction)| direction)
+            .collect::<Vec<_>>();
         for u in 0..directions.len() {
             for v in u + 1..directions.len() {
                 for w in v + 1..directions.len() {
@@ -431,7 +439,7 @@ fn find_affine_cell_basis<T>(
 }
 
 /// Count undirected exact triangle-edge directions in mesh space.
-fn mesh_direction_counts(mesh: &ExactMesh) -> Vec<(Point3, usize)> {
+fn mesh_direction_counts(mesh: &ExactMesh) -> Option<Vec<(Point3, usize)>> {
     let mut counts = Vec::<(Point3, usize)>::new();
     let view = mesh.view();
     for face in view.faces() {
@@ -448,17 +456,21 @@ fn mesh_direction_counts(mesh: &ExactMesh) -> Vec<(Point3, usize)> {
             {
                 continue;
             }
-            if let Some((_, count)) = counts
-                .iter_mut()
-                .find(|(seen, _)| points_equal_or_opposite(seen, &direction))
-            {
-                *count += 1;
-            } else {
-                counts.push((direction, 1));
+            let mut existing_count = None;
+            for (index, (seen, _)) in counts.iter().enumerate() {
+                if points_equal_or_opposite(seen, &direction)? {
+                    existing_count = Some(index);
+                    break;
+                }
             }
+            if let Some(index) = existing_count {
+                counts[index].1 += 1;
+                continue;
+            }
+            counts.push((direction, 1));
         }
     }
-    counts
+    Some(counts)
 }
 
 /// Build a unique undirected vertex adjacency list from retained triangles.
@@ -483,9 +495,13 @@ fn vertex_adjacency(mesh: &ExactMesh) -> Vec<Vec<usize>> {
 }
 
 /// Return unique outgoing exact edge directions at one origin vertex.
-fn unique_edge_directions(mesh: &ExactMesh, origin: usize, neighbors: &[usize]) -> Vec<Point3> {
+fn unique_edge_directions(
+    mesh: &ExactMesh,
+    origin: usize,
+    neighbors: &[usize],
+) -> Option<Vec<Point3>> {
     let Some(origin_point) = mesh.view().vertex(origin).map(|vertex| vertex.point()) else {
-        return Vec::new();
+        return Some(Vec::new());
     };
     let mut directions = Vec::new();
     for &neighbor in neighbors {
@@ -497,24 +513,35 @@ fn unique_edge_directions(mesh: &ExactMesh, origin: usize, neighbors: &[usize]) 
             &neighbor.y - &origin_point.y,
             &neighbor.z - &origin_point.z,
         );
-        if (compare_reals(&direction.x, &Real::from(0)).value() == Some(Ordering::Equal)
+        if compare_reals(&direction.x, &Real::from(0)).value() == Some(Ordering::Equal)
             && compare_reals(&direction.y, &Real::from(0)).value() == Some(Ordering::Equal)
-            && compare_reals(&direction.z, &Real::from(0)).value() == Some(Ordering::Equal))
-            || directions
-                .iter()
-                .any(|seen| point3_exact_equal(seen, &direction) == Some(true))
+            && compare_reals(&direction.z, &Real::from(0)).value() == Some(Ordering::Equal)
         {
+            continue;
+        }
+        let mut seen_direction = false;
+        for seen in &directions {
+            if point3_exact_equal(seen, &direction)? {
+                seen_direction = true;
+                break;
+            }
+        }
+        if seen_direction {
             continue;
         }
         directions.push(direction);
     }
-    directions
+    Some(directions)
 }
 
 /// Compare exact directions up to sign.
-fn points_equal_or_opposite(left: &Point3, right: &Point3) -> bool {
-    point3_exact_equal(left, right) == Some(true)
-        || (compare_reals(&left.x, &(-right.x.clone())).value() == Some(Ordering::Equal)
-            && compare_reals(&left.y, &(-right.y.clone())).value() == Some(Ordering::Equal)
-            && compare_reals(&left.z, &(-right.z.clone())).value() == Some(Ordering::Equal))
+fn points_equal_or_opposite(left: &Point3, right: &Point3) -> Option<bool> {
+    if point3_exact_equal(left, right)? {
+        return Some(true);
+    }
+    Some(
+        compare_reals(&left.x, &(-right.x.clone())).value()? == Ordering::Equal
+            && compare_reals(&left.y, &(-right.y.clone())).value()? == Ordering::Equal
+            && compare_reals(&left.z, &(-right.z.clone())).value()? == Ordering::Equal,
+    )
 }
