@@ -504,15 +504,7 @@ fn triangle_face_cell_sample(
     y: &[Real],
     z: &[Real],
 ) -> Option<FaceTriangleSample> {
-    let points = triangle
-        .map(|index| {
-            mesh.view()
-                .vertex(index)
-                .map(|vertex| vertex.point().clone())
-        })
-        .into_iter()
-        .collect::<Option<Vec<_>>>()?;
-    let points: [Point3; 3] = points.try_into().ok()?;
+    let points = triangle_points(mesh, triangle)?;
     let constant_axes = [Axis::X, Axis::Y, Axis::Z]
         .into_iter()
         .filter(|&axis| {
@@ -527,33 +519,18 @@ fn triangle_face_cell_sample(
     let axis = constant_axes[0];
     let plane = coord_index(axis_coords(x, y, z, axis), axis_coord(&points[0], axis))?;
     let (canonical_u_axis, canonical_v_axis) = canonical_face_axes(axis);
-    let projected = points
-        .iter()
-        .map(|point| ProjectedFacePoint {
-            u: axis_coord(point, canonical_u_axis).clone(),
-            v: axis_coord(point, canonical_v_axis).clone(),
-        })
-        .collect::<Vec<_>>();
-    let projected: [ProjectedFacePoint; 3] = projected.try_into().ok()?;
+    let projected = projected_face_points(&points, canonical_u_axis, canonical_v_axis);
 
-    let u_indices = points
-        .iter()
-        .map(|point| {
-            coord_index(
-                axis_coords(x, y, z, canonical_u_axis),
-                axis_coord(point, canonical_u_axis),
-            )
-        })
-        .collect::<Option<Vec<_>>>()?;
-    let v_indices = points
-        .iter()
-        .map(|point| {
-            coord_index(
-                axis_coords(x, y, z, canonical_v_axis),
-                axis_coord(point, canonical_v_axis),
-            )
-        })
-        .collect::<Option<Vec<_>>>()?;
+    let u_indices = point_coord_indices(
+        &points,
+        axis_coords(x, y, z, canonical_u_axis),
+        canonical_u_axis,
+    )?;
+    let v_indices = point_coord_indices(
+        &points,
+        axis_coords(x, y, z, canonical_v_axis),
+        canonical_v_axis,
+    )?;
     let u_min = u_indices.iter().copied().min()?;
     let u_max = u_indices.iter().copied().max()?;
     let v_min = v_indices.iter().copied().min()?;
@@ -563,21 +540,7 @@ fn triangle_face_cell_sample(
     }
 
     let (oriented_u_axis, oriented_v_axis) = oriented_face_axes(axis);
-    let oriented = points
-        .iter()
-        .map(|point| {
-            Some((
-                coord_index(
-                    axis_coords(x, y, z, oriented_u_axis),
-                    axis_coord(point, oriented_u_axis),
-                )?,
-                coord_index(
-                    axis_coords(x, y, z, oriented_v_axis),
-                    axis_coord(point, oriented_v_axis),
-                )?,
-            ))
-        })
-        .collect::<Option<Vec<_>>>()?;
+    let oriented = point_grid_indices(&points, x, y, z, oriented_u_axis, oriented_v_axis)?;
     let [a, b, c] = [oriented[0], oriented[1], oriented[2]];
     let du1 = i128::try_from(b.0).ok()? - i128::try_from(a.0).ok()?;
     let dv1 = i128::try_from(b.1).ok()? - i128::try_from(a.1).ok()?;
@@ -604,6 +567,51 @@ fn triangle_face_cell_sample(
         projected,
         area2,
     })
+}
+
+fn triangle_points(mesh: &ExactMesh, triangle: [usize; 3]) -> Option<[Point3; 3]> {
+    let vertices = mesh.view().vertices();
+    Some([
+        vertices.get(triangle[0])?.clone(),
+        vertices.get(triangle[1])?.clone(),
+        vertices.get(triangle[2])?.clone(),
+    ])
+}
+
+fn projected_face_points(
+    points: &[Point3; 3],
+    u_axis: Axis,
+    v_axis: Axis,
+) -> [ProjectedFacePoint; 3] {
+    points.each_ref().map(|point| ProjectedFacePoint {
+        u: axis_coord(point, u_axis).clone(),
+        v: axis_coord(point, v_axis).clone(),
+    })
+}
+
+fn point_coord_indices(points: &[Point3; 3], coords: &[Real], axis: Axis) -> Option<[usize; 3]> {
+    Some([
+        coord_index(coords, axis_coord(&points[0], axis))?,
+        coord_index(coords, axis_coord(&points[1], axis))?,
+        coord_index(coords, axis_coord(&points[2], axis))?,
+    ])
+}
+
+fn point_grid_indices(
+    points: &[Point3; 3],
+    x: &[Real],
+    y: &[Real],
+    z: &[Real],
+    u_axis: Axis,
+    v_axis: Axis,
+) -> Option<[(usize, usize); 3]> {
+    let u_indices = point_coord_indices(points, axis_coords(x, y, z, u_axis), u_axis)?;
+    let v_indices = point_coord_indices(points, axis_coords(x, y, z, v_axis), v_axis)?;
+    Some([
+        (u_indices[0], v_indices[0]),
+        (u_indices[1], v_indices[1]),
+        (u_indices[2], v_indices[2]),
+    ])
 }
 
 fn certify_axis_aligned_orthogonal_solid_from_faces(
