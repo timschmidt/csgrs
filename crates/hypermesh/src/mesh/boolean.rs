@@ -360,6 +360,17 @@ impl ExactBooleanOperation {
         }
     }
 
+    fn closed_boundary_touching_shortcut(self) -> Option<ExactBooleanShortcutKind> {
+        match self {
+            Self::Union => Some(ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion),
+            Self::Intersection => {
+                Some(ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection)
+            }
+            Self::Difference => Some(ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference),
+            Self::SelectedRegions(_) => None,
+        }
+    }
+
     fn convex_operation_support(self) -> Option<ExactBooleanSupport> {
         match self {
             Self::Union => Some(ExactBooleanSupport::CertifiedConvexUnion),
@@ -6849,36 +6860,30 @@ pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evid
     else {
         return Ok(None);
     };
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+    if operation.is_selected_regions() {
         return Ok(None);
     }
-    let (mesh, shortcut) = match operation {
-        ExactBooleanOperation::Union => (
-            concatenate_meshes_with_options(
-                left,
-                right,
-                false,
-                "exact closed-boundary-touching union preserving separate shells",
-                validation,
-            )?,
-            ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion,
-        ),
-        ExactBooleanOperation::Intersection => (
-            empty_mesh(
-                "empty exact closed-boundary-touching intersection",
-                validation,
-            )?,
-            ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
-        ),
-        ExactBooleanOperation::Difference => (
-            copy_mesh(
-                left,
-                "exact closed-boundary-touching difference keeps left",
-                validation,
-            )?,
-            ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
-        ),
+    let mesh = match operation {
+        ExactBooleanOperation::Union => concatenate_meshes_with_options(
+            left,
+            right,
+            false,
+            "exact closed-boundary-touching union preserving separate shells",
+            validation,
+        )?,
+        ExactBooleanOperation::Intersection => empty_mesh(
+            "empty exact closed-boundary-touching intersection",
+            validation,
+        )?,
+        ExactBooleanOperation::Difference => copy_mesh(
+            left,
+            "exact closed-boundary-touching difference keeps left",
+            validation,
+        )?,
         ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+    };
+    let Some(shortcut) = operation.closed_boundary_touching_shortcut() else {
+        return Ok(None);
     };
     let result = certified_shortcut_result(mesh, operation, shortcut);
     validate_boolean_result(
