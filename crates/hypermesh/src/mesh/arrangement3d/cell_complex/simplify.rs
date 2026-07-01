@@ -476,14 +476,23 @@ pub(crate) fn simplify_selected_cell_complex(
                 region_label_key(right.face.source),
                 opposite_label_key(right.face.opposite),
             );
-            left_label == right_label
-                && left.face.cell.carrier.face != right.face.cell.carrier.face
-                && faces_share_reversed_exact_edge(left, right)
-                && face_boundaries_are_coplanar(
+            if left_label != right_label
+                || left.face.cell.carrier.face == right.face.cell.carrier.face
+            {
+                return false;
+            }
+            match faces_share_reversed_exact_edge(left, right) {
+                Ok(true) => face_boundaries_are_coplanar(
                     &left.face.cell.boundary_points,
                     &right.face.cell.boundary_points,
                     blockers,
-                )
+                ),
+                Ok(false) => false,
+                Err(blocker) => {
+                    blockers.push(blocker);
+                    false
+                }
+            }
         },
     );
     faces = merged.faces;
@@ -495,13 +504,17 @@ pub(crate) fn simplify_selected_cell_complex(
             faces,
             &mut blockers,
             remove_collinear_nodes,
-            |left, right, blockers| {
-                faces_share_reversed_exact_edge(left, right)
-                    && face_boundaries_are_coplanar(
-                        &left.face.cell.boundary_points,
-                        &right.face.cell.boundary_points,
-                        blockers,
-                    )
+            |left, right, blockers| match faces_share_reversed_exact_edge(left, right) {
+                Ok(true) => face_boundaries_are_coplanar(
+                    &left.face.cell.boundary_points,
+                    &right.face.cell.boundary_points,
+                    blockers,
+                ),
+                Ok(false) => false,
+                Err(blocker) => {
+                    blockers.push(blocker);
+                    false
+                }
             },
         );
         faces = merged.faces;
@@ -816,10 +829,14 @@ fn merge_same_label_group(
                 from_point: face.face.cell.boundary_points[index].clone(),
                 to_point: face.face.cell.boundary_points[next].clone(),
             };
-            if let Some(reverse) = boundary_edges
-                .iter()
-                .position(|existing| exact_edges_are_reversed(existing, &edge))
-            {
+            let mut reverse = None;
+            for (index, existing) in boundary_edges.iter().enumerate() {
+                if exact_edges_are_reversed(existing, &edge)? {
+                    reverse = Some(index);
+                    break;
+                }
+            }
+            if let Some(reverse) = reverse {
                 boundary_edges.remove(reverse);
                 interior_edges_removed += 1;
             } else {
@@ -846,15 +863,32 @@ fn merge_same_label_group(
         let mut boundary_points = vec![first.from_point];
         let max_steps = boundary_edges.len().saturating_add(1);
         let mut guard = 0usize;
-        while current != start && point3_exact_equal(&current_point, &start_point) != Some(true) {
+        while current != start {
+            match point3_exact_equal(&current_point, &start_point) {
+                Some(true) => break,
+                Some(false) => {}
+                None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+            }
             guard += 1;
             if guard > max_steps {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             }
-            let Some(next_index) = boundary_edges.iter().position(|edge| {
-                edge.from == current
-                    || point3_exact_equal(&edge.from_point, &current_point) == Some(true)
-            }) else {
+            let mut next_index = None;
+            for (index, edge) in boundary_edges.iter().enumerate() {
+                if edge.from == current {
+                    next_index = Some(index);
+                    break;
+                }
+                match point3_exact_equal(&edge.from_point, &current_point) {
+                    Some(true) => {
+                        next_index = Some(index);
+                        break;
+                    }
+                    Some(false) => {}
+                    None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+                }
+            }
+            let Some(next_index) = next_index else {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             };
             let next = boundary_edges.remove(next_index);
@@ -882,16 +916,27 @@ fn merge_same_label_group(
     Ok((merged, interior_edges_removed))
 }
 
-fn exact_edges_are_reversed(left: &DirectedBoundaryEdge, right: &DirectedBoundaryEdge) -> bool {
-    (left.from == right.to && left.to == right.from)
-        || (point3_exact_equal(&left.from_point, &right.to_point) == Some(true)
-            && point3_exact_equal(&left.to_point, &right.from_point) == Some(true))
+fn exact_edges_are_reversed(
+    left: &DirectedBoundaryEdge,
+    right: &DirectedBoundaryEdge,
+) -> Result<bool, ExactArrangementBlocker> {
+    if left.from == right.to && left.to == right.from {
+        return Ok(true);
+    }
+    match (
+        point3_exact_equal(&left.from_point, &right.to_point),
+        point3_exact_equal(&left.to_point, &right.from_point),
+    ) {
+        (Some(true), Some(true)) => Ok(true),
+        (Some(false), _) | (_, Some(false)) => Ok(false),
+        _ => Err(ExactArrangementBlocker::UndecidableOrdering),
+    }
 }
 
 fn faces_share_reversed_exact_edge(
     left: &ExactSimplifiedFaceCell,
     right: &ExactSimplifiedFaceCell,
-) -> bool {
+) -> Result<bool, ExactArrangementBlocker> {
     let mut left_edges = Vec::new();
     let mut right_edges = Vec::new();
     for (face, edges) in [(left, &mut left_edges), (right, &mut right_edges)] {
@@ -910,11 +955,14 @@ fn faces_share_reversed_exact_edge(
             });
         }
     }
-    left_edges.iter().any(|left_edge| {
-        right_edges
-            .iter()
-            .any(|right_edge| exact_edges_are_reversed(left_edge, right_edge))
-    })
+    for left_edge in &left_edges {
+        for right_edge in &right_edges {
+            if exact_edges_are_reversed(left_edge, right_edge)? {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
 }
 
 fn face_boundaries_are_coplanar(
