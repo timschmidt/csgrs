@@ -148,7 +148,7 @@ impl CoplanarVolumetricCellEvidenceReport {
         graph: &ExactIntersectionGraph,
         left: &ExactMesh,
         right: &ExactMesh,
-    ) -> Self {
+    ) -> Result<Self, ExactMeshError> {
         let mut report = Self {
             left_closed_manifold: left.facts().mesh.closed_manifold,
             right_closed_manifold: right.facts().mesh.closed_manifold,
@@ -177,11 +177,14 @@ impl CoplanarVolumetricCellEvidenceReport {
             match pair.relation {
                 MeshFacePairRelation::Candidate => {
                     report.candidate_pairs += 1;
-                    if pair
-                        .events
-                        .iter()
-                        .any(|event| proper_crossing_event(event, left, right))
-                    {
+                    let mut has_proper_crossing = false;
+                    for event in &pair.events {
+                        if proper_crossing_event(event, left, right)? {
+                            has_proper_crossing = true;
+                            break;
+                        }
+                    }
+                    if has_proper_crossing {
                         report.proper_crossing_candidate_pairs += 1;
                     }
                 }
@@ -195,7 +198,7 @@ impl CoplanarVolumetricCellEvidenceReport {
                             right,
                             pair.left_face,
                             pair.right_face,
-                        ) {
+                        )? {
                             Some(CoplanarOverlapSideEvidence::OppositeSides) => {
                                 report.opposite_side_coplanar_overlapping_pairs += 1;
                             }
@@ -216,7 +219,7 @@ impl CoplanarVolumetricCellEvidenceReport {
                         report.segment_plane_events += 1;
                         match relation {
                             SegmentPlaneRelation::ProperCrossing => {
-                                if proper_crossing_event(event, left, right) {
+                                if proper_crossing_event(event, left, right)? {
                                     report.proper_crossing_events += 1;
                                 } else {
                                     report.boundary_segment_events += 1;
@@ -257,7 +260,7 @@ impl CoplanarVolumetricCellEvidenceReport {
         }
 
         report.obstacle = derive_obstacle(&report);
-        report
+        Ok(report)
     }
 
     /// Validate the compact report without source meshes.
@@ -360,7 +363,7 @@ pub(crate) fn certify_coplanar_volumetric_cell_evidence(
     right: &ExactMesh,
 ) -> Result<CoplanarVolumetricCellEvidenceReport, ExactMeshError> {
     let graph = build_validated_intersection_graph(left, right)?;
-    let report = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
+    let report = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right)?;
     if let Err(error) = report.validate() {
         return Err(ExactMeshError::one(ExactMeshBlocker::new(
             ExactMeshBlockerKind::ExactConstructionFailure,
@@ -425,18 +428,28 @@ fn classify_coplanar_overlap_sides(
     right: &ExactMesh,
     left_face: usize,
     right_face: usize,
-) -> Option<CoplanarOverlapSideEvidence> {
-    let left_plane = left.view().face(left_face).ok()?.plane();
-    let left_side = mesh_local_off_plane_side(left, left_face, left_plane)
-        .or_else(|| mesh_oriented_face_interior_side(left, left_face, left_plane))
-        .or_else(|| mesh_off_plane_side(left, left_plane))?;
-    let right_side = mesh_local_off_plane_side(right, right_face, left_plane)
-        .or_else(|| mesh_oriented_face_interior_side(right, right_face, left_plane))
-        .or_else(|| mesh_off_plane_side(right, left_plane))?;
+) -> Result<Option<CoplanarOverlapSideEvidence>, ExactMeshError> {
+    let left_plane = left.view().face(left_face)?.plane();
+    let left_side = match mesh_local_off_plane_side(left, left_face, left_plane)? {
+        Some(side) => Some(side),
+        None => mesh_oriented_face_interior_side(left, left_face, left_plane)?
+            .or_else(|| mesh_off_plane_side(left, left_plane)),
+    };
+    let Some(left_side) = left_side else {
+        return Ok(None);
+    };
+    let right_side = match mesh_local_off_plane_side(right, right_face, left_plane)? {
+        Some(side) => Some(side),
+        None => mesh_oriented_face_interior_side(right, right_face, left_plane)?
+            .or_else(|| mesh_off_plane_side(right, left_plane)),
+    };
+    let Some(right_side) = right_side else {
+        return Ok(None);
+    };
     if left_side == right_side {
-        Some(CoplanarOverlapSideEvidence::SameSide)
+        Ok(Some(CoplanarOverlapSideEvidence::SameSide))
     } else {
-        Some(CoplanarOverlapSideEvidence::OppositeSides)
+        Ok(Some(CoplanarOverlapSideEvidence::OppositeSides))
     }
 }
 
@@ -444,19 +457,25 @@ fn mesh_local_off_plane_side(
     mesh: &ExactMesh,
     face: usize,
     plane: &FacePlaneFacts,
-) -> Option<PlaneSide> {
-    let face_is_coplanar_with_plane = |face: usize| {
-        face_point_refs(mesh, face)
-            .map(|points| {
-                points
-                    .iter()
-                    .all(|point| retained_plane_side(plane, point) == Some(PlaneSide::On))
-            })
-            .unwrap_or(false)
+) -> Result<Option<PlaneSide>, ExactMeshError> {
+    let face_is_coplanar_with_plane = |face: usize| -> Result<Option<bool>, ExactMeshError> {
+        let points = face_point_refs(mesh, face)?;
+        for point in points {
+            let Some(side) = retained_plane_side(plane, point) else {
+                return Ok(None);
+            };
+            if side != PlaneSide::On {
+                return Ok(Some(false));
+            }
+        }
+        Ok(Some(true))
     };
 
-    if mesh.view().face(face).is_err() || !face_is_coplanar_with_plane(face) {
-        return None;
+    let Some(coplanar) = face_is_coplanar_with_plane(face)? else {
+        return Ok(None);
+    };
+    if !coplanar {
+        return Ok(None);
     }
     let mut edge_to_faces = HashMap::<[usize; 2], Vec<usize>>::new();
     for face in mesh.view().faces() {
@@ -471,19 +490,16 @@ fn mesh_local_off_plane_side(
         if !patch.insert(current) {
             continue;
         }
-        for edge in mesh
-            .view()
-            .face(current)
-            .ok()?
-            .directed_edges()
-            .map(sorted_edge)
-        {
+        for edge in mesh.view().face(current)?.directed_edges().map(sorted_edge) {
             for &neighbor in edge_to_faces
                 .get(&edge)
                 .into_iter()
                 .flat_map(|faces| faces.iter())
             {
-                if !patch.contains(&neighbor) && face_is_coplanar_with_plane(neighbor) {
+                let Some(neighbor_coplanar) = face_is_coplanar_with_plane(neighbor)? else {
+                    return Ok(None);
+                };
+                if !patch.contains(&neighbor) && neighbor_coplanar {
                     stack.push(neighbor);
                 }
             }
@@ -494,8 +510,7 @@ fn mesh_local_off_plane_side(
     for &patch_face in &patch {
         for edge in mesh
             .view()
-            .face(patch_face)
-            .ok()?
+            .face(patch_face)?
             .directed_edges()
             .map(sorted_edge)
         {
@@ -507,16 +522,21 @@ fn mesh_local_off_plane_side(
                 if patch.contains(&neighbor) {
                     continue;
                 }
-                for vertex in mesh.view().face(neighbor).ok()?.vertex_indices() {
+                for vertex in mesh.view().face(neighbor)?.vertex_indices() {
                     if edge.contains(&vertex) {
                         continue;
                     }
-                    match retained_plane_side(plane, mesh.view().vertex(vertex).ok()?.point())? {
+                    let Some(point_side) =
+                        retained_plane_side(plane, mesh.view().vertex(vertex)?.point())
+                    else {
+                        return Ok(None);
+                    };
+                    match point_side {
                         PlaneSide::On => {}
                         candidate => {
                             if let Some(existing) = side {
                                 if existing != candidate {
-                                    return None;
+                                    return Ok(None);
                                 }
                             } else {
                                 side = Some(candidate);
@@ -527,11 +547,14 @@ fn mesh_local_off_plane_side(
             }
         }
     }
-    side
+    Ok(side)
 }
 
-fn face_point_refs(mesh: &ExactMesh, face: usize) -> Option<[&hyperlimit::Point3; 3]> {
-    mesh.view().face(face).ok()?.vertices().ok()
+fn face_point_refs(
+    mesh: &ExactMesh,
+    face: usize,
+) -> Result<[&hyperlimit::Point3; 3], ExactMeshError> {
+    mesh.view().face(face)?.vertices()
 }
 
 fn coplanar_pair_has_positive_area_overlap(events: &[IntersectionEvent]) -> bool {
@@ -594,25 +617,27 @@ fn mesh_oriented_face_interior_side(
     mesh: &ExactMesh,
     face: usize,
     reference_plane: &FacePlaneFacts,
-) -> Option<PlaneSide> {
+) -> Result<Option<PlaneSide>, ExactMeshError> {
     if !mesh.facts().mesh.closed_manifold {
-        return None;
+        return Ok(None);
     }
     let orientation = exact_mesh_orientation(mesh);
-    let face_plane = mesh.view().face(face).ok()?.plane();
+    let face_plane = mesh.view().face(face)?.plane();
     let dot = &(&reference_plane.normal[0] * &face_plane.normal[0])
         + &(&reference_plane.normal[1] * &face_plane.normal[1])
         + &(&reference_plane.normal[2] * &face_plane.normal[2]);
     let interior_direction_dot = match orientation {
         ClosedMeshOrientation::Positive => Real::from(0) - dot,
         ClosedMeshOrientation::Negative => dot,
-        ClosedMeshOrientation::NotClosed | ClosedMeshOrientation::Unknown => return None,
+        ClosedMeshOrientation::NotClosed | ClosedMeshOrientation::Unknown => return Ok(None),
     };
-    match compare_reals(&interior_direction_dot, &Real::from(0)).value()? {
-        Ordering::Less => Some(PlaneSide::Above),
-        Ordering::Equal => None,
-        Ordering::Greater => Some(PlaneSide::Below),
-    }
+    Ok(
+        match compare_reals(&interior_direction_dot, &Real::from(0)).value() {
+            Some(Ordering::Less) => Some(PlaneSide::Above),
+            Some(Ordering::Equal) | None => None,
+            Some(Ordering::Greater) => Some(PlaneSide::Below),
+        },
+    )
 }
 
 fn retained_plane_side(plane: &FacePlaneFacts, point: &hyperlimit::Point3) -> Option<PlaneSide> {
@@ -627,7 +652,11 @@ fn retained_plane_side(plane: &FacePlaneFacts, point: &hyperlimit::Point3) -> Op
     }
 }
 
-fn proper_crossing_event(event: &IntersectionEvent, left: &ExactMesh, right: &ExactMesh) -> bool {
+fn proper_crossing_event(
+    event: &IntersectionEvent,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactMeshError> {
     let IntersectionEvent::SegmentPlane {
         relation: SegmentPlaneRelation::ProperCrossing,
         plane_side,
@@ -636,34 +665,32 @@ fn proper_crossing_event(event: &IntersectionEvent, left: &ExactMesh, right: &Ex
         ..
     } = event
     else {
-        return matches!(
+        return Ok(matches!(
             event,
             IntersectionEvent::SegmentPlane {
                 relation: SegmentPlaneRelation::ProperCrossing,
                 ..
             }
-        );
+        ));
     };
     let mesh = plane_side.mesh(left, right);
-    let Some(triangle) = face_point_refs(mesh, *plane_face) else {
-        return true;
-    };
+    let triangle = face_point_refs(mesh, *plane_face)?;
     let points = [
         triangle[0].clone(),
         triangle[1].clone(),
         triangle[2].clone(),
     ];
     let Some(projection) = choose_nonzero_projected_polygon_area(&points) else {
-        return true;
+        return Ok(true);
     };
-    classify_point_triangle(
+    Ok(classify_point_triangle(
         &project_point3(&points[0], projection),
         &project_point3(&points[1], projection),
         &project_point3(&points[2], projection),
         &project_point3(point, projection),
     )
     .value()
-        == Some(TriangleLocation::Inside)
+        == Some(TriangleLocation::Inside))
 }
 
 #[cfg(test)]
@@ -938,7 +965,7 @@ mod tests {
         assert_eq!(mesh_off_plane_side(&mesh, plane), None);
         assert_eq!(
             mesh_local_off_plane_side(&mesh, 0, plane),
-            Some(PlaneSide::Above)
+            Ok(Some(PlaneSide::Above))
         );
     }
 
@@ -947,10 +974,23 @@ mod tests {
         let mesh = skew_octahedron_i64();
         let plane = mesh.view().face(0).unwrap().plane();
 
-        assert_eq!(mesh_local_off_plane_side(&mesh, 0, plane), None);
+        assert_eq!(mesh_local_off_plane_side(&mesh, 0, plane), Ok(None));
         assert!(matches!(
             mesh_oriented_face_interior_side(&mesh, 0, plane),
-            Some(PlaneSide::Above | PlaneSide::Below)
+            Ok(Some(PlaneSide::Above | PlaneSide::Below))
         ));
+    }
+
+    #[test]
+    fn face_point_refs_rejects_stale_retained_face_rows() {
+        let mut mesh = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        mesh.facts.faces.clear();
+
+        let error = face_point_refs(&mesh, 0).unwrap_err();
+
+        assert!(
+            error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+            "{error:?}"
+        );
     }
 }

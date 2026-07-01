@@ -2272,7 +2272,7 @@ fn certified_arrangement_cell_complex_coplanar_evidence(
     if counts.coplanar_overlapping_pairs == 0 && counts.coplanar_touching_pairs == 0 {
         return Ok(None);
     }
-    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)?;
     validate_graph_source_replay(graph, left, right)?;
     evidence.validate().map_err(|error| {
         boolean_validation_error(
@@ -2509,7 +2509,7 @@ fn coplanar_volumetric_evidence_if_required(
         return Ok(None);
     }
     validate_graph_source_replay(graph, left, right)?;
-    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)?;
     evidence.validate().map_err(|error| {
         boolean_validation_error(
             ExactMeshBlockerKind::ExactConstructionFailure,
@@ -2531,7 +2531,7 @@ fn coplanar_boundary_only_evidence_if_consumed(
     right: &ExactMesh,
 ) -> Result<Option<CoplanarVolumetricCellEvidenceReport>, ExactMeshError> {
     validate_graph_source_replay(graph, left, right)?;
-    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)?;
     evidence.validate().map_err(|error| {
         boolean_validation_error(
             ExactMeshBlockerKind::ExactConstructionFailure,
@@ -4342,7 +4342,7 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
     {
         return Ok(None);
     }
-    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)?;
     evidence.validate().map_err(|error| {
         boolean_validation_error(
             ExactMeshBlockerKind::ExactConstructionFailure,
@@ -4455,7 +4455,7 @@ pub(crate) fn materialize_closed_no_volume_overlap_regularized_boolean_with_evid
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
-    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)?;
     evidence.validate().map_err(|error| {
         boolean_validation_error(
             ExactMeshBlockerKind::ExactConstructionFailure,
@@ -7048,7 +7048,7 @@ fn closed_boundary_contact_evidence_from_graph(
         return Ok(None);
     }
     validate_graph_source_replay(graph, left, right)?;
-    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)?;
     evidence.validate().map_err(|error| {
         boolean_validation_error(
             ExactMeshBlockerKind::ExactConstructionFailure,

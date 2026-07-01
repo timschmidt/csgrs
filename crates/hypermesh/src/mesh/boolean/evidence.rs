@@ -3211,7 +3211,8 @@ fn closed_boundary_touching_sources_match(
             ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
                 | ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
         ) {
-            let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
+            let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)
+                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
             evidence
                 .validate()
                 .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
@@ -3225,7 +3226,8 @@ fn closed_boundary_touching_sources_match(
     if shortcut == ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
         && report.blocker.coplanar_overlapping_pairs != 0
     {
-        let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
+        let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         evidence
             .validate()
             .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
@@ -3350,7 +3352,8 @@ fn arrangement_cell_complex_sources_match(
         return Ok(false);
     }
     if operation == ExactBooleanOperation::Union {
-        let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
+        let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right)
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         evidence
             .validate()
             .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
@@ -3604,7 +3607,8 @@ fn arrangement_cell_complex_output_matches_sources(
     if validated_graph.has_unknowns() || validated_graph.face_pairs.is_empty() {
         return Ok(retained_mismatch.then_some(false));
     }
-    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(validated_graph, left, right);
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(validated_graph, left, right)
+        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
     evidence
         .validate()
         .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
@@ -4446,6 +4450,14 @@ fn validate_winding_evidence_against_sources_for_request(
     let mut source_replay = ExactBooleanSourceReplay::new(left, right);
     {
         let graph = source_replay.validated_graph()?;
+        let retained_coplanar_volumetric_evidence_matches =
+            if let Some(evidence) = report.coplanar_volumetric_evidence.as_ref() {
+                let replay = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)
+                    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
+                evidence == &replay
+            } else {
+                false
+            };
         if report.operation == request.operation
             && report.status
                 == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
@@ -4456,8 +4468,7 @@ fn validate_winding_evidence_against_sources_for_request(
             && report.region_count == 0
             && report.region_classifications.is_empty()
             && report.coplanar_arrangement_evidence.is_none()
-            && let Some(evidence) = report.coplanar_volumetric_evidence.as_ref()
-            && evidence == &CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)
+            && retained_coplanar_volumetric_evidence_matches
             && volumetric_boundary_closure_report_from_graph(graph, left, right, report.operation)
                 .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
                 .status
@@ -4522,13 +4533,17 @@ fn axis_aligned_orthogonal_solid_winding_evidence_matches_sources(
     if graph.has_unknowns() {
         return Ok(false);
     }
-    let retains_graph_evidence = report.retained_face_pairs == graph.face_pairs.len()
-        && report.retained_events == graph.event_count()
-        && if let Some(evidence) = report.coplanar_volumetric_evidence.as_ref() {
-            evidence == &CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)
+    let retained_coplanar_volumetric_evidence_matches =
+        if let Some(evidence) = report.coplanar_volumetric_evidence.as_ref() {
+            let replay = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)
+                .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
+            evidence == &replay
         } else {
             true
         };
+    let retains_graph_evidence = report.retained_face_pairs == graph.face_pairs.len()
+        && report.retained_events == graph.event_count()
+        && retained_coplanar_volumetric_evidence_matches;
     let collapsed_winding_evidence = report.retained_face_pairs == 0
         && report.retained_events == 0
         && report.coplanar_volumetric_evidence.is_none()
@@ -4577,6 +4592,14 @@ impl ExactBooleanPreflight {
         self.validate()?;
         let mut source_replay = ExactBooleanSourceReplay::new(left, right);
         let graph = source_replay.validated_graph()?;
+        let retained_coplanar_volumetric_evidence_matches =
+            if let Some(evidence) = self.coplanar_volumetric_evidence.as_ref() {
+                let replay = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right)
+                    .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
+                evidence == &replay
+            } else {
+                false
+            };
         if self.operation == request.operation
             && self.support == ExactBooleanSupport::CertifiedArrangementCellComplex
             && self.blocker.is_none()
@@ -4585,8 +4608,7 @@ impl ExactBooleanPreflight {
             && self.region_count == 0
             && self.region_classifications.is_empty()
             && self.coplanar_arrangement_evidence.is_none()
-            && let Some(evidence) = self.coplanar_volumetric_evidence.as_ref()
-            && evidence == &CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right)
+            && retained_coplanar_volumetric_evidence_matches
             && volumetric_boundary_closure_report_from_graph(&graph, left, right, request.operation)
                 .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
                 .status
