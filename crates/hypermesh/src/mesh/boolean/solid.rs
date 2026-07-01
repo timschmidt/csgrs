@@ -374,17 +374,21 @@ pub(crate) fn certify_convex_solid(mesh: &ExactMesh) -> ConvexSolidFacts {
 
     let mut predicates = Vec::new();
     let mut saw_unknown = false;
-    for face in &mesh.facts().faces {
-        let tri = face.triangle.vertices;
-        let a = &mesh.vertices()[tri[0]];
-        let b = &mesh.vertices()[tri[1]];
-        let c = &mesh.vertices()[tri[2]];
+    for face in mesh.view().faces() {
+        let tri = face.vertex_indices();
+        let Ok([a, b, c]) = face.vertices() else {
+            return ConvexSolidFacts {
+                orientation,
+                convexity: ConvexSolidClassification::Unknown,
+                predicates,
+            };
+        };
 
-        for (vertex, point) in mesh.vertices().iter().enumerate() {
-            if tri.contains(&vertex) {
+        for vertex in mesh.view().vertex_refs() {
+            if tri.contains(&vertex.index()) {
                 continue;
             }
-            let report = orient3d_report(a, b, c, point);
+            let report = orient3d_report(a, b, c, vertex.point());
             predicates.push(PredicateUse::from_certificate(report.certificate));
             let Some(side) = report.value().map(PlaneSide::from) else {
                 saw_unknown = true;
@@ -500,12 +504,14 @@ fn classify_point_with_convex_facts_report(
     }
 
     let mut touches_boundary = false;
-    let mut predicates = Vec::with_capacity(solid.facts().mesh.face_count);
-    for face in &solid.facts().faces {
-        let tri = face.triangle.vertices;
-        let a = &solid.vertices()[tri[0]];
-        let b = &solid.vertices()[tri[1]];
-        let c = &solid.vertices()[tri[2]];
+    let mut predicates = Vec::with_capacity(solid.view().face_count());
+    for face in solid.view().faces() {
+        let Ok([a, b, c]) = face.vertices() else {
+            return ConvexSolidPointClassification {
+                relation: ConvexSolidPointRelation::Unknown,
+                predicates,
+            };
+        };
         let report = orient3d_report(a, b, c, point);
         predicates.push(PredicateUse::from_certificate(report.certificate));
         let Some(side) = report.value().map(PlaneSide::from) else {
@@ -535,19 +541,13 @@ fn classify_point_with_convex_facts_report(
 }
 
 pub(crate) fn exact_mesh_orientation(mesh: &ExactMesh) -> ClosedMeshOrientation {
-    let signed_volume = mesh
-        .facts()
-        .faces
-        .iter()
-        .map(|face| {
-            let tri = face.triangle.vertices;
-            determinant_from_origin(
-                &mesh.vertices()[tri[0]],
-                &mesh.vertices()[tri[1]],
-                &mesh.vertices()[tri[2]],
-            )
-        })
-        .fold(Real::from(0), |sum, det| &sum + &det);
+    let mut signed_volume = Real::from(0);
+    for face in mesh.view().faces() {
+        let Ok([a, b, c]) = face.vertices() else {
+            return ClosedMeshOrientation::Unknown;
+        };
+        signed_volume = &signed_volume + &determinant_from_origin(a, b, c);
+    }
 
     match compare_reals(&signed_volume, &Real::from(0)).value() {
         Some(Ordering::Greater) => ClosedMeshOrientation::Positive,

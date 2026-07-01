@@ -485,23 +485,26 @@ pub(crate) fn classify_point_against_closed_mesh_winding_report(
         };
     }
 
-    let triangles = mesh
-        .facts()
-        .faces
-        .iter()
-        .map(|face| {
-            let [a, b, c] = face.triangle.vertices;
-            [
-                &mesh.vertices()[a],
-                &mesh.vertices()[b],
-                &mesh.vertices()[c],
-            ]
-        })
-        .collect::<Vec<_>>();
-
     let mut last_degenerate = 0_usize;
     let mut last_unknown = 0_usize;
     let ray_candidates = winding_ray_candidates();
+    let mut triangles = Vec::with_capacity(mesh.view().face_count());
+    for face in mesh.view().faces() {
+        let Ok(triangle) = face.vertices() else {
+            return PointMeshWindingReport {
+                relation: ClosedMeshWindingRelation::Unknown,
+                axis: None,
+                tested_axes: ray_candidates.len(),
+                triangle_count: mesh.view().face_count(),
+                crossings: 0,
+                boundary_hits: 0,
+                degenerate_hits: 0,
+                parallel_faces: 0,
+                unknown_hits: 1,
+            };
+        };
+        triangles.push(triangle);
+    }
     for (tested, axis) in ray_candidates.iter().copied().enumerate() {
         let mut axis_report = AxisParityReport::default();
         for triangle in &triangles {
