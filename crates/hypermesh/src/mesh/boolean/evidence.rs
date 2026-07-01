@@ -5568,11 +5568,7 @@ fn sorted_triangle_sets(mesh: &ExactMesh, right_to_left: Option<&[usize]>) -> Ve
 }
 
 fn retained_face_rows(mesh: &ExactMesh) -> impl Iterator<Item = [usize; 3]> + '_ {
-    mesh.facts()
-        .faces
-        .iter()
-        .take(mesh.facts().mesh.face_count)
-        .map(|face| face.triangle.vertices)
+    mesh.view().faces().map(|face| face.vertex_indices())
 }
 
 fn retained_face_rows_equal(left: &ExactMesh, right: &ExactMesh) -> bool {
