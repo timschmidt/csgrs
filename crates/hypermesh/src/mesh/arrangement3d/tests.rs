@@ -57,6 +57,85 @@ fn retained_arrangement_face_vertices_reports_stale_rows() {
     );
 }
 
+#[test]
+fn lower_dimensional_contact_artifacts_report_stale_source_rows() {
+    let plane = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
+    let segment = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 0, 2]);
+    let point_event = crate::mesh::graph::IntersectionEvent::SegmentPlane {
+        segment_side: MeshSide::Right,
+        edge: [0, 1],
+        plane_side: MeshSide::Left,
+        plane_face: usize::MAX,
+        relation: hyperlimit::SegmentPlaneRelation::EndpointOnPlane,
+        point: Some(p3(0, 0, 0)),
+        parameter: None,
+        parameter_ratio: None,
+        construction_failure: None,
+        endpoint_sides: [
+            Some(hyperlimit::PlaneSide::On),
+            Some(hyperlimit::PlaneSide::Above),
+        ],
+    };
+    assert_eq!(
+        non_coplanar_point_contact_artifact(0, 0, &point_event, &plane, &segment),
+        Err(ExactArrangementBlocker::InvalidIntersectionGraph(
+            ExactArrangementGraphBlockerKind::FaceIndexOutOfRange
+        ))
+    );
+
+    let mut stale_plane_vertices = plane.clone();
+    stale_plane_vertices.vertices.pop();
+    let stale_point_event = crate::mesh::graph::IntersectionEvent::SegmentPlane {
+        segment_side: MeshSide::Right,
+        edge: [0, 1],
+        plane_side: MeshSide::Left,
+        plane_face: 0,
+        relation: hyperlimit::SegmentPlaneRelation::EndpointOnPlane,
+        point: Some(p3(0, 0, 0)),
+        parameter: None,
+        parameter_ratio: None,
+        construction_failure: None,
+        endpoint_sides: [
+            Some(hyperlimit::PlaneSide::On),
+            Some(hyperlimit::PlaneSide::Above),
+        ],
+    };
+    assert_eq!(
+        non_coplanar_point_contact_artifact(
+            0,
+            0,
+            &stale_point_event,
+            &stale_plane_vertices,
+            &segment
+        ),
+        Err(ExactArrangementBlocker::InvalidSplitPlan(
+            ExactArrangementSplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange
+        ))
+    );
+
+    let edge_event = crate::mesh::graph::IntersectionEvent::SegmentPlane {
+        segment_side: MeshSide::Left,
+        edge: [0, usize::MAX],
+        plane_side: MeshSide::Right,
+        plane_face: 0,
+        relation: hyperlimit::SegmentPlaneRelation::Coplanar,
+        point: None,
+        parameter: None,
+        parameter_ratio: None,
+        construction_failure: None,
+        endpoint_sides: [
+            Some(hyperlimit::PlaneSide::On),
+            Some(hyperlimit::PlaneSide::On),
+        ],
+    };
+    assert_eq!(
+        non_coplanar_edge_contact_artifact(0, 0, &edge_event, &segment, &plane),
+        Err(ExactArrangementBlocker::InvalidIntersectionGraph(
+            ExactArrangementGraphBlockerKind::EventSourceOutOfRange
+        ))
+    );
+}
+
 fn test_face_cell(face: usize, points: Vec<Point3>) -> ArrangementFaceCell {
     ArrangementFaceCell {
         carrier: ArrangementFaceCarrier {

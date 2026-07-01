@@ -2391,22 +2391,31 @@ fn retained_arrangement_face_vertices<'a>(
     face: usize,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<([usize; 3], [&'a Point3; 3])> {
-    let Some(face_ref) = mesh.view().face(face) else {
-        blockers.push(ExactArrangementBlocker::InvalidIntersectionGraph(
-            ExactArrangementGraphBlockerKind::FaceIndexOutOfRange,
-        ));
-        return None;
-    };
-    let triangle = face_ref.vertex_indices();
-    match face_ref.vertices() {
-        Ok(points) => Some((triangle, points)),
-        Err(_) => {
-            blockers.push(ExactArrangementBlocker::InvalidSplitPlan(
-                ExactArrangementSplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange,
-            ));
+    match retained_arrangement_face_vertices_result(mesh, face) {
+        Ok(vertices) => Some(vertices),
+        Err(blocker) => {
+            blockers.push(blocker);
             None
         }
     }
+}
+
+fn retained_arrangement_face_vertices_result(
+    mesh: &ExactMesh,
+    face: usize,
+) -> Result<([usize; 3], [&Point3; 3]), ExactArrangementBlocker> {
+    let Some(face_ref) = mesh.view().face(face) else {
+        return Err(ExactArrangementBlocker::InvalidIntersectionGraph(
+            ExactArrangementGraphBlockerKind::FaceIndexOutOfRange,
+        ));
+    };
+    let triangle = face_ref.vertex_indices();
+    let points = face_ref.vertices().map_err(|_| {
+        ExactArrangementBlocker::InvalidSplitPlan(
+            ExactArrangementSplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange,
+        )
+    })?;
+    Ok((triangle, points))
 }
 
 fn face_plane_arrangement(
@@ -2626,14 +2635,16 @@ fn lower_dimensional_artifacts(
                 Ok(None) => {}
                 Err(blocker) => push_unique_blocker(blockers, blocker),
             }
-            if let Some(artifact) = non_coplanar_point_contact_artifact(
+            match non_coplanar_point_contact_artifact(
                 pair.left_face,
                 pair.right_face,
                 event,
                 left,
                 right,
             ) {
-                artifact_index.push_unique(&mut artifacts, artifact);
+                Ok(Some(artifact)) => artifact_index.push_unique(&mut artifacts, artifact),
+                Ok(None) => {}
+                Err(blocker) => push_unique_blocker(blockers, blocker),
             }
         }
     }
@@ -2712,7 +2723,7 @@ fn non_coplanar_point_contact_artifact(
     event: &super::graph::IntersectionEvent,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Option<ArrangementLowerDimensionalArtifact> {
+) -> Result<Option<ArrangementLowerDimensionalArtifact>, ExactArrangementBlocker> {
     let super::graph::IntersectionEvent::SegmentPlane {
         plane_side,
         plane_face,
@@ -2721,23 +2732,27 @@ fn non_coplanar_point_contact_artifact(
         ..
     } = event
     else {
-        return None;
+        return Ok(None);
     };
     let plane_mesh = plane_side.mesh(left, right);
-    let plane_face = plane_mesh.view().face(*plane_face)?;
-    let triangle = plane_face.vertex_indices();
-    let [a3, b3, c3] = plane_face.vertices().ok()?;
-    let projection = choose_triangle_projection(
-        plane_mesh,
-        triangle,
-        &mut Vec::<ExactArrangementBlocker>::new(),
-    )?;
+    let (triangle, [a3, b3, c3]) =
+        retained_arrangement_face_vertices_result(plane_mesh, *plane_face)?;
+    let mut projection_blockers = Vec::<ExactArrangementBlocker>::new();
+    let projection = choose_triangle_projection(plane_mesh, triangle, &mut projection_blockers)
+        .ok_or_else(|| {
+            projection_blockers
+                .into_iter()
+                .next()
+                .unwrap_or(ExactArrangementBlocker::UnresolvedIntersection)
+        })?;
     let a = project_point3(a3, projection);
     let b = project_point3(b3, projection);
     let c = project_point3(c3, projection);
     let projected = project_point3(point, projection);
-    let location = classify_point_triangle(&a, &b, &c, &projected).value()?;
-    matches!(
+    let location = classify_point_triangle(&a, &b, &c, &projected)
+        .value()
+        .ok_or(ExactArrangementBlocker::UndecidableOrdering)?;
+    Ok(matches!(
         location,
         TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
     )
@@ -2745,7 +2760,7 @@ fn non_coplanar_point_contact_artifact(
         left_face,
         right_face,
         point: point.clone(),
-    })
+    }))
 }
 
 fn non_coplanar_edge_contact_artifact(
@@ -2778,28 +2793,29 @@ fn non_coplanar_edge_contact_artifact(
         .vertex(edge[0])
         .map(|vertex| vertex.point())
     else {
-        return Ok(None);
+        return Err(ExactArrangementBlocker::InvalidIntersectionGraph(
+            ExactArrangementGraphBlockerKind::EventSourceOutOfRange,
+        ));
     };
     let Some(end) = segment_mesh
         .view()
         .vertex(edge[1])
         .map(|vertex| vertex.point())
     else {
-        return Ok(None);
+        return Err(ExactArrangementBlocker::InvalidIntersectionGraph(
+            ExactArrangementGraphBlockerKind::EventSourceOutOfRange,
+        ));
     };
-    let Some(plane_face) = plane_mesh.view().face(*plane_face) else {
-        return Ok(None);
-    };
-    let triangle = plane_face.vertex_indices();
-    let Ok([a3, b3, c3]) = plane_face.vertices() else {
-        return Ok(None);
-    };
-    let projection = choose_triangle_projection(
-        plane_mesh,
-        triangle,
-        &mut Vec::<ExactArrangementBlocker>::new(),
-    )
-    .ok_or(ExactArrangementBlocker::UndecidableOrdering)?;
+    let (triangle, [a3, b3, c3]) =
+        retained_arrangement_face_vertices_result(plane_mesh, *plane_face)?;
+    let mut projection_blockers = Vec::<ExactArrangementBlocker>::new();
+    let projection = choose_triangle_projection(plane_mesh, triangle, &mut projection_blockers)
+        .ok_or_else(|| {
+            projection_blockers
+                .into_iter()
+                .next()
+                .unwrap_or(ExactArrangementBlocker::UnresolvedIntersection)
+        })?;
     let a = project_point3(a3, projection);
     let b = project_point3(b3, projection);
     let c = project_point3(c3, projection);
