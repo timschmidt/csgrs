@@ -502,7 +502,8 @@ fn certification_set_from_graph_and_regularized_arrangement(
         right_open_surface: mesh_is_open_surface(right),
     };
     let counts = ExactBooleanBlocker::from_graph(graph, ExactBooleanBlockerKind::Winding);
-    let graph_had_unknowns = graph.has_unknowns();
+    let graph_counts = retained_graph_counts(graph);
+    let graph_had_unknowns = graph_counts.graph_had_unknowns;
     let needs_refinement = graph_had_unknowns || counts.construction_failed_events > 0;
     let refinement = ExactRefinementReport {
         operation: request.operation,
@@ -512,8 +513,8 @@ fn certification_set_from_graph_and_regularized_arrangement(
             ExactRefinementStatus::NotRequired
         },
         graph_had_unknowns,
-        retained_face_pairs: graph.face_pairs.len(),
-        retained_events: graph.event_count(),
+        retained_face_pairs: graph_counts.retained_face_pairs,
+        retained_events: graph_counts.retained_events,
         blocker: needs_refinement.then(|| counts.into_blocker(ExactBooleanBlockerKind::Refinement)),
     };
     let boundary_touching =
@@ -522,9 +523,9 @@ fn certification_set_from_graph_and_regularized_arrangement(
             let blocker_kind = counts.inferred_kind();
             ExactBoundaryTouchingReport {
                 status: ExactBoundaryTouchingStatus::NotBoundaryOnly,
-                graph_had_unknowns: graph.has_unknowns(),
-                retained_face_pairs: graph.face_pairs.len(),
-                retained_events: graph.event_count(),
+                graph_had_unknowns,
+                retained_face_pairs: graph_counts.retained_face_pairs,
+                retained_events: graph_counts.retained_events,
                 blocker: counts.into_blocker(blocker_kind),
             }
         });
@@ -600,9 +601,9 @@ fn certification_set_from_graph_and_regularized_arrangement(
                 planar_arrangement_report(
                     request.operation,
                     ExactPlanarArrangementStatus::NoPositiveOverlap,
-                    graph.has_unknowns(),
-                    graph.face_pairs.len(),
-                    graph.event_count(),
+                    graph_had_unknowns,
+                    graph_counts.retained_face_pairs,
+                    graph_counts.retained_events,
                     ExactBooleanBlocker::from_graph(graph, ExactBooleanBlockerKind::Winding),
                     None,
                 )
@@ -647,12 +648,7 @@ fn certification_set_from_graph_and_regularized_arrangement(
             Some(attempt.clone())
         } else {
             let retained_arrangement_cell_complex_shortcut_attempt = retained_arrangement_attempt
-                .filter(|attempt| {
-                    attempt.stage == ExactArrangementBooleanStage::Materialized
-                        && attempt.decline.is_none()
-                        && attempt.materialized_shortcut
-                            == Some(ExactBooleanShortcutKind::ArrangementCellComplex)
-                });
+                .filter(|attempt| attempt.materialized_arrangement_cell_complex_shortcut_output());
             let arrangement_cell_complex_shortcut_certified = arrangement_cell_complex_shortcuts
                 .materializes_operation(request.operation)
                 && retained_arrangement_cell_complex_shortcut_attempt.is_some();
@@ -721,9 +717,9 @@ fn certification_set_from_graph_and_regularized_arrangement(
             winding_evidence_report(
                 request.operation,
                 ExactWindingEvidenceStatus::VolumetricAssemblyRequired,
-                graph.has_unknowns(),
-                graph.face_pairs.len(),
-                graph.event_count(),
+                graph_had_unknowns,
+                graph_counts.retained_face_pairs,
+                graph_counts.retained_events,
                 region_plan.regions.len(),
                 region_classifications,
                 counts.into_blocker(ExactBooleanBlockerKind::Winding),
