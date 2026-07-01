@@ -1301,6 +1301,34 @@ pub(crate) enum ExactBooleanShortcutKind {
     ArrangementCellComplex,
 }
 
+impl ExactBooleanShortcutKind {
+    const fn required_named_operation(self) -> Option<ExactBooleanOperation> {
+        match self {
+            Self::ClosedBoundaryTouchingUnion | Self::ConvexUnion => {
+                Some(ExactBooleanOperation::Union)
+            }
+            Self::ClosedBoundaryTouchingIntersection | Self::ConvexIntersection => {
+                Some(ExactBooleanOperation::Intersection)
+            }
+            Self::ClosedBoundaryTouchingDifference | Self::ConvexDifference => {
+                Some(ExactBooleanOperation::Difference)
+            }
+            Self::EmptyOperand
+            | Self::BoundsDisjoint
+            | Self::Identical
+            | Self::SameSurface
+            | Self::OpenSurfaceDisjoint
+            | Self::ClosedWindingSeparated
+            | Self::ClosedWindingContainment
+            | Self::MixedDimensionalRegularizedSolid
+            | Self::LowerDimensionalRegularizedSolid
+            | Self::ConvexContainment
+            | Self::ConvexSeparated
+            | Self::ArrangementCellComplex => None,
+        }
+    }
+}
+
 impl ExactBooleanResultKind {
     fn certified_shortcut(self) -> Option<(ExactBooleanOperation, ExactBooleanShortcutKind)> {
         match self {
@@ -2982,45 +3010,16 @@ fn concatenated_mesh_output_matches(
         })
 }
 
-const fn shortcut_operation_matches(
+fn shortcut_operation_matches(
     shortcut: ExactBooleanShortcutKind,
     operation: ExactBooleanOperation,
 ) -> bool {
-    match (shortcut, operation) {
-        (_, ExactBooleanOperation::SelectedRegions(_)) => false,
-        (
-            ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
-            | ExactBooleanShortcutKind::ConvexUnion,
-            ExactBooleanOperation::Union,
-        )
-        | (
-            ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
-            | ExactBooleanShortcutKind::ConvexIntersection,
-            ExactBooleanOperation::Intersection,
-        )
-        | (
-            ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
-            | ExactBooleanShortcutKind::ConvexDifference,
-            ExactBooleanOperation::Difference,
-        ) => true,
-        (
-            ExactBooleanShortcutKind::EmptyOperand
-            | ExactBooleanShortcutKind::BoundsDisjoint
-            | ExactBooleanShortcutKind::Identical
-            | ExactBooleanShortcutKind::SameSurface
-            | ExactBooleanShortcutKind::OpenSurfaceDisjoint
-            | ExactBooleanShortcutKind::ClosedWindingSeparated
-            | ExactBooleanShortcutKind::ClosedWindingContainment
-            | ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
-            | ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
-            | ExactBooleanShortcutKind::ConvexContainment
-            | ExactBooleanShortcutKind::ConvexSeparated
-            | ExactBooleanShortcutKind::ArrangementCellComplex,
-            ExactBooleanOperation::Union
-            | ExactBooleanOperation::Intersection
-            | ExactBooleanOperation::Difference,
-        ) => true,
-        _ => false,
+    if operation.is_selected_regions() {
+        return false;
+    }
+    match shortcut.required_named_operation() {
+        Some(required) => required == operation,
+        None => true,
     }
 }
 
