@@ -380,22 +380,22 @@ fn full_face_adjacency_certificate(
     let mut left_seen = BTreeSet::new();
     let mut right_seen = BTreeSet::new();
 
-    for (left_face, left_facts) in left.facts().faces.iter().enumerate() {
-        for (right_face, right_facts) in right.facts().faces.iter().enumerate() {
+    for left_face in left.view().faces() {
+        for right_face in right.view().faces() {
             if reversed_whole_face_vertex_map(
                 left,
-                left_facts.triangle.vertices,
+                left_face.vertex_indices(),
                 right,
-                right_facts.triangle.vertices,
+                right_face.vertex_indices(),
             )
             .is_some()
             {
-                if !left_seen.insert(left_face) || !right_seen.insert(right_face) {
+                if !left_seen.insert(left_face.index()) || !right_seen.insert(right_face.index()) {
                     return None;
                 }
                 certificate.shared_faces.push(FullFaceAdjacentFacePair {
-                    left_face,
-                    right_face,
+                    left_face: left_face.index(),
+                    right_face: right_face.index(),
                 });
             }
         }
@@ -423,7 +423,8 @@ fn full_face_adjacency_certificate(
         });
     }
 
-    for left_face in 0..left.facts().mesh.face_count {
+    for left_face in left.view().faces() {
+        let left_face = left_face.index();
         if left_seen.contains(&left_face) {
             continue;
         }
@@ -443,7 +444,8 @@ fn full_face_adjacency_certificate(
         }
     }
 
-    for right_face in 0..right.facts().mesh.face_count {
+    for right_face in right.view().faces() {
+        let right_face = right_face.index();
         if right_seen.contains(&right_face) {
             continue;
         }
@@ -519,27 +521,27 @@ fn merged_union_mesh(
     let mut triangles = Vec::new();
     let left_output_vertices = {
         let mut vertices = BTreeSet::new();
-        for (face, face_facts) in left.facts().faces.iter().enumerate() {
-            if skip_left.contains(&face) {
+        for face in left.view().faces() {
+            if skip_left.contains(&face.index()) {
                 continue;
             }
-            vertices.extend(face_facts.triangle.vertices);
+            vertices.extend(face.vertex_indices());
         }
         vertices
     };
     let right_output_vertices = {
         let mut vertices = BTreeSet::new();
-        for (face, face_facts) in right.facts().faces.iter().enumerate() {
-            if skip_right.contains(&face) {
+        for face in right.view().faces() {
+            if skip_right.contains(&face.index()) {
                 continue;
             }
-            vertices.extend(face_facts.triangle.vertices);
+            vertices.extend(face.vertex_indices());
         }
         vertices
     };
 
-    for (face, face_facts) in left.facts().faces.iter().enumerate() {
-        if skip_left.contains(&face) {
+    for face in left.view().faces() {
+        if skip_left.contains(&face.index()) {
             continue;
         }
         if append_left_triangle_with_edge_splits(
@@ -550,7 +552,7 @@ fn merged_union_mesh(
             &mut right_vertex_map,
             &mut vertices,
             &mut triangles,
-            face_facts.triangle.vertices,
+            face.vertex_indices(),
             &right_output_vertices,
         )
         .is_none()
@@ -559,8 +561,8 @@ fn merged_union_mesh(
         }
     }
 
-    for (face, face_facts) in right.facts().faces.iter().enumerate() {
-        if skip_right.contains(&face) {
+    for face in right.view().faces() {
+        if skip_right.contains(&face.index()) {
             continue;
         }
         if append_right_triangle_with_edge_splits(
@@ -571,7 +573,7 @@ fn merged_union_mesh(
             &mut right_vertex_map,
             &mut vertices,
             &mut triangles,
-            face_facts.triangle.vertices,
+            face.vertex_indices(),
             &left_output_vertices,
         )
         .is_none()
@@ -620,19 +622,21 @@ fn insert_patch_seam_map(
 ) -> Option<()> {
     let mut left_vertices = BTreeSet::new();
     for &left_face in &patch.left_faces {
-        left_vertices.extend(left.facts().faces.get(left_face)?.triangle.vertices);
+        left_vertices.extend(left.view().face(left_face)?.vertex_indices());
     }
     let mut right_vertices = BTreeSet::new();
     for &right_face in &patch.right_faces {
-        right_vertices.extend(right.facts().faces.get(right_face)?.triangle.vertices);
+        right_vertices.extend(right.view().face(right_face)?.vertex_indices());
     }
 
     let mut pairs = Vec::new();
     for right_vertex in right_vertices {
-        let right_point = right.vertices().get(right_vertex)?;
+        let right_point = right.view().vertex(right_vertex)?.point();
         if let Some(left_vertex) = left_vertices.iter().copied().find(|&left_vertex| {
-            match left.vertices().get(left_vertex) {
-                Some(left_point) => point3_exact_equal(left_point, right_point) == Some(true),
+            match left.view().vertex(left_vertex) {
+                Some(left_vertex) => {
+                    point3_exact_equal(left_vertex.point(), right_point) == Some(true)
+                }
                 None => false,
             }
         }) {
@@ -652,7 +656,7 @@ fn map_left_vertex(
         return Some(mapped);
     }
     let mapped = vertices.len();
-    vertices.push(left.vertices().get(vertex)?.clone());
+    vertices.push(left.view().vertex(vertex)?.point().clone());
     *left_vertex_map.get_mut(vertex)? = Some(mapped);
     Some(mapped)
 }
@@ -673,7 +677,7 @@ fn map_right_vertex(
         return Some(mapped);
     }
     let mapped = vertices.len();
-    vertices.push(right.vertices().get(vertex)?.clone());
+    vertices.push(right.view().vertex(vertex)?.point().clone());
     *right_vertex_map.get_mut(vertex)? = Some(mapped);
     Some(mapped)
 }
@@ -697,7 +701,7 @@ fn append_left_triangle_with_edge_splits(
     let points = triangle_point_refs(left, triangle)?;
     let mut splits = [Vec::new(), Vec::new(), Vec::new()];
     for &right_vertex in right_candidates {
-        let point = right.vertices().get(right_vertex)?;
+        let point = right.view().vertex(right_vertex)?.point();
         let Some((edge, parameter)) = triangle_edge_split_parameter(&points, point)? else {
             continue;
         };
@@ -758,7 +762,7 @@ fn append_right_triangle_with_edge_splits(
     let points = triangle_point_refs(right, triangle)?;
     let mut splits = [Vec::new(), Vec::new(), Vec::new()];
     for &left_vertex in left_candidates {
-        let point = left.vertices().get(left_vertex)?;
+        let point = left.view().vertex(left_vertex)?.point();
         let Some((edge, parameter)) = triangle_edge_split_parameter(&points, point)? else {
             continue;
         };
@@ -870,7 +874,7 @@ fn fan_faces_cover_triangle(
     // area matches. Interior vertices are deleted with the patch; boundary
     // split vertices are retained by refining copied side faces before mesh
     // handoff.
-    let whole_triangle = whole_mesh.facts().faces.get(whole_face)?.triangle.vertices;
+    let whole_triangle = whole_mesh.view().face(whole_face)?.vertex_indices();
     let whole_points = triangle_point_refs(whole_mesh, whole_triangle)?;
     let whole_projection_points = [
         (*whole_points[0]).clone(),
@@ -885,11 +889,11 @@ fn fan_faces_cover_triangle(
     let mut edge_counts = BTreeMap::<[usize; 2], usize>::new();
     let mut area_sum = Real::from(0);
 
-    for (fan_face, fan_facts) in fan_mesh.facts().faces.iter().enumerate() {
-        if consumed_fan_faces.contains(&fan_face) {
+    for fan_face in fan_mesh.view().faces() {
+        if consumed_fan_faces.contains(&fan_face.index()) {
             continue;
         }
-        let fan_triangle = fan_facts.triangle.vertices;
+        let fan_triangle = fan_face.vertex_indices();
         let Some(area_abs) = fan_triangle_in_whole_triangle(
             whole_points,
             projection,
@@ -913,7 +917,7 @@ fn fan_faces_cover_triangle(
             }
         }
         area_sum += area_abs;
-        fan_faces.push(fan_face);
+        fan_faces.push(fan_face.index());
     }
 
     if fan_faces.is_empty() {
@@ -936,8 +940,8 @@ fn fan_faces_cover_triangle(
     }
     for whole_point in whole_points {
         if !boundary_vertices.iter().any(|&vertex| {
-            if let Some(point) = fan_mesh.vertices().get(vertex) {
-                point3_exact_equal(whole_point, point) == Some(true)
+            if let Some(vertex) = fan_mesh.view().vertex(vertex) {
+                point3_exact_equal(whole_point, vertex.point()) == Some(true)
             } else {
                 false
             }
@@ -946,7 +950,7 @@ fn fan_faces_cover_triangle(
         }
     }
     for vertex in boundary_vertices {
-        let point = fan_mesh.vertices().get(vertex)?;
+        let point = fan_mesh.view().vertex(vertex)?.point();
         let projected = project_point3(point, projection);
         let location = classify_point_triangle(
             &project_point3(whole_points[0], projection),
@@ -1100,8 +1104,8 @@ fn reversed_whole_face_vertex_map(
 
 fn triangle_point_refs(mesh: &ExactMesh, triangle: [usize; 3]) -> Option<[&Point3; 3]> {
     Some([
-        mesh.vertices().get(triangle[0])?,
-        mesh.vertices().get(triangle[1])?,
-        mesh.vertices().get(triangle[2])?,
+        mesh.view().vertex(triangle[0])?.point(),
+        mesh.view().vertex(triangle[1])?.point(),
+        mesh.view().vertex(triangle[2])?.point(),
     ])
 }
