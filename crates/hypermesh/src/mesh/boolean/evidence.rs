@@ -389,6 +389,60 @@ pub(crate) struct ExactArrangementBooleanAttempt {
 }
 
 impl ExactArrangementBooleanAttempt {
+    pub(crate) fn new(
+        request: ExactBooleanRequest,
+        policy: ExactRegularizationPolicy,
+        stage: ExactArrangementBooleanStage,
+    ) -> Self {
+        Self {
+            operation: request.operation,
+            policy,
+            output_validation: request.validation,
+            stage,
+            decline: None,
+            materialized_shortcut: None,
+            shortcut_reason: None,
+            arrangement_blockers: 0,
+            face_cells: 0,
+            regions: 0,
+            volume_regions: 0,
+            volume_adjacencies: 0,
+            lower_dimensional_artifacts: 0,
+            topology_assembly: None,
+            topology_assembly_report: None,
+            region_ownership: None,
+            region_ownership_report: None,
+            selected_faces: 0,
+            reversed_selected_faces: 0,
+            volume_oriented_selected_faces: 0,
+            label_oriented_selected_faces: 0,
+            selected_volume_regions: 0,
+            selected_cell_complex: None,
+            simplified_cell_complex: None,
+            output_vertices: 0,
+            output_triangles: 0,
+            output_facts: None,
+        }
+    }
+
+    pub(crate) fn retain_arrangement_counts(&mut self, arrangement: &ExactArrangement3d) {
+        self.arrangement_blockers = arrangement.blockers.len();
+        self.face_cells = arrangement.face_cells.len();
+        self.regions = arrangement
+            .shells_or_regions
+            .as_ref()
+            .map_or(0, |regions| regions.len());
+        self.volume_regions = arrangement
+            .volume_regions
+            .as_ref()
+            .map_or(0, |regions| regions.len());
+        self.volume_adjacencies = arrangement
+            .volume_adjacencies
+            .as_ref()
+            .map_or(0, |adjacencies| adjacencies.len());
+        self.lower_dimensional_artifacts = arrangement.lower_dimensional_artifacts.len();
+    }
+
     pub(crate) fn retain_selected_counts(&mut self, counts: ExactSelectedCellComplexCounts) {
         self.selected_faces = counts.selected_faces;
         self.selected_volume_regions = counts.selected_volume_regions;

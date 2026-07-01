@@ -2984,35 +2984,7 @@ fn not_attempted_arrangement_attempt_for_request(
     request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
 ) -> ExactArrangementBooleanAttempt {
-    ExactArrangementBooleanAttempt {
-        operation: request.operation,
-        policy,
-        output_validation: request.validation,
-        stage: ExactArrangementBooleanStage::NotAttempted,
-        decline: None,
-        materialized_shortcut: None,
-        shortcut_reason: None,
-        arrangement_blockers: 0,
-        face_cells: 0,
-        regions: 0,
-        volume_regions: 0,
-        volume_adjacencies: 0,
-        lower_dimensional_artifacts: 0,
-        topology_assembly: None,
-        topology_assembly_report: None,
-        region_ownership: None,
-        region_ownership_report: None,
-        selected_faces: 0,
-        reversed_selected_faces: 0,
-        volume_oriented_selected_faces: 0,
-        label_oriented_selected_faces: 0,
-        selected_volume_regions: 0,
-        selected_cell_complex: None,
-        simplified_cell_complex: None,
-        output_vertices: 0,
-        output_triangles: 0,
-        output_facts: None,
-    }
+    ExactArrangementBooleanAttempt::new(request, policy, ExactArrangementBooleanStage::NotAttempted)
 }
 
 fn declined_output_validation_attempt_outcome_with_counts(
@@ -3463,44 +3435,12 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
 ) -> Result<ArrangementCellComplexOutcome, ExactMeshError> {
     let operation = request.operation;
     let validation = request.validation;
-    let mut attempt = ExactArrangementBooleanAttempt {
-        operation,
+    let mut attempt = ExactArrangementBooleanAttempt::new(
+        request,
         policy,
-        output_validation: validation,
-        stage: ExactArrangementBooleanStage::ArrangementBuilt,
-        decline: None,
-        materialized_shortcut: None,
-        shortcut_reason: None,
-        arrangement_blockers: arrangement.blockers.len(),
-        face_cells: arrangement.face_cells.len(),
-        regions: arrangement
-            .shells_or_regions
-            .as_ref()
-            .map_or(0, |regions| regions.len()),
-        volume_regions: arrangement
-            .volume_regions
-            .as_ref()
-            .map_or(0, |regions| regions.len()),
-        volume_adjacencies: arrangement
-            .volume_adjacencies
-            .as_ref()
-            .map_or(0, |adjacencies| adjacencies.len()),
-        lower_dimensional_artifacts: arrangement.lower_dimensional_artifacts.len(),
-        topology_assembly: None,
-        topology_assembly_report: None,
-        region_ownership: None,
-        region_ownership_report: None,
-        selected_faces: 0,
-        reversed_selected_faces: 0,
-        volume_oriented_selected_faces: 0,
-        label_oriented_selected_faces: 0,
-        selected_volume_regions: 0,
-        selected_cell_complex: None,
-        simplified_cell_complex: None,
-        output_vertices: 0,
-        output_triangles: 0,
-        output_facts: None,
-    };
+        ExactArrangementBooleanStage::ArrangementBuilt,
+    );
+    attempt.retain_arrangement_counts(arrangement);
     let regularized_sheet_recovery_surface = left.facts().mesh.closed_manifold
         && right.facts().mesh.closed_manifold
         && if let Some(regions) = arrangement.shells_or_regions.as_ref() {
