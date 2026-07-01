@@ -2259,6 +2259,7 @@ fn split_topology_plan(
     graph_vertices: &ExactGraphVertexPlan,
 ) -> ExactSplitTopologyPlan {
     let mut unresolved_vertex_lookups = 0;
+    let mut unresolved_equalities = graph_vertices.unresolved_equalities;
     let mut edge_chains = Vec::new();
     for split in &split_plan.splits {
         let mut nodes = Vec::with_capacity(split.points.len() + 2);
@@ -2267,15 +2268,16 @@ fn split_topology_plan(
             vertex: split.edge[0],
         });
         for point in &split.points {
-            match graph_vertices
-                .vertices
-                .iter()
-                .position(|vertex| point3_exact_equal(&point.point, &vertex.point) == Some(true))
-            {
-                Some(index) => nodes.push(SplitEdgeNode::GraphVertex {
+            match graph_vertex_lookup_for_split_point(point, &graph_vertices.vertices) {
+                GraphVertexLookup::Matched(index) => nodes.push(SplitEdgeNode::GraphVertex {
                     graph_vertex: index,
                 }),
-                None => unresolved_vertex_lookups += 1,
+                GraphVertexLookup::Missing { saw_undecidable } => {
+                    unresolved_vertex_lookups += 1;
+                    if saw_undecidable {
+                        unresolved_equalities += 1;
+                    }
+                }
             }
         }
         nodes.push(SplitEdgeNode::OriginalVertex {
@@ -2293,9 +2295,29 @@ fn split_topology_plan(
         graph_vertices: graph_vertices.vertices.clone(),
         edge_chains,
         unresolved_vertex_lookups,
-        unresolved_equalities: graph_vertices.unresolved_equalities,
+        unresolved_equalities,
         unknown_orderings: split_plan.unknown_orderings,
     }
+}
+
+enum GraphVertexLookup {
+    Matched(usize),
+    Missing { saw_undecidable: bool },
+}
+
+fn graph_vertex_lookup_for_split_point(
+    point: &EdgeSplitPoint,
+    vertices: &[ExactGraphVertex],
+) -> GraphVertexLookup {
+    let mut saw_undecidable = false;
+    for (index, vertex) in vertices.iter().enumerate() {
+        match point3_exact_equal(&point.point, &vertex.point) {
+            Some(true) => return GraphVertexLookup::Matched(index),
+            Some(false) => {}
+            None => saw_undecidable = true,
+        }
+    }
+    GraphVertexLookup::Missing { saw_undecidable }
 }
 
 pub(crate) fn validate_edge_split_plan(
@@ -2994,17 +3016,16 @@ fn validate_face_split_boundary_chain_shape(
             });
             continue;
         };
-        if point3_exact_equal(point, source_point) != Some(true) {
-            blockers.push(SplitPlanBlocker {
-                side: Some(side),
-                face: Some(face),
-                edge: Some(chain.edge),
-                ..SplitPlanBlocker::new(
-                    SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch,
-                    "split-face geometry original boundary node point does not match its source vertex",
-                )
-            });
-        }
+        push_original_boundary_source_point_blocker(
+            blockers,
+            Some(side),
+            Some(face),
+            Some(chain.edge),
+            point,
+            source_point,
+            "split-face geometry original boundary node point does not match its source vertex",
+            "split-face geometry original boundary node source-point equality is undecidable",
+        );
     }
 }
 
@@ -3180,16 +3201,49 @@ fn validate_face_region_original_boundary_nodes(
                 )
             });
         }
-        if point3_exact_equal(point, source_point) != Some(true) {
-            blockers.push(SplitPlanBlocker {
-                side: Some(region.side),
-                face: Some(region.face),
-                ..SplitPlanBlocker::new(
-                    SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch,
-                    "face region original boundary node point does not match its source vertex",
-                )
-            });
-        }
+        push_original_boundary_source_point_blocker(
+            blockers,
+            Some(region.side),
+            Some(region.face),
+            None,
+            point,
+            source_point,
+            "face region original boundary node point does not match its source vertex",
+            "face region original boundary node source-point equality is undecidable",
+        );
+    }
+}
+
+fn push_original_boundary_source_point_blocker(
+    blockers: &mut Vec<SplitPlanBlocker>,
+    side: Option<MeshSide>,
+    face: Option<usize>,
+    edge: Option<[usize; 2]>,
+    point: &Point3,
+    source_point: &Point3,
+    mismatch_message: &'static str,
+    unknown_message: &'static str,
+) {
+    match point3_exact_equal(point, source_point) {
+        Some(true) => {}
+        Some(false) => blockers.push(SplitPlanBlocker {
+            side,
+            face,
+            edge,
+            ..SplitPlanBlocker::new(
+                SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch,
+                mismatch_message,
+            )
+        }),
+        None => blockers.push(SplitPlanBlocker {
+            side,
+            face,
+            edge,
+            ..SplitPlanBlocker::new(
+                SplitPlanBlockerKind::UnknownBoundaryIncidence,
+                unknown_message,
+            )
+        }),
     }
 }
 
