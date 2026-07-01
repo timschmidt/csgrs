@@ -383,7 +383,7 @@ fn full_face_adjacency_certificate(
         }
     }
 
-    let Some(polygon_patch_pairs) = polygon_patch_pairs(left, &left_seen, right, &right_seen)
+    let Some(polygon_patch_pairs) = polygon_patch_pairs(left, &left_seen, right, &right_seen)?
     else {
         return Ok(None);
     };
