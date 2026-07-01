@@ -2214,35 +2214,41 @@ fn arrangement_face_cells(
             }
         }));
     } else {
-        for (face, facts) in left.facts().faces.iter().enumerate() {
-            let carrier = (MeshSide::Left, face);
+        for face in left.view().faces() {
+            let face_index = face.index();
+            let carrier = (MeshSide::Left, face_index);
             if skipped_carriers.contains(&carrier) || skipped_face_arrangements.contains(&carrier) {
                 continue;
             }
-            cells.push(face_cell_from_original_triangle(
+            if let Some(cell) = face_cell_from_original_triangle(
                 MeshSide::Left,
-                face,
-                facts.triangle.vertices,
+                face_index,
+                face.vertex_indices(),
                 left,
                 right,
                 policy,
                 blockers,
-            ));
+            ) {
+                cells.push(cell);
+            }
         }
-        for (face, facts) in right.facts().faces.iter().enumerate() {
-            let carrier = (MeshSide::Right, face);
+        for face in right.view().faces() {
+            let face_index = face.index();
+            let carrier = (MeshSide::Right, face_index);
             if skipped_carriers.contains(&carrier) || skipped_face_arrangements.contains(&carrier) {
                 continue;
             }
-            cells.push(face_cell_from_original_triangle(
+            if let Some(cell) = face_cell_from_original_triangle(
                 MeshSide::Right,
-                face,
-                facts.triangle.vertices,
+                face_index,
+                face.vertex_indices(),
                 left,
                 right,
                 policy,
                 blockers,
-            ));
+            ) {
+                cells.push(cell);
+            }
         }
     }
     for (arrangement_index, arrangement) in face_plane_arrangements.iter().enumerate() {
@@ -2380,20 +2386,22 @@ fn face_plane_arrangement(
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFacePlaneArrangement> {
     let mesh = side.mesh(left, right);
-    let triangle = mesh.facts().faces.get(face)?.triangle.vertices;
+    let face_ref = mesh.view().face(face)?;
+    let triangle = face_ref.vertex_indices();
+    let triangle_points = face_ref.vertices().ok()?;
     let projection = choose_triangle_projection(mesh, triangle, blockers)?;
     let mut segments = Vec::new();
     let mut next_source = 0usize;
 
     for edge in [
-        [triangle[0], triangle[1]],
-        [triangle[1], triangle[2]],
-        [triangle[2], triangle[0]],
+        [triangle_points[0], triangle_points[1]],
+        [triangle_points[1], triangle_points[2]],
+        [triangle_points[2], triangle_points[0]],
     ] {
         segments.push(ExactArrangement2dInputSegment {
             endpoints: [
-                project_point3(&mesh.vertices()[edge[0]], projection),
-                project_point3(&mesh.vertices()[edge[1]], projection),
+                project_point3(edge[0], projection),
+                project_point3(edge[1], projection),
             ],
             source: ExactArrangement2dSegmentSource::Anonymous(next_source),
         });
@@ -2472,11 +2480,16 @@ fn choose_triangle_projection(
     triangle: [usize; 3],
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<CoplanarProjection> {
-    let points = [
-        &mesh.vertices()[triangle[0]],
-        &mesh.vertices()[triangle[1]],
-        &mesh.vertices()[triangle[2]],
-    ];
+    let Some(points) = mesh.view().vertex(triangle[0]).and_then(|a| {
+        mesh.view().vertex(triangle[1]).and_then(|b| {
+            mesh.view()
+                .vertex(triangle[2])
+                .map(|c| [a.point(), b.point(), c.point()])
+        })
+    }) else {
+        blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
+        return None;
+    };
     for projection in [
         CoplanarProjection::Xy,
         CoplanarProjection::Xz,
@@ -2512,9 +2525,11 @@ fn face_plane_vertex_provenance(
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFaceCellNode> {
     let mesh = side.mesh(left, right);
-    let triangle = mesh.facts().faces.get(face)?.triangle.vertices;
-    for vertex in triangle {
-        match point2_equal(&project_point3(&mesh.vertices()[vertex], projection), point).value() {
+    let face_ref = mesh.view().face(face)?;
+    let triangle = face_ref.vertex_indices();
+    let points = face_ref.vertices().ok()?;
+    for (vertex, source_point) in triangle.into_iter().zip(points) {
+        match point2_equal(&project_point3(source_point, projection), point).value() {
             Some(true) => return Some(ArrangementFaceCellNode::Source { side, vertex }),
             Some(false) => {}
             None => blockers.push(ExactArrangementBlocker::UndecidableOrdering),
@@ -2637,7 +2652,11 @@ fn lower_dimensional_artifacts(
             }
             for vertex_overlap in &split_graph.vertex_overlaps {
                 let mesh = vertex_overlap.vertex_side.mesh(left, right);
-                if let Some(point) = mesh.vertices().get(vertex_overlap.vertex) {
+                if let Some(point) = mesh
+                    .view()
+                    .vertex(vertex_overlap.vertex)
+                    .map(|vertex| vertex.point())
+                {
                     artifact_index.push_unique(
                         &mut artifacts,
                         ArrangementLowerDimensionalArtifact::PointContact {
@@ -2672,15 +2691,17 @@ fn non_coplanar_point_contact_artifact(
         return None;
     };
     let plane_mesh = plane_side.mesh(left, right);
-    let triangle = plane_mesh.facts().faces.get(*plane_face)?.triangle.vertices;
+    let plane_face = plane_mesh.view().face(*plane_face)?;
+    let triangle = plane_face.vertex_indices();
+    let [a3, b3, c3] = plane_face.vertices().ok()?;
     let projection = choose_triangle_projection(
         plane_mesh,
         triangle,
         &mut Vec::<ExactArrangementBlocker>::new(),
     )?;
-    let a = project_point3(plane_mesh.vertices().get(triangle[0])?, projection);
-    let b = project_point3(plane_mesh.vertices().get(triangle[1])?, projection);
-    let c = project_point3(plane_mesh.vertices().get(triangle[2])?, projection);
+    let a = project_point3(a3, projection);
+    let b = project_point3(b3, projection);
+    let c = project_point3(c3, projection);
     let projected = project_point3(point, projection);
     let location = classify_point_triangle(&a, &b, &c, &projected).value()?;
     matches!(
@@ -2719,17 +2740,19 @@ fn non_coplanar_edge_contact_artifact(
     };
     let segment_mesh = segment_side.mesh(left, right);
     let plane_mesh = plane_side.mesh(left, right);
-    let start = segment_mesh.vertices().get(edge[0])?;
-    let end = segment_mesh.vertices().get(edge[1])?;
-    let triangle = plane_mesh.facts().faces.get(*plane_face)?.triangle.vertices;
+    let start = segment_mesh.view().vertex(edge[0])?.point();
+    let end = segment_mesh.view().vertex(edge[1])?.point();
+    let plane_face = plane_mesh.view().face(*plane_face)?;
+    let triangle = plane_face.vertex_indices();
+    let [a3, b3, c3] = plane_face.vertices().ok()?;
     let projection = choose_triangle_projection(
         plane_mesh,
         triangle,
         &mut Vec::<ExactArrangementBlocker>::new(),
     )?;
-    let a = project_point3(plane_mesh.vertices().get(triangle[0])?, projection);
-    let b = project_point3(plane_mesh.vertices().get(triangle[1])?, projection);
-    let c = project_point3(plane_mesh.vertices().get(triangle[2])?, projection);
+    let a = project_point3(a3, projection);
+    let b = project_point3(b3, projection);
+    let c = project_point3(c3, projection);
     let endpoints = coplanar_segment_triangle_interval(start, end, [&a, &b, &c], projection)?;
     Some(ArrangementLowerDimensionalArtifact::EdgeContact {
         left_face,
@@ -2880,7 +2903,7 @@ fn face_cell_from_face_plane_arrangement(
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFaceCell> {
     let mesh = arrangement.side.mesh(left, right);
-    let triangle = mesh.facts().faces.get(arrangement.face)?.triangle.vertices;
+    let triangle = mesh.view().face(arrangement.face)?.vertex_indices();
     let arrangement_face = arrangement.arrangement.faces.get(face)?;
     let mut boundary = Vec::with_capacity(arrangement_face.vertices.len());
     let mut boundary_points = Vec::with_capacity(arrangement_face.vertices.len());
@@ -2958,7 +2981,7 @@ fn face_cell_from_carrier_plane_overlay(
         MeshSide::Right => overlay.right_face,
     };
     let mesh = side.mesh(left, right);
-    let triangle = mesh.facts().faces.get(carrier_face)?.triangle.vertices;
+    let triangle = mesh.view().face(carrier_face)?.vertex_indices();
     let overlay_face = overlay.overlay.arrangement.faces.get(face)?;
     let mut boundary = Vec::with_capacity(overlay_face.vertices.len());
     let mut boundary_points = Vec::with_capacity(overlay_face.vertices.len());
@@ -3048,20 +3071,14 @@ fn orient_overlay_boundary_to_carrier(
     boundary_points: &mut [Point3],
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) {
-    let Some(triangle) = mesh
-        .facts()
-        .faces
-        .get(face)
-        .map(|face| face.triangle.vertices)
-    else {
+    let Some(face_ref) = mesh.view().face(face) else {
         blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
         return;
     };
-    let points = [
-        &mesh.vertices()[triangle[0]],
-        &mesh.vertices()[triangle[1]],
-        &mesh.vertices()[triangle[2]],
-    ];
+    let Ok(points) = face_ref.vertices() else {
+        blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
+        return;
+    };
     match compare_reals(
         &projected_triangle_area2(&points, projection),
         &Real::from(0),
@@ -3092,10 +3109,13 @@ fn carrier_plane_overlay(
                                mesh: &ExactMesh,
                                face: usize|
      -> Option<ExactArrangement2dRegionRing> {
-        let triangle = mesh.facts().faces.get(face)?.triangle.vertices;
-        let vertices = triangle
+        let vertices = mesh
+            .view()
+            .face(face)?
+            .vertices()
+            .ok()?
             .iter()
-            .map(|vertex| project_point3(&mesh.vertices()[*vertex], overlap.projection))
+            .map(|vertex| project_point3(vertex, overlap.projection))
             .collect::<Vec<Point2>>();
         Some(ExactArrangement2dRegionRing { region, vertices })
     };
@@ -4455,7 +4475,7 @@ fn face_cell_from_original_triangle(
     right: &ExactMesh,
     policy: ExactRegularizationPolicy,
     blockers: &mut Vec<ExactArrangementBlocker>,
-) -> ArrangementFaceCell {
+) -> Option<ArrangementFaceCell> {
     let mesh = side.mesh(left, right);
     let boundary = triangle
         .iter()
@@ -4464,15 +4484,23 @@ fn face_cell_from_original_triangle(
             vertex: *vertex,
         })
         .collect();
-    let boundary_points = triangle
-        .iter()
-        .map(|vertex| mesh.vertices()[*vertex].clone())
-        .collect();
+    let mut boundary_points = Vec::with_capacity(3);
+    for vertex in triangle {
+        let Some(point) = mesh
+            .view()
+            .vertex(vertex)
+            .map(|vertex| vertex.point().clone())
+        else {
+            blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
+            return None;
+        };
+        boundary_points.push(point);
+    }
     let third = (Real::from(1) / &Real::from(3)).ok();
     let representative = third.map(|third| {
-        let a = &mesh.vertices()[triangle[0]];
-        let b = &mesh.vertices()[triangle[1]];
-        let c = &mesh.vertices()[triangle[2]];
+        let [a, b, c] = &boundary_points[..] else {
+            unreachable!("triangle boundary construction always pushes three points");
+        };
         Point3::new(
             (a.x.clone() + &b.x + &c.x) * &third,
             (a.y.clone() + &b.y + &c.y) * &third,
@@ -4484,7 +4512,7 @@ fn face_cell_from_original_triangle(
     if opposite.is_none() && policy.unresolved == ExactUnresolvedPolicy::Block {
         blockers.push(ExactArrangementBlocker::UnresolvedRegionClassification);
     }
-    ArrangementFaceCell {
+    Some(ArrangementFaceCell {
         carrier: ArrangementFaceCarrier {
             side,
             face,
@@ -4493,7 +4521,7 @@ fn face_cell_from_original_triangle(
         boundary,
         boundary_points,
         opposite,
-    }
+    })
 }
 
 fn lift_carrier_plane_point(
@@ -4503,10 +4531,7 @@ fn lift_carrier_plane_point(
     point: &Point2,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<Point3> {
-    let triangle = mesh.facts().faces.get(face)?.triangle.vertices;
-    let a = mesh.vertices().get(triangle[0])?;
-    let b = mesh.vertices().get(triangle[1])?;
-    let c = mesh.vertices().get(triangle[2])?;
+    let [a, b, c] = mesh.view().face(face)?.vertices().ok()?;
     let ab = Point3::new(b.x.clone() - &a.x, b.y.clone() - &a.y, b.z.clone() - &a.z);
     let ac = Point3::new(c.x.clone() - &a.x, c.y.clone() - &a.y, c.z.clone() - &a.z);
     let normal = Point3::new(
