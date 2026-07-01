@@ -346,6 +346,19 @@ impl ExactBooleanOperation {
     pub(crate) const fn is_selected_regions(self) -> bool {
         matches!(self, Self::SelectedRegions(_))
     }
+
+    fn closed_boundary_touching_support(self) -> Option<ExactBooleanSupport> {
+        match self {
+            Self::Union => Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion),
+            Self::Intersection => {
+                Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection)
+            }
+            Self::Difference => {
+                Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference)
+            }
+            Self::SelectedRegions(_) => None,
+        }
+    }
 }
 
 /// Complete policy for an exact boolean request.
@@ -934,7 +947,7 @@ fn preflight_boolean_exact_request_from_graph_core(
     {
         return Ok(certified_preflight(operation, support, Some(graph), None));
     }
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+    if !operation.is_selected_regions()
         && graph.face_pairs.is_empty()
         && let Some((left_in_right, right_in_left)) =
             closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
@@ -986,7 +999,7 @@ fn preflight_boolean_exact_request_from_graph_core(
             coplanar_volumetric_evidence: None,
         });
     }
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+    if operation.is_selected_regions() {
         return region_plan_preflight_from_graph(
             graph,
             left,
@@ -1060,19 +1073,9 @@ fn preflight_boolean_exact_request_from_graph_core(
                 )?
                 .is_some()
             };
-        if boundary_or_no_volume_materialized {
-            let boundary_support = match operation {
-                ExactBooleanOperation::Union => {
-                    ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
-                }
-                ExactBooleanOperation::Intersection => {
-                    ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
-                }
-                ExactBooleanOperation::Difference => {
-                    ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
-                }
-                ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
-            };
+        if boundary_or_no_volume_materialized
+            && let Some(boundary_support) = operation.closed_boundary_touching_support()
+        {
             return Ok(certified_preflight(
                 operation,
                 boundary_support,
@@ -1408,7 +1411,7 @@ fn certified_winding_shortcut_preflight_from_graph(
     certified_arrangement_preflight: &mut Option<Option<ExactBooleanPreflight>>,
 ) -> Result<Option<ExactBooleanPreflight>, ExactMeshError> {
     let operation = request.operation;
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+    if !operation.is_selected_regions()
         && open_surface_disjoint_report_from_graph(graph, left, right).status
             == ExactOpenSurfaceDisjointStatus::Certified
     {
@@ -1463,7 +1466,7 @@ fn certified_winding_shortcut_preflight_from_graph(
             None,
         )));
     }
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+    if !operation.is_selected_regions()
         && certified_closed_winding_containment_relation_from_graph(graph, left, right)?.is_some()
     {
         return Ok(Some(certified_preflight(
@@ -1473,21 +1476,12 @@ fn certified_winding_shortcut_preflight_from_graph(
             None,
         )));
     }
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+    if !operation.is_selected_regions()
         && closed_boundary_contact_evidence_from_graph(graph, left, right)?
             .is_some_and(|evidence| evidence.positive_area_coplanar_overlapping_pairs == 0)
     {
-        let boundary_support = match operation {
-            ExactBooleanOperation::Union => {
-                ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
-            }
-            ExactBooleanOperation::Intersection => {
-                ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
-            }
-            ExactBooleanOperation::Difference => {
-                ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
-            }
-            ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+        let Some(boundary_support) = operation.closed_boundary_touching_support() else {
+            return Ok(None);
         };
         return Ok(Some(certified_preflight(
             operation,
@@ -1894,15 +1888,8 @@ fn certified_closed_boundary_only_contact_preflight(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<Option<ExactBooleanPreflight>, ExactMeshError> {
-    let boundary_support = match operation {
-        ExactBooleanOperation::Union => ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion,
-        ExactBooleanOperation::Intersection => {
-            ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
-        }
-        ExactBooleanOperation::Difference => {
-            ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
-        }
-        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+    let Some(boundary_support) = operation.closed_boundary_touching_support() else {
+        return Ok(None);
     };
     let Some(evidence) = closed_boundary_contact_evidence_from_graph(graph, left, right)? else {
         return Ok(None);
@@ -1915,12 +1902,10 @@ fn certified_closed_boundary_only_contact_preflight(
             Some(evidence),
         )));
     }
-    let consumed_evidence = match operation {
-        ExactBooleanOperation::Union => None,
-        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference => {
-            coplanar_boundary_only_evidence_if_consumed(graph, left, right)?
-        }
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+    let consumed_evidence = if operation == ExactBooleanOperation::Union {
+        None
+    } else {
+        coplanar_boundary_only_evidence_if_consumed(graph, left, right)?
     };
     Ok(Some(certified_preflight(
         operation,
