@@ -359,6 +359,24 @@ impl ExactBooleanOperation {
             Self::SelectedRegions(_) => None,
         }
     }
+
+    fn convex_operation_support(self) -> Option<ExactBooleanSupport> {
+        match self {
+            Self::Union => Some(ExactBooleanSupport::CertifiedConvexUnion),
+            Self::Intersection => Some(ExactBooleanSupport::CertifiedConvexIntersection),
+            Self::Difference => Some(ExactBooleanSupport::CertifiedConvexDifference),
+            Self::SelectedRegions(_) => None,
+        }
+    }
+
+    fn convex_operation_shortcut(self) -> Option<ExactBooleanShortcutKind> {
+        match self {
+            Self::Union => Some(ExactBooleanShortcutKind::ConvexUnion),
+            Self::Intersection => Some(ExactBooleanShortcutKind::ConvexIntersection),
+            Self::Difference => Some(ExactBooleanShortcutKind::ConvexDifference),
+            Self::SelectedRegions(_) => None,
+        }
+    }
 }
 
 /// Complete policy for an exact boolean request.
@@ -4409,16 +4427,12 @@ fn boolean_convex_meshes_optional(
     operation: ExactBooleanOperation,
     validation: ExactMeshValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, ExactMeshError> {
-    let (mesh, shortcut, label) = match operation {
+    let (mesh, label) = match operation {
         ExactBooleanOperation::Union => {
             let Some(union) = union_closed_convex_solids(left, right)? else {
                 return Ok(None);
             };
-            (
-                union.mesh,
-                ExactBooleanShortcutKind::ConvexUnion,
-                "exact closed-convex solid union boolean result",
-            )
+            (union.mesh, "exact closed-convex solid union boolean result")
         }
         ExactBooleanOperation::Intersection => {
             let Some(intersection) = intersect_closed_convex_solids(left, right)? else {
@@ -4426,7 +4440,6 @@ fn boolean_convex_meshes_optional(
             };
             (
                 intersection.mesh,
-                ExactBooleanShortcutKind::ConvexIntersection,
                 "exact closed-convex solid intersection boolean result",
             )
         }
@@ -4436,11 +4449,13 @@ fn boolean_convex_meshes_optional(
             };
             (
                 difference.mesh,
-                ExactBooleanShortcutKind::ConvexDifference,
                 "exact closed-convex solid difference boolean result",
             )
         }
         ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+    };
+    let Some(shortcut) = operation.convex_operation_shortcut() else {
+        return Ok(None);
     };
     let mesh = copy_mesh(&mesh, label, validation)?;
     let result = certified_shortcut_result(mesh, operation, shortcut);

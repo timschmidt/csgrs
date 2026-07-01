@@ -3049,25 +3049,15 @@ pub(crate) fn certified_convex_operation_shortcut_support(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Option<ExactBooleanSupport> {
-    let materializes =
-        boolean_convex_meshes_optional(left, right, operation, ExactMeshValidationPolicy::CLOSED)
-            .ok()
-            .flatten()
-            .is_some();
-    match operation {
-        ExactBooleanOperation::Union if materializes => {
-            Some(ExactBooleanSupport::CertifiedConvexUnion)
-        }
-        ExactBooleanOperation::Intersection if materializes => {
-            Some(ExactBooleanSupport::CertifiedConvexIntersection)
-        }
-        ExactBooleanOperation::Difference if materializes => {
-            Some(ExactBooleanSupport::CertifiedConvexDifference)
-        }
-        ExactBooleanOperation::SelectedRegions(_)
-        | ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference => None,
+    let support = operation.convex_operation_support()?;
+    if boolean_convex_meshes_optional(left, right, operation, ExactMeshValidationPolicy::CLOSED)
+        .ok()
+        .flatten()
+        .is_some()
+    {
+        Some(support)
+    } else {
+        None
     }
 }
 
