@@ -929,19 +929,25 @@ impl ExactIntersectionGraph {
         Ok(())
     }
 
-    /// Validate this graph by replaying it from source operands.
+    /// Validate this graph by checking retained source handles, then replaying
+    /// it from source operands unless it already carries a current certificate.
     ///
     /// [`Self::validate_against_meshes`] checks that retained event handles
-    /// still belong to `left` and `right`. Source replay rebuilds the graph
-    /// from those operands and requires the same retained face-pair records.
-    /// Pair traversal order is an acceleration detail, so source replay
-    /// compares by source face handles instead of by vector position.
+    /// still belong to `left` and `right`. A current replay certificate means
+    /// the graph was either built from those operands or retained through a
+    /// prepared pair source-stamp check. Uncertified source replay rebuilds the
+    /// graph from those operands and requires the same retained face-pair
+    /// records. Pair traversal order is an acceleration detail, so source
+    /// replay compares by source face handles instead of by vector position.
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<(), IntersectionGraphValidationError> {
         self.validate_against_meshes(left, right)?;
+        if self.source_replay_validated {
+            return Ok(());
+        }
         let replay = build_unvalidated_intersection_graph(left, right)
             .map_err(|_| IntersectionGraphValidationError::SourceReplayMismatch)?;
         if intersection_graphs_have_same_face_pair_records(self, &replay) {
