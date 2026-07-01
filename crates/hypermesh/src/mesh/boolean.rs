@@ -2126,6 +2126,24 @@ impl RetainedGraphCounts {
         }
     }
 
+    fn into_open_surface_disjoint_report(
+        self,
+        status: ExactOpenSurfaceDisjointStatus,
+        left_open_surface: bool,
+        right_open_surface: bool,
+        blocker: ExactBooleanBlocker,
+    ) -> ExactOpenSurfaceDisjointReport {
+        ExactOpenSurfaceDisjointReport {
+            status,
+            left_open_surface,
+            right_open_surface,
+            graph_had_unknowns: self.graph_had_unknowns,
+            retained_face_pairs: self.retained_face_pairs,
+            retained_events: self.retained_events,
+            blocker,
+        }
+    }
+
     #[cfg(test)]
     fn into_refinement_report(
         self,
@@ -6600,39 +6618,33 @@ pub(crate) fn open_surface_disjoint_report_from_graph(
 ) -> ExactOpenSurfaceDisjointReport {
     let left_open_surface = mesh_is_open_surface(left);
     let right_open_surface = mesh_is_open_surface(right);
-    let graph_had_unknowns = left_open_surface && right_open_surface && graph.has_unknowns();
-    let counts = if left_open_surface && right_open_surface {
+    let open_surface_pair = left_open_surface && right_open_surface;
+    let graph_counts = if open_surface_pair {
+        retained_graph_counts(graph)
+    } else {
+        RetainedGraphCounts::empty()
+    };
+    let counts = if open_surface_pair {
         ExactBooleanBlocker::from_graph(graph, ExactBooleanBlockerKind::Winding)
     } else {
         ExactBooleanBlocker::default()
     };
-    let status = if !left_open_surface || !right_open_surface {
+    let status = if !open_surface_pair {
         ExactOpenSurfaceDisjointStatus::NotOpenSurface
-    } else if graph_had_unknowns {
+    } else if graph_counts.graph_had_unknowns {
         ExactOpenSurfaceDisjointStatus::GraphUnknowns
-    } else if graph.face_pairs.is_empty() {
+    } else if graph_counts.retained_face_pairs == 0 {
         ExactOpenSurfaceDisjointStatus::Certified
     } else {
         ExactOpenSurfaceDisjointStatus::GraphHasFacePairs
     };
     let blocker_kind = counts.inferred_kind();
-    ExactOpenSurfaceDisjointReport {
+    graph_counts.into_open_surface_disjoint_report(
         status,
         left_open_surface,
         right_open_surface,
-        graph_had_unknowns,
-        retained_face_pairs: if left_open_surface && right_open_surface {
-            graph.face_pairs.len()
-        } else {
-            0
-        },
-        retained_events: if left_open_surface && right_open_surface {
-            graph.event_count()
-        } else {
-            0
-        },
-        blocker: counts.into_blocker(blocker_kind),
-    }
+        counts.into_blocker(blocker_kind),
+    )
 }
 
 fn mesh_is_open_surface(mesh: &ExactMesh) -> bool {
