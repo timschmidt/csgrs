@@ -388,6 +388,30 @@ impl ExactBooleanOperation {
             Self::SelectedRegions(_) => None,
         }
     }
+
+    fn coplanar_overlay_set_operation(self) -> Option<ExactArrangement2dSetOperation> {
+        match self {
+            Self::Union => Some(ExactArrangement2dSetOperation::Union),
+            Self::Intersection => Some(ExactArrangement2dSetOperation::Intersection),
+            Self::Difference => Some(ExactArrangement2dSetOperation::Difference),
+            Self::SelectedRegions(_) => None,
+        }
+    }
+
+    const fn coplanar_overlay_allows_empty(self) -> bool {
+        matches!(self, Self::Intersection | Self::Difference)
+    }
+
+    const fn coplanar_overlay_boundary_policy(
+        self,
+        materialized_boundary_policy: ExactArrangement2dBoundaryPolicy,
+    ) -> Option<ExactArrangement2dBoundaryPolicy> {
+        match self {
+            Self::Union => Some(ExactArrangement2dBoundaryPolicy::SimplifyCollinear),
+            Self::Intersection | Self::Difference => Some(materialized_boundary_policy),
+            Self::SelectedRegions(_) => None,
+        }
+    }
 }
 
 /// Complete policy for an exact boolean request.
@@ -5798,16 +5822,10 @@ fn materialize_simple_coplanar_overlay_arrangement(
         return Ok(None);
     };
     let overlay = &arrangement.carrier_plane_overlays[0];
-    let allow_empty = matches!(
-        operation,
-        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
-    );
-    let set_operation = match operation {
-        ExactBooleanOperation::Union => ExactArrangement2dSetOperation::Union,
-        ExactBooleanOperation::Intersection => ExactArrangement2dSetOperation::Intersection,
-        ExactBooleanOperation::Difference => ExactArrangement2dSetOperation::Difference,
-        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+    let Some(set_operation) = operation.coplanar_overlay_set_operation() else {
+        return Ok(None);
     };
+    let allow_empty = operation.coplanar_overlay_allows_empty();
     let left_ring = projected_mesh_face_ring(
         ExactArrangement2dRegion::Left,
         left,
@@ -5939,12 +5957,8 @@ fn coplanar_mesh_overlay_plan(
     if left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold {
         return None;
     }
-    let (set_operation, allow_empty) = match operation {
-        ExactBooleanOperation::Union => (ExactArrangement2dSetOperation::Union, false),
-        ExactBooleanOperation::Intersection => (ExactArrangement2dSetOperation::Intersection, true),
-        ExactBooleanOperation::Difference => (ExactArrangement2dSetOperation::Difference, true),
-        ExactBooleanOperation::SelectedRegions(_) => return None,
-    };
+    let set_operation = operation.coplanar_overlay_set_operation()?;
+    let allow_empty = operation.coplanar_overlay_allows_empty();
     let materialized_boundary_policy = [
         ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
         ExactArrangement2dBoundaryPolicy::PreserveCollinear,
@@ -5963,13 +5977,8 @@ fn coplanar_mesh_overlay_plan(
             Ok(Some(_))
         )
     })?;
-    let boundary_policy = match operation {
-        ExactBooleanOperation::Union => ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
-        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference => {
-            materialized_boundary_policy
-        }
-        ExactBooleanOperation::SelectedRegions(_) => return None,
-    };
+    let boundary_policy =
+        operation.coplanar_overlay_boundary_policy(materialized_boundary_policy)?;
     Some(CoplanarMeshOverlayPlan {
         set_operation,
         boundary_policy,
