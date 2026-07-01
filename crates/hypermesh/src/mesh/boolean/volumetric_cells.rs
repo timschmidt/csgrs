@@ -426,7 +426,7 @@ fn classify_coplanar_overlap_sides(
     left_face: usize,
     right_face: usize,
 ) -> Option<CoplanarOverlapSideEvidence> {
-    let left_plane = left.view().face(left_face)?.plane();
+    let left_plane = left.view().face(left_face).ok()?.plane();
     let left_side = mesh_local_off_plane_side(left, left_face, left_plane)
         .or_else(|| mesh_oriented_face_interior_side(left, left_face, left_plane))
         .or_else(|| mesh_off_plane_side(left, left_plane))?;
@@ -455,7 +455,7 @@ fn mesh_local_off_plane_side(
             .unwrap_or(false)
     };
 
-    if mesh.view().face(face).is_none() || !face_is_coplanar_with_plane(face) {
+    if mesh.view().face(face).is_err() || !face_is_coplanar_with_plane(face) {
         return None;
     }
     let mut edge_to_faces = HashMap::<[usize; 2], Vec<usize>>::new();
@@ -471,7 +471,13 @@ fn mesh_local_off_plane_side(
         if !patch.insert(current) {
             continue;
         }
-        for edge in mesh.view().face(current)?.directed_edges().map(sorted_edge) {
+        for edge in mesh
+            .view()
+            .face(current)
+            .ok()?
+            .directed_edges()
+            .map(sorted_edge)
+        {
             for &neighbor in edge_to_faces
                 .get(&edge)
                 .into_iter()
@@ -488,7 +494,8 @@ fn mesh_local_off_plane_side(
     for &patch_face in &patch {
         for edge in mesh
             .view()
-            .face(patch_face)?
+            .face(patch_face)
+            .ok()?
             .directed_edges()
             .map(sorted_edge)
         {
@@ -500,7 +507,7 @@ fn mesh_local_off_plane_side(
                 if patch.contains(&neighbor) {
                     continue;
                 }
-                for vertex in mesh.view().face(neighbor)?.vertex_indices() {
+                for vertex in mesh.view().face(neighbor).ok()?.vertex_indices() {
                     if edge.contains(&vertex) {
                         continue;
                     }
@@ -524,7 +531,7 @@ fn mesh_local_off_plane_side(
 }
 
 fn face_point_refs(mesh: &ExactMesh, face: usize) -> Option<[&hyperlimit::Point3; 3]> {
-    mesh.view().face(face)?.vertices().ok()
+    mesh.view().face(face).ok()?.vertices().ok()
 }
 
 fn coplanar_pair_has_positive_area_overlap(events: &[IntersectionEvent]) -> bool {
@@ -592,7 +599,7 @@ fn mesh_oriented_face_interior_side(
         return None;
     }
     let orientation = exact_mesh_orientation(mesh);
-    let face_plane = mesh.view().face(face)?.plane();
+    let face_plane = mesh.view().face(face).ok()?.plane();
     let dot = &(&reference_plane.normal[0] * &face_plane.normal[0])
         + &(&reference_plane.normal[1] * &face_plane.normal[1])
         + &(&reference_plane.normal[2] * &face_plane.normal[2]);

@@ -327,14 +327,14 @@ fn same_whole_face_any_orientation(
     right: &ExactMesh,
     right_face: usize,
 ) -> Result<bool, ExactMeshError> {
-    let Some(left_triangle) = left
+    let Ok(left_triangle) = left
         .view()
         .face(left_face)
         .map(|face| face.vertex_indices())
     else {
         return Ok(false);
     };
-    let Some(right_triangle) = right
+    let Ok(right_triangle) = right
         .view()
         .face(right_face)
         .map(|face| face.vertex_indices())
@@ -477,14 +477,14 @@ fn merged_union_mesh(
     let mut skip_right = BTreeSet::new();
 
     for pair in &certificate.shared_faces {
-        let Some(left_triangle) = left
+        let Ok(left_triangle) = left
             .view()
             .face(pair.left_face)
             .map(|face| face.vertex_indices())
         else {
             return Ok(None);
         };
-        let Some(right_triangle) = right
+        let Ok(right_triangle) = right
             .view()
             .face(pair.right_face)
             .map(|face| face.vertex_indices())
@@ -618,11 +618,11 @@ fn insert_patch_seam_map(
 ) -> Option<()> {
     let mut left_vertices = BTreeSet::new();
     for &left_face in &patch.left_faces {
-        left_vertices.extend(left.view().face(left_face)?.vertex_indices());
+        left_vertices.extend(left.view().face(left_face).ok()?.vertex_indices());
     }
     let mut right_vertices = BTreeSet::new();
     for &right_face in &patch.right_faces {
-        right_vertices.extend(right.view().face(right_face)?.vertex_indices());
+        right_vertices.extend(right.view().face(right_face).ok()?.vertex_indices());
     }
 
     let mut pairs = Vec::new();
@@ -874,7 +874,7 @@ fn fan_faces_cover_triangle(
     // area matches. Interior vertices are deleted with the patch; boundary
     // split vertices are retained by refining copied side faces before mesh
     // handoff.
-    let whole_triangle = whole_mesh.view().face(whole_face)?.vertex_indices();
+    let whole_triangle = whole_mesh.view().face(whole_face).ok()?.vertex_indices();
     let whole_points = triangle_point_refs(whole_mesh, whole_triangle)?;
     let whole_projection_points = [
         (*whole_points[0]).clone(),

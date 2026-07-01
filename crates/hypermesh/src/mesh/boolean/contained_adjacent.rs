@@ -768,7 +768,7 @@ fn map_point(vertices: &mut Vec<Point3>, point: &Point3) -> Option<usize> {
 }
 
 fn face_point_refs(mesh: &ExactMesh, face: usize) -> Option<[&Point3; 3]> {
-    mesh.view().face(face)?.vertices().ok()
+    mesh.view().face(face).ok()?.vertices().ok()
 }
 
 fn projected_triangle_sign(points: [&Point3; 3], projection: CoplanarProjection) -> Option<Sign> {

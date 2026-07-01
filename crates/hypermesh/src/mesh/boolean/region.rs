@@ -1599,7 +1599,7 @@ fn classify_region_against_face_plane(
     plane_mesh: &ExactMesh,
     plane_face: usize,
 ) -> FaceRegionPlaneClassification {
-    let Some(face) = plane_mesh.view().face(plane_face) else {
+    let Ok(face) = plane_mesh.view().face(plane_face) else {
         return FaceRegionPlaneClassification {
             region_side,
             region_face,
@@ -1680,7 +1680,7 @@ fn retained_source_face_points<'a>(
 ) -> hypertri::Result<[&'a Point3; 3]> {
     mesh.view()
         .face(face)
-        .ok_or(hypertri::Error::InvalidInput { reason })?
+        .map_err(|_| hypertri::Error::InvalidInput { reason })?
         .vertices()
         .map_err(|_| hypertri::Error::InvalidInput { reason })
 }

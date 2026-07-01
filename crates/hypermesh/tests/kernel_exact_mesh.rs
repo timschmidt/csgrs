@@ -121,17 +121,14 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(view.triangle(0).unwrap().index(), 0);
     assert_eq!(view.triangle(0).unwrap().vertex_indices(), [0, 2, 1]);
     assert_eq!(
-        view.require_triangle(0)
+        view.triangle(0)
             .unwrap()
             .vertex_refs()
             .unwrap()
             .map(VertexRef::index),
         [0, 2, 1]
     );
-    assert_eq!(
-        view.require_triangle(0).unwrap().vertices().unwrap().len(),
-        3
-    );
+    assert_eq!(view.triangle(0).unwrap().vertices().unwrap().len(), 3);
 
     assert_eq!(view.require_vertex(0).unwrap().index(), 0);
     let missing_vertex = view.require_vertex(view.vertex_count()).unwrap_err();
@@ -174,8 +171,8 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert!(!vertex.has_isolated_link());
     assert!(!vertex.has_non_manifold_link());
 
-    assert_eq!(view.require_face(0).unwrap().index(), 0);
-    let missing_face = view.require_face(view.face_count()).unwrap_err();
+    assert_eq!(view.face(0).unwrap().index(), 0);
+    let missing_face = view.face(view.face_count()).unwrap_err();
     assert_eq!(
         missing_face.blockers()[0].kind(),
         ExactMeshBlockerKind::IndexOutOfBounds
@@ -207,8 +204,8 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     );
     assert_eq!(face.vertices().unwrap().len(), 3);
 
-    assert_eq!(view.require_face(1).unwrap().index(), 1);
-    let missing_face_row = view.require_face(view.face_count()).unwrap_err();
+    assert_eq!(view.face(1).unwrap().index(), 1);
+    let missing_face_row = view.face(view.face_count()).unwrap_err();
     assert_eq!(
         missing_face_row.blockers()[0].kind(),
         ExactMeshBlockerKind::IndexOutOfBounds

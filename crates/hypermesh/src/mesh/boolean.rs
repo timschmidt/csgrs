@@ -2576,8 +2576,7 @@ fn graph_has_only_boundary_contact_pairs(
                         point: Some(point),
                         ..
                     } => {
-                        let Some(face) = plane_side.mesh(left, right).view().face(*plane_face)
-                        else {
+                        let Ok(face) = plane_side.mesh(left, right).view().face(*plane_face) else {
                             return false;
                         };
                         let Ok([a, b, c]) = face.vertices() else {
@@ -4594,7 +4593,7 @@ fn arrangement_difference_preserves_source_surface(
     }
 
     Ok(source.triangles().iter().enumerate().all(|(face, _)| {
-        let Some(face_ref) = source.view().face(face) else {
+        let Ok(face_ref) = source.view().face(face) else {
             return false;
         };
         let Ok([a, b, c]) = face_ref.vertices() else {
@@ -6536,7 +6535,7 @@ fn projected_mesh_face_ring(
     face: usize,
     projection: CoplanarProjection,
 ) -> Result<Option<ExactArrangement2dRegionRing>, ExactMeshError> {
-    let Some(face_ref) = mesh.view().face(face) else {
+    let Ok(face_ref) = mesh.view().face(face) else {
         return Err(ExactMeshError::one(
             ExactMeshBlocker::new(
                 ExactMeshBlockerKind::StaleFactReplay,

@@ -808,7 +808,7 @@ fn source_face_vertices(
     mesh.view()
         .face(face)
         .map(|face| face.vertex_indices())
-        .ok_or(hypertri::Error::InvalidInput { reason })
+        .map_err(|_| hypertri::Error::InvalidInput { reason })
 }
 
 fn source_face_points<'a>(
@@ -818,7 +818,7 @@ fn source_face_points<'a>(
 ) -> hypertri::Result<[&'a Point3; 3]> {
     mesh.view()
         .face(face)
-        .ok_or(hypertri::Error::InvalidInput { reason })?
+        .map_err(|_| hypertri::Error::InvalidInput { reason })?
         .vertices()
         .map_err(|_| hypertri::Error::InvalidInput { reason })
 }

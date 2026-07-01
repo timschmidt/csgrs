@@ -2388,7 +2388,7 @@ fn retained_arrangement_face_vertices_result(
     mesh: &ExactMesh,
     face: usize,
 ) -> Result<([usize; 3], [&Point3; 3]), ExactArrangementBlocker> {
-    let Some(face_ref) = mesh.view().face(face) else {
+    let Ok(face_ref) = mesh.view().face(face) else {
         return Err(ExactArrangementBlocker::InvalidIntersectionGraph(
             ExactArrangementGraphBlockerKind::FaceIndexOutOfRange,
         ));
@@ -3178,7 +3178,7 @@ fn orient_overlay_boundary_to_carrier(
     boundary_points: &mut [Point3],
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) {
-    let Some(face_ref) = mesh.view().face(face) else {
+    let Ok(face_ref) = mesh.view().face(face) else {
         blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
         return;
     };

@@ -2123,7 +2123,7 @@ fn validate_intersection_event_sources(
             if *plane_face != plane_pair_face {
                 return Err(IntersectionGraphValidationError::EventSourceMismatch);
             }
-            if plane_mesh.view().face(*plane_face).is_none() {
+            if plane_mesh.view().face(*plane_face).is_err() {
                 return Err(IntersectionGraphValidationError::EventSourceOutOfRange);
             }
             validate_vertex(*segment_side, edge[0], left, right)?;
@@ -2175,7 +2175,7 @@ fn validate_intersection_event_sources(
             if *triangle_face != expected_triangle_face {
                 return Err(IntersectionGraphValidationError::EventSourceMismatch);
             }
-            if triangle_mesh.view().face(*triangle_face).is_none() {
+            if triangle_mesh.view().face(*triangle_face).is_err() {
                 return Err(IntersectionGraphValidationError::EventSourceOutOfRange);
             }
             validate_vertex(*vertex_side, *vertex, left, right)?;
@@ -2771,7 +2771,7 @@ fn face_split_geometry_plan(
     let mut faces = Vec::with_capacity(face_plan.faces.len());
     for face in &face_plan.faces {
         let mesh = face.side.mesh(left, right);
-        let Some(source_face) = mesh.view().face(face.face) else {
+        let Ok(source_face) = mesh.view().face(face.face) else {
             return Err(ExactMeshError::one(
                 ExactMeshBlocker::new(
                     ExactMeshBlockerKind::IndexOutOfBounds,
@@ -2880,7 +2880,7 @@ pub(crate) fn validate_face_split_geometry_incidence(
 
     for face in &geometry.faces {
         let mesh = face.side.mesh(left, right);
-        let Some(source_face) = mesh.view().face(face.face) else {
+        let Ok(source_face) = mesh.view().face(face.face) else {
             blockers.push(SplitPlanBlocker {
                 side: Some(face.side),
                 face: Some(face.face),
@@ -3159,7 +3159,7 @@ pub(crate) fn validate_face_region_plan(
         }
 
         let mesh = region.side.mesh(left, right);
-        let Some(source_face) = mesh.view().face(region.face) else {
+        let Ok(source_face) = mesh.view().face(region.face) else {
             blockers.push(SplitPlanBlocker {
                 side: Some(region.side),
                 face: Some(region.face),

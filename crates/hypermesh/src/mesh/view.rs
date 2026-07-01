@@ -108,7 +108,7 @@ impl<'a> MeshView<'a> {
 
     /// Borrow retained bounds for one face as exact min/max corners.
     pub fn face_bounds(self, index: usize) -> Result<(&'a Point3, &'a Point3), ExactMeshError> {
-        self.require_face(index)?.bounds()
+        self.face(index)?.bounds()
     }
 
     /// Borrow retained bounds for one edge as exact min/max corners.
@@ -194,26 +194,14 @@ impl<'a> MeshView<'a> {
     }
 
     /// Borrow one face by index.
-    pub fn face(self, index: usize) -> Option<FaceRef<'a>> {
-        self.has_current_row(RetainedRowKind::Face, index)
-            .then(|| self.face_ref(index))
-    }
-
-    /// Borrow one triangle by retained face index.
-    pub fn triangle(self, index: usize) -> Option<TriangleRef<'a>> {
-        self.has_current_row(RetainedRowKind::Face, index)
-            .then(|| self.triangle_ref(index))
-    }
-
-    /// Borrow one face by index, returning a typed blocker when absent.
-    pub fn require_face(self, index: usize) -> Result<FaceRef<'a>, ExactMeshError> {
+    pub fn face(self, index: usize) -> Result<FaceRef<'a>, ExactMeshError> {
         require_current_row(self.mesh, RetainedRowKind::Face, index)?;
         Ok(self.face_ref(index))
     }
 
-    /// Borrow one triangle by retained face index, returning a typed blocker when absent.
-    pub fn require_triangle(self, index: usize) -> Result<TriangleRef<'a>, ExactMeshError> {
-        self.require_face(index).map(|face| face.triangle())
+    /// Borrow one triangle by retained face index.
+    pub fn triangle(self, index: usize) -> Result<TriangleRef<'a>, ExactMeshError> {
+        self.face(index).map(|face| face.triangle())
     }
 
     /// Borrow one retained edge by index.
@@ -987,14 +975,12 @@ mod tests {
 
         assert_eq!(view.triangles().len(), stale_face);
         assert_eq!(view.faces().count(), stale_face);
-        assert!(view.triangle(stale_face).is_none());
-        assert!(view.face(stale_face).is_none());
         assert_eq!(
-            view.require_face(stale_face).unwrap_err().blockers()[0].kind(),
+            view.triangle(stale_face).unwrap_err().blockers()[0].kind(),
             ExactMeshBlockerKind::StaleFactReplay
         );
         assert_eq!(
-            view.require_triangle(stale_face).unwrap_err().blockers()[0].kind(),
+            view.face(stale_face).unwrap_err().blockers()[0].kind(),
             ExactMeshBlockerKind::StaleFactReplay
         );
     }
@@ -1083,14 +1069,16 @@ mod tests {
 
         assert_eq!(view.triangles().len(), stale_face);
         assert_eq!(view.faces().count(), stale_face);
-        assert!(view.triangle(stale_face).is_none());
+        assert_eq!(
+            view.triangle(stale_face).unwrap_err().blockers()[0].kind(),
+            ExactMeshBlockerKind::StaleFactReplay
+        );
         assert_eq!(
             view.face_bounds(stale_face).unwrap_err().blockers()[0].kind(),
             ExactMeshBlockerKind::StaleFactReplay
         );
-        assert!(view.face(stale_face).is_none());
         assert_eq!(
-            view.require_face(stale_face).unwrap_err().blockers()[0].kind(),
+            view.face(stale_face).unwrap_err().blockers()[0].kind(),
             ExactMeshBlockerKind::StaleFactReplay
         );
         assert_eq!(
@@ -1108,7 +1096,7 @@ mod tests {
                 .kind(),
             ExactMeshBlockerKind::StaleFactReplay
         );
-        let face = view.require_face(face_with_stale_vertex).unwrap();
+        let face = view.face(face_with_stale_vertex).unwrap();
         assert_eq!(
             face.vertex_refs().unwrap_err().blockers()[0].kind(),
             ExactMeshBlockerKind::StaleFactReplay
@@ -1167,7 +1155,7 @@ mod tests {
         );
         assert_eq!(vertex_blocker.vertex(), Some(mesh.vertices().len()));
 
-        let face_error = view.require_face(mesh.facts().faces.len()).unwrap_err();
+        let face_error = view.face(mesh.facts().faces.len()).unwrap_err();
         let face_blocker = &face_error.blockers()[0];
         assert_eq!(face_blocker.kind(), ExactMeshBlockerKind::IndexOutOfBounds);
         assert_eq!(face_blocker.face(), Some(mesh.facts().faces.len()));
