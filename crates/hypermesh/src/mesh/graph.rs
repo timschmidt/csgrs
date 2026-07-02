@@ -2771,15 +2771,7 @@ fn face_split_geometry_plan(
     let mut faces = Vec::with_capacity(face_plan.faces.len());
     for face in &face_plan.faces {
         let mesh = face.side.mesh(left, right);
-        let Ok(source_face) = mesh.view().face(face.face) else {
-            return Err(ExactMeshError::one(
-                ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::IndexOutOfBounds,
-                    "face split geometry references a missing retained face fact",
-                )
-                .with_face(face.face),
-            ));
-        };
+        let source_face = mesh.view().face(face.face)?;
         let triangle = source_face.vertex_indices();
         let mut boundary_chains = Vec::with_capacity(face.edges.len());
         for edge in &face.edges {
@@ -2814,15 +2806,7 @@ fn face_split_geometry_plan(
                         side: vertex_side,
                         vertex,
                     } if *vertex_side == face.side => {
-                        let point = mesh.view().vertex(*vertex).map_err(|_| {
-                            ExactMeshError::one(
-                                ExactMeshBlocker::new(
-                                    ExactMeshBlockerKind::IndexOutOfBounds,
-                                    "split boundary references a missing original vertex",
-                                )
-                                .with_vertex(*vertex),
-                            )
-                        })?;
+                        let point = mesh.view().vertex(*vertex)?;
                         FaceSplitBoundaryNode::OriginalVertex {
                             vertex: *vertex,
                             point: point.point().clone(),

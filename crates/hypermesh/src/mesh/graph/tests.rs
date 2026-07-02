@@ -93,6 +93,45 @@ fn face_region_stage_replays_from_internal_graph() {
 }
 
 #[test]
+fn face_split_geometry_reports_stale_source_rows() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, -1, -1, 1, 3, 1, 1, 3, -1],
+        &[0, 1, 2],
+        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
+
+    let mut stale_face_left = left.clone();
+    stale_face_left.facts.faces.clear();
+    let error = graph
+        .face_split_geometry_plan(&stale_face_left, &right)
+        .unwrap_err();
+    assert!(
+        error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        "{error:?}"
+    );
+    assert_eq!(error.blockers()[0].face(), Some(0));
+
+    let mut stale_vertex_left = left.clone();
+    stale_vertex_left.facts.vertices.clear();
+    let error = graph
+        .face_split_geometry_plan(&stale_vertex_left, &right)
+        .unwrap_err();
+    assert!(
+        error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        "{error:?}"
+    );
+    assert_eq!(error.blockers()[0].vertex(), Some(0));
+}
+
+#[test]
 fn face_cell_cdt_replays_from_internal_graph() {
     let left = ExactMesh::from_i64_triangles(
         &[
