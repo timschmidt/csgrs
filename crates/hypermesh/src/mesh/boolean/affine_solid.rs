@@ -296,13 +296,13 @@ fn find_affine_orthogonal_solid_basis<T>(
         accept(left_uvw, right_uvw).map(|accepted| (basis, accepted))
     };
 
-    if let Some(accepted) = find_affine_cell_basis(left, &mut accept_basis) {
+    if let Some(accepted) = find_affine_cell_basis(left, &mut accept_basis)? {
         return Ok(Some(accepted));
     }
     if let Some(error) = blocker.borrow_mut().take() {
         return Err(error);
     }
-    let accepted = find_affine_cell_basis(right, &mut accept_basis);
+    let accepted = find_affine_cell_basis(right, &mut accept_basis)?;
     if let Some(error) = blocker.into_inner() {
         return Err(error);
     }
@@ -417,10 +417,10 @@ fn det3(a: &Point3, b: &Point3, c: &Point3) -> Real {
 fn find_affine_cell_basis<T>(
     mesh: &ExactMesh,
     accept_basis: &mut impl FnMut(AffineBoxBasis) -> Option<T>,
-) -> Option<T> {
+) -> Result<Option<T>, ExactMeshError> {
     let view = mesh.view();
     if view.vertices().len() < 8 || view.faces().count() < 12 {
-        return None;
+        return Ok(None);
     }
     let adjacency = vertex_adjacency(mesh);
     let direction_counts = mesh_direction_counts(mesh)?;
@@ -470,25 +470,23 @@ fn find_affine_cell_basis<T>(
                         continue;
                     }
                     if let Some(accepted) = accept_basis(basis) {
-                        return Some(accepted);
+                        return Ok(Some(accepted));
                     }
                 }
             }
         }
     }
-    None
+    Ok(None)
 }
 
 /// Count undirected exact triangle-edge directions in mesh space.
-fn mesh_direction_counts(mesh: &ExactMesh) -> Option<Vec<(Point3, usize)>> {
+fn mesh_direction_counts(mesh: &ExactMesh) -> Result<Vec<(Point3, usize)>, ExactMeshError> {
     let mut counts = Vec::<(Point3, usize)>::new();
     let view = mesh.view();
     for face in view.faces() {
         let [a, b, c] = face.vertex_indices();
         for [a, b] in [[a, b], [b, c], [c, a]] {
-            let (Ok(a), Ok(b)) = (view.vertex(a), view.vertex(b)) else {
-                continue;
-            };
+            let (a, b) = (view.vertex(a)?, view.vertex(b)?);
             let (a, b) = (a.point(), b.point());
             let direction = Point3::new(&b.x - &a.x, &b.y - &a.y, &b.z - &a.z);
             if compare_reals(&direction.x, &Real::from(0)).value() == Some(Ordering::Equal)
@@ -511,7 +509,7 @@ fn mesh_direction_counts(mesh: &ExactMesh) -> Option<Vec<(Point3, usize)>> {
             counts.push((direction, 1));
         }
     }
-    Some(counts)
+    Ok(counts)
 }
 
 /// Build a unique undirected vertex adjacency list from retained triangles.
@@ -540,15 +538,11 @@ fn unique_edge_directions(
     mesh: &ExactMesh,
     origin: usize,
     neighbors: &[usize],
-) -> Option<Vec<Point3>> {
-    let Ok(origin_point) = mesh.view().vertex(origin).map(|vertex| vertex.point()) else {
-        return Some(Vec::new());
-    };
+) -> Result<Vec<Point3>, ExactMeshError> {
+    let origin_point = mesh.view().vertex(origin)?.point();
     let mut directions = Vec::new();
     for &neighbor in neighbors {
-        let Ok(neighbor) = mesh.view().vertex(neighbor).map(|vertex| vertex.point()) else {
-            continue;
-        };
+        let neighbor = mesh.view().vertex(neighbor)?.point();
         let direction = Point3::new(
             &neighbor.x - &origin_point.x,
             &neighbor.y - &origin_point.y,
@@ -562,7 +556,7 @@ fn unique_edge_directions(
         }
         let mut seen_direction = false;
         for seen in &directions {
-            if point3_exact_equal(seen, &direction)? {
+            if point3_exact_equal(seen, &direction).ok_or_else(affine_direction_equality_error)? {
                 seen_direction = true;
                 break;
             }
@@ -572,17 +566,59 @@ fn unique_edge_directions(
         }
         directions.push(direction);
     }
-    Some(directions)
+    Ok(directions)
 }
 
 /// Compare exact directions up to sign.
-fn points_equal_or_opposite(left: &Point3, right: &Point3) -> Option<bool> {
-    if point3_exact_equal(left, right)? {
-        return Some(true);
+fn points_equal_or_opposite(left: &Point3, right: &Point3) -> Result<bool, ExactMeshError> {
+    if point3_exact_equal(left, right).ok_or_else(affine_direction_equality_error)? {
+        return Ok(true);
     }
-    Some(
-        compare_reals(&left.x, &(-right.x.clone())).value()? == Ordering::Equal
-            && compare_reals(&left.y, &(-right.y.clone())).value()? == Ordering::Equal
-            && compare_reals(&left.z, &(-right.z.clone())).value()? == Ordering::Equal,
-    )
+    Ok(compare_reals(&left.x, &(-right.x.clone()))
+        .value()
+        .ok_or_else(affine_direction_equality_error)?
+        == Ordering::Equal
+        && compare_reals(&left.y, &(-right.y.clone()))
+            .value()
+            .ok_or_else(affine_direction_equality_error)?
+            == Ordering::Equal
+        && compare_reals(&left.z, &(-right.z.clone()))
+            .value()
+            .ok_or_else(affine_direction_equality_error)?
+            == Ordering::Equal)
+}
+
+fn affine_direction_equality_error() -> ExactMeshError {
+    ExactMeshError::one(ExactMeshBlocker::new(
+        ExactMeshBlockerKind::UndecidablePredicate,
+        "affine orthogonal solid edge direction equality is undecidable",
+    ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn affine_direction_counts_report_stale_vertex_facts() {
+        let mut mesh = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, //
+                1, 0, 0, //
+                0, 1, 0,
+            ],
+            &[0, 1, 2],
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .expect("test triangle should construct");
+        mesh.facts.vertices.pop();
+
+        let error = mesh_direction_counts(&mesh)
+            .expect_err("stale vertex facts should propagate as a typed blocker");
+        assert!(
+            error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+            "{error:?}"
+        );
+        assert_eq!(error.blockers()[0].vertex(), Some(2));
+    }
 }
