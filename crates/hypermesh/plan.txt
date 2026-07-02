@@ -4,133 +4,69 @@ hypermesh simplification goal
 Goal
 ----
 
-Make hypermesh a small exact mesh crate centered on one public owned type:
-`Mesh`. The crate should provide construction, retained exact facts, borrowed
-views, named mesh booleans, transforms, inverse orientation, and useful typed
-errors. It should not expose or preserve session, workspace, handoff,
-readiness, proposal, compatibility, or product-policy machinery.
+Make hypermesh a small exact mesh crate centered on one public owned type,
+`Mesh`, with construction, retained exact facts, borrowed views, named
+booleans, transforms, inverse orientation, exact algorithms, and useful typed
+errors. No session, workspace, handoff, readiness, proposal, compatibility, or
+product-policy machinery.
 
-This plan replaces the older `ExactMesh` revision plan. Do not keep aliases or
-compatibility shims while moving toward this shape. Make final edits directly,
-then fix downstream users and tests.
+Do not keep aliases or shims. Replace `ExactMesh` directly with `Mesh`, fix
+downstream users and tests, and make failures visible through useful errors.
 
 Definition of done
 ------------------
 
-- The public owned type is `hypermesh::Mesh`. `ExactMesh` is gone, not aliased.
-- The root API exposes `Mesh` and a minimal low-level `kernel` module only when
-  needed for errors and borrowed views.
-- `Mesh` has useful construction methods from exact coordinates, integer
-  coordinates, explicit source records, and clearly named lossy import
-  boundaries.
-- `Mesh` provides owned and borrowed operations for `union`, `difference`,
-  `intersection`, `xor`, `transform`, and `inverse`.
+- The public owned type is `hypermesh::Mesh`; `ExactMesh` is gone, not aliased.
+- Root API exposes `Mesh` plus only minimal `kernel` errors/views if needed.
+- `Mesh` has useful constructors from exact coordinates, integer coordinates,
+  explicit source records, and clearly named lossy import boundaries.
+- `Mesh` and borrowed views provide `union`, `difference`, `intersection`,
+  `xor`, `transform`, and `inverse`.
 - Borrowed mesh, vertex, face, triangle, edge, and arrangement views remain the
-  preferred query API. Query methods should borrow slices and retained facts
-  instead of cloning mesh storage.
-- Hypermesh booleans either return a decided `Mesh` or a useful typed error
-  explaining the missing exact capability, stale evidence, invalid source
-  facts, unsupported topology, or failed construction.
+  preferred query API and return slices/borrowed iterators over retained facts.
+- Booleans return a `Mesh` or a typed error for invalid source facts,
+  stale/missing evidence, unsupported topology, failed construction, or missing
+  exact capability.
 - csgrs mesh booleans call hypermesh directly and do not fall back to legacy
-  compatibility booleans when hypermesh returns an error.
-- Preflight as a separate orchestration/result layer is gone. Useful facts from
-  preflight are either retained during `Mesh` construction, retained in exact
-  evidence objects that are consumed by validation/materialization, or computed
-  once at the first sound boundary and cached for reuse.
-- Hypermesh contains type, operations, exact algorithms, borrowed views, retained
-  facts, and useful errors. It does not contain session, workspace, proposal,
-  readiness, product-routing, or consumer-domain policy vocabulary.
-- Performance architecture work is staged after simplification, not mixed into
-  the API/type cleanup.
+  compatibility booleans on hypermesh error.
+- Preflight as a separate layer is gone. Its useful facts are retained at
+  construction, held in evidence consumed by validation/materialization, or
+  computed once at the first sound boundary and cached.
+- Hypermesh contains type, operations, exact algorithms, borrowed views,
+  retained facts, and useful errors only.
+- Performance architecture work waits until after this simplification.
 
 Current baseline
 ----------------
 
-- The current crate already has a narrow root API and borrowed query views, but
-  the public type is still `ExactMesh`.
-- Internal Boolean code still contains request, operation, preflight, result,
-  support, policy, and report vocabulary that should be collapsed into direct
-  operation code, retained evidence, or typed errors.
-- Prepared pair/session caches exist internally. Keep only what is required to
-  avoid recomputing exact facts within one operation. Do not turn them into a
-  public workspace/session API.
-- csgrs currently attempts hypermesh booleans but falls back to compatibility
-  CSG operations. That fallback must be removed so hypermesh errors are visible
-  and useful.
+- Root API and borrowed views are narrow, but the type is still `ExactMesh`.
+- Boolean internals still have request, operation, preflight, result, support,
+  policy, and report layers to collapse.
+- Internal prepared-pair caches may remain only to avoid recomputing facts
+  inside one operation; never expose them as session/workspace APIs.
+- csgrs still hides hypermesh errors behind compatibility fallbacks.
 
-Implementation phases
----------------------
+Implementation order
+--------------------
 
-1. Rename the owned type.
-   - Rename `ExactMesh` to `Mesh` throughout hypermesh.
-   - Update root docs, README, fuzz targets, integration tests, and downstream
-     csgrs references.
-   - Do not add `type ExactMesh = Mesh`, deprecated re-exports, or compatibility
-     constructors.
-   - Rename error messages, test names, and docs only where the name is part of
-     the public or developer-facing surface.
-
-2. Make csgrs depend on hypermesh decisions.
-   - Remove `compatibility_union`, `compatibility_difference`, and
-     `compatibility_intersection` fallback use from csgrs mesh booleans.
-   - Decide how csgrs exposes hypermesh failure: either panic-free typed result
-     APIs beside the current trait, or explicit empty/error-report behavior that
-     does not silently hide exact failure.
-   - Update csgrs docs that still mention old handoff packages, readiness, or
-     compatibility routing.
-
-3. Remove preflight as a layer.
-   - Find all `Preflight`, `ExactBooleanRequest`, support/status, and
-     preflight-result code paths.
-   - Preserve useful checks by moving them to retained construction facts,
-     evidence validation, or direct operation branches.
-   - Replace preflight failures with `MeshError` blockers carrying source side,
-     face/edge/vertex indices, predicate or construction family, and retained
-     provenance where available.
-   - Ensure materialization consumes retained evidence through cheap certificate
-     checks and explicitly rebuilds only at named rebuild boundaries.
-
-4. Collapse policy/report machinery into operation evidence and errors.
-   - Remove workspace-level words from hypermesh internals unless they describe
-     a real mesh-kernel algorithm.
-   - Replace broad public-ish report structures with narrow validation evidence
-     or typed blockers.
-   - Keep exact graph, arrangement, winding, simplification, triangulation, and
-     shortcut algorithms, but make their public effect a decided `Mesh` or a
-     useful error.
-
-5. Keep borrowed APIs and retained facts central.
-   - Keep `MeshView`, `FaceRef`, `TriangleRef`, `VertexRef`, `EdgeRef`, and
-     `ArrangementView`.
-   - Prefer slice-returning query methods and exact-size borrowed iterators.
-   - Retain exact mesh facts at construction: vertex facts, edge facts, face
-     facts, determinant-form planes, AABBs, adjacency, orientation, manifold
-     summaries, predicate provenance, and construction provenance.
-   - Stale or missing retained facts must return typed blockers rather than
-     silently recomputing or trusting cache state.
-
-6. Simplify tests and fuzzing around the new contract.
-   - Rename kernel tests around `Mesh`.
-   - Add explicit tests that csgrs no longer hides hypermesh Boolean errors
-     behind compatibility fallbacks.
-   - Keep fuzz targets focused on exact mesh construction, retained facts,
-     borrowed views, and operation error stability.
-
-7. Stage performance work after simplification.
-   - Keep the existing exact AABB broad phase during API cleanup.
-   - After the type/preflight/policy cleanup is complete, add measured
-     performance work: candidate-pair metrics, retained fact memory costs,
-     local arrangement reuse, indirect predicates, and eventually EMBER-style
-     local arrangements.
-   - Do not add new BVH/k-DOP/octree/session APIs until the simplified `Mesh`
-     contract is stable.
-
-First concrete work items
--------------------------
-
-1. Rename `ExactMesh` to `Mesh` inside hypermesh and update all local tests.
-2. Update csgrs to import `hypermesh::Mesh` and remove Boolean fallback calls.
-3. Replace `ExactMeshError` naming only after the `Mesh` type rename lands and
-   the error surface can be audited without aliases.
-4. Use callgraph output to identify preflight/support/result layers with high
-   fanout, then remove them in small committed chunks.
+1. Rename `ExactMesh` to `Mesh` in hypermesh, docs, tests, fuzz targets, and
+   csgrs. Add no alias, re-export, or compatibility constructor.
+2. Remove csgrs Boolean fallback calls. Expose hypermesh failure through typed
+   result APIs or explicit error/report behavior. Update old handoff/readiness/
+   compatibility docs.
+3. Remove preflight. Move useful checks into construction facts, evidence
+   validation, direct operation branches, or cached first-boundary facts. Return
+   `MeshError` blockers with source side, indices, predicate/construction
+   family, and provenance where available.
+4. Collapse broad policy/report machinery into narrow operation evidence and
+   errors. Keep graph, arrangement, winding, simplification, triangulation, and
+   shortcut algorithms, but make their public effect a `Mesh` or useful error.
+5. Keep borrowed APIs and retained facts central: `MeshView`, refs,
+   `ArrangementView`; retained vertex, edge, face, plane, AABB, adjacency,
+   orientation, manifold, predicate, and construction facts; stale/missing facts
+   return typed blockers.
+6. Rename and refocus tests/fuzzing around `Mesh`, retained facts, borrowed
+   views, operation errors, and csgrs no-fallback behavior.
+7. After the simplified contract is stable, measure and improve performance:
+   candidate-pair metrics, retained fact memory, local arrangement reuse,
+   indirect predicates, and eventually EMBER-style local arrangements.
