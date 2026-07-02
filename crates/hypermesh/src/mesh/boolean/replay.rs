@@ -103,7 +103,7 @@ pub(super) fn exact_boolean_evaluation_for_replay_result_with_materialization(
     {
         if matches!(
             operation_evidence.support,
-            ExactBooleanSupport::SelectedRegionPolicy
+            ExactBooleanSupport::SelectedRegionAssembly
         ) {
             try_materialize_certified_boolean_support_with_artifacts(
                 left,
@@ -139,7 +139,7 @@ pub(super) fn exact_boolean_evaluation_for_replay_result_with_materialization(
         result,
     };
     evaluation
-        .validate_with_missing_result_policy(!materialize_result)
+        .validate_with_optional_result(!materialize_result)
         .map_err(|error| {
             retained_evidence_validation_error(
                 RETAINED_EVIDENCE_REPLAY_CONTEXT,
@@ -164,7 +164,7 @@ pub(super) fn try_materialize_certified_boolean_support_with_artifacts(
     let validation = request.validation;
     let mut owned_graph = None;
     let result = match support {
-        ExactBooleanSupport::SelectedRegionPolicy => {
+        ExactBooleanSupport::SelectedRegionAssembly => {
             let ExactBooleanOperation::SelectedRegions(selection) = operation else {
                 return Err(MeshError::one(MeshBlocker::new(
                     MeshBlockerKind::UnsupportedCellMaterializer,

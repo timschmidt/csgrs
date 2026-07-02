@@ -3992,7 +3992,7 @@ fn validate_output_mesh_matches_assembly(
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ExactBooleanSupport {
     /// The request is an explicit selected-region assembly mode.
-    SelectedRegionPolicy,
+    SelectedRegionAssembly,
     /// A named operation was answered by exact empty-operand semantics.
     CertifiedEmptyOperand,
     /// A named operation was answered by certified disjoint AABBs.
@@ -4126,7 +4126,7 @@ impl ExactBooleanSupport {
     pub(crate) const fn is_certified(self) -> bool {
         matches!(
             self,
-            Self::SelectedRegionPolicy
+            Self::SelectedRegionAssembly
                 | Self::CertifiedEmptyOperand
                 | Self::CertifiedBoundsDisjoint
                 | Self::CertifiedIdentical
@@ -4993,7 +4993,7 @@ impl ExactBooleanOperationEvidence {
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactBooleanSupport::SelectedRegionPolicy => {
+            ExactBooleanSupport::SelectedRegionAssembly => {
                 if self.coplanar_arrangement_evidence.is_some() {
                     return Err(
                         ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
@@ -7082,7 +7082,7 @@ mod tests {
     fn selected_region_operation_evidence_accepts_empty_region_plan_with_boundary_face_pairs() {
         let mut operation_evidence = ExactBooleanOperationEvidence {
             operation: ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
-            support: ExactBooleanSupport::SelectedRegionPolicy,
+            support: ExactBooleanSupport::SelectedRegionAssembly,
             graph_had_unknowns: false,
             retained_face_pairs: 1,
             retained_events: 1,

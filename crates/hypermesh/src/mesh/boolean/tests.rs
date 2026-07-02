@@ -672,7 +672,7 @@ impl ExactBooleanCertificationSet {
         operation_evidence: &ExactBooleanOperationEvidence,
     ) -> bool {
         match operation_evidence.support {
-            ExactBooleanSupport::SelectedRegionPolicy => {
+            ExactBooleanSupport::SelectedRegionAssembly => {
                 self.winding_evidence.status == ExactWindingEvidenceStatus::NotNamedOperation
                     && matches!(
                         operation_evidence.operation,
@@ -929,7 +929,7 @@ impl ExactBooleanCertificationSet {
 }
 
 impl ExactBooleanEvaluation {
-    pub(crate) fn validate_with_missing_result_policy(
+    pub(crate) fn validate_with_optional_result(
         &self,
         allow_missing_materialized_result: bool,
     ) -> Result<(), ExactEvidenceValidationError> {
@@ -956,7 +956,7 @@ impl ExactBooleanEvaluation {
             && matches!(&self.operation_evidence.blocker, None)
             && !matches!(
                 self.operation_evidence.support,
-                ExactBooleanSupport::SelectedRegionPolicy
+                ExactBooleanSupport::SelectedRegionAssembly
                     | ExactBooleanSupport::CertifiedArrangementCellComplex
             )
         {
@@ -972,7 +972,7 @@ impl ExactBooleanEvaluation {
         left: &Mesh,
         right: &Mesh,
     ) -> Result<(), ExactEvidenceValidationError> {
-        self.validate_with_missing_result_policy(false)?;
+        self.validate_with_optional_result(false)?;
         let replay = exact_boolean_evaluation_for_replay_result_with_materialization(
             left,
             right,
@@ -1020,7 +1020,7 @@ impl ExactBooleanEvaluation {
             && matches!(&self.operation_evidence.blocker, None)
             && !matches!(
                 self.operation_evidence.support,
-                ExactBooleanSupport::SelectedRegionPolicy
+                ExactBooleanSupport::SelectedRegionAssembly
                     | ExactBooleanSupport::CertifiedArrangementCellComplex
             )
         {
@@ -1070,7 +1070,7 @@ impl ExactBooleanEvaluation {
             return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         let result_matches_operation_evidence_support = match self.operation_evidence.support {
-            ExactBooleanSupport::SelectedRegionPolicy => {
+            ExactBooleanSupport::SelectedRegionAssembly => {
                 matches!(result.kind, ExactBooleanResultKind::SelectedRegions { .. })
             }
             ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
@@ -1263,9 +1263,7 @@ fn with_test_evaluation<R>(
     let evaluation =
         exact_boolean_evaluation_for_replay_result_with_materialization(left, right, request, true)
             .unwrap();
-    evaluation
-        .validate_with_missing_result_policy(false)
-        .unwrap();
+    evaluation.validate_with_optional_result(false).unwrap();
     f(&evaluation)
 }
 
@@ -1286,9 +1284,7 @@ fn test_materialized_result(
     let evaluation =
         exact_boolean_evaluation_for_replay_result_with_materialization(left, right, request, true)
             .unwrap();
-    evaluation
-        .validate_with_missing_result_policy(false)
-        .unwrap();
+    evaluation.validate_with_optional_result(false).unwrap();
     if let Some(retained) = evaluation.result.as_ref() {
         assert!(
             retained
@@ -1309,9 +1305,7 @@ fn test_winding_evidence(
         left, right, request, false,
     )
     .unwrap();
-    evaluation
-        .validate_with_missing_result_policy(true)
-        .unwrap();
+    evaluation.validate_with_optional_result(true).unwrap();
     evaluation.certifications.winding_evidence.clone()
 }
 
@@ -1698,7 +1692,7 @@ fn certified_selected_region_materialization_rejects_stale_retained_graph() {
             &left,
             &overlapping_right,
             request,
-            ExactBooleanSupport::SelectedRegionPolicy,
+            ExactBooleanSupport::SelectedRegionAssembly,
             Some(&stale_graph),
             None,
             None,
@@ -1972,9 +1966,7 @@ fn assert_contained_face_adjacent_union_replays(
     let evaluation =
         exact_boolean_evaluation_for_replay_result_with_materialization(left, right, request, true)
             .unwrap();
-    evaluation
-        .validate_with_missing_result_policy(false)
-        .unwrap();
+    evaluation.validate_with_optional_result(false).unwrap();
     evaluation.validate_against_sources(left, right).unwrap();
     let result = evaluation
         .result
@@ -2860,9 +2852,7 @@ fn certifications_reuse_regularized_arrangement_attempt_reports() {
         &left, &right, request, true,
     )
     .unwrap();
-    evaluation
-        .validate_with_missing_result_policy(false)
-        .unwrap();
+    evaluation.validate_with_optional_result(false).unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
     let certifications = evaluation.certifications.clone();
     certifications.validate_for_request(request).unwrap();

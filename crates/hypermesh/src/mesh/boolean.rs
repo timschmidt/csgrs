@@ -950,7 +950,7 @@ fn operation_evidence_for_exact_request_from_graph_core(
 ) -> Result<ExactBooleanOperationEvidence, MeshError> {
     let operation = request.operation;
     let support = if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
-        ExactBooleanSupport::SelectedRegionPolicy
+        ExactBooleanSupport::SelectedRegionAssembly
     } else if left.triangles().is_empty() || right.triangles().is_empty() {
         ExactBooleanSupport::CertifiedEmptyOperand
     } else if meshes_are_certified_bounds_disjoint(left, right) {
@@ -984,7 +984,7 @@ fn operation_evidence_for_exact_request_from_graph_core(
             && operation == ExactBooleanOperation::Intersection)
         && !matches!(
             support,
-            ExactBooleanSupport::SelectedRegionPolicy
+            ExactBooleanSupport::SelectedRegionAssembly
                 | ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
                 | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
                 | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference
@@ -1057,7 +1057,7 @@ fn operation_evidence_for_exact_request_from_graph_core(
             left,
             right,
             operation,
-            ExactBooleanSupport::SelectedRegionPolicy,
+            ExactBooleanSupport::SelectedRegionAssembly,
             None,
             None,
         );
