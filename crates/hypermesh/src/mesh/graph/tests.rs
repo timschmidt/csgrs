@@ -270,6 +270,16 @@ fn intersection_graph_retains_coplanar_face_pair_events_internal() {
 
     let split_plan = graph.coplanar_overlap_split_plan(&left, &right).unwrap();
     split_plan.validate_against_sources(&left, &right).unwrap();
+    let mut stale_left = left.clone();
+    stale_left.facts.vertices.clear();
+    let split_error = graph
+        .coplanar_overlap_split_plan(&stale_left, &right)
+        .unwrap_err();
+    assert!(
+        split_error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        "{split_error:?}"
+    );
+    assert_eq!(split_error.blockers()[0].vertex(), Some(0));
     let mut stale_split_plan = split_plan.clone();
     stale_split_plan.graphs.clear();
     assert!(

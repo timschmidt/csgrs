@@ -3556,24 +3556,8 @@ fn edge_points(
     mesh: &ExactMesh,
     edge: [usize; 2],
 ) -> Result<BorrowedEdgePoints<'_>, ExactMeshError> {
-    let start = mesh.view().vertex(edge[0]).map_err(|_| {
-        ExactMeshError::one(
-            ExactMeshBlocker::new(
-                ExactMeshBlockerKind::IndexOutOfBounds,
-                "coplanar overlap edge references a missing start vertex",
-            )
-            .with_vertex(edge[0]),
-        )
-    })?;
-    let end = mesh.view().vertex(edge[1]).map_err(|_| {
-        ExactMeshError::one(
-            ExactMeshBlocker::new(
-                ExactMeshBlockerKind::IndexOutOfBounds,
-                "coplanar overlap edge references a missing end vertex",
-            )
-            .with_vertex(edge[1]),
-        )
-    })?;
+    let start = mesh.view().vertex(edge[0])?;
+    let end = mesh.view().vertex(edge[1])?;
     Ok([start.point(), end.point()])
 }
 
