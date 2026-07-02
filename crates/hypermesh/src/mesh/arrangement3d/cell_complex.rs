@@ -3,7 +3,7 @@
 //! The cell complex keeps arrangement face-cells as the primary topological
 //! unit. Boolean operations are selection rules over labels; mesh
 //! triangulation/export remains a later step with its own approximation or
-//! triangulation policy.
+//! triangulation mode.
 
 pub(crate) mod simplify;
 
@@ -479,7 +479,7 @@ impl ExactArrangement3d {
     /// Label arrangement face-cells by source boundary and opposite winding.
     pub(crate) fn label_regions(
         &self,
-        policy: ExactRegularizationMode,
+        mode: ExactRegularizationMode,
     ) -> Result<ExactLabeledCellComplex, ExactArrangementBlocker> {
         let mut blockers = self.blockers.clone();
         for blocker in self.retained_volume_graph_blockers() {
@@ -510,7 +510,7 @@ impl ExactArrangement3d {
             }
         };
         if !blockers.is_empty()
-            && policy.unresolved == super::regularization::ExactUnresolvedMode::Block
+            && mode.unresolved == super::regularization::ExactUnresolvedMode::Block
         {
             return Err(blockers[0].clone());
         }
@@ -538,12 +538,12 @@ impl ExactLabeledCellComplex {
         &self,
         left: &super::super::Mesh,
         right: &super::super::Mesh,
-        policy: ExactRegularizationMode,
+        mode: ExactRegularizationMode,
     ) -> Result<(), ExactArrangementBlocker> {
         self.validate()?;
-        let replay = ExactArrangement3d::from_meshes_with_regularization_mode(left, right, policy)
+        let replay = ExactArrangement3d::from_meshes_with_regularization_mode(left, right, mode)
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
-            .label_regions(policy)?;
+            .label_regions(mode)?;
         if replay == *self {
             Ok(())
         } else {
@@ -556,17 +556,17 @@ impl ExactLabeledCellComplex {
         &self,
         left: &super::super::Mesh,
         right: &super::super::Mesh,
-        policy: ExactRegularizationMode,
+        mode: ExactRegularizationMode,
     ) -> ExactLabeledCellComplexFreshness {
         if self.validate().is_err() {
             return ExactLabeledCellComplexFreshness::StaleLabeledCells;
         }
         let arrangement =
-            match ExactArrangement3d::from_meshes_with_regularization_mode(left, right, policy) {
+            match ExactArrangement3d::from_meshes_with_regularization_mode(left, right, mode) {
                 Ok(arrangement) => arrangement,
                 Err(_) => return ExactLabeledCellComplexFreshness::SourceReplayBlocked,
             };
-        match arrangement.label_regions(policy) {
+        match arrangement.label_regions(mode) {
             Ok(replay) if replay == *self => ExactLabeledCellComplexFreshness::Current,
             Ok(_) => ExactLabeledCellComplexFreshness::StaleLabeledCells,
             Err(_) => ExactLabeledCellComplexFreshness::LabelingReplayBlocked,
@@ -578,9 +578,9 @@ impl ExactLabeledCellComplex {
         &self,
         left: &super::super::Mesh,
         right: &super::super::Mesh,
-        policy: ExactRegularizationMode,
+        mode: ExactRegularizationMode,
     ) -> ExactRegionOwnershipReport {
-        let freshness = self.freshness_against_sources(left, right, policy);
+        let freshness = self.freshness_against_sources(left, right, mode);
         let left_boundary_faces = self
             .faces
             .iter()
@@ -708,7 +708,7 @@ impl ExactLabeledCellComplex {
     pub(crate) fn select_with_regularization_mode(
         self,
         operation: ExactBooleanOperation,
-        policy: ExactRegularizationMode,
+        mode: ExactRegularizationMode,
     ) -> Result<ExactSelectedCellComplex, ExactArrangementBlocker> {
         let mut blockers = self.blockers;
         if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
@@ -740,13 +740,13 @@ impl ExactLabeledCellComplex {
             )
         } else {
             let selected_faces =
-                select_faces_from_face_labels(&self.faces, operation, policy, &mut blockers);
+                select_faces_from_face_labels(&self.faces, operation, mode, &mut blockers);
             let selected_face_orientations =
                 selected_face_orientations_from_operation(&self.faces, &selected_faces, operation);
             (selected_faces, selected_face_orientations)
         };
         if !blockers.is_empty()
-            && policy.unresolved == super::regularization::ExactUnresolvedMode::Block
+            && mode.unresolved == super::regularization::ExactUnresolvedMode::Block
         {
             return Err(blockers[0].clone());
         }
@@ -939,14 +939,13 @@ impl ExactSelectedCellComplex {
         &self,
         left: &super::super::Mesh,
         right: &super::super::Mesh,
-        policy: ExactRegularizationMode,
+        mode: ExactRegularizationMode,
     ) -> Result<(), ExactArrangementBlocker> {
         self.validate()?;
         let arrangement =
-            ExactArrangement3d::from_meshes_with_regularization_mode(left, right, policy)
+            ExactArrangement3d::from_meshes_with_regularization_mode(left, right, mode)
                 .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
-        let replay =
-            select_arrangement_for_replay(arrangement, left, right, self.operation, policy)?;
+        let replay = select_arrangement_for_replay(arrangement, left, right, self.operation, mode)?;
         if self == &replay {
             return Ok(());
         }
@@ -969,10 +968,10 @@ pub(crate) fn select_arrangement_for_replay(
     left: &super::super::Mesh,
     right: &super::super::Mesh,
     operation: ExactBooleanOperation,
-    policy: ExactRegularizationMode,
+    mode: ExactRegularizationMode,
 ) -> Result<ExactSelectedCellComplex, ExactArrangementBlocker> {
     let topology_report =
-        arrangement.topology_assembly_report_with_regularization_mode(left, right, policy);
+        arrangement.topology_assembly_report_with_regularization_mode(left, right, mode);
     topology_report.validate()?;
     if !matches!(
         topology_report.status,
@@ -987,10 +986,9 @@ pub(crate) fn select_arrangement_for_replay(
         }
         return Err(ExactArrangementBlocker::NonManifoldCellComplex);
     }
-    let labeling_policy =
-        arrangement_cell_complex_labeling_policy(&arrangement, Some(operation), policy);
-    let labeled = arrangement.label_regions(labeling_policy)?;
-    let ownership_report = labeled.region_ownership_report(left, right, labeling_policy);
+    let labeling_mode = arrangement_cell_complex_labeling_mode(&arrangement, Some(operation), mode);
+    let labeled = arrangement.label_regions(labeling_mode)?;
+    let ownership_report = labeled.region_ownership_report(left, right, labeling_mode);
     ownership_report.validate()?;
     let mut selected = if ownership_report.volume_selection_resolves_operation(operation) {
         labeled.select_volume_resolved(operation)
@@ -998,7 +996,7 @@ pub(crate) fn select_arrangement_for_replay(
         if !ownership_report.resolves_operation_selection(operation) {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
-        labeled.select_with_regularization_mode(operation, policy)
+        labeled.select_with_regularization_mode(operation, mode)
     }?;
     selected.topology_assembly_report = Some(topology_report);
     selected.region_ownership_report = Some(ownership_report);
@@ -1285,10 +1283,10 @@ pub(crate) fn arrangement_region_classification_blockers_resolve_operation(
         )
 }
 
-pub(crate) fn arrangement_cell_complex_labeling_policy(
+pub(crate) fn arrangement_cell_complex_labeling_mode(
     arrangement: &ExactArrangement3d,
     operation: Option<ExactBooleanOperation>,
-    policy: ExactRegularizationMode,
+    mode: ExactRegularizationMode,
 ) -> ExactRegularizationMode {
     let volume_resolves_classification = match operation {
         Some(operation) => {
@@ -1318,10 +1316,10 @@ pub(crate) fn arrangement_cell_complex_labeling_policy(
     {
         ExactRegularizationMode {
             unresolved: ExactUnresolvedMode::RetainArtifacts,
-            ..policy
+            ..mode
         }
     } else {
-        policy
+        mode
     }
 }
 
@@ -1414,7 +1412,7 @@ fn label_face_cell(cell: ArrangementFaceCell) -> ExactCellComplexFace {
 fn select_face(
     face: &ExactCellComplexFace,
     operation: ExactBooleanOperation,
-    policy: ExactRegularizationMode,
+    mode: ExactRegularizationMode,
 ) -> Option<bool> {
     if let ExactBooleanOperation::SelectedRegions(selection) = operation {
         return Some(selection.keeps(match face.source {
@@ -1423,7 +1421,7 @@ fn select_face(
         }));
     }
     if face.opposite == ExactOppositeRegionLabel::Boundary {
-        if policy.lower_dimensional != ExactLowerDimensionalMode::Drop {
+        if mode.lower_dimensional != ExactLowerDimensionalMode::Drop {
             return match operation {
                 ExactBooleanOperation::Union => Some(false),
                 ExactBooleanOperation::Intersection => Some(true),
@@ -1463,12 +1461,12 @@ fn select_face(
 fn select_faces_from_face_labels(
     faces: &[ExactCellComplexFace],
     operation: ExactBooleanOperation,
-    policy: ExactRegularizationMode,
+    mode: ExactRegularizationMode,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Vec<usize> {
     let mut selected_faces = Vec::new();
     for (index, face) in faces.iter().enumerate() {
-        match select_face(face, operation, policy) {
+        match select_face(face, operation, mode) {
             Some(true) => selected_faces.push(index),
             Some(false) => {}
             None => blockers.push(ExactArrangementBlocker::UnresolvedRegionClassification),
@@ -2108,7 +2106,7 @@ mod tests {
         arrangement.blockers = vec![ExactArrangementBlocker::UnresolvedRegionClassification];
 
         assert_eq!(
-            arrangement_cell_complex_labeling_policy(
+            arrangement_cell_complex_labeling_mode(
                 &arrangement,
                 None,
                 ExactRegularizationMode::REGULARIZED_SOLID,
@@ -2123,7 +2121,7 @@ mod tests {
             )
         );
         assert_eq!(
-            arrangement_cell_complex_labeling_policy(
+            arrangement_cell_complex_labeling_mode(
                 &arrangement,
                 Some(ExactBooleanOperation::Union),
                 ExactRegularizationMode::REGULARIZED_SOLID,
@@ -2136,7 +2134,7 @@ mod tests {
             .separating_face_cells
             .clear();
         assert_eq!(
-            arrangement_cell_complex_labeling_policy(
+            arrangement_cell_complex_labeling_mode(
                 &arrangement,
                 None,
                 ExactRegularizationMode::REGULARIZED_SOLID,
@@ -2151,7 +2149,7 @@ mod tests {
             )
         );
         assert_eq!(
-            arrangement_cell_complex_labeling_policy(
+            arrangement_cell_complex_labeling_mode(
                 &arrangement,
                 Some(ExactBooleanOperation::Union),
                 ExactRegularizationMode::REGULARIZED_SOLID,

@@ -152,7 +152,7 @@ impl ExactBooleanCertificationSet {
             if let Some(attempt) = self.arrangement_attempt.as_ref() {
                 attempt.retained_gate_reports().is_some()
                     && attempt.operation == request.operation
-                    && attempt.policy == ExactRegularizationMode::REGULARIZED_SOLID
+                    && attempt.mode == ExactRegularizationMode::REGULARIZED_SOLID
                     && attempt.resolves_requested_volume_ownership()
             } else {
                 false
@@ -291,7 +291,7 @@ impl ExactBooleanCertificationSet {
     ) -> bool {
         if let Some(attempt) = self.arrangement_attempt.as_ref() {
             attempt.operation == operation
-                && attempt.policy == ExactRegularizationMode::REGULARIZED_SOLID
+                && attempt.mode == ExactRegularizationMode::REGULARIZED_SOLID
                 && attempt.validate().is_ok()
                 && attempt.materialized_arrangement_cell_complex_output()
         } else {
@@ -305,7 +305,7 @@ impl ExactBooleanCertificationSet {
     ) -> bool {
         if let Some(attempt) = self.arrangement_attempt.as_ref() {
             attempt.operation == operation
-                && attempt.policy == ExactRegularizationMode::REGULARIZED_SOLID
+                && attempt.mode == ExactRegularizationMode::REGULARIZED_SOLID
                 && attempt.validate().is_ok()
                 && attempt.stage == ExactArrangementBooleanStage::Materialized
                 && attempt.decline.is_none()
@@ -640,7 +640,7 @@ impl ExactBooleanCertificationSet {
             || (if let Some(attempt) = self.arrangement_attempt.as_ref() {
                 attempt.retained_gate_reports().is_some()
                     && attempt.operation == operation_evidence.operation
-                    && attempt.policy == ExactRegularizationMode::REGULARIZED_SOLID
+                    && attempt.mode == ExactRegularizationMode::REGULARIZED_SOLID
                     && attempt.resolves_requested_volume_ownership()
                     && {
                         let region_evidence_matches = (operation_evidence.region_count
@@ -966,7 +966,7 @@ impl ExactBooleanEvaluation {
     }
 
     /// Validate the retained evaluation by replaying all source-bound reports
-    /// and the materialized result under the original request policy.
+    /// and the materialized result under the original request mode.
     pub(crate) fn validate_against_sources(
         &self,
         left: &Mesh,
@@ -1441,9 +1441,9 @@ fn test_arrangement_attempt(
     request: ExactBooleanRequest,
     left: &Mesh,
     right: &Mesh,
-    policy: ExactRegularizationMode,
+    mode: ExactRegularizationMode,
 ) -> ExactArrangementBooleanAttempt {
-    assert_eq!(policy, ExactRegularizationMode::REGULARIZED_SOLID);
+    assert_eq!(mode, ExactRegularizationMode::REGULARIZED_SOLID);
     let graph = build_validated_intersection_graph(left, right).unwrap();
     let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
     let mut retained_arrangement = None;
@@ -3059,13 +3059,13 @@ fn axis_aligned_orthogonal_union_reaches_generic_arrangement_triangulation() {
         &right,
         ExactRegularizationMode::REGULARIZED_SOLID,
     );
-    let labeling_policy = arrangement_cell_complex_labeling_policy(
+    let labeling_mode = arrangement_cell_complex_labeling_mode(
         &arrangement,
         Some(ExactBooleanOperation::Union),
         ExactRegularizationMode::REGULARIZED_SOLID,
     );
-    let labeled = arrangement.label_regions(labeling_policy).unwrap();
-    let ownership_report = labeled.region_ownership_report(&left, &right, labeling_policy);
+    let labeled = arrangement.label_regions(labeling_mode).unwrap();
+    let ownership_report = labeled.region_ownership_report(&left, &right, labeling_mode);
     let mut selected = labeled
         .select_with_regularization_mode(
             ExactBooleanOperation::Union,
@@ -4558,7 +4558,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
     );
     assert!(
         retained_attempt.operation == ExactBooleanOperation::Union
-            && retained_attempt.policy == ExactRegularizationMode::REGULARIZED_SOLID
+            && retained_attempt.mode == ExactRegularizationMode::REGULARIZED_SOLID
             && retained_attempt.validate().is_ok()
             && retained_attempt.materialized_arrangement_cell_complex_output()
     );
@@ -4566,7 +4566,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
     relabeled_attempt.operation = ExactBooleanOperation::Difference;
     assert!(
         !(relabeled_attempt.operation == ExactBooleanOperation::Union
-            && relabeled_attempt.policy == ExactRegularizationMode::REGULARIZED_SOLID
+            && relabeled_attempt.mode == ExactRegularizationMode::REGULARIZED_SOLID
             && relabeled_attempt.validate().is_ok()
             && relabeled_attempt.materialized_arrangement_cell_complex_output())
     );
@@ -5535,7 +5535,7 @@ fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
     );
     assert!(
         !graph_requires_boundary_only_contact(&graph, &left, &overlapping_right).unwrap(),
-        "overlapping volume should not be classified as boundary-only policy evidence"
+        "overlapping volume should not be classified as boundary-only mode evidence"
     );
 
     for (operation, support) in [

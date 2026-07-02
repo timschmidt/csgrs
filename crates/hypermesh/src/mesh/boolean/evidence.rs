@@ -3,7 +3,7 @@
 //! These types are internal evidence objects produced by the exact boolean
 //! staging layer. They carry graph counts, predicate certificates, and checked
 //! kernel artifacts instead of collapsing exact topology decisions to `bool`.
-//! Downstream policy layers should consume narrower borrowed kernel views.
+//! Downstream mode layers should consume narrower borrowed kernel views.
 
 use hyperlimit::{
     Aabb3Intersection, ApproximationPolicy, MeshSource, Point3, TriangleLocation,
@@ -18,7 +18,7 @@ use super::super::Mesh;
 use super::super::arrangement3d::cell_complex::simplify::ExactSimplifiedCellComplex;
 use super::super::arrangement3d::cell_complex::{
     ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
-    ExactSelectedCellComplexCounts, arrangement_cell_complex_labeling_policy,
+    ExactSelectedCellComplexCounts, arrangement_cell_complex_labeling_mode,
     validate_selected_gate_reports,
 };
 use super::super::arrangement3d::regularization::ExactArrangementBlocker;
@@ -102,7 +102,7 @@ use hyperlimit::PredicateUse;
 /// Validation failure for a retained exact evidence object.
 ///
 /// Evidence validation checks the retained certificate object itself, not the
-/// original geometry. It lets tests, fuzzing, and downstream policy code assert
+/// original geometry. It lets tests, fuzzing, and downstream mode code assert
 /// that status, blocker kind, graph counts, and retained artifacts agree before
 /// a result is trusted as certified evidence.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -187,17 +187,17 @@ pub(crate) enum ExactEvidenceValidationError {
     /// A shortcut result retained selected-region classification,
     /// triangulation, or assembly artifacts.
     ShortcutResultHasAssemblyArtifacts,
-    /// A certified shortcut or boundary-policy result claimed unresolved graph
+    /// A certified shortcut or boundary-mode result claimed unresolved graph
     /// events after materializing output topology.
     ShortcutResultHasUnknownGraph,
     /// A selected-region result claimed unresolved graph events after
     /// materializing output topology.
     SelectedRegionResultHasUnknownGraph,
     /// A selected-region result retained output triangles from a source side
-    /// excluded by its declared selection policy.
+    /// excluded by its declared selection mode.
     SelectedRegionAssemblyViolatesSelection,
     /// A selected-region result did not retain materialized evidence for a
-    /// source region selected by its declared policy.
+    /// source region selected by its declared mode.
     SelectedRegionAssemblyMissingSelectedRegion,
     /// A volumetric materialized result retained output triangles that do not
     /// match the declared operation's per-cell volumetric retention mode.
@@ -326,7 +326,7 @@ pub(crate) struct ExactArrangementBooleanAttempt {
     /// Operation attempted.
     pub(crate) operation: ExactBooleanOperation,
     /// Regularization mode used by the arrangement pipeline.
-    pub(crate) policy: ExactRegularizationMode,
+    pub(crate) mode: ExactRegularizationMode,
     /// Output validation mode used by shortcut recovery and final mesh copy.
     pub(crate) output_validation: MeshValidationMode,
     /// Furthest stage reached.
@@ -389,12 +389,12 @@ pub(crate) struct ExactArrangementBooleanAttempt {
 impl ExactArrangementBooleanAttempt {
     pub(crate) fn new(
         request: ExactBooleanRequest,
-        policy: ExactRegularizationMode,
+        mode: ExactRegularizationMode,
         stage: ExactArrangementBooleanStage,
     ) -> Self {
         Self {
             operation: request.operation,
-            policy,
+            mode,
             output_validation: request.validation,
             stage,
             decline: None,
@@ -528,7 +528,7 @@ impl ExactArrangementBooleanAttempt {
     pub(crate) fn materialized_output_matches_replay(&self, replay: &Self) -> bool {
         let same_source_output = self.operation == replay.operation
             && self.output_validation == replay.output_validation
-            && self.policy == replay.policy
+            && self.mode == replay.mode
             && self.materialized_arrangement_cell_complex_output()
             && replay.materialized_arrangement_cell_complex_output()
             && self.output_vertices == replay.output_vertices
@@ -616,11 +616,11 @@ impl ExactArrangementBooleanAttempt {
     pub(crate) fn validate_for_request_regularization_mode(
         &self,
         request: ExactBooleanRequest,
-        policy: ExactRegularizationMode,
+        mode: ExactRegularizationMode,
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         if self.operation != request.operation
-            || self.policy != policy
+            || self.mode != mode
             || self.output_validation != request.validation
         {
             return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
@@ -1126,7 +1126,7 @@ fn checked_region_facts(
     }
     // `region_count` is a retained combinatorial fact, not a display counter.
     // It must match the unique region handles covered by plane classifications
-    // so a later winding policy cannot silently consume stale or relabeled
+    // so a later winding mode cannot silently consume stale or relabeled
     if unique_regions.len() != region_count {
         return Err(ExactEvidenceValidationError::RegionCountMismatch);
     }
@@ -1228,7 +1228,7 @@ fn validate_coplanar_volumetric_evidence(
 pub(crate) struct ExactBooleanResult {
     /// Declared production path for this result.
     pub(crate) kind: ExactBooleanResultKind,
-    /// Whether graph extraction contained unknown events before policy checks.
+    /// Whether graph extraction contained unknown events before mode checks.
     pub(crate) graph_had_unknowns: bool,
     /// Certified classifications of split regions against opposite face
     /// planes.
@@ -1273,7 +1273,7 @@ impl ExactBooleanResult {
 ///
 /// Result kind is explicit so validation does not infer semantic intent from
 /// empty vectors. That distinction matters for exact computing: selected-region
-/// assembly, certified shortcuts, and boundary-policy projections are different
+/// assembly, certified shortcuts, and boundary-mode projections are different
 /// result shapes even when they all produce an empty mesh.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ExactBooleanResultKind {
@@ -1486,7 +1486,7 @@ impl ExactBooleanResult {
     /// Every retained triangulation must also have at least one matching
     /// retained region/plane classification for its source side and face, so
     /// the mesh boundary cannot contain triangulated topology disconnected from
-    /// the exact side facts prepared for winding policy. Conversely, every
+    /// the exact side facts prepared for winding mode. Conversely, every
     /// retained region/plane classification must belong to a triangulated
     /// source region so stale or relabeled side facts cannot be interpreted as
     /// part of the output proof. Selected-region reports also require those
@@ -2189,13 +2189,13 @@ impl ExactBooleanResult {
         if self.topology_assembly_report.as_ref() != Some(&replay_topology) {
             return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
-        let ownership_policy = arrangement_cell_complex_labeling_policy(
+        let ownership_mode = arrangement_cell_complex_labeling_mode(
             arrangement,
             operation,
             ExactRegularizationMode::REGULARIZED_SOLID,
         );
         let replay_ownership = arrangement
-            .region_ownership_report_with_regularization_mode(left, right, ownership_policy)
+            .region_ownership_report_with_regularization_mode(left, right, ownership_mode)
             .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         if self.region_ownership_report.as_ref() != Some(&replay_ownership) {
             return Err(ExactEvidenceValidationError::SourceReplayMismatch);
@@ -2754,7 +2754,7 @@ pub(crate) struct ExactBooleanCertificationSet {
     pub(super) regularized_solid: ExactRegularizedSolidBooleanFacts,
     /// Exact graph refinement status.
     pub(super) refinement: ExactRefinementReport,
-    /// Boundary-contact policy status.
+    /// Boundary-contact mode status.
     pub(super) boundary_touching: ExactBoundaryTouchingReport,
     /// Open-surface disjointness shortcut status.
     pub(super) open_surface_disjoint: ExactOpenSurfaceDisjointReport,
@@ -3988,10 +3988,10 @@ fn validate_output_mesh_matches_assembly(
 /// computing as an application-level contract: unresolved combinatorics must be
 /// represented explicitly instead of being decided by approximate arithmetic.
 /// These variants therefore distinguish executable certified shortcuts from
-/// cases whose split regions are available but still need exact winding policy.
+/// cases whose split regions are available but still need exact winding mode.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ExactBooleanSupport {
-    /// The request is an explicit selected-region assembly policy.
+    /// The request is an explicit selected-region assembly mode.
     SelectedRegionPolicy,
     /// A named operation was answered by exact empty-operand semantics.
     CertifiedEmptyOperand,
@@ -4057,7 +4057,7 @@ pub(crate) enum ExactBooleanSupport {
     /// includes coplanar touching and the closed-solid case where positive-area
     /// coplanar overlaps plus adjacent contact-only candidates are proven
     /// boundary-only by exact winding evidence. A caller must choose a
-    /// boundary/shared-feature policy before this can become named boolean
+    /// boundary/shared-feature mode before this can become named boolean
     /// output.
     RequiresBoundaryOnlyContact,
     /// Coplanar positive-area overlap is certified, but the requested named
@@ -4071,7 +4071,7 @@ pub(crate) enum ExactBooleanSupport {
     /// yet certified for this nontrivial overlap.
     RequiresCertifiedWinding,
     /// Graph extraction retained unresolved predicate events; callers must
-    /// refine, reject, or use a policy that explicitly accepts uncertainty.
+    /// refine, reject, or use a mode that explicitly accepts uncertainty.
     UnresolvedGraph,
 }
 
@@ -4177,7 +4177,7 @@ pub(crate) struct ExactBooleanOperationEvidence {
     /// planes.
     pub(super) region_classifications: Vec<FaceRegionPlaneClassification>,
     /// Structured explanation for named operations that are certified enough
-    /// to inspect but not yet executable by the selected policy.
+    /// to inspect but not yet executable by the selected mode.
     pub(super) blocker: Option<ExactBooleanBlocker>,
     /// Checked coplanar-overlap evidence retained when operation evidence stops
     /// at a planar arrangement boundary.
@@ -5015,15 +5015,15 @@ impl ExactBooleanOperationEvidence {
     }
 }
 
-/// Missing exact policy or refinement that blocks named boolean output.
+/// Missing exact mode or refinement that blocks named boolean output.
 ///
 /// unresolved application-layer topology as first-class state: a caller should
 /// be able to distinguish "needs exact winding" from "needs a boundary output
-/// policy" or "needs predicate refinement" without interpreting prose
+/// mode" or "needs predicate refinement" without interpreting prose
 /// diagnostics.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) struct ExactBooleanBlocker {
-    /// Missing policy or refinement class.
+    /// Missing mode or refinement class.
     pub(super) kind: ExactBooleanBlockerKind,
     /// Number of retained non-coplanar candidate face pairs.
     pub(super) candidate_pairs: usize,
@@ -5190,9 +5190,9 @@ impl ExactBooleanBlocker {
 /// Exact boolean operation evidence blocker kind.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ExactBooleanBlockerKind {
-    /// Predicate or equality refinement is required before policy can run.
+    /// Predicate or equality refinement is required before mode can run.
     Refinement,
-    /// A lower-dimensional shared-boundary output policy is required.
+    /// A lower-dimensional shared-boundary output mode is required.
     BoundaryOnlyContact,
     /// A planar arrangement output model is required for coplanar surfaces.
     PlanarArrangement,
@@ -5205,16 +5205,16 @@ pub(crate) enum ExactBooleanBlockerKind {
 
 /// Certification status for exact refinement operation_evidence.
 ///
-/// Refinement is the stage before application-level topology policy: exact
+/// Refinement is the stage before application-level topology mode: exact
 /// graph extraction retained an unknown predicate outcome or a construction
 /// whose endpoint predicates certified an event but whose exact point/parameter
-/// from winding or planar-arrangement policy, so it has a separate report.
+/// from winding or planar-arrangement mode, so it has a separate report.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[cfg(test)]
 pub(crate) enum ExactRefinementStatus {
     /// The graph contains no retained unknowns or construction failures.
     NotRequired,
-    /// The graph contains retained evidence that must be refined before policy.
+    /// The graph contains retained evidence that must be refined before mode.
     Required,
 }
 
@@ -5224,7 +5224,7 @@ pub(crate) enum ExactRefinementStatus {
 /// only whether exact graph construction is blocked by unknown predicates or
 /// failed exact constructions, retaining the graph counts that justify the
 /// answer. Later boundary, planar-arrangement, or winding reports should only
-/// run as policy once this report is not required.
+/// run as mode once this report is not required.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg(test)]
 pub(crate) struct ExactRefinementReport {
@@ -5869,9 +5869,9 @@ pub(crate) enum ExactBoundaryTouchingStatus {
 
 /// Auditable report for certified boundary-only contacts.
 ///
-/// Boundary-only contacts require a caller-selected output policy because a
+/// Boundary-only contacts require a caller-selected output mode because a
 /// triangle mesh cannot encode the lower-dimensional intersection itself.
-/// This report retains the exact graph counts that justify that policy gap,
+/// This report retains the exact graph counts that justify that mode gap,
 /// computation sense.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ExactBoundaryTouchingReport {
@@ -6235,7 +6235,7 @@ impl ExactBoundaryTouchingReport {
 
     /// Validate this boundary-touching report against the source meshes.
     ///
-    /// Boundary-only contact is a policy boundary over a resolved exact graph.
+    /// Boundary-only contact is a mode boundary over a resolved exact graph.
     /// Recomputing the report from the source meshes ensures the retained
     pub(crate) fn validate_against_sources(
         &self,
@@ -6257,7 +6257,7 @@ impl ExactBoundaryTouchingReport {
 /// Certification status for planar-arrangement blockers.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ExactPlanarArrangementStatus {
-    /// Selected-region assembly already carries its own explicit region policy.
+    /// Selected-region assembly already carries its own explicit region mode.
     NotNamedOperation,
     /// Exact graph extraction retained unresolved events.
     GraphUnknowns,
@@ -6312,7 +6312,7 @@ impl ExactPlanarArrangementReport {
             return Err(ExactEvidenceValidationError::GraphUnknownStatusMismatch);
         }
         // A graph-unknown arrangement report has not reached planar-cell
-        // policy. It is still blocked on predicate/construction refinement, a
+        // mode. It is still blocked on predicate/construction refinement, a
         let expected_kind = match self.status {
             ExactPlanarArrangementStatus::GraphUnknowns => ExactBooleanBlockerKind::Refinement,
             ExactPlanarArrangementStatus::BoundaryOnlyContactRequired => {
@@ -6434,12 +6434,12 @@ impl ExactPlanarArrangementReport {
 /// Certification status for the remaining exact winding evidence.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ExactWindingEvidenceStatus {
-    /// Selected-region assembly already carries its own explicit region policy.
+    /// Selected-region assembly already carries its own explicit region mode.
     NotNamedOperation,
     /// Exact graph extraction retained unresolved events.
     GraphUnknowns,
     /// Retained graph pairs are boundary-only contacts and need boundary
-    /// output policy rather than winding.
+    /// output mode rather than winding.
     BoundaryOnlyContactRequired,
     /// Retained graph pairs are positive-area coplanar overlaps and need a
     /// planar arrangement output model rather than volumetric winding.
@@ -6507,7 +6507,7 @@ pub(crate) enum ExactWindingEvidenceStatus {
 /// This report is the certified boundary immediately before full named
 /// union/intersection/difference winding semantics. It retains exact graph
 /// counts and checked split-region plane classifications, but deliberately
-/// topological policy remains explicit state instead of a hidden tolerance
+/// topological mode remains explicit state instead of a hidden tolerance
 /// decision.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ExactWindingEvidenceReport {
@@ -6528,7 +6528,7 @@ pub(crate) struct ExactWindingEvidenceReport {
     /// Relation counts for the blocker represented by this report.
     pub(super) blocker: ExactBooleanBlocker,
     /// Checked coplanar-overlap evidence retained when winding is blocked by
-    /// planar-cell extraction rather than by volumetric inside/outside policy.
+    /// planar-cell extraction rather than by volumetric inside/outside mode.
     pub(super) coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
     /// Source-aware coplanar volumetric-cell evidence retained when evidence
     /// is blocked by, or has just consumed, coplanar source-face cells.

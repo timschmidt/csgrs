@@ -1231,11 +1231,11 @@ impl ExactArrangement3d {
     pub(crate) fn from_meshes_with_regularization_mode(
         left: &Mesh,
         right: &Mesh,
-        policy: ExactRegularizationMode,
+        mode: ExactRegularizationMode,
     ) -> Result<Self, MeshError> {
         let graph = build_validated_intersection_graph(left, right)?;
         Self::from_source_certified_intersection_graph_with_regularization_mode(
-            graph, left, right, policy,
+            graph, left, right, mode,
         )
     }
 
@@ -1248,7 +1248,7 @@ impl ExactArrangement3d {
         graph: ExactIntersectionGraph,
         left: &Mesh,
         right: &Mesh,
-        policy: ExactRegularizationMode,
+        mode: ExactRegularizationMode,
     ) -> Result<Self, MeshError> {
         let mut blockers = match graph.validate() {
             Ok(()) => Vec::new(),
@@ -1313,7 +1313,7 @@ impl ExactArrangement3d {
             }
         }
         let lower_dimensional_artifacts =
-            lower_dimensional_artifacts(&graph, left, right, policy, &mut blockers);
+            lower_dimensional_artifacts(&graph, left, right, mode, &mut blockers);
         let face_plane_arrangements = face_plane_arrangements(
             topology.as_ref(),
             left,
@@ -1338,7 +1338,7 @@ impl ExactArrangement3d {
         let face_cells = arrangement_face_cells(
             left,
             right,
-            policy,
+            mode,
             region_plan.as_ref(),
             &carrier_plane_overlays,
             &face_plane_arrangements,
@@ -1368,10 +1368,10 @@ impl ExactArrangement3d {
                 })
             });
         let regularized_closed_solid_sheet_complex = has_mixed_source_open_sheet_complex
-            && policy == ExactRegularizationMode::REGULARIZED_SOLID
+            && mode == ExactRegularizationMode::REGULARIZED_SOLID
             && left.facts().mesh.closed_manifold
             && right.facts().mesh.closed_manifold;
-        let retained_sheet_artifact_complex = policy == ExactRegularizationMode::RETAIN_ARTIFACTS;
+        let retained_sheet_artifact_complex = mode == ExactRegularizationMode::RETAIN_ARTIFACTS;
         if has_mixed_source_open_sheet_complex
             && !regularized_closed_solid_sheet_complex
             && !retained_sheet_artifact_complex
@@ -1416,7 +1416,7 @@ impl ExactArrangement3d {
                 }
             }
         }
-        if policy == ExactRegularizationMode::REGULARIZED_SOLID
+        if mode == ExactRegularizationMode::REGULARIZED_SOLID
             && (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
             && shells_or_regions
                 .as_ref()
@@ -1539,7 +1539,7 @@ impl ExactArrangement3d {
         &self,
         left: &Mesh,
         right: &Mesh,
-        policy: ExactRegularizationMode,
+        mode: ExactRegularizationMode,
     ) -> ExactArrangementFreshness {
         if self.validate().is_err() {
             return ExactArrangementFreshness::StaleArrangement;
@@ -1555,7 +1555,7 @@ impl ExactArrangement3d {
             self.graph.clone(),
             left,
             right,
-            policy,
+            mode,
         ) {
             Ok(replay) if replay == *self => ExactArrangementFreshness::Current,
             Ok(_) => ExactArrangementFreshness::StaleArrangement,
@@ -1569,10 +1569,9 @@ impl ExactArrangement3d {
         &self,
         left: &Mesh,
         right: &Mesh,
-        policy: ExactRegularizationMode,
+        mode: ExactRegularizationMode,
     ) -> ExactTopologyAssemblyReport {
-        let freshness =
-            self.freshness_against_sources_with_regularization_mode(left, right, policy);
+        let freshness = self.freshness_against_sources_with_regularization_mode(left, right, mode);
         let status = match freshness {
             ExactArrangementFreshness::SourceReplayBlocked => {
                 ExactTopologyAssemblyStatus::SourceReplayBlocked
@@ -1706,16 +1705,16 @@ impl ExactArrangement3d {
         &self,
         left: &Mesh,
         right: &Mesh,
-        policy: ExactRegularizationMode,
+        mode: ExactRegularizationMode,
     ) -> Result<ExactRegionOwnershipReport, ExactArrangementBlocker> {
-        let labeling_policy = ExactRegularizationMode {
+        let labeling_mode = ExactRegularizationMode {
             unresolved: ExactUnresolvedMode::RetainArtifacts,
-            ..policy
+            ..mode
         };
-        let labeled = self.label_regions(labeling_policy)?;
-        let mut report = labeled.region_ownership_report(left, right, labeling_policy);
+        let labeled = self.label_regions(labeling_mode)?;
+        let mut report = labeled.region_ownership_report(left, right, labeling_mode);
         report.freshness =
-            match self.freshness_against_sources_with_regularization_mode(left, right, policy) {
+            match self.freshness_against_sources_with_regularization_mode(left, right, mode) {
                 ExactArrangementFreshness::Current => ExactLabeledCellComplexFreshness::Current,
                 ExactArrangementFreshness::SourceReplayBlocked => {
                     ExactLabeledCellComplexFreshness::SourceReplayBlocked
@@ -2209,7 +2208,7 @@ fn push_arrangement_edge(
 fn arrangement_face_cells(
     left: &Mesh,
     right: &Mesh,
-    policy: ExactRegularizationMode,
+    mode: ExactRegularizationMode,
     region_plan: Option<&ExactFaceRegionPlan>,
     carrier_plane_overlays: &[ArrangementCarrierPlaneOverlay],
     face_plane_arrangements: &[ArrangementFacePlaneArrangement],
@@ -2234,7 +2233,7 @@ fn arrangement_face_cells(
             if skipped_carriers.contains(&carrier) || skipped_face_arrangements.contains(&carrier) {
                 None
             } else {
-                Some(face_cell_from_region(region, left, right, policy, blockers))
+                Some(face_cell_from_region(region, left, right, mode, blockers))
             }
         }));
     } else {
@@ -2250,7 +2249,7 @@ fn arrangement_face_cells(
                 face.vertex_indices(),
                 left,
                 right,
-                policy,
+                mode,
                 blockers,
             ) {
                 cells.push(cell);
@@ -2268,7 +2267,7 @@ fn arrangement_face_cells(
                 face.vertex_indices(),
                 left,
                 right,
-                policy,
+                mode,
                 blockers,
             ) {
                 cells.push(cell);
@@ -2283,7 +2282,7 @@ fn arrangement_face_cells(
                 face,
                 left,
                 right,
-                policy,
+                mode,
                 blockers,
             ) {
                 cells.push(cell);
@@ -2301,7 +2300,7 @@ fn arrangement_face_cells(
                     MeshSide::Left,
                     left,
                     right,
-                    policy,
+                    mode,
                     blockers,
                 )
             {
@@ -2316,7 +2315,7 @@ fn arrangement_face_cells(
                     MeshSide::Right,
                     left,
                     right,
-                    policy,
+                    mode,
                     blockers,
                 )
             {
@@ -2610,10 +2609,10 @@ fn lower_dimensional_artifacts(
     graph: &ExactIntersectionGraph,
     left: &Mesh,
     right: &Mesh,
-    policy: ExactRegularizationMode,
+    mode: ExactRegularizationMode,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Vec<ArrangementLowerDimensionalArtifact> {
-    if policy.lower_dimensional == ExactLowerDimensionalMode::Drop {
+    if mode.lower_dimensional == ExactLowerDimensionalMode::Drop {
         return Vec::new();
     }
 
@@ -3016,7 +3015,7 @@ fn face_cell_from_face_plane_arrangement(
     face: usize,
     left: &Mesh,
     right: &Mesh,
-    policy: ExactRegularizationMode,
+    mode: ExactRegularizationMode,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFaceCell> {
     let mesh = arrangement.side.mesh(left, right);
@@ -3079,7 +3078,7 @@ fn face_cell_from_face_plane_arrangement(
         representative,
         left,
         right,
-        policy,
+        mode,
         blockers,
     ));
 
@@ -3103,7 +3102,7 @@ fn face_cell_from_carrier_plane_overlay(
     side: MeshSide,
     left: &Mesh,
     right: &Mesh,
-    policy: ExactRegularizationMode,
+    mode: ExactRegularizationMode,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFaceCell> {
     let carrier_face = match side {
@@ -3147,7 +3146,7 @@ fn face_cell_from_carrier_plane_overlay(
         representative,
         left,
         right,
-        policy,
+        mode,
         blockers,
     ));
 
@@ -4636,7 +4635,7 @@ fn face_cell_from_region(
     region: &FaceRegionBoundary,
     left: &Mesh,
     right: &Mesh,
-    policy: ExactRegularizationMode,
+    mode: ExactRegularizationMode,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> ArrangementFaceCell {
     let boundary = region
@@ -4669,7 +4668,7 @@ fn face_cell_from_region(
     let representative = face_region_interior_representative(region, left, right, blockers)
         .or_else(|| representative_from_boundary_nodes(&region.boundary));
     let opposite = representative
-        .map(|point| classify_opposite(region.side, point, left, right, policy, blockers));
+        .map(|point| classify_opposite(region.side, point, left, right, mode, blockers));
     ArrangementFaceCell {
         carrier: ArrangementFaceCarrier {
             side: region.side,
@@ -4688,7 +4687,7 @@ fn face_cell_from_original_triangle(
     triangle: [usize; 3],
     left: &Mesh,
     right: &Mesh,
-    policy: ExactRegularizationMode,
+    mode: ExactRegularizationMode,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFaceCell> {
     let mesh = side.mesh(left, right);
@@ -4723,8 +4722,8 @@ fn face_cell_from_original_triangle(
         )
     });
     let opposite =
-        representative.map(|point| classify_opposite(side, point, left, right, policy, blockers));
-    if opposite.is_none() && policy.unresolved == ExactUnresolvedMode::Block {
+        representative.map(|point| classify_opposite(side, point, left, right, mode, blockers));
+    if opposite.is_none() && mode.unresolved == ExactUnresolvedMode::Block {
         blockers.push(ExactArrangementBlocker::UnresolvedRegionClassification);
     }
     Some(ArrangementFaceCell {
@@ -4880,7 +4879,7 @@ fn classify_opposite(
     point: Point3,
     left: &Mesh,
     right: &Mesh,
-    policy: ExactRegularizationMode,
+    mode: ExactRegularizationMode,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> ArrangementOppositeClassification {
     let target = match side {
@@ -4903,7 +4902,7 @@ fn classify_opposite(
         winding.relation,
         ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed
     ) && convex_certification.is_none()
-        && policy.unresolved == ExactUnresolvedMode::Block
+        && mode.unresolved == ExactUnresolvedMode::Block
     {
         blockers.push(ExactArrangementBlocker::UnresolvedRegionClassification);
     }

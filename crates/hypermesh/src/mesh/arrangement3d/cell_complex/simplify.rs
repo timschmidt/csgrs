@@ -192,15 +192,15 @@ impl ExactSimplifiedCellComplex {
         &self,
         left: &Mesh,
         right: &Mesh,
-        policy: ExactRegularizationMode,
+        mode: ExactRegularizationMode,
     ) -> Result<(), ExactArrangementBlocker> {
         self.validate()?;
         let arrangement =
-            ExactArrangement3d::from_meshes_with_regularization_mode(left, right, policy)
+            ExactArrangement3d::from_meshes_with_regularization_mode(left, right, mode)
                 .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
         let replay = simplify_selected_cell_complex(
-            select_arrangement_for_replay(arrangement, left, right, self.operation, policy)?,
-            policy,
+            select_arrangement_for_replay(arrangement, left, right, self.operation, mode)?,
+            mode,
         )?;
         if self == &replay {
             return Ok(());
@@ -263,7 +263,7 @@ fn validate_simplified_face(face: &ExactSimplifiedFaceCell) -> Result<(), ExactA
 /// Simplify a selected cell complex by exact canonicalization.
 pub(crate) fn simplify_selected_cell_complex(
     selected: ExactSelectedCellComplex,
-    policy: ExactRegularizationMode,
+    mode: ExactRegularizationMode,
 ) -> Result<ExactSimplifiedCellComplex, ExactArrangementBlocker> {
     let gate_counts = selected_cell_complex_gate_counts(
         &selected.faces,
@@ -533,7 +533,7 @@ pub(crate) fn simplify_selected_cell_complex(
     });
 
     if !blockers.is_empty()
-        && policy.unresolved == super::super::regularization::ExactUnresolvedMode::Block
+        && mode.unresolved == super::super::regularization::ExactUnresolvedMode::Block
     {
         return Err(blockers[0].clone());
     }

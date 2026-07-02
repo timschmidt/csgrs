@@ -792,10 +792,10 @@ pub(super) fn replay_regularized_arrangement_attempt(
     retained_arrangement: &mut Option<ExactArrangement3d>,
     retained_attempt: &mut Option<ExactArrangementBooleanAttempt>,
 ) -> Result<(), MeshError> {
-    let policy = ExactRegularizationMode::REGULARIZED_SOLID;
+    let mode = ExactRegularizationMode::REGULARIZED_SOLID;
     if let Some(attempt) = retained_attempt.as_ref() {
         attempt
-            .validate_for_request_regularization_mode(request, policy)
+            .validate_for_request_regularization_mode(request, mode)
             .and_then(|()| attempt.validate_against_sources_for_request(left, right, request))
             .map_err(|error| {
                 retained_evidence_validation_error(
@@ -813,7 +813,7 @@ pub(super) fn replay_regularized_arrangement_attempt(
                 left,
                 right,
                 request,
-                policy,
+                mode,
                 true,
             )? {
                 ArrangementCellComplexOutcome::Materialized(_, attempt)
@@ -823,7 +823,7 @@ pub(super) fn replay_regularized_arrangement_attempt(
                 left,
                 right,
                 request,
-                policy,
+                mode,
                 shortcut_facts,
                 attempt,
             )?
@@ -832,7 +832,7 @@ pub(super) fn replay_regularized_arrangement_attempt(
             graph.clone(),
             left,
             right,
-            policy,
+            mode,
         ) {
             Ok(arrangement) => {
                 arrangement.validate().map_err(|blocker| {
@@ -847,7 +847,7 @@ pub(super) fn replay_regularized_arrangement_attempt(
                     left,
                     right,
                     request,
-                    policy,
+                    mode,
                     true,
                 )? {
                     ArrangementCellComplexOutcome::Materialized(_, attempt)
@@ -858,7 +858,7 @@ pub(super) fn replay_regularized_arrangement_attempt(
                     left,
                     right,
                     request,
-                    policy,
+                    mode,
                     shortcut_facts,
                     attempt,
                 )?
@@ -868,7 +868,7 @@ pub(super) fn replay_regularized_arrangement_attempt(
                     left,
                     right,
                     request,
-                    policy,
+                    mode,
                     shortcut_facts,
                 )? {
                     attempt
@@ -879,7 +879,7 @@ pub(super) fn replay_regularized_arrangement_attempt(
         },
     };
     attempt
-        .validate_for_request_regularization_mode(request, policy)
+        .validate_for_request_regularization_mode(request, mode)
         .map_err(|error| {
             retained_evidence_validation_error(
                 RETAINED_EVIDENCE_REPLAY_CONTEXT,

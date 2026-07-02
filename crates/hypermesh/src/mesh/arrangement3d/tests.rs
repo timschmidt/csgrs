@@ -4,7 +4,7 @@ use crate::mesh::arrangement3d::cell_complex::simplify::{
     simplify_selected_cell_complex, triangulate_simplified_cell_complex,
 };
 use crate::mesh::arrangement3d::cell_complex::{
-    ExactRegionOwnershipStatus, arrangement_cell_complex_labeling_policy,
+    ExactRegionOwnershipStatus, arrangement_cell_complex_labeling_mode,
 };
 use crate::mesh::arrangement3d::loop_triangulation::projected_loop_orientation;
 use crate::mesh::boolean::ExactBooleanOperation;
@@ -1868,13 +1868,13 @@ fn selected_regions_materialize_open_coplanar_overlap_without_winding_blocker() 
     let operation = ExactBooleanOperation::SelectedRegions(
         crate::mesh::boolean::region::ExactRegionSelection::KeepLeft,
     );
-    let labeling_policy = arrangement_cell_complex_labeling_policy(
+    let labeling_mode = arrangement_cell_complex_labeling_mode(
         &arrangement,
         Some(operation),
         ExactRegularizationMode::RETAIN_ARTIFACTS,
     );
     let selected = arrangement
-        .label_regions(labeling_policy)
+        .label_regions(labeling_mode)
         .unwrap()
         .select_with_regularization_mode(operation, ExactRegularizationMode::RETAIN_ARTIFACTS)
         .unwrap();

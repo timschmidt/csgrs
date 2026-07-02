@@ -6,13 +6,13 @@
 //! triangulate them through exact `hypertri`, assemble exact 3D
 //! output triangles, and validate the resulting [`Mesh`].
 //!
-//! The operation policy is deliberately explicit. Named booleans converge on
+//! The operation mode is deliberately explicit. Named booleans converge on
 //! the graph-backed arrangement/cell-complex path; shortcut materializers stay
 //! only where they can prove coverage for cases that path does not yet support.
-//! Remaining split-region cases require a selected-region policy or an explicit
+//! Remaining split-region cases require a selected-region mode or an explicit
 //! unsupported report instead of a silently approximate
 //! union/intersection/difference decision. Topology decisions must be certified
-//! or represented as policy choices or unknowns.
+//! or represented as mode choices or unknowns.
 
 pub(crate) mod adjacent;
 pub(crate) mod affine_solid;
@@ -43,7 +43,7 @@ use super::arrangement3d::cell_complex::simplify::{
     ExactSimplifiedCellComplex, simplify_selected_cell_complex, triangulate_simplified_cell_complex,
 };
 use super::arrangement3d::cell_complex::{
-    ExactLabeledCellComplex, ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy,
+    ExactLabeledCellComplex, ExactRegionOwnershipReport, arrangement_cell_complex_labeling_mode,
     arrangement_region_classification_blockers_resolve_operation, select_arrangement_for_replay,
 };
 use super::arrangement3d::loop_triangulation::{
@@ -196,12 +196,12 @@ impl ExactArrangementBooleanAttempt {
                 left,
                 right,
                 request,
-                self.policy,
+                self.mode,
                 &shortcut_facts,
             )
             .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
         {
-            replay.validate_for_request_regularization_mode(request, self.policy)?;
+            replay.validate_for_request_regularization_mode(request, self.mode)?;
             return if self == &replay || self.materialized_output_matches_replay(&replay) {
                 Ok(())
             } else {
@@ -209,9 +209,7 @@ impl ExactArrangementBooleanAttempt {
             };
         }
         let replay = match ExactArrangement3d::from_meshes_with_regularization_mode(
-            left,
-            right,
-            self.policy,
+            left, right, self.mode,
         ) {
             Ok(arrangement) => {
                 let attempt = match run_arrangement_cell_complex_attempt_from_arrangement(
@@ -219,7 +217,7 @@ impl ExactArrangementBooleanAttempt {
                     left,
                     right,
                     request,
-                    self.policy,
+                    self.mode,
                     true,
                 ) {
                     Ok(
@@ -230,7 +228,7 @@ impl ExactArrangementBooleanAttempt {
                         left,
                         right,
                         request,
-                        self.policy,
+                        self.mode,
                         &shortcut_facts,
                     )
                     .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
@@ -240,7 +238,7 @@ impl ExactArrangementBooleanAttempt {
                     left,
                     right,
                     request,
-                    self.policy,
+                    self.mode,
                     &shortcut_facts,
                     attempt,
                 )
@@ -250,13 +248,13 @@ impl ExactArrangementBooleanAttempt {
                 left,
                 right,
                 request,
-                self.policy,
+                self.mode,
                 &shortcut_facts,
             )
             .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?,
         };
-        replay.validate_for_request_regularization_mode(request, self.policy)?;
+        replay.validate_for_request_regularization_mode(request, self.mode)?;
         if self == &replay || self.materialized_output_matches_replay(&replay) {
             Ok(())
         } else {
@@ -269,7 +267,7 @@ fn arrangement_cell_complex_attempt_or_shortcut(
     left: &Mesh,
     right: &Mesh,
     request: ExactBooleanRequest,
-    policy: ExactRegularizationMode,
+    mode: ExactRegularizationMode,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
     attempt: ExactArrangementBooleanAttempt,
 ) -> Result<ExactArrangementBooleanAttempt, MeshError> {
@@ -280,7 +278,7 @@ fn arrangement_cell_complex_attempt_or_shortcut(
         left,
         right,
         request,
-        policy,
+        mode,
         shortcut_facts,
     )?
     .unwrap_or(attempt))
@@ -431,7 +429,7 @@ impl ExactBooleanOperation {
     }
 }
 
-/// Complete policy for an exact boolean request.
+/// Complete mode for an exact boolean request.
 ///
 /// The request keeps operation semantics and output validation together so
 /// operation_evidence, certification, and materialization replay the same exact
@@ -799,19 +797,18 @@ fn replay_generic_arrangement_cell_complex_result(
         return Ok(None);
     }
     validate_graph_source_replay(graph, left, right)?;
-    let policy = ExactRegularizationMode::REGULARIZED_SOLID;
+    let mode = ExactRegularizationMode::REGULARIZED_SOLID;
     let arrangement =
         match ExactArrangement3d::from_source_certified_intersection_graph_with_regularization_mode(
             graph.clone(),
             left,
             right,
-            policy,
+            mode,
         ) {
             Ok(arrangement) => arrangement,
             Err(error) => return arrangement_error_declines_or_replays_stale(error),
         };
-    let selected = match select_arrangement_for_replay(arrangement, left, right, operation, policy)
-    {
+    let selected = match select_arrangement_for_replay(arrangement, left, right, operation, mode) {
         Ok(selected) => selected,
         Err(blocker) => {
             return arrangement_blocker_declines_or_replays_stale(
@@ -820,7 +817,7 @@ fn replay_generic_arrangement_cell_complex_result(
             );
         }
     };
-    let simplified = match simplify_selected_cell_complex(selected, policy) {
+    let simplified = match simplify_selected_cell_complex(selected, mode) {
         Ok(simplified) => simplified,
         Err(blocker) => {
             return arrangement_blocker_declines_or_replays_stale(
@@ -2780,7 +2777,7 @@ fn materialize_arrangement_lower_dimensional_intersection_from_graph(
 ///
 /// This path is still strict about general winding. Boundary-only contact is
 /// retained as certified evidence and returned as a blocker unless a complete
-/// kernel materializer can prove a triangle-mesh result. Projection policy for
+/// kernel materializer can prove a triangle-mesh result. Projection mode for
 /// lower-dimensional contact belongs above `hypermesh`.
 pub(crate) fn materialize_boolean_operation(
     left: &Mesh,
@@ -3151,9 +3148,9 @@ fn materialized_arrangement_attempt_outcome(
 
 fn not_attempted_arrangement_attempt_for_request(
     request: ExactBooleanRequest,
-    policy: ExactRegularizationMode,
+    mode: ExactRegularizationMode,
 ) -> ExactArrangementBooleanAttempt {
-    ExactArrangementBooleanAttempt::new(request, policy, ExactArrangementBooleanStage::NotAttempted)
+    ExactArrangementBooleanAttempt::new(request, mode, ExactArrangementBooleanStage::NotAttempted)
 }
 
 fn declined_output_validation_attempt_outcome_with_counts(
@@ -3376,10 +3373,10 @@ pub(crate) fn arrangement_cell_complex_shortcut_attempt_with_facts(
     left: &Mesh,
     right: &Mesh,
     request: ExactBooleanRequest,
-    policy: ExactRegularizationMode,
+    mode: ExactRegularizationMode,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
 ) -> Result<Option<ExactArrangementBooleanAttempt>, MeshError> {
-    if policy != ExactRegularizationMode::REGULARIZED_SOLID {
+    if mode != ExactRegularizationMode::REGULARIZED_SOLID {
         return Ok(None);
     }
     if !shortcut_facts.materializes_operation(request.operation) {
@@ -3394,7 +3391,7 @@ pub(crate) fn arrangement_cell_complex_shortcut_attempt_with_facts(
     else {
         return Ok(None);
     };
-    let mut attempt = not_attempted_arrangement_attempt_for_request(request, policy);
+    let mut attempt = not_attempted_arrangement_attempt_for_request(request, mode);
     match materialized_arrangement_attempt_outcome(
         &mut attempt,
         result,
@@ -3418,8 +3415,7 @@ fn arrangement_cell_complex_result_is_certified_for_operation_evidence(
     let Some(operation) = result.kind.arrangement_cell_complex_operation() else {
         return Ok(false);
     };
-    if attempt.operation != operation
-        || attempt.policy != ExactRegularizationMode::REGULARIZED_SOLID
+    if attempt.operation != operation || attempt.mode != ExactRegularizationMode::REGULARIZED_SOLID
     {
         return Ok(false);
     }
@@ -3612,14 +3608,14 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
     left: &Mesh,
     right: &Mesh,
     request: ExactBooleanRequest,
-    policy: ExactRegularizationMode,
+    mode: ExactRegularizationMode,
     regularize_unregularized_sheet_complex: bool,
 ) -> Result<ArrangementCellComplexOutcome, MeshError> {
     let operation = request.operation;
     let validation = request.validation;
     let mut attempt = ExactArrangementBooleanAttempt::new(
         request,
-        policy,
+        mode,
         ExactArrangementBooleanStage::ArrangementBuilt,
     );
     attempt.retain_arrangement_counts(arrangement);
@@ -3743,7 +3739,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         left,
         right,
         operation,
-        policy,
+        mode,
         &recovery,
         attempt,
     )? {
@@ -3753,7 +3749,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
     let selected = match if ownership_report.volume_selection_resolves_operation(operation) {
         labeled.select_volume_resolved(operation)
     } else {
-        labeled.select_with_regularization_mode(operation, policy)
+        labeled.select_with_regularization_mode(operation, mode)
     } {
         Ok(mut selected) if selected.blockers.is_empty() => {
             selected.topology_assembly_report = Some(topology_report.clone());
@@ -3781,7 +3777,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
     let counts = selected.counts();
     attempt.retain_selected_counts(counts);
     attempt.selected_cell_complex = Some(selected.clone());
-    let simplified = match simplify_selected_cell_complex(selected, policy) {
+    let simplified = match simplify_selected_cell_complex(selected, mode) {
         Ok(simplified) if simplified.blockers.is_empty() => simplified,
         Ok(simplified) => {
             return arrangement_cell_complex_decline_after_recovery(
@@ -3889,13 +3885,13 @@ fn arrangement_cell_complex_gate_evidence_from_arrangement(
     left: &Mesh,
     right: &Mesh,
     operation: ExactBooleanOperation,
-    policy: ExactRegularizationMode,
+    mode: ExactRegularizationMode,
     recovery: &ArrangementCellComplexRecoveryContext<'_>,
     mut attempt: ExactArrangementBooleanAttempt,
 ) -> Result<ControlFlow<ArrangementCellComplexOutcome, ArrangementCellComplexGateEvidence>, MeshError>
 {
     let topology_report =
-        arrangement.topology_assembly_report_with_regularization_mode(left, right, policy);
+        arrangement.topology_assembly_report_with_regularization_mode(left, right, mode);
     attempt.topology_assembly = Some(topology_report.status);
     attempt.topology_assembly_report = Some(topology_report.clone());
     topology_report.validate().map_err(|error| {
@@ -3918,9 +3914,8 @@ fn arrangement_cell_complex_gate_evidence_from_arrangement(
         ));
     }
 
-    let labeling_policy =
-        arrangement_cell_complex_labeling_policy(arrangement, Some(operation), policy);
-    let labeled = match arrangement.label_regions(labeling_policy) {
+    let labeling_mode = arrangement_cell_complex_labeling_mode(arrangement, Some(operation), mode);
+    let labeled = match arrangement.label_regions(labeling_mode) {
         Ok(labeled) => labeled,
         Err(blocker) => {
             return Ok(ControlFlow::Break(
@@ -3934,7 +3929,7 @@ fn arrangement_cell_complex_gate_evidence_from_arrangement(
     };
     attempt.stage = ExactArrangementBooleanStage::Labeled;
 
-    let ownership_report = labeled.region_ownership_report(left, right, labeling_policy);
+    let ownership_report = labeled.region_ownership_report(left, right, labeling_mode);
     attempt.region_ownership = Some(ownership_report.status);
     attempt.region_ownership_report = Some(ownership_report.clone());
     ownership_report.validate().map_err(|error| {
@@ -4834,13 +4829,13 @@ fn result_with_arrangement_gate_reports(
         right,
         ExactRegularizationMode::REGULARIZED_SOLID,
     );
-    let ownership_policy = arrangement_cell_complex_labeling_policy(
+    let ownership_mode = arrangement_cell_complex_labeling_mode(
         &arrangement,
         Some(operation),
         ExactRegularizationMode::REGULARIZED_SOLID,
     );
     let ownership_report = arrangement
-        .region_ownership_report_with_regularization_mode(left, right, ownership_policy)
+        .region_ownership_report_with_regularization_mode(left, right, ownership_mode)
         .map_err(|blocker| {
             boolean_validation_error(
                 MeshBlockerKind::ExactConstructionFailure,
@@ -8054,7 +8049,7 @@ fn volumetric_retention_for_operation(
     // Boundary cells arise when every exact representative for a source-face
     // cell lies on the opposite closed mesh boundary. In mixed coplanar
     // volumetric overlaps that means the same geometric patch is normally
-    // explicit, so we consume it through a deterministic owner policy instead
+    // explicit, so we consume it through a deterministic owner mode instead
     // of pretending it is inside or outside: union/intersection keep the left
     // copy and drop the coincident right copy; difference drops coincident
     // boundary cells because the overlapped volume is removed from the left
