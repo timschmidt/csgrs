@@ -23,7 +23,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use super::super::error::{MeshBlocker, MeshBlockerKind, MeshError};
 use super::super::graph::intersection::MeshFacePairRelation;
 use super::super::graph::{ExactIntersectionGraph, FacePairEvents, IntersectionEvent};
-use super::super::validation::MeshValidationPolicy;
+use super::super::validation::MeshValidationMode;
 use super::super::{Mesh, MeshValidationError, Triangle, sorted_edge};
 use super::{
     choose_nonzero_projected_polygon_area, closed_boundary_contact_only, point3_exact_equal,
@@ -185,7 +185,7 @@ pub(crate) fn materialize_full_face_adjacent_union_from_certificate(
     left: &Mesh,
     right: &Mesh,
     certificate: &FullFaceAdjacentCertificate,
-    validation: MeshValidationPolicy,
+    validation: MeshValidationMode,
 ) -> Result<Option<FullFaceAdjacentUnion>, MeshError> {
     let certificate = &certificate.inner;
     let Some(mesh) = merged_union_mesh(left, right, certificate, validation)? else {
@@ -466,7 +466,7 @@ fn merged_union_mesh(
     left: &Mesh,
     right: &Mesh,
     certificate: &FullFaceAdjacencyCertificate,
-    validation: MeshValidationPolicy,
+    validation: MeshValidationMode,
 ) -> Result<Option<Mesh>, MeshError> {
     let mut right_to_left = BTreeMap::<usize, usize>::new();
     let mut skip_left = BTreeSet::new();
@@ -574,7 +574,7 @@ fn merged_union_mesh(
         seen.insert(key)
     });
 
-    let mesh = Mesh::new_with_policy_and_version(
+    let mesh = Mesh::new_with_validation_mode_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact full-face adjacent closed-solid union"),
@@ -1213,10 +1213,10 @@ mod tests {
 
     #[test]
     fn full_face_materialization_rejects_stale_retained_face_rows() {
-        let mut left = Mesh::from_i64_triangles_with_policy(
+        let mut left = Mesh::from_i64_triangles_with_validation_mode(
             &[0, 0, 0, 2, 0, 0, 0, 2, 0],
             &[0, 1, 2],
-            MeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationMode::ALLOW_BOUNDARY,
         )
         .unwrap();
         let right = left.clone();
@@ -1233,7 +1233,7 @@ mod tests {
             &left,
             &right,
             &certificate,
-            MeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationMode::ALLOW_BOUNDARY,
         )
         .expect_err("stale retained face rows should return a typed blocker");
 

@@ -13,7 +13,7 @@
 use hyperlimit::{Point3, compare_reals};
 
 use super::super::error::{MeshBlocker, MeshBlockerKind, MeshError};
-use super::super::validation::MeshValidationPolicy;
+use super::super::validation::MeshValidationMode;
 use super::super::{Mesh, Triangle, reverse_triangle};
 use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, axis_aligned_orthogonal_solid_cell_plan,
@@ -90,7 +90,7 @@ impl AffineOrthogonalSolidArrangement {
         if self.mesh.vertices().is_empty() && self.mesh.facts().mesh.face_count == 0 {
             return Ok(());
         }
-        let normalized = mesh_to_uvw(&self.mesh, &self.basis, self.mesh.validation_policy())?
+        let normalized = mesh_to_uvw(&self.mesh, &self.basis, self.mesh.validation_mode())?
             .ok_or_else(|| {
                 MeshError::one(MeshBlocker::new(
                     MeshBlockerKind::UnsupportedExactOperation,
@@ -116,7 +116,7 @@ impl AffineOrthogonalSolidArrangement {
             left,
             right,
             self.operation,
-            self.mesh.validation_policy(),
+            self.mesh.validation_mode(),
         )?
         .ok_or_else(|| {
             MeshError::one(MeshBlocker::new(
@@ -174,7 +174,7 @@ pub(crate) fn materialize_affine_orthogonal_solid_operation(
     left: &Mesh,
     right: &Mesh,
     operation: AffineOrthogonalSolidOperation,
-    validation: MeshValidationPolicy,
+    validation: MeshValidationMode,
 ) -> Result<Option<AffineOrthogonalSolidArrangement>, MeshError> {
     let Some((basis, uvw_output_plan)) =
         find_affine_orthogonal_solid_basis(left, right, |left_uvw, right_uvw| {
@@ -199,7 +199,7 @@ pub(crate) fn materialize_affine_orthogonal_solid_operation(
     };
     let uvw_output = uvw_output_plan.to_mesh(
         "exact affine-normalized orthogonal solid cell boolean",
-        MeshValidationPolicy::CLOSED,
+        MeshValidationMode::CLOSED,
     )?;
     let vertices = uvw_output
         .vertices()
@@ -228,7 +228,7 @@ pub(crate) fn materialize_affine_orthogonal_solid_operation(
             .map(|face| Triangle(face.vertex_indices()))
             .collect()
     };
-    let mesh = Mesh::new_with_policy_and_version(
+    let mesh = Mesh::new_with_validation_mode_and_version(
         vertices,
         triangles,
         SourceProvenance::exact(match operation {
@@ -277,7 +277,7 @@ fn find_affine_orthogonal_solid_basis<T>(
             return None;
         }
         seen.push(basis.clone());
-        let left_uvw = match mesh_to_uvw(left, &basis, MeshValidationPolicy::CLOSED) {
+        let left_uvw = match mesh_to_uvw(left, &basis, MeshValidationMode::CLOSED) {
             Ok(Some(mesh)) => mesh,
             Ok(None) => return None,
             Err(error) => {
@@ -285,7 +285,7 @@ fn find_affine_orthogonal_solid_basis<T>(
                 return None;
             }
         };
-        let right_uvw = match mesh_to_uvw(right, &basis, MeshValidationPolicy::CLOSED) {
+        let right_uvw = match mesh_to_uvw(right, &basis, MeshValidationMode::CLOSED) {
             Ok(Some(mesh)) => mesh,
             Ok(None) => return None,
             Err(error) => {
@@ -312,7 +312,7 @@ fn find_affine_orthogonal_solid_basis<T>(
 fn mesh_to_uvw(
     mesh: &Mesh,
     basis: &AffineBoxBasis,
-    validation: MeshValidationPolicy,
+    validation: MeshValidationMode,
 ) -> Result<Option<Mesh>, MeshError> {
     let view = mesh.view();
     let mut vertices = Vec::with_capacity(view.vertex_count());
@@ -356,7 +356,7 @@ fn mesh_to_uvw(
             .map(|face| Triangle(face.vertex_indices()))
             .collect()
     };
-    Mesh::new_with_policy_and_version(
+    Mesh::new_with_validation_mode_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact affine-normalized box solid"),
@@ -601,14 +601,14 @@ mod tests {
 
     #[test]
     fn affine_direction_counts_report_stale_vertex_facts() {
-        let mut mesh = Mesh::from_i64_triangles_with_policy(
+        let mut mesh = Mesh::from_i64_triangles_with_validation_mode(
             &[
                 0, 0, 0, //
                 1, 0, 0, //
                 0, 1, 0,
             ],
             &[0, 1, 2],
-            MeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationMode::ALLOW_BOUNDARY,
         )
         .expect("test triangle should construct");
         mesh.facts.vertices.pop();

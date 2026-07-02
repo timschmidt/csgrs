@@ -4,7 +4,7 @@ use super::arrangement3d::ArrangementView;
 use super::boolean::{ExactBooleanOperation, materialize_boolean_operation};
 use super::error::{MeshBlocker, MeshBlockerKind, MeshError};
 use super::prepared::PreparedMeshPair;
-use super::validation::MeshValidationPolicy;
+use super::validation::MeshValidationMode;
 use super::{ExactAffineTransform3, Mesh, Triangle, reverse_triangle};
 use hyperlimit::{Point3, PredicateUse, SourceProvenance};
 use hyperreal::Real;
@@ -269,24 +269,24 @@ impl<'a> MeshView<'a> {
                 .map(|triangle| Triangle(triangle.vertex_indices()))
                 .collect(),
         };
-        Mesh::new_with_policy_and_version(
+        Mesh::new_with_validation_mode_and_version(
             vertices,
             triangles,
             SourceProvenance::exact("exact affine mesh transform"),
-            self.mesh.validation_policy(),
+            self.mesh.validation_mode(),
             self.mesh.next_construction_version(),
         )
     }
 
     /// Materialize this view with every triangle orientation reversed.
     pub fn inverse(self) -> Result<Mesh, MeshError> {
-        Mesh::new_with_policy_and_version(
+        Mesh::new_with_validation_mode_and_version(
             self.vertices().to_vec(),
             self.triangles()
                 .map(|triangle| reverse_triangle(&Triangle(triangle.vertex_indices())))
                 .collect(),
             SourceProvenance::exact("exact inverse mesh orientation"),
-            self.mesh.validation_policy(),
+            self.mesh.validation_mode(),
             self.mesh.next_construction_version(),
         )
     }
@@ -323,7 +323,7 @@ impl<'a> MeshView<'a> {
             pair.left_view.mesh,
             pair.right_view.mesh,
             operation,
-            MeshValidationPolicy::CLOSED,
+            MeshValidationMode::CLOSED,
             None,
             Some(&pair),
         )

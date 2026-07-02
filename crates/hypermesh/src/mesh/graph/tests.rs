@@ -8,7 +8,7 @@ use crate::mesh::boolean::region::{
     checked_triangulate_face_regions_with_earcut,
 };
 use crate::mesh::error::MeshBlockerKind;
-use crate::mesh::validation::MeshValidationPolicy;
+use crate::mesh::validation::MeshValidationMode;
 
 fn q(numerator: i64, denominator: i64) -> Real {
     (Real::from(numerator) / &Real::from(denominator)).expect("nonzero denominator")
@@ -38,22 +38,22 @@ fn split_point(point: Point3, parameter: Real, face_pair: [usize; 2]) -> EdgeSpl
 
 #[test]
 fn face_region_stage_replays_from_internal_graph() {
-    let left = Mesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_validation_mode(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = Mesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_validation_mode(
         &[1, -1, -1, 1, 3, 1, 1, 3, -1],
         &[0, 1, 2],
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let stale_right = Mesh::from_i64_triangles_with_policy(
+    let stale_right = Mesh::from_i64_triangles_with_validation_mode(
         &[8, -1, -1, 8, 3, 1, 8, 3, -1],
         &[0, 1, 2],
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
     )
     .unwrap();
     let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
@@ -94,16 +94,16 @@ fn face_region_stage_replays_from_internal_graph() {
 
 #[test]
 fn face_split_geometry_reports_stale_source_rows() {
-    let left = Mesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_validation_mode(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = Mesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_validation_mode(
         &[1, -1, -1, 1, 3, 1, 1, 3, -1],
         &[0, 1, 2],
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
     )
     .unwrap();
     let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
@@ -200,16 +200,16 @@ fn face_cell_cdt_replays_from_internal_graph() {
 
 #[test]
 fn intersection_graph_skips_face_preparation_for_disjoint_mesh_bounds() {
-    let left = Mesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_validation_mode(
         &[0, 0, 0, 2, 0, 0, 0, 2, 0],
         &[0, 1, 2],
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = Mesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_validation_mode(
         &[10, 0, 0, 12, 0, 0, 10, 2, 0],
         &[0, 1, 2],
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
     )
     .unwrap();
 
@@ -221,16 +221,16 @@ fn intersection_graph_skips_face_preparation_for_disjoint_mesh_bounds() {
 
 #[test]
 fn intersection_graph_retains_coplanar_face_pair_events_internal() {
-    let left = Mesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_validation_mode(
         &[0, 0, 0, 2, 0, 0, 0, 2, 0, 9, 9, 9],
         &[0, 1, 2],
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = Mesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_validation_mode(
         &[0, 0, 0, 1, 0, 0, 0, 1, 0, -9, -9, -9],
         &[0, 1, 2],
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
     )
     .unwrap();
 
@@ -297,10 +297,10 @@ fn intersection_graph_retains_coplanar_face_pair_events_internal() {
             .validate_against_sources(&left, &right)
             .is_err()
     );
-    let separated_right = Mesh::from_i64_triangles_with_policy(
+    let separated_right = Mesh::from_i64_triangles_with_validation_mode(
         &[9, 0, 0, 10, 0, 0, 9, 1, 0, -9, -9, -9],
         &[0, 1, 2],
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
     )
     .unwrap();
     assert!(
@@ -312,16 +312,16 @@ fn intersection_graph_retains_coplanar_face_pair_events_internal() {
 
 #[test]
 fn coplanar_overlap_extraction_rejects_missing_projection() {
-    let left = Mesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_validation_mode(
         &[0, 0, 0, 2, 0, 0, 0, 2, 0],
         &[0, 1, 2],
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = Mesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_validation_mode(
         &[0, 0, 0, 1, 0, 0, 0, 1, 0],
         &[0, 1, 2],
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
     )
     .unwrap();
     let mut graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
@@ -352,16 +352,16 @@ fn coplanar_overlap_extraction_rejects_missing_projection() {
 
 #[test]
 fn face_pair_candidate_retains_source_plane_split_events_internal() {
-    let left = Mesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_validation_mode(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = Mesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_validation_mode(
         &[1, -1, -1, 1, 3, 1, 1, 3, -1],
         &[0, 1, 2],
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
     )
     .unwrap();
 
@@ -457,10 +457,10 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
     stale_graph.face_pairs[0].events.clear();
     assert!(stale_graph.validate_against_sources(&left, &right).is_err());
 
-    let separated_right = Mesh::from_i64_triangles_with_policy(
+    let separated_right = Mesh::from_i64_triangles_with_validation_mode(
         &[9, -1, -1, 9, 3, 1, 9, 3, -1],
         &[0, 1, 2],
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
     )
     .unwrap();
     assert!(

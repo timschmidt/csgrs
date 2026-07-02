@@ -24,7 +24,7 @@ use super::super::graph::SplitPlanBlockerKind;
 use super::super::graph::{
     ExactFaceRegionPlan, FaceSplitBoundaryNode, MeshSide, validate_face_region_plan,
 };
-use super::super::validation::MeshValidationPolicy;
+use super::super::validation::MeshValidationMode;
 use super::super::{Triangle, paired_triangle_orientation_flips};
 use hyperlimit::CoplanarProjection;
 use hyperlimit::PredicateUse;
@@ -560,7 +560,7 @@ impl ExactBooleanAssemblyPlan {
 
     fn materialize_exact_mesh(
         &self,
-        policy: MeshValidationPolicy,
+        mode: MeshValidationMode,
     ) -> Result<Mesh, super::super::error::MeshError> {
         let vertices = self
             .vertices
@@ -578,11 +578,11 @@ impl ExactBooleanAssemblyPlan {
             .iter()
             .map(|triangle| Triangle(triangle.vertices))
             .collect::<Vec<_>>();
-        Mesh::new_with_policy_and_version(
+        Mesh::new_with_validation_mode_and_version(
             vertices,
             triangles,
             SourceProvenance::exact("exact boolean assembly plan"),
-            policy,
+            mode,
             1,
         )
     }
@@ -598,13 +598,13 @@ impl ExactBooleanAssemblyPlan {
         &self,
         left: &Mesh,
         right: &Mesh,
-        policy: MeshValidationPolicy,
+        mode: MeshValidationMode,
     ) -> Result<Mesh, super::super::error::MeshError> {
         self.validate()
             .map_err(|error| hypertri_error_to_mesh_error("assembly validation", error))?;
         validate_assembly_source_face_incidence(self, left, right)
             .map_err(|error| hypertri_error_to_mesh_error("assembly source incidence", error))?;
-        self.materialize_exact_mesh(policy)
+        self.materialize_exact_mesh(mode)
     }
 
     /// Canonicalize exact assembly topology before mesh materialization.
@@ -1728,10 +1728,10 @@ mod tests {
             original(1, p(1, 0, 0)),
             original(2, p(0, 1, 0)),
         ];
-        let mut plane_mesh = Mesh::from_i64_triangles_with_policy(
+        let mut plane_mesh = Mesh::from_i64_triangles_with_validation_mode(
             &[0, 0, 1, 1, 0, 1, 0, 1, 1],
             &[0, 1, 2],
-            MeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationMode::ALLOW_BOUNDARY,
         )
         .expect("test plane should construct");
         plane_mesh.facts.faces.clear();
@@ -1777,16 +1777,16 @@ mod tests {
 
     #[test]
     fn assembly_source_incidence_rejects_stale_graph_vertex_source() {
-        let left = Mesh::from_i64_triangles_with_policy(
+        let left = Mesh::from_i64_triangles_with_validation_mode(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0],
             &[0, 1, 2],
-            MeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationMode::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let right = Mesh::from_i64_triangles_with_policy(
+        let right = Mesh::from_i64_triangles_with_validation_mode(
             &[1, -1, -1, 1, 3, 1, 1, 3, -1],
             &[0, 1, 2],
-            MeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationMode::ALLOW_BOUNDARY,
         )
         .unwrap();
 
@@ -1866,7 +1866,7 @@ mod tests {
         assembly.validate().unwrap();
         assert!(validate_assembly_source_face_incidence(&assembly, &left, &right).is_err());
         let error = assembly
-            .checked_to_exact_mesh_with_sources(&left, &right, MeshValidationPolicy::ALLOW_BOUNDARY)
+            .checked_to_exact_mesh_with_sources(&left, &right, MeshValidationMode::ALLOW_BOUNDARY)
             .unwrap_err();
         assert!(
             error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
@@ -1876,15 +1876,18 @@ mod tests {
 
     #[test]
     fn assembly_source_incidence_rejects_face_interior_source_outside_triangle() {
-        let left = Mesh::from_i64_triangles_with_policy(
+        let left = Mesh::from_i64_triangles_with_validation_mode(
             &[0, 0, 0, 2, 0, 0, 0, 2, 0],
             &[0, 1, 2],
-            MeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationMode::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let right =
-            Mesh::from_i64_triangles_with_policy(&[], &[], MeshValidationPolicy::ALLOW_BOUNDARY)
-                .unwrap();
+        let right = Mesh::from_i64_triangles_with_validation_mode(
+            &[],
+            &[],
+            MeshValidationMode::ALLOW_BOUNDARY,
+        )
+        .unwrap();
 
         let assembly = ExactBooleanAssemblyPlan {
             vertices: vec![
@@ -1912,7 +1915,7 @@ mod tests {
         assembly.validate().unwrap();
         assert!(validate_assembly_source_face_incidence(&assembly, &left, &right).is_err());
         let error = assembly
-            .checked_to_exact_mesh_with_sources(&left, &right, MeshValidationPolicy::ALLOW_BOUNDARY)
+            .checked_to_exact_mesh_with_sources(&left, &right, MeshValidationMode::ALLOW_BOUNDARY)
             .unwrap_err();
         assert!(
             error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
@@ -1922,15 +1925,18 @@ mod tests {
 
     #[test]
     fn assembly_canonicalization_refines_exact_t_junctions_before_mesh_boundary() {
-        let left = Mesh::from_i64_triangles_with_policy(
+        let left = Mesh::from_i64_triangles_with_validation_mode(
             &[0, 0, 0, 2, 0, 0, 0, 2, 0],
             &[0, 1, 2],
-            MeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationMode::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let right =
-            Mesh::from_i64_triangles_with_policy(&[], &[], MeshValidationPolicy::ALLOW_BOUNDARY)
-                .unwrap();
+        let right = Mesh::from_i64_triangles_with_validation_mode(
+            &[],
+            &[],
+            MeshValidationMode::ALLOW_BOUNDARY,
+        )
+        .unwrap();
 
         let mut assembly = ExactBooleanAssemblyPlan {
             vertices: vec![
@@ -1985,7 +1991,7 @@ mod tests {
         assert_eq!(triangle_sets, vec![[0, 2, 3], [1, 2, 3]]);
 
         let mesh = assembly
-            .checked_to_exact_mesh_with_sources(&left, &right, MeshValidationPolicy::ALLOW_BOUNDARY)
+            .checked_to_exact_mesh_with_sources(&left, &right, MeshValidationMode::ALLOW_BOUNDARY)
             .unwrap();
         assert_eq!(mesh.facts().mesh.face_count, 2);
         assert_eq!(mesh.facts().mesh.boundary_edges, 4);

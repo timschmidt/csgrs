@@ -7,9 +7,7 @@
 use self::bounds::{BoundsValidationError, MeshBounds};
 use self::error::{MeshBlocker, MeshBlockerKind, MeshError};
 use self::facts::{MeshFactsValidationError, MeshValidationFacts};
-use self::validation::{
-    MeshValidationPolicy, ValidationReport, validate_triangle_rows_with_policy,
-};
+use self::validation::{MeshValidationMode, ValidationReport, validate_triangle_rows_with_mode};
 use self::view::MeshView;
 use hyperlimit::{
     ConstructionProvenance, ConstructionProvenanceValidationError, Point3, PredicateUse,
@@ -215,7 +213,7 @@ pub struct Mesh {
     triangles: Vec<Triangle>,
     bounds: MeshBounds,
     facts: MeshValidationFacts,
-    validation_policy: MeshValidationPolicy,
+    validation_mode: MeshValidationMode,
     provenance: ConstructionProvenance,
 }
 
@@ -455,27 +453,27 @@ impl Mesh {
         triangles: Vec<[usize; 3]>,
         source: SourceProvenance,
     ) -> Result<Self, MeshError> {
-        Self::new_with_policy_and_version(
+        Self::new_with_validation_mode_and_version(
             vertices,
             triangles.into_iter().map(Triangle).collect(),
             source,
-            MeshValidationPolicy::CLOSED,
+            MeshValidationMode::CLOSED,
             1,
         )
     }
 
-    pub(crate) fn new_with_policy_and_version(
+    pub(crate) fn new_with_validation_mode_and_version(
         vertices: Vec<Point3>,
         triangles: Vec<Triangle>,
         source: SourceProvenance,
-        policy: MeshValidationPolicy,
+        mode: MeshValidationMode,
         construction_version: u64,
     ) -> Result<Self, MeshError> {
-        let report = validate_triangle_rows_with_policy(
+        let report = validate_triangle_rows_with_mode(
             &vertices,
             triangles.len(),
             triangles.iter().map(|tri| tri.0),
-            policy,
+            mode,
         );
         if !report.blockers.is_empty() {
             return Err(MeshError::new(report.blockers));
@@ -499,7 +497,7 @@ impl Mesh {
             triangles,
             bounds,
             facts: report.facts,
-            validation_policy: policy,
+            validation_mode: mode,
             provenance,
         })
     }
@@ -510,12 +508,12 @@ impl Mesh {
     /// `Real` values with lossy source provenance. They are not used later as
     /// tolerance-bearing floats.
     pub fn from_lossy_f64_triangles(pos: &[f64], idx: &[usize]) -> Result<Self, MeshError> {
-        Self::from_lossy_f64_triangles_with_policy(pos, idx, MeshValidationPolicy::CLOSED)
+        Self::from_lossy_f64_triangles_with_validation_mode(pos, idx, MeshValidationMode::CLOSED)
     }
 
     /// Construct an exact mesh from flat hyperreal coordinates.
     pub fn from_real_triangles(pos: &[Real], idx: &[usize]) -> Result<Self, MeshError> {
-        Self::from_real_triangles_with_policy(pos, idx, MeshValidationPolicy::CLOSED)
+        Self::from_real_triangles_with_validation_mode(pos, idx, MeshValidationMode::CLOSED)
     }
 
     /// Construct an exact boundary-allowed surface mesh from flat hyperreal coordinates.
@@ -525,15 +523,15 @@ impl Mesh {
     /// closed-solid constructor unless an algorithm explicitly accepts surface
     /// artifacts.
     pub fn from_real_surface_triangles(pos: &[Real], idx: &[usize]) -> Result<Self, MeshError> {
-        Self::from_real_triangles_with_policy(pos, idx, MeshValidationPolicy::ALLOW_BOUNDARY)
+        Self::from_real_triangles_with_validation_mode(pos, idx, MeshValidationMode::ALLOW_BOUNDARY)
     }
 
     /// Construct an exact mesh from flat hyperreal coordinates with an explicit
-    /// validation policy.
-    pub(crate) fn from_real_triangles_with_policy(
+    /// validation mode.
+    pub(crate) fn from_real_triangles_with_validation_mode(
         pos: &[Real],
         idx: &[usize],
-        policy: MeshValidationPolicy,
+        mode: MeshValidationMode,
     ) -> Result<Self, MeshError> {
         validate_flat_mesh_buffers(pos.len(), idx.len())?;
 
@@ -542,21 +540,21 @@ impl Mesh {
             .map(|coords| Point3::new(coords[0].clone(), coords[1].clone(), coords[2].clone()))
             .collect::<Vec<_>>();
 
-        Self::new_with_policy_and_version(
+        Self::new_with_validation_mode_and_version(
             vertices,
             flat_triangles(idx),
             SourceProvenance::exact("flat hyperreal triangle mesh"),
-            policy,
+            mode,
             1,
         )
     }
 
     /// Import an exact mesh from flat primitive-float coordinates with an
-    /// explicit validation policy and lossy source provenance.
-    pub(crate) fn from_lossy_f64_triangles_with_policy(
+    /// explicit validation mode and lossy source provenance.
+    pub(crate) fn from_lossy_f64_triangles_with_validation_mode(
         pos: &[f64],
         idx: &[usize],
-        policy: MeshValidationPolicy,
+        mode: MeshValidationMode,
     ) -> Result<Self, MeshError> {
         validate_flat_mesh_buffers(pos.len(), idx.len())?;
 
@@ -566,11 +564,11 @@ impl Mesh {
             vertices.push(point);
         }
 
-        Self::new_with_policy_and_version(
+        Self::new_with_validation_mode_and_version(
             vertices,
             flat_triangles(idx),
             SourceProvenance::lossy_f64("flat f64 triangle mesh"),
-            policy,
+            mode,
             1,
         )
     }
@@ -581,15 +579,15 @@ impl Mesh {
     /// primitive-float edge, keeping exact predicates and determinant schedules
     /// on structural input coordinates.
     pub fn from_i64_triangles(pos: &[i64], idx: &[usize]) -> Result<Self, MeshError> {
-        Self::from_i64_triangles_with_policy(pos, idx, MeshValidationPolicy::CLOSED)
+        Self::from_i64_triangles_with_validation_mode(pos, idx, MeshValidationMode::CLOSED)
     }
 
     /// Construct an exact mesh from integer coordinates with an explicit
-    /// validation policy.
-    pub(crate) fn from_i64_triangles_with_policy(
+    /// validation mode.
+    pub(crate) fn from_i64_triangles_with_validation_mode(
         pos: &[i64],
         idx: &[usize],
-        policy: MeshValidationPolicy,
+        mode: MeshValidationMode,
     ) -> Result<Self, MeshError> {
         validate_flat_mesh_buffers(pos.len(), idx.len())?;
 
@@ -604,11 +602,11 @@ impl Mesh {
             })
             .collect::<Vec<_>>();
 
-        Self::new_with_policy_and_version(
+        Self::new_with_validation_mode_and_version(
             vertices,
             flat_triangles(idx),
             SourceProvenance::exact("flat i64 triangle mesh"),
-            policy,
+            mode,
             1,
         )
     }
@@ -637,14 +635,14 @@ impl Mesh {
         &self.facts
     }
 
-    /// Return the validation policy retained at construction.
+    /// Return the validation mode retained at construction.
     ///
-    /// The policy is part of the exact artifact boundary: an open-surface mesh
-    /// constructed with [`MeshValidationPolicy::ALLOW_BOUNDARY`] must not later be
+    /// The validation mode is part of the exact artifact boundary: an open-surface mesh
+    /// constructed with [`MeshValidationMode::ALLOW_BOUNDARY`] must not later be
     /// mistaken for closed-solid evidence merely because its retained facts are
     /// locally coherent.
-    pub(crate) const fn validation_policy(&self) -> MeshValidationPolicy {
-        self.validation_policy
+    pub(crate) const fn validation_mode(&self) -> MeshValidationMode {
+        self.validation_mode
     }
 
     /// Return construction provenance.
@@ -692,11 +690,11 @@ impl Mesh {
             )
             .map_err(retained_bounds_validation_error)?;
         self.facts
-            .validate_against_triangle_rows_with_policy(
+            .validate_against_triangle_rows_with_mode(
                 &self.vertices,
                 self.triangles.len(),
                 self.triangles.iter().map(|triangle| triangle.0),
-                self.validation_policy,
+                self.validation_mode,
             )
             .map_err(retained_facts_validation_error)?;
         self.provenance
@@ -1074,10 +1072,10 @@ mod tests {
 
     #[test]
     fn retained_facts_reject_unexpected_zero_use_edge() {
-        let mut mesh = Mesh::from_i64_triangles_with_policy(
+        let mut mesh = Mesh::from_i64_triangles_with_validation_mode(
             &[0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
             &[0, 1, 2],
-            MeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationMode::ALLOW_BOUNDARY,
         )
         .unwrap();
 
@@ -1097,10 +1095,10 @@ mod tests {
 
     #[test]
     fn retained_facts_reject_stale_vertex_incident_faces() {
-        let mut mesh = Mesh::from_i64_triangles_with_policy(
+        let mut mesh = Mesh::from_i64_triangles_with_validation_mode(
             &[0, 0, 0, 1, 0, 0, 0, 1, 0],
             &[0, 1, 2],
-            MeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationMode::ALLOW_BOUNDARY,
         )
         .unwrap();
 
@@ -1121,10 +1119,10 @@ mod tests {
 
     #[test]
     fn retained_facts_reject_stale_vertex_incident_edges() {
-        let mut mesh = Mesh::from_i64_triangles_with_policy(
+        let mut mesh = Mesh::from_i64_triangles_with_validation_mode(
             &[0, 0, 0, 1, 0, 0, 0, 1, 0],
             &[0, 1, 2],
-            MeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationMode::ALLOW_BOUNDARY,
         )
         .unwrap();
 

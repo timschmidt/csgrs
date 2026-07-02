@@ -9,7 +9,7 @@ use std::cmp::Ordering;
 
 use super::super::super::boolean::ExactBooleanOperation;
 use super::super::super::graph::MeshSide;
-use super::super::super::validation::MeshValidationPolicy;
+use super::super::super::validation::MeshValidationMode;
 use super::super::super::{
     Mesh, Triangle, orient_paired_triangle_edges, point3_exact_equal,
     remove_duplicate_triangle_vertex_sets,
@@ -1155,11 +1155,11 @@ pub(crate) fn triangulate_simplified_cell_complex(
     orient_paired_triangle_edges(&mut triangles)
         .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
 
-    Mesh::new_with_policy_and_version(
+    Mesh::new_with_validation_mode_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact simplified arrangement cell complex"),
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
         1,
     )
     .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)

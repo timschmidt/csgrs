@@ -684,7 +684,7 @@ mod tests {
 
     use super::*;
     use crate::mesh::error::MeshBlockerKind;
-    use crate::mesh::validation::MeshValidationPolicy;
+    use crate::mesh::validation::MeshValidationMode;
     use proptest::prelude::*;
 
     const OVERSIZED_COMPONENT_FACES: usize = 33;
@@ -694,10 +694,10 @@ mod tests {
         for point in points {
             coordinates.extend_from_slice(point);
         }
-        Mesh::from_i64_triangles_with_policy(
+        Mesh::from_i64_triangles_with_validation_mode(
             &coordinates,
             triangles,
-            MeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationMode::ALLOW_BOUNDARY,
         )
         .unwrap()
     }

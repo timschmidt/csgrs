@@ -26,7 +26,7 @@ use super::super::arrangement3d::arrangement2d::{
 use super::super::error::{MeshBlocker, MeshBlockerKind, MeshError};
 use super::super::graph::intersection::MeshFacePairRelation;
 use super::super::graph::{ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide};
-use super::super::validation::MeshValidationPolicy;
+use super::super::validation::MeshValidationMode;
 use super::super::{Mesh, MeshValidationError, Triangle, sorted_edge};
 use super::closed_boundary_contact_only;
 use super::{
@@ -148,7 +148,7 @@ pub(crate) fn materialize_contained_face_adjacent_union_from_certificate(
     left: &Mesh,
     right: &Mesh,
     certificate: &ContainedFaceAdjacentCertificate,
-    validation: MeshValidationPolicy,
+    validation: MeshValidationMode,
 ) -> Result<Option<ContainedFaceAdjacentUnion>, MeshError> {
     let certificate = &certificate.inner;
     let mut contained_faces = Vec::new();
@@ -527,7 +527,7 @@ fn contained_face_union_mesh(
     patches: &[ContainedFacePatch],
     containing_faces: &[usize],
     contained_faces: &[usize],
-    validation: MeshValidationPolicy,
+    validation: MeshValidationMode,
 ) -> Result<Option<Mesh>, MeshError> {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
@@ -566,7 +566,7 @@ fn contained_face_union_mesh(
         seen.insert(key)
     });
 
-    let mesh = Mesh::new_with_policy_and_version(
+    let mesh = Mesh::new_with_validation_mode_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact contained-face adjacent closed-solid union"),
@@ -666,11 +666,11 @@ fn faces_mesh(
         let mapped = map_triangle_points(&mut vertices, points)?;
         triangles.push(Triangle(mapped));
     }
-    Ok(Some(Mesh::new_with_policy_and_version(
+    Ok(Some(Mesh::new_with_validation_mode_and_version(
         vertices,
         triangles,
         SourceProvenance::exact(label),
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
         1,
     )?))
 }
@@ -870,10 +870,10 @@ mod tests {
 
     #[test]
     fn contained_face_component_rejects_stale_retained_face_rows() {
-        let mut mesh = Mesh::from_i64_triangles_with_policy(
+        let mut mesh = Mesh::from_i64_triangles_with_validation_mode(
             &[0, 0, 0, 2, 0, 0, 0, 2, 0],
             &[0, 1, 2],
-            MeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationMode::ALLOW_BOUNDARY,
         )
         .unwrap();
         mesh.facts.faces.pop();

@@ -8,7 +8,7 @@ use crate::mesh::arrangement3d::cell_complex::{
 };
 use crate::mesh::arrangement3d::loop_triangulation::projected_loop_orientation;
 use crate::mesh::boolean::ExactBooleanOperation;
-use crate::mesh::validation::MeshValidationPolicy;
+use crate::mesh::validation::MeshValidationMode;
 use hyperlimit::{RingPointLocation, classify_point_ring_even_odd, projected_polygon_area2_value};
 
 fn p3(x: i64, y: i64, z: i64) -> Point3 {
@@ -29,10 +29,10 @@ fn rational_p3(x: [i64; 2], y: [i64; 2], z: [i64; 2]) -> Point3 {
 
 #[test]
 fn retained_arrangement_face_vertices_reports_stale_rows() {
-    let mesh = Mesh::from_i64_triangles_with_policy(
+    let mesh = Mesh::from_i64_triangles_with_validation_mode(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
     )
     .unwrap();
 
@@ -522,10 +522,10 @@ fn tetrahedron_with_reversed_inner_i64(outer: [[i64; 3]; 4], inner: [[i64; 3]; 4
 }
 
 fn open_triangle_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3]) -> Mesh {
-    Mesh::from_i64_triangles_with_policy(
+    Mesh::from_i64_triangles_with_validation_mode(
         &[a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]],
         &[0, 1, 2],
-        MeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationMode::ALLOW_BOUNDARY,
     )
     .unwrap()
 }

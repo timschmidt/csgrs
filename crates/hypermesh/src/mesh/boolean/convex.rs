@@ -28,7 +28,7 @@ use super::super::arrangement3d::arrangement2d::{
 };
 use super::super::error::{MeshBlocker, MeshBlockerKind, MeshError};
 use super::super::triangle_edges;
-use super::super::validation::MeshValidationPolicy;
+use super::super::validation::MeshValidationMode;
 use super::super::{
     Mesh, Triangle, exact_points_are_collinear, orient_paired_triangle_edges,
     remove_duplicate_triangle_vertex_sets,
@@ -157,11 +157,11 @@ pub(crate) fn union_closed_convex_solids(
     if orient_paired_triangle_edges(&mut triangles).is_none() {
         return Ok(None);
     }
-    let direct_mesh = Mesh::new_with_policy_and_version(
+    let direct_mesh = Mesh::new_with_validation_mode_and_version(
         vertices.clone(),
         triangles.clone(),
         SourceProvenance::exact("exact closed-convex solid union"),
-        MeshValidationPolicy::CLOSED,
+        MeshValidationMode::CLOSED,
         1,
     );
     let mesh = match direct_mesh {
@@ -228,11 +228,11 @@ pub(crate) fn subtract_closed_convex_solids(
     if orient_paired_triangle_edges(&mut triangles).is_none() {
         return Ok(None);
     }
-    let mesh = Mesh::new_with_policy_and_version(
+    let mesh = Mesh::new_with_validation_mode_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact closed-convex solid difference"),
-        MeshValidationPolicy::CLOSED,
+        MeshValidationMode::CLOSED,
         1,
     )?;
     if !mesh_has_nonzero_signed_volume(&mesh)? {
@@ -284,11 +284,11 @@ fn union_from_difference_and_operand(left: &Mesh, right: &Mesh) -> Result<Option
     if orient_paired_triangle_edges(&mut triangles).is_none() {
         return Ok(None);
     }
-    let mesh = Mesh::new_with_policy_and_version(
+    let mesh = Mesh::new_with_validation_mode_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact closed-convex solid union from exact difference"),
-        MeshValidationPolicy::CLOSED,
+        MeshValidationMode::CLOSED,
         1,
     )?;
     Ok(Some(mesh))
@@ -312,11 +312,11 @@ fn close_planar_boundary_loops(
     }
     remove_duplicate_triangle_vertex_sets(&mut triangles);
     orient_paired_triangle_edges(&mut triangles)?;
-    Mesh::new_with_policy_and_version(
+    Mesh::new_with_validation_mode_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact closed-convex solid union with exact planar caps"),
-        MeshValidationPolicy::CLOSED,
+        MeshValidationMode::CLOSED,
         1,
     )
     .ok()
@@ -409,7 +409,7 @@ pub(crate) fn intersect_closed_convex_solids(
     let Some(mesh) = polygons_to_closed_mesh(
         &hull_polygons,
         "exact closed-convex solid intersection",
-        MeshValidationPolicy::CLOSED,
+        MeshValidationMode::CLOSED,
     )?
     else {
         return Ok(None);
@@ -1367,7 +1367,7 @@ fn orient3d_value(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Real {
 fn polygons_to_closed_mesh(
     polygons: &[Vec<Point3>],
     label: &str,
-    validation: MeshValidationPolicy,
+    validation: MeshValidationMode,
 ) -> Result<Option<Mesh>, MeshError> {
     let mut vertices: Vec<Point3> = Vec::new();
     let mut triangles = Vec::new();
@@ -1385,7 +1385,7 @@ fn polygons_to_closed_mesh(
     if triangles.is_empty() {
         return Ok(None);
     }
-    Mesh::new_with_policy_and_version(
+    Mesh::new_with_validation_mode_and_version(
         vertices,
         triangles,
         SourceProvenance::exact(label),
@@ -1686,7 +1686,7 @@ mod tests {
             &right,
             ExactBooleanRequest {
                 operation: ExactBooleanOperation::Union,
-                validation: MeshValidationPolicy::CLOSED,
+                validation: MeshValidationMode::CLOSED,
             },
             |evaluation| {
                 evaluation.validate_against_sources(&left, &right).unwrap();
@@ -1710,7 +1710,7 @@ mod tests {
             &right,
             ExactBooleanRequest {
                 operation: ExactBooleanOperation::Difference,
-                validation: MeshValidationPolicy::CLOSED,
+                validation: MeshValidationMode::CLOSED,
             },
             |evaluation| {
                 evaluation.validate_against_sources(&left, &right).unwrap();

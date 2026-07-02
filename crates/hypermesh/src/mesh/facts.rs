@@ -7,7 +7,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use super::sorted_edge;
-use super::validation::{MeshValidationPolicy, validate_triangle_rows_with_policy};
+use super::validation::{MeshValidationMode, validate_triangle_rows_with_mode};
 use hyperlimit::Point3;
 use hyperlimit::PredicateUse;
 use hyperreal::Real;
@@ -605,15 +605,15 @@ impl MeshValidationFacts {
         Ok(())
     }
 
-    pub(crate) fn validate_against_triangle_rows_with_policy(
+    pub(crate) fn validate_against_triangle_rows_with_mode(
         &self,
         points: &[Point3],
         triangle_count: usize,
         triangles: impl IntoIterator<Item = [usize; 3]>,
-        policy: MeshValidationPolicy,
+        mode: MeshValidationMode,
     ) -> Result<(), MeshFactsValidationError> {
         self.validate()?;
-        let replay = validate_triangle_rows_with_policy(points, triangle_count, triangles, policy);
+        let replay = validate_triangle_rows_with_mode(points, triangle_count, triangles, mode);
         if self == &replay.facts {
             Ok(())
         } else {

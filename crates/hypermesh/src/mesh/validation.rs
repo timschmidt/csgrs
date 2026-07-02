@@ -28,9 +28,9 @@ pub(crate) struct ValidationReport {
     pub(crate) blockers: Vec<MeshBlocker>,
 }
 
-/// Boundary policy for mesh validation.
+/// Boundary mode for mesh validation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum BoundaryPolicy {
+pub(crate) enum BoundaryMode {
     /// Every undirected edge must have exactly two incident faces.
     Closed,
     /// Boundary edges are allowed, but nonmanifold edges and vertex links are
@@ -38,46 +38,46 @@ pub(crate) enum BoundaryPolicy {
     AllowBoundary,
 }
 
-/// Validation policy for exact triangle meshes.
+/// Validation mode for exact triangle meshes.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) struct MeshValidationPolicy {
+pub(crate) struct MeshValidationMode {
     /// How boundary edges are handled.
-    pub(crate) boundary: BoundaryPolicy,
+    pub(crate) boundary: BoundaryMode,
 }
 
-impl MeshValidationPolicy {
+impl MeshValidationMode {
     /// Closed two-manifold validation.
     pub const CLOSED: Self = Self {
-        boundary: BoundaryPolicy::Closed,
+        boundary: BoundaryMode::Closed,
     };
 
     /// Boundary-allowed two-manifold validation.
     pub const ALLOW_BOUNDARY: Self = Self {
-        boundary: BoundaryPolicy::AllowBoundary,
+        boundary: BoundaryMode::AllowBoundary,
     };
 
-    /// Return whether this policy is at least as strict as `requested`.
+    /// Return whether this mode is at least as strict as `requested`.
     pub(crate) const fn satisfies(self, requested: Self) -> bool {
         matches!(
             (self.boundary, requested.boundary),
-            (BoundaryPolicy::Closed, BoundaryPolicy::Closed)
-                | (BoundaryPolicy::Closed, BoundaryPolicy::AllowBoundary)
-                | (BoundaryPolicy::AllowBoundary, BoundaryPolicy::AllowBoundary)
+            (BoundaryMode::Closed, BoundaryMode::Closed)
+                | (BoundaryMode::Closed, BoundaryMode::AllowBoundary)
+                | (BoundaryMode::AllowBoundary, BoundaryMode::AllowBoundary)
         )
     }
 }
 
-impl Default for MeshValidationPolicy {
+impl Default for MeshValidationMode {
     fn default() -> Self {
         Self::CLOSED
     }
 }
 
-pub(crate) fn validate_triangle_rows_with_policy(
+pub(crate) fn validate_triangle_rows_with_mode(
     points: &[Point3],
     triangle_count: usize,
     triangles: impl IntoIterator<Item = [usize; 3]>,
-    policy: MeshValidationPolicy,
+    mode: MeshValidationMode,
 ) -> ValidationReport {
     let mut blockers = Vec::new();
     let mut edges = BTreeMap::<[usize; 2], EdgeAccumulator>::new();
@@ -176,7 +176,7 @@ pub(crate) fn validate_triangle_rows_with_policy(
 
         if incident_faces == 1 {
             boundary_edges += 1;
-            if policy.boundary == BoundaryPolicy::Closed {
+            if mode.boundary == BoundaryMode::Closed {
                 blockers.push(
                     MeshBlocker::new(
                         MeshBlockerKind::BoundaryEdge,
@@ -417,11 +417,11 @@ mod tests {
     #[test]
     fn validator_returns_blocker_for_out_of_bounds_triangle_vertex() {
         let points = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
-        let report = validate_triangle_rows_with_policy(
+        let report = validate_triangle_rows_with_mode(
             &points,
             1,
             [[0, 1, 3]],
-            MeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationMode::ALLOW_BOUNDARY,
         );
 
         assert!(!report.blockers.is_empty());

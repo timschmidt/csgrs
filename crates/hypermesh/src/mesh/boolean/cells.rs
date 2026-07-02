@@ -1589,12 +1589,16 @@ fn classify_point_on_mesh_face(
 #[cfg(test)]
 mod tests {
     use super::super::super::graph::CoplanarOverlapSplitGraph;
-    use super::super::super::validation::MeshValidationPolicy;
+    use super::super::super::validation::MeshValidationMode;
     use super::*;
 
     fn open_triangle_mesh(pos: &[i64]) -> Mesh {
-        Mesh::from_i64_triangles_with_policy(pos, &[0, 1, 2], MeshValidationPolicy::ALLOW_BOUNDARY)
-            .unwrap()
+        Mesh::from_i64_triangles_with_validation_mode(
+            pos,
+            &[0, 1, 2],
+            MeshValidationMode::ALLOW_BOUNDARY,
+        )
+        .unwrap()
     }
 
     fn ep(x: i64, y: i64) -> hypertri::ExactPoint {

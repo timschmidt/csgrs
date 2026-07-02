@@ -42,7 +42,7 @@ pub(super) fn exact_boolean_evaluation_for_replay_result_with_materialization(
     )?;
     let certified_by_coplanar_boundary_closure = operation_evidence.support
         == ExactBooleanSupport::CertifiedArrangementCellComplex
-        && request.validation == MeshValidationPolicy::CLOSED
+        && request.validation == MeshValidationMode::CLOSED
         && operation_evidence
             .coplanar_volumetric_evidence
             .as_ref()
@@ -397,7 +397,7 @@ pub(super) fn try_materialize_certified_boolean_support_with_artifacts(
         ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
             if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
                 || certified_mixed_dimensional_regularized_solid_support(left, right).is_none()
-                || (validation != MeshValidationPolicy::CLOSED
+                || (validation != MeshValidationMode::CLOSED
                     && meshes_are_certified_bounds_disjoint(left, right))
             {
                 None
@@ -417,7 +417,7 @@ pub(super) fn try_materialize_certified_boolean_support_with_artifacts(
             }
         }
         ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
-            if validation == MeshValidationPolicy::CLOSED
+            if validation == MeshValidationMode::CLOSED
                 && operation == ExactBooleanOperation::Intersection
                 && let Some(result) =
                     materialize_certified_arrangement_cell_complex_support_with_arrangement(
@@ -610,8 +610,7 @@ fn certification_set_from_graph_and_regularized_arrangement(
                 )
             },
         )?;
-    let reject_boundary_evidence_request =
-        request.validation == MeshValidationPolicy::ALLOW_BOUNDARY;
+    let reject_boundary_evidence_request = request.validation == MeshValidationMode::ALLOW_BOUNDARY;
     let planar_arrangement =
         if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
             RetainedGraphCounts::empty().into_planar_arrangement_report(
@@ -657,7 +656,7 @@ fn certification_set_from_graph_and_regularized_arrangement(
                 request.operation,
             )?;
             validate_volumetric_boundary_closure_report(&report)?;
-            if request.validation == MeshValidationPolicy::CLOSED
+            if request.validation == MeshValidationMode::CLOSED
                 && !matches!(
                     report.status,
                     ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
@@ -691,7 +690,7 @@ fn certification_set_from_graph_and_regularized_arrangement(
                 Some(attempt.clone())
             } else if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_))
                 || reject_boundary_evidence_request
-                || request.validation == MeshValidationPolicy::CLOSED
+                || request.validation == MeshValidationMode::CLOSED
             {
                 None
             } else if let Some(arrangement) = retained_regularized_arrangement {
@@ -945,7 +944,7 @@ fn exact_boolean_replay_operation_evidence(
     {
         return Ok(graph_operation_evidence);
     }
-    if ((request.validation != MeshValidationPolicy::ALLOW_BOUNDARY)
+    if ((request.validation != MeshValidationMode::ALLOW_BOUNDARY)
         || graph_operation_evidence_has_source_arrangement_shortcut
         || graph_operation_evidence_has_certified_axis_aligned_box_pair)
         && let Some(attempt) = retained_attempt

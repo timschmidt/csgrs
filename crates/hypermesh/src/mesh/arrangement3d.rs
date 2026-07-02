@@ -41,7 +41,7 @@ use super::graph::{
     validate_face_region_plan, validate_face_split_geometry_incidence,
     validate_split_topology_plan,
 };
-use super::validation::MeshValidationPolicy;
+use super::validation::MeshValidationMode;
 use super::{Mesh, point3_exact_equal};
 use core::cmp::Ordering;
 use hyperlimit::CoplanarProjection;
@@ -4238,11 +4238,11 @@ fn shell_region_mesh(
     for boundary_group in &boundary_loop_groups {
         triangulate_exact_loop_group(boundary_group, &mut vertices, &mut triangles)?;
     }
-    Mesh::new_with_policy_and_version(
+    Mesh::new_with_validation_mode_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact arrangement shell replay"),
-        MeshValidationPolicy::CLOSED,
+        MeshValidationMode::CLOSED,
         1,
     )
     .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)

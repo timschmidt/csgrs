@@ -17,7 +17,7 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use hyperlimit::{Point3, compare_reals};
 
 use super::super::error::{MeshBlocker, MeshBlockerKind, MeshError};
-use super::super::validation::MeshValidationPolicy;
+use super::super::validation::MeshValidationMode;
 use super::super::{Mesh, Triangle};
 use super::solid::certify_convex_solid;
 use hyperlimit::SourceProvenance;
@@ -229,7 +229,7 @@ pub(crate) fn materialize_axis_aligned_orthogonal_solid_cell_output(
     right: &Mesh,
     operation: AxisAlignedOrthogonalSolidOperation,
     label: &'static str,
-    validation: MeshValidationPolicy,
+    validation: MeshValidationMode,
 ) -> Result<Option<Mesh>, MeshError> {
     let Some(plan) = axis_aligned_orthogonal_solid_cell_plan(left, right, operation) else {
         return Ok(None);
@@ -963,10 +963,10 @@ impl OrthogonalCellPlan {
     pub(crate) fn to_mesh(
         &self,
         label: &'static str,
-        validation: MeshValidationPolicy,
+        validation: MeshValidationMode,
     ) -> Result<Mesh, MeshError> {
         if self.selected_count == 0 {
-            return Mesh::new_with_policy_and_version(
+            return Mesh::new_with_validation_mode_and_version(
                 Vec::new(),
                 Vec::new(),
                 SourceProvenance::exact(label),
@@ -1151,7 +1151,7 @@ impl OrthogonalCellPlan {
                 }
             }
         }
-        Mesh::new_with_policy_and_version(
+        Mesh::new_with_validation_mode_and_version(
             vertices,
             triangles,
             SourceProvenance::exact(label),
@@ -1596,7 +1596,7 @@ mod tests {
         let mesh = plan
             .to_mesh(
                 "test axis-aligned orthogonal solid cell union",
-                MeshValidationPolicy::CLOSED,
+                MeshValidationMode::CLOSED,
             )
             .unwrap();
         assert!(certify_axis_aligned_orthogonal_solid_face_cells(&mesh).is_some());
@@ -1628,7 +1628,7 @@ mod tests {
         let error = plan
             .to_mesh(
                 "test corrupted axis-aligned orthogonal solid cell union",
-                MeshValidationPolicy::CLOSED,
+                MeshValidationMode::CLOSED,
             )
             .expect_err("corrupted retained occupancy should not materialize");
         assert_eq!(error.blockers()[0].kind(), MeshBlockerKind::StaleFactReplay);
