@@ -281,6 +281,9 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
             assert_eq!(view.vertices().count(), view.vertex_count());
             assert_eq!(view.edges().count(), view.edge_count());
             assert_eq!(view.face_cells().count(), view.face_cell_count());
+            assert_eq!(view.vertices().len(), view.vertex_count());
+            assert_eq!(view.edges().len(), view.edge_count());
+            assert_eq!(view.face_cells().len(), view.face_cell_count());
             assert_eq!(view.blocker_count(), 0);
             if view.vertex_count() > 0 {
                 assert_eq!(view.vertex(0).unwrap().index(), 0);

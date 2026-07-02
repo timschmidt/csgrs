@@ -749,6 +749,35 @@ pub struct ArrangementFaceCellRef<'a> {
 }
 
 impl<'a> ArrangementView<'a> {
+    const fn vertex_ref(self, index: usize) -> ArrangementVertexRef<'a> {
+        ArrangementVertexRef {
+            arrangement: self.arrangement,
+            index,
+        }
+    }
+
+    const fn edge_ref(self, index: usize) -> ArrangementEdgeRef<'a> {
+        ArrangementEdgeRef {
+            arrangement: self.arrangement,
+            index,
+        }
+    }
+
+    const fn face_cell_ref(self, index: usize) -> ArrangementFaceCellRef<'a> {
+        ArrangementFaceCellRef {
+            arrangement: self.arrangement,
+            index,
+        }
+    }
+
+    fn retained_row_count(self, kind: ArrangementRowKind) -> usize {
+        match kind {
+            ArrangementRowKind::Vertex => self.arrangement.vertices.len(),
+            ArrangementRowKind::Edge => self.arrangement.edges.len(),
+            ArrangementRowKind::FaceCell => self.arrangement.face_cells.len(),
+        }
+    }
+
     /// Return whether construction reached a blocker-free arrangement handoff.
     pub fn is_complete(self) -> bool {
         self.arrangement.blockers.is_empty()
@@ -812,81 +841,78 @@ impl<'a> ArrangementView<'a> {
 
     /// Borrow one arrangement vertex by index.
     pub fn vertex(self, index: usize) -> Result<ArrangementVertexRef<'a>, ExactMeshError> {
-        if index >= self.arrangement.vertices.len() {
-            return Err(ExactMeshError::one(
-                ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::IndexOutOfBounds,
-                    format!(
-                        "arrangement vertex index {index} is out of bounds for {} retained vertices",
-                        self.arrangement.vertices.len()
-                    ),
-                )
-                .with_vertex(index),
-            ));
-        }
-        Ok(ArrangementVertexRef {
-            arrangement: self.arrangement,
-            index,
-        })
+        self.require_row(ArrangementRowKind::Vertex, index)?;
+        Ok(self.vertex_ref(index))
     }
 
     /// Borrow one arrangement edge by index.
     pub fn edge(self, index: usize) -> Result<ArrangementEdgeRef<'a>, ExactMeshError> {
-        if index >= self.arrangement.edges.len() {
-            return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::IndexOutOfBounds,
-                format!(
-                    "arrangement edge index {index} is out of bounds for {} retained edges",
-                    self.arrangement.edges.len()
-                ),
-            )));
-        }
-        Ok(ArrangementEdgeRef {
-            arrangement: self.arrangement,
-            index,
-        })
+        self.require_row(ArrangementRowKind::Edge, index)?;
+        Ok(self.edge_ref(index))
     }
 
     /// Borrow one arrangement face cell by index.
     pub fn face_cell(self, index: usize) -> Result<ArrangementFaceCellRef<'a>, ExactMeshError> {
-        if index >= self.arrangement.face_cells.len() {
-            return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::IndexOutOfBounds,
-                format!(
-                    "arrangement face-cell index {index} is out of bounds for {} retained face cells",
-                    self.arrangement.face_cells.len()
-                ),
-            )));
-        }
-        Ok(ArrangementFaceCellRef {
-            arrangement: self.arrangement,
-            index,
-        })
+        self.require_row(ArrangementRowKind::FaceCell, index)?;
+        Ok(self.face_cell_ref(index))
     }
 
     /// Iterate borrowed arrangement vertices.
-    pub fn vertices(self) -> impl Iterator<Item = ArrangementVertexRef<'a>> + 'a {
-        (0..self.arrangement.vertices.len()).map(move |index| ArrangementVertexRef {
-            arrangement: self.arrangement,
-            index,
-        })
+    pub fn vertices(self) -> impl ExactSizeIterator<Item = ArrangementVertexRef<'a>> + 'a {
+        (0..self.vertex_count()).map(move |index| self.vertex_ref(index))
     }
 
     /// Iterate borrowed arrangement edges.
-    pub fn edges(self) -> impl Iterator<Item = ArrangementEdgeRef<'a>> + 'a {
-        (0..self.arrangement.edges.len()).map(move |index| ArrangementEdgeRef {
-            arrangement: self.arrangement,
-            index,
-        })
+    pub fn edges(self) -> impl ExactSizeIterator<Item = ArrangementEdgeRef<'a>> + 'a {
+        (0..self.edge_count()).map(move |index| self.edge_ref(index))
     }
 
     /// Iterate borrowed arrangement face cells.
-    pub fn face_cells(self) -> impl Iterator<Item = ArrangementFaceCellRef<'a>> + 'a {
-        (0..self.arrangement.face_cells.len()).map(move |index| ArrangementFaceCellRef {
-            arrangement: self.arrangement,
-            index,
-        })
+    pub fn face_cells(self) -> impl ExactSizeIterator<Item = ArrangementFaceCellRef<'a>> + 'a {
+        (0..self.face_cell_count()).map(move |index| self.face_cell_ref(index))
     }
+
+    fn require_row(self, kind: ArrangementRowKind, index: usize) -> Result<(), ExactMeshError> {
+        let count = self.retained_row_count(kind);
+        if index < count {
+            return Ok(());
+        }
+        Err(arrangement_index_out_of_bounds(kind, index, count))
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+enum ArrangementRowKind {
+    Vertex,
+    Edge,
+    FaceCell,
+}
+
+fn arrangement_index_out_of_bounds(
+    kind: ArrangementRowKind,
+    index: usize,
+    count: usize,
+) -> ExactMeshError {
+    let blocker = match kind {
+        ArrangementRowKind::Vertex => ExactMeshBlocker::new(
+            ExactMeshBlockerKind::IndexOutOfBounds,
+            format!(
+                "arrangement vertex index {index} is out of bounds for {count} retained vertices"
+            ),
+        )
+        .with_vertex(index),
+        ArrangementRowKind::Edge => ExactMeshBlocker::new(
+            ExactMeshBlockerKind::IndexOutOfBounds,
+            format!("arrangement edge index {index} is out of bounds for {count} retained edges"),
+        ),
+        ArrangementRowKind::FaceCell => ExactMeshBlocker::new(
+            ExactMeshBlockerKind::IndexOutOfBounds,
+            format!(
+                "arrangement face-cell index {index} is out of bounds for {count} retained face cells"
+            ),
+        ),
+    };
+    ExactMeshError::one(blocker)
 }
 
 impl<'a> ArrangementVertexRef<'a> {
