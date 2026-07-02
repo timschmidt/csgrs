@@ -7003,8 +7003,10 @@ impl ExactWindingEvidenceReport {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::mesh::Triangle;
     use crate::mesh::boolean::region::{ExactOutputVertex, FaceRegionPlaneRelation};
     use crate::mesh::graph::FaceSplitBoundaryNode;
+    use hyperlimit::SourceProvenance;
 
     #[test]
     fn selected_region_preflight_accepts_empty_region_plan_with_boundary_face_pairs() {
@@ -7114,15 +7116,15 @@ mod tests {
         let assembly = ExactBooleanAssemblyPlan {
             vertices: vec![
                 ExactOutputVertex {
-                    point: p0,
+                    point: p0.clone(),
                     source: boundary[0].clone(),
                 },
                 ExactOutputVertex {
-                    point: p1,
+                    point: p1.clone(),
                     source: boundary[1].clone(),
                 },
                 ExactOutputVertex {
-                    point: p2,
+                    point: p2.clone(),
                     source: boundary[2].clone(),
                 },
             ],
@@ -7133,9 +7135,14 @@ mod tests {
                 orientation: ExactOutputTriangleOrientation::PreserveSource,
             }],
         };
-        let mesh = assembly
-            .to_exact_mesh(ExactMeshValidationPolicy::ALLOW_BOUNDARY)
-            .unwrap();
+        let mesh = ExactMesh::new_with_policy_and_version(
+            vec![p0.clone(), p1.clone(), p2.clone()],
+            vec![Triangle([0, 1, 2])],
+            SourceProvenance::exact("exact boolean assembly plan"),
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            1,
+        )
+        .unwrap();
         let result = ExactBooleanResult {
             kind: ExactBooleanResultKind::SelectedRegions {
                 selection: ExactRegionSelection::KeepAll,

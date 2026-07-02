@@ -558,25 +558,10 @@ impl ExactBooleanAssemblyPlan {
         Ok(())
     }
 
-    /// Validate and materialize the assembly plan as an [`ExactMesh`].
-    ///
-    /// Constructed output triangles are converted back into hypermesh exact
-    /// vertices and triangle handles only after local assembly invariants have
-    /// been audited. The resulting mesh is then checked by the same manifold
-    /// and geometric validators used for caller-supplied exact meshes.
-    ///
-    /// combinatorics must carry certified source and incidence facts before a
-    /// topology consumer treats them as mesh state.
-    pub(crate) fn to_exact_mesh(
+    fn materialize_exact_mesh(
         &self,
         policy: ExactMeshValidationPolicy,
     ) -> Result<ExactMesh, super::super::error::ExactMeshError> {
-        self.validate().map_err(|error| {
-            super::super::error::ExactMeshError::one(super::super::error::ExactMeshBlocker::new(
-                super::super::error::ExactMeshBlockerKind::IndexOutOfBounds,
-                format!("exact boolean assembly validation failed: {error}"),
-            ))
-        })?;
         let vertices = self
             .vertices
             .iter()
@@ -615,19 +600,12 @@ impl ExactBooleanAssemblyPlan {
         right: &ExactMesh,
         policy: ExactMeshValidationPolicy,
     ) -> Result<ExactMesh, super::super::error::ExactMeshError> {
-        self.validate().map_err(|error| {
-            super::super::error::ExactMeshError::one(super::super::error::ExactMeshBlocker::new(
-                super::super::error::ExactMeshBlockerKind::IndexOutOfBounds,
-                format!("exact boolean assembly validation failed: {error}"),
-            ))
-        })?;
+        self.validate()
+            .map_err(|error| assembly_hypertri_error_to_mesh_error("assembly validation", error))?;
         validate_assembly_source_face_incidence(self, left, right).map_err(|error| {
-            super::super::error::ExactMeshError::one(super::super::error::ExactMeshBlocker::new(
-                super::super::error::ExactMeshBlockerKind::DegenerateTriangle,
-                format!("exact boolean assembly source incidence failed: {error}"),
-            ))
+            assembly_hypertri_error_to_mesh_error("assembly source incidence", error)
         })?;
-        self.to_exact_mesh(policy)
+        self.materialize_exact_mesh(policy)
     }
 
     /// Canonicalize exact assembly topology before mesh materialization.
@@ -946,6 +924,21 @@ fn assembly_vertex_lies_on_source_face(
         .ok_or(hypertri::Error::PredicateUndecided {
             predicate: "assembly_refinement_source_face_incidence",
         })
+}
+
+fn assembly_hypertri_error_to_mesh_error(
+    context: &'static str,
+    error: hypertri::Error,
+) -> ExactMeshError {
+    let kind = match &error {
+        hypertri::Error::PredicateUndecided { .. } => ExactMeshBlockerKind::UndecidablePredicate,
+        hypertri::Error::InvalidInput { .. } => ExactMeshBlockerKind::StaleFactReplay,
+        hypertri::Error::NoEarFound => ExactMeshBlockerKind::ExactConstructionFailure,
+        hypertri::Error::UnsupportedFeature { .. } => {
+            ExactMeshBlockerKind::UnsupportedExactOperation
+        }
+    };
+    ExactMeshError::one(ExactMeshBlocker::new(kind, format!("{context}: {error}")))
 }
 
 fn assembly_vertex_lies_strictly_on_projected_edge(
@@ -1875,6 +1868,17 @@ mod tests {
 
         assembly.validate().unwrap();
         assert!(validate_assembly_source_face_incidence(&assembly, &left, &right).is_err());
+        let error = assembly
+            .checked_to_exact_mesh_with_sources(
+                &left,
+                &right,
+                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .unwrap_err();
+        assert!(
+            error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+            "{error:?}"
+        );
     }
 
     #[test]
@@ -1917,6 +1921,17 @@ mod tests {
 
         assembly.validate().unwrap();
         assert!(validate_assembly_source_face_incidence(&assembly, &left, &right).is_err());
+        let error = assembly
+            .checked_to_exact_mesh_with_sources(
+                &left,
+                &right,
+                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .unwrap_err();
+        assert!(
+            error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+            "{error:?}"
+        );
     }
 
     #[test]
