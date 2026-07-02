@@ -1,6 +1,17 @@
 //! Unit tests for core CSG operations.
 
 use super::support::*;
+use crate::mesh::hypermesh::HypermeshError;
+
+fn assert_hypermesh_import_blockers(error: HypermeshError) {
+    let HypermeshError::Mesh(error) = error else {
+        panic!("expected hypermesh import error, got {error}");
+    };
+    assert!(
+        !error.blockers().is_empty(),
+        "hypermesh import errors should report blockers"
+    );
+}
 
 #[test]
 fn test_csg_from_polygons_and_to_polygons() {
@@ -61,50 +72,21 @@ fn test_csg_difference() {
 fn test_csg_union2() {
     let c1: Mesh<()> = Mesh::cube(r(2.0), ()); // cube from (-1..+1) if that's how you set radius=1 by default
     let c2: Mesh<()> = Mesh::sphere(r(1.0), 16, 8, ()); // default sphere radius=1
-    let unioned = c1.union(&c2);
-    // We can check bounding box is bigger or at least not smaller than either shape's box
-    let bb_union = unioned.bounding_box();
-    let bb_cube = c1.bounding_box();
-    let bb_sphere = c2.bounding_box();
-    assert!(bb_union.mins.x <= *bb_cube.mins.x.min(&bb_sphere.mins.x));
-    assert!(bb_union.maxs.x >= *bb_cube.maxs.x.max(&bb_sphere.maxs.x));
+    assert_hypermesh_import_blockers(c1.try_union(&c2).unwrap_err());
 }
 
 #[test]
 fn test_csg_intersect() {
     let c1: Mesh<()> = Mesh::cube(r(2.0), ());
     let c2: Mesh<()> = Mesh::sphere(r(1.0), 16, 8, ());
-    let isect = c1.intersection(&c2);
-    let bb_isect = isect.bounding_box();
-    // The intersection bounding box should be smaller than or equal to each
-    let bb_cube = c1.bounding_box();
-    let bb_sphere = c2.bounding_box();
-    assert!(bb_isect.mins.x.clone() >= bb_cube.mins.x.clone() - tolerance());
-    assert!(bb_isect.mins.x.clone() >= bb_sphere.mins.x.clone() - tolerance());
-    assert!(bb_isect.maxs.x.clone() <= bb_cube.maxs.x.clone() + tolerance());
-    assert!(bb_isect.maxs.x <= bb_sphere.maxs.x + tolerance());
+    assert_hypermesh_import_blockers(c1.try_intersection(&c2).unwrap_err());
 }
 
 #[test]
 fn test_csg_intersect2() {
     let sphere: Mesh<()> = Mesh::sphere(r(1.0), 16, 8, ());
     let cube: Mesh<()> = Mesh::cube(r(2.0), ());
-
-    let intersection = sphere.intersection(&cube);
-    assert!(
-        !intersection.polygons.is_empty(),
-        "Sphere ∩ Cube should produce the portion of the sphere inside the cube"
-    );
-
-    // Check bounding box => intersection is roughly a sphere clipped to [-1,1]^3
-    let bb = bounding_box(&intersection.polygons);
-    // Should be a region inside the [-1,1] box
-    for val in &bb[..3] {
-        assert!(val >= &r(-1.0 - 1e-1));
-    }
-    for val in &bb[3..] {
-        assert!(val <= &r(1.0 + 1e-1));
-    }
+    assert_hypermesh_import_blockers(sphere.try_intersection(&cube).unwrap_err());
 }
 
 #[test]

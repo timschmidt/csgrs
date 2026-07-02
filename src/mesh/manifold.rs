@@ -6,7 +6,7 @@ use std::fmt::Debug;
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Return whether this mesh validates as a closed two-manifold in `hypermesh`.
     ///
-    /// This method is intentionally routed through [`hypermesh::ExactMesh`]
+    /// This method is intentionally routed through [`hypermesh::Mesh`]
     /// instead of the old `csgrs` tolerance hash. Edge incidence, duplicate
     /// directed edges, vertex links, and triangle degeneracy are topology
     /// facts owned by `hypermesh`; `csgrs` only supplies the current CAD mesh
