@@ -179,7 +179,7 @@ pub(crate) fn classify_face_regions_against_opposite_planes(
     regions: &ExactFaceRegionPlan,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Vec<FaceRegionPlaneClassification> {
+) -> Result<Vec<FaceRegionPlaneClassification>, ExactMeshError> {
     let mut classifications = Vec::new();
     for region in &regions.regions {
         let (plane_side, plane_mesh) = match region.side {
@@ -194,10 +194,10 @@ pub(crate) fn classify_face_regions_against_opposite_planes(
                 plane_side,
                 plane_mesh,
                 plane_face,
-            ));
+            )?);
         }
     }
-    classifications
+    Ok(classifications)
 }
 
 pub(crate) fn checked_classify_face_regions_against_opposite_planes(
@@ -207,9 +207,7 @@ pub(crate) fn checked_classify_face_regions_against_opposite_planes(
 ) -> Result<Vec<FaceRegionPlaneClassification>, ExactMeshError> {
     let report = validate_face_region_plan(regions, left, right);
     if report.blockers.is_empty() {
-        Ok(classify_face_regions_against_opposite_planes(
-            regions, left, right,
-        ))
+        classify_face_regions_against_opposite_planes(regions, left, right)
     } else {
         Err(ExactMeshError::new(
             report
@@ -1598,29 +1596,9 @@ fn classify_region_against_face_plane(
     plane_side: MeshSide,
     plane_mesh: &ExactMesh,
     plane_face: usize,
-) -> FaceRegionPlaneClassification {
-    let Ok(face) = plane_mesh.view().face(plane_face) else {
-        return FaceRegionPlaneClassification {
-            region_side,
-            region_face,
-            plane_side,
-            plane_face,
-            relation: FaceRegionPlaneRelation::Unknown,
-            node_sides: vec![None; boundary.len()],
-            predicates: Vec::new(),
-        };
-    };
-    let Ok([a, b, c]) = face.vertices() else {
-        return FaceRegionPlaneClassification {
-            region_side,
-            region_face,
-            plane_side,
-            plane_face,
-            relation: FaceRegionPlaneRelation::Unknown,
-            node_sides: vec![None; boundary.len()],
-            predicates: Vec::new(),
-        };
-    };
+) -> Result<FaceRegionPlaneClassification, ExactMeshError> {
+    let face = plane_mesh.view().face(plane_face)?;
+    let [a, b, c] = face.vertices()?;
     let mut predicates = Vec::with_capacity(boundary.len());
     let mut node_sides = Vec::with_capacity(boundary.len());
 
@@ -1631,7 +1609,7 @@ fn classify_region_against_face_plane(
     }
 
     let relation = relation_from_sides(&node_sides);
-    FaceRegionPlaneClassification {
+    Ok(FaceRegionPlaneClassification {
         region_side,
         region_face,
         plane_side,
@@ -1639,7 +1617,7 @@ fn classify_region_against_face_plane(
         relation,
         node_sides,
         predicates,
-    }
+    })
 }
 
 pub(crate) fn choose_region_projection(
@@ -1751,6 +1729,37 @@ mod tests {
 
     fn face_interior(point: Point3) -> FaceSplitBoundaryNode {
         FaceSplitBoundaryNode::FaceInterior { point }
+    }
+
+    #[test]
+    fn region_plane_classification_reports_stale_plane_face_rows() {
+        let boundary = vec![
+            original(0, p(0, 0, 0)),
+            original(1, p(1, 0, 0)),
+            original(2, p(0, 1, 0)),
+        ];
+        let mut plane_mesh = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 1, 1, 0, 1, 0, 1, 1],
+            &[0, 1, 2],
+            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .expect("test plane should construct");
+        plane_mesh.facts.faces.clear();
+
+        let error = classify_region_against_face_plane(
+            MeshSide::Left,
+            0,
+            &boundary,
+            MeshSide::Right,
+            &plane_mesh,
+            0,
+        )
+        .expect_err("stale retained face row should return a typed blocker");
+        assert!(
+            error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+            "{error:?}"
+        );
+        assert_eq!(error.blockers()[0].face(), Some(0));
     }
 
     #[test]
