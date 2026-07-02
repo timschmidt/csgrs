@@ -908,7 +908,7 @@ fn fan_faces_cover_triangle(
     // subdivision of the source triangle boundary and whose exact projected
     // area matches. Interior vertices are deleted with the patch; boundary
     // split vertices are retained by refining copied side faces before mesh
-    // handoff.
+    // boundary.
     let whole_triangle = whole_mesh.view().face(whole_face)?.vertex_indices();
     let whole_points = triangle_point_refs(whole_mesh, whole_triangle)?;
     let whole_projection_points = [

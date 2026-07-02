@@ -945,7 +945,7 @@ impl ExactIntersectionGraph {
 
     /// Validate all retained face-pair event records.
     ///
-    /// Graph validation is the checked handoff between exact face-pair
+    /// Graph validation is the checked boundary between exact face-pair
     /// classification and split planning. It verifies that every retained
     /// event is structurally compatible with its coarse relation before edge
     /// parameters are sorted or graph vertices are merged.
@@ -958,7 +958,7 @@ impl ExactIntersectionGraph {
 
     /// Validate retained face-pair events against their source meshes.
     ///
-    /// This is the graph-level source-aware handoff for downstream exact
+    /// This is the graph-level source-aware boundary for downstream exact
     /// topology construction. It replays each retained event's source handles
     /// against the left/right meshes before any split ordering or planar-cell
     /// extraction consumes the graph.
@@ -1134,7 +1134,7 @@ impl ExactIntersectionGraph {
 
     /// Build a non-mutating split-topology plan after validating split events.
     ///
-    /// This checked entry point enforces the edge-split handoff contract before
+    /// This checked entry point enforces the edge-split boundary contract before
     /// graph-vertex merging. It is the preferred path for production exact
     /// boolean topology because it rejects missing side facts, non-crossing
     /// split facts, and uncertified edge ordering before later stages can
@@ -1197,7 +1197,7 @@ impl ExactIntersectionGraph {
     /// Build exact face-boundary geometry for later triangulation.
     ///
     /// This resolves face split work items into original and constructed
-    /// boundary nodes with exact coordinates. It remains a pre-mutation handoff:
+    /// boundary nodes with exact coordinates. It remains a pre-mutation boundary:
     /// no halfedges are created and no winding decision is inferred here. The
     /// predicates and constructions are validated before combinatorial edits.
     pub fn face_split_geometry_plan(
@@ -1666,7 +1666,7 @@ pub(crate) struct FaceSplitBoundaryChain {
     pub nodes: Vec<FaceSplitBoundaryNode>,
 }
 
-/// Exact geometry handoff for one split face.
+/// Exact geometry boundary for one split face.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct FaceSplitGeometry {
     /// Mesh side owning the face.
@@ -1689,7 +1689,7 @@ pub(crate) struct ExactFaceSplitGeometryPlan {
 impl ExactFaceSplitGeometryPlan {
     /// Build full face-region boundary loops for downstream exact triangulation.
     ///
-    /// The geometry handoff stores only split edge chains. This method expands
+    /// The geometry boundary stores only split edge chains. This method expands
     /// each affected triangle into one boundary loop in original face-edge
     /// order, inserting exact graph vertices along the split edges. It still
     /// does not decide winding, ownership, or boolean output; those decisions
@@ -2021,7 +2021,7 @@ fn push_graph_vertex_source_use_blockers(
     missing_message: &'static str,
 ) {
     // construction object, not only the rounded coordinate it produced. Every
-    // later graph/topology handoff therefore rechecks the determinant ratio and
+    // later graph/topology boundary therefore rechecks the determinant ratio and
     if !ratio_matches_parameter(&vertex_use.parameter_ratio, &vertex_use.parameter) {
         blockers.push(SplitPlanBlocker {
             graph_vertex: Some(graph_vertex),

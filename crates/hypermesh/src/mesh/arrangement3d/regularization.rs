@@ -61,7 +61,7 @@ pub(crate) enum ExactArrangementBlocker {
     NonManifoldCellComplex,
     /// Source boundary sheets overlap or cross in the arrangement, but the
     /// retained face-cells have not yet been regularized into volume-boundary
-    /// cells. This is the exact arrangement handoff for closed-solid cases
+    /// cells. This is the exact arrangement boundary for closed-solid cases
     /// that still need cell-complex volume construction rather than a generic
     /// non-manifold topology failure.
     UnregularizedCoincidentSheetComplex,

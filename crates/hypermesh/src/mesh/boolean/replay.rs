@@ -8,13 +8,13 @@ use super::*;
 /// Complete exact boolean evaluation outcome used by replay/audit tests.
 ///
 /// `result` is present only when the request materialized under retained exact
-/// evidence. When it is absent, `preflight` and `certifications` retain the
-/// blocker/provenance facts instead of collapsing the request to an
+/// evidence. When it is absent, `operation_evidence` and `certifications`
+/// retain the blocker/provenance facts instead of collapsing the request to an
 /// approximate or prose-only error.
 #[derive(Clone, Debug, PartialEq)]
 pub(super) struct ExactBooleanEvaluation {
     pub(super) request: ExactBooleanRequest,
-    pub(super) preflight: ExactBooleanPreflight,
+    pub(super) operation_evidence: ExactBooleanOperationEvidence,
     pub(super) certifications: ExactBooleanCertificationSet,
     pub(super) result: Option<ExactBooleanResult>,
 }
@@ -32,7 +32,7 @@ pub(super) fn exact_boolean_evaluation_for_replay_result_with_materialization(
     let graph = prepared_pair.validated_intersection_graph()?;
     let mut regularized_arrangement = None;
     let mut regularized_attempt = None;
-    let mut preflight = exact_boolean_replay_preflight(
+    let mut operation_evidence = exact_boolean_replay_operation_evidence(
         left,
         right,
         request,
@@ -40,17 +40,20 @@ pub(super) fn exact_boolean_evaluation_for_replay_result_with_materialization(
         &shortcut_facts,
         regularized_attempt.as_ref(),
     )?;
-    let certified_by_coplanar_boundary_closure = preflight.support
+    let certified_by_coplanar_boundary_closure = operation_evidence.support
         == ExactBooleanSupport::CertifiedArrangementCellComplex
         && request.validation == MeshValidationPolicy::CLOSED
-        && preflight.coplanar_volumetric_evidence.as_ref().is_some();
-    let certified_by_orthogonal_cell_materialization = preflight.support
+        && operation_evidence
+            .coplanar_volumetric_evidence
+            .as_ref()
+            .is_some();
+    let certified_by_orthogonal_cell_materialization = operation_evidence.support
         == ExactBooleanSupport::CertifiedArrangementCellComplex
-        && orthogonal_solid_cell_materializes_for_preflight(left, right, request.operation)?;
+        && orthogonal_solid_cell_materializes_for_evidence(left, right, request.operation)?;
     let should_replay_arrangement = !certified_by_coplanar_boundary_closure
         && !certified_by_orthogonal_cell_materialization
         && matches!(
-            preflight.support,
+            operation_evidence.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex
                 | ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
                 | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
@@ -60,7 +63,7 @@ pub(super) fn exact_boolean_evaluation_for_replay_result_with_materialization(
             && !certified_by_orthogonal_cell_materialization
             && !graph.face_pairs.is_empty()
             && matches!(
-                preflight.support,
+                operation_evidence.support,
                 ExactBooleanSupport::CertifiedConvexUnion
                     | ExactBooleanSupport::CertifiedConvexIntersection
                     | ExactBooleanSupport::CertifiedConvexDifference
@@ -76,7 +79,7 @@ pub(super) fn exact_boolean_evaluation_for_replay_result_with_materialization(
             &mut regularized_attempt,
         )?;
         if regularized_attempt.is_some() {
-            preflight = exact_boolean_replay_preflight(
+            operation_evidence = exact_boolean_replay_operation_evidence(
                 left,
                 right,
                 request,
@@ -95,15 +98,18 @@ pub(super) fn exact_boolean_evaluation_for_replay_result_with_materialization(
         regularized_attempt.as_ref(),
     )?;
     let result = if materialize_result
-        && preflight.support.is_certified()
-        && matches!(&preflight.blocker, None)
+        && operation_evidence.support.is_certified()
+        && matches!(&operation_evidence.blocker, None)
     {
-        if matches!(preflight.support, ExactBooleanSupport::SelectedRegionPolicy) {
+        if matches!(
+            operation_evidence.support,
+            ExactBooleanSupport::SelectedRegionPolicy
+        ) {
             try_materialize_certified_boolean_support_with_artifacts(
                 left,
                 right,
                 request,
-                preflight.support,
+                operation_evidence.support,
                 Some(graph.as_ref()),
                 regularized_arrangement.as_ref(),
                 regularized_attempt.as_ref(),
@@ -116,7 +122,7 @@ pub(super) fn exact_boolean_evaluation_for_replay_result_with_materialization(
                 left,
                 right,
                 request,
-                preflight.support,
+                operation_evidence.support,
                 Some(graph.as_ref()),
                 regularized_arrangement.as_ref(),
                 regularized_attempt.as_ref(),
@@ -128,7 +134,7 @@ pub(super) fn exact_boolean_evaluation_for_replay_result_with_materialization(
     };
     let evaluation = ExactBooleanEvaluation {
         request,
-        preflight,
+        operation_evidence,
         certifications,
         result,
     };
@@ -615,13 +621,13 @@ fn certification_set_from_graph_and_regularized_arrangement(
                 None,
             )
         } else {
-            let mut arrangement_cell_complex_preflight = None;
+            let mut arrangement_cell_complex_operation_evidence = None;
             planar_arrangement_report_from_graph_with_cell_complex_cache(
                 graph,
                 left,
                 right,
                 request.operation,
-                &mut arrangement_cell_complex_preflight,
+                &mut arrangement_cell_complex_operation_evidence,
                 Some(request),
                 retained_arrangement_attempt,
             )
@@ -883,33 +889,35 @@ pub(super) fn replay_regularized_arrangement_attempt(
     Ok(())
 }
 
-fn exact_boolean_replay_preflight(
+fn exact_boolean_replay_operation_evidence(
     left: &Mesh,
     right: &Mesh,
     request: ExactBooleanRequest,
     graph: &ExactIntersectionGraph,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
     retained_attempt: Option<&ExactArrangementBooleanAttempt>,
-) -> Result<ExactBooleanPreflight, MeshError> {
-    let graph_preflight_has_source_arrangement_shortcut =
+) -> Result<ExactBooleanOperationEvidence, MeshError> {
+    let graph_operation_evidence_has_source_arrangement_shortcut =
         shortcut_facts.materializes_operation(request.operation);
-    let graph_preflight_has_certified_axis_aligned_box_pair = shortcut_facts.axis_aligned_box_pair;
-    let graph_preflight = preflight_boolean_exact_request_from_graph_with_retained_attempt(
-        graph,
-        left,
-        right,
-        request,
-        retained_attempt,
-        shortcut_facts,
-    )?;
-    if graph_preflight.operation != request.operation {
+    let graph_operation_evidence_has_certified_axis_aligned_box_pair =
+        shortcut_facts.axis_aligned_box_pair;
+    let graph_operation_evidence =
+        operation_evidence_for_exact_request_from_graph_with_retained_attempt(
+            graph,
+            left,
+            right,
+            request,
+            retained_attempt,
+            shortcut_facts,
+        )?;
+    if graph_operation_evidence.operation != request.operation {
         return Err(retained_evidence_validation_error(
             RETAINED_EVIDENCE_REPLAY_CONTEXT,
             ExactEvidenceValidationError::StatusEvidenceMismatch,
             MeshBlockerKind::StaleFactReplay,
         ));
     }
-    graph_preflight.validate().map_err(|error| {
+    graph_operation_evidence.validate().map_err(|error| {
         retained_evidence_validation_error(
             RETAINED_EVIDENCE_REPLAY_CONTEXT,
             error,
@@ -917,7 +925,7 @@ fn exact_boolean_replay_preflight(
         )
     })?;
     if matches!(
-        graph_preflight.support,
+        graph_operation_evidence.support,
         ExactBooleanSupport::CertifiedEmptyOperand
             | ExactBooleanSupport::CertifiedBoundsDisjoint
             | ExactBooleanSupport::CertifiedIdentical
@@ -928,34 +936,34 @@ fn exact_boolean_replay_preflight(
             | ExactBooleanSupport::CertifiedConvexSeparated
             | ExactBooleanSupport::CertifiedConvexContainment
     ) || (matches!(
-        graph_preflight.support,
+        graph_operation_evidence.support,
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
-    ) && !graph_preflight_has_source_arrangement_shortcut
-        && !graph_preflight_has_certified_axis_aligned_box_pair)
+    ) && !graph_operation_evidence_has_source_arrangement_shortcut
+        && !graph_operation_evidence_has_certified_axis_aligned_box_pair)
     {
-        return Ok(graph_preflight);
+        return Ok(graph_operation_evidence);
     }
     if ((request.validation != MeshValidationPolicy::ALLOW_BOUNDARY)
-        || graph_preflight_has_source_arrangement_shortcut
-        || graph_preflight_has_certified_axis_aligned_box_pair)
+        || graph_operation_evidence_has_source_arrangement_shortcut
+        || graph_operation_evidence_has_certified_axis_aligned_box_pair)
         && let Some(attempt) = retained_attempt
-        && let Ok(Some(preflight)) =
-            certified_arrangement_cell_complex_preflight_from_retained_attempt(
+        && let Ok(Some(operation_evidence)) =
+            certified_arrangement_cell_complex_evidence_from_retained_attempt(
                 graph, left, right, request, attempt,
             )
     {
-        preflight.validate().map_err(|error| {
+        operation_evidence.validate().map_err(|error| {
             retained_evidence_validation_error(
                 RETAINED_EVIDENCE_REPLAY_CONTEXT,
                 error,
                 MeshBlockerKind::StaleFactReplay,
             )
         })?;
-        return Ok(preflight);
+        return Ok(operation_evidence);
     }
-    Ok(graph_preflight)
+    Ok(graph_operation_evidence)
 }
 
 const RETAINED_EVIDENCE_REPLAY_CONTEXT: &str =

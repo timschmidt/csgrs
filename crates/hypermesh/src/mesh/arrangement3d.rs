@@ -1,6 +1,6 @@
 //! Exact 3D arrangement artifact for mesh pairs.
 //!
-//! This module is deliberately an arrangement/cell-complex handoff, not a
+//! This module is deliberately an arrangement/cell-complex boundary, not a
 //! direct triangle-soup Boolean shortcut. It retains source vertices, exact
 //! graph-intersection vertices, split edge chains, face-region boundary loops,
 //! carrier-face provenance, and winding labels needed by later selection and
@@ -778,7 +778,7 @@ impl<'a> ArrangementView<'a> {
         }
     }
 
-    /// Return whether construction reached a blocker-free arrangement handoff.
+    /// Return whether construction reached a blocker-free arrangement boundary.
     pub fn is_complete(self) -> bool {
         self.arrangement.blockers.is_empty()
     }

@@ -91,7 +91,7 @@ use super::{
     materialize_open_surface_disjoint_meshes,
     materialize_volumetric_coplanar_boundary_closure_output_from_graph,
     open_surface_disjoint_report_from_graph,
-    preflight_boolean_exact_request_from_graph_with_retained_attempt,
+    operation_evidence_for_exact_request_from_graph_with_retained_attempt,
     rematerialize_simplified_arrangement_cell_complex,
     replay_generic_arrangement_cell_complex_result,
     replay_selected_region_boolean_result_from_graph,
@@ -1480,12 +1480,12 @@ impl ExactBooleanResult {
     /// triangulation, assembly invariant, and the materialized output mesh,
     /// then checks that assembly vertices and triangles still match the mesh.
     /// A selected-region result must retain nonempty region classifications
-    /// and triangulations because those are the checked handoff facts that
+    /// and triangulations because those are the checked boundary facts that
     /// justify the assembly; otherwise a caller could relabel an empty
     /// shortcut-like object as a selected-region boolean.
     /// Every retained triangulation must also have at least one matching
     /// retained region/plane classification for its source side and face, so
-    /// the mesh handoff cannot contain triangulated topology disconnected from
+    /// the mesh boundary cannot contain triangulated topology disconnected from
     /// the exact side facts prepared for winding policy. Conversely, every
     /// retained region/plane classification must belong to a triangulated
     /// source region so stale or relabeled side facts cannot be interpreted as
@@ -1496,14 +1496,14 @@ impl ExactBooleanResult {
     /// retained side evidence is exact state, not a multiset that later
     /// winding code can count twice. The same rule applies to retained
     /// triangulations: each source region has one checked polygon-to-triangle
-    /// handoff. Output assembly triangles must likewise point back to retained
+    /// boundary. Output assembly triangles must likewise point back to retained
     /// triangulated source regions,
     /// preventing post-hoc provenance relabeling after materialization, and
     /// their vertex sources must be members of the retained triangulation
     /// boundary for that source region; welded vertices may carry a different
     /// source witness, but their exact point must still replay to the retained
     /// boundary. The retained assembly must also avoid dead vertices so the
-    /// topology handoff is the exact set consumed by mesh materialization. That
+    /// topology boundary is the exact set consumed by mesh materialization. That
     /// rather than an opaque output mesh.
     pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         let retains_region_artifacts = self.kind.retains_region_artifacts();
@@ -1720,7 +1720,7 @@ impl ExactBooleanResult {
                 classification.plane_face,
             );
             // The exact state cannot retain the same region/plane side fact
-            // twice and still be a coherent winding handoff.
+            // twice and still be a coherent winding boundary.
             if !unique_classifications.insert(classification_key) {
                 return Err(ExactEvidenceValidationError::DuplicateRegionClassification);
             }
@@ -2317,7 +2317,7 @@ impl ExactBooleanResult {
 /// Replayable source-shape facts for exact boolean shortcuts that do not need
 /// graph topology.
 ///
-/// These facts deliberately mirror preflight shortcut semantics rather than the
+/// These facts deliberately mirror operation evidence shortcut semantics rather than the
 /// lower-level bounds helper: an empty operand is certified as empty, not as a
 /// bounds-disjoint non-empty pair even when it has no mesh bounds.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -2737,7 +2737,7 @@ fn retained_output_mesh_matches(
 
 /// Replayable certification bundle for an exact boolean request.
 ///
-/// These reports are intentionally redundant with the preflight summary. The
+/// These reports are intentionally redundant with the operation evidence summary. The
 /// summary is the scheduling decision, while this bundle keeps the Yap-style
 /// exact facts that explain which stage certified, blocked, or declined the
 /// requested operation.
@@ -3382,7 +3382,7 @@ fn arrangement_cell_complex_sources_match(
     }
     let shortcut_facts =
         ExactArrangementCellComplexShortcutFacts::checked_from_sources(left, right)?;
-    let preflight = preflight_boolean_exact_request_from_graph_with_retained_attempt(
+    let operation_evidence = operation_evidence_for_exact_request_from_graph_with_retained_attempt(
         &graph,
         left,
         right,
@@ -3391,8 +3391,8 @@ fn arrangement_cell_complex_sources_match(
         &shortcut_facts,
     )
     .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
-    preflight.validate()?;
-    Ok(preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex)
+    operation_evidence.validate()?;
+    Ok(operation_evidence.support == ExactBooleanSupport::CertifiedArrangementCellComplex)
 }
 
 fn arrangement_cell_complex_output_matches_sources(
@@ -4148,7 +4148,7 @@ impl ExactBooleanSupport {
     }
 }
 
-/// Preflight report for an exact boolean operation request.
+/// Retained evidence for an exact boolean operation request.
 ///
 /// The report gives internal callers a stable way to audit the current
 /// implementation boundary. Shortcut variants are retained as materializable
@@ -4156,7 +4156,7 @@ impl ExactBooleanSupport {
 /// split-region plane classifications without dispatching to the specialized
 /// tolerance kernel.
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct ExactBooleanPreflight {
+pub(crate) struct ExactBooleanOperationEvidence {
     /// Requested operation.
     pub(super) operation: ExactBooleanOperation,
     /// Certified support level for the request.
@@ -4175,14 +4175,14 @@ pub(crate) struct ExactBooleanPreflight {
     /// Structured explanation for named operations that are certified enough
     /// to inspect but not yet executable by the selected policy.
     pub(super) blocker: Option<ExactBooleanBlocker>,
-    /// Checked coplanar-overlap evidence retained when preflight stops at a
-    /// planar arrangement boundary.
+    /// Checked coplanar-overlap evidence retained when operation evidence stops
+    /// at a planar arrangement boundary.
     ///
     /// This keeps positive-area coplanar graph evidence visible to structured
     /// replay instead of flattening it into a generic "unsupported" boolean.
     pub(super) coplanar_arrangement_evidence: Option<CoplanarArrangementEvidence>,
     /// Source-aware coplanar volumetric-cell evidence retained when the
-    /// preflight crosses that exact boundary.
+    /// operation evidence crosses that exact boundary.
     ///
     /// This report separates boundary-only opposite-side shared faces from
     /// same-side or undecided positive-area coplanar overlap. Retaining it
@@ -4566,14 +4566,14 @@ fn axis_aligned_orthogonal_solid_winding_evidence_matches_sources(
         && report.coplanar_volumetric_evidence.is_none()
         && report.blocker == ExactBooleanBlocker::default();
     if retains_graph_evidence || collapsed_winding_evidence {
-        axis_aligned_orthogonal_solid_preflight_matches_sources(left, right, request)
+        axis_aligned_orthogonal_solid_evidence_matches_sources(left, right, request)
     } else {
         Ok(false)
     }
 }
 
 #[cfg(test)]
-fn axis_aligned_orthogonal_solid_preflight_matches_sources(
+fn axis_aligned_orthogonal_solid_evidence_matches_sources(
     left: &Mesh,
     right: &Mesh,
     request: ExactBooleanRequest,
@@ -4585,15 +4585,15 @@ fn axis_aligned_orthogonal_solid_preflight_matches_sources(
         left,
         right,
         solid_operation,
-        "exact arrangement orthogonal solid cell preflight replay",
+        "exact arrangement orthogonal solid cell operation evidence replay",
         request.validation,
     )
     .map(|mesh| mesh.is_some())
     .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)
 }
 
-impl ExactBooleanPreflight {
-    /// Validate this preflight report against source meshes and request.
+impl ExactBooleanOperationEvidence {
+    /// Validate this operation evidence report against source meshes and request.
     ///
     /// Boundary-only named booleans are intentionally blocked until a caller
     /// chooses how to project lower-dimensional contact. Request-native replay
@@ -4642,13 +4642,13 @@ impl ExactBooleanPreflight {
             && self.region_classifications.is_empty()
             && self.coplanar_arrangement_evidence.is_none()
             && self.coplanar_volumetric_evidence.is_none()
-            && axis_aligned_orthogonal_solid_preflight_matches_sources(left, right, request)?
+            && axis_aligned_orthogonal_solid_evidence_matches_sources(left, right, request)?
         {
             return Ok(());
         }
         let shortcut_facts =
             ExactArrangementCellComplexShortcutFacts::checked_from_sources(left, right)?;
-        if let Ok(replay) = preflight_boolean_exact_request_from_graph_with_retained_attempt(
+        if let Ok(replay) = operation_evidence_for_exact_request_from_graph_with_retained_attempt(
             &graph,
             left,
             right,
@@ -4663,7 +4663,7 @@ impl ExactBooleanPreflight {
             left, right, request, true,
         )
         .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
-        .preflight
+        .operation_evidence
         .clone();
         if self == &replay {
             Ok(())
@@ -4674,7 +4674,7 @@ impl ExactBooleanPreflight {
 
     /// Validate support, blocker, and retained artifact consistency.
     pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
-        // Preflight connects exact graph construction to later selection and
+        // OperationEvidence connects exact graph construction to later selection and
         // keeps contradictions visible as structured state rather than hiding
         // them behind a boolean success/failure bit.
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
@@ -5057,7 +5057,7 @@ impl ExactBooleanBlocker {
     /// Build a blocker of `kind` from exact intersection-graph relation
     /// counts.
     ///
-    /// This is the shared provenance-count boundary for preflight blockers and
+    /// This is the shared provenance-count boundary for operation evidence blockers and
     /// source replay. Keeping the counts on the public blocker shape prevents
     /// executor and report code from drifting on how unknown candidate events
     /// and failed exact constructions are retained.
@@ -5183,7 +5183,7 @@ impl ExactBooleanBlocker {
     }
 }
 
-/// Exact boolean preflight blocker kind.
+/// Exact boolean operation evidence blocker kind.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ExactBooleanBlockerKind {
     /// Predicate or equality refinement is required before policy can run.
@@ -5199,7 +5199,7 @@ pub(crate) enum ExactBooleanBlockerKind {
     Winding,
 }
 
-/// Certification status for exact refinement preflight.
+/// Certification status for exact refinement operation_evidence.
 ///
 /// Refinement is the stage before application-level topology policy: exact
 /// graph extraction retained an unknown predicate outcome or a construction
@@ -5216,7 +5216,7 @@ pub(crate) enum ExactRefinementStatus {
 
 /// Auditable report for unresolved exact graph refinement.
 ///
-/// This report is intentionally narrower than boolean preflight. It answers
+/// This report is intentionally narrower than boolean operation_evidence. It answers
 /// only whether exact graph construction is blocked by unknown predicates or
 /// failed exact constructions, retaining the graph counts that justify the
 /// answer. Later boundary, planar-arrangement, or winding reports should only
@@ -7075,8 +7075,8 @@ mod tests {
     use hyperlimit::SourceProvenance;
 
     #[test]
-    fn selected_region_preflight_accepts_empty_region_plan_with_boundary_face_pairs() {
-        let mut preflight = ExactBooleanPreflight {
+    fn selected_region_operation_evidence_accepts_empty_region_plan_with_boundary_face_pairs() {
+        let mut operation_evidence = ExactBooleanOperationEvidence {
             operation: ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
             support: ExactBooleanSupport::SelectedRegionPolicy,
             graph_had_unknowns: false,
@@ -7089,11 +7089,11 @@ mod tests {
             coplanar_volumetric_evidence: None,
         };
 
-        preflight.validate().unwrap();
+        operation_evidence.validate().unwrap();
 
-        preflight.region_count = 1;
+        operation_evidence.region_count = 1;
         assert_eq!(
-            preflight.validate(),
+            operation_evidence.validate(),
             Err(ExactEvidenceValidationError::MissingRegionFacts)
         );
     }
@@ -7822,7 +7822,7 @@ mod tests {
             Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
-        let mut preflight = ExactBooleanPreflight {
+        let mut operation_evidence = ExactBooleanOperationEvidence {
             operation: ExactBooleanOperation::Difference,
             support: ExactBooleanSupport::RequiresPlanarArrangement,
             graph_had_unknowns: false,
@@ -7834,14 +7834,15 @@ mod tests {
             coplanar_arrangement_evidence: report.coplanar_arrangement_evidence.clone(),
             coplanar_volumetric_evidence: None,
         };
-        preflight.validate().unwrap();
+        operation_evidence.validate().unwrap();
 
-        preflight.operation = ExactBooleanOperation::Intersection;
-        preflight.validate().unwrap();
+        operation_evidence.operation = ExactBooleanOperation::Intersection;
+        operation_evidence.validate().unwrap();
 
-        preflight.operation = ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll);
+        operation_evidence.operation =
+            ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll);
         assert_eq!(
-            preflight.validate(),
+            operation_evidence.validate(),
             Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
     }
@@ -8086,7 +8087,7 @@ mod tests {
             Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
-        let preflight = ExactBooleanPreflight {
+        let operation_evidence = ExactBooleanOperationEvidence {
             operation: ExactBooleanOperation::Union,
             support: ExactBooleanSupport::CertifiedConvexUnion,
             graph_had_unknowns: false,
@@ -8099,7 +8100,7 @@ mod tests {
             coplanar_volumetric_evidence: None,
         };
         assert_eq!(
-            preflight.validate(),
+            operation_evidence.validate(),
             Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
         );
 
@@ -8446,7 +8447,7 @@ mod tests {
             unknown_pairs: 0,
             construction_failed_events: 0,
         };
-        let mut preflight = ExactBooleanPreflight {
+        let mut operation_evidence = ExactBooleanOperationEvidence {
             operation: ExactBooleanOperation::Intersection,
             support: ExactBooleanSupport::RequiresCoplanarVolumetricCells,
             graph_had_unknowns: false,
@@ -8458,11 +8459,11 @@ mod tests {
             coplanar_arrangement_evidence: None,
             coplanar_volumetric_evidence: Some(evidence.clone()),
         };
-        preflight.validate().unwrap();
+        operation_evidence.validate().unwrap();
 
-        preflight.retained_events = 5;
+        operation_evidence.retained_events = 5;
         assert_eq!(
-            preflight.validate(),
+            operation_evidence.validate(),
             Err(ExactEvidenceValidationError::CoplanarVolumetricEvidenceMismatch)
         );
 
@@ -8489,10 +8490,10 @@ mod tests {
         let overflowing_evidence = CoplanarVolumetricCellEvidenceReport {
             segment_plane_events: usize::MAX,
             proper_crossing_events: usize::MAX,
-            ..preflight
+            ..operation_evidence
                 .coplanar_volumetric_evidence
                 .as_ref()
-                .expect("preflight retained coplanar volumetric evidence")
+                .expect("operation evidence retained coplanar volumetric evidence")
                 .clone()
         };
         overflowing_evidence.validate().unwrap();

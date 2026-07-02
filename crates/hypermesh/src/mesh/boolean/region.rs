@@ -121,7 +121,7 @@ impl FaceRegionPlaneClassification {
     /// justifies the stored relation. It also checks that the retained plane
     /// came from the opposite mesh side, because winding and inside/outside
     /// policies consume these facts as cross-mesh evidence. Keeping that
-    /// handoff should retain the exact predicate context it depends on.
+    /// boundary should retain the exact predicate context it depends on.
     pub(crate) fn validate(&self) -> Result<(), FaceRegionPlaneValidationError> {
         if self.region_side == self.plane_side {
             return Err(FaceRegionPlaneValidationError::SameRegionAndPlaneSide {
@@ -518,7 +518,7 @@ impl ExactBooleanAssemblyPlan {
     /// Each output vertex stores both a materialized exact point and the
     /// boundary node that produced it. Validating their exact equality keeps
     /// the construction provenance attached to the topology that consumes it,
-    /// rejecting unreferenced vertices keeps the handoff compact to the exact
+    /// rejecting unreferenced vertices keeps the boundary compact to the exact
     /// topology materialization consumes, and validating triangle point
     /// distinctness catches zero-area assembly artifacts before they reach mesh
     /// construction. These are exact
@@ -632,7 +632,7 @@ impl ExactBooleanAssemblyPlan {
     /// disconnected.
     ///
     /// The default assembly welds exact-equal coordinates globally. That is the
-    /// right handoff for ordinary edge-adjacent output, but arrangement-materialized
+    /// right boundary for ordinary edge-adjacent output, but arrangement-materialized
     /// booleans can produce regularized differences where two closed sheets touch
     /// at one exact coordinate while remaining distinct topological vertices. A
     /// global weld turns that point contact into a non-manifold vertex even
@@ -1013,7 +1013,7 @@ fn validate_output_triangle_distinct_points(
 /// Output triangles carry `source_side` and `source_face` so later boolean
 /// stages can audit where each triangle came from. This check replays that
 /// incidence with exact `hyperlimit::orient3d_report` predicates before
-/// handoffs should retain and revalidate the geometric certificates they
+/// boundaries should retain and revalidate the geometric certificates they
 /// depend on.
 pub(crate) fn validate_assembly_source_face_incidence(
     assembly: &ExactBooleanAssemblyPlan,
@@ -1223,7 +1223,7 @@ fn validate_assembly_face_interior_source_against_face(
 /// plane. For boundary topology, the triangle also has to keep the same
 /// projected orientation as the source face it claims. The projection is chosen
 /// by a certified nonzero `hyperlimit::orient2d_report`, then both source and
-/// handoff must retain the predicate facts that make orientation meaningful,
+/// boundary must retain the predicate facts that make orientation meaningful,
 /// rather than trusting vertex order as an unchecked label.
 fn validate_output_triangle_source_orientation(
     assembly: &ExactBooleanAssemblyPlan,
@@ -1317,7 +1317,7 @@ pub(crate) fn triangulate_face_regions_with_earcut(
 
 /// Validate and triangulate split face-region loops with `hypertri` exact earcut.
 ///
-/// This is the checked handoff from exact graph geometry into triangulation:
+/// This is the checked boundary from exact graph geometry into triangulation:
 /// region loops must first satisfy the structural and face-incidence
 /// invariants enforced by [`validate_face_region_plan`]. Only then are
 /// them into downstream combinatorics.
@@ -1921,7 +1921,7 @@ mod tests {
     }
 
     #[test]
-    fn assembly_canonicalization_refines_exact_t_junctions_before_mesh_handoff() {
+    fn assembly_canonicalization_refines_exact_t_junctions_before_mesh_boundary() {
         let left = Mesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 2, 0, 0, 0, 2, 0],
             &[0, 1, 2],

@@ -312,55 +312,58 @@ impl ExactBooleanCertificationSet {
         }
     }
 
-    fn arrangement_attempt_matches_certified_preflight(
+    fn arrangement_attempt_matches_certified_operation_evidence(
         &self,
-        preflight: &ExactBooleanPreflight,
+        operation_evidence: &ExactBooleanOperationEvidence,
     ) -> bool {
         self.winding_evidence.status
             == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
-            && self.arrangement_attempt_certifies_output_for_operation(preflight.operation)
+            && self.arrangement_attempt_certifies_output_for_operation(operation_evidence.operation)
     }
 
-    fn boundary_report_matches_preflight(
+    fn boundary_report_matches_operation_evidence(
         &self,
-        preflight: &ExactBooleanPreflight,
+        operation_evidence: &ExactBooleanOperationEvidence,
         requires_blocker: bool,
     ) -> bool {
-        preflight.graph_had_unknowns == self.boundary_touching.graph_had_unknowns
-            && preflight.retained_face_pairs == self.boundary_touching.retained_face_pairs
-            && preflight.retained_events == self.boundary_touching.retained_events
-            && preflight.region_count == 0
-            && preflight.region_classifications.is_empty()
-            && preflight.coplanar_arrangement_evidence.is_none()
-            && preflight.coplanar_volumetric_evidence.is_none()
+        operation_evidence.graph_had_unknowns == self.boundary_touching.graph_had_unknowns
+            && operation_evidence.retained_face_pairs == self.boundary_touching.retained_face_pairs
+            && operation_evidence.retained_events == self.boundary_touching.retained_events
+            && operation_evidence.region_count == 0
+            && operation_evidence.region_classifications.is_empty()
+            && operation_evidence.coplanar_arrangement_evidence.is_none()
+            && operation_evidence.coplanar_volumetric_evidence.is_none()
             && if requires_blocker {
-                preflight.blocker.as_ref() == Some(&self.boundary_touching.blocker)
+                operation_evidence.blocker.as_ref() == Some(&self.boundary_touching.blocker)
             } else {
-                matches!(&preflight.blocker, None)
+                matches!(&operation_evidence.blocker, None)
             }
     }
 
-    fn closed_boundary_touching_matches_preflight(
+    fn closed_boundary_touching_matches_operation_evidence(
         &self,
-        preflight: &ExactBooleanPreflight,
+        operation_evidence: &ExactBooleanOperationEvidence,
     ) -> bool {
         self.closed_boundary_touching_materialization_certified_by_retained_evidence()
             && ((self.winding_evidence.status
                 == ExactWindingEvidenceStatus::ClosedBoundaryTouchingAlreadyMaterialized
-                && (self.boundary_report_matches_preflight(preflight, false)
-                    || (preflight.graph_had_unknowns == self.winding_evidence.graph_had_unknowns
-                        && preflight.retained_face_pairs
+                && (self.boundary_report_matches_operation_evidence(operation_evidence, false)
+                    || (operation_evidence.graph_had_unknowns
+                        == self.winding_evidence.graph_had_unknowns
+                        && operation_evidence.retained_face_pairs
                             == self.winding_evidence.retained_face_pairs
-                        && preflight.retained_events == self.winding_evidence.retained_events
-                        && preflight.region_count == self.winding_evidence.region_count
-                        && preflight.region_classifications
+                        && operation_evidence.retained_events
+                            == self.winding_evidence.retained_events
+                        && operation_evidence.region_count == self.winding_evidence.region_count
+                        && operation_evidence.region_classifications
                             == self.winding_evidence.region_classifications.as_slice()
-                        && matches!(&preflight.blocker, None)
-                        && preflight.coplanar_arrangement_evidence.is_none()
-                        && preflight.coplanar_volumetric_evidence.is_some()
-                        && preflight.coplanar_volumetric_evidence.as_ref()
+                        && matches!(&operation_evidence.blocker, None)
+                        && operation_evidence.coplanar_arrangement_evidence.is_none()
+                        && operation_evidence.coplanar_volumetric_evidence.is_some()
+                        && operation_evidence.coplanar_volumetric_evidence.as_ref()
                             == self.winding_evidence.coplanar_volumetric_evidence.as_ref())))
-                || self.arrangement_attempt_matches_certified_preflight(preflight))
+                || self
+                    .arrangement_attempt_matches_certified_operation_evidence(operation_evidence))
     }
 
     fn closed_boundary_touching_materialization_certified_by_retained_evidence(&self) -> bool {
@@ -378,35 +381,35 @@ impl ExactBooleanCertificationSet {
         }
     }
 
-    fn open_surface_arrangement_matches_preflight(
+    fn open_surface_arrangement_matches_operation_evidence(
         &self,
-        preflight: &ExactBooleanPreflight,
+        operation_evidence: &ExactBooleanOperationEvidence,
     ) -> bool {
         (self.winding_evidence.status
             == ExactWindingEvidenceStatus::OpenSurfaceArrangementAlreadyMaterialized
-            && preflight.graph_had_unknowns == self.winding_evidence.graph_had_unknowns
-            && preflight.retained_face_pairs == self.winding_evidence.retained_face_pairs
-            && preflight.retained_events == self.winding_evidence.retained_events
-            && preflight.region_count == self.winding_evidence.region_count
-            && preflight.region_classifications
+            && operation_evidence.graph_had_unknowns == self.winding_evidence.graph_had_unknowns
+            && operation_evidence.retained_face_pairs == self.winding_evidence.retained_face_pairs
+            && operation_evidence.retained_events == self.winding_evidence.retained_events
+            && operation_evidence.region_count == self.winding_evidence.region_count
+            && operation_evidence.region_classifications
                 == self.winding_evidence.region_classifications.as_slice()
-            && matches!(&preflight.blocker, None)
-            && preflight.coplanar_arrangement_evidence.is_none()
-            && preflight.coplanar_volumetric_evidence.is_none()
+            && matches!(&operation_evidence.blocker, None)
+            && operation_evidence.coplanar_arrangement_evidence.is_none()
+            && operation_evidence.coplanar_volumetric_evidence.is_none()
             && self
                 .winding_evidence
                 .coplanar_volumetric_evidence
                 .as_ref()
                 .is_none())
-            || (self.arrangement_attempt_matches_certified_preflight(preflight)
-                && preflight.graph_had_unknowns == self.refinement.graph_had_unknowns
-                && preflight.retained_face_pairs == self.refinement.retained_face_pairs
-                && preflight.retained_events == self.refinement.retained_events
-                && preflight.region_count != 0
-                && !preflight.region_classifications.is_empty()
-                && matches!(&preflight.blocker, None)
-                && preflight.coplanar_arrangement_evidence.is_none()
-                && preflight.coplanar_volumetric_evidence.is_none())
+            || (self.arrangement_attempt_matches_certified_operation_evidence(operation_evidence)
+                && operation_evidence.graph_had_unknowns == self.refinement.graph_had_unknowns
+                && operation_evidence.retained_face_pairs == self.refinement.retained_face_pairs
+                && operation_evidence.retained_events == self.refinement.retained_events
+                && operation_evidence.region_count != 0
+                && !operation_evidence.region_classifications.is_empty()
+                && matches!(&operation_evidence.blocker, None)
+                && operation_evidence.coplanar_arrangement_evidence.is_none()
+                && operation_evidence.coplanar_volumetric_evidence.is_none())
     }
 
     fn result_matches_request(
@@ -460,54 +463,64 @@ impl ExactBooleanCertificationSet {
         }
     }
 
-    fn winding_evidence_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        preflight.graph_had_unknowns == self.winding_evidence.graph_had_unknowns
-            && preflight.retained_face_pairs == self.winding_evidence.retained_face_pairs
-            && preflight.retained_events == self.winding_evidence.retained_events
-            && preflight.region_count == self.winding_evidence.region_count
-            && preflight.region_classifications
+    fn winding_evidence_matches_operation_evidence(
+        &self,
+        operation_evidence: &ExactBooleanOperationEvidence,
+    ) -> bool {
+        operation_evidence.graph_had_unknowns == self.winding_evidence.graph_had_unknowns
+            && operation_evidence.retained_face_pairs == self.winding_evidence.retained_face_pairs
+            && operation_evidence.retained_events == self.winding_evidence.retained_events
+            && operation_evidence.region_count == self.winding_evidence.region_count
+            && operation_evidence.region_classifications
                 == self.winding_evidence.region_classifications.as_slice()
-            && preflight.blocker.as_ref() == Some(&self.winding_evidence.blocker)
-            && preflight.coplanar_arrangement_evidence.is_none()
-            && preflight.coplanar_volumetric_evidence.as_ref()
+            && operation_evidence.blocker.as_ref() == Some(&self.winding_evidence.blocker)
+            && operation_evidence.coplanar_arrangement_evidence.is_none()
+            && operation_evidence.coplanar_volumetric_evidence.as_ref()
                 == self.winding_evidence.coplanar_volumetric_evidence.as_ref()
     }
 
-    fn convex_reports_match_preflight_support(&self, preflight: &ExactBooleanPreflight) -> bool {
+    fn convex_reports_match_operation_evidence_support(
+        &self,
+        operation_evidence: &ExactBooleanOperationEvidence,
+    ) -> bool {
         if !self.convex_left_in_right.solid_facts.is_certified_convex()
             || !self.convex_right_in_left.solid_facts.is_certified_convex()
         {
             return false;
         }
-        match preflight.support {
+        match operation_evidence.support {
             ExactBooleanSupport::CertifiedConvexUnion
             | ExactBooleanSupport::CertifiedConvexIntersection
-            | ExactBooleanSupport::CertifiedConvexDifference => match preflight.operation {
-                ExactBooleanOperation::Union => self.convex_capabilities.can_union,
-                ExactBooleanOperation::Intersection => self.convex_capabilities.can_intersection,
-                ExactBooleanOperation::Difference => self.convex_capabilities.can_difference,
-                ExactBooleanOperation::SelectedRegions(_) => false,
-            },
+            | ExactBooleanSupport::CertifiedConvexDifference => {
+                match operation_evidence.operation {
+                    ExactBooleanOperation::Union => self.convex_capabilities.can_union,
+                    ExactBooleanOperation::Intersection => {
+                        self.convex_capabilities.can_intersection
+                    }
+                    ExactBooleanOperation::Difference => self.convex_capabilities.can_difference,
+                    ExactBooleanOperation::SelectedRegions(_) => false,
+                }
+            }
             ExactBooleanSupport::CertifiedConvexSeparated
             | ExactBooleanSupport::CertifiedConvexContainment => true,
             _ => false,
         }
     }
 
-    fn arrangement_cell_complex_matches_preflight(
+    fn arrangement_cell_complex_matches_operation_evidence(
         &self,
-        preflight: &ExactBooleanPreflight,
+        operation_evidence: &ExactBooleanOperationEvidence,
     ) -> bool {
-        let coplanar_boundary_only_evidence_matches = preflight.graph_had_unknowns
+        let coplanar_boundary_only_evidence_matches = operation_evidence.graph_had_unknowns
             == self.winding_evidence.graph_had_unknowns
-            && preflight.retained_face_pairs == self.winding_evidence.retained_face_pairs
-            && preflight.retained_events == self.winding_evidence.retained_events
-            && preflight.region_count == self.winding_evidence.region_count
-            && preflight.region_classifications
+            && operation_evidence.retained_face_pairs == self.winding_evidence.retained_face_pairs
+            && operation_evidence.retained_events == self.winding_evidence.retained_events
+            && operation_evidence.region_count == self.winding_evidence.region_count
+            && operation_evidence.region_classifications
                 == self.winding_evidence.region_classifications.as_slice()
-            && matches!(&preflight.blocker, None)
-            && preflight.coplanar_arrangement_evidence.is_none()
-            && preflight.coplanar_volumetric_evidence.as_ref()
+            && matches!(&operation_evidence.blocker, None)
+            && operation_evidence.coplanar_arrangement_evidence.is_none()
+            && operation_evidence.coplanar_volumetric_evidence.as_ref()
                 == self.winding_evidence.coplanar_volumetric_evidence.as_ref()
             && if let Some(evidence) = self.winding_evidence.coplanar_volumetric_evidence.as_ref() {
                 matches!(
@@ -518,13 +531,13 @@ impl ExactBooleanCertificationSet {
             } else {
                 false
             };
-        let coplanar_boundary_closure_evidence_matches = preflight.graph_had_unknowns
+        let coplanar_boundary_closure_evidence_matches = operation_evidence.graph_had_unknowns
             == self.winding_evidence.graph_had_unknowns
-            && preflight.retained_face_pairs == self.winding_evidence.retained_face_pairs
-            && preflight.retained_events == self.winding_evidence.retained_events
-            && matches!(&preflight.blocker, None)
-            && preflight.coplanar_arrangement_evidence.is_none()
-            && preflight.coplanar_volumetric_evidence.as_ref()
+            && operation_evidence.retained_face_pairs == self.winding_evidence.retained_face_pairs
+            && operation_evidence.retained_events == self.winding_evidence.retained_events
+            && matches!(&operation_evidence.blocker, None)
+            && operation_evidence.coplanar_arrangement_evidence.is_none()
+            && operation_evidence.coplanar_volumetric_evidence.as_ref()
                 == self.winding_evidence.coplanar_volumetric_evidence.as_ref()
             && if let Some(report) = self.volumetric_boundary_closure.as_ref() {
                 matches!(
@@ -534,18 +547,20 @@ impl ExactBooleanCertificationSet {
             } else {
                 false
             };
-        let source_fact_materialization_retains_preflight_evidence = preflight.graph_had_unknowns
+        let source_fact_materialization_retains_operation_evidence_evidence = operation_evidence
+            .graph_had_unknowns
             == self.winding_evidence.graph_had_unknowns
-            && preflight.retained_face_pairs == self.winding_evidence.retained_face_pairs
-            && preflight.retained_events == self.winding_evidence.retained_events
-            && preflight.region_count == self.winding_evidence.region_count
-            && preflight.region_classifications
+            && operation_evidence.retained_face_pairs == self.winding_evidence.retained_face_pairs
+            && operation_evidence.retained_events == self.winding_evidence.retained_events
+            && operation_evidence.region_count == self.winding_evidence.region_count
+            && operation_evidence.region_classifications
                 == self.winding_evidence.region_classifications.as_slice()
-            && preflight.coplanar_arrangement_evidence.as_ref()
+            && operation_evidence.coplanar_arrangement_evidence.as_ref()
                 == self.winding_evidence.coplanar_arrangement_evidence.as_ref()
-            && preflight.coplanar_volumetric_evidence.as_ref()
+            && operation_evidence.coplanar_volumetric_evidence.as_ref()
                 == self.winding_evidence.coplanar_volumetric_evidence.as_ref();
-        let source_fact_materialization_collapsed_winding_evidence = !preflight.graph_had_unknowns
+        let source_fact_materialization_collapsed_winding_evidence = !operation_evidence
+            .graph_had_unknowns
             && !self.winding_evidence.graph_had_unknowns
             && self.winding_evidence.retained_face_pairs == 0
             && self.winding_evidence.retained_events == 0
@@ -569,7 +584,7 @@ impl ExactBooleanCertificationSet {
                 == ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::Winding);
         let source_fact_materialization_evidence_matches = (self
             .arrangement_cell_complex_shortcuts
-            .materializes_operation(preflight.operation)
+            .materializes_operation(operation_evidence.operation)
             || self.winding_evidence.status
                 == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized)
             && matches!(
@@ -578,62 +593,69 @@ impl ExactBooleanCertificationSet {
                     | ExactWindingEvidenceStatus::CoplanarVolumetricCellsAlreadyMaterialized
                     | ExactWindingEvidenceStatus::PlanarArrangementAlreadyMaterialized
             )
-            && matches!(&preflight.blocker, None)
-            && (source_fact_materialization_retains_preflight_evidence
+            && matches!(&operation_evidence.blocker, None)
+            && (source_fact_materialization_retains_operation_evidence_evidence
                 || source_fact_materialization_collapsed_winding_evidence);
-        let retained_attempt_evidence_matches = preflight.graph_had_unknowns
+        let retained_attempt_evidence_matches = operation_evidence.graph_had_unknowns
             == self.refinement.graph_had_unknowns
-            && preflight.retained_face_pairs == self.refinement.retained_face_pairs
-            && preflight.retained_events == self.refinement.retained_events
-            && preflight.region_count == 0
-            && preflight.region_classifications.is_empty()
-            && matches!(&preflight.blocker, None)
-            && preflight.coplanar_arrangement_evidence.is_none()
+            && operation_evidence.retained_face_pairs == self.refinement.retained_face_pairs
+            && operation_evidence.retained_events == self.refinement.retained_events
+            && operation_evidence.region_count == 0
+            && operation_evidence.region_classifications.is_empty()
+            && matches!(&operation_evidence.blocker, None)
+            && operation_evidence.coplanar_arrangement_evidence.is_none()
             && ((self
                 .arrangement_cell_complex_shortcuts
-                .materializes_operation(preflight.operation)
-                && self.arrangement_attempt_certifies_shortcut_for_operation(preflight.operation))
-                || self.arrangement_attempt_certifies_output_for_operation(preflight.operation));
+                .materializes_operation(operation_evidence.operation)
+                && self.arrangement_attempt_certifies_shortcut_for_operation(
+                    operation_evidence.operation,
+                ))
+                || self.arrangement_attempt_certifies_output_for_operation(
+                    operation_evidence.operation,
+                ));
         retained_attempt_evidence_matches
             || (matches!(
                 self.adjacent_union_completion.status,
                 ExactAdjacentUnionCompletionStatus::CertifiedFullFace
                     | ExactAdjacentUnionCompletionStatus::CertifiedContainedFace
-            ) && self.adjacent_union_completion.operation == preflight.operation
-                && preflight.operation == ExactBooleanOperation::Union
-                && preflight.graph_had_unknowns
+            ) && self.adjacent_union_completion.operation == operation_evidence.operation
+                && operation_evidence.operation == ExactBooleanOperation::Union
+                && operation_evidence.graph_had_unknowns
                     == self.adjacent_union_completion.graph_had_unknowns
-                && preflight.retained_face_pairs
+                && operation_evidence.retained_face_pairs
                     == self.adjacent_union_completion.retained_face_pairs
-                && preflight.retained_events == self.adjacent_union_completion.retained_events
-                && preflight.region_count == 0
-                && preflight.region_classifications.is_empty()
-                && matches!(&preflight.blocker, None)
-                && preflight.coplanar_arrangement_evidence.is_none())
+                && operation_evidence.retained_events
+                    == self.adjacent_union_completion.retained_events
+                && operation_evidence.region_count == 0
+                && operation_evidence.region_classifications.is_empty()
+                && matches!(&operation_evidence.blocker, None)
+                && operation_evidence.coplanar_arrangement_evidence.is_none())
             || coplanar_boundary_only_evidence_matches
             || coplanar_boundary_closure_evidence_matches
             || source_fact_materialization_evidence_matches
             || (if let Some(attempt) = self.arrangement_attempt.as_ref() {
                 attempt.retained_gate_reports().is_some()
-                    && attempt.operation == preflight.operation
+                    && attempt.operation == operation_evidence.operation
                     && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
                     && attempt.resolves_requested_volume_ownership()
                     && {
-                        let region_evidence_matches = (preflight.region_count
+                        let region_evidence_matches = (operation_evidence.region_count
                             == self.winding_evidence.region_count
-                            && preflight.region_classifications
+                            && operation_evidence.region_classifications
                                 == self.winding_evidence.region_classifications.as_slice())
-                            || (preflight.region_count == 0
-                                && preflight.region_classifications.is_empty());
-                        preflight.graph_had_unknowns == self.winding_evidence.graph_had_unknowns
-                            && preflight.retained_face_pairs
+                            || (operation_evidence.region_count == 0
+                                && operation_evidence.region_classifications.is_empty());
+                        operation_evidence.graph_had_unknowns
+                            == self.winding_evidence.graph_had_unknowns
+                            && operation_evidence.retained_face_pairs
                                 == self.winding_evidence.retained_face_pairs
-                            && preflight.retained_events == self.winding_evidence.retained_events
+                            && operation_evidence.retained_events
+                                == self.winding_evidence.retained_events
                             && region_evidence_matches
-                            && matches!(&preflight.blocker, None)
-                            && preflight.coplanar_arrangement_evidence.as_ref()
+                            && matches!(&operation_evidence.blocker, None)
+                            && operation_evidence.coplanar_arrangement_evidence.as_ref()
                                 == self.winding_evidence.coplanar_arrangement_evidence.as_ref()
-                            && preflight.coplanar_volumetric_evidence.as_ref()
+                            && operation_evidence.coplanar_volumetric_evidence.as_ref()
                                 == self.winding_evidence.coplanar_volumetric_evidence.as_ref()
                     }
             } else {
@@ -641,23 +663,28 @@ impl ExactBooleanCertificationSet {
             })
     }
 
-    fn matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        match preflight.support {
+    fn matches_operation_evidence(
+        &self,
+        operation_evidence: &ExactBooleanOperationEvidence,
+    ) -> bool {
+        match operation_evidence.support {
             ExactBooleanSupport::SelectedRegionPolicy => {
                 self.winding_evidence.status == ExactWindingEvidenceStatus::NotNamedOperation
                     && matches!(
-                        preflight.operation,
+                        operation_evidence.operation,
                         ExactBooleanOperation::SelectedRegions(_)
                     )
-                    && preflight.graph_had_unknowns == self.refinement.graph_had_unknowns
-                    && preflight.retained_face_pairs == self.refinement.retained_face_pairs
-                    && preflight.retained_events == self.refinement.retained_events
-                    && preflight.graph_had_unknowns == self.winding_evidence.graph_had_unknowns
-                    && preflight.retained_face_pairs == self.winding_evidence.retained_face_pairs
-                    && preflight.retained_events == self.winding_evidence.retained_events
-                    && matches!(&preflight.blocker, None)
-                    && preflight.coplanar_arrangement_evidence.is_none()
-                    && preflight.coplanar_volumetric_evidence.is_none()
+                    && operation_evidence.graph_had_unknowns == self.refinement.graph_had_unknowns
+                    && operation_evidence.retained_face_pairs == self.refinement.retained_face_pairs
+                    && operation_evidence.retained_events == self.refinement.retained_events
+                    && operation_evidence.graph_had_unknowns
+                        == self.winding_evidence.graph_had_unknowns
+                    && operation_evidence.retained_face_pairs
+                        == self.winding_evidence.retained_face_pairs
+                    && operation_evidence.retained_events == self.winding_evidence.retained_events
+                    && matches!(&operation_evidence.blocker, None)
+                    && operation_evidence.coplanar_arrangement_evidence.is_none()
+                    && operation_evidence.coplanar_volumetric_evidence.is_none()
                     && self.winding_evidence.region_count == 0
                     && self
                         .winding_evidence
@@ -678,61 +705,75 @@ impl ExactBooleanCertificationSet {
             ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
             | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
             | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
-                self.open_surface_arrangement_matches_preflight(preflight)
+                self.open_surface_arrangement_matches_operation_evidence(operation_evidence)
             }
             ExactBooleanSupport::CertifiedArrangementCellComplex => {
-                self.arrangement_cell_complex_matches_preflight(preflight)
+                self.arrangement_cell_complex_matches_operation_evidence(operation_evidence)
             }
             ExactBooleanSupport::CertifiedEmptyOperand => {
                 (self.winding_evidence.status
                     == ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized
-                    || self.arrangement_attempt_matches_certified_preflight(preflight))
+                    || self.arrangement_attempt_matches_certified_operation_evidence(
+                        operation_evidence,
+                    ))
                     && (self.trivial.left_empty || self.trivial.right_empty)
             }
             ExactBooleanSupport::CertifiedBoundsDisjoint => {
                 (self.winding_evidence.status
                     == ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized
-                    || self.arrangement_attempt_matches_certified_preflight(preflight))
+                    || self.arrangement_attempt_matches_certified_operation_evidence(
+                        operation_evidence,
+                    ))
                     && self.trivial.bounds_disjoint
             }
             ExactBooleanSupport::CertifiedIdentical => {
                 (self.winding_evidence.status
                     == ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized
-                    || self.arrangement_attempt_matches_certified_preflight(preflight))
+                    || self.arrangement_attempt_matches_certified_operation_evidence(
+                        operation_evidence,
+                    ))
                     && self.identical.status == ExactIdenticalMeshStatus::Certified
                     && self.same_surface.status == ExactSameSurfaceStatus::Certified
             }
             ExactBooleanSupport::CertifiedSameSurface => {
                 (self.winding_evidence.status
                     == ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized
-                    || self.arrangement_attempt_matches_certified_preflight(preflight))
+                    || self.arrangement_attempt_matches_certified_operation_evidence(
+                        operation_evidence,
+                    ))
                     && self.same_surface.status == ExactSameSurfaceStatus::Certified
             }
             ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference => {
-                self.closed_boundary_touching_matches_preflight(preflight)
+                self.closed_boundary_touching_matches_operation_evidence(operation_evidence)
             }
             ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
                 (self.winding_evidence.status
                     == ExactWindingEvidenceStatus::OpenSurfaceDisjointAlreadyMaterialized
-                    || self.arrangement_attempt_matches_certified_preflight(preflight))
+                    || self.arrangement_attempt_matches_certified_operation_evidence(
+                        operation_evidence,
+                    ))
                     && self.open_surface_disjoint.status
                         == ExactOpenSurfaceDisjointStatus::Certified
-                    && preflight.graph_had_unknowns == self.open_surface_disjoint.graph_had_unknowns
-                    && preflight.retained_face_pairs
+                    && operation_evidence.graph_had_unknowns
+                        == self.open_surface_disjoint.graph_had_unknowns
+                    && operation_evidence.retained_face_pairs
                         == self.open_surface_disjoint.retained_face_pairs
-                    && preflight.retained_events == self.open_surface_disjoint.retained_events
-                    && preflight.region_count == 0
-                    && preflight.region_classifications.is_empty()
-                    && matches!(&preflight.blocker, None)
-                    && preflight.coplanar_arrangement_evidence.is_none()
-                    && preflight.coplanar_volumetric_evidence.is_none()
+                    && operation_evidence.retained_events
+                        == self.open_surface_disjoint.retained_events
+                    && operation_evidence.region_count == 0
+                    && operation_evidence.region_classifications.is_empty()
+                    && matches!(&operation_evidence.blocker, None)
+                    && operation_evidence.coplanar_arrangement_evidence.is_none()
+                    && operation_evidence.coplanar_volumetric_evidence.is_none()
             }
             ExactBooleanSupport::CertifiedClosedWindingSeparated => {
                 (self.winding_evidence.status
                     == ExactWindingEvidenceStatus::ClosedWindingSeparatedAlreadyMaterialized
-                    || self.arrangement_attempt_matches_certified_preflight(preflight))
+                    || self.arrangement_attempt_matches_certified_operation_evidence(
+                        operation_evidence,
+                    ))
                     && self.closed_winding_left_in_right.relation
                         == ClosedMeshWindingMeshRelation::Outside
                     && self.closed_winding_right_in_left.relation
@@ -741,7 +782,9 @@ impl ExactBooleanCertificationSet {
             ExactBooleanSupport::CertifiedClosedWindingContainment => {
                 (self.winding_evidence.status
                     == ExactWindingEvidenceStatus::ClosedWindingContainmentAlreadyMaterialized
-                    || self.arrangement_attempt_matches_certified_preflight(preflight))
+                    || self.arrangement_attempt_matches_certified_operation_evidence(
+                        operation_evidence,
+                    ))
                     && (self.closed_winding_left_in_right.relation
                         == ClosedMeshWindingMeshRelation::StrictlyInside
                         || self.closed_winding_right_in_left.relation
@@ -751,7 +794,8 @@ impl ExactBooleanCertificationSet {
                 .winding_evidence
                 .status
                 == ExactWindingEvidenceStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
-                || self.arrangement_attempt_matches_certified_preflight(preflight))
+                || self
+                    .arrangement_attempt_matches_certified_operation_evidence(operation_evidence))
                 && ((self.regularized_solid.left_closed_solid
                     && self.regularized_solid.right_open_surface)
                     || (self.regularized_solid.left_open_surface
@@ -760,7 +804,8 @@ impl ExactBooleanCertificationSet {
                 .winding_evidence
                 .status
                 == ExactWindingEvidenceStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
-                || self.arrangement_attempt_matches_certified_preflight(preflight))
+                || self
+                    .arrangement_attempt_matches_certified_operation_evidence(operation_evidence))
                 && self.regularized_solid.left_open_surface
                 && self.regularized_solid.right_open_surface,
             ExactBooleanSupport::CertifiedConvexUnion
@@ -768,63 +813,71 @@ impl ExactBooleanCertificationSet {
             | ExactBooleanSupport::CertifiedConvexDifference => {
                 (self.winding_evidence.status
                     == ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized
-                    || self.arrangement_attempt_matches_certified_preflight(preflight))
-                    && self.convex_reports_match_preflight_support(preflight)
+                    || self.arrangement_attempt_matches_certified_operation_evidence(
+                        operation_evidence,
+                    ))
+                    && self.convex_reports_match_operation_evidence_support(operation_evidence)
             }
             ExactBooleanSupport::CertifiedConvexSeparated => {
                 (self.winding_evidence.status
                     == ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized
-                    && self.convex_reports_match_preflight_support(preflight))
+                    && self.convex_reports_match_operation_evidence_support(operation_evidence))
                     || (self.winding_evidence.status
                         == ExactWindingEvidenceStatus::ClosedWindingSeparatedAlreadyMaterialized
                         && self.closed_winding_left_in_right.relation
                             == ClosedMeshWindingMeshRelation::Outside
                         && self.closed_winding_right_in_left.relation
                             == ClosedMeshWindingMeshRelation::Outside)
-                    || self.arrangement_attempt_matches_certified_preflight(preflight)
+                    || self.arrangement_attempt_matches_certified_operation_evidence(
+                        operation_evidence,
+                    )
             }
             ExactBooleanSupport::CertifiedConvexContainment => {
                 (self.winding_evidence.status
                     == ExactWindingEvidenceStatus::ConvexBooleanAlreadyMaterialized
-                    && self.convex_reports_match_preflight_support(preflight))
+                    && self.convex_reports_match_operation_evidence_support(operation_evidence))
                     || (self.winding_evidence.status
                         == ExactWindingEvidenceStatus::ClosedWindingContainmentAlreadyMaterialized
                         && (self.closed_winding_left_in_right.relation
                             == ClosedMeshWindingMeshRelation::StrictlyInside
                             || self.closed_winding_right_in_left.relation
                                 == ClosedMeshWindingMeshRelation::StrictlyInside))
-                    || self.arrangement_attempt_matches_certified_preflight(preflight)
+                    || self.arrangement_attempt_matches_certified_operation_evidence(
+                        operation_evidence,
+                    )
             }
             ExactBooleanSupport::RequiresBoundaryOnlyContact => {
                 self.boundary_touching.status == ExactBoundaryTouchingStatus::Certified
                     && self.winding_evidence.status
                         == ExactWindingEvidenceStatus::BoundaryOnlyContactRequired
-                    && self.boundary_report_matches_preflight(preflight, true)
+                    && self.boundary_report_matches_operation_evidence(operation_evidence, true)
             }
             ExactBooleanSupport::RequiresPlanarArrangement => {
                 self.winding_evidence.status
                     == ExactWindingEvidenceStatus::PlanarArrangementRequired
-                    && preflight.graph_had_unknowns == self.planar_arrangement.graph_had_unknowns
-                    && preflight.retained_face_pairs == self.planar_arrangement.retained_face_pairs
-                    && preflight.retained_events == self.planar_arrangement.retained_events
-                    && preflight.region_count == 0
-                    && preflight.region_classifications.is_empty()
-                    && preflight.blocker.as_ref() == Some(&self.planar_arrangement.blocker)
-                    && preflight.coplanar_arrangement_evidence.as_ref()
+                    && operation_evidence.graph_had_unknowns
+                        == self.planar_arrangement.graph_had_unknowns
+                    && operation_evidence.retained_face_pairs
+                        == self.planar_arrangement.retained_face_pairs
+                    && operation_evidence.retained_events == self.planar_arrangement.retained_events
+                    && operation_evidence.region_count == 0
+                    && operation_evidence.region_classifications.is_empty()
+                    && operation_evidence.blocker.as_ref() == Some(&self.planar_arrangement.blocker)
+                    && operation_evidence.coplanar_arrangement_evidence.as_ref()
                         == self
                             .planar_arrangement
                             .coplanar_arrangement_evidence
                             .as_ref()
-                    && preflight.coplanar_volumetric_evidence.is_none()
+                    && operation_evidence.coplanar_volumetric_evidence.is_none()
             }
             ExactBooleanSupport::RequiresCoplanarVolumetricCells => {
                 self.winding_evidence.status
                     == ExactWindingEvidenceStatus::CoplanarVolumetricCellsRequired
-                    && self.winding_evidence_matches_preflight(preflight)
+                    && self.winding_evidence_matches_operation_evidence(operation_evidence)
             }
             ExactBooleanSupport::UnresolvedGraph => {
                 self.winding_evidence.status == ExactWindingEvidenceStatus::GraphUnknowns
-                    && self.winding_evidence_matches_preflight(preflight)
+                    && self.winding_evidence_matches_operation_evidence(operation_evidence)
             }
             ExactBooleanSupport::RequiresCertifiedWinding => {
                 matches!(
@@ -832,7 +885,7 @@ impl ExactBooleanCertificationSet {
                     ExactWindingEvidenceStatus::Ready
                         | ExactWindingEvidenceStatus::NoNontrivialOverlap
                         | ExactWindingEvidenceStatus::VolumetricAssemblyRequired
-                ) && self.winding_evidence_matches_preflight(preflight)
+                ) && self.winding_evidence_matches_operation_evidence(operation_evidence)
             }
         }
     }
@@ -876,24 +929,29 @@ impl ExactBooleanEvaluation {
         &self,
         allow_missing_materialized_result: bool,
     ) -> Result<(), ExactEvidenceValidationError> {
-        if self.preflight.operation != self.request.operation {
+        if self.operation_evidence.operation != self.request.operation {
             return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
-        self.preflight.validate()?;
+        self.operation_evidence.validate()?;
         self.certifications.validate_for_request(self.request)?;
-        if !self.certifications.matches_preflight(&self.preflight) {
+        if !self
+            .certifications
+            .matches_operation_evidence(&self.operation_evidence)
+        {
             return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
         if let Some(result) = self.result.as_ref() {
-            if !self.preflight.support.is_certified() || !matches!(&self.preflight.blocker, None) {
+            if !self.operation_evidence.support.is_certified()
+                || !matches!(&self.operation_evidence.blocker, None)
+            {
                 return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
             }
             self.validate_materialized_result(result)?;
         } else if !allow_missing_materialized_result
-            && self.preflight.support.is_certified()
-            && matches!(&self.preflight.blocker, None)
+            && self.operation_evidence.support.is_certified()
+            && matches!(&self.operation_evidence.blocker, None)
             && !matches!(
-                self.preflight.support,
+                self.operation_evidence.support,
                 ExactBooleanSupport::SelectedRegionPolicy
                     | ExactBooleanSupport::CertifiedArrangementCellComplex
             )
@@ -918,15 +976,19 @@ impl ExactBooleanEvaluation {
             true,
         )
         .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
-        if self.preflight != replay.preflight {
+        if self.operation_evidence != replay.operation_evidence {
             return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
         self.certifications
             .arrangement_cell_complex_shortcuts
             .validate_against_sources(left, right)?;
         if self.certifications != replay.certifications
-            && (!self.certifications.matches_preflight(&self.preflight)
-                || !replay.certifications.matches_preflight(&replay.preflight))
+            && (!self
+                .certifications
+                .matches_operation_evidence(&self.operation_evidence)
+                || !replay
+                    .certifications
+                    .matches_operation_evidence(&replay.operation_evidence))
         {
             return Err(ExactEvidenceValidationError::SourceReplayMismatch);
         }
@@ -950,10 +1012,10 @@ impl ExactBooleanEvaluation {
                 self.request,
                 retained_attempt,
             )
-        } else if self.preflight.support.is_certified()
-            && matches!(&self.preflight.blocker, None)
+        } else if self.operation_evidence.support.is_certified()
+            && matches!(&self.operation_evidence.blocker, None)
             && !matches!(
-                self.preflight.support,
+                self.operation_evidence.support,
                 ExactBooleanSupport::SelectedRegionPolicy
                     | ExactBooleanSupport::CertifiedArrangementCellComplex
             )
@@ -988,8 +1050,9 @@ impl ExactBooleanEvaluation {
         if match result.kind {
             ExactBooleanResultKind::SelectedRegions { .. }
             | ExactBooleanResultKind::OpenSurfaceArrangement { .. } => {
-                result.graph_had_unknowns != self.preflight.graph_had_unknowns
-                    || result.region_classifications != self.preflight.region_classifications
+                result.graph_had_unknowns != self.operation_evidence.graph_had_unknowns
+                    || result.region_classifications
+                        != self.operation_evidence.region_classifications
             }
             ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
             | ExactBooleanResultKind::CertifiedShortcut { .. } => false,
@@ -1002,7 +1065,7 @@ impl ExactBooleanEvaluation {
         {
             return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
         }
-        let result_matches_preflight_support = match self.preflight.support {
+        let result_matches_operation_evidence_support = match self.operation_evidence.support {
             ExactBooleanSupport::SelectedRegionPolicy => {
                 matches!(result.kind, ExactBooleanResultKind::SelectedRegions { .. })
             }
@@ -1149,7 +1212,7 @@ impl ExactBooleanEvaluation {
             | ExactBooleanSupport::RequiresCertifiedWinding
             | ExactBooleanSupport::UnresolvedGraph => false,
         };
-        if result_matches_preflight_support {
+        if result_matches_operation_evidence_support {
             Ok(())
         } else {
             Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
@@ -1176,14 +1239,14 @@ impl ExactPlanarArrangementReport {
     }
 }
 
-fn test_preflight(
+fn test_operation_evidence(
     request: ExactBooleanRequest,
     left: &Mesh,
     right: &Mesh,
-) -> ExactBooleanPreflight {
+) -> ExactBooleanOperationEvidence {
     exact_boolean_evaluation_for_replay_result_with_materialization(left, right, request, false)
         .unwrap()
-        .preflight
+        .operation_evidence
         .clone()
 }
 
@@ -1274,13 +1337,13 @@ fn test_planar_arrangement_report(
         );
     }
     let graph = build_validated_intersection_graph(left, right).unwrap();
-    let mut arrangement_cell_complex_preflight = None;
+    let mut arrangement_cell_complex_operation_evidence = None;
     planar_arrangement_report_from_graph_with_cell_complex_cache(
         &graph,
         left,
         right,
         request.operation,
-        &mut arrangement_cell_complex_preflight,
+        &mut arrangement_cell_complex_operation_evidence,
         None,
         None,
     )
@@ -1713,7 +1776,7 @@ fn generic_arrangement_replay_rejects_stale_retained_graph_indices() {
 }
 
 #[test]
-fn open_surface_disjoint_preflight_prefers_specific_support_over_cell_complex() {
+fn open_surface_disjoint_operation_evidence_prefers_specific_support_over_cell_complex() {
     let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
@@ -1732,21 +1795,24 @@ fn open_surface_disjoint_preflight_prefers_specific_support_over_cell_complex() 
         operation: ExactBooleanOperation::Union,
         validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
-    let preflight = test_preflight(request, &left, &right);
+    let operation_evidence = test_operation_evidence(request, &left, &right);
     assert_eq!(
-        preflight.support,
+        operation_evidence.support,
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
-        "{preflight:?}"
+        "{operation_evidence:?}"
     );
-    assert!(preflight.blocker.is_none(), "{preflight:?}");
-    preflight.validate().unwrap();
-    preflight
+    assert!(
+        operation_evidence.blocker.is_none(),
+        "{operation_evidence:?}"
+    );
+    operation_evidence.validate().unwrap();
+    operation_evidence
         .validate_against_sources_for_request(&left, &right, request)
         .unwrap();
 
     with_test_evaluation(request, &left, &right, |evaluation| {
         assert_eq!(
-            evaluation.preflight.support,
+            evaluation.operation_evidence.support,
             ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
             "{evaluation:?}"
         );
@@ -1799,7 +1865,7 @@ fn coplanar_volumetric_gate_uses_source_side_evidence() {
 }
 
 #[test]
-fn arrangement_coplanar_evidence_retains_source_handoff() {
+fn arrangement_coplanar_evidence_retains_source_boundary() {
     let boundary_left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
     let boundary_right = axis_aligned_box_i64([2, 0, 0], [4, 2, 2]);
     let boundary_graph =
@@ -2571,14 +2637,17 @@ fn coplanar_overlay_certifies_component_holed_contact_difference() {
         operation: ExactBooleanOperation::Difference,
         validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
-    let preflight = test_preflight(request, &left, &opening_plus_hole);
+    let operation_evidence = test_operation_evidence(request, &left, &opening_plus_hole);
     assert_eq!(
-        preflight.support,
+        operation_evidence.support,
         ExactBooleanSupport::CertifiedArrangementCellComplex,
-        "{preflight:?}"
+        "{operation_evidence:?}"
     );
-    assert!(preflight.blocker.is_none(), "{preflight:?}");
-    preflight
+    assert!(
+        operation_evidence.blocker.is_none(),
+        "{operation_evidence:?}"
+    );
+    operation_evidence
         .validate_against_sources_for_request(&left, &opening_plus_hole, request)
         .unwrap();
     let result = boolean_coplanar_mesh_overlay_optional(
@@ -2724,12 +2793,12 @@ fn arrangement_preempts_multi_triangle_coplanar_overlay_including_containment() 
 }
 
 #[test]
-fn materialized_arrangement_preflight_probe_certifies_full_pipeline_output() {
+fn materialized_arrangement_operation_evidence_probe_certifies_full_pipeline_output() {
     let left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
     let right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
     let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
 
-    let preflight = certified_arrangement_cell_complex_preflight_if_materialized(
+    let operation_evidence = certified_arrangement_cell_complex_evidence_if_materialized(
         ExactBooleanOperation::Union,
         &graph,
         &left,
@@ -2742,27 +2811,30 @@ fn materialized_arrangement_preflight_probe_certifies_full_pipeline_output() {
         operation: ExactBooleanOperation::Union,
         validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
-    preflight.validate().unwrap();
-    preflight
+    operation_evidence.validate().unwrap();
+    operation_evidence
         .validate_against_sources_for_request(&left, &right, request)
         .unwrap();
     assert_eq!(
-        preflight.support,
+        operation_evidence.support,
         ExactBooleanSupport::CertifiedArrangementCellComplex
     );
-    assert!(preflight.blocker.is_none());
-    assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
-    assert_eq!(preflight.retained_events, graph.event_count());
+    assert!(operation_evidence.blocker.is_none());
+    assert_eq!(
+        operation_evidence.retained_face_pairs,
+        graph.face_pairs.len()
+    );
+    assert_eq!(operation_evidence.retained_events, graph.event_count());
 
     let materialized = materialize_axis_aligned_orthogonal_solid_cell_output(
         &left,
         &right,
         AxisAlignedOrthogonalSolidOperation::Union,
-        "test axis-aligned box arrangement preflight materialization",
+        "test axis-aligned box arrangement operation evidence materialization",
         request.validation,
     )
     .unwrap()
-    .expect("preflight support should have an exact orthogonal cell output");
+    .expect("operation evidence support should have an exact orthogonal cell output");
     materialized.validate_retained_state().unwrap();
 }
 
@@ -2831,22 +2903,25 @@ fn axis_aligned_orthogonal_cell_booleans_materialize_from_shortcut_support() {
             operation: operation,
             validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
-        let preflight = test_preflight(request, &left, &right);
+        let operation_evidence = test_operation_evidence(request, &left, &right);
         assert_eq!(
-            preflight.support,
+            operation_evidence.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex,
-            "{operation:?}: {preflight:?}"
+            "{operation:?}: {operation_evidence:?}"
         );
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
-        let mut stale_preflight = preflight.clone();
-        stale_preflight
+        assert!(
+            operation_evidence.blocker.is_none(),
+            "{operation:?}: {operation_evidence:?}"
+        );
+        let mut stale_operation_evidence = operation_evidence.clone();
+        stale_operation_evidence
             .coplanar_volumetric_evidence
             .as_mut()
-            .expect("preflight should retain coplanar volumetric evidence")
-            .retained_face_pair_count = preflight.retained_face_pairs + 1;
+            .expect("operation evidence should retain coplanar volumetric evidence")
+            .retained_face_pair_count = operation_evidence.retained_face_pairs + 1;
         assert!(
-            stale_preflight.validate().is_err(),
-            "{operation:?}: {stale_preflight:?}"
+            stale_operation_evidence.validate().is_err(),
+            "{operation:?}: {stale_operation_evidence:?}"
         );
 
         let evidence = test_winding_evidence(
@@ -3065,7 +3140,7 @@ fn evaluation_source_replay_rejects_tampered_arrangement_shortcut_facts() {
 }
 
 #[test]
-fn affine_box_booleans_materialize_from_certified_preflight_support() {
+fn affine_box_booleans_materialize_from_certified_operation_evidence_support() {
     let p = |u: i64, v: i64, w: i64| [2 * u + v, 2 * v, 2 * w];
     let left = affine_box_from_map_i64([0, 0, 0], [2, 2, 2], p);
     let right = affine_box_from_map_i64([1, 0, 0], [3, 2, 2], p);
@@ -3079,13 +3154,16 @@ fn affine_box_booleans_materialize_from_certified_preflight_support() {
             operation: operation,
             validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
-        let preflight = test_preflight(request, &left, &right);
+        let operation_evidence = test_operation_evidence(request, &left, &right);
         assert_eq!(
-            preflight.support,
+            operation_evidence.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex,
-            "{operation:?}: {preflight:?}"
+            "{operation:?}: {operation_evidence:?}"
         );
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+        assert!(
+            operation_evidence.blocker.is_none(),
+            "{operation:?}: {operation_evidence:?}"
+        );
 
         let result = test_materialized_result(
             ExactBooleanRequest {
@@ -3140,13 +3218,16 @@ fn affine_empty_intersection_materializes_without_winding_fallback() {
         operation: ExactBooleanOperation::Intersection,
         validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
-    let preflight = test_preflight(request, &left, &right);
+    let operation_evidence = test_operation_evidence(request, &left, &right);
     assert_eq!(
-        preflight.support,
+        operation_evidence.support,
         ExactBooleanSupport::CertifiedArrangementCellComplex,
-        "{preflight:?}"
+        "{operation_evidence:?}"
     );
-    assert!(preflight.blocker.is_none(), "{preflight:?}");
+    assert!(
+        operation_evidence.blocker.is_none(),
+        "{operation_evidence:?}"
+    );
 
     let result = test_materialized_result(
         ExactBooleanRequest {
@@ -3179,11 +3260,11 @@ fn affine_shortcut_winding_report_retains_already_materialized_status() {
             operation: operation,
             validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
-        let preflight = test_preflight(request, &left, &right);
+        let operation_evidence = test_operation_evidence(request, &left, &right);
         assert_eq!(
-            preflight.support,
+            operation_evidence.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex,
-            "{operation:?}: {preflight:?}"
+            "{operation:?}: {operation_evidence:?}"
         );
 
         let evidence = test_winding_evidence(
@@ -3288,9 +3369,15 @@ fn trivial_shortcuts_report_materialized_evidence() {
                 operation: operation,
                 validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             };
-            let preflight = test_preflight(request, left, right);
-            assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
-            assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+            let operation_evidence = test_operation_evidence(request, left, right);
+            assert_eq!(
+                operation_evidence.support, support,
+                "{operation:?}: {operation_evidence:?}"
+            );
+            assert!(
+                operation_evidence.blocker.is_none(),
+                "{operation:?}: {operation_evidence:?}"
+            );
 
             let evidence = test_winding_evidence(
                 ExactBooleanRequest {
@@ -3368,15 +3455,18 @@ fn graph_empty_containment_routes_named_booleans_through_arrangement_pipeline() 
                 operation: operation,
                 validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             };
-            let preflight = test_preflight(request, left, right);
+            let operation_evidence = test_operation_evidence(request, left, right);
             assert_eq!(
-                preflight.support,
+                operation_evidence.support,
                 ExactBooleanSupport::CertifiedArrangementCellComplex,
-                "{right_inside_left:?} {operation:?}: {preflight:?}"
+                "{right_inside_left:?} {operation:?}: {operation_evidence:?}"
             );
-            assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
-            preflight.validate().unwrap();
-            preflight
+            assert!(
+                operation_evidence.blocker.is_none(),
+                "{operation:?}: {operation_evidence:?}"
+            );
+            operation_evidence.validate().unwrap();
+            operation_evidence
                 .validate_against_sources_for_request(left, right, request)
                 .unwrap();
 
@@ -3506,15 +3596,18 @@ fn graph_empty_closed_winding_separation_materializes_without_bounds_disjointnes
             operation: operation,
             validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
-        let preflight = test_preflight(request, &left, &right);
+        let operation_evidence = test_operation_evidence(request, &left, &right);
         assert_eq!(
-            preflight.support,
+            operation_evidence.support,
             ExactBooleanSupport::CertifiedClosedWindingSeparated,
-            "{operation:?}: {preflight:?}"
+            "{operation:?}: {operation_evidence:?}"
         );
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
-        preflight.validate().unwrap();
-        preflight
+        assert!(
+            operation_evidence.blocker.is_none(),
+            "{operation:?}: {operation_evidence:?}"
+        );
+        operation_evidence.validate().unwrap();
+        operation_evidence
             .validate_against_sources_for_request(&left, &right, request)
             .unwrap();
 
@@ -3605,7 +3698,7 @@ fn mixed_dimensional_regularized_solid_reports_materialized_evidence() {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let preflight = test_preflight(
+            let operation_evidence = test_operation_evidence(
                 ExactBooleanRequest {
                     operation: operation,
                     validation: MeshValidationPolicy::ALLOW_BOUNDARY,
@@ -3614,11 +3707,14 @@ fn mixed_dimensional_regularized_solid_reports_materialized_evidence() {
                 right,
             );
             assert_eq!(
-                preflight.support,
+                operation_evidence.support,
                 ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid,
-                "{operation:?}: {preflight:?}"
+                "{operation:?}: {operation_evidence:?}"
             );
-            assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+            assert!(
+                operation_evidence.blocker.is_none(),
+                "{operation:?}: {operation_evidence:?}"
+            );
 
             let evidence = test_winding_evidence(
                 ExactBooleanRequest {
@@ -3774,7 +3870,7 @@ fn lower_dimensional_regularized_solid_reports_materialized_evidence() {
 }
 
 #[test]
-fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
+fn closed_operation_evidence_does_not_certify_boundary_only_arrangement_output() {
     let left = Mesh::from_i64_triangles(
         &[
             0, 0, 0, //
@@ -3802,15 +3898,18 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
         operation: ExactBooleanOperation::Union,
         validation: MeshValidationPolicy::CLOSED,
     };
-    let preflight = test_preflight(reject_closed_request, &left, &right);
+    let operation_evidence = test_operation_evidence(reject_closed_request, &left, &right);
     assert_eq!(
-        preflight.support,
+        operation_evidence.support,
         ExactBooleanSupport::RequiresCertifiedWinding,
-        "{preflight:?}"
+        "{operation_evidence:?}"
     );
-    assert!(preflight.blocker.is_some(), "{preflight:?}");
-    preflight.validate().unwrap();
-    preflight
+    assert!(
+        operation_evidence.blocker.is_some(),
+        "{operation_evidence:?}"
+    );
+    operation_evidence.validate().unwrap();
+    operation_evidence
         .validate_against_sources_for_request(&left, &right, reject_closed_request)
         .unwrap();
     let fake_shortcut = ExactBooleanResult {
@@ -3845,7 +3944,7 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
         "resolved graph alone must not certify an arrangement-cell shortcut"
     );
 
-    let boundary_preflight = test_preflight(
+    let boundary_operation_evidence = test_operation_evidence(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
             validation: MeshValidationPolicy::ALLOW_BOUNDARY,
@@ -3854,21 +3953,24 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
         &right,
     );
     assert_eq!(
-        boundary_preflight.support,
+        boundary_operation_evidence.support,
         ExactBooleanSupport::CertifiedArrangementCellComplex,
-        "{boundary_preflight:?}"
+        "{boundary_operation_evidence:?}"
     );
     assert!(
-        boundary_preflight.blocker.is_none(),
-        "{boundary_preflight:?}"
+        boundary_operation_evidence.blocker.is_none(),
+        "{boundary_operation_evidence:?}"
     );
     assert_eq!(
-        boundary_preflight.retained_face_pairs,
+        boundary_operation_evidence.retained_face_pairs,
         graph.face_pairs.len()
     );
-    assert_eq!(boundary_preflight.retained_events, graph.event_count());
-    boundary_preflight.validate().unwrap();
-    boundary_preflight
+    assert_eq!(
+        boundary_operation_evidence.retained_events,
+        graph.event_count()
+    );
+    boundary_operation_evidence.validate().unwrap();
+    boundary_operation_evidence
         .validate_against_sources_for_request(
             &left,
             &right,
@@ -3879,10 +3981,10 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
         )
         .unwrap();
     assert!(
-        boundary_preflight
+        boundary_operation_evidence
             .validate_against_sources_for_request(&left, &right, reject_closed_request)
             .is_err(),
-        "closed replay should not certify an allow-boundary preflight"
+        "closed replay should not certify an allow-boundary operation evidence"
     );
 
     let evidence = test_winding_evidence(
@@ -4101,15 +4203,18 @@ fn volumetric_coplanar_boundary_closure_materializes_closed_output() {
             operation: operation,
             validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
-        let preflight = test_preflight(request, &left, &right);
+        let operation_evidence = test_operation_evidence(request, &left, &right);
         assert_eq!(
-            preflight.support,
+            operation_evidence.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex,
-            "{operation:?}: {preflight:?}"
+            "{operation:?}: {operation_evidence:?}"
         );
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
-        preflight.validate().unwrap();
-        preflight
+        assert!(
+            operation_evidence.blocker.is_none(),
+            "{operation:?}: {operation_evidence:?}"
+        );
+        operation_evidence.validate().unwrap();
+        operation_evidence
             .validate_against_sources_for_request(&left, &right, request)
             .unwrap();
 
@@ -4211,7 +4316,7 @@ fn boundary_materialization_result_validation_returns_typed_error() {
     );
 }
 
-fn arrangement_attempt_certified_as_cell_complex_for_preflight_with_validation(
+fn arrangement_attempt_certified_as_cell_complex_for_operation_evidence_with_validation(
     left: &Mesh,
     right: &Mesh,
     operation: ExactBooleanOperation,
@@ -4240,7 +4345,7 @@ fn arrangement_attempt_certified_as_cell_complex_for_preflight_with_validation(
         true,
     ) {
         Ok(ArrangementCellComplexOutcome::Materialized(result, attempt)) => {
-            arrangement_cell_complex_result_is_certified_for_preflight(
+            arrangement_cell_complex_result_is_certified_for_operation_evidence(
                 &result, &attempt, left, right,
             )
             .unwrap_or(false)
@@ -4250,7 +4355,7 @@ fn arrangement_attempt_certified_as_cell_complex_for_preflight_with_validation(
 }
 
 #[test]
-fn arrangement_preflight_probe_keeps_boundary_valid_open_output_separate() {
+fn arrangement_operation_evidence_probe_keeps_boundary_valid_open_output_separate() {
     let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
@@ -4269,7 +4374,7 @@ fn arrangement_preflight_probe_keeps_boundary_valid_open_output_separate() {
         ExactBooleanOperation::Intersection,
     ] {
         assert!(
-            !arrangement_attempt_certified_as_cell_complex_for_preflight_with_validation(
+            !arrangement_attempt_certified_as_cell_complex_for_operation_evidence_with_validation(
                 &left,
                 &right,
                 operation,
@@ -4277,7 +4382,7 @@ fn arrangement_preflight_probe_keeps_boundary_valid_open_output_separate() {
             )
         );
         assert!(
-            !arrangement_attempt_certified_as_cell_complex_for_preflight_with_validation(
+            !arrangement_attempt_certified_as_cell_complex_for_operation_evidence_with_validation(
                 &left,
                 &right,
                 operation,
@@ -4288,14 +4393,14 @@ fn arrangement_preflight_probe_keeps_boundary_valid_open_output_separate() {
             operation: operation,
             validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
-        let preflight = test_preflight(request, &left, &right);
+        let operation_evidence = test_operation_evidence(request, &left, &right);
         assert!(
             matches!(
-                preflight.support,
+                operation_evidence.support,
                 ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
                     | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
             ),
-            "{operation:?}: {preflight:?}"
+            "{operation:?}: {operation_evidence:?}"
         );
     }
 }
@@ -4551,13 +4656,14 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
         stale_materialization_error.blockers()[0].kind(),
         MeshBlockerKind::StaleFactReplay
     );
-    let stale_certification_error = arrangement_cell_complex_result_is_certified_for_preflight(
-        &stale_replay_report,
-        &retained_attempt,
-        &left,
-        &right,
-    )
-    .unwrap_err();
+    let stale_certification_error =
+        arrangement_cell_complex_result_is_certified_for_operation_evidence(
+            &stale_replay_report,
+            &retained_attempt,
+            &left,
+            &right,
+        )
+        .unwrap_err();
     assert_eq!(
         stale_certification_error.blockers()[0].kind(),
         MeshBlockerKind::StaleFactReplay
@@ -4693,7 +4799,7 @@ fn arrangement_attempt_accepts_requested_volume_ownership() {
 }
 
 #[test]
-fn retained_volume_ownership_preflight_rejects_stale_source_replay() {
+fn retained_volume_ownership_operation_evidence_rejects_stale_source_replay() {
     let left = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
     let right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
     let request = ExactBooleanRequest {
@@ -4748,14 +4854,14 @@ fn retained_volume_ownership_preflight_rejects_stale_source_replay() {
     assert!(retained_attempt.resolves_requested_volume_ownership());
 
     let graph = build_validated_intersection_graph(&left, &right).unwrap();
-    let error = certified_arrangement_cell_complex_preflight_from_retained_attempt(
+    let error = certified_arrangement_cell_complex_evidence_from_retained_attempt(
         &graph,
         &left,
         &right,
         request,
         &retained_attempt,
     )
-    .expect_err("source-stale retained ownership must not certify preflight");
+    .expect_err("source-stale retained ownership must not certify operation evidence");
     assert!(
         format!("{error:?}").contains("SourceReplayMismatch"),
         "{error:?}"
@@ -4895,15 +5001,24 @@ fn crossing_open_surface_boolean_materializes_inside_arrangement_attempt() {
             operation: operation,
             validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
-        let preflight = test_preflight(request, &left, &right);
+        let operation_evidence = test_operation_evidence(request, &left, &right);
         assert_eq!(
-            preflight.support, expected_support,
-            "{operation:?}: {preflight:?}"
+            operation_evidence.support, expected_support,
+            "{operation:?}: {operation_evidence:?}"
         );
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
-        assert!(preflight.region_count > 0, "{operation:?}: {preflight:?}");
-        assert!(preflight.validate().is_ok(), "{operation:?}: {preflight:?}");
-        preflight
+        assert!(
+            operation_evidence.blocker.is_none(),
+            "{operation:?}: {operation_evidence:?}"
+        );
+        assert!(
+            operation_evidence.region_count > 0,
+            "{operation:?}: {operation_evidence:?}"
+        );
+        assert!(
+            operation_evidence.validate().is_ok(),
+            "{operation:?}: {operation_evidence:?}"
+        );
+        operation_evidence
             .validate_against_sources_for_request(&left, &right, request)
             .unwrap();
 
@@ -4925,10 +5040,10 @@ fn crossing_open_surface_boolean_materializes_inside_arrangement_attempt() {
             ExactBooleanBlockerKind::Winding,
             "{operation:?}: {evidence:?}"
         );
-        assert_eq!(evidence.region_count, preflight.region_count);
+        assert_eq!(evidence.region_count, operation_evidence.region_count);
         assert_eq!(
             evidence.region_classifications.as_slice(),
-            preflight.region_classifications.as_slice()
+            operation_evidence.region_classifications.as_slice()
         );
         evidence.validate().unwrap();
         evidence.validate_against_sources(&left, &right).unwrap();
@@ -5068,7 +5183,7 @@ fn partial_face_boundary_touch_is_regularized_without_coplanar_cell_blocker() {
         operation: ExactBooleanOperation::Intersection,
         validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
-    let intersection = test_preflight(intersection_request, &left, &right);
+    let intersection = test_operation_evidence(intersection_request, &left, &right);
     assert_eq!(
         intersection.support,
         ExactBooleanSupport::CertifiedArrangementCellComplex
@@ -5084,7 +5199,7 @@ fn partial_face_boundary_touch_is_regularized_without_coplanar_cell_blocker() {
         operation: ExactBooleanOperation::Difference,
         validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
-    let difference = test_preflight(difference_request, &left, &right);
+    let difference = test_operation_evidence(difference_request, &left, &right);
     assert_eq!(
         difference.support,
         ExactBooleanSupport::CertifiedArrangementCellComplex
@@ -5154,15 +5269,18 @@ fn nested_closed_shell_booleans_materialize_through_arrangement_pipeline() {
             operation: operation,
             validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
-        let preflight = test_preflight(request, &left, &right);
+        let operation_evidence = test_operation_evidence(request, &left, &right);
         assert_eq!(
-            preflight.support, expected_support,
-            "{operation:?}: {preflight:?}"
+            operation_evidence.support, expected_support,
+            "{operation:?}: {operation_evidence:?}"
         );
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+        assert!(
+            operation_evidence.blocker.is_none(),
+            "{operation:?}: {operation_evidence:?}"
+        );
         assert_eq!(
-            preflight.retained_face_pairs, 0,
-            "{operation:?}: {preflight:?}"
+            operation_evidence.retained_face_pairs, 0,
+            "{operation:?}: {operation_evidence:?}"
         );
 
         let evidence = test_winding_evidence(
@@ -5269,7 +5387,7 @@ fn closed_boundary_touching_union_materializes_without_shortcut_through_arrangem
     let left = axis_aligned_box_i64([0, 0, 0], [1, 1, 1]);
     let right = axis_aligned_box_i64([1, 0, 0], [2, 1, 1]);
 
-    let preflight = test_preflight(
+    let operation_evidence = test_operation_evidence(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
             validation: MeshValidationPolicy::ALLOW_BOUNDARY,
@@ -5278,11 +5396,14 @@ fn closed_boundary_touching_union_materializes_without_shortcut_through_arrangem
         &right,
     );
     assert_eq!(
-        preflight.support,
+        operation_evidence.support,
         ExactBooleanSupport::CertifiedArrangementCellComplex,
-        "{preflight:?}"
+        "{operation_evidence:?}"
     );
-    assert!(preflight.blocker.is_none(), "{preflight:?}");
+    assert!(
+        operation_evidence.blocker.is_none(),
+        "{operation_evidence:?}"
+    );
 
     let attempt = test_arrangement_attempt(
         ExactBooleanRequest {
@@ -5326,13 +5447,16 @@ fn boundary_touching_orthogonal_shortcuts_report_materialized_evidence() {
             operation: operation,
             validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
-        let preflight = test_preflight(request, &left, &right);
+        let operation_evidence = test_operation_evidence(request, &left, &right);
         assert_eq!(
-            preflight.support,
+            operation_evidence.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex,
-            "{operation:?}: {preflight:?}"
+            "{operation:?}: {operation_evidence:?}"
         );
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+        assert!(
+            operation_evidence.blocker.is_none(),
+            "{operation:?}: {operation_evidence:?}"
+        );
 
         let evidence = test_winding_evidence(
             ExactBooleanRequest {
@@ -5413,11 +5537,17 @@ fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
             operation: operation,
             validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
-        let preflight = test_preflight(request, &left, &right);
-        assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
-        preflight.validate().unwrap();
-        preflight
+        let operation_evidence = test_operation_evidence(request, &left, &right);
+        assert_eq!(
+            operation_evidence.support, support,
+            "{operation:?}: {operation_evidence:?}"
+        );
+        assert!(
+            operation_evidence.blocker.is_none(),
+            "{operation:?}: {operation_evidence:?}"
+        );
+        operation_evidence.validate().unwrap();
+        operation_evidence
             .validate_against_sources_for_request(&left, &right, request)
             .unwrap();
 
@@ -5535,7 +5665,7 @@ fn boundary_attached_contained_tetrahedron_difference_materializes() {
     let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
     let right = tetrahedron_i64([2, 2, 2], [4, 1, 1], [1, 4, 1], [1, 1, 1]);
 
-    let preflight = test_preflight(
+    let operation_evidence = test_operation_evidence(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Difference,
             validation: MeshValidationPolicy::ALLOW_BOUNDARY,
@@ -5544,15 +5674,24 @@ fn boundary_attached_contained_tetrahedron_difference_materializes() {
         &right,
     );
     assert_eq!(
-        preflight.support,
+        operation_evidence.support,
         ExactBooleanSupport::CertifiedArrangementCellComplex
     );
-    assert!(preflight.blocker.is_none(), "{preflight:?}");
-    assert!(preflight.retained_face_pairs > 0, "{preflight:?}");
-    assert!(preflight.retained_events > 0, "{preflight:?}");
-    let mut relabeled_preflight = preflight.clone();
-    relabeled_preflight.support = ExactBooleanSupport::CertifiedConvexDifference;
-    assert!(relabeled_preflight.validate().is_err());
+    assert!(
+        operation_evidence.blocker.is_none(),
+        "{operation_evidence:?}"
+    );
+    assert!(
+        operation_evidence.retained_face_pairs > 0,
+        "{operation_evidence:?}"
+    );
+    assert!(
+        operation_evidence.retained_events > 0,
+        "{operation_evidence:?}"
+    );
+    let mut relabeled_operation_evidence = operation_evidence.clone();
+    relabeled_operation_evidence.support = ExactBooleanSupport::CertifiedConvexDifference;
+    assert!(relabeled_operation_evidence.validate().is_err());
     let evidence = test_winding_evidence(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Difference,
@@ -5625,17 +5764,23 @@ fn noncoplanar_convex_report_cases_retain_graph_counts() {
             operation: operation,
             validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
-        let preflight = test_preflight(request, &left, &right);
+        let operation_evidence = test_operation_evidence(request, &left, &right);
         assert_eq!(
-            preflight.support,
+            operation_evidence.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex,
-            "{operation:?}: {preflight:?}"
+            "{operation:?}: {operation_evidence:?}"
         );
-        assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
-        assert_eq!(preflight.retained_events, graph.event_count());
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
-        preflight.validate().unwrap();
-        preflight
+        assert_eq!(
+            operation_evidence.retained_face_pairs,
+            graph.face_pairs.len()
+        );
+        assert_eq!(operation_evidence.retained_events, graph.event_count());
+        assert!(
+            operation_evidence.blocker.is_none(),
+            "{operation:?}: {operation_evidence:?}"
+        );
+        operation_evidence.validate().unwrap();
+        operation_evidence
             .validate_against_sources_for_request(&left, &right, request)
             .unwrap();
 
@@ -5699,7 +5844,7 @@ fn straddling_coplanar_crossing_tetrahedron_boundary_attempt_materializes() {
             ),
             ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
         };
-        let preflight = test_preflight(
+        let operation_evidence = test_operation_evidence(
             ExactBooleanRequest {
                 operation: operation,
                 validation: MeshValidationPolicy::ALLOW_BOUNDARY,
@@ -5708,17 +5853,20 @@ fn straddling_coplanar_crossing_tetrahedron_boundary_attempt_materializes() {
             &right,
         );
         assert_eq!(
-            preflight.support, expected_support,
-            "{operation:?}: {preflight:?}"
-        );
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
-        assert!(
-            preflight.retained_face_pairs > 0,
-            "{operation:?}: {preflight:?}"
+            operation_evidence.support, expected_support,
+            "{operation:?}: {operation_evidence:?}"
         );
         assert!(
-            preflight.retained_events > 0,
-            "{operation:?}: {preflight:?}"
+            operation_evidence.blocker.is_none(),
+            "{operation:?}: {operation_evidence:?}"
+        );
+        assert!(
+            operation_evidence.retained_face_pairs > 0,
+            "{operation:?}: {operation_evidence:?}"
+        );
+        assert!(
+            operation_evidence.retained_events > 0,
+            "{operation:?}: {operation_evidence:?}"
         );
 
         let evidence = test_winding_evidence(
@@ -6145,7 +6293,7 @@ fn closed_identical_solids_route_through_arrangement_pipeline() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = left.clone();
 
-    let preflight = test_preflight(
+    let operation_evidence = test_operation_evidence(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
             validation: MeshValidationPolicy::ALLOW_BOUNDARY,
@@ -6154,7 +6302,7 @@ fn closed_identical_solids_route_through_arrangement_pipeline() {
         &right,
     );
     assert_eq!(
-        preflight.support,
+        operation_evidence.support,
         ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
@@ -6244,7 +6392,7 @@ fn closed_same_surface_solids_route_through_arrangement_pipeline() {
     assert!(attempt.materialized_shortcut.is_none());
     assert_current_arrangement_attempt(&attempt, &left, &right);
 
-    let preflight = test_preflight(
+    let operation_evidence = test_operation_evidence(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
             validation: MeshValidationPolicy::ALLOW_BOUNDARY,
@@ -6253,7 +6401,7 @@ fn closed_same_surface_solids_route_through_arrangement_pipeline() {
         &right,
     );
     assert_eq!(
-        preflight.support,
+        operation_evidence.support,
         ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
@@ -6445,7 +6593,7 @@ fn open_same_surface_sheets_remain_certified() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let preflight = test_preflight(
+        let operation_evidence = test_operation_evidence(
             ExactBooleanRequest {
                 operation: operation,
                 validation: MeshValidationPolicy::ALLOW_BOUNDARY,
@@ -6454,9 +6602,9 @@ fn open_same_surface_sheets_remain_certified() {
             &right,
         );
         assert_eq!(
-            preflight.support,
+            operation_evidence.support,
             ExactBooleanSupport::CertifiedSameSurface,
-            "{operation:?}: {preflight:?}"
+            "{operation:?}: {operation_evidence:?}"
         );
         let evidence = test_winding_evidence(
             ExactBooleanRequest {
@@ -6525,7 +6673,7 @@ fn open_identical_sheets_keep_identity_shortcut() {
     .unwrap();
     let right = left.clone();
 
-    let preflight = test_preflight(
+    let operation_evidence = test_operation_evidence(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
             validation: MeshValidationPolicy::ALLOW_BOUNDARY,
@@ -6533,7 +6681,10 @@ fn open_identical_sheets_keep_identity_shortcut() {
         &left,
         &right,
     );
-    assert_eq!(preflight.support, ExactBooleanSupport::CertifiedIdentical);
+    assert_eq!(
+        operation_evidence.support,
+        ExactBooleanSupport::CertifiedIdentical
+    );
     let evidence = test_winding_evidence(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
@@ -6602,7 +6753,7 @@ fn graph_backed_early_shortcuts_retain_graph_counts() {
             ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid,
         ),
     ] {
-        let preflight = test_preflight(
+        let operation_evidence = test_operation_evidence(
             ExactBooleanRequest {
                 operation: ExactBooleanOperation::Union,
                 validation: validation,
@@ -6610,12 +6761,21 @@ fn graph_backed_early_shortcuts_retain_graph_counts() {
             &left,
             &right,
         );
-        assert_eq!(preflight.support, expected_support, "{preflight:?}");
-        assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
-        assert_eq!(preflight.retained_events, graph.event_count());
-        assert!(preflight.blocker.is_none(), "{preflight:?}");
-        preflight.validate().unwrap();
-        preflight
+        assert_eq!(
+            operation_evidence.support, expected_support,
+            "{operation_evidence:?}"
+        );
+        assert_eq!(
+            operation_evidence.retained_face_pairs,
+            graph.face_pairs.len()
+        );
+        assert_eq!(operation_evidence.retained_events, graph.event_count());
+        assert!(
+            operation_evidence.blocker.is_none(),
+            "{operation_evidence:?}"
+        );
+        operation_evidence.validate().unwrap();
+        operation_evidence
             .validate_against_sources_for_request(
                 &left,
                 &right,
@@ -6741,16 +6901,22 @@ fn coplanar_overlay_regularizes_nonconvex_boundary_touch_intersection_to_empty()
         operation: ExactBooleanOperation::Intersection,
         validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
-    let preflight = test_preflight(request, &left, &right);
+    let operation_evidence = test_operation_evidence(request, &left, &right);
     assert_eq!(
-        preflight.support,
+        operation_evidence.support,
         ExactBooleanSupport::CertifiedArrangementCellComplex,
-        "{preflight:?}"
+        "{operation_evidence:?}"
     );
-    assert!(preflight.blocker.is_none(), "{preflight:?}");
-    assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
-    assert_eq!(preflight.retained_events, graph.event_count());
-    preflight
+    assert!(
+        operation_evidence.blocker.is_none(),
+        "{operation_evidence:?}"
+    );
+    assert_eq!(
+        operation_evidence.retained_face_pairs,
+        graph.face_pairs.len()
+    );
+    assert_eq!(operation_evidence.retained_events, graph.event_count());
+    operation_evidence
         .validate_against_sources_for_request(&left, &right, request)
         .unwrap();
     assert!(

@@ -86,12 +86,12 @@ use evidence::{
     ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus,
     ExactArrangementBooleanAttempt, ExactArrangementBooleanDecline, ExactArrangementBooleanStage,
     ExactArrangementCellComplexShortcutFacts, ExactBooleanBlocker, ExactBooleanBlockerKind,
-    ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind, ExactBooleanShortcutKind,
-    ExactBooleanSupport, ExactBoundaryTouchingReport, ExactBoundaryTouchingStatus,
-    ExactEvidenceValidationError, ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus,
-    ExactPlanarArrangementReport, ExactPlanarArrangementStatus, ExactSurfaceEqualityReports,
-    ExactVolumetricBoundaryClosureReport, ExactVolumetricBoundaryClosureStatus,
-    ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
+    ExactBooleanOperationEvidence, ExactBooleanResult, ExactBooleanResultKind,
+    ExactBooleanShortcutKind, ExactBooleanSupport, ExactBoundaryTouchingReport,
+    ExactBoundaryTouchingStatus, ExactEvidenceValidationError, ExactOpenSurfaceDisjointReport,
+    ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport, ExactPlanarArrangementStatus,
+    ExactSurfaceEqualityReports, ExactVolumetricBoundaryClosureReport,
+    ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
     certified_convex_operation_shortcut_support, meshes_are_certified_bounds_disjoint,
 };
 #[cfg(test)]
@@ -190,7 +190,7 @@ impl ExactArrangementBooleanAttempt {
         let shortcut_facts =
             ExactArrangementCellComplexShortcutFacts::checked_from_sources(left, right)?;
         if self.materialized_arrangement_cell_complex_shortcut_output()
-            && orthogonal_solid_cell_materializes_for_preflight(left, right, request.operation)
+            && orthogonal_solid_cell_materializes_for_evidence(left, right, request.operation)
                 .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             && let Some(replay) = arrangement_cell_complex_shortcut_attempt_with_facts(
                 left,
@@ -430,7 +430,7 @@ impl ExactBooleanOperation {
 /// Complete policy for an exact boolean request.
 ///
 /// The request keeps operation semantics and output validation together so
-/// preflight, certification, and materialization replay the same exact
+/// operation_evidence, certification, and materialization replay the same exact
 /// contract. Boundary-only contact is always retained as blocker evidence.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) struct ExactBooleanRequest {
@@ -597,7 +597,7 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
             true,
         )?;
         if let ArrangementCellComplexOutcome::Materialized(result, attempt) = outcome
-            && arrangement_cell_complex_result_is_certified_for_preflight(
+            && arrangement_cell_complex_result_is_certified_for_operation_evidence(
                 &result, &attempt, left, right,
             )?
         {
@@ -705,7 +705,7 @@ fn materialize_retained_arrangement_cell_complex_attempt(
         else {
             return Ok(None);
         };
-        return if arrangement_cell_complex_result_is_certified_for_preflight(
+        return if arrangement_cell_complex_result_is_certified_for_operation_evidence(
             &result, attempt, left, right,
         )? {
             Ok(Some(result))
@@ -724,7 +724,9 @@ fn materialize_retained_arrangement_cell_complex_attempt(
     else {
         return Ok(None);
     };
-    if arrangement_cell_complex_result_is_certified_for_preflight(&result, attempt, left, right)? {
+    if arrangement_cell_complex_result_is_certified_for_operation_evidence(
+        &result, attempt, left, right,
+    )? {
         Ok(Some(result))
     } else {
         Ok(None)
@@ -928,21 +930,21 @@ fn assemble_region_selection_mesh(
     Ok((assembly, mesh))
 }
 
-/// Preflight an exact boolean operation without materializing output topology.
+/// OperationEvidence an exact boolean operation without materializing output topology.
 ///
-/// The preflight path deliberately shares the exact graph, region, and
+/// The operation_evidence path deliberately shares the exact graph, region, and
 /// classification stages with the executable arrangement pipeline. For named
 /// booleans that still need unresolved inside/outside semantics, it returns
 /// [`ExactBooleanSupport::RequiresCertifiedWinding`] with replayable facts
 /// instead of approximating them.
-fn preflight_boolean_exact_request_from_graph_core(
+fn operation_evidence_for_exact_request_from_graph_core(
     graph: &super::graph::ExactIntersectionGraph,
     left: &Mesh,
     right: &Mesh,
     request: ExactBooleanRequest,
     retained_attempt: Option<&ExactArrangementBooleanAttempt>,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
-) -> Result<ExactBooleanPreflight, MeshError> {
+) -> Result<ExactBooleanOperationEvidence, MeshError> {
     let operation = request.operation;
     let support = if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         ExactBooleanSupport::SelectedRegionPolicy
@@ -970,7 +972,7 @@ fn preflight_boolean_exact_request_from_graph_core(
     };
     let requires_certified_winding = support == ExactBooleanSupport::RequiresCertifiedWinding;
     if support == ExactBooleanSupport::CertifiedArrangementCellComplex {
-        return Ok(certified_arrangement_cell_complex_preflight(
+        return Ok(certified_arrangement_cell_complex_evidence(
             operation, graph, left, right,
         )?);
     }
@@ -986,7 +988,12 @@ fn preflight_boolean_exact_request_from_graph_core(
                 | ExactBooleanSupport::CertifiedArrangementCellComplex
         )
     {
-        return Ok(certified_preflight(operation, support, Some(graph), None));
+        return Ok(certified_operation_evidence(
+            operation,
+            support,
+            Some(graph),
+            None,
+        ));
     }
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && graph.face_pairs.is_empty()
@@ -995,7 +1002,7 @@ fn preflight_boolean_exact_request_from_graph_core(
         && left_in_right == ClosedMeshWindingMeshRelation::Outside
         && right_in_left == ClosedMeshWindingMeshRelation::Outside
     {
-        return Ok(certified_preflight(
+        return Ok(certified_operation_evidence(
             operation,
             ExactBooleanSupport::CertifiedClosedWindingSeparated,
             Some(graph),
@@ -1004,7 +1011,7 @@ fn preflight_boolean_exact_request_from_graph_core(
     }
 
     if operation == ExactBooleanOperation::Difference && shortcut_facts.axis_aligned_box_pair {
-        return Ok(certified_arrangement_cell_complex_preflight(
+        return Ok(certified_arrangement_cell_complex_evidence(
             operation, graph, left, right,
         )?);
     }
@@ -1014,7 +1021,7 @@ fn preflight_boolean_exact_request_from_graph_core(
             .as_ref()
             .filter(|evidence| coplanar_evidence_is_positive_area_boundary_only(evidence))
     {
-        return Ok(certified_preflight(
+        return Ok(certified_operation_evidence(
             operation,
             ExactBooleanSupport::CertifiedArrangementCellComplex,
             Some(graph),
@@ -1029,9 +1036,9 @@ fn preflight_boolean_exact_request_from_graph_core(
         .filter(|evidence| coplanar_evidence_requires_volumetric_cells(evidence))
         .cloned();
     let requires_coplanar_volumetric_cells = coplanar_volumetric_evidence.is_some();
-    let mut certified_arrangement_preflight = None;
+    let mut certified_arrangement_operation_evidence = None;
     if graph_had_unknowns || relation_counts.construction_failed_events > 0 {
-        return Ok(graph_counts.into_preflight(
+        return Ok(graph_counts.into_operation_evidence(
             operation,
             ExactBooleanSupport::UnresolvedGraph,
             0,
@@ -1042,7 +1049,7 @@ fn preflight_boolean_exact_request_from_graph_core(
         ));
     }
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
-        return region_plan_preflight_from_graph(
+        return region_plan_evidence_from_graph(
             graph,
             left,
             right,
@@ -1053,24 +1060,24 @@ fn preflight_boolean_exact_request_from_graph_core(
         );
     }
     if requires_certified_winding
-        && let Some(preflight) = certified_winding_shortcut_preflight_from_graph(
+        && let Some(operation_evidence) = certified_winding_shortcut_evidence_from_graph(
             graph,
             left,
             right,
             request,
             retained_attempt,
             requires_coplanar_volumetric_cells,
-            &mut certified_arrangement_preflight,
+            &mut certified_arrangement_operation_evidence,
         )?
     {
-        return Ok(preflight);
+        return Ok(operation_evidence);
     }
     if requires_certified_winding
         && matches!(
             operation,
             ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
         )
-        && let Some(preflight) = certified_closed_boundary_only_contact_preflight(
+        && let Some(operation_evidence) = certified_closed_boundary_only_contact_evidence(
             graph,
             left,
             right,
@@ -1078,20 +1085,20 @@ fn preflight_boolean_exact_request_from_graph_core(
             coplanar_evidence.as_ref(),
         )?
     {
-        return Ok(preflight);
+        return Ok(operation_evidence);
     }
     if operation == ExactBooleanOperation::Intersection
         && certified_arrangement_regularized_boundary_contact_from_graph(
             graph, left, right, operation, None,
         )?
     {
-        return Ok(certified_arrangement_cell_complex_preflight(
+        return Ok(certified_arrangement_cell_complex_evidence(
             operation, graph, left, right,
         )?);
     }
     if requires_certified_winding
         && operation == ExactBooleanOperation::Union
-        && let Some(preflight) = certified_closed_boundary_only_contact_preflight(
+        && let Some(operation_evidence) = certified_closed_boundary_only_contact_evidence(
             graph,
             left,
             right,
@@ -1099,7 +1106,7 @@ fn preflight_boolean_exact_request_from_graph_core(
             coplanar_evidence.as_ref(),
         )?
     {
-        return Ok(preflight);
+        return Ok(operation_evidence);
     }
     let boundary_only_coplanar_evidence = coplanar_evidence
         .as_ref()
@@ -1129,7 +1136,7 @@ fn preflight_boolean_exact_request_from_graph_core(
         if boundary_or_no_volume_materialized
             && let Some(boundary_support) = operation.closed_boundary_touching_support()
         {
-            return Ok(certified_preflight(
+            return Ok(certified_operation_evidence(
                 operation,
                 boundary_support,
                 Some(graph),
@@ -1148,7 +1155,7 @@ fn preflight_boolean_exact_request_from_graph_core(
             AxisAlignedOrthogonalSolidOperation::Intersection,
         ) == Some(0)
     {
-        return Ok(certified_arrangement_cell_complex_preflight(
+        return Ok(certified_arrangement_cell_complex_evidence(
             operation, graph, left, right,
         )?);
     }
@@ -1164,13 +1171,13 @@ fn preflight_boolean_exact_request_from_graph_core(
         && !graph.face_pairs.is_empty()
         && open_surface_arrangement_plan.is_some()
     {
-        return Ok(certified_arrangement_cell_complex_preflight(
+        return Ok(certified_arrangement_cell_complex_evidence(
             operation, graph, left, right,
         )?);
     }
     if let Some(plan) = open_surface_arrangement_plan {
         let region_count = unique_classified_region_count(&plan.region_classifications);
-        return Ok(graph_counts.into_preflight(
+        return Ok(graph_counts.into_operation_evidence(
             operation,
             plan.support,
             region_count,
@@ -1185,15 +1192,16 @@ fn preflight_boolean_exact_request_from_graph_core(
         && boundary_report.status == ExactBoundaryTouchingStatus::Certified
     {
         return Ok(
-            RetainedGraphCounts::from_boundary_touching_report(&boundary_report).into_preflight(
-                operation,
-                ExactBooleanSupport::RequiresBoundaryOnlyContact,
-                0,
-                Vec::new(),
-                Some(boundary_report.blocker),
-                None,
-                None,
-            ),
+            RetainedGraphCounts::from_boundary_touching_report(&boundary_report)
+                .into_operation_evidence(
+                    operation,
+                    ExactBooleanSupport::RequiresBoundaryOnlyContact,
+                    0,
+                    Vec::new(),
+                    Some(boundary_report.blocker),
+                    None,
+                    None,
+                ),
         );
     }
     let planar_report = planar_arrangement_report_from_graph_with_cell_complex_cache(
@@ -1201,7 +1209,7 @@ fn preflight_boolean_exact_request_from_graph_core(
         left,
         right,
         operation,
-        &mut certified_arrangement_preflight,
+        &mut certified_arrangement_operation_evidence,
         Some(request),
         retained_attempt,
     )
@@ -1209,8 +1217,8 @@ fn preflight_boolean_exact_request_from_graph_core(
     if let Some(planar_report) = planar_report.as_ref()
         && matches!(planar_report.status, ExactPlanarArrangementStatus::Required)
     {
-        if let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
-            &mut certified_arrangement_preflight,
+        if let Some(operation_evidence) = cached_certified_arrangement_cell_complex_evidence(
+            &mut certified_arrangement_operation_evidence,
             operation,
             graph,
             left,
@@ -1218,21 +1226,22 @@ fn preflight_boolean_exact_request_from_graph_core(
             Some(request),
             retained_attempt,
         )? {
-            return Ok(preflight);
+            return Ok(operation_evidence);
         }
         return Ok(
-            RetainedGraphCounts::from_planar_arrangement_report(planar_report).into_preflight(
-                operation,
-                ExactBooleanSupport::RequiresPlanarArrangement,
-                0,
-                Vec::new(),
-                Some(planar_report.blocker.clone()),
-                planar_report
-                    .coplanar_arrangement_evidence
-                    .as_ref()
-                    .cloned(),
-                None,
-            ),
+            RetainedGraphCounts::from_planar_arrangement_report(planar_report)
+                .into_operation_evidence(
+                    operation,
+                    ExactBooleanSupport::RequiresPlanarArrangement,
+                    0,
+                    Vec::new(),
+                    Some(planar_report.blocker.clone()),
+                    planar_report
+                        .coplanar_arrangement_evidence
+                        .as_ref()
+                        .cloned(),
+                    None,
+                ),
         );
     }
     let planar_arrangement_already_materialized = if let Some(report) = planar_report.as_ref() {
@@ -1244,8 +1253,8 @@ fn preflight_boolean_exact_request_from_graph_core(
         false
     };
     if planar_arrangement_already_materialized
-        && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
-            &mut certified_arrangement_preflight,
+        && let Some(operation_evidence) = cached_certified_arrangement_cell_complex_evidence(
+            &mut certified_arrangement_operation_evidence,
             operation,
             graph,
             left,
@@ -1254,19 +1263,19 @@ fn preflight_boolean_exact_request_from_graph_core(
             retained_attempt,
         )?
     {
-        return Ok(preflight);
+        return Ok(operation_evidence);
     }
-    let convex_operation_preflight_allowed = match operation {
+    let convex_operation_operation_evidence_allowed = match operation {
         ExactBooleanOperation::Intersection => !requires_coplanar_volumetric_cells,
         ExactBooleanOperation::Union | ExactBooleanOperation::Difference => true,
         ExactBooleanOperation::SelectedRegions(_) => false,
     };
     if requires_certified_winding
-        && convex_operation_preflight_allowed
+        && convex_operation_operation_evidence_allowed
         && let Some(convex_support) =
             certified_convex_operation_shortcut_support(left, right, operation)
     {
-        return Ok(certified_preflight(
+        return Ok(certified_operation_evidence(
             operation,
             convex_support,
             Some(graph),
@@ -1281,12 +1290,12 @@ fn preflight_boolean_exact_request_from_graph_core(
                 false
             };
         if coplanar_closure_available_for_closed_request {
-            return Ok(certified_arrangement_cell_complex_preflight(
+            return Ok(certified_arrangement_cell_complex_evidence(
                 operation, graph, left, right,
             )?);
         }
-        if let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
-            &mut certified_arrangement_preflight,
+        if let Some(operation_evidence) = cached_certified_arrangement_cell_complex_evidence(
+            &mut certified_arrangement_operation_evidence,
             operation,
             graph,
             left,
@@ -1294,7 +1303,7 @@ fn preflight_boolean_exact_request_from_graph_core(
             Some(request),
             retained_attempt,
         )? {
-            return Ok(preflight);
+            return Ok(operation_evidence);
         }
         if matches!(
             operation,
@@ -1302,7 +1311,7 @@ fn preflight_boolean_exact_request_from_graph_core(
         ) && let Some(convex_support) =
             certified_convex_operation_shortcut_support(left, right, operation)
         {
-            return Ok(certified_preflight(
+            return Ok(certified_operation_evidence(
                 operation,
                 convex_support,
                 Some(graph),
@@ -1325,7 +1334,7 @@ fn preflight_boolean_exact_request_from_graph_core(
         {
             return Ok(
                 RetainedGraphCounts::from_winding_evidence_report(&winding_evidence)
-                    .into_preflight(
+                    .into_operation_evidence(
                         winding_evidence.operation,
                         ExactBooleanSupport::RequiresCertifiedWinding,
                         winding_evidence.region_count,
@@ -1336,7 +1345,7 @@ fn preflight_boolean_exact_request_from_graph_core(
                     ),
             );
         }
-        return Ok(graph_counts.into_preflight(
+        return Ok(graph_counts.into_operation_evidence(
             operation,
             ExactBooleanSupport::RequiresCoplanarVolumetricCells,
             0,
@@ -1347,7 +1356,7 @@ fn preflight_boolean_exact_request_from_graph_core(
         ));
     }
     if support == ExactBooleanSupport::RequiresBoundaryOnlyContact {
-        return Ok(graph_counts.into_preflight(
+        return Ok(graph_counts.into_operation_evidence(
             operation,
             support,
             0,
@@ -1367,7 +1376,7 @@ fn preflight_boolean_exact_request_from_graph_core(
     ) {
         Ok(report) => report,
         Err(_) => {
-            return region_plan_preflight_from_graph(
+            return region_plan_evidence_from_graph(
                 graph,
                 left,
                 right,
@@ -1420,13 +1429,13 @@ fn preflight_boolean_exact_request_from_graph_core(
     ) || volumetric_winding_materialized
         || closed_boundary_caps_materialized
     {
-        return Ok(certified_arrangement_cell_complex_preflight(
+        return Ok(certified_arrangement_cell_complex_evidence(
             operation, graph, left, right,
         )?);
     }
 
     Ok(
-        RetainedGraphCounts::from_winding_evidence_report(&winding_report).into_preflight(
+        RetainedGraphCounts::from_winding_evidence_report(&winding_report).into_operation_evidence(
             winding_report.operation,
             support,
             winding_report.region_count,
@@ -1438,21 +1447,21 @@ fn preflight_boolean_exact_request_from_graph_core(
     )
 }
 
-fn certified_winding_shortcut_preflight_from_graph(
+fn certified_winding_shortcut_evidence_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &Mesh,
     right: &Mesh,
     request: ExactBooleanRequest,
     retained_attempt: Option<&ExactArrangementBooleanAttempt>,
     requires_coplanar_volumetric_cells: bool,
-    certified_arrangement_preflight: &mut Option<Option<ExactBooleanPreflight>>,
-) -> Result<Option<ExactBooleanPreflight>, MeshError> {
+    certified_arrangement_operation_evidence: &mut Option<Option<ExactBooleanOperationEvidence>>,
+) -> Result<Option<ExactBooleanOperationEvidence>, MeshError> {
     let operation = request.operation;
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && open_surface_disjoint_report_from_graph(graph, left, right).status
             == ExactOpenSurfaceDisjointStatus::Certified
     {
-        return Ok(Some(certified_preflight(
+        return Ok(Some(certified_operation_evidence(
             operation,
             ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
             Some(graph),
@@ -1462,12 +1471,12 @@ fn certified_winding_shortcut_preflight_from_graph(
     let coplanar_closure_available =
         coplanar_boundary_closure_available_from_graph(graph, left, right, operation)?;
     if requires_coplanar_volumetric_cells && coplanar_closure_available {
-        return Ok(Some(certified_arrangement_cell_complex_preflight(
+        return Ok(Some(certified_arrangement_cell_complex_evidence(
             operation, graph, left, right,
         )?));
     }
-    if let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
-        certified_arrangement_preflight,
+    if let Some(operation_evidence) = cached_certified_arrangement_cell_complex_evidence(
+        certified_arrangement_operation_evidence,
         operation,
         graph,
         left,
@@ -1475,7 +1484,7 @@ fn certified_winding_shortcut_preflight_from_graph(
         Some(request),
         retained_attempt,
     )? {
-        return Ok(Some(preflight));
+        return Ok(Some(operation_evidence));
     }
     if let Some(convex_support) = certified_convex_relation_shortcut_from_graph(
         graph, left, right, operation,
@@ -1486,7 +1495,7 @@ fn certified_winding_shortcut_preflight_from_graph(
             ExactBooleanSupport::CertifiedConvexContainment
         }
     }) {
-        return Ok(Some(certified_preflight(
+        return Ok(Some(certified_operation_evidence(
             operation,
             convex_support,
             Some(graph),
@@ -1496,7 +1505,7 @@ fn certified_winding_shortcut_preflight_from_graph(
     if let Some(convex_support) =
         certified_convex_operation_shortcut_support(left, right, operation)
     {
-        return Ok(Some(certified_preflight(
+        return Ok(Some(certified_operation_evidence(
             operation,
             convex_support,
             Some(graph),
@@ -1506,7 +1515,7 @@ fn certified_winding_shortcut_preflight_from_graph(
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && certified_closed_winding_containment_relation_from_graph(graph, left, right)?.is_some()
     {
-        return Ok(Some(certified_preflight(
+        return Ok(Some(certified_operation_evidence(
             operation,
             ExactBooleanSupport::CertifiedClosedWindingContainment,
             Some(graph),
@@ -1522,7 +1531,7 @@ fn certified_winding_shortcut_preflight_from_graph(
         let Some(boundary_support) = operation.closed_boundary_touching_support() else {
             return Ok(None);
         };
-        return Ok(Some(certified_preflight(
+        return Ok(Some(certified_operation_evidence(
             operation,
             boundary_support,
             Some(graph),
@@ -1532,17 +1541,17 @@ fn certified_winding_shortcut_preflight_from_graph(
     Ok(None)
 }
 
-/// Preflight a graph-backed exact boolean operation for a specific output
+/// OperationEvidence a graph-backed exact boolean operation for a specific output
 /// validation policy.
 ///
-pub(crate) fn preflight_boolean_exact_request_from_graph_with_retained_attempt(
+pub(crate) fn operation_evidence_for_exact_request_from_graph_with_retained_attempt(
     graph: &super::graph::ExactIntersectionGraph,
     left: &Mesh,
     right: &Mesh,
     request: ExactBooleanRequest,
     retained_attempt: Option<&ExactArrangementBooleanAttempt>,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
-) -> Result<ExactBooleanPreflight, MeshError> {
+) -> Result<ExactBooleanOperationEvidence, MeshError> {
     validate_graph_source_replay(graph, left, right)?;
     let operation = request.operation;
     let validation = request.validation;
@@ -1551,9 +1560,14 @@ pub(crate) fn preflight_boolean_exact_request_from_graph_with_retained_attempt(
         && !(support == ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid
             && operation == ExactBooleanOperation::Intersection)
     {
-        return Ok(certified_preflight(operation, support, Some(graph), None));
+        return Ok(certified_operation_evidence(
+            operation,
+            support,
+            Some(graph),
+            None,
+        ));
     }
-    let mut preflight = preflight_boolean_exact_request_from_graph_core(
+    let mut operation_evidence = operation_evidence_for_exact_request_from_graph_core(
         graph,
         left,
         right,
@@ -1575,14 +1589,14 @@ pub(crate) fn preflight_boolean_exact_request_from_graph_with_retained_attempt(
                 | ExactAdjacentUnionCompletionStatus::CertifiedContainedFace
         )
     {
-        return Ok(certified_arrangement_cell_complex_preflight(
+        return Ok(certified_arrangement_cell_complex_evidence(
             operation, graph, left, right,
         )?);
     }
     if validation != MeshValidationPolicy::CLOSED
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && matches!(
-            preflight.support,
+            operation_evidence.support,
             ExactBooleanSupport::RequiresCertifiedWinding
                 | ExactBooleanSupport::RequiresCoplanarVolumetricCells
         )
@@ -1591,9 +1605,10 @@ pub(crate) fn preflight_boolean_exact_request_from_graph_with_retained_attempt(
         )?
         .is_some()
     {
-        preflight = certified_arrangement_cell_complex_preflight(operation, graph, left, right)?;
+        operation_evidence =
+            certified_arrangement_cell_complex_evidence(operation, graph, left, right)?;
     }
-    Ok(preflight)
+    Ok(operation_evidence)
 }
 
 fn volumetric_boundary_closure_report_from_graph(
@@ -1855,14 +1870,14 @@ fn volumetric_boundary_closure_report_from_materialized_with_prevalidated_closur
     }
 }
 
-fn certified_preflight(
+fn certified_operation_evidence(
     operation: ExactBooleanOperation,
     support: ExactBooleanSupport,
     graph: Option<&super::graph::ExactIntersectionGraph>,
     coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
-) -> ExactBooleanPreflight {
+) -> ExactBooleanOperationEvidence {
     let graph_counts = graph.map_or_else(RetainedGraphCounts::empty, retained_graph_counts);
-    graph_counts.into_preflight(
+    graph_counts.into_operation_evidence(
         operation,
         support,
         0,
@@ -1873,13 +1888,13 @@ fn certified_preflight(
     )
 }
 
-fn certified_arrangement_cell_complex_preflight(
+fn certified_arrangement_cell_complex_evidence(
     operation: ExactBooleanOperation,
     graph: &super::graph::ExactIntersectionGraph,
     left: &Mesh,
     right: &Mesh,
-) -> Result<ExactBooleanPreflight, MeshError> {
-    Ok(certified_preflight(
+) -> Result<ExactBooleanOperationEvidence, MeshError> {
+    Ok(certified_operation_evidence(
         operation,
         ExactBooleanSupport::CertifiedArrangementCellComplex,
         Some(graph),
@@ -1888,7 +1903,7 @@ fn certified_arrangement_cell_complex_preflight(
     ))
 }
 
-fn region_plan_preflight_from_graph(
+fn region_plan_evidence_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &Mesh,
     right: &Mesh,
@@ -1896,13 +1911,13 @@ fn region_plan_preflight_from_graph(
     support: ExactBooleanSupport,
     blocker: Option<ExactBooleanBlocker>,
     coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
-) -> Result<ExactBooleanPreflight, MeshError> {
+) -> Result<ExactBooleanOperationEvidence, MeshError> {
     let geometry = graph.face_split_geometry_plan(left, right)?;
     let region_plan = geometry.region_plan(left, right);
     let region_classifications =
         checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
     let graph_counts = retained_graph_counts(graph);
-    Ok(graph_counts.into_preflight(
+    Ok(graph_counts.into_operation_evidence(
         operation,
         support,
         region_plan.regions.len(),
@@ -1968,7 +1983,7 @@ impl RetainedGraphCounts {
         }
     }
 
-    fn into_preflight(
+    fn into_operation_evidence(
         self,
         operation: ExactBooleanOperation,
         support: ExactBooleanSupport,
@@ -1977,8 +1992,8 @@ impl RetainedGraphCounts {
         blocker: Option<ExactBooleanBlocker>,
         coplanar_arrangement_evidence: Option<super::graph::CoplanarArrangementEvidence>,
         coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
-    ) -> ExactBooleanPreflight {
-        ExactBooleanPreflight {
+    ) -> ExactBooleanOperationEvidence {
+        ExactBooleanOperationEvidence {
             operation,
             support,
             graph_had_unknowns: self.graph_had_unknowns,
@@ -2142,13 +2157,13 @@ fn retained_graph_counts(graph: &super::graph::ExactIntersectionGraph) -> Retain
     RetainedGraphCounts::from_graph(graph)
 }
 
-fn certified_closed_boundary_only_contact_preflight(
+fn certified_closed_boundary_only_contact_evidence(
     graph: &super::graph::ExactIntersectionGraph,
     left: &Mesh,
     right: &Mesh,
     operation: ExactBooleanOperation,
     coplanar_evidence: Option<&CoplanarVolumetricCellEvidenceReport>,
-) -> Result<Option<ExactBooleanPreflight>, MeshError> {
+) -> Result<Option<ExactBooleanOperationEvidence>, MeshError> {
     let Some(boundary_support) = operation.closed_boundary_touching_support() else {
         return Ok(None);
     };
@@ -2161,14 +2176,14 @@ fn certified_closed_boundary_only_contact_preflight(
         return Ok(None);
     };
     if evidence.positive_area_coplanar_overlapping_pairs != 0 {
-        return Ok(Some(certified_preflight(
+        return Ok(Some(certified_operation_evidence(
             operation,
             ExactBooleanSupport::CertifiedArrangementCellComplex,
             Some(graph),
             Some(evidence.clone()),
         )));
     }
-    Ok(Some(certified_preflight(
+    Ok(Some(certified_operation_evidence(
         operation,
         boundary_support,
         Some(graph),
@@ -2237,14 +2252,14 @@ fn coplanar_evidence_certifies_arrangement_cell_complex(
         || coplanar_evidence_is_positive_area_boundary_only(evidence)
 }
 
-fn certified_arrangement_cell_complex_preflight_if_materialized(
+fn certified_arrangement_cell_complex_evidence_if_materialized(
     operation: ExactBooleanOperation,
     graph: &super::graph::ExactIntersectionGraph,
     left: &Mesh,
     right: &Mesh,
-) -> Result<Option<ExactBooleanPreflight>, MeshError> {
+) -> Result<Option<ExactBooleanOperationEvidence>, MeshError> {
     let orthogonal_cell_materializes =
-        orthogonal_solid_cell_materializes_for_preflight(left, right, operation)?;
+        orthogonal_solid_cell_materializes_for_evidence(left, right, operation)?;
     let arrangement_materializes = if orthogonal_cell_materializes {
         false
     } else {
@@ -2289,7 +2304,7 @@ fn certified_arrangement_cell_complex_preflight_if_materialized(
         )?
         .is_some()
     {
-        Ok(Some(certified_arrangement_cell_complex_preflight(
+        Ok(Some(certified_arrangement_cell_complex_evidence(
             operation, graph, left, right,
         )?))
     } else {
@@ -2297,7 +2312,7 @@ fn certified_arrangement_cell_complex_preflight_if_materialized(
     }
 }
 
-fn orthogonal_solid_cell_materializes_for_preflight(
+fn orthogonal_solid_cell_materializes_for_evidence(
     left: &Mesh,
     right: &Mesh,
     operation: ExactBooleanOperation,
@@ -2319,7 +2334,7 @@ fn orthogonal_solid_cell_materializes_for_preflight(
             left,
             right,
             solid_operation,
-            "exact arrangement orthogonal solid cell preflight probe",
+            "exact arrangement orthogonal solid cell operation_evidence probe",
             validation,
         )?
         .is_some()
@@ -2330,17 +2345,17 @@ fn orthogonal_solid_cell_materializes_for_preflight(
     Ok(false)
 }
 
-fn certified_arrangement_cell_complex_preflight_from_retained_attempt(
+fn certified_arrangement_cell_complex_evidence_from_retained_attempt(
     graph: &super::graph::ExactIntersectionGraph,
     left: &Mesh,
     right: &Mesh,
     request: ExactBooleanRequest,
     attempt: &ExactArrangementBooleanAttempt,
-) -> Result<Option<ExactBooleanPreflight>, MeshError> {
+) -> Result<Option<ExactBooleanOperationEvidence>, MeshError> {
     if materialize_retained_arrangement_cell_complex_attempt(left, right, request, attempt)?
         .is_some()
     {
-        Ok(Some(certified_arrangement_cell_complex_preflight(
+        Ok(Some(certified_arrangement_cell_complex_evidence(
             request.operation,
             graph,
             left,
@@ -2351,36 +2366,36 @@ fn certified_arrangement_cell_complex_preflight_from_retained_attempt(
     }
 }
 
-fn cached_certified_arrangement_cell_complex_preflight(
-    cache: &mut Option<Option<ExactBooleanPreflight>>,
+fn cached_certified_arrangement_cell_complex_evidence(
+    cache: &mut Option<Option<ExactBooleanOperationEvidence>>,
     operation: ExactBooleanOperation,
     graph: &super::graph::ExactIntersectionGraph,
     left: &Mesh,
     right: &Mesh,
     retained_request: Option<ExactBooleanRequest>,
     retained_attempt: Option<&ExactArrangementBooleanAttempt>,
-) -> Result<Option<ExactBooleanPreflight>, MeshError> {
-    if let Some(preflight) = cache.as_ref() {
-        return Ok(preflight.clone());
+) -> Result<Option<ExactBooleanOperationEvidence>, MeshError> {
+    if let Some(operation_evidence) = cache.as_ref() {
+        return Ok(operation_evidence.clone());
     }
-    let retained_preflight = retained_request
+    let retained_operation_evidence = retained_request
         .zip(retained_attempt)
         .filter(|(request, _)| request.operation == operation)
         .map(|(request, attempt)| {
-            certified_arrangement_cell_complex_preflight_from_retained_attempt(
+            certified_arrangement_cell_complex_evidence_from_retained_attempt(
                 graph, left, right, request, attempt,
             )
         })
         .transpose()?
         .flatten();
-    let preflight = match retained_preflight {
-        Some(preflight) => Some(preflight),
-        None => certified_arrangement_cell_complex_preflight_if_materialized(
+    let operation_evidence = match retained_operation_evidence {
+        Some(operation_evidence) => Some(operation_evidence),
+        None => certified_arrangement_cell_complex_evidence_if_materialized(
             operation, graph, left, right,
         )?,
     };
-    *cache = Some(preflight.clone());
-    Ok(preflight)
+    *cache = Some(operation_evidence.clone());
+    Ok(operation_evidence)
 }
 
 fn unique_classified_region_count(classifications: &[FaceRegionPlaneClassification]) -> usize {
@@ -3389,7 +3404,7 @@ pub(crate) fn arrangement_cell_complex_shortcut_attempt_with_facts(
     }
 }
 
-fn arrangement_cell_complex_result_is_certified_for_preflight(
+fn arrangement_cell_complex_result_is_certified_for_operation_evidence(
     result: &ExactBooleanResult,
     attempt: &ExactArrangementBooleanAttempt,
     left: &Mesh,
@@ -3405,7 +3420,7 @@ fn arrangement_cell_complex_result_is_certified_for_preflight(
     }
     attempt.validate().map_err(|error| {
         retained_evidence_validation_error(
-            "retained arrangement attempt failed preflight certification",
+            "retained arrangement attempt failed operation_evidence certification",
             error,
             MeshBlockerKind::ExactConstructionFailure,
         )
@@ -3420,7 +3435,7 @@ fn arrangement_cell_complex_result_is_certified_for_preflight(
             Ok(false)
         } else {
             Err(retained_evidence_validation_error(
-                "arrangement cell-complex result failed preflight certification replay",
+                "arrangement cell-complex result failed operation_evidence certification replay",
                 error,
                 MeshBlockerKind::ExactConstructionFailure,
             ))
@@ -3472,7 +3487,9 @@ fn certified_arrangement_cell_complex_result_from_graph(
     let ArrangementCellComplexOutcome::Materialized(result, attempt) = outcome else {
         return Ok(None);
     };
-    if arrangement_cell_complex_result_is_certified_for_preflight(&result, &attempt, left, right)? {
+    if arrangement_cell_complex_result_is_certified_for_operation_evidence(
+        &result, &attempt, left, right,
+    )? {
         Ok(Some(*result))
     } else {
         Ok(None)
@@ -4740,7 +4757,7 @@ fn boolean_convex_relation_meshes_optional_from_graph(
 /// Certify and materialize a named boolean for closed convex solids.
 ///
 /// This replay helper follows the retained exact materialization path
-/// precedence: it only materializes when preflight certifies the requested
+/// precedence: it only materializes when operation_evidence certifies the requested
 /// operation as a convex operation or convex relation shortcut. Inputs handled
 /// by earlier exact shortcuts, such as orthogonal-cell recovery or bounds
 /// disjointness, return `None` so replay provenance remains stable.
@@ -7127,7 +7144,7 @@ fn arrangement_materialized_evidence_blocker_kind_and_evidence(
     Ok((blocker_kind, retained_coplanar_evidence))
 }
 
-fn arrangement_cell_complex_preflight_materialized_winding_evidence(
+fn arrangement_cell_complex_operation_evidence_materialized_winding_evidence(
     graph: &super::graph::ExactIntersectionGraph,
     left: &Mesh,
     right: &Mesh,
@@ -7170,7 +7187,7 @@ fn arrangement_cell_complex_preflight_materialized_winding_evidence(
 
 /// Validate retained graph handles against their source meshes.
 ///
-/// Boolean preflight and materialization must reject a retained graph whose
+/// Boolean operation_evidence and materialization must reject a retained graph whose
 /// face, edge, vertex, or plane handles no longer replay against the source
 /// meshes. Predicate evidence is only useful when the combinatorial object
 /// handles attached to it are still current.
@@ -7230,7 +7247,7 @@ fn planar_arrangement_report_from_graph_with_cell_complex_cache(
     left: &Mesh,
     right: &Mesh,
     operation: ExactBooleanOperation,
-    arrangement_cell_complex_preflight: &mut Option<Option<ExactBooleanPreflight>>,
+    arrangement_cell_complex_operation_evidence: &mut Option<Option<ExactBooleanOperationEvidence>>,
     retained_request: Option<ExactBooleanRequest>,
     retained_attempt: Option<&ExactArrangementBooleanAttempt>,
 ) -> Result<ExactPlanarArrangementReport, MeshError> {
@@ -7275,8 +7292,8 @@ fn planar_arrangement_report_from_graph_with_cell_complex_cache(
     } else if graph_requires_boundary_only_contact(graph, left, right)? {
         ExactPlanarArrangementStatus::BoundaryOnlyContactRequired
     } else if requires_planar_arrangement
-        && cached_certified_arrangement_cell_complex_preflight(
-            arrangement_cell_complex_preflight,
+        && cached_certified_arrangement_cell_complex_evidence(
+            arrangement_cell_complex_operation_evidence,
             operation,
             graph,
             left,
@@ -7368,7 +7385,7 @@ fn winding_evidence_report_from_graph_with_facts(
     }
     let arrangement_cell_complex_shortcut_materializes =
         shortcut_facts.materializes_operation(operation);
-    let mut arrangement_cell_complex_preflight = None;
+    let mut arrangement_cell_complex_operation_evidence = None;
     let coplanar_evidence = coplanar_volumetric_evidence_from_graph(graph, left, right)?;
     let requires_coplanar_volumetric_cells = coplanar_evidence
         .as_ref()
@@ -7385,8 +7402,8 @@ fn winding_evidence_report_from_graph_with_facts(
     }
     if !graph.face_pairs.is_empty()
         && !arrangement_cell_complex_shortcut_materializes
-        && cached_certified_arrangement_cell_complex_preflight(
-            &mut arrangement_cell_complex_preflight,
+        && cached_certified_arrangement_cell_complex_evidence(
+            &mut arrangement_cell_complex_operation_evidence,
             operation,
             graph,
             left,
@@ -7421,8 +7438,8 @@ fn winding_evidence_report_from_graph_with_facts(
         ));
     }
     if !graph.face_pairs.is_empty()
-        && cached_certified_arrangement_cell_complex_preflight(
-            &mut arrangement_cell_complex_preflight,
+        && cached_certified_arrangement_cell_complex_evidence(
+            &mut arrangement_cell_complex_operation_evidence,
             operation,
             graph,
             left,
@@ -7433,7 +7450,7 @@ fn winding_evidence_report_from_graph_with_facts(
         .is_some()
     {
         return Ok(
-            arrangement_cell_complex_preflight_materialized_winding_evidence(
+            arrangement_cell_complex_operation_evidence_materialized_winding_evidence(
                 graph,
                 left,
                 right,
@@ -7547,7 +7564,7 @@ fn winding_evidence_report_from_graph_with_facts(
         left,
         right,
         operation,
-        &mut arrangement_cell_complex_preflight,
+        &mut arrangement_cell_complex_operation_evidence,
         None,
         None,
     )?;
@@ -7608,8 +7625,8 @@ fn winding_evidence_report_from_graph_with_facts(
         .as_ref()
         .filter(|evidence| coplanar_evidence_requires_volumetric_cells(evidence))
     {
-        if cached_certified_arrangement_cell_complex_preflight(
-            &mut arrangement_cell_complex_preflight,
+        if cached_certified_arrangement_cell_complex_evidence(
+            &mut arrangement_cell_complex_operation_evidence,
             operation,
             graph,
             left,
@@ -7659,8 +7676,8 @@ fn winding_evidence_report_from_graph_with_facts(
     }
     if graph.face_pairs.is_empty()
         && !meshes_are_certified_bounds_disjoint(left, right)
-        && cached_certified_arrangement_cell_complex_preflight(
-            &mut arrangement_cell_complex_preflight,
+        && cached_certified_arrangement_cell_complex_evidence(
+            &mut arrangement_cell_complex_operation_evidence,
             operation,
             graph,
             left,

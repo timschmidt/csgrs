@@ -199,7 +199,7 @@ impl ExactVolumetricRegionClassification {
 /// Validation or source-replay failure for volumetric region classifications.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ExactVolumetricRegionError {
-    /// The retained triangulation did not pass its exact handoff audit.
+    /// The retained triangulation did not pass its exact boundary audit.
     InvalidTriangulation,
     /// The triangulation produced no output triangle from which to choose an
     /// exact representative.

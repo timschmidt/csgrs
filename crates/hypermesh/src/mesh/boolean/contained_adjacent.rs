@@ -583,7 +583,7 @@ fn contained_face_union_mesh(
 /// face components: one connected cap uses the convex one-hole surface
 /// artifact, while several independent caps use the convex multi-hole surface
 /// artifact. Both retain exact rings and validate exact area before
-/// than inferring holes from triangle soup. The ring triangulation handoff
+/// than inferring holes from triangle soup. The ring triangulation boundary
 fn append_contained_face_patch_group(
     left: &Mesh,
     right: &Mesh,

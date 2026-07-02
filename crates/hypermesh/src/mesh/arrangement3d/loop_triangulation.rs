@@ -1,6 +1,6 @@
 //! Shared exact loop triangulation for arrangement replay and simplification.
 //!
-//! This module keeps the `hypertri` handoff in one place. Inputs are exact
+//! This module keeps the `hypertri` boundary in one place. Inputs are exact
 //! coordinates; undecidable predicates and invalid topology return arrangement
 //! blockers instead of falling back to tolerance repair.
 
