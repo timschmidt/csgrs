@@ -719,11 +719,7 @@ fn append_left_triangle_with_edge_splits(
         else {
             return Ok(None);
         };
-        if insert_triangle_edge_split(&mut splits[edge], vertices, mapped, point, parameter)
-            .is_none()
-        {
-            return Ok(None);
-        }
+        insert_triangle_edge_split(&mut splits[edge], vertices, mapped, point, parameter)?;
     }
     Ok(append_refined_triangle(mapped, splits, vertices, triangles))
 }
@@ -790,11 +786,7 @@ fn append_right_triangle_with_edge_splits(
         let Some(mapped) = map_left_vertex(left, left_vertex_map, vertices, left_vertex)? else {
             return Ok(None);
         };
-        if insert_triangle_edge_split(&mut splits[edge], vertices, mapped, point, parameter)
-            .is_none()
-        {
-            return Ok(None);
-        }
+        insert_triangle_edge_split(&mut splits[edge], vertices, mapped, point, parameter)?;
     }
     Ok(append_refined_triangle(mapped, splits, vertices, triangles))
 }
@@ -833,22 +825,29 @@ fn insert_triangle_edge_split(
     mapped_vertex: usize,
     point: &Point3,
     parameter: Real,
-) -> Option<()> {
+) -> Result<(), ExactMeshError> {
     for split in splits.iter() {
         if split.mapped_vertex == mapped_vertex {
-            return Some(());
+            return Ok(());
         }
-        if let Some(existing) = vertices.get(split.mapped_vertex)
-            && point3_exact_equal(existing, point)?
-        {
-            return Some(());
+        if let Some(existing) = vertices.get(split.mapped_vertex) {
+            match point3_exact_equal(existing, point) {
+                Some(true) => return Ok(()),
+                Some(false) => {}
+                None => {
+                    return Err(ExactMeshError::one(ExactMeshBlocker::new(
+                        ExactMeshBlockerKind::UndecidablePredicate,
+                        "full-face adjacent edge split vertex equality is undecidable",
+                    )));
+                }
+            }
         }
     }
     splits.push(TriangleEdgeSplit {
         parameter,
         mapped_vertex,
     });
-    Some(())
+    Ok(())
 }
 
 fn append_refined_triangle(
