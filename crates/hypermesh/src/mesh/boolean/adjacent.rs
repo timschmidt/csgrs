@@ -475,8 +475,14 @@ fn merged_union_mesh(
     for pair in &certificate.shared_faces {
         let left_triangle = left.view().face(pair.left_face)?.vertex_indices();
         let right_triangle = right.view().face(pair.right_face)?.vertex_indices();
-        let Some(seam_map) =
-            reversed_whole_face_vertex_map(left, left_triangle, right, right_triangle)?
+        let Some(seam_map) = retained_reversed_whole_face_vertex_map(
+            left,
+            left_triangle,
+            pair.left_face,
+            right,
+            right_triangle,
+            pair.right_face,
+        )?
         else {
             return Ok(None);
         };
@@ -1134,6 +1140,33 @@ fn reversed_whole_face_vertex_map(
     right: &ExactMesh,
     right_triangle: [usize; 3],
 ) -> Result<Option<[usize; 3]>, ExactMeshError> {
+    reversed_whole_face_vertex_map_impl(left, left_triangle, right, right_triangle, None)
+}
+
+fn retained_reversed_whole_face_vertex_map(
+    left: &ExactMesh,
+    left_triangle: [usize; 3],
+    left_face: usize,
+    right: &ExactMesh,
+    right_triangle: [usize; 3],
+    right_face: usize,
+) -> Result<Option<[usize; 3]>, ExactMeshError> {
+    reversed_whole_face_vertex_map_impl(
+        left,
+        left_triangle,
+        right,
+        right_triangle,
+        Some((left_face, right_face)),
+    )
+}
+
+fn reversed_whole_face_vertex_map_impl(
+    left: &ExactMesh,
+    left_triangle: [usize; 3],
+    right: &ExactMesh,
+    right_triangle: [usize; 3],
+    retained_pair: Option<(usize, usize)>,
+) -> Result<Option<[usize; 3]>, ExactMeshError> {
     let left_points = triangle_point_refs(left, left_triangle)?;
     let right_points = triangle_point_refs(right, right_triangle)?;
     let mut labels = [usize::MAX; 3];
@@ -1141,6 +1174,9 @@ fn reversed_whole_face_vertex_map(
         let mut label = None;
         for (left_corner, left_point) in left_points.iter().enumerate() {
             let Some(equal) = point3_exact_equal(left_point, right_point) else {
+                if let Some((left_face, right_face)) = retained_pair {
+                    return Err(undecidable_shared_face_equality(left_face, right_face));
+                }
                 return Ok(None);
             };
             if equal {
