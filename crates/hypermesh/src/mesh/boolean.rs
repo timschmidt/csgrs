@@ -6632,29 +6632,18 @@ pub(crate) fn materialize_open_surface_disjoint_meshes(
     operation: ExactBooleanOperation,
     validation: ExactMeshValidationPolicy,
 ) -> Result<ExactBooleanResult, ExactMeshError> {
-    let mesh = match operation {
-        ExactBooleanOperation::Union => concatenate_meshes_with_options(
-            left,
-            right,
-            false,
-            "exact open-surface disjoint union",
-            validation,
-        )?,
-        ExactBooleanOperation::Intersection => {
-            empty_mesh("empty exact open-surface disjoint intersection", validation)?
-        }
-        ExactBooleanOperation::Difference => copy_mesh(
-            left,
-            "exact open-surface disjoint difference keeps left",
-            validation,
-        )?,
-        ExactBooleanOperation::SelectedRegions(_) => {
-            return Err(named_boolean_required_error(
-                "open-surface disjoint",
-                operation,
-            ));
-        }
-    };
+    let mesh = materialize_disjoint_boolean_mesh(
+        left,
+        right,
+        operation,
+        validation,
+        DisjointBooleanLabels {
+            union: "exact open-surface disjoint union",
+            intersection: "empty exact open-surface disjoint intersection",
+            difference: "exact open-surface disjoint difference keeps left",
+            context: "open-surface disjoint",
+        },
+    )?;
 
     Ok(certified_shortcut_result(
         mesh,
@@ -8289,27 +8278,50 @@ fn boolean_disjoint_meshes(
     operation: ExactBooleanOperation,
     validation: ExactMeshValidationPolicy,
 ) -> Result<ExactBooleanResult, ExactMeshError> {
-    let mesh = match operation {
-        ExactBooleanOperation::Union => {
-            concatenate_meshes_with_options(left, right, false, "exact disjoint union", validation)?
-        }
-        ExactBooleanOperation::Intersection => {
-            empty_mesh("empty exact bounds-disjoint intersection", validation)?
-        }
-        ExactBooleanOperation::Difference => copy_mesh(
-            left,
-            "exact bounds-disjoint difference keeps left",
-            validation,
-        )?,
-        ExactBooleanOperation::SelectedRegions(_) => {
-            return Err(named_boolean_required_error("bounds-disjoint", operation));
-        }
-    };
+    let mesh = materialize_disjoint_boolean_mesh(
+        left,
+        right,
+        operation,
+        validation,
+        DisjointBooleanLabels {
+            union: "exact disjoint union",
+            intersection: "empty exact bounds-disjoint intersection",
+            difference: "exact bounds-disjoint difference keeps left",
+            context: "bounds-disjoint",
+        },
+    )?;
     Ok(certified_shortcut_result(
         mesh,
         operation,
         ExactBooleanShortcutKind::BoundsDisjoint,
     ))
+}
+
+#[derive(Clone, Copy)]
+struct DisjointBooleanLabels {
+    union: &'static str,
+    intersection: &'static str,
+    difference: &'static str,
+    context: &'static str,
+}
+
+fn materialize_disjoint_boolean_mesh(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ExactMeshValidationPolicy,
+    labels: DisjointBooleanLabels,
+) -> Result<ExactMesh, ExactMeshError> {
+    match operation {
+        ExactBooleanOperation::Union => {
+            concatenate_meshes_with_options(left, right, false, labels.union, validation)
+        }
+        ExactBooleanOperation::Intersection => empty_mesh(labels.intersection, validation),
+        ExactBooleanOperation::Difference => copy_mesh(left, labels.difference, validation),
+        ExactBooleanOperation::SelectedRegions(_) => {
+            Err(named_boolean_required_error(labels.context, operation))
+        }
+    }
 }
 
 fn boolean_empty_operand(
