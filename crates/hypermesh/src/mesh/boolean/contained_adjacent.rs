@@ -663,9 +663,7 @@ fn faces_mesh(
     let mut triangles = Vec::new();
     for &face in faces {
         let points = face_point_refs(mesh, face)?;
-        let Some(mapped) = map_triangle_points(&mut vertices, points) else {
-            return Ok(None);
-        };
+        let mapped = map_triangle_points(&mut vertices, points)?;
         triangles.push(Triangle(mapped));
     }
     Ok(Some(ExactMesh::new_with_policy_and_version(
@@ -734,9 +732,7 @@ fn append_source_mesh_without_face(
             continue;
         }
         let points = face.vertices()?;
-        let Some(mapped) = map_triangle_points(vertices, points) else {
-            return Ok(None);
-        };
+        let mapped = map_triangle_points(vertices, points)?;
         triangles.push(Triangle(mapped));
     }
     Ok(Some(()))
@@ -755,9 +751,7 @@ fn append_holed_replacement(
     let flip = source_sign != target_sign;
     for face in mesh.view().faces() {
         let points = face.vertices()?;
-        let Some(mapped) = map_triangle_points(vertices, points) else {
-            return Ok(None);
-        };
+        let mapped = map_triangle_points(vertices, points)?;
         let mapped_triangle = if flip {
             [mapped[0], mapped[2], mapped[1]]
         } else {
@@ -807,19 +801,29 @@ fn append_triangle_with_existing_edge_splits(
     Some(())
 }
 
-fn map_point(vertices: &mut Vec<Point3>, point: &Point3) -> Option<usize> {
+fn map_point(vertices: &mut Vec<Point3>, point: &Point3) -> Result<usize, ExactMeshError> {
     for (existing, candidate) in vertices.iter().enumerate() {
-        if point3_exact_equal(candidate, point)? {
-            return Some(existing);
+        match point3_exact_equal(candidate, point) {
+            Some(true) => return Ok(existing),
+            Some(false) => {}
+            None => {
+                return Err(ExactMeshError::one(ExactMeshBlocker::new(
+                    ExactMeshBlockerKind::UndecidablePredicate,
+                    "contained-face adjacent output vertex equality is undecidable",
+                )));
+            }
         }
     }
     let mapped = vertices.len();
     vertices.push(point.clone());
-    Some(mapped)
+    Ok(mapped)
 }
 
-fn map_triangle_points(vertices: &mut Vec<Point3>, points: [&Point3; 3]) -> Option<[usize; 3]> {
-    Some([
+fn map_triangle_points(
+    vertices: &mut Vec<Point3>,
+    points: [&Point3; 3],
+) -> Result<[usize; 3], ExactMeshError> {
+    Ok([
         map_point(vertices, points[0])?,
         map_point(vertices, points[1])?,
         map_point(vertices, points[2])?,
