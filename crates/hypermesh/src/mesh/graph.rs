@@ -3055,25 +3055,15 @@ fn validate_face_split_boundary_chain_shape(
         let FaceSplitBoundaryNode::OriginalVertex { vertex, point } = node else {
             continue;
         };
-        let Ok(source_point) = mesh.view().vertex(*vertex).map(|vertex| vertex.point()) else {
-            blockers.push(SplitPlanBlocker {
-                side: Some(side),
-                face: Some(face),
-                edge: Some(chain.edge),
-                ..SplitPlanBlocker::new(
-                    SplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange,
-                    "split-face geometry boundary node references a missing source vertex",
-                )
-            });
-            continue;
-        };
-        push_original_boundary_source_point_blocker(
+        validate_original_boundary_source_point(
             blockers,
+            mesh,
             Some(side),
             Some(face),
             Some(chain.edge),
+            *vertex,
             point,
-            source_point,
+            "split-face geometry boundary node references a missing source vertex",
             "split-face geometry original boundary node point does not match its source vertex",
             "split-face geometry original boundary node source-point equality is undecidable",
         );
@@ -3231,17 +3221,6 @@ fn validate_face_region_original_boundary_nodes(
         let FaceSplitBoundaryNode::OriginalVertex { vertex, point } = node else {
             continue;
         };
-        let Ok(source_point) = mesh.view().vertex(*vertex).map(|vertex| vertex.point()) else {
-            blockers.push(SplitPlanBlocker {
-                side: Some(region.side),
-                face: Some(region.face),
-                ..SplitPlanBlocker::new(
-                    SplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange,
-                    "face region original boundary node references a missing source vertex",
-                )
-            });
-            continue;
-        };
         if !region.triangle.contains(vertex) {
             blockers.push(SplitPlanBlocker {
                 side: Some(region.side),
@@ -3252,29 +3231,45 @@ fn validate_face_region_original_boundary_nodes(
                 )
             });
         }
-        push_original_boundary_source_point_blocker(
+        validate_original_boundary_source_point(
             blockers,
+            mesh,
             Some(region.side),
             Some(region.face),
             None,
+            *vertex,
             point,
-            source_point,
+            "face region original boundary node references a missing source vertex",
             "face region original boundary node point does not match its source vertex",
             "face region original boundary node source-point equality is undecidable",
         );
     }
 }
 
-fn push_original_boundary_source_point_blocker(
+fn validate_original_boundary_source_point(
     blockers: &mut Vec<SplitPlanBlocker>,
+    mesh: &ExactMesh,
     side: Option<MeshSide>,
     face: Option<usize>,
     edge: Option<[usize; 2]>,
+    vertex: usize,
     point: &Point3,
-    source_point: &Point3,
+    missing_vertex_message: &'static str,
     mismatch_message: &'static str,
     unknown_message: &'static str,
 ) {
+    let Ok(source_point) = mesh.view().vertex(vertex).map(|vertex| vertex.point()) else {
+        blockers.push(SplitPlanBlocker {
+            side,
+            face,
+            edge,
+            ..SplitPlanBlocker::new(
+                SplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange,
+                missing_vertex_message,
+            )
+        });
+        return;
+    };
     match point3_exact_equal(point, source_point) {
         Some(true) => {}
         Some(false) => blockers.push(SplitPlanBlocker {
