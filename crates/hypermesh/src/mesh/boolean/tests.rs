@@ -5783,6 +5783,63 @@ fn exact_coplanar_boundary_closer_can_append_cap_vertices() {
 }
 
 #[test]
+fn selected_region_assembly_reports_stale_triangulation_artifacts() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+        &[0, 1, 2],
+        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[],
+        &[],
+        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let boundary = vec![
+        crate::mesh::graph::FaceSplitBoundaryNode::OriginalVertex {
+            vertex: 0,
+            point: Point3::new(Real::from(0), Real::from(0), Real::from(0)),
+        },
+        crate::mesh::graph::FaceSplitBoundaryNode::OriginalVertex {
+            vertex: 1,
+            point: Point3::new(Real::from(2), Real::from(0), Real::from(0)),
+        },
+        crate::mesh::graph::FaceSplitBoundaryNode::OriginalVertex {
+            vertex: 2,
+            point: Point3::new(Real::from(0), Real::from(2), Real::from(0)),
+        },
+    ];
+    let triangulation = FaceRegionTriangulation {
+        side: MeshSide::Left,
+        face: 0,
+        projection: CoplanarProjection::Xy,
+        vertices: vec![
+            hypertri::ExactPoint::new(Real::from(0), Real::from(0)),
+            hypertri::ExactPoint::new(Real::from(2), Real::from(0)),
+            hypertri::ExactPoint::new(Real::from(0), Real::from(2)),
+        ],
+        boundary,
+        triangles: vec![0, 0, 1],
+    };
+
+    let error = assemble_region_selection_mesh(
+        &[triangulation],
+        &left,
+        &right,
+        ExactRegionSelection::KeepAll,
+        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        "test selected-region assembly failed",
+        "test selected-region assembly canonicalization failed",
+    )
+    .unwrap_err();
+    assert!(
+        error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        "{error:?}"
+    );
+}
+
+#[test]
 fn exact_coplanar_boundary_canonicalizes_only_degenerate_self_contact_spurs() {
     let a = Point3::new(Real::from(0), Real::from(0), Real::from(0));
     let b = Point3::new(Real::from(1), Real::from(0), Real::from(0));

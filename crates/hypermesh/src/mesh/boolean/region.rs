@@ -926,7 +926,7 @@ fn assembly_vertex_lies_on_source_face(
         })
 }
 
-fn assembly_hypertri_error_to_mesh_error(
+pub(super) fn assembly_hypertri_error_to_mesh_error(
     context: &'static str,
     error: hypertri::Error,
 ) -> ExactMeshError {

@@ -112,7 +112,7 @@ use orthogonal_solid::{
 use region::{
     ExactBooleanAssemblyPlan, ExactRegionRetention, ExactRegionSelection,
     FaceRegionPlaneClassification, FaceRegionPlaneRelation, FaceRegionTriangulation,
-    checked_classify_face_regions_against_opposite_planes,
+    assembly_hypertri_error_to_mesh_error, checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, choose_region_projection,
 };
 use solid::{ConvexSolidMeshRelation, classify_mesh_vertices_against_convex_solid_report};
@@ -996,19 +996,11 @@ fn assemble_region_selection_mesh(
                 }
             },
         )
-        .map_err(|error| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::IndexOutOfBounds,
-                format!("{assembly_error_label}: {error}"),
-            ))
-        })?;
+        .map_err(|error| assembly_hypertri_error_to_mesh_error(assembly_error_label, error))?;
     assembly
         .canonicalize_for_mesh_with_sources(left, right)
         .map_err(|error| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::IndexOutOfBounds,
-                format!("{canonicalization_error_label}: {error}"),
-            ))
+            assembly_hypertri_error_to_mesh_error(canonicalization_error_label, error)
         })?;
     let mesh = assembly.checked_to_exact_mesh_with_sources(left, right, validation)?;
     Ok((assembly, mesh))
