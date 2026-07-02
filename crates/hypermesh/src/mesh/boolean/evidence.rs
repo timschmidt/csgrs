@@ -22,7 +22,7 @@ use super::super::arrangement3d::cell_complex::{
     validate_selected_gate_reports,
 };
 use super::super::arrangement3d::regularization::ExactArrangementBlocker;
-use super::super::arrangement3d::regularization::ExactRegularizationPolicy;
+use super::super::arrangement3d::regularization::ExactRegularizationMode;
 use super::super::arrangement3d::{
     ExactArrangement3d, ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
 };
@@ -200,7 +200,7 @@ pub(crate) enum ExactEvidenceValidationError {
     /// source region selected by its declared policy.
     SelectedRegionAssemblyMissingSelectedRegion,
     /// A volumetric materialized result retained output triangles that do not
-    /// match the declared operation's per-cell volumetric retention policy.
+    /// match the declared operation's per-cell volumetric retention mode.
     VolumetricMaterializedAssemblyViolatesOperation,
     /// A certified graph shortcut retained graph events that contradict the
     /// shortcut status.
@@ -325,8 +325,8 @@ pub(crate) const fn arrangement_attempt_stage_rank(stage: ExactArrangementBoolea
 pub(crate) struct ExactArrangementBooleanAttempt {
     /// Operation attempted.
     pub(crate) operation: ExactBooleanOperation,
-    /// Regularization policy used by the arrangement pipeline.
-    pub(crate) policy: ExactRegularizationPolicy,
+    /// Regularization mode used by the arrangement pipeline.
+    pub(crate) policy: ExactRegularizationMode,
     /// Output validation mode used by shortcut recovery and final mesh copy.
     pub(crate) output_validation: MeshValidationMode,
     /// Furthest stage reached.
@@ -389,7 +389,7 @@ pub(crate) struct ExactArrangementBooleanAttempt {
 impl ExactArrangementBooleanAttempt {
     pub(crate) fn new(
         request: ExactBooleanRequest,
-        policy: ExactRegularizationPolicy,
+        policy: ExactRegularizationMode,
         stage: ExactArrangementBooleanStage,
     ) -> Self {
         Self {
@@ -613,10 +613,10 @@ impl ExactArrangementBooleanAttempt {
         self.output_facts = Some(mesh.facts().mesh.clone());
     }
 
-    pub(crate) fn validate_for_request_policy(
+    pub(crate) fn validate_for_request_regularization_mode(
         &self,
         request: ExactBooleanRequest,
-        policy: ExactRegularizationPolicy,
+        policy: ExactRegularizationMode,
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         if self.operation != request.operation
@@ -2155,13 +2155,14 @@ impl ExactBooleanResult {
         if self.topology_assembly_report.is_none() && self.region_ownership_report.is_none() {
             return Ok(());
         }
-        let arrangement = ExactArrangement3d::from_source_certified_intersection_graph_with_policy(
-            graph.clone(),
-            left,
-            right,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-        )
-        .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
+        let arrangement =
+            ExactArrangement3d::from_source_certified_intersection_graph_with_regularization_mode(
+                graph.clone(),
+                left,
+                right,
+                ExactRegularizationMode::REGULARIZED_SOLID,
+            )
+            .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         self.validate_arrangement_cell_complex_gate_reports_against_arrangement(
             &arrangement,
             left,
@@ -2180,10 +2181,10 @@ impl ExactBooleanResult {
         if self.topology_assembly_report.is_none() && self.region_ownership_report.is_none() {
             return Ok(());
         }
-        let replay_topology = arrangement.topology_assembly_report_with_policy(
+        let replay_topology = arrangement.topology_assembly_report_with_regularization_mode(
             left,
             right,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ExactRegularizationMode::REGULARIZED_SOLID,
         );
         if self.topology_assembly_report.as_ref() != Some(&replay_topology) {
             return Err(ExactEvidenceValidationError::SourceReplayMismatch);
@@ -2191,10 +2192,10 @@ impl ExactBooleanResult {
         let ownership_policy = arrangement_cell_complex_labeling_policy(
             arrangement,
             operation,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ExactRegularizationMode::REGULARIZED_SOLID,
         );
         let replay_ownership = arrangement
-            .region_ownership_report_with_policy(left, right, ownership_policy)
+            .region_ownership_report_with_regularization_mode(left, right, ownership_policy)
             .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?;
         if self.region_ownership_report.as_ref() != Some(&replay_ownership) {
             return Err(ExactEvidenceValidationError::SourceReplayMismatch);
@@ -2229,7 +2230,10 @@ impl ExactBooleanResult {
             && request_validation_satisfied
             && let Some(attempt) = retained_arrangement_attempt
             && attempt
-                .validate_for_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .validate_for_request_regularization_mode(
+                    request,
+                    ExactRegularizationMode::REGULARIZED_SOLID,
+                )
                 .is_ok()
             && attempt.materialized_arrangement_cell_complex_output()
         {

@@ -493,7 +493,7 @@ pub(crate) struct ExactBooleanAssemblyPlan {
 }
 
 impl ExactBooleanAssemblyPlan {
-    /// Assemble exact output triangles with per-cell retention policy.
+    /// Assemble exact output triangles with per-cell retention mode.
     ///
     /// Constrained planar-cell extraction can emit several independently
     /// classified triangles for one source face. A face-wide keep/drop decision
@@ -854,7 +854,7 @@ impl ExactBooleanAssemblyPlan {
     /// Local validation and source-face incidence prove that this plan is
     /// internally coherent and lies on claimed source faces. This replay also
     /// rebuilds the intersection graph, region plan, exact `hypertri`
-    /// triangulations, and selected-region assembly for the supplied policy,
+    /// triangulations, and selected-region assembly for the supplied mode,
     /// then requires the retained plan to match the recomputed one. That makes
     /// the selected-region policy part of the exact artifact boundary, in the
     /// consume a locally valid assembly that was relabeled from a different

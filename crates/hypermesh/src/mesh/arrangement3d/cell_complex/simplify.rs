@@ -19,7 +19,7 @@ use super::super::ExactArrangement3d;
 use super::super::loop_triangulation::{
     choose_polygon_projection, group_exact_coplanar_loops, triangulate_exact_loop_group,
 };
-use super::super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
+use super::super::regularization::{ExactArrangementBlocker, ExactRegularizationMode};
 use super::super::{
     ArrangementFaceCellNode, ArrangementLowerDimensionalArtifact, ExactTopologyAssemblyReport,
     exact_point_loops_match, validate_lower_dimensional_artifacts,
@@ -56,7 +56,7 @@ pub(crate) struct ExactSimplifiedCellComplex {
     pub(crate) operation: ExactBooleanOperation,
     /// Canonical selected face-cells.
     pub(crate) faces: Vec<ExactSimplifiedFaceCell>,
-    /// Retained lower-dimensional arrangement artifacts under policy.
+    /// Retained lower-dimensional arrangement artifacts under mode.
     pub(crate) lower_dimensional_artifacts: Vec<ArrangementLowerDimensionalArtifact>,
     /// Topology assembly report consumed before the selected cells were simplified.
     pub(crate) topology_assembly_report: Option<ExactTopologyAssemblyReport>,
@@ -192,11 +192,12 @@ impl ExactSimplifiedCellComplex {
         &self,
         left: &Mesh,
         right: &Mesh,
-        policy: ExactRegularizationPolicy,
+        policy: ExactRegularizationMode,
     ) -> Result<(), ExactArrangementBlocker> {
         self.validate()?;
-        let arrangement = ExactArrangement3d::from_meshes_with_policy(left, right, policy)
-            .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
+        let arrangement =
+            ExactArrangement3d::from_meshes_with_regularization_mode(left, right, policy)
+                .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
         let replay = simplify_selected_cell_complex(
             select_arrangement_for_replay(arrangement, left, right, self.operation, policy)?,
             policy,
@@ -262,7 +263,7 @@ fn validate_simplified_face(face: &ExactSimplifiedFaceCell) -> Result<(), ExactA
 /// Simplify a selected cell complex by exact canonicalization.
 pub(crate) fn simplify_selected_cell_complex(
     selected: ExactSelectedCellComplex,
-    policy: ExactRegularizationPolicy,
+    policy: ExactRegularizationMode,
 ) -> Result<ExactSimplifiedCellComplex, ExactArrangementBlocker> {
     let gate_counts = selected_cell_complex_gate_counts(
         &selected.faces,
@@ -532,7 +533,7 @@ pub(crate) fn simplify_selected_cell_complex(
     });
 
     if !blockers.is_empty()
-        && policy.unresolved == super::super::regularization::ExactUnresolvedPolicy::Block
+        && policy.unresolved == super::super::regularization::ExactUnresolvedMode::Block
     {
         return Err(blockers[0].clone());
     }
@@ -1602,7 +1603,7 @@ mod tests {
             blockers: Vec::new(),
         };
 
-        simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+        simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
             .unwrap()
     }
 
@@ -1711,7 +1712,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
                 .unwrap();
 
         assert_eq!(simplified.faces.len(), 1);
@@ -1789,7 +1790,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
                 .unwrap();
 
         assert_eq!(simplified.faces.len(), 1);
@@ -1829,7 +1830,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
                 .unwrap();
 
         assert_eq!(simplified.faces.len(), 1);
@@ -1873,7 +1874,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
                 .unwrap();
 
         assert_eq!(simplified.faces.len(), 2);
@@ -1923,7 +1924,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
                 .unwrap();
 
         assert_eq!(simplified.faces.len(), 1);
@@ -1973,7 +1974,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
                 .unwrap();
 
         assert!(simplified.faces.is_empty());
@@ -2003,7 +2004,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
                 .unwrap();
 
         assert_eq!(simplified.faces.len(), 1);
@@ -2040,7 +2041,7 @@ mod tests {
         };
 
         assert_eq!(
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID),
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID),
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
         );
     }
@@ -2088,7 +2089,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
                 .unwrap();
 
         assert_eq!(simplified.faces.len(), 2);
@@ -2122,7 +2123,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
                 .unwrap();
         let area = projected_polygon_area2_value(
             &simplified.faces[0].face.cell.boundary_points,
@@ -2169,7 +2170,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
                 .unwrap();
         let area = projected_polygon_area2_value(
             &simplified.faces[0].face.cell.boundary_points,
@@ -2216,7 +2217,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
                 .unwrap();
 
         assert_eq!(simplified.faces.len(), 1);
@@ -2257,7 +2258,7 @@ mod tests {
         };
 
         assert_eq!(
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID),
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID),
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
         );
     }
@@ -2280,7 +2281,7 @@ mod tests {
         };
 
         assert_eq!(
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID),
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2303,7 +2304,7 @@ mod tests {
         };
 
         assert_eq!(
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID),
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2334,7 +2335,7 @@ mod tests {
         };
 
         assert_eq!(
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID),
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2361,7 +2362,7 @@ mod tests {
         };
 
         assert_eq!(
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID),
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2390,7 +2391,7 @@ mod tests {
         };
 
         assert_eq!(
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID),
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2419,7 +2420,7 @@ mod tests {
         };
 
         assert_eq!(
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID),
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
@@ -2446,7 +2447,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
                 .unwrap();
         let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
 
@@ -2476,7 +2477,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
                 .unwrap();
         let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
 
@@ -2526,7 +2527,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
                 .unwrap();
         let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
 
@@ -2564,7 +2565,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
                 .unwrap();
 
         let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
@@ -2621,7 +2622,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::RETAIN_ARTIFACTS)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::RETAIN_ARTIFACTS)
                 .unwrap();
         let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
 
@@ -2652,7 +2653,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
                 .unwrap();
 
         let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
@@ -2684,7 +2685,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
                 .unwrap();
         let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
 
@@ -2725,7 +2726,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::RETAIN_ARTIFACTS)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::RETAIN_ARTIFACTS)
                 .unwrap();
 
         assert_eq!(simplified.lower_dimensional_artifacts, vec![artifact]);
@@ -2753,7 +2754,7 @@ mod tests {
         };
 
         let simplified =
-            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::RETAIN_ARTIFACTS)
+            simplify_selected_cell_complex(selected, ExactRegularizationMode::RETAIN_ARTIFACTS)
                 .unwrap();
 
         assert_eq!(simplified.lower_dimensional_artifacts, vec![artifact]);

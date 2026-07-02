@@ -512,7 +512,10 @@ fn certification_set_from_graph_and_regularized_arrangement(
     validate_graph_source_replay(graph, left, right)?;
     if let Some(attempt) = retained_arrangement_attempt {
         attempt
-            .validate_for_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .validate_for_request_regularization_mode(
+                request,
+                ExactRegularizationMode::REGULARIZED_SOLID,
+            )
             .map_err(|error| {
                 retained_evidence_validation_error(
                     "retained arrangement attempt failed validation",
@@ -700,7 +703,7 @@ fn certification_set_from_graph_and_regularized_arrangement(
                         left,
                         right,
                         request,
-                        ExactRegularizationPolicy::REGULARIZED_SOLID,
+                        ExactRegularizationMode::REGULARIZED_SOLID,
                         true,
                     )? {
                         ArrangementCellComplexOutcome::Materialized(_, attempt)
@@ -709,11 +712,11 @@ fn certification_set_from_graph_and_regularized_arrangement(
                 )
             } else {
                 let arrangement =
-                    ExactArrangement3d::from_source_certified_intersection_graph_with_policy(
+                    ExactArrangement3d::from_source_certified_intersection_graph_with_regularization_mode(
                         graph.clone(),
                         left,
                         right,
-                        ExactRegularizationPolicy::REGULARIZED_SOLID,
+                        ExactRegularizationMode::REGULARIZED_SOLID,
                     )?;
                 Some(
                     match run_arrangement_cell_complex_attempt_from_arrangement(
@@ -721,7 +724,7 @@ fn certification_set_from_graph_and_regularized_arrangement(
                         left,
                         right,
                         request,
-                        ExactRegularizationPolicy::REGULARIZED_SOLID,
+                        ExactRegularizationMode::REGULARIZED_SOLID,
                         true,
                     )? {
                         ArrangementCellComplexOutcome::Materialized(_, attempt)
@@ -789,10 +792,10 @@ pub(super) fn replay_regularized_arrangement_attempt(
     retained_arrangement: &mut Option<ExactArrangement3d>,
     retained_attempt: &mut Option<ExactArrangementBooleanAttempt>,
 ) -> Result<(), MeshError> {
-    let policy = ExactRegularizationPolicy::REGULARIZED_SOLID;
+    let policy = ExactRegularizationMode::REGULARIZED_SOLID;
     if let Some(attempt) = retained_attempt.as_ref() {
         attempt
-            .validate_for_request_policy(request, policy)
+            .validate_for_request_regularization_mode(request, policy)
             .and_then(|()| attempt.validate_against_sources_for_request(left, right, request))
             .map_err(|error| {
                 retained_evidence_validation_error(
@@ -825,7 +828,7 @@ pub(super) fn replay_regularized_arrangement_attempt(
                 attempt,
             )?
         }
-        None => match ExactArrangement3d::from_source_certified_intersection_graph_with_policy(
+        None => match ExactArrangement3d::from_source_certified_intersection_graph_with_regularization_mode(
             graph.clone(),
             left,
             right,
@@ -876,7 +879,7 @@ pub(super) fn replay_regularized_arrangement_attempt(
         },
     };
     attempt
-        .validate_for_request_policy(request, policy)
+        .validate_for_request_regularization_mode(request, policy)
         .map_err(|error| {
             retained_evidence_validation_error(
                 RETAINED_EVIDENCE_REPLAY_CONTEXT,

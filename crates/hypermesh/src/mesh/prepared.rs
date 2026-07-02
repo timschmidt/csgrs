@@ -2,7 +2,7 @@
 
 use std::{cell::RefCell, rc::Rc};
 
-use super::arrangement3d::regularization::ExactRegularizationPolicy;
+use super::arrangement3d::regularization::ExactRegularizationMode;
 use super::arrangement3d::{ArrangementView, ExactArrangement3d};
 use super::boolean::evidence::ExactArrangementCellComplexShortcutFacts;
 use super::boolean::evidence::ExactEvidenceValidationError;
@@ -113,12 +113,13 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         }
 
         let graph = self.validated_intersection_graph()?;
-        let arrangement = ExactArrangement3d::from_source_certified_intersection_graph_with_policy(
-            graph.as_ref().clone(),
-            self.left_view.mesh,
-            self.right_view.mesh,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-        )?;
+        let arrangement =
+            ExactArrangement3d::from_source_certified_intersection_graph_with_regularization_mode(
+                graph.as_ref().clone(),
+                self.left_view.mesh,
+                self.right_view.mesh,
+                ExactRegularizationMode::REGULARIZED_SOLID,
+            )?;
         let arrangement = Rc::new(arrangement);
         *self.arrangement.borrow_mut() = Some(Rc::clone(&arrangement));
         Ok(query(arrangement.view()))

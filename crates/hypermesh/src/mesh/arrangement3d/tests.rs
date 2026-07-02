@@ -201,7 +201,7 @@ fn face_cell_builders_report_stale_retained_rows() {
             0,
             &mesh,
             &mesh,
-            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+            ExactRegularizationMode::RETAIN_ARTIFACTS,
             &mut missing_carrier_blockers,
         )
         .is_none()
@@ -223,7 +223,7 @@ fn face_cell_builders_report_stale_retained_rows() {
             0,
             &mesh,
             &mesh,
-            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+            ExactRegularizationMode::RETAIN_ARTIFACTS,
             &mut stale_vertex_blockers,
         )
         .is_none()
@@ -243,7 +243,7 @@ fn face_cell_builders_report_stale_retained_rows() {
             0,
             &mesh,
             &mesh,
-            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+            ExactRegularizationMode::RETAIN_ARTIFACTS,
             &mut stale_provenance_blockers,
         )
         .is_none()
@@ -265,7 +265,7 @@ fn face_cell_builders_report_stale_retained_rows() {
             MeshSide::Left,
             &mesh,
             &mesh,
-            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+            ExactRegularizationMode::RETAIN_ARTIFACTS,
             &mut stale_overlay_blockers,
         )
         .is_none()
@@ -477,19 +477,20 @@ fn arrangement_from_retained_graph_matches_mesh_construction() {
     let graph = crate::mesh::graph::build_unvalidated_intersection_graph(&left, &right).unwrap();
     graph.validate_against_meshes(&left, &right).unwrap();
 
-    let from_meshes = ExactArrangement3d::from_meshes_with_policy(
+    let from_meshes = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
-    let from_graph = ExactArrangement3d::from_source_certified_intersection_graph_with_policy(
-        graph,
-        &left,
-        &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
-    )
-    .unwrap();
+    let from_graph =
+        ExactArrangement3d::from_source_certified_intersection_graph_with_regularization_mode(
+            graph,
+            &left,
+            &right,
+            ExactRegularizationMode::REGULARIZED_SOLID,
+        )
+        .unwrap();
 
     assert_eq!(from_graph, from_meshes);
     from_graph.validate().unwrap();
@@ -647,10 +648,10 @@ fn disjoint_tetrahedra_build_complete_arrangement_cells() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
 
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
 
@@ -703,10 +704,10 @@ fn disjoint_tetrahedra_build_complete_arrangement_cells() {
             .iter()
             .all(|side| side.boundary.len() == 3)
     }));
-    let topology_report = arrangement.topology_assembly_report_with_policy(
+    let topology_report = arrangement.topology_assembly_report_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     );
     topology_report.validate().unwrap();
     assert_eq!(topology_report.arrangement_regions, 2);
@@ -757,10 +758,10 @@ fn disjoint_tetrahedra_build_complete_arrangement_cells() {
                 }))
     );
     assert_eq!(
-        arrangement.freshness_against_sources_with_policy(
+        arrangement.freshness_against_sources_with_regularization_mode(
             &left,
             &right,
-            ExactRegularizationPolicy::REGULARIZED_SOLID
+            ExactRegularizationMode::REGULARIZED_SOLID
         ),
         ExactArrangementFreshness::Current
     );
@@ -770,10 +771,10 @@ fn disjoint_tetrahedra_build_complete_arrangement_cells() {
 fn volume_graph_validation_rejects_missing_shell_adjacency() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
     let shell_regions = arrangement.shells_or_regions.as_ref().unwrap();
@@ -800,10 +801,10 @@ fn volume_graph_validation_rejects_missing_shell_adjacency() {
 fn arrangement_validate_rejects_missing_volume_adjacency() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let mut arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let mut arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
     arrangement.validate().unwrap();
@@ -814,10 +815,10 @@ fn arrangement_validate_rejects_missing_volume_adjacency() {
         Err(ExactArrangementBlocker::NonManifoldCellComplex)
     );
     assert_eq!(
-        arrangement.freshness_against_sources_with_policy(
+        arrangement.freshness_against_sources_with_regularization_mode(
             &left,
             &right,
-            ExactRegularizationPolicy::REGULARIZED_SOLID
+            ExactRegularizationMode::REGULARIZED_SOLID
         ),
         ExactArrangementFreshness::StaleArrangement
     );
@@ -827,10 +828,10 @@ fn arrangement_validate_rejects_missing_volume_adjacency() {
 fn arrangement_validate_rejects_missing_unblocked_topology() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let mut arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let mut arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
     arrangement.validate().unwrap();
@@ -847,10 +848,10 @@ fn arrangement_validate_rejects_missing_unblocked_topology() {
 fn volume_graph_validation_rejects_relabelled_source_sides() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
     let shell_regions = arrangement.shells_or_regions.as_ref().unwrap();
@@ -877,10 +878,10 @@ fn volume_graph_validation_rejects_relabelled_source_sides() {
 fn volume_graph_validation_rejects_extra_boundary_shell() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
     let shell_regions = arrangement.shells_or_regions.as_ref().unwrap();
@@ -907,10 +908,10 @@ fn volume_graph_validation_rejects_extra_boundary_shell() {
 fn volume_graph_validation_rejects_duplicate_separating_face() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
     let shell_regions = arrangement.shells_or_regions.as_ref().unwrap();
@@ -938,10 +939,10 @@ fn volume_graph_validation_rejects_duplicate_separating_face() {
 fn volume_graph_validation_rejects_duplicate_boundary_shell() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
     let shell_regions = arrangement.shells_or_regions.as_ref().unwrap();
@@ -968,17 +969,17 @@ fn volume_graph_validation_rejects_duplicate_boundary_shell() {
 fn label_regions_rejects_relabelled_volume_source_sides() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let mut arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let mut arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
     arrangement.volume_regions.as_mut().unwrap()[1].source_sides = vec![MeshSide::Right];
 
     assert_eq!(
         arrangement
-            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .label_regions(ExactRegularizationMode::REGULARIZED_SOLID)
             .unwrap_err(),
         ExactArrangementBlocker::NonManifoldCellComplex
     );
@@ -988,10 +989,10 @@ fn label_regions_rejects_relabelled_volume_source_sides() {
 fn label_regions_rejects_stale_volume_boundary_shells() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let mut arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let mut arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
     arrangement.volume_regions.as_mut().unwrap()[1]
@@ -1000,7 +1001,7 @@ fn label_regions_rejects_stale_volume_boundary_shells() {
 
     assert_eq!(
         arrangement
-            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .label_regions(ExactRegularizationMode::REGULARIZED_SOLID)
             .unwrap_err(),
         ExactArrangementBlocker::NonManifoldCellComplex
     );
@@ -1133,10 +1134,10 @@ fn shell_containment_classifier_requires_convex_certified_container() {
 fn shell_region_witnesses_include_exact_face_interior_points() {
     let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
     let right = tetrahedron_i64([10, 0, 0], [16, 0, 0], [10, 6, 0], [10, 0, 6]);
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
     let shell = &arrangement.shells_or_regions.as_ref().unwrap()[0];
@@ -1211,10 +1212,10 @@ fn nested_tetrahedra_build_nested_volume_regions() {
     let left = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
     let right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
 
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
 
@@ -1247,11 +1248,11 @@ fn nested_tetrahedra_build_nested_volume_regions() {
 
     let union = arrangement
         .clone()
-        .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .label_regions(ExactRegularizationMode::REGULARIZED_SOLID)
         .unwrap()
-        .select_with_policy(
+        .select_with_regularization_mode(
             ExactBooleanOperation::Union,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ExactRegularizationMode::REGULARIZED_SOLID,
         )
         .unwrap();
     assert_eq!(union.selected_volume_regions, vec![1, 2]);
@@ -1264,11 +1265,11 @@ fn nested_tetrahedra_build_nested_volume_regions() {
     );
     let intersection = arrangement
         .clone()
-        .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .label_regions(ExactRegularizationMode::REGULARIZED_SOLID)
         .unwrap()
-        .select_with_policy(
+        .select_with_regularization_mode(
             ExactBooleanOperation::Intersection,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ExactRegularizationMode::REGULARIZED_SOLID,
         )
         .unwrap();
     assert_eq!(intersection.selected_volume_regions, vec![2]);
@@ -1280,11 +1281,11 @@ fn nested_tetrahedra_build_nested_volume_regions() {
             .all(|orientation| !orientation.reverse && orientation.from_volume_adjacency)
     );
     let difference = arrangement
-        .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .label_regions(ExactRegularizationMode::REGULARIZED_SOLID)
         .unwrap()
-        .select_with_policy(
+        .select_with_regularization_mode(
             ExactBooleanOperation::Difference,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ExactRegularizationMode::REGULARIZED_SOLID,
         )
         .unwrap();
     assert_eq!(difference.selected_volume_regions, vec![1]);
@@ -1309,17 +1310,17 @@ fn nested_tetrahedra_build_nested_volume_regions() {
 fn region_ownership_report_certifies_volume_resolved_nested_solids() {
     let left = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
     let right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
 
-    let topology_report = arrangement.topology_assembly_report_with_policy(
+    let topology_report = arrangement.topology_assembly_report_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     );
     topology_report.validate().unwrap();
     assert_eq!(
@@ -1338,10 +1339,10 @@ fn region_ownership_report_certifies_volume_resolved_nested_solids() {
     );
 
     let report = arrangement
-        .region_ownership_report_with_policy(
+        .region_ownership_report_with_regularization_mode(
             &left,
             &right,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ExactRegularizationMode::REGULARIZED_SOLID,
         )
         .unwrap();
 
@@ -1379,18 +1380,18 @@ fn region_ownership_report_certifies_volume_resolved_nested_solids() {
 fn region_ownership_report_retains_blocked_open_shell_reason() {
     let left = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
     let right = open_triangle_i64([4, 0, 0], [6, 0, 0], [4, 2, 0]);
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
 
     let report = arrangement
-        .region_ownership_report_with_policy(
+        .region_ownership_report_with_regularization_mode(
             &left,
             &right,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ExactRegularizationMode::REGULARIZED_SOLID,
         )
         .unwrap();
 
@@ -1415,10 +1416,10 @@ fn coincident_closed_shell_builds_mixed_source_volume_region() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = left.clone();
 
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
 
@@ -1440,18 +1441,17 @@ fn coincident_closed_shell_builds_mixed_source_volume_region() {
 
     let union = arrangement
         .clone()
-        .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .label_regions(ExactRegularizationMode::REGULARIZED_SOLID)
         .unwrap()
-        .select_with_policy(
+        .select_with_regularization_mode(
             ExactBooleanOperation::Union,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ExactRegularizationMode::REGULARIZED_SOLID,
         )
         .unwrap();
     assert_eq!(union.selected_volume_regions, vec![1]);
     assert_eq!(union.selected_faces.len(), 4);
     let simplified_union =
-        simplify_selected_cell_complex(union, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap();
+        simplify_selected_cell_complex(union, ExactRegularizationMode::REGULARIZED_SOLID).unwrap();
     assert_eq!(simplified_union.faces.len(), 4);
     assert_eq!(simplified_union.duplicate_cells_removed, 0);
     assert_eq!(
@@ -1464,17 +1464,17 @@ fn coincident_closed_shell_builds_mixed_source_volume_region() {
 
     let intersection = arrangement
         .clone()
-        .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .label_regions(ExactRegularizationMode::REGULARIZED_SOLID)
         .unwrap()
-        .select_with_policy(
+        .select_with_regularization_mode(
             ExactBooleanOperation::Intersection,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ExactRegularizationMode::REGULARIZED_SOLID,
         )
         .unwrap();
     assert_eq!(intersection.selected_volume_regions, vec![1]);
     assert_eq!(intersection.selected_faces.len(), 4);
     let simplified_intersection =
-        simplify_selected_cell_complex(intersection, ExactRegularizationPolicy::REGULARIZED_SOLID)
+        simplify_selected_cell_complex(intersection, ExactRegularizationMode::REGULARIZED_SOLID)
             .unwrap();
     assert_eq!(simplified_intersection.faces.len(), 4);
     assert_eq!(simplified_intersection.duplicate_cells_removed, 0);
@@ -1487,11 +1487,11 @@ fn coincident_closed_shell_builds_mixed_source_volume_region() {
     );
 
     let difference = arrangement
-        .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .label_regions(ExactRegularizationMode::REGULARIZED_SOLID)
         .unwrap()
-        .select_with_policy(
+        .select_with_regularization_mode(
             ExactBooleanOperation::Difference,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ExactRegularizationMode::REGULARIZED_SOLID,
         )
         .unwrap();
     assert!(difference.selected_volume_regions.is_empty());
@@ -1506,10 +1506,10 @@ fn nested_tetrahedron_with_two_inner_shells_builds_volume_tree() {
         [[5, 1, 1], [6, 1, 1], [5, 2, 1], [5, 1, 2]],
     ]);
 
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
 
@@ -1551,11 +1551,11 @@ fn nested_tetrahedron_with_two_inner_shells_builds_volume_tree() {
     );
 
     let difference = arrangement
-        .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .label_regions(ExactRegularizationMode::REGULARIZED_SOLID)
         .unwrap()
-        .select_with_policy(
+        .select_with_regularization_mode(
             ExactBooleanOperation::Difference,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ExactRegularizationMode::REGULARIZED_SOLID,
         )
         .unwrap();
     assert_eq!(difference.selected_volume_regions, vec![left_volume.index]);
@@ -1569,10 +1569,10 @@ fn same_source_reversed_nested_shell_builds_cavity_volume() {
     );
     let right = tetrahedron_i64([30, 0, 0], [31, 0, 0], [30, 1, 0], [30, 0, 1]);
 
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
 
@@ -1605,21 +1605,21 @@ fn same_source_reversed_nested_shell_builds_cavity_volume() {
 
     let union = arrangement
         .clone()
-        .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .label_regions(ExactRegularizationMode::REGULARIZED_SOLID)
         .unwrap()
-        .select_with_policy(
+        .select_with_regularization_mode(
             ExactBooleanOperation::Union,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ExactRegularizationMode::REGULARIZED_SOLID,
         )
         .unwrap();
     assert!(!union.selected_volume_regions.contains(&cavity.index));
     assert!(union.selected_volume_regions.contains(&left_volume.index));
     let difference = arrangement
-        .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .label_regions(ExactRegularizationMode::REGULARIZED_SOLID)
         .unwrap()
-        .select_with_policy(
+        .select_with_regularization_mode(
             ExactBooleanOperation::Difference,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ExactRegularizationMode::REGULARIZED_SOLID,
         )
         .unwrap();
     assert_eq!(difference.selected_volume_regions, vec![left_volume.index]);
@@ -1633,10 +1633,10 @@ fn same_source_same_orientation_nested_shell_reports_nonmanifold_volume() {
     ]);
     let right = tetrahedron_i64([30, 0, 0], [31, 0, 0], [30, 1, 0], [30, 0, 1]);
 
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
 
@@ -1653,7 +1653,7 @@ fn same_source_same_orientation_nested_shell_reports_nonmanifold_volume() {
     );
     assert_eq!(
         arrangement
-            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .label_regions(ExactRegularizationMode::REGULARIZED_SOLID)
             .unwrap_err(),
         ExactArrangementBlocker::NonManifoldCellComplex
     );
@@ -1663,25 +1663,25 @@ fn same_source_same_orientation_nested_shell_reports_nonmanifold_volume() {
 fn arrangement_pipeline_labels_selects_and_simplifies() {
     let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
     let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
 
     let labeled = arrangement
-        .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .label_regions(ExactRegularizationMode::REGULARIZED_SOLID)
         .unwrap();
     assert!(
         labeled
-            .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .validate_against_sources(&left, &right, ExactRegularizationMode::REGULARIZED_SOLID)
             .is_ok()
     );
     let selected = labeled
-        .select_with_policy(
+        .select_with_regularization_mode(
             ExactBooleanOperation::Union,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ExactRegularizationMode::REGULARIZED_SOLID,
         )
         .unwrap();
     assert_eq!(selected.selected_faces.len(), 8);
@@ -1689,37 +1689,37 @@ fn arrangement_pipeline_labels_selects_and_simplifies() {
     assert_eq!(selected.selected_volume_regions, vec![1, 2]);
     assert!(
         selected
-            .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .validate_against_sources(&left, &right, ExactRegularizationMode::REGULARIZED_SOLID)
             .is_ok()
     );
 
     let intersection = arrangement
-        .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .label_regions(ExactRegularizationMode::REGULARIZED_SOLID)
         .unwrap()
-        .select_with_policy(
+        .select_with_regularization_mode(
             ExactBooleanOperation::Intersection,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ExactRegularizationMode::REGULARIZED_SOLID,
         )
         .unwrap();
     assert!(intersection.selected_volume_regions.is_empty());
     let difference = arrangement
-        .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .label_regions(ExactRegularizationMode::REGULARIZED_SOLID)
         .unwrap()
-        .select_with_policy(
+        .select_with_regularization_mode(
             ExactBooleanOperation::Difference,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ExactRegularizationMode::REGULARIZED_SOLID,
         )
         .unwrap();
     assert_eq!(difference.selected_volume_regions, vec![1]);
 
     let simplified =
-        simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+        simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
             .unwrap();
     assert_eq!(simplified.faces.len(), 8);
     assert_eq!(simplified.duplicate_cells_removed, 0);
     assert!(
         simplified
-            .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .validate_against_sources(&left, &right, ExactRegularizationMode::REGULARIZED_SOLID)
             .is_ok()
     );
     let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
@@ -1732,10 +1732,10 @@ fn regularized_solid_arrangement_blocks_open_shell_regions() {
     let left = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
     let right = open_triangle_i64([4, 0, 0], [6, 0, 0], [4, 2, 0]);
 
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
 
@@ -1771,10 +1771,10 @@ fn regularized_solid_arrangement_blocks_open_shell_regions() {
     assert!(regions.iter().all(|region| region.non_manifold_edges == 0));
     assert!(regions.iter().all(|region| !region.closed));
     assert!(regions.iter().all(|region| region.manifold));
-    let topology_report = arrangement.topology_assembly_report_with_policy(
+    let topology_report = arrangement.topology_assembly_report_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     );
     topology_report.validate().unwrap();
     assert_eq!(topology_report.arrangement_regions, 2);
@@ -1802,10 +1802,10 @@ fn coplanar_overlapping_triangles_retain_carrier_plane_overlay() {
     let left = open_triangle_i64([0, 0, 0], [4, 0, 0], [0, 4, 0]);
     let right = open_triangle_i64([1, 1, 0], [5, 1, 0], [1, 5, 0]);
 
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        ExactRegularizationMode::RETAIN_ARTIFACTS,
     )
     .unwrap();
     assert!(
@@ -1853,10 +1853,10 @@ fn selected_regions_materialize_open_coplanar_overlap_without_winding_blocker() 
     let left = open_triangle_i64([0, 0, 0], [4, 0, 0], [0, 4, 0]);
     let right = open_triangle_i64([1, 1, 0], [5, 1, 0], [1, 5, 0]);
 
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        ExactRegularizationMode::RETAIN_ARTIFACTS,
     )
     .unwrap();
     assert!(
@@ -1871,12 +1871,12 @@ fn selected_regions_materialize_open_coplanar_overlap_without_winding_blocker() 
     let labeling_policy = arrangement_cell_complex_labeling_policy(
         &arrangement,
         Some(operation),
-        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        ExactRegularizationMode::RETAIN_ARTIFACTS,
     );
     let selected = arrangement
         .label_regions(labeling_policy)
         .unwrap()
-        .select_with_policy(operation, ExactRegularizationPolicy::RETAIN_ARTIFACTS)
+        .select_with_regularization_mode(operation, ExactRegularizationMode::RETAIN_ARTIFACTS)
         .unwrap();
     assert!(selected.blockers.is_empty(), "{:?}", selected.blockers);
     assert!(
@@ -1887,7 +1887,7 @@ fn selected_regions_materialize_open_coplanar_overlap_without_winding_blocker() 
     );
 
     let simplified =
-        simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+        simplify_selected_cell_complex(selected, ExactRegularizationMode::REGULARIZED_SOLID)
             .unwrap();
     assert!(simplified.blockers.is_empty(), "{:?}", simplified.blockers);
     let mesh = triangulate_simplified_cell_complex(&simplified).unwrap();
@@ -1900,14 +1900,14 @@ fn selected_regions_materialize_open_coplanar_overlap_without_winding_blocker() 
 }
 
 #[test]
-fn blocking_policy_reports_open_coplanar_overlap_winding_blockers() {
+fn blocking_mode_reports_open_coplanar_overlap_winding_blockers() {
     let left = open_triangle_i64([0, 0, 0], [4, 0, 0], [0, 4, 0]);
     let right = open_triangle_i64([1, 1, 0], [5, 1, 0], [1, 5, 0]);
 
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
 
@@ -1921,14 +1921,14 @@ fn blocking_policy_reports_open_coplanar_overlap_winding_blockers() {
 }
 
 #[test]
-fn retained_artifact_policy_keeps_open_sheet_complex_without_regularization_blockers() {
+fn retained_artifact_mode_keeps_open_sheet_complex_without_regularization_blockers() {
     let left = open_triangle_i64([0, 0, 0], [4, 0, 0], [0, 4, 0]);
     let right = open_triangle_i64([1, -1, -1], [1, 3, 1], [1, 3, -1]);
 
-    let retained = ExactArrangement3d::from_meshes_with_policy(
+    let retained = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        ExactRegularizationMode::RETAIN_ARTIFACTS,
     )
     .unwrap();
 
@@ -1947,10 +1947,10 @@ fn retained_artifact_policy_keeps_open_sheet_complex_without_regularization_bloc
     assert!(regions[0].boundary_edges > 0);
     assert!(regions[0].non_manifold_edges > 0);
 
-    let regularized = ExactArrangement3d::from_meshes_with_policy(
+    let regularized = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
     assert!(
@@ -1974,10 +1974,10 @@ fn crossing_triangles_build_face_plane_arrangement_cells() {
     let left = open_triangle_i64([0, 0, 0], [4, 0, 0], [0, 4, 0]);
     let right = open_triangle_i64([1, -1, -1], [1, 3, 1], [1, 3, -1]);
 
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        ExactRegularizationMode::RETAIN_ARTIFACTS,
     )
     .unwrap();
 
@@ -2016,22 +2016,22 @@ fn crossing_triangles_build_face_plane_arrangement_cells() {
 }
 
 #[test]
-fn lower_dimensional_policy_controls_coplanar_touch_artifacts() {
+fn lower_dimensional_mode_controls_coplanar_touch_artifacts() {
     let left = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
     let right = open_triangle_i64([2, 0, 0], [4, 0, 0], [2, 2, 0]);
 
-    let dropped = ExactArrangement3d::from_meshes_with_policy(
+    let dropped = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
     assert!(dropped.lower_dimensional_artifacts.is_empty());
 
-    let retained = ExactArrangement3d::from_meshes_with_policy(
+    let retained = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        ExactRegularizationMode::RETAIN_ARTIFACTS,
     )
     .unwrap();
     assert!(
@@ -2046,17 +2046,17 @@ fn lower_dimensional_policy_controls_coplanar_touch_artifacts() {
         retained.lower_dimensional_artifacts
     );
     assert_eq!(
-        retained.freshness_against_sources_with_policy(
+        retained.freshness_against_sources_with_regularization_mode(
             &left,
             &right,
-            ExactRegularizationPolicy::RETAIN_ARTIFACTS
+            ExactRegularizationMode::RETAIN_ARTIFACTS
         ),
         ExactArrangementFreshness::Current
     );
-    let topology_report = retained.topology_assembly_report_with_policy(
+    let topology_report = retained.topology_assembly_report_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        ExactRegularizationMode::RETAIN_ARTIFACTS,
     );
     topology_report.validate().unwrap();
     assert_eq!(
@@ -2069,10 +2069,10 @@ fn lower_dimensional_policy_controls_coplanar_touch_artifacts() {
     );
     assert_eq!(topology_report.lower_dimensional_edge_endpoints, 0);
     let ownership_report = retained
-        .region_ownership_report_with_policy(
+        .region_ownership_report_with_regularization_mode(
             &left,
             &right,
-            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+            ExactRegularizationMode::RETAIN_ARTIFACTS,
         )
         .unwrap();
     ownership_report.validate().unwrap();
@@ -2130,24 +2130,24 @@ fn lower_dimensional_policy_controls_coplanar_touch_artifacts() {
         ArrangementLowerDimensionalArtifact::EdgeContact { .. } => unreachable!(),
     }
     assert_eq!(
-        off_source_face.freshness_against_sources_with_policy(
+        off_source_face.freshness_against_sources_with_regularization_mode(
             &left,
             &right,
-            ExactRegularizationPolicy::RETAIN_ARTIFACTS
+            ExactRegularizationMode::RETAIN_ARTIFACTS
         ),
         ExactArrangementFreshness::StaleArrangement
     );
 }
 
 #[test]
-fn lower_dimensional_policy_retains_noncoplanar_point_touch() {
+fn lower_dimensional_mode_retains_noncoplanar_point_touch() {
     let left = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
     let right = open_triangle_i64([0, 0, 0], [0, -2, 0], [0, 0, 2]);
 
-    let retained = ExactArrangement3d::from_meshes_with_policy(
+    let retained = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        ExactRegularizationMode::RETAIN_ARTIFACTS,
     )
     .unwrap();
 
@@ -2169,7 +2169,7 @@ fn lower_dimensional_policy_retains_noncoplanar_point_touch() {
 }
 
 #[test]
-fn lower_dimensional_policy_ignores_endpoint_on_plane_outside_triangle() {
+fn lower_dimensional_mode_ignores_endpoint_on_plane_outside_triangle() {
     let left = open_triangle_i64([0, 3, 3], [1, 1, 1], [1, 3, 4]);
     let right = open_triangle_i64([0, 0, 0], [0, 4, 0], [0, 0, 4]);
     let outside_endpoint = p3(0, 3, 3);
@@ -2191,10 +2191,10 @@ fn lower_dimensional_policy_ignores_endpoint_on_plane_outside_triangle() {
         "{graph:?}"
     );
 
-    let retained = ExactArrangement3d::from_meshes_with_policy(
+    let retained = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        ExactRegularizationMode::RETAIN_ARTIFACTS,
     )
     .unwrap();
 
@@ -2213,22 +2213,22 @@ fn lower_dimensional_policy_ignores_endpoint_on_plane_outside_triangle() {
 }
 
 #[test]
-fn lower_dimensional_policy_retains_noncoplanar_edge_touch() {
+fn lower_dimensional_mode_retains_noncoplanar_edge_touch() {
     let left = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
     let right = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 0, 2]);
 
-    let dropped = ExactArrangement3d::from_meshes_with_policy(
+    let dropped = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
     assert!(dropped.lower_dimensional_artifacts.is_empty());
 
-    let retained = ExactArrangement3d::from_meshes_with_policy(
+    let retained = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        ExactRegularizationMode::RETAIN_ARTIFACTS,
     )
     .unwrap();
 
@@ -2244,17 +2244,17 @@ fn lower_dimensional_policy_retains_noncoplanar_edge_touch() {
         retained.lower_dimensional_artifacts
     );
     assert_eq!(
-        retained.freshness_against_sources_with_policy(
+        retained.freshness_against_sources_with_regularization_mode(
             &left,
             &right,
-            ExactRegularizationPolicy::RETAIN_ARTIFACTS
+            ExactRegularizationMode::RETAIN_ARTIFACTS
         ),
         ExactArrangementFreshness::Current
     );
-    let topology_report = retained.topology_assembly_report_with_policy(
+    let topology_report = retained.topology_assembly_report_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        ExactRegularizationMode::RETAIN_ARTIFACTS,
     );
     topology_report.validate().unwrap();
     assert!(
@@ -2266,10 +2266,10 @@ fn lower_dimensional_policy_retains_noncoplanar_edge_touch() {
         topology_report.lower_dimensional_edge_contacts * 2
     );
     let ownership_report = retained
-        .region_ownership_report_with_policy(
+        .region_ownership_report_with_regularization_mode(
             &left,
             &right,
-            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+            ExactRegularizationMode::RETAIN_ARTIFACTS,
         )
         .unwrap();
     ownership_report.validate().unwrap();
@@ -2289,17 +2289,17 @@ fn lower_dimensional_policy_retains_noncoplanar_edge_touch() {
 fn topology_assembly_report_certifies_current_arrangement_bridge() {
     let left = tetrahedron_i64([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
     let right = tetrahedron_i64([1, 0, 0], [3, 0, 0], [1, 2, 0], [1, 0, 2]);
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
 
-    let report = arrangement.topology_assembly_report_with_policy(
+    let report = arrangement.topology_assembly_report_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     );
 
     assert_eq!(report.status, ExactTopologyAssemblyStatus::Complete);
@@ -2367,17 +2367,17 @@ fn topology_assembly_report_certifies_current_arrangement_bridge() {
 fn topology_assembly_report_retains_blocked_bridge_reason() {
     let left = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
     let right = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 0, 2]);
-    let arrangement = ExactArrangement3d::from_meshes_with_policy(
+    let arrangement = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     )
     .unwrap();
 
-    let report = arrangement.topology_assembly_report_with_policy(
+    let report = arrangement.topology_assembly_report_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     );
 
     assert_eq!(report.freshness, ExactArrangementFreshness::Current);
@@ -2397,14 +2397,14 @@ fn topology_assembly_report_retains_blocked_bridge_reason() {
 }
 
 #[test]
-fn lower_dimensional_policy_retains_noncoplanar_partial_edge_touch() {
+fn lower_dimensional_mode_retains_noncoplanar_partial_edge_touch() {
     let left = open_triangle_i64([-1, 0, 0], [3, 0, 0], [-1, 2, 0]);
     let right = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 0, 2]);
 
-    let retained = ExactArrangement3d::from_meshes_with_policy(
+    let retained = ExactArrangement3d::from_meshes_with_regularization_mode(
         &left,
         &right,
-        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        ExactRegularizationMode::RETAIN_ARTIFACTS,
     )
     .unwrap();
 
@@ -2424,10 +2424,10 @@ fn lower_dimensional_policy_retains_noncoplanar_partial_edge_touch() {
         retained.lower_dimensional_artifacts
     );
     assert_eq!(
-        retained.freshness_against_sources_with_policy(
+        retained.freshness_against_sources_with_regularization_mode(
             &left,
             &right,
-            ExactRegularizationPolicy::RETAIN_ARTIFACTS
+            ExactRegularizationMode::RETAIN_ARTIFACTS
         ),
         ExactArrangementFreshness::Current
     );
@@ -2450,10 +2450,10 @@ fn lower_dimensional_policy_retains_noncoplanar_partial_edge_touch() {
         ArrangementLowerDimensionalArtifact::PointContact { .. } => unreachable!(),
     }
     assert_eq!(
-        stale_edge_source.freshness_against_sources_with_policy(
+        stale_edge_source.freshness_against_sources_with_regularization_mode(
             &left,
             &right,
-            ExactRegularizationPolicy::RETAIN_ARTIFACTS
+            ExactRegularizationMode::RETAIN_ARTIFACTS
         ),
         ExactArrangementFreshness::StaleArrangement
     );

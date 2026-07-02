@@ -1,52 +1,52 @@
-//! Exact arrangement regularization policy and blockers.
+//! Exact arrangement regularization mode and blockers.
 //!
-//! Regularization in the exact stack is a topology policy, not a tolerance
+//! Regularization in the exact stack is a topology mode, not a tolerance
 //! repair pass. Lower-dimensional leftovers, undecidable predicates, and
 //! unsupported primitive families are retained as explicit blockers or
-//! artifacts according to caller policy.
+//! artifacts according to caller mode.
 
 use super::super::graph::{IntersectionGraphValidationError, SplitPlanBlockerKind};
 
-/// Policy for lower-dimensional arrangement remnants.
+/// Mode for lower-dimensional arrangement remnants.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum ExactLowerDimensionalPolicy {
+pub(crate) enum ExactLowerDimensionalMode {
     /// Drop lower-dimensional contacts from regularized solid output.
     Drop,
     /// Retain lower-dimensional contacts as separate artifacts.
     RetainArtifacts,
 }
 
-/// Policy for exact predicates or constructions that do not resolve.
+/// Mode for exact predicates or constructions that do not resolve.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum ExactUnresolvedPolicy {
+pub(crate) enum ExactUnresolvedMode {
     /// Block the operation when an exact decision is unresolved.
     Block,
     /// Retain unresolved evidence as an artifact for later replay.
     RetainArtifacts,
 }
 
-/// Regularization policy for arrangement/cell-complex operations.
+/// Regularization mode for arrangement/cell-complex operations.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) struct ExactRegularizationPolicy {
+pub(crate) struct ExactRegularizationMode {
     /// How lower-dimensional contacts are handled.
-    pub(crate) lower_dimensional: ExactLowerDimensionalPolicy,
+    pub(crate) lower_dimensional: ExactLowerDimensionalMode,
     /// How unresolved predicates/constructions are handled.
-    pub(crate) unresolved: ExactUnresolvedPolicy,
+    pub(crate) unresolved: ExactUnresolvedMode,
 }
 
-impl ExactRegularizationPolicy {
-    /// Regularized solid policy: drop lower-dimensional leftovers and block on
+impl ExactRegularizationMode {
+    /// Regularized solid mode: drop lower-dimensional leftovers and block on
     /// unresolved exact decisions.
     pub(crate) const REGULARIZED_SOLID: Self = Self {
-        lower_dimensional: ExactLowerDimensionalPolicy::Drop,
-        unresolved: ExactUnresolvedPolicy::Block,
+        lower_dimensional: ExactLowerDimensionalMode::Drop,
+        unresolved: ExactUnresolvedMode::Block,
     };
 
-    /// Diagnostic policy: keep lower-dimensional and unresolved evidence as
+    /// Diagnostic mode: keep lower-dimensional and unresolved evidence as
     /// artifacts where the downstream type can represent them.
     pub(crate) const RETAIN_ARTIFACTS: Self = Self {
-        lower_dimensional: ExactLowerDimensionalPolicy::RetainArtifacts,
-        unresolved: ExactUnresolvedPolicy::RetainArtifacts,
+        lower_dimensional: ExactLowerDimensionalMode::RetainArtifacts,
+        unresolved: ExactUnresolvedMode::RetainArtifacts,
     };
 }
 
@@ -57,7 +57,7 @@ pub(crate) enum ExactArrangementBlocker {
     UndecidableOrdering,
     /// An intersection predicate or construction did not resolve.
     UnresolvedIntersection,
-    /// The retained cell complex is not manifold under the requested policy.
+    /// The retained cell complex is not manifold under the requested mode.
     NonManifoldCellComplex,
     /// Source boundary sheets overlap or cross in the arrangement, but the
     /// retained face-cells have not yet been regularized into volume-boundary

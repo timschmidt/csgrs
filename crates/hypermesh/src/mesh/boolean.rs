@@ -49,7 +49,7 @@ use super::arrangement3d::cell_complex::{
 use super::arrangement3d::loop_triangulation::{
     group_exact_coplanar_loops, triangulate_exact_loop_group,
 };
-use super::arrangement3d::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
+use super::arrangement3d::regularization::{ExactArrangementBlocker, ExactRegularizationMode};
 use super::arrangement3d::{
     ExactArrangement3d, ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
 };
@@ -201,14 +201,18 @@ impl ExactArrangementBooleanAttempt {
             )
             .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
         {
-            replay.validate_for_request_policy(request, self.policy)?;
+            replay.validate_for_request_regularization_mode(request, self.policy)?;
             return if self == &replay || self.materialized_output_matches_replay(&replay) {
                 Ok(())
             } else {
                 Err(ExactEvidenceValidationError::SourceReplayMismatch)
             };
         }
-        let replay = match ExactArrangement3d::from_meshes_with_policy(left, right, self.policy) {
+        let replay = match ExactArrangement3d::from_meshes_with_regularization_mode(
+            left,
+            right,
+            self.policy,
+        ) {
             Ok(arrangement) => {
                 let attempt = match run_arrangement_cell_complex_attempt_from_arrangement(
                     &arrangement,
@@ -252,7 +256,7 @@ impl ExactArrangementBooleanAttempt {
             .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
             .ok_or(ExactEvidenceValidationError::SourceReplayMismatch)?,
         };
-        replay.validate_for_request_policy(request, self.policy)?;
+        replay.validate_for_request_regularization_mode(request, self.policy)?;
         if self == &replay || self.materialized_output_matches_replay(&replay) {
             Ok(())
         } else {
@@ -265,7 +269,7 @@ fn arrangement_cell_complex_attempt_or_shortcut(
     left: &Mesh,
     right: &Mesh,
     request: ExactBooleanRequest,
-    policy: ExactRegularizationPolicy,
+    policy: ExactRegularizationMode,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
     attempt: ExactArrangementBooleanAttempt,
 ) -> Result<ExactArrangementBooleanAttempt, MeshError> {
@@ -523,9 +527,9 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     let validation = request.validation;
     let retained_arrangement_attempt = retained_arrangement_attempt
         .map(|attempt| {
-            attempt.validate_for_request_policy(
+            attempt.validate_for_request_regularization_mode(
                 request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
+                ExactRegularizationMode::REGULARIZED_SOLID,
             )?;
             attempt.validate_against_sources_for_request(left, right, request)?;
             Ok(attempt)
@@ -593,7 +597,7 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
             left,
             right,
             request,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ExactRegularizationMode::REGULARIZED_SOLID,
             true,
         )?;
         if let ArrangementCellComplexOutcome::Materialized(result, attempt) = outcome
@@ -621,12 +625,13 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
             operation,
             ExactBooleanShortcutKind::ArrangementCellComplex,
         );
-        let arrangement = ExactArrangement3d::from_source_certified_intersection_graph_with_policy(
-            graph.clone(),
-            left,
-            right,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-        )?;
+        let arrangement =
+            ExactArrangement3d::from_source_certified_intersection_graph_with_regularization_mode(
+                graph.clone(),
+                left,
+                right,
+                ExactRegularizationMode::REGULARIZED_SOLID,
+            )?;
         let result =
             result_with_arrangement_gate_reports(result, &arrangement, left, right, operation)?;
         validate_boolean_result(
@@ -794,16 +799,17 @@ fn replay_generic_arrangement_cell_complex_result(
         return Ok(None);
     }
     validate_graph_source_replay(graph, left, right)?;
-    let policy = ExactRegularizationPolicy::REGULARIZED_SOLID;
-    let arrangement = match ExactArrangement3d::from_source_certified_intersection_graph_with_policy(
-        graph.clone(),
-        left,
-        right,
-        policy,
-    ) {
-        Ok(arrangement) => arrangement,
-        Err(error) => return arrangement_error_declines_or_replays_stale(error),
-    };
+    let policy = ExactRegularizationMode::REGULARIZED_SOLID;
+    let arrangement =
+        match ExactArrangement3d::from_source_certified_intersection_graph_with_regularization_mode(
+            graph.clone(),
+            left,
+            right,
+            policy,
+        ) {
+            Ok(arrangement) => arrangement,
+            Err(error) => return arrangement_error_declines_or_replays_stale(error),
+        };
     let selected = match select_arrangement_for_replay(arrangement, left, right, operation, policy)
     {
         Ok(selected) => selected,
@@ -3145,7 +3151,7 @@ fn materialized_arrangement_attempt_outcome(
 
 fn not_attempted_arrangement_attempt_for_request(
     request: ExactBooleanRequest,
-    policy: ExactRegularizationPolicy,
+    policy: ExactRegularizationMode,
 ) -> ExactArrangementBooleanAttempt {
     ExactArrangementBooleanAttempt::new(request, policy, ExactArrangementBooleanStage::NotAttempted)
 }
@@ -3370,10 +3376,10 @@ pub(crate) fn arrangement_cell_complex_shortcut_attempt_with_facts(
     left: &Mesh,
     right: &Mesh,
     request: ExactBooleanRequest,
-    policy: ExactRegularizationPolicy,
+    policy: ExactRegularizationMode,
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
 ) -> Result<Option<ExactArrangementBooleanAttempt>, MeshError> {
-    if policy != ExactRegularizationPolicy::REGULARIZED_SOLID {
+    if policy != ExactRegularizationMode::REGULARIZED_SOLID {
         return Ok(None);
     }
     if !shortcut_facts.materializes_operation(request.operation) {
@@ -3413,7 +3419,7 @@ fn arrangement_cell_complex_result_is_certified_for_operation_evidence(
         return Ok(false);
     };
     if attempt.operation != operation
-        || attempt.policy != ExactRegularizationPolicy::REGULARIZED_SOLID
+        || attempt.policy != ExactRegularizationMode::REGULARIZED_SOLID
     {
         return Ok(false);
     }
@@ -3466,21 +3472,22 @@ fn certified_arrangement_cell_complex_result_from_graph(
     regularize_unregularized_sheet_complex: bool,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     validate_graph_source_replay(graph, left, right)?;
-    let arrangement = match ExactArrangement3d::from_source_certified_intersection_graph_with_policy(
-        graph.clone(),
-        left,
-        right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
-    ) {
-        Ok(arrangement) => arrangement,
-        Err(error) => return arrangement_error_declines_or_replays_stale(error),
-    };
+    let arrangement =
+        match ExactArrangement3d::from_source_certified_intersection_graph_with_regularization_mode(
+            graph.clone(),
+            left,
+            right,
+            ExactRegularizationMode::REGULARIZED_SOLID,
+        ) {
+            Ok(arrangement) => arrangement,
+            Err(error) => return arrangement_error_declines_or_replays_stale(error),
+        };
     let outcome = run_arrangement_cell_complex_attempt_from_arrangement(
         &arrangement,
         left,
         right,
         request,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
         regularize_unregularized_sheet_complex,
     )?;
     let ArrangementCellComplexOutcome::Materialized(result, attempt) = outcome else {
@@ -3605,7 +3612,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
     left: &Mesh,
     right: &Mesh,
     request: ExactBooleanRequest,
-    policy: ExactRegularizationPolicy,
+    policy: ExactRegularizationMode,
     regularize_unregularized_sheet_complex: bool,
 ) -> Result<ArrangementCellComplexOutcome, MeshError> {
     let operation = request.operation;
@@ -3746,7 +3753,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
     let selected = match if ownership_report.volume_selection_resolves_operation(operation) {
         labeled.select_volume_resolved(operation)
     } else {
-        labeled.select_with_policy(operation, policy)
+        labeled.select_with_regularization_mode(operation, policy)
     } {
         Ok(mut selected) if selected.blockers.is_empty() => {
             selected.topology_assembly_report = Some(topology_report.clone());
@@ -3882,12 +3889,13 @@ fn arrangement_cell_complex_gate_evidence_from_arrangement(
     left: &Mesh,
     right: &Mesh,
     operation: ExactBooleanOperation,
-    policy: ExactRegularizationPolicy,
+    policy: ExactRegularizationMode,
     recovery: &ArrangementCellComplexRecoveryContext<'_>,
     mut attempt: ExactArrangementBooleanAttempt,
 ) -> Result<ControlFlow<ArrangementCellComplexOutcome, ArrangementCellComplexGateEvidence>, MeshError>
 {
-    let topology_report = arrangement.topology_assembly_report_with_policy(left, right, policy);
+    let topology_report =
+        arrangement.topology_assembly_report_with_regularization_mode(left, right, policy);
     attempt.topology_assembly = Some(topology_report.status);
     attempt.topology_assembly_report = Some(topology_report.clone());
     topology_report.validate().map_err(|error| {
@@ -4821,18 +4829,18 @@ fn result_with_arrangement_gate_reports(
     right: &Mesh,
     operation: ExactBooleanOperation,
 ) -> Result<ExactBooleanResult, MeshError> {
-    let topology_report = arrangement.topology_assembly_report_with_policy(
+    let topology_report = arrangement.topology_assembly_report_with_regularization_mode(
         left,
         right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     );
     let ownership_policy = arrangement_cell_complex_labeling_policy(
         &arrangement,
         Some(operation),
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ExactRegularizationMode::REGULARIZED_SOLID,
     );
     let ownership_report = arrangement
-        .region_ownership_report_with_policy(left, right, ownership_policy)
+        .region_ownership_report_with_regularization_mode(left, right, ownership_policy)
         .map_err(|blocker| {
             boolean_validation_error(
                 MeshBlockerKind::ExactConstructionFailure,
@@ -4955,11 +4963,11 @@ fn materialize_arrangement_volumetric_split_cell_result_from_graph(
                 ExactBooleanShortcutKind::ArrangementCellComplex,
             );
             let arrangement =
-                ExactArrangement3d::from_source_certified_intersection_graph_with_policy(
+                ExactArrangement3d::from_source_certified_intersection_graph_with_regularization_mode(
                     graph.clone(),
                     left,
                     right,
-                    ExactRegularizationPolicy::REGULARIZED_SOLID,
+                    ExactRegularizationMode::REGULARIZED_SOLID,
                 )?;
             let result =
                 result_with_arrangement_gate_reports(result, &arrangement, left, right, operation)?;
@@ -7006,7 +7014,10 @@ fn winding_evidence_report_for_request_from_graph_and_attempt(
     let retained_arrangement_attempt_materializes_output =
         if let Some(attempt) = retained_arrangement_attempt {
             attempt
-                .validate_for_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .validate_for_request_regularization_mode(
+                    request,
+                    ExactRegularizationMode::REGULARIZED_SOLID,
+                )
                 .is_ok()
                 && attempt.materialized_arrangement_cell_complex_output()
         } else {
