@@ -3,7 +3,7 @@
 //! This module handles certified object-level closed-convex boolean fragments.
 //! Each output face is produced by clipping a source face polygon against the
 //! other solid's exact oriented halfspaces, then the resulting triangle mesh is
-//! revalidated through [`ExactMesh`]. Boolean topology is emitted only from
+//! revalidated through [`Mesh`]. Boolean topology is emitted only from
 //! retained object facts and proof-producing predicate routes.
 //!
 //! The clipping is the convex halfspace specialization of Sutherland and
@@ -26,11 +26,11 @@ use super::super::arrangement3d::arrangement2d::{
     ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
     build_exact_arrangement2d_overlay_with_boundary_policy,
 };
-use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::error::{MeshBlocker, MeshBlockerKind, MeshError};
 use super::super::triangle_edges;
-use super::super::validation::ExactMeshValidationPolicy;
+use super::super::validation::MeshValidationPolicy;
 use super::super::{
-    ExactMesh, Triangle, exact_points_are_collinear, orient_paired_triangle_edges,
+    Mesh, Triangle, exact_points_are_collinear, orient_paired_triangle_edges,
     remove_duplicate_triangle_vertex_sets,
 };
 use super::solid::{
@@ -49,7 +49,7 @@ pub(crate) struct ConvexSolidIntersection {
     /// Convexity and orientation facts for the right operand.
     pub right_facts: ConvexSolidFacts,
     /// Exact closed mesh materialized from clipped source-face polygons.
-    pub mesh: ExactMesh,
+    pub mesh: Mesh,
 }
 
 /// Certified union of two closed convex solids.
@@ -67,7 +67,7 @@ pub(crate) struct ConvexSolidUnion {
     /// Convexity and orientation facts for the right operand.
     pub right_facts: ConvexSolidFacts,
     /// Exact closed mesh materialized from outside source-face cells.
-    pub mesh: ExactMesh,
+    pub mesh: Mesh,
 }
 
 /// Certified difference of two closed convex solids.
@@ -83,36 +83,36 @@ pub(crate) struct ConvexSolidDifference {
     /// Convexity and orientation facts for the right operand.
     pub right_facts: ConvexSolidFacts,
     /// Exact closed mesh materialized from retained source-face cells.
-    pub mesh: ExactMesh,
+    pub mesh: Mesh,
 }
 
 fn validate_convex_boolean_output(
     operation: &'static str,
     left_facts: &ConvexSolidFacts,
     right_facts: &ConvexSolidFacts,
-    mesh: &ExactMesh,
-) -> Result<(), ExactMeshError> {
+    mesh: &Mesh,
+) -> Result<(), MeshError> {
     left_facts.validate().map_err(|error| {
-        ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::ExactConstructionFailure,
+        MeshError::one(MeshBlocker::new(
+            MeshBlockerKind::ExactConstructionFailure,
             format!("invalid convex-solid facts retained by convex boolean: {error:?}"),
         ))
     })?;
     right_facts.validate().map_err(|error| {
-        ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::ExactConstructionFailure,
+        MeshError::one(MeshBlocker::new(
+            MeshBlockerKind::ExactConstructionFailure,
             format!("invalid convex-solid facts retained by convex boolean: {error:?}"),
         ))
     })?;
     if !left_facts.is_certified_convex() || !right_facts.is_certified_convex() {
-        return Err(ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::ExactConstructionFailure,
+        return Err(MeshError::one(MeshBlocker::new(
+            MeshBlockerKind::ExactConstructionFailure,
             format!("convex {operation} retained non-certified solid facts"),
         )));
     }
     mesh.validate_retained_state().map_err(|error| {
-        ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::ExactConstructionFailure,
+        MeshError::one(MeshBlocker::new(
+            MeshBlockerKind::ExactConstructionFailure,
             format!("convex {operation} output failed retained-state replay: {error:?}"),
         ))
     })
@@ -125,9 +125,9 @@ fn validate_convex_boolean_output(
 /// are outside the opposite convex solid and revalidates the resulting shell as
 /// a closed exact mesh.
 pub(crate) fn union_closed_convex_solids(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<Option<ConvexSolidUnion>, ExactMeshError> {
+    left: &Mesh,
+    right: &Mesh,
+) -> Result<Option<ConvexSolidUnion>, MeshError> {
     let left_facts = certify_convex_solid(left);
     let right_facts = certify_convex_solid(right);
     if !left_facts.is_certified_convex() || !right_facts.is_certified_convex() {
@@ -157,11 +157,11 @@ pub(crate) fn union_closed_convex_solids(
     if orient_paired_triangle_edges(&mut triangles).is_none() {
         return Ok(None);
     }
-    let direct_mesh = ExactMesh::new_with_policy_and_version(
+    let direct_mesh = Mesh::new_with_policy_and_version(
         vertices.clone(),
         triangles.clone(),
         SourceProvenance::exact("exact closed-convex solid union"),
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
         1,
     );
     let mesh = match direct_mesh {
@@ -196,9 +196,9 @@ pub(crate) fn union_closed_convex_solids(
 /// difference. It returns `None` for empty/lower-dimensional results or when
 /// exact face-cell triangulation cannot be certified.
 pub(crate) fn subtract_closed_convex_solids(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<Option<ConvexSolidDifference>, ExactMeshError> {
+    left: &Mesh,
+    right: &Mesh,
+) -> Result<Option<ConvexSolidDifference>, MeshError> {
     let left_facts = certify_convex_solid(left);
     let right_facts = certify_convex_solid(right);
     if !left_facts.is_certified_convex() || !right_facts.is_certified_convex() {
@@ -228,11 +228,11 @@ pub(crate) fn subtract_closed_convex_solids(
     if orient_paired_triangle_edges(&mut triangles).is_none() {
         return Ok(None);
     }
-    let mesh = ExactMesh::new_with_policy_and_version(
+    let mesh = Mesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact closed-convex solid difference"),
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
         1,
     )?;
     if !mesh_has_nonzero_signed_volume(&mesh)? {
@@ -252,10 +252,7 @@ pub(crate) fn subtract_closed_convex_solids(
     Ok(Some(difference))
 }
 
-fn union_from_difference_and_operand(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<Option<ExactMesh>, ExactMeshError> {
+fn union_from_difference_and_operand(left: &Mesh, right: &Mesh) -> Result<Option<Mesh>, MeshError> {
     let Some(difference) = subtract_closed_convex_solids(left, right)? else {
         return Ok(None);
     };
@@ -287,11 +284,11 @@ fn union_from_difference_and_operand(
     if orient_paired_triangle_edges(&mut triangles).is_none() {
         return Ok(None);
     }
-    let mesh = ExactMesh::new_with_policy_and_version(
+    let mesh = Mesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact closed-convex solid union from exact difference"),
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
         1,
     )?;
     Ok(Some(mesh))
@@ -300,7 +297,7 @@ fn union_from_difference_and_operand(
 fn close_planar_boundary_loops(
     vertices: Vec<Point3>,
     mut triangles: Vec<Triangle>,
-) -> Option<ExactMesh> {
+) -> Option<Mesh> {
     let loops = directed_boundary_loops(&triangles)?;
     if loops.is_empty() {
         return None;
@@ -315,11 +312,11 @@ fn close_planar_boundary_loops(
     }
     remove_duplicate_triangle_vertex_sets(&mut triangles);
     orient_paired_triangle_edges(&mut triangles)?;
-    ExactMesh::new_with_policy_and_version(
+    Mesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact closed-convex solid union with exact planar caps"),
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
         1,
     )
     .ok()
@@ -387,9 +384,9 @@ fn loop_is_planar(vertices: &[Point3], loop_: &[usize]) -> Option<bool> {
 /// approximate winding, and it does not claim union/difference support for
 /// partial overlaps.
 pub(crate) fn intersect_closed_convex_solids(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<Option<ConvexSolidIntersection>, ExactMeshError> {
+    left: &Mesh,
+    right: &Mesh,
+) -> Result<Option<ConvexSolidIntersection>, MeshError> {
     let left_facts = certify_convex_solid(left);
     let right_facts = certify_convex_solid(right);
     if !left_facts.is_certified_convex() || !right_facts.is_certified_convex() {
@@ -412,7 +409,7 @@ pub(crate) fn intersect_closed_convex_solids(
     let Some(mesh) = polygons_to_closed_mesh(
         &hull_polygons,
         "exact closed-convex solid intersection",
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
     )?
     else {
         return Ok(None);
@@ -439,7 +436,7 @@ pub(crate) fn intersect_closed_convex_solids(
 /// This guard is what keeps closed-convex intersection from promoting
 /// only after an exact predicate, here the signed tetrahedral volume sum,
 /// proves the result is a solid instead of a lower-dimensional boundary.
-fn mesh_has_nonzero_signed_volume(mesh: &ExactMesh) -> Result<bool, ExactMeshError> {
+fn mesh_has_nonzero_signed_volume(mesh: &Mesh) -> Result<bool, MeshError> {
     let mut signed_volume = Real::from(0);
     for face in mesh.view().faces() {
         let [a, b, c] = face.vertices()?;
@@ -447,8 +444,8 @@ fn mesh_has_nonzero_signed_volume(mesh: &ExactMesh) -> Result<bool, ExactMeshErr
     }
 
     let Some(ordering) = compare_reals(&signed_volume, &Real::from(0)).value() else {
-        return Err(ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::ExactConstructionFailure,
+        return Err(MeshError::one(MeshBlocker::new(
+            MeshBlockerKind::ExactConstructionFailure,
             "convex output signed-volume comparison was undecidable",
         )));
     };
@@ -456,11 +453,11 @@ fn mesh_has_nonzero_signed_volume(mesh: &ExactMesh) -> Result<bool, ExactMeshErr
 }
 
 fn clipped_source_faces(
-    source: &ExactMesh,
-    clip: &ExactMesh,
+    source: &Mesh,
+    clip: &Mesh,
     clip_facts: &ConvexSolidFacts,
     polygons: &mut Vec<Vec<Point3>>,
-) -> Result<bool, ExactMeshError> {
+) -> Result<bool, MeshError> {
     for source_triangle in source.view().triangles() {
         let Ok([a, b, c]) = source_triangle.vertices() else {
             return Ok(false);
@@ -490,7 +487,7 @@ fn clip_polygon_by_face(
     polygon: &[Point3],
     face: [&Point3; 3],
     clip_facts: &ConvexSolidFacts,
-) -> Result<Option<Vec<Point3>>, ExactMeshError> {
+) -> Result<Option<Vec<Point3>>, MeshError> {
     if polygon.is_empty() {
         return Ok(Some(Vec::new()));
     }
@@ -502,8 +499,8 @@ fn clip_polygon_by_face(
         return Ok(None);
     };
     let Some(previous_side) = point_side(a, b, c, &previous) else {
-        return Err(ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::ExactConstructionFailure,
+        return Err(MeshError::one(MeshBlocker::new(
+            MeshBlockerKind::ExactConstructionFailure,
             "convex clipping plane-side predicate is undecidable",
         )));
     };
@@ -514,8 +511,8 @@ fn clip_polygon_by_face(
     );
     for current in polygon {
         let Some(current_side) = point_side(a, b, c, current) else {
-            return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::ExactConstructionFailure,
+            return Err(MeshError::one(MeshBlocker::new(
+                MeshBlockerKind::ExactConstructionFailure,
                 "convex clipping plane-side predicate is undecidable",
             )));
         };
@@ -568,12 +565,12 @@ fn polygon_centroid(points: &[Point3]) -> Option<Point3> {
 }
 
 fn append_convex_union_source_faces(
-    source: &ExactMesh,
-    clip: &ExactMesh,
+    source: &Mesh,
+    clip: &Mesh,
     clip_facts: &ConvexSolidFacts,
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
-) -> Result<bool, ExactMeshError> {
+) -> Result<bool, MeshError> {
     for source_triangle in source.view().triangles() {
         let Ok([a, b, c]) = source_triangle.vertices() else {
             return Ok(false);
@@ -593,12 +590,12 @@ fn append_convex_union_source_faces(
 }
 
 fn append_convex_difference_right_faces(
-    right: &ExactMesh,
-    left: &ExactMesh,
+    right: &Mesh,
+    left: &Mesh,
     left_facts: &ConvexSolidFacts,
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
-) -> Result<bool, ExactMeshError> {
+) -> Result<bool, MeshError> {
     for right_triangle in right.view().triangles() {
         let Ok([a, b, c]) = right_triangle.vertices() else {
             return Ok(false);
@@ -619,11 +616,11 @@ fn append_convex_difference_right_faces(
 
 fn append_source_face_minus_convex_inside(
     source_points: &[Point3],
-    clip: &ExactMesh,
+    clip: &Mesh,
     clip_facts: &ConvexSolidFacts,
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
-) -> Result<bool, ExactMeshError> {
+) -> Result<bool, MeshError> {
     if source_points.len() < 3 || polygon_is_degenerate(source_points) {
         return Ok(true);
     }
@@ -703,11 +700,11 @@ fn append_source_face_minus_convex_inside(
 
 fn append_source_face_convex_inside_reversed(
     source_points: &[Point3],
-    clip: &ExactMesh,
+    clip: &Mesh,
     clip_facts: &ConvexSolidFacts,
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
-) -> Result<bool, ExactMeshError> {
+) -> Result<bool, MeshError> {
     if source_points.len() < 3 || polygon_is_degenerate(source_points) {
         return Ok(true);
     }
@@ -768,7 +765,7 @@ fn append_source_face_convex_inside_reversed(
     )
 }
 
-fn polygon_lies_on_any_clip_boundary_face(polygon: &[Point3], clip: &ExactMesh) -> Option<bool> {
+fn polygon_lies_on_any_clip_boundary_face(polygon: &[Point3], clip: &Mesh) -> Option<bool> {
     for face in clip.view().faces() {
         let [a, b, c] = face.vertices().ok()?;
         if polygon
@@ -788,7 +785,7 @@ fn append_projected_polygon_triangles(
     source_sign: Ordering,
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
-) -> Result<bool, ExactMeshError> {
+) -> Result<bool, MeshError> {
     let projected = projected_points
         .iter()
         .map(point2_for_hypertri)
@@ -814,7 +811,7 @@ fn append_projected_overlay_triangles(
     source_sign: Ordering,
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
-) -> Result<bool, ExactMeshError> {
+) -> Result<bool, MeshError> {
     for component in &overlay.output_components {
         let Some(outer) = overlay.output_loops.get(component.outer_loop) else {
             return Ok(false);
@@ -928,7 +925,7 @@ fn lift_projected_point_to_carrier(
 
 fn convex_hull_polygons_from_clipped_faces(
     polygons: &[Vec<Point3>],
-) -> Result<Option<Vec<Vec<Point3>>>, ExactMeshError> {
+) -> Result<Option<Vec<Vec<Point3>>>, MeshError> {
     let mut points = Vec::new();
     for polygon in polygons {
         for point in polygon {
@@ -992,7 +989,7 @@ fn convex_hull_polygons_from_clipped_faces(
 fn convex_face_polygon_from_indices(
     points: &[Point3],
     indices: &[usize],
-) -> Result<Option<Vec<Point3>>, ExactMeshError> {
+) -> Result<Option<Vec<Point3>>, MeshError> {
     if indices.len() == 3 {
         return Ok(Some(
             indices.iter().map(|&index| points[index].clone()).collect(),
@@ -1194,10 +1191,10 @@ fn convex_points_equal(
     left: &Point3,
     right: &Point3,
     context: &'static str,
-) -> Result<bool, ExactMeshError> {
+) -> Result<bool, MeshError> {
     point3_exact_equal(left, right).ok_or_else(|| {
-        ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::ExactConstructionFailure,
+        MeshError::one(MeshBlocker::new(
+            MeshBlockerKind::ExactConstructionFailure,
             context,
         ))
     })
@@ -1215,10 +1212,7 @@ fn ordered_segments_equal(left: &[Point3; 2], right: &[Point3; 2]) -> Option<boo
     None
 }
 
-fn unordered_segments_equal(
-    left: &[Point3; 2],
-    right: &[Point3; 2],
-) -> Result<bool, ExactMeshError> {
+fn unordered_segments_equal(left: &[Point3; 2], right: &[Point3; 2]) -> Result<bool, MeshError> {
     let forward = ordered_segments_equal(left, right);
     if forward == Some(true) {
         return Ok(true);
@@ -1231,8 +1225,8 @@ fn unordered_segments_equal(
     if forward == Some(false) && reverse == Some(false) {
         return Ok(false);
     }
-    Err(ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::ExactConstructionFailure,
+    Err(MeshError::one(MeshBlocker::new(
+        MeshBlockerKind::ExactConstructionFailure,
         "convex hull duplicate segment equality is undecidable",
     )))
 }
@@ -1240,7 +1234,7 @@ fn unordered_segments_equal(
 fn push_unique_segment(
     segments: &mut Vec<[Point3; 2]>,
     segment: [Point3; 2],
-) -> Result<(), ExactMeshError> {
+) -> Result<(), MeshError> {
     for existing in segments.iter() {
         if unordered_segments_equal(existing, &segment)? {
             return Ok(());
@@ -1253,7 +1247,7 @@ fn push_unique_segment(
 fn connecting_segment(
     segments: &[[Point3; 2]],
     point: &Point3,
-) -> Result<Option<(usize, bool)>, ExactMeshError> {
+) -> Result<Option<(usize, bool)>, MeshError> {
     let mut saw_undecidable = false;
     for (index, segment) in segments.iter().enumerate() {
         match point3_exact_equal(&segment[0], point) {
@@ -1268,8 +1262,8 @@ fn connecting_segment(
         }
     }
     if saw_undecidable {
-        Err(ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::ExactConstructionFailure,
+        Err(MeshError::one(MeshBlocker::new(
+            MeshBlockerKind::ExactConstructionFailure,
             "convex hull segment chain endpoint equality is undecidable",
         )))
     } else {
@@ -1279,7 +1273,7 @@ fn connecting_segment(
 
 fn chain_segments_to_polygon(
     mut segments: Vec<[Point3; 2]>,
-) -> Result<Option<Vec<Point3>>, ExactMeshError> {
+) -> Result<Option<Vec<Point3>>, MeshError> {
     let Some(first) = segments.pop() else {
         return Ok(None);
     };
@@ -1294,8 +1288,8 @@ fn chain_segments_to_polygon(
         }
         let Some((index, reverse)) = connecting_segment(&segments, &last)? else {
             if closure.is_none() {
-                return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::ExactConstructionFailure,
+                return Err(MeshError::one(MeshBlocker::new(
+                    MeshBlockerKind::ExactConstructionFailure,
                     "convex hull polygon closure equality is undecidable",
                 )));
             }
@@ -1373,8 +1367,8 @@ fn orient3d_value(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Real {
 fn polygons_to_closed_mesh(
     polygons: &[Vec<Point3>],
     label: &str,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<ExactMesh>, ExactMeshError> {
+    validation: MeshValidationPolicy,
+) -> Result<Option<Mesh>, MeshError> {
     let mut vertices: Vec<Point3> = Vec::new();
     let mut triangles = Vec::new();
     for polygon in polygons {
@@ -1391,7 +1385,7 @@ fn polygons_to_closed_mesh(
     if triangles.is_empty() {
         return Ok(None);
     }
-    ExactMesh::new_with_policy_and_version(
+    Mesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact(label),
@@ -1404,7 +1398,7 @@ fn polygons_to_closed_mesh(
 fn refine_triangles_at_existing_edge_vertices(
     vertices: &[Point3],
     triangles: &mut Vec<Triangle>,
-) -> Result<bool, ExactMeshError> {
+) -> Result<bool, MeshError> {
     let mut guard = 0usize;
     loop {
         guard += 1;
@@ -1451,7 +1445,7 @@ enum TriangleEdgeSplitSearch {
 fn find_triangle_edge_split(
     vertices: &[Point3],
     triangles: &[Triangle],
-) -> Result<TriangleEdgeSplitSearch, ExactMeshError> {
+) -> Result<TriangleEdgeSplitSearch, MeshError> {
     for (triangle_index, triangle) in triangles.iter().enumerate() {
         let Some(projection) = choose_nonzero_projected_polygon_area(&[
             vertices[triangle.0[0]].clone(),
@@ -1475,8 +1469,8 @@ fn find_triangle_edge_split(
                     &vertices[candidate],
                 )
                 .value() else {
-                    return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                        ExactMeshBlockerKind::ExactConstructionFailure,
+                    return Err(MeshError::one(MeshBlocker::new(
+                        MeshBlockerKind::ExactConstructionFailure,
                         "convex triangle refinement plane-side predicate is undecidable",
                     )));
                 };
@@ -1496,8 +1490,8 @@ fn find_triangle_edge_split(
                     &project_point3(&vertices[candidate], projection),
                 )
                 .value() else {
-                    return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                        ExactMeshBlockerKind::ExactConstructionFailure,
+                    return Err(MeshError::one(MeshBlocker::new(
+                        MeshBlockerKind::ExactConstructionFailure,
                         "convex triangle refinement segment predicate is undecidable",
                     )));
                 };
@@ -1518,7 +1512,7 @@ fn point_equals_either_endpoint(
     point: &Point3,
     start: &Point3,
     end: &Point3,
-) -> Result<bool, ExactMeshError> {
+) -> Result<bool, MeshError> {
     let start_equal = point3_exact_equal(point, start);
     let end_equal = point3_exact_equal(point, end);
     if start_equal == Some(true) || end_equal == Some(true) {
@@ -1527,13 +1521,13 @@ fn point_equals_either_endpoint(
     if start_equal == Some(false) && end_equal == Some(false) {
         return Ok(false);
     }
-    Err(ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::ExactConstructionFailure,
+    Err(MeshError::one(MeshBlocker::new(
+        MeshBlockerKind::ExactConstructionFailure,
         "convex triangle refinement endpoint equality is undecidable",
     )))
 }
 
-fn intern_point(vertices: &mut Vec<Point3>, point: &Point3) -> Result<usize, ExactMeshError> {
+fn intern_point(vertices: &mut Vec<Point3>, point: &Point3) -> Result<usize, MeshError> {
     for (index, existing) in vertices.iter().enumerate() {
         if convex_points_equal(existing, point, "convex point interning equality")? {
             return Ok(index);
@@ -1547,17 +1541,14 @@ fn intern_point(vertices: &mut Vec<Point3>, point: &Point3) -> Result<usize, Exa
     Ok(vertices.len() - 1)
 }
 
-fn intern_points(
-    vertices: &mut Vec<Point3>,
-    points: &[Point3],
-) -> Result<Vec<usize>, ExactMeshError> {
+fn intern_points(vertices: &mut Vec<Point3>, points: &[Point3]) -> Result<Vec<usize>, MeshError> {
     points
         .iter()
         .map(|point| intern_point(vertices, point))
         .collect()
 }
 
-fn simplify_polygon(points: &mut Vec<Point3>) -> Result<(), ExactMeshError> {
+fn simplify_polygon(points: &mut Vec<Point3>) -> Result<(), MeshError> {
     let mut index = 0;
     while index + 1 < points.len() {
         if convex_points_equal(
@@ -1606,8 +1597,8 @@ mod tests {
     };
 
     fn with_materialized_evaluation_for_test<R>(
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
         request: ExactBooleanRequest,
         f: impl FnOnce(&ExactBooleanEvaluation) -> R,
     ) -> R {
@@ -1618,8 +1609,8 @@ mod tests {
         f(&evaluation)
     }
 
-    fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
-        ExactMesh::from_i64_triangles(
+    fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> Mesh {
+        Mesh::from_i64_triangles(
             &[
                 a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
             ],
@@ -1695,7 +1686,7 @@ mod tests {
             &right,
             ExactBooleanRequest {
                 operation: ExactBooleanOperation::Union,
-                validation: ExactMeshValidationPolicy::CLOSED,
+                validation: MeshValidationPolicy::CLOSED,
             },
             |evaluation| {
                 evaluation.validate_against_sources(&left, &right).unwrap();
@@ -1719,7 +1710,7 @@ mod tests {
             &right,
             ExactBooleanRequest {
                 operation: ExactBooleanOperation::Difference,
-                validation: ExactMeshValidationPolicy::CLOSED,
+                validation: MeshValidationPolicy::CLOSED,
             },
             |evaluation| {
                 evaluation.validate_against_sources(&left, &right).unwrap();

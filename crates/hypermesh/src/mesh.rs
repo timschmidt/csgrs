@@ -1,14 +1,14 @@
 //! Exact mesh construction and storage.
 //!
-//! `ExactMesh` stores coordinates as `hyperlimit::Point3` over
+//! `Mesh` stores coordinates as `hyperlimit::Point3` over
 //! `hyperreal::Real`. Primitive-float construction is a named lossy adapter
 //! and validates every coordinate before import.
 
 use self::bounds::{BoundsValidationError, MeshBounds};
-use self::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use self::error::{MeshBlocker, MeshBlockerKind, MeshError};
 use self::facts::{MeshFactsValidationError, MeshValidationFacts};
 use self::validation::{
-    ExactMeshValidationPolicy, ValidationReport, validate_triangle_rows_with_policy,
+    MeshValidationPolicy, ValidationReport, validate_triangle_rows_with_policy,
 };
 use self::view::MeshView;
 use hyperlimit::{
@@ -165,7 +165,7 @@ pub(crate) struct ExactAffineTransform3 {
 }
 
 impl ExactAffineTransform3 {
-    pub(crate) fn from_homogeneous_rows(matrix: [[Real; 4]; 4]) -> Result<Self, ExactMeshError> {
+    pub(crate) fn from_homogeneous_rows(matrix: [[Real; 4]; 4]) -> Result<Self, MeshError> {
         let [
             [m00, m01, m02, tx],
             [m10, m11, m12, ty],
@@ -177,8 +177,8 @@ impl ExactAffineTransform3 {
             && real_equals(&affine_row[2], &Real::zero())?
             && real_equals(&affine_row[3], &Real::one())?;
         if !affine_row_is_exact {
-            return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+            return Err(MeshError::one(MeshBlocker::new(
+                MeshBlockerKind::UnsupportedExactOperation,
                 "homogeneous mesh transform must be affine with final row [0, 0, 0, 1]",
             )));
         }
@@ -196,12 +196,12 @@ impl ExactAffineTransform3 {
         )
     }
 
-    pub(crate) fn orientation(&self) -> Result<Ordering, ExactMeshError> {
+    pub(crate) fn orientation(&self) -> Result<Ordering, MeshError> {
         compare_reals(&det3_rows(&self.linear), &Real::zero())
             .value()
             .ok_or_else(|| {
-                ExactMeshError::one(ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::UndecidablePredicate,
+                MeshError::one(MeshBlocker::new(
+                    MeshBlockerKind::UndecidablePredicate,
                     "exact transform determinant sign could not be certified",
                 ))
             })
@@ -210,50 +210,47 @@ impl ExactAffineTransform3 {
 
 /// Exact triangular mesh with retained validation facts.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactMesh {
+pub struct Mesh {
     vertices: Vec<Point3>,
     triangles: Vec<Triangle>,
     bounds: MeshBounds,
     facts: MeshValidationFacts,
-    validation_policy: ExactMeshValidationPolicy,
+    validation_policy: MeshValidationPolicy,
     provenance: ConstructionProvenance,
 }
 
-fn point_from_f64_lossy(
-    values: [f64; 3],
-    first_coordinate: usize,
-) -> Result<Point3, ExactMeshError> {
-    let x = import_lossy_f64_real(values[0], first_coordinate).map_err(ExactMeshError::one)?;
-    let y = import_lossy_f64_real(values[1], first_coordinate + 1).map_err(ExactMeshError::one)?;
-    let z = import_lossy_f64_real(values[2], first_coordinate + 2).map_err(ExactMeshError::one)?;
+fn point_from_f64_lossy(values: [f64; 3], first_coordinate: usize) -> Result<Point3, MeshError> {
+    let x = import_lossy_f64_real(values[0], first_coordinate).map_err(MeshError::one)?;
+    let y = import_lossy_f64_real(values[1], first_coordinate + 1).map_err(MeshError::one)?;
+    let z = import_lossy_f64_real(values[2], first_coordinate + 2).map_err(MeshError::one)?;
     Ok(Point3::new(x, y, z))
 }
 
-fn import_lossy_f64_real(value: f64, coordinate_index: usize) -> Result<Real, ExactMeshBlocker> {
+fn import_lossy_f64_real(value: f64, coordinate_index: usize) -> Result<Real, MeshBlocker> {
     if !value.is_finite() {
-        return Err(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::NonFiniteCoordinate,
+        return Err(MeshBlocker::new(
+            MeshBlockerKind::NonFiniteCoordinate,
             format!("coordinate {coordinate_index} is not finite"),
         )
         .with_coordinate(coordinate_index));
     }
 
     Real::try_from(value).map_err(|problem| {
-        ExactMeshBlocker::new(
-            ExactMeshBlockerKind::CoordinateImportFailed,
+        MeshBlocker::new(
+            MeshBlockerKind::CoordinateImportFailed,
             format!("coordinate {coordinate_index} could not be imported: {problem}"),
         )
         .with_coordinate(coordinate_index)
     })
 }
 
-/// Error returned when an [`ExactMesh`] retained-state audit fails.
+/// Error returned when an [`Mesh`] retained-state audit fails.
 ///
 /// This is a whole-object consistency check over topology facts, exact bounds,
 /// object facts and proof-producing predicate provenance as part of the
 /// certified mesh state rather than as incidental cache entries.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum ExactMeshValidationError {
+pub(crate) enum MeshValidationError {
     /// The retained vertex count disagrees with the vertex buffer length.
     VertexCountMismatch {
         /// Vertex buffer length.
@@ -451,18 +448,18 @@ pub(crate) enum ExactMeshValidationError {
     PredicateRetentionMismatch,
 }
 
-impl ExactMesh {
+impl Mesh {
     /// Construct an exact mesh from exact vertices and triangle indices.
     pub fn new(
         vertices: Vec<Point3>,
         triangles: Vec<[usize; 3]>,
         source: SourceProvenance,
-    ) -> Result<Self, ExactMeshError> {
+    ) -> Result<Self, MeshError> {
         Self::new_with_policy_and_version(
             vertices,
             triangles.into_iter().map(Triangle).collect(),
             source,
-            ExactMeshValidationPolicy::CLOSED,
+            MeshValidationPolicy::CLOSED,
             1,
         )
     }
@@ -471,9 +468,9 @@ impl ExactMesh {
         vertices: Vec<Point3>,
         triangles: Vec<Triangle>,
         source: SourceProvenance,
-        policy: ExactMeshValidationPolicy,
+        policy: MeshValidationPolicy,
         construction_version: u64,
-    ) -> Result<Self, ExactMeshError> {
+    ) -> Result<Self, MeshError> {
         let report = validate_triangle_rows_with_policy(
             &vertices,
             triangles.len(),
@@ -481,7 +478,7 @@ impl ExactMesh {
             policy,
         );
         if !report.blockers.is_empty() {
-            return Err(ExactMeshError::new(report.blockers));
+            return Err(MeshError::new(report.blockers));
         }
         let bounds = MeshBounds::from_triangle_rows(
             &vertices,
@@ -512,13 +509,13 @@ impl ExactMesh {
     /// The `f64` values are checked for finiteness and imported as exact dyadic
     /// `Real` values with lossy source provenance. They are not used later as
     /// tolerance-bearing floats.
-    pub fn from_lossy_f64_triangles(pos: &[f64], idx: &[usize]) -> Result<Self, ExactMeshError> {
-        Self::from_lossy_f64_triangles_with_policy(pos, idx, ExactMeshValidationPolicy::CLOSED)
+    pub fn from_lossy_f64_triangles(pos: &[f64], idx: &[usize]) -> Result<Self, MeshError> {
+        Self::from_lossy_f64_triangles_with_policy(pos, idx, MeshValidationPolicy::CLOSED)
     }
 
     /// Construct an exact mesh from flat hyperreal coordinates.
-    pub fn from_real_triangles(pos: &[Real], idx: &[usize]) -> Result<Self, ExactMeshError> {
-        Self::from_real_triangles_with_policy(pos, idx, ExactMeshValidationPolicy::CLOSED)
+    pub fn from_real_triangles(pos: &[Real], idx: &[usize]) -> Result<Self, MeshError> {
+        Self::from_real_triangles_with_policy(pos, idx, MeshValidationPolicy::CLOSED)
     }
 
     /// Construct an exact boundary-allowed surface mesh from flat hyperreal coordinates.
@@ -527,11 +524,8 @@ impl ExactMesh {
     /// not closed solids. Named Boolean entry points still require the default
     /// closed-solid constructor unless an algorithm explicitly accepts surface
     /// artifacts.
-    pub fn from_real_surface_triangles(
-        pos: &[Real],
-        idx: &[usize],
-    ) -> Result<Self, ExactMeshError> {
-        Self::from_real_triangles_with_policy(pos, idx, ExactMeshValidationPolicy::ALLOW_BOUNDARY)
+    pub fn from_real_surface_triangles(pos: &[Real], idx: &[usize]) -> Result<Self, MeshError> {
+        Self::from_real_triangles_with_policy(pos, idx, MeshValidationPolicy::ALLOW_BOUNDARY)
     }
 
     /// Construct an exact mesh from flat hyperreal coordinates with an explicit
@@ -539,8 +533,8 @@ impl ExactMesh {
     pub(crate) fn from_real_triangles_with_policy(
         pos: &[Real],
         idx: &[usize],
-        policy: ExactMeshValidationPolicy,
-    ) -> Result<Self, ExactMeshError> {
+        policy: MeshValidationPolicy,
+    ) -> Result<Self, MeshError> {
         validate_flat_mesh_buffers(pos.len(), idx.len())?;
 
         let vertices = pos
@@ -562,8 +556,8 @@ impl ExactMesh {
     pub(crate) fn from_lossy_f64_triangles_with_policy(
         pos: &[f64],
         idx: &[usize],
-        policy: ExactMeshValidationPolicy,
-    ) -> Result<Self, ExactMeshError> {
+        policy: MeshValidationPolicy,
+    ) -> Result<Self, MeshError> {
         validate_flat_mesh_buffers(pos.len(), idx.len())?;
 
         let mut vertices = Vec::with_capacity(pos.len() / 3);
@@ -586,8 +580,8 @@ impl ExactMesh {
     /// Integer grid input is lifted directly into `hyperreal::Real` without a
     /// primitive-float edge, keeping exact predicates and determinant schedules
     /// on structural input coordinates.
-    pub fn from_i64_triangles(pos: &[i64], idx: &[usize]) -> Result<Self, ExactMeshError> {
-        Self::from_i64_triangles_with_policy(pos, idx, ExactMeshValidationPolicy::CLOSED)
+    pub fn from_i64_triangles(pos: &[i64], idx: &[usize]) -> Result<Self, MeshError> {
+        Self::from_i64_triangles_with_policy(pos, idx, MeshValidationPolicy::CLOSED)
     }
 
     /// Construct an exact mesh from integer coordinates with an explicit
@@ -595,8 +589,8 @@ impl ExactMesh {
     pub(crate) fn from_i64_triangles_with_policy(
         pos: &[i64],
         idx: &[usize],
-        policy: ExactMeshValidationPolicy,
-    ) -> Result<Self, ExactMeshError> {
+        policy: MeshValidationPolicy,
+    ) -> Result<Self, MeshError> {
         validate_flat_mesh_buffers(pos.len(), idx.len())?;
 
         let vertices = pos
@@ -646,10 +640,10 @@ impl ExactMesh {
     /// Return the validation policy retained at construction.
     ///
     /// The policy is part of the exact artifact boundary: an open-surface mesh
-    /// constructed with [`ExactMeshValidationPolicy::ALLOW_BOUNDARY`] must not later be
+    /// constructed with [`MeshValidationPolicy::ALLOW_BOUNDARY`] must not later be
     /// mistaken for closed-solid evidence merely because its retained facts are
     /// locally coherent.
-    pub(crate) const fn validation_policy(&self) -> ExactMeshValidationPolicy {
+    pub(crate) const fn validation_policy(&self) -> MeshValidationPolicy {
         self.validation_policy
     }
 
@@ -667,25 +661,25 @@ impl ExactMesh {
     ///
     /// Mesh construction already validates inputs before returning `Ok`. This
     /// method exists for tests, fuzzing, serialization boundaries, and
-    /// downstream exact algorithms that receive an `ExactMesh` artifact and
+    /// downstream exact algorithms that receive an `Mesh` artifact and
     /// want to audit that its retained bounds, topology facts, and provenance
     /// still agree before consuming them. The bounds and topology facts are
     /// replayed from the exact vertices and triangle rows before acceptance.
-    pub(crate) fn validate_retained_state(&self) -> Result<(), ExactMeshError> {
+    pub(crate) fn validate_retained_state(&self) -> Result<(), MeshError> {
         self.validate_retained_state_detail().map_err(|error| {
             retained_validation_mesh_error("exact mesh retained state replay failed", error)
         })
     }
 
-    pub(crate) fn validate_retained_state_detail(&self) -> Result<(), ExactMeshValidationError> {
+    pub(crate) fn validate_retained_state_detail(&self) -> Result<(), MeshValidationError> {
         if self.vertices.len() != self.facts.mesh.vertex_count {
-            return Err(ExactMeshValidationError::VertexCountMismatch {
+            return Err(MeshValidationError::VertexCountMismatch {
                 expected: self.vertices.len(),
                 actual: self.facts.mesh.vertex_count,
             });
         }
         if self.triangles.len() != self.facts.mesh.face_count {
-            return Err(ExactMeshValidationError::FaceCountMismatch {
+            return Err(MeshValidationError::FaceCountMismatch {
                 expected: self.triangles.len(),
                 actual: self.facts.mesh.face_count,
             });
@@ -707,7 +701,7 @@ impl ExactMesh {
             .map_err(retained_facts_validation_error)?;
         self.provenance
             .validate()
-            .map_err(ExactMeshValidationError::Provenance)?;
+            .map_err(MeshValidationError::Provenance)?;
 
         let retained_predicates = self
             .facts
@@ -721,18 +715,18 @@ impl ExactMesh {
             .copied()
             .eq(retained_predicates)
         {
-            return Err(ExactMeshValidationError::PredicateRetentionMismatch);
+            return Err(MeshValidationError::PredicateRetentionMismatch);
         }
         Ok(())
     }
 
     /// Validate the retained broad-phase bounds certificate without recomputing it.
     ///
-    /// `ExactMesh` construction computes bounds from the source vertices and
+    /// `Mesh` construction computes bounds from the source vertices and
     /// triangles once. Routine broad-phase consumers use this cheap certificate
     /// check to ensure the retained bounds object has the expected shape and
     /// ordered exact intervals before consuming it.
-    pub(crate) fn validate_retained_bounds_certificate(&self) -> Result<(), ExactMeshError> {
+    pub(crate) fn validate_retained_bounds_certificate(&self) -> Result<(), MeshError> {
         self.validate_retained_bounds_certificate_detail()
             .map_err(|error| {
                 retained_validation_mesh_error(
@@ -744,7 +738,7 @@ impl ExactMesh {
 
     pub(crate) fn validate_retained_bounds_certificate_detail(
         &self,
-    ) -> Result<(), ExactMeshValidationError> {
+    ) -> Result<(), MeshValidationError> {
         self.bounds
             .validate(
                 self.vertices.len(),
@@ -760,13 +754,13 @@ impl ExactMesh {
     /// and artifact boundaries. Normal broad-phase scheduling uses
     /// [`Self::validate_retained_bounds_certificate`] so already-retained
     /// construction facts are not recomputed on every use.
-    pub(crate) fn validate_retained_bounds(&self) -> Result<(), ExactMeshError> {
+    pub(crate) fn validate_retained_bounds(&self) -> Result<(), MeshError> {
         self.validate_retained_bounds_detail().map_err(|error| {
             retained_validation_mesh_error("exact mesh retained bounds replay failed", error)
         })
     }
 
-    pub(crate) fn validate_retained_bounds_detail(&self) -> Result<(), ExactMeshValidationError> {
+    pub(crate) fn validate_retained_bounds_detail(&self) -> Result<(), MeshValidationError> {
         self.bounds
             .validate_against_triangle_rows(
                 &self.vertices,
@@ -781,7 +775,7 @@ impl ExactMesh {
     /// The matrix must have final row `[0, 0, 0, 1]`. A negative linear
     /// determinant reverses triangle winding so transformed closed shells keep
     /// their outside orientation.
-    pub fn transform(&self, matrix: [[Real; 4]; 4]) -> Result<ExactMesh, ExactMeshError> {
+    pub fn transform(&self, matrix: [[Real; 4]; 4]) -> Result<Mesh, MeshError> {
         self.view().transform(matrix)
     }
 
@@ -793,7 +787,7 @@ impl ExactMesh {
     }
 
     /// Materialize this mesh with every triangle orientation reversed.
-    pub fn inverse(&self) -> Result<ExactMesh, ExactMeshError> {
+    pub fn inverse(&self) -> Result<Mesh, MeshError> {
         self.view().inverse()
     }
 
@@ -802,7 +796,7 @@ impl ExactMesh {
     /// This is the mesh-kernel convenience entry point for named booleans. It
     /// returns only the output mesh; callers that need retained arrangement
     /// evidence should query [`MeshView::with_arrangement_view`].
-    pub fn union(&self, right: &ExactMesh) -> Result<ExactMesh, ExactMeshError> {
+    pub fn union(&self, right: &Mesh) -> Result<Mesh, MeshError> {
         self.view().union(right.view())
     }
 
@@ -810,12 +804,12 @@ impl ExactMesh {
     ///
     /// Lower-dimensional contact is regularized into the representable triangle
     /// mesh result for the default closed output contract.
-    pub fn intersection(&self, right: &ExactMesh) -> Result<ExactMesh, ExactMeshError> {
+    pub fn intersection(&self, right: &Mesh) -> Result<Mesh, MeshError> {
         self.view().intersection(right.view())
     }
 
     /// Materialize the exact closed difference of this mesh minus `right`.
-    pub fn difference(&self, right: &ExactMesh) -> Result<ExactMesh, ExactMeshError> {
+    pub fn difference(&self, right: &Mesh) -> Result<Mesh, MeshError> {
         self.view().difference(right.view())
     }
 
@@ -823,21 +817,21 @@ impl ExactMesh {
     ///
     /// Each side difference is materialized through the exact kernel and then
     /// unioned under the same closed output contract.
-    pub fn xor(&self, right: &ExactMesh) -> Result<ExactMesh, ExactMeshError> {
+    pub fn xor(&self, right: &Mesh) -> Result<Mesh, MeshError> {
         self.view().xor(right.view())
     }
 }
 
-fn validate_flat_mesh_buffers(position_len: usize, index_len: usize) -> Result<(), ExactMeshError> {
+fn validate_flat_mesh_buffers(position_len: usize, index_len: usize) -> Result<(), MeshError> {
     if !position_len.is_multiple_of(3) {
-        return Err(ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::VertexBufferArity,
+        return Err(MeshError::one(MeshBlocker::new(
+            MeshBlockerKind::VertexBufferArity,
             "position buffer length must be a multiple of 3",
         )));
     }
     if !index_len.is_multiple_of(3) {
-        return Err(ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::IndexBufferArity,
+        return Err(MeshError::one(MeshBlocker::new(
+            MeshBlockerKind::IndexBufferArity,
             "index buffer length must be a multiple of 3",
         )));
     }
@@ -858,41 +852,37 @@ fn retain_predicates(provenance: &mut ConstructionProvenance, report: &Validatio
     }
 }
 
-const fn retained_bounds_validation_error(
-    error: BoundsValidationError,
-) -> ExactMeshValidationError {
+const fn retained_bounds_validation_error(error: BoundsValidationError) -> MeshValidationError {
     match error {
-        BoundsValidationError::InvertedAxis => ExactMeshValidationError::RetainedBoundsInvertedAxis,
+        BoundsValidationError::InvertedAxis => MeshValidationError::RetainedBoundsInvertedAxis,
         BoundsValidationError::UnknownAxisOrder => {
-            ExactMeshValidationError::RetainedBoundsUnknownAxisOrder
+            MeshValidationError::RetainedBoundsUnknownAxisOrder
         }
         BoundsValidationError::MissingMeshBounds => {
-            ExactMeshValidationError::RetainedBoundsMissingMeshBounds
+            MeshValidationError::RetainedBoundsMissingMeshBounds
         }
         BoundsValidationError::UnexpectedMeshBounds => {
-            ExactMeshValidationError::RetainedBoundsUnexpectedMeshBounds
+            MeshValidationError::RetainedBoundsUnexpectedMeshBounds
         }
         BoundsValidationError::FaceBoundsCountMismatch => {
-            ExactMeshValidationError::RetainedBoundsFaceCountMismatch
+            MeshValidationError::RetainedBoundsFaceCountMismatch
         }
         BoundsValidationError::EdgeBoundsCountMismatch => {
-            ExactMeshValidationError::RetainedBoundsEdgeCountMismatch
+            MeshValidationError::RetainedBoundsEdgeCountMismatch
         }
         BoundsValidationError::SourceReplayMismatch => {
-            ExactMeshValidationError::RetainedBoundsSourceReplayMismatch
+            MeshValidationError::RetainedBoundsSourceReplayMismatch
         }
     }
 }
 
-const fn retained_facts_validation_error(
-    error: MeshFactsValidationError,
-) -> ExactMeshValidationError {
+const fn retained_facts_validation_error(error: MeshFactsValidationError) -> MeshValidationError {
     match error {
         MeshFactsValidationError::SummaryLengthMismatch {
             field,
             expected,
             actual,
-        } => ExactMeshValidationError::RetainedFactsSummaryLengthMismatch {
+        } => MeshValidationError::RetainedFactsSummaryLengthMismatch {
             field,
             expected,
             actual,
@@ -901,31 +891,31 @@ const fn retained_facts_validation_error(
             field,
             expected,
             actual,
-        } => ExactMeshValidationError::RetainedFactsSummaryCountMismatch {
+        } => MeshValidationError::RetainedFactsSummaryCountMismatch {
             field,
             expected,
             actual,
         },
         MeshFactsValidationError::EulerCharacteristicMismatch { expected, actual } => {
-            ExactMeshValidationError::RetainedFactsEulerCharacteristicMismatch { expected, actual }
+            MeshValidationError::RetainedFactsEulerCharacteristicMismatch { expected, actual }
         }
         MeshFactsValidationError::ClosedManifoldMismatch { expected, actual } => {
-            ExactMeshValidationError::RetainedFactsClosedManifoldMismatch { expected, actual }
+            MeshValidationError::RetainedFactsClosedManifoldMismatch { expected, actual }
         }
         MeshFactsValidationError::FixedCoordinatesMismatch { expected, actual } => {
-            ExactMeshValidationError::RetainedFactsFixedCoordinatesMismatch { expected, actual }
+            MeshValidationError::RetainedFactsFixedCoordinatesMismatch { expected, actual }
         }
         MeshFactsValidationError::SourceReplayMismatch => {
-            ExactMeshValidationError::RetainedFactsSourceReplayMismatch
+            MeshValidationError::RetainedFactsSourceReplayMismatch
         }
         MeshFactsValidationError::VertexIndexMismatch { expected, actual } => {
-            ExactMeshValidationError::RetainedFactsVertexIndexMismatch { expected, actual }
+            MeshValidationError::RetainedFactsVertexIndexMismatch { expected, actual }
         }
         MeshFactsValidationError::VertexIncidentFaceMismatch {
             vertex,
             expected,
             actual,
-        } => ExactMeshValidationError::RetainedFactsVertexIncidentFaceMismatch {
+        } => MeshValidationError::RetainedFactsVertexIncidentFaceMismatch {
             vertex,
             expected,
             actual,
@@ -934,7 +924,7 @@ const fn retained_facts_validation_error(
             vertex,
             expected,
             actual,
-        } => ExactMeshValidationError::RetainedFactsVertexIncidentEdgeMismatch {
+        } => MeshValidationError::RetainedFactsVertexIncidentEdgeMismatch {
             vertex,
             expected,
             actual,
@@ -944,7 +934,7 @@ const fn retained_facts_validation_error(
             mismatch_index,
             expected_len,
             actual_len,
-        } => ExactMeshValidationError::RetainedFactsVertexIncidentFaceListMismatch {
+        } => MeshValidationError::RetainedFactsVertexIncidentFaceListMismatch {
             vertex,
             mismatch_index,
             expected_len,
@@ -955,44 +945,44 @@ const fn retained_facts_validation_error(
             mismatch_index,
             expected_len,
             actual_len,
-        } => ExactMeshValidationError::RetainedFactsVertexIncidentEdgeListMismatch {
+        } => MeshValidationError::RetainedFactsVertexIncidentEdgeListMismatch {
             vertex,
             mismatch_index,
             expected_len,
             actual_len,
         },
         MeshFactsValidationError::EdgeVertexOutOfBounds { edge, vertex_count } => {
-            ExactMeshValidationError::RetainedFactsEdgeVertexOutOfBounds { edge, vertex_count }
+            MeshValidationError::RetainedFactsEdgeVertexOutOfBounds { edge, vertex_count }
         }
         MeshFactsValidationError::EdgeEndpointOrder { edge } => {
-            ExactMeshValidationError::RetainedFactsEdgeEndpointOrder { edge }
+            MeshValidationError::RetainedFactsEdgeEndpointOrder { edge }
         }
         MeshFactsValidationError::DuplicateEdgeFact { edge } => {
-            ExactMeshValidationError::RetainedFactsDuplicateEdgeFact { edge }
+            MeshValidationError::RetainedFactsDuplicateEdgeFact { edge }
         }
         MeshFactsValidationError::UnexpectedEdgeFact { edge } => {
-            ExactMeshValidationError::RetainedFactsUnexpectedEdgeFact { edge }
+            MeshValidationError::RetainedFactsUnexpectedEdgeFact { edge }
         }
         MeshFactsValidationError::FaceVertexOutOfBounds {
             face,
             vertex,
             vertex_count,
-        } => ExactMeshValidationError::RetainedFactsFaceVertexOutOfBounds {
+        } => MeshValidationError::RetainedFactsFaceVertexOutOfBounds {
             face,
             vertex,
             vertex_count,
         },
         MeshFactsValidationError::FaceRepeatedVertex { face, vertices } => {
-            ExactMeshValidationError::RetainedFactsFaceRepeatedVertex { face, vertices }
+            MeshValidationError::RetainedFactsFaceRepeatedVertex { face, vertices }
         }
         MeshFactsValidationError::FaceIndexMismatch { expected, actual } => {
-            ExactMeshValidationError::RetainedFactsFaceIndexMismatch { expected, actual }
+            MeshValidationError::RetainedFactsFaceIndexMismatch { expected, actual }
         }
         MeshFactsValidationError::FaceDirectedEdgesMismatch {
             face,
             expected,
             actual,
-        } => ExactMeshValidationError::RetainedFactsFaceDirectedEdgesMismatch {
+        } => MeshValidationError::RetainedFactsFaceDirectedEdgesMismatch {
             face,
             expected,
             actual,
@@ -1003,7 +993,7 @@ const fn retained_facts_validation_error(
             actual_directed_uses,
             expected_incident_faces,
             actual_incident_faces,
-        } => ExactMeshValidationError::RetainedFactsEdgeUseMismatch {
+        } => MeshValidationError::RetainedFactsEdgeUseMismatch {
             edge,
             expected_directed_uses,
             actual_directed_uses,
@@ -1011,28 +1001,25 @@ const fn retained_facts_validation_error(
             actual_incident_faces,
         },
         MeshFactsValidationError::MissingEdgeFact { edge } => {
-            ExactMeshValidationError::RetainedFactsMissingEdgeFact { edge }
+            MeshValidationError::RetainedFactsMissingEdgeFact { edge }
         }
     }
 }
 
-fn retained_validation_mesh_error(
-    context: &'static str,
-    error: ExactMeshValidationError,
-) -> ExactMeshError {
+fn retained_validation_mesh_error(context: &'static str, error: MeshValidationError) -> MeshError {
     let kind = match error {
-        ExactMeshValidationError::VertexCountMismatch { .. }
-        | ExactMeshValidationError::FaceCountMismatch { .. }
-        | ExactMeshValidationError::RetainedBoundsSourceReplayMismatch
-        | ExactMeshValidationError::RetainedFactsSourceReplayMismatch => {
-            ExactMeshBlockerKind::StaleFactReplay
+        MeshValidationError::VertexCountMismatch { .. }
+        | MeshValidationError::FaceCountMismatch { .. }
+        | MeshValidationError::RetainedBoundsSourceReplayMismatch
+        | MeshValidationError::RetainedFactsSourceReplayMismatch => {
+            MeshBlockerKind::StaleFactReplay
         }
-        ExactMeshValidationError::RetainedBoundsUnknownAxisOrder => {
-            ExactMeshBlockerKind::UndecidablePredicate
+        MeshValidationError::RetainedBoundsUnknownAxisOrder => {
+            MeshBlockerKind::UndecidablePredicate
         }
-        _ => ExactMeshBlockerKind::ExactConstructionFailure,
+        _ => MeshBlockerKind::ExactConstructionFailure,
     };
-    ExactMeshError::one(ExactMeshBlocker::new(kind, format!("{context}: {error:?}")))
+    MeshError::one(MeshBlocker::new(kind, format!("{context}: {error:?}")))
 }
 
 fn transformed_coordinate(row: &[Real; 3], point: &Point3, translation: &Real) -> Real {
@@ -1051,13 +1038,13 @@ fn det3_rows(rows: &[[Real; 3]; 3]) -> Real {
     &(&rows[0][0] * &x_minor) - &(&rows[0][1] * &y_minor) + &(&rows[0][2] * &z_minor)
 }
 
-fn real_equals(left: &Real, right: &Real) -> Result<bool, ExactMeshError> {
+fn real_equals(left: &Real, right: &Real) -> Result<bool, MeshError> {
     compare_reals(left, right)
         .value()
         .map(|ordering| ordering == Ordering::Equal)
         .ok_or_else(|| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UndecidablePredicate,
+            MeshError::one(MeshBlocker::new(
+                MeshBlockerKind::UndecidablePredicate,
                 "exact transform coefficient comparison could not be certified",
             ))
         })
@@ -1087,10 +1074,10 @@ mod tests {
 
     #[test]
     fn retained_facts_reject_unexpected_zero_use_edge() {
-        let mut mesh = ExactMesh::from_i64_triangles_with_policy(
+        let mut mesh = Mesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
             &[0, 1, 2],
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
 
@@ -1104,16 +1091,16 @@ mod tests {
 
         assert_eq!(
             mesh.validate_retained_state_detail(),
-            Err(ExactMeshValidationError::RetainedFactsUnexpectedEdgeFact { edge: [0, 3] })
+            Err(MeshValidationError::RetainedFactsUnexpectedEdgeFact { edge: [0, 3] })
         );
     }
 
     #[test]
     fn retained_facts_reject_stale_vertex_incident_faces() {
-        let mut mesh = ExactMesh::from_i64_triangles_with_policy(
+        let mut mesh = Mesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 1, 0, 0, 0, 1, 0],
             &[0, 1, 2],
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
 
@@ -1122,7 +1109,7 @@ mod tests {
         assert_eq!(
             mesh.validate_retained_state_detail(),
             Err(
-                ExactMeshValidationError::RetainedFactsVertexIncidentFaceListMismatch {
+                MeshValidationError::RetainedFactsVertexIncidentFaceListMismatch {
                     vertex: 0,
                     mismatch_index: 0,
                     expected_len: 1,
@@ -1134,10 +1121,10 @@ mod tests {
 
     #[test]
     fn retained_facts_reject_stale_vertex_incident_edges() {
-        let mut mesh = ExactMesh::from_i64_triangles_with_policy(
+        let mut mesh = Mesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 1, 0, 0, 0, 1, 0],
             &[0, 1, 2],
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
 
@@ -1146,7 +1133,7 @@ mod tests {
         assert_eq!(
             mesh.validate_retained_state_detail(),
             Err(
-                ExactMeshValidationError::RetainedFactsVertexIncidentEdgeListMismatch {
+                MeshValidationError::RetainedFactsVertexIncidentEdgeListMismatch {
                     vertex: 0,
                     mismatch_index: 0,
                     expected_len: 2,

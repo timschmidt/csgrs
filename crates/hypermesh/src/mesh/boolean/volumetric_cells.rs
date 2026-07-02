@@ -21,13 +21,13 @@ use hyperlimit::{
     classify_point_triangle, compare_reals, project_point3,
 };
 
-use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::error::{MeshBlocker, MeshBlockerKind, MeshError};
 use super::super::facts::FacePlaneFacts;
 use super::super::graph::intersection::MeshFacePairRelation;
 use super::super::graph::{
     ExactIntersectionGraph, IntersectionEvent, MeshSide, build_validated_intersection_graph,
 };
-use super::super::{ExactMesh, sorted_edge};
+use super::super::{Mesh, sorted_edge};
 use super::choose_nonzero_projected_polygon_area;
 use super::solid::{ClosedMeshOrientation, exact_mesh_orientation};
 use hyperreal::Real;
@@ -146,9 +146,9 @@ impl CoplanarVolumetricCellEvidenceReport {
     /// has crossed an API boundary.
     pub(crate) fn from_graph(
         graph: &ExactIntersectionGraph,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Self, ExactMeshError> {
+        left: &Mesh,
+        right: &Mesh,
+    ) -> Result<Self, MeshError> {
         let mut report = Self {
             left_closed_manifold: left.facts().mesh.closed_manifold,
             right_closed_manifold: right.facts().mesh.closed_manifold,
@@ -343,8 +343,8 @@ impl CoplanarVolumetricCellEvidenceReport {
     /// computation model.
     pub(crate) fn validate_against_sources(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
     ) -> Result<(), CoplanarVolumetricCellEvidenceError> {
         self.validate()?;
         let replay = certify_coplanar_volumetric_cell_evidence(left, right)
@@ -359,14 +359,14 @@ impl CoplanarVolumetricCellEvidenceReport {
 
 /// Certify retained graph evidence for coplanar volumetric-cell extraction.
 pub(crate) fn certify_coplanar_volumetric_cell_evidence(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<CoplanarVolumetricCellEvidenceReport, ExactMeshError> {
+    left: &Mesh,
+    right: &Mesh,
+) -> Result<CoplanarVolumetricCellEvidenceReport, MeshError> {
     let graph = build_validated_intersection_graph(left, right)?;
     let report = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right)?;
     if let Err(error) = report.validate() {
-        return Err(ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::ExactConstructionFailure,
+        return Err(MeshError::one(MeshBlocker::new(
+            MeshBlockerKind::ExactConstructionFailure,
             format!("coplanar volumetric-cell evidence failed validation: {error:?}"),
         )));
     }
@@ -424,11 +424,11 @@ enum CoplanarOverlapSideEvidence {
 /// ownership witness. This is deliberately object-level certificate evidence
 /// instead of a tolerance-derived "touching" label.
 fn classify_coplanar_overlap_sides(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     left_face: usize,
     right_face: usize,
-) -> Result<Option<CoplanarOverlapSideEvidence>, ExactMeshError> {
+) -> Result<Option<CoplanarOverlapSideEvidence>, MeshError> {
     let left_plane = left.view().face(left_face)?.plane();
     let left_side = match mesh_local_off_plane_side(left, left_face, left_plane)? {
         Some(side) => Some(side),
@@ -454,11 +454,11 @@ fn classify_coplanar_overlap_sides(
 }
 
 fn mesh_local_off_plane_side(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     face: usize,
     plane: &FacePlaneFacts,
-) -> Result<Option<PlaneSide>, ExactMeshError> {
-    let face_is_coplanar_with_plane = |face: usize| -> Result<Option<bool>, ExactMeshError> {
+) -> Result<Option<PlaneSide>, MeshError> {
+    let face_is_coplanar_with_plane = |face: usize| -> Result<Option<bool>, MeshError> {
         let points = face_point_refs(mesh, face)?;
         for point in points {
             let Some(side) = retained_plane_side(plane, point) else {
@@ -550,10 +550,7 @@ fn mesh_local_off_plane_side(
     Ok(side)
 }
 
-fn face_point_refs(
-    mesh: &ExactMesh,
-    face: usize,
-) -> Result<[&hyperlimit::Point3; 3], ExactMeshError> {
+fn face_point_refs(mesh: &Mesh, face: usize) -> Result<[&hyperlimit::Point3; 3], MeshError> {
     mesh.view().face(face)?.vertices()
 }
 
@@ -594,7 +591,7 @@ fn coplanar_pair_has_positive_area_overlap(events: &[IntersectionEvent]) -> bool
     identical_edges >= 3 || left_vertices_in_right.len() >= 3 || right_vertices_in_left.len() >= 3
 }
 
-fn mesh_off_plane_side(mesh: &ExactMesh, plane: &FacePlaneFacts) -> Option<PlaneSide> {
+fn mesh_off_plane_side(mesh: &Mesh, plane: &FacePlaneFacts) -> Option<PlaneSide> {
     let mut side = None;
     for vertex in mesh.view().vertices() {
         match retained_plane_side(plane, vertex)? {
@@ -614,10 +611,10 @@ fn mesh_off_plane_side(mesh: &ExactMesh, plane: &FacePlaneFacts) -> Option<Plane
 }
 
 fn mesh_oriented_face_interior_side(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     face: usize,
     reference_plane: &FacePlaneFacts,
-) -> Result<Option<PlaneSide>, ExactMeshError> {
+) -> Result<Option<PlaneSide>, MeshError> {
     if !mesh.facts().mesh.closed_manifold {
         return Ok(None);
     }
@@ -654,9 +651,9 @@ fn retained_plane_side(plane: &FacePlaneFacts, point: &hyperlimit::Point3) -> Op
 
 fn proper_crossing_event(
     event: &IntersectionEvent,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<bool, ExactMeshError> {
+    left: &Mesh,
+    right: &Mesh,
+) -> Result<bool, MeshError> {
     let IntersectionEvent::SegmentPlane {
         relation: SegmentPlaneRelation::ProperCrossing,
         plane_side,
@@ -697,7 +694,7 @@ fn proper_crossing_event(
 mod tests {
     use super::*;
 
-    fn two_tetrahedra_i64(tetrahedra: &[[[i64; 3]; 4]]) -> ExactMesh {
+    fn two_tetrahedra_i64(tetrahedra: &[[[i64; 3]; 4]]) -> Mesh {
         let mut vertices = Vec::new();
         let mut triangles = Vec::new();
         for tetrahedron in tetrahedra {
@@ -720,11 +717,11 @@ mod tests {
                 start + 3,
             ]);
         }
-        ExactMesh::from_i64_triangles(&vertices, &triangles).unwrap()
+        Mesh::from_i64_triangles(&vertices, &triangles).unwrap()
     }
 
-    fn skew_octahedron_i64() -> ExactMesh {
-        ExactMesh::from_i64_triangles(
+    fn skew_octahedron_i64() -> Mesh {
+        Mesh::from_i64_triangles(
             &[
                 0, 0, 2, //
                 2, 0, 0, //
@@ -747,8 +744,8 @@ mod tests {
         .unwrap()
     }
 
-    fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
-        ExactMesh::from_i64_triangles(
+    fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> Mesh {
+        Mesh::from_i64_triangles(
             &[
                 a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
             ],
@@ -989,7 +986,7 @@ mod tests {
         let error = face_point_refs(&mesh, 0).unwrap_err();
 
         assert!(
-            error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+            error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
             "{error:?}"
         );
     }

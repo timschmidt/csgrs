@@ -12,9 +12,9 @@
 
 use hyperlimit::{Point3, compare_reals};
 
-use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::super::validation::ExactMeshValidationPolicy;
-use super::super::{ExactMesh, Triangle, reverse_triangle};
+use super::super::error::{MeshBlocker, MeshBlockerKind, MeshError};
+use super::super::validation::MeshValidationPolicy;
+use super::super::{Mesh, Triangle, reverse_triangle};
 use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, axis_aligned_orthogonal_solid_cell_plan,
     axis_aligned_orthogonal_solid_cell_selected_count, is_axis_aligned_orthogonal_solid,
@@ -67,7 +67,7 @@ pub(crate) struct AffineOrthogonalSolidArrangement {
     /// Boolean operation that produced the retained mesh.
     pub operation: AffineOrthogonalSolidOperation,
     /// Exact lifted closed output mesh in original 3D space.
-    pub mesh: ExactMesh,
+    pub mesh: Mesh,
 }
 
 impl AffineOrthogonalSolidArrangement {
@@ -77,10 +77,10 @@ impl AffineOrthogonalSolidArrangement {
     /// mesh remains valid and that every lifted vertex maps back to an exact
     /// axis-aligned orthogonal solid cell complex in the retained frame. Source
     /// replay is handled by the retained boolean result evidence.
-    pub fn validate(&self) -> Result<(), ExactMeshError> {
+    pub fn validate(&self) -> Result<(), MeshError> {
         self.mesh.validate_retained_state().map_err(|error| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::StaleFactReplay,
+            MeshError::one(MeshBlocker::new(
+                MeshBlockerKind::StaleFactReplay,
                 format!("affine orthogonal solid output mesh is stale: {error:?}"),
             ))
         })?;
@@ -92,14 +92,14 @@ impl AffineOrthogonalSolidArrangement {
         }
         let normalized = mesh_to_uvw(&self.mesh, &self.basis, self.mesh.validation_policy())?
             .ok_or_else(|| {
-                ExactMeshError::one(ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::UnsupportedExactOperation,
+                MeshError::one(MeshBlocker::new(
+                    MeshBlockerKind::UnsupportedExactOperation,
                     "affine orthogonal solid output does not replay through basis",
                 ))
             })?;
         if !is_axis_aligned_orthogonal_solid(&normalized) {
-            return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::UnsupportedExactOperation,
+            return Err(MeshError::one(MeshBlocker::new(
+                MeshBlockerKind::UnsupportedExactOperation,
                 "affine orthogonal solid output is not a normalized cell complex",
             )));
         }
@@ -108,9 +108,9 @@ impl AffineOrthogonalSolidArrangement {
 
     pub(crate) fn validate_against_sources(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), ExactMeshError> {
+        left: &Mesh,
+        right: &Mesh,
+    ) -> Result<(), MeshError> {
         self.validate()?;
         let replay = materialize_affine_orthogonal_solid_operation(
             left,
@@ -119,16 +119,16 @@ impl AffineOrthogonalSolidArrangement {
             self.mesh.validation_policy(),
         )?
         .ok_or_else(|| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::StaleFactReplay,
+            MeshError::one(MeshBlocker::new(
+                MeshBlockerKind::StaleFactReplay,
                 "source replay did not reproduce affine orthogonal solid output",
             ))
         })?;
         if self == &replay {
             Ok(())
         } else {
-            Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::StaleFactReplay,
+            Err(MeshError::one(MeshBlocker::new(
+                MeshBlockerKind::StaleFactReplay,
                 "retained affine orthogonal solid output does not match source replay",
             )))
         }
@@ -138,8 +138,8 @@ impl AffineOrthogonalSolidArrangement {
 /// Return the exact count of selected cells for a certified affine-normalized
 /// orthogonal operation.
 pub(crate) fn affine_orthogonal_solid_cell_selected_count(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     operation: AffineOrthogonalSolidOperation,
 ) -> Option<usize> {
     if let Some((_basis, selected_count)) =
@@ -171,11 +171,11 @@ pub(crate) fn affine_orthogonal_solid_cell_selected_count(
 
 /// Certify and materialize one affine orthogonal-solid operation.
 pub(crate) fn materialize_affine_orthogonal_solid_operation(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     operation: AffineOrthogonalSolidOperation,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<AffineOrthogonalSolidArrangement>, ExactMeshError> {
+    validation: MeshValidationPolicy,
+) -> Result<Option<AffineOrthogonalSolidArrangement>, MeshError> {
     let Some((basis, uvw_output_plan)) =
         find_affine_orthogonal_solid_basis(left, right, |left_uvw, right_uvw| {
             axis_aligned_orthogonal_solid_cell_plan(
@@ -199,7 +199,7 @@ pub(crate) fn materialize_affine_orthogonal_solid_operation(
     };
     let uvw_output = uvw_output_plan.to_mesh(
         "exact affine-normalized orthogonal solid cell boolean",
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
     )?;
     let vertices = uvw_output
         .vertices()
@@ -228,7 +228,7 @@ pub(crate) fn materialize_affine_orthogonal_solid_operation(
             .map(|face| Triangle(face.vertex_indices()))
             .collect()
     };
-    let mesh = ExactMesh::new_with_policy_and_version(
+    let mesh = Mesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact(match operation {
@@ -253,10 +253,10 @@ pub(crate) fn materialize_affine_orthogonal_solid_operation(
 }
 
 fn find_affine_orthogonal_solid_basis<T>(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    mut accept: impl FnMut(ExactMesh, ExactMesh) -> Option<T>,
-) -> Result<Option<(AffineBoxBasis, T)>, ExactMeshError> {
+    left: &Mesh,
+    right: &Mesh,
+    mut accept: impl FnMut(Mesh, Mesh) -> Option<T>,
+) -> Result<Option<(AffineBoxBasis, T)>, MeshError> {
     if is_axis_aligned_orthogonal_solid(left) && is_axis_aligned_orthogonal_solid(right) {
         return Ok(None);
     }
@@ -277,7 +277,7 @@ fn find_affine_orthogonal_solid_basis<T>(
             return None;
         }
         seen.push(basis.clone());
-        let left_uvw = match mesh_to_uvw(left, &basis, ExactMeshValidationPolicy::CLOSED) {
+        let left_uvw = match mesh_to_uvw(left, &basis, MeshValidationPolicy::CLOSED) {
             Ok(Some(mesh)) => mesh,
             Ok(None) => return None,
             Err(error) => {
@@ -285,7 +285,7 @@ fn find_affine_orthogonal_solid_basis<T>(
                 return None;
             }
         };
-        let right_uvw = match mesh_to_uvw(right, &basis, ExactMeshValidationPolicy::CLOSED) {
+        let right_uvw = match mesh_to_uvw(right, &basis, MeshValidationPolicy::CLOSED) {
             Ok(Some(mesh)) => mesh,
             Ok(None) => return None,
             Err(error) => {
@@ -310,10 +310,10 @@ fn find_affine_orthogonal_solid_basis<T>(
 }
 
 fn mesh_to_uvw(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     basis: &AffineBoxBasis,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<ExactMesh>, ExactMeshError> {
+    validation: MeshValidationPolicy,
+) -> Result<Option<Mesh>, MeshError> {
     let view = mesh.view();
     let mut vertices = Vec::with_capacity(view.vertex_count());
     for point in view.vertices() {
@@ -325,8 +325,8 @@ fn mesh_to_uvw(
             Some(true) => {}
             Some(false) => return Ok(None),
             None => {
-                return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::ExactConstructionFailure,
+                return Err(MeshError::one(MeshBlocker::new(
+                    MeshBlockerKind::ExactConstructionFailure,
                     "affine normalization replay equality is undecidable",
                 )));
             }
@@ -342,8 +342,8 @@ fn mesh_to_uvw(
     )
     .value()
     .ok_or_else(|| {
-        ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::ExactConstructionFailure,
+        MeshError::one(MeshBlocker::new(
+            MeshBlockerKind::ExactConstructionFailure,
             "affine normalization determinant sign is undecidable",
         ))
     })? == Ordering::Less
@@ -356,7 +356,7 @@ fn mesh_to_uvw(
             .map(|face| Triangle(face.vertex_indices()))
             .collect()
     };
-    ExactMesh::new_with_policy_and_version(
+    Mesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact affine-normalized box solid"),
@@ -415,9 +415,9 @@ fn det3(a: &Point3, b: &Point3, c: &Point3) -> Real {
 /// source mesh. This deliberately favors completeness over heuristic sampling
 /// because supportable exact cell complexes must not depend on vertex order.
 fn find_affine_cell_basis<T>(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     accept_basis: &mut impl FnMut(AffineBoxBasis) -> Option<T>,
-) -> Result<Option<T>, ExactMeshError> {
+) -> Result<Option<T>, MeshError> {
     let view = mesh.view();
     if view.vertices().len() < 8 || view.faces().count() < 12 {
         return Ok(None);
@@ -480,7 +480,7 @@ fn find_affine_cell_basis<T>(
 }
 
 /// Count undirected exact triangle-edge directions in mesh space.
-fn mesh_direction_counts(mesh: &ExactMesh) -> Result<Vec<(Point3, usize)>, ExactMeshError> {
+fn mesh_direction_counts(mesh: &Mesh) -> Result<Vec<(Point3, usize)>, MeshError> {
     let mut counts = Vec::<(Point3, usize)>::new();
     let view = mesh.view();
     for face in view.faces() {
@@ -513,7 +513,7 @@ fn mesh_direction_counts(mesh: &ExactMesh) -> Result<Vec<(Point3, usize)>, Exact
 }
 
 /// Build a unique undirected vertex adjacency list from retained triangles.
-fn vertex_adjacency(mesh: &ExactMesh) -> Vec<Vec<usize>> {
+fn vertex_adjacency(mesh: &Mesh) -> Vec<Vec<usize>> {
     let mut adjacency = vec![Vec::new(); mesh.view().vertices().len()];
     for face in mesh.view().faces() {
         let [a, b, c] = face.vertex_indices();
@@ -535,10 +535,10 @@ fn vertex_adjacency(mesh: &ExactMesh) -> Vec<Vec<usize>> {
 
 /// Return unique outgoing exact edge directions at one origin vertex.
 fn unique_edge_directions(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     origin: usize,
     neighbors: &[usize],
-) -> Result<Vec<Point3>, ExactMeshError> {
+) -> Result<Vec<Point3>, MeshError> {
     let origin_point = mesh.view().vertex(origin)?.point();
     let mut directions = Vec::new();
     for &neighbor in neighbors {
@@ -570,7 +570,7 @@ fn unique_edge_directions(
 }
 
 /// Compare exact directions up to sign.
-fn points_equal_or_opposite(left: &Point3, right: &Point3) -> Result<bool, ExactMeshError> {
+fn points_equal_or_opposite(left: &Point3, right: &Point3) -> Result<bool, MeshError> {
     if point3_exact_equal(left, right).ok_or_else(affine_direction_equality_error)? {
         return Ok(true);
     }
@@ -588,9 +588,9 @@ fn points_equal_or_opposite(left: &Point3, right: &Point3) -> Result<bool, Exact
             == Ordering::Equal)
 }
 
-fn affine_direction_equality_error() -> ExactMeshError {
-    ExactMeshError::one(ExactMeshBlocker::new(
-        ExactMeshBlockerKind::UndecidablePredicate,
+fn affine_direction_equality_error() -> MeshError {
+    MeshError::one(MeshBlocker::new(
+        MeshBlockerKind::UndecidablePredicate,
         "affine orthogonal solid edge direction equality is undecidable",
     ))
 }
@@ -601,14 +601,14 @@ mod tests {
 
     #[test]
     fn affine_direction_counts_report_stale_vertex_facts() {
-        let mut mesh = ExactMesh::from_i64_triangles_with_policy(
+        let mut mesh = Mesh::from_i64_triangles_with_policy(
             &[
                 0, 0, 0, //
                 1, 0, 0, //
                 0, 1, 0,
             ],
             &[0, 1, 2],
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .expect("test triangle should construct");
         mesh.facts.vertices.pop();
@@ -616,7 +616,7 @@ mod tests {
         let error = mesh_direction_counts(&mesh)
             .expect_err("stale vertex facts should propagate as a typed blocker");
         assert!(
-            error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+            error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
             "{error:?}"
         );
         assert_eq!(error.blockers()[0].vertex(), Some(2));

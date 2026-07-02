@@ -536,8 +536,8 @@ impl ExactLabeledCellComplex {
     #[cfg(test)]
     pub(crate) fn validate_against_sources(
         &self,
-        left: &super::super::ExactMesh,
-        right: &super::super::ExactMesh,
+        left: &super::super::Mesh,
+        right: &super::super::Mesh,
         policy: ExactRegularizationPolicy,
     ) -> Result<(), ExactArrangementBlocker> {
         self.validate()?;
@@ -554,8 +554,8 @@ impl ExactLabeledCellComplex {
     /// Classify whether this retained labeled complex is fresh for the source operands.
     pub(crate) fn freshness_against_sources(
         &self,
-        left: &super::super::ExactMesh,
-        right: &super::super::ExactMesh,
+        left: &super::super::Mesh,
+        right: &super::super::Mesh,
         policy: ExactRegularizationPolicy,
     ) -> ExactLabeledCellComplexFreshness {
         if self.validate().is_err() {
@@ -575,8 +575,8 @@ impl ExactLabeledCellComplex {
     /// Report whether retained exact evidence resolves region ownership.
     pub(crate) fn region_ownership_report(
         &self,
-        left: &super::super::ExactMesh,
-        right: &super::super::ExactMesh,
+        left: &super::super::Mesh,
+        right: &super::super::Mesh,
         policy: ExactRegularizationPolicy,
     ) -> ExactRegionOwnershipReport {
         let freshness = self.freshness_against_sources(left, right, policy);
@@ -936,8 +936,8 @@ impl ExactSelectedCellComplex {
     #[cfg(test)]
     pub(crate) fn validate_against_sources(
         &self,
-        left: &super::super::ExactMesh,
-        right: &super::super::ExactMesh,
+        left: &super::super::Mesh,
+        right: &super::super::Mesh,
         policy: ExactRegularizationPolicy,
     ) -> Result<(), ExactArrangementBlocker> {
         self.validate()?;
@@ -964,8 +964,8 @@ impl ExactSelectedCellComplex {
 
 pub(crate) fn select_arrangement_for_replay(
     arrangement: ExactArrangement3d,
-    left: &super::super::ExactMesh,
-    right: &super::super::ExactMesh,
+    left: &super::super::Mesh,
+    right: &super::super::Mesh,
     operation: ExactBooleanOperation,
     policy: ExactRegularizationPolicy,
 ) -> Result<ExactSelectedCellComplex, ExactArrangementBlocker> {
@@ -1709,7 +1709,7 @@ fn selected_volume_regions(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mesh::ExactMesh;
+    use crate::mesh::Mesh;
     use crate::mesh::arrangement3d::{
         ArrangementFaceCarrier, ArrangementFaceCell, ArrangementFaceCellNode,
         ArrangementOppositeClassification, ArrangementVolumeFaceSide, ExactTopologyAssemblyStatus,
@@ -1775,8 +1775,8 @@ mod tests {
         face
     }
 
-    fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
-        ExactMesh::from_i64_triangles(
+    fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> Mesh {
+        Mesh::from_i64_triangles(
             &[
                 a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
             ],
@@ -1787,7 +1787,7 @@ mod tests {
 
     fn replay_arrangement_with_blocker(
         blocker: ExactArrangementBlocker,
-    ) -> (ExactArrangement3d, ExactMesh, ExactMesh) {
+    ) -> (ExactArrangement3d, Mesh, Mesh) {
         let left = tetrahedron_i64([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
         let right = tetrahedron_i64([1, 0, 0], [3, 0, 0], [1, 2, 0], [1, 0, 2]);
         let mut arrangement = ExactArrangement3d::from_meshes_with_policy(

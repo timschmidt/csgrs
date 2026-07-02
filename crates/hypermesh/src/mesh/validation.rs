@@ -8,7 +8,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::Point3;
 
-use super::error::{ExactMeshBlocker, ExactMeshBlockerKind};
+use super::error::{MeshBlocker, MeshBlockerKind};
 use super::facts::{
     EdgeFacts, FaceFacts, FacePlaneFacts, MeshFacts, MeshValidationFacts, OrientedFaceFacts,
     TriangleFacts, VertexFacts, VertexLinkKind,
@@ -25,7 +25,7 @@ pub(crate) struct ValidationReport {
     /// Exact facts collected during validation.
     pub(crate) facts: MeshValidationFacts,
     /// Blockers collected during validation.
-    pub(crate) blockers: Vec<ExactMeshBlocker>,
+    pub(crate) blockers: Vec<MeshBlocker>,
 }
 
 /// Boundary policy for mesh validation.
@@ -40,12 +40,12 @@ pub(crate) enum BoundaryPolicy {
 
 /// Validation policy for exact triangle meshes.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) struct ExactMeshValidationPolicy {
+pub(crate) struct MeshValidationPolicy {
     /// How boundary edges are handled.
     pub(crate) boundary: BoundaryPolicy,
 }
 
-impl ExactMeshValidationPolicy {
+impl MeshValidationPolicy {
     /// Closed two-manifold validation.
     pub const CLOSED: Self = Self {
         boundary: BoundaryPolicy::Closed,
@@ -67,7 +67,7 @@ impl ExactMeshValidationPolicy {
     }
 }
 
-impl Default for ExactMeshValidationPolicy {
+impl Default for MeshValidationPolicy {
     fn default() -> Self {
         Self::CLOSED
     }
@@ -77,7 +77,7 @@ pub(crate) fn validate_triangle_rows_with_policy(
     points: &[Point3],
     triangle_count: usize,
     triangles: impl IntoIterator<Item = [usize; 3]>,
-    policy: ExactMeshValidationPolicy,
+    policy: MeshValidationPolicy,
 ) -> ValidationReport {
     let mut blockers = Vec::new();
     let mut edges = BTreeMap::<[usize; 2], EdgeAccumulator>::new();
@@ -93,8 +93,8 @@ pub(crate) fn validate_triangle_rows_with_policy(
             if vertex >= points.len() {
                 has_out_of_bounds_vertex = true;
                 blockers.push(
-                    ExactMeshBlocker::new(
-                        ExactMeshBlockerKind::IndexOutOfBounds,
+                    MeshBlocker::new(
+                        MeshBlockerKind::IndexOutOfBounds,
                         format!(
                             "face {face} references vertex {vertex}, but only {} vertices exist",
                             points.len()
@@ -113,8 +113,8 @@ pub(crate) fn validate_triangle_rows_with_policy(
         sorted_tri.sort_unstable();
         if !seen_triangles.insert(sorted_tri) && duplicate_triangles.insert(sorted_tri) {
             blockers.push(
-                ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::DuplicateTriangle,
+                MeshBlocker::new(
+                    MeshBlockerKind::DuplicateTriangle,
                     format!("face {face} duplicates triangle vertex set {sorted_tri:?}"),
                 )
                 .with_face(face),
@@ -140,8 +140,8 @@ pub(crate) fn validate_triangle_rows_with_policy(
         if !non_degenerate {
             degenerate_triangles += 1;
             blockers.push(
-                ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::DegenerateTriangle,
+                MeshBlocker::new(
+                    MeshBlockerKind::DegenerateTriangle,
                     format!("face {face} is not a certified non-degenerate triangle"),
                 )
                 .with_face(face),
@@ -178,8 +178,8 @@ pub(crate) fn validate_triangle_rows_with_policy(
             boundary_edges += 1;
             if policy.boundary == BoundaryPolicy::Closed {
                 blockers.push(
-                    ExactMeshBlocker::new(
-                        ExactMeshBlockerKind::BoundaryEdge,
+                    MeshBlocker::new(
+                        MeshBlockerKind::BoundaryEdge,
                         format!("edge {vertices:?} has only one incident face"),
                     )
                     .with_edge(vertices),
@@ -188,8 +188,8 @@ pub(crate) fn validate_triangle_rows_with_policy(
         } else if incident_faces > 2 {
             non_manifold_edges += 1;
             blockers.push(
-                ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::NonManifoldEdge,
+                MeshBlocker::new(
+                    MeshBlockerKind::NonManifoldEdge,
                     format!("edge {vertices:?} has {incident_faces} incident faces"),
                 )
                 .with_edge(vertices),
@@ -199,8 +199,8 @@ pub(crate) fn validate_triangle_rows_with_policy(
         if directed_uses[0] > 1 || directed_uses[1] > 1 {
             duplicate_directed_edges += 1;
             blockers.push(
-                ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::DuplicateDirectedEdge,
+                MeshBlocker::new(
+                    MeshBlockerKind::DuplicateDirectedEdge,
                     format!("edge {vertices:?} has duplicate directed uses {directed_uses:?}"),
                 )
                 .with_edge(vertices),
@@ -226,8 +226,8 @@ pub(crate) fn validate_triangle_rows_with_policy(
             if link_facts.kind == VertexLinkKind::NonManifold {
                 non_manifold_vertices += 1;
                 blockers.push(
-                    ExactMeshBlocker::new(
-                        ExactMeshBlockerKind::NonManifoldVertexLink,
+                    MeshBlocker::new(
+                        MeshBlockerKind::NonManifoldVertexLink,
                         format!("vertex {index} has a nonmanifold link"),
                     )
                     .with_vertex(index),
@@ -421,15 +421,12 @@ mod tests {
             &points,
             1,
             [[0, 1, 3]],
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
         );
 
         assert!(!report.blockers.is_empty());
         assert_eq!(report.blockers.len(), 1);
-        assert_eq!(
-            report.blockers[0].kind(),
-            ExactMeshBlockerKind::IndexOutOfBounds
-        );
+        assert_eq!(report.blockers[0].kind(), MeshBlockerKind::IndexOutOfBounds);
         assert_eq!(report.blockers[0].face(), Some(0));
         assert_eq!(report.blockers[0].vertex(), Some(3));
         assert_eq!(report.facts.faces.len(), 0);

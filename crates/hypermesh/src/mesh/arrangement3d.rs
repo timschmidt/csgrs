@@ -29,7 +29,7 @@ use super::boolean::winding::{
     ClosedMeshWindingRelation, PointMeshWindingReport,
     classify_point_against_closed_mesh_winding_report,
 };
-use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::error::{MeshBlocker, MeshBlockerKind, MeshError};
 use super::graph::key::{
     ExactPoint3Key, ExactUndirectedPoint3EdgeKey, exact_point3_key,
     exact_undirected_point3_edge_key,
@@ -41,8 +41,8 @@ use super::graph::{
     validate_face_region_plan, validate_face_split_geometry_incidence,
     validate_split_topology_plan,
 };
-use super::validation::ExactMeshValidationPolicy;
-use super::{ExactMesh, point3_exact_equal};
+use super::validation::MeshValidationPolicy;
+use super::{Mesh, point3_exact_equal};
 use core::cmp::Ordering;
 use hyperlimit::CoplanarProjection;
 use hyperlimit::SourceProvenance;
@@ -784,10 +784,10 @@ impl<'a> ArrangementView<'a> {
     }
 
     /// Validate retained arrangement state without cloning arrangement storage.
-    pub fn validate_retained_state(self) -> Result<(), ExactMeshError> {
+    pub fn validate_retained_state(self) -> Result<(), MeshError> {
         self.arrangement.validate().map_err(|blocker| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::ExactConstructionFailure,
+            MeshError::one(MeshBlocker::new(
+                MeshBlockerKind::ExactConstructionFailure,
                 format!("retained arrangement validation failed: {blocker:?}"),
             ))
         })
@@ -840,19 +840,19 @@ impl<'a> ArrangementView<'a> {
     }
 
     /// Borrow one arrangement vertex by index.
-    pub fn vertex(self, index: usize) -> Result<ArrangementVertexRef<'a>, ExactMeshError> {
+    pub fn vertex(self, index: usize) -> Result<ArrangementVertexRef<'a>, MeshError> {
         self.require_row(ArrangementRowKind::Vertex, index)?;
         Ok(self.vertex_ref(index))
     }
 
     /// Borrow one arrangement edge by index.
-    pub fn edge(self, index: usize) -> Result<ArrangementEdgeRef<'a>, ExactMeshError> {
+    pub fn edge(self, index: usize) -> Result<ArrangementEdgeRef<'a>, MeshError> {
         self.require_row(ArrangementRowKind::Edge, index)?;
         Ok(self.edge_ref(index))
     }
 
     /// Borrow one arrangement face cell by index.
-    pub fn face_cell(self, index: usize) -> Result<ArrangementFaceCellRef<'a>, ExactMeshError> {
+    pub fn face_cell(self, index: usize) -> Result<ArrangementFaceCellRef<'a>, MeshError> {
         self.require_row(ArrangementRowKind::FaceCell, index)?;
         Ok(self.face_cell_ref(index))
     }
@@ -872,7 +872,7 @@ impl<'a> ArrangementView<'a> {
         (0..self.face_cell_count()).map(move |index| self.face_cell_ref(index))
     }
 
-    fn require_row(self, kind: ArrangementRowKind, index: usize) -> Result<(), ExactMeshError> {
+    fn require_row(self, kind: ArrangementRowKind, index: usize) -> Result<(), MeshError> {
         let count = self.retained_row_count(kind);
         if index < count {
             return Ok(());
@@ -892,27 +892,27 @@ fn arrangement_index_out_of_bounds(
     kind: ArrangementRowKind,
     index: usize,
     count: usize,
-) -> ExactMeshError {
+) -> MeshError {
     let blocker = match kind {
-        ArrangementRowKind::Vertex => ExactMeshBlocker::new(
-            ExactMeshBlockerKind::IndexOutOfBounds,
+        ArrangementRowKind::Vertex => MeshBlocker::new(
+            MeshBlockerKind::IndexOutOfBounds,
             format!(
                 "arrangement vertex index {index} is out of bounds for {count} retained vertices"
             ),
         )
         .with_vertex(index),
-        ArrangementRowKind::Edge => ExactMeshBlocker::new(
-            ExactMeshBlockerKind::IndexOutOfBounds,
+        ArrangementRowKind::Edge => MeshBlocker::new(
+            MeshBlockerKind::IndexOutOfBounds,
             format!("arrangement edge index {index} is out of bounds for {count} retained edges"),
         ),
-        ArrangementRowKind::FaceCell => ExactMeshBlocker::new(
-            ExactMeshBlockerKind::IndexOutOfBounds,
+        ArrangementRowKind::FaceCell => MeshBlocker::new(
+            MeshBlockerKind::IndexOutOfBounds,
             format!(
                 "arrangement face-cell index {index} is out of bounds for {count} retained face cells"
             ),
         ),
     };
-    ExactMeshError::one(blocker)
+    MeshError::one(blocker)
 }
 
 impl<'a> ArrangementVertexRef<'a> {
@@ -1229,10 +1229,10 @@ impl ExactArrangement3d {
 
     /// Build a retained exact arrangement from two meshes with explicit policy.
     pub(crate) fn from_meshes_with_policy(
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
         policy: ExactRegularizationPolicy,
-    ) -> Result<Self, ExactMeshError> {
+    ) -> Result<Self, MeshError> {
         let graph = build_validated_intersection_graph(left, right)?;
         Self::from_source_certified_intersection_graph_with_policy(graph, left, right, policy)
     }
@@ -1244,10 +1244,10 @@ impl ExactArrangement3d {
     /// consumes the retained graph evidence without replaying that certificate.
     pub(crate) fn from_source_certified_intersection_graph_with_policy(
         graph: ExactIntersectionGraph,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
         policy: ExactRegularizationPolicy,
-    ) -> Result<Self, ExactMeshError> {
+    ) -> Result<Self, MeshError> {
         let mut blockers = match graph.validate() {
             Ok(()) => Vec::new(),
             Err(error) => vec![ExactArrangementBlocker::InvalidIntersectionGraph(
@@ -1535,8 +1535,8 @@ impl ExactArrangement3d {
     /// Classify retained arrangement freshness under an explicit regularization policy.
     pub(crate) fn freshness_against_sources_with_policy(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
         policy: ExactRegularizationPolicy,
     ) -> ExactArrangementFreshness {
         if self.validate().is_err() {
@@ -1565,8 +1565,8 @@ impl ExactArrangement3d {
     /// policy.
     pub(crate) fn topology_assembly_report_with_policy(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
         policy: ExactRegularizationPolicy,
     ) -> ExactTopologyAssemblyReport {
         let freshness = self.freshness_against_sources_with_policy(left, right, policy);
@@ -1701,8 +1701,8 @@ impl ExactArrangement3d {
     /// policy.
     pub(crate) fn region_ownership_report_with_policy(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
         policy: ExactRegularizationPolicy,
     ) -> Result<ExactRegionOwnershipReport, ExactArrangementBlocker> {
         let labeling_policy = ExactRegularizationPolicy {
@@ -1756,8 +1756,8 @@ fn extend_split_plan_blockers(
 }
 
 fn arrangement_vertices(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     topology: Option<&ExactSplitTopologyPlan>,
     carrier_plane_overlays: &[ArrangementCarrierPlaneOverlay],
     face_plane_arrangements: &[ArrangementFacePlaneArrangement],
@@ -2203,8 +2203,8 @@ fn push_arrangement_edge(
 }
 
 fn arrangement_face_cells(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     policy: ExactRegularizationPolicy,
     region_plan: Option<&ExactFaceRegionPlan>,
     carrier_plane_overlays: &[ArrangementCarrierPlaneOverlay],
@@ -2325,8 +2325,8 @@ fn arrangement_face_cells(
 
 fn face_plane_arrangements(
     topology: Option<&ExactSplitTopologyPlan>,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     carrier_plane_overlays: &[ArrangementCarrierPlaneOverlay],
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Vec<ArrangementFacePlaneArrangement> {
@@ -2397,7 +2397,7 @@ fn face_plane_arrangements(
 }
 
 fn retained_arrangement_face_vertices<'a>(
-    mesh: &'a ExactMesh,
+    mesh: &'a Mesh,
     face: usize,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<([usize; 3], [&'a Point3; 3])> {
@@ -2411,7 +2411,7 @@ fn retained_arrangement_face_vertices<'a>(
 }
 
 fn retained_arrangement_face_vertices_result(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     face: usize,
 ) -> Result<([usize; 3], [&Point3; 3]), ExactArrangementBlocker> {
     let Ok(face_ref) = mesh.view().face(face) else {
@@ -2433,8 +2433,8 @@ fn face_plane_arrangement(
     face: usize,
     groups: Vec<Vec<usize>>,
     topology: &ExactSplitTopologyPlan,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFacePlaneArrangement> {
     let mesh = side.mesh(left, right);
@@ -2526,7 +2526,7 @@ fn face_plane_arrangement(
 }
 
 fn choose_triangle_projection(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     triangle: [usize; 3],
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<CoplanarProjection> {
@@ -2570,8 +2570,8 @@ fn face_plane_vertex_provenance(
     projection: CoplanarProjection,
     graph_vertices_on_face: &[usize],
     topology: &ExactSplitTopologyPlan,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFaceCellNode> {
     let mesh = side.mesh(left, right);
@@ -2604,8 +2604,8 @@ fn face_plane_vertex_provenance(
 
 fn lower_dimensional_artifacts(
     graph: &ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     policy: ExactRegularizationPolicy,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Vec<ArrangementLowerDimensionalArtifact> {
@@ -2740,8 +2740,8 @@ fn non_coplanar_point_contact_artifact(
     left_face: usize,
     right_face: usize,
     event: &super::graph::IntersectionEvent,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> Result<Option<ArrangementLowerDimensionalArtifact>, ExactArrangementBlocker> {
     let super::graph::IntersectionEvent::SegmentPlane {
         plane_side,
@@ -2786,8 +2786,8 @@ fn non_coplanar_edge_contact_artifact(
     left_face: usize,
     right_face: usize,
     event: &super::graph::IntersectionEvent,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> Result<Option<ArrangementLowerDimensionalArtifact>, ExactArrangementBlocker> {
     let super::graph::IntersectionEvent::SegmentPlane {
         segment_side,
@@ -3010,8 +3010,8 @@ fn face_cell_from_face_plane_arrangement(
     arrangement_index: usize,
     arrangement: &ArrangementFacePlaneArrangement,
     face: usize,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     policy: ExactRegularizationPolicy,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFaceCell> {
@@ -3097,8 +3097,8 @@ fn face_cell_from_carrier_plane_overlay(
     face: usize,
     witness: &Point2,
     side: MeshSide,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     policy: ExactRegularizationPolicy,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFaceCell> {
@@ -3197,7 +3197,7 @@ fn extend_arrangement2d_blockers(
 }
 
 fn orient_overlay_boundary_to_carrier(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     face: usize,
     projection: CoplanarProjection,
     boundary: &mut [ArrangementFaceCellNode],
@@ -3230,8 +3230,8 @@ fn orient_overlay_boundary_to_carrier(
 
 fn carrier_plane_overlay(
     overlap: &CoplanarOverlapGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementCarrierPlaneOverlay> {
     if overlap.validate().is_err() {
@@ -3239,7 +3239,7 @@ fn carrier_plane_overlay(
         return None;
     }
     let mut projected_face_ring = |region: ExactArrangement2dRegion,
-                                   mesh: &ExactMesh,
+                                   mesh: &Mesh,
                                    face: usize|
      -> Option<ExactArrangement2dRegionRing> {
         let (_, points) = retained_arrangement_face_vertices(mesh, face, blockers)?;
@@ -3477,8 +3477,8 @@ pub(crate) fn exact_point_loops_match(
 fn arrangement_volume_graph(
     shell_regions: &[ArrangementRegion],
     face_cells: &[ArrangementFaceCell],
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> ArrangementVolumeGraph {
     if shell_regions.is_empty()
@@ -3839,8 +3839,8 @@ struct ArrangementVolumeGraph {
 fn nested_shell_volume_graph(
     shell_regions: &[ArrangementRegion],
     face_cells: &[ArrangementFaceCell],
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementVolumeGraph> {
     if shell_regions
@@ -4008,7 +4008,7 @@ enum ShellContainmentRelation {
 
 fn classify_shell_witnesses_against_container(
     witnesses: &[Point3],
-    container: &ExactMesh,
+    container: &Mesh,
 ) -> ShellContainmentRelation {
     let mut decided = None;
     let mut saw_boundary = false;
@@ -4165,8 +4165,8 @@ fn apply_nested_shell_source_side(
 fn shell_region_witnesses(
     shell: &ArrangementRegion,
     face_cells: &[ArrangementFaceCell],
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> Result<Vec<Point3>, ExactArrangementBlocker> {
     let mut witnesses = Vec::new();
     let mut witness_index = ArrangementPointUniquenessIndex::default();
@@ -4209,7 +4209,7 @@ fn shell_region_witnesses(
 fn shell_region_mesh(
     shell: &ArrangementRegion,
     face_cells: &[ArrangementFaceCell],
-) -> Result<ExactMesh, ExactArrangementBlocker> {
+) -> Result<Mesh, ExactArrangementBlocker> {
     let mut boundary_loops = Vec::<Vec<Point3>>::new();
     for &cell_index in &shell.face_cells {
         let cell = face_cells
@@ -4238,11 +4238,11 @@ fn shell_region_mesh(
     for boundary_group in &boundary_loop_groups {
         triangulate_exact_loop_group(boundary_group, &mut vertices, &mut triangles)?;
     }
-    ExactMesh::new_with_policy_and_version(
+    Mesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact arrangement shell replay"),
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
         1,
     )
     .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)
@@ -4630,8 +4630,8 @@ fn cell_node_key(node: &ArrangementFaceCellNode) -> ArrangementCellNodeKey {
 
 fn face_cell_from_region(
     region: &FaceRegionBoundary,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     policy: ExactRegularizationPolicy,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> ArrangementFaceCell {
@@ -4682,8 +4682,8 @@ fn face_cell_from_original_triangle(
     side: MeshSide,
     face: usize,
     triangle: [usize; 3],
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     policy: ExactRegularizationPolicy,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFaceCell> {
@@ -4736,7 +4736,7 @@ fn face_cell_from_original_triangle(
 }
 
 fn lift_carrier_plane_point(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     face: usize,
     projection: CoplanarProjection,
     point: &Point2,
@@ -4820,8 +4820,8 @@ fn projected_triangle_area2(points: &[&Point3; 3], projection: CoplanarProjectio
 
 fn face_region_interior_representative(
     region: &FaceRegionBoundary,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<Point3> {
     let mesh = region.side.mesh(left, right);
@@ -4874,8 +4874,8 @@ fn face_region_interior_representative(
 fn classify_opposite(
     side: MeshSide,
     point: Point3,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     policy: ExactRegularizationPolicy,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> ArrangementOppositeClassification {

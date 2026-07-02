@@ -7,7 +7,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use super::sorted_edge;
-use super::validation::{ExactMeshValidationPolicy, validate_triangle_rows_with_policy};
+use super::validation::{MeshValidationPolicy, validate_triangle_rows_with_policy};
 use hyperlimit::Point3;
 use hyperlimit::PredicateUse;
 use hyperreal::Real;
@@ -149,7 +149,7 @@ pub(crate) struct MeshValidationFacts {
 
 /// Error returned when retained mesh validation facts contradict themselves.
 ///
-/// This audits the structural certificates that travel with an [`ExactMesh`](crate::ExactMesh).
+/// This audits the structural certificates that travel with an [`Mesh`](crate::Mesh).
 /// It does not re-run geometric predicates; instead it checks that the retained
 /// topology-affecting predicate decisions remain separately certified.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -610,7 +610,7 @@ impl MeshValidationFacts {
         points: &[Point3],
         triangle_count: usize,
         triangles: impl IntoIterator<Item = [usize; 3]>,
-        policy: ExactMeshValidationPolicy,
+        policy: MeshValidationPolicy,
     ) -> Result<(), MeshFactsValidationError> {
         self.validate()?;
         let replay = validate_triangle_rows_with_policy(points, triangle_count, triangles, policy);

@@ -7,10 +7,10 @@
 
 //! Exact-facing mesh API for the hyper geometry stack.
 //!
-//! [`ExactMesh`] is the primary entry point. It owns exact vertices, triangle
+//! [`Mesh`] is the primary entry point. It owns exact vertices, triangle
 //! topology, retained validation facts, broad-phase bounds, and construction
 //! provenance. Borrowed query and acceleration APIs start from
-//! [`ExactMesh::view`] so callers can inspect retained facts without cloning
+//! [`Mesh::view`] so callers can inspect retained facts without cloning
 //! mesh storage.
 //!
 //! Mesh coordinates are carried as [`hyperlimit::Point3`] over
@@ -20,15 +20,13 @@
 
 mod mesh;
 
-pub use mesh::ExactMesh;
+pub use mesh::Mesh;
 
 #[doc(hidden)]
 pub mod kernel {
     pub use crate::mesh::arrangement3d::{
         ArrangementEdgeRef, ArrangementFaceCellRef, ArrangementVertexRef, ArrangementView,
     };
-    pub use crate::mesh::error::{
-        ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide,
-    };
+    pub use crate::mesh::error::{MeshBlocker, MeshBlockerKind, MeshError, MeshSourceSide};
     pub use crate::mesh::view::{EdgeRef, FaceRef, MeshView, TriangleRef, VertexRef};
 }

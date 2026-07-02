@@ -7,7 +7,7 @@ use super::arrangement3d::{ArrangementView, ExactArrangement3d};
 use super::boolean::evidence::ExactArrangementCellComplexShortcutFacts;
 use super::boolean::evidence::ExactEvidenceValidationError;
 use super::bounds::{BroadPhaseScratch, CandidateFacePairPlan, PreparedMeshBounds};
-use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide};
+use super::error::{MeshBlocker, MeshBlockerKind, MeshError, MeshSourceSide};
 use super::graph::{
     ExactIntersectionGraph, build_unvalidated_intersection_graph_from_prepared_pair_rc,
     intersection_graph_validation_error,
@@ -24,8 +24,8 @@ pub(crate) struct PreparedMeshPair<'left, 'right> {
     left_bounds: PreparedMeshBounds<'left>,
     right_bounds: PreparedMeshBounds<'right>,
     plan: CandidateFacePairPlan,
-    left_source: ExactMeshSourceStamp,
-    right_source: ExactMeshSourceStamp,
+    left_source: MeshSourceStamp,
+    right_source: MeshSourceStamp,
     pub(crate) candidate_pair_capacity_hint: usize,
     scratch: RefCell<BroadPhaseScratch>,
     intersection_graph: RefCell<Option<Rc<ExactIntersectionGraph>>>,
@@ -35,7 +35,7 @@ pub(crate) struct PreparedMeshPair<'left, 'right> {
 
 /// Compact source/freshness stamp for retained exact mesh facts.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct ExactMeshSourceStamp {
+struct MeshSourceStamp {
     source: MeshSource,
     approximation: ApproximationPolicy,
     source_identity: u64,
@@ -81,18 +81,18 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         }
     }
 
-    fn require_sources_current(&self, fact: &'static str) -> Result<(), ExactMeshError> {
+    fn require_sources_current(&self, fact: &'static str) -> Result<(), MeshError> {
         let mut blockers = Vec::new();
         if self.left_source != source_stamp(self.left_view) {
-            blockers.push(stale_source_stamp_blocker(fact, ExactMeshSourceSide::Left));
+            blockers.push(stale_source_stamp_blocker(fact, MeshSourceSide::Left));
         }
         if self.right_source != source_stamp(self.right_view) {
-            blockers.push(stale_source_stamp_blocker(fact, ExactMeshSourceSide::Right));
+            blockers.push(stale_source_stamp_blocker(fact, MeshSourceSide::Right));
         }
         if blockers.is_empty() {
             Ok(())
         } else {
-            Err(ExactMeshError::new(blockers))
+            Err(MeshError::new(blockers))
         }
     }
 
@@ -104,12 +104,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     pub(crate) fn with_arrangement_view<R>(
         &self,
         query: impl for<'arrangement> FnOnce(ArrangementView<'arrangement>) -> R,
-    ) -> Result<R, ExactMeshError> {
+    ) -> Result<R, MeshError> {
         match self.current_arrangement_for_reuse() {
             Ok(arrangement) => return Ok(query(arrangement.view())),
             Err(error)
-                if error
-                    .has_only_blocker_kinds(&[ExactMeshBlockerKind::MissingRequiredEvidence]) => {}
+                if error.has_only_blocker_kinds(&[MeshBlockerKind::MissingRequiredEvidence]) => {}
             Err(error) => return Err(error),
         }
 
@@ -127,16 +126,16 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     pub(crate) fn current_intersection_graph(
         &self,
-    ) -> Result<Rc<ExactIntersectionGraph>, ExactMeshError> {
+    ) -> Result<Rc<ExactIntersectionGraph>, MeshError> {
         self.require_sources_current("intersection graph")?;
         match self.intersection_graph.borrow().clone() {
             Some(graph) if graph.source_replay_validated => Ok(graph),
-            Some(_) => Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::MissingRequiredEvidence,
+            Some(_) => Err(MeshError::one(MeshBlocker::new(
+                MeshBlockerKind::MissingRequiredEvidence,
                 "prepared mesh-pair session retained intersection graph evidence without a current certificate",
             ))),
-            None => Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::MissingRequiredEvidence,
+            None => Err(MeshError::one(MeshBlocker::new(
+                MeshBlockerKind::MissingRequiredEvidence,
                 "prepared mesh-pair session is missing retained intersection graph evidence",
             ))),
         }
@@ -144,12 +143,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     pub(crate) fn validated_intersection_graph(
         &self,
-    ) -> Result<Rc<ExactIntersectionGraph>, ExactMeshError> {
+    ) -> Result<Rc<ExactIntersectionGraph>, MeshError> {
         match self.current_intersection_graph() {
             Ok(graph) => return Ok(graph),
             Err(error)
-                if error
-                    .has_only_blocker_kinds(&[ExactMeshBlockerKind::MissingRequiredEvidence]) => {}
+                if error.has_only_blocker_kinds(&[MeshBlockerKind::MissingRequiredEvidence]) => {}
             Err(error) => return Err(error),
         }
 
@@ -159,18 +157,18 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     pub(crate) fn retained_intersection_graph_for_validation(
         &self,
-    ) -> Result<Option<Rc<ExactIntersectionGraph>>, ExactMeshError> {
+    ) -> Result<Option<Rc<ExactIntersectionGraph>>, MeshError> {
         self.require_sources_current("intersection graph")?;
         Ok(self.intersection_graph.borrow().clone())
     }
 
     pub(crate) fn current_arrangement_for_reuse(
         &self,
-    ) -> Result<Rc<ExactArrangement3d>, ExactMeshError> {
+    ) -> Result<Rc<ExactArrangement3d>, MeshError> {
         self.require_sources_current("arrangement")?;
         self.arrangement.borrow().clone().ok_or_else(|| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::MissingRequiredEvidence,
+            MeshError::one(MeshBlocker::new(
+                MeshBlockerKind::MissingRequiredEvidence,
                 "prepared mesh-pair session is missing retained arrangement evidence",
             ))
         })
@@ -190,17 +188,17 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
     pub(crate) fn certify_retained_intersection_graph_source_replay(
         &self,
         graph: &Rc<ExactIntersectionGraph>,
-    ) -> Result<Rc<ExactIntersectionGraph>, ExactMeshError> {
+    ) -> Result<Rc<ExactIntersectionGraph>, MeshError> {
         self.require_sources_current("intersection graph")?;
         let retained = self.intersection_graph.borrow().clone().ok_or_else(|| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::MissingRequiredEvidence,
+            MeshError::one(MeshBlocker::new(
+                MeshBlockerKind::MissingRequiredEvidence,
                 "prepared mesh-pair session cannot certify a graph that is not retained",
             ))
         })?;
         if !Rc::ptr_eq(&retained, graph) {
-            return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::MissingRequiredEvidence,
+            return Err(MeshError::one(MeshBlocker::new(
+                MeshBlockerKind::MissingRequiredEvidence,
                 "prepared mesh-pair session cannot certify a different retained intersection graph",
             )));
         }
@@ -224,13 +222,13 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     pub(crate) fn prepare_arrangement_cell_complex_shortcut_facts(
         &self,
-    ) -> Result<Rc<ExactArrangementCellComplexShortcutFacts>, ExactMeshError> {
+    ) -> Result<Rc<ExactArrangementCellComplexShortcutFacts>, MeshError> {
         self.require_sources_current("arrangement cell-complex shortcut facts")?;
         if let Some(facts) = self.arrangement_shortcut_facts.borrow().clone() {
             self.validate_arrangement_cell_complex_shortcut_facts(
                 facts.as_ref(),
                 "retained arrangement shortcut facts",
-                ExactMeshBlockerKind::StaleFactReplay,
+                MeshBlockerKind::StaleFactReplay,
             )?;
             return Ok(facts);
         }
@@ -242,7 +240,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             arrangement_cell_complex_shortcut_facts_error(
                 error,
                 "arrangement shortcut facts",
-                ExactMeshBlockerKind::ExactConstructionFailure,
+                MeshBlockerKind::ExactConstructionFailure,
             )
         })?;
         let facts = Rc::new(facts);
@@ -254,8 +252,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         &self,
         facts: &ExactArrangementCellComplexShortcutFacts,
         label: &'static str,
-        blocker_kind: ExactMeshBlockerKind,
-    ) -> Result<(), ExactMeshError> {
+        blocker_kind: MeshBlockerKind,
+    ) -> Result<(), MeshError> {
         facts
             .validate_against_sources(self.left_view.mesh, self.right_view.mesh)
             .map_err(|error| {
@@ -292,28 +290,25 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 fn arrangement_cell_complex_shortcut_facts_error(
     error: ExactEvidenceValidationError,
     label: &'static str,
-    blocker_kind: ExactMeshBlockerKind,
-) -> ExactMeshError {
+    blocker_kind: MeshBlockerKind,
+) -> MeshError {
     let replay_kind = match error {
-        ExactEvidenceValidationError::SourceReplayMismatch => ExactMeshBlockerKind::StaleFactReplay,
+        ExactEvidenceValidationError::SourceReplayMismatch => MeshBlockerKind::StaleFactReplay,
         _ => blocker_kind,
     };
-    ExactMeshError::one(ExactMeshBlocker::new(
+    MeshError::one(MeshBlocker::new(
         replay_kind,
         format!("prepared mesh-pair {label} failed source replay: {error:?}"),
     ))
 }
 
-fn stale_source_stamp_blocker(
-    fact: &'static str,
-    source_side: ExactMeshSourceSide,
-) -> ExactMeshBlocker {
+fn stale_source_stamp_blocker(fact: &'static str, source_side: MeshSourceSide) -> MeshBlocker {
     let source_name = match source_side {
-        ExactMeshSourceSide::Left => "left",
-        ExactMeshSourceSide::Right => "right",
+        MeshSourceSide::Left => "left",
+        MeshSourceSide::Right => "right",
     };
-    ExactMeshBlocker::new(
-        ExactMeshBlockerKind::StaleFactReplay,
+    MeshBlocker::new(
+        MeshBlockerKind::StaleFactReplay,
         format!(
             "prepared mesh-pair session retained {fact} evidence for stale {source_name} source stamp"
         ),
@@ -321,9 +316,9 @@ fn stale_source_stamp_blocker(
     .with_source_side(source_side)
 }
 
-fn source_stamp(view: MeshView<'_>) -> ExactMeshSourceStamp {
+fn source_stamp(view: MeshView<'_>) -> MeshSourceStamp {
     let provenance = view.mesh.provenance();
-    ExactMeshSourceStamp {
+    MeshSourceStamp {
         source: provenance.source.source,
         approximation: provenance.source.approximation,
         source_identity: exact_mesh_source_identity(view),
@@ -414,7 +409,7 @@ const fn fnv1a_u64(mut hash: u64, value: u64) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ExactMesh;
+    use crate::Mesh;
     use crate::mesh::graph::FacePairEvents;
     use crate::mesh::graph::intersection::MeshFacePairRelation;
     use hyperlimit::{Point3, SourceProvenance};
@@ -423,9 +418,9 @@ mod tests {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
-    fn tetra(offset: [i64; 3]) -> ExactMesh {
+    fn tetra(offset: [i64; 3]) -> Mesh {
         let [ox, oy, oz] = offset;
-        ExactMesh::new(
+        Mesh::new(
             vec![
                 p(ox, oy, oz),
                 p(ox + 1, oy, oz),
@@ -438,10 +433,10 @@ mod tests {
         .unwrap()
     }
 
-    fn axis_aligned_box(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
+    fn axis_aligned_box(min: [i64; 3], max: [i64; 3]) -> Mesh {
         let [xmin, ymin, zmin] = min;
         let [xmax, ymax, zmax] = max;
-        ExactMesh::from_i64_triangles(
+        Mesh::from_i64_triangles(
             &[
                 xmin, ymin, zmin, xmax, ymin, zmin, xmax, ymax, zmin, xmin, ymax, zmin, xmin, ymin,
                 zmax, xmax, ymin, zmax, xmax, ymax, zmax, xmin, ymax, zmax,
@@ -454,12 +449,12 @@ mod tests {
         .unwrap()
     }
 
-    fn assert_stale_source_sides(error: &ExactMeshError, expected: &[ExactMeshSourceSide]) {
+    fn assert_stale_source_sides(error: &MeshError, expected: &[MeshSourceSide]) {
         let actual = error
             .blockers()
             .iter()
             .map(|blocker| {
-                assert_eq!(blocker.kind(), ExactMeshBlockerKind::StaleFactReplay);
+                assert_eq!(blocker.kind(), MeshBlockerKind::StaleFactReplay);
                 blocker.source_side().expect("stale blocker names a source")
             })
             .collect::<Vec<_>>();
@@ -562,7 +557,7 @@ mod tests {
         let missing_error = pair.current_arrangement_for_reuse().unwrap_err();
         assert_eq!(
             missing_error.blockers()[0].kind(),
-            ExactMeshBlockerKind::MissingRequiredEvidence
+            MeshBlockerKind::MissingRequiredEvidence
         );
 
         pair.with_arrangement_view(|view| {
@@ -591,18 +586,18 @@ mod tests {
         let arrangement_error = pair.current_arrangement_for_reuse().unwrap_err();
         assert_eq!(
             arrangement_error.blockers()[0].kind(),
-            ExactMeshBlockerKind::StaleFactReplay
+            MeshBlockerKind::StaleFactReplay
         );
-        assert_stale_source_sides(&arrangement_error, &[ExactMeshSourceSide::Left]);
+        assert_stale_source_sides(&arrangement_error, &[MeshSourceSide::Left]);
 
         let shortcut_error = pair
             .prepare_arrangement_cell_complex_shortcut_facts()
             .unwrap_err();
         assert_eq!(
             shortcut_error.blockers()[0].kind(),
-            ExactMeshBlockerKind::StaleFactReplay
+            MeshBlockerKind::StaleFactReplay
         );
-        assert_stale_source_sides(&shortcut_error, &[ExactMeshSourceSide::Left]);
+        assert_stale_source_sides(&shortcut_error, &[MeshSourceSide::Left]);
     }
 
     #[test]
@@ -638,7 +633,7 @@ mod tests {
             .prepare_arrangement_cell_complex_shortcut_facts()
             .unwrap_err();
         let blocker = &error.blockers()[0];
-        assert_eq!(blocker.kind(), ExactMeshBlockerKind::StaleFactReplay);
+        assert_eq!(blocker.kind(), MeshBlockerKind::StaleFactReplay);
         assert!(blocker.message().contains("SourceReplayMismatch"));
     }
 
@@ -654,28 +649,28 @@ mod tests {
         let graph_error = pair.current_intersection_graph().unwrap_err();
         assert_eq!(
             graph_error.blockers()[0].kind(),
-            ExactMeshBlockerKind::StaleFactReplay
+            MeshBlockerKind::StaleFactReplay
         );
-        assert_stale_source_sides(&graph_error, &[ExactMeshSourceSide::Left]);
+        assert_stale_source_sides(&graph_error, &[MeshSourceSide::Left]);
 
         let validated_graph_error = pair.validated_intersection_graph().unwrap_err();
-        assert_stale_source_sides(&validated_graph_error, &[ExactMeshSourceSide::Left]);
+        assert_stale_source_sides(&validated_graph_error, &[MeshSourceSide::Left]);
 
         let validation_error = pair
             .retained_intersection_graph_for_validation()
             .unwrap_err();
         assert_eq!(
             validation_error.blockers()[0].kind(),
-            ExactMeshBlockerKind::StaleFactReplay
+            MeshBlockerKind::StaleFactReplay
         );
-        assert_stale_source_sides(&validation_error, &[ExactMeshSourceSide::Left]);
+        assert_stale_source_sides(&validation_error, &[MeshSourceSide::Left]);
 
         let arrangement_error = pair.current_arrangement_for_reuse().unwrap_err();
         assert_eq!(
             arrangement_error.blockers()[0].kind(),
-            ExactMeshBlockerKind::StaleFactReplay
+            MeshBlockerKind::StaleFactReplay
         );
-        assert_stale_source_sides(&arrangement_error, &[ExactMeshSourceSide::Left]);
+        assert_stale_source_sides(&arrangement_error, &[MeshSourceSide::Left]);
     }
 
     #[test]
@@ -689,7 +684,7 @@ mod tests {
             .saturating_add(1);
 
         let right_error = right_stale_pair.current_intersection_graph().unwrap_err();
-        assert_stale_source_sides(&right_error, &[ExactMeshSourceSide::Right]);
+        assert_stale_source_sides(&right_error, &[MeshSourceSide::Right]);
 
         let mut both_stale_pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
         both_stale_pair.left_source.construction_version = both_stale_pair
@@ -702,10 +697,7 @@ mod tests {
             .saturating_add(1);
 
         let both_error = both_stale_pair.current_intersection_graph().unwrap_err();
-        assert_stale_source_sides(
-            &both_error,
-            &[ExactMeshSourceSide::Left, ExactMeshSourceSide::Right],
-        );
+        assert_stale_source_sides(&both_error, &[MeshSourceSide::Left, MeshSourceSide::Right]);
     }
 
     #[test]
@@ -721,11 +713,11 @@ mod tests {
 
         assert_eq!(
             error.blockers()[0].kind(),
-            ExactMeshBlockerKind::MissingRequiredEvidence
+            MeshBlockerKind::MissingRequiredEvidence
         );
         assert_eq!(
             pair.current_intersection_graph().unwrap_err().blockers()[0].kind(),
-            ExactMeshBlockerKind::MissingRequiredEvidence
+            MeshBlockerKind::MissingRequiredEvidence
         );
     }
 
@@ -739,10 +731,7 @@ mod tests {
 
         let error = pair.current_intersection_graph().unwrap_err();
         let blocker = &error.blockers()[0];
-        assert_eq!(
-            blocker.kind(),
-            ExactMeshBlockerKind::MissingRequiredEvidence
-        );
+        assert_eq!(blocker.kind(), MeshBlockerKind::MissingRequiredEvidence);
         assert!(blocker.message().contains("without a current certificate"));
     }
 
@@ -756,7 +745,7 @@ mod tests {
         assert!(!retained.source_replay_validated);
         assert_eq!(
             pair.current_intersection_graph().unwrap_err().blockers()[0].kind(),
-            ExactMeshBlockerKind::MissingRequiredEvidence
+            MeshBlockerKind::MissingRequiredEvidence
         );
 
         let validated = pair.validated_intersection_graph().unwrap();
@@ -786,10 +775,7 @@ mod tests {
 
         let error = pair.validated_intersection_graph().unwrap_err();
         let blocker = &error.blockers()[0];
-        assert_eq!(
-            blocker.kind(),
-            ExactMeshBlockerKind::MissingRequiredEvidence
-        );
+        assert_eq!(blocker.kind(), MeshBlockerKind::MissingRequiredEvidence);
         assert!(blocker.message().contains("RetainedPairHasNoEvents"));
     }
 
@@ -804,7 +790,7 @@ mod tests {
         pair.retain_intersection_graph(graph);
         assert_eq!(
             pair.current_intersection_graph().unwrap_err().blockers()[0].kind(),
-            ExactMeshBlockerKind::MissingRequiredEvidence
+            MeshBlockerKind::MissingRequiredEvidence
         );
 
         let validated = pair.validated_intersection_graph().unwrap();

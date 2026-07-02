@@ -9,9 +9,9 @@ use std::cmp::Ordering;
 
 use super::super::super::boolean::ExactBooleanOperation;
 use super::super::super::graph::MeshSide;
-use super::super::super::validation::ExactMeshValidationPolicy;
+use super::super::super::validation::MeshValidationPolicy;
 use super::super::super::{
-    ExactMesh, Triangle, orient_paired_triangle_edges, point3_exact_equal,
+    Mesh, Triangle, orient_paired_triangle_edges, point3_exact_equal,
     remove_duplicate_triangle_vertex_sets,
 };
 #[cfg(test)]
@@ -190,8 +190,8 @@ impl ExactSimplifiedCellComplex {
     #[cfg(test)]
     pub(crate) fn validate_against_sources(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
         policy: ExactRegularizationPolicy,
     ) -> Result<(), ExactArrangementBlocker> {
         self.validate()?;
@@ -1097,7 +1097,7 @@ fn canonicalize_boundary_start(face: &mut ExactCellComplexFace) {
 /// over exact coordinates. No primitive-float tolerance is used.
 pub(crate) fn triangulate_simplified_cell_complex(
     complex: &ExactSimplifiedCellComplex,
-) -> Result<ExactMesh, ExactArrangementBlocker> {
+) -> Result<Mesh, ExactArrangementBlocker> {
     complex.validate()?;
     let mut vertices = Vec::<Point3>::new();
     let mut triangles = Vec::<Triangle>::new();
@@ -1155,11 +1155,11 @@ pub(crate) fn triangulate_simplified_cell_complex(
     orient_paired_triangle_edges(&mut triangles)
         .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
 
-    ExactMesh::new_with_policy_and_version(
+    Mesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact simplified arrangement cell complex"),
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
         1,
     )
     .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)
@@ -2858,7 +2858,7 @@ mod tests {
         );
     }
 
-    fn mesh_projected_area2(mesh: &ExactMesh, projection: CoplanarProjection) -> Real {
+    fn mesh_projected_area2(mesh: &Mesh, projection: CoplanarProjection) -> Real {
         mesh.triangles()
             .iter()
             .fold(Real::from(0), |area, triangle| {

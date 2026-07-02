@@ -16,9 +16,9 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use hyperlimit::{Point3, compare_reals};
 
-use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
-use super::super::validation::ExactMeshValidationPolicy;
-use super::super::{ExactMesh, Triangle};
+use super::super::error::{MeshBlocker, MeshBlockerKind, MeshError};
+use super::super::validation::MeshValidationPolicy;
+use super::super::{Mesh, Triangle};
 use super::solid::certify_convex_solid;
 use hyperlimit::SourceProvenance;
 use hyperreal::Real;
@@ -173,8 +173,8 @@ struct GridBoxBounds {
 /// materializer instead of replaying closed-shell winding for shapes whose
 /// complete volume state is already certified.
 pub(crate) fn axis_aligned_orthogonal_solid_cell_selected_count(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     operation: AxisAlignedOrthogonalSolidOperation,
 ) -> Option<usize> {
     let inputs = certify_orthogonal_cell_inputs(left, right)?;
@@ -192,14 +192,14 @@ pub(crate) fn axis_aligned_orthogonal_solid_cell_selected_count(
 }
 
 /// Return whether one mesh certifies as an exact orthogonal solid cell complex.
-pub(crate) fn is_axis_aligned_orthogonal_solid(mesh: &ExactMesh) -> bool {
+pub(crate) fn is_axis_aligned_orthogonal_solid(mesh: &Mesh) -> bool {
     certify_axis_aligned_orthogonal_solid_face_cells(mesh).is_some()
 }
 
 pub(crate) fn try_certified_axis_aligned_box_pair(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<bool, ExactMeshError> {
+    left: &Mesh,
+    right: &Mesh,
+) -> Result<bool, MeshError> {
     Ok(try_certify_axis_aligned_box(left)?.is_some()
         && try_certify_axis_aligned_box(right)?.is_some())
 }
@@ -211,13 +211,13 @@ pub(crate) fn try_certified_axis_aligned_box_pair(
 /// after its exact vertices, closed topology, and convexity certify as one
 /// structure rule intact across the affine adapter instead of trusting a
 /// coordinate transform alone.
-pub(crate) fn is_axis_aligned_box(mesh: &ExactMesh) -> bool {
+pub(crate) fn is_axis_aligned_box(mesh: &Mesh) -> bool {
     matches!(try_certify_axis_aligned_box(mesh), Ok(Some(_)))
 }
 
 pub(crate) fn axis_aligned_orthogonal_solid_cell_plan(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     operation: AxisAlignedOrthogonalSolidOperation,
 ) -> Option<OrthogonalCellPlan> {
     let inputs = certify_orthogonal_cell_inputs(left, right)?;
@@ -225,12 +225,12 @@ pub(crate) fn axis_aligned_orthogonal_solid_cell_plan(
 }
 
 pub(crate) fn materialize_axis_aligned_orthogonal_solid_cell_output(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     operation: AxisAlignedOrthogonalSolidOperation,
     label: &'static str,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<ExactMesh>, ExactMeshError> {
+    validation: MeshValidationPolicy,
+) -> Result<Option<Mesh>, MeshError> {
     let Some(plan) = axis_aligned_orthogonal_solid_cell_plan(left, right, operation) else {
         return Ok(None);
     };
@@ -238,9 +238,7 @@ pub(crate) fn materialize_axis_aligned_orthogonal_solid_cell_output(
 }
 
 /// Recognize a closed exact mesh as exactly its retained AABB.
-fn try_certify_axis_aligned_box(
-    mesh: &ExactMesh,
-) -> Result<Option<AxisAlignedBox>, ExactMeshError> {
+fn try_certify_axis_aligned_box(mesh: &Mesh) -> Result<Option<AxisAlignedBox>, MeshError> {
     let view = mesh.view();
     let vertices = view.vertices();
     if vertices.len() != 8 || view.faces().count() != 12 {
@@ -313,10 +311,7 @@ fn try_certify_axis_aligned_box(
     }
 }
 
-fn certify_orthogonal_cell_inputs(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<OrthogonalCellInputs> {
+fn certify_orthogonal_cell_inputs(left: &Mesh, right: &Mesh) -> Option<OrthogonalCellInputs> {
     let left = certify_axis_aligned_orthogonal_solid_face_cells(left)?;
     let right = certify_axis_aligned_orthogonal_solid_face_cells(right)?;
     let x = merge_axis_coords(&left.x, &right.x)?;
@@ -416,7 +411,7 @@ fn orthogonal_cell_selected(
 /// This is the volumetric analogue of a planar cell arrangement: certification
 /// follows from exact area equality, not from tolerance repair of triangle soup.
 fn certify_axis_aligned_orthogonal_solid_face_cells(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
 ) -> Option<AxisAlignedOrthogonalSolid> {
     let view = mesh.view();
     if view.vertices().is_empty() || view.faces().count() == 0 {
@@ -501,7 +496,7 @@ fn certify_axis_aligned_orthogonal_solid_face_cells(
 }
 
 fn triangle_face_cell_sample(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     triangle: [usize; 3],
     x: &[Real],
     y: &[Real],
@@ -572,7 +567,7 @@ fn triangle_face_cell_sample(
     })
 }
 
-fn triangle_points(mesh: &ExactMesh, triangle: [usize; 3]) -> Option<[Point3; 3]> {
+fn triangle_points(mesh: &Mesh, triangle: [usize; 3]) -> Option<[Point3; 3]> {
     let vertices = mesh.view().vertices();
     Some([
         vertices.get(triangle[0])?.clone(),
@@ -947,16 +942,16 @@ impl AxisAlignedOrthogonalSolid {
 }
 
 impl OrthogonalCellPlan {
-    fn is_selected(&self, i: usize, j: usize, k: usize) -> Result<bool, ExactMeshError> {
+    fn is_selected(&self, i: usize, j: usize, k: usize) -> Result<bool, MeshError> {
         let Some(index) = cell_index(i, j, k, self.ny, self.nz) else {
-            return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::StaleFactReplay,
+            return Err(MeshError::one(MeshBlocker::new(
+                MeshBlockerKind::StaleFactReplay,
                 format!("retained orthogonal cell plan index overflowed at cell ({i}, {j}, {k})"),
             )));
         };
         if index >= self.selected.len() {
-            return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::StaleFactReplay,
+            return Err(MeshError::one(MeshBlocker::new(
+                MeshBlockerKind::StaleFactReplay,
                 format!(
                     "retained orthogonal cell plan index exceeded selected occupancy at cell ({i}, {j}, {k})"
                 ),
@@ -968,10 +963,10 @@ impl OrthogonalCellPlan {
     pub(crate) fn to_mesh(
         &self,
         label: &'static str,
-        validation: ExactMeshValidationPolicy,
-    ) -> Result<ExactMesh, ExactMeshError> {
+        validation: MeshValidationPolicy,
+    ) -> Result<Mesh, MeshError> {
         if self.selected_count == 0 {
-            return ExactMesh::new_with_policy_and_version(
+            return Mesh::new_with_policy_and_version(
                 Vec::new(),
                 Vec::new(),
                 SourceProvenance::exact(label),
@@ -1156,7 +1151,7 @@ impl OrthogonalCellPlan {
                 }
             }
         }
-        ExactMesh::new_with_policy_and_version(
+        Mesh::new_with_policy_and_version(
             vertices,
             triangles,
             SourceProvenance::exact(label),
@@ -1165,7 +1160,7 @@ impl OrthogonalCellPlan {
         )
     }
 
-    fn selected_rectangular_block_bounds(&self) -> Result<Option<GridBoxBounds>, ExactMeshError> {
+    fn selected_rectangular_block_bounds(&self) -> Result<Option<GridBoxBounds>, MeshError> {
         if self.selected_count == 0 {
             return Ok(None);
         }
@@ -1419,7 +1414,7 @@ fn shared_grid_vertex_index(
     index
 }
 
-fn collect_sorted_unique_axis_coords(mesh: &ExactMesh, axis: Axis) -> Option<Vec<Real>> {
+fn collect_sorted_unique_axis_coords(mesh: &Mesh, axis: Axis) -> Option<Vec<Real>> {
     let values = mesh
         .view()
         .vertices()
@@ -1523,10 +1518,10 @@ fn axis_coord(point: &Point3, axis: Axis) -> &Real {
     }
 }
 
-fn exact_compare_axis(left: &Real, right: &Real) -> Result<Ordering, ExactMeshError> {
+fn exact_compare_axis(left: &Real, right: &Real) -> Result<Ordering, MeshError> {
     compare_reals(left, right).value().ok_or_else(|| {
-        ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::UndecidablePredicate,
+        MeshError::one(MeshBlocker::new(
+            MeshBlockerKind::UndecidablePredicate,
             "exact axis-aligned box certificate comparison was undecidable",
         ))
     })
@@ -1573,8 +1568,8 @@ fn projected_face_orientation(
 mod tests {
     use super::*;
 
-    fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
-        ExactMesh::from_i64_triangles(
+    fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> Mesh {
+        Mesh::from_i64_triangles(
             &[
                 min[0], min[1], min[2], max[0], min[1], min[2], max[0], max[1], min[2], min[0],
                 max[1], min[2], min[0], min[1], max[2], max[0], min[1], max[2], max[0], max[1],
@@ -1601,7 +1596,7 @@ mod tests {
         let mesh = plan
             .to_mesh(
                 "test axis-aligned orthogonal solid cell union",
-                ExactMeshValidationPolicy::CLOSED,
+                MeshValidationPolicy::CLOSED,
             )
             .unwrap();
         assert!(certify_axis_aligned_orthogonal_solid_face_cells(&mesh).is_some());
@@ -1633,12 +1628,9 @@ mod tests {
         let error = plan
             .to_mesh(
                 "test corrupted axis-aligned orthogonal solid cell union",
-                ExactMeshValidationPolicy::CLOSED,
+                MeshValidationPolicy::CLOSED,
             )
             .expect_err("corrupted retained occupancy should not materialize");
-        assert_eq!(
-            error.blockers()[0].kind(),
-            ExactMeshBlockerKind::StaleFactReplay
-        );
+        assert_eq!(error.blockers()[0].kind(), MeshBlockerKind::StaleFactReplay);
     }
 }

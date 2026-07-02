@@ -18,13 +18,13 @@ use hyperlimit::{
 };
 use hyperlimit::{Point2 as PredicatePoint2, Sign, compare_reals, orient2d_report, project_point3};
 
-use super::super::ExactMesh;
-use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::Mesh;
+use super::super::error::{MeshBlocker, MeshBlockerKind, MeshError};
 use super::super::graph::SplitPlanBlockerKind;
 use super::super::graph::{
     ExactFaceRegionPlan, FaceSplitBoundaryNode, MeshSide, validate_face_region_plan,
 };
-use super::super::validation::ExactMeshValidationPolicy;
+use super::super::validation::MeshValidationPolicy;
 use super::super::{Triangle, paired_triangle_orientation_flips};
 use hyperlimit::CoplanarProjection;
 use hyperlimit::PredicateUse;
@@ -152,8 +152,8 @@ impl FaceRegionPlaneClassification {
     #[cfg(test)]
     pub(crate) fn validate_against_sources(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
     ) -> Result<(), FaceRegionPlaneValidationError> {
         self.validate()?;
         let region_plan = replay_region_plan(left, right)
@@ -177,9 +177,9 @@ impl FaceRegionPlaneClassification {
 /// against a symbolic face until refinement or a policy decision is available.
 pub(crate) fn classify_face_regions_against_opposite_planes(
     regions: &ExactFaceRegionPlan,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<Vec<FaceRegionPlaneClassification>, ExactMeshError> {
+    left: &Mesh,
+    right: &Mesh,
+) -> Result<Vec<FaceRegionPlaneClassification>, MeshError> {
     let mut classifications = Vec::new();
     for region in &regions.regions {
         let (plane_side, plane_mesh) = match region.side {
@@ -202,38 +202,38 @@ pub(crate) fn classify_face_regions_against_opposite_planes(
 
 pub(crate) fn checked_classify_face_regions_against_opposite_planes(
     regions: &ExactFaceRegionPlan,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<Vec<FaceRegionPlaneClassification>, ExactMeshError> {
+    left: &Mesh,
+    right: &Mesh,
+) -> Result<Vec<FaceRegionPlaneClassification>, MeshError> {
     let report = validate_face_region_plan(regions, left, right);
     if report.blockers.is_empty() {
         classify_face_regions_against_opposite_planes(regions, left, right)
     } else {
-        Err(ExactMeshError::new(
+        Err(MeshError::new(
             report
                 .blockers
                 .into_iter()
                 .map(|blocker| {
                     let kind = match blocker.kind {
                         SplitPlanBlockerKind::UnknownBoundaryIncidence => {
-                            ExactMeshBlockerKind::UndecidablePredicate
+                            MeshBlockerKind::UndecidablePredicate
                         }
                         SplitPlanBlockerKind::BoundaryNodeSourceVertexOutOfRange => {
-                            ExactMeshBlockerKind::IndexOutOfBounds
+                            MeshBlockerKind::IndexOutOfBounds
                         }
                         SplitPlanBlockerKind::BoundaryNodeSourceVertexNotOnTriangle
                         | SplitPlanBlockerKind::BoundaryNodeSourcePointMismatch => {
-                            ExactMeshBlockerKind::StaleFactReplay
+                            MeshBlockerKind::StaleFactReplay
                         }
                         SplitPlanBlockerKind::BoundaryNodeOffFacePlane
                         | SplitPlanBlockerKind::EmptyOrShortRegionBoundary
                         | SplitPlanBlockerKind::DuplicateConsecutiveRegionNode
                         | SplitPlanBlockerKind::BoundaryChainEdgeNotOnTriangle => {
-                            ExactMeshBlockerKind::ExactConstructionFailure
+                            MeshBlockerKind::ExactConstructionFailure
                         }
-                        _ => ExactMeshBlockerKind::ExactConstructionFailure,
+                        _ => MeshBlockerKind::ExactConstructionFailure,
                     };
-                    let mut mesh = ExactMeshBlocker::new(kind, blocker.message);
+                    let mut mesh = MeshBlocker::new(kind, blocker.message);
                     if let Some(face) = blocker.face {
                         mesh = mesh.with_face(face);
                     }
@@ -367,8 +367,8 @@ impl FaceRegionTriangulation {
     #[cfg(test)]
     pub(crate) fn validate_against_sources(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
     ) -> hypertri::Result<()> {
         self.validate()?;
         let region_plan =
@@ -390,9 +390,9 @@ impl FaceRegionTriangulation {
 }
 
 fn replay_region_plan(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<ExactFaceRegionPlan, super::super::error::ExactMeshError> {
+    left: &Mesh,
+    right: &Mesh,
+) -> Result<ExactFaceRegionPlan, super::super::error::MeshError> {
     let graph = super::super::graph::build_validated_intersection_graph(left, right)?;
     let geometry = graph.face_split_geometry_plan(left, right)?;
     Ok(geometry.region_plan(left, right))
@@ -502,8 +502,8 @@ impl ExactBooleanAssemblyPlan {
     /// winding policy. Orientation replay is still source-aware and exact, in
     pub(crate) fn from_region_triangulations_with_triangle_retention_and_sources(
         triangulations: &[FaceRegionTriangulation],
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
         mut retain: impl FnMut(&FaceRegionTriangulation, [usize; 3]) -> ExactRegionRetention,
     ) -> hypertri::Result<Self> {
         assemble_region_triangulations_with_triangle_retention(
@@ -560,8 +560,8 @@ impl ExactBooleanAssemblyPlan {
 
     fn materialize_exact_mesh(
         &self,
-        policy: ExactMeshValidationPolicy,
-    ) -> Result<ExactMesh, super::super::error::ExactMeshError> {
+        policy: MeshValidationPolicy,
+    ) -> Result<Mesh, super::super::error::MeshError> {
         let vertices = self
             .vertices
             .iter()
@@ -578,7 +578,7 @@ impl ExactBooleanAssemblyPlan {
             .iter()
             .map(|triangle| Triangle(triangle.vertices))
             .collect::<Vec<_>>();
-        ExactMesh::new_with_policy_and_version(
+        Mesh::new_with_policy_and_version(
             vertices,
             triangles,
             SourceProvenance::exact("exact boolean assembly plan"),
@@ -596,10 +596,10 @@ impl ExactBooleanAssemblyPlan {
     /// coordinate-only approximation of earlier construction history.
     pub(crate) fn checked_to_exact_mesh_with_sources(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        policy: ExactMeshValidationPolicy,
-    ) -> Result<ExactMesh, super::super::error::ExactMeshError> {
+        left: &Mesh,
+        right: &Mesh,
+        policy: MeshValidationPolicy,
+    ) -> Result<Mesh, super::super::error::MeshError> {
         self.validate()
             .map_err(|error| hypertri_error_to_mesh_error("assembly validation", error))?;
         validate_assembly_source_face_incidence(self, left, right)
@@ -617,8 +617,8 @@ impl ExactBooleanAssemblyPlan {
     /// can still replay exactly from retained source-face provenance.
     pub(crate) fn canonicalize_for_mesh_with_sources(
         &mut self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
     ) -> hypertri::Result<()> {
         self.refine_edges_at_existing_vertices(left, right)?;
         self.remove_duplicate_triangle_vertex_sets()?;
@@ -734,8 +734,8 @@ impl ExactBooleanAssemblyPlan {
     /// predicates. No new coordinates are introduced.
     pub(crate) fn refine_edges_at_existing_vertices(
         &mut self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
     ) -> hypertri::Result<usize> {
         let mut splits = 0;
         loop {
@@ -862,8 +862,8 @@ impl ExactBooleanAssemblyPlan {
     #[cfg(test)]
     pub(crate) fn validate_against_sources(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
         selection: ExactRegionSelection,
     ) -> hypertri::Result<()> {
         self.validate()?;
@@ -905,8 +905,8 @@ fn assembly_vertex_lies_on_source_face(
     assembly: &ExactBooleanAssemblyPlan,
     triangle: &ExactOutputTriangle,
     vertex: usize,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> hypertri::Result<bool> {
     let mesh = match triangle.source_side {
         MeshSide::Left => left,
@@ -928,16 +928,14 @@ fn assembly_vertex_lies_on_source_face(
 pub(super) fn hypertri_error_to_mesh_error(
     context: &'static str,
     error: hypertri::Error,
-) -> ExactMeshError {
+) -> MeshError {
     let kind = match &error {
-        hypertri::Error::PredicateUndecided { .. } => ExactMeshBlockerKind::UndecidablePredicate,
-        hypertri::Error::InvalidInput { .. } => ExactMeshBlockerKind::StaleFactReplay,
-        hypertri::Error::NoEarFound => ExactMeshBlockerKind::ExactConstructionFailure,
-        hypertri::Error::UnsupportedFeature { .. } => {
-            ExactMeshBlockerKind::UnsupportedExactOperation
-        }
+        hypertri::Error::PredicateUndecided { .. } => MeshBlockerKind::UndecidablePredicate,
+        hypertri::Error::InvalidInput { .. } => MeshBlockerKind::StaleFactReplay,
+        hypertri::Error::NoEarFound => MeshBlockerKind::ExactConstructionFailure,
+        hypertri::Error::UnsupportedFeature { .. } => MeshBlockerKind::UnsupportedExactOperation,
     };
-    ExactMeshError::one(ExactMeshBlocker::new(kind, format!("{context}: {error}")))
+    MeshError::one(MeshBlocker::new(kind, format!("{context}: {error}")))
 }
 
 fn assembly_vertex_lies_strictly_on_projected_edge(
@@ -1019,8 +1017,8 @@ fn validate_output_triangle_distinct_points(
 /// depend on.
 pub(crate) fn validate_assembly_source_face_incidence(
     assembly: &ExactBooleanAssemblyPlan,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> hypertri::Result<()> {
     let has_graph_vertex_source = assembly
         .vertices
@@ -1083,8 +1081,8 @@ pub(crate) fn validate_assembly_source_face_incidence(
 
 fn validate_assembly_output_vertex_source_against_sources(
     vertex: &ExactOutputVertex,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     replayed_region_plan: Option<&ExactFaceRegionPlan>,
 ) -> hypertri::Result<()> {
     match &vertex.source {
@@ -1186,7 +1184,7 @@ fn validate_assembly_graph_vertex_source_against_region_plan(
 
 fn validate_assembly_face_interior_source_against_face(
     source: &FaceSplitBoundaryNode,
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     source_face: usize,
 ) -> hypertri::Result<()> {
     let FaceSplitBoundaryNode::FaceInterior { point } = source else {
@@ -1230,7 +1228,7 @@ fn validate_assembly_face_interior_source_against_face(
 fn validate_output_triangle_source_orientation(
     assembly: &ExactBooleanAssemblyPlan,
     triangle: &ExactOutputTriangle,
-    mesh: &ExactMesh,
+    mesh: &Mesh,
 ) -> hypertri::Result<()> {
     let projection = choose_region_projection(mesh, triangle.source_face)?;
     let source_points = retained_source_face_points(
@@ -1287,8 +1285,8 @@ fn validate_output_triangle_source_orientation(
 /// (2001), with exact projected coordinates supplied by `hypertri`.
 pub(crate) fn triangulate_face_regions_with_earcut(
     regions: &ExactFaceRegionPlan,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> hypertri::Result<Vec<FaceRegionTriangulation>> {
     regions
         .regions
@@ -1325,8 +1323,8 @@ pub(crate) fn triangulate_face_regions_with_earcut(
 /// them into downstream combinatorics.
 pub(crate) fn checked_triangulate_face_regions_with_earcut(
     regions: &ExactFaceRegionPlan,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> hypertri::Result<Vec<FaceRegionTriangulation>> {
     let report = validate_face_region_plan(regions, left, right);
     if !report.blockers.is_empty() {
@@ -1352,7 +1350,7 @@ pub(crate) fn checked_triangulate_face_regions_with_earcut(
 
 fn assemble_region_triangulations_with_triangle_retention(
     triangulations: &[FaceRegionTriangulation],
-    sources: Option<(&ExactMesh, &ExactMesh)>,
+    sources: Option<(&Mesh, &Mesh)>,
     retain: &mut impl FnMut(&FaceRegionTriangulation, [usize; 3]) -> ExactRegionRetention,
 ) -> hypertri::Result<ExactBooleanAssemblyPlan> {
     let mut vertices = Vec::new();
@@ -1416,8 +1414,8 @@ fn orient_output_triangle_for_source(
     vertices: &[ExactOutputVertex],
     output_vertices: &mut [usize; 3],
     orientation: ExactOutputTriangleOrientation,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> hypertri::Result<()> {
     let source_mesh = match triangulation.side {
         MeshSide::Left => left,
@@ -1552,7 +1550,7 @@ fn vertex_fan_components(
         if let [left, right] = uses.as_slice() {
             // Two triangles are adjacent across a retained edge only when the
             // edge is traversed in opposite directions. Same-direction uses
-            // are separate sheets that must be split before ExactMesh
+            // are separate sheets that must be split before Mesh
             // validation, otherwise they materialize as duplicate directed
             // edges.
             if left.forward_from_vertex != right.forward_from_vertex {
@@ -1586,9 +1584,9 @@ fn classify_region_against_face_plane(
     region_face: usize,
     boundary: &[FaceSplitBoundaryNode],
     plane_side: MeshSide,
-    plane_mesh: &ExactMesh,
+    plane_mesh: &Mesh,
     plane_face: usize,
-) -> Result<FaceRegionPlaneClassification, ExactMeshError> {
+) -> Result<FaceRegionPlaneClassification, MeshError> {
     let face = plane_mesh.view().face(plane_face)?;
     let [a, b, c] = face.vertices()?;
     let mut predicates = Vec::with_capacity(boundary.len());
@@ -1613,7 +1611,7 @@ fn classify_region_against_face_plane(
 }
 
 pub(crate) fn choose_region_projection(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     face: usize,
 ) -> hypertri::Result<CoplanarProjection> {
     let [a, b, c] = retained_source_face_points(
@@ -1644,7 +1642,7 @@ pub(crate) fn choose_region_projection(
 }
 
 fn retained_source_face_points<'a>(
-    mesh: &'a ExactMesh,
+    mesh: &'a Mesh,
     face: usize,
     reason: &'static str,
 ) -> hypertri::Result<[&'a Point3; 3]> {
@@ -1730,10 +1728,10 @@ mod tests {
             original(1, p(1, 0, 0)),
             original(2, p(0, 1, 0)),
         ];
-        let mut plane_mesh = ExactMesh::from_i64_triangles_with_policy(
+        let mut plane_mesh = Mesh::from_i64_triangles_with_policy(
             &[0, 0, 1, 1, 0, 1, 0, 1, 1],
             &[0, 1, 2],
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .expect("test plane should construct");
         plane_mesh.facts.faces.clear();
@@ -1748,7 +1746,7 @@ mod tests {
         )
         .expect_err("stale retained face row should return a typed blocker");
         assert!(
-            error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+            error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
             "{error:?}"
         );
         assert_eq!(error.blockers()[0].face(), Some(0));
@@ -1779,16 +1777,16 @@ mod tests {
 
     #[test]
     fn assembly_source_incidence_rejects_stale_graph_vertex_source() {
-        let left = ExactMesh::from_i64_triangles_with_policy(
+        let left = Mesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0],
             &[0, 1, 2],
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let right = ExactMesh::from_i64_triangles_with_policy(
+        let right = Mesh::from_i64_triangles_with_policy(
             &[1, -1, -1, 1, 3, 1, 1, 3, -1],
             &[0, 1, 2],
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
 
@@ -1868,32 +1866,25 @@ mod tests {
         assembly.validate().unwrap();
         assert!(validate_assembly_source_face_incidence(&assembly, &left, &right).is_err());
         let error = assembly
-            .checked_to_exact_mesh_with_sources(
-                &left,
-                &right,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-            )
+            .checked_to_exact_mesh_with_sources(&left, &right, MeshValidationPolicy::ALLOW_BOUNDARY)
             .unwrap_err();
         assert!(
-            error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+            error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
             "{error:?}"
         );
     }
 
     #[test]
     fn assembly_source_incidence_rejects_face_interior_source_outside_triangle() {
-        let left = ExactMesh::from_i64_triangles_with_policy(
+        let left = Mesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 2, 0, 0, 0, 2, 0],
             &[0, 1, 2],
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let right = ExactMesh::from_i64_triangles_with_policy(
-            &[],
-            &[],
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .unwrap();
+        let right =
+            Mesh::from_i64_triangles_with_policy(&[], &[], MeshValidationPolicy::ALLOW_BOUNDARY)
+                .unwrap();
 
         let assembly = ExactBooleanAssemblyPlan {
             vertices: vec![
@@ -1921,32 +1912,25 @@ mod tests {
         assembly.validate().unwrap();
         assert!(validate_assembly_source_face_incidence(&assembly, &left, &right).is_err());
         let error = assembly
-            .checked_to_exact_mesh_with_sources(
-                &left,
-                &right,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-            )
+            .checked_to_exact_mesh_with_sources(&left, &right, MeshValidationPolicy::ALLOW_BOUNDARY)
             .unwrap_err();
         assert!(
-            error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+            error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
             "{error:?}"
         );
     }
 
     #[test]
     fn assembly_canonicalization_refines_exact_t_junctions_before_mesh_handoff() {
-        let left = ExactMesh::from_i64_triangles_with_policy(
+        let left = Mesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 2, 0, 0, 0, 2, 0],
             &[0, 1, 2],
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let right = ExactMesh::from_i64_triangles_with_policy(
-            &[],
-            &[],
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .unwrap();
+        let right =
+            Mesh::from_i64_triangles_with_policy(&[], &[], MeshValidationPolicy::ALLOW_BOUNDARY)
+                .unwrap();
 
         let mut assembly = ExactBooleanAssemblyPlan {
             vertices: vec![
@@ -2001,11 +1985,7 @@ mod tests {
         assert_eq!(triangle_sets, vec![[0, 2, 3], [1, 2, 3]]);
 
         let mesh = assembly
-            .checked_to_exact_mesh_with_sources(
-                &left,
-                &right,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-            )
+            .checked_to_exact_mesh_with_sources(&left, &right, MeshValidationPolicy::ALLOW_BOUNDARY)
             .unwrap();
         assert_eq!(mesh.facts().mesh.face_count, 2);
         assert_eq!(mesh.facts().mesh.boundary_edges, 4);

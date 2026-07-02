@@ -4,7 +4,7 @@
 </h1>
 
 `hypermesh` is the experimental exact 3D mesh-topology crate for the Hyper
-stack. Its primary type is `ExactMesh`: exact vertices, triangle topology,
+stack. Its primary type is `Mesh`: exact vertices, triangle topology,
 retained validation facts, exact bounds, construction provenance, and cached
 predicate evidence.
 
@@ -23,24 +23,24 @@ planning, winding, and mesh assembly.
 
 Application adapters and operation routing belong above this crate. `hypermesh`
 provides mesh-kernel storage, replayable acceleration facts, low-level exact
-algorithms, typed blockers, and `ExactMesh` convenience methods required by
+algorithms, typed blockers, and `Mesh` convenience methods required by
 downstream CSG layers.
 
 ## Public Surface
 
-`ExactMesh` is the entry point: it owns exact vertices, triangle topology,
+`Mesh` is the entry point: it owns exact vertices, triangle topology,
 validation facts, bounds, and construction provenance. It also carries the
 convenience methods downstream CSG layers need: `union`, `intersection`,
 `difference`, `xor`, `transform`, and `inverse`.
 
-The default crate root intentionally keeps that shape narrow: `ExactMesh` is the
+The default crate root intentionally keeps that shape narrow: `Mesh` is the
 normal import. Low-level kernel errors and borrowed views live under
 `hypermesh::kernel` for exact integrations that need them without becoming
 additional root entry points. Workspace routing, boundary policy, output policy,
 and product-facing reports belong above this crate rather than in the default
 public API.
 
-Borrowed queries start from `ExactMesh::view()`. Mesh, triangle, face, and edge
+Borrowed queries start from `Mesh::view()`. Mesh, triangle, face, and edge
 views avoid cloning mesh storage. Repeated pair queries use crate-internal
 prepared mesh-pair sessions that retain certificate-validated broad-phase facts,
 stream candidate face pairs with fallible early-stop support, and return typed
@@ -54,7 +54,7 @@ kernel internals unless a borrowed view is needed for exact query reuse.
 ## Precision Model
 
 Geometry is stored as `hyperreal::Real`. Finite `f64` coordinates enter through
-`ExactMesh::from_lossy_f64_triangles`, which imports by dyadic lifting with
+`Mesh::from_lossy_f64_triangles`, which imports by dyadic lifting with
 lossy provenance recorded explicitly; integer-grid input is lifted directly into
 exact `Real` values. Retained face planes keep unnormalized determinant
 coefficients instead of unit normals.
@@ -81,7 +81,7 @@ for difficult inputs.
 
 ## Status
 
-The default crate root centers on `ExactMesh`. Unsupported boolean,
+The default crate root centers on `Mesh`. Unsupported boolean,
 intersection, or simplification topology is reported as a typed blocker instead
 of falling back to tolerance-based geometry.
 
@@ -97,9 +97,9 @@ hypermesh = "0.3.0"
 The exact-facing path is the preferred boundary for new code:
 
 ```rust,ignore
-use hypermesh::ExactMesh;
+use hypermesh::Mesh;
 
-let mesh = ExactMesh::from_i64_triangles(
+let mesh = Mesh::from_i64_triangles(
     &[
         0, 0, 0,
         1, 0, 0,
@@ -149,9 +149,9 @@ Useful local checks:
 
 ```sh
 cargo check --all-targets
-cargo test --test kernel_exact_mesh
+cargo test --test kernel_mesh
 cargo test bounds::tests
 cargo check --manifest-path fuzz/Cargo.toml
-cargo fuzz run exact_mesh_input
-cargo fuzz run exact_integer_mesh_input
+cargo fuzz run mesh_input
+cargo fuzz run integer_mesh_input
 ```

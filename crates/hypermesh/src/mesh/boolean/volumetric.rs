@@ -14,7 +14,7 @@ mod witness;
 
 use hyperlimit::Point3;
 
-use super::super::ExactMesh;
+use super::super::Mesh;
 use super::super::graph::MeshSide;
 use super::region::{FaceRegionTriangulation, boundary_node_point};
 use super::winding::{
@@ -180,7 +180,7 @@ impl ExactVolumetricRegionClassification {
     pub(crate) fn validate_against_sources(
         &self,
         triangulation: &FaceRegionTriangulation,
-        target: &ExactMesh,
+        target: &Mesh,
     ) -> Result<(), ExactVolumetricRegionError> {
         self.validate_representatives_against_triangulation(triangulation)?;
         let replay = classify_triangulated_region_triangle_against_closed_mesh(
@@ -241,7 +241,7 @@ pub(crate) enum ExactVolumetricRegionError {
 pub(crate) fn classify_triangulated_region_triangle_against_closed_mesh(
     triangulation: &FaceRegionTriangulation,
     triangle: [usize; 3],
-    target: &ExactMesh,
+    target: &Mesh,
 ) -> Result<ExactVolumetricRegionClassification, ExactVolumetricRegionError> {
     triangulation
         .validate()
@@ -292,8 +292,8 @@ pub(crate) fn classify_triangulated_region_triangle_against_closed_mesh(
 /// Classify every split-region triangle against its opposite closed mesh.
 pub(crate) fn classify_triangulated_regions_against_opposite_meshes(
     triangulations: &[FaceRegionTriangulation],
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> Result<Vec<ExactVolumetricRegionClassification>, ExactVolumetricRegionError> {
     let mut classifications = Vec::new();
     for triangulation in triangulations {
@@ -325,7 +325,7 @@ fn relation_from_winding(relation: ClosedMeshWindingRelation) -> ExactVolumetric
 fn classify_witness_attempt(
     witness: ExactTriangleInteriorWitness,
     representative: Point3,
-    target: &ExactMesh,
+    target: &Mesh,
 ) -> Result<ExactVolumetricWitnessAttempt, ExactVolumetricRegionError> {
     let winding = classify_point_against_closed_mesh_winding_report(&representative, target);
     winding

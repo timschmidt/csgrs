@@ -10,7 +10,7 @@ use std::cmp::Ordering;
 
 use hyperlimit::{PlaneSide, Point3, compare_reals, orient3d_report};
 
-use super::super::ExactMesh;
+use super::super::Mesh;
 use hyperlimit::PredicateUse;
 use hyperreal::Real;
 
@@ -330,8 +330,8 @@ impl ConvexSolidMeshClassification {
     /// source meshes.
     pub(crate) fn validate_against_sources(
         &self,
-        subject: &ExactMesh,
-        solid: &ExactMesh,
+        subject: &Mesh,
+        solid: &Mesh,
     ) -> Result<(), ConvexSolidReportError> {
         self.validate()?;
         if self == &classify_mesh_vertices_against_convex_solid_report(subject, solid) {
@@ -351,7 +351,7 @@ impl ConvexSolidMeshClassification {
 /// volume convention used here, interior points of a positively oriented
 /// closed surface therefore lie on the above side of every face. The signed
 /// volume orientation is exact `Real` arithmetic and is compared through
-pub(crate) fn certify_convex_solid(mesh: &ExactMesh) -> ConvexSolidFacts {
+pub(crate) fn certify_convex_solid(mesh: &Mesh) -> ConvexSolidFacts {
     if !mesh.facts().mesh.closed_manifold {
         return ConvexSolidFacts {
             orientation: ClosedMeshOrientation::NotClosed,
@@ -423,7 +423,7 @@ pub(crate) fn certify_convex_solid(mesh: &ExactMesh) -> ConvexSolidFacts {
 /// boolean-like answer.
 pub(crate) fn classify_point_against_convex_solid_report(
     point: &Point3,
-    solid: &ExactMesh,
+    solid: &Mesh,
 ) -> ConvexSolidPointClassification {
     let facts = certify_convex_solid(solid);
     classify_point_with_convex_facts_report(point, solid, &facts)
@@ -437,8 +437,8 @@ pub(crate) fn classify_point_against_convex_solid_report(
 /// contract used throughout the port: predicates and uncertainty stay explicit
 /// at API boundaries.
 pub(crate) fn classify_mesh_vertices_against_convex_solid_report(
-    subject: &ExactMesh,
-    solid: &ExactMesh,
+    subject: &Mesh,
+    solid: &Mesh,
 ) -> ConvexSolidMeshClassification {
     let facts = certify_convex_solid(solid);
     if !facts.is_certified_convex() {
@@ -493,7 +493,7 @@ pub(crate) fn classify_mesh_vertices_against_convex_solid_report(
 
 fn classify_point_with_convex_facts_report(
     point: &Point3,
-    solid: &ExactMesh,
+    solid: &Mesh,
     facts: &ConvexSolidFacts,
 ) -> ConvexSolidPointClassification {
     if !facts.is_certified_convex() {
@@ -540,7 +540,7 @@ fn classify_point_with_convex_facts_report(
     }
 }
 
-pub(crate) fn exact_mesh_orientation(mesh: &ExactMesh) -> ClosedMeshOrientation {
+pub(crate) fn exact_mesh_orientation(mesh: &Mesh) -> ClosedMeshOrientation {
     let mut signed_volume = Real::from(0);
     for face in mesh.view().faces() {
         let Ok([a, b, c]) = face.vertices() else {

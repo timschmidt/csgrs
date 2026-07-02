@@ -23,7 +23,7 @@ use hyperlimit::{
 };
 use hypertri::Constraint;
 
-use super::super::ExactMesh;
+use super::super::Mesh;
 use super::super::graph::intersection::MeshFacePairRelation;
 #[cfg(test)]
 use super::super::graph::validate_face_region_plan;
@@ -70,8 +70,8 @@ struct CoplanarCellEdgePoint {
 /// validation or assembly can consume it.
 pub(crate) fn triangulate_all_face_cells_with_cdt(
     graph: &ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> hypertri::Result<Option<(ExactFaceRegionPlan, Vec<FaceRegionTriangulation>)>> {
     let topology = match graph.checked_split_topology_plan() {
         Ok(topology) => topology,
@@ -122,8 +122,8 @@ pub(crate) fn validate_face_cell_cdt_against_sources(
     graph: &ExactIntersectionGraph,
     regions: &ExactFaceRegionPlan,
     triangulations: &[FaceRegionTriangulation],
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> hypertri::Result<()> {
     if !validate_face_region_plan(regions, left, right)
         .blockers
@@ -162,9 +162,9 @@ fn triangulate_one_face_cell_graph(
     coplanar_splits: &CoplanarOverlapSplitPlan,
     side: MeshSide,
     face: usize,
-    mesh: &ExactMesh,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    mesh: &Mesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> hypertri::Result<Option<(FaceRegionBoundary, FaceRegionTriangulation)>> {
     let source_triangle =
         source_face_vertices(mesh, face, "face cell references a missing source face")?;
@@ -302,7 +302,7 @@ fn triangulate_one_face_cell_graph(
 }
 
 fn seed_source_triangle_face_cell_boundary(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     source_triangle: [usize; 3],
     boundary: &mut Vec<FaceSplitBoundaryNode>,
 ) -> hypertri::Result<()> {
@@ -326,8 +326,8 @@ fn append_non_coplanar_face_cell_constraints(
     topology: &ExactSplitTopologyPlan,
     side: MeshSide,
     face: usize,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     boundary: &mut Vec<FaceSplitBoundaryNode>,
     interior_constraints: &mut Vec<Constraint>,
     unique_interior_constraints: &mut BTreeSet<(usize, usize)>,
@@ -414,8 +414,8 @@ fn append_coplanar_face_cell_constraints(
     split_plan: &CoplanarOverlapSplitPlan,
     side: MeshSide,
     face: usize,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     boundary: &mut Vec<FaceSplitBoundaryNode>,
     constraints: &mut Vec<Constraint>,
     unique_constraints: &mut BTreeSet<(usize, usize)>,
@@ -550,8 +550,8 @@ fn append_coplanar_face_cell_constraints(
 fn seed_contained_coplanar_opposite_edge_endpoints(
     side: MeshSide,
     face: usize,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     edges: &mut [CoplanarCellEdge],
 ) -> hypertri::Result<()> {
     let opposite_side = match side {
@@ -590,8 +590,8 @@ fn seed_contained_coplanar_opposite_edge_endpoints(
 fn seed_source_boundary_vertices_on_coplanar_opposite_edges(
     side: MeshSide,
     face: usize,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     edges: &mut [CoplanarCellEdge],
 ) -> hypertri::Result<()> {
     let source_mesh = match side {
@@ -653,8 +653,8 @@ fn seed_source_boundary_vertices_on_coplanar_opposite_edges(
 fn seed_source_boundary_edge_crossings_on_coplanar_opposite_edges(
     side: MeshSide,
     face: usize,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     edges: &mut [CoplanarCellEdge],
 ) -> hypertri::Result<()> {
     let source_mesh = match side {
@@ -752,8 +752,8 @@ fn coplanar_opposite_edges(
     left_face: usize,
     right_face: usize,
     side: MeshSide,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> hypertri::Result<Vec<CoplanarCellEdge>> {
     let (mesh, face) = match side {
         MeshSide::Left => (right, right_face),
@@ -786,8 +786,8 @@ fn coplanar_edges_incident_to_vertex(edges: &[CoplanarCellEdge], vertex: usize) 
 fn vertex_point_for_side(
     side: MeshSide,
     vertex: usize,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> hypertri::Result<Point3> {
     let mesh = match side {
         MeshSide::Left => left,
@@ -801,7 +801,7 @@ fn vertex_point_for_side(
 }
 
 fn source_face_vertices(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     face: usize,
     reason: &'static str,
 ) -> hypertri::Result<[usize; 3]> {
@@ -812,7 +812,7 @@ fn source_face_vertices(
 }
 
 fn source_face_points<'a>(
-    mesh: &'a ExactMesh,
+    mesh: &'a Mesh,
     face: usize,
     reason: &'static str,
 ) -> hypertri::Result<[&'a Point3; 3]> {
@@ -824,7 +824,7 @@ fn source_face_points<'a>(
 }
 
 fn source_vertex_ref<'a>(
-    mesh: &'a ExactMesh,
+    mesh: &'a Mesh,
     vertex: usize,
     reason: &'static str,
 ) -> hypertri::Result<&'a Point3> {
@@ -835,7 +835,7 @@ fn source_vertex_ref<'a>(
 }
 
 fn source_vertex_point(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     vertex: usize,
     reason: &'static str,
 ) -> hypertri::Result<Point3> {
@@ -981,7 +981,7 @@ fn append_closed_constraint_loop_triangles(
 }
 
 fn lift_projected_face_cell_point(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     face: usize,
     projection: CoplanarProjection,
     point: &hypertri::ExactPoint,
@@ -1549,8 +1549,8 @@ fn append_subdivided_source_boundary_constraints(
 fn point_lies_in_face_pair_overlap(
     point: &Point3,
     pair: &FacePairEvents,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> hypertri::Result<bool> {
     let left_location = classify_point_on_mesh_face(left, pair.left_face, point)?;
     let right_location = classify_point_on_mesh_face(right, pair.right_face, point)?;
@@ -1564,7 +1564,7 @@ fn point_lies_in_face_pair_overlap(
 }
 
 fn classify_point_on_mesh_face(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     face: usize,
     point: &Point3,
 ) -> hypertri::Result<TriangleLocation> {
@@ -1589,16 +1589,12 @@ fn classify_point_on_mesh_face(
 #[cfg(test)]
 mod tests {
     use super::super::super::graph::CoplanarOverlapSplitGraph;
-    use super::super::super::validation::ExactMeshValidationPolicy;
+    use super::super::super::validation::MeshValidationPolicy;
     use super::*;
 
-    fn open_triangle_mesh(pos: &[i64]) -> ExactMesh {
-        ExactMesh::from_i64_triangles_with_policy(
-            pos,
-            &[0, 1, 2],
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .unwrap()
+    fn open_triangle_mesh(pos: &[i64]) -> Mesh {
+        Mesh::from_i64_triangles_with_policy(pos, &[0, 1, 2], MeshValidationPolicy::ALLOW_BOUNDARY)
+            .unwrap()
     }
 
     fn ep(x: i64, y: i64) -> hypertri::ExactPoint {
@@ -1609,7 +1605,7 @@ mod tests {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
-    fn retained_source_boundary(mesh: &ExactMesh) -> Vec<FaceSplitBoundaryNode> {
+    fn retained_source_boundary(mesh: &Mesh) -> Vec<FaceSplitBoundaryNode> {
         mesh.view()
             .face(0)
             .unwrap()

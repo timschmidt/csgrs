@@ -1,8 +1,7 @@
 use hyperlimit::{Point3, SourceProvenance};
-use hypermesh::ExactMesh;
+use hypermesh::Mesh;
 use hypermesh::kernel::{
-    EdgeRef, ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, FaceRef, MeshView,
-    TriangleRef, VertexRef,
+    EdgeRef, FaceRef, MeshBlocker, MeshBlockerKind, MeshError, MeshView, TriangleRef, VertexRef,
 };
 use hyperreal::Real;
 
@@ -10,9 +9,9 @@ fn p(x: i64, y: i64, z: i64) -> Point3 {
     Point3::new(Real::from(x), Real::from(y), Real::from(z))
 }
 
-fn tetra(offset: [i64; 3]) -> ExactMesh {
+fn tetra(offset: [i64; 3]) -> Mesh {
     let [ox, oy, oz] = offset;
-    ExactMesh::new(
+    Mesh::new(
         vec![
             p(ox, oy, oz),
             p(ox + 1, oy, oz),
@@ -25,21 +24,21 @@ fn tetra(offset: [i64; 3]) -> ExactMesh {
     .unwrap()
 }
 
-fn vertices(mesh: &ExactMesh) -> &[Point3] {
+fn vertices(mesh: &Mesh) -> &[Point3] {
     mesh.view().vertices()
 }
 
-fn triangle_count(mesh: &ExactMesh) -> usize {
+fn triangle_count(mesh: &Mesh) -> usize {
     mesh.view().face_count()
 }
 
-fn triangle_indices(mesh: &ExactMesh) -> impl ExactSizeIterator<Item = [usize; 3]> + '_ {
+fn triangle_indices(mesh: &Mesh) -> impl ExactSizeIterator<Item = [usize; 3]> + '_ {
     mesh.view().triangles().map(TriangleRef::vertex_indices)
 }
 
 #[test]
-fn exact_mesh_named_boolean_methods_materialize_meshes() {
-    let empty = ExactMesh::new(
+fn mesh_named_boolean_methods_materialize_meshes() {
+    let empty = Mesh::new(
         Vec::new(),
         Vec::new(),
         SourceProvenance::exact("empty test mesh"),
@@ -65,8 +64,8 @@ fn exact_mesh_named_boolean_methods_materialize_meshes() {
 }
 
 #[test]
-fn exact_mesh_borrowed_view_materializes_named_operations() {
-    let empty = ExactMesh::new(
+fn mesh_borrowed_view_materializes_named_operations() {
+    let empty = Mesh::new(
         Vec::new(),
         Vec::new(),
         SourceProvenance::exact("empty test mesh"),
@@ -92,7 +91,7 @@ fn exact_mesh_borrowed_view_materializes_named_operations() {
 }
 
 #[test]
-fn exact_mesh_borrowed_view_exposes_retained_facts() {
+fn mesh_borrowed_view_exposes_retained_facts() {
     let mesh = tetra([0, 0, 0]);
     let view: MeshView<'_> = mesh.view();
     let mesh_view: MeshView<'_> = view;
@@ -134,7 +133,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let missing_vertex = view.vertex(view.vertex_count()).unwrap_err();
     assert_eq!(
         missing_vertex.blockers()[0].kind(),
-        ExactMeshBlockerKind::IndexOutOfBounds
+        MeshBlockerKind::IndexOutOfBounds
     );
     assert_eq!(
         missing_vertex.blockers()[0].vertex(),
@@ -175,7 +174,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let missing_face = view.face(view.face_count()).unwrap_err();
     assert_eq!(
         missing_face.blockers()[0].kind(),
-        ExactMeshBlockerKind::IndexOutOfBounds
+        MeshBlockerKind::IndexOutOfBounds
     );
     assert_eq!(missing_face.blockers()[0].face(), Some(view.face_count()));
 
@@ -188,7 +187,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     assert_eq!(view.face_bounds(0).unwrap(), (&p(0, 0, 0), &p(1, 1, 0)));
     assert_eq!(
         view.face_bounds(view.face_count()).unwrap_err().blockers()[0].kind(),
-        ExactMeshBlockerKind::IndexOutOfBounds
+        MeshBlockerKind::IndexOutOfBounds
     );
     assert_eq!(face.bounds().unwrap(), (&p(0, 0, 0), &p(1, 1, 0)));
     assert_eq!(
@@ -208,7 +207,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let missing_face_row = view.face(view.face_count()).unwrap_err();
     assert_eq!(
         missing_face_row.blockers()[0].kind(),
-        ExactMeshBlockerKind::IndexOutOfBounds
+        MeshBlockerKind::IndexOutOfBounds
     );
     assert_eq!(
         missing_face_row.blockers()[0].face(),
@@ -239,7 +238,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let missing_edge = view.edge(view.edge_count()).unwrap_err();
     assert_eq!(
         missing_edge.blockers()[0].kind(),
-        ExactMeshBlockerKind::IndexOutOfBounds
+        MeshBlockerKind::IndexOutOfBounds
     );
     assert_eq!(missing_edge.blockers()[0].edge(), None);
 
@@ -249,7 +248,7 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
     let missing_edge_bounds = view.edge_bounds(view.edge_count()).unwrap_err();
     assert_eq!(
         missing_edge_bounds.blockers()[0].kind(),
-        ExactMeshBlockerKind::IndexOutOfBounds
+        MeshBlockerKind::IndexOutOfBounds
     );
     assert_eq!(missing_edge_bounds.blockers()[0].edge(), None);
     assert_eq!(edge.incident_face_count(), 2);
@@ -298,7 +297,7 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
             let missing_vertex = view.vertex(view.vertex_count()).unwrap_err();
             assert_eq!(
                 missing_vertex.blockers()[0].kind(),
-                ExactMeshBlockerKind::IndexOutOfBounds
+                MeshBlockerKind::IndexOutOfBounds
             );
             assert_eq!(
                 missing_vertex.blockers()[0].vertex(),
@@ -307,12 +306,12 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
             let missing_edge = view.edge(view.edge_count()).unwrap_err();
             assert_eq!(
                 missing_edge.blockers()[0].kind(),
-                ExactMeshBlockerKind::IndexOutOfBounds
+                MeshBlockerKind::IndexOutOfBounds
             );
             let missing_face_cell = view.face_cell(view.face_cell_count()).unwrap_err();
             assert_eq!(
                 missing_face_cell.blockers()[0].kind(),
-                ExactMeshBlockerKind::IndexOutOfBounds
+                MeshBlockerKind::IndexOutOfBounds
             );
 
             if let Ok(vertex) = view.vertex(0) {
@@ -368,7 +367,7 @@ fn exact_arrangement_borrowed_view_exposes_retained_topology_counts() {
 }
 
 #[test]
-fn exact_mesh_transform_and_inverse_replay_retained_state() {
+fn mesh_transform_and_inverse_replay_retained_state() {
     let mesh = tetra([0, 0, 0]);
     let translated = mesh
         .transform([
@@ -405,7 +404,7 @@ fn exact_mesh_transform_and_inverse_replay_retained_state() {
 }
 
 #[test]
-fn exact_mesh_borrowed_view_transform_and_inverse_replay_retained_state() {
+fn mesh_borrowed_view_transform_and_inverse_replay_retained_state() {
     let mesh = tetra([0, 0, 0]);
 
     let translated = mesh
@@ -438,7 +437,7 @@ fn exact_mesh_borrowed_view_transform_and_inverse_replay_retained_state() {
 }
 
 #[test]
-fn exact_mesh_transform_accepts_homogeneous_affine_rows() {
+fn mesh_transform_accepts_homogeneous_affine_rows() {
     let mesh = tetra([0, 0, 0]);
     let transformed = mesh
         .transform([
@@ -454,7 +453,7 @@ fn exact_mesh_transform_accepts_homogeneous_affine_rows() {
 }
 
 #[test]
-fn exact_mesh_transform_rejects_non_affine_homogeneous_rows() {
+fn mesh_transform_rejects_non_affine_homogeneous_rows() {
     let mesh = tetra([0, 0, 0]);
     let error = mesh
         .transform([
@@ -467,19 +466,19 @@ fn exact_mesh_transform_rejects_non_affine_homogeneous_rows() {
 
     assert_eq!(
         error.blockers()[0].kind(),
-        ExactMeshBlockerKind::UnsupportedExactOperation
+        MeshBlockerKind::UnsupportedExactOperation
     );
 }
 
 #[test]
-fn exact_mesh_error_names_cover_kernel_blockers() {
-    let error: ExactMeshError = ExactMesh::new(
+fn mesh_error_names_cover_kernel_blockers() {
+    let error: MeshError = Mesh::new(
         vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)],
         vec![[0, 1, 3]],
         SourceProvenance::exact("invalid test mesh"),
     )
     .unwrap_err();
-    let blocker: ExactMeshBlocker = error.blockers()[0].clone();
+    let blocker: MeshBlocker = error.blockers()[0].clone();
 
     assert_eq!(blocker.face(), Some(0));
     assert_eq!(blocker.vertex(), Some(3));

@@ -8,7 +8,7 @@ use crate::mesh::arrangement3d::cell_complex::{
 };
 use crate::mesh::arrangement3d::loop_triangulation::projected_loop_orientation;
 use crate::mesh::boolean::ExactBooleanOperation;
-use crate::mesh::validation::ExactMeshValidationPolicy;
+use crate::mesh::validation::MeshValidationPolicy;
 use hyperlimit::{RingPointLocation, classify_point_ring_even_odd, projected_polygon_area2_value};
 
 fn p3(x: i64, y: i64, z: i64) -> Point3 {
@@ -29,10 +29,10 @@ fn rational_p3(x: [i64; 2], y: [i64; 2], z: [i64; 2]) -> Point3 {
 
 #[test]
 fn retained_arrangement_face_vertices_reports_stale_rows() {
-    let mesh = ExactMesh::from_i64_triangles_with_policy(
+    let mesh = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
 
@@ -434,8 +434,8 @@ fn arrangement_edge_user_index_buckets_exact_rational_edges() {
     assert!(index.unkeyed_edges.is_empty());
 }
 
-fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
-    ExactMesh::from_i64_triangles(
+fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> Mesh {
+    Mesh::from_i64_triangles(
         &[
             a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
         ],
@@ -444,7 +444,7 @@ fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactM
     .unwrap()
 }
 
-fn two_tetrahedra_i64(tetrahedra: &[[[i64; 3]; 4]]) -> ExactMesh {
+fn two_tetrahedra_i64(tetrahedra: &[[[i64; 3]; 4]]) -> Mesh {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
     for tetrahedron in tetrahedra {
@@ -467,7 +467,7 @@ fn two_tetrahedra_i64(tetrahedra: &[[[i64; 3]; 4]]) -> ExactMesh {
             start + 3,
         ]);
     }
-    ExactMesh::from_i64_triangles(&vertices, &triangles).unwrap()
+    Mesh::from_i64_triangles(&vertices, &triangles).unwrap()
 }
 
 #[test]
@@ -495,7 +495,7 @@ fn arrangement_from_retained_graph_matches_mesh_construction() {
     from_graph.validate().unwrap();
 }
 
-fn tetrahedron_with_reversed_inner_i64(outer: [[i64; 3]; 4], inner: [[i64; 3]; 4]) -> ExactMesh {
+fn tetrahedron_with_reversed_inner_i64(outer: [[i64; 3]; 4], inner: [[i64; 3]; 4]) -> Mesh {
     let mut vertices = Vec::new();
     for point in outer.iter().chain(inner.iter()) {
         vertices.extend(point);
@@ -518,14 +518,14 @@ fn tetrahedron_with_reversed_inner_i64(outer: [[i64; 3]; 4], inner: [[i64; 3]; 4
             inner_start + tri[1],
         ]);
     }
-    ExactMesh::from_i64_triangles(&vertices, &triangles).unwrap()
+    Mesh::from_i64_triangles(&vertices, &triangles).unwrap()
 }
 
-fn open_triangle_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3]) -> ExactMesh {
-    ExactMesh::from_i64_triangles_with_policy(
+fn open_triangle_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3]) -> Mesh {
+    Mesh::from_i64_triangles_with_policy(
         &[a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap()
 }

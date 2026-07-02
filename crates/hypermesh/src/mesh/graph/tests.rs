@@ -1,5 +1,5 @@
 use super::*;
-use crate::mesh::ExactMesh;
+use crate::mesh::Mesh;
 use crate::mesh::boolean::cells::{
     triangulate_all_face_cells_with_cdt, validate_face_cell_cdt_against_sources,
 };
@@ -7,8 +7,8 @@ use crate::mesh::boolean::region::{
     FaceRegionPlaneRelation, checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut,
 };
-use crate::mesh::error::ExactMeshBlockerKind;
-use crate::mesh::validation::ExactMeshValidationPolicy;
+use crate::mesh::error::MeshBlockerKind;
+use crate::mesh::validation::MeshValidationPolicy;
 
 fn q(numerator: i64, denominator: i64) -> Real {
     (Real::from(numerator) / &Real::from(denominator)).expect("nonzero denominator")
@@ -38,22 +38,22 @@ fn split_point(point: Point3, parameter: Real, face_pair: [usize; 2]) -> EdgeSpl
 
 #[test]
 fn face_region_stage_replays_from_internal_graph() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[1, -1, -1, 1, 3, 1, 1, 3, -1],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let stale_right = ExactMesh::from_i64_triangles_with_policy(
+    let stale_right = Mesh::from_i64_triangles_with_policy(
         &[8, -1, -1, 8, 3, 1, 8, 3, -1],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
@@ -94,16 +94,16 @@ fn face_region_stage_replays_from_internal_graph() {
 
 #[test]
 fn face_split_geometry_reports_stale_source_rows() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[1, -1, -1, 1, 3, 1, 1, 3, -1],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
@@ -114,7 +114,7 @@ fn face_split_geometry_reports_stale_source_rows() {
         .face_split_geometry_plan(&stale_face_left, &right)
         .unwrap_err();
     assert!(
-        error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
         "{error:?}"
     );
     assert_eq!(error.blockers()[0].face(), Some(0));
@@ -125,7 +125,7 @@ fn face_split_geometry_reports_stale_source_rows() {
         .face_split_geometry_plan(&stale_vertex_left, &right)
         .unwrap_err();
     assert!(
-        error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
         "{error:?}"
     );
     assert_eq!(error.blockers()[0].vertex(), Some(0));
@@ -133,7 +133,7 @@ fn face_split_geometry_reports_stale_source_rows() {
 
 #[test]
 fn face_cell_cdt_replays_from_internal_graph() {
-    let left = ExactMesh::from_i64_triangles(
+    let left = Mesh::from_i64_triangles(
         &[
             0, 0, 0, //
             4, 0, 0, //
@@ -151,12 +151,12 @@ fn face_cell_cdt_replays_from_internal_graph() {
         ],
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles(
+    let right = Mesh::from_i64_triangles(
         &[1, 1, 1, 5, 1, 1, 1, 5, 1, 1, 1, 5],
         &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
     )
     .unwrap();
-    let separated_right = ExactMesh::from_i64_triangles(
+    let separated_right = Mesh::from_i64_triangles(
         &[10, 10, 10, 11, 10, 10, 10, 11, 10, 10, 10, 11],
         &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
     )
@@ -200,16 +200,16 @@ fn face_cell_cdt_replays_from_internal_graph() {
 
 #[test]
 fn intersection_graph_skips_face_preparation_for_disjoint_mesh_bounds() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 2, 0, 0, 0, 2, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[10, 0, 0, 12, 0, 0, 10, 2, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
 
@@ -221,16 +221,16 @@ fn intersection_graph_skips_face_preparation_for_disjoint_mesh_bounds() {
 
 #[test]
 fn intersection_graph_retains_coplanar_face_pair_events_internal() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 2, 0, 0, 0, 2, 0, 9, 9, 9],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 1, 0, 0, 0, 1, 0, -9, -9, -9],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
 
@@ -276,7 +276,7 @@ fn intersection_graph_retains_coplanar_face_pair_events_internal() {
         .coplanar_overlap_split_plan(&stale_left, &right)
         .unwrap_err();
     assert!(
-        split_error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        split_error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
         "{split_error:?}"
     );
     assert_eq!(split_error.blockers()[0].vertex(), Some(0));
@@ -297,10 +297,10 @@ fn intersection_graph_retains_coplanar_face_pair_events_internal() {
             .validate_against_sources(&left, &right)
             .is_err()
     );
-    let separated_right = ExactMesh::from_i64_triangles_with_policy(
+    let separated_right = Mesh::from_i64_triangles_with_policy(
         &[9, 0, 0, 10, 0, 0, 9, 1, 0, -9, -9, -9],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     assert!(
@@ -312,16 +312,16 @@ fn intersection_graph_retains_coplanar_face_pair_events_internal() {
 
 #[test]
 fn coplanar_overlap_extraction_rejects_missing_projection() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 2, 0, 0, 0, 2, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 1, 0, 0, 0, 1, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let mut graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
@@ -345,23 +345,23 @@ fn coplanar_overlap_extraction_rejects_missing_projection() {
         .coplanar_overlap_split_plan(&left, &right)
         .unwrap_err();
     assert!(
-        split_error.has_only_blocker_kinds(&[ExactMeshBlockerKind::MissingRequiredEvidence]),
+        split_error.has_only_blocker_kinds(&[MeshBlockerKind::MissingRequiredEvidence]),
         "{split_error:?}"
     );
 }
 
 #[test]
 fn face_pair_candidate_retains_source_plane_split_events_internal() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[1, -1, -1, 1, 3, 1, 1, 3, -1],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
 
@@ -412,7 +412,7 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
+        MeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         prepared_pair
@@ -420,7 +420,7 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        ExactMeshBlockerKind::MissingRequiredEvidence
+        MeshBlockerKind::MissingRequiredEvidence
     );
     assert_eq!(
         prepared_pair
@@ -428,7 +428,7 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        ExactMeshBlockerKind::StaleFactReplay
+        MeshBlockerKind::StaleFactReplay
     );
     let retained_pair = graph
         .face_pairs
@@ -457,10 +457,10 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
     stale_graph.face_pairs[0].events.clear();
     assert!(stale_graph.validate_against_sources(&left, &right).is_err());
 
-    let separated_right = ExactMesh::from_i64_triangles_with_policy(
+    let separated_right = Mesh::from_i64_triangles_with_policy(
         &[9, -1, -1, 9, 3, 1, 9, 3, -1],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     assert!(
@@ -520,7 +520,7 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
         noncanonical_chain_error
             .blockers()
             .iter()
-            .any(|blocker| blocker.source_side() == Some(ExactMeshSourceSide::Left)),
+            .any(|blocker| blocker.source_side() == Some(MeshSourceSide::Left)),
         "{noncanonical_chain_error:?}"
     );
     let mut duplicate_chain_geometry = geometry.clone();

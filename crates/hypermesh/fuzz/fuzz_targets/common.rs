@@ -1,6 +1,6 @@
-use hypermesh::ExactMesh;
+use hypermesh::Mesh;
 
-pub fn exercise_mesh_kernel_pair(left: &ExactMesh, right: &ExactMesh) {
+pub fn exercise_mesh_kernel_pair(left: &Mesh, right: &Mesh) {
     let left_view = left.view();
     let right_view = right.view();
 
@@ -20,7 +20,7 @@ pub fn exercise_mesh_kernel_pair(left: &ExactMesh, right: &ExactMesh) {
     }
 }
 
-pub fn generated_tetra_pair(data: &[u8]) -> Option<(ExactMesh, ExactMesh)> {
+pub fn generated_tetra_pair(data: &[u8]) -> Option<(Mesh, Mesh)> {
     if data.len() < 6 {
         return None;
     }
@@ -37,8 +37,8 @@ pub fn generated_tetra_pair(data: &[u8]) -> Option<(ExactMesh, ExactMesh)> {
     ))
 }
 
-fn tetrahedron(offset: [i64; 3], scale: i64) -> Option<ExactMesh> {
-    ExactMesh::from_i64_triangles(
+fn tetrahedron(offset: [i64; 3], scale: i64) -> Option<Mesh> {
+    Mesh::from_i64_triangles(
         &[
             offset[0],
             offset[1],

@@ -4,7 +4,7 @@ use std::fmt;
 
 /// Stable category for a mesh blocker.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactMeshBlockerKind {
+pub enum MeshBlockerKind {
     /// Coordinate buffer length is not divisible by three.
     VertexBufferArity,
     /// Index buffer length is not divisible by three.
@@ -48,7 +48,7 @@ pub enum ExactMeshBlockerKind {
 
 /// Source operand named by a kernel blocker, when the blocker comes from a mesh pair.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactMeshSourceSide {
+pub enum MeshSourceSide {
     /// The left/input-first mesh.
     Left,
     /// The right/input-second mesh.
@@ -57,9 +57,9 @@ pub enum ExactMeshSourceSide {
 
 /// One fatal validation or import blocker.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ExactMeshBlocker {
+pub struct MeshBlocker {
     /// Stable category.
-    pub(crate) kind: ExactMeshBlockerKind,
+    pub(crate) kind: MeshBlockerKind,
     /// Human-readable detail.
     pub(crate) message: String,
     /// Optional vertex index.
@@ -71,12 +71,12 @@ pub struct ExactMeshBlocker {
     /// Optional undirected edge endpoints.
     pub(crate) edge: Option<[usize; 2]>,
     /// Optional source operand for pair-stage blockers.
-    pub(crate) source_side: Option<ExactMeshSourceSide>,
+    pub(crate) source_side: Option<MeshSourceSide>,
 }
 
-impl ExactMeshBlocker {
+impl MeshBlocker {
     /// Build a blocker with no object location.
-    pub(crate) fn new(kind: ExactMeshBlockerKind, message: impl Into<String>) -> Self {
+    pub(crate) fn new(kind: MeshBlockerKind, message: impl Into<String>) -> Self {
         Self {
             kind,
             message: message.into(),
@@ -89,7 +89,7 @@ impl ExactMeshBlocker {
     }
 
     /// Attach a source operand side.
-    pub(crate) const fn with_source_side(mut self, source_side: ExactMeshSourceSide) -> Self {
+    pub(crate) const fn with_source_side(mut self, source_side: MeshSourceSide) -> Self {
         self.source_side = Some(source_side);
         self
     }
@@ -119,7 +119,7 @@ impl ExactMeshBlocker {
     }
 
     /// Stable blocker category.
-    pub const fn kind(&self) -> ExactMeshBlockerKind {
+    pub const fn kind(&self) -> MeshBlockerKind {
         self.kind
     }
 
@@ -149,39 +149,39 @@ impl ExactMeshBlocker {
     }
 
     /// Source operand provenance, when the blocker came from a mesh-pair stage.
-    pub const fn source_side(&self) -> Option<ExactMeshSourceSide> {
+    pub const fn source_side(&self) -> Option<MeshSourceSide> {
         self.source_side
     }
 }
 
 /// Error returned when mesh construction has one or more fatal blockers.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ExactMeshError {
+pub struct MeshError {
     /// Blockers collected before construction stopped.
-    pub(crate) blockers: Vec<ExactMeshBlocker>,
+    pub(crate) blockers: Vec<MeshBlocker>,
 }
 
-impl ExactMeshError {
+impl MeshError {
     /// Build an error from blockers.
-    pub(crate) fn new(blockers: Vec<ExactMeshBlocker>) -> Self {
+    pub(crate) fn new(blockers: Vec<MeshBlocker>) -> Self {
         Self { blockers }
     }
 
     /// Build an error containing one blocker.
-    pub(crate) fn one(blocker: ExactMeshBlocker) -> Self {
+    pub(crate) fn one(blocker: MeshBlocker) -> Self {
         Self {
             blockers: vec![blocker],
         }
     }
 
     /// Blockers collected before construction stopped.
-    pub fn blockers(&self) -> &[ExactMeshBlocker] {
+    pub fn blockers(&self) -> &[MeshBlocker] {
         &self.blockers
     }
 
     /// Whether this error contains at least one blocker and every blocker has
     /// one of the requested kinds.
-    pub(crate) fn has_only_blocker_kinds(&self, kinds: &[ExactMeshBlockerKind]) -> bool {
+    pub(crate) fn has_only_blocker_kinds(&self, kinds: &[MeshBlockerKind]) -> bool {
         !self.blockers.is_empty()
             && self
                 .blockers
@@ -190,7 +190,7 @@ impl ExactMeshError {
     }
 }
 
-impl fmt::Display for ExactMeshError {
+impl fmt::Display for MeshError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.blockers.as_slice() {
             [] => write!(f, "mesh validation failed"),
@@ -200,4 +200,4 @@ impl fmt::Display for ExactMeshError {
     }
 }
 
-impl std::error::Error for ExactMeshError {}
+impl std::error::Error for MeshError {}

@@ -20,11 +20,11 @@ mod polygon;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
-use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::error::{MeshBlocker, MeshBlockerKind, MeshError};
 use super::super::graph::intersection::MeshFacePairRelation;
 use super::super::graph::{ExactIntersectionGraph, FacePairEvents, IntersectionEvent};
-use super::super::validation::ExactMeshValidationPolicy;
-use super::super::{ExactMesh, ExactMeshValidationError, Triangle, sorted_edge};
+use super::super::validation::MeshValidationPolicy;
+use super::super::{Mesh, MeshValidationError, Triangle, sorted_edge};
 use super::{
     choose_nonzero_projected_polygon_area, closed_boundary_contact_only, point3_exact_equal,
     point3_lies_strictly_on_segment, split_output_triangle_edge,
@@ -75,7 +75,7 @@ pub(crate) struct FullFaceAdjacentUnion {
     /// Source face patches that were proven exactly coincident and removed.
     pub shared_patches: Vec<FullFaceAdjacentPatch>,
     /// Closed output mesh after deleting shared faces and welding seam vertices.
-    pub mesh: ExactMesh,
+    pub mesh: Mesh,
 }
 
 /// Opaque retained certificate for full-face adjacency.
@@ -92,7 +92,7 @@ pub(crate) enum FullFaceAdjacentUnionError {
     /// A retained source face was paired more than once.
     DuplicateSharedFace,
     /// The retained output mesh no longer validates as a closed exact mesh.
-    OutputMesh(ExactMeshValidationError),
+    OutputMesh(MeshValidationError),
     /// The retained output mesh is locally valid but is not a closed manifold.
     OutputNotClosed,
 }
@@ -138,10 +138,10 @@ impl FullFaceAdjacentUnion {
     }
 }
 
-fn undecidable_shared_face_equality(left_face: usize, right_face: usize) -> ExactMeshError {
-    ExactMeshError::one(
-        ExactMeshBlocker::new(
-            ExactMeshBlockerKind::UndecidablePredicate,
+fn undecidable_shared_face_equality(left_face: usize, right_face: usize) -> MeshError {
+    MeshError::one(
+        MeshBlocker::new(
+            MeshBlockerKind::UndecidablePredicate,
             format!(
                 "full-face adjacent certificate could not decide whether left face {left_face} and right face {right_face} share the same exact vertices"
             ),
@@ -152,10 +152,10 @@ fn undecidable_shared_face_equality(left_face: usize, right_face: usize) -> Exac
 
 /// Return the retained full-face adjacency certificate from a validated graph.
 pub(crate) fn full_face_adjacent_certificate_from_graph(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     graph: &ExactIntersectionGraph,
-) -> Result<Option<FullFaceAdjacentCertificate>, ExactMeshError> {
+) -> Result<Option<FullFaceAdjacentCertificate>, MeshError> {
     if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
         return Ok(None);
     }
@@ -182,11 +182,11 @@ pub(crate) fn full_face_adjacent_certificate_from_graph(
 }
 
 pub(crate) fn materialize_full_face_adjacent_union_from_certificate(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     certificate: &FullFaceAdjacentCertificate,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<FullFaceAdjacentUnion>, ExactMeshError> {
+    validation: MeshValidationPolicy,
+) -> Result<Option<FullFaceAdjacentUnion>, MeshError> {
     let certificate = &certificate.inner;
     let Some(mesh) = merged_union_mesh(left, right, certificate, validation)? else {
         return Ok(None);
@@ -197,8 +197,8 @@ pub(crate) fn materialize_full_face_adjacent_union_from_certificate(
         mesh,
     };
     union.validate().map_err(|error| {
-        ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::ExactConstructionFailure,
+        MeshError::one(MeshBlocker::new(
+            MeshBlockerKind::ExactConstructionFailure,
             format!("full-face adjacent union retained output failed validation: {error:?}"),
         ))
     })?;
@@ -212,11 +212,11 @@ struct FullFaceAdjacencyCertificate {
 }
 
 fn adjacency_contact_pair(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     pair: &FacePairEvents,
     certificate: &FullFaceAdjacencyCertificate,
-) -> Result<bool, ExactMeshError> {
+) -> Result<bool, MeshError> {
     if certificate
         .shared_faces
         .iter()
@@ -322,11 +322,11 @@ fn adjacency_contact_pair(
 }
 
 fn same_whole_face_any_orientation(
-    left: &ExactMesh,
+    left: &Mesh,
     left_face: usize,
-    right: &ExactMesh,
+    right: &Mesh,
     right_face: usize,
-) -> Result<bool, ExactMeshError> {
+) -> Result<bool, MeshError> {
     let left_triangle = left.view().face(left_face)?.vertex_indices();
     let right_triangle = right.view().face(right_face)?.vertex_indices();
     let left_points = triangle_point_refs(left, left_triangle)?;
@@ -355,9 +355,9 @@ fn same_whole_face_any_orientation(
 }
 
 fn full_face_adjacency_certificate(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<Option<FullFaceAdjacencyCertificate>, ExactMeshError> {
+    left: &Mesh,
+    right: &Mesh,
+) -> Result<Option<FullFaceAdjacencyCertificate>, MeshError> {
     let mut certificate = FullFaceAdjacencyCertificate::default();
     let mut left_seen = BTreeSet::new();
     let mut right_seen = BTreeSet::new();
@@ -463,11 +463,11 @@ fn full_face_adjacency_certificate(
 }
 
 fn merged_union_mesh(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     certificate: &FullFaceAdjacencyCertificate,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<ExactMesh>, ExactMeshError> {
+    validation: MeshValidationPolicy,
+) -> Result<Option<Mesh>, MeshError> {
     let mut right_to_left = BTreeMap::<usize, usize>::new();
     let mut skip_left = BTreeSet::new();
     let mut skip_right = BTreeSet::new();
@@ -574,7 +574,7 @@ fn merged_union_mesh(
         seen.insert(key)
     });
 
-    let mesh = ExactMesh::new_with_policy_and_version(
+    let mesh = Mesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact full-face adjacent closed-solid union"),
@@ -601,11 +601,11 @@ where
 }
 
 fn insert_patch_seam_map(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     patch: &FullFaceAdjacentPatch,
     right_to_left: &mut BTreeMap<usize, usize>,
-) -> Result<Option<()>, ExactMeshError> {
+) -> Result<Option<()>, MeshError> {
     let mut left_vertices = BTreeSet::new();
     for &left_face in &patch.left_faces {
         left_vertices.extend(left.view().face(left_face)?.vertex_indices());
@@ -637,11 +637,11 @@ fn insert_patch_seam_map(
 }
 
 fn map_left_vertex(
-    left: &ExactMesh,
+    left: &Mesh,
     left_vertex_map: &mut [Option<usize>],
     vertices: &mut Vec<Point3>,
     vertex: usize,
-) -> Result<Option<usize>, ExactMeshError> {
+) -> Result<Option<usize>, MeshError> {
     if let Some(mapped) = left_vertex_map.get(vertex).copied().flatten() {
         return Ok(Some(mapped));
     }
@@ -655,14 +655,14 @@ fn map_left_vertex(
 }
 
 fn map_right_vertex(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     right_to_left: &BTreeMap<usize, usize>,
     left_vertex_map: &mut [Option<usize>],
     right_vertex_map: &mut [Option<usize>],
     vertices: &mut Vec<Point3>,
     vertex: usize,
-) -> Result<Option<usize>, ExactMeshError> {
+) -> Result<Option<usize>, MeshError> {
     if let Some(&left_vertex) = right_to_left.get(&vertex) {
         return map_left_vertex(left, left_vertex_map, vertices, left_vertex);
     }
@@ -679,8 +679,8 @@ fn map_right_vertex(
 }
 
 fn append_left_triangle_with_edge_splits(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     right_to_left: &BTreeMap<usize, usize>,
     left_vertex_map: &mut [Option<usize>],
     right_vertex_map: &mut [Option<usize>],
@@ -688,7 +688,7 @@ fn append_left_triangle_with_edge_splits(
     triangles: &mut Vec<Triangle>,
     triangle: [usize; 3],
     right_candidates: &BTreeSet<usize>,
-) -> Result<Option<()>, ExactMeshError> {
+) -> Result<Option<()>, MeshError> {
     let mapped = [
         match map_left_vertex(left, left_vertex_map, vertices, triangle[0])? {
             Some(mapped) => mapped,
@@ -731,8 +731,8 @@ fn append_left_triangle_with_edge_splits(
 }
 
 fn append_right_triangle_with_edge_splits(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     right_to_left: &BTreeMap<usize, usize>,
     left_vertex_map: &mut [Option<usize>],
     right_vertex_map: &mut [Option<usize>],
@@ -740,7 +740,7 @@ fn append_right_triangle_with_edge_splits(
     triangles: &mut Vec<Triangle>,
     triangle: [usize; 3],
     left_candidates: &BTreeSet<usize>,
-) -> Result<Option<()>, ExactMeshError> {
+) -> Result<Option<()>, MeshError> {
     let mapped = [
         match map_right_vertex(
             left,
@@ -831,7 +831,7 @@ fn insert_triangle_edge_split(
     mapped_vertex: usize,
     point: &Point3,
     parameter: Real,
-) -> Result<(), ExactMeshError> {
+) -> Result<(), MeshError> {
     for split in splits.iter() {
         if split.mapped_vertex == mapped_vertex {
             return Ok(());
@@ -841,8 +841,8 @@ fn insert_triangle_edge_split(
                 Some(true) => return Ok(()),
                 Some(false) => {}
                 None => {
-                    return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                        ExactMeshBlockerKind::UndecidablePredicate,
+                    return Err(MeshError::one(MeshBlocker::new(
+                        MeshBlockerKind::UndecidablePredicate,
                         "full-face adjacent edge split vertex equality is undecidable",
                     )));
                 }
@@ -897,11 +897,11 @@ fn sort_edge_splits(splits: &mut Vec<TriangleEdgeSplit>) -> Option<()> {
 }
 
 fn fan_faces_cover_triangle(
-    whole_mesh: &ExactMesh,
+    whole_mesh: &Mesh,
     whole_face: usize,
-    fan_mesh: &ExactMesh,
+    fan_mesh: &Mesh,
     consumed_fan_faces: &BTreeSet<usize>,
-) -> Result<Option<Option<Vec<usize>>>, ExactMeshError> {
+) -> Result<Option<Option<Vec<usize>>>, MeshError> {
     // This is intentionally a source-triangle disk certificate, not a general
     // planar arrangement. One source triangle may be consumed by an
     // opposite-oriented coplanar triangulated disk whose boundary is a
@@ -1059,9 +1059,9 @@ fn fan_triangle_in_whole_triangle(
     whole_points: [&Point3; 3],
     projection: CoplanarProjection,
     whole_sign: Sign,
-    fan_mesh: &ExactMesh,
+    fan_mesh: &Mesh,
     fan_triangle: [usize; 3],
-) -> Result<Option<Option<Real>>, ExactMeshError> {
+) -> Result<Option<Option<Real>>, MeshError> {
     let fan_points = triangle_point_refs(fan_mesh, fan_triangle)?;
     if !fan_points.iter().all(|point| {
         point_on_triangle_plane(whole_points[0], whole_points[1], whole_points[2], point)
@@ -1135,22 +1135,22 @@ fn real_sign(value: &Real) -> Option<Sign> {
 }
 
 fn reversed_whole_face_vertex_map(
-    left: &ExactMesh,
+    left: &Mesh,
     left_triangle: [usize; 3],
-    right: &ExactMesh,
+    right: &Mesh,
     right_triangle: [usize; 3],
-) -> Result<Option<[usize; 3]>, ExactMeshError> {
+) -> Result<Option<[usize; 3]>, MeshError> {
     reversed_whole_face_vertex_map_impl(left, left_triangle, right, right_triangle, None)
 }
 
 fn retained_reversed_whole_face_vertex_map(
-    left: &ExactMesh,
+    left: &Mesh,
     left_triangle: [usize; 3],
     left_face: usize,
-    right: &ExactMesh,
+    right: &Mesh,
     right_triangle: [usize; 3],
     right_face: usize,
-) -> Result<Option<[usize; 3]>, ExactMeshError> {
+) -> Result<Option<[usize; 3]>, MeshError> {
     reversed_whole_face_vertex_map_impl(
         left,
         left_triangle,
@@ -1161,12 +1161,12 @@ fn retained_reversed_whole_face_vertex_map(
 }
 
 fn reversed_whole_face_vertex_map_impl(
-    left: &ExactMesh,
+    left: &Mesh,
     left_triangle: [usize; 3],
-    right: &ExactMesh,
+    right: &Mesh,
     right_triangle: [usize; 3],
     retained_pair: Option<(usize, usize)>,
-) -> Result<Option<[usize; 3]>, ExactMeshError> {
+) -> Result<Option<[usize; 3]>, MeshError> {
     let left_points = triangle_point_refs(left, left_triangle)?;
     let right_points = triangle_point_refs(right, right_triangle)?;
     let mut labels = [usize::MAX; 3];
@@ -1199,10 +1199,7 @@ fn reversed_whole_face_vertex_map_impl(
     ]))
 }
 
-fn triangle_point_refs(
-    mesh: &ExactMesh,
-    triangle: [usize; 3],
-) -> Result<[&Point3; 3], ExactMeshError> {
+fn triangle_point_refs(mesh: &Mesh, triangle: [usize; 3]) -> Result<[&Point3; 3], MeshError> {
     Ok([
         mesh.view().vertex(triangle[0])?.point(),
         mesh.view().vertex(triangle[1])?.point(),
@@ -1216,10 +1213,10 @@ mod tests {
 
     #[test]
     fn full_face_materialization_rejects_stale_retained_face_rows() {
-        let mut left = ExactMesh::from_i64_triangles_with_policy(
+        let mut left = Mesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 2, 0, 0, 0, 2, 0],
             &[0, 1, 2],
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
         let right = left.clone();
@@ -1236,12 +1233,12 @@ mod tests {
             &left,
             &right,
             &certificate,
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .expect_err("stale retained face rows should return a typed blocker");
 
         assert!(
-            error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+            error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
             "{error:?}"
         );
         assert_eq!(error.blockers()[0].face(), Some(0));

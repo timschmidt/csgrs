@@ -21,8 +21,8 @@ use hyperlimit::{
     point_on_segment3, point2_equal, project_point3, projected_polygon_area2_value,
 };
 
-use super::super::super::error::ExactMeshError;
-use super::super::super::{ExactMesh, sorted_edge};
+use super::super::super::error::MeshError;
+use super::super::super::{Mesh, sorted_edge};
 use super::super::{cloned_indexed_points, point3_exact_equal};
 use super::{point_on_triangle_plane, real_sign, triangle_point_refs};
 use hyperreal::Real;
@@ -45,11 +45,11 @@ struct PolygonPatchCandidate {
 /// predicates certify coplanarity, interior inclusion, and signed-area
 /// agreement.
 pub(crate) fn polygon_patch_pairs(
-    left: &ExactMesh,
+    left: &Mesh,
     consumed_left_faces: &BTreeSet<usize>,
-    right: &ExactMesh,
+    right: &Mesh,
     consumed_right_faces: &BTreeSet<usize>,
-) -> Result<Option<Vec<(Vec<usize>, Vec<usize>)>>, ExactMeshError> {
+) -> Result<Option<Vec<(Vec<usize>, Vec<usize>)>>, MeshError> {
     let Some(left_candidates) = polygon_patch_candidates(left, consumed_left_faces)? else {
         return Ok(None);
     };
@@ -96,9 +96,9 @@ fn pair_polygon_patch_candidates(
 }
 
 fn polygon_patch_candidates(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     consumed_faces: &BTreeSet<usize>,
-) -> Result<Option<Vec<PolygonPatchCandidate>>, ExactMeshError> {
+) -> Result<Option<Vec<PolygonPatchCandidate>>, MeshError> {
     let mut candidates = Vec::new();
     let available = mesh
         .view()
@@ -172,11 +172,11 @@ fn polygon_patch_candidates(
 }
 
 fn collect_path_polygon_patch_candidates(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     path: &[usize],
     seen: &mut BTreeSet<Vec<usize>>,
     candidates: &mut Vec<PolygonPatchCandidate>,
-) -> Result<Option<()>, ExactMeshError> {
+) -> Result<Option<()>, MeshError> {
     for start in 0..path.len() {
         for end in start + 2..=path.len() {
             let mut key = path[start..end].to_vec();
@@ -194,13 +194,13 @@ fn collect_path_polygon_patch_candidates(
 }
 
 fn collect_polygon_patch_candidates(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     neighbors: &BTreeMap<usize, BTreeSet<usize>>,
     start_face: usize,
     selected: &mut Vec<usize>,
     seen: &mut BTreeSet<Vec<usize>>,
     candidates: &mut Vec<PolygonPatchCandidate>,
-) -> Result<Option<()>, ExactMeshError> {
+) -> Result<Option<()>, MeshError> {
     if selected.len() >= 2 {
         let mut key = selected.clone();
         key.sort_unstable();
@@ -240,9 +240,9 @@ fn collect_polygon_patch_candidates(
 }
 
 fn polygon_patch_candidate(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     faces: &[usize],
-) -> Result<Option<PolygonPatchCandidate>, ExactMeshError> {
+) -> Result<Option<PolygonPatchCandidate>, MeshError> {
     if faces.len() < 2 {
         return Ok(None);
     }
@@ -392,9 +392,9 @@ fn polygon_patch_candidate(
 }
 
 fn edge_connected_face_neighbors(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     faces: &[usize],
-) -> Result<Option<BTreeMap<usize, BTreeSet<usize>>>, ExactMeshError> {
+) -> Result<Option<BTreeMap<usize, BTreeSet<usize>>>, MeshError> {
     let mut edge_faces = BTreeMap::<[usize; 2], Vec<usize>>::new();
     for &face in faces {
         for edge in mesh.view().face(face)?.directed_edges().map(sorted_edge) {
@@ -471,10 +471,10 @@ fn ordered_dual_path_component(
 }
 
 fn faces_are_coplanar(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     left_face: usize,
     right_face: usize,
-) -> Result<Option<bool>, ExactMeshError> {
+) -> Result<Option<bool>, MeshError> {
     // Source-disk discovery is a planar certificate, not a shell-connectivity
     // topology by exact retained planes before promoting a connected component
     // to a planar disk candidate.
@@ -683,21 +683,21 @@ mod tests {
     use std::collections::BTreeSet;
 
     use super::*;
-    use crate::mesh::error::ExactMeshBlockerKind;
-    use crate::mesh::validation::ExactMeshValidationPolicy;
+    use crate::mesh::error::MeshBlockerKind;
+    use crate::mesh::validation::MeshValidationPolicy;
     use proptest::prelude::*;
 
     const OVERSIZED_COMPONENT_FACES: usize = 33;
 
-    fn open_mesh(points: &[[i64; 3]], triangles: &[usize]) -> ExactMesh {
+    fn open_mesh(points: &[[i64; 3]], triangles: &[usize]) -> Mesh {
         let mut coordinates = Vec::with_capacity(points.len() * 3);
         for point in points {
             coordinates.extend_from_slice(point);
         }
-        ExactMesh::from_i64_triangles_with_policy(
+        Mesh::from_i64_triangles_with_policy(
             &coordinates,
             triangles,
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap()
     }
@@ -715,11 +715,7 @@ mod tests {
         }
     }
 
-    fn shifted_square_subpatch_pair(
-        prefix: i64,
-        width: i64,
-        height: i64,
-    ) -> (ExactMesh, ExactMesh) {
+    fn shifted_square_subpatch_pair(prefix: i64, width: i64, height: i64) -> (Mesh, Mesh) {
         let left = open_mesh(
             &[
                 [0, 0, 0],
@@ -745,7 +741,7 @@ mod tests {
         (left, right)
     }
 
-    fn oversized_component_fan(face_count: usize, reversed: bool) -> ExactMesh {
+    fn oversized_component_fan(face_count: usize, reversed: bool) -> Mesh {
         let mut points = Vec::new();
         points.push([0, 0, 0]);
         for index in 0..=face_count {
@@ -762,7 +758,7 @@ mod tests {
         open_mesh(&points, &triangles)
     }
 
-    fn wide_boundary_subpatch_pair() -> (ExactMesh, ExactMesh) {
+    fn wide_boundary_subpatch_pair() -> (Mesh, Mesh) {
         let mut left_points = vec![[0, 0, 0]];
         for index in 0..=9 {
             left_points.push([index, 1, 0]);
@@ -786,7 +782,7 @@ mod tests {
         (left, right)
     }
 
-    fn wide_face_subpatch_pair() -> (ExactMesh, ExactMesh) {
+    fn wide_face_subpatch_pair() -> (Mesh, Mesh) {
         let mut left_points = vec![[0, 0, 0]];
         for index in 0..=11 {
             left_points.push([index, 1, 0]);
@@ -853,7 +849,7 @@ mod tests {
             .expect_err("stale retained face row should return a typed blocker");
 
         assert!(
-            error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+            error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
             "{error:?}"
         );
         assert_eq!(error.blockers()[0].face(), Some(1));

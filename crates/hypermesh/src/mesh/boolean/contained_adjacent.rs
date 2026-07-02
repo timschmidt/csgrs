@@ -23,11 +23,11 @@ use hyperlimit::{
 use super::super::arrangement3d::arrangement2d::{
     ExactArrangement2dBoundaryPolicy, ExactArrangement2dSetOperation,
 };
-use super::super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError};
+use super::super::error::{MeshBlocker, MeshBlockerKind, MeshError};
 use super::super::graph::intersection::MeshFacePairRelation;
 use super::super::graph::{ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide};
-use super::super::validation::ExactMeshValidationPolicy;
-use super::super::{ExactMesh, ExactMeshValidationError, Triangle, sorted_edge};
+use super::super::validation::MeshValidationPolicy;
+use super::super::{Mesh, MeshValidationError, Triangle, sorted_edge};
 use super::closed_boundary_contact_only;
 use super::{
     DisjointSets, coplanar_mesh_overlay_carrier, materialize_coplanar_mesh_overlay_mesh,
@@ -59,7 +59,7 @@ pub(crate) struct ContainedFaceAdjacentUnion {
     pub containing_faces: Vec<usize>,
     /// Closed output mesh after replacing the containing face and deleting the
     /// contained face.
-    pub mesh: ExactMesh,
+    pub mesh: Mesh,
 }
 
 /// Opaque retained certificate for contained-face adjacency.
@@ -74,7 +74,7 @@ pub(crate) enum ContainedFaceAdjacentUnionError {
     /// The retained source-face certificate shape is internally incoherent.
     InvalidCertificate,
     /// The retained output mesh no longer validates as an exact mesh.
-    OutputMesh(ExactMeshValidationError),
+    OutputMesh(MeshValidationError),
     /// The retained output mesh is locally valid but is not a closed manifold.
     OutputNotClosed,
 }
@@ -123,10 +123,10 @@ impl ContainedFaceAdjacentUnion {
 
 /// Return the retained contained-face adjacency certificate from a validated graph.
 pub(crate) fn contained_face_adjacent_certificate_from_graph(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     graph: &ExactIntersectionGraph,
-) -> Result<Option<ContainedFaceAdjacentCertificate>, ExactMeshError> {
+) -> Result<Option<ContainedFaceAdjacentCertificate>, MeshError> {
     if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
         return Ok(None);
     }
@@ -145,11 +145,11 @@ pub(crate) fn contained_face_adjacent_certificate_from_graph(
 
 /// Materialize a contained-face adjacent union from an already-retained certificate.
 pub(crate) fn materialize_contained_face_adjacent_union_from_certificate(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     certificate: &ContainedFaceAdjacentCertificate,
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<ContainedFaceAdjacentUnion>, ExactMeshError> {
+    validation: MeshValidationPolicy,
+) -> Result<Option<ContainedFaceAdjacentUnion>, MeshError> {
     let certificate = &certificate.inner;
     let mut contained_faces = Vec::new();
     let mut containing_faces = Vec::new();
@@ -192,8 +192,8 @@ pub(crate) fn materialize_contained_face_adjacent_union_from_certificate(
         mesh,
     };
     union.validate().map_err(|error| {
-        ExactMeshError::one(ExactMeshBlocker::new(
-            ExactMeshBlockerKind::ExactConstructionFailure,
+        MeshError::one(MeshBlocker::new(
+            MeshBlockerKind::ExactConstructionFailure,
             format!("contained-face adjacent union retained output failed validation: {error:?}"),
         ))
     })?;
@@ -215,10 +215,10 @@ struct ContainedFacePatch {
 }
 
 fn contained_face_adjacency_certificate(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     pairs: &[FacePairEvents],
-) -> Result<Option<ContainedFaceAdjacencyCertificate>, ExactMeshError> {
+) -> Result<Option<ContainedFaceAdjacencyCertificate>, MeshError> {
     let Some(certificate) = component_contained_adjacency_certificate(left, right, pairs)? else {
         return Ok(None);
     };
@@ -240,10 +240,10 @@ fn contained_face_adjacency_certificate(
 /// face sets through the coplanar convex holed surface artifacts, preserving
 /// exact source-owned representative geometry.
 fn component_contained_adjacency_certificate(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     pairs: &[FacePairEvents],
-) -> Result<Option<ContainedFaceAdjacencyCertificate>, ExactMeshError> {
+) -> Result<Option<ContainedFaceAdjacencyCertificate>, MeshError> {
     let overlapping = pairs
         .iter()
         .filter(|pair| pair.relation == MeshFacePairRelation::CoplanarOverlapping)
@@ -351,11 +351,11 @@ fn overlap_face_components(overlapping: &[&FacePairEvents]) -> Option<Vec<Overla
 
 fn component_contained_adjacency_for_side(
     containing_side: MeshSide,
-    containing_source: &ExactMesh,
-    contained_source: &ExactMesh,
+    containing_source: &Mesh,
+    contained_source: &Mesh,
     containing_faces: &[usize],
     contained_faces: &[usize],
-) -> Result<Option<ContainedFaceAdjacencyCertificate>, ExactMeshError> {
+) -> Result<Option<ContainedFaceAdjacencyCertificate>, MeshError> {
     if containing_faces.is_empty() || contained_faces.is_empty() {
         return Ok(None);
     }
@@ -417,11 +417,11 @@ fn component_contained_adjacency_for_side(
 }
 
 fn contained_adjacency_contact_pair(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     pair: &FacePairEvents,
     certificate: &ContainedFaceAdjacencyCertificate,
-) -> Result<bool, ExactMeshError> {
+) -> Result<bool, MeshError> {
     let certificate_contains_pair = match certificate.containing_side {
         MeshSide::Left => certificate.patches.iter().any(|patch| {
             patch.containing_faces.contains(&pair.left_face)
@@ -475,10 +475,10 @@ fn contained_adjacency_contact_pair(
 }
 
 fn retained_plane_crossing_is_not_inside_plane_face(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     event: &IntersectionEvent,
-) -> Result<bool, ExactMeshError> {
+) -> Result<bool, MeshError> {
     let IntersectionEvent::SegmentPlane {
         relation: SegmentPlaneRelation::ProperCrossing,
         plane_side,
@@ -521,14 +521,14 @@ fn retained_plane_crossing_is_not_inside_plane_face(
 }
 
 fn contained_face_union_mesh(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     containing_side: MeshSide,
     patches: &[ContainedFacePatch],
     containing_faces: &[usize],
     contained_faces: &[usize],
-    validation: ExactMeshValidationPolicy,
-) -> Result<Option<ExactMesh>, ExactMeshError> {
+    validation: MeshValidationPolicy,
+) -> Result<Option<Mesh>, MeshError> {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
     let (left_skip_faces, right_skip_faces) = match containing_side {
@@ -566,7 +566,7 @@ fn contained_face_union_mesh(
         seen.insert(key)
     });
 
-    let mesh = ExactMesh::new_with_policy_and_version(
+    let mesh = Mesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("exact contained-face adjacent closed-solid union"),
@@ -585,13 +585,13 @@ fn contained_face_union_mesh(
 /// artifact. Both retain exact rings and validate exact area before
 /// than inferring holes from triangle soup. The ring triangulation handoff
 fn append_contained_face_patch_group(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     containing_side: MeshSide,
     patch: &ContainedFacePatch,
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
-) -> Result<Option<()>, ExactMeshError> {
+) -> Result<Option<()>, MeshError> {
     let Some(containing_mesh) = faces_mesh(
         containing_side.mesh(left, right),
         &patch.containing_faces,
@@ -627,9 +627,9 @@ fn append_contained_face_patch_group(
 }
 
 fn materialize_contained_patch_difference(
-    containing_mesh: &ExactMesh,
-    contained_mesh: &ExactMesh,
-) -> Option<(ExactMesh, CoplanarProjection)> {
+    containing_mesh: &Mesh,
+    contained_mesh: &Mesh,
+) -> Option<(Mesh, CoplanarProjection)> {
     let (_, projection) = coplanar_mesh_overlay_carrier(containing_mesh, contained_mesh)
         .ok()
         .flatten()?;
@@ -655,10 +655,10 @@ fn materialize_contained_patch_difference(
 }
 
 fn faces_mesh(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     faces: &[usize],
     label: &'static str,
-) -> Result<Option<ExactMesh>, ExactMeshError> {
+) -> Result<Option<Mesh>, MeshError> {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
     for &face in faces {
@@ -666,16 +666,16 @@ fn faces_mesh(
         let mapped = map_triangle_points(&mut vertices, points)?;
         triangles.push(Triangle(mapped));
     }
-    Ok(Some(ExactMesh::new_with_policy_and_version(
+    Ok(Some(Mesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact(label),
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
         1,
     )?))
 }
 
-fn connected_face_component_count(mesh: &ExactMesh) -> Option<usize> {
+fn connected_face_component_count(mesh: &Mesh) -> Option<usize> {
     let face_count = mesh.view().faces().count();
     if face_count == 0 {
         return None;
@@ -722,11 +722,11 @@ fn connected_face_component_count(mesh: &ExactMesh) -> Option<usize> {
 }
 
 fn append_source_mesh_without_face(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     skip_faces: &[usize],
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
-) -> Result<Option<()>, ExactMeshError> {
+) -> Result<Option<()>, MeshError> {
     for face in mesh.view().faces() {
         if skip_faces.contains(&face.index()) {
             continue;
@@ -739,12 +739,12 @@ fn append_source_mesh_without_face(
 }
 
 fn append_holed_replacement(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     projection: CoplanarProjection,
     target_sign: Sign,
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
-) -> Result<Option<()>, ExactMeshError> {
+) -> Result<Option<()>, MeshError> {
     let Some(source_sign) = consistent_projected_mesh_triangle_sign(mesh, projection)? else {
         return Ok(None);
     };
@@ -801,14 +801,14 @@ fn append_triangle_with_existing_edge_splits(
     Some(())
 }
 
-fn map_point(vertices: &mut Vec<Point3>, point: &Point3) -> Result<usize, ExactMeshError> {
+fn map_point(vertices: &mut Vec<Point3>, point: &Point3) -> Result<usize, MeshError> {
     for (existing, candidate) in vertices.iter().enumerate() {
         match point3_exact_equal(candidate, point) {
             Some(true) => return Ok(existing),
             Some(false) => {}
             None => {
-                return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::UndecidablePredicate,
+                return Err(MeshError::one(MeshBlocker::new(
+                    MeshBlockerKind::UndecidablePredicate,
                     "contained-face adjacent output vertex equality is undecidable",
                 )));
             }
@@ -822,7 +822,7 @@ fn map_point(vertices: &mut Vec<Point3>, point: &Point3) -> Result<usize, ExactM
 fn map_triangle_points(
     vertices: &mut Vec<Point3>,
     points: [&Point3; 3],
-) -> Result<[usize; 3], ExactMeshError> {
+) -> Result<[usize; 3], MeshError> {
     Ok([
         map_point(vertices, points[0])?,
         map_point(vertices, points[1])?,
@@ -830,7 +830,7 @@ fn map_triangle_points(
     ])
 }
 
-fn face_point_refs(mesh: &ExactMesh, face: usize) -> Result<[&Point3; 3], ExactMeshError> {
+fn face_point_refs(mesh: &Mesh, face: usize) -> Result<[&Point3; 3], MeshError> {
     mesh.view().face(face)?.vertices()
 }
 
@@ -846,9 +846,9 @@ fn projected_triangle_sign(points: [&Point3; 3], projection: CoplanarProjection)
 }
 
 fn consistent_projected_mesh_triangle_sign(
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     projection: CoplanarProjection,
-) -> Result<Option<Sign>, ExactMeshError> {
+) -> Result<Option<Sign>, MeshError> {
     let mut sign = None;
     for face in mesh.view().faces() {
         let points = face.vertices()?;
@@ -870,10 +870,10 @@ mod tests {
 
     #[test]
     fn contained_face_component_rejects_stale_retained_face_rows() {
-        let mut mesh = ExactMesh::from_i64_triangles_with_policy(
+        let mut mesh = Mesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 2, 0, 0, 0, 2, 0],
             &[0, 1, 2],
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
         mesh.facts.faces.pop();
@@ -886,7 +886,7 @@ mod tests {
         .expect_err("stale retained face rows should return a typed blocker");
 
         assert!(
-            error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+            error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
             "{error:?}"
         );
         assert_eq!(error.blockers()[0].face(), Some(0));

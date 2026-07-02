@@ -14,7 +14,7 @@ use hyperreal::Real;
 use std::cmp::Ordering;
 use std::collections::BTreeSet;
 
-use super::super::ExactMesh;
+use super::super::Mesh;
 use super::super::arrangement3d::cell_complex::simplify::ExactSimplifiedCellComplex;
 use super::super::arrangement3d::cell_complex::{
     ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
@@ -35,7 +35,7 @@ use super::super::graph::{
     CoplanarArrangementEvidence, ExactIntersectionGraph, IntersectionEvent,
     build_validated_intersection_graph,
 };
-use super::super::validation::ExactMeshValidationPolicy;
+use super::super::validation::MeshValidationPolicy;
 use super::adjacent::{
     full_face_adjacent_certificate_from_graph,
     materialize_full_face_adjacent_union_from_certificate,
@@ -328,7 +328,7 @@ pub(crate) struct ExactArrangementBooleanAttempt {
     /// Regularization policy used by the arrangement pipeline.
     pub(crate) policy: ExactRegularizationPolicy,
     /// Output validation policy used by shortcut recovery and final mesh copy.
-    pub(crate) output_validation: ExactMeshValidationPolicy,
+    pub(crate) output_validation: MeshValidationPolicy,
     /// Furthest stage reached.
     pub(crate) stage: ExactArrangementBooleanStage,
     /// Reason no output was produced, when the attempt declined.
@@ -607,7 +607,7 @@ impl ExactArrangementBooleanAttempt {
     }
 
     /// Record the output mesh certificate retained by this attempt.
-    pub(crate) fn retain_output_mesh(&mut self, mesh: &ExactMesh) {
+    pub(crate) fn retain_output_mesh(&mut self, mesh: &Mesh) {
         self.output_vertices = mesh.vertices().len();
         self.output_triangles = mesh.facts().mesh.face_count;
         self.output_facts = Some(mesh.facts().mesh.clone());
@@ -910,21 +910,21 @@ impl ExactArrangementBooleanAttempt {
 }
 
 fn validated_report_intersection_graph(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> Result<ExactIntersectionGraph, ExactEvidenceValidationError> {
     build_validated_intersection_graph(left, right)
         .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)
 }
 
 struct ExactBooleanSourceReplay<'a> {
-    left: &'a ExactMesh,
-    right: &'a ExactMesh,
+    left: &'a Mesh,
+    right: &'a Mesh,
     validated_graph: Option<Result<ExactIntersectionGraph, ExactEvidenceValidationError>>,
 }
 
 impl<'a> ExactBooleanSourceReplay<'a> {
-    fn new(left: &'a ExactMesh, right: &'a ExactMesh) -> Self {
+    fn new(left: &'a Mesh, right: &'a Mesh) -> Self {
         Self {
             left,
             right,
@@ -1246,7 +1246,7 @@ pub(crate) struct ExactBooleanResult {
     /// when the materialization path retained that gate evidence.
     pub(crate) region_ownership_report: Option<ExactRegionOwnershipReport>,
     /// Materialized exact output mesh validated under the requested policy.
-    pub(crate) mesh: ExactMesh,
+    pub(crate) mesh: Mesh,
 }
 
 impl ExactBooleanResult {
@@ -1366,7 +1366,7 @@ pub(crate) enum ExactBooleanShortcutKind {
     /// The output was produced by building retained 3D arrangement cells,
     /// labeling them against the opposite mesh, selecting the named Boolean
     /// boundary cells, exact-simplifying the selected cell complex, and only
-    /// then triangulating to an [`ExactMesh`].
+    /// then triangulating to an [`Mesh`].
     ArrangementCellComplex,
 }
 
@@ -1448,7 +1448,7 @@ impl ExactBooleanResultKind {
         }
     }
 
-    fn request(self, validation: ExactMeshValidationPolicy) -> ExactBooleanRequest {
+    fn request(self, validation: MeshValidationPolicy) -> ExactBooleanRequest {
         match self {
             ExactBooleanResultKind::SelectedRegions { selection } => ExactBooleanRequest {
                 operation: ExactBooleanOperation::SelectedRegions(selection),
@@ -1893,8 +1893,8 @@ impl ExactBooleanResult {
     /// that produced it, not just to a locally consistent output mesh.
     pub(crate) fn validate_against_sources(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         let mut arrangement_cell_complex_output_replayed = false;
@@ -2149,8 +2149,8 @@ impl ExactBooleanResult {
     pub(crate) fn validate_arrangement_cell_complex_gate_reports_against_sources(
         &self,
         graph: &ExactIntersectionGraph,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
     ) -> Result<(), ExactEvidenceValidationError> {
         if self.topology_assembly_report.is_none() && self.region_ownership_report.is_none() {
             return Ok(());
@@ -2173,8 +2173,8 @@ impl ExactBooleanResult {
     pub(crate) fn validate_arrangement_cell_complex_gate_reports_against_arrangement(
         &self,
         arrangement: &ExactArrangement3d,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
         operation: Option<ExactBooleanOperation>,
     ) -> Result<(), ExactEvidenceValidationError> {
         if self.topology_assembly_report.is_none() && self.region_ownership_report.is_none() {
@@ -2214,8 +2214,8 @@ impl ExactBooleanResult {
     /// named operation or shortcut kind while still passing the source audit.
     pub(crate) fn validate_request_against_sources_with_retained_attempt(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
         request: ExactBooleanRequest,
         retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     ) -> Result<(), ExactEvidenceValidationError> {
@@ -2403,8 +2403,8 @@ impl ExactArrangementCellComplexShortcutFacts {
 
     pub(crate) fn validate_against_sources(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         if self == &Self::from_sources(left, right) {
@@ -2415,13 +2415,13 @@ impl ExactArrangementCellComplexShortcutFacts {
     }
 
     pub(crate) fn checked_from_sources(
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
     ) -> Result<Self, ExactEvidenceValidationError> {
         Self::from_sources(left, right).checked()
     }
 
-    pub(crate) fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
+    pub(crate) fn from_sources(left: &Mesh, right: &Mesh) -> Self {
         Self {
             axis_aligned_box_pair: is_axis_aligned_box(left) && is_axis_aligned_box(right),
             axis_aligned_union: axis_aligned_orthogonal_solid_cell_selected_count(
@@ -2560,7 +2560,7 @@ fn certified_shortcut_sources_match(
 fn certified_shortcut_output_matches_sources(
     shortcut: ExactBooleanShortcutKind,
     request: ExactBooleanRequest,
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     source_replay: &mut ExactBooleanSourceReplay<'_>,
 ) -> Result<bool, ExactEvidenceValidationError> {
     let operation = request.operation;
@@ -2577,7 +2577,7 @@ fn certified_shortcut_output_matches_sources(
             } else {
                 match operation {
                     ExactBooleanOperation::Union
-                        if validation == ExactMeshValidationPolicy::CLOSED
+                        if validation == MeshValidationPolicy::CLOSED
                             && lower_dimensional_regularized_sources(left, right) =>
                     {
                         mesh_output_is_empty(mesh)
@@ -2590,7 +2590,7 @@ fn certified_shortcut_output_matches_sources(
                         mesh_output_is_empty(mesh)
                     }
                     ExactBooleanOperation::Difference
-                        if validation == ExactMeshValidationPolicy::CLOSED
+                        if validation == MeshValidationPolicy::CLOSED
                             && right.facts().mesh.face_count == 0
                             && closed_regularized_operand_kind(left)
                                 == Some(ClosedRegularizedOperandKind::LowerDimensional) =>
@@ -2605,7 +2605,7 @@ fn certified_shortcut_output_matches_sources(
         ExactBooleanShortcutKind::BoundsDisjoint => {
             if left.facts().mesh.face_count == 0
                 || right.facts().mesh.face_count == 0
-                || (validation == ExactMeshValidationPolicy::CLOSED
+                || (validation == MeshValidationPolicy::CLOSED
                     && (lower_dimensional_regularized_sources(left, right)
                         || mixed_dimensional_regularized_sources(left, right)))
             {
@@ -2630,7 +2630,7 @@ fn certified_shortcut_output_matches_sources(
                 && identical_output_matches_sources(operation, validation, mesh, left, right)
         }
         ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid => {
-            if validation != ExactMeshValidationPolicy::CLOSED
+            if validation != MeshValidationPolicy::CLOSED
                 && meshes_are_certified_bounds_disjoint(left, right)
             {
                 false
@@ -2657,7 +2657,7 @@ fn certified_shortcut_output_matches_sources(
             }
         }
         ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid => {
-            if validation == ExactMeshValidationPolicy::CLOSED
+            if validation == MeshValidationPolicy::CLOSED
                 && operation == ExactBooleanOperation::Intersection
                 && lower_dimensional_regularized_sources(left, right)
             {
@@ -2674,7 +2674,7 @@ fn certified_shortcut_output_matches_sources(
             {
                 return Ok(false);
             }
-            validation == ExactMeshValidationPolicy::CLOSED
+            validation == MeshValidationPolicy::CLOSED
                 && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
                 && mesh_output_is_empty(mesh)
         }
@@ -2695,10 +2695,10 @@ fn certified_shortcut_output_matches_sources(
 
 fn identical_output_matches_sources(
     operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
-    mesh: &ExactMesh,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    validation: MeshValidationPolicy,
+    mesh: &Mesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> bool {
     if matches!(
         (
@@ -2709,7 +2709,7 @@ fn identical_output_matches_sources(
             Some(ClosedRegularizedOperandKind::ClosedSolid),
             Some(ClosedRegularizedOperandKind::ClosedSolid)
         )
-    ) || (validation == ExactMeshValidationPolicy::CLOSED
+    ) || (validation == MeshValidationPolicy::CLOSED
         && (lower_dimensional_regularized_sources(left, right)
             || mixed_dimensional_regularized_sources(left, right)))
     {
@@ -2725,8 +2725,8 @@ fn identical_output_matches_sources(
 }
 
 fn retained_output_mesh_matches(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> Result<bool, ExactEvidenceValidationError> {
     Ok(mesh_output_matches_result(left, right)?
         && left.bounds() == right.bounds()
@@ -2786,7 +2786,7 @@ pub(crate) struct ExactBooleanCertificationSet {
 fn validate_shortcut_output_shape(
     shortcut: ExactBooleanShortcutKind,
     operation: ExactBooleanOperation,
-    mesh: &ExactMesh,
+    mesh: &Mesh,
 ) -> Result<(), ExactEvidenceValidationError> {
     let requires_empty_output = matches!(
         (shortcut, operation),
@@ -2854,7 +2854,7 @@ fn validate_shortcut_output_shape(
 fn convex_operation_output_matches_sources(
     shortcut: ExactBooleanShortcutKind,
     operation: ExactBooleanOperation,
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     source_replay: &mut ExactBooleanSourceReplay<'_>,
 ) -> Result<bool, ExactEvidenceValidationError> {
     if !shortcut_operation_matches(shortcut, operation) {
@@ -2907,9 +2907,9 @@ fn relation_output_matches_sources(
     containment_shortcut: ExactBooleanShortcutKind,
     operation: ExactBooleanOperation,
     relation: ReportMeshRelation,
-    mesh: &ExactMesh,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    mesh: &Mesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> bool {
     match relation {
         ReportMeshRelation::Separated => {
@@ -3027,13 +3027,13 @@ fn certified_convex_relation_from_sources(
     })
 }
 
-fn mesh_output_matches(left: &ExactMesh, right: &ExactMesh) -> bool {
+fn mesh_output_matches(left: &Mesh, right: &Mesh) -> bool {
     mesh_output_matches_result(left, right).unwrap_or(false)
 }
 
 fn mesh_output_matches_result(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> Result<bool, ExactEvidenceValidationError> {
     if left.vertices().len() != right.vertices().len() || !retained_face_rows_equal(left, right) {
         return Ok(false);
@@ -3048,23 +3048,23 @@ fn mesh_output_matches_result(
     Ok(true)
 }
 
-fn mesh_output_is_empty(mesh: &ExactMesh) -> bool {
+fn mesh_output_is_empty(mesh: &Mesh) -> bool {
     mesh.vertices().is_empty() && mesh.facts().mesh.face_count == 0
 }
 
 fn concatenated_mesh_output_matches(
-    mesh: &ExactMesh,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    mesh: &Mesh,
+    left: &Mesh,
+    right: &Mesh,
     reverse_right: bool,
 ) -> bool {
     concatenated_mesh_output_matches_result(mesh, left, right, reverse_right).unwrap_or(false)
 }
 
 fn concatenated_mesh_output_matches_result(
-    mesh: &ExactMesh,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    mesh: &Mesh,
+    left: &Mesh,
+    right: &Mesh,
     reverse_right: bool,
 ) -> Result<bool, ExactEvidenceValidationError> {
     if mesh.vertices().len() != left.vertices().len() + right.vertices().len()
@@ -3138,7 +3138,7 @@ fn shortcut_operation_matches(
     }
 }
 
-pub(crate) fn meshes_are_certified_bounds_disjoint(left: &ExactMesh, right: &ExactMesh) -> bool {
+pub(crate) fn meshes_are_certified_bounds_disjoint(left: &Mesh, right: &Mesh) -> bool {
     if left.validate_retained_bounds_certificate().is_err()
         || right.validate_retained_bounds_certificate().is_err()
     {
@@ -3160,12 +3160,12 @@ pub(crate) fn meshes_are_certified_bounds_disjoint(left: &ExactMesh, right: &Exa
 }
 
 pub(crate) fn certified_convex_operation_shortcut_support(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     operation: ExactBooleanOperation,
 ) -> Option<ExactBooleanSupport> {
     let support = operation.convex_operation_support()?;
-    if boolean_convex_meshes_optional(left, right, operation, ExactMeshValidationPolicy::CLOSED)
+    if boolean_convex_meshes_optional(left, right, operation, MeshValidationPolicy::CLOSED)
         .ok()
         .flatten()
         .is_some()
@@ -3176,7 +3176,7 @@ pub(crate) fn certified_convex_operation_shortcut_support(
     }
 }
 
-fn mixed_dimensional_regularized_sources(left: &ExactMesh, right: &ExactMesh) -> bool {
+fn mixed_dimensional_regularized_sources(left: &Mesh, right: &Mesh) -> bool {
     matches!(
         (
             closed_regularized_operand_kind(left),
@@ -3192,7 +3192,7 @@ fn mixed_dimensional_regularized_sources(left: &ExactMesh, right: &ExactMesh) ->
     )
 }
 
-fn lower_dimensional_regularized_sources(left: &ExactMesh, right: &ExactMesh) -> bool {
+fn lower_dimensional_regularized_sources(left: &Mesh, right: &Mesh) -> bool {
     matches!(
         (
             closed_regularized_operand_kind(left),
@@ -3343,7 +3343,7 @@ fn arrangement_cell_complex_sources_match(
     let validation = request.validation;
     let left = source_replay.left;
     let right = source_replay.right;
-    if validation == ExactMeshValidationPolicy::CLOSED
+    if validation == MeshValidationPolicy::CLOSED
         && lower_dimensional_regularized_sources(left, right)
     {
         return Ok(true);
@@ -3397,7 +3397,7 @@ fn arrangement_cell_complex_sources_match(
 
 fn arrangement_cell_complex_output_matches_sources(
     request: ExactBooleanRequest,
-    mesh: &ExactMesh,
+    mesh: &Mesh,
     source_replay: &mut ExactBooleanSourceReplay<'_>,
 ) -> Result<Option<bool>, ExactEvidenceValidationError> {
     let operation = request.operation;
@@ -3497,7 +3497,7 @@ fn arrangement_cell_complex_output_matches_sources(
         retained_mismatch = true;
     }
 
-    if validation == ExactMeshValidationPolicy::CLOSED
+    if validation == MeshValidationPolicy::CLOSED
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && lower_dimensional_regularized_sources(left, right)
     {
@@ -3949,7 +3949,7 @@ fn output_triangle_points<'a>(
 
 fn validate_output_mesh_matches_assembly(
     assembly: &ExactBooleanAssemblyPlan,
-    mesh: &ExactMesh,
+    mesh: &Mesh,
 ) -> Result<(), ExactEvidenceValidationError> {
     if assembly.vertices.len() != mesh.vertices().len()
         || assembly.triangles.len() != mesh.facts().mesh.face_count
@@ -4262,8 +4262,8 @@ impl ExactVolumetricBoundaryClosureReport {
     /// Validate this report against the source meshes that produced it.
     pub(crate) fn validate_against_sources(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         let replay = if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
@@ -4459,8 +4459,8 @@ impl ExactVolumetricBoundaryClosureReport {
 #[cfg(test)]
 fn validate_winding_evidence_against_sources_for_request(
     report: &ExactWindingEvidenceReport,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     request: ExactBooleanRequest,
 ) -> Result<(), ExactEvidenceValidationError> {
     let mut source_replay = ExactBooleanSourceReplay::new(left, right);
@@ -4574,8 +4574,8 @@ fn axis_aligned_orthogonal_solid_winding_evidence_matches_sources(
 
 #[cfg(test)]
 fn axis_aligned_orthogonal_solid_preflight_matches_sources(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     request: ExactBooleanRequest,
 ) -> Result<bool, ExactEvidenceValidationError> {
     let Some(solid_operation) = request.operation.axis_aligned_orthogonal_solid_operation() else {
@@ -4602,8 +4602,8 @@ impl ExactBooleanPreflight {
     #[cfg(test)]
     pub(crate) fn validate_against_sources_for_request(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
         request: ExactBooleanRequest,
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
@@ -5466,7 +5466,7 @@ pub(crate) struct ExactSurfaceEqualityReports {
 }
 
 impl ExactSurfaceEqualityReports {
-    pub(crate) fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
+    pub(crate) fn from_sources(left: &Mesh, right: &Mesh) -> Self {
         let identical = identical_mesh_report_from_sources(left, right);
         let same_surface = if matches!(identical.status, ExactIdenticalMeshStatus::Certified) {
             None
@@ -5500,8 +5500,8 @@ impl ExactSurfaceEqualityReports {
 /// used to find a vertex bijection and the sorted triangle sets compared after
 /// remapping. This is the auditable form of the same-surface shortcut.
 pub(crate) fn same_surface_report_from_sources(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> ExactSameSurfaceReport {
     if left.vertices().len() != right.vertices().len() {
         return ExactSameSurfaceReport {
@@ -5563,8 +5563,8 @@ pub(crate) fn same_surface_report_from_sources(
 /// Certify whether two meshes are exactly identical in source vertex and
 /// triangle order.
 pub(crate) fn identical_mesh_report_from_sources(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> ExactIdenticalMeshReport {
     let left_vertices = left.vertices().len();
     let right_vertices = right.vertices().len();
@@ -5647,8 +5647,8 @@ pub(crate) fn identical_mesh_report_from_sources(
 }
 
 fn certified_vertex_permutation_report(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> (Vec<usize>, Vec<PredicateUse>, ExactSameSurfaceStatus) {
     let mut left_to_right = Vec::with_capacity(left.vertices().len());
     let mut used_right = vec![false; right.vertices().len()];
@@ -5702,7 +5702,7 @@ fn certified_vertex_permutation_report(
     (left_to_right, predicates, ExactSameSurfaceStatus::Certified)
 }
 
-fn sorted_triangle_sets(mesh: &ExactMesh, right_to_left: Option<&[usize]>) -> Vec<[usize; 3]> {
+fn sorted_triangle_sets(mesh: &Mesh, right_to_left: Option<&[usize]>) -> Vec<[usize; 3]> {
     retained_face_rows(mesh)
         .map(|triangle| {
             let mut vertices = triangle.map(|vertex| match right_to_left {
@@ -5715,11 +5715,11 @@ fn sorted_triangle_sets(mesh: &ExactMesh, right_to_left: Option<&[usize]>) -> Ve
         .collect()
 }
 
-fn retained_face_rows(mesh: &ExactMesh) -> impl Iterator<Item = [usize; 3]> + '_ {
+fn retained_face_rows(mesh: &Mesh) -> impl Iterator<Item = [usize; 3]> + '_ {
     mesh.view().faces().map(|face| face.vertex_indices())
 }
 
-fn retained_face_rows_equal(left: &ExactMesh, right: &ExactMesh) -> bool {
+fn retained_face_rows_equal(left: &Mesh, right: &Mesh) -> bool {
     left.facts().mesh.face_count == right.facts().mesh.face_count
         && left.facts().faces.len() >= left.facts().mesh.face_count
         && right.facts().faces.len() >= right.facts().mesh.face_count
@@ -5783,8 +5783,8 @@ impl ExactOpenSurfaceDisjointReport {
     /// preconditions. This method recomputes both from `left` and `right`
     pub(crate) fn validate_against_sources(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         let graph = validated_report_intersection_graph(left, right)?;
@@ -6148,8 +6148,8 @@ impl ExactAdjacentUnionCompletionReport {
     /// operands.
     pub(crate) fn validate_against_sources(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         let graph = validated_report_intersection_graph(left, right)?;
@@ -6235,8 +6235,8 @@ impl ExactBoundaryTouchingReport {
     /// Recomputing the report from the source meshes ensures the retained
     pub(crate) fn validate_against_sources(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         let graph = validated_report_intersection_graph(left, right)?;
@@ -6544,13 +6544,13 @@ impl ExactWindingEvidenceReport {
     #[cfg(test)]
     pub(crate) fn validate_against_sources(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
         let request = ExactBooleanRequest {
             operation: self.operation,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
         validate_winding_evidence_against_sources_for_request(self, left, right, request)
     }
@@ -7098,8 +7098,8 @@ mod tests {
         );
     }
 
-    fn report_test_triangle(points: &[[i64; 3]; 3]) -> ExactMesh {
-        ExactMesh::from_i64_triangles_with_policy(
+    fn report_test_triangle(points: &[[i64; 3]; 3]) -> Mesh {
+        Mesh::from_i64_triangles_with_policy(
             &[
                 points[0][0],
                 points[0][1],
@@ -7112,7 +7112,7 @@ mod tests {
                 points[2][2],
             ],
             &[0, 1, 2],
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap()
     }
@@ -7125,7 +7125,7 @@ mod tests {
             &left,
             &right,
             ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
             None,
             None,
         )
@@ -7201,11 +7201,11 @@ mod tests {
                 orientation: ExactOutputTriangleOrientation::PreserveSource,
             }],
         };
-        let mesh = ExactMesh::new_with_policy_and_version(
+        let mesh = Mesh::new_with_policy_and_version(
             vec![p0.clone(), p1.clone(), p2.clone()],
             vec![Triangle([0, 1, 2])],
             SourceProvenance::exact("exact boolean assembly plan"),
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
             1,
         )
         .unwrap();
@@ -7331,7 +7331,7 @@ mod tests {
 
     #[test]
     fn empty_shortcut_result_rejects_retained_orphan_vertices() {
-        let mesh = ExactMesh::from_i64_triangles(&[0, 0, 0], &[]).unwrap();
+        let mesh = Mesh::from_i64_triangles(&[0, 0, 0], &[]).unwrap();
         assert_eq!(mesh.facts().mesh.face_count, 0);
         assert!(!mesh.vertices().is_empty());
         let result = ExactBooleanResult {
@@ -7375,7 +7375,7 @@ mod tests {
             volumetric_classifications: Vec::new(),
             topology_assembly_report: None,
             region_ownership_report: None,
-            mesh: ExactMesh::new(
+            mesh: Mesh::new(
                 Vec::new(),
                 Vec::new(),
                 hyperlimit::SourceProvenance::exact("empty exact arrangement union shortcut"),
@@ -7405,7 +7405,7 @@ mod tests {
             volumetric_classifications: Vec::new(),
             topology_assembly_report: None,
             region_ownership_report: None,
-            mesh: ExactMesh::new(
+            mesh: Mesh::new(
                 Vec::new(),
                 Vec::new(),
                 hyperlimit::SourceProvenance::exact("empty exact arrangement union shortcut"),
@@ -7424,7 +7424,7 @@ mod tests {
                 &right,
                 ExactBooleanRequest {
                     operation: ExactBooleanOperation::Union,
-                    validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                    validation: MeshValidationPolicy::ALLOW_BOUNDARY,
                 },
                 None,
             ),

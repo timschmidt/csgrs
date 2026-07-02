@@ -24,7 +24,7 @@ use hyperlimit::{
 };
 use hyperreal::Real;
 
-use super::super::ExactMesh;
+use super::super::Mesh;
 use super::super::facts::FacePlaneFacts;
 use super::super::triangle_edges;
 
@@ -112,9 +112,9 @@ impl MeshFacePairClassification {
 }
 
 pub(crate) fn classify_mesh_face_pair_unchecked(
-    left: &ExactMesh,
+    left: &Mesh,
     left_face: usize,
-    right: &ExactMesh,
+    right: &Mesh,
     right_face: usize,
 ) -> MeshFacePairClassification {
     let right_against_left = classify_mesh_triangle_against_retained_face_plane_unchecked(
@@ -174,9 +174,9 @@ pub(crate) fn classify_mesh_face_pair_unchecked(
 }
 
 fn classify_mesh_triangles_from_retained_plane_relations(
-    left: &ExactMesh,
+    left: &Mesh,
     left_face: usize,
-    right: &ExactMesh,
+    right: &Mesh,
     right_face: usize,
     right_against_left_plane: TrianglePlaneRelation,
     left_against_right_plane: TrianglePlaneRelation,
@@ -196,9 +196,9 @@ fn classify_mesh_triangles_from_retained_plane_relations(
 /// structure should survive so later topology stages can reuse exact facts
 /// instead of reconstructing normals or representative floats.
 fn classify_mesh_triangle_against_retained_face_plane_unchecked(
-    plane_mesh: &ExactMesh,
+    plane_mesh: &Mesh,
     plane_face: usize,
-    query_mesh: &ExactMesh,
+    query_mesh: &Mesh,
     query_face: usize,
 ) -> TrianglePlaneClassification {
     let plane = retained_face_plane_unchecked(plane_mesh, plane_face);
@@ -255,9 +255,9 @@ fn classify_triangle_triangle_points_from_plane_relations(
 }
 
 fn retained_triangle_edge_events(
-    plane_mesh: &ExactMesh,
+    plane_mesh: &Mesh,
     plane_face: usize,
-    segment_mesh: &ExactMesh,
+    segment_mesh: &Mesh,
     segment_face: usize,
 ) -> [SegmentPlaneIntersection; 3] {
     let plane = retained_face_plane_unchecked(plane_mesh, plane_face);
@@ -271,7 +271,7 @@ fn retained_triangle_edge_events(
     })
 }
 
-fn retained_face_vertices_unchecked(mesh: &ExactMesh, face: usize) -> [&Point3; 3] {
+fn retained_face_vertices_unchecked(mesh: &Mesh, face: usize) -> [&Point3; 3] {
     mesh.view()
         .face(face)
         .expect("retained face-pair classification references a missing face")
@@ -279,21 +279,21 @@ fn retained_face_vertices_unchecked(mesh: &ExactMesh, face: usize) -> [&Point3; 
         .expect("retained face-pair classification references a missing vertex")
 }
 
-fn retained_face_vertex_indices_unchecked(mesh: &ExactMesh, face: usize) -> [usize; 3] {
+fn retained_face_vertex_indices_unchecked(mesh: &Mesh, face: usize) -> [usize; 3] {
     mesh.view()
         .face(face)
         .expect("retained face-pair classification references a missing face")
         .vertex_indices()
 }
 
-fn retained_face_plane_unchecked(mesh: &ExactMesh, face: usize) -> &FacePlaneFacts {
+fn retained_face_plane_unchecked(mesh: &Mesh, face: usize) -> &FacePlaneFacts {
     mesh.view()
         .face(face)
         .expect("retained face-pair classification references a missing face")
         .plane()
 }
 
-fn retained_vertex_point_unchecked(mesh: &ExactMesh, vertex: usize) -> &Point3 {
+fn retained_vertex_point_unchecked(mesh: &Mesh, vertex: usize) -> &Point3 {
     mesh.view()
         .vertex(vertex)
         .expect("retained face-pair classification references a missing vertex")

@@ -59,7 +59,7 @@ impl ExactBooleanCertificationSet {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
-        if request.validation == ExactMeshValidationPolicy::CLOSED
+        if request.validation == MeshValidationPolicy::CLOSED
             && self
                 .arrangement_cell_complex_shortcuts
                 .materializes_operation(request.operation)
@@ -73,7 +73,7 @@ impl ExactBooleanCertificationSet {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
-        if request.validation == ExactMeshValidationPolicy::ALLOW_BOUNDARY
+        if request.validation == MeshValidationPolicy::ALLOW_BOUNDARY
             && self.winding_evidence.status
                 == ExactWindingEvidenceStatus::ArrangementCellComplexAlreadyMaterialized
         {
@@ -97,9 +97,7 @@ impl ExactBooleanCertificationSet {
             } else {
                 false
             };
-        if request.validation == ExactMeshValidationPolicy::CLOSED
-            && coplanar_closure_matches_request
-        {
+        if request.validation == MeshValidationPolicy::CLOSED && coplanar_closure_matches_request {
             self.validate_retained_closure_and_attempt_for_request(request, true, false)?;
             return Ok(());
         }
@@ -909,8 +907,8 @@ impl ExactBooleanEvaluation {
     /// and the materialized result under the original request policy.
     pub(crate) fn validate_against_sources(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate_with_missing_result_policy(false)?;
         let replay = exact_boolean_evaluation_for_replay_result_with_materialization(
@@ -1163,8 +1161,8 @@ impl ExactPlanarArrangementReport {
     /// Validate this planar-arrangement report against source meshes and request.
     pub(crate) fn validate_against_sources_for_request(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
+        left: &Mesh,
+        right: &Mesh,
         request: ExactBooleanRequest,
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
@@ -1180,8 +1178,8 @@ impl ExactPlanarArrangementReport {
 
 fn test_preflight(
     request: ExactBooleanRequest,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> ExactBooleanPreflight {
     exact_boolean_evaluation_for_replay_result_with_materialization(left, right, request, false)
         .unwrap()
@@ -1191,8 +1189,8 @@ fn test_preflight(
 
 fn with_test_evaluation<R>(
     request: ExactBooleanRequest,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     f: impl FnOnce(&ExactBooleanEvaluation) -> R,
 ) -> R {
     let evaluation =
@@ -1206,8 +1204,8 @@ fn with_test_evaluation<R>(
 
 fn test_materialized_result(
     request: ExactBooleanRequest,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> ExactBooleanResult {
     let result = materialize_boolean_operation(
         left,
@@ -1237,8 +1235,8 @@ fn test_materialized_result(
 
 fn test_winding_evidence(
     request: ExactBooleanRequest,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> ExactWindingEvidenceReport {
     let evaluation = exact_boolean_evaluation_for_replay_result_with_materialization(
         left, right, request, false,
@@ -1252,8 +1250,8 @@ fn test_winding_evidence(
 
 fn test_volumetric_boundary_closure(
     request: ExactBooleanRequest,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> ExactVolumetricBoundaryClosureReport {
     if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
         return ExactVolumetricBoundaryClosureReport::no_materialized(request.operation);
@@ -1264,8 +1262,8 @@ fn test_volumetric_boundary_closure(
 
 fn test_planar_arrangement_report(
     request: ExactBooleanRequest,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) -> ExactPlanarArrangementReport {
     if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
         return RetainedGraphCounts::empty().into_planar_arrangement_report(
@@ -1289,7 +1287,7 @@ fn test_planar_arrangement_report(
     .unwrap()
 }
 
-fn exact_meshes_have_same_shape(left: &ExactMesh, right: &ExactMesh) -> bool {
+fn exact_meshes_have_same_shape(left: &Mesh, right: &Mesh) -> bool {
     (left.vertices().len() == right.vertices().len()
         && left.vertices().iter().all(|left_point| {
             right
@@ -1312,7 +1310,7 @@ struct ExactBoundaryEdge {
     count: usize,
 }
 
-fn exact_mesh_boundary_edges_match(left: &ExactMesh, right: &ExactMesh) -> bool {
+fn exact_mesh_boundary_edges_match(left: &Mesh, right: &Mesh) -> bool {
     let Some(left_edges) = exact_mesh_boundary_edges(left) else {
         return false;
     };
@@ -1337,7 +1335,7 @@ fn exact_mesh_boundary_edges_match(left: &ExactMesh, right: &ExactMesh) -> bool 
         })
 }
 
-fn exact_mesh_boundary_edges(mesh: &ExactMesh) -> Option<Vec<ExactBoundaryEdge>> {
+fn exact_mesh_boundary_edges(mesh: &Mesh) -> Option<Vec<ExactBoundaryEdge>> {
     let mut edges = Vec::<ExactBoundaryEdge>::new();
     for triangle in mesh.triangles() {
         for [start, end] in super::super::triangle_edges(triangle.0) {
@@ -1374,8 +1372,8 @@ fn point3_edge_exact_equal(left: &[Point3; 2], right: &[Point3; 2]) -> Option<bo
 
 fn test_arrangement_attempt(
     request: ExactBooleanRequest,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     policy: ExactRegularizationPolicy,
 ) -> ExactArrangementBooleanAttempt {
     assert_eq!(policy, ExactRegularizationPolicy::REGULARIZED_SOLID);
@@ -1396,18 +1394,15 @@ fn test_arrangement_attempt(
     retained_attempt.unwrap()
 }
 
-fn test_boundary_touching_report(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> ExactBoundaryTouchingReport {
+fn test_boundary_touching_report(left: &Mesh, right: &Mesh) -> ExactBoundaryTouchingReport {
     let graph = build_validated_intersection_graph(left, right).unwrap();
     boundary_touching_report_from_graph(&graph, left, right).unwrap()
 }
 
 fn assert_current_arrangement_attempt(
     attempt: &ExactArrangementBooleanAttempt,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
 ) {
     attempt.validate().unwrap();
     let request = ExactBooleanRequest {
@@ -1452,7 +1447,7 @@ fn synthetic_arrangement_attempt(
     let mut attempt = not_attempted_arrangement_attempt_for_request(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         ExactRegularizationPolicy::REGULARIZED_SOLID,
     );
@@ -1538,16 +1533,16 @@ fn arrangement_shortcut_reason_names_generic_blocker_stage() {
 
 #[test]
 fn exact_mesh_shape_accepts_same_boundary_with_different_triangulation() {
-    let diagonal = ExactMesh::from_i64_triangles_with_policy(
+    let diagonal = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let centered = ExactMesh::from_i64_triangles_with_policy(
+    let centered = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, 2, 2, 0],
         &[0, 1, 4, 1, 2, 4, 2, 3, 4, 3, 0, 4],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
 
@@ -1557,22 +1552,22 @@ fn exact_mesh_shape_accepts_same_boundary_with_different_triangulation() {
 
 #[test]
 fn open_surface_disjoint_graph_shortcut_replays_sources_before_acceptance() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 4, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let separated_right = ExactMesh::from_i64_triangles_with_policy(
+    let separated_right = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 1, 4, 0, 5, 0, 4, 1],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let overlapping_right = ExactMesh::from_i64_triangles_with_policy(
+    let overlapping_right = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 4, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
 
@@ -1583,7 +1578,7 @@ fn open_surface_disjoint_graph_shortcut_replays_sources_before_acceptance() {
             &left,
             &separated_right,
             ExactBooleanOperation::Union,
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap()
         .is_none()
@@ -1594,39 +1589,39 @@ fn open_surface_disjoint_graph_shortcut_replays_sources_before_acceptance() {
         &left,
         &overlapping_right,
         ExactBooleanOperation::Union,
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap_err();
     assert!(
-        stale_error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        stale_error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
         "{stale_error:?}"
     );
 }
 
 #[test]
 fn certified_selected_region_materialization_rejects_stale_retained_graph() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 4, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let separated_right = ExactMesh::from_i64_triangles_with_policy(
+    let separated_right = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 1, 4, 0, 5, 0, 4, 1],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let overlapping_right = ExactMesh::from_i64_triangles_with_policy(
+    let overlapping_right = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 4, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let stale_graph = build_unvalidated_intersection_graph(&left, &separated_right).unwrap();
     let request = ExactBooleanRequest {
         operation: ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
-        validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
     let shortcut_facts =
         ExactArrangementCellComplexShortcutFacts::from_sources(&left, &overlapping_right);
@@ -1649,22 +1644,22 @@ fn certified_selected_region_materialization_rejects_stale_retained_graph() {
 
 #[test]
 fn named_materialization_rejects_stale_retained_graph_before_ready_graph_use() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let separated_right = ExactMesh::from_i64_triangles_with_policy(
+    let separated_right = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 3, 4, 0, 3, 0, 4, 3],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let crossing_right = ExactMesh::from_i64_triangles_with_policy(
+    let crossing_right = Mesh::from_i64_triangles_with_policy(
         &[1, -1, -1, 1, 3, 1, 1, 3, -1],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let stale_graph = build_unvalidated_intersection_graph(&left, &separated_right).unwrap();
@@ -1674,30 +1669,27 @@ fn named_materialization_rejects_stale_retained_graph_before_ready_graph_use() {
         &left,
         &crossing_right,
         ExactBooleanOperation::Union,
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
         Some(&stale_graph),
         None,
     )
     .unwrap_err();
 
-    assert_eq!(
-        error.blockers()[0].kind(),
-        ExactMeshBlockerKind::StaleFactReplay
-    );
+    assert_eq!(error.blockers()[0].kind(), MeshBlockerKind::StaleFactReplay);
 }
 
 #[test]
 fn generic_arrangement_replay_rejects_stale_retained_graph_indices() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[1, -1, -1, 1, 3, 1, 1, 3, -1],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let mut stale_graph = build_unvalidated_intersection_graph(&left, &right).unwrap();
@@ -1710,35 +1702,35 @@ fn generic_arrangement_replay_rejects_stale_retained_graph_indices() {
         &right,
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
     )
     .expect_err("stale generic arrangement replay should return a typed blocker");
     assert!(
-        stale_error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        stale_error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
         "{stale_error:?}"
     );
 }
 
 #[test]
 fn open_surface_disjoint_preflight_prefers_specific_support_over_cell_complex() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[3, 3, 0, 5, 3, 0, 3, 5, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     assert!(!meshes_are_certified_bounds_disjoint(&left, &right));
 
     let request = ExactBooleanRequest {
         operation: ExactBooleanOperation::Union,
-        validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
     let preflight = test_preflight(request, &left, &right);
     assert_eq!(
@@ -1831,7 +1823,7 @@ fn arrangement_coplanar_evidence_retains_source_handoff() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        ExactMeshBlockerKind::StaleFactReplay,
+        MeshBlockerKind::StaleFactReplay,
         "coplanar arrangement evidence must not survive stale source replay"
     );
     assert_eq!(
@@ -1839,7 +1831,7 @@ fn arrangement_coplanar_evidence_retains_source_handoff() {
             .unwrap_err()
             .blockers()[0]
             .kind(),
-        ExactMeshBlockerKind::StaleFactReplay
+        MeshBlockerKind::StaleFactReplay
     );
 }
 
@@ -1855,7 +1847,7 @@ fn disconnected_contained_face_adjacent_union_replays_result_source() {
     );
     let request = ExactBooleanRequest {
         operation: ExactBooleanOperation::Union,
-        validation: ExactMeshValidationPolicy::CLOSED,
+        validation: MeshValidationPolicy::CLOSED,
     };
 
     assert_contained_face_adjacent_union_replays(&container, &right, request);
@@ -1865,7 +1857,7 @@ fn disconnected_contained_face_adjacent_union_replays_result_source() {
         &container,
         &right,
         ExactBooleanOperation::Union,
-        Some(ExactMeshValidationPolicy::CLOSED),
+        Some(MeshValidationPolicy::CLOSED),
     )
     .unwrap();
     assert_eq!(
@@ -1881,11 +1873,11 @@ fn disconnected_contained_face_adjacent_union_replays_result_source() {
     let stale_report_error = super::retained_evidence_validation_error(
         "exact adjacent-union completion report failed source replay",
         stale_source_error,
-        ExactMeshBlockerKind::ExactConstructionFailure,
+        MeshBlockerKind::ExactConstructionFailure,
     );
     assert_eq!(
         stale_report_error.blockers()[0].kind(),
-        ExactMeshBlockerKind::StaleFactReplay
+        MeshBlockerKind::StaleFactReplay
     );
 
     let square_left = square_pyramid_with_base_i64();
@@ -1903,8 +1895,8 @@ fn disconnected_contained_face_adjacent_union_replays_result_source() {
 }
 
 fn assert_contained_face_adjacent_union_replays(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     request: ExactBooleanRequest,
 ) {
     let evaluation =
@@ -1965,16 +1957,16 @@ fn exact_boolean_blocker_counts_include_unknown_segment_plane_events() {
 
 #[test]
 fn selected_overlay_faces_triangulate_simple_coplanar_difference_cells() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[2, 0, 0, 4, 0, 0, 4, 2, 0, 2, 2, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right)
@@ -2045,14 +2037,14 @@ fn selected_overlay_faces_triangulate_simple_coplanar_difference_cells() {
     )
     .expect_err("stale selected-face arrangement vertex should return a typed blocker");
     assert!(
-        stale_error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        stale_error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
         "{stale_error:?}"
     );
 
     let evidence = test_winding_evidence(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Difference,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -2068,16 +2060,16 @@ fn selected_overlay_faces_triangulate_simple_coplanar_difference_cells() {
 
 #[test]
 fn projected_boundary_rings_reject_stale_boundary_vertex() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let (_, projection) = coplanar_mesh_overlay_carrier(&left, &right)
@@ -2090,7 +2082,7 @@ fn projected_boundary_rings_reject_stale_boundary_vertex() {
         projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &stale_left, projection)
             .expect_err("stale retained boundary vertex should return a typed blocker");
     assert!(
-        error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
         "{error:?}"
     );
     assert_eq!(error.blockers()[0].vertex(), Some(3));
@@ -2098,10 +2090,10 @@ fn projected_boundary_rings_reject_stale_boundary_vertex() {
 
 #[test]
 fn projected_face_ring_rejects_stale_face_rows() {
-    let mesh = ExactMesh::from_i64_triangles_with_policy(
+    let mesh = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let (_, projection) = coplanar_mesh_overlay_carrier(&mesh, &mesh)
@@ -2116,7 +2108,7 @@ fn projected_face_ring_rejects_stale_face_rows() {
     )
     .expect_err("missing retained face should return a typed blocker");
     assert!(
-        missing_face_error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        missing_face_error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
         "{missing_face_error:?}"
     );
     assert_eq!(missing_face_error.blockers()[0].face(), Some(usize::MAX));
@@ -2126,7 +2118,7 @@ fn projected_face_ring_rejects_stale_face_rows() {
     let stale_vertex_error = coplanar_mesh_overlay_carrier(&stale_vertex_mesh, &stale_vertex_mesh)
         .expect_err("stale carrier face vertex should return a typed blocker");
     assert!(
-        stale_vertex_error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        stale_vertex_error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
         "{stale_vertex_error:?}"
     );
 }
@@ -2145,7 +2137,7 @@ fn required_indexed_points_reports_missing_vertex() {
     )
     .expect_err("missing required indexed point should return a typed blocker");
     assert!(
-        error.has_only_blocker_kinds(&[ExactMeshBlockerKind::IndexOutOfBounds]),
+        error.has_only_blocker_kinds(&[MeshBlockerKind::IndexOutOfBounds]),
         "{error:?}"
     );
     assert_eq!(error.blockers()[0].vertex(), Some(2));
@@ -2153,21 +2145,21 @@ fn required_indexed_points_reports_missing_vertex() {
 
 #[test]
 fn selected_region_winding_evidence_classifies_retained_graph_blocker() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[2, 0, 0, 4, 0, 0, 4, 2, 0, 2, 2, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let request = ExactBooleanRequest {
         operation: ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
-        validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
     let evidence = with_test_evaluation(request, &left, &right, |evaluation| {
         assert!(
@@ -2198,10 +2190,10 @@ fn selected_region_winding_evidence_classifies_retained_graph_blocker() {
         Err(ExactEvidenceValidationError::WrongBlockerKind)
     );
 
-    let disjoint_right = ExactMesh::from_i64_triangles_with_policy(
+    let disjoint_right = Mesh::from_i64_triangles_with_policy(
         &[8, 0, 0, 12, 0, 0, 12, 4, 0, 8, 4, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let disjoint_evidence = test_winding_evidence(request, &left, &disjoint_right);
@@ -2232,19 +2224,19 @@ fn selected_region_winding_evidence_classifies_retained_graph_blocker() {
 
 #[test]
 fn selected_overlay_faces_recover_point_touching_hole_components() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 8, 0, 0, 8, 8, 0, 0, 8, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[
             1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0, //
             3, 3, 0, 5, 3, 0, 5, 5, 0, 3, 5, 0,
         ],
         &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right)
@@ -2293,16 +2285,16 @@ fn selected_overlay_faces_recover_point_touching_hole_components() {
 
 #[test]
 fn selected_overlay_faces_absorb_contained_union_components() {
-    let outer_square = ExactMesh::from_i64_triangles_with_policy(
+    let outer_square = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let inner_square = ExactMesh::from_i64_triangles_with_policy(
+    let inner_square = Mesh::from_i64_triangles_with_policy(
         &[1, 1, 0, 2, 1, 0, 2, 2, 0, 1, 2, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&outer_square, &inner_square)
@@ -2409,26 +2401,26 @@ fn projected_overlay_mesh_uses_certified_output_components() {
     )
     .expect_err("stale certified output component should return a typed blocker");
     assert!(
-        stale_loop_error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        stale_loop_error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
         "{stale_loop_error:?}"
     );
 }
 
 #[test]
 fn selected_overlay_faces_recover_when_output_loop_ownership_is_blocked() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 8, 0, 0, 8, 8, 0, 0, 8, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[
             1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0, //
             3, 3, 0, 5, 3, 0, 5, 5, 0, 3, 5, 0,
         ],
         &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right)
@@ -2487,16 +2479,16 @@ fn selected_overlay_faces_recover_when_output_loop_ownership_is_blocked() {
 
 #[test]
 fn selected_overlay_faces_recover_selected_boundary_topology_blockers() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[2, 0, 0, 4, 0, 0, 4, 2, 0, 2, 2, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right)
@@ -2550,13 +2542,13 @@ fn selected_overlay_faces_recover_selected_boundary_topology_blockers() {
 
 #[test]
 fn coplanar_overlay_certifies_component_holed_contact_difference() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let opening_plus_hole = ExactMesh::from_i64_triangles_with_policy(
+    let opening_plus_hole = Mesh::from_i64_triangles_with_policy(
         &[
             8, 8, 0, 12, 10, 0, 8, 12, 0, //
             0, 9, 0, 10, 8, 0, 10, 12, 0, 0, 11, 0, //
@@ -2567,7 +2559,7 @@ fn coplanar_overlay_certifies_component_holed_contact_difference() {
             3, 4, 5, 3, 5, 6, //
             7, 8, 9, 7, 9, 10,
         ],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
 
@@ -2577,7 +2569,7 @@ fn coplanar_overlay_certifies_component_holed_contact_difference() {
     );
     let request = ExactBooleanRequest {
         operation: ExactBooleanOperation::Difference,
-        validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
     let preflight = test_preflight(request, &left, &opening_plus_hole);
     assert_eq!(
@@ -2593,7 +2585,7 @@ fn coplanar_overlay_certifies_component_holed_contact_difference() {
         &left,
         &opening_plus_hole,
         ExactBooleanOperation::Difference,
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap()
     .expect("certified overlay should materialize component-holed difference");
@@ -2605,26 +2597,26 @@ fn coplanar_overlay_certifies_component_holed_contact_difference() {
 
 #[test]
 fn coplanar_overlay_materializes_point_touching_hole_difference() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 8, 0, 0, 8, 8, 0, 0, 8, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let touching_holes = ExactMesh::from_i64_triangles_with_policy(
+    let touching_holes = Mesh::from_i64_triangles_with_policy(
         &[
             1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0, //
             3, 3, 0, 5, 3, 0, 5, 5, 0, 3, 5, 0,
         ],
         &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let result = boolean_coplanar_mesh_overlay_optional(
         &left,
         &touching_holes,
         ExactBooleanOperation::Difference,
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap()
     .expect("point-touching holed difference should materialize");
@@ -2640,28 +2632,28 @@ fn coplanar_overlay_materializes_point_touching_hole_difference() {
 
 #[test]
 fn coplanar_overlay_materializes_containment_union_and_intersection() {
-    let outer_triangle = ExactMesh::from_i64_triangles_with_policy(
+    let outer_triangle = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let inner_triangle = ExactMesh::from_i64_triangles_with_policy(
+    let inner_triangle = Mesh::from_i64_triangles_with_policy(
         &[1, 1, 0, 2, 1, 0, 1, 2, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let outer_square = ExactMesh::from_i64_triangles_with_policy(
+    let outer_square = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let inner_square = ExactMesh::from_i64_triangles_with_policy(
+    let inner_square = Mesh::from_i64_triangles_with_policy(
         &[1, 1, 0, 2, 1, 0, 2, 2, 0, 1, 2, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
 
@@ -2697,30 +2689,30 @@ fn coplanar_overlay_materializes_containment_union_and_intersection() {
 
 #[test]
 fn arrangement_preempts_multi_triangle_coplanar_overlay_including_containment() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[2, 2, 0, 6, 2, 0, 6, 6, 0, 2, 6, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     assert!(coplanar_mesh_overlay_plan(&left, &right, ExactBooleanOperation::Union).is_some());
 
-    let inner = ExactMesh::from_i64_triangles_with_policy(
+    let inner = Mesh::from_i64_triangles_with_policy(
         &[1, 1, 0, 2, 1, 0, 1, 2, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let union = test_materialized_result(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &inner,
         &left,
@@ -2748,7 +2740,7 @@ fn materialized_arrangement_preflight_probe_certifies_full_pipeline_output() {
 
     let request = ExactBooleanRequest {
         operation: ExactBooleanOperation::Union,
-        validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
     preflight.validate().unwrap();
     preflight
@@ -2780,7 +2772,7 @@ fn certifications_reuse_regularized_arrangement_attempt_reports() {
     let right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
     let request = ExactBooleanRequest {
         operation: ExactBooleanOperation::Union,
-        validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
     let retained_attempt = test_arrangement_attempt(
         request,
@@ -2837,7 +2829,7 @@ fn axis_aligned_orthogonal_cell_booleans_materialize_from_shortcut_support() {
 
         let request = ExactBooleanRequest {
             operation: operation,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(
@@ -2860,7 +2852,7 @@ fn axis_aligned_orthogonal_cell_booleans_materialize_from_shortcut_support() {
         let evidence = test_winding_evidence(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -2879,7 +2871,7 @@ fn axis_aligned_orthogonal_cell_booleans_materialize_from_shortcut_support() {
 
         let request = ExactBooleanRequest {
             operation: operation,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
         let planar = test_planar_arrangement_report(request, &left, &right);
         planar.validate().unwrap();
@@ -2891,7 +2883,7 @@ fn axis_aligned_orthogonal_cell_booleans_materialize_from_shortcut_support() {
             &left,
             &right,
             operation,
-            ExactMeshValidationPolicy::CLOSED,
+            MeshValidationPolicy::CLOSED,
         )
         .unwrap()
         .expect("orthogonal cell shortcut should materialize through certified replay");
@@ -2900,7 +2892,7 @@ fn axis_aligned_orthogonal_cell_booleans_materialize_from_shortcut_support() {
         let attempt = test_arrangement_attempt(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::CLOSED,
+                validation: MeshValidationPolicy::CLOSED,
             },
             &left,
             &right,
@@ -2917,7 +2909,7 @@ fn axis_aligned_orthogonal_cell_booleans_materialize_from_shortcut_support() {
                 .validate_for_request_policy(
                     ExactBooleanRequest {
                         operation: operation,
-                        validation: ExactMeshValidationPolicy::CLOSED
+                        validation: MeshValidationPolicy::CLOSED
                     },
                     ExactRegularizationPolicy::REGULARIZED_SOLID,
                 )
@@ -2931,7 +2923,7 @@ fn axis_aligned_orthogonal_cell_booleans_materialize_from_shortcut_support() {
         let result = test_materialized_result(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::CLOSED,
+                validation: MeshValidationPolicy::CLOSED,
             },
             &left,
             &right,
@@ -3029,21 +3021,21 @@ fn arrangement_cell_complex_shortcut_facts_detect_mixed_axis_and_affine_families
 
 #[test]
 fn evaluation_source_replay_rejects_tampered_arrangement_shortcut_facts() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 2, 0, 0, 0, 2, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[4, 0, 0, 6, 0, 0, 4, 2, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let request = ExactBooleanRequest {
         operation: ExactBooleanOperation::Union,
-        validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
     let mut evaluation = exact_boolean_evaluation_for_replay_result_with_materialization(
         &left, &right, request, true,
@@ -3085,7 +3077,7 @@ fn affine_box_booleans_materialize_from_certified_preflight_support() {
     ] {
         let request = ExactBooleanRequest {
             operation: operation,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(
@@ -3098,7 +3090,7 @@ fn affine_box_booleans_materialize_from_certified_preflight_support() {
         let result = test_materialized_result(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::CLOSED,
+                validation: MeshValidationPolicy::CLOSED,
             },
             &left,
             &right,
@@ -3146,7 +3138,7 @@ fn affine_empty_intersection_materializes_without_winding_fallback() {
 
     let request = ExactBooleanRequest {
         operation: ExactBooleanOperation::Intersection,
-        validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
     let preflight = test_preflight(request, &left, &right);
     assert_eq!(
@@ -3159,7 +3151,7 @@ fn affine_empty_intersection_materializes_without_winding_fallback() {
     let result = test_materialized_result(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Intersection,
-            validation: ExactMeshValidationPolicy::CLOSED,
+            validation: MeshValidationPolicy::CLOSED,
         },
         &left,
         &right,
@@ -3185,7 +3177,7 @@ fn affine_shortcut_winding_report_retains_already_materialized_status() {
     ] {
         let request = ExactBooleanRequest {
             operation: operation,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(
@@ -3197,7 +3189,7 @@ fn affine_shortcut_winding_report_retains_already_materialized_status() {
         let evidence = test_winding_evidence(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -3217,7 +3209,7 @@ fn affine_shortcut_winding_report_retains_already_materialized_status() {
 
         let request = ExactBooleanRequest {
             operation: operation,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
         let planar = test_planar_arrangement_report(request, &left, &right);
         planar.validate().unwrap();
@@ -3231,29 +3223,29 @@ fn affine_shortcut_winding_report_retains_already_materialized_status() {
 fn trivial_shortcuts_report_materialized_evidence() {
     let empty = empty_mesh(
         "empty operand evidence fixture",
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
     )
     .unwrap();
     let solid = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
     let far_solid = axis_aligned_box_i64([4, 0, 0], [6, 2, 2]);
-    let left_open = ExactMesh::from_i64_triangles_with_policy(
+    let left_open = Mesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, //
             4, 0, 4, //
             0, 4, 0,
         ],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right_open = ExactMesh::from_i64_triangles_with_policy(
+    let right_open = Mesh::from_i64_triangles_with_policy(
         &[
             0, 0, 1, //
             4, 0, 5, //
             0, 4, 1,
         ],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     assert!(!meshes_are_certified_bounds_disjoint(
@@ -3265,7 +3257,7 @@ fn trivial_shortcuts_report_materialized_evidence() {
         (
             &empty,
             &solid,
-            ExactMeshValidationPolicy::CLOSED,
+            MeshValidationPolicy::CLOSED,
             ExactBooleanSupport::CertifiedEmptyOperand,
             ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized,
             ExactBooleanShortcutKind::EmptyOperand,
@@ -3273,7 +3265,7 @@ fn trivial_shortcuts_report_materialized_evidence() {
         (
             &solid,
             &far_solid,
-            ExactMeshValidationPolicy::CLOSED,
+            MeshValidationPolicy::CLOSED,
             ExactBooleanSupport::CertifiedBoundsDisjoint,
             ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized,
             ExactBooleanShortcutKind::BoundsDisjoint,
@@ -3281,7 +3273,7 @@ fn trivial_shortcuts_report_materialized_evidence() {
         (
             &left_open,
             &right_open,
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
             ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
             ExactWindingEvidenceStatus::OpenSurfaceDisjointAlreadyMaterialized,
             ExactBooleanShortcutKind::OpenSurfaceDisjoint,
@@ -3294,7 +3286,7 @@ fn trivial_shortcuts_report_materialized_evidence() {
         ] {
             let request = ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             };
             let preflight = test_preflight(request, left, right);
             assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
@@ -3303,7 +3295,7 @@ fn trivial_shortcuts_report_materialized_evidence() {
             let evidence = test_winding_evidence(
                 ExactBooleanRequest {
                     operation: operation,
-                    validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                    validation: MeshValidationPolicy::ALLOW_BOUNDARY,
                 },
                 left,
                 right,
@@ -3347,7 +3339,7 @@ fn graph_empty_containment_routes_named_booleans_through_arrangement_pipeline() 
         &disjoint_shell,
         false,
         "exact disjoint union",
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
     )
     .expect("disconnected closed container fixture should validate");
     let contained = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
@@ -3374,7 +3366,7 @@ fn graph_empty_containment_routes_named_booleans_through_arrangement_pipeline() 
         ] {
             let request = ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             };
             let preflight = test_preflight(request, left, right);
             assert_eq!(
@@ -3391,7 +3383,7 @@ fn graph_empty_containment_routes_named_booleans_through_arrangement_pipeline() 
             let evidence = test_winding_evidence(
                 ExactBooleanRequest {
                     operation: operation,
-                    validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                    validation: MeshValidationPolicy::ALLOW_BOUNDARY,
                 },
                 left,
                 right,
@@ -3414,7 +3406,7 @@ fn graph_empty_containment_routes_named_booleans_through_arrangement_pipeline() 
             let result = test_materialized_result(
                 ExactBooleanRequest {
                     operation: operation,
-                    validation: ExactMeshValidationPolicy::CLOSED,
+                    validation: MeshValidationPolicy::CLOSED,
                 },
                 left,
                 right,
@@ -3492,7 +3484,7 @@ fn graph_empty_closed_winding_separation_materializes_without_bounds_disjointnes
         &left_b,
         false,
         "exact disjoint union",
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
     )
     .unwrap();
     let right = tetrahedron_i64([5, 0, 0], [6, 0, 0], [5, 1, 0], [5, 0, 1]);
@@ -3512,7 +3504,7 @@ fn graph_empty_closed_winding_separation_materializes_without_bounds_disjointnes
     ] {
         let request = ExactBooleanRequest {
             operation: operation,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(
@@ -3529,7 +3521,7 @@ fn graph_empty_closed_winding_separation_materializes_without_bounds_disjointnes
         let evidence = test_winding_evidence(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -3552,7 +3544,7 @@ fn graph_empty_closed_winding_separation_materializes_without_bounds_disjointnes
         let result = test_materialized_result(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::CLOSED,
+                validation: MeshValidationPolicy::CLOSED,
             },
             &left,
             &right,
@@ -3600,10 +3592,10 @@ fn graph_empty_closed_winding_separation_materializes_without_bounds_disjointnes
 #[test]
 fn mixed_dimensional_regularized_solid_reports_materialized_evidence() {
     let solid = axis_aligned_box_i64([0, 0, 0], [4, 4, 4]);
-    let sheet = ExactMesh::from_i64_triangles_with_policy(
+    let sheet = Mesh::from_i64_triangles_with_policy(
         &[1, 1, 1, 3, 1, 1, 1, 3, 1],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
 
@@ -3616,7 +3608,7 @@ fn mixed_dimensional_regularized_solid_reports_materialized_evidence() {
             let preflight = test_preflight(
                 ExactBooleanRequest {
                     operation: operation,
-                    validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                    validation: MeshValidationPolicy::ALLOW_BOUNDARY,
                 },
                 left,
                 right,
@@ -3631,7 +3623,7 @@ fn mixed_dimensional_regularized_solid_reports_materialized_evidence() {
             let evidence = test_winding_evidence(
                 ExactBooleanRequest {
                     operation: operation,
-                    validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                    validation: MeshValidationPolicy::ALLOW_BOUNDARY,
                 },
                 left,
                 right,
@@ -3654,7 +3646,7 @@ fn mixed_dimensional_regularized_solid_reports_materialized_evidence() {
             let result = test_materialized_result(
                 ExactBooleanRequest {
                     operation: operation,
-                    validation: ExactMeshValidationPolicy::CLOSED,
+                    validation: MeshValidationPolicy::CLOSED,
                 },
                 left,
                 right,
@@ -3687,16 +3679,16 @@ fn mixed_dimensional_regularized_solid_reports_materialized_evidence() {
 
 #[test]
 fn lower_dimensional_regularized_solid_reports_materialized_evidence() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[1, -1, -1, 1, 3, 1, 1, 3, -1],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
 
@@ -3707,7 +3699,7 @@ fn lower_dimensional_regularized_solid_reports_materialized_evidence() {
     ] {
         let request = ExactBooleanRequest {
             operation: operation,
-            validation: ExactMeshValidationPolicy::CLOSED,
+            validation: MeshValidationPolicy::CLOSED,
         };
         with_test_evaluation(request, &left, &right, |evaluation| {
             let evidence = &evaluation.certifications.winding_evidence;
@@ -3783,7 +3775,7 @@ fn lower_dimensional_regularized_solid_reports_materialized_evidence() {
 
 #[test]
 fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
-    let left = ExactMesh::from_i64_triangles(
+    let left = Mesh::from_i64_triangles(
         &[
             0, 0, 0, //
             4, 0, 0, //
@@ -3808,7 +3800,7 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
 
     let reject_closed_request = ExactBooleanRequest {
         operation: ExactBooleanOperation::Union,
-        validation: ExactMeshValidationPolicy::CLOSED,
+        validation: MeshValidationPolicy::CLOSED,
     };
     let preflight = test_preflight(reject_closed_request, &left, &right);
     assert_eq!(
@@ -3838,7 +3830,7 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
         region_ownership_report: None,
         mesh: empty_mesh(
             "fake closed arrangement shortcut for unresolved winding case",
-            ExactMeshValidationPolicy::CLOSED,
+            MeshValidationPolicy::CLOSED,
         )
         .unwrap(),
     };
@@ -3856,7 +3848,7 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
     let boundary_preflight = test_preflight(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -3882,7 +3874,7 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
             &right,
             ExactBooleanRequest {
                 operation: ExactBooleanOperation::Union,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
         )
         .unwrap();
@@ -3896,7 +3888,7 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
     let evidence = test_winding_evidence(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -3912,7 +3904,7 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
 
     let boundary_request = ExactBooleanRequest {
         operation: ExactBooleanOperation::Union,
-        validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
     with_test_evaluation(boundary_request, &left, &right, |boundary_evaluation| {
         let boundary_evidence = &boundary_evaluation.certifications.winding_evidence;
@@ -3938,7 +3930,7 @@ fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
 
 #[test]
 fn volumetric_boundary_closure_report_certifies_triangular_coplanar_cap() {
-    let left = ExactMesh::from_i64_triangles(
+    let left = Mesh::from_i64_triangles(
         &[
             0, 0, 0, //
             4, 0, 0, //
@@ -3961,7 +3953,7 @@ fn volumetric_boundary_closure_report_certifies_triangular_coplanar_cap() {
     let closure = test_volumetric_boundary_closure(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -3979,7 +3971,7 @@ fn volumetric_boundary_closure_report_certifies_triangular_coplanar_cap() {
 
 #[test]
 fn coplanar_boundary_closure_availability_rejects_stale_retained_graph() {
-    let left = ExactMesh::from_i64_triangles(
+    let left = Mesh::from_i64_triangles(
         &[
             0, 0, 0, //
             4, 0, 0, //
@@ -4019,15 +4011,12 @@ fn coplanar_boundary_closure_availability_rejects_stale_retained_graph() {
         ExactBooleanOperation::Union,
     )
     .unwrap_err();
-    assert_eq!(
-        error.blockers()[0].kind(),
-        ExactMeshBlockerKind::StaleFactReplay
-    );
+    assert_eq!(error.blockers()[0].kind(), MeshBlockerKind::StaleFactReplay);
 }
 
 #[test]
 fn volumetric_coplanar_boundary_closure_materializes_closed_output() {
-    let left = ExactMesh::from_i64_triangles(
+    let left = Mesh::from_i64_triangles(
         &[
             0, 0, 0, //
             4, 0, 0, //
@@ -4052,7 +4041,7 @@ fn volumetric_coplanar_boundary_closure_materializes_closed_output() {
     let union_closure = test_volumetric_boundary_closure(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -4070,7 +4059,7 @@ fn volumetric_coplanar_boundary_closure_materializes_closed_output() {
     let difference_closure = test_volumetric_boundary_closure(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Difference,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -4090,7 +4079,7 @@ fn volumetric_coplanar_boundary_closure_materializes_closed_output() {
         let closure = test_volumetric_boundary_closure(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -4110,7 +4099,7 @@ fn volumetric_coplanar_boundary_closure_materializes_closed_output() {
 
         let request = ExactBooleanRequest {
             operation: operation,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(
@@ -4127,7 +4116,7 @@ fn volumetric_coplanar_boundary_closure_materializes_closed_output() {
         let evidence = test_winding_evidence(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -4144,7 +4133,7 @@ fn volumetric_coplanar_boundary_closure_materializes_closed_output() {
             &left,
             &right,
             operation,
-            ExactMeshValidationPolicy::CLOSED,
+            MeshValidationPolicy::CLOSED,
         )
         .unwrap()
         .expect("coplanar boundary closure should materialize closed output");
@@ -4168,7 +4157,7 @@ fn volumetric_coplanar_boundary_closure_materializes_closed_output() {
         let public = test_materialized_result(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::CLOSED,
+                validation: MeshValidationPolicy::CLOSED,
             },
             &left,
             &right,
@@ -4180,7 +4169,7 @@ fn volumetric_coplanar_boundary_closure_materializes_closed_output() {
 
 #[test]
 fn boundary_materialization_result_validation_returns_typed_error() {
-    let left = ExactMesh::from_i64_triangles(
+    let left = Mesh::from_i64_triangles(
         &[
             0, 0, 0, //
             4, 0, 0, //
@@ -4205,7 +4194,7 @@ fn boundary_materialization_result_validation_returns_typed_error() {
         &left,
         &right,
         ExactBooleanOperation::Union,
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
     )
     .unwrap()
     .expect("coplanar boundary closure should materialize closed output");
@@ -4218,15 +4207,15 @@ fn boundary_materialization_result_validation_returns_typed_error() {
     .unwrap_err();
     assert_eq!(
         error.blockers()[0].kind(),
-        ExactMeshBlockerKind::ExactConstructionFailure
+        MeshBlockerKind::ExactConstructionFailure
     );
 }
 
 fn arrangement_attempt_certified_as_cell_complex_for_preflight_with_validation(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    left: &Mesh,
+    right: &Mesh,
     operation: ExactBooleanOperation,
-    validation: ExactMeshValidationPolicy,
+    validation: MeshValidationPolicy,
 ) -> bool {
     let Ok(graph) = build_validated_intersection_graph(left, right) else {
         return false;
@@ -4262,16 +4251,16 @@ fn arrangement_attempt_certified_as_cell_complex_for_preflight_with_validation(
 
 #[test]
 fn arrangement_preflight_probe_keeps_boundary_valid_open_output_separate() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[1, -1, -1, 1, 3, 1, 1, 3, -1],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
 
@@ -4284,7 +4273,7 @@ fn arrangement_preflight_probe_keeps_boundary_valid_open_output_separate() {
                 &left,
                 &right,
                 operation,
-                ExactMeshValidationPolicy::CLOSED
+                MeshValidationPolicy::CLOSED
             )
         );
         assert!(
@@ -4292,12 +4281,12 @@ fn arrangement_preflight_probe_keeps_boundary_valid_open_output_separate() {
                 &left,
                 &right,
                 operation,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY
+                MeshValidationPolicy::ALLOW_BOUNDARY
             )
         );
         let request = ExactBooleanRequest {
             operation: operation,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
         let preflight = test_preflight(request, &left, &right);
         assert!(
@@ -4318,7 +4307,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
 
     let request = ExactBooleanRequest {
         operation: ExactBooleanOperation::Union,
-        validation: ExactMeshValidationPolicy::CLOSED,
+        validation: MeshValidationPolicy::CLOSED,
     };
     let mut attempt = test_arrangement_attempt(
         request,
@@ -4331,7 +4320,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
     let mesh = copy_mesh(
         &left,
         "exact arrangement cell-complex boolean result",
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
     )
     .unwrap();
     let result = certified_shortcut_result(
@@ -4375,7 +4364,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
     .unwrap_err();
     assert_eq!(
         simplified_error.blockers()[0].kind(),
-        ExactMeshBlockerKind::ExactConstructionFailure
+        MeshBlockerKind::ExactConstructionFailure
     );
 
     let mut missing_generic_evidence = retained_attempt.clone();
@@ -4402,7 +4391,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
         .validate()
         .map_err(|error| {
             boolean_validation_error(
-                ExactMeshBlockerKind::ExactConstructionFailure,
+                MeshBlockerKind::ExactConstructionFailure,
                 "exact topology assembly report validation failed",
                 error,
             )
@@ -4410,7 +4399,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
         .unwrap_err();
     assert_eq!(
         topology_error.blockers()[0].kind(),
-        ExactMeshBlockerKind::ExactConstructionFailure
+        MeshBlockerKind::ExactConstructionFailure
     );
 
     let mut invalid_ownership = retained_attempt.region_ownership_report.clone().unwrap();
@@ -4419,7 +4408,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
         .validate()
         .map_err(|error| {
             boolean_validation_error(
-                ExactMeshBlockerKind::ExactConstructionFailure,
+                MeshBlockerKind::ExactConstructionFailure,
                 "exact region ownership report validation failed",
                 error,
             )
@@ -4427,13 +4416,13 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
         .unwrap_err();
     assert_eq!(
         ownership_error.blockers()[0].kind(),
-        ExactMeshBlockerKind::ExactConstructionFailure
+        MeshBlockerKind::ExactConstructionFailure
     );
 
     let report_attempt = test_arrangement_attempt(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -4446,7 +4435,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
             .validate_for_request_policy(
                 ExactBooleanRequest {
                     operation: ExactBooleanOperation::Union,
-                    validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                    validation: MeshValidationPolicy::ALLOW_BOUNDARY,
                 },
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
             )
@@ -4468,13 +4457,13 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
             && relabeled_attempt.materialized_arrangement_cell_complex_output())
     );
     let mut wrong_validation_attempt = report_attempt.clone();
-    wrong_validation_attempt.output_validation = ExactMeshValidationPolicy::CLOSED;
+    wrong_validation_attempt.output_validation = MeshValidationPolicy::CLOSED;
     assert!(
         !(wrong_validation_attempt
             .validate_for_request_policy(
                 ExactBooleanRequest {
                     operation: ExactBooleanOperation::Union,
-                    validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                    validation: MeshValidationPolicy::ALLOW_BOUNDARY,
                 },
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
             )
@@ -4485,7 +4474,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
         wrong_validation_attempt.validate_for_request_policy(
             ExactBooleanRequest {
                 operation: ExactBooleanOperation::Union,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         ),
@@ -4532,7 +4521,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
             &left,
             &right,
             ExactBooleanOperation::Union,
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
         ),
         Err(ExactEvidenceValidationError::SourceReplayMismatch)
     );
@@ -4556,11 +4545,11 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
     let stale_materialization_error = super::retained_evidence_validation_error(
         "exact volumetric arrangement boundary gate reports failed validation",
         stale_gate_report_error,
-        ExactMeshBlockerKind::ExactConstructionFailure,
+        MeshBlockerKind::ExactConstructionFailure,
     );
     assert_eq!(
         stale_materialization_error.blockers()[0].kind(),
-        ExactMeshBlockerKind::StaleFactReplay
+        MeshBlockerKind::StaleFactReplay
     );
     let stale_certification_error = arrangement_cell_complex_result_is_certified_for_preflight(
         &stale_replay_report,
@@ -4571,7 +4560,7 @@ fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
     .unwrap_err();
     assert_eq!(
         stale_certification_error.blockers()[0].kind(),
-        ExactMeshBlockerKind::StaleFactReplay
+        MeshBlockerKind::StaleFactReplay
     );
 }
 
@@ -4622,7 +4611,7 @@ fn arrangement_attempt_accepts_requested_volume_ownership() {
     let right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
     let request = ExactBooleanRequest {
         operation: ExactBooleanOperation::Difference,
-        validation: ExactMeshValidationPolicy::CLOSED,
+        validation: MeshValidationPolicy::CLOSED,
     };
     let mut attempt = test_arrangement_attempt(
         request,
@@ -4635,7 +4624,7 @@ fn arrangement_attempt_accepts_requested_volume_ownership() {
     let mesh = copy_mesh(
         &left,
         "exact arrangement cell-complex boolean result",
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
     )
     .unwrap();
     let result = certified_shortcut_result(
@@ -4709,7 +4698,7 @@ fn retained_volume_ownership_preflight_rejects_stale_source_replay() {
     let right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
     let request = ExactBooleanRequest {
         operation: ExactBooleanOperation::Difference,
-        validation: ExactMeshValidationPolicy::CLOSED,
+        validation: MeshValidationPolicy::CLOSED,
     };
     let mut attempt = test_arrangement_attempt(
         request,
@@ -4720,7 +4709,7 @@ fn retained_volume_ownership_preflight_rejects_stale_source_replay() {
     let mesh = copy_mesh(
         &left,
         "exact arrangement cell-complex boolean result",
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
     )
     .unwrap();
     let result = certified_shortcut_result(
@@ -4779,7 +4768,7 @@ fn retained_result_validation_rejects_stale_supplied_attempt() {
     let right = tetrahedron_i64([1, 0, 0], [2, 0, 0], [1, 1, 0], [1, 0, 1]);
     let request = ExactBooleanRequest {
         operation: ExactBooleanOperation::Union,
-        validation: ExactMeshValidationPolicy::CLOSED,
+        validation: MeshValidationPolicy::CLOSED,
     };
 
     let result = test_materialized_result(request, &left, &right);
@@ -4816,21 +4805,21 @@ fn retained_result_validation_rejects_stale_supplied_attempt() {
 
 #[test]
 fn non_arrangement_result_validation_ignores_unrelated_stale_attempt() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[10, 10, 0, 14, 10, 0, 10, 14, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let request = ExactBooleanRequest {
         operation: ExactBooleanOperation::Union,
-        validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
 
     let result = test_materialized_result(request, &left, &right);
@@ -4838,10 +4827,10 @@ fn non_arrangement_result_validation_ignores_unrelated_stale_attempt() {
         matches!(result.kind, ExactBooleanResultKind::CertifiedShortcut { operation: result_operation, shortcut: result_shortcut } if result_operation == ExactBooleanOperation::Union && result_shortcut == ExactBooleanShortcutKind::BoundsDisjoint)
     );
 
-    let stale_right = ExactMesh::from_i64_triangles_with_policy(
+    let stale_right = Mesh::from_i64_triangles_with_policy(
         &[1, 1, 0, 5, 1, 0, 1, 5, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let mut stale_attempt = test_arrangement_attempt(
@@ -4872,16 +4861,16 @@ fn non_arrangement_result_validation_ignores_unrelated_stale_attempt() {
 
 #[test]
 fn crossing_open_surface_boolean_materializes_inside_arrangement_attempt() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[1, -1, -1, 1, 3, 1, 1, 3, -1],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
 
@@ -4904,7 +4893,7 @@ fn crossing_open_surface_boolean_materializes_inside_arrangement_attempt() {
         };
         let request = ExactBooleanRequest {
             operation: operation,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(
@@ -4921,7 +4910,7 @@ fn crossing_open_surface_boolean_materializes_inside_arrangement_attempt() {
         let evidence = test_winding_evidence(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -4947,7 +4936,7 @@ fn crossing_open_surface_boolean_materializes_inside_arrangement_attempt() {
         let attempt = test_arrangement_attempt(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -4972,7 +4961,7 @@ fn crossing_open_surface_boolean_materializes_inside_arrangement_attempt() {
         let result = test_materialized_result(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -5077,7 +5066,7 @@ fn partial_face_boundary_touch_is_regularized_without_coplanar_cell_blocker() {
 
     let intersection_request = ExactBooleanRequest {
         operation: ExactBooleanOperation::Intersection,
-        validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
     let intersection = test_preflight(intersection_request, &left, &right);
     assert_eq!(
@@ -5093,7 +5082,7 @@ fn partial_face_boundary_touch_is_regularized_without_coplanar_cell_blocker() {
 
     let difference_request = ExactBooleanRequest {
         operation: ExactBooleanOperation::Difference,
-        validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
     let difference = test_preflight(difference_request, &left, &right);
     assert_eq!(
@@ -5110,7 +5099,7 @@ fn partial_face_boundary_touch_is_regularized_without_coplanar_cell_blocker() {
     let intersection = test_materialized_result(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Intersection,
-            validation: ExactMeshValidationPolicy::CLOSED,
+            validation: MeshValidationPolicy::CLOSED,
         },
         &left,
         &right,
@@ -5124,7 +5113,7 @@ fn partial_face_boundary_touch_is_regularized_without_coplanar_cell_blocker() {
     let difference = test_materialized_result(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Difference,
-            validation: ExactMeshValidationPolicy::CLOSED,
+            validation: MeshValidationPolicy::CLOSED,
         },
         &left,
         &right,
@@ -5163,7 +5152,7 @@ fn nested_closed_shell_booleans_materialize_through_arrangement_pipeline() {
         };
         let request = ExactBooleanRequest {
             operation: operation,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(
@@ -5179,7 +5168,7 @@ fn nested_closed_shell_booleans_materialize_through_arrangement_pipeline() {
         let evidence = test_winding_evidence(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -5202,7 +5191,7 @@ fn nested_closed_shell_booleans_materialize_through_arrangement_pipeline() {
         let attempt = test_arrangement_attempt(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -5223,7 +5212,7 @@ fn nested_closed_shell_booleans_materialize_through_arrangement_pipeline() {
                 .validate_for_request_policy(
                     ExactBooleanRequest {
                         operation: operation,
-                        validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                        validation: MeshValidationPolicy::ALLOW_BOUNDARY,
                     },
                     ExactRegularizationPolicy::REGULARIZED_SOLID,
                 )
@@ -5236,7 +5225,7 @@ fn nested_closed_shell_booleans_materialize_through_arrangement_pipeline() {
         let result = test_materialized_result(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::CLOSED,
+                validation: MeshValidationPolicy::CLOSED,
             },
             &left,
             &right,
@@ -5262,7 +5251,7 @@ fn nested_closed_shell_booleans_materialize_through_arrangement_pipeline() {
                 &right,
                 ExactBooleanRequest {
                     operation: operation,
-                    validation: ExactMeshValidationPolicy::CLOSED,
+                    validation: MeshValidationPolicy::CLOSED,
                 },
                 None,
             )
@@ -5283,7 +5272,7 @@ fn closed_boundary_touching_union_materializes_without_shortcut_through_arrangem
     let preflight = test_preflight(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -5298,7 +5287,7 @@ fn closed_boundary_touching_union_materializes_without_shortcut_through_arrangem
     let attempt = test_arrangement_attempt(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -5313,7 +5302,7 @@ fn closed_boundary_touching_union_materializes_without_shortcut_through_arrangem
     let result = test_materialized_result(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::CLOSED,
+            validation: MeshValidationPolicy::CLOSED,
         },
         &left,
         &right,
@@ -5335,7 +5324,7 @@ fn boundary_touching_orthogonal_shortcuts_report_materialized_evidence() {
     ] {
         let request = ExactBooleanRequest {
             operation: operation,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(
@@ -5348,7 +5337,7 @@ fn boundary_touching_orthogonal_shortcuts_report_materialized_evidence() {
         let evidence = test_winding_evidence(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -5377,7 +5366,7 @@ fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
         &left_b,
         false,
         "exact disjoint union",
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
     )
     .expect("disconnected nonconvex boundary fixture should validate");
     let right = tetrahedron_i64([0, 0, 0], [-4, 0, 0], [0, -4, 0], [0, 0, -4]);
@@ -5422,7 +5411,7 @@ fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
     ] {
         let request = ExactBooleanRequest {
             operation: operation,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
@@ -5435,7 +5424,7 @@ fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
         let evidence = test_winding_evidence(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -5459,7 +5448,7 @@ fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
                 &left,
                 &right,
                 operation,
-                ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                MeshValidationPolicy::ALLOW_BOUNDARY,
             )
             .unwrap()
             .expect("zero-area boundary-touching shortcut should materialize with evidence");
@@ -5472,7 +5461,7 @@ fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
         let result = test_materialized_result(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::CLOSED,
+                validation: MeshValidationPolicy::CLOSED,
             },
             &left,
             &right,
@@ -5549,7 +5538,7 @@ fn boundary_attached_contained_tetrahedron_difference_materializes() {
     let preflight = test_preflight(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Difference,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -5567,7 +5556,7 @@ fn boundary_attached_contained_tetrahedron_difference_materializes() {
     let evidence = test_winding_evidence(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Difference,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -5583,7 +5572,7 @@ fn boundary_attached_contained_tetrahedron_difference_materializes() {
     let difference = test_materialized_result(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Difference,
-            validation: ExactMeshValidationPolicy::CLOSED,
+            validation: MeshValidationPolicy::CLOSED,
         },
         &left,
         &right,
@@ -5609,7 +5598,7 @@ fn boundary_attached_contained_tetrahedron_difference_materializes() {
             &right,
             ExactBooleanRequest {
                 operation: ExactBooleanOperation::Difference,
-                validation: ExactMeshValidationPolicy::CLOSED,
+                validation: MeshValidationPolicy::CLOSED,
             },
             None,
         )
@@ -5634,7 +5623,7 @@ fn noncoplanar_convex_report_cases_retain_graph_counts() {
     ] {
         let request = ExactBooleanRequest {
             operation: operation,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         };
         let preflight = test_preflight(request, &left, &right);
         assert_eq!(
@@ -5653,7 +5642,7 @@ fn noncoplanar_convex_report_cases_retain_graph_counts() {
         let evidence = test_winding_evidence(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -5713,7 +5702,7 @@ fn straddling_coplanar_crossing_tetrahedron_boundary_attempt_materializes() {
         let preflight = test_preflight(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -5735,7 +5724,7 @@ fn straddling_coplanar_crossing_tetrahedron_boundary_attempt_materializes() {
         let evidence = test_winding_evidence(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -5752,7 +5741,7 @@ fn straddling_coplanar_crossing_tetrahedron_boundary_attempt_materializes() {
         let result = test_materialized_result(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::CLOSED,
+                validation: MeshValidationPolicy::CLOSED,
             },
             &left,
             &right,
@@ -5771,7 +5760,7 @@ fn straddling_coplanar_crossing_tetrahedron_boundary_attempt_materializes() {
                 &right,
                 ExactBooleanRequest {
                     operation: operation,
-                    validation: ExactMeshValidationPolicy::CLOSED,
+                    validation: MeshValidationPolicy::CLOSED,
                 },
                 None,
             )
@@ -5785,7 +5774,7 @@ fn straddling_coplanar_crossing_tetrahedron_boundary_attempt_materializes() {
         let attempt = test_arrangement_attempt(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -5807,7 +5796,7 @@ fn straddling_coplanar_crossing_tetrahedron_boundary_attempt_materializes() {
         if expected_support == ExactBooleanSupport::CertifiedArrangementCellComplex {
             let request = ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             };
             let retained_result = materialize_retained_arrangement_cell_complex_attempt(
                 &left, &right, request, &attempt,
@@ -5871,7 +5860,7 @@ fn exact_coplanar_boundary_closer_handles_multiple_planar_loops() {
     let closed = close_exact_coplanar_boundary_loops(
         &mesh,
         "test exact multi-loop coplanar boundary closure",
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
     )
     .expect("exact boundary closure should not hit a typed blocker")
     .expect("two planar cap loops should close exactly");
@@ -5883,14 +5872,14 @@ fn exact_coplanar_boundary_closer_handles_multiple_planar_loops() {
 
 #[test]
 fn exact_coplanar_boundary_closer_can_append_cap_vertices() {
-    let mesh = ExactMesh::from_i64_triangles_with_policy(
+    let mesh = Mesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, //
             4, 0, 0, //
             0, 4, 0,
         ],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("test triangle should construct");
     let mut vertices = mesh.vertices().to_vec();
@@ -5927,25 +5916,22 @@ fn exact_coplanar_boundary_closer_can_append_cap_vertices() {
     )
     .expect_err("stale cap boundary vertex should return a typed blocker");
     assert!(
-        stale_error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        stale_error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
         "{stale_error:?}"
     );
 }
 
 #[test]
 fn selected_region_assembly_reports_stale_triangulation_artifacts() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 2, 0, 0, 0, 2, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
-        &[],
-        &[],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .unwrap();
+    let right =
+        Mesh::from_i64_triangles_with_policy(&[], &[], MeshValidationPolicy::ALLOW_BOUNDARY)
+            .unwrap();
     let boundary = vec![
         crate::mesh::graph::FaceSplitBoundaryNode::OriginalVertex {
             vertex: 0,
@@ -5978,13 +5964,13 @@ fn selected_region_assembly_reports_stale_triangulation_artifacts() {
         &left,
         &right,
         ExactRegionSelection::KeepAll,
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
         "test selected-region assembly failed",
         "test selected-region assembly canonicalization failed",
     )
     .unwrap_err();
     assert!(
-        error.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        error.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
         "{error:?}"
     );
 }
@@ -5998,7 +5984,7 @@ fn hypertri_errors_map_to_typed_mesh_blockers() {
         },
     );
     assert!(
-        stale.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        stale.has_only_blocker_kinds(&[MeshBlockerKind::StaleFactReplay]),
         "{stale:?}"
     );
 
@@ -6009,14 +5995,14 @@ fn hypertri_errors_map_to_typed_mesh_blockers() {
         },
     );
     assert!(
-        undecidable.has_only_blocker_kinds(&[ExactMeshBlockerKind::UndecidablePredicate]),
+        undecidable.has_only_blocker_kinds(&[MeshBlockerKind::UndecidablePredicate]),
         "{undecidable:?}"
     );
 
     let construction =
         hypertri_error_to_mesh_error("test construction", hypertri::Error::NoEarFound);
     assert!(
-        construction.has_only_blocker_kinds(&[ExactMeshBlockerKind::ExactConstructionFailure]),
+        construction.has_only_blocker_kinds(&[MeshBlockerKind::ExactConstructionFailure]),
         "{construction:?}"
     );
 
@@ -6027,7 +6013,7 @@ fn hypertri_errors_map_to_typed_mesh_blockers() {
         },
     );
     assert!(
-        unsupported.has_only_blocker_kinds(&[ExactMeshBlockerKind::UnsupportedExactOperation]),
+        unsupported.has_only_blocker_kinds(&[MeshBlockerKind::UnsupportedExactOperation]),
         "{unsupported:?}"
     );
 }
@@ -6085,7 +6071,7 @@ fn exact_coplanar_boundary_canonicalizes_only_degenerate_self_contact_spurs() {
 
 #[test]
 fn exact_coplanar_boundary_closer_preserves_hole_loop_groups() {
-    let mesh = ExactMesh::from_i64_triangles_with_policy(
+    let mesh = Mesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, //
             1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0, //
@@ -6102,7 +6088,7 @@ fn exact_coplanar_boundary_closer_preserves_hole_loop_groups() {
             6, 14, 15, 6, 15, 7, //
             7, 15, 12, 7, 12, 4,
         ],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     assert_eq!(mesh.facts().mesh.boundary_edges, 16);
@@ -6110,7 +6096,7 @@ fn exact_coplanar_boundary_closer_preserves_hole_loop_groups() {
     let closed = close_exact_coplanar_boundary_loops(
         &mesh,
         "test exact annular cap closure",
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
     )
     .expect("exact annular cap closure should not hit a typed blocker")
     .expect("annular cap loop groups should close exactly");
@@ -6140,7 +6126,7 @@ fn exact_coplanar_boundary_closer_orients_cap_groups_independently() {
     let closed = close_exact_coplanar_boundary_loops(
         &mesh,
         "test exact independently oriented coplanar boundary closure",
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
     )
     .expect("exact oriented cap closure should not hit a typed blocker")
     .expect("opposite cap groups should close with independently certified orientations");
@@ -6162,7 +6148,7 @@ fn closed_identical_solids_route_through_arrangement_pipeline() {
     let preflight = test_preflight(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -6175,7 +6161,7 @@ fn closed_identical_solids_route_through_arrangement_pipeline() {
     let attempt = test_arrangement_attempt(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -6190,7 +6176,7 @@ fn closed_identical_solids_route_through_arrangement_pipeline() {
     let union = test_materialized_result(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::CLOSED,
+            validation: MeshValidationPolicy::CLOSED,
         },
         &left,
         &right,
@@ -6204,7 +6190,7 @@ fn closed_identical_solids_route_through_arrangement_pipeline() {
     let difference = test_materialized_result(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Difference,
-            validation: ExactMeshValidationPolicy::CLOSED,
+            validation: MeshValidationPolicy::CLOSED,
         },
         &left,
         &right,
@@ -6219,7 +6205,7 @@ fn closed_identical_solids_route_through_arrangement_pipeline() {
 #[test]
 fn closed_same_surface_solids_route_through_arrangement_pipeline() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
-    let right = ExactMesh::from_i64_triangles(
+    let right = Mesh::from_i64_triangles(
         &[
             4, 0, 0, //
             0, 0, 0, //
@@ -6246,7 +6232,7 @@ fn closed_same_surface_solids_route_through_arrangement_pipeline() {
     let attempt = test_arrangement_attempt(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -6261,7 +6247,7 @@ fn closed_same_surface_solids_route_through_arrangement_pipeline() {
     let preflight = test_preflight(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -6274,7 +6260,7 @@ fn closed_same_surface_solids_route_through_arrangement_pipeline() {
     let union = test_materialized_result(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::CLOSED,
+            validation: MeshValidationPolicy::CLOSED,
         },
         &left,
         &right,
@@ -6288,7 +6274,7 @@ fn closed_same_surface_solids_route_through_arrangement_pipeline() {
     let difference = test_materialized_result(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Difference,
-            validation: ExactMeshValidationPolicy::CLOSED,
+            validation: MeshValidationPolicy::CLOSED,
         },
         &left,
         &right,
@@ -6303,7 +6289,7 @@ fn closed_same_surface_solids_route_through_arrangement_pipeline() {
 #[test]
 fn closed_same_surface_reversed_orientation_routes_through_arrangement_pipeline() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
-    let right = ExactMesh::from_i64_triangles(
+    let right = Mesh::from_i64_triangles(
         &[
             4, 0, 0, //
             0, 0, 0, //
@@ -6326,7 +6312,7 @@ fn closed_same_surface_reversed_orientation_routes_through_arrangement_pipeline(
     let union_attempt = test_arrangement_attempt(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -6395,7 +6381,7 @@ fn closed_same_surface_reversed_orientation_routes_through_arrangement_pipeline(
     let difference_attempt = test_arrangement_attempt(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Difference,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -6409,7 +6395,7 @@ fn closed_same_surface_reversed_orientation_routes_through_arrangement_pipeline(
     let union = test_materialized_result(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::CLOSED,
+            validation: MeshValidationPolicy::CLOSED,
         },
         &left,
         &right,
@@ -6423,7 +6409,7 @@ fn closed_same_surface_reversed_orientation_routes_through_arrangement_pipeline(
     let difference = test_materialized_result(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Difference,
-            validation: ExactMeshValidationPolicy::CLOSED,
+            validation: MeshValidationPolicy::CLOSED,
         },
         &left,
         &right,
@@ -6437,16 +6423,16 @@ fn closed_same_surface_reversed_orientation_routes_through_arrangement_pipeline(
 
 #[test]
 fn open_same_surface_sheets_remain_certified() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[4, 0, 0, 0, 4, 0, 0, 0, 0],
         &[2, 0, 1],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     assert_eq!(
@@ -6462,7 +6448,7 @@ fn open_same_surface_sheets_remain_certified() {
         let preflight = test_preflight(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -6475,7 +6461,7 @@ fn open_same_surface_sheets_remain_certified() {
         let evidence = test_winding_evidence(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -6493,7 +6479,7 @@ fn open_same_surface_sheets_remain_certified() {
         let result = test_materialized_result(
             ExactBooleanRequest {
                 operation: operation,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             &left,
             &right,
@@ -6516,7 +6502,7 @@ fn open_same_surface_sheets_remain_certified() {
                 &right,
                 ExactBooleanRequest {
                     operation: operation,
-                    validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                    validation: MeshValidationPolicy::ALLOW_BOUNDARY,
                 },
                 None,
             )
@@ -6531,10 +6517,10 @@ fn open_same_surface_sheets_remain_certified() {
 
 #[test]
 fn open_identical_sheets_keep_identity_shortcut() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let right = left.clone();
@@ -6542,7 +6528,7 @@ fn open_identical_sheets_keep_identity_shortcut() {
     let preflight = test_preflight(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -6551,7 +6537,7 @@ fn open_identical_sheets_keep_identity_shortcut() {
     let evidence = test_winding_evidence(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -6567,7 +6553,7 @@ fn open_identical_sheets_keep_identity_shortcut() {
     let union = test_materialized_result(
         ExactBooleanRequest {
             operation: ExactBooleanOperation::Union,
-            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            validation: MeshValidationPolicy::ALLOW_BOUNDARY,
         },
         &left,
         &right,
@@ -6585,7 +6571,7 @@ fn open_identical_sheets_keep_identity_shortcut() {
             &right,
             ExactBooleanRequest {
                 operation: ExactBooleanOperation::Union,
-                validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                validation: MeshValidationPolicy::ALLOW_BOUNDARY,
             },
             None,
         )
@@ -6594,10 +6580,10 @@ fn open_identical_sheets_keep_identity_shortcut() {
 
 #[test]
 fn graph_backed_early_shortcuts_retain_graph_counts() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
         &[0, 1, 2],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
     let right = left.clone();
@@ -6608,11 +6594,11 @@ fn graph_backed_early_shortcuts_retain_graph_counts() {
 
     for (validation, expected_support) in [
         (
-            ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+            MeshValidationPolicy::ALLOW_BOUNDARY,
             ExactBooleanSupport::CertifiedIdentical,
         ),
         (
-            ExactMeshValidationPolicy::CLOSED,
+            MeshValidationPolicy::CLOSED,
             ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid,
         ),
     ] {
@@ -6656,11 +6642,11 @@ fn arrangement_materialized_evidence_retains_boundary_only_evidence() {
             .iter()
             .map(|triangle| Triangle(triangle.0.map(|index| index + offset))),
     );
-    let left = ExactMesh::new_with_policy_and_version(
+    let left = Mesh::new_with_policy_and_version(
         vertices,
         triangles,
         SourceProvenance::exact("evidence disconnected positive-area boundary fixture"),
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
         1,
     )
     .unwrap();
@@ -6713,13 +6699,13 @@ fn arrangement_materialized_evidence_retains_boundary_only_evidence() {
     .unwrap_err();
     assert_eq!(
         stale_error.blockers()[0].kind(),
-        ExactMeshBlockerKind::StaleFactReplay
+        MeshBlockerKind::StaleFactReplay
     );
 }
 
 #[test]
 fn coplanar_overlay_regularizes_nonconvex_boundary_touch_intersection_to_empty() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
+    let left = Mesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, 10, 0, 0, 10, 4, 0, 7, 4, 0, 6, 6, 0, 10, 8, 0, 10, 12, 0, 0, 12, 0,
         ],
@@ -6731,13 +6717,13 @@ fn coplanar_overlay_regularizes_nonconvex_boundary_touch_intersection_to_empty()
             7, 4, 5, //
             7, 5, 6,
         ],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
+    let right = Mesh::from_i64_triangles_with_policy(
         &[4, 12, 0, 6, 12, 0, 6, 14, 0, 4, 14, 0],
         &[0, 1, 2, 0, 2, 3],
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
 
@@ -6745,7 +6731,7 @@ fn coplanar_overlay_regularizes_nonconvex_boundary_touch_intersection_to_empty()
         &left,
         &right,
         ExactBooleanOperation::Intersection,
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap()
     .expect("regularized boundary-touch intersection should materialize through overlay");
@@ -6753,7 +6739,7 @@ fn coplanar_overlay_regularizes_nonconvex_boundary_touch_intersection_to_empty()
     validate_graph_source_replay(&graph, &left, &right).unwrap();
     let request = ExactBooleanRequest {
         operation: ExactBooleanOperation::Intersection,
-        validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        validation: MeshValidationPolicy::ALLOW_BOUNDARY,
     };
     let preflight = test_preflight(request, &left, &right);
     assert_eq!(
@@ -6774,8 +6760,8 @@ fn coplanar_overlay_regularizes_nonconvex_boundary_touch_intersection_to_empty()
     assert!(result.mesh.triangles().is_empty());
 }
 
-fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
-    ExactMesh::from_i64_triangles(
+fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> Mesh {
+    Mesh::from_i64_triangles(
         &[
             a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
         ],
@@ -6784,9 +6770,9 @@ fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactM
     .unwrap()
 }
 
-fn combine_test_meshes(left: &ExactMesh, right: &ExactMesh, label: &'static str) -> ExactMesh {
+fn combine_test_meshes(left: &Mesh, right: &Mesh, label: &'static str) -> Mesh {
     let right_offset = left.vertices().len();
-    ExactMesh::new(
+    Mesh::new(
         left.vertices()
             .iter()
             .chain(right.vertices())
@@ -6805,8 +6791,8 @@ fn combine_test_meshes(left: &ExactMesh, right: &ExactMesh, label: &'static str)
     .unwrap()
 }
 
-fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
-    ExactMesh::from_i64_triangles(
+fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> Mesh {
+    Mesh::from_i64_triangles(
         &[
             min[0], min[1], min[2], max[0], min[1], min[2], max[0], max[1], min[2], min[0], max[1],
             min[2], min[0], min[1], max[2], max[0], min[1], max[2], max[0], max[1], max[2], min[0],
@@ -6820,16 +6806,16 @@ fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
     .unwrap()
 }
 
-fn square_pyramid_with_base_i64() -> ExactMesh {
-    ExactMesh::from_i64_triangles(
+fn square_pyramid_with_base_i64() -> Mesh {
+    Mesh::from_i64_triangles(
         &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0, 5, 5, 10],
         &[0, 3, 2, 0, 2, 1, 0, 1, 4, 1, 2, 4, 2, 3, 4, 3, 0, 4],
     )
     .unwrap()
 }
 
-fn downward_square_pyramid_with_base_i64(min: [i64; 2], max: [i64; 2], z: i64) -> ExactMesh {
-    ExactMesh::from_i64_triangles(
+fn downward_square_pyramid_with_base_i64(min: [i64; 2], max: [i64; 2], z: i64) -> Mesh {
+    Mesh::from_i64_triangles(
         &[
             min[0], min[1], 0, max[0], min[1], 0, max[0], max[1], 0, min[0], max[1], 0, min[0],
             min[1], z,
@@ -6839,7 +6825,7 @@ fn downward_square_pyramid_with_base_i64(min: [i64; 2], max: [i64; 2], z: i64) -
     .unwrap()
 }
 
-fn axis_aligned_orthogonal_l_solid_i64() -> ExactMesh {
+fn axis_aligned_orthogonal_l_solid_i64() -> Mesh {
     let horizontal = axis_aligned_box_i64([0, 0, 0], [2, 1, 1]);
     let vertical = axis_aligned_box_i64([0, 1, 0], [1, 2, 1]);
     let plan = axis_aligned_orthogonal_solid_cell_plan(
@@ -6850,7 +6836,7 @@ fn axis_aligned_orthogonal_l_solid_i64() -> ExactMesh {
     .expect("L solid should have an orthogonal cell plan");
     plan.to_mesh(
         "test axis-aligned orthogonal L solid",
-        ExactMeshValidationPolicy::CLOSED,
+        MeshValidationPolicy::CLOSED,
     )
     .unwrap()
 }
@@ -6859,7 +6845,7 @@ fn affine_box_from_map_i64(
     min: [i64; 3],
     max: [i64; 3],
     p: impl Fn(i64, i64, i64) -> [i64; 3],
-) -> ExactMesh {
+) -> Mesh {
     let corners = [
         p(min[0], min[1], min[2]),
         p(max[0], min[1], min[2]),
@@ -6870,7 +6856,7 @@ fn affine_box_from_map_i64(
         p(max[0], max[1], max[2]),
         p(min[0], max[1], max[2]),
     ];
-    ExactMesh::from_i64_triangles(
+    Mesh::from_i64_triangles(
         &corners
             .iter()
             .flat_map(|point| point.iter().copied())
@@ -6883,7 +6869,7 @@ fn affine_box_from_map_i64(
     .unwrap()
 }
 
-fn two_open_boxes_missing_top_i64(first_min: [i64; 3], second_min: [i64; 3]) -> ExactMesh {
+fn two_open_boxes_missing_top_i64(first_min: [i64; 3], second_min: [i64; 3]) -> Mesh {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
     for min in [first_min, second_min] {
@@ -6927,10 +6913,10 @@ fn two_open_boxes_missing_top_i64(first_min: [i64; 3], second_min: [i64; 3]) -> 
             start + 7,
         ]);
     }
-    ExactMesh::from_i64_triangles_with_policy(
+    Mesh::from_i64_triangles_with_policy(
         &vertices,
         &triangles,
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap()
 }
@@ -6938,7 +6924,7 @@ fn two_open_boxes_missing_top_i64(first_min: [i64; 3], second_min: [i64; 3]) -> 
 fn two_open_boxes_missing_opposite_caps_i64(
     missing_top_min: [i64; 3],
     missing_bottom_min: [i64; 3],
-) -> ExactMesh {
+) -> Mesh {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
     for (min, missing_top) in [(missing_top_min, true), (missing_bottom_min, false)] {
@@ -6989,10 +6975,10 @@ fn two_open_boxes_missing_opposite_caps_i64(
             start + 7,
         ]);
     }
-    ExactMesh::from_i64_triangles_with_policy(
+    Mesh::from_i64_triangles_with_policy(
         &vertices,
         &triangles,
-        ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        MeshValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap()
 }

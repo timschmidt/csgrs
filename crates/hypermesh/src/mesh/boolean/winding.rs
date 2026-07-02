@@ -13,7 +13,7 @@ use std::cmp::Ordering;
 use hyperlimit::{Point3, compare_reals};
 use hyperreal::Real;
 
-use super::super::ExactMesh;
+use super::super::Mesh;
 
 /// Deterministic exact ray direction used by an exact ray-parity query.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -430,8 +430,8 @@ impl ClosedMeshWindingMeshReport {
     /// Validate this retained report against its subject and target meshes.
     pub(crate) fn validate_against_sources(
         &self,
-        subject: &ExactMesh,
-        target: &ExactMesh,
+        subject: &Mesh,
+        target: &Mesh,
     ) -> Result<(), WindingReportError> {
         self.validate()?;
         if self == &classify_mesh_vertices_against_closed_mesh_winding_report(subject, target) {
@@ -469,7 +469,7 @@ pub(crate) enum WindingReportError {
 /// count, and blocker counts used to reach the decision.
 pub(crate) fn classify_point_against_closed_mesh_winding_report(
     point: &Point3,
-    mesh: &ExactMesh,
+    mesh: &Mesh,
 ) -> PointMeshWindingReport {
     if !mesh.facts().mesh.closed_manifold {
         return PointMeshWindingReport {
@@ -607,8 +607,8 @@ fn point_on_closed_triangle(point: &Point3, triangle: &[&Point3; 3]) -> Option<b
 /// Classify every vertex of `subject` against a closed target mesh and retain
 /// exact ray-parity reports.
 pub(crate) fn classify_mesh_vertices_against_closed_mesh_winding_report(
-    subject: &ExactMesh,
-    target: &ExactMesh,
+    subject: &Mesh,
+    target: &Mesh,
 ) -> ClosedMeshWindingMeshReport {
     if !target.facts().mesh.closed_manifold {
         return ClosedMeshWindingMeshReport {
@@ -882,8 +882,8 @@ mod tests {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
-    fn cube_with_centered_positive_face_diagonals() -> ExactMesh {
-        ExactMesh::from_i64_triangles(
+    fn cube_with_centered_positive_face_diagonals() -> Mesh {
+        Mesh::from_i64_triangles(
             &[
                 -1, -1, -1, //
                 1, -1, -1, //

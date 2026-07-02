@@ -3,7 +3,7 @@
 mod common;
 
 use common::{exercise_mesh_kernel_pair, generated_tetra_pair};
-use hypermesh::ExactMesh;
+use hypermesh::Mesh;
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {
@@ -18,7 +18,7 @@ fuzz_target!(|data: &[u8]| {
         idx.push(u16::from_le_bytes(chunk.try_into().unwrap()) as usize);
     }
 
-    if let Ok(mesh) = ExactMesh::from_lossy_f64_triangles(&pos, &idx) {
+    if let Ok(mesh) = Mesh::from_lossy_f64_triangles(&pos, &idx) {
         mesh.view().validate_retained_state().unwrap();
         exercise_mesh_kernel_pair(&mesh, &mesh);
     }
