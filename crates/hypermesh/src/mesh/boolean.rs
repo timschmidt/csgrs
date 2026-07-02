@@ -87,12 +87,14 @@ use evidence::{
     ExactArrangementCellComplexShortcutFacts, ExactBooleanBlocker, ExactBooleanBlockerKind,
     ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind, ExactBooleanShortcutKind,
     ExactBooleanSupport, ExactBoundaryTouchingReport, ExactBoundaryTouchingStatus,
-    ExactEvidenceValidationError, ExactIdenticalMeshStatus, ExactOpenSurfaceDisjointReport,
-    ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport, ExactPlanarArrangementStatus,
-    ExactSameSurfaceStatus, ExactVolumetricBoundaryClosureReport,
-    ExactVolumetricBoundaryClosureStatus, ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
+    ExactEvidenceValidationError, ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus,
+    ExactPlanarArrangementReport, ExactPlanarArrangementStatus, ExactSurfaceEqualityReports,
+    ExactVolumetricBoundaryClosureReport, ExactVolumetricBoundaryClosureStatus,
+    ExactWindingEvidenceReport, ExactWindingEvidenceStatus,
     certified_convex_operation_shortcut_support, meshes_are_certified_bounds_disjoint,
 };
+#[cfg(test)]
+use evidence::{ExactIdenticalMeshStatus, ExactSameSurfaceStatus};
 use hyperlimit::SourceProvenance;
 use hyperlimit::{
     CoplanarProjection, Point2, Point3, SegmentIntersection, Sign, TriangleLocation,
@@ -1017,50 +1019,29 @@ fn preflight_boolean_exact_request_from_graph_core(
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
 ) -> Result<ExactBooleanPreflight, ExactMeshError> {
     let operation = request.operation;
-    let support = match operation {
-        ExactBooleanOperation::SelectedRegions(_) => ExactBooleanSupport::SelectedRegionPolicy,
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference
-            if left.triangles().is_empty() || right.triangles().is_empty() =>
-        {
-            ExactBooleanSupport::CertifiedEmptyOperand
-        }
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference
-            if meshes_are_certified_bounds_disjoint(left, right) =>
-        {
-            ExactBooleanSupport::CertifiedBoundsDisjoint
-        }
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference
-            if (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
-                && evidence::identical_mesh_report_from_sources(left, right).status
-                    == ExactIdenticalMeshStatus::Certified =>
-        {
+    let support = if operation.is_selected_regions() {
+        ExactBooleanSupport::SelectedRegionPolicy
+    } else if left.triangles().is_empty() || right.triangles().is_empty() {
+        ExactBooleanSupport::CertifiedEmptyOperand
+    } else if meshes_are_certified_bounds_disjoint(left, right) {
+        ExactBooleanSupport::CertifiedBoundsDisjoint
+    } else if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        let surface_equality = ExactSurfaceEqualityReports::from_sources(left, right);
+        if surface_equality.identical_certified() {
             ExactBooleanSupport::CertifiedIdentical
-        }
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference
-            if (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
-                && evidence::same_surface_report_from_sources(left, right).status
-                    == ExactSameSurfaceStatus::Certified =>
-        {
+        } else if surface_equality.same_surface_certified() {
             ExactBooleanSupport::CertifiedSameSurface
+        } else if shortcut_facts.materializes_operation(operation) {
+            ExactBooleanSupport::CertifiedArrangementCellComplex
+        } else {
+            certified_mixed_dimensional_regularized_solid_support(left, right)
+                .unwrap_or(ExactBooleanSupport::RequiresCertifiedWinding)
         }
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference => {
-            if shortcut_facts.materializes_operation(operation) {
-                ExactBooleanSupport::CertifiedArrangementCellComplex
-            } else {
-                certified_mixed_dimensional_regularized_solid_support(left, right)
-                    .unwrap_or(ExactBooleanSupport::RequiresCertifiedWinding)
-            }
-        }
+    } else if shortcut_facts.materializes_operation(operation) {
+        ExactBooleanSupport::CertifiedArrangementCellComplex
+    } else {
+        certified_mixed_dimensional_regularized_solid_support(left, right)
+            .unwrap_or(ExactBooleanSupport::RequiresCertifiedWinding)
     };
     let requires_certified_winding = support == ExactBooleanSupport::RequiresCertifiedWinding;
     if support == ExactBooleanSupport::CertifiedArrangementCellComplex {
@@ -1176,7 +1157,7 @@ fn preflight_boolean_exact_request_from_graph_core(
     }
     if operation == ExactBooleanOperation::Intersection
         && certified_arrangement_regularized_boundary_contact_from_graph(
-            graph, left, right, operation,
+            graph, left, right, operation, None,
         )?
     {
         return Ok(certified_arrangement_cell_complex_preflight(
@@ -2915,17 +2896,14 @@ pub(crate) fn materialize_boolean_operation(
     {
         return Ok(result);
     }
-    if (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
-        && evidence::identical_mesh_report_from_sources(left, right).status
-            == ExactIdenticalMeshStatus::Certified
-    {
-        return boolean_identical_meshes(left, operation, validation);
-    }
-    if (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
-        && evidence::same_surface_report_from_sources(left, right).status
-            == ExactSameSurfaceStatus::Certified
-    {
-        return boolean_same_surface_meshes(left, operation, validation);
+    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        let surface_equality = ExactSurfaceEqualityReports::from_sources(left, right);
+        if surface_equality.identical_certified() {
+            return boolean_identical_meshes(left, operation, validation);
+        }
+        if surface_equality.same_surface_certified() {
+            return boolean_same_surface_meshes(left, operation, validation);
+        }
     }
     let ready_graph = if let Some(graph) = retained_graph {
         validate_graph_source_replay(graph, left, right)?;
@@ -3587,11 +3565,8 @@ fn boolean_arrangement_regularized_boundary_contact_from_graph(
     ) {
         return Ok(None);
     }
-    if evidence::identical_mesh_report_from_sources(left, right).status
-        == ExactIdenticalMeshStatus::Certified
-        || evidence::same_surface_report_from_sources(left, right).status
-            == ExactSameSurfaceStatus::Certified
-    {
+    let surface_equality = ExactSurfaceEqualityReports::from_sources(left, right);
+    if surface_equality.any_certified() {
         return Ok(None);
     }
     if let Some(report) =
@@ -3607,7 +3582,11 @@ fn boolean_arrangement_regularized_boundary_contact_from_graph(
                 )
             })?;
     } else if !certified_arrangement_regularized_boundary_contact_from_graph(
-        graph, left, right, operation,
+        graph,
+        left,
+        right,
+        operation,
+        Some(&surface_equality),
     )? {
         return Ok(None);
     }
@@ -3637,6 +3616,7 @@ fn certified_arrangement_regularized_boundary_contact_from_graph(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
+    surface_equality: Option<&ExactSurfaceEqualityReports>,
 ) -> Result<bool, ExactMeshError> {
     if !matches!(
         operation,
@@ -3644,11 +3624,15 @@ fn certified_arrangement_regularized_boundary_contact_from_graph(
     ) {
         return Ok(false);
     }
-    if evidence::identical_mesh_report_from_sources(left, right).status
-        == ExactIdenticalMeshStatus::Certified
-        || evidence::same_surface_report_from_sources(left, right).status
-            == ExactSameSurfaceStatus::Certified
-    {
+    let computed_surface_equality;
+    let surface_equality = match surface_equality {
+        Some(surface_equality) => surface_equality,
+        None => {
+            computed_surface_equality = ExactSurfaceEqualityReports::from_sources(left, right);
+            &computed_surface_equality
+        }
+    };
+    if surface_equality.any_certified() {
         return Ok(false);
     }
     if matches!(
@@ -7382,13 +7366,16 @@ fn winding_evidence_report_from_graph_with_facts(
             Some(ExactWindingEvidenceStatus::EmptyOperandAlreadyMaterialized)
         } else if meshes_are_certified_bounds_disjoint(left, right) {
             Some(ExactWindingEvidenceStatus::BoundsDisjointAlreadyMaterialized)
-        } else if (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
-            && (evidence::identical_mesh_report_from_sources(left, right).status
-                == ExactIdenticalMeshStatus::Certified
-                || evidence::same_surface_report_from_sources(left, right).status
-                    == ExactSameSurfaceStatus::Certified)
-        {
-            Some(ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized)
+        } else if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+            if ExactSurfaceEqualityReports::from_sources(left, right).any_certified() {
+                Some(ExactWindingEvidenceStatus::SurfaceEqualityAlreadyMaterialized)
+            } else if certified_mixed_dimensional_regularized_solid_support(left, right).is_some() {
+                Some(
+                    ExactWindingEvidenceStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
+                )
+            } else {
+                None
+            }
         } else if certified_mixed_dimensional_regularized_solid_support(left, right).is_some() {
             Some(ExactWindingEvidenceStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized)
         } else {

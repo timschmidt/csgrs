@@ -5446,6 +5446,45 @@ impl ExactSameSurfaceReport {
     }
 }
 
+/// Retained source-equality facts for trivial open-surface shortcuts.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct ExactSurfaceEqualityReports {
+    /// Original-row identical mesh evidence.
+    pub(super) identical: ExactIdenticalMeshReport,
+    /// Reindexed same-surface evidence, computed only when identity did not
+    /// already certify the source pair.
+    pub(super) same_surface: Option<ExactSameSurfaceReport>,
+}
+
+impl ExactSurfaceEqualityReports {
+    pub(crate) fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
+        let identical = identical_mesh_report_from_sources(left, right);
+        let same_surface = if matches!(identical.status, ExactIdenticalMeshStatus::Certified) {
+            None
+        } else {
+            Some(same_surface_report_from_sources(left, right))
+        };
+        Self {
+            identical,
+            same_surface,
+        }
+    }
+
+    pub(crate) const fn identical_certified(&self) -> bool {
+        matches!(self.identical.status, ExactIdenticalMeshStatus::Certified)
+    }
+
+    pub(crate) fn same_surface_certified(&self) -> bool {
+        self.same_surface
+            .as_ref()
+            .is_some_and(|report| matches!(report.status, ExactSameSurfaceStatus::Certified))
+    }
+
+    pub(crate) fn any_certified(&self) -> bool {
+        self.identical_certified() || self.same_surface_certified()
+    }
+}
+
 /// Certify whether two meshes represent the same triangle surface.
 ///
 /// The report preserves the exact coordinate-equality predicate certificates

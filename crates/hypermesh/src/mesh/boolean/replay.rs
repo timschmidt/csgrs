@@ -1,7 +1,7 @@
 use super::evidence::{
-    ExactBooleanCertificationSet, ExactConvexBooleanCapabilityFacts, ExactRefinementStatus,
-    ExactRegularizedSolidBooleanFacts, ExactTrivialBooleanFacts,
-    identical_mesh_report_from_sources, same_surface_report_from_sources,
+    ExactBooleanCertificationSet, ExactConvexBooleanCapabilityFacts, ExactIdenticalMeshStatus,
+    ExactRefinementStatus, ExactRegularizedSolidBooleanFacts, ExactSurfaceEqualityReports,
+    ExactTrivialBooleanFacts, identical_mesh_report_from_sources, same_surface_report_from_sources,
 };
 use super::*;
 
@@ -269,14 +269,13 @@ pub(super) fn try_materialize_certified_boolean_support_with_artifacts(
             }
         }
         ExactBooleanSupport::CertifiedSameSurface => {
+            let surface_equality = ExactSurfaceEqualityReports::from_sources(left, right);
             if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
                 || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
                 || closed_validation_regularized_solid_support(left, right, operation, validation)
                     .is_some()
-                || evidence::identical_mesh_report_from_sources(left, right).status
-                    == ExactIdenticalMeshStatus::Certified
-                || evidence::same_surface_report_from_sources(left, right).status
-                    != ExactSameSurfaceStatus::Certified
+                || surface_equality.identical_certified()
+                || !surface_equality.same_surface_certified()
             {
                 None
             } else {
