@@ -813,7 +813,7 @@ impl ExactArrangementBooleanAttempt {
             _ => {}
         }
         if self.decline.is_none()
-            && !self.operation.is_selected_regions()
+            && !matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
             && self.region_ownership.is_some()
             && !self.materialized_arrangement_cell_complex_shortcut_output()
             && !self.resolves_requested_volume_ownership()
@@ -3129,7 +3129,7 @@ fn shortcut_operation_matches(
     shortcut: ExactBooleanShortcutKind,
     operation: ExactBooleanOperation,
 ) -> bool {
-    if operation.is_selected_regions() {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return false;
     }
     match shortcut.required_named_operation() {
@@ -3498,7 +3498,7 @@ fn arrangement_cell_complex_output_matches_sources(
     }
 
     if validation == ExactMeshValidationPolicy::CLOSED
-        && !operation.is_selected_regions()
+        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && lower_dimensional_regularized_sources(left, right)
     {
         if mesh_output_is_empty(mesh) {
@@ -4266,7 +4266,7 @@ impl ExactVolumetricBoundaryClosureReport {
         right: &ExactMesh,
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
-        let replay = if self.operation.is_selected_regions() {
+        let replay = if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
             ExactVolumetricBoundaryClosureReport::no_materialized(self.operation)
         } else {
             let graph = validated_report_intersection_graph(left, right)?;
@@ -4712,7 +4712,7 @@ impl ExactBooleanPreflight {
                         ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
                     );
                 }
-                if self.operation.is_selected_regions()
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                     || !certified_support_matches_operation
                 {
@@ -4748,7 +4748,7 @@ impl ExactBooleanPreflight {
                         ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
                     );
                 }
-                if self.operation.is_selected_regions()
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                     || !certified_support_matches_operation
                 {
@@ -4769,7 +4769,7 @@ impl ExactBooleanPreflight {
                         ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
                     );
                 }
-                if self.operation.is_selected_regions()
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                     || !certified_support_matches_operation
                 {
@@ -4795,7 +4795,7 @@ impl ExactBooleanPreflight {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::CertifiedArrangementCellComplex => {
-                if self.operation.is_selected_regions()
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                     || self.blocker.is_some()
                 {
@@ -4823,7 +4823,7 @@ impl ExactBooleanPreflight {
                     .support
                     .open_surface_arrangement_operation()
                     .expect("matched open-surface arrangement support");
-                if self.operation.is_selected_regions()
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.operation != expected_operation
                     || self.graph_had_unknowns
                     || self.blocker.is_some()
@@ -4839,7 +4839,9 @@ impl ExactBooleanPreflight {
                 checked_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::RequiresBoundaryOnlyContact => {
-                if self.operation.is_selected_regions() || self.graph_had_unknowns {
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
+                    || self.graph_had_unknowns
+                {
                     return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 validate_blocker_evidence(
@@ -4856,7 +4858,9 @@ impl ExactBooleanPreflight {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::RequiresPlanarArrangement => {
-                if self.operation.is_selected_regions() || self.graph_had_unknowns {
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
+                    || self.graph_had_unknowns
+                {
                     return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 let blocker = validate_blocker_evidence(
@@ -4879,7 +4883,9 @@ impl ExactBooleanPreflight {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::RequiresCoplanarVolumetricCells => {
-                if self.operation.is_selected_regions() || self.graph_had_unknowns {
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
+                    || self.graph_had_unknowns
+                {
                     return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 let blocker = validate_blocker_evidence(
@@ -4907,7 +4913,7 @@ impl ExactBooleanPreflight {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::RequiresCertifiedWinding => {
-                if self.operation.is_selected_regions()
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                     || self.retained_face_pairs == 0
                 {
@@ -4989,7 +4995,7 @@ impl ExactBooleanPreflight {
                         ExactEvidenceValidationError::UnexpectedCoplanarArrangementEvidence,
                     );
                 }
-                if !self.operation.is_selected_regions()
+                if !matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                     || self.blocker.is_some()
                 {
@@ -6329,7 +6335,7 @@ impl ExactPlanarArrangementReport {
         // one another.
         match self.status {
             ExactPlanarArrangementStatus::NotNamedOperation => {
-                if !self.operation.is_selected_regions()
+                if !matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                     || self.retained_face_pairs != 0
                     || self.retained_events != 0
@@ -6342,7 +6348,7 @@ impl ExactPlanarArrangementReport {
             ExactPlanarArrangementStatus::AlreadyMaterialized
             | ExactPlanarArrangementStatus::NoPositiveOverlap
             | ExactPlanarArrangementStatus::BoundaryOnlyContactRequired => {
-                if self.operation.is_selected_regions() {
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
                     return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
                 if matches!(self.status, ExactPlanarArrangementStatus::NoPositiveOverlap)
@@ -6353,7 +6359,7 @@ impl ExactPlanarArrangementReport {
                 }
             }
             ExactPlanarArrangementStatus::Required => {
-                if self.operation.is_selected_regions() {
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
                     return Err(ExactEvidenceValidationError::StatusEvidenceMismatch);
                 }
             }
@@ -6552,7 +6558,8 @@ impl ExactWindingEvidenceReport {
     /// Validate status, blocker, and checked-region artifact consistency.
     pub(crate) fn validate(&self) -> Result<(), ExactEvidenceValidationError> {
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
-        let selected_regions_operation = self.operation.is_selected_regions();
+        let selected_regions_operation =
+            matches!(self.operation, ExactBooleanOperation::SelectedRegions(_));
         if matches!(self.status, ExactWindingEvidenceStatus::GraphUnknowns)
             != self.graph_had_unknowns
             && !matches!(self.status, ExactWindingEvidenceStatus::NotNamedOperation)

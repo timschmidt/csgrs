@@ -371,10 +371,6 @@ pub(crate) enum ExactBooleanOperation {
 }
 
 impl ExactBooleanOperation {
-    pub(crate) const fn is_selected_regions(self) -> bool {
-        matches!(self, Self::SelectedRegions(_))
-    }
-
     fn closed_boundary_touching_support(self) -> Option<ExactBooleanSupport> {
         match self {
             Self::Union => Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion),
@@ -1005,7 +1001,7 @@ fn preflight_boolean_exact_request_from_graph_core(
     shortcut_facts: &ExactArrangementCellComplexShortcutFacts,
 ) -> Result<ExactBooleanPreflight, ExactMeshError> {
     let operation = request.operation;
-    let support = if operation.is_selected_regions() {
+    let support = if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         ExactBooleanSupport::SelectedRegionPolicy
     } else if left.triangles().is_empty() || right.triangles().is_empty() {
         ExactBooleanSupport::CertifiedEmptyOperand
@@ -1049,7 +1045,7 @@ fn preflight_boolean_exact_request_from_graph_core(
     {
         return Ok(certified_preflight(operation, support, Some(graph), None));
     }
-    if !operation.is_selected_regions()
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && graph.face_pairs.is_empty()
         && let Some((left_in_right, right_in_left)) =
             closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
@@ -1102,7 +1098,7 @@ fn preflight_boolean_exact_request_from_graph_core(
             None,
         ));
     }
-    if operation.is_selected_regions() {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return region_plan_preflight_from_graph(
             graph,
             left,
@@ -1509,7 +1505,7 @@ fn certified_winding_shortcut_preflight_from_graph(
     certified_arrangement_preflight: &mut Option<Option<ExactBooleanPreflight>>,
 ) -> Result<Option<ExactBooleanPreflight>, ExactMeshError> {
     let operation = request.operation;
-    if !operation.is_selected_regions()
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && open_surface_disjoint_report_from_graph(graph, left, right).status
             == ExactOpenSurfaceDisjointStatus::Certified
     {
@@ -1564,7 +1560,7 @@ fn certified_winding_shortcut_preflight_from_graph(
             None,
         )));
     }
-    if !operation.is_selected_regions()
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && certified_closed_winding_containment_relation_from_graph(graph, left, right)?.is_some()
     {
         return Ok(Some(certified_preflight(
@@ -1574,7 +1570,7 @@ fn certified_winding_shortcut_preflight_from_graph(
             None,
         )));
     }
-    if !operation.is_selected_regions()
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && left.facts().mesh.closed_manifold
         && right.facts().mesh.closed_manifold
         && coplanar_volumetric_evidence_from_graph(graph, left, right)?
@@ -6975,7 +6971,7 @@ pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evid
     else {
         return Ok(None);
     };
-    if operation.is_selected_regions() {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
     let mesh = match operation {
