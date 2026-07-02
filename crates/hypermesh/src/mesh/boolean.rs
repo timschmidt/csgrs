@@ -7251,10 +7251,9 @@ fn validate_graph_source_replay(
     graph
         .validate_against_sources(left, right)
         .map_err(|error| {
-            boolean_validation_error(
-                ExactMeshBlockerKind::StaleFactReplay,
-                "retained exact intersection graph failed source replay",
+            super::graph::intersection_graph_validation_error(
                 error,
+                "retained exact intersection graph failed source replay",
             )
         })
 }

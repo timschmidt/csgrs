@@ -841,9 +841,9 @@ impl FacePairEvents {
     }
 }
 
-fn retained_coplanar_graph_error(
+pub(crate) fn intersection_graph_validation_error(
     error: IntersectionGraphValidationError,
-    context: &'static str,
+    context: &str,
 ) -> ExactMeshError {
     let kind = match error {
         IntersectionGraphValidationError::FaceIndexOutOfRange
@@ -868,10 +868,17 @@ fn retained_coplanar_graph_error(
             ExactMeshBlockerKind::ExactConstructionFailure
         }
     };
-    ExactMeshError::one(ExactMeshBlocker::new(
-        kind,
-        format!("retained coplanar overlap graph failed to {context}: {error:?}"),
-    ))
+    ExactMeshError::one(ExactMeshBlocker::new(kind, format!("{context}: {error:?}")))
+}
+
+fn retained_coplanar_graph_error(
+    error: IntersectionGraphValidationError,
+    context: &'static str,
+) -> ExactMeshError {
+    intersection_graph_validation_error(
+        error,
+        &format!("retained coplanar overlap graph failed to {context}"),
+    )
 }
 
 /// Exact intersection event graph for two meshes.
@@ -1286,10 +1293,10 @@ pub(crate) fn build_validated_intersection_graph(
     graph
         .validate_against_meshes(left, right)
         .map_err(|error| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::StaleFactReplay,
-                format!("exact intersection graph failed source replay: {error:?}"),
-            ))
+            intersection_graph_validation_error(
+                error,
+                "exact intersection graph failed source replay",
+            )
         })?;
     graph.source_replay_validated = true;
     Ok(graph)

@@ -10,6 +10,7 @@ use super::bounds::{BroadPhaseScratch, CandidateFacePairPlan, PreparedMeshBounds
 use super::error::{ExactMeshBlocker, ExactMeshBlockerKind, ExactMeshError, ExactMeshSourceSide};
 use super::graph::{
     ExactIntersectionGraph, build_unvalidated_intersection_graph_from_prepared_pair_rc,
+    intersection_graph_validation_error,
 };
 use super::view::MeshView;
 use hyperlimit::{ApproximationPolicy, MeshSource};
@@ -209,10 +210,10 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         graph
             .validate_against_sources(self.left_view.mesh, self.right_view.mesh)
             .map_err(|error| {
-                ExactMeshError::one(ExactMeshBlocker::new(
-                    ExactMeshBlockerKind::StaleFactReplay,
-                    format!("exact intersection graph failed source replay: {error:?}"),
-                ))
+                intersection_graph_validation_error(
+                    error,
+                    "exact intersection graph failed source replay",
+                )
             })?;
         let mut validated = graph.as_ref().clone();
         validated.source_replay_validated = true;
@@ -413,6 +414,8 @@ const fn fnv1a_u64(mut hash: u64, value: u64) -> u64 {
 mod tests {
     use super::*;
     use crate::ExactMesh;
+    use crate::mesh::graph::FacePairEvents;
+    use crate::mesh::graph::intersection::MeshFacePairRelation;
     use hyperlimit::{Point3, SourceProvenance};
 
     fn p(x: i64, y: i64, z: i64) -> Point3 {
@@ -762,6 +765,30 @@ mod tests {
                 .source_replay_validated
         );
         assert_eq!(validated.face_pairs, retained.face_pairs);
+    }
+
+    #[test]
+    fn prepared_pair_validation_preserves_structural_graph_blockers() {
+        let left = tetra([0, 0, 0]);
+        let right = tetra([0, 0, 0]);
+        let pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
+        pair.retain_intersection_graph(ExactIntersectionGraph::from_face_pairs(vec![
+            FacePairEvents {
+                left_face: 0,
+                right_face: 0,
+                relation: MeshFacePairRelation::Candidate,
+                projection: None,
+                events: Vec::new(),
+            },
+        ]));
+
+        let error = pair.validated_intersection_graph().unwrap_err();
+        let blocker = &error.blockers()[0];
+        assert_eq!(
+            blocker.kind(),
+            ExactMeshBlockerKind::MissingRequiredEvidence
+        );
+        assert!(blocker.message().contains("RetainedPairHasNoEvents"));
     }
 
     #[test]
