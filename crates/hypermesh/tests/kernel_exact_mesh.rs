@@ -107,9 +107,9 @@ fn exact_mesh_borrowed_view_exposes_retained_facts() {
         Some((&p(0, 0, 0), &p(1, 1, 1)))
     );
     assert!(view.is_closed_manifold());
-    assert_eq!(view.faces().count(), 4);
-    assert_eq!(view.vertex_refs().count(), 4);
-    assert_eq!(view.edges().count(), view.edge_count());
+    assert_eq!(view.faces().len(), 4);
+    assert_eq!(view.vertex_refs().len(), 4);
+    assert_eq!(view.edges().len(), view.edge_count());
     assert_eq!(
         view.triangles()
             .map(TriangleRef::vertex_indices)

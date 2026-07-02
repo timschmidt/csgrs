@@ -201,13 +201,13 @@ impl<'a> MeshView<'a> {
     }
 
     /// Iterate borrowed vertices.
-    pub fn vertex_refs(self) -> impl Iterator<Item = VertexRef<'a>> + 'a {
+    pub fn vertex_refs(self) -> impl ExactSizeIterator<Item = VertexRef<'a>> + 'a {
         let count = self.current_row_count(RetainedRowKind::Vertex);
         (0..count).map(move |index| self.vertex_ref(index))
     }
 
     /// Iterate borrowed faces.
-    pub fn faces(self) -> impl Iterator<Item = FaceRef<'a>> + 'a {
+    pub fn faces(self) -> impl ExactSizeIterator<Item = FaceRef<'a>> + 'a {
         let count = self.current_row_count(RetainedRowKind::Face);
         (0..count).map(move |index| self.face_ref(index))
     }
@@ -219,7 +219,7 @@ impl<'a> MeshView<'a> {
     }
 
     /// Iterate retained edges.
-    pub fn edges(self) -> impl Iterator<Item = EdgeRef<'a>> + 'a {
+    pub fn edges(self) -> impl ExactSizeIterator<Item = EdgeRef<'a>> + 'a {
         let count = self.current_row_count(RetainedRowKind::Edge);
         (0..count).map(move |index| self.edge_ref(index))
     }
