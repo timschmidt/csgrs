@@ -310,9 +310,7 @@ impl ClosedTriangleMesh3 {
     /// Physics keeps material and mass-property interpretation. Mesh
     /// validation and topology facts are delegated to hypermesh at this
     /// boundary.
-    pub fn to_hypermesh_exact(
-        &self,
-    ) -> Result<hypermesh::ExactMesh, hypermesh::kernel::ExactMeshError> {
+    pub fn to_hypermesh_exact(&self) -> Result<hypermesh::Mesh, hypermesh::kernel::MeshError> {
         let mut positions = Vec::with_capacity(self.triangles.len() * 9);
         let mut indices = Vec::with_capacity(self.triangles.len() * 3);
         for triangle in &self.triangles {
@@ -326,7 +324,7 @@ impl ClosedTriangleMesh3 {
             }
             indices.extend_from_slice(&[base, base + 1, base + 2]);
         }
-        hypermesh::ExactMesh::from_real_triangles(&positions, &indices)
+        hypermesh::Mesh::from_real_triangles(&positions, &indices)
     }
 }
 
