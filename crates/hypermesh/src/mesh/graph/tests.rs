@@ -372,7 +372,7 @@ fn face_pair_candidate_retains_source_plane_split_events_internal() {
         .prepare_arrangement_cell_complex_shortcut_facts()
         .unwrap();
     assert_eq!(
-        shortcut_facts,
+        *shortcut_facts.as_ref(),
         crate::mesh::boolean::evidence::ExactArrangementCellComplexShortcutFacts::from_sources(
             &left, &right
         )

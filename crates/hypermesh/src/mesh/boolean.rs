@@ -30,6 +30,7 @@ pub(crate) mod winding;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::ops::ControlFlow;
+use std::rc::Rc;
 
 use hyperlimit::SegmentPlaneRelation;
 
@@ -120,7 +121,6 @@ use region::{
 };
 use solid::{ConvexSolidMeshRelation, classify_mesh_vertices_against_convex_solid_report};
 use std::cmp::Ordering;
-use std::rc::Rc;
 use volumetric::{
     ExactVolumetricRegionClassification, ExactVolumetricRegionRelation,
     classify_triangulated_regions_against_opposite_meshes,
@@ -3008,7 +3008,7 @@ pub(crate) fn materialize_boolean_operation(
 }
 
 fn cached_arrangement_shortcut_facts<'facts>(
-    cached: &'facts mut Option<ExactArrangementCellComplexShortcutFacts>,
+    cached: &'facts mut Option<Rc<ExactArrangementCellComplexShortcutFacts>>,
     prepared_pair: Option<&PreparedMeshPair<'_, '_>>,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3016,10 +3016,12 @@ fn cached_arrangement_shortcut_facts<'facts>(
     if cached.is_none() {
         *cached = Some(match prepared_pair {
             Some(pair) => pair.prepare_arrangement_cell_complex_shortcut_facts()?,
-            None => checked_arrangement_cell_complex_shortcut_facts_from_sources(left, right)?,
+            None => {
+                Rc::new(checked_arrangement_cell_complex_shortcut_facts_from_sources(left, right)?)
+            }
         });
     }
-    cached.as_ref().ok_or_else(|| {
+    cached.as_deref().ok_or_else(|| {
         ExactMeshError::one(ExactMeshBlocker::new(
             ExactMeshBlockerKind::MissingRequiredEvidence,
             "arrangement shortcut facts were not retained after initialization",

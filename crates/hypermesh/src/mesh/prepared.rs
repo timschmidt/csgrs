@@ -30,7 +30,7 @@ pub(crate) struct PreparedMeshPair<'left, 'right> {
     scratch: RefCell<BroadPhaseScratch>,
     intersection_graph: RefCell<Option<Rc<ExactIntersectionGraph>>>,
     arrangement: RefCell<Option<Rc<ExactArrangement3d>>>,
-    arrangement_shortcut_facts: RefCell<Option<ExactArrangementCellComplexShortcutFacts>>,
+    arrangement_shortcut_facts: RefCell<Option<Rc<ExactArrangementCellComplexShortcutFacts>>>,
 }
 
 /// Compact source/freshness stamp for retained exact mesh facts.
@@ -224,11 +224,11 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
 
     pub(crate) fn prepare_arrangement_cell_complex_shortcut_facts(
         &self,
-    ) -> Result<ExactArrangementCellComplexShortcutFacts, ExactMeshError> {
+    ) -> Result<Rc<ExactArrangementCellComplexShortcutFacts>, ExactMeshError> {
         self.require_sources_current("arrangement cell-complex shortcut facts")?;
         if let Some(facts) = self.arrangement_shortcut_facts.borrow().clone() {
             self.validate_arrangement_cell_complex_shortcut_facts(
-                &facts,
+                facts.as_ref(),
                 "retained arrangement shortcut facts",
                 ExactMeshBlockerKind::StaleFactReplay,
             )?;
@@ -245,7 +245,8 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
                 ExactMeshBlockerKind::ExactConstructionFailure,
             )
         })?;
-        *self.arrangement_shortcut_facts.borrow_mut() = Some(facts.clone());
+        let facts = Rc::new(facts);
+        *self.arrangement_shortcut_facts.borrow_mut() = Some(Rc::clone(&facts));
         Ok(facts)
     }
 
@@ -627,8 +628,9 @@ mod tests {
         let pair = left.view().prepare_broad_phase_pair(right.view()).unwrap();
         let box_left = axis_aligned_box([0, 0, 0], [1, 1, 1]);
         let box_right = axis_aligned_box([1, 0, 0], [2, 1, 1]);
-        let stale_facts =
-            ExactArrangementCellComplexShortcutFacts::from_sources(&box_left, &box_right);
+        let stale_facts = Rc::new(ExactArrangementCellComplexShortcutFacts::from_sources(
+            &box_left, &box_right,
+        ));
 
         *pair.arrangement_shortcut_facts.borrow_mut() = Some(stale_facts);
 
