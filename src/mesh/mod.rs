@@ -13,7 +13,6 @@ use crate::csg::CSG;
 #[cfg(feature = "sketch")]
 use hypercurve::{Classification, FiniteProjectionOptions};
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
-use hyperlimit::{PreparedAabb3, aabb3s_intersect};
 use hyperphysics::{
     ClosedTriangleMesh3 as HyperClosedTriangleMesh3,
     MassPropertyReport3 as HyperMassPropertyReport3, Triangle3 as HyperTriangle3,
@@ -149,138 +148,6 @@ fn point3_bounds(points: &[Point3]) -> Option<(Point3, Point3)> {
         Point3::new(min_x, min_y, min_z),
         Point3::new(max_x, max_y, max_z),
     ))
-}
-
-fn bounding_box_contains_bounds(container: &Aabb, contained: &Aabb) -> bool {
-    let container_min = hyperlimit::Point3::new(
-        container.mins.x.clone(),
-        container.mins.y.clone(),
-        container.mins.z.clone(),
-    );
-    let container_max = hyperlimit::Point3::new(
-        container.maxs.x.clone(),
-        container.maxs.y.clone(),
-        container.maxs.z.clone(),
-    );
-    let contained_min = hyperlimit::Point3::new(
-        contained.mins.x.clone(),
-        contained.mins.y.clone(),
-        contained.mins.z.clone(),
-    );
-    let contained_max = hyperlimit::Point3::new(
-        contained.maxs.x.clone(),
-        contained.maxs.y.clone(),
-        contained.maxs.z.clone(),
-    );
-
-    let container = PreparedAabb3::new(&container_min, &container_max);
-    matches!(container.contains_point(&contained_min).value(), Some(true))
-        && matches!(container.contains_point(&contained_max).value(), Some(true))
-}
-
-fn bounding_boxes_intersect(lhs: &Aabb, rhs: &Aabb) -> bool {
-    let lhs_min =
-        hyperlimit::Point3::new(lhs.mins.x.clone(), lhs.mins.y.clone(), lhs.mins.z.clone());
-    let lhs_max =
-        hyperlimit::Point3::new(lhs.maxs.x.clone(), lhs.maxs.y.clone(), lhs.maxs.z.clone());
-    let rhs_min =
-        hyperlimit::Point3::new(rhs.mins.x.clone(), rhs.mins.y.clone(), rhs.mins.z.clone());
-    let rhs_max =
-        hyperlimit::Point3::new(rhs.maxs.x.clone(), rhs.maxs.y.clone(), rhs.maxs.z.clone());
-
-    matches!(
-        aabb3s_intersect(&lhs_min, &lhs_max, &rhs_min, &rhs_max).value(),
-        Some(true)
-    )
-}
-
-fn mesh_from_bounding_box_intersection<M: Clone + Send + Sync + Debug>(
-    lhs: &Aabb,
-    rhs: &Aabb,
-    metadata: M,
-) -> Mesh<M> {
-    let min_x = if matches!(
-        real_cmp_for_finite_bounds(&lhs.mins.x, &rhs.mins.x),
-        std::cmp::Ordering::Greater
-    ) {
-        lhs.mins.x.clone()
-    } else {
-        rhs.mins.x.clone()
-    };
-    let min_y = if matches!(
-        real_cmp_for_finite_bounds(&lhs.mins.y, &rhs.mins.y),
-        std::cmp::Ordering::Greater
-    ) {
-        lhs.mins.y.clone()
-    } else {
-        rhs.mins.y.clone()
-    };
-    let min_z = if matches!(
-        real_cmp_for_finite_bounds(&lhs.mins.z, &rhs.mins.z),
-        std::cmp::Ordering::Greater
-    ) {
-        lhs.mins.z.clone()
-    } else {
-        rhs.mins.z.clone()
-    };
-    let max_x = if matches!(
-        real_cmp_for_finite_bounds(&lhs.maxs.x, &rhs.maxs.x),
-        std::cmp::Ordering::Less
-    ) {
-        lhs.maxs.x.clone()
-    } else {
-        rhs.maxs.x.clone()
-    };
-    let max_y = if matches!(
-        real_cmp_for_finite_bounds(&lhs.maxs.y, &rhs.maxs.y),
-        std::cmp::Ordering::Less
-    ) {
-        lhs.maxs.y.clone()
-    } else {
-        rhs.maxs.y.clone()
-    };
-    let max_z = if matches!(
-        real_cmp_for_finite_bounds(&lhs.maxs.z, &rhs.maxs.z),
-        std::cmp::Ordering::Less
-    ) {
-        lhs.maxs.z.clone()
-    } else {
-        rhs.maxs.z.clone()
-    };
-
-    let width = max_x.clone() - min_x.clone();
-    let length = max_y.clone() - min_y.clone();
-    let height = max_z.clone() - min_z.clone();
-    if !real_gt(&width, &Real::zero())
-        || !real_gt(&length, &Real::zero())
-        || !real_gt(&height, &Real::zero())
-    {
-        return Mesh::empty(metadata);
-    }
-
-    Mesh::cuboid(width, length, height, metadata).translate(min_x, min_y, min_z)
-}
-
-fn mesh_with_fewer_polygons<M: Clone + Send + Sync + Debug>(
-    lhs: &Mesh<M>,
-    rhs: &Mesh<M>,
-) -> Mesh<M> {
-    if lhs.polygons.len() <= rhs.polygons.len() {
-        lhs.clone()
-    } else {
-        rhs.clone().with_metadata(lhs.metadata.clone())
-    }
-}
-
-fn mesh_with_more_polygons<M: Clone + Send + Sync + Debug>(
-    lhs: &Mesh<M>,
-    rhs: &Mesh<M>,
-) -> Mesh<M> {
-    if lhs.polygons.len() >= rhs.polygons.len() {
-        lhs.clone()
-    } else {
-        rhs.clone().with_metadata(lhs.metadata.clone())
-    }
 }
 
 fn hyperphysics_vector3_from_point3(point: &Point3) -> Result<HyperVector3, ValidationError> {
@@ -677,9 +544,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         Ok((vertices, indices))
     }
 
-    /// Extract vertices and triangle indices through the `hypermesh` handoff path.
+    /// Extract vertices and triangle indices through the native mesh path.
     ///
-    /// This compatibility method returns empty buffers when exact handoff
+    /// This legacy convenience method returns empty buffers when validation
     /// rejects the mesh. Prefer [`Mesh::try_get_vertices_and_indices`] when the
     /// caller needs to distinguish empty geometry from invalid topology.
     pub fn get_vertices_and_indices(&self) -> (Vec<Point3>, Vec<[u32; 3]>) {
@@ -1015,61 +882,49 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         mesh
     }
 
-    #[allow(dead_code)]
-    fn compatibility_union(&self, other: &Self) -> Self {
-        let self_bounds = self.bounding_box();
-        let other_bounds = other.bounding_box();
-        let self_contains_other = bounding_box_contains_bounds(&self_bounds, &other_bounds);
-        let other_contains_self = bounding_box_contains_bounds(&other_bounds, &self_bounds);
-        if self_contains_other && other_contains_self {
-            return mesh_with_fewer_polygons(self, other);
+    /// Return a new mesh representing the exact hypermesh union, or the reason
+    /// hypermesh could not import, validate, or materialize the result.
+    pub fn try_union(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
+        if self.polygons.is_empty() {
+            return Ok(other.clone().with_metadata(self.metadata.clone()));
         }
-        if self_contains_other {
-            return self.clone();
+        if other.polygons.is_empty() {
+            return Ok(self.clone());
         }
-        if other_contains_self {
-            return other.clone().with_metadata(self.metadata.clone());
-        }
-
-        let mut polygons = self.polygons.clone();
-        polygons.extend(other.polygons.iter().cloned());
-        Mesh::from_polygons(&polygons, self.metadata.clone())
+        self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Union)
     }
 
-    #[allow(dead_code)]
-    fn compatibility_difference(&self, other: &Self) -> Self {
-        let other_bounds = other.bounding_box();
-        if bounding_box_contains_bounds(&other_bounds, &self.bounding_box()) {
-            Mesh::empty(self.metadata.clone())
-        } else {
-            self.clone()
+    /// Return a new mesh representing the exact hypermesh difference, or the
+    /// typed reason hypermesh could not produce it.
+    pub fn try_difference(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
+        if self.polygons.is_empty() {
+            return Ok(Mesh::empty(self.metadata.clone()));
         }
+        if other.polygons.is_empty() {
+            return Ok(self.clone());
+        }
+        self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Difference)
     }
 
-    #[allow(dead_code)]
-    fn compatibility_intersection(&self, other: &Self) -> Self {
-        let self_bounds = self.bounding_box();
-        let other_bounds = other.bounding_box();
-        let self_contains_other = bounding_box_contains_bounds(&self_bounds, &other_bounds);
-        let other_contains_self = bounding_box_contains_bounds(&other_bounds, &self_bounds);
-        if self_contains_other && other_contains_self {
-            return mesh_with_more_polygons(self, other);
+    /// Return a new mesh representing the exact hypermesh intersection, or the
+    /// typed reason hypermesh could not produce it.
+    pub fn try_intersection(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
+        if self.polygons.is_empty() || other.polygons.is_empty() {
+            return Ok(Mesh::empty(self.metadata.clone()));
         }
-        if self_contains_other {
-            return other.clone().with_metadata(self.metadata.clone());
+        self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Intersection)
+    }
+
+    /// Return a new mesh representing the exact hypermesh symmetric
+    /// difference, or the typed reason hypermesh could not produce it.
+    pub fn try_xor(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
+        if self.polygons.is_empty() {
+            return Ok(other.clone().with_metadata(self.metadata.clone()));
         }
-        if other_contains_self {
-            return self.clone();
+        if other.polygons.is_empty() {
+            return Ok(self.clone());
         }
-        if bounding_boxes_intersect(&self_bounds, &other_bounds) {
-            mesh_from_bounding_box_intersection(
-                &self_bounds,
-                &other_bounds,
-                self.metadata.clone(),
-            )
-        } else {
-            Mesh::empty(self.metadata.clone())
-        }
+        self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Xor)
     }
 }
 
@@ -1101,10 +956,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
         if other.polygons.is_empty() {
             return self.clone();
         }
-        self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Union)
-            .ok()
-            .filter(|mesh| !mesh.polygons.is_empty())
-            .unwrap_or_else(|| self.compatibility_union(other))
+        self.try_union(other)
+            .unwrap_or_else(|error| panic!("hypermesh union failed: {error}"))
     }
 
     /// Return a new Mesh representing diffarence of the two Meshes.
@@ -1127,9 +980,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
         if other.polygons.is_empty() {
             return self.clone();
         }
-        self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Difference)
-            .ok()
-            .unwrap_or_else(|| self.compatibility_difference(other))
+        self.try_difference(other)
+            .unwrap_or_else(|error| panic!("hypermesh difference failed: {error}"))
     }
 
     /// Return a new CSG representing intersection of the two CSG's.
@@ -1149,13 +1001,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
         if self.polygons.is_empty() || other.polygons.is_empty() {
             return Mesh::empty(self.metadata.clone());
         }
-        self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Intersection)
-            .ok()
-            .filter(|mesh| {
-                !mesh.polygons.is_empty()
-                    || !bounding_boxes_intersect(&self.bounding_box(), &other.bounding_box())
-            })
-            .unwrap_or_else(|| self.compatibility_intersection(other))
+        self.try_intersection(other)
+            .unwrap_or_else(|error| panic!("hypermesh intersection failed: {error}"))
     }
 
     /// Return a new CSG representing space in this CSG excluding the space in the
@@ -1173,15 +1020,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
     ///          +-------+            +-------+
     /// ```
     fn xor(&self, other: &Mesh<M>) -> Mesh<M> {
-        // 3D and 2D xor:
-        // A \ B
-        let a_sub_b = self.difference(other);
-
-        // B \ A
-        let b_sub_a = other.difference(self);
-
-        // Union those two
-        a_sub_b.union(&b_sub_a)
+        self.try_xor(other)
+            .unwrap_or_else(|error| panic!("hypermesh xor failed: {error}"))
     }
 
     /// **Mathematical Foundation: General 3D Transformations**

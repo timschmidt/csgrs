@@ -552,11 +552,11 @@ import/export for common mesh and manufacturing formats behind Cargo features.
 The project is also intentionally experimental in several areas:
 
 - **Boolean kernels**: `Mesh` booleans now route through `hypermesh` rather
-  than a csgrs-owned partition tree. The current compatibility adapter remains
-  report-bearing while exact solid booleans continue moving into `hypermesh`.
-  Prefer `Mesh::to_hypermesh_handoff_package` when a downstream consumer needs
-  replayable surface, solid, readiness, or lossy display/export artifacts; raw
-  vertex/index buffers are compatibility views, not topology authority.
+  than a csgrs-owned partition tree. Nontrivial `union`, `difference`,
+  `intersection`, and `xor` calls import both operands as `hypermesh::Mesh` and
+  materialize the hypermesh result directly. Use the `try_*` boolean methods
+  when callers need the typed hypermesh import or materialization error instead
+  of the legacy `CSG` trait's bare mesh return.
 - **Triangulation**: hypertri is the single triangulation backend. It replaces
   the former Spade, Earcut, and `delaunay` dependency matrix.
 - **Numeric model**: hyperreals are the internal scalar model being carried
@@ -592,10 +592,8 @@ README_RENDER_OUTPUT_DIR=/tmp/csgrs-readme-renders cargo run --example readme_re
 
 ## Roadmap
 
-- **Boolean robustness**: finish replacing the remaining primitive-float
-  compatibility adapter with exact `hypermesh` solid booleans, route mesh
-  handoff and validation through `hypermesh`, and add indexed mesh
-  conversion/merge utilities.
+- **Boolean robustness**: extend the direct `hypermesh` solid boolean path with
+  more topology coverage and add indexed mesh conversion/merge utilities.
 - **Numeric backend**: continue removing tolerance-driven compatibility
   branches by pushing more predicates into hyperreal-backed hyper geometry,
   while keeping primitive `f32`/`f64` conversions at API and IO boundaries.

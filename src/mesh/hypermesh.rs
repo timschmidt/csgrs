@@ -1,9 +1,9 @@
 //! Adapters from the transitional `csgrs::Mesh` carrier into `hypermesh`.
 //!
 //! `Mesh` stores hyperreal polygons while the CSG pipeline is being
-//! ported. This module keeps the exact handoff explicit: triangles are
+//! ported. This module keeps the exact adapter boundary explicit: triangles are
 //! tessellated, vertices are deduplicated by canonical coordinate keys, and the
-//! flat stream is handed to `hypermesh::ExactMesh` for topology
+//! flat stream is passed to `hypermesh::Mesh` for topology
 //! validation. This follows Yap, "Towards Exact Geometric Computation,"
 //! *Computational Geometry* 7.1-2 (1997),
 //! <https://doi.org/10.1016/0925-7721(95)00040-2>: approximate input channels
@@ -25,13 +25,13 @@ use super::Mesh;
 /// Error returned while importing or materializing a transitional `csgrs::Mesh`
 /// through hypermesh.
 #[derive(Debug, thiserror::Error)]
-pub enum HypermeshHandoffError {
+pub enum HypermeshError {
     /// The mesh could not be imported or validated as an exact hypermesh.
     #[error("hypermesh exact import failed: {0}")]
-    Mesh(::hypermesh::kernel::ExactMeshError),
+    Mesh(::hypermesh::kernel::MeshError),
     /// The exact boolean operation failed.
     #[error("hypermesh boolean operation failed: {0}")]
-    Boolean(::hypermesh::kernel::ExactMeshError),
+    Boolean(::hypermesh::kernel::MeshError),
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -39,13 +39,14 @@ pub(crate) enum HypermeshBooleanOp {
     Union,
     Difference,
     Intersection,
+    Xor,
 }
 
-/// Primitive-float buffers ready for `hypermesh::ExactMesh` import.
+/// Primitive-float buffers ready for `hypermesh::Mesh` import.
 ///
 /// The coordinates are a lossy boundary view over the current `csgrs` carrier;
 /// consumers that need certified topology should construct an
-/// [`hypermesh::ExactMesh`] from these rows instead of making decisions
+/// [`hypermesh::Mesh`] from these rows instead of making decisions
 /// on the raw `f64` stream.
 #[derive(Clone, Debug, PartialEq)]
 pub struct HypermeshBuffers {
@@ -107,26 +108,20 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// validated as boundary-allowed surface meshes.
     pub fn to_hypermesh_exact(
         &self,
-    ) -> Result<::hypermesh::ExactMesh, ::hypermesh::kernel::ExactMeshError> {
+    ) -> Result<::hypermesh::Mesh, ::hypermesh::kernel::MeshError> {
         let buffers = self.to_hypermesh_buffers();
-        ::hypermesh::ExactMesh::from_real_triangles(&buffers.positions, &buffers.indices)
+        ::hypermesh::Mesh::from_real_triangles(&buffers.positions, &buffers.indices)
     }
 
     /// Convert this mesh into a boundary-allowed exact `hypermesh` surface mesh.
     pub fn to_hypermesh_surface_exact(
         &self,
-    ) -> Result<::hypermesh::ExactMesh, ::hypermesh::kernel::ExactMeshError> {
+    ) -> Result<::hypermesh::Mesh, ::hypermesh::kernel::MeshError> {
         let buffers = self.to_hypermesh_buffers();
         if !self.polygons.is_empty() && buffers.indices.is_empty() {
-            return ::hypermesh::ExactMesh::from_real_surface_triangles(
-                &buffers.positions,
-                &[0],
-            );
+            return ::hypermesh::Mesh::from_real_surface_triangles(&buffers.positions, &[0]);
         }
-        ::hypermesh::ExactMesh::from_real_surface_triangles(
-            &buffers.positions,
-            &buffers.indices,
-        )
+        ::hypermesh::Mesh::from_real_surface_triangles(&buffers.positions, &buffers.indices)
     }
 
     /// Compute a mesh boolean through exact `hypermesh`.
@@ -141,23 +136,20 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         &self,
         other: &Self,
         operation: HypermeshBooleanOp,
-    ) -> Result<Self, HypermeshHandoffError> {
-        let left = self
-            .to_hypermesh_exact()
-            .map_err(HypermeshHandoffError::Mesh)?;
-        let right = other
-            .to_hypermesh_exact()
-            .map_err(HypermeshHandoffError::Mesh)?;
+    ) -> Result<Self, HypermeshError> {
+        let left = self.to_hypermesh_exact().map_err(HypermeshError::Mesh)?;
+        let right = other.to_hypermesh_exact().map_err(HypermeshError::Mesh)?;
         let result = match operation {
             HypermeshBooleanOp::Union => left.union(&right),
             HypermeshBooleanOp::Difference => left.difference(&right),
             HypermeshBooleanOp::Intersection => left.intersection(&right),
+            HypermeshBooleanOp::Xor => left.xor(&right),
         };
-        let result = result.map_err(HypermeshHandoffError::Boolean)?;
+        let result = result.map_err(HypermeshError::Boolean)?;
         Ok(Self::from_hypermesh_exact(&result, self.metadata.clone()))
     }
 
-    fn from_hypermesh_exact(mesh: &::hypermesh::ExactMesh, metadata: M) -> Self {
+    fn from_hypermesh_exact(mesh: &::hypermesh::Mesh, metadata: M) -> Self {
         let mut polygons = Vec::with_capacity(mesh.view().face_count());
 
         mesh.visit_triangles(|[a, b, c]| {
@@ -168,13 +160,13 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     }
 }
 
-impl Triangulated3D for ::hypermesh::ExactMesh {
+impl Triangulated3D for ::hypermesh::Mesh {
     fn visit_triangles<F>(&self, mut f: F)
     where
         F: FnMut([Vertex; 3]),
     {
         let view = self.view();
-        for triangle in view.triangle_indices() {
+        for triangle in view.triangles().map(|triangle| triangle.vertex_indices()) {
             let Some(a) = exact_vertex_position(self, triangle[0]) else {
                 continue;
             };
@@ -194,7 +186,7 @@ impl Triangulated3D for ::hypermesh::ExactMesh {
     }
 }
 
-impl IndexedTriangulated3D for ::hypermesh::ExactMesh {
+impl IndexedTriangulated3D for ::hypermesh::Mesh {
     fn indexed_triangles(&self) -> IndexedTriangleMesh3D {
         let view = self.view();
         let positions = view
@@ -205,7 +197,11 @@ impl IndexedTriangulated3D for ::hypermesh::ExactMesh {
         let mut normals = Vec::with_capacity(view.face_count());
         let mut faces = Vec::with_capacity(view.face_count());
 
-        for (normal_index, triangle) in view.triangle_indices().enumerate() {
+        for (normal_index, triangle) in view
+            .triangles()
+            .map(|triangle| triangle.vertex_indices())
+            .enumerate()
+        {
             if triangle.iter().any(|&index| index >= positions.len()) {
                 continue;
             }
@@ -241,7 +237,7 @@ fn canonical_coordinate_key(value: &Real) -> String {
     canonical_coordinate(value).to_string()
 }
 
-fn exact_vertex_position(mesh: &::hypermesh::ExactMesh, vertex: usize) -> Option<Point3> {
+fn exact_vertex_position(mesh: &::hypermesh::Mesh, vertex: usize) -> Option<Point3> {
     mesh.view()
         .vertices()
         .get(vertex)
