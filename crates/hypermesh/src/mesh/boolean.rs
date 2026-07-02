@@ -112,8 +112,9 @@ use orthogonal_solid::{
 use region::{
     ExactBooleanAssemblyPlan, ExactRegionRetention, ExactRegionSelection,
     FaceRegionPlaneClassification, FaceRegionPlaneRelation, FaceRegionTriangulation,
-    assembly_hypertri_error_to_mesh_error, checked_classify_face_regions_against_opposite_planes,
+    checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, choose_region_projection,
+    hypertri_error_to_mesh_error,
 };
 use solid::{ConvexSolidMeshRelation, classify_mesh_vertices_against_convex_solid_report};
 use std::cmp::Ordering;
@@ -925,12 +926,7 @@ fn replay_selected_region_boolean_result_from_graph(
     let region_classifications =
         checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
     let triangulations = checked_triangulate_face_regions_with_earcut(&region_plan, left, right)
-        .map_err(|error| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::DegenerateTriangle,
-                format!("exact region triangulation failed: {error}"),
-            ))
-        })?;
+        .map_err(|error| hypertri_error_to_mesh_error("exact region triangulation", error))?;
     let (assembly, mesh) = assemble_region_selection_mesh(
         &triangulations,
         left,
@@ -996,12 +992,10 @@ fn assemble_region_selection_mesh(
                 }
             },
         )
-        .map_err(|error| assembly_hypertri_error_to_mesh_error(assembly_error_label, error))?;
+        .map_err(|error| hypertri_error_to_mesh_error(assembly_error_label, error))?;
     assembly
         .canonicalize_for_mesh_with_sources(left, right)
-        .map_err(|error| {
-            assembly_hypertri_error_to_mesh_error(canonicalization_error_label, error)
-        })?;
+        .map_err(|error| hypertri_error_to_mesh_error(canonicalization_error_label, error))?;
     let mesh = assembly.checked_to_exact_mesh_with_sources(left, right, validation)?;
     Ok((assembly, mesh))
 }
@@ -6923,10 +6917,7 @@ fn open_surface_arrangement_plan_from_graph(
     }
     let triangulations = checked_triangulate_face_regions_with_earcut(&region_plan, left, right)
         .map_err(|error| {
-            ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::DegenerateTriangle,
-                format!("open-surface arrangement triangulation failed: {error}"),
-            ))
+            hypertri_error_to_mesh_error("open-surface arrangement triangulation", error)
         })?;
     Ok(Some(OpenSurfaceArrangementPlan {
         support,
@@ -8046,10 +8037,10 @@ fn volumetric_winding_region_plan_from_graph(
             return Ok(None);
         }
         Err(error) => {
-            return Err(ExactMeshError::one(ExactMeshBlocker::new(
-                ExactMeshBlockerKind::DegenerateTriangle,
-                format!("exact winding face-cell triangulation failed: {error}"),
-            )));
+            return Err(hypertri_error_to_mesh_error(
+                "exact winding face-cell triangulation",
+                error,
+            ));
         }
     };
     let Some((region_plan, triangulations)) = cell_plan else {

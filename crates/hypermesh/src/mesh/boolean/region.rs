@@ -601,10 +601,9 @@ impl ExactBooleanAssemblyPlan {
         policy: ExactMeshValidationPolicy,
     ) -> Result<ExactMesh, super::super::error::ExactMeshError> {
         self.validate()
-            .map_err(|error| assembly_hypertri_error_to_mesh_error("assembly validation", error))?;
-        validate_assembly_source_face_incidence(self, left, right).map_err(|error| {
-            assembly_hypertri_error_to_mesh_error("assembly source incidence", error)
-        })?;
+            .map_err(|error| hypertri_error_to_mesh_error("assembly validation", error))?;
+        validate_assembly_source_face_incidence(self, left, right)
+            .map_err(|error| hypertri_error_to_mesh_error("assembly source incidence", error))?;
         self.materialize_exact_mesh(policy)
     }
 
@@ -926,7 +925,7 @@ fn assembly_vertex_lies_on_source_face(
         })
 }
 
-pub(super) fn assembly_hypertri_error_to_mesh_error(
+pub(super) fn hypertri_error_to_mesh_error(
     context: &'static str,
     error: hypertri::Error,
 ) -> ExactMeshError {

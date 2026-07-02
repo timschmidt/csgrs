@@ -5840,6 +5840,49 @@ fn selected_region_assembly_reports_stale_triangulation_artifacts() {
 }
 
 #[test]
+fn hypertri_errors_map_to_typed_mesh_blockers() {
+    let stale = hypertri_error_to_mesh_error(
+        "test invalid retained artifact",
+        hypertri::Error::InvalidInput {
+            reason: "retained artifact is incoherent",
+        },
+    );
+    assert!(
+        stale.has_only_blocker_kinds(&[ExactMeshBlockerKind::StaleFactReplay]),
+        "{stale:?}"
+    );
+
+    let undecidable = hypertri_error_to_mesh_error(
+        "test undecidable predicate",
+        hypertri::Error::PredicateUndecided {
+            predicate: "test predicate",
+        },
+    );
+    assert!(
+        undecidable.has_only_blocker_kinds(&[ExactMeshBlockerKind::UndecidablePredicate]),
+        "{undecidable:?}"
+    );
+
+    let construction =
+        hypertri_error_to_mesh_error("test construction", hypertri::Error::NoEarFound);
+    assert!(
+        construction.has_only_blocker_kinds(&[ExactMeshBlockerKind::ExactConstructionFailure]),
+        "{construction:?}"
+    );
+
+    let unsupported = hypertri_error_to_mesh_error(
+        "test unsupported feature",
+        hypertri::Error::UnsupportedFeature {
+            feature: "test feature",
+        },
+    );
+    assert!(
+        unsupported.has_only_blocker_kinds(&[ExactMeshBlockerKind::UnsupportedExactOperation]),
+        "{unsupported:?}"
+    );
+}
+
+#[test]
 fn exact_coplanar_boundary_canonicalizes_only_degenerate_self_contact_spurs() {
     let a = Point3::new(Real::from(0), Real::from(0), Real::from(0));
     let b = Point3::new(Real::from(1), Real::from(0), Real::from(0));
