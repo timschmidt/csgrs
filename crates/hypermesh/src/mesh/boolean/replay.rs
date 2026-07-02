@@ -225,7 +225,10 @@ pub(super) fn try_materialize_certified_boolean_support_with_artifacts(
                     Some(boolean_empty_operand(left, right, operation, validation)?),
                     left,
                     right,
-                    ExactBooleanRequest::new(operation, validation),
+                    ExactBooleanRequest {
+                        operation: operation,
+                        validation: validation,
+                    },
                     retained_arrangement_attempt,
                 )
             }
@@ -244,7 +247,10 @@ pub(super) fn try_materialize_certified_boolean_support_with_artifacts(
                     Some(boolean_disjoint_meshes(left, right, operation, validation)?),
                     left,
                     right,
-                    ExactBooleanRequest::new(operation, validation),
+                    ExactBooleanRequest {
+                        operation: operation,
+                        validation: validation,
+                    },
                     retained_arrangement_attempt,
                 )
             }
@@ -263,7 +269,10 @@ pub(super) fn try_materialize_certified_boolean_support_with_artifacts(
                     Some(boolean_identical_meshes(left, operation, validation)?),
                     left,
                     right,
-                    ExactBooleanRequest::new(operation, validation),
+                    ExactBooleanRequest {
+                        operation: operation,
+                        validation: validation,
+                    },
                     retained_arrangement_attempt,
                 )
             }
@@ -283,7 +292,10 @@ pub(super) fn try_materialize_certified_boolean_support_with_artifacts(
                     Some(boolean_same_surface_meshes(left, operation, validation)?),
                     left,
                     right,
-                    ExactBooleanRequest::new(operation, validation),
+                    ExactBooleanRequest {
+                        operation: operation,
+                        validation: validation,
+                    },
                     retained_arrangement_attempt,
                 )
             }
@@ -327,7 +339,10 @@ pub(super) fn try_materialize_certified_boolean_support_with_artifacts(
                 )?,
                 left,
                 right,
-                ExactBooleanRequest::new(operation, validation),
+                ExactBooleanRequest {
+                    operation: operation,
+                    validation: validation,
+                },
                 retained_arrangement_attempt,
             )
         }
@@ -365,7 +380,10 @@ pub(super) fn try_materialize_certified_boolean_support_with_artifacts(
                     result,
                     left,
                     right,
-                    ExactBooleanRequest::new(operation, validation),
+                    ExactBooleanRequest {
+                        operation: operation,
+                        validation: validation,
+                    },
                     retained_arrangement_attempt,
                 )
             }
@@ -384,7 +402,10 @@ pub(super) fn try_materialize_certified_boolean_support_with_artifacts(
                     )?,
                     left,
                     right,
-                    ExactBooleanRequest::new(operation, validation),
+                    ExactBooleanRequest {
+                        operation: operation,
+                        validation: validation,
+                    },
                     retained_arrangement_attempt,
                 )
             }
@@ -411,7 +432,10 @@ pub(super) fn try_materialize_certified_boolean_support_with_artifacts(
                     )?,
                     left,
                     right,
-                    ExactBooleanRequest::new(operation, validation),
+                    ExactBooleanRequest {
+                        operation: operation,
+                        validation: validation,
+                    },
                     retained_arrangement_attempt,
                 )
             }
@@ -422,7 +446,10 @@ pub(super) fn try_materialize_certified_boolean_support_with_artifacts(
             boolean_convex_meshes_optional(left, right, operation, validation)?,
             left,
             right,
-            ExactBooleanRequest::new(operation, validation),
+            ExactBooleanRequest {
+                operation: operation,
+                validation: validation,
+            },
             retained_arrangement_attempt,
         ),
         ExactBooleanSupport::CertifiedConvexSeparated
@@ -441,7 +468,10 @@ pub(super) fn try_materialize_certified_boolean_support_with_artifacts(
                 )?,
                 left,
                 right,
-                ExactBooleanRequest::new(operation, validation),
+                ExactBooleanRequest {
+                    operation: operation,
+                    validation: validation,
+                },
                 retained_arrangement_attempt,
             )
         }

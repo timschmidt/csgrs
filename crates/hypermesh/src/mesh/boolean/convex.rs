@@ -1693,10 +1693,10 @@ mod tests {
         with_materialized_evaluation_for_test(
             &left,
             &right,
-            ExactBooleanRequest::new(
-                ExactBooleanOperation::Union,
-                ExactMeshValidationPolicy::CLOSED,
-            ),
+            ExactBooleanRequest {
+                operation: ExactBooleanOperation::Union,
+                validation: ExactMeshValidationPolicy::CLOSED,
+            },
             |evaluation| {
                 evaluation.validate_against_sources(&left, &right).unwrap();
             },
@@ -1717,10 +1717,10 @@ mod tests {
         with_materialized_evaluation_for_test(
             &left,
             &right,
-            ExactBooleanRequest::new(
-                ExactBooleanOperation::Difference,
-                ExactMeshValidationPolicy::CLOSED,
-            ),
+            ExactBooleanRequest {
+                operation: ExactBooleanOperation::Difference,
+                validation: ExactMeshValidationPolicy::CLOSED,
+            },
             |evaluation| {
                 evaluation.validate_against_sources(&left, &right).unwrap();
             },

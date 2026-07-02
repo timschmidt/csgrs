@@ -1450,14 +1450,17 @@ impl ExactBooleanResultKind {
 
     fn request(self, validation: ExactMeshValidationPolicy) -> ExactBooleanRequest {
         match self {
-            ExactBooleanResultKind::SelectedRegions { selection } => ExactBooleanRequest::new(
-                ExactBooleanOperation::SelectedRegions(selection),
-                validation,
-            ),
+            ExactBooleanResultKind::SelectedRegions { selection } => ExactBooleanRequest {
+                operation: ExactBooleanOperation::SelectedRegions(selection),
+                validation: validation,
+            },
             ExactBooleanResultKind::CertifiedShortcut { operation, .. }
             | ExactBooleanResultKind::OpenSurfaceArrangement { operation }
             | ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
-                ExactBooleanRequest::new(operation, validation)
+                ExactBooleanRequest {
+                    operation: operation,
+                    validation: validation,
+                }
             }
         }
     }
@@ -6539,8 +6542,10 @@ impl ExactWindingEvidenceReport {
         right: &ExactMesh,
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
-        let request =
-            ExactBooleanRequest::new(self.operation, ExactMeshValidationPolicy::ALLOW_BOUNDARY);
+        let request = ExactBooleanRequest {
+            operation: self.operation,
+            validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+        };
         validate_winding_evidence_against_sources_for_request(self, left, right, request)
     }
 
@@ -7410,10 +7415,10 @@ mod tests {
             result.validate_request_against_sources_with_retained_attempt(
                 &left,
                 &right,
-                ExactBooleanRequest::new(
-                    ExactBooleanOperation::Union,
-                    ExactMeshValidationPolicy::ALLOW_BOUNDARY,
-                ),
+                ExactBooleanRequest {
+                    operation: ExactBooleanOperation::Union,
+                    validation: ExactMeshValidationPolicy::ALLOW_BOUNDARY,
+                },
                 None,
             ),
             Err(ExactEvidenceValidationError::SourceReplayMismatch)

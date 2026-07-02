@@ -497,20 +497,6 @@ pub(crate) struct ExactBooleanRequest {
     pub(crate) validation: ExactMeshValidationPolicy,
 }
 
-impl ExactBooleanRequest {
-    /// Creates a request using the kernel's default exact materialization
-    /// policy. Boundary-only contacts are retained as explicit blockers.
-    pub(crate) const fn new(
-        operation: ExactBooleanOperation,
-        validation: ExactMeshValidationPolicy,
-    ) -> Self {
-        Self {
-            operation,
-            validation,
-        }
-    }
-}
-
 fn graph_for_certified_materialization<'a>(
     retained_graph: Option<&'a ExactIntersectionGraph>,
     owned_graph: &'a mut Option<ExactIntersectionGraph>,
@@ -2339,7 +2325,10 @@ fn certified_arrangement_cell_complex_preflight_if_materialized(
                     graph,
                     left,
                     right,
-                    ExactBooleanRequest::new(operation, validation),
+                    ExactBooleanRequest {
+                        operation: operation,
+                        validation: validation,
+                    },
                     regularize_sheet_complex,
                 )?
                 .is_some()
@@ -2866,7 +2855,10 @@ pub(crate) fn materialize_boolean_operation(
         return boolean_disjoint_meshes(left, right, operation, validation);
     }
     let mut shortcut_facts = None;
-    let request = ExactBooleanRequest::new(operation, validation);
+    let request = ExactBooleanRequest {
+        operation: operation,
+        validation: validation,
+    };
     if validation == ExactMeshValidationPolicy::CLOSED
         && operation == ExactBooleanOperation::Intersection
     {
