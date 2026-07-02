@@ -566,7 +566,15 @@ fn certification_set_from_graph_and_regularized_arrangement(
         .is_some(),
     };
     let arrangement_cell_complex_shortcuts =
-        ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
+        ExactArrangementCellComplexShortcutFacts::checked_from_sources(left, right).map_err(
+            |error| {
+                retained_evidence_validation_error(
+                    "arrangement shortcut facts failed source replay",
+                    error,
+                    ExactMeshBlockerKind::ExactConstructionFailure,
+                )
+            },
+        )?;
     let reject_boundary_evidence_request =
         request.validation == ExactMeshValidationPolicy::ALLOW_BOUNDARY;
     let planar_arrangement =

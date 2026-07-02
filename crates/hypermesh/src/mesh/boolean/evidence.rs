@@ -2393,6 +2393,11 @@ impl ExactArrangementCellComplexShortcutFacts {
         Ok(())
     }
 
+    pub(crate) fn checked(self) -> Result<Self, ExactEvidenceValidationError> {
+        self.validate()?;
+        Ok(self)
+    }
+
     pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -2404,6 +2409,13 @@ impl ExactArrangementCellComplexShortcutFacts {
         } else {
             Err(ExactEvidenceValidationError::SourceReplayMismatch)
         }
+    }
+
+    pub(crate) fn checked_from_sources(
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Self, ExactEvidenceValidationError> {
+        Self::from_sources(left, right).checked()
     }
 
     pub(crate) fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
@@ -3365,7 +3377,8 @@ fn arrangement_cell_complex_sources_match(
             return Ok(true);
         }
     }
-    let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
+    let shortcut_facts =
+        ExactArrangementCellComplexShortcutFacts::checked_from_sources(left, right)?;
     let preflight = preflight_boolean_exact_request_from_graph_with_retained_attempt(
         &graph,
         left,
@@ -4485,7 +4498,8 @@ fn validate_winding_evidence_against_sources_for_request(
         return Ok(());
     }
     let graph = source_replay.validated_graph()?;
-    let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
+    let shortcut_facts =
+        ExactArrangementCellComplexShortcutFacts::checked_from_sources(left, right)?;
     if let Ok(replay) = winding_evidence_report_for_request_from_graph_and_attempt(
         graph,
         left,
@@ -4629,7 +4643,8 @@ impl ExactBooleanPreflight {
         {
             return Ok(());
         }
-        let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
+        let shortcut_facts =
+            ExactArrangementCellComplexShortcutFacts::checked_from_sources(left, right)?;
         if let Ok(replay) = preflight_boolean_exact_request_from_graph_with_retained_attempt(
             &graph,
             left,

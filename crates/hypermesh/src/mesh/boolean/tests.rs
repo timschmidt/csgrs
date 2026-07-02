@@ -3002,6 +3002,10 @@ fn arrangement_cell_complex_shortcut_facts_detect_mixed_axis_and_affine_families
         facts.validate(),
         Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
     );
+    assert_eq!(
+        facts.checked(),
+        Err(ExactEvidenceValidationError::StatusEvidenceMismatch)
+    );
 }
 
 #[test]

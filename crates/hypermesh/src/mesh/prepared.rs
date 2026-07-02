@@ -233,15 +233,17 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
             )?;
             return Ok(facts);
         }
-        let facts = ExactArrangementCellComplexShortcutFacts::from_sources(
+        let facts = ExactArrangementCellComplexShortcutFacts::checked_from_sources(
             self.left_view.mesh,
             self.right_view.mesh,
-        );
-        self.validate_arrangement_cell_complex_shortcut_facts(
-            &facts,
-            "arrangement shortcut facts",
-            ExactMeshBlockerKind::ExactConstructionFailure,
-        )?;
+        )
+        .map_err(|error| {
+            arrangement_cell_complex_shortcut_facts_error(
+                error,
+                "arrangement shortcut facts",
+                ExactMeshBlockerKind::ExactConstructionFailure,
+            )
+        })?;
         *self.arrangement_shortcut_facts.borrow_mut() = Some(facts.clone());
         Ok(facts)
     }
@@ -255,16 +257,7 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
         facts
             .validate_against_sources(self.left_view.mesh, self.right_view.mesh)
             .map_err(|error| {
-                let replay_kind = match error {
-                    ExactEvidenceValidationError::SourceReplayMismatch => {
-                        ExactMeshBlockerKind::StaleFactReplay
-                    }
-                    _ => blocker_kind,
-                };
-                ExactMeshError::one(ExactMeshBlocker::new(
-                    replay_kind,
-                    format!("prepared mesh-pair {label} failed source replay: {error:?}"),
-                ))
+                arrangement_cell_complex_shortcut_facts_error(error, label, blocker_kind)
             })
     }
 
@@ -292,6 +285,21 @@ impl<'left, 'right> PreparedMeshPair<'left, 'right> {
                 visit,
             )
     }
+}
+
+fn arrangement_cell_complex_shortcut_facts_error(
+    error: ExactEvidenceValidationError,
+    label: &'static str,
+    blocker_kind: ExactMeshBlockerKind,
+) -> ExactMeshError {
+    let replay_kind = match error {
+        ExactEvidenceValidationError::SourceReplayMismatch => ExactMeshBlockerKind::StaleFactReplay,
+        _ => blocker_kind,
+    };
+    ExactMeshError::one(ExactMeshBlocker::new(
+        replay_kind,
+        format!("prepared mesh-pair {label} failed source replay: {error:?}"),
+    ))
 }
 
 fn stale_source_stamp_blocker(

@@ -188,7 +188,8 @@ impl ExactArrangementBooleanAttempt {
         request: ExactBooleanRequest,
     ) -> Result<(), ExactEvidenceValidationError> {
         self.validate()?;
-        let shortcut_facts = ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
+        let shortcut_facts =
+            ExactArrangementCellComplexShortcutFacts::checked_from_sources(left, right)?;
         if self.materialized_arrangement_cell_complex_shortcut_output()
             && orthogonal_solid_cell_materializes_for_preflight(left, right, request.operation)
                 .map_err(|_| ExactEvidenceValidationError::SourceReplayMismatch)?
@@ -3037,7 +3038,7 @@ fn cached_arrangement_shortcut_facts<'facts>(
     if cached.is_none() {
         *cached = Some(match prepared_pair {
             Some(pair) => pair.prepare_arrangement_cell_complex_shortcut_facts()?,
-            None => ExactArrangementCellComplexShortcutFacts::from_sources(left, right),
+            None => checked_arrangement_cell_complex_shortcut_facts_from_sources(left, right)?,
         });
     }
     cached.as_ref().ok_or_else(|| {
@@ -3045,6 +3046,19 @@ fn cached_arrangement_shortcut_facts<'facts>(
             ExactMeshBlockerKind::MissingRequiredEvidence,
             "arrangement shortcut facts were not retained after initialization",
         ))
+    })
+}
+
+fn checked_arrangement_cell_complex_shortcut_facts_from_sources(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<ExactArrangementCellComplexShortcutFacts, ExactMeshError> {
+    ExactArrangementCellComplexShortcutFacts::checked_from_sources(left, right).map_err(|error| {
+        retained_evidence_validation_error(
+            "arrangement shortcut facts failed source replay",
+            error,
+            ExactMeshBlockerKind::ExactConstructionFailure,
+        )
     })
 }
 
