@@ -1,0 +1,43 @@
+[package]
+name = "hypermesh_ui"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
+hypermesh = { path = "../.." }
+# hypermesh = { version = "0.1.0" }
+hypergraphics = { path = "../../../hypergraphics" }
+# hypergraphics = { version = "0.1.0" }
+eframe = { version = "0.33.0", default-features = false, features = [
+    "accesskit",
+    "default_fonts",
+    "glow",
+    "persistence",
+    "wayland",
+] }
+egui = "0.33.0"
+log = "0.4"
+web-time = "1.1"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+env_logger = "0.11"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.2", features = ["js"] }
+wasm-bindgen-futures = "0.4"
+web-sys = { version = "0.3.81", features = [
+    "Document",
+    "Element",
+    "HtmlCanvasElement",
+    "Window",
+] }
+
+# Keep transitive sibling crates unified while using local path development mode.
+[patch.crates-io]
+hyperlattice = { path = "../../../hyperlattice" }
+hyperlimit = { path = "../../../hyperlimit" }
+hyperreal = { path = "../../../hyperreal" }
+hypertri = { path = "../../../hypertri" }

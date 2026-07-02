@@ -1,32 +1,57 @@
-//--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
-//--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
-
-#![allow(clippy::too_many_arguments)]
-#![allow(clippy::cast_abs_to_unsigned)]
-#![forbid(unsafe_code)]
-
-//! Exact-facing mesh API for the hyper geometry stack.
+//! Hyperreal-backed mesh boolean primitives.
 //!
-//! [`Mesh`] is the primary entry point. It owns exact vertices, triangle
-//! topology, retained validation facts, broad-phase bounds, and construction
-//! provenance. Borrowed query and acceleration APIs start from
-//! [`Mesh::view`] so callers can inspect retained facts without cloning
-//! mesh storage.
-//!
-//! Mesh coordinates are carried as [`hyperlimit::Point3`] over
-//! [`hyperreal::Real`]. Topology-affecting decisions are exposed through exact
-//! predicate evidence, certified outputs, or explicit blockers when the
-//! implementation cannot prove a requested operation.
+//! This crate keeps primitive coordinates at API boundaries only. Core
+//! geometric state uses [`Real`] as its scalar and provides borrowed slice APIs
+//! before owned convenience wrappers.
 
-mod mesh;
+#![warn(missing_docs)]
 
-pub use mesh::Mesh;
+pub mod bvh;
+pub mod clip;
+pub mod error;
+pub mod geometry;
+pub mod intersection;
+pub mod local_bsp;
+pub mod mesh;
+pub mod operations;
+pub mod output;
+pub mod polygon;
+pub mod segment_trace;
+pub mod subdivision;
+pub mod winding;
 
-#[doc(hidden)]
-pub mod kernel {
-    pub use crate::mesh::arrangement3d::{
-        ArrangementEdgeRef, ArrangementFaceCellRef, ArrangementVertexRef, ArrangementView,
-    };
-    pub use crate::mesh::error::{MeshBlocker, MeshBlockerKind, MeshError, MeshSourceSide};
-    pub use crate::mesh::view::{EdgeRef, FaceRef, MeshView, TriangleRef, VertexRef};
-}
+pub use bvh::{ExactBvh, PolygonBounds};
+pub use error::{HypermeshError, HypermeshResult};
+pub use geometry::{Aabb, Classification, Plane, classify_point, classify_projective_point};
+pub use hyperlattice::{Point3, Real, Vector3};
+pub use intersection::{
+    IntersectionSegment, OverlapInfo, PairwiseIntersection, PairwiseIntersectionType,
+    intersect_polygons,
+};
+pub use local_bsp::{BspLeaf, LocalBsp};
+pub use mesh::{
+    InputMesh, MeshRef, OutputVertex, PolygonSoup, Triangle, load_obj, parse_obj_str,
+    prepare_input, prepare_input_meshes, prepare_input_refs,
+};
+pub use operations::{
+    EmberConfig, boolean_difference, boolean_difference_refs, boolean_intersection,
+    boolean_intersection_refs, boolean_operation, boolean_operation_refs, boolean_union,
+    boolean_union_refs,
+};
+pub use output::{
+    BooleanResult, ClassifiedPolygon, OutputPolygon, TriangleSoup, extract_output,
+    resolve_tjunctions, to_obj_string, triangulate_and_resolve, triangulate_output,
+};
+pub use polygon::{ApproxBounds, ConvexPolygon, make_quad, make_triangle};
+pub use segment_trace::{
+    TraceAxisSegmentResult, classify_leaf_polygon, find_probe_point, trace_axis_segment,
+    trace_segment,
+};
+pub use subdivision::{
+    DEFAULT_LEAF_THRESHOLD, DEFAULT_MAX_DEPTH, LeafProcessingStats, SubdivisionConfig,
+    SubdivisionTask, process_leaf, process_leaf_into, subdivide, subdivide_into,
+};
+pub use winding::{
+    BooleanOp, Indicator, WindingNumberTransitionVector, WindingNumberVector, WindingPair,
+    can_early_terminate, classify_polygon_output, make_indicator, propagate_wnv,
+};

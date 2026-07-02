@@ -1,33 +1,19 @@
 [package]
 name = "hypermesh"
-version = "0.3.0"
+version = "0.1.0"
 edition = "2024"
-description = "Exact 3D mesh kernel for the Hyper geometry stack"
-license = "MPL-2.0"
-readme = "README.md"
-repository = "https://github.com/timschmidt/hypermesh"
-authors = ["Saki Komikado <komietty@gmail.com>", "Timothy Schmidt <timschmidt@gmail.com>"]
-keywords = ["3d", "geometry", "graphics", "modeling", "mesh"]
-categories = ["algorithms", "mathematics", "graphics", "simulation"]
-exclude = ["/examples", ".gitignore"]
+description = "Hyperreal-backed exact mesh boolean primitives for Rust."
+license = "MIT"
 
 [dependencies]
-# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
-# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-hyperlimit = { path = "../hyperlimit" }
-hyperreal = { path = "../hyperreal" }
-hypertri = { path = "../hypertri", default-features = false, features = ["earcut", "cdt"] }
-# hyperlimit = { version = "0.4.0" }
-# hyperreal = { version = "0.13.0" }
-# hypertri = { version = "0.4.0", default-features = false, features = ["earcut", "cdt"] }
-# Keep transitive sibling crates unified while using local path development mode.
-[patch.crates-io]
 hyperlattice = { path = "../hyperlattice" }
-hyperlimit = { path = "../hyperlimit" }
 hyperreal = { path = "../hyperreal" }
+hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"] }
+hypertri = { path = "../hypertri", default-features = false, features = ["earcut"] }
 
 [dev-dependencies]
 proptest = "1.7.0"
 
-[features]
-default = []
+[patch.crates-io]
+hyperreal = { path = "../hyperreal" }
+hyperlimit = { path = "../hyperlimit" }
