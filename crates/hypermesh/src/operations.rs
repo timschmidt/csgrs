@@ -77,11 +77,7 @@ fn boolean_operation_general(
         },
     )?;
 
-    Ok(BooleanResult::from_classified_with_operation(
-        soup,
-        classified,
-        Some(op),
-    ))
+    Ok(BooleanResult::from_classified(soup, classified))
 }
 
 fn validate_mesh_refs(meshes: &[MeshRef<'_>]) -> HypermeshResult<()> {

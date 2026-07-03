@@ -7,8 +7,7 @@ use hypermesh::{
     boolean_operation_refs, classify_leaf_polygon, classify_point, classify_polygon_output,
     extract_output, find_probe_point, intersect_polygons, make_indicator, make_quad, make_triangle,
     prepare_input, prepare_input_meshes, process_leaf, process_leaf_into, subdivide,
-    trace_axis_segment, trace_segment, triangulate_and_resolve, triangulate_and_resolve_certified,
-    triangulate_output,
+    trace_axis_segment, trace_segment, triangulate_and_resolve_certified, triangulate_output,
 };
 
 fn r(value: i32) -> Real {
@@ -594,7 +593,7 @@ fn resolve_tjunctions_merges_duplicate_vertices_and_faces_exactly() {
 }
 
 #[test]
-fn certified_triangulation_rejects_open_output_without_repair() {
+fn certified_triangulation_rejects_open_output() {
     let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     let result = hypermesh::BooleanResult::new(
         hypermesh::PolygonSoup {
@@ -708,19 +707,19 @@ fn overlapping_cube_booleans_use_general_path() {
     };
 
     let union = hypermesh::boolean_union(&cube_a, &cube_b, config).unwrap();
-    let union_soup = triangulate_and_resolve(&union).unwrap();
+    let union_soup = triangulate_and_resolve_certified(&union).unwrap();
     assert!(!union.output.polygons.is_empty());
     assert!(!union_soup.triangles.is_empty());
     assert_triangle_soup_within_bounds(&union_soup, 0, 3).unwrap();
 
     let intersection = hypermesh::boolean_intersection(&cube_a, &cube_b, config).unwrap();
-    let intersection_soup = triangulate_and_resolve(&intersection).unwrap();
+    let intersection_soup = triangulate_and_resolve_certified(&intersection).unwrap();
     assert!(intersection.output.polygons.len() >= 12);
     assert_triangle_soup_within_bounds(&intersection_soup, 1, 2).unwrap();
     assert_triangle_soup_on_cube_boundary(&intersection_soup, 1, 2);
 
     let difference = hypermesh::boolean_difference(&cube_a, &cube_b, config).unwrap();
-    let difference_soup = triangulate_and_resolve(&difference).unwrap();
+    let difference_soup = triangulate_and_resolve_certified(&difference).unwrap();
     assert!(!difference.output.polygons.is_empty());
     assert!(!difference_soup.triangles.is_empty());
     assert_triangle_soup_within_bounds(&difference_soup, 0, 2).unwrap();

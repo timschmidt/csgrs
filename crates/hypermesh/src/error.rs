@@ -21,8 +21,7 @@ pub enum HypermeshError {
     /// A scalar predicate could not certify its sign through exact predicate
     /// routes without choosing a precision budget.
     UnknownClassification,
-    /// Certified output extraction found boundary edges before compatibility
-    /// repair.
+    /// Certified output extraction found boundary edges.
     OpenOutput {
         /// Number of undirected edges used by exactly one triangle.
         boundary_edges: usize,
@@ -50,7 +49,7 @@ impl fmt::Display for HypermeshError {
                 non_manifold_edges,
             } => write!(
                 f,
-                "output has boundary before repair: {boundary_edges} boundary edges, {non_manifold_edges} non-manifold edges"
+                "output has boundary: {boundary_edges} boundary edges, {non_manifold_edges} non-manifold edges"
             ),
             Self::PointAtInfinity => f.write_str("homogeneous point is at infinity"),
         }

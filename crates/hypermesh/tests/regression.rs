@@ -4,8 +4,7 @@ use std::str::FromStr;
 use hypermesh::{
     Aabb, BooleanOp, EmberConfig, ExactBvh, HypermeshResult, InputMesh, MeshRef, OutputVertex,
     Point3, Real, Triangle, TriangleSoup, boolean_difference, boolean_intersection,
-    boolean_operation_refs, boolean_union, prepare_input_meshes, triangulate_and_resolve,
-    triangulate_and_resolve_certified,
+    boolean_operation_refs, boolean_union, prepare_input_meshes, triangulate_and_resolve_certified,
 };
 
 fn r(value: i32) -> Real {
@@ -172,7 +171,7 @@ fn config() -> EmberConfig {
 
 fn run_op(a: &InputMesh, b: &InputMesh, op: BooleanOp) -> HypermeshResult<TriangleSoup> {
     let refs = [a.as_ref(), b.as_ref()];
-    triangulate_and_resolve(&boolean_operation_refs(&refs, op, config())?)
+    triangulate_and_resolve_certified(&boolean_operation_refs(&refs, op, config())?)
 }
 
 fn run_certified_op(a: &InputMesh, b: &InputMesh, op: BooleanOp) -> HypermeshResult<TriangleSoup> {
@@ -181,7 +180,7 @@ fn run_certified_op(a: &InputMesh, b: &InputMesh, op: BooleanOp) -> HypermeshRes
 }
 
 fn run_op_refs(meshes: &[MeshRef<'_>], op: BooleanOp) -> HypermeshResult<TriangleSoup> {
-    triangulate_and_resolve(&boolean_operation_refs(meshes, op, config())?)
+    triangulate_and_resolve_certified(&boolean_operation_refs(meshes, op, config())?)
 }
 
 fn vertex_key(vertex: &OutputVertex) -> [String; 3] {
@@ -317,7 +316,7 @@ fn passthrough(mesh: &InputMesh) -> HypermeshResult<TriangleSoup> {
             ..config()
         },
     )?;
-    triangulate_and_resolve(&result)
+    triangulate_and_resolve_certified(&result)
 }
 
 #[test]
@@ -326,7 +325,7 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
     let cube_b = rational_cube([ratio(1, 2), ratio(1, 2), ratio(1, 2)], r(1));
 
     let union = boolean_union(&cube_a, &cube_b, config()).unwrap();
-    let union_soup = triangulate_and_resolve(&union).unwrap();
+    let union_soup = triangulate_and_resolve_certified(&union).unwrap();
     assert_closed_triangle_soup(&union_soup);
     assert_bounds(
         &union_soup,
@@ -337,7 +336,7 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
     assert_volume_numerator(&union_soup, ratio(303, 4));
 
     let intersection = boolean_intersection(&cube_a, &cube_b, config()).unwrap();
-    let intersection_soup = triangulate_and_resolve(&intersection).unwrap();
+    let intersection_soup = triangulate_and_resolve_certified(&intersection).unwrap();
     assert_closed_triangle_soup(&intersection_soup);
     assert_bounds(
         &intersection_soup,
@@ -348,7 +347,7 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
     assert_volume_numerator(&intersection_soup, ratio(81, 4));
 
     let difference = boolean_difference(&cube_a, &cube_b, config()).unwrap();
-    let difference_soup = triangulate_and_resolve(&difference).unwrap();
+    let difference_soup = triangulate_and_resolve_certified(&difference).unwrap();
     assert_closed_triangle_soup(&difference_soup);
     assert_bounds(&difference_soup, [r(-1), r(-1), r(-1)], [r(1), r(1), r(1)]).unwrap();
     assert_volume_numerator(&difference_soup, ratio(111, 4));

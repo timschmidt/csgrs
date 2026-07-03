@@ -13,10 +13,9 @@
 //! operations certify that the classified arrangement is already closed after
 //! exact duplicate/T-junction resolution before returning a result.
 //!
-//! Use [`triangulate_and_resolve_certified`] when callers need evidence that a
-//! boolean result is already closed after exact duplicate/T-junction
-//! resolution. [`triangulate_and_resolve`] remains a compatibility helper that
-//! may cap or peel open boundaries.
+//! Use [`triangulate_and_resolve_certified`] to triangulate a boolean result
+//! while preserving the invariant that open or zero-volume output is rejected
+//! rather than repaired.
 
 #![warn(missing_docs)]
 
@@ -55,7 +54,7 @@ pub use operations::{
 pub use output::{
     BooleanResult, ClassifiedPolygon, OutputPolygon, TriangleSoup, TriangleSoupClosureReport,
     extract_output, resolve_tjunctions, triangle_soup_closure_report, triangle_soup_is_closed,
-    triangulate_and_resolve, triangulate_and_resolve_certified, triangulate_output,
+    triangulate_and_resolve_certified, triangulate_output,
 };
 pub use polygon::{ApproxBounds, ConvexPolygon, make_quad, make_triangle};
 pub use segment_trace::{

@@ -6,7 +6,7 @@ use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, compare_real};
 use crate::mesh::{OutputVertex, PolygonSoup};
 use crate::polygon::ConvexPolygon;
-use crate::winding::{BooleanOp, WindingPair};
+use crate::winding::WindingPair;
 use hyperlattice::Real;
 
 /// Polygon plus its boolean output classification.
@@ -44,7 +44,6 @@ pub struct BooleanResult {
     /// Per-output-polygon front/back winding evidence, when produced by the
     /// general subdivision classifier.
     pub winding_pairs: Vec<Option<WindingPair>>,
-    operation: Option<BooleanOp>,
 }
 
 impl BooleanResult {
@@ -55,22 +54,12 @@ impl BooleanResult {
             output,
             classifications,
             winding_pairs,
-            operation: None,
         }
     }
 
     /// Builds a result by applying classification orientation to owned
     /// classified polygons.
-    pub fn from_classified(output: PolygonSoup, classified: Vec<ClassifiedPolygon>) -> Self {
-        Self::from_classified_with_operation(output, classified, None)
-    }
-
-    /// Builds a result from classified polygons and records the source operation.
-    pub fn from_classified_with_operation(
-        mut output: PolygonSoup,
-        classified: Vec<ClassifiedPolygon>,
-        operation: Option<BooleanOp>,
-    ) -> Self {
+    pub fn from_classified(mut output: PolygonSoup, classified: Vec<ClassifiedPolygon>) -> Self {
         output.polygons.clear();
         let mut classifications = Vec::with_capacity(classified.len());
         let mut winding_pairs = Vec::with_capacity(classified.len());
@@ -92,7 +81,6 @@ impl BooleanResult {
             output,
             classifications,
             winding_pairs,
-            operation,
         }
     }
 }
@@ -171,34 +159,12 @@ pub fn triangulate_output(result: &BooleanResult) -> HypermeshResult<TriangleSou
     triangulate_polygons(&result.output.polygons)
 }
 
-/// Fan-triangulates and applies exact duplicate/T-junction cleanup.
-pub fn triangulate_and_resolve(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
-    let mut soup = resolve_tjunctions(&triangulate_output(result)?)?;
-    if crate::geometry::classify_real(&signed_volume_numerator(&soup))? == Classification::On {
-        soup.triangles.clear();
-        soup.vertices.clear();
-        return Ok(soup);
-    }
-    fill_boundary_loops(&mut soup);
-    remove_degenerate_and_duplicate_triangles(&mut soup);
-    fix_winding_by_signed_volume(&mut soup)?;
-    soup = peel_open_boundary_triangles(&soup);
-    if result.operation == Some(BooleanOp::Intersection)
-        && peel_open_boundary_triangles(&soup).triangles.is_empty()
-    {
-        soup.triangles.clear();
-        soup.vertices.clear();
-    }
-    Ok(soup)
-}
-
-/// Fan-triangulates and resolves exact duplicate/T-junction artifacts, but
-/// does not cap or peel boundaries.
+/// Fan-triangulates and resolves exact duplicate/T-junction artifacts.
 ///
 /// This is useful for tests and callers that need evidence that the classified
 /// arrangement is already a closed regularized PWN surface. Non-manifold edge
 /// valence is allowed, but non-empty open or zero-volume soups are reported as
-/// uncertified instead of being repaired.
+/// uncertified.
 pub fn triangulate_and_resolve_certified(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
     let mut soup = resolve_tjunctions(&triangulate_output(result)?)?;
     if soup.triangles.is_empty() {
@@ -304,22 +270,6 @@ fn remove_degenerate_and_duplicate_triangles(soup: &mut TriangleSoup) {
     });
 }
 
-fn peel_open_boundary_triangles(input: &TriangleSoup) -> TriangleSoup {
-    let mut soup = input.clone();
-    loop {
-        let edge_counts = triangle_edge_counts(&soup.triangles);
-        let old_len = soup.triangles.len();
-        soup.triangles.retain(|triangle| {
-            triangle_edges(*triangle)
-                .iter()
-                .all(|edge| edge_counts.get(&sorted_edge(*edge)).copied().unwrap_or(0) == 2)
-        });
-        if soup.triangles.len() == old_len {
-            return soup;
-        }
-    }
-}
-
 fn triangle_edge_counts(triangles: &[[usize; 3]]) -> BTreeMap<[usize; 2], usize> {
     let mut counts = BTreeMap::new();
     for triangle in triangles {
@@ -347,109 +297,6 @@ pub fn triangle_soup_closure_report(soup: &TriangleSoup) -> TriangleSoupClosureR
         }
     }
     report
-}
-
-fn fill_boundary_loops(soup: &mut TriangleSoup) {
-    let mut edge_counts = triangle_edge_counts(&soup.triangles);
-    let mut unused = edge_counts
-        .iter()
-        .filter_map(|(edge, count)| if *count == 1 { Some(*edge) } else { None })
-        .collect::<BTreeSet<_>>();
-    if unused.is_empty() {
-        return;
-    }
-
-    let mut adjacency: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
-    for edge in &unused {
-        adjacency.entry(edge[0]).or_default().push(edge[1]);
-        adjacency.entry(edge[1]).or_default().push(edge[0]);
-    }
-
-    let mut caps = Vec::new();
-    while let Some(start_edge) = unused.iter().next().copied() {
-        let start = start_edge[0];
-        let mut previous = start_edge[0];
-        let mut current = start_edge[1];
-        let mut loop_vertices = vec![start, current];
-        unused.remove(&start_edge);
-
-        while current != start {
-            let Some(neighbors) = adjacency.get(&current) else {
-                break;
-            };
-            let Some(next) = neighbors.iter().copied().find(|candidate| {
-                *candidate != previous && unused.contains(&sorted_edge([current, *candidate]))
-            }) else {
-                break;
-            };
-            unused.remove(&sorted_edge([current, next]));
-            previous = current;
-            current = next;
-            if current != start {
-                loop_vertices.push(current);
-            }
-        }
-
-        if current == start
-            && loop_vertices.len() >= 3
-            && let Some(loop_caps) = fan_for_boundary_loop(&loop_vertices, &edge_counts)
-        {
-            for triangle in &loop_caps {
-                for edge in triangle_edges(*triangle) {
-                    *edge_counts.entry(sorted_edge(edge)).or_insert(0) += 1;
-                }
-            }
-            caps.extend(loop_caps);
-        }
-    }
-
-    soup.triangles.extend(caps);
-}
-
-fn fan_for_boundary_loop(
-    loop_vertices: &[usize],
-    existing_counts: &BTreeMap<[usize; 2], usize>,
-) -> Option<Vec<[usize; 3]>> {
-    for root in 0..loop_vertices.len() {
-        let rotated = loop_vertices
-            .iter()
-            .cycle()
-            .skip(root)
-            .take(loop_vertices.len())
-            .copied()
-            .collect::<Vec<_>>();
-        let mut caps = Vec::new();
-        let mut cap_counts = BTreeMap::new();
-        let mut valid = true;
-
-        for index in 1..(rotated.len() - 1) {
-            let triangle = [rotated[0], rotated[index], rotated[index + 1]];
-            for edge in triangle_edges(triangle) {
-                *cap_counts.entry(sorted_edge(edge)).or_insert(0usize) += 1;
-            }
-            caps.push(triangle);
-        }
-
-        for (edge, cap_count) in &cap_counts {
-            let existing = existing_counts.get(edge).copied().unwrap_or(0);
-            let final_count = existing + cap_count;
-            let is_boundary = loop_vertices
-                .iter()
-                .zip(loop_vertices.iter().cycle().skip(1))
-                .take(loop_vertices.len())
-                .any(|(a, b)| sorted_edge([*a, *b]) == *edge);
-            if (is_boundary && final_count != 2) || (!is_boundary && existing != 0) {
-                valid = false;
-                break;
-            }
-        }
-
-        if valid {
-            return Some(caps);
-        }
-    }
-
-    None
 }
 
 fn split_one_tjunction_pass(soup: &mut TriangleSoup) -> HypermeshResult<bool> {
