@@ -58,8 +58,7 @@ pub use output::{
 };
 pub use polygon::{ApproxBounds, ConvexPolygon, make_quad, make_triangle};
 pub use segment_trace::{
-    TraceAxisSegmentResult, classify_leaf_polygon, find_probe_point, trace_axis_segment,
-    trace_segment,
+    TraceAxisSegmentResult, classify_leaf_polygon, trace_axis_segment, trace_segment,
 };
 pub use subdivision::{
     DEFAULT_LEAF_THRESHOLD, DEFAULT_MAX_DEPTH, LeafProcessingStats, SubdivisionConfig,

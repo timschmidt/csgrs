@@ -5,9 +5,9 @@ use hypermesh::{
     BooleanOp, Classification, ClassifiedPolygon, EmberConfig, HypermeshError, Plane, PolygonSoup,
     SubdivisionConfig, SubdivisionTask, Triangle, WindingPair, boolean_operation,
     boolean_operation_refs, classify_leaf_polygon, classify_point, classify_polygon_output,
-    extract_output, find_probe_point, intersect_polygons, make_indicator, make_quad, make_triangle,
-    prepare_input, prepare_input_meshes, process_leaf_into, subdivide, trace_axis_segment,
-    trace_segment, triangulate_and_resolve_certified, triangulate_output,
+    extract_output, intersect_polygons, make_indicator, make_quad, make_triangle, prepare_input,
+    prepare_input_meshes, process_leaf_into, subdivide, trace_axis_segment, trace_segment,
+    triangulate_and_resolve_certified, triangulate_output,
 };
 
 fn r(value: i32) -> Real {
@@ -395,9 +395,6 @@ fn leaf_classification_traces_to_probe_and_returns_winding_vector() {
     let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = hypermesh::Aabb::new(p(-2, -2, -2), p(3, 3, 3));
-
-    let probe = find_probe_point(&wall).unwrap().unwrap();
-    assert_ne!(probe.1, Classification::On);
 
     let winding = classify_leaf_polygon(
         &wall.support,

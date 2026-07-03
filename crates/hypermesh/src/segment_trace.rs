@@ -362,51 +362,6 @@ fn point_lies_on_traced_surface(
     Ok(false)
 }
 
-/// Finds a probe point off a polygon surface and reports its side.
-pub fn find_probe_point(
-    polygon: &ConvexPolygon,
-) -> HypermeshResult<Option<(Point3, Classification)>> {
-    find_probe_point_on_side(polygon, true)
-}
-
-fn find_probe_point_on_side(
-    polygon: &ConvexPolygon,
-    positive_side: bool,
-) -> HypermeshResult<Option<(Point3, Classification)>> {
-    if polygon.vertex_count() < 3 {
-        return Ok(None);
-    }
-
-    let vertices = polygon.vertices()?;
-    let center = centroid(&vertices).ok_or(HypermeshError::EmptyInput)?;
-    let axis = dominant_normal_axis(&polygon.support)?;
-    let normal_sign = crate::geometry::classify_real(axis_ref(&polygon.support.normal, axis))?;
-    if normal_sign == Classification::On {
-        return Ok(None);
-    }
-
-    let offset = probe_offset(&vertices, axis)?;
-    let mut probe = center;
-    let signed_offset = if (normal_sign == Classification::Positive) == positive_side {
-        offset
-    } else {
-        -offset
-    };
-    *axis_mut(&mut probe, axis) = axis_ref(&probe, axis) + &signed_offset;
-
-    let mut side = classify_point(&probe, &polygon.support)?;
-    if side == Classification::On {
-        *axis_mut(&mut probe, axis) = axis_ref(&probe, axis) + &signed_offset;
-        side = classify_point(&probe, &polygon.support)?;
-    }
-
-    if side == Classification::On {
-        Ok(None)
-    } else {
-        Ok(Some((probe, side)))
-    }
-}
-
 /// Classifies a leaf polygon by tracing from a reference point to an off-face
 /// probe and applying the host transition correction.
 pub fn classify_leaf_polygon(
@@ -815,28 +770,6 @@ fn probe_axes(support: &Plane) -> HypermeshResult<Vec<usize>> {
         }
     }
     Ok(axes)
-}
-
-fn probe_offset(points: &[Point3], axis: usize) -> HypermeshResult<Real> {
-    let mut min = axis_ref(&points[0], axis).clone();
-    let mut max = min.clone();
-    for point in &points[1..] {
-        if compare_real(axis_ref(point, axis), &min)?.is_lt() {
-            min = axis_ref(point, axis).clone();
-        }
-        if compare_real(axis_ref(point, axis), &max)?.is_gt() {
-            max = axis_ref(point, axis).clone();
-        }
-    }
-    let extent = max - min;
-    if extent.definitely_zero() {
-        Ok(Real::one())
-    } else {
-        Ok(
-            (extent.abs() / Real::from(10)).expect("division by literal ten is valid")
-                + Real::one(),
-        )
-    }
 }
 
 #[cfg(test)]
