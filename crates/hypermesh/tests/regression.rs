@@ -171,6 +171,13 @@ fn config() -> EmberConfig {
     }
 }
 
+fn config_without_shortcuts() -> EmberConfig {
+    EmberConfig {
+        use_proven_shortcuts: false,
+        ..config()
+    }
+}
+
 fn run_op(a: &InputMesh, b: &InputMesh, op: BooleanOp) -> HypermeshResult<TriangleSoup> {
     let refs = [a.as_ref(), b.as_ref()];
     triangulate_and_resolve(&boolean_operation_refs(&refs, op, config())?)
@@ -600,6 +607,35 @@ fn boundary_touching_boxes_regularize_intersection_and_difference_with_certified
 
     let difference = run_certified_op(&left, &right, BooleanOp::Difference).unwrap();
     assert_same_shape(&difference, &left_soup);
+}
+
+#[test]
+fn disjoint_boxes_use_general_leaf_path_when_shortcuts_disabled() -> HypermeshResult<()> {
+    let left = box_mesh([0, 0, 0], [1, 1, 1]);
+    let right = box_mesh([3, 0, 0], [4, 1, 1]);
+    let refs = [left.as_ref(), right.as_ref()];
+    let left_soup = passthrough(&left).unwrap();
+    let config = EmberConfig {
+        // Keep this as a single certified leaf so the test exercises the
+        // general classifier, not the disjoint-bounds shortcut.
+        leaf_threshold: 25,
+        ..config_without_shortcuts()
+    };
+    assert!(!config.use_proven_shortcuts);
+
+    let union_result = boolean_operation_refs(&refs, BooleanOp::Union, config)?;
+    let union = triangulate_and_resolve_certified(&union_result)?;
+    assert_no_boundary_edges(&union);
+
+    let intersection_result = boolean_operation_refs(&refs, BooleanOp::Intersection, config)?;
+    let intersection = triangulate_and_resolve_certified(&intersection_result)?;
+    assert!(intersection.triangles.is_empty());
+
+    let difference_result = boolean_operation_refs(&refs, BooleanOp::Difference, config)?;
+    let difference = triangulate_and_resolve_certified(&difference_result)?;
+    assert_same_shape(&difference, &left_soup);
+
+    Ok(())
 }
 
 #[test]
