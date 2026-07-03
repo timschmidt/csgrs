@@ -1,6 +1,6 @@
 //! Exact segment tracing for winding-number propagation.
 
-use hyperlattice::{Point3, Real};
+use hyperlattice::{HomogeneousPoint3, Point3, Real};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
@@ -126,6 +126,8 @@ pub fn trace_axis_segment(
         accepted.push(event.clone());
     }
 
+    sort_crossing_events(&mut accepted, axis, dir_sign)?;
+
     for event in accepted {
         for (value, delta) in winding.iter_mut().zip(&event.delta_w) {
             *value += event.cross_sign * *delta;
@@ -146,7 +148,14 @@ pub fn trace_segment(
     winding: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<WindingNumberVector> {
-    const ORDERINGS: [[usize; 3]; 3] = [[0, 1, 2], [1, 2, 0], [2, 0, 1]];
+    const ORDERINGS: [[usize; 3]; 6] = [
+        [0, 1, 2],
+        [0, 2, 1],
+        [1, 0, 2],
+        [1, 2, 0],
+        [2, 0, 1],
+        [2, 1, 0],
+    ];
 
     for ordering in ORDERINGS {
         let mut current = start.clone();
@@ -157,6 +166,10 @@ pub fn trace_segment(
             if compare_real(axis_ref(&current, axis), axis_ref(end, axis))?.is_ne() {
                 let mut next = current.clone();
                 *axis_mut(&mut next, axis) = axis_ref(end, axis).clone();
+                if next != *end && point_lies_on_traced_surface(&next, polygons)? {
+                    valid = false;
+                    break;
+                }
                 let traced = trace_axis_segment(&current, &next, axis, &attempt, polygons)?;
                 attempt = traced.winding;
                 valid = traced.valid;
@@ -172,7 +185,34 @@ pub fn trace_segment(
         }
     }
 
-    Ok(winding.to_vec())
+    Err(HypermeshError::UnknownClassification)
+}
+
+fn point_lies_on_traced_surface(
+    point: &Point3,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<bool> {
+    for polygon in polygons {
+        if polygon.mesh_index < 0 {
+            continue;
+        }
+
+        if classify_point(point, &polygon.support)? != Classification::On {
+            continue;
+        }
+
+        let mut inside_polygon = true;
+        for edge in &polygon.edges {
+            if classify_point(point, edge)? == Classification::Positive {
+                inside_polygon = false;
+                break;
+            }
+        }
+        if inside_polygon {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 /// Finds a probe point off a polygon surface and reports its side.
@@ -242,33 +282,26 @@ pub fn classify_leaf_polygon(
         approx_bounds: None,
     };
 
-    let Some((mut probe, _)) = find_probe_point_on_side(&leaf, true)? else {
-        return Ok(ref_wnv.to_vec());
-    };
-
-    clamp_point_to_bounds(&mut probe, bounds)?;
-    let mut probe_side = classify_point(&probe, support)?;
-    if probe_side == Classification::On
-        && let Some((mut alternate_probe, _)) = find_probe_point_on_side(&leaf, false)?
-    {
-        clamp_point_to_bounds(&mut alternate_probe, bounds)?;
-        let clamped_alternate_side = classify_point(&alternate_probe, support)?;
-        if clamped_alternate_side != Classification::On {
-            probe = alternate_probe;
-            probe_side = clamped_alternate_side;
+    let interior_points = interior_leaf_points(&leaf)?;
+    for point in &interior_points {
+        for positive_side in [true, false] {
+            for (probe, probe_side) in
+                bounded_probes_from_interior(point, support, bounds, positive_side)?
+            {
+                let Ok(mut winding) = trace_segment(ref_point, &probe, ref_wnv, polygons) else {
+                    continue;
+                };
+                if probe_side == Classification::Negative {
+                    for (value, delta) in winding.iter_mut().zip(host_delta_w) {
+                        *value -= *delta;
+                    }
+                }
+                return Ok(winding);
+            }
         }
     }
-    if probe_side == Classification::On {
-        return Ok(ref_wnv.to_vec());
-    }
 
-    let mut winding = trace_segment(ref_point, &probe, ref_wnv, polygons)?;
-    if probe_side == Classification::Negative {
-        for (value, delta) in winding.iter_mut().zip(host_delta_w) {
-            *value -= *delta;
-        }
-    }
-    Ok(winding)
+    Err(HypermeshError::UnknownClassification)
 }
 
 fn segment_plane_crossing(
@@ -309,6 +342,30 @@ fn point_strictly_between_axis(
         || (start_to_point.is_lt() && point_to_end.is_gt()))
 }
 
+fn sort_crossing_events(
+    events: &mut Vec<CrossingEvent>,
+    axis: usize,
+    dir_sign: i32,
+) -> HypermeshResult<()> {
+    let mut sorted: Vec<CrossingEvent> = Vec::with_capacity(events.len());
+    for event in events.drain(..) {
+        let mut insert_at = sorted.len();
+        for (index, existing) in sorted.iter().enumerate() {
+            let order = compare_real(
+                axis_ref(&event.point, axis),
+                axis_ref(&existing.point, axis),
+            )?;
+            if (dir_sign > 0 && order.is_lt()) || (dir_sign < 0 && order.is_gt()) {
+                insert_at = index;
+                break;
+            }
+        }
+        sorted.insert(insert_at, event);
+    }
+    *events = sorted;
+    Ok(())
+}
+
 fn dominant_normal_axis(plane: &Plane) -> HypermeshResult<usize> {
     let abs = [
         plane.normal.x.clone().abs(),
@@ -342,6 +399,107 @@ fn centroid(points: &[Point3]) -> Option<Point3> {
     ))
 }
 
+fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<Point3>> {
+    let vertices = leaf.vertices()?;
+    let Some(center) = centroid(&vertices) else {
+        return Ok(Vec::new());
+    };
+
+    let mut points = Vec::with_capacity(vertices.len() + 1);
+    if point_strictly_inside_leaf(&center, leaf)? {
+        points.push(center.clone());
+    }
+
+    let n = Real::from(vertices.len() as u64);
+    let denom = &n + &Real::one();
+    for vertex in vertices {
+        let candidate = Point3::new(
+            (((&center.x * &n) + vertex.x) / denom.clone())
+                .map_err(|_| HypermeshError::UnknownClassification)?,
+            (((&center.y * &n) + vertex.y) / denom.clone())
+                .map_err(|_| HypermeshError::UnknownClassification)?,
+            (((&center.z * &n) + vertex.z) / denom.clone())
+                .map_err(|_| HypermeshError::UnknownClassification)?,
+        );
+        if point_strictly_inside_leaf(&candidate, leaf)? {
+            points.push(candidate);
+        }
+    }
+
+    Ok(points)
+}
+
+fn point_strictly_inside_leaf(point: &Point3, leaf: &ConvexPolygon) -> HypermeshResult<bool> {
+    let homogeneous = HomogeneousPoint3::new(
+        point.x.clone(),
+        point.y.clone(),
+        point.z.clone(),
+        Real::one(),
+    );
+    leaf.contains_point_strictly(&homogeneous)
+}
+
+fn bounded_probes_from_interior(
+    interior: &Point3,
+    support: &Plane,
+    bounds: &Aabb,
+    positive_side: bool,
+) -> HypermeshResult<Vec<(Point3, Classification)>> {
+    let mut probes = Vec::new();
+    let fractions = [(1u64, 2u64), (1, 3), (2, 3), (1, 4), (3, 4)];
+
+    for axis in probe_axes(support)? {
+        let normal_sign = crate::geometry::classify_real(axis_ref(&support.normal, axis))?;
+        if normal_sign == Classification::On {
+            continue;
+        }
+
+        let direction_positive = (normal_sign == Classification::Positive) == positive_side;
+        let axis_value = axis_ref(interior, axis);
+        let room = if direction_positive {
+            axis_ref(&bounds.max, axis) - axis_value
+        } else {
+            axis_value - axis_ref(&bounds.min, axis)
+        };
+        if !compare_real(&room, &Real::zero())?.is_gt() {
+            continue;
+        }
+
+        for (numerator, denominator) in fractions {
+            let offset = ((room.clone() * Real::from(numerator)) / Real::from(denominator))
+                .map_err(|_| HypermeshError::UnknownClassification)?;
+            let mut probe = interior.clone();
+            *axis_mut(&mut probe, axis) = if direction_positive {
+                axis_value + &offset
+            } else {
+                axis_value - &offset
+            };
+
+            let side = classify_point(&probe, support)?;
+            if side != Classification::On
+                && !probes
+                    .iter()
+                    .any(|(existing, _): &(Point3, Classification)| existing == &probe)
+            {
+                probes.push((probe, side));
+            }
+        }
+    }
+
+    Ok(probes)
+}
+
+fn probe_axes(support: &Plane) -> HypermeshResult<Vec<usize>> {
+    let dominant = dominant_normal_axis(support)?;
+    let mut axes = vec![dominant];
+    for axis in 0..3 {
+        if axis != dominant && !axis_ref(&support.normal, axis).definitely_zero() {
+            axes.push(axis);
+        }
+    }
+    Ok(axes)
+}
+
 fn probe_offset(points: &[Point3], axis: usize) -> HypermeshResult<Real> {
     let mut min = axis_ref(&points[0], axis).clone();
     let mut max = min.clone();
@@ -362,15 +520,4 @@ fn probe_offset(points: &[Point3], axis: usize) -> HypermeshResult<Real> {
                 + Real::one(),
         )
     }
-}
-
-fn clamp_point_to_bounds(point: &mut Point3, bounds: &Aabb) -> HypermeshResult<()> {
-    for axis in 0..3 {
-        if compare_real(axis_ref(point, axis), axis_ref(&bounds.min, axis))?.is_lt() {
-            *axis_mut(point, axis) = axis_ref(&bounds.min, axis).clone();
-        } else if compare_real(axis_ref(point, axis), axis_ref(&bounds.max, axis))?.is_gt() {
-            *axis_mut(point, axis) = axis_ref(&bounds.max, axis).clone();
-        }
-    }
-    Ok(())
 }

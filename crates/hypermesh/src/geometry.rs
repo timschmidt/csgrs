@@ -3,9 +3,10 @@
 use std::cmp::Ordering;
 
 use hyperlattice::{
-    HomogeneousPoint3, Plane3Coefficients, Point3, ProjectivePlane3, Real, RealSign,
+    HomogeneousPoint3, Plane3Coefficients, Point3, ProjectivePlane3, Real,
     homogeneous_point_plane_expression,
 };
+use hyperlimit::{PredicateOutcome, Sign, classify_real_sign};
 
 use crate::error::{HypermeshError, HypermeshResult};
 
@@ -237,19 +238,26 @@ pub fn classify_projective_point(
 
 /// Returns a certified ordering for two exact reals.
 pub fn compare_real(left: &Real, right: &Real) -> HypermeshResult<Ordering> {
-    classify_real(&(left - right)).map(|classification| match classification {
-        Classification::Negative => Ordering::Less,
-        Classification::On => Ordering::Equal,
-        Classification::Positive => Ordering::Greater,
-    })
+    match hyperlimit::compare_reals(left, right) {
+        PredicateOutcome::Decided { value, .. } => Ok(value),
+        PredicateOutcome::Unknown { .. } => Err(HypermeshError::UnknownClassification),
+    }
 }
 
 pub(crate) fn classify_real(value: &Real) -> HypermeshResult<Classification> {
-    match value.refine_sign_until(128) {
-        Some(RealSign::Negative) => Ok(Classification::Negative),
-        Some(RealSign::Zero) => Ok(Classification::On),
-        Some(RealSign::Positive) => Ok(Classification::Positive),
-        None => Err(HypermeshError::UnknownClassification),
+    match classify_real_sign(value) {
+        PredicateOutcome::Decided {
+            value: Sign::Negative,
+            ..
+        } => Ok(Classification::Negative),
+        PredicateOutcome::Decided {
+            value: Sign::Zero, ..
+        } => Ok(Classification::On),
+        PredicateOutcome::Decided {
+            value: Sign::Positive,
+            ..
+        } => Ok(Classification::Positive),
+        PredicateOutcome::Unknown { .. } => Err(HypermeshError::UnknownClassification),
     }
 }
 

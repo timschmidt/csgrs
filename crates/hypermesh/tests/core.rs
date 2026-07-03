@@ -2,11 +2,12 @@ use hyperlattice::{Point3, Real};
 use hypermesh::bvh::bounds_overlap;
 use hypermesh::clip::{ClipSide, clip_polygon};
 use hypermesh::{
-    BooleanOp, Classification, EmberConfig, Plane, Triangle, boolean_operation,
-    boolean_operation_refs, classify_leaf_polygon, classify_point, classify_polygon_output,
-    extract_output, find_probe_point, intersect_polygons, make_indicator, make_triangle,
-    prepare_input, prepare_input_meshes, process_leaf, process_leaf_into, trace_axis_segment,
-    trace_segment, triangulate_and_resolve, triangulate_output,
+    BooleanOp, Classification, EmberConfig, HypermeshError, Plane, SubdivisionConfig,
+    SubdivisionTask, Triangle, boolean_operation, boolean_operation_refs, classify_leaf_polygon,
+    classify_point, classify_polygon_output, extract_output, find_probe_point, intersect_polygons,
+    make_indicator, make_quad, make_triangle, prepare_input, prepare_input_meshes, process_leaf,
+    process_leaf_into, subdivide, trace_axis_segment, trace_segment, triangulate_and_resolve,
+    triangulate_output,
 };
 
 fn r(value: i32) -> Real {
@@ -218,6 +219,50 @@ fn coplanar_overlapping_triangles_report_overlap() {
 }
 
 #[test]
+fn coplanar_crossing_quads_report_overlap_without_contained_vertices() {
+    let horizontal = make_quad(&p(-2, -1, 0), &p(2, -1, 0), &p(2, 1, 0), &p(-2, 1, 0), 0, 0);
+    let vertical = make_quad(&p(-1, -2, 0), &p(1, -2, 0), &p(1, 2, 0), &p(-1, 2, 0), 1, 0);
+
+    let intersection = intersect_polygons(&horizontal, &vertical, 7).unwrap();
+
+    assert_eq!(
+        intersection.kind,
+        hypermesh::PairwiseIntersectionType::Overlap
+    );
+    assert_eq!(intersection.overlap.unwrap().other_polygon_idx, 7);
+}
+
+#[test]
+fn boolean_operation_refs_validates_before_shortcuts() {
+    let empty = hypermesh::MeshRef {
+        positions: &[],
+        triangles: &[],
+        nsi: false,
+        nnc: false,
+    };
+    assert!(matches!(
+        boolean_operation_refs(&[empty], BooleanOp::Union, EmberConfig::default()),
+        Err(hypermesh::HypermeshError::EmptyInput)
+    ));
+
+    let positions = vec![p(0, 0, 0), p(1, 0, 0)];
+    let triangles = vec![Triangle::new(0, 1, 2)];
+    let invalid = hypermesh::MeshRef {
+        positions: &positions,
+        triangles: &triangles,
+        nsi: false,
+        nnc: false,
+    };
+    assert!(matches!(
+        boolean_operation_refs(&[invalid], BooleanOp::Union, EmberConfig::default()),
+        Err(hypermesh::HypermeshError::VertexIndexOutOfBounds {
+            index: 2,
+            vertex_count: 2
+        })
+    ));
+}
+
+#[test]
 fn local_bsp_splits_leaf_with_intersection_segment() {
     let host = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let cutter = make_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 1, 0);
@@ -311,6 +356,18 @@ fn trace_segment_uses_axis_orderings_for_l_path() {
 }
 
 #[test]
+fn trace_segment_rejects_surface_intermediate_points() {
+    let blockers = vec![
+        make_triangle(&p(2, 0, 0), &p(3, 0, 0), &p(2, 1, 0), 0, 0),
+        make_triangle(&p(0, 2, 0), &p(1, 2, 0), &p(0, 3, 0), 0, 1),
+        make_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
+    ];
+
+    let err = trace_segment(&p(0, 0, 0), &p(2, 2, 2), &[0], &blockers).unwrap_err();
+    assert_eq!(err, HypermeshError::UnknownClassification);
+}
+
+#[test]
 fn leaf_classification_traces_to_probe_and_returns_winding_vector() {
     let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
@@ -330,6 +387,25 @@ fn leaf_classification_traces_to_probe_and_returns_winding_vector() {
     )
     .unwrap();
     assert_eq!(winding.len(), 1);
+}
+
+#[test]
+fn leaf_classification_reports_unknown_when_no_valid_probe_path_exists() {
+    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    wall.delta_w = vec![1];
+    let bounds = hypermesh::Aabb::new(p(1, -1, -1), p(1, 1, 1));
+
+    let err = classify_leaf_polygon(
+        &wall.support,
+        &wall.edges,
+        &p(0, 0, 0),
+        &[0],
+        &[wall.clone()],
+        &bounds,
+        &wall.delta_w,
+    )
+    .unwrap_err();
+    assert_eq!(err, HypermeshError::UnknownClassification);
 }
 
 #[test]
@@ -414,25 +490,29 @@ fn boolean_operation_owned_delegates_to_borrowed_pipeline() {
 }
 
 #[test]
-fn boolean_operation_can_force_recursive_subdivision() {
-    let mut mesh = hypermesh::InputMesh::new(
-        vec![p(1, -4, -4), p(1, 4, -4), p(1, 0, 4)],
-        vec![Triangle::new(0, 1, 2)],
-    );
-    mesh.nsi = true;
-    mesh.nnc = true;
-    let config = EmberConfig {
+fn boolean_operation_reports_unknown_when_max_depth_forces_oversized_leaf() {
+    let mesh = cube_mesh(0, 2);
+    let soup = prepare_input_meshes(&[mesh]).unwrap();
+    let indicator = make_indicator(BooleanOp::Union, soup.num_meshes);
+    let config = SubdivisionConfig {
         leaf_threshold: 0,
-        max_depth: 2,
+        max_depth: 0,
         use_early_termination: false,
-        assume_nsi: false,
-        assume_nnc: false,
     };
 
-    let result = boolean_operation(&[mesh], BooleanOp::Union, config).unwrap();
-
-    assert_eq!(result.classifications.len(), result.output.polygons.len());
-    assert!(!result.output.polygons.is_empty());
+    assert!(matches!(
+        subdivide(
+            SubdivisionTask::new(
+                soup.polygons,
+                hypermesh::Aabb::new(p(-1, -1, -1), p(3, 3, 3)),
+                p(-1, -1, -1),
+                vec![0; soup.num_meshes],
+            ),
+            &indicator,
+            config,
+        ),
+        Err(HypermeshError::UnknownClassification)
+    ));
 }
 
 #[test]
@@ -468,52 +548,6 @@ fn resolve_tjunctions_splits_exact_boundary_tjunction() {
 }
 
 #[test]
-fn parse_obj_str_lifts_coordinates_to_reals_and_fan_triangulates() {
-    let mesh = hypermesh::parse_obj_str(
-        "\
-v 0 0 0
-v 1/2 0 0
-v 1/2 1/2 0
-v 0 1/2 0
-f 1 2 3 4
-",
-        true,
-        true,
-    )
-    .unwrap();
-
-    assert_eq!(mesh.positions.len(), 4);
-    assert_eq!(mesh.positions[1].x, "1/2".parse::<Real>().unwrap());
-    assert_eq!(
-        mesh.triangles,
-        vec![Triangle::new(0, 1, 2), Triangle::new(0, 2, 3)]
-    );
-    assert!(mesh.nsi);
-    assert!(mesh.nnc);
-}
-
-#[test]
-fn to_obj_string_exports_exact_real_coordinates() {
-    let soup = hypermesh::TriangleSoup {
-        vertices: vec![
-            ov(0, 0, 0),
-            hypermesh::OutputVertex {
-                x: "1/2".parse::<Real>().unwrap(),
-                y: r(0),
-                z: r(0),
-            },
-            ov(0, 1, 0),
-        ],
-        triangles: vec![[0, 1, 2]],
-    };
-
-    let obj = hypermesh::to_obj_string(&soup);
-
-    assert!(obj.contains("v 1/2 0 0"));
-    assert!(obj.contains("f 1 2 3"));
-}
-
-#[test]
 fn disjoint_cube_booleans_have_expected_polygon_counts() {
     let cube_a = cube_mesh(0, 2);
     let cube_b = cube_mesh(4, 6);
@@ -546,6 +580,7 @@ fn overlapping_cube_booleans_clip_and_resolve_exactly() {
         assume_nsi: true,
         assume_nnc: true,
         use_early_termination: false,
+        use_fast_paths: false,
     };
 
     let union = hypermesh::boolean_union(&cube_a, &cube_b, config).unwrap();

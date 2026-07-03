@@ -1,8 +1,5 @@
 //! Input mesh conversion into polygon soup.
 
-use std::path::Path;
-use std::str::FromStr;
-
 use hyperlattice::{Point3, Real};
 
 use crate::error::{HypermeshError, HypermeshResult};
@@ -65,75 +62,6 @@ impl InputMesh {
             nnc: self.nnc,
         }
     }
-}
-
-/// Parses OBJ text into an input mesh.
-///
-/// Vertex coordinates are parsed directly as [`Real`]. Faces are fan
-/// triangulated and may use `v`, `v/vt`, `v//vn`, or `v/vt/vn` tokens.
-pub fn parse_obj_str(text: &str, nsi: bool, nnc: bool) -> HypermeshResult<InputMesh> {
-    let mut mesh = InputMesh {
-        positions: Vec::new(),
-        triangles: Vec::new(),
-        nsi,
-        nnc,
-    };
-
-    for (line_index, line) in text.lines().enumerate() {
-        let line_number = line_index + 1;
-        let trimmed = line.trim();
-        if trimmed.is_empty() || trimmed.starts_with('#') {
-            continue;
-        }
-
-        let mut parts = trimmed.split_whitespace();
-        match parts.next() {
-            Some("v") => {
-                let coords = parts.collect::<Vec<_>>();
-                if coords.len() < 3 {
-                    return Err(obj_error(
-                        line_number,
-                        "vertex line needs three coordinates",
-                    ));
-                }
-                let x = parse_real(coords[0], line_number)?;
-                let y = parse_real(coords[1], line_number)?;
-                let z = parse_real(coords[2], line_number)?;
-                mesh.positions.push(Point3::new(x, y, z));
-            }
-            Some("f") => {
-                let indices = parts
-                    .map(|token| parse_obj_vertex_index(token, mesh.positions.len(), line_number))
-                    .collect::<HypermeshResult<Vec<_>>>()?;
-                if indices.len() < 3 {
-                    return Err(obj_error(
-                        line_number,
-                        "face line needs at least three vertices",
-                    ));
-                }
-                for index in 1..(indices.len() - 1) {
-                    mesh.triangles.push(Triangle::new(
-                        indices[0],
-                        indices[index],
-                        indices[index + 1],
-                    ));
-                }
-            }
-            Some(_) | None => {}
-        }
-    }
-
-    Ok(mesh)
-}
-
-/// Loads OBJ text from a path into an input mesh.
-pub fn load_obj(path: impl AsRef<Path>, nsi: bool, nnc: bool) -> HypermeshResult<InputMesh> {
-    let path_ref = path.as_ref();
-    let text = std::fs::read_to_string(path_ref).map_err(|error| HypermeshError::Io {
-        path: path_ref.display().to_string(),
-        reason: error.to_string(),
-    })?;
-    parse_obj_str(&text, nsi, nnc)
 }
 
 /// Borrowed input mesh view.
@@ -270,46 +198,4 @@ fn bounds_for_positions(positions: &[Point3]) -> HypermeshResult<Aabb> {
     }
 
     Ok(Aabb::new(min, max))
-}
-
-fn parse_real(token: &str, line: usize) -> HypermeshResult<Real> {
-    Real::from_str(token).map_err(|error| HypermeshError::InvalidObj {
-        line,
-        reason: error.to_string(),
-    })
-}
-
-fn parse_obj_vertex_index(token: &str, vertex_count: usize, line: usize) -> HypermeshResult<usize> {
-    let raw = token
-        .split('/')
-        .next()
-        .filter(|value| !value.is_empty())
-        .ok_or_else(|| obj_error(line, "face token is missing a vertex index"))?;
-    let parsed = raw
-        .parse::<isize>()
-        .map_err(|error| HypermeshError::InvalidObj {
-            line,
-            reason: error.to_string(),
-        })?;
-    let index = if parsed > 0 {
-        parsed as usize - 1
-    } else if parsed < 0 {
-        vertex_count
-            .checked_sub(parsed.unsigned_abs())
-            .ok_or_else(|| obj_error(line, "negative face index is out of bounds"))?
-    } else {
-        return Err(obj_error(line, "OBJ indices are one-based"));
-    };
-
-    if index >= vertex_count {
-        return Err(obj_error(line, "face vertex index is out of bounds"));
-    }
-    Ok(index)
-}
-
-fn obj_error(line: usize, reason: impl Into<String>) -> HypermeshError {
-    HypermeshError::InvalidObj {
-        line,
-        reason: reason.into(),
-    }
 }

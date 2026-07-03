@@ -6,7 +6,7 @@ use crate::error::HypermeshResult;
 use crate::geometry::{Classification, compare_real};
 use crate::mesh::{OutputVertex, PolygonSoup};
 use crate::polygon::ConvexPolygon;
-use crate::winding::WindingPair;
+use crate::winding::{BooleanOp, WindingPair};
 use hyperlattice::Real;
 
 /// Polygon plus its boolean output classification.
@@ -41,6 +41,7 @@ pub struct BooleanResult {
     pub output: PolygonSoup,
     /// Per-output-polygon classifications.
     pub classifications: Vec<i8>,
+    operation: Option<BooleanOp>,
 }
 
 impl BooleanResult {
@@ -49,12 +50,22 @@ impl BooleanResult {
         Self {
             output,
             classifications,
+            operation: None,
         }
     }
 
     /// Builds a result by applying classification orientation to owned
     /// classified polygons.
-    pub fn from_classified(mut output: PolygonSoup, classified: Vec<ClassifiedPolygon>) -> Self {
+    pub fn from_classified(output: PolygonSoup, classified: Vec<ClassifiedPolygon>) -> Self {
+        Self::from_classified_with_operation(output, classified, None)
+    }
+
+    /// Builds a result from classified polygons and records the source operation.
+    pub fn from_classified_with_operation(
+        mut output: PolygonSoup,
+        classified: Vec<ClassifiedPolygon>,
+        operation: Option<BooleanOp>,
+    ) -> Self {
         output.polygons.clear();
         let mut classifications = Vec::with_capacity(classified.len());
 
@@ -72,6 +83,7 @@ impl BooleanResult {
         Self {
             output,
             classifications,
+            operation,
         }
     }
 }
@@ -129,7 +141,23 @@ pub fn triangulate_output(result: &BooleanResult) -> HypermeshResult<TriangleSou
 
 /// Fan-triangulates and applies exact duplicate/T-junction cleanup.
 pub fn triangulate_and_resolve(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
-    resolve_tjunctions(&triangulate_output(result)?)
+    let mut soup = resolve_tjunctions(&triangulate_output(result)?)?;
+    if crate::geometry::classify_real(&signed_volume_numerator(&soup))? == Classification::On {
+        soup.triangles.clear();
+        soup.vertices.clear();
+        return Ok(soup);
+    }
+    fill_boundary_loops(&mut soup);
+    remove_degenerate_and_duplicate_triangles(&mut soup);
+    fix_winding_by_signed_volume(&mut soup)?;
+    soup = peel_open_boundary_triangles(&soup);
+    if result.operation == Some(BooleanOp::Intersection)
+        && peel_open_boundary_triangles(&soup).triangles.is_empty()
+    {
+        soup.triangles.clear();
+        soup.vertices.clear();
+    }
+    Ok(soup)
 }
 
 /// Fan-triangulates a borrowed polygon slice.
@@ -169,7 +197,9 @@ pub fn resolve_tjunctions(input: &TriangleSoup) -> HypermeshResult<TriangleSoup>
     remove_degenerate_and_duplicate_triangles(&mut soup);
 
     for _ in 0..256 {
-        if !split_one_tjunction_pass(&mut soup)? {
+        let split_tjunction = split_one_tjunction_pass(&mut soup)?;
+        let split_crossing = split_one_edge_crossing_pass(&mut soup)?;
+        if !split_tjunction && !split_crossing {
             break;
         }
         remove_degenerate_and_duplicate_triangles(&mut soup);
@@ -177,34 +207,6 @@ pub fn resolve_tjunctions(input: &TriangleSoup) -> HypermeshResult<TriangleSoup>
 
     fix_winding_by_signed_volume(&mut soup)?;
     Ok(soup)
-}
-
-/// Serializes a triangle soup to OBJ text using exact `Real` formatting.
-pub fn to_obj_string(soup: &TriangleSoup) -> String {
-    let mut obj = String::new();
-    obj.push_str("# hypermesh hyperreal CSG output\n");
-
-    for vertex in &soup.vertices {
-        obj.push_str("v ");
-        obj.push_str(&vertex.x.to_string());
-        obj.push(' ');
-        obj.push_str(&vertex.y.to_string());
-        obj.push(' ');
-        obj.push_str(&vertex.z.to_string());
-        obj.push('\n');
-    }
-
-    for triangle in &soup.triangles {
-        obj.push_str("f ");
-        obj.push_str(&(triangle[0] + 1).to_string());
-        obj.push(' ');
-        obj.push_str(&(triangle[1] + 1).to_string());
-        obj.push(' ');
-        obj.push_str(&(triangle[2] + 1).to_string());
-        obj.push('\n');
-    }
-
-    obj
 }
 
 fn merge_duplicate_vertices(input: &TriangleSoup) -> TriangleSoup {
@@ -242,6 +244,135 @@ fn remove_degenerate_and_duplicate_triangles(soup: &mut TriangleSoup) {
         key.sort();
         seen.insert(key)
     });
+}
+
+fn peel_open_boundary_triangles(input: &TriangleSoup) -> TriangleSoup {
+    let mut soup = input.clone();
+    loop {
+        let edge_counts = triangle_edge_counts(&soup.triangles);
+        let old_len = soup.triangles.len();
+        soup.triangles.retain(|triangle| {
+            triangle_edges(*triangle)
+                .iter()
+                .all(|edge| edge_counts.get(&sorted_edge(*edge)).copied().unwrap_or(0) == 2)
+        });
+        if soup.triangles.len() == old_len {
+            return soup;
+        }
+    }
+}
+
+fn triangle_edge_counts(triangles: &[[usize; 3]]) -> BTreeMap<[usize; 2], usize> {
+    let mut counts = BTreeMap::new();
+    for triangle in triangles {
+        for edge in triangle_edges(*triangle) {
+            *counts.entry(sorted_edge(edge)).or_insert(0) += 1;
+        }
+    }
+    counts
+}
+
+fn fill_boundary_loops(soup: &mut TriangleSoup) {
+    let mut edge_counts = triangle_edge_counts(&soup.triangles);
+    let mut unused = edge_counts
+        .iter()
+        .filter_map(|(edge, count)| if *count == 1 { Some(*edge) } else { None })
+        .collect::<BTreeSet<_>>();
+    if unused.is_empty() {
+        return;
+    }
+
+    let mut adjacency: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
+    for edge in &unused {
+        adjacency.entry(edge[0]).or_default().push(edge[1]);
+        adjacency.entry(edge[1]).or_default().push(edge[0]);
+    }
+
+    let mut caps = Vec::new();
+    while let Some(start_edge) = unused.iter().next().copied() {
+        let start = start_edge[0];
+        let mut previous = start_edge[0];
+        let mut current = start_edge[1];
+        let mut loop_vertices = vec![start, current];
+        unused.remove(&start_edge);
+
+        while current != start {
+            let Some(neighbors) = adjacency.get(&current) else {
+                break;
+            };
+            let Some(next) = neighbors.iter().copied().find(|candidate| {
+                *candidate != previous && unused.contains(&sorted_edge([current, *candidate]))
+            }) else {
+                break;
+            };
+            unused.remove(&sorted_edge([current, next]));
+            previous = current;
+            current = next;
+            if current != start {
+                loop_vertices.push(current);
+            }
+        }
+
+        if current == start
+            && loop_vertices.len() >= 3
+            && let Some(loop_caps) = fan_for_boundary_loop(&loop_vertices, &edge_counts)
+        {
+            for triangle in &loop_caps {
+                for edge in triangle_edges(*triangle) {
+                    *edge_counts.entry(sorted_edge(edge)).or_insert(0) += 1;
+                }
+            }
+            caps.extend(loop_caps);
+        }
+    }
+
+    soup.triangles.extend(caps);
+}
+
+fn fan_for_boundary_loop(
+    loop_vertices: &[usize],
+    existing_counts: &BTreeMap<[usize; 2], usize>,
+) -> Option<Vec<[usize; 3]>> {
+    for root in 0..loop_vertices.len() {
+        let rotated = loop_vertices
+            .iter()
+            .cycle()
+            .skip(root)
+            .take(loop_vertices.len())
+            .copied()
+            .collect::<Vec<_>>();
+        let mut caps = Vec::new();
+        let mut cap_counts = BTreeMap::new();
+        let mut valid = true;
+
+        for index in 1..(rotated.len() - 1) {
+            let triangle = [rotated[0], rotated[index], rotated[index + 1]];
+            for edge in triangle_edges(triangle) {
+                *cap_counts.entry(sorted_edge(edge)).or_insert(0usize) += 1;
+            }
+            caps.push(triangle);
+        }
+
+        for (edge, cap_count) in &cap_counts {
+            let existing = existing_counts.get(edge).copied().unwrap_or(0);
+            let final_count = existing + cap_count;
+            let is_boundary = loop_vertices
+                .iter()
+                .zip(loop_vertices.iter().cycle().skip(1))
+                .take(loop_vertices.len())
+                .any(|(a, b)| sorted_edge([*a, *b]) == *edge);
+            if (is_boundary && final_count != 2) || (!is_boundary && existing != 0) {
+                valid = false;
+                break;
+            }
+        }
+
+        if valid {
+            return Some(caps);
+        }
+    }
+
+    None
 }
 
 fn split_one_tjunction_pass(soup: &mut TriangleSoup) -> HypermeshResult<bool> {
@@ -319,6 +450,135 @@ fn split_one_tjunction_pass(soup: &mut TriangleSoup) -> HypermeshResult<bool> {
     kept.extend(new_triangles);
     soup.triangles = kept;
     Ok(true)
+}
+
+fn split_one_edge_crossing_pass(soup: &mut TriangleSoup) -> HypermeshResult<bool> {
+    let mut edges = Vec::new();
+    for triangle in &soup.triangles {
+        for edge in triangle_edges(*triangle) {
+            edges.push(sorted_edge(edge));
+        }
+    }
+    edges.sort();
+    edges.dedup();
+
+    for left_index in 0..edges.len() {
+        for right_index in (left_index + 1)..edges.len() {
+            let left = edges[left_index];
+            let right = edges[right_index];
+            if left.iter().any(|vertex| right.contains(vertex)) {
+                continue;
+            }
+
+            let Some(point) = proper_segment_intersection(
+                &soup.vertices[left[0]],
+                &soup.vertices[left[1]],
+                &soup.vertices[right[0]],
+                &soup.vertices[right[1]],
+            )?
+            else {
+                continue;
+            };
+
+            let new_index = insert_or_find_vertex(soup, point);
+            split_edges_at_vertex(soup, &[left, right], new_index);
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
+fn proper_segment_intersection(
+    a: &OutputVertex,
+    b: &OutputVertex,
+    c: &OutputVertex,
+    d: &OutputVertex,
+) -> HypermeshResult<Option<OutputVertex>> {
+    let ab = sub_vertex(b, a);
+    let cd = sub_vertex(d, c);
+    let normal = cross_arrays(&ab, &cd);
+    if normal
+        .iter()
+        .all(|component| crate::geometry::classify_real(component) == Ok(Classification::On))
+    {
+        return Ok(None);
+    }
+
+    let ac = sub_vertex(c, a);
+    if crate::geometry::classify_real(&dot_arrays(&ac, &normal))? != Classification::On {
+        return Ok(None);
+    }
+
+    let projection_axis = dominant_component_axis(&normal)?;
+    let (u_axis, v_axis) = match projection_axis {
+        0 => (1, 2),
+        1 => (0, 2),
+        2 => (0, 1),
+        _ => unreachable!("axis must be in 0..3"),
+    };
+    let denom = (&ab[u_axis] * &cd[v_axis]) - (&ab[v_axis] * &cd[u_axis]);
+    if crate::geometry::classify_real(&denom)? == Classification::On {
+        return Ok(None);
+    }
+    let t_num = (&ac[u_axis] * &cd[v_axis]) - (&ac[v_axis] * &cd[u_axis]);
+    let t = (t_num / denom).map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
+    let point = OutputVertex {
+        x: &a.x + &(t.clone() * &ab[0]),
+        y: &a.y + &(t.clone() * &ab[1]),
+        z: &a.z + &(t * &ab[2]),
+    };
+
+    if point == *a || point == *b || point == *c || point == *d {
+        return Ok(None);
+    }
+    if point_on_segment_exact(&point, a, b)? && point_on_segment_exact(&point, c, d)? {
+        Ok(Some(point))
+    } else {
+        Ok(None)
+    }
+}
+
+fn insert_or_find_vertex(soup: &mut TriangleSoup, vertex: OutputVertex) -> usize {
+    if let Some(index) = soup
+        .vertices
+        .iter()
+        .position(|existing| existing == &vertex)
+    {
+        index
+    } else {
+        let index = soup.vertices.len();
+        soup.vertices.push(vertex);
+        index
+    }
+}
+
+fn split_edges_at_vertex(soup: &mut TriangleSoup, edges: &[[usize; 2]], vertex: usize) {
+    let mut new_triangles = Vec::new();
+    let mut kept = Vec::new();
+    for triangle in &soup.triangles {
+        let mut split = false;
+        for edge_index in 0..3 {
+            let ea = triangle[edge_index];
+            let eb = triangle[(edge_index + 1) % 3];
+            let ec = triangle[(edge_index + 2) % 3];
+            if edges.contains(&sorted_edge([ea, eb]))
+                && vertex != ea
+                && vertex != eb
+                && vertex != ec
+            {
+                new_triangles.push([ea, vertex, ec]);
+                new_triangles.push([vertex, eb, ec]);
+                split = true;
+                break;
+            }
+        }
+        if !split {
+            kept.push(*triangle);
+        }
+    }
+    kept.extend(new_triangles);
+    soup.triangles = kept;
 }
 
 fn triangle_edges(triangle: [usize; 3]) -> [[usize; 2]; 3] {
@@ -415,6 +675,21 @@ fn dominant_segment_axis(start: &OutputVertex, end: &OutputVertex) -> HypermeshR
     Ok(best)
 }
 
+fn dominant_component_axis(values: &[Real; 3]) -> HypermeshResult<usize> {
+    let abs = [
+        values[0].clone().abs(),
+        values[1].clone().abs(),
+        values[2].clone().abs(),
+    ];
+    let mut best = 0;
+    for axis in 1..3 {
+        if compare_real(&abs[axis], &abs[best])?.is_gt() {
+            best = axis;
+        }
+    }
+    Ok(best)
+}
+
 fn fix_winding_by_signed_volume(soup: &mut TriangleSoup) -> HypermeshResult<()> {
     let volume = signed_volume_numerator(soup);
     if crate::geometry::classify_real(&volume)? == Classification::Negative {
@@ -449,6 +724,10 @@ fn cross_arrays(left: &[Real; 3], right: &[Real; 3]) -> [Real; 3] {
         (&left[2] * &right[0]) - (&left[0] * &right[2]),
         (&left[0] * &right[1]) - (&left[1] * &right[0]),
     ]
+}
+
+fn dot_arrays(left: &[Real; 3], right: &[Real; 3]) -> Real {
+    (&left[0] * &right[0]) + (&left[1] * &right[1]) + (&left[2] * &right[2])
 }
 
 fn vertex_axis(vertex: &OutputVertex, axis: usize) -> &Real {

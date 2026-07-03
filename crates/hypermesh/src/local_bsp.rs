@@ -1,6 +1,6 @@
 //! Face-local BSP tree for splitting one polygon into convex leaves.
 
-use hyperlattice::{Point3, intersect_three_planes};
+use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, Plane, classify_point, classify_projective_point};
@@ -251,15 +251,8 @@ impl LocalBsp {
                 if !leaf.enabled || leaf.edges.len() < 3 {
                     return Ok(());
                 }
-                let test_point =
-                    intersect_three_planes(&self.support, &leaf.edges[0], &leaf.edges[1]);
-                let mut inside = true;
-                for edge in &other.edges {
-                    if classify_projective_point(&test_point, edge)?.is_non_negative() {
-                        inside = false;
-                        break;
-                    }
-                }
+                let test_point = leaf_interior_point(&self.support, &leaf.edges)?;
+                let inside = other.contains_point_strictly(&test_point)?;
                 if inside && let BspNode::Leaf(leaf) = &mut self.nodes[node_index] {
                     leaf.enabled = false;
                 }
@@ -288,4 +281,29 @@ impl LocalBsp {
             }
         }
     }
+}
+
+fn leaf_interior_point(support: &Plane, edges: &[Plane]) -> HypermeshResult<HomogeneousPoint3> {
+    let mut points = Vec::with_capacity(edges.len());
+    for index in 0..edges.len() {
+        points.push(
+            intersect_three_planes(support, &edges[index], &edges[(index + 1) % edges.len()])
+                .to_affine_point()
+                .map_err(|_| HypermeshError::PointAtInfinity)?,
+        );
+    }
+
+    let mut sum = Point3::origin();
+    for point in &points {
+        sum.x += point.x.clone();
+        sum.y += point.y.clone();
+        sum.z += point.z.clone();
+    }
+    let denom = Real::from(points.len() as u64);
+    Ok(HomogeneousPoint3::new(
+        (sum.x / denom.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
+        (sum.y / denom.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
+        (sum.z / denom).map_err(|_| HypermeshError::UnknownClassification)?,
+        Real::one(),
+    ))
 }

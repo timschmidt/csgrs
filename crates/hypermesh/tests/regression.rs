@@ -164,14 +164,27 @@ fn config() -> EmberConfig {
         leaf_threshold: 1,
         max_depth: 10,
         use_early_termination: false,
+        use_fast_paths: true,
         assume_nsi: true,
         assume_nnc: true,
+    }
+}
+
+fn general_config() -> EmberConfig {
+    EmberConfig {
+        use_fast_paths: false,
+        ..config()
     }
 }
 
 fn run_op(a: &InputMesh, b: &InputMesh, op: BooleanOp) -> HypermeshResult<TriangleSoup> {
     let refs = [a.as_ref(), b.as_ref()];
     triangulate_and_resolve(&boolean_operation_refs(&refs, op, config())?)
+}
+
+fn run_general_op(a: &InputMesh, b: &InputMesh, op: BooleanOp) -> HypermeshResult<TriangleSoup> {
+    let refs = [a.as_ref(), b.as_ref()];
+    triangulate_and_resolve(&boolean_operation_refs(&refs, op, general_config())?)
 }
 
 fn run_op_refs(meshes: &[MeshRef<'_>], op: BooleanOp) -> HypermeshResult<TriangleSoup> {
@@ -418,7 +431,7 @@ fn generated_sphere_booleans_are_closed() {
         BooleanOp::Difference,
         BooleanOp::SymmetricDifference,
     ] {
-        let result = run_op(&a, &b, op).unwrap();
+        let result = run_op(&a, &b, op).unwrap_or_else(|err| panic!("{op:?} failed: {err:?}"));
         if !result.triangles.is_empty() {
             assert_closed_triangle_soup(&result);
         }
@@ -480,6 +493,23 @@ fn hypermesh_nested_closed_tetrahedra_booleans_have_expected_shape() {
 }
 
 #[test]
+fn nested_closed_tetrahedra_use_strict_containment_without_fast_paths() {
+    let outer = tetrahedron([[0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]]);
+    let inner = tetrahedron([[1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]]);
+    let outer_soup = passthrough(&outer).unwrap();
+    let inner_soup = passthrough(&inner).unwrap();
+
+    let union = run_general_op(&outer, &inner, BooleanOp::Union).unwrap();
+    assert_same_shape(&union, &outer_soup);
+
+    let intersection = run_general_op(&outer, &inner, BooleanOp::Intersection).unwrap();
+    assert_same_shape(&intersection, &inner_soup);
+
+    let difference = run_general_op(&inner, &outer, BooleanOp::Difference).unwrap();
+    assert!(difference.triangles.is_empty());
+}
+
+#[test]
 fn hypermesh_disconnected_container_routes_containment_correctly() {
     let outer = tetrahedron([[0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]]);
     let disjoint_shell = tetrahedron([[20, 0, 0], [21, 0, 0], [20, 1, 0], [20, 0, 1]]);
@@ -519,6 +549,19 @@ fn hypermesh_boundary_touching_boxes_regularize_named_booleans() {
 }
 
 #[test]
+fn boundary_touching_boxes_regularize_intersection_and_difference_without_fast_paths() {
+    let left = box_mesh([0, 0, 0], [1, 1, 1]);
+    let right = box_mesh([1, 0, 0], [2, 1, 1]);
+    let left_soup = passthrough(&left).unwrap();
+
+    let intersection = run_general_op(&left, &right, BooleanOp::Intersection).unwrap();
+    assert!(intersection.triangles.is_empty());
+
+    let difference = run_general_op(&left, &right, BooleanOp::Difference).unwrap();
+    assert_same_shape(&difference, &left_soup);
+}
+
+#[test]
 fn hypermesh_identical_and_same_surface_solids_regularize() {
     let left = tetrahedron([[0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]]);
     let identical = left.clone();
@@ -554,6 +597,25 @@ fn hypermesh_identical_and_same_surface_solids_regularize() {
         let difference = run_op(&left, right, BooleanOp::Difference).unwrap();
         assert!(difference.triangles.is_empty());
     }
+}
+
+#[test]
+fn disconnected_container_uses_strict_containment_without_fast_paths() {
+    let outer = tetrahedron([[0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]]);
+    let disjoint_shell = tetrahedron([[20, 0, 0], [21, 0, 0], [20, 1, 0], [20, 0, 1]]);
+    let container = combine_meshes(&[outer.clone(), disjoint_shell.clone()]);
+    let contained = tetrahedron([[1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]]);
+    let container_soup = passthrough(&container).unwrap();
+    let contained_soup = passthrough(&contained).unwrap();
+
+    let union = run_general_op(&container, &contained, BooleanOp::Union).unwrap();
+    assert_same_shape(&union, &container_soup);
+
+    let intersection = run_general_op(&container, &contained, BooleanOp::Intersection).unwrap();
+    assert_same_shape(&intersection, &contained_soup);
+
+    let difference = run_general_op(&contained, &container, BooleanOp::Difference).unwrap();
+    assert!(difference.triangles.is_empty());
 }
 
 #[test]
@@ -596,6 +658,29 @@ fn hypermesh_affine_box_booleans_are_closed() {
         );
         assert_closed_triangle_soup(&result);
     }
+}
+
+#[test]
+fn same_surface_solids_are_exact_equivalence_without_fast_paths() {
+    let left = tetrahedron([[0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]]);
+    let same_surface = InputMesh {
+        positions: vec![p(4, 0, 0), p(0, 0, 0), p(0, 4, 0), p(0, 0, 4)],
+        triangles: vec![
+            Triangle::new(1, 2, 0),
+            Triangle::new(1, 0, 3),
+            Triangle::new(0, 2, 3),
+            Triangle::new(2, 1, 3),
+        ],
+        nsi: true,
+        nnc: true,
+    };
+    let left_soup = passthrough(&left).unwrap();
+
+    let union = run_general_op(&left, &same_surface, BooleanOp::Union).unwrap();
+    assert_same_shape(&union, &left_soup);
+
+    let difference = run_general_op(&left, &same_surface, BooleanOp::Difference).unwrap();
+    assert!(difference.triangles.is_empty());
 }
 
 #[test]

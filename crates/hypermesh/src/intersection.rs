@@ -1,9 +1,11 @@
 //! Pairwise convex polygon intersection primitives.
 
-use hyperlattice::Point3;
+use hyperlattice::{Point3, Real};
 
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::geometry::{Classification, Plane, classify_point, classify_real};
+use crate::geometry::{
+    Classification, Plane, classify_point, classify_real, cross_arrays, dot_point, sub_points,
+};
 use crate::polygon::ConvexPolygon;
 
 /// Intersection segment between two polygons.
@@ -137,16 +139,45 @@ fn intersect_coplanar(
 }
 
 fn polygons_share_area(polygon: &ConvexPolygon, other: &ConvexPolygon) -> HypermeshResult<bool> {
-    for point in polygon.vertices()? {
-        if affine_point_in_polygon(&point, other)? {
+    let polygon_vertices = polygon.vertices()?;
+    let other_vertices = other.vertices()?;
+
+    if let Some(point) = centroid(&polygon_vertices)
+        && affine_point_in_polygon(&point, other)?
+    {
+        return Ok(true);
+    }
+    if let Some(point) = centroid(&other_vertices)
+        && affine_point_in_polygon(&point, polygon)?
+    {
+        return Ok(true);
+    }
+
+    for point in &polygon_vertices {
+        if affine_point_strictly_in_polygon(point, other)? {
             return Ok(true);
         }
     }
-    for point in other.vertices()? {
-        if affine_point_in_polygon(&point, polygon)? {
+    for point in &other_vertices {
+        if affine_point_strictly_in_polygon(point, polygon)? {
             return Ok(true);
         }
     }
+
+    for edge in segment_edges(&polygon_vertices) {
+        for other_edge in segment_edges(&other_vertices) {
+            if segments_properly_cross(
+                edge.0,
+                edge.1,
+                other_edge.0,
+                other_edge.1,
+                &polygon.support,
+            )? {
+                return Ok(true);
+            }
+        }
+    }
+
     Ok(false)
 }
 
@@ -205,6 +236,79 @@ fn affine_point_in_polygon(point: &Point3, polygon: &ConvexPolygon) -> Hypermesh
         }
     }
     Ok(true)
+}
+
+fn affine_point_strictly_in_polygon(
+    point: &Point3,
+    polygon: &ConvexPolygon,
+) -> HypermeshResult<bool> {
+    if classify_point(point, &polygon.support)? != Classification::On {
+        return Ok(false);
+    }
+    for edge in &polygon.edges {
+        if classify_point(point, edge)?.is_non_negative() {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn segment_edges(vertices: &[Point3]) -> impl Iterator<Item = (&Point3, &Point3)> {
+    vertices
+        .iter()
+        .zip(vertices.iter().cycle().skip(1))
+        .take(vertices.len())
+}
+
+fn centroid(vertices: &[Point3]) -> Option<Point3> {
+    if vertices.is_empty() {
+        return None;
+    }
+    let mut sum = Point3::origin();
+    for vertex in vertices {
+        sum.x += vertex.x.clone();
+        sum.y += vertex.y.clone();
+        sum.z += vertex.z.clone();
+    }
+    let denom = Real::from(vertices.len() as u64);
+    Some(Point3::new(
+        (sum.x / denom.clone()).ok()?,
+        (sum.y / denom.clone()).ok()?,
+        (sum.z / denom).ok()?,
+    ))
+}
+
+fn segments_properly_cross(
+    a0: &Point3,
+    a1: &Point3,
+    b0: &Point3,
+    b1: &Point3,
+    support: &Plane,
+) -> HypermeshResult<bool> {
+    let a_line = segment_split_plane(a0, a1, support);
+    let b_line = segment_split_plane(b0, b1, support);
+
+    let b0_side = classify_point(b0, &a_line)?;
+    let b1_side = classify_point(b1, &a_line)?;
+    let a0_side = classify_point(a0, &b_line)?;
+    let a1_side = classify_point(a1, &b_line)?;
+
+    Ok(((b0_side.is_negative() && b1_side.is_positive())
+        || (b0_side.is_positive() && b1_side.is_negative()))
+        && ((a0_side.is_negative() && a1_side.is_positive())
+            || (a0_side.is_positive() && a1_side.is_negative())))
+}
+
+fn segment_split_plane(a: &Point3, b: &Point3, support: &Plane) -> Plane {
+    let edge = sub_points(b, a);
+    let support_normal = [
+        support.normal.x.clone(),
+        support.normal.y.clone(),
+        support.normal.z.clone(),
+    ];
+    let normal = cross_arrays(&edge, &support_normal);
+    let offset = -dot_point(&normal, a);
+    Plane::new(normal, offset)
 }
 
 fn supports_are_parallel(left: &Plane, right: &Plane) -> HypermeshResult<bool> {

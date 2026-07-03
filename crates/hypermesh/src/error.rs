@@ -18,25 +18,11 @@ pub enum HypermeshError {
     },
     /// A mesh operation needs at least one point.
     EmptyInput,
-    /// A scalar predicate could not certify its sign within the configured
-    /// exact-real refinement budget.
+    /// A scalar predicate could not certify its sign through exact predicate
+    /// routes without choosing a precision budget.
     UnknownClassification,
     /// A homogeneous point had zero or unknown homogeneous scale.
     PointAtInfinity,
-    /// OBJ text could not be parsed.
-    InvalidObj {
-        /// One-based line number.
-        line: usize,
-        /// Parse failure detail.
-        reason: String,
-    },
-    /// File input failed.
-    Io {
-        /// Path that was requested.
-        path: String,
-        /// I/O failure detail.
-        reason: String,
-    },
 }
 
 impl fmt::Display for HypermeshError {
@@ -52,10 +38,6 @@ impl fmt::Display for HypermeshError {
             Self::EmptyInput => f.write_str("input mesh set has no positions"),
             Self::UnknownClassification => f.write_str("could not certify scalar sign"),
             Self::PointAtInfinity => f.write_str("homogeneous point is at infinity"),
-            Self::InvalidObj { line, reason } => {
-                write!(f, "invalid OBJ at line {line}: {reason}")
-            }
-            Self::Io { path, reason } => write!(f, "could not read {path}: {reason}"),
         }
     }
 }

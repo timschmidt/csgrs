@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 use crate::bvh::ExactBvh;
 use crate::clip::{ClipSide, clip_polygon};
 use crate::error::HypermeshResult;
-use crate::geometry::{Aabb, axis_mut, axis_ref, compare_real};
+use crate::geometry::{Aabb, Classification, axis_mut, axis_ref, compare_real};
 use crate::intersection::{PairwiseIntersection, PairwiseIntersectionType, intersect_polygons};
 use crate::local_bsp::LocalBsp;
 use crate::output::ClassifiedPolygon;
@@ -14,7 +14,7 @@ use crate::segment_trace::classify_leaf_polygon;
 use crate::winding::{
     Indicator, WindingPair, can_early_terminate, classify_polygon_output, propagate_wnv,
 };
-use hyperlattice::{Point3, Real};
+use hyperlattice::{HomogeneousPoint3, Point3, Real};
 
 /// Default leaf threshold for subdivision.
 pub const DEFAULT_LEAF_THRESHOLD: usize = 25;
@@ -154,6 +154,7 @@ pub fn process_leaf_into(
             if leaf.edges.len() < 3 {
                 continue;
             }
+            let effective_delta_w = effective_leaf_delta_w(polygon, &leaf.edges, polygons)?;
             let w_front = classify_leaf_polygon(
                 &polygon.support,
                 &leaf.edges,
@@ -161,13 +162,14 @@ pub fn process_leaf_into(
                 ref_wnv,
                 polygons,
                 bounds,
-                &polygon.delta_w,
+                &effective_delta_w,
             )?;
-            let w_back = propagate_wnv(&w_front, 1, &polygon.delta_w);
+            let w_back = propagate_wnv(&w_front, 1, &effective_delta_w);
             let classification = classify_polygon_output(&w_front, &w_back, indicator);
             if classification != 0 {
                 let mut fragment = polygon.clone();
                 fragment.edges = leaf.edges.clone();
+                fragment.delta_w = effective_delta_w;
                 let mut classified = ClassifiedPolygon::new(fragment, classification);
                 classified.winding = Some(WindingPair { w_front, w_back });
                 classified.is_bsp_fragment = true;
@@ -209,10 +211,7 @@ pub fn subdivide_into(
         }
     }
 
-    if task.polygons.len() <= config.leaf_threshold
-        || task.depth >= config.max_depth
-        || !can_split_bounds(&task.bounds)?
-    {
+    if task.polygons.len() <= config.leaf_threshold || !can_split_bounds(&task.bounds)? {
         process_leaf_into(
             &task.polygons,
             &task.bounds,
@@ -222,6 +221,10 @@ pub fn subdivide_into(
             output,
         )?;
         return Ok(());
+    }
+
+    if task.depth >= config.max_depth {
+        return Err(crate::error::HypermeshError::UnknownClassification);
     }
 
     let split_axis = task.bounds.longest_axis()?;
@@ -368,6 +371,73 @@ fn emit_one_direct(
     Ok(())
 }
 
+fn effective_leaf_delta_w(
+    polygon: &ConvexPolygon,
+    leaf_edges: &[crate::geometry::Plane],
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Vec<i32>> {
+    let mut delta_w = polygon.delta_w.clone();
+    let test_point = leaf_interior_point(&polygon.support, leaf_edges)?;
+
+    for other in polygons {
+        if other.polygon_index == polygon.polygon_index && other.mesh_index == polygon.mesh_index {
+            continue;
+        }
+        if other.contains_point_strictly(&test_point)? {
+            let sign = if supports_have_same_direction(&polygon.support, &other.support)? {
+                1
+            } else {
+                -1
+            };
+            for (value, delta) in delta_w.iter_mut().zip(&other.delta_w) {
+                *value += sign * *delta;
+            }
+        }
+    }
+
+    Ok(delta_w)
+}
+
+fn leaf_interior_point(
+    support: &crate::geometry::Plane,
+    edges: &[crate::geometry::Plane],
+) -> HypermeshResult<HomogeneousPoint3> {
+    let leaf = ConvexPolygon {
+        support: support.clone(),
+        edges: edges.to_vec(),
+        mesh_index: -1,
+        polygon_index: -1,
+        delta_w: Vec::new(),
+        no_self_intersections: false,
+        no_nested_components: false,
+        approx_bounds: None,
+    };
+    let vertices = leaf.vertices()?;
+    let mut sum = Point3::origin();
+    for point in &vertices {
+        sum.x += point.x.clone();
+        sum.y += point.y.clone();
+        sum.z += point.z.clone();
+    }
+    let denom = Real::from(vertices.len() as u64);
+    Ok(HomogeneousPoint3::new(
+        (sum.x / denom.clone()).map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+        (sum.y / denom.clone()).map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+        (sum.z / denom).map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+        Real::one(),
+    ))
+}
+
+fn supports_have_same_direction(
+    left: &crate::geometry::Plane,
+    right: &crate::geometry::Plane,
+) -> HypermeshResult<bool> {
+    let dot = (&left.normal.x * &right.normal.x)
+        + (&left.normal.y * &right.normal.y)
+        + (&left.normal.z * &right.normal.z);
+    Ok(crate::geometry::classify_real(&dot)? != Classification::Negative)
+}
+
 fn pairwise_intersections_by_polygon(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>> {
@@ -452,29 +522,139 @@ fn compute_new_reference(
         return Ok((old_ref.clone(), old_wnv.to_vec()));
     }
 
-    let mut target = old_ref.clone();
-    let three = Real::from(3);
-    for axis in 0..3 {
-        let min = axis_ref(&bounds.min, axis);
-        let max = axis_ref(&bounds.max, axis);
-        let extent = max - min;
-        if compare_real(axis_ref(&target, axis), axis_ref(&bounds.min, axis))?.is_lt() {
-            *axis_mut(&mut target, axis) = if extent.definitely_zero() {
-                min.clone()
-            } else {
-                min + &(extent / three.clone()).expect("division by literal three is valid")
-            };
-        } else if compare_real(axis_ref(&target, axis), axis_ref(&bounds.max, axis))?.is_gt() {
-            *axis_mut(&mut target, axis) = if extent.definitely_zero() {
-                max.clone()
-            } else {
-                max - &(extent / three.clone()).expect("division by literal three is valid")
-            };
+    for target in reference_candidates(old_ref, bounds)? {
+        if point_lies_on_local_surface(&target, polygons)? {
+            continue;
+        }
+        if let Ok(winding) =
+            crate::segment_trace::trace_segment(old_ref, &target, old_wnv, polygons)
+        {
+            return Ok((target, winding));
         }
     }
 
-    let winding = crate::segment_trace::trace_segment(old_ref, &target, old_wnv, polygons)?;
-    Ok((target, winding))
+    Err(crate::error::HypermeshError::UnknownClassification)
+}
+
+fn reference_candidates(old_ref: &Point3, bounds: &Aabb) -> HypermeshResult<Vec<Point3>> {
+    let mut candidates = Vec::new();
+    let projected = project_reference_point(old_ref, bounds)?;
+    push_unique_point(&mut candidates, projected.clone());
+
+    let fractions = [(1u64, 2u64), (1, 3), (2, 3), (1, 4), (3, 4)];
+    let axis_values = [
+        reference_axis_values(bounds, 0, &fractions)?,
+        reference_axis_values(bounds, 1, &fractions)?,
+        reference_axis_values(bounds, 2, &fractions)?,
+    ];
+
+    for axis in 0..3 {
+        for value in &axis_values[axis] {
+            let mut candidate = projected.clone();
+            *axis_mut(&mut candidate, axis) = value.clone();
+            push_unique_point(&mut candidates, candidate);
+        }
+    }
+
+    for first_axis in 0..3 {
+        for second_axis in (first_axis + 1)..3 {
+            for first_value in &axis_values[first_axis] {
+                for second_value in &axis_values[second_axis] {
+                    let mut candidate = projected.clone();
+                    *axis_mut(&mut candidate, first_axis) = first_value.clone();
+                    *axis_mut(&mut candidate, second_axis) = second_value.clone();
+                    push_unique_point(&mut candidates, candidate);
+                }
+            }
+        }
+    }
+
+    for x in &axis_values[0] {
+        for y in &axis_values[1] {
+            for z in &axis_values[2] {
+                push_unique_point(
+                    &mut candidates,
+                    Point3::new(x.clone(), y.clone(), z.clone()),
+                );
+            }
+        }
+    }
+
+    Ok(candidates)
+}
+
+fn push_unique_point(points: &mut Vec<Point3>, point: Point3) {
+    if !points.iter().any(|existing| existing == &point) {
+        points.push(point);
+    }
+}
+
+fn reference_axis_values(
+    bounds: &Aabb,
+    axis: usize,
+    fractions: &[(u64, u64)],
+) -> HypermeshResult<Vec<Real>> {
+    let mut values = Vec::new();
+    for &(numerator, denominator) in fractions {
+        let value = interpolate_axis(bounds, axis, numerator, denominator)?;
+        if !values.iter().any(|existing| existing == &value) {
+            values.push(value);
+        }
+    }
+    Ok(values)
+}
+
+fn project_reference_point(old_ref: &Point3, bounds: &Aabb) -> HypermeshResult<Point3> {
+    let mut target = old_ref.clone();
+    for axis in 0..3 {
+        if compare_real(axis_ref(&target, axis), axis_ref(&bounds.min, axis))?.is_lt() {
+            *axis_mut(&mut target, axis) = interpolate_axis(bounds, axis, 1, 3)?;
+        } else if compare_real(axis_ref(&target, axis), axis_ref(&bounds.max, axis))?.is_gt() {
+            *axis_mut(&mut target, axis) = interpolate_axis(bounds, axis, 2, 3)?;
+        }
+    }
+    Ok(target)
+}
+
+fn interpolate_axis(
+    bounds: &Aabb,
+    axis: usize,
+    numerator: u64,
+    denominator: u64,
+) -> HypermeshResult<Real> {
+    let min = axis_ref(&bounds.min, axis);
+    let max = axis_ref(&bounds.max, axis);
+    let extent = max - min;
+    if extent.definitely_zero() {
+        return Ok(min.clone());
+    }
+    Ok(min
+        + &((extent * Real::from(numerator)) / Real::from(denominator))
+            .map_err(|_| crate::error::HypermeshError::UnknownClassification)?)
+}
+
+fn point_lies_on_local_surface(
+    point: &Point3,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<bool> {
+    for polygon in polygons {
+        if crate::geometry::classify_point(point, &polygon.support)?
+            != crate::geometry::Classification::On
+        {
+            continue;
+        }
+        let mut inside = true;
+        for edge in &polygon.edges {
+            if crate::geometry::classify_point(point, edge)?.is_positive() {
+                inside = false;
+                break;
+            }
+        }
+        if inside {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 fn unique_wntvs(polygons: &[ConvexPolygon]) -> Vec<Vec<i32>> {

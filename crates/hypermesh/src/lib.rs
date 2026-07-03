@@ -30,8 +30,8 @@ pub use intersection::{
 };
 pub use local_bsp::{BspLeaf, LocalBsp};
 pub use mesh::{
-    InputMesh, MeshRef, OutputVertex, PolygonSoup, Triangle, load_obj, parse_obj_str,
-    prepare_input, prepare_input_meshes, prepare_input_refs,
+    InputMesh, MeshRef, OutputVertex, PolygonSoup, Triangle, prepare_input, prepare_input_meshes,
+    prepare_input_refs,
 };
 pub use operations::{
     EmberConfig, boolean_difference, boolean_difference_refs, boolean_intersection,
@@ -40,7 +40,7 @@ pub use operations::{
 };
 pub use output::{
     BooleanResult, ClassifiedPolygon, OutputPolygon, TriangleSoup, extract_output,
-    resolve_tjunctions, to_obj_string, triangulate_and_resolve, triangulate_output,
+    resolve_tjunctions, triangulate_and_resolve, triangulate_output,
 };
 pub use polygon::{ApproxBounds, ConvexPolygon, make_quad, make_triangle};
 pub use segment_trace::{
