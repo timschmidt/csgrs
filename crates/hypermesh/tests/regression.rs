@@ -448,17 +448,29 @@ fn bvh_candidates_match_bruteforce_bounds_for_complex_fixture() {
 fn generated_sphere_booleans_are_closed() {
     let a = octahedron([r(0), r(0), r(0)], r(3));
     let b = octahedron([r(1), r(1), r(1)], r(3));
+    let refs = [a.as_ref(), b.as_ref()];
 
     for op in [
         BooleanOp::Union,
         BooleanOp::Intersection,
         BooleanOp::Difference,
-        BooleanOp::SymmetricDifference,
     ] {
-        let result = run_op(&a, &b, op).unwrap_or_else(|err| panic!("{op:?} failed: {err:?}"));
+        let result = triangulate_and_resolve_certified(
+            &boolean_operation_refs(&refs, op, config())
+                .unwrap_or_else(|err| panic!("{op:?} failed: {err:?}")),
+        )
+        .unwrap_or_else(|err| panic!("{op:?} certified output failed: {err:?}"));
         if !result.triangles.is_empty() {
             assert_closed_triangle_soup(&result);
         }
+    }
+
+    let symmetric_difference =
+        run_op(&a, &b, BooleanOp::SymmetricDifference).unwrap_or_else(|err| {
+            panic!("SymmetricDifference failed: {err:?}");
+        });
+    if !symmetric_difference.triangles.is_empty() {
+        assert_closed_triangle_soup(&symmetric_difference);
     }
 }
 
