@@ -22,6 +22,8 @@ pub struct EmberConfig {
     pub max_depth: usize,
     /// Enable WNV reachability early-out.
     pub use_early_termination: bool,
+    /// Enable proven exact shortcut paths before the general subdivision path.
+    pub use_proven_shortcuts: bool,
     /// Assume every source mesh has no self-intersections.
     pub assume_nsi: bool,
     /// Assume every source mesh has no nested components.
@@ -34,6 +36,7 @@ impl Default for EmberConfig {
             leaf_threshold: crate::subdivision::DEFAULT_LEAF_THRESHOLD,
             max_depth: crate::subdivision::DEFAULT_MAX_DEPTH,
             use_early_termination: true,
+            use_proven_shortcuts: true,
             assume_nsi: false,
             assume_nnc: false,
         }
@@ -48,20 +51,22 @@ pub fn boolean_operation_refs(
 ) -> HypermeshResult<BooleanResult> {
     validate_mesh_refs(meshes)?;
 
-    if let Some(result) = disjoint_bounds_boolean(meshes, op)? {
-        return Ok(result);
-    }
-    if let Some(result) = same_surface_boolean(meshes, op)? {
-        return Ok(result);
-    }
-    if let Some(result) = containment_boolean(meshes, op)? {
-        return Ok(result);
-    }
-    if let Some(result) = boundary_only_contact_boolean(meshes, op)? {
-        return Ok(result);
-    }
-    if let Some(result) = oriented_box_boolean(meshes, op)? {
-        return Ok(result);
+    if config.use_proven_shortcuts {
+        if let Some(result) = disjoint_bounds_boolean(meshes, op)? {
+            return Ok(result);
+        }
+        if let Some(result) = same_surface_boolean(meshes, op)? {
+            return Ok(result);
+        }
+        if let Some(result) = containment_boolean(meshes, op)? {
+            return Ok(result);
+        }
+        if let Some(result) = boundary_only_contact_boolean(meshes, op)? {
+            return Ok(result);
+        }
+        if let Some(result) = oriented_box_boolean(meshes, op)? {
+            return Ok(result);
+        }
     }
 
     let mut soup = prepare_input_refs(meshes)?;

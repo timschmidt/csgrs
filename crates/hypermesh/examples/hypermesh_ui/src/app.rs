@@ -85,6 +85,7 @@ impl MainApp {
             leaf_threshold: 1,
             max_depth: 8,
             use_early_termination: false,
+            use_proven_shortcuts: true,
             assume_nsi: true,
             assume_nnc: true,
         };
@@ -701,6 +702,7 @@ mod tests {
             leaf_threshold: 1,
             max_depth: 8,
             use_early_termination: false,
+            use_proven_shortcuts: true,
             assume_nsi: true,
             assume_nnc: true,
         };

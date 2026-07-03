@@ -59,7 +59,9 @@ preserves the left operand.
 Same-basis oriented boxes are handled by exact cell decompositions before
 subdivision. Ordered axis-aligned box fixtures are covered by that same path.
 The regression suite verifies this through the certified no-repair
-triangulation helper.
+triangulation helper. `EmberConfig::use_proven_shortcuts` can disable these
+pre-subdivision equivalence paths; the core suite exercises overlapping boxes
+through the general subdivision/BSP classifier with shortcuts disabled.
 
 Subdivision depth is a certification budget, not a permission to guess. If a
 task reaches `max_depth` while it still contains more polygons than the leaf

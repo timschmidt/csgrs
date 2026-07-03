@@ -165,6 +165,7 @@ fn config() -> EmberConfig {
         leaf_threshold: 1,
         max_depth: 10,
         use_early_termination: false,
+        use_proven_shortcuts: true,
         assume_nsi: true,
         assume_nnc: true,
     }

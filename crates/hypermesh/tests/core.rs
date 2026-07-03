@@ -679,7 +679,7 @@ fn disjoint_cube_booleans_have_expected_polygon_counts() {
 }
 
 #[test]
-fn overlapping_cube_booleans_clip_and_resolve_exactly() {
+fn overlapping_cube_booleans_use_general_path_when_shortcuts_disabled() {
     let cube_a = cube_mesh(0, 2);
     let cube_b = cube_mesh(1, 3);
     let config = EmberConfig {
@@ -688,7 +688,9 @@ fn overlapping_cube_booleans_clip_and_resolve_exactly() {
         assume_nsi: true,
         assume_nnc: true,
         use_early_termination: false,
+        use_proven_shortcuts: false,
     };
+    assert!(!config.use_proven_shortcuts);
 
     let union = hypermesh::boolean_union(&cube_a, &cube_b, config).unwrap();
     let union_soup = triangulate_and_resolve(&union).unwrap();
