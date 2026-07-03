@@ -2,7 +2,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::error::HypermeshResult;
+use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, compare_real};
 use crate::mesh::{OutputVertex, PolygonSoup};
 use crate::polygon::ConvexPolygon;
@@ -160,6 +160,27 @@ pub fn triangulate_and_resolve(result: &BooleanResult) -> HypermeshResult<Triang
     Ok(soup)
 }
 
+/// Fan-triangulates and resolves exact duplicate/T-junction artifacts, but
+/// does not cap or peel boundaries.
+///
+/// This is useful for tests and callers that need evidence that the classified
+/// arrangement is already a closed regularized surface. Non-empty open or
+/// zero-volume soups are reported as uncertified instead of being repaired.
+pub fn triangulate_and_resolve_certified(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
+    let mut soup = resolve_tjunctions(&triangulate_output(result)?)?;
+    if soup.triangles.is_empty() {
+        return Ok(soup);
+    }
+    if !triangle_soup_is_closed(&soup) {
+        return Err(HypermeshError::UnknownClassification);
+    }
+    if crate::geometry::classify_real(&signed_volume_numerator(&soup))? == Classification::On {
+        return Err(HypermeshError::UnknownClassification);
+    }
+    fix_winding_by_signed_volume(&mut soup)?;
+    Ok(soup)
+}
+
 /// Fan-triangulates a borrowed polygon slice.
 pub fn triangulate_polygons(polygons: &[ConvexPolygon]) -> HypermeshResult<TriangleSoup> {
     let mut soup = TriangleSoup::default();
@@ -270,6 +291,14 @@ fn triangle_edge_counts(triangles: &[[usize; 3]]) -> BTreeMap<[usize; 2], usize>
         }
     }
     counts
+}
+
+/// Returns true when every undirected triangle edge is used by exactly two
+/// triangles.
+pub fn triangle_soup_is_closed(soup: &TriangleSoup) -> bool {
+    triangle_edge_counts(&soup.triangles)
+        .values()
+        .all(|count| *count == 2)
 }
 
 fn fill_boundary_loops(soup: &mut TriangleSoup) {

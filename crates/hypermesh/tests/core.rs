@@ -7,7 +7,7 @@ use hypermesh::{
     classify_point, classify_polygon_output, extract_output, find_probe_point, intersect_polygons,
     make_indicator, make_quad, make_triangle, prepare_input, prepare_input_meshes, process_leaf,
     process_leaf_into, subdivide, trace_axis_segment, trace_segment, triangulate_and_resolve,
-    triangulate_output,
+    triangulate_and_resolve_certified, triangulate_output,
 };
 
 fn r(value: i32) -> Real {
@@ -526,6 +526,25 @@ fn resolve_tjunctions_merges_duplicate_vertices_and_faces_exactly() {
 
     assert_eq!(resolved.vertices.len(), 3);
     assert_eq!(resolved.triangles.len(), 1);
+}
+
+#[test]
+fn certified_triangulation_rejects_open_output_without_repair() {
+    let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let result = hypermesh::BooleanResult::new(
+        hypermesh::PolygonSoup {
+            polygons: vec![polygon],
+            bounds: hypermesh::Aabb::new(p(0, 0, 0), p(1, 1, 0)),
+            num_meshes: 1,
+        },
+        vec![1],
+    );
+
+    let raw = triangulate_output(&result).unwrap();
+    assert!(!hypermesh::triangle_soup_is_closed(&raw));
+
+    let err = triangulate_and_resolve_certified(&result).unwrap_err();
+    assert_eq!(err, HypermeshError::UnknownClassification);
 }
 
 #[test]

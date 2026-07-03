@@ -5,6 +5,7 @@ use hypermesh::{
     Aabb, BooleanOp, EmberConfig, ExactBvh, HypermeshResult, InputMesh, MeshRef, OutputVertex,
     Point3, Real, Triangle, TriangleSoup, boolean_difference, boolean_intersection,
     boolean_operation_refs, boolean_union, prepare_input_meshes, triangulate_and_resolve,
+    triangulate_and_resolve_certified,
 };
 
 fn r(value: i32) -> Real {
@@ -184,7 +185,7 @@ fn run_op(a: &InputMesh, b: &InputMesh, op: BooleanOp) -> HypermeshResult<Triang
 
 fn run_general_op(a: &InputMesh, b: &InputMesh, op: BooleanOp) -> HypermeshResult<TriangleSoup> {
     let refs = [a.as_ref(), b.as_ref()];
-    triangulate_and_resolve(&boolean_operation_refs(&refs, op, general_config())?)
+    triangulate_and_resolve_certified(&boolean_operation_refs(&refs, op, general_config())?)
 }
 
 fn run_op_refs(meshes: &[MeshRef<'_>], op: BooleanOp) -> HypermeshResult<TriangleSoup> {
