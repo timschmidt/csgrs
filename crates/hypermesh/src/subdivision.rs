@@ -521,11 +521,7 @@ fn compute_new_reference(
 
     let projected = project_reference_point(old_ref, bounds)?;
     for target in reference_targets_from_projection(&projected, bounds, polygons)? {
-        if point_lies_on_local_surface(&target, polygons)? {
-            continue;
-        }
-        if let Ok(winding) =
-            crate::segment_trace::trace_segment(old_ref, &target, old_wnv, polygons)
+        if let Some(winding) = trace_reference_target(old_ref, old_wnv, bounds, polygons, &target)?
         {
             return Ok((target, winding));
         }
@@ -538,6 +534,23 @@ fn compute_new_reference(
     }
 
     Err(crate::error::HypermeshError::UnknownClassification)
+}
+
+fn trace_reference_target(
+    old_ref: &Point3,
+    old_wnv: &[i32],
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    target: &Point3,
+) -> HypermeshResult<Option<Vec<i32>>> {
+    if !is_valid_reference_for_bounds(target, bounds, polygons)? {
+        return Ok(None);
+    }
+    match crate::segment_trace::trace_segment(old_ref, target, old_wnv, polygons) {
+        Ok(winding) => Ok(Some(winding)),
+        Err(crate::error::HypermeshError::UnknownClassification) => Ok(None),
+        Err(err) => Err(err),
+    }
 }
 
 fn is_valid_reference_for_bounds(
@@ -621,11 +634,7 @@ fn support_plane_cell_reference(
         if point_lies_on_any_support_plane(&target, polygons)? {
             continue;
         }
-        if point_lies_on_local_surface(&target, polygons)? {
-            continue;
-        }
-        if let Ok(winding) =
-            crate::segment_trace::trace_segment(old_ref, &target, old_wnv, polygons)
+        if let Some(winding) = trace_reference_target(old_ref, old_wnv, bounds, polygons, &target)?
         {
             return Ok(Some((target, winding)));
         }
@@ -1021,6 +1030,23 @@ mod tests {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
         assert!(!is_valid_reference_for_bounds(&p(2, 2, 1), &bounds, &[wall]).unwrap());
+    }
+
+    #[test]
+    fn trace_reference_target_rejects_uncertified_targets() {
+        let mut wall = make_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+
+        assert_eq!(
+            trace_reference_target(&p(-1, -1, -1), &[0], &bounds, &[wall.clone()], &p(2, 2, 1))
+                .unwrap(),
+            None
+        );
+        assert_eq!(
+            trace_reference_target(&p(-1, -1, -1), &[0], &bounds, &[wall], &p(5, 2, 2)).unwrap(),
+            None
+        );
     }
 
     #[test]
