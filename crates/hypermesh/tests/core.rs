@@ -476,6 +476,8 @@ fn process_leaf_uses_bsp_for_intersecting_cross_mesh_polygons() {
 
 #[test]
 fn boolean_operation_refs_runs_leaf_pipeline_from_borrowed_meshes() {
+    assert!(!EmberConfig::default().use_proven_shortcuts);
+
     let positions = vec![p(1, -1, -1), p(1, 1, -1), p(1, 0, 1)];
     let triangles = vec![Triangle::new(0, 1, 2)];
     let mesh = hypermesh::MeshRef {
@@ -489,6 +491,7 @@ fn boolean_operation_refs_runs_leaf_pipeline_from_borrowed_meshes() {
 
     assert_eq!(result.classifications.len(), result.output.polygons.len());
     assert!(!result.output.polygons.is_empty());
+    assert!(result.winding_pairs.iter().all(Option::is_some));
 }
 
 #[test]

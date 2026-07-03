@@ -36,7 +36,7 @@ impl Default for EmberConfig {
             leaf_threshold: crate::subdivision::DEFAULT_LEAF_THRESHOLD,
             max_depth: crate::subdivision::DEFAULT_MAX_DEPTH,
             use_early_termination: true,
-            use_proven_shortcuts: true,
+            use_proven_shortcuts: false,
             assume_nsi: false,
             assume_nnc: false,
         }
