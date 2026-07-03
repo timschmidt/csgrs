@@ -342,7 +342,7 @@ pub fn classify_leaf_polygon(
     for point in &interior_points {
         for positive_side in [true, false] {
             for (probe, probe_side) in
-                bounded_probes_from_interior(point, support, bounds, positive_side)?
+                bounded_probes_from_interior(point, support, bounds, positive_side, polygons)?
             {
                 if point_lies_on_traced_surface(&probe, polygons)? {
                     continue;
@@ -604,9 +604,9 @@ fn bounded_probes_from_interior(
     support: &Plane,
     bounds: &Aabb,
     positive_side: bool,
+    polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<(Point3, Classification)>> {
     let mut probes = Vec::new();
-    let fractions = [(1u64, 2u64), (1, 3), (2, 3), (1, 4), (3, 4)];
 
     for axis in probe_axes(support)? {
         let normal_sign = crate::geometry::classify_real(axis_ref(&support.normal, axis))?;
@@ -625,28 +625,96 @@ fn bounded_probes_from_interior(
             continue;
         }
 
-        for (numerator, denominator) in fractions {
-            let offset = ((room.clone() * Real::from(numerator)) / Real::from(denominator))
-                .map_err(|_| HypermeshError::UnknownClassification)?;
-            let mut probe = interior.clone();
-            *axis_mut(&mut probe, axis) = if direction_positive {
-                axis_value + &offset
-            } else {
-                axis_value - &offset
-            };
+        let Some(probe) =
+            adjacent_axis_probe(interior, bounds, polygons, axis, direction_positive)?
+        else {
+            continue;
+        };
 
-            let side = classify_point(&probe, support)?;
-            if side != Classification::On
-                && !probes
-                    .iter()
-                    .any(|(existing, _): &(Point3, Classification)| existing == &probe)
-            {
-                probes.push((probe, side));
-            }
+        let side = classify_point(&probe, support)?;
+        if side != Classification::On
+            && !probes
+                .iter()
+                .any(|(existing, _): &(Point3, Classification)| existing == &probe)
+        {
+            probes.push((probe, side));
         }
     }
 
     Ok(probes)
+}
+
+fn adjacent_axis_probe(
+    interior: &Point3,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    axis: usize,
+    direction_positive: bool,
+) -> HypermeshResult<Option<Point3>> {
+    let start_value = axis_ref(interior, axis);
+    let bound_value = if direction_positive {
+        axis_ref(&bounds.max, axis)
+    } else {
+        axis_ref(&bounds.min, axis)
+    };
+    if !axis_value_after_start(start_value, bound_value, direction_positive)? {
+        return Ok(None);
+    }
+
+    let mut endpoint = interior.clone();
+    *axis_mut(&mut endpoint, axis) = bound_value.clone();
+    let mut stop_value = bound_value.clone();
+
+    for polygon in polygons {
+        if polygon.mesh_index < 0 {
+            continue;
+        }
+
+        let Some(crossing) = segment_plane_crossing(interior, &endpoint, &polygon.support)? else {
+            continue;
+        };
+        if !point_strictly_between_axis(&crossing, interior, &endpoint, axis)? {
+            continue;
+        }
+        if !point_lies_on_polygon(&crossing, polygon)? {
+            continue;
+        }
+
+        let crossing_value = axis_ref(&crossing, axis);
+        if axis_value_after_start(start_value, crossing_value, direction_positive)?
+            && axis_value_before_stop(crossing_value, &stop_value, direction_positive)?
+        {
+            stop_value = crossing_value.clone();
+        }
+    }
+
+    if !axis_value_after_start(start_value, &stop_value, direction_positive)? {
+        return Ok(None);
+    }
+
+    let midpoint = ((start_value + &stop_value) / Real::from(2))
+        .map_err(|_| HypermeshError::UnknownClassification)?;
+    let mut probe = interior.clone();
+    *axis_mut(&mut probe, axis) = midpoint;
+    Ok(Some(probe))
+}
+
+fn axis_value_after_start(
+    start: &Real,
+    value: &Real,
+    direction_positive: bool,
+) -> HypermeshResult<bool> {
+    let order = compare_real(value, start)?;
+    Ok((direction_positive && order.is_gt()) || (!direction_positive && order.is_lt()))
+}
+
+fn axis_value_before_stop(
+    value: &Real,
+    stop: &Real,
+    direction_positive: bool,
+) -> HypermeshResult<bool> {
+    let order = compare_real(value, stop)?;
+    Ok((direction_positive && order.is_lt()) || (!direction_positive && order.is_gt()))
 }
 
 fn probe_axes(support: &Plane) -> HypermeshResult<Vec<usize>> {

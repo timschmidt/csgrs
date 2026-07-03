@@ -41,9 +41,10 @@ general path. Remaining gaps are tracked by code paths that can still return
 `UnknownClassification`.
 
 Leaf classification currently searches certified off-face probes from exact
-leaf interior points. If a probe lies on a traced surface, cannot reach the
-adjacent cell, or cannot be traced from the reference point, that probe is
-discarded. If no certified probe path remains, the leaf reports
+leaf interior points by stepping into the open interval before the nearest
+crossed local surface or AABB boundary. If a probe lies on a traced surface,
+cannot reach the adjacent cell, or cannot be traced from the reference point,
+that probe is discarded. If no certified probe path remains, the leaf reports
 `UnknownClassification`; there is no silent fallback to the reference winding
 number.
 
