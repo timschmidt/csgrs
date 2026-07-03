@@ -203,10 +203,10 @@ fn triangulate_output(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
 ///
 /// This is useful for tests and callers that need evidence that the classified
 /// arrangement is already a closed regularized PWN surface. Non-manifold edge
-/// valence is allowed, but non-empty open or zero-volume soups are reported as
-/// uncertified.
+/// valence is allowed, but non-empty open, reversed, or zero-volume soups are
+/// reported as uncertified.
 pub fn triangulate_and_resolve_certified(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
-    let mut soup = resolve_tjunctions(&triangulate_output(result)?)?;
+    let soup = resolve_tjunctions(&triangulate_output(result)?)?;
     if soup.triangles.is_empty() {
         return Ok(soup);
     }
@@ -217,10 +217,7 @@ pub fn triangulate_and_resolve_certified(result: &BooleanResult) -> HypermeshRes
             non_manifold_edges: closure.non_manifold_edges,
         });
     }
-    if crate::geometry::classify_real(&signed_volume_numerator(&soup))? == Classification::On {
-        return Err(HypermeshError::UnknownClassification);
-    }
-    fix_winding_by_signed_volume(&mut soup)?;
+    certify_positive_signed_volume(&soup)?;
     Ok(soup)
 }
 
@@ -273,7 +270,6 @@ fn resolve_tjunctions(input: &TriangleSoup) -> HypermeshResult<TriangleSoup> {
         return Err(HypermeshError::UnknownClassification);
     }
 
-    fix_winding_by_signed_volume(&mut soup)?;
     Ok(soup)
 }
 
@@ -658,12 +654,10 @@ fn dominant_component_axis(values: &[Real; 3]) -> HypermeshResult<usize> {
     Ok(best)
 }
 
-fn fix_winding_by_signed_volume(soup: &mut TriangleSoup) -> HypermeshResult<()> {
+fn certify_positive_signed_volume(soup: &TriangleSoup) -> HypermeshResult<()> {
     let volume = signed_volume_numerator(soup);
-    if crate::geometry::classify_real(&volume)? == Classification::Negative {
-        for triangle in &mut soup.triangles {
-            triangle.swap(0, 1);
-        }
+    if crate::geometry::classify_real(&volume)? != Classification::Positive {
+        return Err(HypermeshError::UnknownClassification);
     }
     Ok(())
 }
@@ -728,6 +722,13 @@ mod tests {
             x: r(x),
             y: r(y),
             z: r(z),
+        }
+    }
+
+    fn positive_tetra_soup() -> TriangleSoup {
+        TriangleSoup {
+            vertices: vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 1, 0), ov(0, 0, 1)],
+            triangles: vec![[0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]],
         }
     }
 
@@ -862,5 +863,29 @@ mod tests {
 
         let err = triangulate_and_resolve_certified(&result).unwrap_err();
         assert!(matches!(err, HypermeshError::OpenOutput { .. }));
+    }
+
+    #[test]
+    fn signed_volume_certification_accepts_only_positive_orientation() {
+        let positive = positive_tetra_soup();
+        certify_positive_signed_volume(&positive).unwrap();
+
+        let mut reversed = positive.clone();
+        for triangle in &mut reversed.triangles {
+            triangle.swap(0, 1);
+        }
+        assert_eq!(
+            certify_positive_signed_volume(&reversed),
+            Err(HypermeshError::UnknownClassification)
+        );
+
+        let flat = TriangleSoup {
+            vertices: vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 1, 0)],
+            triangles: vec![[0, 1, 2]],
+        };
+        assert_eq!(
+            certify_positive_signed_volume(&flat),
+            Err(HypermeshError::UnknownClassification)
+        );
     }
 }
