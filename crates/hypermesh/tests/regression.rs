@@ -348,6 +348,37 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
 }
 
 #[test]
+fn axis_aligned_box_booleans_use_exact_cell_decomposition_without_fast_paths() {
+    let cube_a = box_mesh([-1, -1, -1], [1, 1, 1]);
+    let cube_b = rational_cube([ratio(1, 2), ratio(1, 2), ratio(1, 2)], r(1));
+
+    let union = run_general_op(&cube_a, &cube_b, BooleanOp::Union).unwrap();
+    assert_closed_triangle_soup(&union);
+    assert_bounds(
+        &union,
+        [r(-1), r(-1), r(-1)],
+        [ratio(3, 2), ratio(3, 2), ratio(3, 2)],
+    )
+    .unwrap();
+    assert_volume_numerator(&union, ratio(303, 4));
+
+    let intersection = run_general_op(&cube_a, &cube_b, BooleanOp::Intersection).unwrap();
+    assert_closed_triangle_soup(&intersection);
+    assert_bounds(
+        &intersection,
+        [ratio(-1, 2), ratio(-1, 2), ratio(-1, 2)],
+        [r(1), r(1), r(1)],
+    )
+    .unwrap();
+    assert_volume_numerator(&intersection, ratio(81, 4));
+
+    let difference = run_general_op(&cube_a, &cube_b, BooleanOp::Difference).unwrap();
+    assert_closed_triangle_soup(&difference);
+    assert_bounds(&difference, [r(-1), r(-1), r(-1)], [r(1), r(1), r(1)]).unwrap();
+    assert_volume_numerator(&difference, ratio(111, 4));
+}
+
+#[test]
 fn roundtrip_preserves_triangle_vertices_exactly() {
     let mesh = octahedron([r(0), r(0), r(0)], r(2));
     let soup = prepare_input_meshes(std::slice::from_ref(&mesh)).unwrap();
