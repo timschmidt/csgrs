@@ -543,9 +543,22 @@ fn certified_triangulation_rejects_open_output_without_repair() {
 
     let raw = triangulate_output(&result).unwrap();
     assert!(!hypermesh::triangle_soup_is_closed(&raw));
+    assert_eq!(
+        hypermesh::triangle_soup_closure_report(&raw),
+        hypermesh::TriangleSoupClosureReport {
+            boundary_edges: 3,
+            non_manifold_edges: 0,
+        }
+    );
 
     let err = triangulate_and_resolve_certified(&result).unwrap_err();
-    assert_eq!(err, HypermeshError::UnknownClassification);
+    assert_eq!(
+        err,
+        HypermeshError::OpenOutput {
+            boundary_edges: 3,
+            non_manifold_edges: 0,
+        }
+    );
 }
 
 #[test]

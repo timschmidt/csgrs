@@ -117,6 +117,23 @@ pub struct TriangleSoup {
     pub triangles: Vec<[usize; 3]>,
 }
 
+/// Exact closure summary for an indexed triangle soup.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct TriangleSoupClosureReport {
+    /// Number of undirected edges used by exactly one triangle.
+    pub boundary_edges: usize,
+    /// Number of undirected edges used by more than two triangles.
+    pub non_manifold_edges: usize,
+}
+
+impl TriangleSoupClosureReport {
+    /// Returns true when every undirected edge is used by exactly two
+    /// triangles.
+    pub const fn is_closed(self) -> bool {
+        self.boundary_edges == 0 && self.non_manifold_edges == 0
+    }
+}
+
 /// Extracts output polygons from a boolean result.
 pub fn extract_output(result: &BooleanResult) -> HypermeshResult<Vec<OutputPolygon>> {
     extract_output_polygons(&result.output.polygons)
@@ -180,8 +197,12 @@ pub fn triangulate_and_resolve_certified(result: &BooleanResult) -> HypermeshRes
     if soup.triangles.is_empty() {
         return Ok(soup);
     }
-    if !triangle_soup_is_closed(&soup) {
-        return Err(HypermeshError::UnknownClassification);
+    let closure = triangle_soup_closure_report(&soup);
+    if !closure.is_closed() {
+        return Err(HypermeshError::OpenOutput {
+            boundary_edges: closure.boundary_edges,
+            non_manifold_edges: closure.non_manifold_edges,
+        });
     }
     if crate::geometry::classify_real(&signed_volume_numerator(&soup))? == Classification::On {
         return Err(HypermeshError::UnknownClassification);
@@ -305,9 +326,20 @@ fn triangle_edge_counts(triangles: &[[usize; 3]]) -> BTreeMap<[usize; 2], usize>
 /// Returns true when every undirected triangle edge is used by exactly two
 /// triangles.
 pub fn triangle_soup_is_closed(soup: &TriangleSoup) -> bool {
-    triangle_edge_counts(&soup.triangles)
-        .values()
-        .all(|count| *count == 2)
+    triangle_soup_closure_report(soup).is_closed()
+}
+
+/// Counts exact boundary and non-manifold edges in a triangle soup.
+pub fn triangle_soup_closure_report(soup: &TriangleSoup) -> TriangleSoupClosureReport {
+    let mut report = TriangleSoupClosureReport::default();
+    for count in triangle_edge_counts(&soup.triangles).values() {
+        if *count == 1 {
+            report.boundary_edges += 1;
+        } else if *count > 2 {
+            report.non_manifold_edges += 1;
+        }
+    }
+    report
 }
 
 fn fill_boundary_loops(soup: &mut TriangleSoup) {
