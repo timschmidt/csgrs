@@ -340,7 +340,7 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
 }
 
 #[test]
-fn axis_aligned_box_booleans_use_exact_cell_decomposition_with_certified_output() {
+fn ordered_axis_aligned_boxes_use_same_basis_cell_decomposition_with_certified_output() {
     let cube_a = box_mesh([-1, -1, -1], [1, 1, 1]);
     let cube_b = rational_cube([ratio(1, 2), ratio(1, 2), ratio(1, 2)], r(1));
 

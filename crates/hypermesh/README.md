@@ -47,9 +47,10 @@ mesh and no pair of faces has a certified transverse crossing through both
 face interiors. In that case, regularized intersection is empty and difference
 preserves the left operand.
 
-Same-basis oriented boxes and detected axis-aligned boxes are handled by exact
-cell decompositions before subdivision. The regression suite verifies these
-paths through the certified no-repair triangulation helper.
+Same-basis oriented boxes are handled by exact cell decompositions before
+subdivision. Ordered axis-aligned box fixtures are covered by that same path.
+The regression suite verifies this through the certified no-repair
+triangulation helper.
 
 Subdivision depth is a certification budget, not a permission to guess. If a
 task reaches `max_depth` while it still contains more polygons than the leaf

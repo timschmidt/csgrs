@@ -63,9 +63,6 @@ pub fn boolean_operation_refs(
     if let Some(result) = oriented_box_boolean(meshes, op)? {
         return Ok(result);
     }
-    if let Some(result) = axis_aligned_box_boolean(meshes, op)? {
-        return Ok(result);
-    }
 
     let mut soup = prepare_input_refs(meshes)?;
     for polygon in &mut soup.polygons {
@@ -546,12 +543,6 @@ fn combine_mesh_ref_with_inverted_hole(outer: MeshRef<'_>, hole: MeshRef<'_>) ->
 }
 
 #[derive(Clone, Debug, PartialEq)]
-struct BoxBounds {
-    min: [Real; 3],
-    max: [Real; 3],
-}
-
-#[derive(Clone, Debug, PartialEq)]
 struct OrientedBox {
     min: [Real; 3],
     max: [Real; 3],
@@ -765,153 +756,6 @@ fn bounds_from_meshes(meshes: &[MeshRef<'_>]) -> HypermeshResult<Aabb> {
     Ok(Aabb::new(min, max))
 }
 
-fn axis_aligned_box_boolean(
-    meshes: &[MeshRef<'_>],
-    op: BooleanOp,
-) -> HypermeshResult<Option<BooleanResult>> {
-    if meshes.is_empty() {
-        return Ok(None);
-    }
-
-    let mut boxes = Vec::with_capacity(meshes.len());
-    for mesh in meshes {
-        let Some(bounds) = detect_axis_aligned_box(mesh)? else {
-            return Ok(None);
-        };
-        boxes.push(bounds);
-    }
-
-    let mut xs = sorted_unique_reals(
-        boxes
-            .iter()
-            .flat_map(|bounds| [bounds.min[0].clone(), bounds.max[0].clone()]),
-    )?;
-    let mut ys = sorted_unique_reals(
-        boxes
-            .iter()
-            .flat_map(|bounds| [bounds.min[1].clone(), bounds.max[1].clone()]),
-    )?;
-    let mut zs = sorted_unique_reals(
-        boxes
-            .iter()
-            .flat_map(|bounds| [bounds.min[2].clone(), bounds.max[2].clone()]),
-    )?;
-    xs.retain_adjacent_unique();
-    ys.retain_adjacent_unique();
-    zs.retain_adjacent_unique();
-
-    let indicator = make_indicator(op, boxes.len());
-    let mut selected = BTreeSet::new();
-    for ix in 0..xs.len().saturating_sub(1) {
-        for iy in 0..ys.len().saturating_sub(1) {
-            for iz in 0..zs.len().saturating_sub(1) {
-                let mid = [
-                    midpoint_real(&xs[ix], &xs[ix + 1]),
-                    midpoint_real(&ys[iy], &ys[iy + 1]),
-                    midpoint_real(&zs[iz], &zs[iz + 1]),
-                ];
-                let w = boxes
-                    .iter()
-                    .map(|bounds| {
-                        if point_strictly_inside_box(&mid, bounds)? {
-                            Ok(1)
-                        } else {
-                            Ok(0)
-                        }
-                    })
-                    .collect::<HypermeshResult<Vec<_>>>()?;
-                if indicator(&w) {
-                    selected.insert((ix, iy, iz));
-                }
-            }
-        }
-    }
-
-    let output_bounds = bounds_from_box_bounds(&boxes);
-    if selected.is_empty() {
-        return Ok(Some(BooleanResult::new(
-            PolygonSoup {
-                polygons: Vec::new(),
-                bounds: output_bounds,
-                num_meshes: meshes.len(),
-            },
-            Vec::new(),
-        )));
-    }
-
-    let mut builder = CellMeshBuilder::default();
-    for &(ix, iy, iz) in &selected {
-        let min = [xs[ix].clone(), ys[iy].clone(), zs[iz].clone()];
-        let max = [xs[ix + 1].clone(), ys[iy + 1].clone(), zs[iz + 1].clone()];
-
-        for (axis, positive) in [
-            (0usize, false),
-            (0, true),
-            (1, false),
-            (1, true),
-            (2, false),
-            (2, true),
-        ] {
-            let neighbor = neighbor_cell((ix, iy, iz), axis, positive);
-            if neighbor.is_some_and(|cell| selected.contains(&cell)) {
-                continue;
-            }
-            builder.add_cell_face(&min, &max, axis, positive);
-        }
-    }
-
-    let mut mesh = InputMesh::new(builder.positions, builder.triangles);
-    mesh.nsi = true;
-    mesh.nnc = true;
-    let soup = prepare_input_refs(&[mesh.as_ref()])?;
-    let classifications = vec![1; soup.polygons.len()];
-    Ok(Some(BooleanResult::new(soup, classifications)))
-}
-
-fn detect_axis_aligned_box(mesh: &MeshRef<'_>) -> HypermeshResult<Option<BoxBounds>> {
-    if mesh.positions.len() != 8 || mesh.triangles.len() != 12 {
-        return Ok(None);
-    }
-
-    let mut min = [
-        mesh.positions[0].x.clone(),
-        mesh.positions[0].y.clone(),
-        mesh.positions[0].z.clone(),
-    ];
-    let mut max = min.clone();
-    for point in &mesh.positions[1..] {
-        for axis in 0..3 {
-            if compare_real(axis_ref(point, axis), &min[axis])?.is_lt() {
-                min[axis] = axis_ref(point, axis).clone();
-            }
-            if compare_real(axis_ref(point, axis), &max[axis])?.is_gt() {
-                max[axis] = axis_ref(point, axis).clone();
-            }
-        }
-    }
-
-    let mut corners = BTreeSet::new();
-    for point in mesh.positions {
-        let mut key = Vec::with_capacity(3);
-        for axis in 0..3 {
-            let value = axis_ref(point, axis);
-            if value == &min[axis] {
-                key.push(format!("min{axis}"));
-            } else if value == &max[axis] {
-                key.push(format!("max{axis}"));
-            } else {
-                return Ok(None);
-            }
-        }
-        corners.insert(key);
-    }
-    if corners.len() != 8 {
-        return Ok(None);
-    }
-
-    Ok(Some(BoxBounds { min, max }))
-}
-
 fn sorted_unique_reals(values: impl IntoIterator<Item = Real>) -> HypermeshResult<Vec<Real>> {
     let mut sorted = Vec::new();
     for value in values {
@@ -951,42 +795,6 @@ fn midpoint_real(left: &Real, right: &Real) -> Real {
     ((left + right) / Real::from(2)).expect("division by literal two is valid")
 }
 
-fn point_strictly_inside_box(point: &[Real; 3], bounds: &BoxBounds) -> HypermeshResult<bool> {
-    for (axis, value) in point.iter().enumerate() {
-        if !compare_real(value, &bounds.min[axis])?.is_gt()
-            || !compare_real(value, &bounds.max[axis])?.is_lt()
-        {
-            return Ok(false);
-        }
-    }
-    Ok(true)
-}
-
-fn bounds_from_box_bounds(boxes: &[BoxBounds]) -> Aabb {
-    let mut min = boxes[0].min.clone();
-    let mut max = boxes[0].max.clone();
-    for bounds in &boxes[1..] {
-        for axis in 0..3 {
-            if compare_real(&bounds.min[axis], &min[axis])
-                .expect("box bounds should compare exactly")
-                .is_lt()
-            {
-                min[axis] = bounds.min[axis].clone();
-            }
-            if compare_real(&bounds.max[axis], &max[axis])
-                .expect("box bounds should compare exactly")
-                .is_gt()
-            {
-                max[axis] = bounds.max[axis].clone();
-            }
-        }
-    }
-    Aabb::new(
-        Point3::new(min[0].clone(), min[1].clone(), min[2].clone()),
-        Point3::new(max[0].clone(), max[1].clone(), max[2].clone()),
-    )
-}
-
 fn neighbor_cell(
     (ix, iy, iz): (usize, usize, usize),
     axis: usize,
@@ -1011,32 +819,6 @@ struct CellMeshBuilder {
 }
 
 impl CellMeshBuilder {
-    fn add_cell_face(&mut self, min: &[Real; 3], max: &[Real; 3], axis: usize, positive: bool) {
-        let corners = [
-            self.vertex([min[0].clone(), min[1].clone(), min[2].clone()]),
-            self.vertex([max[0].clone(), min[1].clone(), min[2].clone()]),
-            self.vertex([max[0].clone(), max[1].clone(), min[2].clone()]),
-            self.vertex([min[0].clone(), max[1].clone(), min[2].clone()]),
-            self.vertex([min[0].clone(), min[1].clone(), max[2].clone()]),
-            self.vertex([max[0].clone(), min[1].clone(), max[2].clone()]),
-            self.vertex([max[0].clone(), max[1].clone(), max[2].clone()]),
-            self.vertex([min[0].clone(), max[1].clone(), max[2].clone()]),
-        ];
-        let faces = match (axis, positive) {
-            (0, false) => [[0, 4, 7], [0, 7, 3]],
-            (0, true) => [[1, 2, 6], [1, 6, 5]],
-            (1, false) => [[0, 1, 5], [0, 5, 4]],
-            (1, true) => [[3, 7, 6], [3, 6, 2]],
-            (2, false) => [[0, 3, 2], [0, 2, 1]],
-            (2, true) => [[4, 5, 6], [4, 6, 7]],
-            _ => unreachable!("axis must be in 0..3"),
-        };
-        for [a, b, c] in faces {
-            self.triangles
-                .push(Triangle::new(corners[a], corners[b], corners[c]));
-        }
-    }
-
     fn add_oriented_cell_face(
         &mut self,
         min: &[Real; 3],
