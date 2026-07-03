@@ -1,7 +1,5 @@
 //! Leaf processing for the subdivision pipeline.
 
-use std::collections::BTreeMap;
-
 use crate::bvh::ExactBvh;
 use crate::clip::{ClipSide, clip_polygon};
 use crate::error::HypermeshResult;
@@ -469,64 +467,33 @@ fn pairwise_intersections_by_polygon(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>> {
     let mut by_polygon = vec![Vec::new(); polygons.len()];
-    let mesh_groups = mesh_groups(polygons);
+    let bvh = ExactBvh::build(polygons)?;
+    let mut candidate_pairs = Vec::new();
+    bvh.intersect_pairs(&bvh, |left, right| {
+        if left < right {
+            candidate_pairs.push((left, right));
+        }
+    })?;
 
-    for (mesh_i, ids_i) in mesh_groups.iter() {
-        for (mesh_j, ids_j) in mesh_groups.iter() {
-            if mesh_i >= mesh_j {
-                continue;
-            }
+    for (global_i, global_j) in candidate_pairs {
+        let intersection = intersect_polygons(&polygons[global_i], &polygons[global_j], global_j)?;
+        if matches!(
+            intersection.kind,
+            PairwiseIntersectionType::Segment | PairwiseIntersectionType::Overlap
+        ) {
+            by_polygon[global_i].push(intersection);
+        }
 
-            let polys_i = ids_i
-                .iter()
-                .map(|index| polygons[*index].clone())
-                .collect::<Vec<_>>();
-            let polys_j = ids_j
-                .iter()
-                .map(|index| polygons[*index].clone())
-                .collect::<Vec<_>>();
-            let bvh_i = ExactBvh::build(&polys_i)?;
-            let bvh_j = ExactBvh::build(&polys_j)?;
-
-            let mut candidate_pairs = Vec::new();
-            bvh_i.intersect_pairs(&bvh_j, |local_i, local_j| {
-                candidate_pairs.push((ids_i[local_i], ids_j[local_j]));
-            })?;
-
-            for (global_i, global_j) in candidate_pairs {
-                let intersection =
-                    intersect_polygons(&polygons[global_i], &polygons[global_j], global_j)?;
-                if matches!(
-                    intersection.kind,
-                    PairwiseIntersectionType::Segment | PairwiseIntersectionType::Overlap
-                ) {
-                    by_polygon[global_i].push(intersection);
-                }
-
-                let intersection =
-                    intersect_polygons(&polygons[global_j], &polygons[global_i], global_i)?;
-                if matches!(
-                    intersection.kind,
-                    PairwiseIntersectionType::Segment | PairwiseIntersectionType::Overlap
-                ) {
-                    by_polygon[global_j].push(intersection);
-                }
-            }
+        let intersection = intersect_polygons(&polygons[global_j], &polygons[global_i], global_i)?;
+        if matches!(
+            intersection.kind,
+            PairwiseIntersectionType::Segment | PairwiseIntersectionType::Overlap
+        ) {
+            by_polygon[global_j].push(intersection);
         }
     }
 
     Ok(by_polygon)
-}
-
-fn mesh_groups(polygons: &[ConvexPolygon]) -> BTreeMap<isize, Vec<usize>> {
-    let mut groups = BTreeMap::new();
-    for (index, polygon) in polygons.iter().enumerate() {
-        groups
-            .entry(polygon.mesh_index)
-            .or_insert_with(Vec::new)
-            .push(index);
-    }
-    groups
 }
 
 fn can_split_bounds(bounds: &Aabb) -> HypermeshResult<bool> {

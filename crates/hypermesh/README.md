@@ -46,7 +46,8 @@ cannot reach the adjacent cell, or cannot be traced from the reference point,
 that probe is discarded. If no certified probe path remains, the leaf reports
 `UnknownClassification`; there is no silent fallback to the reference winding
 number. There are no input-assumption bypass flags; leaves run pairwise
-intersection discovery and classify each direct polygon separately.
+intersection discovery across all local polygons, including same-mesh
+self-intersections, and classify each direct polygon separately.
 
 Subdivision reference propagation currently accepts the EMBER projection of the
 parent reference point onto a child AABB only when the projected point and trace

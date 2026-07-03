@@ -503,6 +503,35 @@ fn process_leaf_uses_bsp_for_intersecting_cross_mesh_polygons() {
 }
 
 #[test]
+fn process_leaf_uses_bsp_for_same_mesh_self_intersections() {
+    let mut host = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    host.delta_w = vec![1];
+    let mut cutter = make_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 0, 1);
+    cutter.delta_w = vec![1];
+    let polygons = vec![host, cutter];
+    let bounds = hypermesh::Aabb::new(p(-1, -1, -2), p(3, 3, 2));
+    let union = make_indicator(BooleanOp::Union, 1);
+    let mut output = Vec::new();
+
+    let stats = process_leaf_into(
+        &polygons,
+        &bounds,
+        &p(-1, -1, -1),
+        &[0],
+        &union,
+        &mut output,
+    )
+    .unwrap();
+
+    assert_eq!(stats.polygon_count, 2);
+    assert!(stats.intersection_count >= 2);
+    assert!(stats.certified_complete);
+    assert!(stats.bsp_leaf_count > 0);
+    assert!(stats.bsp_fragment_count > 0);
+    assert!(output.iter().any(|polygon| polygon.is_bsp_fragment));
+}
+
+#[test]
 fn boolean_operation_refs_runs_leaf_pipeline_from_borrowed_meshes() {
     let cube = cube_mesh(0, 2);
     let mesh_ref = cube.as_ref();
