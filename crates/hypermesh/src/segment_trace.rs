@@ -4,7 +4,7 @@ use hyperlattice::{HomogeneousPoint3, Point3, Real};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
-    Aabb, Classification, Plane, axis_mut, axis_ref, classify_point, compare_real,
+    Aabb, Classification, Plane, axis_mut, axis_ref, classify_point, classify_real, compare_real,
 };
 use crate::polygon::ConvexPolygon;
 use crate::winding::{WindingNumberTransitionVector, WindingNumberVector};
@@ -329,7 +329,7 @@ fn probe_reaches_adjacent_cell(
         let probe_class = classify_point(probe, &polygon.support)?;
 
         if start_class == Classification::On {
-            if polygon.support == *host_support {
+            if planes_are_coplanar(&polygon.support, host_support)? {
                 continue;
             }
             if point_lies_on_polygon(start, polygon)? {
@@ -359,6 +359,27 @@ fn probe_reaches_adjacent_cell(
         }
     }
 
+    Ok(true)
+}
+
+fn planes_are_coplanar(left: &Plane, right: &Plane) -> HypermeshResult<bool> {
+    let left_coefficients = [&left.normal.x, &left.normal.y, &left.normal.z, &left.offset];
+    let right_coefficients = [
+        &right.normal.x,
+        &right.normal.y,
+        &right.normal.z,
+        &right.offset,
+    ];
+
+    for i in 0..left_coefficients.len() {
+        for j in (i + 1)..left_coefficients.len() {
+            let determinant = (left_coefficients[i] * right_coefficients[j])
+                - (left_coefficients[j] * right_coefficients[i]);
+            if classify_real(&determinant)? != Classification::On {
+                return Ok(false);
+            }
+        }
+    }
     Ok(true)
 }
 

@@ -639,6 +639,29 @@ fn disjoint_boxes_use_general_leaf_path_when_shortcuts_disabled() -> HypermeshRe
 }
 
 #[test]
+fn boundary_touching_boxes_use_general_path_when_shortcuts_disabled() -> HypermeshResult<()> {
+    let left = box_mesh([0, 0, 0], [1, 1, 1]);
+    let right = box_mesh([1, 0, 0], [2, 1, 1]);
+    let refs = [left.as_ref(), right.as_ref()];
+    let config = EmberConfig {
+        leaf_threshold: 1,
+        ..config_without_shortcuts()
+    };
+    assert!(!config.use_proven_shortcuts);
+
+    let intersection_result = boolean_operation_refs(&refs, BooleanOp::Intersection, config)?;
+    let intersection = triangulate_and_resolve_certified(&intersection_result)?;
+    assert!(intersection.triangles.is_empty());
+
+    let difference_result = boolean_operation_refs(&refs, BooleanOp::Difference, config)?;
+    let difference = triangulate_and_resolve_certified(&difference_result)?;
+    assert_no_boundary_edges(&difference);
+    assert_volume_numerator(&difference, r(6));
+
+    Ok(())
+}
+
+#[test]
 fn hypermesh_identical_and_same_surface_solids_regularize() {
     let left = tetrahedron([[0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]]);
     let identical = left.clone();
