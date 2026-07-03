@@ -114,6 +114,27 @@ pub fn process_leaf_into(
     indicator: &Indicator,
     output: &mut Vec<ClassifiedPolygon>,
 ) -> HypermeshResult<LeafProcessingStats> {
+    let mut certified_output = Vec::new();
+    let stats = process_leaf_into_inner(
+        polygons,
+        bounds,
+        ref_point,
+        ref_wnv,
+        indicator,
+        &mut certified_output,
+    )?;
+    output.extend(certified_output);
+    Ok(stats)
+}
+
+fn process_leaf_into_inner(
+    polygons: &[ConvexPolygon],
+    bounds: &Aabb,
+    ref_point: &Point3,
+    ref_wnv: &[i32],
+    indicator: &Indicator,
+    output: &mut Vec<ClassifiedPolygon>,
+) -> HypermeshResult<LeafProcessingStats> {
     let mut stats = LeafProcessingStats {
         polygon_count: polygons.len(),
         ..LeafProcessingStats::default()
@@ -276,16 +297,9 @@ fn subdivide_into_inner(
         }
     }
 
-    let (left_ref, left_wnv) =
-        compute_new_reference(&task.ref_point, &task.ref_wnv, &left_bounds, &task.polygons)?;
-    let (right_ref, right_wnv) = compute_new_reference(
-        &task.ref_point,
-        &task.ref_wnv,
-        &right_bounds,
-        &task.polygons,
-    )?;
-
     if !left_polys.is_empty() {
+        let (left_ref, left_wnv) =
+            compute_new_reference(&task.ref_point, &task.ref_wnv, &left_bounds, &task.polygons)?;
         subdivide_into_inner(
             SubdivisionTask {
                 polygons: left_polys,
@@ -301,6 +315,12 @@ fn subdivide_into_inner(
     }
 
     if !right_polys.is_empty() {
+        let (right_ref, right_wnv) = compute_new_reference(
+            &task.ref_point,
+            &task.ref_wnv,
+            &right_bounds,
+            &task.polygons,
+        )?;
         subdivide_into_inner(
             SubdivisionTask {
                 polygons: right_polys,
@@ -1127,6 +1147,25 @@ mod tests {
             &mut output,
         )
         .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+        assert_eq!(output, vec![sentinel]);
+    }
+
+    #[test]
+    fn process_leaf_into_keeps_output_unchanged_on_uncertified_failure() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
+        let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Union, 1);
+        let sentinel = ClassifiedPolygon::new(
+            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 99),
+            1,
+        );
+        let mut output = vec![sentinel.clone()];
+
+        let err = process_leaf_into(&[wall], &bounds, &p(0, 0, 0), &[0], &indicator, &mut output)
+            .unwrap_err();
 
         assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
         assert_eq!(output, vec![sentinel]);
