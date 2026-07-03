@@ -522,7 +522,8 @@ fn compute_new_reference(
         return Ok((old_ref.clone(), old_wnv.to_vec()));
     }
 
-    for target in reference_candidates(old_ref, bounds)? {
+    let projected = project_reference_point(old_ref, bounds)?;
+    for target in reference_targets_from_projection(&projected, bounds, polygons)? {
         if point_lies_on_local_surface(&target, polygons)? {
             continue;
         }
@@ -536,72 +537,128 @@ fn compute_new_reference(
     Err(crate::error::HypermeshError::UnknownClassification)
 }
 
-fn reference_candidates(old_ref: &Point3, bounds: &Aabb) -> HypermeshResult<Vec<Point3>> {
-    let mut candidates = Vec::new();
-    let projected = project_reference_point(old_ref, bounds)?;
-    push_unique_point(&mut candidates, projected.clone());
-
-    let fractions = [(1u64, 2u64), (1, 3), (2, 3), (1, 4), (3, 4)];
-    let axis_values = [
-        reference_axis_values(bounds, 0, &fractions)?,
-        reference_axis_values(bounds, 1, &fractions)?,
-        reference_axis_values(bounds, 2, &fractions)?,
-    ];
+fn reference_targets_from_projection(
+    projected: &Point3,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Vec<Point3>> {
+    let mut targets = Vec::new();
+    if !point_lies_on_local_surface(projected, polygons)? {
+        targets.push(projected.clone());
+    }
 
     for axis in 0..3 {
-        for value in &axis_values[axis] {
-            let mut candidate = projected.clone();
-            *axis_mut(&mut candidate, axis) = value.clone();
-            push_unique_point(&mut candidates, candidate);
-        }
-    }
-
-    for first_axis in 0..3 {
-        for second_axis in (first_axis + 1)..3 {
-            for first_value in &axis_values[first_axis] {
-                for second_value in &axis_values[second_axis] {
-                    let mut candidate = projected.clone();
-                    *axis_mut(&mut candidate, first_axis) = first_value.clone();
-                    *axis_mut(&mut candidate, second_axis) = second_value.clone();
-                    push_unique_point(&mut candidates, candidate);
-                }
+        for direction_positive in [true, false] {
+            if let Some(target) =
+                escaped_reference_target(projected, bounds, polygons, axis, direction_positive)?
+                && !targets.iter().any(|existing| existing == &target)
+            {
+                targets.push(target);
             }
         }
     }
-
-    for x in &axis_values[0] {
-        for y in &axis_values[1] {
-            for z in &axis_values[2] {
-                push_unique_point(
-                    &mut candidates,
-                    Point3::new(x.clone(), y.clone(), z.clone()),
-                );
-            }
-        }
-    }
-
-    Ok(candidates)
+    Ok(targets)
 }
 
-fn push_unique_point(points: &mut Vec<Point3>, point: Point3) {
-    if !points.iter().any(|existing| existing == &point) {
-        points.push(point);
-    }
-}
-
-fn reference_axis_values(
+fn escaped_reference_target(
+    projected: &Point3,
     bounds: &Aabb,
+    polygons: &[ConvexPolygon],
     axis: usize,
-    fractions: &[(u64, u64)],
-) -> HypermeshResult<Vec<Real>> {
-    let mut values = Vec::new();
-    for &(numerator, denominator) in fractions {
-        let value = interpolate_axis(bounds, axis, numerator, denominator)?;
-        if !values.iter().any(|existing| existing == &value) {
-            values.push(value);
+    direction_positive: bool,
+) -> HypermeshResult<Option<Point3>> {
+    let start_value = axis_ref(projected, axis);
+    let bound_value = if direction_positive {
+        axis_ref(&bounds.max, axis)
+    } else {
+        axis_ref(&bounds.min, axis)
+    };
+    let room = if direction_positive {
+        bound_value - start_value
+    } else {
+        start_value - bound_value
+    };
+    if !compare_real(&room, &Real::zero())?.is_gt() {
+        return Ok(None);
+    }
+
+    let mut endpoint = projected.clone();
+    *axis_mut(&mut endpoint, axis) = bound_value.clone();
+    let mut stop_value = bound_value.clone();
+
+    for polygon in polygons {
+        if reference_escape_runs_along_surface(projected, &endpoint, polygon)? {
+            return Ok(None);
+        }
+
+        let Some(crossing) = reference_axis_surface_crossing(projected, &endpoint, polygon, axis)?
+        else {
+            continue;
+        };
+        if !point_lies_on_local_polygon(&crossing, polygon)? {
+            continue;
+        }
+
+        let crossing_value = axis_ref(&crossing, axis);
+        let order = compare_real(crossing_value, &stop_value)?;
+        if (direction_positive && order.is_lt()) || (!direction_positive && order.is_gt()) {
+            stop_value = crossing_value.clone();
         }
     }
-    Ok(values)
+
+    if compare_real(&stop_value, start_value)?.is_eq() {
+        return Ok(None);
+    }
+    let target_value = ((start_value + &stop_value) / Real::from(2))
+        .map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
+    let mut target = projected.clone();
+    *axis_mut(&mut target, axis) = target_value;
+    Ok(Some(target))
+}
+
+fn reference_escape_runs_along_surface(
+    start: &Point3,
+    endpoint: &Point3,
+    polygon: &ConvexPolygon,
+) -> HypermeshResult<bool> {
+    if crate::geometry::classify_point(start, &polygon.support)?
+        != crate::geometry::Classification::On
+        || crate::geometry::classify_point(endpoint, &polygon.support)?
+            != crate::geometry::Classification::On
+    {
+        return Ok(false);
+    }
+    point_lies_on_local_polygon(start, polygon)
+}
+
+fn reference_axis_surface_crossing(
+    start: &Point3,
+    endpoint: &Point3,
+    polygon: &ConvexPolygon,
+    axis: usize,
+) -> HypermeshResult<Option<Point3>> {
+    let start_class = crate::geometry::classify_point(start, &polygon.support)?;
+    let endpoint_class = crate::geometry::classify_point(endpoint, &polygon.support)?;
+    if start_class == crate::geometry::Classification::On {
+        return Ok(None);
+    }
+    if endpoint_class == crate::geometry::Classification::On {
+        return Ok(Some(endpoint.clone()));
+    }
+    if start_class == endpoint_class {
+        return Ok(None);
+    }
+
+    let start_value = polygon.support.expression_at_point(start);
+    let endpoint_value = polygon.support.expression_at_point(endpoint);
+    let denom = &start_value - &endpoint_value;
+    let t =
+        (start_value / denom).map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
+    let axis_value =
+        axis_ref(start, axis) + &(t * (axis_ref(endpoint, axis) - axis_ref(start, axis)));
+    let mut crossing = start.clone();
+    *axis_mut(&mut crossing, axis) = axis_value;
+    Ok(Some(crossing))
 }
 
 fn project_reference_point(old_ref: &Point3, bounds: &Aabb) -> HypermeshResult<Point3> {
@@ -638,23 +695,25 @@ fn point_lies_on_local_surface(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
     for polygon in polygons {
-        if crate::geometry::classify_point(point, &polygon.support)?
-            != crate::geometry::Classification::On
-        {
-            continue;
-        }
-        let mut inside = true;
-        for edge in &polygon.edges {
-            if crate::geometry::classify_point(point, edge)?.is_positive() {
-                inside = false;
-                break;
-            }
-        }
-        if inside {
+        if point_lies_on_local_polygon(point, polygon)? {
             return Ok(true);
         }
     }
     Ok(false)
+}
+
+fn point_lies_on_local_polygon(point: &Point3, polygon: &ConvexPolygon) -> HypermeshResult<bool> {
+    if crate::geometry::classify_point(point, &polygon.support)?
+        != crate::geometry::Classification::On
+    {
+        return Ok(false);
+    }
+    for edge in &polygon.edges {
+        if crate::geometry::classify_point(point, edge)?.is_positive() {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 fn unique_wntvs(polygons: &[ConvexPolygon]) -> Vec<Vec<i32>> {

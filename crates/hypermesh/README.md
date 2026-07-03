@@ -28,6 +28,15 @@ certified path or report `UnknownClassification`. Arbitrary computable `Real`
 values are outside the current completeness claim when bounded strict
 refinement cannot decide the required predicate.
 
+Subdivision reference propagation currently accepts the EMBER projection of the
+parent reference point onto a child AABB only when the projected point and trace
+are certified valid. If the projected point or direct trace is degenerate, the
+implementation tries local axis-aligned escape targets inside certified open
+intervals before the next surface hit or AABB boundary. If none trace cleanly,
+it reports `UnknownClassification` instead of falling back to finite interior
+sampling while the full plane-replacement reference construction remains
+unfinished.
+
 Exact same-surface two-mesh booleans are handled as a proven equivalence before
 subdivision: union/intersection preserve the surface, while difference and
 symmetric difference are empty.

@@ -538,6 +538,32 @@ fn boolean_operation_reports_unknown_when_max_depth_forces_oversized_leaf() {
 }
 
 #[test]
+fn subdivision_escapes_projected_reference_on_surface() {
+    let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    left.delta_w = vec![1];
+    let mut right = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    right.delta_w = vec![1];
+    let indicator = make_indicator(BooleanOp::Union, 1);
+    let config = SubdivisionConfig {
+        leaf_threshold: 1,
+        max_depth: 4,
+        use_early_termination: false,
+    };
+
+    let result = subdivide(
+        SubdivisionTask::new(
+            vec![left, right],
+            hypermesh::Aabb::new(p(0, 0, 0), p(6, 6, 6)),
+            p(1, 3, 3),
+            vec![0],
+        ),
+        &indicator,
+        config,
+    );
+    assert!(result.is_ok());
+}
+
+#[test]
 fn resolve_tjunctions_merges_duplicate_vertices_and_faces_exactly() {
     let soup = hypermesh::TriangleSoup {
         vertices: vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 1, 0), ov(1, 0, 0)],
