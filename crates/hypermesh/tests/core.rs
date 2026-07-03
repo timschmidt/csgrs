@@ -2,12 +2,11 @@ use hyperlattice::{Point3, Real};
 use hypermesh::bvh::bounds_overlap;
 use hypermesh::clip::{ClipSide, clip_polygon};
 use hypermesh::{
-    BooleanOp, Classification, ClassifiedPolygon, EmberConfig, HypermeshError, Plane, PolygonSoup,
-    SubdivisionConfig, SubdivisionTask, Triangle, WindingPair, boolean_operation,
-    boolean_operation_refs, classify_leaf_polygon, classify_point, classify_polygon_output,
-    extract_output, intersect_polygons, make_indicator, make_quad, make_triangle, prepare_input,
-    prepare_input_meshes, process_leaf_into, subdivide, trace_axis_segment, trace_segment,
-    triangulate_and_resolve_certified,
+    BooleanOp, Classification, EmberConfig, HypermeshError, Plane, SubdivisionConfig,
+    SubdivisionTask, Triangle, boolean_operation, classify_leaf_polygon, classify_point,
+    classify_polygon_output, intersect_polygons, make_indicator, make_quad, make_triangle,
+    prepare_input, prepare_input_meshes, process_leaf_into, subdivide, trace_axis_segment,
+    trace_segment, triangulate_and_resolve_certified,
 };
 
 fn r(value: i32) -> Real {
@@ -230,13 +229,13 @@ fn coplanar_crossing_quads_report_overlap_without_contained_vertices() {
 }
 
 #[test]
-fn boolean_operation_refs_validates_before_general_path() {
+fn boolean_operation_validates_before_general_path() {
     let empty = hypermesh::MeshRef {
         positions: &[],
         triangles: &[],
     };
     assert!(matches!(
-        boolean_operation_refs(&[empty], BooleanOp::Union, EmberConfig::default()),
+        boolean_operation(&[empty], BooleanOp::Union, EmberConfig::default()),
         Err(hypermesh::HypermeshError::EmptyInput)
     ));
 
@@ -247,7 +246,7 @@ fn boolean_operation_refs_validates_before_general_path() {
         triangles: &triangles,
     };
     assert!(matches!(
-        boolean_operation_refs(&[invalid], BooleanOp::Union, EmberConfig::default()),
+        boolean_operation(&[invalid], BooleanOp::Union, EmberConfig::default()),
         Err(hypermesh::HypermeshError::VertexIndexOutOfBounds {
             index: 2,
             vertex_count: 2
@@ -284,19 +283,6 @@ fn local_bsp_overlap_can_disable_higher_index_duplicate_leaf() {
     bsp.add_overlap(&lower, overlap).unwrap();
 
     assert!(bsp.collect_leaves().is_empty());
-}
-
-#[test]
-fn output_extraction_uses_real_vertices() {
-    let positions = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
-    let triangles = vec![Triangle::new(0, 1, 2)];
-    let soup = prepare_input(&positions, &triangles).unwrap();
-    let result = hypermesh::BooleanResult::new(soup, vec![1]);
-
-    let polygons = extract_output(&result).unwrap();
-    assert_eq!(polygons.len(), 1);
-    assert_eq!(polygons[0].vertices.len(), 3);
-    assert!(polygons[0].vertices.iter().any(|vertex| vertex.x == r(1)));
 }
 
 #[test]
@@ -453,9 +439,9 @@ fn process_leaf_classifies_direct_polygon_slice() {
     assert_eq!(stats.direct_polygon_count, 1);
     assert_eq!(stats.bsp_leaf_count, 0);
     assert_eq!(output.len(), 1);
-    assert_ne!(output[0].classification, 0);
-    assert!(!output[0].is_bsp_fragment);
-    assert!(output[0].winding.is_some());
+    assert_ne!(output[0].classification(), 0);
+    assert!(!output[0].is_bsp_fragment());
+    assert!(output[0].winding().is_some());
 }
 
 #[test]
@@ -484,7 +470,7 @@ fn process_leaf_uses_bsp_for_intersecting_cross_mesh_polygons() {
     assert!(stats.certified_complete);
     assert!(stats.bsp_leaf_count > 0);
     assert!(stats.bsp_fragment_count > 0);
-    assert!(output.iter().any(|polygon| polygon.is_bsp_fragment));
+    assert!(output.iter().any(|polygon| polygon.is_bsp_fragment()));
 }
 
 #[test]
@@ -513,11 +499,11 @@ fn process_leaf_uses_bsp_for_same_mesh_self_intersections() {
     assert!(stats.certified_complete);
     assert!(stats.bsp_leaf_count > 0);
     assert!(stats.bsp_fragment_count > 0);
-    assert!(output.iter().any(|polygon| polygon.is_bsp_fragment));
+    assert!(output.iter().any(|polygon| polygon.is_bsp_fragment()));
 }
 
 #[test]
-fn boolean_operation_refs_runs_leaf_pipeline_from_borrowed_meshes() {
+fn boolean_operation_runs_leaf_pipeline_from_borrowed_meshes() {
     let cube = cube_mesh(0, 2);
     let mesh_ref = cube.as_ref();
     let mesh = hypermesh::MeshRef {
@@ -525,15 +511,18 @@ fn boolean_operation_refs_runs_leaf_pipeline_from_borrowed_meshes() {
         triangles: mesh_ref.triangles,
     };
 
-    let result = boolean_operation_refs(&[mesh], BooleanOp::Union, EmberConfig::default()).unwrap();
+    let result = boolean_operation(&[mesh], BooleanOp::Union, EmberConfig::default()).unwrap();
 
-    assert_eq!(result.classifications.len(), result.output.polygons.len());
-    assert!(!result.output.polygons.is_empty());
-    assert!(result.winding_pairs.iter().all(Option::is_some));
+    assert_eq!(
+        result.classifications().len(),
+        result.output().polygons.len()
+    );
+    assert!(!result.output().polygons.is_empty());
+    assert!(result.winding_pairs().iter().all(Option::is_some));
 }
 
 #[test]
-fn boolean_operation_refs_rejects_uncertified_open_output() {
+fn boolean_operation_rejects_uncertified_open_output() {
     let positions = vec![p(1, -1, -1), p(1, 1, -1), p(1, 0, 1)];
     let triangles = vec![Triangle::new(0, 1, 2)];
     let mesh = hypermesh::MeshRef {
@@ -541,22 +530,22 @@ fn boolean_operation_refs_rejects_uncertified_open_output() {
         triangles: &triangles,
     };
 
-    let err =
-        boolean_operation_refs(&[mesh], BooleanOp::Union, EmberConfig::default()).unwrap_err();
+    let err = boolean_operation(&[mesh], BooleanOp::Union, EmberConfig::default()).unwrap_err();
 
     assert!(matches!(err, HypermeshError::OpenOutput { .. }));
 }
 
 #[test]
-fn boolean_operation_owned_delegates_to_borrowed_pipeline() {
+fn boolean_operation_accepts_input_mesh_refs() {
     let mesh = cube_mesh(0, 2);
 
-    let result = boolean_operation(&[mesh], BooleanOp::Union, EmberConfig::default()).unwrap();
+    let result =
+        boolean_operation(&[mesh.as_ref()], BooleanOp::Union, EmberConfig::default()).unwrap();
 
-    assert!(!result.output.polygons.is_empty());
+    assert!(!result.output().polygons.is_empty());
     assert!(
         result
-            .classifications
+            .classifications()
             .iter()
             .all(|classification| *classification != 0)
     );
@@ -586,7 +575,7 @@ fn subdivision_processes_certified_leaf_at_max_depth() {
     .unwrap();
 
     assert_eq!(output.len(), 12);
-    assert!(output.iter().all(|polygon| polygon.winding.is_some()));
+    assert!(output.iter().all(|polygon| polygon.winding().is_some()));
 }
 
 #[test]
@@ -615,96 +604,13 @@ fn subdivision_escapes_projected_reference_on_surface() {
 }
 
 #[test]
-fn certified_triangulation_rejects_duplicate_open_faces_exactly() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let result = hypermesh::BooleanResult::new(
-        hypermesh::PolygonSoup {
-            polygons: vec![polygon.clone(), polygon],
-            bounds: hypermesh::Aabb::new(p(0, 0, 0), p(1, 1, 0)),
-            num_meshes: 1,
-        },
-        vec![1, 1],
-    );
-
-    let err = triangulate_and_resolve_certified(&result).unwrap_err();
-    assert!(matches!(err, HypermeshError::OpenOutput { .. }));
-}
-
-#[test]
-fn certified_triangulation_rejects_open_output() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let result = hypermesh::BooleanResult::new(
-        hypermesh::PolygonSoup {
-            polygons: vec![polygon],
-            bounds: hypermesh::Aabb::new(p(0, 0, 0), p(1, 1, 0)),
-            num_meshes: 1,
-        },
-        vec![1],
-    );
-
-    let err = triangulate_and_resolve_certified(&result).unwrap_err();
-    assert_eq!(
-        err,
-        HypermeshError::OpenOutput {
-            boundary_edges: 3,
-            non_manifold_edges: 0,
-        }
-    );
-}
-
-#[test]
-fn boolean_result_preserves_classified_winding_evidence() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let mut classified = ClassifiedPolygon::new(polygon, 1);
-    classified.winding = Some(WindingPair {
-        w_front: vec![0],
-        w_back: vec![1],
-    });
-
-    let result = hypermesh::BooleanResult::from_classified(
-        PolygonSoup {
-            polygons: Vec::new(),
-            bounds: hypermesh::Aabb::new(p(0, 0, 0), p(1, 1, 0)),
-            num_meshes: 1,
-        },
-        vec![classified],
-    );
-
-    assert_eq!(result.winding_pairs.len(), 1);
-    assert_eq!(
-        result.winding_pairs[0],
-        Some(WindingPair {
-            w_front: vec![0],
-            w_back: vec![1],
-        })
-    );
-}
-
-#[test]
-fn certified_triangulation_rejects_open_surface_after_boundary_tjunction_cleanup() {
-    let lower = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
-    let upper = make_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1);
-    let result = hypermesh::BooleanResult::new(
-        hypermesh::PolygonSoup {
-            polygons: vec![lower, upper],
-            bounds: hypermesh::Aabb::new(p(0, 0, 0), p(2, 2, 0)),
-            num_meshes: 1,
-        },
-        vec![1, 1],
-    );
-
-    let err = triangulate_and_resolve_certified(&result).unwrap_err();
-    assert!(matches!(err, HypermeshError::OpenOutput { .. }));
-}
-
-#[test]
 fn disjoint_cube_booleans_have_expected_polygon_counts() {
     let cube_a = cube_mesh(0, 2);
     let cube_b = cube_mesh(4, 6);
     let config = EmberConfig::default();
 
-    let union = hypermesh::boolean_union(&cube_a, &cube_b, config).unwrap();
-    assert_eq!(union.output.polygons.len(), 24);
+    let union = hypermesh::boolean_union(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
+    assert_eq!(union.output().polygons.len(), 24);
     assert_eq!(
         triangulate_and_resolve_certified(&union)
             .unwrap()
@@ -713,11 +619,13 @@ fn disjoint_cube_booleans_have_expected_polygon_counts() {
         24
     );
 
-    let intersection = hypermesh::boolean_intersection(&cube_a, &cube_b, config).unwrap();
-    assert!(intersection.output.polygons.is_empty());
+    let intersection =
+        hypermesh::boolean_intersection(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
+    assert!(intersection.output().polygons.is_empty());
 
-    let difference = hypermesh::boolean_difference(&cube_a, &cube_b, config).unwrap();
-    assert_eq!(difference.output.polygons.len(), 12);
+    let difference =
+        hypermesh::boolean_difference(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
+    assert_eq!(difference.output().polygons.len(), 12);
     assert_eq!(
         triangulate_and_resolve_certified(&difference)
             .unwrap()
@@ -736,21 +644,23 @@ fn overlapping_cube_booleans_use_general_path() {
         max_depth: 6,
     };
 
-    let union = hypermesh::boolean_union(&cube_a, &cube_b, config).unwrap();
+    let union = hypermesh::boolean_union(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
     let union_soup = triangulate_and_resolve_certified(&union).unwrap();
-    assert!(!union.output.polygons.is_empty());
+    assert!(!union.output().polygons.is_empty());
     assert!(!union_soup.triangles.is_empty());
     assert_triangle_soup_within_bounds(&union_soup, 0, 3).unwrap();
 
-    let intersection = hypermesh::boolean_intersection(&cube_a, &cube_b, config).unwrap();
+    let intersection =
+        hypermesh::boolean_intersection(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
     let intersection_soup = triangulate_and_resolve_certified(&intersection).unwrap();
-    assert!(intersection.output.polygons.len() >= 12);
+    assert!(intersection.output().polygons.len() >= 12);
     assert_triangle_soup_within_bounds(&intersection_soup, 1, 2).unwrap();
     assert_triangle_soup_on_cube_boundary(&intersection_soup, 1, 2);
 
-    let difference = hypermesh::boolean_difference(&cube_a, &cube_b, config).unwrap();
+    let difference =
+        hypermesh::boolean_difference(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
     let difference_soup = triangulate_and_resolve_certified(&difference).unwrap();
-    assert!(!difference.output.polygons.is_empty());
+    assert!(!difference.output().polygons.is_empty());
     assert!(!difference_soup.triangles.is_empty());
     assert_triangle_soup_within_bounds(&difference_soup, 0, 2).unwrap();
 }

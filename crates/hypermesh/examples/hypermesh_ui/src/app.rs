@@ -10,7 +10,7 @@ use hypergraphics::{
 };
 use hypermesh::{
     BooleanOp, EmberConfig, InputMesh, MeshRef, OutputVertex, Point3, Real, Triangle, TriangleSoup,
-    boolean_operation_refs, triangulate_and_resolve_certified,
+    boolean_operation, triangulate_and_resolve_certified,
 };
 use web_time::{Duration, Instant};
 
@@ -517,7 +517,7 @@ fn run_boolean(
     op: BooleanOp,
     config: EmberConfig,
 ) -> hypermesh::HypermeshResult<TriangleSoup> {
-    let result = boolean_operation_refs(meshes, op, config)?;
+    let result = boolean_operation(meshes, op, config)?;
     triangulate_and_resolve_certified(&result)
 }
 

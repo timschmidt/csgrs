@@ -1,8 +1,7 @@
 //! Hyperreal-backed mesh boolean primitives.
 //!
 //! This crate keeps primitive coordinates at API boundaries only. Core
-//! geometric state uses [`Real`] as its scalar and provides borrowed slice APIs
-//! before owned convenience wrappers.
+//! geometric state uses [`Real`] as its scalar and exposes borrowed slice APIs.
 //!
 //! The boolean kernel targets finite closed PWN triangle meshes represented
 //! with exact [`Real`] coordinates. Unsupported or uncertifiable configurations
@@ -47,14 +46,11 @@ pub use mesh::{
     prepare_input_refs,
 };
 pub use operations::{
-    EmberConfig, boolean_difference, boolean_difference_refs, boolean_intersection,
-    boolean_intersection_refs, boolean_operation, boolean_operation_refs, boolean_union,
-    boolean_union_refs,
+    EmberConfig, boolean_difference, boolean_intersection, boolean_operation, boolean_union,
 };
 pub use output::{
-    BooleanResult, ClassifiedPolygon, OutputPolygon, TriangleSoup, TriangleSoupClosureReport,
-    extract_output, triangle_soup_closure_report, triangle_soup_is_closed,
-    triangulate_and_resolve_certified,
+    BooleanResult, OutputPolygon, TriangleSoup, TriangleSoupClosureReport, extract_output,
+    triangle_soup_closure_report, triangle_soup_is_closed, triangulate_and_resolve_certified,
 };
 pub use polygon::{ApproxBounds, ConvexPolygon, make_quad, make_triangle};
 pub use segment_trace::{

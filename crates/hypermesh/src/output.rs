@@ -15,18 +15,18 @@ const RESOLVE_TJUNCTION_MAX_PASSES: usize = 256;
 #[derive(Clone, Debug, PartialEq)]
 pub struct ClassifiedPolygon {
     /// Classified polygon.
-    pub polygon: ConvexPolygon,
+    pub(crate) polygon: ConvexPolygon,
     /// `+1` emits as-is, `-1` emits inverted.
-    pub classification: i8,
+    pub(crate) classification: i8,
     /// Optional front/back winding evidence.
-    pub winding: Option<WindingPair>,
+    pub(crate) winding: Option<WindingPair>,
     /// Whether this polygon came from face-local BSP splitting.
-    pub is_bsp_fragment: bool,
+    pub(crate) is_bsp_fragment: bool,
 }
 
 impl ClassifiedPolygon {
     /// Constructs a classified polygon.
-    pub fn new(polygon: ConvexPolygon, classification: i8) -> Self {
+    pub(crate) fn new(polygon: ConvexPolygon, classification: i8) -> Self {
         Self {
             polygon,
             classification,
@@ -34,23 +34,44 @@ impl ClassifiedPolygon {
             is_bsp_fragment: false,
         }
     }
+
+    /// Returns the classified polygon.
+    pub fn polygon(&self) -> &ConvexPolygon {
+        &self.polygon
+    }
+
+    /// Returns the output classification sign.
+    pub const fn classification(&self) -> i8 {
+        self.classification
+    }
+
+    /// Returns the certified front/back winding evidence, when available.
+    pub const fn winding(&self) -> Option<&WindingPair> {
+        self.winding.as_ref()
+    }
+
+    /// Returns whether this polygon came from face-local BSP splitting.
+    pub const fn is_bsp_fragment(&self) -> bool {
+        self.is_bsp_fragment
+    }
 }
 
 /// Result of a boolean operation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BooleanResult {
     /// Output polygon soup.
-    pub output: PolygonSoup,
+    output: PolygonSoup,
     /// Per-output-polygon classifications.
-    pub classifications: Vec<i8>,
+    classifications: Vec<i8>,
     /// Per-output-polygon front/back winding evidence, when produced by the
     /// general subdivision classifier.
-    pub winding_pairs: Vec<Option<WindingPair>>,
+    winding_pairs: Vec<Option<WindingPair>>,
 }
 
 impl BooleanResult {
     /// Constructs a result from an output soup and classifications.
-    pub fn new(output: PolygonSoup, classifications: Vec<i8>) -> Self {
+    #[cfg(test)]
+    fn new(output: PolygonSoup, classifications: Vec<i8>) -> Self {
         let winding_pairs = vec![None; classifications.len()];
         Self {
             output,
@@ -61,7 +82,10 @@ impl BooleanResult {
 
     /// Builds a result by applying classification orientation to owned
     /// classified polygons.
-    pub fn from_classified(mut output: PolygonSoup, classified: Vec<ClassifiedPolygon>) -> Self {
+    pub(crate) fn from_classified(
+        mut output: PolygonSoup,
+        classified: Vec<ClassifiedPolygon>,
+    ) -> Self {
         output.polygons.clear();
         let mut classifications = Vec::with_capacity(classified.len());
         let mut winding_pairs = Vec::with_capacity(classified.len());
@@ -84,6 +108,21 @@ impl BooleanResult {
             classifications,
             winding_pairs,
         }
+    }
+
+    /// Returns the output polygon soup.
+    pub const fn output(&self) -> &PolygonSoup {
+        &self.output
+    }
+
+    /// Returns per-output-polygon classifications.
+    pub fn classifications(&self) -> &[i8] {
+        &self.classifications
+    }
+
+    /// Returns per-output-polygon front/back winding evidence.
+    pub fn winding_pairs(&self) -> &[Option<WindingPair>] {
+        &self.winding_pairs
     }
 }
 
@@ -671,9 +710,17 @@ fn vertex_axis(vertex: &OutputVertex, axis: usize) -> &Real {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::geometry::Aabb;
+    use crate::polygon::make_triangle;
+    use crate::winding::WindingPair;
+    use hyperlattice::Point3;
 
     fn r(value: i32) -> Real {
         value.into()
+    }
+
+    fn p(x: i32, y: i32, z: i32) -> Point3 {
+        Point3::new(r(x), r(y), r(z))
     }
 
     fn ov(x: i32, y: i32, z: i32) -> OutputVertex {
@@ -714,5 +761,106 @@ mod tests {
                 .iter()
                 .any(|triangle| triangle.contains(&3))
         );
+    }
+
+    #[test]
+    fn output_extraction_uses_real_vertices() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let result = BooleanResult::new(
+            PolygonSoup {
+                polygons: vec![polygon],
+                bounds: Aabb::new(p(0, 0, 0), p(1, 1, 0)),
+                num_meshes: 1,
+            },
+            vec![1],
+        );
+
+        let polygons = extract_output(&result).unwrap();
+        assert_eq!(polygons.len(), 1);
+        assert_eq!(polygons[0].vertices.len(), 3);
+        assert!(polygons[0].vertices.iter().any(|vertex| vertex.x == r(1)));
+    }
+
+    #[test]
+    fn certified_triangulation_rejects_duplicate_open_faces_exactly() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let result = BooleanResult::new(
+            PolygonSoup {
+                polygons: vec![polygon.clone(), polygon],
+                bounds: Aabb::new(p(0, 0, 0), p(1, 1, 0)),
+                num_meshes: 1,
+            },
+            vec![1, 1],
+        );
+
+        let err = triangulate_and_resolve_certified(&result).unwrap_err();
+        assert!(matches!(err, HypermeshError::OpenOutput { .. }));
+    }
+
+    #[test]
+    fn certified_triangulation_rejects_open_output() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let result = BooleanResult::new(
+            PolygonSoup {
+                polygons: vec![polygon],
+                bounds: Aabb::new(p(0, 0, 0), p(1, 1, 0)),
+                num_meshes: 1,
+            },
+            vec![1],
+        );
+
+        let err = triangulate_and_resolve_certified(&result).unwrap_err();
+        assert_eq!(
+            err,
+            HypermeshError::OpenOutput {
+                boundary_edges: 3,
+                non_manifold_edges: 0,
+            }
+        );
+    }
+
+    #[test]
+    fn boolean_result_preserves_classified_winding_evidence() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let mut classified = ClassifiedPolygon::new(polygon, 1);
+        classified.winding = Some(WindingPair {
+            w_front: vec![0],
+            w_back: vec![1],
+        });
+
+        let result = BooleanResult::from_classified(
+            PolygonSoup {
+                polygons: Vec::new(),
+                bounds: Aabb::new(p(0, 0, 0), p(1, 1, 0)),
+                num_meshes: 1,
+            },
+            vec![classified],
+        );
+
+        assert_eq!(result.winding_pairs().len(), 1);
+        assert_eq!(
+            result.winding_pairs()[0],
+            Some(WindingPair {
+                w_front: vec![0],
+                w_back: vec![1],
+            })
+        );
+    }
+
+    #[test]
+    fn certified_triangulation_rejects_open_surface_after_boundary_tjunction_cleanup() {
+        let lower = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let upper = make_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1);
+        let result = BooleanResult::new(
+            PolygonSoup {
+                polygons: vec![lower, upper],
+                bounds: Aabb::new(p(0, 0, 0), p(2, 2, 0)),
+                num_meshes: 1,
+            },
+            vec![1, 1],
+        );
+
+        let err = triangulate_and_resolve_certified(&result).unwrap_err();
+        assert!(matches!(err, HypermeshError::OpenOutput { .. }));
     }
 }

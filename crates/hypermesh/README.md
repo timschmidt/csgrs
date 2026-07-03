@@ -67,9 +67,9 @@ path construction remains unfinished.
 
 `EmberConfig::default()` runs only the general subdivision/BSP/classification
 path. The previous same-surface, disjoint-bound, strict-containment,
-boundary-contact, and oriented-box compatibility fallbacks have been removed,
-so public boolean results either certify through the general path or return an
-error. Bounded WNV-reachability early termination is not exposed; subdivision
+boundary-contact, and oriented-box shortcuts have been removed, so public
+boolean results either certify through the general path or return an error.
+Bounded WNV-reachability early termination is not exposed; subdivision
 continues unless a leaf or certified failure is reached.
 
 Subdivision depth is a certification budget, not a permission to guess. Bounds

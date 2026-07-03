@@ -4,7 +4,7 @@ use hyperlattice::{Point3, Real};
 
 use crate::error::HypermeshResult;
 use crate::geometry::{Aabb, axis_mut, axis_ref};
-use crate::mesh::{InputMesh, MeshRef, prepare_input_refs};
+use crate::mesh::{MeshRef, prepare_input_refs};
 use crate::output::{BooleanResult, triangulate_and_resolve_certified};
 use crate::subdivision::{SubdivisionConfig, SubdivisionTask, subdivide};
 use crate::winding::{BooleanOp, make_indicator};
@@ -28,7 +28,7 @@ impl Default for EmberConfig {
 }
 
 /// Performs a boolean operation on borrowed mesh views.
-pub fn boolean_operation_refs(
+pub fn boolean_operation(
     meshes: &[MeshRef<'_>],
     op: BooleanOp,
     config: EmberConfig,
@@ -83,68 +83,31 @@ fn validate_mesh_refs(meshes: &[MeshRef<'_>]) -> HypermeshResult<()> {
     Ok(())
 }
 
-/// Performs a boolean operation on owned mesh values through the borrowed API.
-pub fn boolean_operation(
-    meshes: &[InputMesh],
-    op: BooleanOp,
-    config: EmberConfig,
-) -> HypermeshResult<BooleanResult> {
-    let refs = meshes.iter().map(InputMesh::as_ref).collect::<Vec<_>>();
-    boolean_operation_refs(&refs, op, config)
-}
-
-/// Borrowed union convenience wrapper.
-pub fn boolean_union_refs(
-    a: MeshRef<'_>,
-    b: MeshRef<'_>,
-    config: EmberConfig,
-) -> HypermeshResult<BooleanResult> {
-    boolean_operation_refs(&[a, b], BooleanOp::Union, config)
-}
-
-/// Owned union convenience wrapper.
+/// Union convenience wrapper.
 pub fn boolean_union(
-    a: &InputMesh,
-    b: &InputMesh,
-    config: EmberConfig,
-) -> HypermeshResult<BooleanResult> {
-    boolean_union_refs(a.as_ref(), b.as_ref(), config)
-}
-
-/// Borrowed intersection convenience wrapper.
-pub fn boolean_intersection_refs(
     a: MeshRef<'_>,
     b: MeshRef<'_>,
     config: EmberConfig,
 ) -> HypermeshResult<BooleanResult> {
-    boolean_operation_refs(&[a, b], BooleanOp::Intersection, config)
+    boolean_operation(&[a, b], BooleanOp::Union, config)
 }
 
-/// Owned intersection convenience wrapper.
+/// Intersection convenience wrapper.
 pub fn boolean_intersection(
-    a: &InputMesh,
-    b: &InputMesh,
-    config: EmberConfig,
-) -> HypermeshResult<BooleanResult> {
-    boolean_intersection_refs(a.as_ref(), b.as_ref(), config)
-}
-
-/// Borrowed difference convenience wrapper.
-pub fn boolean_difference_refs(
     a: MeshRef<'_>,
     b: MeshRef<'_>,
     config: EmberConfig,
 ) -> HypermeshResult<BooleanResult> {
-    boolean_operation_refs(&[a, b], BooleanOp::Difference, config)
+    boolean_operation(&[a, b], BooleanOp::Intersection, config)
 }
 
-/// Owned difference convenience wrapper.
+/// Difference convenience wrapper.
 pub fn boolean_difference(
-    a: &InputMesh,
-    b: &InputMesh,
+    a: MeshRef<'_>,
+    b: MeshRef<'_>,
     config: EmberConfig,
 ) -> HypermeshResult<BooleanResult> {
-    boolean_difference_refs(a.as_ref(), b.as_ref(), config)
+    boolean_operation(&[a, b], BooleanOp::Difference, config)
 }
 
 fn expanded_bounds(bounds: &Aabb) -> Aabb {

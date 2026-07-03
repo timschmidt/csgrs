@@ -4,7 +4,7 @@ use std::str::FromStr;
 use hypermesh::{
     Aabb, BooleanOp, EmberConfig, ExactBvh, HypermeshResult, InputMesh, MeshRef, OutputVertex,
     Point3, Real, Triangle, TriangleSoup, boolean_difference, boolean_intersection,
-    boolean_operation_refs, boolean_union, prepare_input_meshes, triangulate_and_resolve_certified,
+    boolean_operation, boolean_union, prepare_input_meshes, triangulate_and_resolve_certified,
 };
 
 fn r(value: i32) -> Real {
@@ -153,16 +153,16 @@ fn config() -> EmberConfig {
 
 fn run_op(a: &InputMesh, b: &InputMesh, op: BooleanOp) -> HypermeshResult<TriangleSoup> {
     let refs = [a.as_ref(), b.as_ref()];
-    triangulate_and_resolve_certified(&boolean_operation_refs(&refs, op, config())?)
+    triangulate_and_resolve_certified(&boolean_operation(&refs, op, config())?)
 }
 
 fn run_certified_op(a: &InputMesh, b: &InputMesh, op: BooleanOp) -> HypermeshResult<TriangleSoup> {
     let refs = [a.as_ref(), b.as_ref()];
-    triangulate_and_resolve_certified(&boolean_operation_refs(&refs, op, config())?)
+    triangulate_and_resolve_certified(&boolean_operation(&refs, op, config())?)
 }
 
 fn run_op_refs(meshes: &[MeshRef<'_>], op: BooleanOp) -> HypermeshResult<TriangleSoup> {
-    triangulate_and_resolve_certified(&boolean_operation_refs(meshes, op, config())?)
+    triangulate_and_resolve_certified(&boolean_operation(meshes, op, config())?)
 }
 
 fn vertex_key(vertex: &OutputVertex) -> [String; 3] {
@@ -290,7 +290,7 @@ fn assert_same_shape(left: &TriangleSoup, right: &TriangleSoup) {
 }
 
 fn passthrough(mesh: &InputMesh) -> HypermeshResult<TriangleSoup> {
-    let result = boolean_operation_refs(
+    let result = boolean_operation(
         &[mesh.as_ref()],
         BooleanOp::Union,
         EmberConfig {
@@ -306,7 +306,7 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
     let cube_a = box_mesh([-1, -1, -1], [1, 1, 1]);
     let cube_b = rational_cube([ratio(1, 2), ratio(1, 2), ratio(1, 2)], r(1));
 
-    let union = boolean_union(&cube_a, &cube_b, config()).unwrap();
+    let union = boolean_union(cube_a.as_ref(), cube_b.as_ref(), config()).unwrap();
     let union_soup = triangulate_and_resolve_certified(&union).unwrap();
     assert_closed_triangle_soup(&union_soup);
     assert_bounds(
@@ -317,7 +317,7 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
     .unwrap();
     assert_volume_numerator(&union_soup, ratio(303, 4));
 
-    let intersection = boolean_intersection(&cube_a, &cube_b, config()).unwrap();
+    let intersection = boolean_intersection(cube_a.as_ref(), cube_b.as_ref(), config()).unwrap();
     let intersection_soup = triangulate_and_resolve_certified(&intersection).unwrap();
     assert_closed_triangle_soup(&intersection_soup);
     assert_bounds(
@@ -328,7 +328,7 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
     .unwrap();
     assert_volume_numerator(&intersection_soup, ratio(81, 4));
 
-    let difference = boolean_difference(&cube_a, &cube_b, config()).unwrap();
+    let difference = boolean_difference(cube_a.as_ref(), cube_b.as_ref(), config()).unwrap();
     let difference_soup = triangulate_and_resolve_certified(&difference).unwrap();
     assert_closed_triangle_soup(&difference_soup);
     assert_bounds(&difference_soup, [r(-1), r(-1), r(-1)], [r(1), r(1), r(1)]).unwrap();
@@ -453,7 +453,7 @@ fn generated_sphere_booleans_are_closed() {
         BooleanOp::SymmetricDifference,
     ] {
         let result = triangulate_and_resolve_certified(
-            &boolean_operation_refs(&refs, op, config())
+            &boolean_operation(&refs, op, config())
                 .unwrap_or_else(|err| panic!("{op:?} failed: {err:?}")),
         )
         .unwrap_or_else(|err| panic!("{op:?} certified output failed: {err:?}"));
@@ -605,15 +605,15 @@ fn disjoint_boxes_use_general_leaf_path() -> HypermeshResult<()> {
         ..config()
     };
 
-    let union_result = boolean_operation_refs(&refs, BooleanOp::Union, config)?;
+    let union_result = boolean_operation(&refs, BooleanOp::Union, config)?;
     let union = triangulate_and_resolve_certified(&union_result)?;
     assert_no_boundary_edges(&union);
 
-    let intersection_result = boolean_operation_refs(&refs, BooleanOp::Intersection, config)?;
+    let intersection_result = boolean_operation(&refs, BooleanOp::Intersection, config)?;
     let intersection = triangulate_and_resolve_certified(&intersection_result)?;
     assert!(intersection.triangles.is_empty());
 
-    let difference_result = boolean_operation_refs(&refs, BooleanOp::Difference, config)?;
+    let difference_result = boolean_operation(&refs, BooleanOp::Difference, config)?;
     let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert_same_shape(&difference, &left_soup);
 
@@ -630,11 +630,11 @@ fn boundary_touching_boxes_use_general_path() -> HypermeshResult<()> {
         ..config()
     };
 
-    let intersection_result = boolean_operation_refs(&refs, BooleanOp::Intersection, config)?;
+    let intersection_result = boolean_operation(&refs, BooleanOp::Intersection, config)?;
     let intersection = triangulate_and_resolve_certified(&intersection_result)?;
     assert!(intersection.triangles.is_empty());
 
-    let difference_result = boolean_operation_refs(&refs, BooleanOp::Difference, config)?;
+    let difference_result = boolean_operation(&refs, BooleanOp::Difference, config)?;
     let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert_no_boundary_edges(&difference);
     assert_volume_numerator(&difference, r(6));
@@ -797,11 +797,11 @@ fn same_surface_solids_use_general_path() -> HypermeshResult<()> {
     let refs = [left.as_ref(), same_surface.as_ref()];
     let config = config();
 
-    let union_result = boolean_operation_refs(&refs, BooleanOp::Union, config)?;
+    let union_result = boolean_operation(&refs, BooleanOp::Union, config)?;
     let union = triangulate_and_resolve_certified(&union_result)?;
     assert_no_boundary_edges(&union);
 
-    let difference_result = boolean_operation_refs(&refs, BooleanOp::Difference, config)?;
+    let difference_result = boolean_operation(&refs, BooleanOp::Difference, config)?;
     let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert!(difference.triangles.is_empty());
 
