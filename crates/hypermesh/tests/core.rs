@@ -473,6 +473,7 @@ fn process_leaf_classifies_direct_nsi_polygon_slice() {
         process_leaf_into(&[wall], &bounds, &p(0, 0, 0), &[0], &union, &mut output).unwrap();
 
     assert!(stats.certified_complete);
+    assert_eq!(stats.intersection_count, 0);
     assert_eq!(stats.direct_polygon_count, 1);
     assert_eq!(stats.bsp_leaf_count, 0);
     assert_eq!(output.len(), 1);

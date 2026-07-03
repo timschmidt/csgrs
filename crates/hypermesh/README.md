@@ -46,7 +46,8 @@ crossed local surface or AABB boundary. If a probe lies on a traced surface,
 cannot reach the adjacent cell, or cannot be traced from the reference point,
 that probe is discarded. If no certified probe path remains, the leaf reports
 `UnknownClassification`; there is no silent fallback to the reference winding
-number.
+number. NSI/NNC flags do not bypass leaf classification; leaves still run
+pairwise intersection discovery and classify each direct polygon separately.
 
 Subdivision reference propagation currently accepts the EMBER projection of the
 parent reference point onto a child AABB only when the projected point and trace

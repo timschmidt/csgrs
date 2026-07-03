@@ -125,13 +125,6 @@ pub fn process_leaf_into(
         return Ok(stats);
     }
 
-    if can_skip_bsp_for_leaf(polygons) {
-        stats.direct_polygon_count =
-            emit_direct(polygons, bounds, ref_point, ref_wnv, indicator, output)?;
-        stats.certified_complete = true;
-        return Ok(stats);
-    }
-
     let intersections = pairwise_intersections_by_polygon(polygons)?;
     stats.intersection_count = intersections.iter().map(Vec::len).sum();
 
@@ -313,62 +306,6 @@ pub fn subdivide_into(
     }
 
     Ok(())
-}
-
-fn can_skip_bsp_for_leaf(polygons: &[ConvexPolygon]) -> bool {
-    polygons
-        .first()
-        .map(|first| {
-            polygons
-                .iter()
-                .all(|polygon| polygon.no_self_intersections && polygon.delta_w == first.delta_w)
-        })
-        .unwrap_or(true)
-}
-
-fn emit_direct(
-    polygons: &[ConvexPolygon],
-    bounds: &Aabb,
-    ref_point: &Point3,
-    ref_wnv: &[i32],
-    indicator: &Indicator,
-    output: &mut Vec<ClassifiedPolygon>,
-) -> HypermeshResult<usize> {
-    let all_nnc = polygons.iter().all(|polygon| polygon.no_nested_components);
-    let mut emitted = 0;
-    if all_nnc {
-        let first = &polygons[0];
-        let w_front = classify_leaf_polygon(
-            &first.support,
-            &first.edges,
-            ref_point,
-            ref_wnv,
-            polygons,
-            bounds,
-            &first.delta_w,
-        )?;
-        let w_back = propagate_wnv(&w_front, 1, &first.delta_w);
-        let classification = classify_polygon_output(&w_front, &w_back, indicator);
-        if classification != 0 {
-            for polygon in polygons {
-                let mut classified = ClassifiedPolygon::new(polygon.clone(), classification);
-                classified.winding = Some(WindingPair {
-                    w_front: w_front.clone(),
-                    w_back: w_back.clone(),
-                });
-                output.push(classified);
-                emitted += 1;
-            }
-        }
-        return Ok(emitted);
-    }
-
-    for polygon in polygons {
-        emitted += usize::from(emit_one_direct(
-            polygon, bounds, ref_point, ref_wnv, polygons, indicator, output,
-        )?);
-    }
-    Ok(emitted)
 }
 
 fn emit_one_direct(
