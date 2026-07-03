@@ -182,6 +182,35 @@ fn prepare_input_rejects_empty_mesh_views() {
 }
 
 #[test]
+fn prepare_input_rejects_degenerate_source_triangles() {
+    let repeated_positions = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+    let repeated = [Triangle::new(0, 0, 2)];
+    assert_eq!(
+        prepare_input(&[MeshRef {
+            positions: &repeated_positions,
+            triangles: &repeated,
+        }]),
+        Err(hypermesh::HypermeshError::DegenerateTriangle {
+            mesh_index: 0,
+            triangle_index: 0
+        })
+    );
+
+    let collinear_positions = vec![p(0, 0, 0), p(1, 0, 0), p(2, 0, 0)];
+    let collinear = [Triangle::new(0, 1, 2)];
+    assert_eq!(
+        prepare_input(&[MeshRef {
+            positions: &collinear_positions,
+            triangles: &collinear,
+        }]),
+        Err(hypermesh::HypermeshError::DegenerateTriangle {
+            mesh_index: 0,
+            triangle_index: 0
+        })
+    );
+}
+
+#[test]
 fn prepare_input_accepts_owned_mesh_views() {
     let mesh = hypermesh::InputMesh::new(
         vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)],
@@ -275,6 +304,20 @@ fn boolean_operation_validates_before_general_path() {
     assert_eq!(
         boolean_operation(&[no_triangles], BooleanOp::Union, EmberConfig::default()),
         Err(hypermesh::HypermeshError::EmptyMesh { mesh_index: 0 })
+    );
+
+    let degenerate_positions = vec![p(0, 0, 0), p(1, 0, 0), p(2, 0, 0)];
+    let degenerate_triangles = vec![Triangle::new(0, 1, 2)];
+    let degenerate = hypermesh::MeshRef {
+        positions: &degenerate_positions,
+        triangles: &degenerate_triangles,
+    };
+    assert_eq!(
+        boolean_operation(&[degenerate], BooleanOp::Union, EmberConfig::default()),
+        Err(hypermesh::HypermeshError::DegenerateTriangle {
+            mesh_index: 0,
+            triangle_index: 0
+        })
     );
 
     let positions = vec![p(0, 0, 0), p(1, 0, 0)];

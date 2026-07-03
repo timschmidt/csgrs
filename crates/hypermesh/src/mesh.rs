@@ -112,7 +112,7 @@ pub fn prepare_input(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
     let mut polygons = Vec::new();
     let mut polygon_index = 0isize;
     for (mesh_index, mesh) in meshes.iter().enumerate() {
-        for triangle in mesh.triangles {
+        for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
             let [i0, i1, i2] = triangle.indices();
             let p0 = mesh
                 .positions
@@ -137,7 +137,10 @@ pub fn prepare_input(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
                 })?;
             let mut polygon = make_triangle(p0, p1, p2, mesh_index as isize, polygon_index);
             if !polygon.support.is_valid() {
-                continue;
+                return Err(HypermeshError::DegenerateTriangle {
+                    mesh_index,
+                    triangle_index,
+                });
             }
             polygon.delta_w = vec![0; meshes.len()];
             polygon.delta_w[mesh_index] = 1;

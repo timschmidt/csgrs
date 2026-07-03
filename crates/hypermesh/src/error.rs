@@ -23,6 +23,13 @@ pub enum HypermeshError {
         /// Index of the empty mesh in the input slice.
         mesh_index: usize,
     },
+    /// A source triangle is degenerate and cannot bound a PWN surface.
+    DegenerateTriangle {
+        /// Index of the mesh containing the triangle.
+        mesh_index: usize,
+        /// Index of the triangle within that mesh.
+        triangle_index: usize,
+    },
     /// A scalar predicate could not certify its sign through exact predicate
     /// routes without choosing a precision budget.
     UnknownClassification,
@@ -51,6 +58,13 @@ impl fmt::Display for HypermeshError {
             Self::EmptyMesh { mesh_index } => {
                 write!(f, "input mesh {mesh_index} has no positions or triangles")
             }
+            Self::DegenerateTriangle {
+                mesh_index,
+                triangle_index,
+            } => write!(
+                f,
+                "input mesh {mesh_index} triangle {triangle_index} is degenerate"
+            ),
             Self::UnknownClassification => f.write_str("could not certify scalar sign"),
             Self::OpenOutput {
                 boundary_edges,
