@@ -55,14 +55,6 @@ fn cube_mesh(min: i32, max: i32) -> hypermesh::InputMesh {
     )
 }
 
-fn ov(x: i32, y: i32, z: i32) -> hypermesh::OutputVertex {
-    hypermesh::OutputVertex {
-        x: r(x),
-        y: r(y),
-        z: r(z),
-    }
-}
-
 fn assert_triangle_soup_within_bounds(
     soup: &hypermesh::TriangleSoup,
     min: i32,
@@ -627,16 +619,19 @@ fn subdivision_escapes_projected_reference_on_surface() {
 }
 
 #[test]
-fn resolve_tjunctions_merges_duplicate_vertices_and_faces_exactly() {
-    let soup = hypermesh::TriangleSoup {
-        vertices: vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 1, 0), ov(1, 0, 0)],
-        triangles: vec![[0, 1, 2], [0, 3, 2]],
-    };
+fn certified_triangulation_rejects_duplicate_open_faces_exactly() {
+    let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let result = hypermesh::BooleanResult::new(
+        hypermesh::PolygonSoup {
+            polygons: vec![polygon.clone(), polygon],
+            bounds: hypermesh::Aabb::new(p(0, 0, 0), p(1, 1, 0)),
+            num_meshes: 1,
+        },
+        vec![1, 1],
+    );
 
-    let resolved = hypermesh::resolve_tjunctions(&soup).unwrap();
-
-    assert_eq!(resolved.vertices.len(), 3);
-    assert_eq!(resolved.triangles.len(), 1);
+    let err = triangulate_and_resolve_certified(&result).unwrap_err();
+    assert!(matches!(err, HypermeshError::OpenOutput { .. }));
 }
 
 #[test]
@@ -700,22 +695,20 @@ fn boolean_result_preserves_classified_winding_evidence() {
 }
 
 #[test]
-fn resolve_tjunctions_splits_exact_boundary_tjunction() {
-    let soup = hypermesh::TriangleSoup {
-        vertices: vec![ov(0, 0, 0), ov(2, 0, 0), ov(0, 2, 0), ov(1, 0, 0)],
-        triangles: vec![[0, 1, 2]],
-    };
-
-    let resolved = hypermesh::resolve_tjunctions(&soup).unwrap();
-
-    assert_eq!(resolved.vertices.len(), 4);
-    assert_eq!(resolved.triangles.len(), 2);
-    assert!(
-        resolved
-            .triangles
-            .iter()
-            .any(|triangle| triangle.contains(&3))
+fn certified_triangulation_rejects_open_surface_after_boundary_tjunction_cleanup() {
+    let lower = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let upper = make_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1);
+    let result = hypermesh::BooleanResult::new(
+        hypermesh::PolygonSoup {
+            polygons: vec![lower, upper],
+            bounds: hypermesh::Aabb::new(p(0, 0, 0), p(2, 2, 0)),
+            num_meshes: 1,
+        },
+        vec![1, 1],
     );
+
+    let err = triangulate_and_resolve_certified(&result).unwrap_err();
+    assert!(matches!(err, HypermeshError::OpenOutput { .. }));
 }
 
 #[test]

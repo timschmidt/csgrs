@@ -218,7 +218,7 @@ pub fn triangulate_polygons(polygons: &[ConvexPolygon]) -> HypermeshResult<Trian
 /// This pass deliberately uses no tolerance and no primitive floating-point
 /// arithmetic. It only merges or splits when exact hyperreal predicates prove
 /// equality, collinearity, and segment containment.
-pub fn resolve_tjunctions(input: &TriangleSoup) -> HypermeshResult<TriangleSoup> {
+fn resolve_tjunctions(input: &TriangleSoup) -> HypermeshResult<TriangleSoup> {
     let mut soup = merge_duplicate_vertices(input);
     remove_degenerate_and_duplicate_triangles(&mut soup);
 
@@ -667,5 +667,54 @@ fn vertex_axis(vertex: &OutputVertex, axis: usize) -> &Real {
         1 => &vertex.y,
         2 => &vertex.z,
         _ => panic!("axis must be 0, 1, or 2"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn r(value: i32) -> Real {
+        value.into()
+    }
+
+    fn ov(x: i32, y: i32, z: i32) -> OutputVertex {
+        OutputVertex {
+            x: r(x),
+            y: r(y),
+            z: r(z),
+        }
+    }
+
+    #[test]
+    fn internal_resolution_merges_duplicate_vertices_and_faces_exactly() {
+        let soup = TriangleSoup {
+            vertices: vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 1, 0), ov(1, 0, 0)],
+            triangles: vec![[0, 1, 2], [0, 3, 2]],
+        };
+
+        let resolved = resolve_tjunctions(&soup).unwrap();
+
+        assert_eq!(resolved.vertices.len(), 3);
+        assert_eq!(resolved.triangles.len(), 1);
+    }
+
+    #[test]
+    fn internal_resolution_splits_exact_boundary_tjunction() {
+        let soup = TriangleSoup {
+            vertices: vec![ov(0, 0, 0), ov(2, 0, 0), ov(0, 2, 0), ov(1, 0, 0)],
+            triangles: vec![[0, 1, 2]],
+        };
+
+        let resolved = resolve_tjunctions(&soup).unwrap();
+
+        assert_eq!(resolved.vertices.len(), 4);
+        assert_eq!(resolved.triangles.len(), 2);
+        assert!(
+            resolved
+                .triangles
+                .iter()
+                .any(|triangle| triangle.contains(&3))
+        );
     }
 }
