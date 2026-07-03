@@ -48,12 +48,8 @@ face interiors. In that case, regularized intersection is empty and difference
 preserves the left operand.
 
 Same-basis oriented boxes and detected axis-aligned boxes are handled by exact
-cell decompositions before the compatibility fast-path flag. The regression
-suite verifies these paths with `use_fast_paths` disabled.
-
-`EmberConfig::use_fast_paths` controls compatibility shortcuts for cases that
-the general path does not yet cover completely. It defaults to `false` so new
-callers exercise subdivision/BSP classification first.
+cell decompositions before subdivision. The regression suite verifies these
+paths through the certified no-repair triangulation helper.
 
 Subdivision depth is a certification budget, not a permission to guess. If a
 task reaches `max_depth` while it still contains more polygons than the leaf

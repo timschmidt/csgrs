@@ -22,9 +22,6 @@ pub struct EmberConfig {
     pub max_depth: usize,
     /// Enable WNV reachability early-out.
     pub use_early_termination: bool,
-    /// Enable specialized boolean fast paths instead of forcing the general
-    /// subdivision/BSP classification path.
-    pub use_fast_paths: bool,
     /// Assume every source mesh has no self-intersections.
     pub assume_nsi: bool,
     /// Assume every source mesh has no nested components.
@@ -37,7 +34,6 @@ impl Default for EmberConfig {
             leaf_threshold: crate::subdivision::DEFAULT_LEAF_THRESHOLD,
             max_depth: crate::subdivision::DEFAULT_MAX_DEPTH,
             use_early_termination: true,
-            use_fast_paths: false,
             assume_nsi: false,
             assume_nnc: false,
         }

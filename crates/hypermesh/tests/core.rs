@@ -628,7 +628,6 @@ fn overlapping_cube_booleans_clip_and_resolve_exactly() {
         assume_nsi: true,
         assume_nnc: true,
         use_early_termination: false,
-        use_fast_paths: false,
     };
 
     let union = hypermesh::boolean_union(&cube_a, &cube_b, config).unwrap();
