@@ -1,6 +1,6 @@
 //! Exact segment tracing for winding-number propagation.
 
-use hyperlattice::{HomogeneousPoint3, Point3, Real};
+use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
@@ -612,25 +612,60 @@ fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<Point3>> {
     let mut points = Vec::with_capacity(vertices.len() + 1);
     if point_strictly_inside_leaf(&center, leaf)? {
         points.push(center.clone());
-    }
-
-    let n = Real::from(vertices.len() as u64);
-    let denom = &n + &Real::one();
-    for vertex in vertices {
-        let candidate = Point3::new(
-            (((&center.x * &n) + vertex.x) / denom.clone())
-                .map_err(|_| HypermeshError::UnknownClassification)?,
-            (((&center.y * &n) + vertex.y) / denom.clone())
-                .map_err(|_| HypermeshError::UnknownClassification)?,
-            (((&center.z * &n) + vertex.z) / denom.clone())
-                .map_err(|_| HypermeshError::UnknownClassification)?,
-        );
-        if point_strictly_inside_leaf(&candidate, leaf)? {
-            points.push(candidate);
+        for candidate in shifted_edge_interior_points(leaf, &center)? {
+            push_unique_point(&mut points, candidate);
         }
     }
 
     Ok(points)
+}
+
+fn shifted_edge_interior_points(
+    leaf: &ConvexPolygon,
+    strict_interior: &Point3,
+) -> HypermeshResult<Vec<Point3>> {
+    let mut points = Vec::with_capacity(leaf.vertex_count());
+    let half = (Real::one() / Real::from(2)).map_err(|_| HypermeshError::UnknownClassification)?;
+
+    for first_edge in 0..leaf.vertex_count() {
+        let second_edge = (first_edge + 1) % leaf.vertex_count();
+        let first_margin = leaf.edges[first_edge].expression_at_point(strict_interior);
+        let second_margin = leaf.edges[second_edge].expression_at_point(strict_interior);
+        if classify_real(&first_margin)? != Classification::Negative
+            || classify_real(&second_margin)? != Classification::Negative
+        {
+            continue;
+        }
+
+        let first_shifted =
+            inward_shifted_edge_plane(&leaf.edges[first_edge], &first_margin, &half);
+        let second_shifted =
+            inward_shifted_edge_plane(&leaf.edges[second_edge], &second_margin, &half);
+        let candidate = intersect_three_planes(&leaf.support, &first_shifted, &second_shifted)
+            .to_affine_point()
+            .map_err(|_| HypermeshError::UnknownClassification)?;
+
+        if point_strictly_inside_leaf(&candidate, leaf)? {
+            push_unique_point(&mut points, candidate);
+        }
+    }
+
+    Ok(points)
+}
+
+fn inward_shifted_edge_plane(
+    edge: &Plane,
+    strict_interior_margin: &Real,
+    fraction: &Real,
+) -> Plane {
+    let inward_offset = strict_interior_margin * fraction;
+    Plane::new(edge.normal.clone(), &edge.offset - &inward_offset)
+}
+
+fn push_unique_point(points: &mut Vec<Point3>, point: Point3) {
+    if !points.iter().any(|existing| existing == &point) {
+        points.push(point);
+    }
 }
 
 fn point_strictly_inside_leaf(point: &Point3, leaf: &ConvexPolygon) -> HypermeshResult<bool> {
@@ -805,5 +840,33 @@ mod tests {
 
         assert!(x_values.contains(&r(1)));
         assert!(x_values.contains(&r(3)));
+    }
+
+    #[test]
+    fn shifted_edge_interior_points_move_vertices_inside_by_certified_margins() {
+        let leaf = make_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+        let vertices = leaf.vertices().unwrap();
+        let center = centroid(&vertices).unwrap();
+        let points = shifted_edge_interior_points(&leaf, &center).unwrap();
+
+        assert_eq!(points.len(), 3);
+        for point in &points {
+            assert!(point_strictly_inside_leaf(point, &leaf).unwrap());
+        }
+
+        let first = &points[0];
+        let expected_first_edge_margin =
+            (leaf.edges[0].expression_at_point(&center) / Real::from(2)).unwrap();
+        let expected_second_edge_margin =
+            (leaf.edges[1].expression_at_point(&center) / Real::from(2)).unwrap();
+
+        assert_eq!(
+            leaf.edges[0].expression_at_point(first),
+            expected_first_edge_margin
+        );
+        assert_eq!(
+            leaf.edges[1].expression_at_point(first),
+            expected_second_edge_margin
+        );
     }
 }

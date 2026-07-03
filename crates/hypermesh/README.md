@@ -9,7 +9,8 @@ hyperreal-backed coordinates.
 - Exact input coordinates through `hyperreal` / `hyperlattice`.
 - Triangle mesh boolean operations: union, intersection, difference, and
   symmetric difference.
-- Borrowed and owned mesh APIs.
+- Borrowed boolean APIs over `MeshRef` views, with `InputMesh` available as an
+  owned storage helper.
 - Focused Rust regression tests for topology, classification, and output mesh
   regularization.
 - An egui / WASM demo using the shared `hypergraphics` renderer.
@@ -41,13 +42,16 @@ general path. Remaining gaps are tracked by code paths that can still return
 
 Leaf classification currently searches certified off-face probes from exact
 leaf interior points by stepping into the open interval before the nearest
-crossed local surface or AABB boundary. If a probe lies on a traced surface,
-cannot reach the adjacent cell, or cannot be traced from the reference point,
-that probe is discarded. If no certified probe path remains, the leaf reports
-`UnknownClassification`; there is no silent fallback to the reference winding
-number. There are no input-assumption bypass flags; leaves run pairwise
-intersection discovery across all local polygons, including same-mesh
-self-intersections, and classify each direct polygon separately.
+crossed local surface or AABB boundary. Interior targets include the centroid
+and deterministic EMBER-style points formed by shifting adjacent edge planes
+inward and intersecting them with the support plane. If a probe lies on a
+traced surface, cannot reach the adjacent cell, or cannot be traced from the
+reference point, that probe is discarded. If no certified probe path remains,
+the leaf reports `UnknownClassification`; there is no silent fallback to the
+reference winding number. There are no input-assumption bypass flags; leaves
+run pairwise intersection discovery across all local polygons, including
+same-mesh self-intersections, and classify each direct polygon separately. The
+full plane-replacement classification path remains unfinished.
 
 Subdivision reference propagation currently accepts the EMBER projection of the
 parent reference point onto a child AABB only when the projected point and trace
