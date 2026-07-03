@@ -603,6 +603,8 @@ fn overlapping_cube_booleans_clip_and_resolve_exactly() {
     };
 
     let union = hypermesh::boolean_union(&cube_a, &cube_b, config).unwrap();
+    assert_eq!(union.winding_pairs.len(), union.output.polygons.len());
+    assert!(union.winding_pairs.iter().any(Option::is_some));
     let union_soup = triangulate_and_resolve(&union).unwrap();
     assert!(!union.output.polygons.is_empty());
     assert!(!union_soup.triangles.is_empty());

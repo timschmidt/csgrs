@@ -41,15 +41,20 @@ pub struct BooleanResult {
     pub output: PolygonSoup,
     /// Per-output-polygon classifications.
     pub classifications: Vec<i8>,
+    /// Per-output-polygon front/back winding evidence, when produced by the
+    /// general subdivision classifier.
+    pub winding_pairs: Vec<Option<WindingPair>>,
     operation: Option<BooleanOp>,
 }
 
 impl BooleanResult {
     /// Constructs a result from an output soup and classifications.
     pub fn new(output: PolygonSoup, classifications: Vec<i8>) -> Self {
+        let winding_pairs = vec![None; classifications.len()];
         Self {
             output,
             classifications,
+            winding_pairs,
             operation: None,
         }
     }
@@ -68,9 +73,11 @@ impl BooleanResult {
     ) -> Self {
         output.polygons.clear();
         let mut classifications = Vec::with_capacity(classified.len());
+        let mut winding_pairs = Vec::with_capacity(classified.len());
 
         for classified_polygon in classified {
             let classification = classified_polygon.classification;
+            let winding = classified_polygon.winding;
             let polygon = if classification == -1 {
                 classified_polygon.polygon.inverted()
             } else {
@@ -78,11 +85,13 @@ impl BooleanResult {
             };
             output.polygons.push(polygon);
             classifications.push(classification);
+            winding_pairs.push(winding);
         }
 
         Self {
             output,
             classifications,
+            winding_pairs,
             operation,
         }
     }

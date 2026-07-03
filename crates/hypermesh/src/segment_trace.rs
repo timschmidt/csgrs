@@ -288,6 +288,9 @@ pub fn classify_leaf_polygon(
             for (probe, probe_side) in
                 bounded_probes_from_interior(point, support, bounds, positive_side)?
             {
+                if point_lies_on_traced_surface(&probe, polygons)? {
+                    continue;
+                }
                 let Ok(mut winding) = trace_segment(ref_point, &probe, ref_wnv, polygons) else {
                     continue;
                 };
