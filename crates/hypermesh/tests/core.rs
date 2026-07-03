@@ -495,6 +495,22 @@ fn boolean_operation_refs_runs_leaf_pipeline_from_borrowed_meshes() {
 }
 
 #[test]
+fn proven_shortcut_flag_does_not_bypass_general_path() {
+    let mesh = cube_mesh(0, 2);
+    let config = EmberConfig {
+        use_proven_shortcuts: true,
+        assume_nsi: true,
+        assume_nnc: true,
+        ..EmberConfig::default()
+    };
+
+    let result = boolean_operation_refs(&[mesh.as_ref()], BooleanOp::Union, config).unwrap();
+
+    assert!(!result.output.polygons.is_empty());
+    assert!(result.winding_pairs.iter().all(Option::is_some));
+}
+
+#[test]
 fn boolean_operation_owned_delegates_to_borrowed_pipeline() {
     let mut mesh = hypermesh::InputMesh::new(
         vec![p(1, -1, -1), p(1, 1, -1), p(1, 0, 1)],

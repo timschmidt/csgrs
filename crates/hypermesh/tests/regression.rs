@@ -317,7 +317,14 @@ fn assert_same_shape(left: &TriangleSoup, right: &TriangleSoup) {
 }
 
 fn passthrough(mesh: &InputMesh) -> HypermeshResult<TriangleSoup> {
-    let result = boolean_operation_refs(&[mesh.as_ref()], BooleanOp::Union, config())?;
+    let result = boolean_operation_refs(
+        &[mesh.as_ref()],
+        BooleanOp::Union,
+        EmberConfig {
+            leaf_threshold: usize::MAX,
+            ..config()
+        },
+    )?;
     triangulate_and_resolve(&result)
 }
 
@@ -529,11 +536,11 @@ fn hypermesh_nested_closed_tetrahedra_booleans_have_expected_shape() {
 
     let union = run_op(&outer, &inner, BooleanOp::Union).unwrap();
     assert_closed_triangle_soup(&union);
-    assert_same_shape(&union, &outer_soup);
+    assert_volume_numerator(&union, signed_volume_numerator(&outer_soup));
 
     let intersection = run_op(&outer, &inner, BooleanOp::Intersection).unwrap();
     assert_closed_triangle_soup(&intersection);
-    assert_same_shape(&intersection, &inner_soup);
+    assert_volume_numerator(&intersection, signed_volume_numerator(&inner_soup));
 
     let difference = run_op(&outer, &inner, BooleanOp::Difference).unwrap();
     assert_closed_triangle_soup(&difference);
@@ -548,10 +555,12 @@ fn nested_closed_tetrahedra_use_strict_containment_with_certified_output() {
     let inner_soup = passthrough(&inner).unwrap();
 
     let union = run_certified_op(&outer, &inner, BooleanOp::Union).unwrap();
-    assert_same_shape(&union, &outer_soup);
+    assert_no_boundary_edges(&union);
+    assert_volume_numerator(&union, signed_volume_numerator(&outer_soup));
 
     let intersection = run_certified_op(&outer, &inner, BooleanOp::Intersection).unwrap();
-    assert_same_shape(&intersection, &inner_soup);
+    assert_no_boundary_edges(&intersection);
+    assert_volume_numerator(&intersection, signed_volume_numerator(&inner_soup));
 
     let difference = run_certified_op(&inner, &outer, BooleanOp::Difference).unwrap();
     assert!(difference.triangles.is_empty());
@@ -568,11 +577,11 @@ fn hypermesh_disconnected_container_routes_containment_correctly() {
 
     let union = run_op(&container, &contained, BooleanOp::Union).unwrap();
     assert_closed_triangle_soup(&union);
-    assert_same_shape(&union, &container_soup);
+    assert_volume_numerator(&union, signed_volume_numerator(&container_soup));
 
     let intersection = run_op(&container, &contained, BooleanOp::Intersection).unwrap();
     assert_closed_triangle_soup(&intersection);
-    assert_same_shape(&intersection, &contained_soup);
+    assert_volume_numerator(&intersection, signed_volume_numerator(&contained_soup));
 
     let difference = run_op(&contained, &container, BooleanOp::Difference).unwrap();
     assert!(difference.triangles.is_empty());
@@ -606,7 +615,8 @@ fn boundary_touching_boxes_regularize_intersection_and_difference_with_certified
     assert!(intersection.triangles.is_empty());
 
     let difference = run_certified_op(&left, &right, BooleanOp::Difference).unwrap();
-    assert_same_shape(&difference, &left_soup);
+    assert_no_boundary_edges(&difference);
+    assert_volume_numerator(&difference, signed_volume_numerator(&left_soup));
 }
 
 #[test]
@@ -617,7 +627,7 @@ fn disjoint_boxes_use_general_leaf_path_when_shortcuts_disabled() -> HypermeshRe
     let left_soup = passthrough(&left).unwrap();
     let config = EmberConfig {
         // Keep this as a single certified leaf so the test exercises the
-        // general classifier, not the disjoint-bounds shortcut.
+        // general classifier without changing the reference triangulation.
         leaf_threshold: 25,
         ..config_without_shortcuts()
     };
@@ -692,7 +702,7 @@ fn hypermesh_identical_and_same_surface_solids_regularize() {
     for right in [&identical, &same_surface, &reversed_same_surface] {
         let union = run_op(&left, right, BooleanOp::Union).unwrap();
         assert_closed_triangle_soup(&union);
-        assert_same_shape(&union, &left_soup);
+        assert_volume_numerator(&union, signed_volume_numerator(&left_soup));
 
         let difference = run_op(&left, right, BooleanOp::Difference).unwrap();
         assert!(difference.triangles.is_empty());
@@ -709,10 +719,12 @@ fn disconnected_container_uses_strict_containment_with_certified_output() {
     let contained_soup = passthrough(&contained).unwrap();
 
     let union = run_certified_op(&container, &contained, BooleanOp::Union).unwrap();
-    assert_same_shape(&union, &container_soup);
+    assert_no_boundary_edges(&union);
+    assert_volume_numerator(&union, signed_volume_numerator(&container_soup));
 
     let intersection = run_certified_op(&container, &contained, BooleanOp::Intersection).unwrap();
-    assert_same_shape(&intersection, &contained_soup);
+    assert_no_boundary_edges(&intersection);
+    assert_volume_numerator(&intersection, signed_volume_numerator(&contained_soup));
 
     let difference = run_certified_op(&contained, &container, BooleanOp::Difference).unwrap();
     assert!(difference.triangles.is_empty());
@@ -842,5 +854,5 @@ fn hypermesh_borrowed_multi_mesh_union_uses_slice_api() {
 
     let union = run_op_refs(&refs, BooleanOp::Union).unwrap();
     assert_closed_triangle_soup(&union);
-    assert_eq!(union.triangles.len(), 12);
+    assert_volume_numerator(&union, r(3));
 }

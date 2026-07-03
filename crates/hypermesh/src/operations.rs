@@ -8,7 +8,7 @@ use crate::error::HypermeshResult;
 use crate::geometry::{Aabb, axis_mut, axis_ref, compare_real};
 use crate::intersection::{PairwiseIntersectionType, intersect_polygons};
 use crate::mesh::{InputMesh, MeshRef, PolygonSoup, Triangle, prepare_input_refs};
-use crate::output::BooleanResult;
+use crate::output::{BooleanResult, triangulate_and_resolve_certified};
 use crate::segment_trace::trace_segment;
 use crate::subdivision::{SubdivisionConfig, SubdivisionTask, subdivide};
 use crate::winding::{BooleanOp, make_indicator};
@@ -51,24 +51,54 @@ pub fn boolean_operation_refs(
 ) -> HypermeshResult<BooleanResult> {
     validate_mesh_refs(meshes)?;
 
-    if config.use_proven_shortcuts {
-        if let Some(result) = disjoint_bounds_boolean(meshes, op)? {
-            return Ok(result);
+    match boolean_operation_general(meshes, op, config) {
+        Ok(result) => {
+            if !config.use_proven_shortcuts || triangulate_and_resolve_certified(&result).is_ok() {
+                Ok(result)
+            } else if let Some(shortcut) = shortcut_boolean(meshes, op)? {
+                Ok(shortcut)
+            } else {
+                Ok(result)
+            }
         }
-        if let Some(result) = same_surface_boolean(meshes, op)? {
-            return Ok(result);
+        Err(err) if config.use_proven_shortcuts => {
+            if let Some(result) = shortcut_boolean(meshes, op)? {
+                Ok(result)
+            } else {
+                Err(err)
+            }
         }
-        if let Some(result) = containment_boolean(meshes, op)? {
-            return Ok(result);
-        }
-        if let Some(result) = boundary_only_contact_boolean(meshes, op)? {
-            return Ok(result);
-        }
-        if let Some(result) = oriented_box_boolean(meshes, op)? {
-            return Ok(result);
-        }
+        Err(err) => Err(err),
     }
+}
 
+fn shortcut_boolean(
+    meshes: &[MeshRef<'_>],
+    op: BooleanOp,
+) -> HypermeshResult<Option<BooleanResult>> {
+    if let Some(result) = disjoint_bounds_boolean(meshes, op)? {
+        return Ok(Some(result));
+    }
+    if let Some(result) = same_surface_boolean(meshes, op)? {
+        return Ok(Some(result));
+    }
+    if let Some(result) = containment_boolean(meshes, op)? {
+        return Ok(Some(result));
+    }
+    if let Some(result) = boundary_only_contact_boolean(meshes, op)? {
+        return Ok(Some(result));
+    }
+    if let Some(result) = oriented_box_boolean(meshes, op)? {
+        return Ok(Some(result));
+    }
+    Ok(None)
+}
+
+fn boolean_operation_general(
+    meshes: &[MeshRef<'_>],
+    op: BooleanOp,
+    config: EmberConfig,
+) -> HypermeshResult<BooleanResult> {
     let mut soup = prepare_input_refs(meshes)?;
     for polygon in &mut soup.polygons {
         if config.assume_nsi {
