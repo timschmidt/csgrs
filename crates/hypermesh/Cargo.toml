@@ -9,7 +9,6 @@ license = "MIT"
 hyperlattice = { path = "../hyperlattice" }
 hyperreal = { path = "../hyperreal" }
 hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"] }
-hypertri = { path = "../hypertri", default-features = false, features = ["earcut"] }
 
 [dev-dependencies]
 proptest = "1.7.0"

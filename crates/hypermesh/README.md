@@ -25,8 +25,8 @@ NSI/NNC facts. Open triangle soups, invalid triangle indices, and arbitrary
 non-PWN surface collections are outside the supported model.
 
 Predicate decisions are routed through the strict exact-predicate stack
-(`hyperlimit`, `hyperlattice`, and `hypertri` as support crates). A predicate,
-path trace, or classification that cannot be certified returns
+(`hyperlimit` and `hyperlattice` as support crates). A predicate, path trace,
+or classification that cannot be certified returns
 `UnknownClassification`; the algorithm must not silently use an approximate
 answer. In particular, arbitrary undecidable computable `Real` values remain
 outside any completeness claim when strict bounded refinement cannot decide the
@@ -38,7 +38,7 @@ subdivision, face-local BSP splitting, exact pairwise intersection handling,
 certified winding-vector propagation by segment traces, and no-repair
 triangulation checks for the regression cases that have been promoted to the
 general path. Remaining gaps are tracked by code paths that can still return
-`UnknownClassification`, and by compatibility fallbacks described below.
+`UnknownClassification`.
 
 Leaf classification currently searches certified off-face probes from exact
 leaf interior points. If a probe lies on a traced surface, cannot reach the

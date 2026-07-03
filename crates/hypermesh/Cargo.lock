@@ -102,7 +102,6 @@ dependencies = [
  "hyperlattice",
  "hyperlimit",
  "hyperreal",
- "hypertri",
  "proptest",
 ]
 
@@ -111,14 +110,6 @@ name = "hyperreal"
 version = "0.13.1"
 dependencies = [
  "num",
-]
-
-[[package]]
-name = "hypertri"
-version = "0.4.0"
-dependencies = [
- "hyperlimit",
- "hyperreal",
 ]
 
 [[package]]
