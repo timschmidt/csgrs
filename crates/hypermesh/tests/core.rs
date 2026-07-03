@@ -164,6 +164,24 @@ fn borrowed_prepare_input_builds_polygon_soup() {
 }
 
 #[test]
+fn prepare_input_rejects_empty_mesh_views() {
+    assert!(matches!(
+        prepare_input(&[]),
+        Err(hypermesh::HypermeshError::EmptyInput)
+    ));
+
+    let positions = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+    let empty = MeshRef {
+        positions: &positions,
+        triangles: &[],
+    };
+    assert_eq!(
+        prepare_input(&[empty]),
+        Err(hypermesh::HypermeshError::EmptyMesh { mesh_index: 0 })
+    );
+}
+
+#[test]
 fn prepare_input_accepts_owned_mesh_views() {
     let mesh = hypermesh::InputMesh::new(
         vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)],
@@ -235,14 +253,29 @@ fn coplanar_crossing_quads_report_overlap_without_contained_vertices() {
 
 #[test]
 fn boolean_operation_validates_before_general_path() {
+    assert!(matches!(
+        boolean_operation(&[], BooleanOp::Union, EmberConfig::default()),
+        Err(hypermesh::HypermeshError::EmptyInput)
+    ));
+
     let empty = hypermesh::MeshRef {
         positions: &[],
         triangles: &[],
     };
-    assert!(matches!(
+    assert_eq!(
         boolean_operation(&[empty], BooleanOp::Union, EmberConfig::default()),
-        Err(hypermesh::HypermeshError::EmptyInput)
-    ));
+        Err(hypermesh::HypermeshError::EmptyMesh { mesh_index: 0 })
+    );
+
+    let positions_only = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+    let no_triangles = hypermesh::MeshRef {
+        positions: &positions_only,
+        triangles: &[],
+    };
+    assert_eq!(
+        boolean_operation(&[no_triangles], BooleanOp::Union, EmberConfig::default()),
+        Err(hypermesh::HypermeshError::EmptyMesh { mesh_index: 0 })
+    );
 
     let positions = vec![p(0, 0, 0), p(1, 0, 0)];
     let triangles = vec![Triangle::new(0, 1, 2)];

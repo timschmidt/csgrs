@@ -18,6 +18,11 @@ pub enum HypermeshError {
     },
     /// A mesh operation needs at least one point.
     EmptyInput,
+    /// An individual input mesh has no positions or no triangles.
+    EmptyMesh {
+        /// Index of the empty mesh in the input slice.
+        mesh_index: usize,
+    },
     /// A scalar predicate could not certify its sign through exact predicate
     /// routes without choosing a precision budget.
     UnknownClassification,
@@ -42,7 +47,10 @@ impl fmt::Display for HypermeshError {
                 f,
                 "vertex index {index} is out of bounds for {vertex_count} vertices"
             ),
-            Self::EmptyInput => f.write_str("input mesh set has no positions"),
+            Self::EmptyInput => f.write_str("input mesh set is empty"),
+            Self::EmptyMesh { mesh_index } => {
+                write!(f, "input mesh {mesh_index} has no positions or triangles")
+            }
             Self::UnknownClassification => f.write_str("could not certify scalar sign"),
             Self::OpenOutput {
                 boundary_edges,

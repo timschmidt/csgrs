@@ -63,11 +63,14 @@ fn boolean_operation_general(
 }
 
 fn validate_mesh_refs(meshes: &[MeshRef<'_>]) -> HypermeshResult<()> {
-    if meshes.iter().all(|mesh| mesh.positions.is_empty()) {
+    if meshes.is_empty() {
         return Err(crate::error::HypermeshError::EmptyInput);
     }
 
-    for mesh in meshes {
+    for (mesh_index, mesh) in meshes.iter().enumerate() {
+        if mesh.positions.is_empty() || mesh.triangles.is_empty() {
+            return Err(crate::error::HypermeshError::EmptyMesh { mesh_index });
+        }
         for triangle in mesh.triangles {
             for index in triangle.indices() {
                 if index >= mesh.positions.len() {

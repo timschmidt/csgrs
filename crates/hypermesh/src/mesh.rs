@@ -101,6 +101,8 @@ impl PolygonSoup {
 
 /// Prepares borrowed mesh views into a combined polygon soup.
 pub fn prepare_input(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
+    validate_non_empty_mesh_views(meshes)?;
+
     let all_positions = meshes
         .iter()
         .flat_map(|mesh| mesh.positions.iter().cloned())
@@ -149,6 +151,18 @@ pub fn prepare_input(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
         bounds,
         num_meshes: meshes.len(),
     })
+}
+
+fn validate_non_empty_mesh_views(meshes: &[MeshRef<'_>]) -> HypermeshResult<()> {
+    if meshes.is_empty() {
+        return Err(HypermeshError::EmptyInput);
+    }
+    for (mesh_index, mesh) in meshes.iter().enumerate() {
+        if mesh.positions.is_empty() || mesh.triangles.is_empty() {
+            return Err(HypermeshError::EmptyMesh { mesh_index });
+        }
+    }
+    Ok(())
 }
 
 fn bounds_for_positions(positions: &[Point3]) -> HypermeshResult<Aabb> {
