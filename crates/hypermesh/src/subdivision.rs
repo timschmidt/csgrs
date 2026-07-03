@@ -224,7 +224,15 @@ pub fn subdivide_into(
     }
 
     if task.depth >= config.max_depth {
-        return Err(crate::error::HypermeshError::UnknownClassification);
+        process_leaf_into(
+            &task.polygons,
+            &task.bounds,
+            &task.ref_point,
+            &task.ref_wnv,
+            indicator,
+            output,
+        )?;
+        return Ok(());
     }
 
     let split_axis = task.bounds.longest_axis()?;

@@ -545,29 +545,31 @@ fn boolean_operation_owned_delegates_to_borrowed_pipeline() {
 }
 
 #[test]
-fn boolean_operation_reports_unknown_when_max_depth_forces_oversized_leaf() {
+fn subdivision_processes_certified_leaf_at_max_depth() {
     let mesh = cube_mesh(0, 2);
     let soup = prepare_input_meshes(&[mesh]).unwrap();
     let indicator = make_indicator(BooleanOp::Union, soup.num_meshes);
+    let num_meshes = soup.num_meshes;
     let config = SubdivisionConfig {
         leaf_threshold: 0,
         max_depth: 0,
         use_early_termination: false,
     };
 
-    assert!(matches!(
-        subdivide(
-            SubdivisionTask::new(
-                soup.polygons,
-                hypermesh::Aabb::new(p(-1, -1, -1), p(3, 3, 3)),
-                p(-1, -1, -1),
-                vec![0; soup.num_meshes],
-            ),
-            &indicator,
-            config,
+    let output = subdivide(
+        SubdivisionTask::new(
+            soup.polygons,
+            hypermesh::Aabb::new(p(-1, -1, -1), p(3, 3, 3)),
+            p(-1, -1, -1),
+            vec![0; num_meshes],
         ),
-        Err(HypermeshError::UnknownClassification)
-    ));
+        &indicator,
+        config,
+    )
+    .unwrap();
+
+    assert_eq!(output.len(), 12);
+    assert!(output.iter().all(|polygon| polygon.winding.is_some()));
 }
 
 #[test]
