@@ -140,24 +140,51 @@ pub fn trace_axis_segment(
     })
 }
 
-/// Traces an L-shaped path using several axis orderings and returns the first
-/// valid winding result.
+const AXIS_ORDERINGS: [[usize; 3]; 6] = [
+    [0, 1, 2],
+    [0, 2, 1],
+    [1, 0, 2],
+    [1, 2, 0],
+    [2, 0, 1],
+    [2, 1, 0],
+];
+
+/// Traces an axis-aligned polyline using several axis orderings and returns
+/// the first valid winding result. If direct L-shaped paths are blocked by
+/// exact surface hits, retries through deterministic endpoint-box detours.
 pub fn trace_segment(
     start: &Point3,
     end: &Point3,
     winding: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<WindingNumberVector> {
-    const ORDERINGS: [[usize; 3]; 6] = [
-        [0, 1, 2],
-        [0, 2, 1],
-        [1, 0, 2],
-        [1, 2, 0],
-        [2, 0, 1],
-        [2, 1, 0],
-    ];
+    if let Ok(winding) = trace_axis_ordered_paths(start, end, winding, polygons) {
+        return Ok(winding);
+    }
 
-    for ordering in ORDERINGS {
+    for detour in interior_box_detour_points(start, end)? {
+        if detour == *start || detour == *end || point_lies_on_traced_surface(&detour, polygons)? {
+            continue;
+        }
+        let Ok(first_leg) = trace_axis_ordered_paths(start, &detour, winding, polygons) else {
+            continue;
+        };
+        let Ok(second_leg) = trace_axis_ordered_paths(&detour, end, &first_leg, polygons) else {
+            continue;
+        };
+        return Ok(second_leg);
+    }
+
+    Err(HypermeshError::UnknownClassification)
+}
+
+fn trace_axis_ordered_paths(
+    start: &Point3,
+    end: &Point3,
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<WindingNumberVector> {
+    for ordering in AXIS_ORDERINGS {
         let mut current = start.clone();
         let mut attempt = winding.to_vec();
         let mut valid = true;
@@ -186,6 +213,35 @@ pub fn trace_segment(
     }
 
     Err(HypermeshError::UnknownClassification)
+}
+
+fn interior_box_detour_points(start: &Point3, end: &Point3) -> HypermeshResult<Vec<Point3>> {
+    let fractions = [(1u64, 2u64), (1, 3), (2, 3)];
+    let mut values = vec![Vec::new(), Vec::new(), Vec::new()];
+    for (axis, axis_values) in values.iter_mut().enumerate() {
+        let start_value = axis_ref(start, axis);
+        let end_value = axis_ref(end, axis);
+        let delta = end_value - start_value;
+        if compare_real(&delta, &Real::zero())?.is_eq() {
+            axis_values.push(start_value.clone());
+            continue;
+        }
+        for (numerator, denominator) in fractions {
+            let offset = ((&delta * Real::from(numerator)) / Real::from(denominator))
+                .map_err(|_| HypermeshError::UnknownClassification)?;
+            axis_values.push(start_value + &offset);
+        }
+    }
+
+    let mut detours = Vec::with_capacity(values[0].len() * values[1].len() * values[2].len());
+    for x in &values[0] {
+        for y in &values[1] {
+            for z in &values[2] {
+                detours.push(Point3::new(x.clone(), y.clone(), z.clone()));
+            }
+        }
+    }
+    Ok(detours)
 }
 
 fn point_lies_on_traced_surface(

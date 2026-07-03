@@ -357,15 +357,15 @@ fn trace_segment_uses_axis_orderings_for_l_path() {
 }
 
 #[test]
-fn trace_segment_rejects_surface_intermediate_points() {
+fn trace_segment_uses_detour_when_axis_order_corners_hit_surfaces() {
     let blockers = vec![
         make_triangle(&p(2, 0, 0), &p(3, 0, 0), &p(2, 1, 0), 0, 0),
         make_triangle(&p(0, 2, 0), &p(1, 2, 0), &p(0, 3, 0), 0, 1),
         make_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
     ];
 
-    let err = trace_segment(&p(0, 0, 0), &p(2, 2, 2), &[0], &blockers).unwrap_err();
-    assert_eq!(err, HypermeshError::UnknownClassification);
+    let winding = trace_segment(&p(0, 0, 0), &p(2, 2, 2), &[0], &blockers).unwrap();
+    assert_eq!(winding, vec![0]);
 }
 
 #[test]
