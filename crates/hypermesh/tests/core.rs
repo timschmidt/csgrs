@@ -572,7 +572,6 @@ fn subdivision_processes_certified_leaf_at_max_depth() {
     let config = SubdivisionConfig {
         leaf_threshold: 0,
         max_depth: 0,
-        use_early_termination: false,
     };
 
     let output = subdivide(
@@ -601,7 +600,6 @@ fn subdivision_escapes_projected_reference_on_surface() {
     let config = SubdivisionConfig {
         leaf_threshold: 1,
         max_depth: 4,
-        use_early_termination: false,
     };
 
     let result = subdivide(
@@ -716,7 +714,6 @@ fn disjoint_cube_booleans_have_expected_polygon_counts() {
     let config = EmberConfig {
         assume_nsi: true,
         assume_nnc: true,
-        use_early_termination: false,
         ..EmberConfig::default()
     };
 
@@ -741,7 +738,6 @@ fn overlapping_cube_booleans_use_general_path() {
         max_depth: 6,
         assume_nsi: true,
         assume_nnc: true,
-        use_early_termination: false,
     };
 
     let union = hypermesh::boolean_union(&cube_a, &cube_b, config).unwrap();

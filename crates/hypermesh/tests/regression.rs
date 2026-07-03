@@ -163,7 +163,6 @@ fn config() -> EmberConfig {
     EmberConfig {
         leaf_threshold: 1,
         max_depth: 10,
-        use_early_termination: false,
         assume_nsi: true,
         assume_nnc: true,
     }

@@ -1,7 +1,5 @@
 //! Winding number vectors and boolean output classification.
 
-use std::collections::{HashSet, VecDeque};
-
 /// Winding number vector: one integer per input mesh.
 pub type WindingNumberVector = Vec<i32>;
 
@@ -59,40 +57,6 @@ pub fn classify_polygon_output(w_front: &[i32], w_back: &[i32], indicator: &Indi
     } else {
         0
     }
-}
-
-/// Returns true if all bounded reachable winding transitions can be skipped.
-pub fn can_early_terminate(
-    ref_wnv: &[i32],
-    available_wntvs: &[WindingNumberTransitionVector],
-    indicator: &Indicator,
-) -> bool {
-    const MAX_DEPTH: usize = 8;
-
-    let mut frontier = VecDeque::from([(ref_wnv.to_vec(), 0usize)]);
-    let mut visited = HashSet::from([ref_wnv.to_vec()]);
-
-    while let Some((w, depth)) = frontier.pop_front() {
-        if depth >= MAX_DEPTH {
-            continue;
-        }
-
-        for dw in available_wntvs {
-            for sign in [-1, 1] {
-                let w_next = apply_transition(&w, sign, dw);
-                if classify_polygon_output(&w, &w_next, indicator) != 0
-                    || classify_polygon_output(&w_next, &w, indicator) != 0
-                {
-                    return false;
-                }
-                if visited.insert(w_next.clone()) {
-                    frontier.push_back((w_next, depth + 1));
-                }
-            }
-        }
-    }
-
-    true
 }
 
 /// Propagates a winding vector across one crossing.

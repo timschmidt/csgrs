@@ -67,5 +67,5 @@ pub use subdivision::{
 };
 pub use winding::{
     BooleanOp, Indicator, WindingNumberTransitionVector, WindingNumberVector, WindingPair,
-    can_early_terminate, classify_polygon_output, make_indicator, propagate_wnv,
+    classify_polygon_output, make_indicator, propagate_wnv,
 };

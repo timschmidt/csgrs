@@ -11,9 +11,7 @@ use crate::local_bsp::LocalBsp;
 use crate::output::ClassifiedPolygon;
 use crate::polygon::ConvexPolygon;
 use crate::segment_trace::classify_leaf_polygon;
-use crate::winding::{
-    Indicator, WindingPair, can_early_terminate, classify_polygon_output, propagate_wnv,
-};
+use crate::winding::{Indicator, WindingPair, classify_polygon_output, propagate_wnv};
 use hyperlattice::{HomogeneousPoint3, Point3, Real};
 
 /// Default leaf threshold for subdivision.
@@ -29,8 +27,6 @@ pub struct SubdivisionConfig {
     pub leaf_threshold: usize,
     /// Maximum recursive depth.
     pub max_depth: usize,
-    /// Enable WNV reachability early-out.
-    pub use_early_termination: bool,
 }
 
 impl Default for SubdivisionConfig {
@@ -38,7 +34,6 @@ impl Default for SubdivisionConfig {
         Self {
             leaf_threshold: DEFAULT_LEAF_THRESHOLD,
             max_depth: DEFAULT_MAX_DEPTH,
-            use_early_termination: true,
         }
     }
 }
@@ -208,13 +203,6 @@ pub fn subdivide_into(
 ) -> HypermeshResult<()> {
     if task.polygons.is_empty() {
         return Ok(());
-    }
-
-    if config.use_early_termination {
-        let available_wntvs = unique_wntvs(&task.polygons);
-        if can_early_terminate(&task.ref_wnv, &available_wntvs, indicator) {
-            return Ok(());
-        }
     }
 
     if task.polygons.len() <= config.leaf_threshold || !can_split_bounds(&task.bounds)? {
@@ -718,16 +706,6 @@ fn point_lies_on_local_polygon(point: &Point3, polygon: &ConvexPolygon) -> Hyper
         }
     }
     Ok(true)
-}
-
-fn unique_wntvs(polygons: &[ConvexPolygon]) -> Vec<Vec<i32>> {
-    let mut result = Vec::new();
-    for polygon in polygons {
-        if !result.iter().any(|existing| existing == &polygon.delta_w) {
-            result.push(polygon.delta_w.clone());
-        }
-    }
-    result
 }
 
 #[cfg(test)]
