@@ -55,7 +55,8 @@ child-cell interior points and not on local surfaces. If the projected point or
 direct trace is degenerate, the implementation tries local axis-aligned escape
 targets and their multi-axis combinations inside certified open intervals
 before the next surface hit or AABB boundary. Segment tracing uses
-arrangement-coordinate endpoint-box detours when direct axis-ordered paths hit
+arrangement-coordinate endpoint-box detours, cut by local vertex coordinates
+and exact endpoint-box surface crossings, when direct axis-ordered paths hit
 surfaces. If none trace cleanly, it reports `UnknownClassification` instead of
 using finite random/interior sampling. The full EMBER plane-replacement
 reference construction remains unfinished.

@@ -240,6 +240,15 @@ fn interior_box_detour_points(
                     push_unique_ordered_real(&mut cuts, value.clone())?;
                 }
             }
+            add_axis_box_surface_cuts(
+                &mut cuts,
+                start,
+                end,
+                polygon,
+                axis,
+                start_value,
+                end_value,
+            )?;
         }
 
         for endpoints in cuts.windows(2) {
@@ -258,6 +267,51 @@ fn interior_box_detour_points(
         }
     }
     Ok(detours)
+}
+
+fn add_axis_box_surface_cuts(
+    cuts: &mut Vec<Real>,
+    start: &Point3,
+    end: &Point3,
+    polygon: &ConvexPolygon,
+    axis: usize,
+    start_value: &Real,
+    end_value: &Real,
+) -> HypermeshResult<()> {
+    let other_axes = other_axes(axis);
+    for first in [axis_ref(start, other_axes[0]), axis_ref(end, other_axes[0])] {
+        for second in [axis_ref(start, other_axes[1]), axis_ref(end, other_axes[1])] {
+            let mut edge_start = Point3::origin();
+            let mut edge_end = Point3::origin();
+            *axis_mut(&mut edge_start, axis) = start_value.clone();
+            *axis_mut(&mut edge_end, axis) = end_value.clone();
+            *axis_mut(&mut edge_start, other_axes[0]) = first.clone();
+            *axis_mut(&mut edge_end, other_axes[0]) = first.clone();
+            *axis_mut(&mut edge_start, other_axes[1]) = second.clone();
+            *axis_mut(&mut edge_end, other_axes[1]) = second.clone();
+
+            let Some(crossing) = segment_plane_crossing(&edge_start, &edge_end, &polygon.support)?
+            else {
+                continue;
+            };
+            if point_lies_on_polygon(&crossing, polygon)? {
+                let value = axis_ref(&crossing, axis);
+                if value_strictly_between(value, start_value, end_value)? {
+                    push_unique_ordered_real(cuts, value.clone())?;
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn other_axes(axis: usize) -> [usize; 2] {
+    match axis {
+        0 => [1, 2],
+        1 => [0, 2],
+        2 => [0, 1],
+        _ => unreachable!("axis must be in 0..3"),
+    }
 }
 
 fn value_strictly_between(value: &Real, a: &Real, b: &Real) -> HypermeshResult<bool> {
@@ -784,5 +838,41 @@ fn probe_offset(points: &[Point3], axis: usize) -> HypermeshResult<Real> {
             (extent.abs() / Real::from(10)).expect("division by literal ten is valid")
                 + Real::one(),
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::polygon::make_triangle;
+
+    fn r(value: i32) -> Real {
+        value.into()
+    }
+
+    fn p(x: i32, y: i32, z: i32) -> Point3 {
+        Point3::new(r(x), r(y), r(z))
+    }
+
+    fn axis_values(points: &[Point3], axis: usize) -> Vec<Real> {
+        let mut values = Vec::new();
+        for point in points {
+            let value = axis_ref(point, axis).clone();
+            if !values.iter().any(|existing| existing == &value) {
+                values.push(value);
+            }
+        }
+        values
+    }
+
+    #[test]
+    fn endpoint_box_detours_are_cut_by_surface_crossings() {
+        let slanted = make_triangle(&p(0, 2, -2), &p(0, 2, 2), &p(4, -2, 0), 0, 0);
+
+        let detours = interior_box_detour_points(&p(0, 0, 0), &p(4, 4, 4), &[slanted]).unwrap();
+        let x_values = axis_values(&detours, 0);
+
+        assert!(x_values.contains(&r(1)));
+        assert!(x_values.contains(&r(3)));
     }
 }
