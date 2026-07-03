@@ -16,65 +16,69 @@ hyperreal-backed coordinates.
 
 ## Algorithmic Support Boundary
 
-The boolean kernel targets closed PWN triangle meshes whose coordinates are
-represented as `hyperreal::Real` values. Predicate decisions are routed through
-the strict `hyperlimit` pipeline and may return `UnknownClassification` when a
-sign, path, or classification cannot be certified under that pipeline.
+The intended input model is finite, closed, piecewise-winding-number (PWN)
+triangle meshes. Vertex coordinates are `hyperreal::Real` values carried
+through `hyperlattice::Point3`; the boolean kernel does not downcast geometry
+to primitive floats. Meshes may contain disconnected closed components and
+nested components when the caller either supplies or assumes the corresponding
+NSI/NNC facts. Open triangle soups, invalid triangle indices, and arbitrary
+non-PWN surface collections are outside the supported model.
+
+Predicate decisions are routed through the strict exact-predicate stack
+(`hyperlimit`, `hyperlattice`, and `hypertri` as support crates). A predicate,
+path trace, or classification that cannot be certified returns
+`UnknownClassification`; the algorithm must not silently use an approximate
+answer. In particular, arbitrary undecidable computable `Real` values remain
+outside any completeness claim when strict bounded refinement cannot decide the
+required sign.
 
 The implementation is being aligned with the EMBER algorithm in `ember.pdf`.
-It currently favors explicit uncertainty over silent topology guesses: failed
-leaf classification or reference-path construction must either find another
-certified path or report `UnknownClassification`. Arbitrary computable `Real`
-values are outside the current completeness claim when bounded strict
-refinement cannot decide the required predicate.
+Completion is not yet claimed. Current general-path coverage includes
+subdivision, face-local BSP splitting, exact pairwise intersection handling,
+certified winding-vector propagation by segment traces, and no-repair
+triangulation checks for the regression cases that have been promoted to the
+general path. Remaining gaps are tracked by code paths that can still return
+`UnknownClassification`, and by compatibility fallbacks described below.
+
+Leaf classification currently searches certified off-face probes from exact
+leaf interior points. If a probe lies on a traced surface, cannot reach the
+adjacent cell, or cannot be traced from the reference point, that probe is
+discarded. If no certified probe path remains, the leaf reports
+`UnknownClassification`; there is no silent fallback to the reference winding
+number.
 
 Subdivision reference propagation currently accepts the EMBER projection of the
 parent reference point onto a child AABB only when the projected point and trace
 are certified valid. If the projected point or direct trace is degenerate, the
-implementation tries local axis-aligned escape targets inside certified open
-intervals before the next surface hit or AABB boundary. If none trace cleanly,
-it reports `UnknownClassification` instead of falling back to finite interior
-sampling while the full plane-replacement reference construction remains
-unfinished.
+implementation tries local axis-aligned escape targets and their multi-axis
+combinations inside certified open intervals before the next surface hit or
+AABB boundary. If none trace cleanly, it reports `UnknownClassification`
+instead of using finite random/interior sampling. The full EMBER
+plane-replacement reference construction remains unfinished.
 
-Exact same-surface two-mesh booleans are handled as a proven equivalence before
-subdivision: union/intersection preserve the surface, while difference and
-symmetric difference are empty.
-
-Meshes with provably disjoint AABB interiors are also handled before
-subdivision for regularized operations where that proof is sufficient:
-intersection is empty, and difference preserves the left operand. This includes
-boundary-plane touching boxes.
-
-Strict containment between two non-intersecting mesh surfaces is handled before
-subdivision when every candidate vertex has certified nonzero winding inside
-the container and no candidate vertex lies on the container surface.
-
-Boundary-only contact for two meshes is also handled before subdivision for
-intersection and difference when no input vertex is strictly inside the other
-mesh and no pair of faces has a certified transverse crossing through both
-face interiors. In that case, regularized intersection is empty and difference
-preserves the left operand.
-
-Same-basis oriented boxes are handled by exact cell decompositions before
-subdivision. Ordered axis-aligned box fixtures are covered by that same path.
-The regression suite verifies this through the certified no-repair
-triangulation helper. `EmberConfig::use_proven_shortcuts` can disable these
-pre-subdivision equivalence paths; the core suite exercises overlapping boxes
-through the general subdivision/BSP classifier with shortcuts disabled.
+`EmberConfig::default()` runs the general subdivision/BSP/classification path
+with shortcut fallbacks disabled. If a caller explicitly sets
+`use_proven_shortcuts: true`, the implementation still attempts the general
+path first. Shortcut results are used only when the general path errors or its
+classified output fails `triangulate_and_resolve_certified`. Current fallback
+families are exact same-surface equivalence, disjoint-bound proofs, strict
+containment proofs, boundary-only contact proofs, and same-basis oriented-box
+cell decompositions. These are compatibility fallbacks, not the primary
+algorithmic route.
 
 Subdivision depth is a certification budget, not a permission to guess. If a
 task reaches `max_depth` while it still contains more polygons than the leaf
 threshold and the bounds remain splittable, the operation reports
-`UnknownClassification` instead of forcing an oversized leaf.
+`UnknownClassification` instead of forcing an oversized leaf. Full
+arrangement-isolation termination is still an implementation target.
 
 `triangulate_and_resolve_certified` resolves exact duplicate vertices,
 duplicate faces, and T-junctions, but refuses non-empty outputs with boundary
 edges or zero signed volume instead of capping or peeling them. Non-manifold
 edge valence is allowed for closed PWN output. The broader
 `triangulate_and_resolve` compatibility helper still performs boundary cleanup
-for cases whose classified arrangement is not yet emitted closed by
-construction.
+for legacy consumers and for cases whose classified arrangement is not yet
+emitted closed by construction.
 
 ## Building
 

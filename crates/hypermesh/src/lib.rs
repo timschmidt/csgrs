@@ -3,6 +3,19 @@
 //! This crate keeps primitive coordinates at API boundaries only. Core
 //! geometric state uses [`Real`] as its scalar and provides borrowed slice APIs
 //! before owned convenience wrappers.
+//!
+//! The boolean kernel targets finite closed PWN triangle meshes represented
+//! with exact [`Real`] coordinates. Unsupported or uncertifiable configurations
+//! are reported as [`HypermeshError::UnknownClassification`] rather than being
+//! guessed with approximate topology. By default, boolean operations run the
+//! general EMBER subdivision/BSP/classification path; compatibility shortcut
+//! proofs are only consulted when explicitly enabled and the general result is
+//! not certifiable.
+//!
+//! Use [`triangulate_and_resolve_certified`] when callers need evidence that a
+//! boolean result is already closed after exact duplicate/T-junction
+//! resolution. [`triangulate_and_resolve`] remains a compatibility helper that
+//! may cap or peel open boundaries.
 
 #![warn(missing_docs)]
 
