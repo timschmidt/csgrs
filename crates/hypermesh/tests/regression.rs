@@ -165,16 +165,8 @@ fn config() -> EmberConfig {
         leaf_threshold: 1,
         max_depth: 10,
         use_early_termination: false,
-        use_proven_shortcuts: true,
         assume_nsi: true,
         assume_nnc: true,
-    }
-}
-
-fn config_without_shortcuts() -> EmberConfig {
-    EmberConfig {
-        use_proven_shortcuts: false,
-        ..config()
     }
 }
 
@@ -620,7 +612,7 @@ fn boundary_touching_boxes_regularize_intersection_and_difference_with_certified
 }
 
 #[test]
-fn disjoint_boxes_use_general_leaf_path_when_shortcuts_disabled() -> HypermeshResult<()> {
+fn disjoint_boxes_use_general_leaf_path() -> HypermeshResult<()> {
     let left = box_mesh([0, 0, 0], [1, 1, 1]);
     let right = box_mesh([3, 0, 0], [4, 1, 1]);
     let refs = [left.as_ref(), right.as_ref()];
@@ -629,9 +621,8 @@ fn disjoint_boxes_use_general_leaf_path_when_shortcuts_disabled() -> HypermeshRe
         // Keep this as a single certified leaf so the test exercises the
         // general classifier without changing the reference triangulation.
         leaf_threshold: 25,
-        ..config_without_shortcuts()
+        ..config()
     };
-    assert!(!config.use_proven_shortcuts);
 
     let union_result = boolean_operation_refs(&refs, BooleanOp::Union, config)?;
     let union = triangulate_and_resolve_certified(&union_result)?;
@@ -649,15 +640,14 @@ fn disjoint_boxes_use_general_leaf_path_when_shortcuts_disabled() -> HypermeshRe
 }
 
 #[test]
-fn boundary_touching_boxes_use_general_path_when_shortcuts_disabled() -> HypermeshResult<()> {
+fn boundary_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let left = box_mesh([0, 0, 0], [1, 1, 1]);
     let right = box_mesh([1, 0, 0], [2, 1, 1]);
     let refs = [left.as_ref(), right.as_ref()];
     let config = EmberConfig {
         leaf_threshold: 1,
-        ..config_without_shortcuts()
+        ..config()
     };
-    assert!(!config.use_proven_shortcuts);
 
     let intersection_result = boolean_operation_refs(&refs, BooleanOp::Intersection, config)?;
     let intersection = triangulate_and_resolve_certified(&intersection_result)?;
@@ -821,7 +811,7 @@ fn same_surface_solids_are_exact_equivalence_with_certified_output() {
 }
 
 #[test]
-fn same_surface_solids_use_general_path_when_shortcuts_disabled() -> HypermeshResult<()> {
+fn same_surface_solids_use_general_path() -> HypermeshResult<()> {
     let left = tetrahedron([[0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]]);
     let same_surface = InputMesh {
         positions: vec![p(4, 0, 0), p(0, 0, 0), p(0, 4, 0), p(0, 0, 4)],
@@ -835,8 +825,7 @@ fn same_surface_solids_use_general_path_when_shortcuts_disabled() -> HypermeshRe
         nnc: true,
     };
     let refs = [left.as_ref(), same_surface.as_ref()];
-    let config = config_without_shortcuts();
-    assert!(!config.use_proven_shortcuts);
+    let config = config();
 
     let union_result = boolean_operation_refs(&refs, BooleanOp::Union, config)?;
     let union = triangulate_and_resolve_certified(&union_result)?;

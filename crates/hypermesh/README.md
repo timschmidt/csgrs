@@ -56,20 +56,17 @@ AABB boundary. If none trace cleanly, it reports `UnknownClassification`
 instead of using finite random/interior sampling. The full EMBER
 plane-replacement reference construction remains unfinished.
 
-`EmberConfig::default()` runs the general subdivision/BSP/classification path
-with shortcut fallbacks disabled. If a caller explicitly sets
-`use_proven_shortcuts: true`, the implementation still attempts the general
-path first. Shortcut results are used only when the general path errors or its
-classified output fails `triangulate_and_resolve_certified`. Current fallback
-families are exact same-surface equivalence, disjoint-bound proofs, strict
-containment proofs, boundary-only contact proofs, and same-basis oriented-box
-cell decompositions. These are compatibility fallbacks, not the primary
-algorithmic route.
+`EmberConfig::default()` runs only the general subdivision/BSP/classification
+path. The previous same-surface, disjoint-bound, strict-containment,
+boundary-contact, and oriented-box compatibility fallbacks have been removed,
+so public boolean results either certify through the general path or return an
+error.
 
 Subdivision depth is a certification budget, not a permission to guess. If a
 task reaches `max_depth` while it still contains more polygons than the leaf
-threshold and the bounds remain splittable, the operation reports
-`UnknownClassification` instead of forcing an oversized leaf. Full
+threshold and the bounds remain splittable, hypermesh attempts to certify the
+current task as a leaf using the same exact BSP/classification path. It reports
+`UnknownClassification` only if that leaf certification fails. Full
 arrangement-isolation termination is still an implementation target.
 
 `triangulate_and_resolve_certified` resolves exact duplicate vertices,

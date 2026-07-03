@@ -476,8 +476,6 @@ fn process_leaf_uses_bsp_for_intersecting_cross_mesh_polygons() {
 
 #[test]
 fn boolean_operation_refs_runs_leaf_pipeline_from_borrowed_meshes() {
-    assert!(!EmberConfig::default().use_proven_shortcuts);
-
     let cube = cube_mesh(0, 2);
     let mesh_ref = cube.as_ref();
     let mesh = hypermesh::MeshRef {
@@ -509,22 +507,6 @@ fn boolean_operation_refs_rejects_uncertified_open_output() {
         boolean_operation_refs(&[mesh], BooleanOp::Union, EmberConfig::default()).unwrap_err();
 
     assert!(matches!(err, HypermeshError::OpenOutput { .. }));
-}
-
-#[test]
-fn deprecated_shortcut_flag_does_not_bypass_general_path() {
-    let mesh = cube_mesh(0, 2);
-    let config = EmberConfig {
-        use_proven_shortcuts: true,
-        assume_nsi: true,
-        assume_nnc: true,
-        ..EmberConfig::default()
-    };
-
-    let result = boolean_operation_refs(&[mesh.as_ref()], BooleanOp::Union, config).unwrap();
-
-    assert!(!result.output.polygons.is_empty());
-    assert!(result.winding_pairs.iter().all(Option::is_some));
 }
 
 #[test]
@@ -714,7 +696,7 @@ fn disjoint_cube_booleans_have_expected_polygon_counts() {
 }
 
 #[test]
-fn overlapping_cube_booleans_use_general_path_when_shortcuts_disabled() {
+fn overlapping_cube_booleans_use_general_path() {
     let cube_a = cube_mesh(0, 2);
     let cube_b = cube_mesh(1, 3);
     let config = EmberConfig {
@@ -723,9 +705,7 @@ fn overlapping_cube_booleans_use_general_path_when_shortcuts_disabled() {
         assume_nsi: true,
         assume_nnc: true,
         use_early_termination: false,
-        use_proven_shortcuts: false,
     };
-    assert!(!config.use_proven_shortcuts);
 
     let union = hypermesh::boolean_union(&cube_a, &cube_b, config).unwrap();
     let union_soup = triangulate_and_resolve(&union).unwrap();
