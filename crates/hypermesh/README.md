@@ -20,8 +20,10 @@ The intended input model is finite, closed, piecewise-winding-number (PWN)
 triangle meshes. Vertex coordinates are `hyperreal::Real` values carried
 through `hyperlattice::Point3`; the boolean kernel does not downcast geometry
 to primitive floats. Meshes may contain disconnected closed components and
-nested closed components. Open triangle soups, invalid triangle indices, and
-arbitrary non-PWN surface collections are outside the supported model.
+nested closed components. Empty meshes, degenerate source triangles, open
+triangle soups, invalid triangle indices, and arbitrary non-PWN surface
+collections are outside the supported model and are rejected before the boolean
+subdivision path.
 
 Predicate decisions are routed through the strict exact-predicate stack
 (`hyperlimit` and `hyperlattice` as support crates). A predicate, path trace,

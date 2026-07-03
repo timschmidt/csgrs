@@ -30,6 +30,13 @@ pub enum HypermeshError {
         /// Index of the triangle within that mesh.
         triangle_index: usize,
     },
+    /// An input mesh has boundary edges and is not closed.
+    OpenInput {
+        /// Index of the open mesh in the input slice.
+        mesh_index: usize,
+        /// Number of undirected edges used by exactly one triangle.
+        boundary_edges: usize,
+    },
     /// A scalar predicate could not certify its sign through exact predicate
     /// routes without choosing a precision budget.
     UnknownClassification,
@@ -64,6 +71,13 @@ impl fmt::Display for HypermeshError {
             } => write!(
                 f,
                 "input mesh {mesh_index} triangle {triangle_index} is degenerate"
+            ),
+            Self::OpenInput {
+                mesh_index,
+                boundary_edges,
+            } => write!(
+                f,
+                "input mesh {mesh_index} has {boundary_edges} boundary edges"
             ),
             Self::UnknownClassification => f.write_str("could not certify scalar sign"),
             Self::OpenOutput {

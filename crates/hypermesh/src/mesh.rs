@@ -112,6 +112,7 @@ pub fn prepare_input(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
     let mut polygons = Vec::new();
     let mut polygon_index = 0isize;
     for (mesh_index, mesh) in meshes.iter().enumerate() {
+        let mut mesh_edges = Vec::with_capacity(mesh.triangles.len() * 3);
         for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
             let [i0, i1, i2] = triangle.indices();
             let p0 = mesh
@@ -142,10 +143,20 @@ pub fn prepare_input(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
                     triangle_index,
                 });
             }
+            mesh_edges.push([p0.clone(), p1.clone()]);
+            mesh_edges.push([p1.clone(), p2.clone()]);
+            mesh_edges.push([p2.clone(), p0.clone()]);
             polygon.delta_w = vec![0; meshes.len()];
             polygon.delta_w[mesh_index] = 1;
             polygons.push(polygon);
             polygon_index += 1;
+        }
+        let boundary_edges = count_boundary_edges(&mesh_edges);
+        if boundary_edges != 0 {
+            return Err(HypermeshError::OpenInput {
+                mesh_index,
+                boundary_edges,
+            });
         }
     }
 
@@ -166,6 +177,27 @@ fn validate_non_empty_mesh_views(meshes: &[MeshRef<'_>]) -> HypermeshResult<()> 
         }
     }
     Ok(())
+}
+
+fn count_boundary_edges(edges: &[[Point3; 2]]) -> usize {
+    let mut boundary_edges = 0;
+    for (index, edge) in edges.iter().enumerate() {
+        let count = edges
+            .iter()
+            .enumerate()
+            .filter(|(other_index, other)| {
+                *other_index == index || undirected_edges_match(edge, other)
+            })
+            .count();
+        if count == 1 {
+            boundary_edges += 1;
+        }
+    }
+    boundary_edges
+}
+
+fn undirected_edges_match(left: &[Point3; 2], right: &[Point3; 2]) -> bool {
+    (left[0] == right[0] && left[1] == right[1]) || (left[0] == right[1] && left[1] == right[0])
 }
 
 fn bounds_for_positions(positions: &[Point3]) -> HypermeshResult<Aabb> {

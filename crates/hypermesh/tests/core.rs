@@ -25,6 +25,18 @@ fn px(x: Real, y: i32, z: i32) -> Point3 {
     Point3::new(x, r(y), r(z))
 }
 
+fn tetra_mesh() -> hypermesh::InputMesh {
+    hypermesh::InputMesh::new(
+        vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0), p(0, 0, 1)],
+        vec![
+            Triangle::new(0, 2, 1),
+            Triangle::new(0, 1, 3),
+            Triangle::new(0, 3, 2),
+            Triangle::new(1, 2, 3),
+        ],
+    )
+}
+
 fn cube_mesh(min: i32, max: i32) -> hypermesh::InputMesh {
     hypermesh::InputMesh::new(
         vec![
@@ -149,18 +161,16 @@ fn triangle_plane_and_vertices_are_exact_reals() {
 
 #[test]
 fn borrowed_prepare_input_builds_polygon_soup() {
-    let positions = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
-    let triangles = vec![Triangle::new(0, 1, 2)];
+    let mesh = tetra_mesh();
 
-    let soup = prepare_input(&[MeshRef {
-        positions: &positions,
-        triangles: &triangles,
-    }])
-    .unwrap();
+    let soup = prepare_input(&[mesh.as_ref()]).unwrap();
     assert_eq!(soup.num_meshes, 1);
-    assert_eq!(soup.polygons.len(), 1);
-    assert_eq!(soup.polygons[0].delta_w, vec![1]);
-    assert_eq!(soup.polygons[0].mesh_index, 0);
+    assert_eq!(soup.polygons.len(), 4);
+    assert!(
+        soup.polygons
+            .iter()
+            .all(|polygon| polygon.delta_w == vec![1] && polygon.mesh_index == 0)
+    );
 }
 
 #[test]
@@ -178,6 +188,23 @@ fn prepare_input_rejects_empty_mesh_views() {
     assert_eq!(
         prepare_input(&[empty]),
         Err(hypermesh::HypermeshError::EmptyMesh { mesh_index: 0 })
+    );
+}
+
+#[test]
+fn prepare_input_rejects_open_source_meshes() {
+    let positions = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+    let triangles = [Triangle::new(0, 1, 2)];
+
+    assert_eq!(
+        prepare_input(&[MeshRef {
+            positions: &positions,
+            triangles: &triangles,
+        }]),
+        Err(hypermesh::HypermeshError::OpenInput {
+            mesh_index: 0,
+            boundary_edges: 3
+        })
     );
 }
 
@@ -212,15 +239,16 @@ fn prepare_input_rejects_degenerate_source_triangles() {
 
 #[test]
 fn prepare_input_accepts_owned_mesh_views() {
-    let mesh = hypermesh::InputMesh::new(
-        vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)],
-        vec![Triangle::new(0, 1, 2)],
-    );
+    let mesh = tetra_mesh();
 
     let soup = prepare_input(&[mesh.as_ref()]).unwrap();
     assert_eq!(soup.num_meshes, 1);
-    assert_eq!(soup.polygons.len(), 1);
-    assert_eq!(soup.polygons[0].delta_w, vec![1]);
+    assert_eq!(soup.polygons.len(), 4);
+    assert!(
+        soup.polygons
+            .iter()
+            .all(|polygon| polygon.delta_w == vec![1])
+    );
 }
 
 #[test]
@@ -618,7 +646,7 @@ fn boolean_operation_runs_leaf_pipeline_from_borrowed_meshes() {
 }
 
 #[test]
-fn boolean_operation_rejects_uncertified_open_output() {
+fn boolean_operation_rejects_open_input_before_general_path() {
     let positions = vec![p(1, -1, -1), p(1, 1, -1), p(1, 0, 1)];
     let triangles = vec![Triangle::new(0, 1, 2)];
     let mesh = hypermesh::MeshRef {
@@ -628,7 +656,13 @@ fn boolean_operation_rejects_uncertified_open_output() {
 
     let err = boolean_operation(&[mesh], BooleanOp::Union, EmberConfig::default()).unwrap_err();
 
-    assert!(matches!(err, HypermeshError::OpenOutput { .. }));
+    assert_eq!(
+        err,
+        HypermeshError::OpenInput {
+            mesh_index: 0,
+            boundary_edges: 3
+        }
+    );
 }
 
 #[test]
