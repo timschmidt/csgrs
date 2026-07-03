@@ -67,8 +67,9 @@ threshold and the bounds remain splittable, the operation reports
 `UnknownClassification` instead of forcing an oversized leaf.
 
 `triangulate_and_resolve_certified` resolves exact duplicate vertices,
-duplicate faces, and T-junctions, but refuses non-empty open or zero-volume
-triangle soups instead of capping or peeling them. The broader
+duplicate faces, and T-junctions, but refuses non-empty outputs with boundary
+edges or zero signed volume instead of capping or peeling them. Non-manifold
+edge valence is allowed for closed PWN output. The broader
 `triangulate_and_resolve` compatibility helper still performs boundary cleanup
 for cases whose classified arrangement is not yet emitted closed by
 construction.

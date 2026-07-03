@@ -251,6 +251,14 @@ fn assert_closed_triangle_soup(soup: &TriangleSoup) {
     );
 }
 
+fn assert_no_boundary_edges(soup: &TriangleSoup) {
+    let closure = hypermesh::triangle_soup_closure_report(soup);
+    assert_eq!(
+        closure.boundary_edges, 0,
+        "expected no boundary edges; closure report: {closure:?}",
+    );
+}
+
 fn assert_bounds(soup: &TriangleSoup, min: [Real; 3], max: [Real; 3]) -> HypermeshResult<()> {
     let bounds = Aabb::new(
         pr(min[0].clone(), min[1].clone(), min[2].clone()),
@@ -454,6 +462,7 @@ fn generated_sphere_booleans_are_closed() {
         BooleanOp::Union,
         BooleanOp::Intersection,
         BooleanOp::Difference,
+        BooleanOp::SymmetricDifference,
     ] {
         let result = triangulate_and_resolve_certified(
             &boolean_operation_refs(&refs, op, config())
@@ -461,16 +470,11 @@ fn generated_sphere_booleans_are_closed() {
         )
         .unwrap_or_else(|err| panic!("{op:?} certified output failed: {err:?}"));
         if !result.triangles.is_empty() {
-            assert_closed_triangle_soup(&result);
+            assert_no_boundary_edges(&result);
+            if op != BooleanOp::SymmetricDifference {
+                assert_closed_triangle_soup(&result);
+            }
         }
-    }
-
-    let symmetric_difference =
-        run_op(&a, &b, BooleanOp::SymmetricDifference).unwrap_or_else(|err| {
-            panic!("SymmetricDifference failed: {err:?}");
-        });
-    if !symmetric_difference.triangles.is_empty() {
-        assert_closed_triangle_soup(&symmetric_difference);
     }
 }
 

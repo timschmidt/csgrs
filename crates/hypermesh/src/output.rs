@@ -127,6 +127,12 @@ pub struct TriangleSoupClosureReport {
 }
 
 impl TriangleSoupClosureReport {
+    /// Returns true when no undirected edge is used by exactly one triangle.
+    /// Non-manifold edge valence is allowed for closed PWN outputs.
+    pub const fn has_no_boundary(self) -> bool {
+        self.boundary_edges == 0
+    }
+
     /// Returns true when every undirected edge is used by exactly two
     /// triangles.
     pub const fn is_closed(self) -> bool {
@@ -190,15 +196,16 @@ pub fn triangulate_and_resolve(result: &BooleanResult) -> HypermeshResult<Triang
 /// does not cap or peel boundaries.
 ///
 /// This is useful for tests and callers that need evidence that the classified
-/// arrangement is already a closed regularized surface. Non-empty open or
-/// zero-volume soups are reported as uncertified instead of being repaired.
+/// arrangement is already a closed regularized PWN surface. Non-manifold edge
+/// valence is allowed, but non-empty open or zero-volume soups are reported as
+/// uncertified instead of being repaired.
 pub fn triangulate_and_resolve_certified(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
     let mut soup = resolve_tjunctions(&triangulate_output(result)?)?;
     if soup.triangles.is_empty() {
         return Ok(soup);
     }
     let closure = triangle_soup_closure_report(&soup);
-    if !closure.is_closed() {
+    if !closure.has_no_boundary() {
         return Err(HypermeshError::OpenOutput {
             boundary_edges: closure.boundary_edges,
             non_manifold_edges: closure.non_manifold_edges,
