@@ -85,7 +85,8 @@ pub struct LeafProcessingStats {
     /// Number of BSP fragments emitted.
     pub bsp_fragment_count: usize,
     /// Whether every emitted or discarded output decision in this leaf was
-    /// certified by the exact classifier.
+    /// certified after exact local BSP isolation checks and exact classifier
+    /// traces.
     pub certified_complete: bool,
 }
 
@@ -152,6 +153,9 @@ pub fn process_leaf_into(
         for leaf in bsp.collect_leaves() {
             if leaf.edges.len() < 3 {
                 continue;
+            }
+            if !certify_bsp_leaf_has_no_interior_intersections(polygon, &leaf.edges, polygons)? {
+                return Err(crate::error::HypermeshError::UnknownClassification);
             }
             stats.bsp_leaf_count += 1;
             let effective_delta_w = effective_leaf_delta_w(polygon, &leaf.edges, polygons)?;
@@ -388,6 +392,77 @@ fn supports_have_same_direction(
         + (&left.normal.y * &right.normal.y)
         + (&left.normal.z * &right.normal.z);
     Ok(crate::geometry::classify_real(&dot)? != Classification::Negative)
+}
+
+fn certify_bsp_leaf_has_no_interior_intersections(
+    host: &ConvexPolygon,
+    leaf_edges: &[crate::geometry::Plane],
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<bool> {
+    let leaf_polygon = ConvexPolygon {
+        support: host.support.clone(),
+        edges: leaf_edges.to_vec(),
+        mesh_index: host.mesh_index,
+        polygon_index: host.polygon_index,
+        delta_w: host.delta_w.clone(),
+        approx_bounds: None,
+    };
+    let leaf_test_point = leaf_interior_point(&leaf_polygon.support, &leaf_polygon.edges)?;
+
+    for other in polygons {
+        if other.mesh_index == host.mesh_index && other.polygon_index == host.polygon_index {
+            continue;
+        }
+
+        let intersection = intersect_polygons(&leaf_polygon, other, 0)?;
+        match intersection.kind {
+            PairwiseIntersectionType::None | PairwiseIntersectionType::Point => {}
+            PairwiseIntersectionType::Segment => {
+                let Some(segment) = intersection.segment else {
+                    return Ok(false);
+                };
+                if segment_midpoint_is_strictly_inside_both(
+                    &segment.v0,
+                    &segment.v1,
+                    &leaf_polygon,
+                    other,
+                )? {
+                    return Ok(false);
+                }
+            }
+            PairwiseIntersectionType::Overlap => {
+                if leaf_polygon_key(host) > leaf_polygon_key(other)
+                    && other.contains_point_strictly(&leaf_test_point)?
+                {
+                    return Ok(false);
+                }
+            }
+        }
+    }
+
+    Ok(true)
+}
+
+fn segment_midpoint_is_strictly_inside_both(
+    a: &Point3,
+    b: &Point3,
+    left: &ConvexPolygon,
+    right: &ConvexPolygon,
+) -> HypermeshResult<bool> {
+    let midpoint = HomogeneousPoint3::new(
+        ((&a.x + &b.x) / Real::from(2))
+            .map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+        ((&a.y + &b.y) / Real::from(2))
+            .map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+        ((&a.z + &b.z) / Real::from(2))
+            .map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+        Real::one(),
+    );
+    Ok(left.contains_point_strictly(&midpoint)? && right.contains_point_strictly(&midpoint)?)
+}
+
+fn leaf_polygon_key(polygon: &ConvexPolygon) -> (isize, isize) {
+    (polygon.mesh_index, polygon.polygon_index)
 }
 
 fn pairwise_intersections_by_polygon(
@@ -877,6 +952,19 @@ mod tests {
 
         assert!(point_strictly_inside_bounds(&target, &bounds).unwrap());
         assert!(!point_lies_on_any_support_plane(&target, &polygons).unwrap());
+    }
+
+    #[test]
+    fn bsp_leaf_certification_rejects_unsplit_interior_segment() {
+        let mut host = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        host.delta_w = vec![1, 0];
+        let mut cutter = make_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 1, 0);
+        cutter.delta_w = vec![0, 1];
+        let polygons = vec![host.clone(), cutter];
+
+        assert!(
+            !certify_bsp_leaf_has_no_interior_intersections(&host, &host.edges, &polygons).unwrap()
+        );
     }
 
     fn support_only_polygon(support: Plane) -> ConvexPolygon {

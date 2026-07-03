@@ -76,10 +76,11 @@ remain splittable whenever any axis has certified positive extent; there is no
 coordinate-scale cutoff. If a task reaches `max_depth` while it still contains
 more polygons than the leaf threshold and the bounds remain splittable,
 hypermesh attempts to certify the current task as a leaf using the same exact
-BSP/classification path. It reports `UnknownClassification` if that leaf
-classification fails or does not report complete certification before appending
-output. Full arrangement-isolation termination is still an implementation
-target.
+BSP/classification path. Enabled BSP leaves are rejected unless exact pairwise
+checks prove they have no remaining interior segment intersections with local
+polygons. Hypermesh reports `UnknownClassification` if leaf classification or
+this isolation check fails before appending output. Full arrangement-isolation
+termination is still an implementation target.
 
 `triangulate_and_resolve_certified` resolves exact duplicate vertices,
 duplicate faces, and T-junctions, but refuses non-empty outputs with boundary
