@@ -698,6 +698,19 @@ fn hypermesh_partial_face_boundary_touch_regularizes_empty_intersection() {
 }
 
 #[test]
+fn partial_face_boundary_touch_uses_contact_proof_without_fast_paths() {
+    let left = tetrahedron([[0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]]);
+    let right = tetrahedron([[2, 2, 2], [4, 1, 1], [1, 4, 1], [3, 3, 3]]);
+    let left_soup = passthrough(&left).unwrap();
+
+    let intersection = run_general_op(&left, &right, BooleanOp::Intersection).unwrap();
+    assert!(intersection.triangles.is_empty());
+
+    let difference = run_general_op(&left, &right, BooleanOp::Difference).unwrap();
+    assert_same_shape(&difference, &left_soup);
+}
+
+#[test]
 fn hypermesh_borrowed_multi_mesh_union_uses_slice_api() {
     let left_a = tetrahedron([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]]);
     let left_b = tetrahedron([[10, 0, 0], [11, 0, 0], [10, 1, 0], [10, 0, 1]]);

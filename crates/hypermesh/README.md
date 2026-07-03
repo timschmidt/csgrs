@@ -41,6 +41,12 @@ Strict containment between two non-intersecting mesh surfaces is handled before
 subdivision when every candidate vertex has certified nonzero winding inside
 the container and no candidate vertex lies on the container surface.
 
+Boundary-only contact for two meshes is also handled before subdivision for
+intersection and difference when no input vertex is strictly inside the other
+mesh and no pair of faces has a certified transverse crossing through both
+face interiors. In that case, regularized intersection is empty and difference
+preserves the left operand.
+
 `EmberConfig::use_fast_paths` controls compatibility shortcuts for cases that
 the general path does not yet cover completely. It defaults to `false` so new
 callers exercise subdivision/BSP classification first. The regression suite

@@ -2,7 +2,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use hyperlattice::{Point3, Real};
+use hyperlattice::{HomogeneousPoint3, Point3, Real};
 
 use crate::error::HypermeshResult;
 use crate::geometry::{Aabb, axis_mut, axis_ref, compare_real};
@@ -61,11 +61,11 @@ pub fn boolean_operation_refs(
     if let Some(result) = containment_boolean(meshes, op)? {
         return Ok(result);
     }
+    if let Some(result) = boundary_only_contact_boolean(meshes, op)? {
+        return Ok(result);
+    }
     if config.use_fast_paths {
         if let Some(result) = oriented_box_boolean(meshes, op)? {
-            return Ok(result);
-        }
-        if let Some(result) = boundary_only_difference_boolean(meshes, op)? {
             return Ok(result);
         }
         if let Some(result) = axis_aligned_box_boolean(meshes, op)? {
@@ -176,7 +176,7 @@ fn containment_boolean(
     }
 }
 
-fn boundary_only_difference_boolean(
+fn boundary_only_contact_boolean(
     meshes: &[MeshRef<'_>],
     op: BooleanOp,
 ) -> HypermeshResult<Option<BooleanResult>> {
@@ -184,9 +184,23 @@ fn boundary_only_difference_boolean(
         return Ok(None);
     }
 
-    let left_has_strict_vertex_inside_right = mesh_has_strict_vertex_inside(meshes[1], meshes[0])?;
-    let right_has_strict_vertex_inside_left = mesh_has_strict_vertex_inside(meshes[0], meshes[1])?;
-    if left_has_strict_vertex_inside_right || right_has_strict_vertex_inside_left {
+    let left_has_strict_sample_inside_right =
+        mesh_has_strict_surface_sample_inside(meshes[1], meshes[0])?;
+    let right_has_strict_sample_inside_left =
+        mesh_has_strict_surface_sample_inside(meshes[0], meshes[1])?;
+    let (Some(left_has_strict_sample_inside_right), Some(right_has_strict_sample_inside_left)) = (
+        left_has_strict_sample_inside_right,
+        right_has_strict_sample_inside_left,
+    ) else {
+        return Ok(None);
+    };
+    if left_has_strict_sample_inside_right || right_has_strict_sample_inside_left {
+        return Ok(None);
+    }
+
+    let left_soup = prepare_input_refs(&[meshes[0]])?;
+    let right_soup = prepare_input_refs(&[meshes[1]])?;
+    if soups_have_transverse_surface_crossing(&left_soup, &right_soup)? {
         return Ok(None);
     }
 
@@ -404,25 +418,99 @@ fn soups_have_surface_intersection(
     Ok(false)
 }
 
-fn mesh_has_strict_vertex_inside(
-    container: MeshRef<'_>,
-    candidate: MeshRef<'_>,
+fn soups_have_transverse_surface_crossing(
+    left: &PolygonSoup,
+    right: &PolygonSoup,
 ) -> HypermeshResult<bool> {
-    let soup = prepare_input_refs(&[container])?;
-    let process_bounds = expanded_bounds(&soup.bounds);
-    let ref_point = outside_reference_point(&process_bounds);
-    for point in candidate.positions {
-        if point_lies_on_surface(point, &soup.polygons)? {
-            continue;
-        }
-        let Ok(winding) = trace_segment(&ref_point, point, &[0], &soup.polygons) else {
-            continue;
-        };
-        if winding.first().copied().unwrap_or_default() != 0 {
-            return Ok(true);
+    for left_polygon in &left.polygons {
+        for (right_index, right_polygon) in right.polygons.iter().enumerate() {
+            let intersection = intersect_polygons(left_polygon, right_polygon, right_index)?;
+            if intersection.kind != PairwiseIntersectionType::Segment {
+                continue;
+            }
+            let Some(segment) = intersection.segment else {
+                continue;
+            };
+            let mid = segment_midpoint(&segment.v0, &segment.v1)?;
+            if left_polygon.contains_point_strictly(&mid)?
+                && right_polygon.contains_point_strictly(&mid)?
+            {
+                return Ok(true);
+            }
         }
     }
     Ok(false)
+}
+
+fn segment_midpoint(left: &Point3, right: &Point3) -> HypermeshResult<HomogeneousPoint3> {
+    let two = Real::from(2);
+    Ok(HomogeneousPoint3::new(
+        ((&left.x + &right.x) / two.clone())
+            .map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+        ((&left.y + &right.y) / two.clone())
+            .map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+        ((&left.z + &right.z) / two)
+            .map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+        Real::one(),
+    ))
+}
+
+fn mesh_has_strict_surface_sample_inside(
+    container: MeshRef<'_>,
+    candidate: MeshRef<'_>,
+) -> HypermeshResult<Option<bool>> {
+    let soup = prepare_input_refs(&[container])?;
+    let process_bounds = expanded_bounds(&soup.bounds);
+    let ref_points = outside_reference_points(&process_bounds);
+    for point in candidate.positions {
+        match point_has_nonzero_winding(point, &ref_points, &soup.polygons)? {
+            Some(true) => return Ok(Some(true)),
+            Some(false) => {}
+            None => return Ok(None),
+        }
+    }
+    let candidate_soup = prepare_input_refs(&[candidate])?;
+    for polygon in &candidate_soup.polygons {
+        let point = polygon_centroid(polygon)?;
+        match point_has_nonzero_winding(&point, &ref_points, &soup.polygons)? {
+            Some(true) => return Ok(Some(true)),
+            Some(false) => {}
+            None => return Ok(None),
+        }
+    }
+    Ok(Some(false))
+}
+
+fn point_has_nonzero_winding(
+    point: &Point3,
+    ref_points: &[Point3],
+    polygons: &[crate::polygon::ConvexPolygon],
+) -> HypermeshResult<Option<bool>> {
+    if point_lies_on_surface(point, polygons)? {
+        return Ok(Some(false));
+    }
+    for ref_point in ref_points {
+        if let Ok(winding) = trace_segment(ref_point, point, &[0], polygons) {
+            return Ok(Some(winding.first().copied().unwrap_or_default() != 0));
+        }
+    }
+    Ok(None)
+}
+
+fn polygon_centroid(polygon: &crate::polygon::ConvexPolygon) -> HypermeshResult<Point3> {
+    let vertices = polygon.vertices()?;
+    let mut sum = Point3::origin();
+    for point in &vertices {
+        sum.x += point.x.clone();
+        sum.y += point.y.clone();
+        sum.z += point.z.clone();
+    }
+    let denom = Real::from(vertices.len() as u64);
+    Ok(Point3::new(
+        (sum.x / denom.clone()).map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+        (sum.y / denom.clone()).map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+        (sum.z / denom).map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+    ))
 }
 
 fn point_lies_on_surface(
@@ -1181,4 +1269,24 @@ fn outside_reference_point(bounds: &Aabb) -> Point3 {
         *axis_mut(&mut point, axis) = axis_ref(&point, axis) - &one;
     }
     point
+}
+
+fn outside_reference_points(bounds: &Aabb) -> Vec<Point3> {
+    let one = Real::one();
+    let x = [&bounds.min.x - &one, &bounds.max.x + &one];
+    let y = [&bounds.min.y - &one, &bounds.max.y + &one];
+    let z = [&bounds.min.z - &one, &bounds.max.z + &one];
+    let mut points = Vec::with_capacity(8);
+    for x_value in &x {
+        for y_value in &y {
+            for z_value in &z {
+                points.push(Point3::new(
+                    x_value.clone(),
+                    y_value.clone(),
+                    z_value.clone(),
+                ));
+            }
+        }
+    }
+    points
 }
