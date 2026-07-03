@@ -478,11 +478,11 @@ fn process_leaf_uses_bsp_for_intersecting_cross_mesh_polygons() {
 fn boolean_operation_refs_runs_leaf_pipeline_from_borrowed_meshes() {
     assert!(!EmberConfig::default().use_proven_shortcuts);
 
-    let positions = vec![p(1, -1, -1), p(1, 1, -1), p(1, 0, 1)];
-    let triangles = vec![Triangle::new(0, 1, 2)];
+    let cube = cube_mesh(0, 2);
+    let mesh_ref = cube.as_ref();
     let mesh = hypermesh::MeshRef {
-        positions: &positions,
-        triangles: &triangles,
+        positions: mesh_ref.positions,
+        triangles: mesh_ref.triangles,
         nsi: true,
         nnc: true,
     };
@@ -492,6 +492,23 @@ fn boolean_operation_refs_runs_leaf_pipeline_from_borrowed_meshes() {
     assert_eq!(result.classifications.len(), result.output.polygons.len());
     assert!(!result.output.polygons.is_empty());
     assert!(result.winding_pairs.iter().all(Option::is_some));
+}
+
+#[test]
+fn boolean_operation_refs_rejects_uncertified_open_output() {
+    let positions = vec![p(1, -1, -1), p(1, 1, -1), p(1, 0, 1)];
+    let triangles = vec![Triangle::new(0, 1, 2)];
+    let mesh = hypermesh::MeshRef {
+        positions: &positions,
+        triangles: &triangles,
+        nsi: true,
+        nnc: true,
+    };
+
+    let err =
+        boolean_operation_refs(&[mesh], BooleanOp::Union, EmberConfig::default()).unwrap_err();
+
+    assert!(matches!(err, HypermeshError::OpenOutput { .. }));
 }
 
 #[test]
@@ -512,10 +529,7 @@ fn deprecated_shortcut_flag_does_not_bypass_general_path() {
 
 #[test]
 fn boolean_operation_owned_delegates_to_borrowed_pipeline() {
-    let mut mesh = hypermesh::InputMesh::new(
-        vec![p(1, -1, -1), p(1, 1, -1), p(1, 0, 1)],
-        vec![Triangle::new(0, 1, 2)],
-    );
+    let mut mesh = cube_mesh(0, 2);
     mesh.nsi = true;
     mesh.nnc = true;
 

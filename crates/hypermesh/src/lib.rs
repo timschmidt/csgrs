@@ -9,7 +9,9 @@
 //! are reported as [`HypermeshError::UnknownClassification`] rather than being
 //! guessed with approximate topology. By default, boolean operations run the
 //! general EMBER subdivision/BSP/classification path; special-case boolean
-//! shortcuts are not used to rescue uncertified general results.
+//! shortcuts are not used to rescue uncertified general results. Public boolean
+//! operations certify that the classified arrangement is already closed after
+//! exact duplicate/T-junction resolution before returning a result.
 //!
 //! Use [`triangulate_and_resolve_certified`] when callers need evidence that a
 //! boolean result is already closed after exact duplicate/T-junction
