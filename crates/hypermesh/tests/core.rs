@@ -7,7 +7,7 @@ use hypermesh::{
     boolean_operation_refs, classify_leaf_polygon, classify_point, classify_polygon_output,
     extract_output, intersect_polygons, make_indicator, make_quad, make_triangle, prepare_input,
     prepare_input_meshes, process_leaf_into, subdivide, trace_axis_segment, trace_segment,
-    triangulate_and_resolve_certified, triangulate_output,
+    triangulate_and_resolve_certified,
 };
 
 fn r(value: i32) -> Real {
@@ -287,7 +287,7 @@ fn local_bsp_overlap_can_disable_higher_index_duplicate_leaf() {
 }
 
 #[test]
-fn output_extraction_and_triangulation_use_real_vertices() {
+fn output_extraction_uses_real_vertices() {
     let positions = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
     let triangles = vec![Triangle::new(0, 1, 2)];
     let soup = prepare_input(&positions, &triangles).unwrap();
@@ -297,10 +297,6 @@ fn output_extraction_and_triangulation_use_real_vertices() {
     assert_eq!(polygons.len(), 1);
     assert_eq!(polygons[0].vertices.len(), 3);
     assert!(polygons[0].vertices.iter().any(|vertex| vertex.x == r(1)));
-
-    let triangulated = triangulate_output(&result).unwrap();
-    assert_eq!(triangulated.vertices.len(), 3);
-    assert_eq!(triangulated.triangles, vec![[0, 1, 2]]);
 }
 
 #[test]
@@ -646,16 +642,6 @@ fn certified_triangulation_rejects_open_output() {
         vec![1],
     );
 
-    let raw = triangulate_output(&result).unwrap();
-    assert!(!hypermesh::triangle_soup_is_closed(&raw));
-    assert_eq!(
-        hypermesh::triangle_soup_closure_report(&raw),
-        hypermesh::TriangleSoupClosureReport {
-            boundary_edges: 3,
-            non_manifold_edges: 0,
-        }
-    );
-
     let err = triangulate_and_resolve_certified(&result).unwrap_err();
     assert_eq!(
         err,
@@ -719,14 +705,26 @@ fn disjoint_cube_booleans_have_expected_polygon_counts() {
 
     let union = hypermesh::boolean_union(&cube_a, &cube_b, config).unwrap();
     assert_eq!(union.output.polygons.len(), 24);
-    assert_eq!(triangulate_output(&union).unwrap().triangles.len(), 24);
+    assert_eq!(
+        triangulate_and_resolve_certified(&union)
+            .unwrap()
+            .triangles
+            .len(),
+        24
+    );
 
     let intersection = hypermesh::boolean_intersection(&cube_a, &cube_b, config).unwrap();
     assert!(intersection.output.polygons.is_empty());
 
     let difference = hypermesh::boolean_difference(&cube_a, &cube_b, config).unwrap();
     assert_eq!(difference.output.polygons.len(), 12);
-    assert_eq!(triangulate_output(&difference).unwrap().triangles.len(), 12);
+    assert_eq!(
+        triangulate_and_resolve_certified(&difference)
+            .unwrap()
+            .triangles
+            .len(),
+        12
+    );
 }
 
 #[test]

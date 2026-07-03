@@ -54,7 +54,7 @@ pub use operations::{
 pub use output::{
     BooleanResult, ClassifiedPolygon, OutputPolygon, TriangleSoup, TriangleSoupClosureReport,
     extract_output, triangle_soup_closure_report, triangle_soup_is_closed,
-    triangulate_and_resolve_certified, triangulate_output,
+    triangulate_and_resolve_certified,
 };
 pub use polygon::{ApproxBounds, ConvexPolygon, make_quad, make_triangle};
 pub use segment_trace::{

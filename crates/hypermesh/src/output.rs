@@ -156,8 +156,7 @@ pub fn extract_output_polygons(polygons: &[ConvexPolygon]) -> HypermeshResult<Ve
     Ok(out)
 }
 
-/// Fan-triangulates all output polygons in a boolean result.
-pub fn triangulate_output(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
+fn triangulate_output(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
     triangulate_polygons(&result.output.polygons)
 }
 
@@ -186,8 +185,7 @@ pub fn triangulate_and_resolve_certified(result: &BooleanResult) -> HypermeshRes
     Ok(soup)
 }
 
-/// Fan-triangulates a borrowed polygon slice.
-pub fn triangulate_polygons(polygons: &[ConvexPolygon]) -> HypermeshResult<TriangleSoup> {
+fn triangulate_polygons(polygons: &[ConvexPolygon]) -> HypermeshResult<TriangleSoup> {
     let mut soup = TriangleSoup::default();
 
     for polygon in polygons {

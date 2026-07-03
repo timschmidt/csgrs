@@ -21,7 +21,6 @@ pub struct MainApp {
     show_cube_a: bool,
     show_cube_b: bool,
     show_wireframe: bool,
-    resolve_tjunctions: bool,
     offset_quarters: i32,
     spin: f32,
     last_frame: Instant,
@@ -48,7 +47,6 @@ impl MainApp {
             show_cube_a: true,
             show_cube_b: true,
             show_wireframe: true,
-            resolve_tjunctions: true,
             offset_quarters: 4,
             spin: 0.0,
             last_frame: Instant::now(),
@@ -86,7 +84,7 @@ impl MainApp {
             max_depth: 8,
         };
 
-        match run_boolean(&refs, op, config, self.resolve_tjunctions) {
+        match run_boolean(&refs, op, config) {
             Ok(result) => {
                 self.stats = DemoStats::ok(started.elapsed(), &self.cube_a, &self.cube_b, &result);
                 self.result = Some(result);
@@ -146,9 +144,6 @@ impl eframe::App for MainApp {
                             .text("Cube B x offset")
                             .custom_formatter(|value, _| format!("{:.2}", value / 4.0)),
                     )
-                    .changed();
-                changed |= ui
-                    .checkbox(&mut self.resolve_tjunctions, "Resolve T-junctions")
                     .changed();
                 if ui.button("Run exact boolean").clicked() {
                     changed = true;
@@ -521,14 +516,9 @@ fn run_boolean(
     meshes: &[MeshRef<'_>],
     op: BooleanOp,
     config: EmberConfig,
-    resolve: bool,
 ) -> hypermesh::HypermeshResult<TriangleSoup> {
     let result = boolean_operation_refs(meshes, op, config)?;
-    if resolve {
-        triangulate_and_resolve_certified(&result)
-    } else {
-        hypermesh::triangulate_output(&result)
-    }
+    triangulate_and_resolve_certified(&result)
 }
 
 fn cube_mesh(min: i32, max: i32) -> InputMesh {
@@ -704,7 +694,7 @@ mod tests {
                 DemoOperation::CubeAMinusB | DemoOperation::CubeBMinusA => BooleanOp::Difference,
                 DemoOperation::SymmetricDifference => BooleanOp::SymmetricDifference,
             };
-            let result = run_boolean(&refs, op, config, true);
+            let result = run_boolean(&refs, op, config);
             assert!(
                 result.is_ok(),
                 "{} failed: {:?}",
