@@ -621,6 +621,41 @@ fn disconnected_container_uses_strict_containment_without_fast_paths() {
 
 #[test]
 fn hypermesh_affine_box_booleans_are_closed() {
+    let (left, right) = affine_box_pair();
+
+    for op in [
+        BooleanOp::Union,
+        BooleanOp::Intersection,
+        BooleanOp::Difference,
+    ] {
+        let result = run_op(&left, &right, op).unwrap();
+        assert!(
+            !result.triangles.is_empty(),
+            "{op:?} should produce non-empty output"
+        );
+        assert_closed_triangle_soup(&result);
+    }
+}
+
+#[test]
+fn affine_box_booleans_use_exact_cell_decomposition_without_fast_paths() {
+    let (left, right) = affine_box_pair();
+
+    for op in [
+        BooleanOp::Union,
+        BooleanOp::Intersection,
+        BooleanOp::Difference,
+    ] {
+        let result = run_general_op(&left, &right, op).unwrap();
+        assert!(
+            !result.triangles.is_empty(),
+            "{op:?} should produce non-empty output"
+        );
+        assert_closed_triangle_soup(&result);
+    }
+}
+
+fn affine_box_pair() -> (InputMesh, InputMesh) {
     let map = |u: i32, v: i32, w: i32| [2 * u + v, 2 * v, 2 * w];
     let affine_box = |min: [i32; 3], max: [i32; 3]| {
         let corners = [
@@ -644,21 +679,10 @@ fn hypermesh_affine_box_booleans_are_closed() {
         mesh.nnc = true;
         mesh
     };
-    let left = affine_box([0, 0, 0], [2, 2, 2]);
-    let right = affine_box([1, 0, 0], [3, 2, 2]);
-
-    for op in [
-        BooleanOp::Union,
-        BooleanOp::Intersection,
-        BooleanOp::Difference,
-    ] {
-        let result = run_op(&left, &right, op).unwrap();
-        assert!(
-            !result.triangles.is_empty(),
-            "{op:?} should produce non-empty output"
-        );
-        assert_closed_triangle_soup(&result);
-    }
+    (
+        affine_box([0, 0, 0], [2, 2, 2]),
+        affine_box([1, 0, 0], [3, 2, 2]),
+    )
 }
 
 #[test]

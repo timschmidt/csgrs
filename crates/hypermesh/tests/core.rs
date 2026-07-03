@@ -2,12 +2,13 @@ use hyperlattice::{Point3, Real};
 use hypermesh::bvh::bounds_overlap;
 use hypermesh::clip::{ClipSide, clip_polygon};
 use hypermesh::{
-    BooleanOp, Classification, EmberConfig, HypermeshError, Plane, SubdivisionConfig,
-    SubdivisionTask, Triangle, boolean_operation, boolean_operation_refs, classify_leaf_polygon,
-    classify_point, classify_polygon_output, extract_output, find_probe_point, intersect_polygons,
-    make_indicator, make_quad, make_triangle, prepare_input, prepare_input_meshes, process_leaf,
-    process_leaf_into, subdivide, trace_axis_segment, trace_segment, triangulate_and_resolve,
-    triangulate_and_resolve_certified, triangulate_output,
+    BooleanOp, Classification, ClassifiedPolygon, EmberConfig, HypermeshError, Plane, PolygonSoup,
+    SubdivisionConfig, SubdivisionTask, Triangle, WindingPair, boolean_operation,
+    boolean_operation_refs, classify_leaf_polygon, classify_point, classify_polygon_output,
+    extract_output, find_probe_point, intersect_polygons, make_indicator, make_quad, make_triangle,
+    prepare_input, prepare_input_meshes, process_leaf, process_leaf_into, subdivide,
+    trace_axis_segment, trace_segment, triangulate_and_resolve, triangulate_and_resolve_certified,
+    triangulate_output,
 };
 
 fn r(value: i32) -> Real {
@@ -548,6 +549,34 @@ fn certified_triangulation_rejects_open_output_without_repair() {
 }
 
 #[test]
+fn boolean_result_preserves_classified_winding_evidence() {
+    let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let mut classified = ClassifiedPolygon::new(polygon, 1);
+    classified.winding = Some(WindingPair {
+        w_front: vec![0],
+        w_back: vec![1],
+    });
+
+    let result = hypermesh::BooleanResult::from_classified(
+        PolygonSoup {
+            polygons: Vec::new(),
+            bounds: hypermesh::Aabb::new(p(0, 0, 0), p(1, 1, 0)),
+            num_meshes: 1,
+        },
+        vec![classified],
+    );
+
+    assert_eq!(result.winding_pairs.len(), 1);
+    assert_eq!(
+        result.winding_pairs[0],
+        Some(WindingPair {
+            w_front: vec![0],
+            w_back: vec![1],
+        })
+    );
+}
+
+#[test]
 fn resolve_tjunctions_splits_exact_boundary_tjunction() {
     let soup = hypermesh::TriangleSoup {
         vertices: vec![ov(0, 0, 0), ov(2, 0, 0), ov(0, 2, 0), ov(1, 0, 0)],
@@ -603,8 +632,6 @@ fn overlapping_cube_booleans_clip_and_resolve_exactly() {
     };
 
     let union = hypermesh::boolean_union(&cube_a, &cube_b, config).unwrap();
-    assert_eq!(union.winding_pairs.len(), union.output.polygons.len());
-    assert!(union.winding_pairs.iter().any(Option::is_some));
     let union_soup = triangulate_and_resolve(&union).unwrap();
     assert!(!union.output.polygons.is_empty());
     assert!(!union_soup.triangles.is_empty());

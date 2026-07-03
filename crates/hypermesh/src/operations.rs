@@ -64,10 +64,10 @@ pub fn boolean_operation_refs(
     if let Some(result) = boundary_only_contact_boolean(meshes, op)? {
         return Ok(result);
     }
+    if let Some(result) = oriented_box_boolean(meshes, op)? {
+        return Ok(result);
+    }
     if config.use_fast_paths {
-        if let Some(result) = oriented_box_boolean(meshes, op)? {
-            return Ok(result);
-        }
         if let Some(result) = axis_aligned_box_boolean(meshes, op)? {
             return Ok(result);
         }
