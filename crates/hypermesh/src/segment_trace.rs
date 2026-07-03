@@ -97,34 +97,12 @@ pub fn trace_axis_segment(
         });
     }
 
-    let mut accepted: Vec<CrossingEvent> = Vec::new();
-    for (index, event) in events.iter().enumerate() {
-        if event.on_edge
-            && !events.iter().enumerate().any(|(other_index, other)| {
-                other_index != index
-                    && other.point == event.point
-                    && other.support == event.support
-                    && other.normal_sign == event.normal_sign
-                    && other.delta_w == event.delta_w
-            })
-        {
-            return Ok(TraceAxisSegmentResult {
-                winding,
-                valid: false,
-            });
-        }
-
-        if accepted.iter().any(|existing| {
-            existing.point == event.point
-                && existing.support == event.support
-                && existing.normal_sign == event.normal_sign
-                && existing.delta_w == event.delta_w
-        }) {
-            continue;
-        }
-
-        accepted.push(event.clone());
-    }
+    let Some(mut accepted) = accepted_crossing_events(&events) else {
+        return Ok(TraceAxisSegmentResult {
+            winding,
+            valid: false,
+        });
+    };
 
     sort_crossing_events(&mut accepted, axis, dir_sign)?;
 
@@ -163,6 +141,12 @@ pub fn trace_segment(
         return Ok(winding);
     }
 
+    if let Ok(traced) = trace_direct_segment(start, end, winding, polygons)
+        && traced.valid
+    {
+        return Ok(traced.winding);
+    }
+
     for detour in interior_box_detour_points(start, end, polygons)? {
         if detour == *start || detour == *end || point_lies_on_traced_surface(&detour, polygons)? {
             continue;
@@ -177,6 +161,141 @@ pub fn trace_segment(
     }
 
     Err(HypermeshError::UnknownClassification)
+}
+
+fn trace_direct_segment(
+    start: &Point3,
+    end: &Point3,
+    start_wnv: &[i32],
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<TraceAxisSegmentResult> {
+    let mut winding = start_wnv.to_vec();
+    let Some(sort_axis) = first_changed_axis(start, end)? else {
+        return Ok(TraceAxisSegmentResult {
+            winding,
+            valid: true,
+        });
+    };
+    let dir_sign = if compare_real(axis_ref(end, sort_axis), axis_ref(start, sort_axis))?.is_gt() {
+        1
+    } else {
+        -1
+    };
+
+    let mut events = Vec::new();
+    for polygon in polygons {
+        if polygon.mesh_index < 0 {
+            continue;
+        }
+
+        let start_value = polygon.support.expression_at_point(start);
+        let end_value = polygon.support.expression_at_point(end);
+        let start_class = classify_real(&start_value)?;
+        let end_class = classify_real(&end_value)?;
+        if start_class == Classification::On || end_class == Classification::On {
+            continue;
+        }
+        if start_class == end_class {
+            continue;
+        }
+
+        let Some(crossing) = segment_plane_crossing(start, end, &polygon.support)? else {
+            continue;
+        };
+
+        let mut inside = true;
+        let mut on_edge = false;
+        for edge in &polygon.edges {
+            match classify_point(&crossing, edge)? {
+                Classification::Positive => {
+                    inside = false;
+                    break;
+                }
+                Classification::On => on_edge = true,
+                Classification::Negative => {}
+            }
+        }
+        if !inside {
+            continue;
+        }
+
+        let normal_axis = dominant_normal_axis(&polygon.support)?;
+        let normal_sign = match classify_real(axis_ref(&polygon.support.normal, normal_axis))? {
+            Classification::Positive => 1,
+            Classification::Negative => -1,
+            Classification::On => continue,
+        };
+        let cross_sign = match classify_real(&(&start_value - &end_value))? {
+            Classification::Positive => 1,
+            Classification::Negative => -1,
+            Classification::On => continue,
+        };
+        events.push(CrossingEvent {
+            point: crossing,
+            support: polygon.support.clone(),
+            normal_sign,
+            cross_sign,
+            delta_w: polygon.delta_w.clone(),
+            on_edge,
+        });
+    }
+
+    let Some(mut accepted) = accepted_crossing_events(&events) else {
+        return Ok(TraceAxisSegmentResult {
+            winding,
+            valid: false,
+        });
+    };
+    sort_crossing_events(&mut accepted, sort_axis, dir_sign)?;
+
+    for event in accepted {
+        for (value, delta) in winding.iter_mut().zip(&event.delta_w) {
+            *value += event.cross_sign * *delta;
+        }
+    }
+
+    Ok(TraceAxisSegmentResult {
+        winding,
+        valid: true,
+    })
+}
+
+fn accepted_crossing_events(events: &[CrossingEvent]) -> Option<Vec<CrossingEvent>> {
+    let mut accepted = Vec::new();
+    for (index, event) in events.iter().enumerate() {
+        if event.on_edge
+            && !events.iter().enumerate().any(|(other_index, other)| {
+                other_index != index
+                    && other.point == event.point
+                    && other.support == event.support
+                    && other.normal_sign == event.normal_sign
+                    && other.delta_w == event.delta_w
+            })
+        {
+            return None;
+        }
+
+        if accepted.iter().any(|existing: &CrossingEvent| {
+            existing.point == event.point
+                && existing.support == event.support
+                && existing.normal_sign == event.normal_sign
+                && existing.delta_w == event.delta_w
+        }) {
+            continue;
+        }
+
+        accepted.push(event.clone());
+    }
+    Some(accepted)
+}
+
+fn first_changed_axis(start: &Point3, end: &Point3) -> HypermeshResult<Option<usize>> {
+    for axis in 0..3 {
+        if compare_real(axis_ref(start, axis), axis_ref(end, axis))?.is_ne() {
+            return Ok(Some(axis));
+        }
+    }
+    Ok(None)
 }
 
 fn trace_axis_ordered_paths(

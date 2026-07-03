@@ -343,6 +343,21 @@ fn trace_segment_uses_detour_when_axis_order_corners_hit_surfaces() {
 }
 
 #[test]
+fn trace_segment_uses_direct_path_when_axis_order_corners_hit_surfaces() {
+    let mut blockers = vec![
+        make_triangle(&p(2, 0, 0), &p(3, 0, 0), &p(2, 1, 0), 0, 0),
+        make_triangle(&p(0, 2, 0), &p(1, 2, 0), &p(0, 3, 0), 0, 1),
+        make_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
+    ];
+    let mut diagonal_wall = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 1, 0);
+    diagonal_wall.delta_w = vec![1];
+    blockers.push(diagonal_wall);
+
+    let winding = trace_segment(&p(0, 0, 0), &p(2, 2, 2), &[0], &blockers).unwrap();
+    assert_eq!(winding, vec![-1]);
+}
+
+#[test]
 fn trace_segment_uses_arrangement_detour_when_fixed_fraction_box_is_blocked() {
     let mut blockers = vec![
         make_triangle(&p(4, 0, 0), &p(5, 0, 0), &p(4, 1, 0), 0, 0),
