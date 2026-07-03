@@ -1,5 +1,7 @@
 //! Winding number vectors and boolean output classification.
 
+use crate::error::{HypermeshError, HypermeshResult};
+
 /// Winding number vector: one integer per input mesh.
 pub type WindingNumberVector = Vec<i32>;
 
@@ -60,14 +62,39 @@ pub fn classify_polygon_output(w_front: &[i32], w_back: &[i32], indicator: &Indi
 }
 
 /// Propagates a winding vector across one crossing.
-pub fn propagate_wnv(w_x: &[i32], sign_direction: i32, delta_w: &[i32]) -> WindingNumberVector {
+pub fn propagate_wnv(
+    w_x: &[i32],
+    sign_direction: i32,
+    delta_w: &[i32],
+) -> HypermeshResult<WindingNumberVector> {
     apply_transition(w_x, sign_direction, delta_w)
 }
 
-fn apply_transition(w: &[i32], sign: i32, delta_w: &[i32]) -> WindingNumberVector {
+fn apply_transition(w: &[i32], sign: i32, delta_w: &[i32]) -> HypermeshResult<WindingNumberVector> {
+    if w.len() != delta_w.len() {
+        return Err(HypermeshError::UnknownClassification);
+    }
     let mut result = w.to_vec();
     for (value, delta) in result.iter_mut().zip(delta_w) {
         *value += sign * *delta;
     }
-    result
+    Ok(result)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn propagate_wnv_rejects_dimension_mismatch() {
+        assert_eq!(
+            propagate_wnv(&[1, 0], 1, &[1]),
+            Err(HypermeshError::UnknownClassification)
+        );
+    }
+
+    #[test]
+    fn propagate_wnv_applies_full_transition() {
+        assert_eq!(propagate_wnv(&[1, 0], -1, &[1, -2]).unwrap(), vec![0, 2]);
+    }
 }

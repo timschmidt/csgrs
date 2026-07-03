@@ -191,7 +191,7 @@ fn process_leaf_into_inner(
                 bounds,
                 &effective_delta_w,
             )?;
-            let w_back = propagate_wnv(&w_front, 1, &effective_delta_w);
+            let w_back = propagate_wnv(&w_front, 1, &effective_delta_w)?;
             let classification = classify_polygon_output(&w_front, &w_back, indicator);
             if classification != 0 {
                 let mut fragment = polygon.clone();
@@ -356,7 +356,7 @@ fn emit_one_direct(
         bounds,
         &polygon.delta_w,
     )?;
-    let w_back = propagate_wnv(&w_front, 1, &polygon.delta_w);
+    let w_back = propagate_wnv(&w_front, 1, &polygon.delta_w)?;
     let classification = classify_polygon_output(&w_front, &w_back, indicator);
     if classification != 0 {
         let mut classified = ClassifiedPolygon::new(polygon.clone(), classification);
@@ -378,6 +378,9 @@ fn effective_leaf_delta_w(
     for other in polygons {
         if other.polygon_index == polygon.polygon_index && other.mesh_index == polygon.mesh_index {
             continue;
+        }
+        if delta_w.len() != other.delta_w.len() {
+            return Err(crate::error::HypermeshError::UnknownClassification);
         }
         if other.contains_point_strictly(&test_point)? {
             let sign = if supports_have_same_direction(&polygon.support, &other.support)? {

@@ -107,9 +107,7 @@ pub fn trace_axis_segment(
     sort_crossing_events(&mut accepted, axis, dir_sign)?;
 
     for event in accepted {
-        for (value, delta) in winding.iter_mut().zip(&event.delta_w) {
-            *value += event.cross_sign * *delta;
-        }
+        apply_winding_transition_in_place(&mut winding, event.cross_sign, &event.delta_w)?;
     }
 
     Ok(TraceAxisSegmentResult {
@@ -174,6 +172,20 @@ fn retryable_trace<T>(result: HypermeshResult<T>) -> HypermeshResult<Option<T>> 
         Err(HypermeshError::UnknownClassification) => Ok(None),
         Err(err) => Err(err),
     }
+}
+
+fn apply_winding_transition_in_place(
+    winding: &mut [i32],
+    sign: i32,
+    delta_w: &[i32],
+) -> HypermeshResult<()> {
+    if winding.len() != delta_w.len() {
+        return Err(HypermeshError::UnknownClassification);
+    }
+    for (value, delta) in winding.iter_mut().zip(delta_w) {
+        *value += sign * *delta;
+    }
+    Ok(())
 }
 
 fn trace_direct_segment(
@@ -262,9 +274,7 @@ fn trace_direct_segment(
     sort_crossing_events(&mut accepted, sort_axis, dir_sign)?;
 
     for event in accepted {
-        for (value, delta) in winding.iter_mut().zip(&event.delta_w) {
-            *value += event.cross_sign * *delta;
-        }
+        apply_winding_transition_in_place(&mut winding, event.cross_sign, &event.delta_w)?;
     }
 
     Ok(TraceAxisSegmentResult {
@@ -532,9 +542,7 @@ pub fn classify_leaf_polygon(
                     continue;
                 };
                 if probe_side == Classification::Negative {
-                    for (value, delta) in winding.iter_mut().zip(host_delta_w) {
-                        *value -= *delta;
-                    }
+                    apply_winding_transition_in_place(&mut winding, -1, host_delta_w)?;
                 }
                 return Ok(winding);
             }
@@ -963,6 +971,17 @@ mod tests {
         assert_eq!(
             retryable_trace::<Vec<i32>>(Err(HypermeshError::PointAtInfinity)),
             Err(HypermeshError::PointAtInfinity)
+        );
+    }
+
+    #[test]
+    fn trace_axis_segment_rejects_transition_dimension_mismatch() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+
+        assert_eq!(
+            trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0, 0], &[wall]),
+            Err(HypermeshError::UnknownClassification)
         );
     }
 
