@@ -50,13 +50,15 @@ number.
 
 Subdivision reference propagation currently accepts the EMBER projection of the
 parent reference point onto a child AABB only when the projected point and trace
-are certified valid. If the projected point or direct trace is degenerate, the
-implementation tries local axis-aligned escape targets and their multi-axis
-combinations inside certified open intervals before the next surface hit or
-AABB boundary. Segment tracing uses arrangement-coordinate endpoint-box detours
-when direct axis-ordered paths hit surfaces. If none trace cleanly, it reports
-`UnknownClassification` instead of using finite random/interior sampling. The
-full EMBER plane-replacement reference construction remains unfinished.
+are certified valid. Existing references are reused only when they are strict
+child-cell interior points and not on local surfaces. If the projected point or
+direct trace is degenerate, the implementation tries local axis-aligned escape
+targets and their multi-axis combinations inside certified open intervals
+before the next surface hit or AABB boundary. Segment tracing uses
+arrangement-coordinate endpoint-box detours when direct axis-ordered paths hit
+surfaces. If none trace cleanly, it reports `UnknownClassification` instead of
+using finite random/interior sampling. The full EMBER plane-replacement
+reference construction remains unfinished.
 
 `EmberConfig::default()` runs only the general subdivision/BSP/classification
 path. The previous same-surface, disjoint-bound, strict-containment,

@@ -525,7 +525,7 @@ fn compute_new_reference(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<(Point3, Vec<i32>)> {
-    if bounds.contains_point(old_ref)? {
+    if is_valid_reference_for_bounds(old_ref, bounds, polygons)? {
         return Ok((old_ref.clone(), old_wnv.to_vec()));
     }
 
@@ -542,6 +542,15 @@ fn compute_new_reference(
     }
 
     Err(crate::error::HypermeshError::UnknownClassification)
+}
+
+fn is_valid_reference_for_bounds(
+    point: &Point3,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<bool> {
+    Ok(point_strictly_inside_bounds(point, bounds)?
+        && !point_lies_on_local_surface(point, polygons)?)
 }
 
 fn reference_targets_from_projection(
@@ -687,21 +696,16 @@ fn reference_axis_surface_crossing(
 fn project_reference_point(old_ref: &Point3, bounds: &Aabb) -> HypermeshResult<Point3> {
     let mut target = old_ref.clone();
     for axis in 0..3 {
-        if compare_real(axis_ref(&target, axis), axis_ref(&bounds.min, axis))?.is_lt() {
-            *axis_mut(&mut target, axis) = interpolate_axis(bounds, axis, 1, 3)?;
-        } else if compare_real(axis_ref(&target, axis), axis_ref(&bounds.max, axis))?.is_gt() {
-            *axis_mut(&mut target, axis) = interpolate_axis(bounds, axis, 2, 3)?;
+        let min_order = compare_real(axis_ref(&target, axis), axis_ref(&bounds.min, axis))?;
+        let max_order = compare_real(axis_ref(&target, axis), axis_ref(&bounds.max, axis))?;
+        if !min_order.is_gt() || !max_order.is_lt() {
+            *axis_mut(&mut target, axis) = interior_axis_value(bounds, axis)?;
         }
     }
     Ok(target)
 }
 
-fn interpolate_axis(
-    bounds: &Aabb,
-    axis: usize,
-    numerator: u64,
-    denominator: u64,
-) -> HypermeshResult<Real> {
+fn interior_axis_value(bounds: &Aabb, axis: usize) -> HypermeshResult<Real> {
     let min = axis_ref(&bounds.min, axis);
     let max = axis_ref(&bounds.max, axis);
     let extent = max - min;
@@ -709,8 +713,27 @@ fn interpolate_axis(
         return Ok(min.clone());
     }
     Ok(min
-        + &((extent * Real::from(numerator)) / Real::from(denominator))
+        + &((extent * Real::from(1)) / Real::from(2))
             .map_err(|_| crate::error::HypermeshError::UnknownClassification)?)
+}
+
+fn point_strictly_inside_bounds(point: &Point3, bounds: &Aabb) -> HypermeshResult<bool> {
+    for axis in 0..3 {
+        let min = axis_ref(&bounds.min, axis);
+        let max = axis_ref(&bounds.max, axis);
+        if compare_real(min, max)?.is_eq() {
+            if compare_real(axis_ref(point, axis), min)?.is_ne() {
+                return Ok(false);
+            }
+            continue;
+        }
+        if !compare_real(axis_ref(point, axis), min)?.is_gt()
+            || !compare_real(axis_ref(point, axis), max)?.is_lt()
+        {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 fn point_lies_on_local_surface(
@@ -752,6 +775,7 @@ fn unique_wntvs(polygons: &[ConvexPolygon]) -> Vec<Vec<i32>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::polygon::make_triangle;
 
     fn r(value: i32) -> Real {
         value.into()
@@ -773,5 +797,40 @@ mod tests {
         let bounds = Aabb::new(p(0, 0, 0), p(0, 0, 0));
 
         assert!(!can_split_bounds(&bounds).unwrap());
+    }
+
+    #[test]
+    fn point_strictly_inside_bounds_rejects_positive_extent_boundary() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+
+        assert!(!point_strictly_inside_bounds(&p(0, 2, 2), &bounds).unwrap());
+        assert!(point_strictly_inside_bounds(&p(2, 2, 2), &bounds).unwrap());
+    }
+
+    #[test]
+    fn point_strictly_inside_bounds_accepts_zero_extent_axis_on_plane() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 0, 4));
+
+        assert!(point_strictly_inside_bounds(&p(2, 0, 2), &bounds).unwrap());
+        assert!(!point_strictly_inside_bounds(&p(2, 1, 2), &bounds).unwrap());
+    }
+
+    #[test]
+    fn project_reference_point_moves_non_strict_axes_to_midpoint() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+
+        assert_eq!(
+            project_reference_point(&p(0, 2, 5), &bounds).unwrap(),
+            p(2, 2, 2)
+        );
+    }
+
+    #[test]
+    fn valid_reference_rejects_local_surface_points() {
+        let mut wall = make_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+
+        assert!(!is_valid_reference_for_bounds(&p(2, 2, 1), &bounds, &[wall]).unwrap());
     }
 }
