@@ -291,6 +291,9 @@ pub fn classify_leaf_polygon(
                 if point_lies_on_traced_surface(&probe, polygons)? {
                     continue;
                 }
+                if !probe_reaches_adjacent_cell(point, &probe, support, polygons)? {
+                    continue;
+                }
                 let Ok(mut winding) = trace_segment(ref_point, &probe, ref_wnv, polygons) else {
                     continue;
                 };
@@ -305,6 +308,83 @@ pub fn classify_leaf_polygon(
     }
 
     Err(HypermeshError::UnknownClassification)
+}
+
+fn probe_reaches_adjacent_cell(
+    start: &Point3,
+    probe: &Point3,
+    host_support: &Plane,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<bool> {
+    let Some(axis) = changed_axis(start, probe)? else {
+        return Ok(false);
+    };
+
+    for polygon in polygons {
+        if polygon.mesh_index < 0 {
+            continue;
+        }
+
+        let start_class = classify_point(start, &polygon.support)?;
+        let probe_class = classify_point(probe, &polygon.support)?;
+
+        if start_class == Classification::On {
+            if polygon.support == *host_support {
+                continue;
+            }
+            if point_lies_on_polygon(start, polygon)? {
+                return Ok(false);
+            }
+            continue;
+        }
+
+        if probe_class == Classification::On {
+            if point_lies_on_polygon(probe, polygon)? {
+                return Ok(false);
+            }
+            continue;
+        }
+
+        if start_class == probe_class {
+            continue;
+        }
+
+        let Some(crossing) = segment_plane_crossing(start, probe, &polygon.support)? else {
+            continue;
+        };
+        if point_strictly_between_axis(&crossing, start, probe, axis)?
+            && point_lies_on_polygon(&crossing, polygon)?
+        {
+            return Ok(false);
+        }
+    }
+
+    Ok(true)
+}
+
+fn changed_axis(start: &Point3, end: &Point3) -> HypermeshResult<Option<usize>> {
+    let mut changed = None;
+    for axis in 0..3 {
+        if compare_real(axis_ref(start, axis), axis_ref(end, axis))?.is_ne() {
+            if changed.is_some() {
+                return Ok(None);
+            }
+            changed = Some(axis);
+        }
+    }
+    Ok(changed)
+}
+
+fn point_lies_on_polygon(point: &Point3, polygon: &ConvexPolygon) -> HypermeshResult<bool> {
+    if classify_point(point, &polygon.support)? != Classification::On {
+        return Ok(false);
+    }
+    for edge in &polygon.edges {
+        if classify_point(point, edge)? == Classification::Positive {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 fn segment_plane_crossing(

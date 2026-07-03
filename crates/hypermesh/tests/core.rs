@@ -410,6 +410,27 @@ fn leaf_classification_reports_unknown_when_no_valid_probe_path_exists() {
 }
 
 #[test]
+fn leaf_classification_rejects_probes_past_intervening_surface() {
+    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    wall.delta_w = vec![1];
+    let mut blocker = make_triangle(&p(2, -10, -10), &p(2, 10, -10), &p(2, 0, 10), 1, 0);
+    blocker.delta_w = vec![1];
+    let bounds = hypermesh::Aabb::new(p(1, -2, -2), p(5, 2, 2));
+
+    let err = classify_leaf_polygon(
+        &wall.support,
+        &wall.edges,
+        &p(0, 0, 0),
+        &[0],
+        &[wall.clone(), blocker],
+        &bounds,
+        &wall.delta_w,
+    )
+    .unwrap_err();
+    assert_eq!(err, HypermeshError::UnknownClassification);
+}
+
+#[test]
 fn process_leaf_classifies_direct_nsi_polygon_slice() {
     let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
