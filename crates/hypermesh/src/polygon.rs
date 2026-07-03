@@ -42,10 +42,6 @@ pub struct ConvexPolygon {
     pub polygon_index: isize,
     /// Winding transition vector.
     pub delta_w: WindingNumberTransitionVector,
-    /// No self-intersections flag from the source mesh.
-    pub no_self_intersections: bool,
-    /// No nested components flag from the source mesh.
-    pub no_nested_components: bool,
     /// Optional approximate bounds.
     pub approx_bounds: Option<ApproxBounds>,
 }
@@ -64,8 +60,6 @@ impl ConvexPolygon {
             mesh_index: -1,
             polygon_index: -1,
             delta_w: Vec::new(),
-            no_self_intersections: false,
-            no_nested_components: false,
             approx_bounds: None,
         }
     }
@@ -173,8 +167,6 @@ pub fn make_triangle(
         mesh_index,
         polygon_index,
         delta_w: Vec::new(),
-        no_self_intersections: false,
-        no_nested_components: false,
         approx_bounds: Some(bounds_for_points(&[p0, p1, p2])),
     }
 }
@@ -207,8 +199,6 @@ pub fn make_quad(
         mesh_index,
         polygon_index,
         delta_w: Vec::new(),
-        no_self_intersections: false,
-        no_nested_components: false,
         approx_bounds: Some(bounds_for_points(&[p0, p1, p2, p3])),
     }
 }

@@ -36,10 +36,6 @@ pub struct InputMesh {
     pub positions: Vec<Point3>,
     /// Triangle indices.
     pub triangles: Vec<Triangle>,
-    /// No self-intersections flag.
-    pub nsi: bool,
-    /// No nested components flag.
-    pub nnc: bool,
 }
 
 impl InputMesh {
@@ -48,8 +44,6 @@ impl InputMesh {
         Self {
             positions,
             triangles,
-            nsi: false,
-            nnc: false,
         }
     }
 
@@ -58,8 +52,6 @@ impl InputMesh {
         MeshRef {
             positions: &self.positions,
             triangles: &self.triangles,
-            nsi: self.nsi,
-            nnc: self.nnc,
         }
     }
 }
@@ -71,10 +63,6 @@ pub struct MeshRef<'a> {
     pub positions: &'a [Point3],
     /// Borrowed triangles.
     pub triangles: &'a [Triangle],
-    /// No self-intersections flag.
-    pub nsi: bool,
-    /// No nested components flag.
-    pub nnc: bool,
 }
 
 /// Output vertex in external primitive space.
@@ -116,8 +104,6 @@ pub fn prepare_input(positions: &[Point3], triangles: &[Triangle]) -> HypermeshR
     prepare_input_refs(&[MeshRef {
         positions,
         triangles,
-        nsi: false,
-        nnc: false,
     }])
 }
 
@@ -167,8 +153,6 @@ pub fn prepare_input_refs(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup
             }
             polygon.delta_w = vec![0; meshes.len()];
             polygon.delta_w[mesh_index] = 1;
-            polygon.no_self_intersections = mesh.nsi;
-            polygon.no_nested_components = mesh.nnc;
             polygons.push(polygon);
             polygon_index += 1;
         }

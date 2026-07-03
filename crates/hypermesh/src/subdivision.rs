@@ -362,8 +362,6 @@ fn leaf_interior_point(
         mesh_index: -1,
         polygon_index: -1,
         delta_w: Vec::new(),
-        no_self_intersections: false,
-        no_nested_components: false,
         approx_bounds: None,
     };
     let vertices = leaf.vertices()?;

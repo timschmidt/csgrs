@@ -424,8 +424,6 @@ pub fn classify_leaf_polygon(
         mesh_index: -1,
         polygon_index: -1,
         delta_w: WindingNumberTransitionVector::new(),
-        no_self_intersections: false,
-        no_nested_components: false,
         approx_bounds: None,
     };
 

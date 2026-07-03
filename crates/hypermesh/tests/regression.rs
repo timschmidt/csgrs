@@ -45,7 +45,7 @@ fn standard_cube_triangles() -> Vec<Triangle> {
 }
 
 fn box_mesh(min: [i32; 3], max: [i32; 3]) -> InputMesh {
-    let mut mesh = InputMesh::new(
+    InputMesh::new(
         vec![
             p(min[0], min[1], min[2]),
             p(max[0], min[1], min[2]),
@@ -57,10 +57,7 @@ fn box_mesh(min: [i32; 3], max: [i32; 3]) -> InputMesh {
             p(min[0], max[1], max[2]),
         ],
         standard_cube_triangles(),
-    );
-    mesh.nsi = true;
-    mesh.nnc = true;
-    mesh
+    )
 }
 
 fn rational_cube(center: [Real; 3], half_extent: Real) -> InputMesh {
@@ -74,7 +71,7 @@ fn rational_cube(center: [Real; 3], half_extent: Real) -> InputMesh {
         &center[1] + &half_extent,
         &center[2] + &half_extent,
     ];
-    let mut mesh = InputMesh::new(
+    InputMesh::new(
         vec![
             pr(min[0].clone(), min[1].clone(), min[2].clone()),
             pr(max[0].clone(), min[1].clone(), min[2].clone()),
@@ -86,14 +83,11 @@ fn rational_cube(center: [Real; 3], half_extent: Real) -> InputMesh {
             pr(min[0].clone(), max[1].clone(), max[2].clone()),
         ],
         standard_cube_triangles(),
-    );
-    mesh.nsi = true;
-    mesh.nnc = true;
-    mesh
+    )
 }
 
 fn tetrahedron(points: [[i32; 3]; 4]) -> InputMesh {
-    let mut mesh = InputMesh::new(
+    InputMesh::new(
         points
             .into_iter()
             .map(|[x, y, z]| p(x, y, z))
@@ -104,17 +98,14 @@ fn tetrahedron(points: [[i32; 3]; 4]) -> InputMesh {
             Triangle::new(1, 2, 3),
             Triangle::new(2, 0, 3),
         ],
-    );
-    mesh.nsi = true;
-    mesh.nnc = true;
-    mesh
+    )
 }
 
 fn octahedron(center: [Real; 3], radius: Real) -> InputMesh {
     let cx = center[0].clone();
     let cy = center[1].clone();
     let cz = center[2].clone();
-    let mut mesh = InputMesh::new(
+    InputMesh::new(
         vec![
             pr(&cx + &radius, cy.clone(), cz.clone()),
             pr(&cx - &radius, cy.clone(), cz.clone()),
@@ -133,10 +124,7 @@ fn octahedron(center: [Real; 3], radius: Real) -> InputMesh {
             Triangle::new(3, 1, 5),
             Triangle::new(0, 3, 5),
         ],
-    );
-    mesh.nsi = true;
-    mesh.nnc = true;
-    mesh
+    )
 }
 
 fn combine_meshes(meshes: &[InputMesh]) -> InputMesh {
@@ -153,18 +141,13 @@ fn combine_meshes(meshes: &[InputMesh]) -> InputMesh {
             )
         }));
     }
-    let mut combined = InputMesh::new(positions, triangles);
-    combined.nsi = true;
-    combined.nnc = true;
-    combined
+    InputMesh::new(positions, triangles)
 }
 
 fn config() -> EmberConfig {
     EmberConfig {
         leaf_threshold: 1,
         max_depth: 10,
-        assume_nsi: true,
-        assume_nnc: true,
     }
 }
 
@@ -671,8 +654,6 @@ fn hypermesh_identical_and_same_surface_solids_regularize() {
             Triangle::new(0, 2, 3),
             Triangle::new(2, 1, 3),
         ],
-        nsi: true,
-        nnc: true,
     };
     let reversed_same_surface = InputMesh {
         positions: same_surface.positions.clone(),
@@ -682,8 +663,6 @@ fn hypermesh_identical_and_same_surface_solids_regularize() {
             Triangle::new(0, 3, 2),
             Triangle::new(2, 3, 1),
         ],
-        nsi: true,
-        nnc: true,
     };
     let left_soup = passthrough(&left).unwrap();
 
@@ -767,16 +746,13 @@ fn affine_box_pair() -> (InputMesh, InputMesh) {
             map(max[0], max[1], max[2]),
             map(min[0], max[1], max[2]),
         ];
-        let mut mesh = InputMesh::new(
+        InputMesh::new(
             corners
                 .into_iter()
                 .map(|[x, y, z]| p(x, y, z))
                 .collect::<Vec<_>>(),
             standard_cube_triangles(),
-        );
-        mesh.nsi = true;
-        mesh.nnc = true;
-        mesh
+        )
     };
     (
         affine_box([0, 0, 0], [2, 2, 2]),
@@ -795,8 +771,6 @@ fn same_surface_solids_are_exact_equivalence_with_certified_output() {
             Triangle::new(0, 2, 3),
             Triangle::new(2, 1, 3),
         ],
-        nsi: true,
-        nnc: true,
     };
     let left_soup = passthrough(&left).unwrap();
 
@@ -819,8 +793,6 @@ fn same_surface_solids_use_general_path() -> HypermeshResult<()> {
             Triangle::new(0, 2, 3),
             Triangle::new(2, 1, 3),
         ],
-        nsi: true,
-        nnc: true,
     };
     let refs = [left.as_ref(), same_surface.as_ref()];
     let config = config();

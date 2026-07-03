@@ -16,10 +16,6 @@ pub struct EmberConfig {
     pub leaf_threshold: usize,
     /// Maximum recursive subdivision depth.
     pub max_depth: usize,
-    /// Assume every source mesh has no self-intersections.
-    pub assume_nsi: bool,
-    /// Assume every source mesh has no nested components.
-    pub assume_nnc: bool,
 }
 
 impl Default for EmberConfig {
@@ -27,8 +23,6 @@ impl Default for EmberConfig {
         Self {
             leaf_threshold: crate::subdivision::DEFAULT_LEAF_THRESHOLD,
             max_depth: crate::subdivision::DEFAULT_MAX_DEPTH,
-            assume_nsi: false,
-            assume_nnc: false,
         }
     }
 }
@@ -50,15 +44,7 @@ fn boolean_operation_general(
     op: BooleanOp,
     config: EmberConfig,
 ) -> HypermeshResult<BooleanResult> {
-    let mut soup = prepare_input_refs(meshes)?;
-    for polygon in &mut soup.polygons {
-        if config.assume_nsi {
-            polygon.no_self_intersections = true;
-        }
-        if config.assume_nnc {
-            polygon.no_nested_components = true;
-        }
-    }
+    let soup = prepare_input_refs(meshes)?;
 
     let process_bounds = expanded_bounds(&soup.bounds);
     let ref_point = outside_reference_point(&process_bounds);

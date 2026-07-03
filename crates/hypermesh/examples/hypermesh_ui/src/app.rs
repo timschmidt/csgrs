@@ -84,8 +84,6 @@ impl MainApp {
         let config = EmberConfig {
             leaf_threshold: 1,
             max_depth: 8,
-            assume_nsi: true,
-            assume_nnc: true,
         };
 
         match run_boolean(&refs, op, config, self.resolve_tjunctions) {
@@ -534,7 +532,7 @@ fn run_boolean(
 }
 
 fn cube_mesh(min: i32, max: i32) -> InputMesh {
-    let mut mesh = InputMesh::new(
+    InputMesh::new(
         vec![
             p(min, min, min),
             p(max, min, min),
@@ -546,17 +544,14 @@ fn cube_mesh(min: i32, max: i32) -> InputMesh {
             p(min, max, max),
         ],
         cube_triangles(),
-    );
-    mesh.nsi = true;
-    mesh.nnc = true;
-    mesh
+    )
 }
 
 fn shifted_cube_mesh(offset_quarters: i32) -> InputMesh {
     let offset = real_ratio(offset_quarters, 4);
     let min = &offset - &Real::one();
     let max = &offset + &Real::one();
-    let mut mesh = InputMesh::new(
+    InputMesh::new(
         vec![
             point(min.clone(), r(-1), r(-1)),
             point(max.clone(), r(-1), r(-1)),
@@ -568,10 +563,7 @@ fn shifted_cube_mesh(offset_quarters: i32) -> InputMesh {
             point(min, r(1), r(1)),
         ],
         cube_triangles(),
-    );
-    mesh.nsi = true;
-    mesh.nnc = true;
-    mesh
+    )
 }
 
 fn cube_triangles() -> Vec<Triangle> {
@@ -699,8 +691,6 @@ mod tests {
         let config = EmberConfig {
             leaf_threshold: 1,
             max_depth: 8,
-            assume_nsi: true,
-            assume_nnc: true,
         };
 
         for operation in DemoOperation::ALL {

@@ -27,7 +27,7 @@ fn px(x: Real, y: i32, z: i32) -> Point3 {
 }
 
 fn cube_mesh(min: i32, max: i32) -> hypermesh::InputMesh {
-    let mut mesh = hypermesh::InputMesh::new(
+    hypermesh::InputMesh::new(
         vec![
             p(min, min, min),
             p(max, min, min),
@@ -52,10 +52,7 @@ fn cube_mesh(min: i32, max: i32) -> hypermesh::InputMesh {
             Triangle::new(0, 1, 5),
             Triangle::new(0, 5, 4),
         ],
-    );
-    mesh.nsi = true;
-    mesh.nnc = true;
-    mesh
+    )
 }
 
 fn ov(x: i32, y: i32, z: i32) -> hypermesh::OutputVertex {
@@ -245,8 +242,6 @@ fn boolean_operation_refs_validates_before_general_path() {
     let empty = hypermesh::MeshRef {
         positions: &[],
         triangles: &[],
-        nsi: false,
-        nnc: false,
     };
     assert!(matches!(
         boolean_operation_refs(&[empty], BooleanOp::Union, EmberConfig::default()),
@@ -258,8 +253,6 @@ fn boolean_operation_refs_validates_before_general_path() {
     let invalid = hypermesh::MeshRef {
         positions: &positions,
         triangles: &triangles,
-        nsi: false,
-        nnc: false,
     };
     assert!(matches!(
         boolean_operation_refs(&[invalid], BooleanOp::Union, EmberConfig::default()),
@@ -460,11 +453,9 @@ fn leaf_classification_places_probe_before_intervening_surface() {
 }
 
 #[test]
-fn process_leaf_classifies_direct_nsi_polygon_slice() {
+fn process_leaf_classifies_direct_polygon_slice() {
     let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
-    wall.no_self_intersections = true;
-    wall.no_nested_components = true;
     let bounds = hypermesh::Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let union = make_indicator(BooleanOp::Union, 1);
 
@@ -518,8 +509,6 @@ fn boolean_operation_refs_runs_leaf_pipeline_from_borrowed_meshes() {
     let mesh = hypermesh::MeshRef {
         positions: mesh_ref.positions,
         triangles: mesh_ref.triangles,
-        nsi: true,
-        nnc: true,
     };
 
     let result = boolean_operation_refs(&[mesh], BooleanOp::Union, EmberConfig::default()).unwrap();
@@ -536,8 +525,6 @@ fn boolean_operation_refs_rejects_uncertified_open_output() {
     let mesh = hypermesh::MeshRef {
         positions: &positions,
         triangles: &triangles,
-        nsi: true,
-        nnc: true,
     };
 
     let err =
@@ -548,9 +535,7 @@ fn boolean_operation_refs_rejects_uncertified_open_output() {
 
 #[test]
 fn boolean_operation_owned_delegates_to_borrowed_pipeline() {
-    let mut mesh = cube_mesh(0, 2);
-    mesh.nsi = true;
-    mesh.nnc = true;
+    let mesh = cube_mesh(0, 2);
 
     let result = boolean_operation(&[mesh], BooleanOp::Union, EmberConfig::default()).unwrap();
 
@@ -711,11 +696,7 @@ fn resolve_tjunctions_splits_exact_boundary_tjunction() {
 fn disjoint_cube_booleans_have_expected_polygon_counts() {
     let cube_a = cube_mesh(0, 2);
     let cube_b = cube_mesh(4, 6);
-    let config = EmberConfig {
-        assume_nsi: true,
-        assume_nnc: true,
-        ..EmberConfig::default()
-    };
+    let config = EmberConfig::default();
 
     let union = hypermesh::boolean_union(&cube_a, &cube_b, config).unwrap();
     assert_eq!(union.output.polygons.len(), 24);
@@ -736,8 +717,6 @@ fn overlapping_cube_booleans_use_general_path() {
     let config = EmberConfig {
         leaf_threshold: 1,
         max_depth: 6,
-        assume_nsi: true,
-        assume_nnc: true,
     };
 
     let union = hypermesh::boolean_union(&cube_a, &cube_b, config).unwrap();

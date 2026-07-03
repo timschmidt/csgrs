@@ -20,9 +20,8 @@ The intended input model is finite, closed, piecewise-winding-number (PWN)
 triangle meshes. Vertex coordinates are `hyperreal::Real` values carried
 through `hyperlattice::Point3`; the boolean kernel does not downcast geometry
 to primitive floats. Meshes may contain disconnected closed components and
-nested components when the caller either supplies or assumes the corresponding
-NSI/NNC facts. Open triangle soups, invalid triangle indices, and arbitrary
-non-PWN surface collections are outside the supported model.
+nested closed components. Open triangle soups, invalid triangle indices, and
+arbitrary non-PWN surface collections are outside the supported model.
 
 Predicate decisions are routed through the strict exact-predicate stack
 (`hyperlimit` and `hyperlattice` as support crates). A predicate, path trace,
@@ -46,8 +45,8 @@ crossed local surface or AABB boundary. If a probe lies on a traced surface,
 cannot reach the adjacent cell, or cannot be traced from the reference point,
 that probe is discarded. If no certified probe path remains, the leaf reports
 `UnknownClassification`; there is no silent fallback to the reference winding
-number. NSI/NNC flags do not bypass leaf classification; leaves still run
-pairwise intersection discovery and classify each direct polygon separately.
+number. There are no input-assumption bypass flags; leaves run pairwise
+intersection discovery and classify each direct polygon separately.
 
 Subdivision reference propagation currently accepts the EMBER projection of the
 parent reference point onto a child AABB only when the projected point and trace
