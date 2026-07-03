@@ -9,8 +9,7 @@ hyperreal-backed coordinates.
 - Exact input coordinates through `hyperreal` / `hyperlattice`.
 - Triangle mesh boolean operations: union, intersection, difference, and
   symmetric difference.
-- Borrowed boolean APIs over `MeshRef` views, with `InputMesh` available as an
-  owned storage helper.
+- Borrowed boolean and preparation APIs over `MeshRef` views.
 - Focused Rust regression tests for topology, classification, and output mesh
   regularization.
 - An egui / WASM demo using the shared `hypergraphics` renderer.

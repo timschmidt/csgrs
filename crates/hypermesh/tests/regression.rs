@@ -4,7 +4,7 @@ use std::str::FromStr;
 use hypermesh::{
     Aabb, BooleanOp, EmberConfig, ExactBvh, HypermeshResult, InputMesh, MeshRef, OutputVertex,
     Point3, Real, Triangle, TriangleSoup, boolean_difference, boolean_intersection,
-    boolean_operation, boolean_union, prepare_input_meshes, triangulate_and_resolve_certified,
+    boolean_operation, boolean_union, prepare_input, triangulate_and_resolve_certified,
 };
 
 fn r(value: i32) -> Real {
@@ -369,7 +369,7 @@ fn ordered_axis_aligned_boxes_use_same_basis_cell_decomposition_with_certified_o
 #[test]
 fn roundtrip_preserves_triangle_vertices_exactly() {
     let mesh = octahedron([r(0), r(0), r(0)], r(2));
-    let soup = prepare_input_meshes(std::slice::from_ref(&mesh)).unwrap();
+    let soup = prepare_input(&[mesh.as_ref()]).unwrap();
 
     assert_eq!(soup.polygons.len(), mesh.triangles.len());
     for (poly_index, polygon) in soup.polygons.iter().enumerate() {
@@ -401,7 +401,7 @@ fn roundtrip_preserves_triangle_vertices_exactly() {
 fn bvh_candidates_match_bruteforce_bounds_for_complex_fixture() {
     let a = octahedron([r(0), r(0), r(0)], r(3));
     let b = octahedron([r(1), r(1), r(1)], r(3));
-    let soup = prepare_input_meshes(&[a, b]).unwrap();
+    let soup = prepare_input(&[a.as_ref(), b.as_ref()]).unwrap();
     let polygons = soup.polygons;
     let left = polygons
         .iter()

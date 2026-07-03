@@ -99,22 +99,8 @@ impl PolygonSoup {
     }
 }
 
-/// Prepares one borrowed mesh from position and triangle slices.
-pub fn prepare_input(positions: &[Point3], triangles: &[Triangle]) -> HypermeshResult<PolygonSoup> {
-    prepare_input_refs(&[MeshRef {
-        positions,
-        triangles,
-    }])
-}
-
-/// Prepares owned meshes by delegating to the borrowed slice API.
-pub fn prepare_input_meshes(meshes: &[InputMesh]) -> HypermeshResult<PolygonSoup> {
-    let refs = meshes.iter().map(InputMesh::as_ref).collect::<Vec<_>>();
-    prepare_input_refs(&refs)
-}
-
 /// Prepares borrowed mesh views into a combined polygon soup.
-pub fn prepare_input_refs(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
+pub fn prepare_input(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
     let all_positions = meshes
         .iter()
         .flat_map(|mesh| mesh.positions.iter().cloned())

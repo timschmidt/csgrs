@@ -4,7 +4,7 @@ use hyperlattice::{Point3, Real};
 
 use crate::error::HypermeshResult;
 use crate::geometry::{Aabb, axis_mut, axis_ref};
-use crate::mesh::{MeshRef, prepare_input_refs};
+use crate::mesh::{MeshRef, prepare_input};
 use crate::output::{BooleanResult, triangulate_and_resolve_certified};
 use crate::subdivision::{SubdivisionConfig, SubdivisionTask, subdivide};
 use crate::winding::{BooleanOp, make_indicator};
@@ -44,7 +44,7 @@ fn boolean_operation_general(
     op: BooleanOp,
     config: EmberConfig,
 ) -> HypermeshResult<BooleanResult> {
-    let soup = prepare_input_refs(meshes)?;
+    let soup = prepare_input(meshes)?;
 
     let process_bounds = expanded_bounds(&soup.bounds);
     let ref_point = outside_reference_point(&process_bounds);

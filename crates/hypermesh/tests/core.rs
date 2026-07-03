@@ -2,11 +2,11 @@ use hyperlattice::{Point3, Real};
 use hypermesh::bvh::bounds_overlap;
 use hypermesh::clip::{ClipSide, clip_polygon};
 use hypermesh::{
-    BooleanOp, Classification, EmberConfig, HypermeshError, Plane, SubdivisionConfig,
+    BooleanOp, Classification, EmberConfig, HypermeshError, MeshRef, Plane, SubdivisionConfig,
     SubdivisionTask, Triangle, boolean_operation, classify_leaf_polygon, classify_point,
     classify_polygon_output, intersect_polygons, make_indicator, make_quad, make_triangle,
-    prepare_input, prepare_input_meshes, process_leaf_into, subdivide, trace_axis_segment,
-    trace_segment, triangulate_and_resolve_certified,
+    prepare_input, process_leaf_into, subdivide, trace_axis_segment, trace_segment,
+    triangulate_and_resolve_certified,
 };
 
 fn r(value: i32) -> Real {
@@ -152,7 +152,11 @@ fn borrowed_prepare_input_builds_polygon_soup() {
     let positions = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
     let triangles = vec![Triangle::new(0, 1, 2)];
 
-    let soup = prepare_input(&positions, &triangles).unwrap();
+    let soup = prepare_input(&[MeshRef {
+        positions: &positions,
+        triangles: &triangles,
+    }])
+    .unwrap();
     assert_eq!(soup.num_meshes, 1);
     assert_eq!(soup.polygons.len(), 1);
     assert_eq!(soup.polygons[0].delta_w, vec![1]);
@@ -160,15 +164,16 @@ fn borrowed_prepare_input_builds_polygon_soup() {
 }
 
 #[test]
-fn owned_prepare_input_delegates_to_borrowed_api() {
+fn prepare_input_accepts_owned_mesh_views() {
     let mesh = hypermesh::InputMesh::new(
         vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)],
         vec![Triangle::new(0, 1, 2)],
     );
 
-    let borrowed = prepare_input(&mesh.positions, &mesh.triangles).unwrap();
-    let owned = prepare_input_meshes(&[mesh]).unwrap();
-    assert_eq!(owned.polygons, borrowed.polygons);
+    let soup = prepare_input(&[mesh.as_ref()]).unwrap();
+    assert_eq!(soup.num_meshes, 1);
+    assert_eq!(soup.polygons.len(), 1);
+    assert_eq!(soup.polygons[0].delta_w, vec![1]);
 }
 
 #[test]
@@ -569,7 +574,7 @@ fn boolean_operation_accepts_input_mesh_refs() {
 #[test]
 fn subdivision_processes_certified_leaf_at_max_depth() {
     let mesh = cube_mesh(0, 2);
-    let soup = prepare_input_meshes(&[mesh]).unwrap();
+    let soup = prepare_input(&[mesh.as_ref()]).unwrap();
     let indicator = make_indicator(BooleanOp::Union, soup.num_meshes);
     let num_meshes = soup.num_meshes;
     let config = SubdivisionConfig {

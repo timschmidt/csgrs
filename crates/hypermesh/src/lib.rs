@@ -41,10 +41,7 @@ pub use intersection::{
     intersect_polygons,
 };
 pub use local_bsp::{BspLeaf, LocalBsp};
-pub use mesh::{
-    InputMesh, MeshRef, OutputVertex, PolygonSoup, Triangle, prepare_input, prepare_input_meshes,
-    prepare_input_refs,
-};
+pub use mesh::{InputMesh, MeshRef, OutputVertex, PolygonSoup, Triangle, prepare_input};
 pub use operations::{
     EmberConfig, boolean_difference, boolean_intersection, boolean_operation, boolean_union,
 };
