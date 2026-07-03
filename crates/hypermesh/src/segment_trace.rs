@@ -151,7 +151,8 @@ const AXIS_ORDERINGS: [[usize; 3]; 6] = [
 
 /// Traces an axis-aligned polyline using several axis orderings and returns
 /// the first valid winding result. If direct L-shaped paths are blocked by
-/// exact surface hits, retries through deterministic endpoint-box detours.
+/// exact surface hits, retries through arrangement-coordinate endpoint-box
+/// detours.
 pub fn trace_segment(
     start: &Point3,
     end: &Point3,
@@ -162,7 +163,7 @@ pub fn trace_segment(
         return Ok(winding);
     }
 
-    for detour in interior_box_detour_points(start, end)? {
+    for detour in interior_box_detour_points(start, end, polygons)? {
         if detour == *start || detour == *end || point_lies_on_traced_surface(&detour, polygons)? {
             continue;
         }
@@ -215,21 +216,36 @@ fn trace_axis_ordered_paths(
     Err(HypermeshError::UnknownClassification)
 }
 
-fn interior_box_detour_points(start: &Point3, end: &Point3) -> HypermeshResult<Vec<Point3>> {
-    let fractions = [(1u64, 2u64), (1, 3), (2, 3)];
+fn interior_box_detour_points(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Vec<Point3>> {
     let mut values = vec![Vec::new(), Vec::new(), Vec::new()];
     for (axis, axis_values) in values.iter_mut().enumerate() {
         let start_value = axis_ref(start, axis);
         let end_value = axis_ref(end, axis);
-        let delta = end_value - start_value;
-        if compare_real(&delta, &Real::zero())?.is_eq() {
+        if compare_real(start_value, end_value)?.is_eq() {
             axis_values.push(start_value.clone());
             continue;
         }
-        for (numerator, denominator) in fractions {
-            let offset = ((&delta * Real::from(numerator)) / Real::from(denominator))
+
+        let mut cuts = Vec::new();
+        push_unique_ordered_real(&mut cuts, start_value.clone())?;
+        push_unique_ordered_real(&mut cuts, end_value.clone())?;
+        for polygon in polygons {
+            for vertex in polygon.vertices()? {
+                let value = axis_ref(&vertex, axis);
+                if value_strictly_between(value, start_value, end_value)? {
+                    push_unique_ordered_real(&mut cuts, value.clone())?;
+                }
+            }
+        }
+
+        for endpoints in cuts.windows(2) {
+            let midpoint = ((&endpoints[0] + &endpoints[1]) / Real::from(2))
                 .map_err(|_| HypermeshError::UnknownClassification)?;
-            axis_values.push(start_value + &offset);
+            axis_values.push(midpoint);
         }
     }
 
@@ -242,6 +258,27 @@ fn interior_box_detour_points(start: &Point3, end: &Point3) -> HypermeshResult<V
         }
     }
     Ok(detours)
+}
+
+fn value_strictly_between(value: &Real, a: &Real, b: &Real) -> HypermeshResult<bool> {
+    let value_to_a = compare_real(value, a)?;
+    let value_to_b = compare_real(value, b)?;
+    Ok((value_to_a.is_gt() && value_to_b.is_lt()) || (value_to_a.is_lt() && value_to_b.is_gt()))
+}
+
+fn push_unique_ordered_real(values: &mut Vec<Real>, value: Real) -> HypermeshResult<()> {
+    for (index, existing) in values.iter().enumerate() {
+        match compare_real(&value, existing)? {
+            std::cmp::Ordering::Equal => return Ok(()),
+            std::cmp::Ordering::Less => {
+                values.insert(index, value);
+                return Ok(());
+            }
+            std::cmp::Ordering::Greater => {}
+        }
+    }
+    values.push(value);
+    Ok(())
 }
 
 fn point_lies_on_traced_surface(

@@ -53,9 +53,10 @@ parent reference point onto a child AABB only when the projected point and trace
 are certified valid. If the projected point or direct trace is degenerate, the
 implementation tries local axis-aligned escape targets and their multi-axis
 combinations inside certified open intervals before the next surface hit or
-AABB boundary. If none trace cleanly, it reports `UnknownClassification`
-instead of using finite random/interior sampling. The full EMBER
-plane-replacement reference construction remains unfinished.
+AABB boundary. Segment tracing uses arrangement-coordinate endpoint-box detours
+when direct axis-ordered paths hit surfaces. If none trace cleanly, it reports
+`UnknownClassification` instead of using finite random/interior sampling. The
+full EMBER plane-replacement reference construction remains unfinished.
 
 `EmberConfig::default()` runs only the general subdivision/BSP/classification
 path. The previous same-surface, disjoint-bound, strict-containment,

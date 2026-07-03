@@ -14,8 +14,16 @@ fn r(value: i32) -> Real {
     value.into()
 }
 
+fn q(numerator: i32, denominator: i32) -> Real {
+    (Real::from(numerator) / Real::from(denominator)).unwrap()
+}
+
 fn p(x: i32, y: i32, z: i32) -> Point3 {
     Point3::new(r(x), r(y), r(z))
+}
+
+fn px(x: Real, y: i32, z: i32) -> Point3 {
+    Point3::new(x, r(y), r(z))
 }
 
 fn cube_mesh(min: i32, max: i32) -> hypermesh::InputMesh {
@@ -364,6 +372,28 @@ fn trace_segment_uses_detour_when_axis_order_corners_hit_surfaces() {
     ];
 
     let winding = trace_segment(&p(0, 0, 0), &p(2, 2, 2), &[0], &blockers).unwrap();
+    assert_eq!(winding, vec![0]);
+}
+
+#[test]
+fn trace_segment_uses_arrangement_detour_when_fixed_fraction_box_is_blocked() {
+    let mut blockers = vec![
+        make_triangle(&p(4, 0, 0), &p(5, 0, 0), &p(4, 1, 0), 0, 0),
+        make_triangle(&p(0, 4, 0), &p(1, 4, 0), &p(0, 5, 0), 0, 1),
+        make_triangle(&p(0, 0, 4), &p(1, 0, 4), &p(0, 1, 4), 0, 2),
+    ];
+
+    for (index, x) in [q(4, 3), r(2), q(8, 3)].into_iter().enumerate() {
+        blockers.push(make_triangle(
+            &px(x.clone(), -1, -1),
+            &px(x.clone(), 5, -1),
+            &px(x, 2, 5),
+            0,
+            3 + index as isize,
+        ));
+    }
+
+    let winding = trace_segment(&p(0, 0, 0), &p(4, 4, 4), &[0], &blockers).unwrap();
     assert_eq!(winding, vec![0]);
 }
 
