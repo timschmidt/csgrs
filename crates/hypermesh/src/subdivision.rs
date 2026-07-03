@@ -196,12 +196,28 @@ pub fn subdivide(
     config: SubdivisionConfig,
 ) -> HypermeshResult<Vec<ClassifiedPolygon>> {
     let mut output = Vec::new();
-    subdivide_into(task, indicator, config, &mut output)?;
+    subdivide_into_inner(task, indicator, config, &mut output)?;
     Ok(output)
 }
 
 /// Recursively subdivides a task into an existing output buffer.
+///
+/// The caller-visible buffer is extended only after the whole task certifies.
+/// If subdivision or leaf classification returns an error, no partial output
+/// from that task is retained.
 pub fn subdivide_into(
+    task: SubdivisionTask,
+    indicator: &Indicator,
+    config: SubdivisionConfig,
+    output: &mut Vec<ClassifiedPolygon>,
+) -> HypermeshResult<()> {
+    let mut certified_output = Vec::new();
+    subdivide_into_inner(task, indicator, config, &mut certified_output)?;
+    output.extend(certified_output);
+    Ok(())
+}
+
+fn subdivide_into_inner(
     task: SubdivisionTask,
     indicator: &Indicator,
     config: SubdivisionConfig,
@@ -270,7 +286,7 @@ pub fn subdivide_into(
     )?;
 
     if !left_polys.is_empty() {
-        subdivide_into(
+        subdivide_into_inner(
             SubdivisionTask {
                 polygons: left_polys,
                 bounds: left_bounds,
@@ -285,7 +301,7 @@ pub fn subdivide_into(
     }
 
     if !right_polys.is_empty() {
-        subdivide_into(
+        subdivide_into_inner(
             SubdivisionTask {
                 polygons: right_polys,
                 bounds: right_bounds,
@@ -1087,6 +1103,33 @@ mod tests {
         assert_eq!(winding, vec![7]);
         assert!(point_strictly_inside_bounds(&target, &bounds).unwrap());
         assert!(!point_lies_on_any_support_plane(&target, &polygons).unwrap());
+    }
+
+    #[test]
+    fn subdivide_into_keeps_output_unchanged_on_uncertified_failure() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
+        let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Union, 1);
+        let sentinel = ClassifiedPolygon::new(
+            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 99),
+            1,
+        );
+        let mut output = vec![sentinel.clone()];
+
+        let err = subdivide_into(
+            SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
+            &indicator,
+            SubdivisionConfig {
+                leaf_threshold: 1,
+                max_depth: 0,
+            },
+            &mut output,
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+        assert_eq!(output, vec![sentinel]);
     }
 
     #[test]
