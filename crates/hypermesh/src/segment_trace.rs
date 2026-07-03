@@ -137,11 +137,12 @@ pub fn trace_segment(
     winding: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<WindingNumberVector> {
-    if let Ok(winding) = trace_axis_ordered_paths(start, end, winding, polygons) {
+    if let Some(winding) = retryable_trace(trace_axis_ordered_paths(start, end, winding, polygons))?
+    {
         return Ok(winding);
     }
 
-    if let Ok(traced) = trace_direct_segment(start, end, winding, polygons)
+    if let Some(traced) = retryable_trace(trace_direct_segment(start, end, winding, polygons))?
         && traced.valid
     {
         return Ok(traced.winding);
@@ -151,16 +152,28 @@ pub fn trace_segment(
         if detour == *start || detour == *end || point_lies_on_traced_surface(&detour, polygons)? {
             continue;
         }
-        let Ok(first_leg) = trace_axis_ordered_paths(start, &detour, winding, polygons) else {
+        let Some(first_leg) =
+            retryable_trace(trace_axis_ordered_paths(start, &detour, winding, polygons))?
+        else {
             continue;
         };
-        let Ok(second_leg) = trace_axis_ordered_paths(&detour, end, &first_leg, polygons) else {
+        let Some(second_leg) =
+            retryable_trace(trace_axis_ordered_paths(&detour, end, &first_leg, polygons))?
+        else {
             continue;
         };
         return Ok(second_leg);
     }
 
     Err(HypermeshError::UnknownClassification)
+}
+
+fn retryable_trace<T>(result: HypermeshResult<T>) -> HypermeshResult<Option<T>> {
+    match result {
+        Ok(value) => Ok(Some(value)),
+        Err(HypermeshError::UnknownClassification) => Ok(None),
+        Err(err) => Err(err),
+    }
 }
 
 fn trace_direct_segment(
@@ -513,7 +526,9 @@ pub fn classify_leaf_polygon(
                 if !probe_reaches_adjacent_cell(point, &probe, support, polygons)? {
                     continue;
                 }
-                let Ok(mut winding) = trace_segment(ref_point, &probe, ref_wnv, polygons) else {
+                let Some(mut winding) =
+                    retryable_trace(trace_segment(ref_point, &probe, ref_wnv, polygons))?
+                else {
                     continue;
                 };
                 if probe_side == Classification::Negative {
@@ -937,6 +952,18 @@ mod tests {
 
     fn p(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(r(x), r(y), r(z))
+    }
+
+    #[test]
+    fn trace_retry_only_suppresses_unknown_classification() {
+        assert_eq!(
+            retryable_trace::<Vec<i32>>(Err(HypermeshError::UnknownClassification)).unwrap(),
+            None
+        );
+        assert_eq!(
+            retryable_trace::<Vec<i32>>(Err(HypermeshError::PointAtInfinity)),
+            Err(HypermeshError::PointAtInfinity)
+        );
     }
 
     fn axis_values(points: &[Point3], axis: usize) -> Vec<Real> {
