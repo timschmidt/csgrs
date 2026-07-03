@@ -81,9 +81,11 @@ target.
 `triangulate_and_resolve_certified` resolves exact duplicate vertices,
 duplicate faces, and T-junctions, but refuses non-empty outputs with boundary
 edges or zero signed volume instead of capping or peeling them. Non-manifold
-edge valence is allowed for closed PWN output. Hypermesh does not expose a
-repairing triangulation path; if the classified arrangement is not emitted
-closed by construction, the operation fails certification.
+edge valence is allowed for closed PWN output. If exact T-junction/crossing
+resolution does not converge within its certification budget, it reports
+`UnknownClassification`. Hypermesh does not expose a repairing triangulation
+path; if the classified arrangement is not emitted closed by construction, the
+operation fails certification.
 
 ## Building
 

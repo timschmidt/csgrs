@@ -9,6 +9,8 @@ use crate::polygon::ConvexPolygon;
 use crate::winding::WindingPair;
 use hyperlattice::Real;
 
+const RESOLVE_TJUNCTION_MAX_PASSES: usize = 256;
+
 /// Polygon plus its boolean output classification.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ClassifiedPolygon {
@@ -220,13 +222,18 @@ pub fn resolve_tjunctions(input: &TriangleSoup) -> HypermeshResult<TriangleSoup>
     let mut soup = merge_duplicate_vertices(input);
     remove_degenerate_and_duplicate_triangles(&mut soup);
 
-    for _ in 0..256 {
+    let mut converged = false;
+    for _ in 0..RESOLVE_TJUNCTION_MAX_PASSES {
         let split_tjunction = split_one_tjunction_pass(&mut soup)?;
         let split_crossing = split_one_edge_crossing_pass(&mut soup)?;
         if !split_tjunction && !split_crossing {
+            converged = true;
             break;
         }
         remove_degenerate_and_duplicate_triangles(&mut soup);
+    }
+    if !converged {
+        return Err(HypermeshError::UnknownClassification);
     }
 
     fix_winding_by_signed_volume(&mut soup)?;
