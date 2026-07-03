@@ -234,7 +234,7 @@ fn coplanar_crossing_quads_report_overlap_without_contained_vertices() {
 }
 
 #[test]
-fn boolean_operation_refs_validates_before_shortcuts() {
+fn boolean_operation_refs_validates_before_general_path() {
     let empty = hypermesh::MeshRef {
         positions: &[],
         triangles: &[],
@@ -495,7 +495,7 @@ fn boolean_operation_refs_runs_leaf_pipeline_from_borrowed_meshes() {
 }
 
 #[test]
-fn proven_shortcut_flag_does_not_bypass_general_path() {
+fn deprecated_shortcut_flag_does_not_bypass_general_path() {
     let mesh = cube_mesh(0, 2);
     let config = EmberConfig {
         use_proven_shortcuts: true,

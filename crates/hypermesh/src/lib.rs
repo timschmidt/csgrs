@@ -8,9 +8,8 @@
 //! with exact [`Real`] coordinates. Unsupported or uncertifiable configurations
 //! are reported as [`HypermeshError::UnknownClassification`] rather than being
 //! guessed with approximate topology. By default, boolean operations run the
-//! general EMBER subdivision/BSP/classification path; compatibility shortcut
-//! proofs are only consulted when explicitly enabled and the general result is
-//! not certifiable.
+//! general EMBER subdivision/BSP/classification path; special-case boolean
+//! shortcuts are not used to rescue uncertified general results.
 //!
 //! Use [`triangulate_and_resolve_certified`] when callers need evidence that a
 //! boolean result is already closed after exact duplicate/T-junction
