@@ -6,8 +6,8 @@ use hypermesh::{
     SubdivisionConfig, SubdivisionTask, Triangle, WindingPair, boolean_operation,
     boolean_operation_refs, classify_leaf_polygon, classify_point, classify_polygon_output,
     extract_output, find_probe_point, intersect_polygons, make_indicator, make_quad, make_triangle,
-    prepare_input, prepare_input_meshes, process_leaf, process_leaf_into, subdivide,
-    trace_axis_segment, trace_segment, triangulate_and_resolve_certified, triangulate_output,
+    prepare_input, prepare_input_meshes, process_leaf_into, subdivide, trace_axis_segment,
+    trace_segment, triangulate_and_resolve_certified, triangulate_output,
 };
 
 fn r(value: i32) -> Real {
@@ -468,8 +468,13 @@ fn process_leaf_classifies_direct_nsi_polygon_slice() {
     let bounds = hypermesh::Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let union = make_indicator(BooleanOp::Union, 1);
 
-    let output = process_leaf(&[wall], &bounds, &p(0, 0, 0), &[0], &union).unwrap();
+    let mut output = Vec::new();
+    let stats =
+        process_leaf_into(&[wall], &bounds, &p(0, 0, 0), &[0], &union, &mut output).unwrap();
 
+    assert!(stats.certified_complete);
+    assert_eq!(stats.direct_polygon_count, 1);
+    assert_eq!(stats.bsp_leaf_count, 0);
     assert_eq!(output.len(), 1);
     assert_ne!(output[0].classification, 0);
     assert!(!output[0].is_bsp_fragment);
@@ -499,6 +504,8 @@ fn process_leaf_uses_bsp_for_intersecting_cross_mesh_polygons() {
 
     assert_eq!(stats.polygon_count, 2);
     assert!(stats.intersection_count >= 2);
+    assert!(stats.certified_complete);
+    assert!(stats.bsp_leaf_count > 0);
     assert!(stats.bsp_fragment_count > 0);
     assert!(output.iter().any(|polygon| polygon.is_bsp_fragment));
 }

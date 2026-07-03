@@ -83,8 +83,15 @@ pub struct LeafProcessingStats {
     pub polygon_count: usize,
     /// Number of non-empty pairwise intersections.
     pub intersection_count: usize,
+    /// Number of polygons emitted through direct leaf classification.
+    pub direct_polygon_count: usize,
+    /// Number of enabled face-local BSP leaves classified.
+    pub bsp_leaf_count: usize,
     /// Number of BSP fragments emitted.
     pub bsp_fragment_count: usize,
+    /// Whether every emitted or discarded output decision in this leaf was
+    /// certified by the exact classifier.
+    pub certified_complete: bool,
 }
 
 /// Processes one leaf and returns classified output polygons.
@@ -114,11 +121,14 @@ pub fn process_leaf_into(
         ..LeafProcessingStats::default()
     };
     if polygons.is_empty() {
+        stats.certified_complete = true;
         return Ok(stats);
     }
 
     if can_skip_bsp_for_leaf(polygons) {
-        emit_direct(polygons, bounds, ref_point, ref_wnv, indicator, output)?;
+        stats.direct_polygon_count =
+            emit_direct(polygons, bounds, ref_point, ref_wnv, indicator, output)?;
+        stats.certified_complete = true;
         return Ok(stats);
     }
 
@@ -127,9 +137,10 @@ pub fn process_leaf_into(
 
     for (index, polygon) in polygons.iter().enumerate() {
         if intersections[index].is_empty() {
-            emit_one_direct(
+            let emitted = emit_one_direct(
                 polygon, bounds, ref_point, ref_wnv, polygons, indicator, output,
             )?;
+            stats.direct_polygon_count += usize::from(emitted);
             continue;
         }
 
@@ -154,6 +165,7 @@ pub fn process_leaf_into(
             if leaf.edges.len() < 3 {
                 continue;
             }
+            stats.bsp_leaf_count += 1;
             let effective_delta_w = effective_leaf_delta_w(polygon, &leaf.edges, polygons)?;
             let w_front = classify_leaf_polygon(
                 &polygon.support,
@@ -179,6 +191,7 @@ pub fn process_leaf_into(
         }
     }
 
+    stats.certified_complete = true;
     Ok(stats)
 }
 
@@ -224,14 +237,19 @@ pub fn subdivide_into(
     }
 
     if task.depth >= config.max_depth {
-        process_leaf_into(
+        let mut certified_output = Vec::new();
+        let stats = process_leaf_into(
             &task.polygons,
             &task.bounds,
             &task.ref_point,
             &task.ref_wnv,
             indicator,
-            output,
+            &mut certified_output,
         )?;
+        if !stats.certified_complete {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        }
+        output.extend(certified_output);
         return Ok(());
     }
 
@@ -315,8 +333,9 @@ fn emit_direct(
     ref_wnv: &[i32],
     indicator: &Indicator,
     output: &mut Vec<ClassifiedPolygon>,
-) -> HypermeshResult<()> {
+) -> HypermeshResult<usize> {
     let all_nnc = polygons.iter().all(|polygon| polygon.no_nested_components);
+    let mut emitted = 0;
     if all_nnc {
         let first = &polygons[0];
         let w_front = classify_leaf_polygon(
@@ -338,17 +357,18 @@ fn emit_direct(
                     w_back: w_back.clone(),
                 });
                 output.push(classified);
+                emitted += 1;
             }
         }
-        return Ok(());
+        return Ok(emitted);
     }
 
     for polygon in polygons {
-        emit_one_direct(
+        emitted += usize::from(emit_one_direct(
             polygon, bounds, ref_point, ref_wnv, polygons, indicator, output,
-        )?;
+        )?);
     }
-    Ok(())
+    Ok(emitted)
 }
 
 fn emit_one_direct(
@@ -359,7 +379,7 @@ fn emit_one_direct(
     class_polygons: &[ConvexPolygon],
     indicator: &Indicator,
     output: &mut Vec<ClassifiedPolygon>,
-) -> HypermeshResult<()> {
+) -> HypermeshResult<bool> {
     let w_front = classify_leaf_polygon(
         &polygon.support,
         &polygon.edges,
@@ -375,8 +395,9 @@ fn emit_one_direct(
         let mut classified = ClassifiedPolygon::new(polygon.clone(), classification);
         classified.winding = Some(WindingPair { w_front, w_back });
         output.push(classified);
+        return Ok(true);
     }
-    Ok(())
+    Ok(false)
 }
 
 fn effective_leaf_delta_w(
