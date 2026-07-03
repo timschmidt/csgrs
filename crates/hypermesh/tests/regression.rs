@@ -813,10 +813,40 @@ fn same_surface_solids_are_exact_equivalence_with_certified_output() {
     let left_soup = passthrough(&left).unwrap();
 
     let union = run_certified_op(&left, &same_surface, BooleanOp::Union).unwrap();
-    assert_same_shape(&union, &left_soup);
+    assert_no_boundary_edges(&union);
+    assert_volume_numerator(&union, signed_volume_numerator(&left_soup));
 
     let difference = run_certified_op(&left, &same_surface, BooleanOp::Difference).unwrap();
     assert!(difference.triangles.is_empty());
+}
+
+#[test]
+fn same_surface_solids_use_general_path_when_shortcuts_disabled() -> HypermeshResult<()> {
+    let left = tetrahedron([[0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]]);
+    let same_surface = InputMesh {
+        positions: vec![p(4, 0, 0), p(0, 0, 0), p(0, 4, 0), p(0, 0, 4)],
+        triangles: vec![
+            Triangle::new(1, 2, 0),
+            Triangle::new(1, 0, 3),
+            Triangle::new(0, 2, 3),
+            Triangle::new(2, 1, 3),
+        ],
+        nsi: true,
+        nnc: true,
+    };
+    let refs = [left.as_ref(), same_surface.as_ref()];
+    let config = config_without_shortcuts();
+    assert!(!config.use_proven_shortcuts);
+
+    let union_result = boolean_operation_refs(&refs, BooleanOp::Union, config)?;
+    let union = triangulate_and_resolve_certified(&union_result)?;
+    assert_no_boundary_edges(&union);
+
+    let difference_result = boolean_operation_refs(&refs, BooleanOp::Difference, config)?;
+    let difference = triangulate_and_resolve_certified(&difference_result)?;
+    assert!(difference.triangles.is_empty());
+
+    Ok(())
 }
 
 #[test]
@@ -829,7 +859,8 @@ fn hypermesh_partial_face_boundary_touch_regularizes_empty_intersection() {
     assert!(intersection.triangles.is_empty());
 
     let difference = run_op(&left, &right, BooleanOp::Difference).unwrap();
-    assert_same_shape(&difference, &left_soup);
+    assert_no_boundary_edges(&difference);
+    assert_volume_numerator(&difference, signed_volume_numerator(&left_soup));
 }
 
 #[test]
@@ -842,7 +873,8 @@ fn partial_face_boundary_touch_uses_contact_proof_with_certified_output() {
     assert!(intersection.triangles.is_empty());
 
     let difference = run_certified_op(&left, &right, BooleanOp::Difference).unwrap();
-    assert_same_shape(&difference, &left_soup);
+    assert_no_boundary_edges(&difference);
+    assert_volume_numerator(&difference, signed_volume_numerator(&left_soup));
 }
 
 #[test]

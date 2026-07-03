@@ -39,6 +39,7 @@ enum BspNode {
 #[derive(Clone, Debug, PartialEq)]
 pub struct LocalBsp {
     support: Plane,
+    host_mesh_index: isize,
     host_polygon_index: isize,
     nodes: Vec<BspNode>,
     root: Option<usize>,
@@ -49,6 +50,7 @@ impl LocalBsp {
     pub fn new(polygon: &ConvexPolygon) -> Self {
         Self {
             support: polygon.support.clone(),
+            host_mesh_index: polygon.mesh_index,
             host_polygon_index: polygon.polygon_index,
             nodes: vec![BspNode::Leaf(BspLeaf::new(polygon.edges.clone()))],
             root: Some(0),
@@ -74,7 +76,7 @@ impl LocalBsp {
     }
 
     /// Adds coplanar overlap boundaries and disables duplicate overlap leaves
-    /// when this host polygon has the higher source index.
+    /// when this host polygon has the higher source mesh/polygon key.
     pub fn add_overlap(
         &mut self,
         other: &ConvexPolygon,
@@ -84,7 +86,9 @@ impl LocalBsp {
             for edge in &overlap.other_edges {
                 self.add_plane_split_recursive(root, edge)?;
             }
-            if self.host_polygon_index > overlap.other_polygon_idx as isize {
+            if (self.host_mesh_index, self.host_polygon_index)
+                > (other.mesh_index, other.polygon_index)
+            {
                 self.mark_overlapping_leaves(root, other)?;
             }
         }
