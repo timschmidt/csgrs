@@ -54,12 +54,15 @@ are certified valid. Existing references are reused only when they are strict
 child-cell interior points and not on local surfaces. If the projected point or
 direct trace is degenerate, the implementation tries local axis-aligned escape
 targets and their multi-axis combinations inside certified open intervals
-before the next surface hit or AABB boundary. Segment tracing uses
+before the next surface hit or AABB boundary. If those targets are degenerate,
+it scans a deterministic `(n + 1)^3` strict interior grid for `n` local support
+planes; in a positive-volume child cell, this grid has a point off every finite
+support plane unless a predicate is undecidable. Segment tracing uses
 arrangement-coordinate endpoint-box detours, cut by local vertex coordinates
 and exact endpoint-box surface crossings, when direct axis-ordered paths hit
 surfaces. If none trace cleanly, it reports `UnknownClassification` instead of
-using finite random/interior sampling. The full EMBER plane-replacement
-reference construction remains unfinished.
+using random/interior sampling. The full EMBER plane-replacement reference
+path construction remains unfinished.
 
 `EmberConfig::default()` runs only the general subdivision/BSP/classification
 path. The previous same-surface, disjoint-bound, strict-containment,

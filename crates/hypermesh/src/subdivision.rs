@@ -485,6 +485,12 @@ fn compute_new_reference(
         }
     }
 
+    if let Some((target, winding)) =
+        support_plane_grid_reference(old_ref, old_wnv, bounds, polygons)?
+    {
+        return Ok((target, winding));
+    }
+
     Err(crate::error::HypermeshError::UnknownClassification)
 }
 
@@ -554,6 +560,79 @@ fn push_unique_point(points: &mut Vec<Point3>, point: Point3) {
     if !points.iter().any(|existing| existing == &point) {
         points.push(point);
     }
+}
+
+fn support_plane_grid_reference(
+    old_ref: &Point3,
+    old_wnv: &[i32],
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Option<(Point3, Vec<i32>)>> {
+    let values = support_plane_grid_axis_values(bounds, polygons.len() + 1)?;
+    for x in &values[0] {
+        for y in &values[1] {
+            for z in &values[2] {
+                let target = Point3::new(x.clone(), y.clone(), z.clone());
+                if point_lies_on_any_support_plane(&target, polygons)? {
+                    continue;
+                }
+                if point_lies_on_local_surface(&target, polygons)? {
+                    continue;
+                }
+                if let Ok(winding) =
+                    crate::segment_trace::trace_segment(old_ref, &target, old_wnv, polygons)
+                {
+                    return Ok(Some((target, winding)));
+                }
+            }
+        }
+    }
+    Ok(None)
+}
+
+fn support_plane_grid_axis_values(bounds: &Aabb, slots: usize) -> HypermeshResult<[Vec<Real>; 3]> {
+    Ok([
+        support_plane_grid_values_for_axis(bounds, 0, slots)?,
+        support_plane_grid_values_for_axis(bounds, 1, slots)?,
+        support_plane_grid_values_for_axis(bounds, 2, slots)?,
+    ])
+}
+
+fn support_plane_grid_values_for_axis(
+    bounds: &Aabb,
+    axis: usize,
+    slots: usize,
+) -> HypermeshResult<Vec<Real>> {
+    let min = axis_ref(&bounds.min, axis);
+    let max = axis_ref(&bounds.max, axis);
+    let extent = max - min;
+    if compare_real(&extent, &Real::zero())?.is_eq() {
+        return Ok(vec![min.clone()]);
+    }
+
+    let denominator = Real::from((slots + 1) as u64);
+    let mut values = Vec::with_capacity(slots);
+    for index in 1..=slots {
+        values.push(
+            min + &((extent.clone() * Real::from(index as u64)) / denominator.clone())
+                .map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+        );
+    }
+    Ok(values)
+}
+
+fn point_lies_on_any_support_plane(
+    point: &Point3,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<bool> {
+    for polygon in polygons {
+        if crate::geometry::classify_point(point, &polygon.support)?
+            == crate::geometry::Classification::On
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 fn escaped_reference_axis_value(
@@ -709,6 +788,7 @@ fn point_lies_on_local_polygon(point: &Point3, polygon: &ConvexPolygon) -> Hyper
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::geometry::Plane;
     use crate::polygon::make_triangle;
 
     fn r(value: i32) -> Real {
@@ -766,5 +846,47 @@ mod tests {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
         assert!(!is_valid_reference_for_bounds(&p(2, 2, 1), &bounds, &[wall]).unwrap());
+    }
+
+    #[test]
+    fn support_plane_grid_finds_target_when_midpoint_is_blocked() {
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
+        let polygons = vec![
+            support_only_polygon(Plane::axis_aligned(0, r(5))),
+            support_only_polygon(Plane::axis_aligned(1, r(5))),
+            support_only_polygon(Plane::axis_aligned(2, r(5))),
+            support_only_polygon(Plane::from_coefficients(r(1), r(1), r(1), r(-15))),
+        ];
+
+        assert!(point_lies_on_any_support_plane(&p(5, 5, 5), &polygons).unwrap());
+
+        let values = support_plane_grid_axis_values(&bounds, polygons.len() + 1).unwrap();
+        let mut target = None;
+        'outer: for x in &values[0] {
+            for y in &values[1] {
+                for z in &values[2] {
+                    let candidate = Point3::new(x.clone(), y.clone(), z.clone());
+                    if !point_lies_on_any_support_plane(&candidate, &polygons).unwrap() {
+                        target = Some(candidate);
+                        break 'outer;
+                    }
+                }
+            }
+        }
+        let target = target.expect("grid should contain a point off every finite support plane");
+
+        assert!(point_strictly_inside_bounds(&target, &bounds).unwrap());
+        assert!(!point_lies_on_any_support_plane(&target, &polygons).unwrap());
+    }
+
+    fn support_only_polygon(support: Plane) -> ConvexPolygon {
+        ConvexPolygon {
+            support,
+            edges: Vec::new(),
+            mesh_index: 0,
+            polygon_index: 0,
+            delta_w: Vec::new(),
+            approx_bounds: None,
+        }
     }
 }
