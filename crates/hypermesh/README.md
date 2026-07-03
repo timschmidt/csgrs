@@ -62,12 +62,14 @@ boundary-contact, and oriented-box compatibility fallbacks have been removed,
 so public boolean results either certify through the general path or return an
 error.
 
-Subdivision depth is a certification budget, not a permission to guess. If a
-task reaches `max_depth` while it still contains more polygons than the leaf
-threshold and the bounds remain splittable, hypermesh attempts to certify the
-current task as a leaf using the same exact BSP/classification path. It reports
-`UnknownClassification` only if that leaf certification fails. Full
-arrangement-isolation termination is still an implementation target.
+Subdivision depth is a certification budget, not a permission to guess. Bounds
+remain splittable whenever any axis has certified positive extent; there is no
+coordinate-scale cutoff. If a task reaches `max_depth` while it still contains
+more polygons than the leaf threshold and the bounds remain splittable,
+hypermesh attempts to certify the current task as a leaf using the same exact
+BSP/classification path. It reports `UnknownClassification` only if that leaf
+certification fails. Full arrangement-isolation termination is still an
+implementation target.
 
 `triangulate_and_resolve_certified` resolves exact duplicate vertices,
 duplicate faces, and T-junctions, but refuses non-empty outputs with boundary

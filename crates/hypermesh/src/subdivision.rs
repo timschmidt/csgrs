@@ -511,9 +511,8 @@ fn mesh_groups(polygons: &[ConvexPolygon]) -> BTreeMap<isize, Vec<usize>> {
 }
 
 fn can_split_bounds(bounds: &Aabb) -> HypermeshResult<bool> {
-    let two = Real::from(2);
     for axis in 0..3 {
-        if compare_real(&bounds.extent(axis), &two)?.is_gt() {
+        if compare_real(&bounds.extent(axis), &Real::zero())?.is_gt() {
             return Ok(true);
         }
     }
@@ -748,4 +747,31 @@ fn unique_wntvs(polygons: &[ConvexPolygon]) -> Vec<Vec<i32>> {
         }
     }
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn r(value: i32) -> Real {
+        value.into()
+    }
+
+    fn p(x: i32, y: i32, z: i32) -> Point3 {
+        Point3::new(r(x), r(y), r(z))
+    }
+
+    #[test]
+    fn can_split_any_certified_positive_extent() {
+        let bounds = Aabb::new(p(0, 0, 0), p(1, 0, 0));
+
+        assert!(can_split_bounds(&bounds).unwrap());
+    }
+
+    #[test]
+    fn cannot_split_zero_extent_bounds() {
+        let bounds = Aabb::new(p(0, 0, 0), p(0, 0, 0));
+
+        assert!(!can_split_bounds(&bounds).unwrap());
+    }
 }
