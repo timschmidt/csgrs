@@ -2037,6 +2037,19 @@ fn shifted_halfspace_cell_witnesses_from_seed(
             },
         );
     }
+    for witness in feasible_halfspace_cell_vertices(&shifted)? {
+        if !point_strictly_inside_halfspace_cell(&witness, bounds, halfspaces)? {
+            continue;
+        }
+        push_unique_shifted_halfspace_witness(
+            &mut witnesses,
+            ShiftedHalfspaceWitness {
+                point: witness,
+                halfspaces: shifted.clone(),
+                active_planes: [None, None, None],
+            },
+        );
+    }
 
     Ok(witnesses)
 }
@@ -2231,6 +2244,10 @@ mod tests {
         value.into()
     }
 
+    fn q(numerator: i32, denominator: i32) -> Real {
+        (Real::from(numerator) / Real::from(denominator)).unwrap()
+    }
+
     fn p(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(r(x), r(y), r(z))
     }
@@ -2342,6 +2359,27 @@ mod tests {
             witnesses
                 .iter()
                 .find(|witness| witness.point == p(1, 1, 1))
+                .is_some_and(|witness| witness.active_planes == [None, None, None])
+        );
+    }
+
+    #[test]
+    fn shifted_halfspace_cell_witnesses_from_seed_include_shifted_vertex_targets() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+
+        let witnesses =
+            shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, &p(2, 1, 3)).unwrap();
+
+        assert!(
+            witnesses
+                .iter()
+                .any(|witness| witness.point == Point3::new(r(3), q(5, 2), q(7, 2)))
+        );
+        assert!(
+            witnesses
+                .iter()
+                .find(|witness| witness.point == Point3::new(r(3), q(5, 2), q(7, 2)))
                 .is_some_and(|witness| witness.active_planes == [None, None, None])
         );
     }
