@@ -998,9 +998,20 @@ fn probe_reaches_adjacent_cell_from_interior(
     let mut end_definitions = probe.planes.clone();
     append_definition_if_missing(&mut end_definitions, axis_plane_definition(&probe.point));
 
+    if probe_reaches_adjacent_cell_via_detours(
+        &interior.point,
+        &probe.point,
+        host_support,
+        polygons,
+        &start_definitions,
+        &end_definitions,
+    )? {
+        return Ok(true);
+    }
+
     for start_definition in &start_definitions {
         for end_definition in &end_definitions {
-            if plane_replacement_path_reaches_adjacent_cell(
+            if plane_replacement_path_reaches_adjacent_cell_without_detours(
                 start_definition,
                 end_definition,
                 host_support,
@@ -1014,7 +1025,80 @@ fn probe_reaches_adjacent_cell_from_interior(
     Ok(false)
 }
 
-fn plane_replacement_path_reaches_adjacent_cell(
+fn probe_reaches_adjacent_cell_via_detours(
+    start: &Point3,
+    end: &Point3,
+    host_support: &Plane,
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+) -> HypermeshResult<bool> {
+    for detour in interior_box_detour_targets(start, end, polygons)? {
+        if detour.point == *start
+            || detour.point == *end
+            || point_lies_on_traced_surface(&detour.point, polygons)?
+        {
+            continue;
+        }
+        if !probe_reaches_adjacent_cell_with_definitions_no_detours(
+            start,
+            &detour.point,
+            host_support,
+            polygons,
+            start_definitions,
+            &detour.definitions,
+        )? {
+            continue;
+        }
+        if probe_reaches_adjacent_cell_with_definitions_no_detours(
+            &detour.point,
+            end,
+            host_support,
+            polygons,
+            &detour.definitions,
+            end_definitions,
+        )? {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
+fn probe_reaches_adjacent_cell_with_definitions_no_detours(
+    start: &Point3,
+    end: &Point3,
+    host_support: &Plane,
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+) -> HypermeshResult<bool> {
+    if probe_reaches_adjacent_cell(start, end, host_support, polygons)? {
+        return Ok(true);
+    }
+
+    let mut start_definitions = start_definitions.to_vec();
+    append_definition_if_missing(&mut start_definitions, axis_plane_definition(start));
+    let mut end_definitions = end_definitions.to_vec();
+    append_definition_if_missing(&mut end_definitions, axis_plane_definition(end));
+
+    for start_definition in &start_definitions {
+        for end_definition in &end_definitions {
+            if plane_replacement_path_reaches_adjacent_cell_without_detours(
+                start_definition,
+                end_definition,
+                host_support,
+                polygons,
+            )? {
+                return Ok(true);
+            }
+        }
+    }
+
+    Ok(false)
+}
+
+fn plane_replacement_path_reaches_adjacent_cell_without_detours(
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     host_support: &Plane,
@@ -2509,6 +2593,10 @@ mod tests {
         Point3::new(r(x), r(y), r(z))
     }
 
+    fn px(x: Real, y: i32, z: i32) -> Point3 {
+        Point3::new(x, r(y), r(z))
+    }
+
     #[test]
     fn trace_retry_only_suppresses_unknown_classification() {
         assert_eq!(
@@ -3185,6 +3273,41 @@ mod tests {
             &[blocker],
         )
         .unwrap());
+    }
+
+    #[test]
+    fn probe_reachability_uses_arrangement_detour_when_direct_segment_is_blocked() {
+        let host_support = Plane::axis_aligned(2, r(0));
+        let start = p(0, 0, 0);
+        let end = p(4, 4, 4);
+        let mut blockers = vec![
+            make_triangle(&p(4, 0, 0), &p(5, 0, 0), &p(4, 1, 0), 0, 0),
+            make_triangle(&p(0, 4, 0), &p(1, 4, 0), &p(0, 5, 0), 0, 1),
+            make_triangle(&p(0, 0, 4), &p(1, 0, 4), &p(0, 1, 4), 0, 2),
+        ];
+
+        for (index, x) in [q(4, 3), r(2), q(8, 3)].into_iter().enumerate() {
+            blockers.push(make_triangle(
+                &px(x.clone(), -1, -1),
+                &px(x.clone(), 5, -1),
+                &px(x, 2, 5),
+                0,
+                3 + index as isize,
+            ));
+        }
+
+        assert!(!probe_reaches_adjacent_cell(&start, &end, &host_support, &blockers).unwrap());
+        assert!(
+            probe_reaches_adjacent_cell_via_detours(
+                &start,
+                &end,
+                &host_support,
+                &blockers,
+                &[axis_plane_definition(&start)],
+                &[axis_plane_definition(&end)],
+            )
+            .unwrap()
+        );
     }
 
     #[test]
