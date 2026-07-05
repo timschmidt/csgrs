@@ -1191,4 +1191,37 @@ mod tests {
                 && probe.z == q(5, 2)
         }));
     }
+
+    #[test]
+    fn normal_probe_is_clipped_before_intervening_surface() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let blocker = make_triangle(&p(6, 0, 0), &p(0, 6, 0), &p(0, 0, 6), 1, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
+
+        let probe = adjacent_normal_probe(&p(1, 1, 1), &leaf.support, &bounds, &[blocker], true)
+            .unwrap()
+            .expect("normal probe should stop before the blocking surface");
+
+        assert_eq!(probe, Point3::new(q(3, 2), q(3, 2), q(3, 2)));
+    }
+
+    #[test]
+    fn leaf_classification_uses_certified_slanted_normal_probe() {
+        let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        leaf.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+
+        let winding = classify_leaf_polygon(
+            &leaf.support,
+            &leaf.edges,
+            &p(0, 0, 0),
+            &[0],
+            &[leaf.clone()],
+            &bounds,
+            &leaf.delta_w,
+        )
+        .unwrap();
+
+        assert_eq!(winding, vec![-1]);
+    }
 }
