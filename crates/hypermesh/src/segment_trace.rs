@@ -558,7 +558,7 @@ fn probe_reaches_adjacent_cell(
     host_support: &Plane,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
-    let Some(axis) = changed_axis(start, probe)? else {
+    let Some(sort_axis) = first_changed_axis(start, probe)? else {
         return Ok(false);
     };
 
@@ -594,7 +594,7 @@ fn probe_reaches_adjacent_cell(
         let Some(crossing) = segment_plane_crossing(start, probe, &polygon.support)? else {
             continue;
         };
-        if point_strictly_between_axis(&crossing, start, probe, axis)?
+        if point_strictly_between_axis(&crossing, start, probe, sort_axis)?
             && point_lies_on_polygon(&crossing, polygon)?
         {
             return Ok(false);
@@ -623,19 +623,6 @@ fn planes_are_coplanar(left: &Plane, right: &Plane) -> HypermeshResult<bool> {
         }
     }
     Ok(true)
-}
-
-fn changed_axis(start: &Point3, end: &Point3) -> HypermeshResult<Option<usize>> {
-    let mut changed = None;
-    for axis in 0..3 {
-        if compare_real(axis_ref(start, axis), axis_ref(end, axis))?.is_ne() {
-            if changed.is_some() {
-                return Ok(None);
-            }
-            changed = Some(axis);
-        }
-    }
-    Ok(changed)
 }
 
 fn point_lies_on_polygon(point: &Point3, polygon: &ConvexPolygon) -> HypermeshResult<bool> {
@@ -829,6 +816,14 @@ fn bounded_probes_from_interior(
 ) -> HypermeshResult<Vec<(Point3, Classification)>> {
     let mut probes = Vec::new();
 
+    if let Some(probe) = adjacent_normal_probe(interior, support, bounds, polygons, positive_side)?
+    {
+        let side = classify_point(&probe, support)?;
+        if side != Classification::On {
+            probes.push((probe, side));
+        }
+    }
+
     for axis in probe_axes(support)? {
         let normal_sign = crate::geometry::classify_real(axis_ref(&support.normal, axis))?;
         if normal_sign == Classification::On {
@@ -863,6 +858,139 @@ fn bounded_probes_from_interior(
     }
 
     Ok(probes)
+}
+
+fn adjacent_normal_probe(
+    interior: &Point3,
+    support: &Plane,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    positive_side: bool,
+) -> HypermeshResult<Option<Point3>> {
+    let direction = if positive_side {
+        support.normal.clone()
+    } else {
+        Point3::new(
+            -support.normal.x.clone(),
+            -support.normal.y.clone(),
+            -support.normal.z.clone(),
+        )
+    };
+
+    let Some(mut stop_t) = normal_probe_bounds_stop(interior, &direction, bounds)? else {
+        return Ok(None);
+    };
+
+    for polygon in polygons {
+        if polygon.mesh_index < 0 {
+            continue;
+        }
+        if planes_are_coplanar(&polygon.support, support)? {
+            continue;
+        }
+
+        let start_value = polygon.support.expression_at_point(interior);
+        if classify_real(&start_value)? == Classification::On {
+            if point_lies_on_polygon(interior, polygon)? {
+                return Ok(None);
+            }
+            continue;
+        }
+
+        let denom = dot_direction(&polygon.support.normal, &direction);
+        if classify_real(&denom)? == Classification::On {
+            continue;
+        }
+        let crossing_t =
+            ((-start_value) / denom).map_err(|_| HypermeshError::UnknownClassification)?;
+        if !positive_real_strictly_before(&crossing_t, &stop_t)? {
+            continue;
+        }
+
+        let crossing = offset_point(interior, &direction, &crossing_t);
+        if point_lies_on_polygon(&crossing, polygon)? {
+            stop_t = crossing_t;
+        }
+    }
+
+    if !compare_real(&stop_t, &Real::zero())?.is_gt() {
+        return Ok(None);
+    }
+    let half = (Real::one() / Real::from(2)).map_err(|_| HypermeshError::UnknownClassification)?;
+    Ok(Some(offset_point(interior, &direction, &(stop_t * half))))
+}
+
+fn normal_probe_bounds_stop(
+    interior: &Point3,
+    direction: &Point3,
+    bounds: &Aabb,
+) -> HypermeshResult<Option<Real>> {
+    let mut stop_t: Option<Real> = None;
+    for axis in 0..3 {
+        let component = axis_ref(direction, axis);
+        match classify_real(component)? {
+            Classification::Positive => {
+                let room = axis_ref(&bounds.max, axis) - axis_ref(interior, axis);
+                if !compare_real(&room, &Real::zero())?.is_gt() {
+                    return Ok(None);
+                }
+                update_positive_stop(
+                    &mut stop_t,
+                    (room / component.clone())
+                        .map_err(|_| HypermeshError::UnknownClassification)?,
+                )?;
+            }
+            Classification::Negative => {
+                let room = axis_ref(interior, axis) - axis_ref(&bounds.min, axis);
+                if !compare_real(&room, &Real::zero())?.is_gt() {
+                    return Ok(None);
+                }
+                update_positive_stop(
+                    &mut stop_t,
+                    (room / (-component.clone()))
+                        .map_err(|_| HypermeshError::UnknownClassification)?,
+                )?;
+            }
+            Classification::On => {}
+        }
+    }
+    Ok(stop_t)
+}
+
+fn update_positive_stop(stop_t: &mut Option<Real>, candidate: Real) -> HypermeshResult<()> {
+    if !compare_real(&candidate, &Real::zero())?.is_gt() {
+        return Ok(());
+    }
+    if stop_t
+        .as_ref()
+        .is_none_or(|current| compare_real(&candidate, current).is_ok_and(|order| order.is_lt()))
+    {
+        *stop_t = Some(candidate);
+    }
+    Ok(())
+}
+
+fn positive_real_strictly_before(value: &Real, stop: &Real) -> HypermeshResult<bool> {
+    Ok(compare_real(value, &Real::zero())?.is_gt() && compare_real(value, stop)?.is_lt())
+}
+
+fn dot_direction(left: &Point3, right: &Point3) -> Real {
+    Real::signed_product_sum(
+        [true, true, true],
+        [
+            [&left.x, &right.x],
+            [&left.y, &right.y],
+            [&left.z, &right.z],
+        ],
+    )
+}
+
+fn offset_point(point: &Point3, direction: &Point3, amount: &Real) -> Point3 {
+    Point3::new(
+        &point.x + &(amount * &direction.x),
+        &point.y + &(amount * &direction.y),
+        &point.z + &(amount * &direction.z),
+    )
 }
 
 fn adjacent_axis_probe(
@@ -958,6 +1086,10 @@ mod tests {
         value.into()
     }
 
+    fn q(numerator: i32, denominator: i32) -> Real {
+        (Real::from(numerator) / Real::from(denominator)).unwrap()
+    }
+
     fn p(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(r(x), r(y), r(z))
     }
@@ -1042,5 +1174,21 @@ mod tests {
             leaf.edges[1].expression_at_point(first),
             expected_second_edge_margin
         );
+    }
+
+    #[test]
+    fn bounded_probes_include_certified_normal_direction_probe() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+
+        let probes =
+            bounded_probes_from_interior(&p(1, 1, 1), &leaf.support, &bounds, true, &[]).unwrap();
+
+        assert!(probes.iter().any(|(probe, side)| {
+            *side == Classification::Positive
+                && probe.x == q(5, 2)
+                && probe.y == q(5, 2)
+                && probe.z == q(5, 2)
+        }));
     }
 }

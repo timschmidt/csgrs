@@ -42,17 +42,18 @@ general path. Remaining gaps are tracked by code paths that can still return
 explicit certification errors.
 
 Leaf classification currently searches certified off-face probes from exact
-leaf interior points by stepping into the open interval before the nearest
-crossed local surface or AABB boundary. Interior targets include the centroid
-and deterministic EMBER-style points formed by shifting adjacent edge planes
-inward and intersecting them with the support plane. If a probe lies on a
-traced surface, cannot reach the adjacent cell, or cannot be traced from the
-reference point, that probe is discarded. If no certified probe path remains,
-the leaf reports `UnknownClassification`; there is no silent fallback to the
-reference winding number. There are no input-assumption bypass flags; leaves
-run pairwise intersection discovery across all local polygons, including
-same-mesh self-intersections, and classify each direct polygon separately. The
-full plane-replacement classification path remains unfinished.
+leaf interior points by stepping along the support normal or a support-axis
+direction into the open interval before the nearest crossed local surface or
+AABB boundary. Interior targets include the centroid and deterministic
+EMBER-style points formed by shifting adjacent edge planes inward and
+intersecting them with the support plane. If a probe lies on a traced surface,
+cannot reach the adjacent cell, or cannot be traced from the reference point,
+that probe is discarded. If no certified probe path remains, the leaf reports
+`UnknownClassification`; there is no silent fallback to the reference winding
+number. There are no input-assumption bypass flags; leaves run pairwise
+intersection discovery across all local polygons, including same-mesh
+self-intersections, and classify each direct polygon separately. The full
+plane-replacement classification path remains unfinished.
 
 Subdivision reference propagation currently accepts the EMBER projection of the
 parent reference point onto a child AABB only when the projected point and trace
