@@ -62,7 +62,10 @@ before failing. When a straight interior-to-probe reachability segment is
 blocked, leaf classification now also retries retained plane-replacement paths
 between the interior and probe definitions before discarding that probe, and it
 now also retries the same certified endpoint-box detour family used by segment
-tracing when straight interior-to-probe reachability is blocked. Leaf interior
+tracing when straight interior-to-probe reachability is blocked; those probe
+reachability detours now also allow the same bounded nested-detour retry on
+detour legs instead of collapsing every chosen leg to the no-detour family
+immediately. Leaf interior
 construction also asks `hyperlimit` for a strict replayable halfspace witness
 inside the leaf so probe generation can retain multiple certified plane
 definitions even when the affine interior point itself came from

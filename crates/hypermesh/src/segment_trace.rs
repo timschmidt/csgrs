@@ -1108,10 +1108,6 @@ fn probe_reaches_adjacent_cell_from_interior(
     host_support: &Plane,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
-    if probe_reaches_adjacent_cell(&interior.point, &probe.point, host_support, polygons)? {
-        return Ok(true);
-    }
-
     let mut start_definitions = interior.planes.clone();
     append_definition_if_missing(
         &mut start_definitions,
@@ -1120,32 +1116,90 @@ fn probe_reaches_adjacent_cell_from_interior(
     let mut end_definitions = probe.planes.clone();
     append_definition_if_missing(&mut end_definitions, axis_plane_definition(&probe.point));
 
-    if probe_reaches_adjacent_cell_via_detours(
+    probe_reaches_adjacent_cell_with_definitions_budget(
         &interior.point,
         &probe.point,
         host_support,
         polygons,
         &start_definitions,
         &end_definitions,
-    )? {
-        return Ok(true);
-    }
-    for start_definition in &start_definitions {
-        for end_definition in &end_definitions {
-            if plane_replacement_path_reaches_adjacent_cell_without_detours(
-                start_definition,
-                end_definition,
-                host_support,
-                polygons,
-            )? {
-                return Ok(true);
-            }
-        }
-    }
-
-    Ok(false)
+        DETOUR_RECURSION_LIMIT,
+    )
 }
 
+fn probe_reaches_adjacent_cell_with_definitions_budget(
+    start: &Point3,
+    end: &Point3,
+    host_support: &Plane,
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    remaining_detours: usize,
+) -> HypermeshResult<bool> {
+    let mut trace_without_detours =
+        |start: &Point3,
+         end: &Point3,
+         start_definitions: &[[Plane; 3]],
+         end_definitions: &[[Plane; 3]]| {
+            probe_reaches_adjacent_cell_with_definitions_no_detours(
+                start,
+                end,
+                host_support,
+                polygons,
+                start_definitions,
+                end_definitions,
+            )
+        };
+    let mut detours_for =
+        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons);
+    probe_reaches_adjacent_cell_with_definitions_budget_impl(
+        start,
+        end,
+        polygons,
+        start_definitions,
+        end_definitions,
+        remaining_detours,
+        &mut trace_without_detours,
+        &mut detours_for,
+    )
+}
+
+fn probe_reaches_adjacent_cell_with_definitions_budget_impl(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    remaining_detours: usize,
+    trace_without_detours: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<bool>,
+    detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<bool> {
+    if trace_without_detours(start, end, start_definitions, end_definitions)? {
+        return Ok(true);
+    }
+
+    if remaining_detours == 0 {
+        return Ok(false);
+    }
+
+    probe_reaches_adjacent_cell_via_detours_with_budget(
+        start,
+        end,
+        polygons,
+        start_definitions,
+        end_definitions,
+        remaining_detours,
+        trace_without_detours,
+        detours_for,
+    )
+}
+
+#[cfg(test)]
 fn probe_reaches_adjacent_cell_via_detours(
     start: &Point3,
     end: &Point3,
@@ -1154,30 +1208,77 @@ fn probe_reaches_adjacent_cell_via_detours(
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<bool> {
-    for detour in interior_box_detour_targets(start, end, polygons)? {
+    let mut trace_without_detours =
+        |start: &Point3,
+         end: &Point3,
+         start_definitions: &[[Plane; 3]],
+         end_definitions: &[[Plane; 3]]| {
+            probe_reaches_adjacent_cell_with_definitions_no_detours(
+                start,
+                end,
+                host_support,
+                polygons,
+                start_definitions,
+                end_definitions,
+            )
+        };
+    let mut detours_for =
+        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons);
+    probe_reaches_adjacent_cell_via_detours_with_budget(
+        start,
+        end,
+        polygons,
+        start_definitions,
+        end_definitions,
+        DETOUR_RECURSION_LIMIT,
+        &mut trace_without_detours,
+        &mut detours_for,
+    )
+}
+
+fn probe_reaches_adjacent_cell_via_detours_with_budget(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    remaining_detours: usize,
+    trace_without_detours: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<bool>,
+    detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<bool> {
+    for detour in detours_for(start, end)? {
         if detour.point == *start
             || detour.point == *end
             || point_lies_on_traced_surface(&detour.point, polygons)?
         {
             continue;
         }
-        if !probe_reaches_adjacent_cell_with_definitions_no_detours(
+        if !probe_reaches_adjacent_cell_with_definitions_budget_impl(
             start,
             &detour.point,
-            host_support,
             polygons,
             start_definitions,
             &detour.definitions,
+            remaining_detours - 1,
+            trace_without_detours,
+            detours_for,
         )? {
             continue;
         }
-        if probe_reaches_adjacent_cell_with_definitions_no_detours(
+        if probe_reaches_adjacent_cell_with_definitions_budget_impl(
             &detour.point,
             end,
-            host_support,
             polygons,
             &detour.definitions,
             end_definitions,
+            remaining_detours - 1,
+            trace_without_detours,
+            detours_for,
         )? {
             return Ok(true);
         }
@@ -3526,6 +3627,68 @@ mod tests {
                 &blockers,
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn recursive_probe_reachability_budget_retries_detour_legs() {
+        let start = p(0, 0, 0);
+        let inner = p(1, 0, 0);
+        let outer = p(2, 0, 0);
+        let end = p(3, 0, 0);
+        let outer_target = DetourTarget {
+            point: outer.clone(),
+            definitions: vec![axis_plane_definition(&outer)],
+        };
+        let inner_target = DetourTarget {
+            point: inner.clone(),
+            definitions: vec![axis_plane_definition(&inner)],
+        };
+        let mut trace_without_detours =
+            |from: &Point3,
+             to: &Point3,
+             _start_definitions: &[[Plane; 3]],
+             _end_definitions: &[[Plane; 3]]| {
+                Ok((*from == start && *to == inner)
+                    || (*from == inner && *to == outer)
+                    || (*from == outer && *to == end))
+            };
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![outer_target.clone()])
+            } else if *from == start && *to == outer {
+                Ok(vec![inner_target.clone()])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        assert!(
+            !probe_reaches_adjacent_cell_with_definitions_budget_impl(
+                &start,
+                &end,
+                &[],
+                &[axis_plane_definition(&start)],
+                &[axis_plane_definition(&end)],
+                1,
+                &mut trace_without_detours,
+                &mut detours_for,
+            )
+            .unwrap()
+        );
+
+        assert!(
+            probe_reaches_adjacent_cell_with_definitions_budget_impl(
+                &start,
+                &end,
+                &[],
+                &[axis_plane_definition(&start)],
+                &[axis_plane_definition(&end)],
+                2,
+                &mut trace_without_detours,
+                &mut detours_for,
             )
             .unwrap()
         );
