@@ -1261,30 +1261,109 @@ fn bounded_probes_from_interior(
     Ok(probes)
 }
 
-fn normal_probe_planes(
-    interior: &InteriorLeafPoint,
-    support: &Plane,
-    probe: &Point3,
+fn probe_definitions_from_active_halfspaces(
+    witness: &Point3,
+    halfspaces: &[LimitPlane3],
+    active_planes: [Option<usize>; 3],
+    extra_planes: &[Plane],
 ) -> HypermeshResult<Vec<[Plane; 3]>> {
-    let shifted_support = Plane::new(
-        support.normal.clone(),
-        &support.offset - &support.expression_at_point(probe),
-    );
+    let axis_definition = axis_plane_definition(witness);
     let mut definitions = Vec::new();
-    for interior_planes in &interior.planes {
-        let planes = [
-            shifted_support.clone(),
-            interior_planes[1].clone(),
-            interior_planes[2].clone(),
-        ];
-        let reproduced = intersect_three_planes(&planes[0], &planes[1], &planes[2])
-            .to_affine_point()
-            .map_err(|_| HypermeshError::UnknownClassification)?;
-        if reproduced == *probe && !definitions.iter().any(|existing| existing == &planes) {
-            definitions.push(planes);
+    let mut active = Vec::new();
+
+    for plane in extra_planes {
+        if !active.iter().any(|existing| existing == plane) {
+            active.push(plane.clone());
         }
     }
+
+    for index in active_planes.into_iter().flatten() {
+        let Some(halfspace) = halfspaces.get(index) else {
+            return Err(HypermeshError::UnknownClassification);
+        };
+        let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
+        if !active.iter().any(|existing| existing == &plane) {
+            active.push(plane);
+        }
+    }
+
+    for halfspace in halfspaces {
+        let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
+        if !compare_real(&plane.expression_at_point(witness), &Real::zero())?.is_eq() {
+            continue;
+        }
+        if !active.iter().any(|existing| existing == &plane) {
+            active.push(plane);
+        }
+    }
+
+    for first in 0..active.len() {
+        for second in (first + 1)..active.len() {
+            for third in (second + 1)..active.len() {
+                push_verified_probe_definition(
+                    &mut definitions,
+                    [
+                        active[first].clone(),
+                        active[second].clone(),
+                        active[third].clone(),
+                    ],
+                    witness,
+                )?;
+            }
+        }
+    }
+
+    for first in 0..active.len() {
+        for second in (first + 1)..active.len() {
+            for axis in 0..3 {
+                push_verified_probe_definition(
+                    &mut definitions,
+                    [
+                        active[first].clone(),
+                        active[second].clone(),
+                        axis_definition[axis].clone(),
+                    ],
+                    witness,
+                )?;
+            }
+        }
+    }
+
+    for plane in &active {
+        for first_axis in 0..3 {
+            for second_axis in (first_axis + 1)..3 {
+                push_verified_probe_definition(
+                    &mut definitions,
+                    [
+                        plane.clone(),
+                        axis_definition[first_axis].clone(),
+                        axis_definition[second_axis].clone(),
+                    ],
+                    witness,
+                )?;
+            }
+        }
+    }
+
+    push_verified_probe_definition(&mut definitions, axis_definition, witness)?;
     Ok(definitions)
+}
+
+fn push_verified_probe_definition(
+    definitions: &mut Vec<[Plane; 3]>,
+    definition: [Plane; 3],
+    witness: &Point3,
+) -> HypermeshResult<()> {
+    match affine_from_planes(&definition) {
+        Ok(point) if point == *witness => {
+            if !definitions.iter().any(|existing| existing == &definition) {
+                definitions.push(definition);
+            }
+        }
+        Ok(_) | Err(HypermeshError::UnknownClassification) => {}
+        Err(err) => return Err(err),
+    }
+    Ok(())
 }
 
 fn adjacent_normal_probes(
@@ -1436,7 +1515,24 @@ fn strict_normal_probe_target(
         return Ok(None);
     }
 
-    let planes = normal_probe_planes(interior, support, &witness)?;
+    let shifted_support = Plane::new(
+        support.normal.clone(),
+        &support.offset - &support.expression_at_point(&witness),
+    );
+    let mut extra_planes = vec![shifted_support];
+    for definition in &interior.planes {
+        for plane in &definition[1..] {
+            if !extra_planes.iter().any(|existing| existing == plane) {
+                extra_planes.push(plane.clone());
+            }
+        }
+    }
+    let planes = probe_definitions_from_active_halfspaces(
+        &witness,
+        &shifted,
+        report.active_planes,
+        &extra_planes,
+    )?;
 
     Ok(Some(ProbePoint {
         point: witness,
@@ -1633,7 +1729,14 @@ fn strict_axis_probe_target(
     }
 
     Ok(Some(ProbePoint {
-        planes: axis_probe_definitions(interior, support, axis, &witness)?,
+        planes: axis_probe_definitions(
+            interior,
+            support,
+            axis,
+            &shifted,
+            report.active_planes,
+            &witness,
+        )?,
         point: witness,
         side,
     }))
@@ -1643,24 +1746,25 @@ fn axis_probe_definitions(
     interior: &Point3,
     support: &Plane,
     axis: usize,
+    halfspaces: &[LimitPlane3],
+    active_planes: [Option<usize>; 3],
     witness: &Point3,
 ) -> HypermeshResult<Vec<[Plane; 3]>> {
     let shifted_support = Plane::new(
         support.normal.clone(),
         &support.offset - &support.expression_at_point(witness),
     );
-    let mut definitions = Vec::new();
     let axes = other_axes(axis);
-    let definition = [
-        shifted_support,
-        Plane::axis_aligned(axes[0], axis_ref(interior, axes[0]).clone()),
-        Plane::axis_aligned(axes[1], axis_ref(interior, axes[1]).clone()),
-    ];
-    let reproduced = affine_from_planes(&definition)?;
-    if reproduced == *witness {
-        definitions.push(definition);
-    }
-    Ok(definitions)
+    probe_definitions_from_active_halfspaces(
+        witness,
+        halfspaces,
+        active_planes,
+        &[
+            shifted_support,
+            Plane::axis_aligned(axes[0], axis_ref(interior, axes[0]).clone()),
+            Plane::axis_aligned(axes[1], axis_ref(interior, axes[1]).clone()),
+        ],
+    )
 }
 
 fn aabb_core_halfspaces(bounds: &Aabb) -> HypermeshResult<Vec<LimitPlane3>> {
@@ -2162,6 +2266,34 @@ mod tests {
         }));
         for definition in &definitions {
             assert_eq!(definition[0], support);
+            assert_eq!(affine_from_planes(definition).unwrap(), witness);
+        }
+    }
+
+    #[test]
+    fn probe_definitions_include_non_basis_active_halfspaces() {
+        let witness = p(1, 1, 1);
+        let shifted_support = Plane::axis_aligned(2, r(1));
+        let halfspaces = vec![
+            LimitPlane3::new(p(1, 0, 0), r(-1)),
+            LimitPlane3::new(p(0, 1, 0), r(-1)),
+            LimitPlane3::new(p(1, 1, 1), r(-3)),
+        ];
+
+        let definitions = probe_definitions_from_active_halfspaces(
+            &witness,
+            &halfspaces,
+            [Some(0), Some(1), None],
+            &[shifted_support],
+        )
+        .unwrap();
+
+        assert!(
+            definitions
+                .iter()
+                .any(|definition| { definition.iter().any(|plane| plane.normal == p(1, 1, 1)) })
+        );
+        for definition in &definitions {
             assert_eq!(affine_from_planes(definition).unwrap(), witness);
         }
     }

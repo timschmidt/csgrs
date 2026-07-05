@@ -62,7 +62,9 @@ inside the leaf so probe generation can retain multiple certified plane
 definitions even when the affine interior point itself came from
 centroid-style construction, and those retained definitions now include every
 exact witness-active leaf halfspace we can verify rather than only the
-feasibility basis planes. Axis-direction probes are now constructed from
+feasibility basis planes. Normal- and axis-direction probe witnesses now do
+the same for their strict witness cells instead of keeping only a hand-built
+definition family. Axis-direction probes are now constructed from
 strict witness search in the closed axis corridor and desired support-side
 cell, rather than by midpoint sampling. Full
 plane-replacement coverage for every reference/probe construction remains
