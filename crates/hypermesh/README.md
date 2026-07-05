@@ -160,7 +160,9 @@ more polygons than the leaf threshold and the bounds remain splittable,
 hypermesh attempts to certify the current task as a leaf using the same exact
 BSP/classification path. Enabled BSP leaves are rejected unless exact pairwise
 checks prove they have no remaining interior segment intersections with local
-polygons. Coplanar overlap and effective-delta checks now use the same
+polygons; segment intersections are now checked by exact open-interval
+feasibility along the certified intersection segment instead of by midpoint
+sampling. Coplanar overlap and effective-delta checks now use the same
 certified strict leaf interior witness family instead of a centroid-only test
 point, and pairwise coplanar overlap detection now reuses that certified
 convex-polygon interior witness construction instead of a standalone centroid

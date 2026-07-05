@@ -3,7 +3,9 @@
 use crate::bvh::ExactBvh;
 use crate::clip::{ClipSide, clip_polygon};
 use crate::error::HypermeshResult;
-use crate::geometry::{Aabb, Classification, Plane, axis_mut, axis_ref, compare_real};
+use crate::geometry::{
+    Aabb, Classification, Plane, axis_mut, axis_ref, classify_point, classify_real, compare_real,
+};
 use crate::intersection::{PairwiseIntersection, PairwiseIntersectionType, intersect_polygons};
 use crate::local_bsp::LocalBsp;
 use crate::output::ClassifiedPolygon;
@@ -597,7 +599,7 @@ fn certify_bsp_leaf_has_no_interior_intersections(
                 let Some(segment) = intersection.segment else {
                     return Ok(false);
                 };
-                if segment_midpoint_is_strictly_inside_both(
+                if segment_has_strict_interior_point_in_both(
                     &segment.v0,
                     &segment.v1,
                     &leaf_polygon,
@@ -621,22 +623,111 @@ fn certify_bsp_leaf_has_no_interior_intersections(
     Ok(true)
 }
 
-fn segment_midpoint_is_strictly_inside_both(
+fn segment_has_strict_interior_point_in_both(
     a: &Point3,
     b: &Point3,
     left: &ConvexPolygon,
     right: &ConvexPolygon,
 ) -> HypermeshResult<bool> {
-    let midpoint = HomogeneousPoint3::new(
-        ((&a.x + &b.x) / Real::from(2))
-            .map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
-        ((&a.y + &b.y) / Real::from(2))
-            .map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
-        ((&a.z + &b.z) / Real::from(2))
-            .map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
-        Real::one(),
-    );
-    Ok(left.contains_point_strictly(&midpoint)? && right.contains_point_strictly(&midpoint)?)
+    let mut lower = Real::zero();
+    let mut upper = Real::one();
+    if !constrain_open_segment_interval_to_polygon(a, b, left, &mut lower, &mut upper)?
+        || !constrain_open_segment_interval_to_polygon(a, b, right, &mut lower, &mut upper)?
+        || !compare_real(&lower, &upper)?.is_lt()
+    {
+        return Ok(false);
+    }
+
+    let t = ((&lower + &upper) / Real::from(2))
+        .map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
+    let witness = interpolate_segment_point(a, b, &t);
+    Ok(affine_point_strictly_in_polygon(&witness, left)?
+        && affine_point_strictly_in_polygon(&witness, right)?)
+}
+
+fn constrain_open_segment_interval_to_polygon(
+    a: &Point3,
+    b: &Point3,
+    polygon: &ConvexPolygon,
+    lower: &mut Real,
+    upper: &mut Real,
+) -> HypermeshResult<bool> {
+    for edge in &polygon.edges {
+        if !constrain_open_segment_interval_to_plane_negative(a, b, edge, lower, upper)? {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn constrain_open_segment_interval_to_plane_negative(
+    a: &Point3,
+    b: &Point3,
+    plane: &Plane,
+    lower: &mut Real,
+    upper: &mut Real,
+) -> HypermeshResult<bool> {
+    let start = plane.expression_at_point(a);
+    let end = plane.expression_at_point(b);
+    let start_class = classify_real(&start)?;
+    let end_class = classify_real(&end)?;
+
+    match (start_class, end_class) {
+        (Classification::Negative, Classification::Negative) => Ok(true),
+        (Classification::Negative, Classification::On) => Ok(true),
+        (Classification::On, Classification::Negative) => Ok(true),
+        (Classification::Positive, Classification::Negative) => {
+            let cut = (start.clone() / (&start - &end))
+                .map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
+            update_open_segment_lower(lower, &cut)
+        }
+        (Classification::Negative, Classification::Positive) => {
+            let cut = (start.clone() / (&start - &end))
+                .map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
+            update_open_segment_upper(upper, &cut)
+        }
+        (Classification::On, Classification::On)
+        | (Classification::Positive, Classification::Positive)
+        | (Classification::Positive, Classification::On)
+        | (Classification::On, Classification::Positive) => Ok(false),
+    }
+}
+
+fn update_open_segment_lower(lower: &mut Real, candidate: &Real) -> HypermeshResult<bool> {
+    if compare_real(candidate, lower)?.is_gt() {
+        *lower = candidate.clone();
+    }
+    Ok(compare_real(lower, &Real::one())?.is_lt())
+}
+
+fn update_open_segment_upper(upper: &mut Real, candidate: &Real) -> HypermeshResult<bool> {
+    if compare_real(candidate, upper)?.is_lt() {
+        *upper = candidate.clone();
+    }
+    Ok(compare_real(&Real::zero(), upper)?.is_lt())
+}
+
+fn interpolate_segment_point(start: &Point3, end: &Point3, t: &Real) -> Point3 {
+    Point3::new(
+        &start.x + &(t.clone() * (&end.x - &start.x)),
+        &start.y + &(t.clone() * (&end.y - &start.y)),
+        &start.z + &(t.clone() * (&end.z - &start.z)),
+    )
+}
+
+fn affine_point_strictly_in_polygon(
+    point: &Point3,
+    polygon: &ConvexPolygon,
+) -> HypermeshResult<bool> {
+    if classify_point(point, &polygon.support)? != Classification::On {
+        return Ok(false);
+    }
+    for edge in &polygon.edges {
+        if classify_point(point, edge)?.is_non_negative() {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 fn leaf_polygon_key(polygon: &ConvexPolygon) -> (isize, isize) {
@@ -2562,6 +2653,17 @@ mod tests {
 
         assert!(
             !certify_bsp_leaf_has_no_interior_intersections(&host, &host.edges, &polygons).unwrap()
+        );
+    }
+
+    #[test]
+    fn segment_interval_witness_finds_strict_overlap_when_midpoint_is_on_boundary() {
+        let left = make_triangle(&p(1, -1, 0), &p(3, -1, 0), &p(1, 1, 0), 0, 0);
+        let right = make_triangle(&p(0, -2, 0), &p(4, -2, 0), &p(0, 2, 0), 1, 0);
+
+        assert!(
+            segment_has_strict_interior_point_in_both(&p(0, 0, 0), &p(2, 0, 0), &left, &right)
+                .unwrap()
         );
     }
 
