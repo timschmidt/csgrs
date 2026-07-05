@@ -128,21 +128,19 @@ cleanly, it reports
 `ReferencePropagationFailed` instead of using random/interior sampling. The
 reference point carries retained plane triples; projected/escaped references
 carry axis-plane triples, and support-cell witnesses are now constructed from
-closed support-side cells by enumerating exact feasible cell vertices, taking a
-strict interior centroid seed, and then asking `hyperlimit` for a replayable
-witness inside the inward-shifted strict cell. When `hyperlimit` already
-provides a strict feasible witness for the closed support cell, hypermesh now
-tries that richer direct witness first, then shifted replayable witnesses built
-from every available strict support-cell seed, and finally any remaining strict
-direct seeds of the closed cell. That lets reference propagation backtrack
-across multiple certified direct and shifted targets inside one feasible
-support-side cell instead of collapsing the cell to one point. Each shifted
-support cell now also contributes every strict target recovered from its own
-certified witness family and its own exact feasible vertices instead of only
-the first feasibility witness selected by the halfspace predicate. Shifted
-support-cell search also starts from every exact feasible support-cell vertex
-instead of relying only on the direct witness plus one centroid-style strict
-seed.
+closed support-side cells by enumerating exact feasible cell vertices and
+asking `hyperlimit` for replayable witnesses inside inward-shifted strict
+cells. When `hyperlimit` already provides a strict feasible witness for the
+closed support cell, hypermesh now tries that richer direct witness first, then
+shifted replayable witnesses built from every available strict support-cell
+witness and from every exact feasible support-cell vertex, and finally any
+remaining strict direct witnesses of the closed cell. That lets reference
+propagation backtrack across multiple certified direct and shifted targets
+inside one feasible support-side cell instead of collapsing the cell to one
+point. Each shifted support cell now also contributes every strict target
+recovered from its own certified witness family and its own exact feasible
+vertices instead of only the first feasibility witness selected by the
+halfspace predicate.
 Support-cell retained definitions now include every exact witness-active
 halfspace we can verify, not just the feasibility basis planes returned by
 `hyperlimit`. When direct tracing cannot certify a reference step, hypermesh

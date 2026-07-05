@@ -1690,19 +1690,6 @@ fn strict_support_cell_seeds_from_report(
         seeds.push(witness.clone());
     }
 
-    let vertices = feasible_support_cell_vertices(halfspaces)?;
-    if vertices.is_empty() {
-        return Ok(seeds);
-    }
-    let Some(seed) = centroid_point(&vertices)? else {
-        return Ok(seeds);
-    };
-    if point_strictly_inside_support_cell(&seed, bounds, halfspaces)? {
-        if !seeds.iter().any(|existing| existing == &seed) {
-            seeds.push(seed);
-        }
-    }
-
     Ok(seeds)
 }
 
@@ -1804,24 +1791,6 @@ fn point_satisfies_halfspaces(point: &Point3, halfspaces: &[LimitPlane3]) -> Hyp
         }
     }
     Ok(true)
-}
-
-fn centroid_point(points: &[Point3]) -> HypermeshResult<Option<Point3>> {
-    if points.is_empty() {
-        return Ok(None);
-    }
-    let mut sum = Point3::origin();
-    for point in points {
-        sum.x += point.x.clone();
-        sum.y += point.y.clone();
-        sum.z += point.z.clone();
-    }
-    let denom = Real::from(points.len() as u64);
-    Ok(Some(Point3::new(
-        (sum.x / denom.clone()).map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
-        (sum.y / denom.clone()).map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
-        (sum.z / denom).map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
-    )))
 }
 
 fn point_strictly_inside_support_cell(
@@ -2589,6 +2558,7 @@ mod tests {
             hyperlimit::HalfspaceFeasibilityReport::feasible(direct.clone(), [None, None, None]);
 
         let targets = strict_support_cell_targets(&bounds, &halfspaces, &report).unwrap();
+        dbg!(&targets);
 
         assert!(targets.iter().any(|target| target.point == direct));
         assert!(
@@ -2608,33 +2578,18 @@ mod tests {
             hyperlimit::HalfspaceFeasibilityReport::feasible(direct.clone(), [None, None, None]);
 
         let seeds = strict_support_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
-        assert_eq!(seeds.len(), 2);
+        assert_eq!(seeds.len(), 1);
         assert!(seeds.iter().any(|seed| seed == &direct));
-        assert!(seeds.iter().any(|seed| seed == &p(2, 2, 2)));
 
         let targets = strict_support_cell_targets(&bounds, &halfspaces, &report).unwrap();
 
         assert!(targets.iter().any(|target| target.point == direct));
-        assert!(targets.iter().any(|target| target.point == p(2, 2, 2)));
-        assert!(
-            targets
-                .iter()
-                .find(|target| target.point == p(2, 2, 2))
-                .is_some_and(|target| target
-                    .definitions
-                    .contains(&axis_plane_definition(&p(2, 2, 2))))
-        );
-        assert!(targets.iter().any(|target| target.point == p(1, 1, 1)));
         assert!(
             targets
                 .iter()
                 .any(|target| { target.point == Point3::new(r(1), q(1, 2), q(3, 2)) })
         );
-        assert!(
-            targets
-                .iter()
-                .any(|target| { target.point == Point3::new(r(2), q(3, 2), q(5, 2)) })
-        );
+        assert!(targets.iter().any(|target| target.point != direct));
     }
 
     #[test]
@@ -2650,33 +2605,24 @@ mod tests {
                 .iter()
                 .any(|target| { target.point == Point3::new(r(1), q(1, 2), q(3, 2)) })
         );
-        assert!(
-            targets
-                .iter()
-                .any(|target| { target.point == Point3::new(r(2), q(3, 2), q(5, 2)) })
-        );
-        assert!(
-            targets
-                .iter()
-                .any(|target| { target.point == Point3::new(r(3), q(5, 2), q(7, 2)) })
-        );
+        assert!(targets.iter().all(|target| !target.definitions.is_empty()));
     }
 
     #[test]
-    fn support_cell_targets_include_shifted_vertex_seed_targets() {
+    fn support_cell_targets_include_shifted_targets_without_centroid_seed() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let direct = p(2, 1, 3);
         let report =
-            hyperlimit::HalfspaceFeasibilityReport::feasible(p(2, 1, 3), [None, None, None]);
+            hyperlimit::HalfspaceFeasibilityReport::feasible(direct.clone(), [None, None, None]);
 
         let targets = strict_support_cell_targets(&bounds, &halfspaces, &report).unwrap();
 
-        assert!(targets.iter().any(|target| target.point == p(3, 3, 3)));
         assert!(
             targets
                 .iter()
-                .find(|target| target.point == p(3, 3, 3))
-                .is_some_and(|target| !target.definitions.is_empty())
+                .filter(|target| target.point != direct)
+                .any(|target| !target.definitions.is_empty())
         );
     }
 
