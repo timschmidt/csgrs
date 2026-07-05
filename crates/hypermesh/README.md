@@ -72,7 +72,12 @@ direct paths and arrangement-coordinate endpoint-box detours, cut by local
 vertex coordinates and exact endpoint-box surface crossings, when axis-ordered
 paths hit surfaces. If none trace cleanly, it reports
 `ReferencePropagationFailed` instead of using random/interior sampling. The
-full EMBER plane-replacement reference path construction remains unfinished.
+reference point carries retained plane triples; projected/escaped references
+carry axis-plane triples, and support-cell witnesses retain active halfspace
+planes from the `hyperlimit` feasibility report. When direct tracing cannot
+certify a reference step, hypermesh retries certified plane-replacement traces
+between retained definitions. Full EMBER plane-replacement coverage for every
+reference construction remains unfinished.
 
 `EmberConfig::default()` runs only the general subdivision/BSP/classification
 path. The previous same-surface, disjoint-bound, strict-containment,

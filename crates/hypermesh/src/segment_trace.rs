@@ -184,7 +184,7 @@ pub fn trace_segment(
     Err(HypermeshError::UnknownClassification)
 }
 
-fn trace_plane_replacement_path(
+pub(crate) fn trace_plane_replacement_path(
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     winding: &[i32],
@@ -234,19 +234,23 @@ fn trace_plane_replacement_path(
     Err(HypermeshError::UnknownClassification)
 }
 
-fn affine_from_planes(planes: &[Plane; 3]) -> HypermeshResult<Point3> {
+pub(crate) fn affine_from_planes(planes: &[Plane; 3]) -> HypermeshResult<Point3> {
     intersect_three_planes(&planes[0], &planes[1], &planes[2])
         .to_affine_point()
         .map_err(|_| HypermeshError::UnknownClassification)
 }
 
+pub(crate) fn axis_plane_definition(point: &Point3) -> [Plane; 3] {
+    [
+        Plane::axis_aligned(0, point.x.clone()),
+        Plane::axis_aligned(1, point.y.clone()),
+        Plane::axis_aligned(2, point.z.clone()),
+    ]
+}
+
 fn axis_plane_defined_point(point: &Point3) -> PlaneDefinedPoint {
     PlaneDefinedPoint {
-        planes: [
-            Plane::axis_aligned(0, point.x.clone()),
-            Plane::axis_aligned(1, point.y.clone()),
-            Plane::axis_aligned(2, point.z.clone()),
-        ],
+        planes: axis_plane_definition(point),
     }
 }
 

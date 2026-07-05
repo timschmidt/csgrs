@@ -3,12 +3,14 @@
 use crate::bvh::ExactBvh;
 use crate::clip::{ClipSide, clip_polygon};
 use crate::error::HypermeshResult;
-use crate::geometry::{Aabb, Classification, axis_mut, axis_ref, compare_real};
+use crate::geometry::{Aabb, Classification, Plane, axis_mut, axis_ref, compare_real};
 use crate::intersection::{PairwiseIntersection, PairwiseIntersectionType, intersect_polygons};
 use crate::local_bsp::LocalBsp;
 use crate::output::ClassifiedPolygon;
 use crate::polygon::ConvexPolygon;
-use crate::segment_trace::classify_leaf_polygon;
+use crate::segment_trace::{
+    affine_from_planes, axis_plane_definition, classify_leaf_polygon, trace_plane_replacement_path,
+};
 use crate::winding::{Indicator, WindingPair, classify_polygon_output, propagate_wnv};
 use hyperlattice::{HomogeneousPoint3, Point3, Real};
 use hyperlimit::{
@@ -48,6 +50,8 @@ pub struct SubdivisionTask {
     pub bounds: Aabb,
     /// Reference point with known winding.
     pub ref_point: Point3,
+    /// Plane triples that certify constructions of `ref_point`.
+    pub ref_definitions: Vec<[crate::geometry::Plane; 3]>,
     /// Winding number at `ref_point`.
     pub ref_wnv: Vec<i32>,
     /// Recursive depth.
@@ -63,6 +67,7 @@ impl SubdivisionTask {
         ref_wnv: Vec<i32>,
     ) -> Self {
         Self {
+            ref_definitions: vec![axis_plane_definition(&ref_point)],
             polygons,
             bounds,
             ref_point,
@@ -309,13 +314,19 @@ fn subdivide_into_inner(
     }
 
     if !left_polys.is_empty() {
-        let (left_ref, left_wnv) =
-            compute_new_reference(&task.ref_point, &task.ref_wnv, &left_bounds, &task.polygons)?;
+        let (left_ref, left_ref_definitions, left_wnv) = compute_new_reference(
+            &task.ref_point,
+            &task.ref_definitions,
+            &task.ref_wnv,
+            &left_bounds,
+            &task.polygons,
+        )?;
         subdivide_into_inner(
             SubdivisionTask {
                 polygons: left_polys,
                 bounds: left_bounds,
                 ref_point: left_ref,
+                ref_definitions: left_ref_definitions,
                 ref_wnv: left_wnv,
                 depth: task.depth + 1,
             },
@@ -326,8 +337,9 @@ fn subdivide_into_inner(
     }
 
     if !right_polys.is_empty() {
-        let (right_ref, right_wnv) = compute_new_reference(
+        let (right_ref, right_ref_definitions, right_wnv) = compute_new_reference(
             &task.ref_point,
+            &task.ref_definitions,
             &task.ref_wnv,
             &right_bounds,
             &task.polygons,
@@ -337,6 +349,7 @@ fn subdivide_into_inner(
                 polygons: right_polys,
                 bounds: right_bounds,
                 ref_point: right_ref,
+                ref_definitions: right_ref_definitions,
                 ref_wnv: right_wnv,
                 depth: task.depth + 1,
             },
@@ -561,46 +574,91 @@ fn can_split_bounds(bounds: &Aabb) -> HypermeshResult<bool> {
 
 fn compute_new_reference(
     old_ref: &Point3,
+    old_ref_definitions: &[[Plane; 3]],
     old_wnv: &[i32],
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
-) -> HypermeshResult<(Point3, Vec<i32>)> {
+) -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)> {
     if is_valid_reference_for_bounds(old_ref, bounds, polygons)? {
-        return Ok((old_ref.clone(), old_wnv.to_vec()));
+        return Ok((
+            old_ref.clone(),
+            old_ref_definitions.to_vec(),
+            old_wnv.to_vec(),
+        ));
     }
 
     let projected = project_reference_point(old_ref, bounds)?;
     for target in reference_targets_from_projection(&projected, bounds, polygons)? {
-        if let Some(winding) = trace_reference_target(old_ref, old_wnv, bounds, polygons, &target)?
-        {
-            return Ok((target, winding));
+        if let Some(winding) = trace_reference_target(
+            old_ref,
+            old_ref_definitions,
+            old_wnv,
+            bounds,
+            polygons,
+            &target,
+        )? {
+            return Ok((target.point, target.definitions, winding));
         }
     }
 
     if let Some((target, winding)) =
-        support_plane_cell_reference(old_ref, old_wnv, bounds, polygons)?
+        support_plane_cell_reference(old_ref, old_ref_definitions, old_wnv, bounds, polygons)?
     {
-        return Ok((target, winding));
+        return Ok((target.point, target.definitions, winding));
     }
 
     Err(crate::error::HypermeshError::ReferencePropagationFailed)
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct ReferenceTarget {
+    point: Point3,
+    definitions: Vec<[Plane; 3]>,
+}
+
+impl ReferenceTarget {
+    fn axis_defined(point: Point3) -> Self {
+        Self {
+            definitions: vec![axis_plane_definition(&point)],
+            point,
+        }
+    }
+
+    fn with_definitions(point: Point3, definitions: Vec<[Plane; 3]>) -> Self {
+        Self { point, definitions }
+    }
+}
+
 fn trace_reference_target(
     old_ref: &Point3,
+    old_ref_definitions: &[[Plane; 3]],
     old_wnv: &[i32],
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
-    target: &Point3,
+    target: &ReferenceTarget,
 ) -> HypermeshResult<Option<Vec<i32>>> {
-    if !is_valid_reference_for_bounds(target, bounds, polygons)? {
+    if !is_valid_reference_for_bounds(&target.point, bounds, polygons)? {
         return Ok(None);
     }
-    match crate::segment_trace::trace_segment(old_ref, target, old_wnv, polygons) {
-        Ok(winding) => Ok(Some(winding)),
-        Err(crate::error::HypermeshError::UnknownClassification) => Ok(None),
-        Err(err) => Err(err),
+
+    match crate::segment_trace::trace_segment(old_ref, &target.point, old_wnv, polygons) {
+        Ok(winding) => return Ok(Some(winding)),
+        Err(crate::error::HypermeshError::UnknownClassification) => {}
+        Err(err) => return Err(err),
     }
+
+    for start_definition in old_ref_definitions {
+        for end_definition in &target.definitions {
+            match trace_plane_replacement_path(start_definition, end_definition, old_wnv, polygons)
+            {
+                Ok(winding) => return Ok(Some(winding)),
+                Err(crate::error::HypermeshError::UnknownClassification) => {}
+                Err(err) => return Err(err),
+            }
+        }
+    }
+
+    Ok(None)
 }
 
 fn is_valid_reference_for_bounds(
@@ -616,10 +674,13 @@ fn reference_targets_from_projection(
     projected: &Point3,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
-) -> HypermeshResult<Vec<Point3>> {
+) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut targets = Vec::new();
     if !point_lies_on_local_surface(projected, polygons)? {
-        targets.push(projected.clone());
+        push_unique_reference_target(
+            &mut targets,
+            ReferenceTarget::axis_defined(projected.clone()),
+        );
     }
 
     let mut axis_values = vec![Vec::new(), Vec::new(), Vec::new()];
@@ -631,7 +692,7 @@ fn reference_targets_from_projection(
                 push_unique_real(&mut axis_values[axis], value.clone());
                 let mut target = projected.clone();
                 *axis_mut(&mut target, axis) = value;
-                push_unique_point(&mut targets, target);
+                push_unique_reference_target(&mut targets, ReferenceTarget::axis_defined(target));
             }
         }
     }
@@ -643,7 +704,10 @@ fn reference_targets_from_projection(
                     let mut target = projected.clone();
                     *axis_mut(&mut target, first_axis) = first_value.clone();
                     *axis_mut(&mut target, second_axis) = second_value.clone();
-                    push_unique_point(&mut targets, target);
+                    push_unique_reference_target(
+                        &mut targets,
+                        ReferenceTarget::axis_defined(target),
+                    );
                 }
             }
         }
@@ -652,7 +716,10 @@ fn reference_targets_from_projection(
     for x in &axis_values[0] {
         for y in &axis_values[1] {
             for z in &axis_values[2] {
-                push_unique_point(&mut targets, Point3::new(x.clone(), y.clone(), z.clone()));
+                push_unique_reference_target(
+                    &mut targets,
+                    ReferenceTarget::axis_defined(Point3::new(x.clone(), y.clone(), z.clone())),
+                );
             }
         }
     }
@@ -665,27 +732,37 @@ fn push_unique_real(values: &mut Vec<Real>, value: Real) {
     }
 }
 
-fn push_unique_point(points: &mut Vec<Point3>, point: Point3) {
-    if !points.iter().any(|existing| existing == &point) {
-        points.push(point);
+fn push_unique_reference_target(targets: &mut Vec<ReferenceTarget>, target: ReferenceTarget) {
+    if !targets
+        .iter()
+        .any(|existing| existing.point == target.point)
+    {
+        targets.push(target);
     }
 }
 
 fn support_plane_cell_reference(
     old_ref: &Point3,
+    old_ref_definitions: &[[Plane; 3]],
     old_wnv: &[i32],
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
-) -> HypermeshResult<Option<(Point3, Vec<i32>)>> {
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     for margin in support_cell_margins(bounds, polygons.len() + 1)? {
         let Some(target) = support_plane_cell_target(bounds, polygons, &margin)? else {
             continue;
         };
-        if point_lies_on_any_support_plane(&target, polygons)? {
+        if point_lies_on_any_support_plane(&target.point, polygons)? {
             continue;
         }
-        if let Some(winding) = trace_reference_target(old_ref, old_wnv, bounds, polygons, &target)?
-        {
+        if let Some(winding) = trace_reference_target(
+            old_ref,
+            old_ref_definitions,
+            old_wnv,
+            bounds,
+            polygons,
+            &target,
+        )? {
             return Ok(Some((target, winding)));
         }
     }
@@ -696,7 +773,7 @@ fn support_plane_cell_target(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
     margin: &Real,
-) -> HypermeshResult<Option<Point3>> {
+) -> HypermeshResult<Option<ReferenceTarget>> {
     let mut halfspaces = aabb_core_halfspaces(bounds, margin)?;
     if halfspaces.is_empty() {
         return Ok(None);
@@ -714,7 +791,7 @@ fn support_plane_cell_target_from(
     margin: &Real,
     polygon_index: usize,
     halfspaces: &mut Vec<LimitPlane3>,
-) -> HypermeshResult<Option<Point3>> {
+) -> HypermeshResult<Option<ReferenceTarget>> {
     if polygon_index < polygons.len() {
         for positive in [false, true] {
             halfspaces.push(support_side_halfspace(
@@ -740,11 +817,22 @@ fn support_plane_cell_target_from(
         return Ok(None);
     }
 
-    let Some(witness) = halfspace_system_witness(&halfspaces)? else {
+    let Some(report) = halfspace_system_report(&halfspaces)? else {
+        return Ok(None);
+    };
+    let Some(witness) = report.witness else {
         return Ok(None);
     };
     if is_valid_reference_for_bounds(&witness, bounds, polygons)? {
-        Ok(Some(witness))
+        let definitions = reference_definitions_from_active_halfspaces(
+            &witness,
+            halfspaces,
+            report.active_planes,
+        )?;
+        Ok(Some(ReferenceTarget::with_definitions(
+            witness,
+            definitions,
+        )))
     } else {
         Ok(None)
     }
@@ -849,10 +937,6 @@ fn halfspace_system_is_feasible(halfspaces: &[LimitPlane3]) -> HypermeshResult<b
     ))
 }
 
-fn halfspace_system_witness(halfspaces: &[LimitPlane3]) -> HypermeshResult<Option<Point3>> {
-    Ok(halfspace_system_report(halfspaces)?.and_then(|report| report.witness))
-}
-
 fn halfspace_system_report(
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Option<hyperlimit::HalfspaceFeasibilityReport>> {
@@ -862,6 +946,85 @@ fn halfspace_system_report(
             Err(crate::error::HypermeshError::UnknownClassification)
         }
     }
+}
+
+fn reference_definitions_from_active_halfspaces(
+    witness: &Point3,
+    halfspaces: &[LimitPlane3],
+    active_planes: [Option<usize>; 3],
+) -> HypermeshResult<Vec<[Plane; 3]>> {
+    let axis_definition = axis_plane_definition(witness);
+    let mut definitions = Vec::new();
+    let mut active = Vec::new();
+    for index in active_planes.into_iter().flatten() {
+        let Some(halfspace) = halfspaces.get(index) else {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        };
+        let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
+        if !active.iter().any(|existing| existing == &plane) {
+            active.push(plane);
+        }
+    }
+
+    match active.len() {
+        3 => {
+            push_verified_definition(
+                &mut definitions,
+                [active[0].clone(), active[1].clone(), active[2].clone()],
+                witness,
+            )?;
+        }
+        2 => {
+            for axis in 0..3 {
+                push_verified_definition(
+                    &mut definitions,
+                    [
+                        active[0].clone(),
+                        active[1].clone(),
+                        axis_definition[axis].clone(),
+                    ],
+                    witness,
+                )?;
+            }
+        }
+        1 => {
+            for first_axis in 0..3 {
+                for second_axis in (first_axis + 1)..3 {
+                    push_verified_definition(
+                        &mut definitions,
+                        [
+                            active[0].clone(),
+                            axis_definition[first_axis].clone(),
+                            axis_definition[second_axis].clone(),
+                        ],
+                        witness,
+                    )?;
+                }
+            }
+        }
+        0 => {}
+        _ => return Err(crate::error::HypermeshError::UnknownClassification),
+    }
+
+    push_verified_definition(&mut definitions, axis_definition, witness)?;
+    Ok(definitions)
+}
+
+fn push_verified_definition(
+    definitions: &mut Vec<[Plane; 3]>,
+    definition: [Plane; 3],
+    witness: &Point3,
+) -> HypermeshResult<()> {
+    match affine_from_planes(&definition) {
+        Ok(point) if point == *witness => {
+            if !definitions.iter().any(|existing| existing == &definition) {
+                definitions.push(definition);
+            }
+        }
+        Ok(_) | Err(crate::error::HypermeshError::UnknownClassification) => {}
+        Err(err) => return Err(err),
+    }
+    Ok(())
 }
 
 fn point_lies_on_any_support_plane(
@@ -1046,6 +1209,16 @@ mod tests {
         Point3::new(r(x), r(y), r(z))
     }
 
+    fn axis_defs(point: &Point3) -> Vec<[Plane; 3]> {
+        vec![axis_plane_definition(point)]
+    }
+
+    fn definition_uses_non_axis_plane(definition: &[Plane; 3]) -> bool {
+        definition.iter().any(|plane| {
+            plane.normal != p(1, 0, 0) && plane.normal != p(0, 1, 0) && plane.normal != p(0, 0, 1)
+        })
+    }
+
     #[test]
     fn can_split_any_certified_positive_extent() {
         let bounds = Aabb::new(p(0, 0, 0), p(1, 0, 0));
@@ -1102,12 +1275,27 @@ mod tests {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
         assert_eq!(
-            trace_reference_target(&p(-1, -1, -1), &[0], &bounds, &[wall.clone()], &p(2, 2, 1))
-                .unwrap(),
+            trace_reference_target(
+                &p(-1, -1, -1),
+                &axis_defs(&p(-1, -1, -1)),
+                &[0],
+                &bounds,
+                &[wall.clone()],
+                &ReferenceTarget::axis_defined(p(2, 2, 1))
+            )
+            .unwrap(),
             None
         );
         assert_eq!(
-            trace_reference_target(&p(-1, -1, -1), &[0], &bounds, &[wall], &p(5, 2, 2)).unwrap(),
+            trace_reference_target(
+                &p(-1, -1, -1),
+                &axis_defs(&p(-1, -1, -1)),
+                &[0],
+                &bounds,
+                &[wall],
+                &ReferenceTarget::axis_defined(p(5, 2, 2))
+            )
+            .unwrap(),
             None
         );
     }
@@ -1129,8 +1317,14 @@ mod tests {
             .unwrap()
             .expect("strict support cell should have a feasible witness");
 
-        assert!(point_strictly_inside_bounds(&target, &bounds).unwrap());
-        assert!(!point_lies_on_any_support_plane(&target, &polygons).unwrap());
+        assert!(point_strictly_inside_bounds(&target.point, &bounds).unwrap());
+        assert!(!point_lies_on_any_support_plane(&target.point, &polygons).unwrap());
+        assert!(
+            target
+                .definitions
+                .iter()
+                .any(|definition| affine_from_planes(definition).unwrap() == target.point)
+        );
     }
 
     #[test]
@@ -1146,9 +1340,15 @@ mod tests {
             .unwrap()
             .expect("backtracking should find an alternate feasible support cell");
 
-        assert!(point_strictly_inside_bounds(&target, &bounds).unwrap());
-        assert!(!point_lies_on_any_support_plane(&target, &polygons).unwrap());
-        assert!(compare_real(&target.x, &r(6)).unwrap().is_gt());
+        assert!(point_strictly_inside_bounds(&target.point, &bounds).unwrap());
+        assert!(!point_lies_on_any_support_plane(&target.point, &polygons).unwrap());
+        assert!(compare_real(&target.point.x, &r(6)).unwrap().is_gt());
+        assert!(
+            target
+                .definitions
+                .iter()
+                .any(definition_uses_non_axis_plane)
+        );
     }
 
     #[test]
@@ -1160,14 +1360,52 @@ mod tests {
             support_only_polygon(Plane::axis_aligned(2, r(5))),
         ];
 
-        let (target, winding) =
-            support_plane_cell_reference(&p(-1, -1, -1), &[7], &bounds, &polygons)
-                .unwrap()
-                .expect("strict support cell target should trace from old reference");
+        let (target, winding) = support_plane_cell_reference(
+            &p(-1, -1, -1),
+            &axis_defs(&p(-1, -1, -1)),
+            &[7],
+            &bounds,
+            &polygons,
+        )
+        .unwrap()
+        .expect("strict support cell target should trace from old reference");
 
         assert_eq!(winding, vec![7]);
-        assert!(point_strictly_inside_bounds(&target, &bounds).unwrap());
-        assert!(!point_lies_on_any_support_plane(&target, &polygons).unwrap());
+        assert!(point_strictly_inside_bounds(&target.point, &bounds).unwrap());
+        assert!(!point_lies_on_any_support_plane(&target.point, &polygons).unwrap());
+        assert!(!target.definitions.is_empty());
+    }
+
+    #[test]
+    fn support_plane_cell_reference_retains_active_plane_definitions() {
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
+        let polygons = vec![
+            support_only_polygon(Plane::axis_aligned(0, r(5))),
+            support_only_polygon(Plane::axis_aligned(1, r(5))),
+            support_only_polygon(Plane::axis_aligned(2, r(5))),
+            support_only_polygon(Plane::from_coefficients(r(1), r(1), r(1), r(-15))),
+        ];
+
+        let (target, winding) = support_plane_cell_reference(
+            &p(-1, -1, -1),
+            &axis_defs(&p(-1, -1, -1)),
+            &[3],
+            &bounds,
+            &polygons,
+        )
+        .unwrap()
+        .expect("support-cell witness should be traceable");
+
+        assert_eq!(winding, vec![3]);
+        assert!(
+            target
+                .definitions
+                .iter()
+                .any(definition_uses_non_axis_plane)
+        );
+        for definition in &target.definitions {
+            assert_eq!(affine_from_planes(definition).unwrap(), target.point);
+        }
     }
 
     #[test]
@@ -1175,7 +1413,14 @@ mod tests {
         let bounds = Aabb::new(p(0, 0, 0), p(0, 0, 0));
         let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(0)))];
 
-        let err = compute_new_reference(&p(-1, -1, -1), &[0], &bounds, &polygons).unwrap_err();
+        let err = compute_new_reference(
+            &p(-1, -1, -1),
+            &axis_defs(&p(-1, -1, -1)),
+            &[0],
+            &bounds,
+            &polygons,
+        )
+        .unwrap_err();
 
         assert_eq!(
             err,
