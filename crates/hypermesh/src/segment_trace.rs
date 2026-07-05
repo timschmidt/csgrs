@@ -1119,6 +1119,19 @@ fn leaf_interior_definitions_from_active_halfspaces(
         }
     }
 
+    for halfspace in halfspaces {
+        let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
+        if plane == *support || plane == support.inverted() {
+            continue;
+        }
+        if !compare_real(&plane.expression_at_point(witness), &Real::zero())?.is_eq() {
+            continue;
+        }
+        if !active.iter().any(|existing| existing == &plane) {
+            active.push(plane);
+        }
+    }
+
     if active.len() >= 2 {
         for first in 0..active.len() {
             for second in (first + 1)..active.len() {
@@ -2120,6 +2133,37 @@ mod tests {
         let planes = &interior.planes[0];
         assert_eq!(affine_from_planes(planes).unwrap(), interior.point);
         assert_eq!(planes[0], leaf.support);
+    }
+
+    #[test]
+    fn leaf_interior_definitions_include_non_basis_active_halfspaces() {
+        let witness = p(1, 1, 1);
+        let support = Plane::axis_aligned(2, r(1));
+        let halfspaces = vec![
+            limit_plane_from_plane(&support),
+            limit_plane_from_plane(&support.inverted()),
+            LimitPlane3::new(p(1, 0, 0), r(-1)),
+            LimitPlane3::new(p(0, 1, 0), r(-1)),
+            LimitPlane3::new(p(1, 1, 1), r(-3)),
+        ];
+
+        let definitions = leaf_interior_definitions_from_active_halfspaces(
+            &witness,
+            &support,
+            &halfspaces,
+            [Some(0), Some(2), Some(3)],
+        )
+        .unwrap();
+
+        assert!(definitions.iter().any(|definition| {
+            definition[1..]
+                .iter()
+                .any(|plane| plane.normal == p(1, 1, 1))
+        }));
+        for definition in &definitions {
+            assert_eq!(definition[0], support);
+            assert_eq!(affine_from_planes(definition).unwrap(), witness);
+        }
     }
 
     #[test]
