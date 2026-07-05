@@ -575,6 +575,13 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<Point3>> {
             targets.push(witness);
         }
     }
+
+    for witness in shifted_halfspace_cell_vertex_witnesses(bounds, &halfspaces)? {
+        if !targets.iter().any(|existing| existing == &witness.point) {
+            targets.push(witness.point);
+        }
+    }
+
     Ok(targets)
 }
 
@@ -1586,6 +1593,18 @@ fn strict_normal_probe_targets(
         }
     }
 
+    for witness in shifted_halfspace_cell_vertex_witnesses(corridor, &halfspaces)? {
+        if let Some(probe) = build_probe_point(
+            &witness.point,
+            support,
+            &witness.halfspaces,
+            witness.active_planes,
+            &extra_planes,
+        )? {
+            push_unique_probe_point(&mut probes, probe);
+        }
+    }
+
     Ok(probes)
 }
 
@@ -1788,6 +1807,19 @@ fn strict_axis_probe_targets(
         }
     }
 
+    for witness in shifted_halfspace_cell_vertex_witnesses(corridor, &halfspaces)? {
+        if let Some(probe) = build_axis_probe_point(
+            &witness.point,
+            interior,
+            support,
+            axis,
+            &witness.halfspaces,
+            witness.active_planes,
+        )? {
+            push_unique_probe_point(&mut probes, probe);
+        }
+    }
+
     Ok(probes)
 }
 
@@ -1984,6 +2016,41 @@ fn strict_halfspace_cell_seeds_from_report(
     }
 
     Ok(seeds)
+}
+
+struct ShiftedHalfspaceWitness {
+    point: Point3,
+    halfspaces: Vec<LimitPlane3>,
+    active_planes: [Option<usize>; 3],
+}
+
+fn shifted_halfspace_cell_vertex_witnesses(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>> {
+    let mut witnesses: Vec<ShiftedHalfspaceWitness> = Vec::new();
+    for seed in feasible_halfspace_cell_vertices(halfspaces)? {
+        let shifted = shifted_halfspace_cell(bounds, halfspaces, &seed)?;
+        let shifted_report = halfspace_feasibility_report(&shifted)?;
+        if shifted_report.status != HalfspaceFeasibility::Feasible {
+            continue;
+        }
+        let Some(witness) = shifted_report.witness else {
+            continue;
+        };
+        if !point_strictly_inside_halfspace_cell(&witness, bounds, halfspaces)? {
+            continue;
+        }
+        if witnesses.iter().any(|existing| existing.point == witness) {
+            continue;
+        }
+        witnesses.push(ShiftedHalfspaceWitness {
+            point: witness,
+            halfspaces: shifted,
+            active_planes: shifted_report.active_planes,
+        });
+    }
+    Ok(witnesses)
 }
 
 fn halfspace_feasibility_report(
@@ -2231,6 +2298,21 @@ mod tests {
             assert!(compare_real(&witness.x, &r(4)).unwrap().is_lt());
             assert!(compare_real(&witness.y, &r(0)).unwrap().is_gt());
             assert!(compare_real(&witness.y, &r(6)).unwrap().is_lt());
+        }
+    }
+
+    #[test]
+    fn shifted_halfspace_cell_vertex_witnesses_return_strict_points() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+
+        let witnesses = shifted_halfspace_cell_vertex_witnesses(&bounds, &halfspaces).unwrap();
+
+        assert!(!witnesses.is_empty());
+        for witness in &witnesses {
+            assert!(
+                point_strictly_inside_halfspace_cell(&witness.point, &bounds, &halfspaces).unwrap()
+            );
         }
     }
 
