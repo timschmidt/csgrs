@@ -1183,13 +1183,14 @@ fn trace_plane_replacement_path_with_step_detours(
         winding,
         polygons,
         |current, next, attempt, polygons| {
-            trace_segment_with_detours_without_plane_replacement(
+            retryable_trace(trace_segment_from_definitions(
                 current,
                 next,
                 attempt,
                 polygons,
-                PLANE_REPLACEMENT_STEP_DETOUR_LIMIT,
-            )
+                &[axis_plane_definition(current)],
+                &[axis_plane_definition(next)],
+            ))
         },
     )
 }
