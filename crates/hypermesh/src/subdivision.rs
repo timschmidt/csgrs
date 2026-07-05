@@ -1300,6 +1300,25 @@ fn push_unique_reference_target(targets: &mut Vec<ReferenceTarget>, target: Refe
     }
 }
 
+fn extend_reference_targets_backtracking_unknown<T>(
+    targets: &mut Vec<ReferenceTarget>,
+    candidates: impl IntoIterator<Item = T>,
+    mut build: impl FnMut(T) -> HypermeshResult<Vec<ReferenceTarget>>,
+) -> HypermeshResult<()> {
+    for candidate in candidates {
+        match build(candidate) {
+            Ok(found) => {
+                for target in found {
+                    push_unique_reference_target(targets, target);
+                }
+            }
+            Err(crate::error::HypermeshError::UnknownClassification) => continue,
+            Err(err) => return Err(err),
+        }
+    }
+    Ok(())
+}
+
 fn projection_axis_escape_reference(
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
@@ -1781,16 +1800,16 @@ fn strict_projected_cell_targets(
         );
     }
 
-    for seed in strict_projected_cell_seeds_from_report(bounds, halfspaces, report)? {
-        for target in shifted_projected_cell_targets_from_seed(bounds, halfspaces, &seed)? {
-            push_unique_reference_target(&mut targets, target);
-        }
-    }
-    for vertex in feasible_support_cell_vertices(halfspaces)? {
-        for target in shifted_projected_cell_targets_from_seed(bounds, halfspaces, &vertex)? {
-            push_unique_reference_target(&mut targets, target);
-        }
-    }
+    extend_reference_targets_backtracking_unknown(
+        &mut targets,
+        strict_projected_cell_seeds_from_report(bounds, halfspaces, report)?,
+        |seed| shifted_projected_cell_targets_from_seed(bounds, halfspaces, &seed),
+    )?;
+    extend_reference_targets_backtracking_unknown(
+        &mut targets,
+        feasible_support_cell_vertices(halfspaces)?,
+        |vertex| shifted_projected_cell_targets_from_seed(bounds, halfspaces, &vertex),
+    )?;
 
     Ok(targets)
 }
@@ -2562,6 +2581,22 @@ mod tests {
         let targets = projected_reference_escape_targets(&p(-2, 2, 7), &bounds, &[]).unwrap();
 
         assert_eq!(targets, vec![ReferenceTarget::axis_defined(p(0, 2, 4))]);
+    }
+
+    #[test]
+    fn reference_target_collection_backtracks_after_uncertified_candidate() {
+        let mut targets = Vec::new();
+
+        extend_reference_targets_backtracking_unknown(&mut targets, [0, 1], |candidate| {
+            if candidate == 0 {
+                Err(crate::error::HypermeshError::UnknownClassification)
+            } else {
+                Ok(vec![ReferenceTarget::axis_defined(p(1, 2, 3))])
+            }
+        })
+        .unwrap();
+
+        assert_eq!(targets, vec![ReferenceTarget::axis_defined(p(1, 2, 3))]);
     }
 
     #[test]

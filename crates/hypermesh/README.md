@@ -111,7 +111,9 @@ fall through to later certified escape families instead of aborting the whole
 propagation step. When projected target construction yields no certified
 targets at all, those later escape families now fall back to the exact clamped
 projection anchor of the old reference instead of being skipped entirely. If those projected
-support cells still cannot be certified, the implementation next tries local
+support cells still cannot be certified, the implementation now also
+backtracks past uncertified shifted projected seeds and projected vertices
+instead of aborting the whole projected target family, and then it tries local
 axis-aligned
 escape corridors inside certified open intervals before the next surface hit or
 AABB boundary, using `hyperlimit` witness search instead of midpoint sampling
