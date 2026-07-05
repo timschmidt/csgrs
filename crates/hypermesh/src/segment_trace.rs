@@ -628,19 +628,8 @@ pub fn classify_leaf_polygon(
                 if !probe_reaches_adjacent_cell(&point.point, &probe.point, support, polygons)? {
                     continue;
                 }
-                let mut winding =
-                    retryable_trace(trace_segment(ref_point, &probe.point, ref_wnv, polygons))?;
-                if winding.is_none()
-                    && let Some(probe_planes) = &probe.planes
-                {
-                    winding = retryable_trace(trace_probe_from_reference_definitions(
-                        ref_point,
-                        ref_definitions,
-                        probe_planes,
-                        ref_wnv,
-                        polygons,
-                    ))?;
-                };
+                let winding =
+                    trace_probe_winding(ref_point, ref_definitions, &probe, ref_wnv, polygons)?;
                 let Some(mut winding) = winding else {
                     continue;
                 };
@@ -653,6 +642,30 @@ pub fn classify_leaf_polygon(
     }
 
     Err(HypermeshError::UnknownClassification)
+}
+
+fn trace_probe_winding(
+    ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
+    probe: &ProbePoint,
+    ref_wnv: &[i32],
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    let mut winding = retryable_trace(trace_segment(ref_point, &probe.point, ref_wnv, polygons))?;
+    if winding.is_none() {
+        let probe_planes = probe
+            .planes
+            .clone()
+            .unwrap_or_else(|| axis_plane_defined_point(&probe.point).planes);
+        winding = retryable_trace(trace_probe_from_reference_definitions(
+            ref_point,
+            ref_definitions,
+            &probe_planes,
+            ref_wnv,
+            polygons,
+        ))?;
+    }
+    Ok(winding)
 }
 
 fn trace_probe_from_reference_definitions(
@@ -1609,5 +1622,32 @@ mod tests {
         .unwrap();
 
         assert_eq!(winding, vec![-1]);
+    }
+
+    #[test]
+    fn axis_defined_probes_retry_plane_replacement_from_reference_definitions() {
+        let ref_point = p(0, 0, 0);
+        let ref_definitions = [[
+            Plane::axis_aligned(0, r(0)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::from_coefficients(r(1), r(1), r(1), r(0)),
+        ]];
+        let probe = ProbePoint {
+            point: p(2, 1, 0),
+            side: Classification::Positive,
+            planes: None,
+        };
+        let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+        wall.delta_w = vec![1];
+
+        assert_eq!(
+            trace_segment(&ref_point, &probe.point, &[0], &[wall.clone()]),
+            Err(HypermeshError::UnknownClassification)
+        );
+
+        let winding =
+            trace_probe_winding(&ref_point, &ref_definitions, &probe, &[0], &[wall]).unwrap();
+
+        assert_eq!(winding, Some(vec![0]));
     }
 }
