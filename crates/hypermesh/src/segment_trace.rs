@@ -2776,14 +2776,6 @@ fn strict_halfspace_cell_seeds_from_report(
         seeds.push(witness.clone());
     }
 
-    let vertices = feasible_halfspace_cell_vertices(halfspaces)?;
-    if let Some(seed) = centroid(&vertices)?
-        && point_strictly_inside_halfspace_cell(&seed, bounds, halfspaces)?
-        && !seeds.iter().any(|existing| existing == &seed)
-    {
-        seeds.push(seed);
-    }
-
     Ok(seeds)
 }
 
@@ -3145,20 +3137,19 @@ mod tests {
     }
 
     #[test]
-    fn shifted_halfspace_cell_witnesses_from_seed_include_shifted_centroid_seed() {
+    fn shifted_halfspace_cell_witnesses_from_seed_returns_only_strict_points() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
 
         let witnesses =
-            shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, &p(0, 0, 0)).unwrap();
+            shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, &p(2, 1, 3)).unwrap();
 
-        assert!(witnesses.iter().any(|witness| witness.point == p(1, 1, 1)));
-        assert!(
-            witnesses
-                .iter()
-                .find(|witness| witness.point == p(1, 1, 1))
-                .is_some_and(|witness| witness.active_planes == [None, None, None])
-        );
+        assert!(!witnesses.is_empty());
+        for witness in &witnesses {
+            assert!(
+                point_strictly_inside_halfspace_cell(&witness.point, &bounds, &halfspaces).unwrap()
+            );
+        }
     }
 
     #[test]

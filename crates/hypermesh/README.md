@@ -77,16 +77,16 @@ definitions even when the affine interior point itself came from
 centroid-style construction, and those retained definitions now include every
 exact witness-active leaf halfspace we can verify rather than only the
 feasibility basis planes. The shifted strict leaf cell now also contributes
-its own centroid-style strict seed and exact feasible vertices instead of
-collapsing to one chosen feasibility witness. Normal- and axis-direction probe witnesses now do
-the same for their strict witness cells instead of keeping only a hand-built
-definition family, and they now reuse any strict closed-cell feasibility
-witness that `hyperlimit` already provides before falling back to additional
-shifted-cell witnesses. Those shifted witness searches now also start from the
-exact feasible vertices of the local witness cell instead of only the direct
-witness plus one centroid-style strict seed, and each shifted witness cell now
-contributes its own strict seed family and exact feasible vertices instead of
-collapsing to one chosen feasibility witness. Axis-direction probes are now
+its own strict feasibility witness and exact feasible vertices instead of
+collapsing to one chosen feasibility witness. Normal- and axis-direction probe
+witnesses now do the same for their strict witness cells instead of keeping
+only a hand-built definition family, and they now reuse any strict closed-cell
+feasibility witness that `hyperlimit` already provides before falling back to
+additional shifted-cell witnesses. Those shifted witness searches now also
+start from the exact feasible vertices of the local witness cell rather than a
+centroid seed family, and each shifted witness cell now contributes its own
+strict witness family and exact feasible vertices instead of collapsing to one
+chosen feasibility witness. Axis-direction probes are now
 constructed from strict
 witness search in the closed axis corridor and desired support-side cell,
 rather than by midpoint sampling. Full
@@ -116,9 +116,8 @@ direct paths and arrangement-coordinate endpoint-box detours, cut by local
 vertex coordinates and exact endpoint-box surface crossings, when axis-ordered
 paths hit surfaces. Those detour points are now constructed from each
 certified cut endpoint box by first reusing any strict closed-cell feasibility
-witness that `hyperlimit` already provides, then retaining the strict interior
-cell seed and any additional strict shifted-cell witness instead of midpoint
-Cartesian sampling.
+witness that `hyperlimit` already provides, then retaining the remaining
+strict shifted-cell witness family instead of midpoint Cartesian sampling.
 Those detour witnesses now also retain replayable plane definitions, and
 chosen detour legs retry certified plane-replacement traces from those
 definitions after the axis-ordered/direct leg search fails. Retained-definition
