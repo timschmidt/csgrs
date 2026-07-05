@@ -128,7 +128,9 @@ Subdivision depth is a certification budget, not a permission to guess. Bounds
 remain splittable whenever any axis has certified positive extent; there is no
 coordinate-scale cutoff. When local polygon vertices provide an exact interior
 arrangement gap, subdivision now prefers that gap over a pure AABB midpoint for
-the next split plane. If a task reaches `max_depth` while it still contains
+the next split plane, and when vertex-only candidates do not improve the split
+it now also considers exact local pairwise-intersection segment endpoints
+before falling back to the midpoint. If a task reaches `max_depth` while it still contains
 more polygons than the leaf threshold and the bounds remain splittable,
 hypermesh attempts to certify the current task as a leaf using the same exact
 BSP/classification path. Enabled BSP leaves are rejected unless exact pairwise

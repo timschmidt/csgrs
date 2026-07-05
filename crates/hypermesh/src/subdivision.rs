@@ -684,7 +684,8 @@ fn select_subdivision_split(
 ) -> HypermeshResult<(usize, Real)> {
     let mut best_axis = bounds.longest_axis()?;
     let mut best_value = bounds.midpoint(best_axis);
-    let mut best_counts = split_child_counts(polygons, best_axis, &best_value)?;
+    let baseline_counts = split_child_counts(polygons, best_axis, &best_value)?;
+    let mut best_counts = baseline_counts;
 
     for axis in 0..3 {
         if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
@@ -696,6 +697,22 @@ fn select_subdivision_split(
                 best_counts = counts;
                 best_value = value;
                 best_axis = axis;
+            }
+        }
+    }
+
+    if best_counts == baseline_counts {
+        for axis in 0..3 {
+            if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
+                continue;
+            }
+            for value in intersection_split_candidates(bounds, polygons, axis)? {
+                let counts = split_child_counts(polygons, axis, &value)?;
+                if split_counts_strictly_better(counts, best_counts) {
+                    best_counts = counts;
+                    best_value = value;
+                    best_axis = axis;
+                }
             }
         }
     }
@@ -745,6 +762,45 @@ fn arrangement_split_candidates(
     update_axis_gap_candidates(&mut candidates, min, &values[0])?;
     update_axis_gap_candidates(&mut candidates, values.last().expect("non-empty"), max)?;
     Ok(candidates)
+}
+
+fn intersection_split_candidates(
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    axis: usize,
+) -> HypermeshResult<Vec<Real>> {
+    let min = axis_ref(&bounds.min, axis);
+    let max = axis_ref(&bounds.max, axis);
+    if !compare_real(min, max)?.is_lt() {
+        return Ok(Vec::new());
+    }
+
+    let bvh = ExactBvh::build(polygons)?;
+    let mut candidate_pairs = Vec::new();
+    bvh.intersect_pairs(&bvh, |left, right| {
+        if left < right {
+            candidate_pairs.push((left, right));
+        }
+    })?;
+
+    let mut values = Vec::new();
+    for (left, right) in candidate_pairs {
+        let intersection = intersect_polygons(&polygons[left], &polygons[right], right)?;
+        if intersection.kind != PairwiseIntersectionType::Segment {
+            continue;
+        }
+        let Some(segment) = intersection.segment else {
+            continue;
+        };
+        for point in [&segment.v0, &segment.v1] {
+            let value = axis_ref(point, axis);
+            if compare_real(value, min)?.is_gt() && compare_real(value, max)?.is_lt() {
+                push_unique_ordered_axis_value(&mut values, value.clone())?;
+            }
+        }
+    }
+
+    Ok(values)
 }
 
 fn axis_gap_candidates_between_values(values: &[Real]) -> HypermeshResult<Vec<(Real, Real)>> {
@@ -1714,6 +1770,23 @@ mod tests {
 
         assert_eq!(axis, 0);
         assert_eq!(value, r(5));
+    }
+
+    #[test]
+    fn select_subdivision_split_can_use_intersection_segment_coordinates() {
+        let bounds = Aabb::new(p(-3, 0, -1), p(3, 4, 1));
+        let horizontal =
+            crate::polygon::make_quad(&p(-3, 0, 0), &p(3, 0, 0), &p(3, 4, 0), &p(-3, 4, 0), 0, 0);
+        let vertical = make_triangle(&p(-2, 2, -1), &p(2, 2, -1), &p(1, 2, 1), 1, 0);
+
+        let candidates =
+            intersection_split_candidates(&bounds, &[horizontal.clone(), vertical.clone()], 0)
+                .unwrap();
+
+        assert_eq!(candidates, vec![q(-1, 2), q(3, 2)]);
+        let vertex_candidates =
+            arrangement_split_candidates(&bounds, &[horizontal, vertical], 0).unwrap();
+        assert!(!vertex_candidates.iter().any(|(_, value)| *value == q(1, 2)));
     }
 
     #[test]
