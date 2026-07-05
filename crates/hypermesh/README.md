@@ -26,12 +26,12 @@ collections are outside the supported model and are rejected before the boolean
 subdivision path.
 
 Predicate decisions are routed through the strict exact-predicate stack
-(`hyperlimit` and `hyperlattice` as support crates). A predicate, path trace,
-or classification that cannot be certified returns
-`UnknownClassification`; the algorithm must not silently use an approximate
-answer. In particular, arbitrary undecidable computable `Real` values remain
-outside any completeness claim when strict bounded refinement cannot decide the
-required sign.
+(`hyperlimit` and `hyperlattice` as support crates). A scalar predicate, path
+trace, reference propagation step, or classification that cannot be certified
+returns an explicit `HypermeshError`; the algorithm must not silently use an
+approximate answer. In particular, arbitrary undecidable computable `Real`
+values remain outside any completeness claim when strict bounded refinement
+cannot decide the required sign.
 
 The implementation is being aligned with the EMBER algorithm in `ember.pdf`.
 Completion is not yet claimed. Current general-path coverage includes
@@ -39,7 +39,7 @@ subdivision, face-local BSP splitting, exact pairwise intersection handling,
 certified winding-vector propagation by segment traces, and no-repair
 triangulation checks for the regression cases that have been promoted to the
 general path. Remaining gaps are tracked by code paths that can still return
-`UnknownClassification`.
+explicit certification errors.
 
 Leaf classification currently searches certified off-face probes from exact
 leaf interior points by stepping into the open interval before the nearest
@@ -66,9 +66,9 @@ strictly shrunken child AABB while greedily choosing a certified slack side of
 each local support plane. Segment tracing uses direct paths and
 arrangement-coordinate endpoint-box detours, cut by local vertex coordinates
 and exact endpoint-box surface crossings, when axis-ordered paths hit
-surfaces. If none trace cleanly, it reports `UnknownClassification` instead of
-using random/interior sampling. The full EMBER plane-replacement reference
-path construction remains unfinished.
+surfaces. If none trace cleanly, it reports `ReferencePropagationFailed`
+instead of using random/interior sampling. The full EMBER plane-replacement
+reference path construction remains unfinished.
 
 `EmberConfig::default()` runs only the general subdivision/BSP/classification
 path. The previous same-surface, disjoint-bound, strict-containment,
@@ -84,9 +84,11 @@ more polygons than the leaf threshold and the bounds remain splittable,
 hypermesh attempts to certify the current task as a leaf using the same exact
 BSP/classification path. Enabled BSP leaves are rejected unless exact pairwise
 checks prove they have no remaining interior segment intersections with local
-polygons. Hypermesh reports `UnknownClassification` if leaf classification or
-this isolation check fails before appending output. Full arrangement-isolation
-termination is still an implementation target.
+polygons. Hypermesh reports `SubdivisionDepthLimit` if the configured depth
+budget is reached before the current task can be certified as a leaf, and it
+reports `UnknownClassification` if leaf classification or this isolation check
+fails before appending output outside the depth-limit branch. Full
+arrangement-isolation termination is still an implementation target.
 
 `triangulate_and_resolve_certified` resolves exact duplicate vertices,
 duplicate faces, and T-junctions, but refuses non-empty outputs with boundary

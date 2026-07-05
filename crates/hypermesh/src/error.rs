@@ -40,6 +40,16 @@ pub enum HypermeshError {
     /// A scalar predicate could not certify its sign through exact predicate
     /// routes without choosing a precision budget.
     UnknownClassification,
+    /// Subdivision could not construct a certified child-cell reference point.
+    ReferencePropagationFailed,
+    /// A subdividable task exhausted the configured depth budget before a
+    /// certified leaf could be produced.
+    SubdivisionDepthLimit {
+        /// Depth at which subdivision stopped.
+        depth: usize,
+        /// Number of polygons remaining in the uncertified task.
+        polygon_count: usize,
+    },
     /// Certified output extraction found boundary edges.
     OpenOutput {
         /// Number of undirected edges used by exactly one triangle.
@@ -80,6 +90,16 @@ impl fmt::Display for HypermeshError {
                 "input mesh {mesh_index} has {boundary_edges} boundary edges"
             ),
             Self::UnknownClassification => f.write_str("could not certify scalar sign"),
+            Self::ReferencePropagationFailed => {
+                f.write_str("could not construct a certified subdivision reference")
+            }
+            Self::SubdivisionDepthLimit {
+                depth,
+                polygon_count,
+            } => write!(
+                f,
+                "subdivision reached depth {depth} with {polygon_count} uncertified polygons"
+            ),
             Self::OpenOutput {
                 boundary_edges,
                 non_manifold_edges,

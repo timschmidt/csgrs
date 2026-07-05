@@ -262,16 +262,28 @@ fn subdivide_into_inner(
 
     if task.depth >= config.max_depth {
         let mut certified_output = Vec::new();
-        let stats = process_leaf_into(
+        let stats = match process_leaf_into(
             &task.polygons,
             &task.bounds,
             &task.ref_point,
             &task.ref_wnv,
             indicator,
             &mut certified_output,
-        )?;
+        ) {
+            Ok(stats) => stats,
+            Err(crate::error::HypermeshError::UnknownClassification) => {
+                return Err(crate::error::HypermeshError::SubdivisionDepthLimit {
+                    depth: task.depth,
+                    polygon_count: task.polygons.len(),
+                });
+            }
+            Err(err) => return Err(err),
+        };
         if !stats.certified_complete {
-            return Err(crate::error::HypermeshError::UnknownClassification);
+            return Err(crate::error::HypermeshError::SubdivisionDepthLimit {
+                depth: task.depth,
+                polygon_count: task.polygons.len(),
+            });
         }
         output.extend(certified_output);
         return Ok(());
@@ -572,7 +584,7 @@ fn compute_new_reference(
         return Ok((target, winding));
     }
 
-    Err(crate::error::HypermeshError::UnknownClassification)
+    Err(crate::error::HypermeshError::ReferencePropagationFailed)
 }
 
 fn trace_reference_target(
@@ -1129,6 +1141,19 @@ mod tests {
     }
 
     #[test]
+    fn reference_propagation_reports_exhausted_construction() {
+        let bounds = Aabb::new(p(0, 0, 0), p(0, 0, 0));
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(0)))];
+
+        let err = compute_new_reference(&p(-1, -1, -1), &[0], &bounds, &polygons).unwrap_err();
+
+        assert_eq!(
+            err,
+            crate::error::HypermeshError::ReferencePropagationFailed
+        );
+    }
+
+    #[test]
     fn subdivide_into_keeps_output_unchanged_on_uncertified_failure() {
         let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
         wall.delta_w = vec![1];
@@ -1144,14 +1169,20 @@ mod tests {
             SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
             &indicator,
             SubdivisionConfig {
-                leaf_threshold: 1,
+                leaf_threshold: 0,
                 max_depth: 0,
             },
             &mut output,
         )
         .unwrap_err();
 
-        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+        assert_eq!(
+            err,
+            crate::error::HypermeshError::SubdivisionDepthLimit {
+                depth: 0,
+                polygon_count: 1
+            }
+        );
         assert_eq!(output, vec![sentinel]);
     }
 

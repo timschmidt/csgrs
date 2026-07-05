@@ -5,8 +5,8 @@
 //!
 //! The boolean kernel targets finite closed PWN triangle meshes represented
 //! with exact [`Real`] coordinates. Unsupported or uncertifiable configurations
-//! are reported as [`HypermeshError::UnknownClassification`] rather than being
-//! guessed with approximate topology. By default, boolean operations run the
+//! are reported as explicit [`HypermeshError`] values rather than being guessed
+//! with approximate topology. By default, boolean operations run the
 //! general EMBER subdivision/BSP/classification path; special-case boolean
 //! shortcuts are not used to rescue uncertified general results. Public boolean
 //! operations certify that the classified arrangement is already closed after
