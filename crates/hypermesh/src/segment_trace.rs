@@ -972,7 +972,7 @@ fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<InteriorLea
     }
 
     let mut points = Vec::with_capacity(vertices.len() + 1);
-    if let Some(point) = strict_leaf_cell_point(leaf, &center)? {
+    for point in strict_leaf_cell_points(leaf, &center)? {
         push_unique_interior_point(&mut points, point);
     }
     for candidate in shifted_edge_interior_points(leaf, &center)? {
@@ -1100,10 +1100,10 @@ fn push_unique_interior_point(points: &mut Vec<InteriorLeafPoint>, point: Interi
     }
 }
 
-fn strict_leaf_cell_point(
+fn strict_leaf_cell_points(
     leaf: &ConvexPolygon,
     strict_interior: &Point3,
-) -> HypermeshResult<Option<InteriorLeafPoint>> {
+) -> HypermeshResult<Vec<InteriorLeafPoint>> {
     let half = (Real::one() / Real::from(2)).map_err(|_| HypermeshError::UnknownClassification)?;
     let mut halfspaces = Vec::with_capacity(leaf.edges.len() + 2);
     halfspaces.push(limit_plane_from_plane(&leaf.support));
@@ -1112,7 +1112,7 @@ fn strict_leaf_cell_point(
     for edge in &leaf.edges {
         let margin = edge.expression_at_point(strict_interior);
         if classify_real(&margin)? != Classification::Negative {
-            return Ok(None);
+            return Ok(Vec::new());
         }
         halfspaces.push(limit_plane_from_plane(&inward_shifted_edge_plane(
             edge, &margin, &half,
@@ -1124,23 +1124,52 @@ fn strict_leaf_cell_point(
         PredicateOutcome::Unknown { .. } => return Err(HypermeshError::UnknownClassification),
     };
     if report.status != HalfspaceFeasibility::Feasible {
-        return Ok(None);
+        return Ok(Vec::new());
     }
-    let Some(witness) = report.witness else {
-        return Ok(None);
-    };
-    if !point_strictly_inside_leaf(&witness, leaf)? {
+
+    let mut points = Vec::new();
+    if let Some(witness) = report.witness.as_ref()
+        && let Some(point) =
+            build_strict_leaf_point(leaf, witness, &halfspaces, report.active_planes)?
+    {
+        push_unique_interior_point(&mut points, point);
+    }
+
+    let vertices = feasible_halfspace_cell_vertices(&halfspaces)?;
+    if let Some(seed) = centroid(&vertices)?
+        && let Some(point) = build_strict_leaf_point(leaf, &seed, &halfspaces, [None, None, None])?
+    {
+        push_unique_interior_point(&mut points, point);
+    }
+    for witness in vertices {
+        if let Some(point) =
+            build_strict_leaf_point(leaf, &witness, &halfspaces, [None, None, None])?
+        {
+            push_unique_interior_point(&mut points, point);
+        }
+    }
+
+    Ok(points)
+}
+
+fn build_strict_leaf_point(
+    leaf: &ConvexPolygon,
+    witness: &Point3,
+    halfspaces: &[LimitPlane3],
+    active_planes: [Option<usize>; 3],
+) -> HypermeshResult<Option<InteriorLeafPoint>> {
+    if !point_strictly_inside_leaf(witness, leaf)? {
         return Ok(None);
     }
 
     let planes = leaf_interior_definitions_from_active_halfspaces(
-        &witness,
+        witness,
         &leaf.support,
-        &halfspaces,
-        report.active_planes,
+        halfspaces,
+        active_planes,
     )?;
     Ok(Some(InteriorLeafPoint {
-        point: witness,
+        point: witness.clone(),
         planes,
     }))
 }
@@ -2525,12 +2554,14 @@ mod tests {
     }
 
     #[test]
-    fn strict_leaf_cell_point_retains_replayable_planes() {
+    fn strict_leaf_cell_points_retain_replayable_planes() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let center = p(1, 1, 1);
 
-        let interior = strict_leaf_cell_point(&leaf, &center)
+        let interior = strict_leaf_cell_points(&leaf, &center)
             .unwrap()
+            .into_iter()
+            .find(|point| !point.planes.is_empty())
             .expect("strict leaf halfspaces should have a feasible witness");
 
         assert!(point_strictly_inside_leaf(&interior.point, &leaf).unwrap());
@@ -2538,6 +2569,26 @@ mod tests {
         let planes = &interior.planes[0];
         assert_eq!(affine_from_planes(planes).unwrap(), interior.point);
         assert_eq!(planes[0], leaf.support);
+    }
+
+    #[test]
+    fn strict_leaf_cell_points_include_shifted_leaf_vertices() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let center = p(1, 1, 1);
+
+        let interiors = strict_leaf_cell_points(&leaf, &center).unwrap();
+
+        assert!(
+            interiors
+                .iter()
+                .any(|point| point.point == Point3::new(q(1, 2), q(1, 2), r(2)))
+        );
+        assert!(
+            interiors
+                .iter()
+                .find(|point| point.point == Point3::new(q(1, 2), q(1, 2), r(2)))
+                .is_some_and(|point| !point.planes.is_empty())
+        );
     }
 
     #[test]

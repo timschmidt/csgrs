@@ -64,7 +64,9 @@ inside the leaf so probe generation can retain multiple certified plane
 definitions even when the affine interior point itself came from
 centroid-style construction, and those retained definitions now include every
 exact witness-active leaf halfspace we can verify rather than only the
-feasibility basis planes. Normal- and axis-direction probe witnesses now do
+feasibility basis planes. The shifted strict leaf cell now also contributes
+its own centroid-style strict seed and exact feasible vertices instead of
+collapsing to one chosen feasibility witness. Normal- and axis-direction probe witnesses now do
 the same for their strict witness cells instead of keeping only a hand-built
 definition family, and they now reuse any strict closed-cell feasibility
 witness that `hyperlimit` already provides before falling back to additional
