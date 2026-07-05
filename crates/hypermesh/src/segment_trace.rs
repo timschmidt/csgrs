@@ -554,23 +554,24 @@ fn aabb_from_axis_intervals(intervals: [&(Real, Real); 3]) -> HypermeshResult<Aa
 
 fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<Point3>> {
     let halfspaces = aabb_core_halfspaces(bounds)?;
-    let Some(seed) = strict_halfspace_cell_seed(bounds, &halfspaces)? else {
-        return Ok(Vec::new());
-    };
-    let mut targets = vec![seed.clone()];
-    let shifted = shifted_halfspace_cell(bounds, &halfspaces, &seed)?;
-    let report = match classify_halfspace_feasibility3(&shifted) {
-        PredicateOutcome::Decided { value, .. } => value,
-        PredicateOutcome::Unknown { .. } => return Err(HypermeshError::UnknownClassification),
-    };
-    if report.status != HalfspaceFeasibility::Feasible {
-        return Ok(targets);
-    }
-    let Some(witness) = report.witness else {
-        return Ok(targets);
-    };
-    if point_strictly_inside_halfspace_cell(&witness, bounds, &halfspaces)? {
-        if !targets.iter().any(|existing| existing == &witness) {
+    let report = halfspace_feasibility_report(&halfspaces)?;
+    let mut targets = Vec::new();
+
+    for seed in strict_halfspace_cell_seeds_from_report(bounds, &halfspaces, &report)? {
+        if !targets.iter().any(|existing| existing == &seed) {
+            targets.push(seed.clone());
+        }
+        let shifted = shifted_halfspace_cell(bounds, &halfspaces, &seed)?;
+        let shifted_report = halfspace_feasibility_report(&shifted)?;
+        if shifted_report.status != HalfspaceFeasibility::Feasible {
+            continue;
+        }
+        let Some(witness) = shifted_report.witness else {
+            continue;
+        };
+        if point_strictly_inside_halfspace_cell(&witness, bounds, &halfspaces)?
+            && !targets.iter().any(|existing| existing == &witness)
+        {
             targets.push(witness);
         }
     }
@@ -1904,14 +1905,45 @@ fn strict_halfspace_cell_seed(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Option<Point3>> {
+    let report = halfspace_feasibility_report(halfspaces)?;
+    Ok(
+        strict_halfspace_cell_seeds_from_report(bounds, halfspaces, &report)?
+            .into_iter()
+            .next(),
+    )
+}
+
+fn strict_halfspace_cell_seeds_from_report(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: &hyperlimit::HalfspaceFeasibilityReport,
+) -> HypermeshResult<Vec<Point3>> {
+    let mut seeds = Vec::new();
+
+    if report.status == HalfspaceFeasibility::Feasible
+        && let Some(witness) = &report.witness
+        && point_strictly_inside_halfspace_cell(witness, bounds, halfspaces)?
+    {
+        seeds.push(witness.clone());
+    }
+
     let vertices = feasible_halfspace_cell_vertices(halfspaces)?;
-    let Some(seed) = centroid(&vertices)? else {
-        return Ok(None);
-    };
-    if point_strictly_inside_halfspace_cell(&seed, bounds, halfspaces)? {
-        Ok(Some(seed))
-    } else {
-        Ok(None)
+    if let Some(seed) = centroid(&vertices)?
+        && point_strictly_inside_halfspace_cell(&seed, bounds, halfspaces)?
+        && !seeds.iter().any(|existing| existing == &seed)
+    {
+        seeds.push(seed);
+    }
+
+    Ok(seeds)
+}
+
+fn halfspace_feasibility_report(
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<hyperlimit::HalfspaceFeasibilityReport> {
+    match classify_halfspace_feasibility3(halfspaces) {
+        PredicateOutcome::Decided { value, .. } => Ok(value),
+        PredicateOutcome::Unknown { .. } => Err(HypermeshError::UnknownClassification),
     }
 }
 
@@ -2152,6 +2184,19 @@ mod tests {
             assert!(compare_real(&witness.y, &r(0)).unwrap().is_gt());
             assert!(compare_real(&witness.y, &r(6)).unwrap().is_lt());
         }
+    }
+
+    #[test]
+    fn strict_halfspace_cell_seeds_include_direct_strict_feasibility_witness() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let direct = p(2, 1, 3);
+        let report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(direct.clone(), [None, None, None]);
+
+        let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
+
+        assert!(seeds.iter().any(|seed| seed == &direct));
     }
 
     #[test]

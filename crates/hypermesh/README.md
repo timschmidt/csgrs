@@ -92,8 +92,10 @@ Segment tracing uses
 direct paths and arrangement-coordinate endpoint-box detours, cut by local
 vertex coordinates and exact endpoint-box surface crossings, when axis-ordered
 paths hit surfaces. Those detour points are now constructed from each
-certified cut endpoint box by retaining the strict interior cell seed and any
-additional strict `hyperlimit` witness instead of midpoint Cartesian sampling.
+certified cut endpoint box by first reusing any strict closed-cell feasibility
+witness that `hyperlimit` already provides, then retaining the strict interior
+cell seed and any additional strict shifted-cell witness instead of midpoint
+Cartesian sampling.
 Chosen detour legs now retry the same axis-ordered then
 direct certified path search before the detour is abandoned. If none trace
 cleanly, it reports
