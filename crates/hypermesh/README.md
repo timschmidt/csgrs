@@ -85,13 +85,15 @@ reference point carries retained plane triples; projected/escaped references
 carry axis-plane triples, and support-cell witnesses are now constructed from
 closed support-side cells by enumerating exact feasible cell vertices, taking a
 strict interior centroid seed, and then asking `hyperlimit` for a replayable
-witness inside the inward-shifted strict cell. When direct tracing cannot
-certify a reference step, hypermesh retries certified plane-replacement traces
-between retained definitions. The same retained definitions are used again
-during leaf classification for plane-defined probes, and duplicate certified
-target points merge their retained definition sets instead of dropping later
-constructions. The support-cell fallback backtracks across alternate feasible
-support-side cells when a candidate target cannot be traced.
+witness inside the inward-shifted strict cell. Support-cell retained
+definitions now include every exact witness-active halfspace we can verify, not
+just the feasibility basis planes returned by `hyperlimit`. When direct tracing
+cannot certify a reference step, hypermesh retries certified plane-replacement
+traces between retained definitions. The same retained definitions are used
+again during leaf classification for plane-defined probes, and duplicate
+certified target points merge their retained definition sets instead of
+dropping later constructions. The support-cell fallback backtracks across
+alternate feasible support-side cells when a candidate target cannot be traced.
 Full EMBER plane-replacement coverage for every reference construction remains
 unfinished.
 

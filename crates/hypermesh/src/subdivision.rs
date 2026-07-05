@@ -1156,44 +1156,62 @@ fn reference_definitions_from_active_halfspaces(
         }
     }
 
-    match active.len() {
-        3 => {
-            push_verified_definition(
-                &mut definitions,
-                [active[0].clone(), active[1].clone(), active[2].clone()],
-                witness,
-            )?;
+    for halfspace in halfspaces {
+        let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
+        if !compare_real(&plane.expression_at_point(witness), &Real::zero())?.is_eq() {
+            continue;
         }
-        2 => {
+        if !active.iter().any(|existing| existing == &plane) {
+            active.push(plane);
+        }
+    }
+
+    for first in 0..active.len() {
+        for second in (first + 1)..active.len() {
+            for third in (second + 1)..active.len() {
+                push_verified_definition(
+                    &mut definitions,
+                    [
+                        active[first].clone(),
+                        active[second].clone(),
+                        active[third].clone(),
+                    ],
+                    witness,
+                )?;
+            }
+        }
+    }
+
+    for first in 0..active.len() {
+        for second in (first + 1)..active.len() {
             for axis in 0..3 {
                 push_verified_definition(
                     &mut definitions,
                     [
-                        active[0].clone(),
-                        active[1].clone(),
+                        active[first].clone(),
+                        active[second].clone(),
                         axis_definition[axis].clone(),
                     ],
                     witness,
                 )?;
             }
         }
-        1 => {
-            for first_axis in 0..3 {
-                for second_axis in (first_axis + 1)..3 {
-                    push_verified_definition(
-                        &mut definitions,
-                        [
-                            active[0].clone(),
-                            axis_definition[first_axis].clone(),
-                            axis_definition[second_axis].clone(),
-                        ],
-                        witness,
-                    )?;
-                }
+    }
+
+    for plane in &active {
+        for first_axis in 0..3 {
+            for second_axis in (first_axis + 1)..3 {
+                push_verified_definition(
+                    &mut definitions,
+                    [
+                        plane.clone(),
+                        axis_definition[first_axis].clone(),
+                        axis_definition[second_axis].clone(),
+                    ],
+                    witness,
+                )?;
             }
         }
-        0 => {}
-        _ => return Err(crate::error::HypermeshError::UnknownClassification),
     }
 
     push_verified_definition(&mut definitions, axis_definition, witness)?;
@@ -1833,6 +1851,29 @@ mod tests {
         );
         for definition in &target.definitions {
             assert_eq!(affine_from_planes(definition).unwrap(), target.point);
+        }
+    }
+
+    #[test]
+    fn support_reference_definitions_include_non_basis_active_halfspaces() {
+        let witness = p(1, 1, 1);
+        let halfspaces = vec![
+            axis_halfspace(0, false, r(1)),
+            axis_halfspace(1, false, r(1)),
+            axis_halfspace(2, false, r(1)),
+            LimitPlane3::new(p(1, 1, 1), r(-3)),
+        ];
+
+        let definitions = reference_definitions_from_active_halfspaces(
+            &witness,
+            &halfspaces,
+            [Some(0), Some(1), Some(2)],
+        )
+        .unwrap();
+
+        assert!(definitions.iter().any(definition_uses_non_axis_plane));
+        for definition in &definitions {
+            assert_eq!(affine_from_planes(definition).unwrap(), witness);
         }
     }
 
