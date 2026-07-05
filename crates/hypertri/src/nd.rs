@@ -997,7 +997,7 @@ impl TriangulationDataStructureD {
                 })
                 .collect::<Vec<_>>();
             let orientation = decide_hyperlimit_nd_sign(
-                hyperlimit::orient_d_with_policy(&simplex, nd_predicate_policy()),
+                hyperlimit::orient_d(&simplex),
                 "D-dimensional orientation",
             );
             let Ok(orientation) = orientation else {
@@ -1021,11 +1021,7 @@ impl TriangulationDataStructureD {
                     continue;
                 }
                 let sphere = decide_hyperlimit_nd_sign(
-                    hyperlimit::insphere_d_with_policy(
-                        &simplex,
-                        point.coordinates(),
-                        nd_predicate_policy(),
-                    ),
+                    hyperlimit::insphere_d(&simplex, point.coordinates()),
                     "D-dimensional in-sphere",
                 );
                 let Ok(sphere) = sphere else {
@@ -1856,7 +1852,7 @@ fn simplex_orientation(points: &[PointD], simplex: &[usize]) -> Result<Sign> {
         .map(|&index| points[index].coordinates.clone())
         .collect::<Vec<_>>();
     decide_hyperlimit_nd_sign(
-        hyperlimit::orient_d_with_policy(&coordinates, nd_predicate_policy()),
+        hyperlimit::orient_d(&coordinates),
         "D-dimensional orientation",
     )
 }
@@ -1871,11 +1867,7 @@ fn insphere_sign_for_query(points: &[PointD], simplex: &[usize], query: &PointD)
         .map(|&index| points[index].coordinates.clone())
         .collect::<Vec<_>>();
     decide_hyperlimit_nd_sign(
-        hyperlimit::insphere_d_with_policy(
-            &coordinates,
-            query.coordinates(),
-            nd_predicate_policy(),
-        ),
+        hyperlimit::insphere_d(&coordinates, query.coordinates()),
         "D-dimensional in-sphere",
     )
 }
@@ -1961,14 +1953,6 @@ fn bistellar_flip_reason(reason: &'static str) -> &'static str {
         "D-dimensional orientation" => "D-dimensional orientation",
         "D-dimensional in-sphere" => "D-dimensional in-sphere",
         _ => "D-dimensional flip validation failed",
-    }
-}
-
-fn nd_predicate_policy() -> hyperlimit::PredicatePolicy {
-    hyperlimit::PredicatePolicy {
-        allow_exact: true,
-        allow_refinement: true,
-        max_refinement_precision: Some(-4096),
     }
 }
 

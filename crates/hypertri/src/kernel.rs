@@ -8,7 +8,7 @@
 
 use crate::error::{Error, Result};
 use crate::types::{Point2, Real, Sign, TriangleLocation};
-use hyperlimit::{PredicateOutcome, PredicatePolicy};
+use hyperlimit::PredicateOutcome;
 use hyperreal::{RealSign, ZeroKnowledge};
 use std::cmp::Ordering;
 
@@ -136,11 +136,10 @@ impl Kernel for ExactKernel {
         // implementation carries Shewchuk-style robust-orientation discipline
         // and exact rational/common-scale schedules near their use.
         decide_hyperlimit_sign(
-            hyperlimit::orient2d_with_policy(
+            hyperlimit::orient2d(
                 &predicate_point(a),
                 &predicate_point(b),
                 &predicate_point(c),
-                triangulation_predicate_policy(),
             ),
             "orient2d",
         )
@@ -152,12 +151,11 @@ impl Kernel for ExactKernel {
         // prepared incircle facts remain centralized, matching Delaunay's empty
         // circle test while preserving Yap's object/predicate boundary.
         decide_hyperlimit_sign(
-            hyperlimit::incircle2d_with_policy(
+            hyperlimit::incircle2d(
                 &predicate_point(a),
                 &predicate_point(b),
                 &predicate_point(c),
                 &predicate_point(d),
-                triangulation_predicate_policy(),
             ),
             "incircle2d",
         )
@@ -218,14 +216,6 @@ fn map_real_sign(sign: RealSign) -> Sign {
 
 fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
     hyperlimit::Point2::new(point.x.clone(), point.y.clone())
-}
-
-const fn triangulation_predicate_policy() -> PredicatePolicy {
-    PredicatePolicy {
-        allow_exact: true,
-        allow_refinement: true,
-        max_refinement_precision: Some(-4096),
-    }
 }
 
 fn decide_hyperlimit_sign(

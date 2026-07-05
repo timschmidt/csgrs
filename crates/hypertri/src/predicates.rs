@@ -11,7 +11,7 @@ use crate::error::{Error, Result};
 use crate::kernel::Kernel;
 use crate::types::Point2;
 use crate::types::{Sign, TriangleLocation};
-use hyperlimit::{PredicateOutcome, PredicatePolicy};
+use hyperlimit::PredicateOutcome;
 
 pub use hyperlimit::SegmentIntersection;
 
@@ -47,11 +47,10 @@ pub(crate) fn point_on_segment(a: &Point2, b: &Point2, point: &Point2) -> Result
     // object/predicate separation; see Yap, "Towards Exact Geometric
     // Computation," Computational Geometry 7.1-2 (1997).
     decide_hyperlimit_bool(
-        hyperlimit::point_on_segment_with_policy(
+        hyperlimit::point_on_segment(
             &predicate_point(a),
             &predicate_point(b),
             &predicate_point(point),
-            triangulation_predicate_policy(),
         ),
         "point_on_segment",
     )
@@ -67,11 +66,10 @@ pub(crate) fn point_in_ring_even_odd(
     // Yap-style exact boundary checks. Hypertri supplies only index topology.
     let predicate_vertices: Vec<_> = vertices.iter().map(predicate_point).collect();
     decide_hyperlimit_bool(
-        hyperlimit::point_in_indexed_ring_even_odd_with_policy(
+        hyperlimit::point_in_indexed_ring_even_odd(
             &predicate_vertices,
             ring,
             &predicate_point(point),
-            triangulation_predicate_policy(),
         ),
         "point_in_indexed_ring_even_odd",
     )
@@ -89,12 +87,11 @@ pub(crate) fn segment_intersection(
     // hyperlimit, where the de Berg et al. classifier and Shewchuk/Yap exact
     // predicate discipline are documented near the determinant and interval
     // decisions. Hypertri consumes the decided combinatorial relation only.
-    match hyperlimit::classify_segment_intersection_with_policy(
+    match hyperlimit::classify_segment_intersection(
         &predicate_point(a),
         &predicate_point(b),
         &predicate_point(c),
         &predicate_point(d),
-        triangulation_predicate_policy(),
     ) {
         PredicateOutcome::Decided { value, .. } => Ok(value),
         PredicateOutcome::Unknown { .. } => Err(Error::PredicateUndecided {
@@ -105,14 +102,6 @@ pub(crate) fn segment_intersection(
 
 fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
     hyperlimit::Point2::new(point.x.clone(), point.y.clone())
-}
-
-const fn triangulation_predicate_policy() -> PredicatePolicy {
-    PredicatePolicy {
-        allow_exact: true,
-        allow_refinement: true,
-        max_refinement_precision: Some(-4096),
-    }
 }
 
 fn decide_hyperlimit_bool(

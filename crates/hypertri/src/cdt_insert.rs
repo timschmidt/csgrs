@@ -141,12 +141,11 @@ fn segment_intersection_point(
     let c = &points[second.from];
     let d = &points[second.to];
 
-    match hyperlimit::proper_segment_intersection_point_with_policy(
+    match hyperlimit::proper_segment_intersection_point(
         &predicate_point(a),
         &predicate_point(b),
         &predicate_point(c),
         &predicate_point(d),
-        cdt_insert_predicate_policy(),
     ) {
         hyperlimit::PredicateOutcome::Decided {
             value: Some(point), ..
@@ -179,14 +178,6 @@ fn constraints_share_endpoint(first: Constraint, second: Constraint) -> bool {
 
 fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
     hyperlimit::Point2::new(point.x.clone(), point.y.clone())
-}
-
-const fn cdt_insert_predicate_policy() -> hyperlimit::PredicatePolicy {
-    hyperlimit::PredicatePolicy {
-        allow_exact: true,
-        allow_refinement: true,
-        max_refinement_precision: Some(-4096),
-    }
 }
 
 fn sort_indices_on_segment(
@@ -236,7 +227,7 @@ fn compare_segment_axis_reals(
     // subsegment split order is therefore a scalar exact-ordering predicate,
     // which belongs with hyperlimit's Yap-style predicate pipeline rather than
     // with CDT topology.
-    match hyperlimit::compare_reals_with_policy(left, right, cdt_insert_predicate_policy()) {
+    match hyperlimit::compare_reals(left, right) {
         hyperlimit::PredicateOutcome::Decided { value, .. } => Ok(value),
         hyperlimit::PredicateOutcome::Unknown { .. } => {
             Err(Error::PredicateUndecided { predicate })

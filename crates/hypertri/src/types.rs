@@ -371,7 +371,7 @@ fn polygon_symbolic_dependencies(vertices: &[ExactPoint]) -> SymbolicDependencyM
 impl RingInputFacts {
     fn from_range(vertices: &[ExactPoint], start: usize, end: usize) -> Self {
         let ring = predicate_ring(vertices, start, end);
-        let facts = hyperlimit::ring2_facts_with_policy(&ring, fact_predicate_policy());
+        let facts = hyperlimit::ring2_facts(&ring);
 
         Self {
             start,
@@ -396,13 +396,6 @@ fn predicate_ring(vertices: &[ExactPoint], start: usize, end: usize) -> Vec<hype
 
 fn predicate_point(point: &ExactPoint) -> hyperlimit::Point2 {
     hyperlimit::Point2::new(point.x.clone(), point.y.clone())
-}
-
-fn fact_predicate_policy() -> hyperlimit::PredicatePolicy {
-    hyperlimit::PredicatePolicy {
-        allow_refinement: false,
-        ..hyperlimit::PredicatePolicy::STRICT
-    }
 }
 
 fn map_hyperlimit_sign(sign: hyperlimit::Sign) -> Sign {

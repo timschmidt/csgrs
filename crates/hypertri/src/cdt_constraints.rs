@@ -244,10 +244,9 @@ fn compare_points(points: &[Point2], left: usize, right: usize) -> Result<Orderi
     // Ring ordering is not CDT topology; it is a reusable exact point-order
     // predicate. Keep it in hyperlimit with the other Yap-style scalar
     // decisions so hypertri only chooses how ordered rings are consumed.
-    match hyperlimit::compare_point2_lexicographic_with_policy(
+    match hyperlimit::compare_point2_lexicographic(
         &predicate_point(&points[left]),
         &predicate_point(&points[right]),
-        constraint_predicate_policy(),
     ) {
         hyperlimit::PredicateOutcome::Decided { value, .. } => Ok(value),
         hyperlimit::PredicateOutcome::Unknown { .. } => Err(Error::PredicateUndecided {
@@ -258,12 +257,4 @@ fn compare_points(points: &[Point2], left: usize, right: usize) -> Result<Orderi
 
 fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
     hyperlimit::Point2::new(point.x.clone(), point.y.clone())
-}
-
-const fn constraint_predicate_policy() -> hyperlimit::PredicatePolicy {
-    hyperlimit::PredicatePolicy {
-        allow_exact: true,
-        allow_refinement: true,
-        max_refinement_precision: Some(-4096),
-    }
 }

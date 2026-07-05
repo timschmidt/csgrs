@@ -379,11 +379,10 @@ fn compare_distance_then_xy(
     right_pos: usize,
 ) -> Result<Ordering> {
     match decide_hyperlimit_ordering(
-        hyperlimit::compare_point2_distance_squared_with_policy(
+        hyperlimit::compare_point2_distance_squared(
             &predicate_point(&vertices[from]),
             &predicate_point(&vertices[ring[left_pos]]),
             &predicate_point(&vertices[ring[right_pos]]),
-            earcut_predicate_policy(),
         ),
         "compare_point2_distance_squared",
     )? {
@@ -403,10 +402,9 @@ fn compare_ring_positions(
 
 fn compare_point_indices(vertices: &[Point2], left: usize, right: usize) -> Result<Ordering> {
     decide_hyperlimit_ordering(
-        hyperlimit::compare_point2_lexicographic_with_policy(
+        hyperlimit::compare_point2_lexicographic(
             &predicate_point(&vertices[left]),
             &predicate_point(&vertices[right]),
-            earcut_predicate_policy(),
         ),
         "compare_point2_lexicographic",
     )
@@ -962,12 +960,11 @@ fn point_in_triangle_bbox(a: &Point2, b: &Point2, c: &Point2, point: &Point2) ->
     // Ericson, *Real-Time Collision Detection* (2005), but it is evaluated with
     // the crate's exact kernel rather than primitive floats.
     decide_hyperlimit_bool(
-        hyperlimit::point_in_triangle2_aabb_with_policy(
+        hyperlimit::point_in_triangle2_aabb(
             &predicate_point(a),
             &predicate_point(b),
             &predicate_point(c),
             &predicate_point(point),
-            earcut_predicate_policy(),
         ),
         "point_in_triangle2_aabb",
     )
@@ -976,11 +973,7 @@ fn point_in_triangle_bbox(a: &Point2, b: &Point2, c: &Point2, point: &Point2) ->
 fn ring_area_sign(vertices: &[Point2], ring: &[usize]) -> Result<Sign> {
     let predicate_vertices: Vec<_> = vertices.iter().map(predicate_point).collect();
     decide_hyperlimit_sign(
-        hyperlimit::indexed_ring_area_sign_with_policy(
-            &predicate_vertices,
-            ring,
-            earcut_predicate_policy(),
-        ),
+        hyperlimit::indexed_ring_area_sign(&predicate_vertices, ring),
         "indexed_ring_area_sign",
     )
 }
@@ -1002,14 +995,6 @@ fn same_point(vertices: &[ExactPoint], left: usize, right: usize) -> bool {
 
 fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
     hyperlimit::Point2::new(point.x.clone(), point.y.clone())
-}
-
-const fn earcut_predicate_policy() -> hyperlimit::PredicatePolicy {
-    hyperlimit::PredicatePolicy {
-        allow_exact: true,
-        allow_refinement: true,
-        max_refinement_precision: Some(-4096),
-    }
 }
 
 fn decide_hyperlimit_bool(
