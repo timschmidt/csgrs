@@ -79,7 +79,9 @@ still cannot be traced, it falls back to the full child-cell support search.
 Segment tracing uses
 direct paths and arrangement-coordinate endpoint-box detours, cut by local
 vertex coordinates and exact endpoint-box surface crossings, when axis-ordered
-paths hit surfaces. If none trace cleanly, it reports
+paths hit surfaces. Chosen detour legs now retry the same axis-ordered then
+direct certified path search before the detour is abandoned. If none trace
+cleanly, it reports
 `ReferencePropagationFailed` instead of using random/interior sampling. The
 reference point carries retained plane triples; projected/escaped references
 carry axis-plane triples, and support-cell witnesses are now constructed from

@@ -156,35 +156,66 @@ pub fn trace_segment(
     winding: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<WindingNumberVector> {
+    if let Some(winding) = trace_segment_without_detours(start, end, winding, polygons)? {
+        return Ok(winding);
+    }
+
+    if let Some(winding) = trace_segment_via_detours(
+        start,
+        end,
+        winding,
+        polygons,
+        &interior_box_detour_points(start, end, polygons)?,
+    )? {
+        return Ok(winding);
+    }
+
+    Err(HypermeshError::UnknownClassification)
+}
+
+fn trace_segment_without_detours(
+    start: &Point3,
+    end: &Point3,
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Option<WindingNumberVector>> {
     if let Some(winding) = retryable_trace(trace_axis_ordered_paths(start, end, winding, polygons))?
     {
-        return Ok(winding);
+        return Ok(Some(winding));
     }
 
     if let Some(traced) = retryable_trace(trace_direct_segment(start, end, winding, polygons))?
         && traced.valid
     {
-        return Ok(traced.winding);
+        return Ok(Some(traced.winding));
     }
 
-    for detour in interior_box_detour_points(start, end, polygons)? {
-        if detour == *start || detour == *end || point_lies_on_traced_surface(&detour, polygons)? {
+    Ok(None)
+}
+
+fn trace_segment_via_detours(
+    start: &Point3,
+    end: &Point3,
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    detours: &[Point3],
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    for detour in detours {
+        if *detour == *start || *detour == *end || point_lies_on_traced_surface(detour, polygons)? {
             continue;
         }
-        let Some(first_leg) =
-            retryable_trace(trace_axis_ordered_paths(start, &detour, winding, polygons))?
+        let Some(first_leg) = trace_segment_without_detours(start, detour, winding, polygons)?
         else {
             continue;
         };
-        let Some(second_leg) =
-            retryable_trace(trace_axis_ordered_paths(&detour, end, &first_leg, polygons))?
+        let Some(second_leg) = trace_segment_without_detours(detour, end, &first_leg, polygons)?
         else {
             continue;
         };
-        return Ok(second_leg);
+        return Ok(Some(second_leg));
     }
 
-    Err(HypermeshError::UnknownClassification)
+    Ok(None)
 }
 
 pub(crate) fn trace_plane_replacement_path(
@@ -1700,6 +1731,32 @@ mod tests {
             trace_probe_winding(&ref_point, &ref_definitions, &probe, &[0], &[wall]).unwrap();
 
         assert_eq!(winding, Some(vec![0]));
+    }
+
+    #[test]
+    fn detour_legs_retry_direct_paths_when_axis_order_fails() {
+        let blockers = vec![
+            make_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0),
+            make_triangle(&p(0, 1, 0), &p(1, 1, 0), &p(0, 2, 0), 0, 1),
+            make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 0, 2),
+        ];
+
+        assert_eq!(
+            trace_axis_ordered_paths(&p(0, 0, 0), &p(1, 1, 1), &[0], &blockers),
+            Err(HypermeshError::UnknownClassification)
+        );
+        assert_eq!(
+            trace_direct_segment(&p(0, 0, 0), &p(1, 1, 1), &[0], &blockers)
+                .unwrap()
+                .winding,
+            vec![0]
+        );
+
+        let traced =
+            trace_segment_via_detours(&p(0, 0, 0), &p(2, 2, 2), &[0], &blockers, &[p(1, 1, 1)])
+                .unwrap();
+
+        assert_eq!(traced, Some(vec![0]));
     }
 
     #[test]
