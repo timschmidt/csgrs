@@ -1,9 +1,10 @@
 //! Shared sign-resolution helpers for predicate pipelines.
 
+use crate::predicate::PredicatePolicy;
 use crate::predicate::{
-    Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign, SignKnowledge,
+    Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign, SignKnowledge,
 };
-use crate::real::{sign_knowledge_from_real_facts, RealPredicateExt};
+use crate::real::{RealPredicateExt, sign_knowledge_from_real_facts};
 use hyperreal::{Real, ZeroKnowledge};
 
 /// Resolve a Real sign through the common predicate pipeline.
@@ -13,7 +14,7 @@ use hyperreal::{Real, ZeroKnowledge};
 /// certify signs that are already exposed by the computed Real value.
 pub(crate) fn resolve_real_sign(
     value: &Real,
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
     filter: impl FnOnce() -> Option<PredicateOutcome<Sign>>,
     exact: impl FnOnce() -> Option<Sign>,
     unknown_need: RefinementNeed,
@@ -38,17 +39,17 @@ pub(crate) fn resolve_real_sign(
         return outcome;
     }
 
-    if let Some(outcome) = exact_real_sign_if_allowed(value, policy) {
+    if let Some(outcome) = exact_real_sign(value) {
         crate::trace_dispatch!("hyperlimit", "resolve_real_sign", "exact-real-facts");
         return outcome;
     }
 
-    if let Some(outcome) = exact_evaluation_if_allowed(policy, exact) {
+    if let Some(outcome) = exact_evaluation(exact) {
         crate::trace_dispatch!("hyperlimit", "resolve_real_sign", "exact-predicate");
         return outcome;
     }
 
-    if let Some(outcome) = refine_real_sign_if_allowed(value, policy) {
+    if let Some(outcome) = refine_real_sign(value) {
         crate::trace_dispatch!("hyperlimit", "resolve_real_sign", "real-refinement");
         return outcome;
     }
@@ -88,15 +89,7 @@ pub(crate) fn map_outcome<T, U>(
     }
 }
 
-fn exact_real_sign_if_allowed(
-    value: &Real,
-    policy: PredicatePolicy,
-) -> Option<PredicateOutcome<Sign>> {
-    if !policy.allow_exact {
-        crate::trace_dispatch!("hyperlimit", "exact_real_sign", "disabled");
-        return None;
-    }
-
+fn exact_real_sign(value: &Real) -> Option<PredicateOutcome<Sign>> {
     let facts = value.real_facts();
     if !facts.exact_rational {
         crate::trace_dispatch!("hyperlimit", "exact_real_sign", "not-exact-real");
@@ -123,32 +116,15 @@ fn exact_real_sign_if_allowed(
     }
 }
 
-fn exact_evaluation_if_allowed(
-    policy: PredicatePolicy,
-    exact: impl FnOnce() -> Option<Sign>,
-) -> Option<PredicateOutcome<Sign>> {
-    if !policy.allow_exact {
-        crate::trace_dispatch!("hyperlimit", "exact_evaluation", "disabled");
-        return None;
-    }
-
+fn exact_evaluation(exact: impl FnOnce() -> Option<Sign>) -> Option<PredicateOutcome<Sign>> {
     exact().map(|sign| {
         crate::trace_dispatch!("hyperlimit", "exact_evaluation", "decided");
         PredicateOutcome::decided(sign, Certainty::Exact, Escalation::Exact)
     })
 }
 
-fn refine_real_sign_if_allowed(
-    value: &Real,
-    policy: PredicatePolicy,
-) -> Option<PredicateOutcome<Sign>> {
-    if !policy.allow_refinement {
-        crate::trace_dispatch!("hyperlimit", "refine_real_sign", "disabled");
-        return None;
-    }
-
-    let precision = policy.max_refinement_precision?;
-    match value.refine_sign_knowledge_until(precision) {
+fn refine_real_sign(value: &Real) -> Option<PredicateOutcome<Sign>> {
+    match value.refine_sign_knowledge_until(PredicatePolicy::MAX_REFINEMENT_PRECISION) {
         SignKnowledge::Known { sign, certainty } => {
             crate::trace_dispatch!("hyperlimit", "refine_real_sign", "decided");
             Some(PredicateOutcome::decided(
@@ -260,8 +236,6 @@ fn multiply_sign(left: Sign, right: Sign) -> Sign {
 
 #[cfg(test)]
 mod tests {
-    use core::cell::Cell;
-
     use super::*;
     use hyperreal::Rational;
 
@@ -308,34 +282,5 @@ mod tests {
             ),
             PredicateOutcome::decided(Sign::Positive, Certainty::Exact, Escalation::Exact)
         );
-    }
-
-    #[test]
-    fn resolve_real_sign_does_not_call_exact_evaluation_when_policy_disallows_exact() {
-        // The value is not structurally sign-known, which keeps this test
-        // focused on the exact-callback policy gate instead of the earlier
-        // structural short-circuit.
-        let value = Real::pi() - Real::new(Rational::fraction(103_993, 33_102).unwrap());
-        let called = Cell::new(false);
-        let policy = PredicatePolicy {
-            allow_exact: false,
-            allow_refinement: false,
-            ..PredicatePolicy::STRICT
-        };
-
-        assert_eq!(
-            resolve_real_sign(
-                &value,
-                policy,
-                || None,
-                || {
-                    called.set(true);
-                    Some(Sign::Positive)
-                },
-                RefinementNeed::ExactArithmetic,
-            ),
-            PredicateOutcome::unknown(RefinementNeed::ExactArithmetic, Escalation::Undecided)
-        );
-        assert!(!called.get());
     }
 }

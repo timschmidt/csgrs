@@ -7,14 +7,14 @@
 calls return both the classified result and provenance for how the result was decided.
 
 The crate is not a polygon, mesh, BSP, CSG, or intersection engine. It owns reusable
-predicate semantics and escalation policy; object topology belongs in the higher crate
+predicate semantics and strict escalation; object topology belongs in the higher crate
 that owns the geometry.
 
 ## Hyper Ecosystem
 
-`hyperlimit` is the shared exact decision layer. It owns predicate semantics, policy,
-classification enums, prepared predicate views, and construction-session provenance;
-object storage stays in the crate that owns the geometry.
+`hyperlimit` is the shared exact decision layer. It owns predicate semantics, strict
+escalation, classification enums, prepared predicate views, and construction-session
+provenance; object storage stays in the crate that owns the geometry.
 
 - [hyperreal](https://github.com/timschmidt/hyperreal): scalar values, structural facts,
   and bounded refinement.
@@ -23,7 +23,7 @@ object storage stays in the crate that owns the geometry.
 - [hypercurve](https://github.com/timschmidt/hypercurve),
   [hypertri](https://github.com/timschmidt/hypertri), and
   [hypermesh](https://github.com/timschmidt/hypermesh): geometry/topology crates that
-  should use shared predicate policy rather than local epsilon rules.
+  should use shared strict predicates rather than local epsilon rules.
 - [hypersolve](https://github.com/timschmidt/hypersolve),
   [hyperpath](https://github.com/timschmidt/hyperpath),
   [hyperdrc](https://github.com/timschmidt/hyperdrc), and
@@ -45,7 +45,7 @@ solver active sets.
 
 `hyperlimit` makes the escalation ladder part of the API. It uses structural facts,
 exact reducers, certified interval/ball filters, and bounded `Real` refinement. If the
-configured policy cannot certify a result, it returns `Unknown` with provenance rather
+strict escalation cannot certify a result, it returns `Unknown` with provenance rather
 than inventing a float decision.
 
 ## Main Types
@@ -53,11 +53,12 @@ than inventing a float decision.
 - `Point2`, `Point3`, point facts, shared-scale point views, `HomogeneousPoint3`, and
   `HomogeneousLine3` are predicate-facing re-exports of lattice-owned object carriers.
 - `Plane3`, `Plane3Facts`, `PreparedPlane3`, and homogeneous plane-incidence helpers
-  keep 3D sidedness and projective incidence under predicate policy.
+  keep 3D sidedness and projective incidence under strict predicates.
 - `PredicateOutcome<T>`, `PredicateReport<T>`, `PredicateCertificate`, `Certainty`,
   `Escalation`, `PredicatePrecisionStage`, and `PredicateApiSemantics` describe what was
   decided and how.
-- `PredicatePolicy` controls refinement and approximate-edge behavior.
+- Predicate escalation uses the single strict exact/refined path; callers do not
+  select alternate policies.
 - `Sign`, `LineSide`, `PlaneSide`, `TriangleLocation`, `SegmentIntersection`,
   `TriangleTriangleIntersection`, `RingPointLocation`, interval, and AABB
   classifications are the common result enums.
@@ -81,8 +82,8 @@ than inventing a float decision.
 
 Predicate coordinates are `Real` values. The resolver tries exact structural facts,
 determinant term facts, exact reducers, certified interval/ball filters, and bounded
-`Real` refinement. Approximate edge policy is explicit and labeled; it is not proof
-producing. If policy cannot prove a result, the public result is `Unknown`.
+`Real` refinement. Approximate edge metadata is explicit and labeled; it is not proof
+producing. If strict escalation cannot prove a result, the public result is `Unknown`.
 
 Higher crates should carry object facts such as sparse coordinates, ring structure,
 plane facts, or prepared bounds, but the final topology-changing decision should remain
@@ -101,7 +102,7 @@ sign or relation, the result stays `Unknown` rather than forcing unbounded arith
 structural zero/sign facts, prepared point/segment/triangle/AABB facts, determinant
 schedule hints, certified filters, and versioned prepared objects before generic
 refinement. Optional batch APIs and the `parallel` feature let callers evaluate many
-independent predicates under the same policy.
+independent predicates through the same strict path.
 
 Dispatch tracing exists to show whether predicates are using structural facts, exact
 reducers, filters, bounded refinement, or fallback paths.
@@ -133,7 +134,7 @@ Version `0.4.0` is an early but usable predicate crate. It currently includes:
 - prepared segment, triangle, AABB, line, circle/sphere, plane, and halfspace-system
   helpers for repeated decisions;
 - `PredicateOutcome`, `PredicateReport`, `PredicateCertificate`, certainty,
-  precision-stage, API-semantics, and policy types;
+  precision-stage, and API-semantics types;
 - versioned sessions, construction certificates, cached approximate-view labels, and
   optional parallel batch APIs.
 

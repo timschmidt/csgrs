@@ -8,7 +8,7 @@ pub type Result<T> = core::result::Result<T, PredicateError>;
 /// Errors that can occur while evaluating a predicate.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum PredicateError {
-    /// The selected policy requires a Real predicate capability that is unavailable.
+    /// Strict predicate escalation requires a Real predicate capability that is unavailable.
     CapabilityUnavailable(&'static str),
     /// Real refinement or exact evaluation failed.
     Real(&'static str),

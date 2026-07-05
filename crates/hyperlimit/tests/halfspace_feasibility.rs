@@ -1,6 +1,5 @@
 use hyperlimit::{
-    HalfspaceFeasibility, Plane3, Point3, PredicateOutcome, PredicatePolicy,
-    classify_halfspace_feasibility3,
+    HalfspaceFeasibility, Plane3, Point3, PredicateOutcome, classify_halfspace_feasibility3,
 };
 use hyperreal::{Rational, Real};
 
@@ -47,12 +46,7 @@ fn halfspace_feasibility_accepts_origin_for_unit_box() {
     assert_eq!(report.status, HalfspaceFeasibility::Feasible);
     assert_eq!(report.witness, Some(pi(0, 0, 0)));
     assert_eq!(report.active_planes, [None, None, None]);
-    assert_eq!(
-        report
-            .validate_against_planes(&planes, PredicatePolicy::default())
-            .value(),
-        Some(true)
-    );
+    assert_eq!(report.validate_against_planes(&planes).value(), Some(true));
 }
 
 #[test]
@@ -64,12 +58,7 @@ fn halfspace_feasibility_finds_single_plane_projection_when_origin_fails() {
     assert_eq!(report.status, HalfspaceFeasibility::Feasible);
     assert_eq!(report.witness, Some(pi(2, 0, 0)));
     assert_eq!(report.active_planes[0], Some(0));
-    assert_eq!(
-        report
-            .validate_against_planes(&planes, PredicatePolicy::default())
-            .value(),
-        Some(true)
-    );
+    assert_eq!(report.validate_against_planes(&planes).value(), Some(true));
 }
 
 #[test]
@@ -120,12 +109,7 @@ fn halfspace_feasibility_rejects_inconsistent_parallel_slabs() {
         .expect("opposed slabs should produce a two-plane Farkas certificate");
     assert_eq!(certificate.active_planes, [Some(0), Some(1), None, None]);
     assert_eq!(certificate.offset_sum, r(1));
-    assert_eq!(
-        report
-            .validate_against_planes(&planes, PredicatePolicy::default())
-            .value(),
-        Some(true)
-    );
+    assert_eq!(report.validate_against_planes(&planes).value(), Some(true));
 }
 
 #[test]
@@ -143,9 +127,7 @@ fn halfspace_feasibility_rejects_zero_normal_positive_offset() {
     assert_eq!(certificate.active_planes, [Some(0), None, None, None]);
     assert_eq!(certificate.offset_sum, r(1));
     assert_eq!(
-        certificate
-            .validate_against_planes(&planes, PredicatePolicy::default())
-            .value(),
+        certificate.validate_against_planes(&planes).value(),
         Some(true)
     );
 }
@@ -172,9 +154,7 @@ fn halfspace_feasibility_reports_four_plane_farkas_certificate() {
     );
     assert_eq!(certificate.offset_sum, r(1));
     assert_eq!(
-        certificate
-            .validate_against_planes(&planes, PredicatePolicy::default())
-            .value(),
+        certificate.validate_against_planes(&planes).value(),
         Some(true)
     );
 }

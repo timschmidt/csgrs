@@ -5,10 +5,11 @@
 //! box or sweep-line data structures; higher crates own those objects and call
 //! this module for certified interval decisions.
 
+use crate::predicate::PredicatePolicy;
 use core::cmp::Ordering;
 
 use crate::classify::{ClosedIntervalIntersection, RealIntervalLocation};
-use crate::predicate::{Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed};
+use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed};
 use crate::predicates::order::compare_reals_with_policy;
 use hyperreal::Real;
 
@@ -36,7 +37,7 @@ pub fn classify_real_closed_interval(
 /// The numerical boundary follows Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997): every comparison is a certified sign,
 /// not a primitive-float tolerance.
-pub fn classify_real_closed_interval_with_policy(
+pub(crate) fn classify_real_closed_interval_with_policy(
     value: &Real,
     first: &Real,
     second: &Real,
@@ -92,7 +93,7 @@ pub fn real_in_closed_interval(
 
 /// Return whether `value` lies in a closed interval with an explicit predicate
 /// escalation policy.
-pub fn real_in_closed_interval_with_policy(
+pub(crate) fn real_in_closed_interval_with_policy(
     value: &Real,
     first: &Real,
     second: &Real,
@@ -130,7 +131,7 @@ pub fn classify_closed_interval_intersection(
 /// Endpoint order does not matter for either interval. `Touching` means the
 /// intervals share exactly one endpoint value, which is a useful distinction for
 /// curve splitting, sweep events, and conservative broad-phase pruning.
-pub fn classify_closed_interval_intersection_with_policy(
+pub(crate) fn classify_closed_interval_intersection_with_policy(
     first_start: &Real,
     first_end: &Real,
     second_start: &Real,
@@ -212,7 +213,7 @@ pub fn closed_intervals_intersect(
 
 /// Return whether two closed Real intervals intersect with an explicit
 /// predicate escalation policy.
-pub fn closed_intervals_intersect_with_policy(
+pub(crate) fn closed_intervals_intersect_with_policy(
     first_start: &Real,
     first_end: &Real,
     second_start: &Real,

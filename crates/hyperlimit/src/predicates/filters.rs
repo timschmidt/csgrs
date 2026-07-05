@@ -7,13 +7,14 @@
 //! when it produces a certificate or a bounded non-decision; see Yap, "Towards
 //! Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
 
+use crate::predicate::PredicatePolicy;
 use core::cmp::Ordering;
 
 use hyperreal::Real;
 
 use crate::predicate::{
-    Certainty, Escalation, PredicateCertificate, PredicateOutcome, PredicatePolicy,
-    PredicateReport, RefinementNeed, Sign,
+    Certainty, Escalation, PredicateCertificate, PredicateOutcome, PredicateReport, RefinementNeed,
+    Sign,
 };
 use crate::predicates::order::compare_reals_report_with_policy;
 
@@ -36,7 +37,7 @@ pub fn certified_interval_sign_report(first: &Real, second: &Real) -> PredicateR
 }
 
 /// Try to certify a sign from an exact closed interval enclosure with policy.
-pub fn certified_interval_sign_report_with_policy(
+pub(crate) fn certified_interval_sign_report_with_policy(
     first: &Real,
     second: &Real,
     policy: PredicatePolicy,
@@ -70,7 +71,7 @@ pub fn certified_ball_sign_report(center: &Real, radius: &Real) -> PredicateRepo
 }
 
 /// Try to certify a sign from an exact closed ball enclosure with policy.
-pub fn certified_ball_sign_report_with_policy(
+pub(crate) fn certified_ball_sign_report_with_policy(
     center: &Real,
     radius: &Real,
     policy: PredicatePolicy,
@@ -100,7 +101,7 @@ pub fn certified_ball_sign(center: &Real, radius: &Real) -> Option<PredicateOutc
 }
 
 /// Try to certify a sign from an exact closed ball enclosure with policy.
-pub fn certified_ball_sign_with_policy(
+pub(crate) fn certified_ball_sign_with_policy(
     center: &Real,
     radius: &Real,
     policy: PredicatePolicy,
@@ -121,16 +122,12 @@ pub fn certified_interval_sign(first: &Real, second: &Real) -> Option<PredicateO
 }
 
 /// Try to certify a sign from an exact closed interval enclosure with policy.
-pub fn certified_interval_sign_with_policy(
+pub(crate) fn certified_interval_sign_with_policy(
     first: &Real,
     second: &Real,
     policy: PredicatePolicy,
 ) -> Option<PredicateOutcome<Sign>> {
     crate::trace_dispatch!("hyperlimit", "certified_interval_sign", "start");
-    let policy = PredicatePolicy {
-        allow_refinement: false,
-        ..policy
-    };
     let zero = Real::from(0);
 
     // Endpoint comparisons are themselves exact predicates. Use their
@@ -177,10 +174,6 @@ fn certified_ball_sign_outcome_with_policy(
     policy: PredicatePolicy,
 ) -> BallFilterResult {
     crate::trace_dispatch!("hyperlimit", "certified_ball_sign", "start");
-    let policy = PredicatePolicy {
-        allow_refinement: false,
-        ..policy
-    };
     let zero = Real::from(0);
     match compare_reals_report_with_policy(radius, &zero, policy).value() {
         Some(Ordering::Less) => {
@@ -243,7 +236,6 @@ fn ordering_rank(ordering: Ordering) -> i8 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hyperreal::Rational;
 
     #[test]
     fn certified_interval_sign_decides_strict_and_zero_enclosures() {
@@ -289,22 +281,6 @@ mod tests {
         let unknown = certified_interval_sign_report(&Real::from(-2), &Real::from(5));
         assert_eq!(unknown.value(), None);
         assert_eq!(unknown.certificate, PredicateCertificate::Unknown);
-    }
-
-    #[test]
-    fn certified_interval_filter_does_not_force_refinement() {
-        let pi_minus_approx = Real::pi() - Real::new(Rational::fraction(103_993, 33_102).unwrap());
-        let positive = Real::from(1);
-        let policy = PredicatePolicy {
-            allow_exact: false,
-            allow_refinement: true,
-            ..PredicatePolicy::STRICT
-        };
-
-        assert_eq!(
-            certified_interval_sign_with_policy(&pi_minus_approx, &positive, policy),
-            None
-        );
     }
 
     #[test]
@@ -359,22 +335,6 @@ mod tests {
         assert_eq!(
             invalid.outcome,
             PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Filter)
-        );
-    }
-
-    #[test]
-    fn certified_ball_filter_does_not_force_refinement() {
-        let symbolic_center = Real::pi() - Real::new(Rational::fraction(103_993, 33_102).unwrap());
-        let radius = Real::new(Rational::fraction(1, 1_000_000).unwrap());
-        let policy = PredicatePolicy {
-            allow_exact: false,
-            allow_refinement: true,
-            ..PredicatePolicy::STRICT
-        };
-
-        assert_eq!(
-            certified_ball_sign_with_policy(&symbolic_center, &radius, policy),
-            None
         );
     }
 }

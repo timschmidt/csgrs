@@ -1,6 +1,5 @@
 use hyperlimit::{
-    PredicateOutcome, PredicatePolicy, RefinementNeed, Sign, affine_independent_d, insphere_d,
-    orient_d,
+    PredicateOutcome, RefinementNeed, Sign, affine_independent_d, insphere_d, orient_d,
 };
 use hyperreal::{Rational, Real};
 
@@ -64,7 +63,7 @@ fn invalid_nd_predicate_arity_is_explicit_unknown() {
         PredicateOutcome::unknown(RefinementNeed::Unsupported, hyperlimit::Escalation::Exact)
     );
     assert_eq!(
-        hyperlimit::orient_d_with_policy(&[p(&[0, 0]), p(&[1, 0])], PredicatePolicy::STRICT),
+        hyperlimit::orient_d(&[p(&[0, 0]), p(&[1, 0])]),
         PredicateOutcome::unknown(RefinementNeed::Unsupported, hyperlimit::Escalation::Exact)
     );
 }

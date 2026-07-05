@@ -1,5 +1,5 @@
 use hyperlimit::{
-    ConvexPointLocation, Plane3, Point3, PredicateOutcome, PredicatePolicy, SupportDop3,
+    ConvexPointLocation, Plane3, Point3, PredicateOutcome, SupportDop3,
     SupportDopAabb3ValidationError, SupportDopPlane3ValidationError, SupportDopPlaneRelation,
     SupportDopRelation, SupportSlab3, support_dop3_from_points,
 };
@@ -109,10 +109,7 @@ fn support_dop_aabb_report_retains_boundary_projection_evidence() {
     );
     assert_eq!(report.slab_reports[2].query_min, Some(r(5)));
     assert_eq!(report.slab_reports[2].query_max, Some(r(7)));
-    assert_eq!(
-        report.validate_against_sources(&dop, &min, &max, PredicatePolicy::default()),
-        Ok(())
-    );
+    assert_eq!(report.validate_against_sources(&dop, &min, &max), Ok(()));
     assert_eq!(
         dop.classify_aabb3(&min, &max).value(),
         Some(report.relation)
@@ -139,10 +136,7 @@ fn support_dop_aabb_report_stops_at_first_separating_slab() {
         report.slab_reports[0].relation,
         SupportDopRelation::Separated
     );
-    assert_eq!(
-        report.validate_against_sources(&dop, &min, &max, PredicatePolicy::default()),
-        Ok(())
-    );
+    assert_eq!(report.validate_against_sources(&dop, &min, &max), Ok(()));
 }
 
 #[test]
@@ -161,10 +155,7 @@ fn support_dop_aabb_report_records_invalid_retained_slab_as_degenerate() {
     assert_eq!(report.slab_reports.len(), 1);
     assert_eq!(report.slab_reports[0].query_min, None);
     assert_eq!(report.slab_reports[0].query_max, None);
-    assert_eq!(
-        report.validate_against_sources(&dop, &min, &max, PredicatePolicy::default()),
-        Ok(())
-    );
+    assert_eq!(report.validate_against_sources(&dop, &min, &max), Ok(()));
 }
 
 #[test]
@@ -230,7 +221,7 @@ fn support_dop_plane_report_classifies_strict_sides_and_intersections() {
             .is_feasible()
     );
     assert_eq!(
-        tangent.validate_against_sources(&dop, &tangent_plane, PredicatePolicy::default()),
+        tangent.validate_against_sources(&dop, &tangent_plane),
         Ok(())
     );
 
@@ -238,7 +229,7 @@ fn support_dop_plane_report_classifies_strict_sides_and_intersections() {
     let crossing = decided(dop.classify_plane3_report(&crossing_plane));
     assert_eq!(crossing.relation, SupportDopPlaneRelation::Intersecting);
     assert_eq!(
-        crossing.validate_against_sources(&dop, &crossing_plane, PredicatePolicy::default()),
+        crossing.validate_against_sources(&dop, &crossing_plane),
         Ok(())
     );
 }
@@ -251,7 +242,7 @@ fn support_dop_plane_report_detects_invalid_and_infeasible_carriers() {
     assert_eq!(invalid_report.relation, SupportDopPlaneRelation::Degenerate);
     assert!(invalid_report.carrier_feasibility.is_none());
     assert_eq!(
-        invalid_report.validate_against_sources(&invalid, &plane, PredicatePolicy::default()),
+        invalid_report.validate_against_sources(&invalid, &plane),
         Ok(())
     );
 
@@ -274,7 +265,7 @@ fn support_dop_plane_report_detects_invalid_and_infeasible_carriers() {
     assert!(infeasible_report.below_feasibility.is_none());
     assert!(infeasible_report.above_feasibility.is_none());
     assert_eq!(
-        infeasible_report.validate_against_sources(&infeasible, &plane, PredicatePolicy::default()),
+        infeasible_report.validate_against_sources(&infeasible, &plane),
         Ok(())
     );
 }

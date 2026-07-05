@@ -7,7 +7,8 @@
 use crate::classify::{ConvexPointLocation, PlaneSide};
 use crate::geometry::{Plane3, Point2, Point3};
 use crate::plane::classify_point_plane_with_policy;
-use crate::predicate::{Certainty, Escalation, PredicateOutcome, PredicatePolicy, Sign};
+use crate::predicate::PredicatePolicy;
+use crate::predicate::{Certainty, Escalation, PredicateOutcome, Sign};
 use crate::predicates::orient::orient2d_with_policy;
 use crate::predicates::ring::ring_area_sign_with_policy;
 
@@ -29,7 +30,7 @@ pub fn classify_point_convex_polygon2(
 /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
 /// (1997). Invalid nonconvex ordering is not guessed here because topology
 /// ownership belongs to `hypercurve`, `hypertri`, or mesh crates.
-pub fn classify_point_convex_polygon2_with_policy(
+pub(crate) fn classify_point_convex_polygon2_with_policy(
     vertices: &[Point2],
     point: &Point2,
     policy: PredicatePolicy,
@@ -115,7 +116,7 @@ pub fn classify_point_convex_planes3(
 /// their planes before calling. The composition follows Yap's object-layer
 /// guidance by reusing exact point-plane predicates rather than converting
 /// planes to primitive approximations.
-pub fn classify_point_convex_planes3_with_policy(
+pub(crate) fn classify_point_convex_planes3_with_policy(
     planes: &[Plane3],
     point: &Point3,
     policy: PredicatePolicy,

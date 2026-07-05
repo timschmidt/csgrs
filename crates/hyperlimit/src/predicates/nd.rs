@@ -11,9 +11,10 @@
 //! "Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric
 //! Predicates," *Discrete & Computational Geometry* 18.3 (1997).
 
+use crate::predicate::PredicatePolicy;
 use hyperreal::Real;
 
-use crate::predicate::{PredicateOutcome, PredicatePolicy, RefinementNeed, Sign};
+use crate::predicate::{PredicateOutcome, RefinementNeed, Sign};
 use crate::resolve::resolve_real_sign;
 
 /// Decides the orientation sign of `dimension + 1` points in `dimension` space.
@@ -26,7 +27,7 @@ pub fn orient_d(points: &[Vec<Real>]) -> PredicateOutcome<Sign> {
 }
 
 /// Policy-controlled variant of [`orient_d`].
-pub fn orient_d_with_policy(
+pub(crate) fn orient_d_with_policy(
     points: &[Vec<Real>],
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
@@ -54,7 +55,7 @@ pub fn insphere_d(simplex: &[Vec<Real>], query: &[Real]) -> PredicateOutcome<Sig
 }
 
 /// Policy-controlled variant of [`insphere_d`].
-pub fn insphere_d_with_policy(
+pub(crate) fn insphere_d_with_policy(
     simplex: &[Vec<Real>],
     query: &[Real],
     policy: PredicatePolicy,
@@ -78,7 +79,7 @@ pub fn affine_independent_d(points: &[Vec<Real>]) -> PredicateOutcome<bool> {
 }
 
 /// Policy-controlled variant of [`affine_independent_d`].
-pub fn affine_independent_d_with_policy(
+pub(crate) fn affine_independent_d_with_policy(
     points: &[Vec<Real>],
     policy: PredicatePolicy,
 ) -> PredicateOutcome<bool> {

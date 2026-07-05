@@ -1,5 +1,5 @@
 use hyperlimit::{
-    Plane3, Point2, Point3, PredicatePolicy, classify_circle_line2, classify_circle_line2_batch,
+    Plane3, Point2, Point3, classify_circle_line2, classify_circle_line2_batch,
     classify_circle_segment2, classify_circle_segment2_batch, classify_point_line,
     classify_point_line_batch, classify_point_oriented_plane, classify_point_oriented_plane_batch,
     classify_point_plane, classify_point_plane_batch, classify_ray_triangle3_intersection,
@@ -193,17 +193,12 @@ fn sequential_batches_match_scalar_predicates() {
 }
 
 #[test]
-fn batch_policy_is_applied_to_each_case() {
+fn batch_uses_the_strict_scalar_path_for_each_case() {
     let cases = vec![(p2(0.0, 0.0), p2(1.0, 0.0), p2(0.0, 1.0))];
 
     assert_eq!(
-        hyperlimit::orient2d_batch_with_policy(&cases, PredicatePolicy::STRICT),
-        vec![hyperlimit::orient::orient2d_with_policy(
-            &cases[0].0,
-            &cases[0].1,
-            &cases[0].2,
-            PredicatePolicy::STRICT,
-        )]
+        hyperlimit::orient2d_batch(&cases),
+        vec![hyperlimit::orient2d(&cases[0].0, &cases[0].1, &cases[0].2,)]
     );
 }
 

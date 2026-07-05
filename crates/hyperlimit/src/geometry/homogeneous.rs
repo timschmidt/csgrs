@@ -4,11 +4,12 @@
 //! This module keeps incidence classification in `hyperlimit`, where predicate
 //! policy, provenance, and exact/unknown outcomes are owned.
 
-use hyperlattice::{homogeneous_point_plane_expression, Plane3Coefficients};
+use crate::predicate::PredicatePolicy;
 pub use hyperlattice::{HomogeneousLine3, HomogeneousPoint3};
+use hyperlattice::{Plane3Coefficients, homogeneous_point_plane_expression};
 
 use crate::geometry::Plane3;
-use crate::predicate::{PredicateOutcome, PredicatePolicy, RefinementNeed, Sign};
+use crate::predicate::{PredicateOutcome, RefinementNeed, Sign};
 use crate::real::mul_ref;
 use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
 
@@ -44,7 +45,7 @@ pub fn classify_homogeneous_point_plane(
 
 /// Classifies homogeneous point/plane incidence with an explicit predicate
 /// policy.
-pub fn classify_homogeneous_point_plane_with_policy(
+pub(crate) fn classify_homogeneous_point_plane_with_policy(
     point: &HomogeneousPoint3,
     plane: &Plane3,
     policy: PredicatePolicy,

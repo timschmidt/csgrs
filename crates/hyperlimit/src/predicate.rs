@@ -1,4 +1,4 @@
-//! Predicate result states and escalation policy.
+//! Predicate result states and strict escalation metadata.
 
 /// A concrete sign.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -190,11 +190,11 @@ pub enum PredicatePrecisionStage {
 ///
 /// This label is intentionally coarser than a certificate. It describes the
 /// contract a caller should assume at an API boundary: exact topology,
-/// deferred uncertainty, explicit approximate edge data, cache population, or
-/// caller-controlled policy. The split follows Yap's exact-geometric-
-/// computation discipline of keeping exact combinatorial decisions separate
-/// from approximate numerical views and scheduling caches; see Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+/// deferred uncertainty, explicit approximate edge data, or cache population.
+/// The split follows Yap's exact-geometric-computation discipline of keeping
+/// exact combinatorial decisions separate from approximate numerical views and
+/// scheduling caches; see Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PredicateApiSemantics {
     /// The API preserves exact predicate meaning when it returns a decided
@@ -208,8 +208,6 @@ pub enum PredicateApiSemantics {
     /// The API records reusable structural/cache metadata without making that
     /// metadata a predicate proof by itself.
     CachePopulating,
-    /// The API's escalation behavior is controlled by a caller-supplied policy.
-    PolicyDependent,
 }
 
 /// Provenance certificate for a predicate decision or explicit non-decision.
@@ -459,33 +457,20 @@ pub enum RefinementNeed {
     Unsupported,
 }
 
-/// Runtime policy for predicate escalation.
+/// Crate-local strict predicate escalation marker.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct PredicatePolicy {
-    /// Permit exact Real predicate paths when available.
-    pub allow_exact: bool,
-    /// Permit Real refinement when available.
-    pub allow_refinement: bool,
-    /// Lowest binary precision Real refinement may request.
-    pub max_refinement_precision: Option<i32>,
-}
+pub struct PredicatePolicy;
 
 impl PredicatePolicy {
     /// Conservative default: topology is decided by exact/refined paths.
-    pub const STRICT: Self = Self {
-        allow_exact: true,
-        allow_refinement: true,
-        max_refinement_precision: Some(-512),
-    };
+    pub const STRICT: Self = Self;
 
-    /// Return the semantic class for APIs that accept this policy.
-    ///
-    /// The policy does not itself decide a predicate. It marks the API boundary
-    /// as caller-controlled while individual predicate reports still carry exact
-    /// certificates, approximation-deferring uncertainty, or explicit
-    /// approximation certificates.
+    /// Lowest binary precision Real refinement may request.
+    pub const MAX_REFINEMENT_PRECISION: i32 = -512;
+
+    /// Return the semantic class for the strict predicate path.
     pub const fn api_semantics(self) -> PredicateApiSemantics {
-        PredicateApiSemantics::PolicyDependent
+        PredicateApiSemantics::ExactPreserving
     }
 }
 
@@ -612,7 +597,7 @@ mod tests {
     }
 
     #[test]
-    fn api_semantics_separates_exact_deferring_approximate_and_policy_boundaries() {
+    fn api_semantics_separates_exact_deferring_and_approximate_boundaries() {
         assert_eq!(
             PredicateCertificate::ExactRealFact.api_semantics(),
             PredicateApiSemantics::ExactPreserving
@@ -627,7 +612,7 @@ mod tests {
         );
         assert_eq!(
             PredicatePolicy::STRICT.api_semantics(),
-            PredicateApiSemantics::PolicyDependent
+            PredicateApiSemantics::ExactPreserving
         );
 
         let report = PredicateReport::new(

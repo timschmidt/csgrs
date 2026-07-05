@@ -1,11 +1,11 @@
 //! Session-level exact geometry preparation.
 //!
 //! `ExactGeometrySession` is the first shared object boundary for construction
-//! graph work. It carries predicate policy and an explicit construction version
-//! while continuing to return borrowed prepared predicate objects. Higher crates
-//! keep topology storage, approximate views, and invalidation rules; this module
-//! gives them a small exact-kernel session to thread through repeated predicate
-//! preparation.
+//! graph work. It carries the strict predicate context and an explicit
+//! construction version while continuing to return borrowed prepared predicate
+//! objects. Higher crates keep topology storage, approximate views, and
+//! invalidation rules; this module gives them a small exact-kernel session to
+//! thread through repeated predicate preparation.
 
 use crate::classify::{
     Aabb2Intersection, Aabb2PointLocation, LineSide, PlaneAabbRelation, PlaneSide,
@@ -13,8 +13,9 @@ use crate::classify::{
     TriangleLocation,
 };
 use crate::geometry::Point2;
+use crate::predicate::PredicatePolicy;
 use crate::predicate::{
-    PredicateApiSemantics, PredicateCertificate, PredicateOutcome, PredicatePolicy, PredicateReport,
+    PredicateApiSemantics, PredicateCertificate, PredicateOutcome, PredicateReport,
 };
 use crate::predicates::aabb::{PreparedAabb2, PreparedAabb3};
 use crate::predicates::segment::{PreparedSegment2, PreparedSegment3};
@@ -648,44 +649,32 @@ fn freshness_from_source(
 /// Shared exact predicate preparation session.
 ///
 /// The session does not own points, rings, triangulations, or approximate
-/// coordinates. Instead, it centralizes policy and versioning for prepared
-/// predicate objects that borrow immutable inputs. This keeps `hyperlimit` at
-/// the semantic boundary between exact Real predicates and product-crate
-/// topology storage, matching Yap's separation between geometric object facts
-/// and arithmetic packages.
+/// coordinates. Instead, it centralizes the strict predicate context and
+/// versioning for prepared predicate objects that borrow immutable inputs. This
+/// keeps `hyperlimit` at the semantic boundary between exact Real predicates
+/// and product-crate topology storage, matching Yap's separation between
+/// geometric object facts and arithmetic packages.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactGeometrySession {
-    policy: PredicatePolicy,
     version: ConstructionVersion,
 }
 
 impl ExactGeometrySession {
-    /// Create a session using the strict default predicate policy.
+    /// Create a session using the strict predicate context.
     pub const fn new() -> Self {
-        Self::with_policy(PredicatePolicy::STRICT)
-    }
-
-    /// Create a session with an explicit predicate policy.
-    pub const fn with_policy(policy: PredicatePolicy) -> Self {
         Self {
-            policy,
             version: ConstructionVersion::ZERO,
         }
     }
 
-    /// Return the predicate policy used by this session.
-    pub const fn policy(self) -> PredicatePolicy {
-        self.policy
-    }
-
     /// Return the semantic class for session predicate APIs.
     ///
-    /// A session is policy-dependent: it carries the caller's exact/refinement
-    /// policy into prepared predicates and versioned reports. Individual
+    /// A session is exact-preserving: it threads the single strict predicate
+    /// context into prepared predicates and versioned reports. Individual
     /// reports still expose their proof-producing or approximation-deferring
     /// certificate semantics.
     pub const fn api_semantics(self) -> PredicateApiSemantics {
-        self.policy.api_semantics()
+        PredicatePolicy::STRICT.api_semantics()
     }
 
     /// Return the current construction version.
@@ -747,7 +736,12 @@ impl ExactGeometrySession {
         b: &Point2,
         c: &Point2,
     ) -> VersionedPredicateReport<Sign> {
-        self.versioned_report(crate::orient2d_report_with_policy(a, b, c, self.policy))
+        self.versioned_report(crate::orient::orient2d_report_with_policy(
+            a,
+            b,
+            c,
+            PredicatePolicy::STRICT,
+        ))
     }
 
     /// Evaluate 3D orientation and bind the report to this session.
@@ -758,7 +752,13 @@ impl ExactGeometrySession {
         c: &Point3,
         d: &Point3,
     ) -> VersionedPredicateReport<Sign> {
-        self.versioned_report(crate::orient3d_report_with_policy(a, b, c, d, self.policy))
+        self.versioned_report(crate::orient::orient3d_report_with_policy(
+            a,
+            b,
+            c,
+            d,
+            PredicatePolicy::STRICT,
+        ))
     }
 
     /// Evaluate the 2D in-circle predicate and bind the report to this session.
@@ -769,12 +769,12 @@ impl ExactGeometrySession {
         c: &Point2,
         d: &Point2,
     ) -> VersionedPredicateReport<Sign> {
-        self.versioned_report(crate::incircle2d_report_with_policy(
+        self.versioned_report(crate::orient::incircle2d_report_with_policy(
             a,
             b,
             c,
             d,
-            self.policy,
+            PredicatePolicy::STRICT,
         ))
     }
 
@@ -787,13 +787,13 @@ impl ExactGeometrySession {
         d: &Point3,
         e: &Point3,
     ) -> VersionedPredicateReport<Sign> {
-        self.versioned_report(crate::insphere3d_report_with_policy(
+        self.versioned_report(crate::orient::insphere3d_report_with_policy(
             a,
             b,
             c,
             d,
             e,
-            self.policy,
+            PredicatePolicy::STRICT,
         ))
     }
 
@@ -887,24 +887,24 @@ impl ExactGeometrySession {
         PreparedSegment3::new(start, end)
     }
 
-    /// Prepare a borrowed triangle predicate using this session's policy.
+    /// Prepare a borrowed triangle predicate using the strict predicate context.
     pub fn prepare_triangle2<'a>(
         &self,
         a: &'a Point2,
         b: &'a Point2,
         c: &'a Point2,
     ) -> PreparedTriangle2<'a> {
-        PreparedTriangle2::with_policy(a, b, c, self.policy)
+        PreparedTriangle2::new(a, b, c)
     }
 
-    /// Prepare a borrowed 3D triangle predicate using this session's policy.
+    /// Prepare a borrowed 3D triangle predicate using the strict predicate context.
     pub fn prepare_triangle3<'a>(
         &self,
         a: &'a Point3,
         b: &'a Point3,
         c: &'a Point3,
     ) -> PreparedTriangle3<'a> {
-        PreparedTriangle3::with_policy(a, b, c, self.policy)
+        PreparedTriangle3::new(a, b, c)
     }
 
     /// Prepare a borrowed axis-aligned box predicate.
@@ -935,8 +935,8 @@ impl ExactGeometrySession {
     /// Prepare a borrowed in-sphere predicate.
     ///
     /// This is the 3D lifted-sphere companion to [`Self::prepare_incircle2`].
-    /// Higher crates keep tetrahedral topology and cache invalidation policy;
-    /// `hyperlimit` keeps exact predicate policy and reusable coefficient facts.
+    /// Higher crates keep tetrahedral topology and cache invalidation rules;
+    /// `hyperlimit` keeps strict exact predicates and reusable coefficient facts.
     pub fn prepare_insphere3<'a>(
         &self,
         a: &'a Point3,
@@ -968,7 +968,7 @@ impl ExactGeometrySession {
     /// explicit plane coefficients across batches. Keeping the borrowed
     /// prepared object in `hyperlimit` preserves the abstraction boundary:
     /// higher crates own meshes, CSG cells, or curve topology, while this
-    /// kernel owns exact predicate policy and structural scheduling facts.
+    /// kernel owns strict exact predicates and structural scheduling facts.
     ///
     /// [`Plane3Facts`]: crate::Plane3Facts
     pub fn prepare_plane3<'a>(&self, plane: &'a Plane3) -> PreparedPlane3<'a> {
@@ -1006,67 +1006,67 @@ impl ExactGeometrySession {
         PreparedHalfspaceSystem3::new(planes)
     }
 
-    /// Classify a point against a prepared line using this session's policy.
+    /// Classify a point against a prepared line using the strict predicate context.
     pub fn classify_prepared_line2(
         &self,
         line: &PreparedLine2<'_>,
         point: &Point2,
     ) -> PredicateOutcome<LineSide> {
-        line.classify_point_with_policy(point, self.policy)
+        line.classify_point_with_policy(point, PredicatePolicy::STRICT)
     }
 
-    /// Classify a point against a prepared segment using this session's policy.
+    /// Classify a point against a prepared segment using the strict predicate context.
     pub fn classify_prepared_segment2_point(
         &self,
         segment: &PreparedSegment2<'_>,
         point: &Point2,
     ) -> PredicateOutcome<PointSegmentLocation> {
-        segment.classify_point_with_policy(point, self.policy)
+        segment.classify_point_with_policy(point, PredicatePolicy::STRICT)
     }
 
-    /// Classify a point against a prepared 3D segment using this session's policy.
+    /// Classify a point against a prepared 3D segment using the strict predicate context.
     pub fn classify_prepared_segment3_point(
         &self,
         segment: &PreparedSegment3<'_>,
         point: &Point3,
     ) -> PredicateOutcome<PointSegmentLocation> {
-        segment.classify_point_with_policy(point, self.policy)
+        segment.classify_point_with_policy(point, PredicatePolicy::STRICT)
     }
 
-    /// Classify two prepared segments using this session's policy.
+    /// Classify two prepared segments using the strict predicate context.
     pub fn classify_prepared_segment2_intersection(
         &self,
         first: &PreparedSegment2<'_>,
         second: &PreparedSegment2<'_>,
     ) -> PredicateOutcome<SegmentIntersection> {
-        first.classify_intersection_with_policy(second, self.policy)
+        first.classify_intersection_with_policy(second, PredicatePolicy::STRICT)
     }
 
-    /// Classify two prepared 3D segments using this session's policy.
+    /// Classify two prepared 3D segments using the strict predicate context.
     pub fn classify_prepared_segment3_intersection(
         &self,
         first: &PreparedSegment3<'_>,
         second: &PreparedSegment3<'_>,
     ) -> PredicateOutcome<Segment3Intersection> {
-        first.classify_intersection_with_policy(second, self.policy)
+        first.classify_intersection_with_policy(second, PredicatePolicy::STRICT)
     }
 
-    /// Classify a point against a prepared triangle using this session's policy.
+    /// Classify a point against a prepared triangle using the strict predicate context.
     pub fn classify_prepared_triangle2_point(
         &self,
         triangle: &PreparedTriangle2<'_>,
         point: &Point2,
     ) -> PredicateOutcome<TriangleLocation> {
-        triangle.classify_point_with_policy(point, self.policy)
+        triangle.classify_point_with_policy(point, PredicatePolicy::STRICT)
     }
 
-    /// Classify a point against a prepared 3D triangle using this session's policy.
+    /// Classify a point against a prepared 3D triangle using the strict predicate context.
     pub fn classify_prepared_triangle3_point(
         &self,
         triangle: &PreparedTriangle3<'_>,
         point: &Point3,
     ) -> PredicateOutcome<Triangle3Location> {
-        triangle.classify_point_with_policy(point, self.policy)
+        triangle.classify_point_with_policy(point, PredicatePolicy::STRICT)
     }
 
     /// Return the cached orientation sign for a prepared triangle.
@@ -1077,40 +1077,40 @@ impl ExactGeometrySession {
         triangle.orientation()
     }
 
-    /// Classify a point against a prepared AABB using this session's policy.
+    /// Classify a point against a prepared AABB using the strict predicate context.
     pub fn classify_prepared_aabb2_point(
         &self,
         aabb: &PreparedAabb2<'_>,
         point: &Point2,
     ) -> PredicateOutcome<Aabb2PointLocation> {
-        aabb.classify_point_with_policy(point, self.policy)
+        aabb.classify_point_with_policy(point, PredicatePolicy::STRICT)
     }
 
-    /// Classify a point against a prepared 3D AABB using this session's policy.
+    /// Classify a point against a prepared 3D AABB using the strict predicate context.
     pub fn classify_prepared_aabb3_point(
         &self,
         aabb: &PreparedAabb3<'_>,
         point: &Point3,
     ) -> PredicateOutcome<crate::classify::Aabb3PointLocation> {
-        aabb.classify_point_with_policy(point, self.policy)
+        aabb.classify_point_with_policy(point, PredicatePolicy::STRICT)
     }
 
-    /// Classify two prepared AABBs using this session's policy.
+    /// Classify two prepared AABBs using the strict predicate context.
     pub fn classify_prepared_aabb2_intersection(
         &self,
         first: &PreparedAabb2<'_>,
         second: &PreparedAabb2<'_>,
     ) -> PredicateOutcome<Aabb2Intersection> {
-        first.classify_intersection_with_policy(second, self.policy)
+        first.classify_intersection_with_policy(second, PredicatePolicy::STRICT)
     }
 
-    /// Classify two prepared 3D AABBs using this session's policy.
+    /// Classify two prepared 3D AABBs using the strict predicate context.
     pub fn classify_prepared_aabb3_intersection(
         &self,
         first: &PreparedAabb3<'_>,
         second: &PreparedAabb3<'_>,
     ) -> PredicateOutcome<crate::classify::Aabb3Intersection> {
-        first.classify_intersection_with_policy(second, self.policy)
+        first.classify_intersection_with_policy(second, PredicatePolicy::STRICT)
     }
 
     /// Test a query point against a prepared in-circle predicate.
@@ -1119,7 +1119,7 @@ impl ExactGeometrySession {
         incircle: &PreparedIncircle2<'_>,
         point: &Point2,
     ) -> PredicateOutcome<Sign> {
-        incircle.test_point_with_policy(point, self.policy)
+        incircle.test_point_with_policy(point, PredicatePolicy::STRICT)
     }
 
     /// Test a query point against a prepared in-sphere predicate.
@@ -1128,29 +1128,29 @@ impl ExactGeometrySession {
         insphere: &PreparedInsphere3<'_>,
         point: &Point3,
     ) -> PredicateOutcome<Sign> {
-        insphere.test_point_with_policy(point, self.policy)
+        insphere.test_point_with_policy(point, PredicatePolicy::STRICT)
     }
 
-    /// Classify a point against a prepared explicit sphere using this session's policy.
+    /// Classify a point against a prepared explicit sphere using the strict predicate context.
     pub fn classify_prepared_explicit_sphere3_point(
         &self,
         sphere: &PreparedExplicitSphere3<'_>,
         point: &Point3,
     ) -> PredicateOutcome<crate::classify::SpherePointLocation> {
-        sphere.classify_point_with_policy(point, self.policy)
+        sphere.classify_point_with_policy(point, PredicatePolicy::STRICT)
     }
 
-    /// Classify a point against a prepared explicit plane using this session's policy.
+    /// Classify a point against a prepared explicit plane using the strict predicate context.
     pub fn classify_prepared_plane3_point(
         &self,
         plane: &PreparedPlane3<'_>,
         point: &Point3,
     ) -> PredicateOutcome<PlaneSide> {
-        plane.classify_point_with_policy(point, self.policy)
+        plane.classify_point_with_policy(point, PredicatePolicy::STRICT)
     }
 
     /// Classify a closed 3D AABB against a prepared explicit plane using this
-    /// session's policy.
+    /// strict predicate context.
     ///
     /// This is the session-level entry point for the mesh-kernel-style
     /// plane/AABB broad-phase predicate. The prepared plane owns only cached
@@ -1164,7 +1164,7 @@ impl ExactGeometrySession {
         min: &Point3,
         max: &Point3,
     ) -> PredicateOutcome<PlaneAabbRelation> {
-        plane.classify_aabb3_with_policy(min, max, self.policy)
+        plane.classify_aabb3_with_policy(min, max, PredicatePolicy::STRICT)
     }
 
     /// Classify a closed 3D AABB against a prepared explicit plane and retain
@@ -1175,24 +1175,24 @@ impl ExactGeometrySession {
         min: &Point3,
         max: &Point3,
     ) -> PredicateOutcome<PlaneAabbReport> {
-        plane.classify_aabb3_report_with_policy(min, max, self.policy)
+        plane.classify_aabb3_report_with_policy(min, max, PredicatePolicy::STRICT)
     }
 
-    /// Classify a point against a prepared oriented plane using this session's policy.
+    /// Classify a point against a prepared oriented plane using the strict predicate context.
     pub fn classify_prepared_oriented_plane3_point(
         &self,
         plane: &PreparedOrientedPlane3,
         point: &Point3,
     ) -> PredicateOutcome<PlaneSide> {
-        plane.classify_point_with_policy(point, self.policy)
+        plane.classify_point_with_policy(point, PredicatePolicy::STRICT)
     }
 
-    /// Classify a prepared closed 3D halfspace system using this session's policy.
+    /// Classify a prepared closed 3D halfspace system using the strict predicate context.
     pub fn classify_prepared_halfspace_feasibility3(
         &self,
         system: &PreparedHalfspaceSystem3<'_>,
     ) -> PredicateOutcome<HalfspaceFeasibilityReport> {
-        system.classify_feasibility_with_policy(self.policy)
+        system.classify_feasibility_with_policy(PredicatePolicy::STRICT)
     }
 
     /// Replay a halfspace feasibility report against a prepared system.
@@ -1201,7 +1201,7 @@ impl ExactGeometrySession {
         system: &PreparedHalfspaceSystem3<'_>,
         report: &HalfspaceFeasibilityReport,
     ) -> PredicateOutcome<bool> {
-        system.validate_report(report, self.policy)
+        system.validate_report(report)
     }
 }
 
@@ -1229,9 +1229,8 @@ mod tests {
     }
 
     #[test]
-    fn session_prepares_predicates_with_shared_policy_and_version() {
+    fn session_prepares_predicates_with_strict_context_and_version() {
         let mut session = ExactGeometrySession::default();
-        assert_eq!(session.policy(), PredicatePolicy::STRICT);
         assert_eq!(session.version(), ConstructionVersion::ZERO);
         assert_eq!(session.advance_version().get(), 1);
 
@@ -1496,10 +1495,12 @@ mod tests {
 
         assert_eq!(feasible.planes(), feasible_planes.as_slice());
         assert_eq!(feasible.plane_facts().len(), feasible_planes.len());
-        assert!(feasible
-            .plane_facts()
-            .iter()
-            .all(|facts| facts.normal_has_sparse_support()));
+        assert!(
+            feasible
+                .plane_facts()
+                .iter()
+                .all(|facts| facts.normal_has_sparse_support())
+        );
 
         let feasible_report = session
             .classify_prepared_halfspace_feasibility3(&feasible)
@@ -1675,9 +1676,11 @@ mod tests {
             }
         );
         assert!(session.approximate_view([0.0_f64, 0.0], 0, 0.0).is_none());
-        assert!(session
-            .approximate_view([0.0_f64, 0.0], 53, f64::NAN)
-            .is_none());
+        assert!(
+            session
+                .approximate_view([0.0_f64, 0.0], 53, f64::NAN)
+                .is_none()
+        );
         assert!(session.approximate_view([0.0_f64, 0.0], 53, -1.0).is_none());
     }
 
@@ -1687,8 +1690,12 @@ mod tests {
         let origin = p2(0, 0);
         let x_axis = p2(1, 0);
         let y_axis = p2(0, 1);
-        let report =
-            crate::orient2d_report_with_policy(&origin, &x_axis, &y_axis, session.policy());
+        let report = crate::orient::orient2d_report_with_policy(
+            &origin,
+            &x_axis,
+            &y_axis,
+            PredicatePolicy::STRICT,
+        );
         let certificate = session.certificate_from_report(&report);
 
         assert_eq!(certificate.version(), ConstructionVersion::ZERO);
@@ -1717,8 +1724,12 @@ mod tests {
         let origin = p2(0, 0);
         let x_axis = p2(1, 0);
         let y_axis = p2(0, 1);
-        let report =
-            crate::orient2d_report_with_policy(&origin, &x_axis, &y_axis, session.policy());
+        let report = crate::orient::orient2d_report_with_policy(
+            &origin,
+            &x_axis,
+            &y_axis,
+            PredicatePolicy::STRICT,
+        );
         let certificate = session.certificate_from_report(&report);
 
         let mut dependencies = ConstructionDependencies::new();
@@ -1829,7 +1840,7 @@ mod tests {
         assert_eq!(report.certificate().version(), ConstructionVersion::ZERO);
         assert_eq!(
             session.api_semantics(),
-            PredicateApiSemantics::PolicyDependent
+            PredicateApiSemantics::ExactPreserving
         );
         assert_eq!(
             report.api_semantics(),

@@ -1,10 +1,9 @@
-use hyperlimit::orient::orient2d_with_policy;
 use hyperlimit::{
     DeterminantScheduleHint, ExactPredicateKernel, LineSide, Plane3, PlaneSide, Point2, Point3,
-    PredicateOutcome, PredicatePolicy, RationalStorageClass, RealExactSetDenominatorKind,
+    PredicateOutcome, RationalStorageClass, RealExactSetDenominatorKind,
     RealExactSetDyadicExponentClass, RealExactSetSignPattern, RealSymbolicDependencyMask, Sign,
-    classify_point_line, classify_point_oriented_plane, classify_point_plane, incircle2d, orient2d,
-    orient2d_batch, orient3d,
+    classify_point_line, classify_point_oriented_plane, classify_point_plane, classify_real_sign,
+    compare_reals, incircle2d, orient2d, orient2d_batch, orient3d,
 };
 
 type Real = hyperreal::Real;
@@ -34,6 +33,22 @@ fn rational(numerator: i64, denominator: u64) -> Real {
 fn unknown_zero() -> Real {
     let one = Real::from(1);
     one.clone().sin() - one.sin()
+}
+
+#[test]
+fn strict_predicates_decide_scalar_signs_and_ordering() {
+    assert_eq!(
+        classify_real_sign(&rational(-7, 3)).value(),
+        Some(Sign::Negative)
+    );
+    assert_eq!(
+        compare_reals(&rational(2, 3), &rational(5, 7)).value(),
+        Some(core::cmp::Ordering::Less)
+    );
+
+    let near_pi = Real::pi() - Real::new(hyperreal::Rational::fraction(103_993, 33_102).unwrap());
+    assert_eq!(classify_real_sign(&near_pi).value(), Some(Sign::Positive));
+    assert_eq!(classify_real_sign(&near_pi).value(), Some(Sign::Positive));
 }
 
 #[test]
@@ -362,11 +377,10 @@ fn orient2d_handles_exact_degenerate_and_near_degenerate_cases() {
     assert_eq!(decided(orient2d(&a, &b, &p2(0.0, -1.0))), Sign::Negative);
     assert_eq!(decided(orient2d(&a, &b, &p2(0.5, 0.0))), Sign::Zero);
     assert_eq!(
-        decided(orient2d_with_policy(
+        decided(orient2d(
             &a,
             &b,
             &Point2::new(real(0.5), real(f64::from_bits(1))),
-            PredicatePolicy::STRICT,
         )),
         Sign::Positive
     );

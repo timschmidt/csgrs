@@ -7,9 +7,8 @@
 
 use crate::classify::{PointSegmentLocation, Segment3Intersection, SegmentIntersection};
 use crate::geometry::{Point2, Point3, Segment2Facts};
-use crate::predicate::{
-    Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign,
-};
+use crate::predicate::PredicatePolicy;
+use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
 use crate::predicates::orient::orient2d_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::resolve_real_sign;
@@ -67,7 +66,7 @@ impl<'a> PreparedSegment2<'a> {
     }
 
     /// Classify a point relative to this segment using an explicit policy.
-    pub fn classify_point_with_policy(
+    pub(crate) fn classify_point_with_policy(
         &self,
         point: &Point2,
         policy: PredicatePolicy,
@@ -83,7 +82,7 @@ impl<'a> PreparedSegment2<'a> {
     }
 
     /// Return whether a point lies on this segment using an explicit policy.
-    pub fn point_on_segment_with_policy(
+    pub(crate) fn point_on_segment_with_policy(
         &self,
         point: &Point2,
         policy: PredicatePolicy,
@@ -108,7 +107,7 @@ impl<'a> PreparedSegment2<'a> {
     /// Kreveld, and Overmars, *Computational Geometry: Algorithms and
     /// Applications*, 3rd ed., Springer, 2008. Every equality or containment
     /// result is still certified through exact Real predicates.
-    pub fn classify_intersection_with_policy(
+    pub(crate) fn classify_intersection_with_policy(
         &self,
         other: &PreparedSegment2,
         policy: PredicatePolicy,
@@ -155,7 +154,7 @@ impl<'a> PreparedSegment3<'a> {
     }
 
     /// Classify a point relative to this segment using an explicit policy.
-    pub fn classify_point_with_policy(
+    pub(crate) fn classify_point_with_policy(
         &self,
         point: &Point3,
         policy: PredicatePolicy,
@@ -169,7 +168,7 @@ impl<'a> PreparedSegment3<'a> {
     }
 
     /// Return whether a point lies on this segment using an explicit policy.
-    pub fn point_on_segment_with_policy(
+    pub(crate) fn point_on_segment_with_policy(
         &self,
         point: &Point3,
         policy: PredicatePolicy,
@@ -187,7 +186,7 @@ impl<'a> PreparedSegment3<'a> {
 
     /// Classify this segment's intersection with another prepared 3D segment
     /// using an explicit predicate policy.
-    pub fn classify_intersection_with_policy(
+    pub(crate) fn classify_intersection_with_policy(
         &self,
         other: &PreparedSegment3,
         policy: PredicatePolicy,
@@ -226,7 +225,7 @@ pub fn classify_point_segment3(
 /// Collinearity is certified by the three exact components of
 /// `(b - a) x (point - a)`. Interval containment then uses exact coordinate
 /// comparisons on all three axes.
-pub fn classify_point_segment3_with_policy(
+pub(crate) fn classify_point_segment3_with_policy(
     a: &Point3,
     b: &Point3,
     point: &Point3,
@@ -265,7 +264,7 @@ pub fn classify_point_segment3_with_policy(
 
 /// Classify `point` relative to the closed segment `ab` with an explicit
 /// predicate escalation policy.
-pub fn classify_point_segment_with_policy(
+pub(crate) fn classify_point_segment_with_policy(
     a: &Point2,
     b: &Point2,
     point: &Point2,
@@ -302,7 +301,7 @@ pub fn classify_point_segment_with_facts(
 /// retaining object facts in the sense used by de Berg, Cheong, van Kreveld,
 /// and Overmars for degeneracy-aware geometric algorithms in *Computational
 /// Geometry: Algorithms and Applications*, 3rd ed., Springer, 2008.
-pub fn classify_point_segment_with_policy_and_facts(
+pub(crate) fn classify_point_segment_with_policy_and_facts(
     a: &Point2,
     b: &Point2,
     point: &Point2,
@@ -359,7 +358,7 @@ pub fn point_on_segment3(a: &Point3, b: &Point3, point: &Point3) -> PredicateOut
 
 /// Return whether `point` lies on the closed 3D segment `ab` with an explicit
 /// predicate escalation policy.
-pub fn point_on_segment3_with_policy(
+pub(crate) fn point_on_segment3_with_policy(
     a: &Point3,
     b: &Point3,
     point: &Point3,
@@ -377,7 +376,7 @@ pub fn point_on_segment3_with_policy(
 
 /// Return whether `point` lies on the closed segment `ab` with an explicit
 /// predicate escalation policy.
-pub fn point_on_segment_with_policy(
+pub(crate) fn point_on_segment_with_policy(
     a: &Point2,
     b: &Point2,
     point: &Point2,
@@ -406,7 +405,7 @@ pub fn point_on_segment_with_facts(
 
 /// Return whether `point` lies on the closed segment `ab` with both an explicit
 /// policy and cached segment structural facts.
-pub fn point_on_segment_with_policy_and_facts(
+pub(crate) fn point_on_segment_with_policy_and_facts(
     a: &Point2,
     b: &Point2,
     point: &Point2,
@@ -455,7 +454,7 @@ pub fn proper_segment_intersection_point(
 /// Springer, 2008. The precondition is certified by exact predicates in the
 /// exact-geometric-computation style of Yap, "Towards Exact Geometric
 /// Computation," *Computational Geometry* 7.1-2 (1997).
-pub fn proper_segment_intersection_point_with_policy(
+pub(crate) fn proper_segment_intersection_point_with_policy(
     a: &Point2,
     b: &Point2,
     c: &Point2,
@@ -527,7 +526,7 @@ pub fn classify_segment3_intersection(
 /// the segment-intersection treatment in de Berg, Cheong, van Kreveld, and
 /// Overmars, *Computational Geometry: Algorithms and Applications*, 3rd ed.,
 /// Springer, 2008, lifted to 3D with explicit skew/coplanar separation.
-pub fn classify_segment3_intersection_with_policy(
+pub(crate) fn classify_segment3_intersection_with_policy(
     a: &Point3,
     b: &Point3,
     c: &Point3,
@@ -652,7 +651,7 @@ pub fn classify_segment3_intersection_with_policy(
 
 /// Classify the intersection of closed segments `ab` and `cd` with an explicit
 /// predicate escalation policy.
-pub fn classify_segment_intersection_with_policy(
+pub(crate) fn classify_segment_intersection_with_policy(
     a: &Point2,
     b: &Point2,
     c: &Point2,
@@ -693,7 +692,7 @@ pub fn classify_segment_intersection_with_facts(
 /// computation boundary and the degeneracy handling discipline in de Berg,
 /// Cheong, van Kreveld, and Overmars, *Computational Geometry: Algorithms and
 /// Applications*, 3rd ed., Springer, 2008.
-pub fn classify_segment_intersection_with_policy_and_facts(
+pub(crate) fn classify_segment_intersection_with_policy_and_facts(
     a: &Point2,
     b: &Point2,
     c: &Point2,

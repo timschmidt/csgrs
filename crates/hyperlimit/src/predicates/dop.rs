@@ -12,6 +12,7 @@
 //! Bounding Volume Hierarchies of k-DOPs," *IEEE Transactions on Visualization
 //! and Computer Graphics* 4.1 (1998).
 
+use crate::predicate::PredicatePolicy;
 use core::cmp::Ordering;
 
 use hyperreal::Real;
@@ -20,11 +21,9 @@ use crate::classify::{
     ConvexPointLocation, HalfspaceFeasibility, SupportDopPlaneRelation, SupportDopRelation,
 };
 use crate::geometry::{Plane3, Point3};
-use crate::predicate::{
-    Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign,
-};
+use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
 use crate::predicates::halfspace::{
-    classify_halfspace_feasibility3_with_policy, HalfspaceFeasibilityReport,
+    HalfspaceFeasibilityReport, classify_halfspace_feasibility3_with_policy,
 };
 use crate::predicates::order::compare_reals_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
@@ -676,10 +675,9 @@ impl SupportDopAabb3Report {
         dop: &SupportDop3,
         min: &Point3,
         max: &Point3,
-        policy: PredicatePolicy,
     ) -> Result<(), SupportDopAabb3ValidationError> {
         self.validate()?;
-        match dop.classify_aabb3_report_with_policy(min, max, policy) {
+        match dop.classify_aabb3_report(min, max) {
             PredicateOutcome::Decided { value, .. } if &value == self => Ok(()),
             _ => Err(SupportDopAabb3ValidationError::SourceReplayMismatch),
         }
@@ -782,11 +780,7 @@ impl SupportDopPlane3Report {
             .carrier_feasibility
             .as_ref()
             .ok_or(SupportDopPlane3ValidationError::CarrierFeasibilityMismatch)?;
-        if !decided_bool(
-            carrier.validate_against_planes(&self.slab_halfspaces, PredicatePolicy::default()),
-        )
-        .unwrap_or(false)
-        {
+        if !decided_bool(carrier.validate_against_planes(&self.slab_halfspaces)).unwrap_or(false) {
             return Err(SupportDopPlane3ValidationError::CarrierFeasibilityMismatch);
         }
 
@@ -812,17 +806,13 @@ impl SupportDopPlane3Report {
 
         let below_planes =
             side_halfspaces(&self.slab_halfspaces, &self.plane, PlaneQuerySide::Below);
-        if !decided_bool(below.validate_against_planes(&below_planes, PredicatePolicy::default()))
-            .unwrap_or(false)
-        {
+        if !decided_bool(below.validate_against_planes(&below_planes)).unwrap_or(false) {
             return Err(SupportDopPlane3ValidationError::BelowFeasibilityMismatch);
         }
 
         let above_planes =
             side_halfspaces(&self.slab_halfspaces, &self.plane, PlaneQuerySide::Above);
-        if !decided_bool(above.validate_against_planes(&above_planes, PredicatePolicy::default()))
-            .unwrap_or(false)
-        {
+        if !decided_bool(above.validate_against_planes(&above_planes)).unwrap_or(false) {
             return Err(SupportDopPlane3ValidationError::AboveFeasibilityMismatch);
         }
 
@@ -842,10 +832,9 @@ impl SupportDopPlane3Report {
         &self,
         dop: &SupportDop3,
         plane: &Plane3,
-        policy: PredicatePolicy,
     ) -> Result<(), SupportDopPlane3ValidationError> {
         self.validate()?;
-        match dop.classify_plane3_report_with_policy(plane, policy) {
+        match dop.classify_plane3_report(plane) {
             PredicateOutcome::Decided { value, .. } if &value == self => Ok(()),
             _ => Err(SupportDopPlane3ValidationError::SourceReplayMismatch),
         }
@@ -871,7 +860,7 @@ impl SupportDop3 {
 
     /// Build exact support slabs from axes and source points with an explicit
     /// predicate policy.
-    pub fn from_points_with_policy(
+    pub(crate) fn from_points_with_policy(
         axes: &[Point3],
         points: &[Point3],
         policy: PredicatePolicy,
@@ -946,7 +935,7 @@ impl SupportDop3 {
     /// projection lies between the retained slab bounds. Boundary status is
     /// reported separately so downstream topology can distinguish strict
     /// interior from support contact.
-    pub fn classify_point_with_policy(
+    pub(crate) fn classify_point_with_policy(
         &self,
         point: &Point3,
         policy: PredicatePolicy,
@@ -1040,7 +1029,7 @@ impl SupportDop3 {
     /// proves disjointness. A non-separated result certifies only that all
     /// retained support intervals overlap, which is the reusable bounding-volume
     /// predicate that downstream mesh, voxel, and packing crates can replay.
-    pub fn classify_aabb3_with_policy(
+    pub(crate) fn classify_aabb3_with_policy(
         &self,
         min: &Point3,
         max: &Point3,
@@ -1072,7 +1061,7 @@ impl SupportDop3 {
     /// k-DOP axis and stops at the first terminal slab, matching the coarse
     /// classifier's scheduling while preserving the object-level evidence that
     /// Yap's exact geometric computation model requires.
-    pub fn classify_aabb3_report_with_policy(
+    pub(crate) fn classify_aabb3_report_with_policy(
         &self,
         min: &Point3,
         max: &Point3,
@@ -1219,7 +1208,7 @@ impl SupportDop3 {
     }
 
     /// Classify this retained DOP relative to an oriented plane with a policy.
-    pub fn classify_plane3_with_policy(
+    pub(crate) fn classify_plane3_with_policy(
         &self,
         plane: &Plane3,
         policy: PredicatePolicy,
@@ -1251,7 +1240,7 @@ impl SupportDop3 {
     /// and both closed sides of the query plane are certified by the
     /// halfspace-feasibility predicate. The result follows the same
     /// report-first discipline as [`Self::classify_aabb3_report_with_policy`].
-    pub fn classify_plane3_report_with_policy(
+    pub(crate) fn classify_plane3_report_with_policy(
         &self,
         plane: &Plane3,
         policy: PredicatePolicy,
@@ -1392,7 +1381,7 @@ pub fn support_dop3_from_points(
 }
 
 /// Build an exact support k-DOP with an explicit predicate policy.
-pub fn support_dop3_from_points_with_policy(
+pub(crate) fn support_dop3_from_points_with_policy(
     axes: &[Point3],
     points: &[Point3],
     policy: PredicatePolicy,

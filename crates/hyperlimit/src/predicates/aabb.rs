@@ -10,7 +10,8 @@ use crate::classify::{
     ClosedIntervalIntersection, RealIntervalLocation,
 };
 use crate::geometry::{Aabb2Facts, Point2, Point3};
-use crate::predicate::{Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed};
+use crate::predicate::PredicatePolicy;
+use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed};
 use crate::predicates::interval::{
     classify_closed_interval_intersection_with_policy, classify_real_closed_interval_with_policy,
 };
@@ -71,7 +72,7 @@ impl<'a> PreparedAabb2<'a> {
     }
 
     /// Classify a point relative to this box using an explicit policy.
-    pub fn classify_point_with_policy(
+    pub(crate) fn classify_point_with_policy(
         &self,
         point: &Point2,
         policy: PredicatePolicy,
@@ -85,7 +86,7 @@ impl<'a> PreparedAabb2<'a> {
     }
 
     /// Return whether a point lies in this box using an explicit policy.
-    pub fn contains_point_with_policy(
+    pub(crate) fn contains_point_with_policy(
         &self,
         point: &Point2,
         policy: PredicatePolicy,
@@ -112,7 +113,7 @@ impl<'a> PreparedAabb2<'a> {
     /// Geometric Intersections," *IEEE Transactions on Computers* C-28.9
     /// (1979), with the final topological decision kept inside exact
     /// predicates per Yap.
-    pub fn classify_intersection_with_policy(
+    pub(crate) fn classify_intersection_with_policy(
         &self,
         other: &PreparedAabb2,
         policy: PredicatePolicy,
@@ -135,7 +136,7 @@ impl<'a> PreparedAabb2<'a> {
 
     /// Return whether this box intersects another prepared box with an explicit
     /// policy.
-    pub fn intersects_with_policy(
+    pub(crate) fn intersects_with_policy(
         &self,
         other: &PreparedAabb2,
         policy: PredicatePolicy,
@@ -181,7 +182,7 @@ impl<'a> PreparedAabb3<'a> {
     }
 
     /// Classify a point relative to this box using an explicit policy.
-    pub fn classify_point_with_policy(
+    pub(crate) fn classify_point_with_policy(
         &self,
         point: &Point3,
         policy: PredicatePolicy,
@@ -195,7 +196,7 @@ impl<'a> PreparedAabb3<'a> {
     }
 
     /// Return whether a point lies in this box using an explicit policy.
-    pub fn contains_point_with_policy(
+    pub(crate) fn contains_point_with_policy(
         &self,
         point: &Point3,
         policy: PredicatePolicy,
@@ -213,7 +214,7 @@ impl<'a> PreparedAabb3<'a> {
 
     /// Classify this box's intersection with another prepared 3D box with an
     /// explicit policy.
-    pub fn classify_intersection_with_policy(
+    pub(crate) fn classify_intersection_with_policy(
         &self,
         other: &PreparedAabb3,
         policy: PredicatePolicy,
@@ -228,7 +229,7 @@ impl<'a> PreparedAabb3<'a> {
 
     /// Return whether this box intersects another prepared 3D box with an
     /// explicit policy.
-    pub fn intersects_with_policy(
+    pub(crate) fn intersects_with_policy(
         &self,
         other: &PreparedAabb3,
         policy: PredicatePolicy,
@@ -266,7 +267,7 @@ pub fn classify_point_aabb2(
 /// topology still belongs to orientation/incidence predicates. See Yap,
 /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
 /// (1997).
-pub fn classify_point_aabb2_with_policy(
+pub(crate) fn classify_point_aabb2_with_policy(
     min: &Point2,
     max: &Point2,
     point: &Point2,
@@ -319,7 +320,7 @@ pub fn point_in_aabb2(min: &Point2, max: &Point2, point: &Point2) -> PredicateOu
 
 /// Return whether a point lies in a closed 2D axis-aligned box with an explicit
 /// predicate escalation policy.
-pub fn point_in_aabb2_with_policy(
+pub(crate) fn point_in_aabb2_with_policy(
     min: &Point2,
     max: &Point2,
     point: &Point2,
@@ -354,7 +355,7 @@ pub fn point_in_triangle2_aabb(
 /// *Real-Time Collision Detection*, Morgan Kaufmann, 2005; here every min/max
 /// and interval decision is exact, preserving Yap's exact-geometric-computation
 /// boundary between filters and final topology.
-pub fn point_in_triangle2_aabb_with_policy(
+pub(crate) fn point_in_triangle2_aabb_with_policy(
     a: &Point2,
     b: &Point2,
     c: &Point2,
@@ -407,7 +408,7 @@ pub fn classify_point_aabb3(
 ///
 /// The min/max corners may be supplied in either coordinate order; each axis is
 /// normalized by exact interval predicates.
-pub fn classify_point_aabb3_with_policy(
+pub(crate) fn classify_point_aabb3_with_policy(
     min: &Point3,
     max: &Point3,
     point: &Point3,
@@ -476,7 +477,7 @@ pub fn point_in_aabb3(min: &Point3, max: &Point3, point: &Point3) -> PredicateOu
 
 /// Return whether a point lies in a closed 3D axis-aligned box with an explicit
 /// predicate escalation policy.
-pub fn point_in_aabb3_with_policy(
+pub(crate) fn point_in_aabb3_with_policy(
     min: &Point3,
     max: &Point3,
     point: &Point3,
@@ -514,7 +515,7 @@ pub fn classify_aabb2_intersection(
 /// `Touching` covers edge and corner contact with zero area. `Overlapping`
 /// means both coordinate intervals overlap over positive length, so the box
 /// intersection has positive area.
-pub fn classify_aabb2_intersection_with_policy(
+pub(crate) fn classify_aabb2_intersection_with_policy(
     first_min: &Point2,
     first_max: &Point2,
     second_min: &Point2,
@@ -562,7 +563,7 @@ pub fn classify_aabb2_intersection_with_facts(
 
 /// Classify the intersection relation between two closed 2D axis-aligned boxes
 /// with both an explicit policy and caller-cached structural facts.
-pub fn classify_aabb2_intersection_with_policy_and_facts(
+pub(crate) fn classify_aabb2_intersection_with_policy_and_facts(
     first_min: &Point2,
     first_max: &Point2,
     second_min: &Point2,
@@ -646,7 +647,7 @@ pub fn aabb2s_intersect(
 
 /// Return whether two closed 2D axis-aligned boxes intersect with an explicit
 /// predicate escalation policy.
-pub fn aabb2s_intersect_with_policy(
+pub(crate) fn aabb2s_intersect_with_policy(
     first_min: &Point2,
     first_max: &Point2,
     second_min: &Point2,
@@ -692,7 +693,7 @@ pub fn classify_aabb3_intersection(
 /// in intersection-reporting algorithms such as Bentley and Ottmann,
 /// "Algorithms for Reporting and Counting Geometric Intersections," *IEEE
 /// Transactions on Computers* C-28.9 (1979).
-pub fn classify_aabb3_intersection_with_policy(
+pub(crate) fn classify_aabb3_intersection_with_policy(
     first_min: &Point3,
     first_max: &Point3,
     second_min: &Point3,
@@ -800,7 +801,7 @@ pub fn aabb3s_intersect(
 
 /// Return whether two closed 3D axis-aligned boxes intersect with an explicit
 /// predicate escalation policy.
-pub fn aabb3s_intersect_with_policy(
+pub(crate) fn aabb3s_intersect_with_policy(
     first_min: &Point3,
     first_max: &Point3,
     second_min: &Point3,

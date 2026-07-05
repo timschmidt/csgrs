@@ -15,13 +15,14 @@ use crate::classify::{
     PlaneTriangleRelation, SegmentTriangleIntersection, TriangleLocation,
     TriangleTriangleIntersection,
 };
-use crate::geometry::plane::{classify_plane_triangle_with_policy, PreparedOrientedPlane3};
 use crate::geometry::Point3;
-use crate::predicate::{Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed};
+use crate::geometry::plane::{PreparedOrientedPlane3, classify_plane_triangle_with_policy};
+use crate::predicate::PredicatePolicy;
+use crate::predicate::{Escalation, PredicateOutcome, RefinementNeed};
 use crate::predicates::coplanar::{
+    CoplanarTriangleClassification, CoplanarTriangleRelation, TriangleDegeneracy,
     choose_coplanar_projection, classify_coplanar_triangle_points, classify_triangle3_degeneracy,
-    project_point3, project_triangle3, CoplanarTriangleClassification, CoplanarTriangleRelation,
-    TriangleDegeneracy,
+    project_point3, project_triangle3,
 };
 use crate::predicates::segment::classify_segment_intersection_with_policy;
 use crate::predicates::triangle::{
@@ -166,7 +167,7 @@ pub fn classify_triangle_triangle3(
 }
 
 /// Classify two closed 3D triangles using an explicit predicate policy.
-pub fn classify_triangle_triangle3_with_policy(
+pub(crate) fn classify_triangle_triangle3_with_policy(
     a0: &Point3,
     a1: &Point3,
     a2: &Point3,
@@ -179,7 +180,7 @@ pub fn classify_triangle_triangle3_with_policy(
 }
 
 /// Classify two closed 3D triangles supplied as borrowed point triples.
-pub fn classify_triangle_triangle3_points_with_policy(
+pub(crate) fn classify_triangle_triangle3_points_with_policy(
     left: [&Point3; 3],
     right: [&Point3; 3],
     policy: PredicatePolicy,

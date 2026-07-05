@@ -1,22 +1,23 @@
 //! Triangle classification predicates.
 
+use crate::predicate::PredicatePolicy;
 use core::cmp::Ordering;
 
 use crate::classify::{
     PlaneSide, RayTriangleIntersection, SegmentTriangleIntersection, TetrahedronLocation,
     Triangle3Location, TriangleLocation,
 };
-use crate::geometry::{triangle2_facts, HomogeneousLine3, Plane3, Point2, Point3, Triangle2Facts};
+use crate::geometry::{HomogeneousLine3, Plane3, Point2, Point3, Triangle2Facts, triangle2_facts};
 use crate::predicate::{
-    Certainty, Escalation, PredicateOutcome, PredicatePolicy, PredicateUse, RefinementNeed, Sign,
+    Certainty, Escalation, PredicateOutcome, PredicateUse, RefinementNeed, Sign,
 };
 use crate::predicates::order::compare_reals_with_policy;
 use crate::predicates::orient::{
     orient2d_with_policy, orient3d_report_with_policy, orient3d_with_policy,
 };
 use crate::predicates::segment_plane::{
-    intersect_segment_with_plane_values, point_plane_value, SegmentPlaneIntersection,
-    SegmentPlaneRelation, SegmentPlaneValidationError,
+    SegmentPlaneIntersection, SegmentPlaneRelation, SegmentPlaneValidationError,
+    intersect_segment_with_plane_values, point_plane_value,
 };
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::resolve_real_sign;
@@ -43,17 +44,16 @@ pub struct PreparedTriangle2<'a> {
     c: &'a Point2,
     facts: Triangle2Facts,
     orientation: PredicateOutcome<Sign>,
-    policy: PredicatePolicy,
 }
 
 impl<'a> PreparedTriangle2<'a> {
-    /// Prepare a triangle using the default predicate policy.
+    /// Prepare a triangle using the strict predicate context.
     pub fn new(a: &'a Point2, b: &'a Point2, c: &'a Point2) -> Self {
-        Self::with_policy(a, b, c, PredicatePolicy::default())
+        Self::with_policy(a, b, c, PredicatePolicy::STRICT)
     }
 
-    /// Prepare a triangle using an explicit predicate policy.
-    pub fn with_policy(
+    /// Prepare a triangle using the crate-local strict predicate marker.
+    pub(crate) fn with_policy(
         a: &'a Point2,
         b: &'a Point2,
         c: &'a Point2,
@@ -62,22 +62,21 @@ impl<'a> PreparedTriangle2<'a> {
         crate::trace_dispatch!("hyperlimit", "prepared_triangle2", "new");
         let facts = triangle2_facts(a, b, c);
         let orientation = triangle_orientation_with_policy_and_facts(a, b, c, policy, facts);
-        Self::from_parts(a, b, c, facts, orientation, policy)
+        Self::from_parts(a, b, c, facts, orientation)
     }
 
     /// Prepare a triangle from caller-cached facts and orientation.
     ///
-    /// The caller must pass facts and orientation for the same vertex triple and
-    /// policy. Conservative facts merely leave fast paths unused, but
-    /// non-conservative facts or an orientation from different vertices can
-    /// change the classified result.
+    /// The caller must pass facts and orientation for the same vertex triple
+    /// under the strict predicate context. Conservative facts merely leave fast
+    /// paths unused, but non-conservative facts or an orientation from different
+    /// vertices can change the classified result.
     pub const fn from_parts(
         a: &'a Point2,
         b: &'a Point2,
         c: &'a Point2,
         facts: Triangle2Facts,
         orientation: PredicateOutcome<Sign>,
-        policy: PredicatePolicy,
     ) -> Self {
         Self {
             a,
@@ -85,7 +84,6 @@ impl<'a> PreparedTriangle2<'a> {
             c,
             facts,
             orientation,
-            policy,
         }
     }
 
@@ -114,39 +112,25 @@ impl<'a> PreparedTriangle2<'a> {
         self.orientation
     }
 
-    /// Return the policy used to compute the cached orientation.
-    pub const fn policy(&self) -> PredicatePolicy {
-        self.policy
-    }
-
-    /// Classify a point using the policy captured at preparation time.
+    /// Classify a point using the strict predicate context.
     pub fn classify_point(&self, point: &Point2) -> PredicateOutcome<TriangleLocation> {
         classify_point_triangle_impl(
             self.a,
             self.b,
             self.c,
             point,
-            self.policy,
+            PredicatePolicy::STRICT,
             Some(self.facts),
             Some(self.orientation),
         )
     }
 
-    /// Classify a point with an explicit predicate policy.
-    ///
-    /// The cached orientation is reused when `policy` matches the preparation
-    /// policy. If a different policy is requested, orientation is recomputed
-    /// under that policy while cached structural facts are still reused.
-    pub fn classify_point_with_policy(
+    /// Classify a point with the crate-local strict predicate marker.
+    pub(crate) fn classify_point_with_policy(
         &self,
         point: &Point2,
         policy: PredicatePolicy,
     ) -> PredicateOutcome<TriangleLocation> {
-        let cached_orientation = if policy == self.policy {
-            Some(self.orientation)
-        } else {
-            None
-        };
         classify_point_triangle_impl(
             self.a,
             self.b,
@@ -154,7 +138,7 @@ impl<'a> PreparedTriangle2<'a> {
             point,
             policy,
             Some(self.facts),
-            cached_orientation,
+            Some(self.orientation),
         )
     }
 }
@@ -167,17 +151,16 @@ pub struct PreparedTriangle3<'a> {
     c: &'a Point3,
     normal: Triangle3Normal,
     normal_signs: PredicateOutcome<[Sign; 3]>,
-    policy: PredicatePolicy,
 }
 
 impl<'a> PreparedTriangle3<'a> {
-    /// Prepare a 3D triangle using the default predicate policy.
+    /// Prepare a 3D triangle using the strict predicate context.
     pub fn new(a: &'a Point3, b: &'a Point3, c: &'a Point3) -> Self {
-        Self::with_policy(a, b, c, PredicatePolicy::default())
+        Self::with_policy(a, b, c, PredicatePolicy::STRICT)
     }
 
-    /// Prepare a 3D triangle using an explicit predicate policy.
-    pub fn with_policy(
+    /// Prepare a 3D triangle using the crate-local strict predicate marker.
+    pub(crate) fn with_policy(
         a: &'a Point3,
         b: &'a Point3,
         c: &'a Point3,
@@ -192,7 +175,6 @@ impl<'a> PreparedTriangle3<'a> {
             c,
             normal,
             normal_signs,
-            policy,
         }
     }
 
@@ -216,44 +198,34 @@ impl<'a> PreparedTriangle3<'a> {
         self.normal_signs
     }
 
-    /// Return the policy used to compute cached normal signs.
-    pub const fn policy(&self) -> PredicatePolicy {
-        self.policy
-    }
-
-    /// Classify a point using the policy captured at preparation time.
+    /// Classify a point using the strict predicate context.
     pub fn classify_point(&self, point: &Point3) -> PredicateOutcome<Triangle3Location> {
         classify_point_triangle3_impl(
             self.a,
             self.b,
             self.c,
             point,
-            self.policy,
+            PredicatePolicy::STRICT,
             &self.normal,
             self.normal_signs,
         )
     }
 
-    /// Classify a point with an explicit predicate policy.
-    pub fn classify_point_with_policy(
+    /// Classify a point with the crate-local strict predicate marker.
+    pub(crate) fn classify_point_with_policy(
         &self,
         point: &Point3,
         policy: PredicatePolicy,
     ) -> PredicateOutcome<Triangle3Location> {
-        if policy == self.policy {
-            self.classify_point(point)
-        } else {
-            let normal_signs = triangle3_normal_signs_outcome(&self.normal, policy);
-            classify_point_triangle3_impl(
-                self.a,
-                self.b,
-                self.c,
-                point,
-                policy,
-                &self.normal,
-                normal_signs,
-            )
-        }
+        classify_point_triangle3_impl(
+            self.a,
+            self.b,
+            self.c,
+            point,
+            policy,
+            &self.normal,
+            self.normal_signs,
+        )
     }
 }
 
@@ -496,7 +468,7 @@ pub fn classify_point_triangle(
 
 /// Classify `point` relative to triangle `abc` with an explicit escalation
 /// policy.
-pub fn classify_point_triangle_with_policy(
+pub(crate) fn classify_point_triangle_with_policy(
     a: &Point2,
     b: &Point2,
     c: &Point2,
@@ -523,7 +495,7 @@ pub fn classify_point_triangle3(
 /// certifies that `point` is on the supporting plane. Containment is decided by
 /// exact signs of `normal . ((edge_end - edge_start) x (point - edge_start))`
 /// for each oriented edge.
-pub fn classify_point_triangle3_with_policy(
+pub(crate) fn classify_point_triangle3_with_policy(
     a: &Point3,
     b: &Point3,
     c: &Point3,
@@ -550,7 +522,7 @@ pub fn triangle3_winding_normal_sign(
 }
 
 /// Policy-controlled variant of [`triangle3_winding_normal_sign`].
-pub fn triangle3_winding_normal_sign_with_policy(
+pub(crate) fn triangle3_winding_normal_sign_with_policy(
     a: &Point3,
     b: &Point3,
     c: &Point3,
@@ -616,7 +588,7 @@ pub fn classify_segment_triangle3_intersection_report(
 /// Moller (1997) and Guigue-Devillers (2003). The candidate is then replayed
 /// through the exact 3D point/triangle classifier before the coarse relation is
 /// accepted.
-pub fn classify_segment_triangle3_intersection_report_with_policy(
+pub(crate) fn classify_segment_triangle3_intersection_report_with_policy(
     p: &Point3,
     q: &Point3,
     a: &Point3,
@@ -710,7 +682,7 @@ pub fn classify_segment_triangle3_intersection_report_with_policy(
 /// tolerance; this follows Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997), and keeps planar arrangement
 /// ownership in higher crates.
-pub fn classify_segment_triangle3_intersection_with_policy(
+pub(crate) fn classify_segment_triangle3_intersection_with_policy(
     p: &Point3,
     q: &Point3,
     a: &Point3,
@@ -836,7 +808,7 @@ pub fn classify_ray_triangle3_intersection_report(
 /// nonnegative. The retained ratio and point/triangle replay embody Yap's
 /// report-before-topology rule, while keeping the classic
 /// ray-plane-then-triangle-containment decomposition explicit.
-pub fn classify_ray_triangle3_intersection_report_with_policy(
+pub(crate) fn classify_ray_triangle3_intersection_report_with_policy(
     origin: &Point3,
     direction: &Point3,
     a: &Point3,
@@ -968,7 +940,7 @@ pub fn classify_ray_triangle3_intersection_report_with_policy(
 /// constructed only after the parameter is certified nonnegative. This is the
 /// same exact-decision discipline advocated by Yap (1997); the final triangle
 /// containment reuses the existing exact edge-halfspace classifier.
-pub fn classify_ray_triangle3_intersection_with_policy(
+pub(crate) fn classify_ray_triangle3_intersection_with_policy(
     origin: &Point3,
     direction: &Point3,
     a: &Point3,
@@ -1066,7 +1038,7 @@ pub fn classify_point_tetrahedron(
 
 /// Classify `point` relative to tetrahedron `abcd` with an explicit predicate
 /// escalation policy.
-pub fn classify_point_tetrahedron_with_policy(
+pub(crate) fn classify_point_tetrahedron_with_policy(
     a: &Point3,
     b: &Point3,
     c: &Point3,
@@ -1153,7 +1125,7 @@ pub fn classify_point_triangle_with_facts(
 /// Cached facts can certify structurally degenerate triangles without building
 /// the orientation determinant. Non-degenerate containment still uses exact
 /// orientation signs for the three triangle edges.
-pub fn classify_point_triangle_with_policy_and_facts(
+pub(crate) fn classify_point_triangle_with_policy_and_facts(
     a: &Point2,
     b: &Point2,
     c: &Point2,
@@ -2329,11 +2301,7 @@ mod tests {
         let c = p2(5.0, 0.0);
         let point = p2(1.0, 0.0);
         let facts = triangle2_facts(&a, &b, &c);
-        let policy = PredicatePolicy {
-            allow_exact: false,
-            allow_refinement: false,
-            ..PredicatePolicy::STRICT
-        };
+        let policy = PredicatePolicy::STRICT;
 
         assert_eq!(facts.known_degenerate(), Some(true));
         assert_eq!(

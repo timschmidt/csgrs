@@ -1,12 +1,11 @@
 //! Polygon ring Real classifiers.
 
+use crate::predicate::PredicatePolicy;
 use core::cmp::Ordering;
 
 use crate::classify::{PointSegmentLocation, RingConvexity, RingPointLocation};
 use crate::geometry::Point2;
-use crate::predicate::{
-    Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign,
-};
+use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
 use crate::predicates::order::compare_reals_with_policy;
 use crate::predicates::orient::orient2d_with_policy;
 use crate::predicates::segment::classify_point_segment_with_policy;
@@ -205,7 +204,7 @@ pub fn ring2_facts(points: &[Point2]) -> Ring2Facts {
 }
 
 /// Build structural facts for a closed polygonal ring with an explicit policy.
-pub fn ring2_facts_with_policy(points: &[Point2], policy: PredicatePolicy) -> Ring2Facts {
+pub(crate) fn ring2_facts_with_policy(points: &[Point2], policy: PredicatePolicy) -> Ring2Facts {
     let refs: Vec<_> = points.iter().collect();
     ring2_facts_refs(&refs, policy)
 }
@@ -217,7 +216,7 @@ pub fn indexed_ring2_facts(points: &[Point2], ring: &[usize]) -> Option<Ring2Fac
 
 /// Build structural facts for an indexed closed polygonal ring with an explicit
 /// policy.
-pub fn indexed_ring2_facts_with_policy(
+pub(crate) fn indexed_ring2_facts_with_policy(
     points: &[Point2],
     ring: &[usize],
     policy: PredicatePolicy,
@@ -268,7 +267,10 @@ pub fn ring_convexity(points: &[Point2]) -> RingConvexity {
 }
 
 /// Classify local turn consistency for a closed polygonal ring with a policy.
-pub fn ring_convexity_with_policy(points: &[Point2], policy: PredicatePolicy) -> RingConvexity {
+pub(crate) fn ring_convexity_with_policy(
+    points: &[Point2],
+    policy: PredicatePolicy,
+) -> RingConvexity {
     let refs: Vec<_> = points.iter().collect();
     ring_convexity_refs(&refs, policy)
 }
@@ -280,7 +282,7 @@ pub fn indexed_ring_convexity(points: &[Point2], ring: &[usize]) -> Option<RingC
 
 /// Classify local turn consistency for an indexed closed polygonal ring with a
 /// policy.
-pub fn indexed_ring_convexity_with_policy(
+pub(crate) fn indexed_ring_convexity_with_policy(
     points: &[Point2],
     ring: &[usize],
     policy: PredicatePolicy,
@@ -305,7 +307,7 @@ pub fn ring_area_sign(points: &[Point2]) -> PredicateOutcome<Sign> {
 
 /// Return the sign of twice the signed area of a closed polygonal ring with an
 /// explicit predicate escalation policy.
-pub fn ring_area_sign_with_policy(
+pub(crate) fn ring_area_sign_with_policy(
     points: &[Point2],
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
@@ -320,7 +322,7 @@ pub fn indexed_ring_area_sign(points: &[Point2], ring: &[usize]) -> PredicateOut
 
 /// Return the sign of twice the signed area of an indexed closed polygonal ring
 /// with an explicit predicate escalation policy.
-pub fn indexed_ring_area_sign_with_policy(
+pub(crate) fn indexed_ring_area_sign_with_policy(
     points: &[Point2],
     ring: &[usize],
     policy: PredicatePolicy,
@@ -397,7 +399,7 @@ pub fn classify_point_ring_even_odd_report(
 /// 20.3 (2001), but every crossing decision is certified through exact signs in
 /// the exact-geometric-computation model of Yap, "Towards Exact Geometric
 /// Computation," *Computational Geometry* 7.1-2 (1997).
-pub fn classify_point_ring_even_odd_with_policy(
+pub(crate) fn classify_point_ring_even_odd_with_policy(
     ring: &[Point2],
     point: &Point2,
     policy: PredicatePolicy,
@@ -414,7 +416,7 @@ pub fn classify_point_ring_even_odd_with_policy(
 
 /// Policy-controlled report-bearing variant of
 /// [`classify_point_ring_even_odd`].
-pub fn classify_point_ring_even_odd_report_with_policy(
+pub(crate) fn classify_point_ring_even_odd_report_with_policy(
     ring: &[Point2],
     point: &Point2,
     policy: PredicatePolicy,
@@ -455,7 +457,7 @@ pub fn classify_point_indexed_ring_even_odd_report(
 
 /// Classify a point against an indexed closed polygonal ring by the even-odd
 /// rule with an explicit predicate escalation policy.
-pub fn classify_point_indexed_ring_even_odd_with_policy(
+pub(crate) fn classify_point_indexed_ring_even_odd_with_policy(
     points: &[Point2],
     ring: &[usize],
     point: &Point2,
@@ -473,7 +475,7 @@ pub fn classify_point_indexed_ring_even_odd_with_policy(
 
 /// Policy-controlled report-bearing variant of
 /// [`classify_point_indexed_ring_even_odd`].
-pub fn classify_point_indexed_ring_even_odd_report_with_policy(
+pub(crate) fn classify_point_indexed_ring_even_odd_report_with_policy(
     points: &[Point2],
     ring: &[usize],
     point: &Point2,
@@ -617,7 +619,7 @@ pub fn point_in_ring_even_odd(ring: &[Point2], point: &Point2) -> PredicateOutco
 
 /// Return whether `point` is inside or on the boundary of `ring` by the
 /// even-odd rule with an explicit predicate escalation policy.
-pub fn point_in_ring_even_odd_with_policy(
+pub(crate) fn point_in_ring_even_odd_with_policy(
     ring: &[Point2],
     point: &Point2,
     policy: PredicatePolicy,
@@ -644,7 +646,7 @@ pub fn point_in_indexed_ring_even_odd(
 
 /// Return whether `point` is inside or on the boundary of an indexed ring by
 /// the even-odd rule with an explicit predicate escalation policy.
-pub fn point_in_indexed_ring_even_odd_with_policy(
+pub(crate) fn point_in_indexed_ring_even_odd_with_policy(
     points: &[Point2],
     ring: &[usize],
     point: &Point2,

@@ -1,29 +1,25 @@
 //! Orientation predicates.
 
+use crate::RealSymbolicDependencyMask;
 use crate::classify::LineSide;
 pub use crate::geometry::{Point2, Point3};
+use crate::predicate::PredicatePolicy;
 use crate::predicate::{
     Certainty, DeterminantScheduleHint, Escalation, ExactPredicateKernel, PredicateCertificate,
-    PredicateOutcome, PredicatePolicy, PredicateReport, RefinementNeed, Sign,
+    PredicateOutcome, PredicateReport, RefinementNeed, Sign,
 };
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
-use crate::RealSymbolicDependencyMask;
 use hyperreal::{Real, RealExactSetFacts, ZeroKnowledge};
 
 pub use crate::batch::{
-    classify_point_line_batch, classify_point_line_batch_with_policy, incircle2d_batch,
-    incircle2d_batch_with_policy, insphere3d_batch, insphere3d_batch_with_policy, orient2d_batch,
-    orient2d_batch_with_policy, orient3d_batch, orient3d_batch_with_policy, Incircle2dCase,
-    Insphere3dCase, Orient2dCase, Orient3dCase,
+    Incircle2dCase, Insphere3dCase, Orient2dCase, Orient3dCase, classify_point_line_batch,
+    incircle2d_batch, insphere3d_batch, orient2d_batch, orient3d_batch,
 };
 #[cfg(feature = "parallel")]
 pub use crate::batch::{
-    classify_point_line_batch_parallel, classify_point_line_batch_parallel_with_policy,
-    incircle2d_batch_parallel, incircle2d_batch_parallel_with_policy, insphere3d_batch_parallel,
-    insphere3d_batch_parallel_with_policy, orient2d_batch_parallel,
-    orient2d_batch_parallel_with_policy, orient3d_batch_parallel,
-    orient3d_batch_parallel_with_policy,
+    classify_point_line_batch_parallel, incircle2d_batch_parallel, insphere3d_batch_parallel,
+    orient2d_batch_parallel, orient3d_batch_parallel,
 };
 
 /// Orientation of three 2D points.
@@ -32,7 +28,7 @@ pub fn orient2d(a: &Point2, b: &Point2, c: &Point2) -> PredicateOutcome<Sign> {
 }
 
 /// Orientation of three 2D points with an explicit escalation policy.
-pub fn orient2d_with_policy(
+pub(crate) fn orient2d_with_policy(
     a: &Point2,
     b: &Point2,
     c: &Point2,
@@ -56,7 +52,7 @@ pub fn orient2d_f64(a: [f64; 2], b: [f64; 2], c: [f64; 2]) -> PredicateOutcome<S
 }
 
 /// Orientation of three finite primitive 2D points with an explicit policy.
-pub fn orient2d_f64_with_policy(
+pub(crate) fn orient2d_f64_with_policy(
     a: [f64; 2],
     b: [f64; 2],
     c: [f64; 2],
@@ -71,7 +67,7 @@ pub fn orient2d_f64_report(a: [f64; 2], b: [f64; 2], c: [f64; 2]) -> PredicateRe
 }
 
 /// Orientation of three finite primitive 2D points with policy and provenance.
-pub fn orient2d_f64_report_with_policy(
+pub(crate) fn orient2d_f64_report_with_policy(
     a: [f64; 2],
     b: [f64; 2],
     c: [f64; 2],
@@ -92,7 +88,7 @@ pub fn orient2d_f64_report_with_policy(
 
 /// Orientation of three 2D points with an explicit escalation policy and
 /// provenance certificate.
-pub fn orient2d_report_with_policy(
+pub(crate) fn orient2d_report_with_policy(
     a: &Point2,
     b: &Point2,
     c: &Point2,
@@ -144,7 +140,7 @@ pub fn orient3d(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> PredicateOutc
 }
 
 /// Orientation of four 3D points with an explicit escalation policy.
-pub fn orient3d_with_policy(
+pub(crate) fn orient3d_with_policy(
     a: &Point3,
     b: &Point3,
     c: &Point3,
@@ -161,7 +157,7 @@ pub fn orient3d_report(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Predic
 
 /// Orientation of four 3D points with an explicit escalation policy and
 /// provenance certificate.
-pub fn orient3d_report_with_policy(
+pub(crate) fn orient3d_report_with_policy(
     a: &Point3,
     b: &Point3,
     c: &Point3,
@@ -227,7 +223,7 @@ pub fn classify_point_line(
 
 /// Classify `point` relative to the oriented line from `from` to `to` with an
 /// explicit escalation policy.
-pub fn classify_point_line_with_policy(
+pub(crate) fn classify_point_line_with_policy(
     from: &Point2,
     to: &Point2,
     point: &Point2,
@@ -542,7 +538,7 @@ impl<'a> PreparedLine2<'a> {
     }
 
     /// Classify a point using an explicit predicate policy.
-    pub fn classify_point_with_policy(
+    pub(crate) fn classify_point_with_policy(
         &self,
         point: &Point2,
         policy: PredicatePolicy,
@@ -572,7 +568,7 @@ pub fn incircle2d(a: &Point2, b: &Point2, c: &Point2, d: &Point2) -> PredicateOu
 }
 
 /// In-circle predicate for four 2D points with an explicit escalation policy.
-pub fn incircle2d_with_policy(
+pub(crate) fn incircle2d_with_policy(
     a: &Point2,
     b: &Point2,
     c: &Point2,
@@ -588,7 +584,7 @@ pub fn incircle2d_report(a: &Point2, b: &Point2, c: &Point2, d: &Point2) -> Pred
 }
 
 /// In-circle predicate with an explicit escalation policy and certificate.
-pub fn incircle2d_report_with_policy(
+pub(crate) fn incircle2d_report_with_policy(
     a: &Point2,
     b: &Point2,
     c: &Point2,
@@ -736,7 +732,7 @@ impl<'a> PreparedIncircle2<'a> {
     }
 
     /// Test a point using an explicit predicate policy.
-    pub fn test_point_with_policy(
+    pub(crate) fn test_point_with_policy(
         &self,
         point: &Point2,
         policy: PredicatePolicy,
@@ -790,7 +786,7 @@ pub fn insphere3d(
 }
 
 /// In-sphere predicate for five 3D points with an explicit escalation policy.
-pub fn insphere3d_with_policy(
+pub(crate) fn insphere3d_with_policy(
     a: &Point3,
     b: &Point3,
     c: &Point3,
@@ -813,7 +809,7 @@ pub fn insphere3d_report(
 }
 
 /// In-sphere predicate with an explicit escalation policy and certificate.
-pub fn insphere3d_report_with_policy(
+pub(crate) fn insphere3d_report_with_policy(
     a: &Point3,
     b: &Point3,
     c: &Point3,
@@ -1054,7 +1050,7 @@ impl<'a> PreparedInsphere3<'a> {
     }
 
     /// Test a point using an explicit predicate policy.
-    pub fn test_point_with_policy(
+    pub(crate) fn test_point_with_policy(
         &self,
         point: &Point3,
         policy: PredicatePolicy,
@@ -1185,14 +1181,10 @@ fn mul(left: &Real, right: &Real) -> Real {
 }
 
 fn exact_report(
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
     kernel: ExactPredicateKernel,
     exact: impl FnOnce() -> Option<Sign>,
 ) -> Option<PredicateReport<Sign>> {
-    if !policy.allow_exact {
-        return None;
-    }
-
     exact().map(|sign| {
         PredicateReport::new(
             PredicateOutcome::decided(sign, Certainty::Exact, Escalation::Exact),
@@ -1397,9 +1389,11 @@ mod tests {
             orient2d_f64([0.0, 0.0], [1.0, 0.0], [0.0, 1.0]).value(),
             Some(Sign::Positive)
         );
-        assert!(orient2d_f64([0.0, 0.0], [f64::NAN, 0.0], [0.0, 1.0])
-            .value()
-            .is_none());
+        assert!(
+            orient2d_f64([0.0, 0.0], [f64::NAN, 0.0], [0.0, 1.0])
+                .value()
+                .is_none()
+        );
     }
 
     #[test]
@@ -1415,11 +1409,7 @@ mod tests {
 
     #[test]
     fn exact_rational_predicates_do_not_need_refinement_budget() {
-        let policy = PredicatePolicy {
-            allow_refinement: false,
-            max_refinement_precision: Some(0),
-            ..PredicatePolicy::STRICT
-        };
+        let policy = PredicatePolicy::STRICT;
 
         let a = Point2::new(Real::from(0), Real::from(0));
         let b = Point2::new(Real::from(2), Real::from(0));
@@ -1466,10 +1456,7 @@ mod tests {
 
     #[test]
     fn exact_rational_reports_identify_selected_kernel() {
-        let policy = PredicatePolicy {
-            allow_refinement: false,
-            ..PredicatePolicy::STRICT
-        };
+        let policy = PredicatePolicy::STRICT;
 
         let a = Point2::new(Real::from(0), Real::from(0));
         let b = Point2::new(Real::from(2), Real::from(0));
@@ -2088,10 +2075,7 @@ mod tests {
             cx in -64_i32..64, cy in -64_i32..64,
             tx in -64_i32..64, ty in -64_i32..64,
         ) {
-            let policy = PredicatePolicy {
-                allow_refinement: false,
-                ..PredicatePolicy::STRICT
-            };
+            let policy = PredicatePolicy::STRICT;
             let a = rp2(ax, ay);
             let b = rp2(bx, by);
             let c = rp2(cx, cy);
@@ -2113,10 +2097,7 @@ mod tests {
             dx in -16_i32..16, dy in -16_i32..16, dz in -16_i32..16,
             tx in -16_i32..16, ty in -16_i32..16, tz in -16_i32..16,
         ) {
-            let policy = PredicatePolicy {
-                allow_refinement: false,
-                ..PredicatePolicy::STRICT
-            };
+            let policy = PredicatePolicy::STRICT;
             let a = rp3(ax, ay, az);
             let b = rp3(bx, by, bz);
             let c = rp3(cx, cy, cz);
@@ -2138,10 +2119,7 @@ mod tests {
             bx in -16_i32..16, by in -16_i32..16,
             cx in -16_i32..16, cy in -16_i32..16,
         ) {
-            let policy = PredicatePolicy {
-                allow_refinement: false,
-                ..PredicatePolicy::STRICT
-            };
+            let policy = PredicatePolicy::STRICT;
             let a = rp2(ax, ay);
             let b = rp2(bx, by);
             let c = rp2(cx, cy);
@@ -2159,10 +2137,7 @@ mod tests {
             cx in -8_i32..8, cy in -8_i32..8, cz in -8_i32..8,
             dx in -8_i32..8, dy in -8_i32..8, dz in -8_i32..8,
         ) {
-            let policy = PredicatePolicy {
-                allow_refinement: false,
-                ..PredicatePolicy::STRICT
-            };
+            let policy = PredicatePolicy::STRICT;
             let a = rp3(ax, ay, az);
             let b = rp3(bx, by, bz);
             let c = rp3(cx, cy, cz);

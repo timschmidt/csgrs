@@ -48,7 +48,7 @@ impl<'a> PreparedExplicitSphere3<'a> {
     }
 
     /// Classify a point using an explicit predicate policy.
-    pub fn classify_point_with_policy(
+    pub(crate) fn classify_point_with_policy(
         &self,
         point: &Point3,
         policy: PredicatePolicy,
@@ -79,7 +79,7 @@ pub fn compare_point2_distance_squared(
 /// final sign decision in the exact-geometric-computation model of Yap,
 /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
 /// (1997).
-pub fn compare_point2_distance_squared_with_policy(
+pub(crate) fn compare_point2_distance_squared_with_policy(
     anchor: &Point2,
     left: &Point2,
     right: &Point2,
@@ -105,7 +105,7 @@ pub fn compare_point3_distance_squared(
 /// This is the 3D lift of [`compare_point2_distance_squared`]. It compares
 /// `|anchor-left|^2` and `|anchor-right|^2` through exact `Real` predicates,
 /// avoiding square-root construction and primitive-float tie decisions.
-pub fn compare_point3_distance_squared_with_policy(
+pub(crate) fn compare_point3_distance_squared_with_policy(
     anchor: &Point3,
     left: &Point3,
     right: &Point3,
@@ -135,7 +135,7 @@ pub fn classify_circle_line2(
 /// squared-distance form; keeping it as an exact sign comparison follows Yap,
 /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
 /// (1997).
-pub fn classify_circle_line2_with_policy(
+pub(crate) fn classify_circle_line2_with_policy(
     center: &Point2,
     radius_squared: &Real,
     a: &Point2,
@@ -200,7 +200,7 @@ pub fn classify_circle_segment2(
 /// comparison distinguishes disjoint, tangent, and secant cases without a
 /// primitive tolerance. Degenerate segments reduce to exact point/circle
 /// classification.
-pub fn classify_circle_segment2_with_policy(
+pub(crate) fn classify_circle_segment2_with_policy(
     center: &Point2,
     radius_squared: &Real,
     a: &Point2,
@@ -341,7 +341,7 @@ pub fn compare_point_line3_distance_squared(
 /// reduction for point-line queries in computational geometry, while the
 /// division-free exact decision boundary follows Yap, "Towards Exact
 /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
-pub fn compare_point_line3_distance_squared_with_policy(
+pub(crate) fn compare_point_line3_distance_squared_with_policy(
     point: &Point3,
     a: &Point3,
     b: &Point3,
@@ -399,7 +399,7 @@ pub fn compare_point_segment3_distance_squared(
 /// branch exactly. No square roots, normalized direction vectors, or
 /// primitive-float tolerances are used; this keeps closest-feature decisions in
 /// Yap's exact-geometric-computation model.
-pub fn compare_point_segment3_distance_squared_with_policy(
+pub(crate) fn compare_point_segment3_distance_squared_with_policy(
     point: &Point3,
     a: &Point3,
     b: &Point3,
@@ -488,7 +488,7 @@ pub fn compare_point_plane_distance_squared(
 /// plane or constructs a square root. Degenerate zero-normal planes fall back
 /// to comparing the squared offset expression directly, making invalid input
 /// behavior explicit and exact rather than tolerance-defined.
-pub fn compare_point_plane_distance_squared_with_policy(
+pub(crate) fn compare_point_plane_distance_squared_with_policy(
     point: &Point3,
     plane: &crate::plane::Plane3,
     threshold_squared: &Real,
@@ -535,7 +535,7 @@ pub fn classify_sphere3_intersection(
 /// unsupported domain input instead of being silently reinterpreted. This keeps
 /// the exact algebraic relation square-root-free while preserving Yap's rule
 /// that invalid or undecidable geometric states stay explicit.
-pub fn classify_sphere3_intersection_with_policy(
+pub(crate) fn classify_sphere3_intersection_with_policy(
     first_center: &Point3,
     first_radius: &Real,
     second_center: &Point3,
@@ -598,7 +598,7 @@ pub fn classify_aabb3_sphere_intersection(
 /// axis comparison is exact and inclusive, and the final comparison stays in
 /// squared-distance form. See Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997), for the exact decision boundary.
-pub fn classify_aabb3_sphere_intersection_with_policy(
+pub(crate) fn classify_aabb3_sphere_intersection_with_policy(
     min: &Point3,
     max: &Point3,
     center: &Point3,
@@ -641,7 +641,7 @@ pub fn classify_point_sphere3(
 /// The API accepts squared radius so callers do not need to construct square
 /// roots. Domain validation for nonnegative radius remains with the caller that
 /// owns the sphere object; this predicate only certifies the distance relation.
-pub fn classify_point_sphere3_with_policy(
+pub(crate) fn classify_point_sphere3_with_policy(
     center: &Point3,
     radius_squared: &Real,
     point: &Point3,

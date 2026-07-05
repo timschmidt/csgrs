@@ -323,8 +323,6 @@ checksum = "fc0fef456e4baa96da950455cd02c081ca953b141298e41db3fc7e36b1da849c"
 [[package]]
 name = "hyperlattice"
 version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b65eff926d97a7fafc3985d1faba167e0e67b7870f90af494fa1269ac64d45a9"
 dependencies = [
  "hyperreal",
 ]
@@ -343,9 +341,7 @@ dependencies = [
 
 [[package]]
 name = "hyperreal"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "158f5ff74eddb87664f7a574cc059e619ea5b27eb96d6121e58f9f866f45feba"
+version = "0.13.1"
 dependencies = [
  "num",
 ]

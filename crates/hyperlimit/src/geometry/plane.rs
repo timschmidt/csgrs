@@ -1,30 +1,27 @@
 //! Plane classification helpers.
 
+use crate::predicate::PredicatePolicy;
 use core::cmp::Ordering;
 
 use hyperreal::{Real, RealExactSetFacts, ZeroKnowledge};
 
+use crate::RealSymbolicDependencyMask;
 use crate::classify::{PlaneAabbRelation, PlaneSegmentRelation, PlaneSide, PlaneTriangleRelation};
 use crate::geometry::Point3;
 use crate::predicate::{
-    Certainty, Escalation, PredicateOutcome, PredicatePolicy, PredicateUse, RefinementNeed, Sign,
+    Certainty, Escalation, PredicateOutcome, PredicateUse, RefinementNeed, Sign,
 };
 use crate::predicates::order::compare_reals_with_policy;
 use crate::predicates::{orient3d_report_with_policy, orient3d_with_policy};
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
-use crate::RealSymbolicDependencyMask;
 
 pub use crate::batch::{
-    classify_point_oriented_plane_batch, classify_point_oriented_plane_batch_with_policy,
-    classify_point_plane_batch, classify_point_plane_batch_with_policy, Orient3dCase,
-    PointPlaneCase,
+    Orient3dCase, PointPlaneCase, classify_point_oriented_plane_batch, classify_point_plane_batch,
 };
 #[cfg(feature = "parallel")]
 pub use crate::batch::{
-    classify_point_oriented_plane_batch_parallel,
-    classify_point_oriented_plane_batch_parallel_with_policy, classify_point_plane_batch_parallel,
-    classify_point_plane_batch_parallel_with_policy,
+    classify_point_oriented_plane_batch_parallel, classify_point_plane_batch_parallel,
 };
 
 /// Plane represented by `normal . point + offset = 0`.
@@ -355,7 +352,7 @@ impl<'a> PreparedPlane3<'a> {
     }
 
     /// Classify a point using an explicit predicate policy.
-    pub fn classify_point_with_policy(
+    pub(crate) fn classify_point_with_policy(
         &self,
         point: &Point3,
         policy: PredicatePolicy,
@@ -375,7 +372,7 @@ impl<'a> PreparedPlane3<'a> {
 
     /// Classify a closed segment relative to this plane using an explicit
     /// predicate policy.
-    pub fn classify_segment_with_policy(
+    pub(crate) fn classify_segment_with_policy(
         &self,
         start: &Point3,
         end: &Point3,
@@ -397,7 +394,7 @@ impl<'a> PreparedPlane3<'a> {
 
     /// Classify a triangle relative to this plane using an explicit predicate
     /// policy.
-    pub fn classify_triangle_with_policy(
+    pub(crate) fn classify_triangle_with_policy(
         &self,
         a: &Point3,
         b: &Point3,
@@ -419,7 +416,7 @@ impl<'a> PreparedPlane3<'a> {
 
     /// Classify a closed 3D AABB relative to this plane using an explicit
     /// predicate policy.
-    pub fn classify_aabb3_with_policy(
+    pub(crate) fn classify_aabb3_with_policy(
         &self,
         min: &Point3,
         max: &Point3,
@@ -439,7 +436,7 @@ impl<'a> PreparedPlane3<'a> {
 
     /// Classify a closed 3D AABB with an explicit policy and retain exact
     /// support-extrema evidence.
-    pub fn classify_aabb3_report_with_policy(
+    pub(crate) fn classify_aabb3_report_with_policy(
         &self,
         min: &Point3,
         max: &Point3,
@@ -506,7 +503,7 @@ impl PreparedOrientedPlane3 {
     }
 
     /// Classify a point using an explicit predicate policy.
-    pub fn classify_point_with_policy(
+    pub(crate) fn classify_point_with_policy(
         &self,
         point: &Point3,
         policy: PredicatePolicy,
@@ -531,7 +528,7 @@ pub fn classify_point_plane(point: &Point3, plane: &Plane3) -> PredicateOutcome<
 }
 
 /// Classify a point relative to a plane with an explicit escalation policy.
-pub fn classify_point_plane_with_policy(
+pub(crate) fn classify_point_plane_with_policy(
     point: &Point3,
     plane: &Plane3,
     policy: PredicatePolicy,
@@ -550,7 +547,7 @@ pub fn classify_plane_segment(
 
 /// Classify a closed segment relative to a plane with an explicit escalation
 /// policy.
-pub fn classify_plane_segment_with_policy(
+pub(crate) fn classify_plane_segment_with_policy(
     plane: &Plane3,
     start: &Point3,
     end: &Point3,
@@ -607,7 +604,7 @@ pub fn classify_plane_triangle(
 }
 
 /// Classify a triangle relative to a plane with an explicit escalation policy.
-pub fn classify_plane_triangle_with_policy(
+pub(crate) fn classify_plane_triangle_with_policy(
     plane: &Plane3,
     a: &Point3,
     b: &Point3,
@@ -671,7 +668,7 @@ pub fn classify_triangle_against_oriented_plane(
 
 /// Classify a query triangle against an oriented plane triangle with an
 /// explicit predicate policy and retained per-vertex side facts.
-pub fn classify_triangle_against_oriented_plane_with_policy(
+pub(crate) fn classify_triangle_against_oriented_plane_with_policy(
     plane: [&Point3; 3],
     query: [&Point3; 3],
     policy: PredicatePolicy,
@@ -757,7 +754,7 @@ pub fn classify_plane_aabb3_report(
 /// selecting the lower/upper contribution for each source axis, then certifies
 /// only those two extrema. It preserves exact `Real` arithmetic while avoiding
 /// eight point-plane classifications.
-pub fn classify_plane_aabb3_with_policy(
+pub(crate) fn classify_plane_aabb3_with_policy(
     plane: &Plane3,
     min: &Point3,
     max: &Point3,
@@ -779,7 +776,7 @@ pub fn classify_plane_aabb3_with_policy(
 /// support corners. The retained `axis_term_orderings` document which bound was
 /// chosen on each axis, so callers can audit the Arvo-style interval reduction
 /// without enumerating all eight corners.
-pub fn classify_plane_aabb3_report_with_policy(
+pub(crate) fn classify_plane_aabb3_report_with_policy(
     plane: &Plane3,
     min: &Point3,
     max: &Point3,
@@ -1099,7 +1096,7 @@ pub fn classify_point_oriented_plane(
 
 /// Classify a point relative to the oriented plane through `a`, `b`, and `c`
 /// with an explicit escalation policy.
-pub fn classify_point_oriented_plane_with_policy(
+pub(crate) fn classify_point_oriented_plane_with_policy(
     a: &Point3,
     b: &Point3,
     c: &Point3,
@@ -1427,15 +1424,21 @@ mod tests {
         let plane = Plane3::new(Point3::new(Real::pi(), trig, 0.into()), Real::e());
         let facts = plane.structural_facts();
 
-        assert!(facts
-            .coefficient_symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::PI));
-        assert!(facts
-            .coefficient_symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::TRIG));
-        assert!(facts
-            .coefficient_symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::EXP));
+        assert!(
+            facts
+                .coefficient_symbolic_dependencies
+                .contains(RealSymbolicDependencyMask::PI)
+        );
+        assert!(
+            facts
+                .coefficient_symbolic_dependencies
+                .contains(RealSymbolicDependencyMask::TRIG)
+        );
+        assert!(
+            facts
+                .coefficient_symbolic_dependencies
+                .contains(RealSymbolicDependencyMask::EXP)
+        );
 
         let prepared = plane.prepare();
         assert_eq!(

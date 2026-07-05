@@ -4,15 +4,49 @@
 //! about the sign of a Real difference, so provenance belongs in
 //! [`PredicateOutcome`].
 
+use crate::predicate::PredicatePolicy;
 use core::cmp::Ordering;
 
 use crate::geometry::{Point2, Point3};
 use crate::predicate::{
-    Certainty, Escalation, PredicateOutcome, PredicatePolicy, PredicateReport, RefinementNeed, Sign,
+    Certainty, Escalation, PredicateOutcome, PredicateReport, RefinementNeed, Sign,
 };
 use crate::real::sub_ref;
 use crate::resolve::{map_outcome, resolve_real_sign};
 use hyperreal::Real;
+
+/// Decide the sign of one Real value through the predicate pipeline.
+pub fn classify_real_sign(value: &Real) -> PredicateOutcome<Sign> {
+    classify_real_sign_with_policy(value, PredicatePolicy::default())
+}
+
+/// Decide the sign of one Real value and return predicate provenance.
+pub fn classify_real_sign_report(value: &Real) -> PredicateReport<Sign> {
+    classify_real_sign_report_with_policy(value, PredicatePolicy::default())
+}
+
+/// Decide the sign of one Real value with an explicit predicate policy.
+pub(crate) fn classify_real_sign_with_policy(
+    value: &Real,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Sign> {
+    classify_real_sign_report_with_policy(value, policy).outcome
+}
+
+/// Decide the sign of one Real value with an explicit predicate policy and
+/// provenance certificate.
+pub(crate) fn classify_real_sign_report_with_policy(
+    value: &Real,
+    policy: PredicatePolicy,
+) -> PredicateReport<Sign> {
+    PredicateReport::from_outcome(resolve_real_sign(
+        value,
+        policy,
+        || None,
+        || None,
+        RefinementNeed::RealRefinement,
+    ))
+}
 
 /// Compare two Real values by deciding the sign of `left - right`.
 pub fn compare_reals(left: &Real, right: &Real) -> PredicateOutcome<Ordering> {
@@ -34,7 +68,7 @@ pub fn compare_reals_report(left: &Real, right: &Real) -> PredicateReport<Orderi
 /// may be carried by Real objects, while geometric decisions ask a predicate
 /// layer to certify signs. See Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997).
-pub fn compare_reals_with_policy(
+pub(crate) fn compare_reals_with_policy(
     left: &Real,
     right: &Real,
     policy: PredicatePolicy,
@@ -52,7 +86,7 @@ pub fn compare_reals_with_policy(
 /// topology path, while certified sign decisions expose how they were decided.
 /// See Yap, "Towards Exact Geometric Computation," *Computational Geometry*
 /// 7.1-2 (1997).
-pub fn compare_reals_report_with_policy(
+pub(crate) fn compare_reals_report_with_policy(
     left: &Real,
     right: &Real,
     policy: PredicatePolicy,
@@ -77,7 +111,7 @@ pub fn real_le(left: &Real, right: &Real) -> PredicateOutcome<bool> {
 }
 
 /// Policy-controlled variant of [`real_le`].
-pub fn real_le_with_policy(
+pub(crate) fn real_le_with_policy(
     left: &Real,
     right: &Real,
     policy: PredicatePolicy,
@@ -93,7 +127,7 @@ pub fn real_ge(left: &Real, right: &Real) -> PredicateOutcome<bool> {
 }
 
 /// Policy-controlled variant of [`real_ge`].
-pub fn real_ge_with_policy(
+pub(crate) fn real_ge_with_policy(
     left: &Real,
     right: &Real,
     policy: PredicatePolicy,
@@ -109,7 +143,7 @@ pub fn real_min<'a>(left: &'a Real, right: &'a Real) -> PredicateOutcome<&'a Rea
 }
 
 /// Policy-controlled variant of [`real_min`].
-pub fn real_min_with_policy<'a>(
+pub(crate) fn real_min_with_policy<'a>(
     left: &'a Real,
     right: &'a Real,
     policy: PredicatePolicy,
@@ -129,7 +163,7 @@ pub fn real_max<'a>(left: &'a Real, right: &'a Real) -> PredicateOutcome<&'a Rea
 }
 
 /// Policy-controlled variant of [`real_max`].
-pub fn real_max_with_policy<'a>(
+pub(crate) fn real_max_with_policy<'a>(
     left: &'a Real,
     right: &'a Real,
     policy: PredicatePolicy,
@@ -149,7 +183,7 @@ pub fn real_clamp(value: Real, min: &Real, max: &Real) -> PredicateOutcome<Real>
 }
 
 /// Policy-controlled variant of [`real_clamp`].
-pub fn real_clamp_with_policy(
+pub(crate) fn real_clamp_with_policy(
     value: Real,
     min: &Real,
     max: &Real,
@@ -240,7 +274,7 @@ pub fn compare_point2_lexicographic_report(
 /// This is useful for deterministic exact event queues and canonical endpoint
 /// ordering. It deliberately does not impose polygon, segment, or sweep-line
 /// topology; it only composes two Real ordering predicates.
-pub fn compare_point2_lexicographic_with_policy(
+pub(crate) fn compare_point2_lexicographic_with_policy(
     left: &Point2,
     right: &Point2,
     policy: PredicatePolicy,
@@ -249,7 +283,7 @@ pub fn compare_point2_lexicographic_with_policy(
 }
 
 /// Compare two 2D points lexicographically with an explicit policy and report.
-pub fn compare_point2_lexicographic_report_with_policy(
+pub(crate) fn compare_point2_lexicographic_report_with_policy(
     left: &Point2,
     right: &Point2,
     policy: PredicatePolicy,
@@ -296,7 +330,7 @@ pub fn point2_equal_report(left: &Point2, right: &Point2) -> PredicateReport<boo
 /// uncertainty handling. The equality decision follows the exact computation
 /// boundary described by Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997).
-pub fn point2_equal_with_policy(
+pub(crate) fn point2_equal_with_policy(
     left: &Point2,
     right: &Point2,
     policy: PredicatePolicy,
@@ -306,7 +340,7 @@ pub fn point2_equal_with_policy(
 
 /// Return whether two 2D points have equal coordinates with explicit policy
 /// and provenance.
-pub fn point2_equal_report_with_policy(
+pub(crate) fn point2_equal_report_with_policy(
     left: &Point2,
     right: &Point2,
     policy: PredicatePolicy,
@@ -337,7 +371,7 @@ pub fn compare_point3_lexicographic_report(
 /// exact Real ordering predicates for deterministic canonicalization and
 /// equality decisions without routing coordinate equality through an unrelated
 /// geometric primitive such as a zero-radius sphere.
-pub fn compare_point3_lexicographic_with_policy(
+pub(crate) fn compare_point3_lexicographic_with_policy(
     left: &Point3,
     right: &Point3,
     policy: PredicatePolicy,
@@ -346,7 +380,7 @@ pub fn compare_point3_lexicographic_with_policy(
 }
 
 /// Compare two 3D points lexicographically with an explicit policy and report.
-pub fn compare_point3_lexicographic_report_with_policy(
+pub(crate) fn compare_point3_lexicographic_report_with_policy(
     left: &Point3,
     right: &Point3,
     policy: PredicatePolicy,
@@ -409,7 +443,7 @@ pub fn point3_equal_report(left: &Point3, right: &Point3) -> PredicateReport<boo
 /// Keeping the 3D form beside [`point2_equal`] gives callers a direct semantic
 /// API for vertex identity and normal-row deduplication instead of requiring a
 /// zero-radius sphere classification.
-pub fn point3_equal_with_policy(
+pub(crate) fn point3_equal_with_policy(
     left: &Point3,
     right: &Point3,
     policy: PredicatePolicy,
@@ -419,7 +453,7 @@ pub fn point3_equal_with_policy(
 
 /// Return whether two 3D points have equal coordinates with explicit policy
 /// and provenance.
-pub fn point3_equal_report_with_policy(
+pub(crate) fn point3_equal_report_with_policy(
     left: &Point3,
     right: &Point3,
     policy: PredicatePolicy,
