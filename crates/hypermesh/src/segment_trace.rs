@@ -1,6 +1,9 @@
 //! Exact segment tracing for winding-number propagation.
 
 use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
+use hyperlimit::{
+    HalfspaceFeasibility, Plane3 as LimitPlane3, PredicateOutcome, classify_halfspace_feasibility3,
+};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
@@ -871,6 +874,9 @@ fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<InteriorLea
             point: center.clone(),
             planes: None,
         });
+        if let Some(point) = strict_leaf_cell_point(leaf, &center)? {
+            push_unique_interior_point(&mut points, point);
+        }
         for candidate in shifted_edge_interior_points(leaf, &center)? {
             push_unique_interior_point(&mut points, candidate);
         }
@@ -928,9 +934,129 @@ fn inward_shifted_edge_plane(
 }
 
 fn push_unique_interior_point(points: &mut Vec<InteriorLeafPoint>, point: InteriorLeafPoint) {
-    if !points.iter().any(|existing| existing.point == point.point) {
+    if let Some(existing) = points
+        .iter_mut()
+        .find(|existing| existing.point == point.point)
+    {
+        if existing.planes.is_none() {
+            existing.planes = point.planes;
+        }
+    } else {
         points.push(point);
     }
+}
+
+fn strict_leaf_cell_point(
+    leaf: &ConvexPolygon,
+    strict_interior: &Point3,
+) -> HypermeshResult<Option<InteriorLeafPoint>> {
+    let half = (Real::one() / Real::from(2)).map_err(|_| HypermeshError::UnknownClassification)?;
+    let mut halfspaces = Vec::with_capacity(leaf.edges.len() + 2);
+    halfspaces.push(limit_plane_from_plane(&leaf.support));
+    halfspaces.push(limit_plane_from_plane(&leaf.support.inverted()));
+
+    for edge in &leaf.edges {
+        let margin = edge.expression_at_point(strict_interior);
+        if classify_real(&margin)? != Classification::Negative {
+            return Ok(None);
+        }
+        halfspaces.push(limit_plane_from_plane(&inward_shifted_edge_plane(
+            edge, &margin, &half,
+        )));
+    }
+
+    let report = match classify_halfspace_feasibility3(&halfspaces) {
+        PredicateOutcome::Decided { value, .. } => value,
+        PredicateOutcome::Unknown { .. } => return Err(HypermeshError::UnknownClassification),
+    };
+    if report.status != HalfspaceFeasibility::Feasible {
+        return Ok(None);
+    }
+    let Some(witness) = report.witness else {
+        return Ok(None);
+    };
+    if !point_strictly_inside_leaf(&witness, leaf)? {
+        return Ok(None);
+    }
+
+    let planes = leaf_interior_definition_from_active_halfspaces(
+        &witness,
+        &leaf.support,
+        &halfspaces,
+        report.active_planes,
+    )?;
+    Ok(Some(InteriorLeafPoint {
+        point: witness,
+        planes: Some(planes),
+    }))
+}
+
+fn limit_plane_from_plane(plane: &Plane) -> LimitPlane3 {
+    LimitPlane3::new(plane.normal.clone(), plane.offset.clone())
+}
+
+fn leaf_interior_definition_from_active_halfspaces(
+    witness: &Point3,
+    support: &Plane,
+    halfspaces: &[LimitPlane3],
+    active_planes: [Option<usize>; 3],
+) -> HypermeshResult<[Plane; 3]> {
+    let axis_definition = axis_plane_definition(witness);
+    let mut active = Vec::new();
+    for index in active_planes.into_iter().flatten() {
+        let Some(halfspace) = halfspaces.get(index) else {
+            return Err(HypermeshError::UnknownClassification);
+        };
+        let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
+        if plane == *support || plane == support.inverted() {
+            continue;
+        }
+        if !active.iter().any(|existing| existing == &plane) {
+            active.push(plane);
+        }
+    }
+
+    if active.len() >= 2 {
+        let definition = [support.clone(), active[0].clone(), active[1].clone()];
+        if let Ok(point) =
+            intersect_three_planes(&definition[0], &definition[1], &definition[2]).to_affine_point()
+            && point == *witness
+        {
+            return Ok(definition);
+        }
+    }
+
+    for plane in active {
+        for axis in axis_definition.iter().cloned() {
+            let definition = [support.clone(), plane.clone(), axis];
+            if let Ok(point) =
+                intersect_three_planes(&definition[0], &definition[1], &definition[2])
+                    .to_affine_point()
+                && point == *witness
+            {
+                return Ok(definition);
+            }
+        }
+    }
+
+    for first_axis in 0..3 {
+        for second_axis in (first_axis + 1)..3 {
+            let definition = [
+                support.clone(),
+                axis_definition[first_axis].clone(),
+                axis_definition[second_axis].clone(),
+            ];
+            if let Ok(point) =
+                intersect_three_planes(&definition[0], &definition[1], &definition[2])
+                    .to_affine_point()
+                && point == *witness
+            {
+                return Ok(definition);
+            }
+        }
+    }
+
+    Err(HypermeshError::UnknownClassification)
 }
 
 fn point_strictly_inside_leaf(point: &Point3, leaf: &ConvexPolygon) -> HypermeshResult<bool> {
@@ -1406,6 +1532,46 @@ mod tests {
         .unwrap();
 
         assert_eq!(winding, vec![-1]);
+    }
+
+    #[test]
+    fn strict_leaf_cell_point_retains_replayable_planes() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let center = p(1, 1, 1);
+
+        let interior = strict_leaf_cell_point(&leaf, &center)
+            .unwrap()
+            .expect("strict leaf halfspaces should have a feasible witness");
+
+        assert!(point_strictly_inside_leaf(&interior.point, &leaf).unwrap());
+        let planes = interior.planes.expect("witness should retain planes");
+        assert_eq!(affine_from_planes(&planes).unwrap(), interior.point);
+        assert_eq!(planes[0], leaf.support);
+    }
+
+    #[test]
+    fn duplicate_interior_points_upgrade_to_plane_defined() {
+        let point = p(1, 1, 1);
+        let mut points = vec![InteriorLeafPoint {
+            point: point.clone(),
+            planes: None,
+        }];
+        let definition = [
+            Plane::from_coefficients(r(1), r(1), r(1), r(-3)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+
+        push_unique_interior_point(
+            &mut points,
+            InteriorLeafPoint {
+                point,
+                planes: Some(definition.clone()),
+            },
+        );
+
+        assert_eq!(points.len(), 1);
+        assert_eq!(points[0].planes, Some(definition));
     }
 
     #[test]
