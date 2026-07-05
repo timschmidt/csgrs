@@ -81,7 +81,10 @@ still cannot be traced, it falls back to the full child-cell support search.
 Segment tracing uses
 direct paths and arrangement-coordinate endpoint-box detours, cut by local
 vertex coordinates and exact endpoint-box surface crossings, when axis-ordered
-paths hit surfaces. Chosen detour legs now retry the same axis-ordered then
+paths hit surfaces. Those detour points are now constructed from each
+certified cut endpoint box by retaining the strict interior cell seed and any
+additional strict `hyperlimit` witness instead of midpoint Cartesian sampling.
+Chosen detour legs now retry the same axis-ordered then
 direct certified path search before the detour is abandoned. If none trace
 cleanly, it reports
 `ReferencePropagationFailed` instead of using random/interior sampling. The

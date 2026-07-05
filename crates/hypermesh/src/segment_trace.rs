@@ -485,12 +485,12 @@ fn interior_box_detour_points(
     end: &Point3,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<Point3>> {
-    let mut values = vec![Vec::new(), Vec::new(), Vec::new()];
-    for (axis, axis_values) in values.iter_mut().enumerate() {
+    let mut intervals = vec![Vec::new(), Vec::new(), Vec::new()];
+    for (axis, axis_intervals) in intervals.iter_mut().enumerate() {
         let start_value = axis_ref(start, axis);
         let end_value = axis_ref(end, axis);
         if compare_real(start_value, end_value)?.is_eq() {
-            axis_values.push(start_value.clone());
+            axis_intervals.push((start_value.clone(), end_value.clone()));
             continue;
         }
 
@@ -516,21 +516,65 @@ fn interior_box_detour_points(
         }
 
         for endpoints in cuts.windows(2) {
-            let midpoint = ((&endpoints[0] + &endpoints[1]) / Real::from(2))
-                .map_err(|_| HypermeshError::UnknownClassification)?;
-            axis_values.push(midpoint);
+            axis_intervals.push((endpoints[0].clone(), endpoints[1].clone()));
         }
     }
 
-    let mut detours = Vec::with_capacity(values[0].len() * values[1].len() * values[2].len());
-    for x in &values[0] {
-        for y in &values[1] {
-            for z in &values[2] {
-                detours.push(Point3::new(x.clone(), y.clone(), z.clone()));
+    let mut detours =
+        Vec::with_capacity(intervals[0].len() * intervals[1].len() * intervals[2].len());
+    for x in &intervals[0] {
+        for y in &intervals[1] {
+            for z in &intervals[2] {
+                let bounds = aabb_from_axis_intervals([x, y, z])?;
+                for witness in strict_aabb_targets(&bounds)? {
+                    if !detours.iter().any(|existing| existing == &witness) {
+                        detours.push(witness);
+                    }
+                }
             }
         }
     }
     Ok(detours)
+}
+
+fn aabb_from_axis_intervals(intervals: [&(Real, Real); 3]) -> HypermeshResult<Aabb> {
+    let mut min = Point3::origin();
+    let mut max = Point3::origin();
+    for (axis, (start, end)) in intervals.into_iter().enumerate() {
+        if compare_real(start, end)?.is_le() {
+            *axis_mut(&mut min, axis) = start.clone();
+            *axis_mut(&mut max, axis) = end.clone();
+        } else {
+            *axis_mut(&mut min, axis) = end.clone();
+            *axis_mut(&mut max, axis) = start.clone();
+        }
+    }
+    Ok(Aabb::new(min, max))
+}
+
+fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<Point3>> {
+    let halfspaces = aabb_core_halfspaces(bounds)?;
+    let Some(seed) = strict_halfspace_cell_seed(bounds, &halfspaces)? else {
+        return Ok(Vec::new());
+    };
+    let mut targets = vec![seed.clone()];
+    let shifted = shifted_halfspace_cell(bounds, &halfspaces, &seed)?;
+    let report = match classify_halfspace_feasibility3(&shifted) {
+        PredicateOutcome::Decided { value, .. } => value,
+        PredicateOutcome::Unknown { .. } => return Err(HypermeshError::UnknownClassification),
+    };
+    if report.status != HalfspaceFeasibility::Feasible {
+        return Ok(targets);
+    }
+    let Some(witness) = report.witness else {
+        return Ok(targets);
+    };
+    if point_strictly_inside_halfspace_cell(&witness, bounds, &halfspaces)? {
+        if !targets.iter().any(|existing| existing == &witness) {
+            targets.push(witness);
+        }
+    }
+    Ok(targets)
 }
 
 fn add_axis_box_surface_cuts(
@@ -1762,8 +1806,33 @@ mod tests {
         let detours = interior_box_detour_points(&p(0, 0, 0), &p(4, 4, 4), &[slanted]).unwrap();
         let x_values = axis_values(&detours, 0);
 
-        assert!(x_values.contains(&r(1)));
-        assert!(x_values.contains(&r(3)));
+        assert!(
+            x_values
+                .iter()
+                .any(|value| compare_real(value, &r(0)).unwrap().is_gt()
+                    && compare_real(value, &r(2)).unwrap().is_lt())
+        );
+        assert!(
+            x_values
+                .iter()
+                .any(|value| compare_real(value, &r(2)).unwrap().is_gt()
+                    && compare_real(value, &r(4)).unwrap().is_lt())
+        );
+    }
+
+    #[test]
+    fn strict_aabb_targets_handle_degenerate_axis_boxes() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 6, 0));
+        let targets = strict_aabb_targets(&bounds).unwrap();
+
+        assert!(!targets.is_empty());
+        for witness in targets {
+            assert_eq!(witness.z, r(0));
+            assert!(compare_real(&witness.x, &r(0)).unwrap().is_gt());
+            assert!(compare_real(&witness.x, &r(4)).unwrap().is_lt());
+            assert!(compare_real(&witness.y, &r(0)).unwrap().is_gt());
+            assert!(compare_real(&witness.y, &r(6)).unwrap().is_lt());
+        }
     }
 
     #[test]
