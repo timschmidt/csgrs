@@ -153,6 +153,7 @@ const AXIS_ORDERINGS: [[usize; 3]; 6] = [
 ];
 
 const DETOUR_RECURSION_LIMIT: usize = 2;
+const PLANE_REPLACEMENT_STEP_DETOUR_LIMIT: usize = 1;
 
 /// Traces an axis-aligned polyline using several axis orderings and returns
 /// the first valid winding result. If direct L-shaped paths are blocked by
@@ -1306,7 +1307,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
 
     for start_definition in &start_definitions {
         for end_definition in &end_definitions {
-            if plane_replacement_path_reaches_adjacent_cell_without_detours(
+            if plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement(
                 start_definition,
                 end_definition,
                 host_support,
@@ -1320,7 +1321,77 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
     Ok(false)
 }
 
-fn plane_replacement_path_reaches_adjacent_cell_without_detours(
+fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement(
+    start: &Point3,
+    end: &Point3,
+    host_support: &Plane,
+    polygons: &[ConvexPolygon],
+    remaining_detours: usize,
+) -> HypermeshResult<bool> {
+    let mut trace_without_detours = |start: &Point3, end: &Point3| {
+        probe_reaches_adjacent_cell(start, end, host_support, polygons)
+    };
+    let mut detours_for =
+        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons);
+    probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
+        start,
+        end,
+        polygons,
+        remaining_detours,
+        &mut trace_without_detours,
+        &mut detours_for,
+    )
+}
+
+fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    remaining_detours: usize,
+    trace_without_detours: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<bool>,
+    detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<bool> {
+    if trace_without_detours(start, end)? {
+        return Ok(true);
+    }
+
+    if remaining_detours == 0 {
+        return Ok(false);
+    }
+
+    for detour in detours_for(start, end)? {
+        if detour.point == *start
+            || detour.point == *end
+            || point_lies_on_traced_surface(&detour.point, polygons)?
+        {
+            continue;
+        }
+        if !probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
+            start,
+            &detour.point,
+            polygons,
+            remaining_detours - 1,
+            trace_without_detours,
+            detours_for,
+        )? {
+            continue;
+        }
+        if probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
+            &detour.point,
+            end,
+            polygons,
+            remaining_detours - 1,
+            trace_without_detours,
+            detours_for,
+        )? {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
+fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement(
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     host_support: &Plane,
@@ -1346,11 +1417,12 @@ fn plane_replacement_path_reaches_adjacent_cell_without_detours(
                 Err(err) => return Err(err),
             };
             if next_point != current_point
-                && !probe_reaches_adjacent_cell(
+                && !probe_reaches_adjacent_cell_with_detours_without_plane_replacement(
                     &current_point,
                     &next_point,
                     host_support,
                     polygons,
+                    PLANE_REPLACEMENT_STEP_DETOUR_LIMIT,
                 )?
             {
                 valid = false;
@@ -3687,6 +3759,51 @@ mod tests {
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
                 2,
+                &mut trace_without_detours,
+                &mut detours_for,
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn probe_plane_replacement_step_detour_budget_uses_single_detour() {
+        let start = p(0, 0, 0);
+        let detour_point = p(1, 0, 0);
+        let end = p(2, 0, 0);
+        let detour_target = DetourTarget {
+            point: detour_point.clone(),
+            definitions: vec![axis_plane_definition(&detour_point)],
+        };
+        let mut trace_without_detours = |from: &Point3, to: &Point3| {
+            Ok((*from == start && *to == detour_point) || (*from == detour_point && *to == end))
+        };
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![detour_target.clone()])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        assert!(
+            !probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
+                &start,
+                &end,
+                &[],
+                0,
+                &mut trace_without_detours,
+                &mut detours_for,
+            )
+            .unwrap()
+        );
+
+        assert!(
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
+                &start,
+                &end,
+                &[],
+                1,
                 &mut trace_without_detours,
                 &mut detours_for,
             )
