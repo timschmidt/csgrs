@@ -715,7 +715,6 @@ pub fn classify_leaf_polygon(
             }
         }
     }
-
     Err(HypermeshError::UnknownClassification)
 }
 
@@ -1201,17 +1200,12 @@ fn bounded_probes_from_interior(
 ) -> HypermeshResult<Vec<ProbePoint>> {
     let mut probes = Vec::new();
 
-    if let Some(probe) =
-        adjacent_normal_probe(&interior.point, support, bounds, polygons, positive_side)?
-    {
-        let side = classify_point(&probe, support)?;
-        if side != Classification::On {
-            let planes = normal_probe_planes(interior, support, &probe)?;
-            probes.push(ProbePoint {
-                point: probe,
-                side,
-                planes,
-            });
+    for probe in adjacent_normal_probes(interior, support, bounds, polygons, positive_side)? {
+        if !probes
+            .iter()
+            .any(|existing: &ProbePoint| existing.point == probe.point)
+        {
+            probes.push(probe);
         }
     }
 
@@ -1280,13 +1274,13 @@ fn normal_probe_planes(
     Ok(definitions)
 }
 
-fn adjacent_normal_probe(
-    interior: &Point3,
+fn adjacent_normal_probes(
+    interior: &InteriorLeafPoint,
     support: &Plane,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
     positive_side: bool,
-) -> HypermeshResult<Option<Point3>> {
+) -> HypermeshResult<Vec<ProbePoint>> {
     let direction = if positive_side {
         support.normal.clone()
     } else {
@@ -1297,8 +1291,8 @@ fn adjacent_normal_probe(
         )
     };
 
-    let Some(mut stop_t) = normal_probe_bounds_stop(interior, &direction, bounds)? else {
-        return Ok(None);
+    let Some(mut stop_t) = normal_probe_bounds_stop(&interior.point, &direction, bounds)? else {
+        return Ok(Vec::new());
     };
 
     for polygon in polygons {
@@ -1309,10 +1303,10 @@ fn adjacent_normal_probe(
             continue;
         }
 
-        let start_value = polygon.support.expression_at_point(interior);
+        let start_value = polygon.support.expression_at_point(&interior.point);
         if classify_real(&start_value)? == Classification::On {
-            if point_lies_on_polygon(interior, polygon)? {
-                return Ok(None);
+            if point_lies_on_polygon(&interior.point, polygon)? {
+                return Ok(Vec::new());
             }
             continue;
         }
@@ -1327,17 +1321,132 @@ fn adjacent_normal_probe(
             continue;
         }
 
-        let crossing = offset_point(interior, &direction, &crossing_t);
+        let crossing = offset_point(&interior.point, &direction, &crossing_t);
         if point_lies_on_polygon(&crossing, polygon)? {
             stop_t = crossing_t;
         }
     }
 
     if !compare_real(&stop_t, &Real::zero())?.is_gt() {
+        return Ok(Vec::new());
+    }
+    let stop_point = offset_point(&interior.point, &direction, &stop_t);
+    let corridor = bounds_between_points(&interior.point, &stop_point)?;
+    let mut probes = Vec::new();
+    for definition in &interior.planes {
+        if !normal_probe_definition_preserves_support_direction(definition, support)? {
+            continue;
+        }
+        let Some(probe) = strict_normal_probe_target(
+            interior,
+            support,
+            &corridor,
+            Some(definition),
+            &stop_point,
+            positive_side,
+        )?
+        else {
+            continue;
+        };
+        if !probes
+            .iter()
+            .any(|existing: &ProbePoint| existing.point == probe.point)
+        {
+            probes.push(probe);
+        }
+    }
+
+    if probes.is_empty() {
+        if let Some(probe) = strict_normal_probe_target(
+            interior,
+            support,
+            &corridor,
+            None,
+            &stop_point,
+            positive_side,
+        )? {
+            probes.push(probe);
+        }
+    }
+
+    Ok(probes)
+}
+
+fn normal_probe_definition_preserves_support_direction(
+    definition: &[Plane; 3],
+    support: &Plane,
+) -> HypermeshResult<bool> {
+    Ok(
+        classify_real(&dot_direction(&definition[1].normal, &support.normal))?
+            == Classification::On
+            && classify_real(&dot_direction(&definition[2].normal, &support.normal))?
+                == Classification::On,
+    )
+}
+
+fn strict_normal_probe_target(
+    interior: &InteriorLeafPoint,
+    support: &Plane,
+    corridor: &Aabb,
+    definition: Option<&[Plane; 3]>,
+    stop_point: &Point3,
+    positive_side: bool,
+) -> HypermeshResult<Option<ProbePoint>> {
+    let mut halfspaces = aabb_core_halfspaces(corridor)?;
+    if let Some(definition) = definition {
+        push_plane_equality_halfspaces(&mut halfspaces, &definition[1]);
+        push_plane_equality_halfspaces(&mut halfspaces, &definition[2]);
+    }
+    halfspaces.push(support_side_halfspace(support, positive_side));
+    halfspaces.push(normal_stop_halfspace(support, stop_point, positive_side));
+
+    let Some(seed) = strict_halfspace_cell_seed(corridor, &halfspaces)? else {
+        return Ok(None);
+    };
+    let shifted = shifted_halfspace_cell(corridor, &halfspaces, &seed)?;
+    let report = match classify_halfspace_feasibility3(&shifted) {
+        PredicateOutcome::Decided { value, .. } => value,
+        PredicateOutcome::Unknown { .. } => return Err(HypermeshError::UnknownClassification),
+    };
+    if report.status != HalfspaceFeasibility::Feasible {
         return Ok(None);
     }
-    let half = (Real::one() / Real::from(2)).map_err(|_| HypermeshError::UnknownClassification)?;
-    Ok(Some(offset_point(interior, &direction, &(stop_t * half))))
+    let Some(witness) = report.witness else {
+        return Ok(None);
+    };
+    if !point_strictly_inside_halfspace_cell(&witness, corridor, &halfspaces)? {
+        return Ok(None);
+    }
+
+    let side = classify_point(&witness, support)?;
+    if side == Classification::On {
+        return Ok(None);
+    }
+
+    let planes = normal_probe_planes(interior, support, &witness)?;
+
+    Ok(Some(ProbePoint {
+        point: witness,
+        side,
+        planes,
+    }))
+}
+
+fn bounds_between_points(start: &Point3, end: &Point3) -> HypermeshResult<Aabb> {
+    let mut min = Point3::origin();
+    let mut max = Point3::origin();
+    for axis in 0..3 {
+        let start_value = axis_ref(start, axis);
+        let end_value = axis_ref(end, axis);
+        if compare_real(start_value, end_value)?.is_le() {
+            *axis_mut(&mut min, axis) = start_value.clone();
+            *axis_mut(&mut max, axis) = end_value.clone();
+        } else {
+            *axis_mut(&mut min, axis) = end_value.clone();
+            *axis_mut(&mut max, axis) = start_value.clone();
+        }
+    }
+    Ok(Aabb::new(min, max))
 }
 
 fn normal_probe_bounds_stop(
@@ -1569,6 +1678,27 @@ fn axis_halfspace(axis: usize, lower_bound: bool, value: Real) -> LimitPlane3 {
     LimitPlane3::new(normal, offset)
 }
 
+fn plane_halfspace(plane: &Plane) -> LimitPlane3 {
+    LimitPlane3::new(plane.normal.clone(), plane.offset.clone())
+}
+
+fn negated_halfspace(halfspace: &LimitPlane3) -> LimitPlane3 {
+    LimitPlane3::new(
+        Point3::new(
+            -halfspace.normal.x.clone(),
+            -halfspace.normal.y.clone(),
+            -halfspace.normal.z.clone(),
+        ),
+        -halfspace.offset.clone(),
+    )
+}
+
+fn push_plane_equality_halfspaces(halfspaces: &mut Vec<LimitPlane3>, plane: &Plane) {
+    let halfspace = plane_halfspace(plane);
+    halfspaces.push(halfspace.clone());
+    halfspaces.push(negated_halfspace(&halfspace));
+}
+
 fn support_side_halfspace(plane: &Plane, positive: bool) -> LimitPlane3 {
     if positive {
         LimitPlane3::new(
@@ -1581,6 +1711,19 @@ fn support_side_halfspace(plane: &Plane, positive: bool) -> LimitPlane3 {
         )
     } else {
         LimitPlane3::new(plane.normal.clone(), plane.offset.clone())
+    }
+}
+
+fn normal_stop_halfspace(plane: &Plane, stop_point: &Point3, positive_side: bool) -> LimitPlane3 {
+    let stop_plane = Plane::new(
+        plane.normal.clone(),
+        &plane.offset - &plane.expression_at_point(stop_point),
+    );
+    let halfspace = plane_halfspace(&stop_plane);
+    if positive_side {
+        halfspace
+    } else {
+        negated_halfspace(&halfspace)
     }
 }
 
@@ -1642,7 +1785,9 @@ fn point_strictly_inside_halfspace_cell(
         return Ok(false);
     }
     for halfspace in halfspaces {
-        if halfspace_is_degenerate_bound(halfspace, bounds)? {
+        if halfspace_is_degenerate_bound(halfspace, bounds)?
+            || halfspace_has_opposite_pair(halfspace, halfspaces)
+        {
             continue;
         }
         let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
@@ -1710,6 +1855,11 @@ fn halfspace_is_degenerate_bound(halfspace: &LimitPlane3, bounds: &Aabb) -> Hype
     Ok(false)
 }
 
+fn halfspace_has_opposite_pair(target: &LimitPlane3, halfspaces: &[LimitPlane3]) -> bool {
+    let opposite = negated_halfspace(target);
+    halfspaces.iter().any(|halfspace| halfspace == &opposite)
+}
+
 fn axis_value_after_start(
     start: &Real,
     value: &Real,
@@ -1746,10 +1896,6 @@ mod tests {
 
     fn r(value: i32) -> Real {
         value.into()
-    }
-
-    fn q(numerator: i32, denominator: i32) -> Real {
-        (Real::from(numerator) / Real::from(denominator)).unwrap()
     }
 
     fn p(x: i32, y: i32, z: i32) -> Point3 {
@@ -1891,12 +2037,31 @@ mod tests {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let blocker = make_triangle(&p(6, 0, 0), &p(0, 6, 0), &p(0, 0, 6), 1, 0);
         let bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
-
-        let probe = adjacent_normal_probe(&p(1, 1, 1), &leaf.support, &bounds, &[blocker], true)
+        let vertices = leaf.vertices().unwrap();
+        let center = centroid(&vertices).unwrap().unwrap();
+        let interior = shifted_edge_interior_points(&leaf, &center)
             .unwrap()
-            .expect("normal probe should stop before the blocking surface");
+            .into_iter()
+            .find(|point| !point.planes.is_empty())
+            .expect("shifted edge construction should retain defining planes");
 
-        assert_eq!(probe, Point3::new(q(3, 2), q(3, 2), q(3, 2)));
+        let probes =
+            adjacent_normal_probes(&interior, &leaf.support, &bounds, &[blocker.clone()], true)
+                .unwrap();
+        let probe = probes
+            .into_iter()
+            .find(|probe| probe.side == Classification::Positive)
+            .expect("normal corridor should contain a certified probe witness");
+
+        assert!(!probe.planes.is_empty());
+        for definition in &probe.planes {
+            assert_eq!(affine_from_planes(definition).unwrap(), probe.point);
+        }
+        let start_value = leaf.support.expression_at_point(&interior.point);
+        let probe_value = leaf.support.expression_at_point(&probe.point);
+        let blocker_value = blocker.support.expression_at_point(&probe.point);
+        assert!(compare_real(&probe_value, &start_value).unwrap().is_gt());
+        assert!(compare_real(&blocker_value, &Real::zero()).unwrap().is_lt());
     }
 
     #[test]
