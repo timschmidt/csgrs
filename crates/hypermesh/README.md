@@ -69,7 +69,9 @@ strict witness search in the closed axis corridor and desired support-side
 cell, rather than by midpoint sampling. Full
 plane-replacement coverage for every reference/probe construction remains
 unfinished, though probe fallback now also retries from the reference point's
-exact axis-plane definition even when other retained start definitions exist.
+exact axis-plane definition even when other retained start definitions exist,
+and duplicate certified probe witnesses now merge their retained definition
+families instead of dropping later constructions.
 
 Subdivision reference propagation currently accepts the EMBER projection of the
 parent reference point onto a child AABB only when the projected point and trace

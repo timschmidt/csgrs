@@ -1213,12 +1213,7 @@ fn bounded_probes_from_interior(
     let mut probes = Vec::new();
 
     for probe in adjacent_normal_probes(interior, support, bounds, polygons, positive_side)? {
-        if !probes
-            .iter()
-            .any(|existing: &ProbePoint| existing.point == probe.point)
-        {
-            probes.push(probe);
-        }
+        push_unique_probe_point(&mut probes, probe);
     }
 
     for axis in probe_axes(support)? {
@@ -1249,12 +1244,7 @@ fn bounded_probes_from_interior(
         else {
             continue;
         };
-        if !probes
-            .iter()
-            .any(|existing: &ProbePoint| existing.point == probe.point)
-        {
-            probes.push(probe);
-        }
+        push_unique_probe_point(&mut probes, probe);
     }
 
     Ok(probes)
@@ -1439,12 +1429,7 @@ fn adjacent_normal_probes(
         else {
             continue;
         };
-        if !probes
-            .iter()
-            .any(|existing: &ProbePoint| existing.point == probe.point)
-        {
-            probes.push(probe);
-        }
+        push_unique_probe_point(&mut probes, probe);
     }
 
     if probes.is_empty() {
@@ -1461,6 +1446,25 @@ fn adjacent_normal_probes(
     }
 
     Ok(probes)
+}
+
+fn push_unique_probe_point(probes: &mut Vec<ProbePoint>, probe: ProbePoint) {
+    if let Some(existing) = probes
+        .iter_mut()
+        .find(|existing| existing.point == probe.point && existing.side == probe.side)
+    {
+        for definition in probe.planes {
+            if !existing
+                .planes
+                .iter()
+                .any(|candidate| candidate == &definition)
+            {
+                existing.planes.push(definition);
+            }
+        }
+    } else {
+        probes.push(probe);
+    }
 }
 
 fn normal_probe_definition_preserves_support_direction(
@@ -2295,6 +2299,46 @@ mod tests {
         for definition in &definitions {
             assert_eq!(affine_from_planes(definition).unwrap(), witness);
         }
+    }
+
+    #[test]
+    fn duplicate_probe_points_merge_plane_definitions() {
+        let point = p(1, 1, 1);
+        let first_definition = [
+            Plane::from_coefficients(r(1), r(1), r(1), r(-3)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+        let second_definition = [
+            Plane::from_coefficients(r(1), r(1), r(1), r(-3)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(2, r(1)),
+        ];
+        let mut probes = vec![ProbePoint {
+            point: point.clone(),
+            side: Classification::Positive,
+            planes: vec![first_definition.clone()],
+        }];
+
+        push_unique_probe_point(
+            &mut probes,
+            ProbePoint {
+                point,
+                side: Classification::Positive,
+                planes: vec![second_definition.clone()],
+            },
+        );
+        push_unique_probe_point(
+            &mut probes,
+            ProbePoint {
+                point: p(1, 1, 1),
+                side: Classification::Positive,
+                planes: vec![second_definition],
+            },
+        );
+
+        assert_eq!(probes.len(), 1);
+        assert_eq!(probes[0].planes.len(), 2);
     }
 
     #[test]
