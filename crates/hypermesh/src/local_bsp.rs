@@ -1,11 +1,12 @@
 //! Face-local BSP tree for splitting one polygon into convex leaves.
 
-use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
+use hyperlattice::{Point3, intersect_three_planes};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, Plane, classify_point, classify_projective_point};
 use crate::intersection::{IntersectionSegment, OverlapInfo};
 use crate::polygon::ConvexPolygon;
+use crate::segment_trace::certified_leaf_test_points;
 
 /// Convex sub-polygon leaf in a face-local BSP.
 #[derive(Clone, Debug, PartialEq)]
@@ -255,12 +256,11 @@ impl LocalBsp {
                 if !leaf.enabled || leaf.edges.len() < 3 {
                     return Ok(());
                 }
-                let test_point = leaf_interior_point(&self.support, &leaf.edges)?;
-                let inside_or_on = other.contains_point(&test_point)?;
-                let strictly_inside = other.contains_point_strictly(&test_point)?;
-                if inside_or_on && !strictly_inside {
+                let Some(strictly_inside) =
+                    classify_leaf_overlap_relation(&self.support, &leaf.edges, other)?
+                else {
                     return Err(HypermeshError::UnknownClassification);
-                }
+                };
                 if strictly_inside && let BspNode::Leaf(leaf) = &mut self.nodes[node_index] {
                     leaf.enabled = false;
                 }
@@ -291,27 +291,78 @@ impl LocalBsp {
     }
 }
 
-fn leaf_interior_point(support: &Plane, edges: &[Plane]) -> HypermeshResult<HomogeneousPoint3> {
-    let mut points = Vec::with_capacity(edges.len());
-    for index in 0..edges.len() {
-        points.push(
-            intersect_three_planes(support, &edges[index], &edges[(index + 1) % edges.len()])
-                .to_affine_point()
-                .map_err(|_| HypermeshError::PointAtInfinity)?,
-        );
+fn classify_leaf_overlap_relation(
+    support: &Plane,
+    edges: &[Plane],
+    other: &ConvexPolygon,
+) -> HypermeshResult<Option<bool>> {
+    let test_points = certified_leaf_test_points(support, edges)?;
+    if test_points.is_empty() {
+        return Ok(None);
+    }
+    classify_overlap_test_relation(&test_points, other)
+}
+
+fn classify_overlap_test_relation(
+    test_points: &[hyperlattice::HomogeneousPoint3],
+    other: &ConvexPolygon,
+) -> HypermeshResult<Option<bool>> {
+    let mut any_inside = false;
+    let mut any_outside = false;
+    for test_point in test_points {
+        let inside_or_on = other.contains_point(test_point)?;
+        let strictly_inside = other.contains_point_strictly(test_point)?;
+        if strictly_inside {
+            any_inside = true;
+        } else if !inside_or_on {
+            any_outside = true;
+        }
     }
 
-    let mut sum = Point3::origin();
-    for point in &points {
-        sum.x += point.x.clone();
-        sum.y += point.y.clone();
-        sum.z += point.z.clone();
+    if any_inside && any_outside {
+        Ok(None)
+    } else if any_inside {
+        Ok(Some(true))
+    } else if any_outside {
+        Ok(Some(false))
+    } else {
+        Ok(None)
     }
-    let denom = Real::from(points.len() as u64);
-    Ok(HomogeneousPoint3::new(
-        (sum.x / denom.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
-        (sum.y / denom.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
-        (sum.z / denom).map_err(|_| HypermeshError::UnknownClassification)?,
-        Real::one(),
-    ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::polygon::make_triangle;
+    use hyperlattice::{HomogeneousPoint3, Point3, Real};
+
+    fn r(value: i32) -> Real {
+        value.into()
+    }
+
+    fn q(numerator: i32, denominator: i32) -> Real {
+        (Real::from(numerator) / Real::from(denominator)).unwrap()
+    }
+
+    fn p(x: i32, y: i32, z: i32) -> Point3 {
+        Point3::new(r(x), r(y), r(z))
+    }
+
+    #[test]
+    fn overlap_test_relation_prefers_strict_inside_over_boundary_only_points() {
+        let other = make_triangle(
+            &p(0, 0, 0),
+            &Point3::new(q(4, 3), r(0), r(0)),
+            &Point3::new(r(0), q(4, 3), r(0)),
+            0,
+            0,
+        );
+        let strict_inside = HomogeneousPoint3::new(q(1, 3), q(1, 3), r(0), Real::one());
+        let boundary_only = HomogeneousPoint3::new(q(2, 3), q(2, 3), r(0), Real::one());
+
+        assert_eq!(
+            classify_overlap_test_relation(&[strict_inside, boundary_only], &other).unwrap(),
+            Some(true)
+        );
+    }
 }

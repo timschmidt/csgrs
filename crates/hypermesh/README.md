@@ -167,7 +167,9 @@ sampling. Coplanar overlap and effective-delta checks now use the same
 certified strict leaf interior witness family instead of a centroid-only test
 point, and pairwise coplanar overlap detection now reuses that certified
 convex-polygon interior witness construction instead of a standalone centroid
-witness when no strict contained vertex exists. Splittable tasks now also try
+witness when no strict contained vertex exists. Face-local BSP duplicate-overlap
+suppression now uses the same certified leaf witness-family relation instead of
+one centroid-style representative point. Splittable tasks now also try
 that same certified leaf path before subdivision once they are above the leaf
 threshold, so exact local arrangement isolation can terminate a branch without
 waiting for the depth budget to expire. Hypermesh reports
