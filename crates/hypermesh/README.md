@@ -139,8 +139,10 @@ exact axis-plane definitions appended for both endpoints before giving up. The
 same retained definitions are used again during leaf classification for
 plane-defined probes, and duplicate certified target points merge their
 retained definition sets instead of dropping later constructions. The
-support-cell fallback backtracks across alternate feasible support-side cells
-when a candidate target cannot be traced. Full EMBER plane-replacement
+support-cell fallback now also backtracks across alternate feasible
+support-side cells when one candidate branch returns
+`UnknownClassification`, rather than aborting the whole search on the first
+uncertified cell. Full EMBER plane-replacement
 coverage for every reference construction remains unfinished.
 
 `EmberConfig::default()` runs only the general subdivision/BSP/classification
