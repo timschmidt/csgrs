@@ -667,7 +667,23 @@ fn compute_new_reference(
     }
 
     let projected = project_reference_point(old_ref, bounds)?;
-    for target in reference_targets_from_projection(&projected, bounds, polygons)? {
+    let projected_target = ReferenceTarget::axis_defined(projected.clone());
+    if let Some(winding) = trace_reference_target(
+        old_ref,
+        old_ref_definitions,
+        old_wnv,
+        bounds,
+        polygons,
+        &projected_target,
+    )? {
+        return Ok((
+            projected_target.point,
+            projected_target.definitions,
+            winding,
+        ));
+    }
+
+    for target in projection_escape_targets(&projected, bounds, polygons)? {
         if let Some(winding) = trace_reference_target(
             old_ref,
             old_ref_definitions,
@@ -680,6 +696,17 @@ fn compute_new_reference(
         }
     }
 
+    if let Some((target, winding)) = projection_escape_reference(
+        old_ref,
+        old_ref_definitions,
+        old_wnv,
+        &projected,
+        bounds,
+        polygons,
+    )? {
+        return Ok((target.point, target.definitions, winding));
+    }
+
     if let Some((target, winding)) =
         support_plane_cell_reference(old_ref, old_ref_definitions, old_wnv, bounds, polygons)?
     {
@@ -689,6 +716,206 @@ fn compute_new_reference(
     Err(crate::error::HypermeshError::ReferencePropagationFailed)
 }
 
+fn projection_escape_reference(
+    old_ref: &Point3,
+    old_ref_definitions: &[[Plane; 3]],
+    old_wnv: &[i32],
+    projected: &Point3,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    let Some(escape_bounds) = projection_escape_bounds(projected, bounds, polygons)? else {
+        return Ok(None);
+    };
+    if escape_bounds == *bounds {
+        return Ok(None);
+    }
+    support_plane_cell_reference(
+        old_ref,
+        old_ref_definitions,
+        old_wnv,
+        &escape_bounds,
+        polygons,
+    )
+}
+
+fn projection_escape_bounds(
+    projected: &Point3,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Option<Aabb>> {
+    let mut min = projected.clone();
+    let mut max = projected.clone();
+
+    for axis in 0..3 {
+        let bound_min = axis_ref(&bounds.min, axis);
+        let bound_max = axis_ref(&bounds.max, axis);
+        if compare_real(bound_min, bound_max)?.is_eq() {
+            *axis_mut(&mut min, axis) = bound_min.clone();
+            *axis_mut(&mut max, axis) = bound_max.clone();
+            continue;
+        }
+
+        let Some(lower) =
+            escaped_reference_axis_stop_value(projected, bounds, polygons, axis, false)?
+        else {
+            return Ok(None);
+        };
+        let Some(upper) =
+            escaped_reference_axis_stop_value(projected, bounds, polygons, axis, true)?
+        else {
+            return Ok(None);
+        };
+        if !compare_real(&lower, &upper)?.is_lt() {
+            return Ok(None);
+        }
+        *axis_mut(&mut min, axis) = lower;
+        *axis_mut(&mut max, axis) = upper;
+    }
+
+    Ok(Some(Aabb::new(min, max)))
+}
+
+fn escaped_reference_axis_stop_value(
+    projected: &Point3,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    axis: usize,
+    direction_positive: bool,
+) -> HypermeshResult<Option<Real>> {
+    let start_value = axis_ref(projected, axis);
+    let bound_value = if direction_positive {
+        axis_ref(&bounds.max, axis)
+    } else {
+        axis_ref(&bounds.min, axis)
+    };
+    let room = if direction_positive {
+        bound_value - start_value
+    } else {
+        start_value - bound_value
+    };
+    if !compare_real(&room, &Real::zero())?.is_gt() {
+        return Ok(None);
+    }
+
+    let mut endpoint = projected.clone();
+    *axis_mut(&mut endpoint, axis) = bound_value.clone();
+    let mut stop_value = bound_value.clone();
+
+    for polygon in polygons {
+        let Some(crossing) = reference_axis_surface_crossing(projected, &endpoint, polygon, axis)?
+        else {
+            continue;
+        };
+        if !point_lies_on_local_polygon(&crossing, polygon)? {
+            continue;
+        }
+
+        let crossing_value = axis_ref(&crossing, axis);
+        let order = compare_real(crossing_value, &stop_value)?;
+        if (direction_positive && order.is_lt()) || (!direction_positive && order.is_gt()) {
+            stop_value = crossing_value.clone();
+        }
+    }
+
+    if compare_real(&stop_value, start_value)?.is_eq() {
+        return Ok(None);
+    }
+    Ok(Some(stop_value))
+}
+
+fn push_unique_reference_target(targets: &mut Vec<ReferenceTarget>, target: ReferenceTarget) {
+    if let Some(existing) = targets
+        .iter_mut()
+        .find(|existing| existing.point == target.point)
+    {
+        for definition in target.definitions {
+            if !existing
+                .definitions
+                .iter()
+                .any(|candidate| candidate == &definition)
+            {
+                existing.definitions.push(definition);
+            }
+        }
+    } else {
+        targets.push(target);
+    }
+}
+
+fn projection_escape_targets(
+    projected: &Point3,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    let mut targets = Vec::new();
+    let mut axis_values = vec![Vec::new(), Vec::new(), Vec::new()];
+    for axis in 0..3 {
+        for direction_positive in [true, false] {
+            if let Some(value) =
+                escaped_reference_axis_value(projected, bounds, polygons, axis, direction_positive)?
+            {
+                push_unique_real(&mut axis_values[axis], value.clone());
+                let mut target = projected.clone();
+                *axis_mut(&mut target, axis) = value;
+                push_unique_reference_target(&mut targets, ReferenceTarget::axis_defined(target));
+            }
+        }
+    }
+
+    for first_axis in 0..3 {
+        for second_axis in (first_axis + 1)..3 {
+            for first_value in &axis_values[first_axis] {
+                for second_value in &axis_values[second_axis] {
+                    let mut target = projected.clone();
+                    *axis_mut(&mut target, first_axis) = first_value.clone();
+                    *axis_mut(&mut target, second_axis) = second_value.clone();
+                    push_unique_reference_target(
+                        &mut targets,
+                        ReferenceTarget::axis_defined(target),
+                    );
+                }
+            }
+        }
+    }
+
+    for x in &axis_values[0] {
+        for y in &axis_values[1] {
+            for z in &axis_values[2] {
+                push_unique_reference_target(
+                    &mut targets,
+                    ReferenceTarget::axis_defined(Point3::new(x.clone(), y.clone(), z.clone())),
+                );
+            }
+        }
+    }
+    Ok(targets)
+}
+
+fn push_unique_real(values: &mut Vec<Real>, value: Real) {
+    if !values.iter().any(|existing| existing == &value) {
+        values.push(value);
+    }
+}
+
+fn escaped_reference_axis_value(
+    projected: &Point3,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    axis: usize,
+    direction_positive: bool,
+) -> HypermeshResult<Option<Real>> {
+    let Some(stop_value) =
+        escaped_reference_axis_stop_value(projected, bounds, polygons, axis, direction_positive)?
+    else {
+        return Ok(None);
+    };
+
+    Ok(Some(
+        ((axis_ref(projected, axis) + &stop_value) / Real::from(2))
+            .map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+    ))
+}
 #[derive(Clone, Debug, PartialEq)]
 struct ReferenceTarget {
     point: Point3,
@@ -747,87 +974,6 @@ fn is_valid_reference_for_bounds(
 ) -> HypermeshResult<bool> {
     Ok(point_strictly_inside_bounds(point, bounds)?
         && !point_lies_on_local_surface(point, polygons)?)
-}
-
-fn reference_targets_from_projection(
-    projected: &Point3,
-    bounds: &Aabb,
-    polygons: &[ConvexPolygon],
-) -> HypermeshResult<Vec<ReferenceTarget>> {
-    let mut targets = Vec::new();
-    if !point_lies_on_local_surface(projected, polygons)? {
-        push_unique_reference_target(
-            &mut targets,
-            ReferenceTarget::axis_defined(projected.clone()),
-        );
-    }
-
-    let mut axis_values = vec![Vec::new(), Vec::new(), Vec::new()];
-    for axis in 0..3 {
-        for direction_positive in [true, false] {
-            if let Some(value) =
-                escaped_reference_axis_value(projected, bounds, polygons, axis, direction_positive)?
-            {
-                push_unique_real(&mut axis_values[axis], value.clone());
-                let mut target = projected.clone();
-                *axis_mut(&mut target, axis) = value;
-                push_unique_reference_target(&mut targets, ReferenceTarget::axis_defined(target));
-            }
-        }
-    }
-
-    for first_axis in 0..3 {
-        for second_axis in (first_axis + 1)..3 {
-            for first_value in &axis_values[first_axis] {
-                for second_value in &axis_values[second_axis] {
-                    let mut target = projected.clone();
-                    *axis_mut(&mut target, first_axis) = first_value.clone();
-                    *axis_mut(&mut target, second_axis) = second_value.clone();
-                    push_unique_reference_target(
-                        &mut targets,
-                        ReferenceTarget::axis_defined(target),
-                    );
-                }
-            }
-        }
-    }
-
-    for x in &axis_values[0] {
-        for y in &axis_values[1] {
-            for z in &axis_values[2] {
-                push_unique_reference_target(
-                    &mut targets,
-                    ReferenceTarget::axis_defined(Point3::new(x.clone(), y.clone(), z.clone())),
-                );
-            }
-        }
-    }
-    Ok(targets)
-}
-
-fn push_unique_real(values: &mut Vec<Real>, value: Real) {
-    if !values.iter().any(|existing| existing == &value) {
-        values.push(value);
-    }
-}
-
-fn push_unique_reference_target(targets: &mut Vec<ReferenceTarget>, target: ReferenceTarget) {
-    if let Some(existing) = targets
-        .iter_mut()
-        .find(|existing| existing.point == target.point)
-    {
-        for definition in target.definitions {
-            if !existing
-                .definitions
-                .iter()
-                .any(|candidate| candidate == &definition)
-            {
-                existing.definitions.push(definition);
-            }
-        }
-    } else {
-        targets.push(target);
-    }
 }
 
 fn support_plane_cell_reference(
@@ -1186,57 +1332,6 @@ fn point_lies_on_any_support_plane(
     Ok(false)
 }
 
-fn escaped_reference_axis_value(
-    projected: &Point3,
-    bounds: &Aabb,
-    polygons: &[ConvexPolygon],
-    axis: usize,
-    direction_positive: bool,
-) -> HypermeshResult<Option<Real>> {
-    let start_value = axis_ref(projected, axis);
-    let bound_value = if direction_positive {
-        axis_ref(&bounds.max, axis)
-    } else {
-        axis_ref(&bounds.min, axis)
-    };
-    let room = if direction_positive {
-        bound_value - start_value
-    } else {
-        start_value - bound_value
-    };
-    if !compare_real(&room, &Real::zero())?.is_gt() {
-        return Ok(None);
-    }
-
-    let mut endpoint = projected.clone();
-    *axis_mut(&mut endpoint, axis) = bound_value.clone();
-    let mut stop_value = bound_value.clone();
-
-    for polygon in polygons {
-        let Some(crossing) = reference_axis_surface_crossing(projected, &endpoint, polygon, axis)?
-        else {
-            continue;
-        };
-        if !point_lies_on_local_polygon(&crossing, polygon)? {
-            continue;
-        }
-
-        let crossing_value = axis_ref(&crossing, axis);
-        let order = compare_real(crossing_value, &stop_value)?;
-        if (direction_positive && order.is_lt()) || (!direction_positive && order.is_gt()) {
-            stop_value = crossing_value.clone();
-        }
-    }
-
-    if compare_real(&stop_value, start_value)?.is_eq() {
-        return Ok(None);
-    }
-    Ok(Some(
-        ((start_value + &stop_value) / Real::from(2))
-            .map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
-    ))
-}
-
 fn reference_axis_surface_crossing(
     start: &Point3,
     endpoint: &Point3,
@@ -1443,6 +1538,26 @@ mod tests {
             .unwrap(),
             None
         );
+    }
+
+    #[test]
+    fn projection_escape_bounds_stop_at_nearest_axis_surfaces() {
+        let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+        left.delta_w = vec![1];
+        let mut right = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+        right.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
+
+        let escape = projection_escape_bounds(&p(1, 3, 3), &bounds, &[left, right])
+            .unwrap()
+            .expect("parallel walls should define a strict projection escape box");
+
+        assert_eq!(escape.min.x, r(0));
+        assert_eq!(escape.max.x, r(4));
+        assert_eq!(escape.min.y, r(0));
+        assert_eq!(escape.max.y, r(6));
+        assert_eq!(escape.min.z, r(0));
+        assert_eq!(escape.max.z, r(6));
     }
 
     #[test]
