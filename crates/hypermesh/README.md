@@ -54,7 +54,8 @@ number. There are no input-assumption bypass flags; leaves run pairwise
 intersection discovery across all local polygons, including same-mesh
 self-intersections, and classify each direct polygon separately. Normal probes
 derived from shifted edge-plane interior points retain their defining plane
-triples and can fall back to the EMBER plane-replacement path. Full
+triples, and leaf classification retries EMBER plane-replacement traces from
+all retained reference definitions before failing. Full
 plane-replacement coverage for every reference/probe construction remains
 unfinished.
 
@@ -76,7 +77,8 @@ reference point carries retained plane triples; projected/escaped references
 carry axis-plane triples, and support-cell witnesses retain active halfspace
 planes from the `hyperlimit` feasibility report. When direct tracing cannot
 certify a reference step, hypermesh retries certified plane-replacement traces
-between retained definitions. The support-cell fallback backtracks across
+between retained definitions. The same retained definitions are used again
+during leaf classification for plane-defined probes. The support-cell fallback backtracks across
 alternate feasible support-side cells when a candidate target cannot be traced.
 Full EMBER plane-replacement coverage for every reference construction remains
 unfinished.

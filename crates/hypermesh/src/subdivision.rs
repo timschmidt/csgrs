@@ -104,11 +104,20 @@ pub fn process_leaf(
     polygons: &[ConvexPolygon],
     bounds: &Aabb,
     ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
     ref_wnv: &[i32],
     indicator: &Indicator,
 ) -> HypermeshResult<Vec<ClassifiedPolygon>> {
     let mut output = Vec::new();
-    process_leaf_into(polygons, bounds, ref_point, ref_wnv, indicator, &mut output)?;
+    process_leaf_into(
+        polygons,
+        bounds,
+        ref_point,
+        ref_definitions,
+        ref_wnv,
+        indicator,
+        &mut output,
+    )?;
     Ok(output)
 }
 
@@ -117,6 +126,7 @@ pub fn process_leaf_into(
     polygons: &[ConvexPolygon],
     bounds: &Aabb,
     ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
     ref_wnv: &[i32],
     indicator: &Indicator,
     output: &mut Vec<ClassifiedPolygon>,
@@ -126,6 +136,7 @@ pub fn process_leaf_into(
         polygons,
         bounds,
         ref_point,
+        ref_definitions,
         ref_wnv,
         indicator,
         &mut certified_output,
@@ -138,6 +149,7 @@ fn process_leaf_into_inner(
     polygons: &[ConvexPolygon],
     bounds: &Aabb,
     ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
     ref_wnv: &[i32],
     indicator: &Indicator,
     output: &mut Vec<ClassifiedPolygon>,
@@ -157,7 +169,14 @@ fn process_leaf_into_inner(
     for (index, polygon) in polygons.iter().enumerate() {
         if intersections[index].is_empty() {
             let emitted = emit_one_direct(
-                polygon, bounds, ref_point, ref_wnv, polygons, indicator, output,
+                polygon,
+                bounds,
+                ref_point,
+                ref_definitions,
+                ref_wnv,
+                polygons,
+                indicator,
+                output,
             )?;
             stats.direct_polygon_count += usize::from(emitted);
             continue;
@@ -193,6 +212,7 @@ fn process_leaf_into_inner(
                 &polygon.support,
                 &leaf.edges,
                 ref_point,
+                ref_definitions,
                 ref_wnv,
                 polygons,
                 bounds,
@@ -278,6 +298,7 @@ fn subdivide_into_inner(
             &task.polygons,
             &task.bounds,
             &task.ref_point,
+            &task.ref_definitions,
             &task.ref_wnv,
             indicator,
             output,
@@ -291,6 +312,7 @@ fn subdivide_into_inner(
             &task.polygons,
             &task.bounds,
             &task.ref_point,
+            &task.ref_definitions,
             &task.ref_wnv,
             indicator,
             &mut certified_output,
@@ -413,6 +435,7 @@ fn emit_one_direct(
     polygon: &ConvexPolygon,
     bounds: &Aabb,
     ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
     ref_wnv: &[i32],
     class_polygons: &[ConvexPolygon],
     indicator: &Indicator,
@@ -422,6 +445,7 @@ fn emit_one_direct(
         &polygon.support,
         &polygon.edges,
         ref_point,
+        ref_definitions,
         ref_wnv,
         class_polygons,
         bounds,
@@ -1667,8 +1691,16 @@ mod tests {
         );
         let mut output = vec![sentinel.clone()];
 
-        let err = process_leaf_into(&[wall], &bounds, &p(0, 0, 0), &[0], &indicator, &mut output)
-            .unwrap_err();
+        let err = process_leaf_into(
+            &[wall],
+            &bounds,
+            &p(0, 0, 0),
+            &axis_defs(&p(0, 0, 0)),
+            &[0],
+            &indicator,
+            &mut output,
+        )
+        .unwrap_err();
 
         assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
         assert_eq!(output, vec![sentinel]);

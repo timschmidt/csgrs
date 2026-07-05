@@ -598,6 +598,7 @@ pub fn classify_leaf_polygon(
     support: &Plane,
     leaf_edges: &[Plane],
     ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
     ref_wnv: &[i32],
     polygons: &[ConvexPolygon],
     bounds: &Aabb,
@@ -613,7 +614,6 @@ pub fn classify_leaf_polygon(
     };
 
     let interior_points = interior_leaf_points(&leaf)?;
-    let ref_definition = axis_plane_defined_point(ref_point);
     for point in &interior_points {
         for positive_side in [true, false] {
             for probe in
@@ -630,8 +630,9 @@ pub fn classify_leaf_polygon(
                 if winding.is_none()
                     && let Some(probe_planes) = &probe.planes
                 {
-                    winding = retryable_trace(trace_plane_replacement_path(
-                        &ref_definition.planes,
+                    winding = retryable_trace(trace_probe_from_reference_definitions(
+                        ref_point,
+                        ref_definitions,
                         probe_planes,
                         ref_wnv,
                         polygons,
@@ -645,6 +646,33 @@ pub fn classify_leaf_polygon(
                 }
                 return Ok(winding);
             }
+        }
+    }
+
+    Err(HypermeshError::UnknownClassification)
+}
+
+fn trace_probe_from_reference_definitions(
+    ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
+    probe_planes: &[Plane; 3],
+    ref_wnv: &[i32],
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<WindingNumberVector> {
+    if ref_definitions.is_empty() {
+        return trace_plane_replacement_path(
+            &axis_plane_defined_point(ref_point).planes,
+            probe_planes,
+            ref_wnv,
+            polygons,
+        );
+    }
+
+    for start_definition in ref_definitions {
+        match trace_plane_replacement_path(start_definition, probe_planes, ref_wnv, polygons) {
+            Ok(winding) => return Ok(winding),
+            Err(HypermeshError::UnknownClassification) => continue,
+            Err(err) => return Err(err),
         }
     }
 
@@ -1363,11 +1391,13 @@ mod tests {
         let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         leaf.delta_w = vec![1];
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let ref_definitions = [axis_plane_definition(&p(0, 0, 0))];
 
         let winding = classify_leaf_polygon(
             &leaf.support,
             &leaf.edges,
             &p(0, 0, 0),
+            &ref_definitions,
             &[0],
             &[leaf.clone()],
             &bounds,
@@ -1387,6 +1417,30 @@ mod tests {
 
         let winding =
             trace_plane_replacement_path(&start.planes, &end.planes, &[0], &[wall]).unwrap();
+
+        assert_eq!(winding, vec![-1]);
+    }
+
+    #[test]
+    fn retained_reference_definitions_try_later_plane_replacement_paths() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let invalid_start = [
+            Plane::axis_aligned(0, r(0)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(0, r(2)),
+        ];
+        let valid_start = axis_plane_defined_point(&p(0, 0, 0));
+        let end = axis_plane_defined_point(&p(2, 0, 0));
+
+        let winding = trace_probe_from_reference_definitions(
+            &p(0, 0, 0),
+            &[invalid_start, valid_start.planes],
+            &end.planes,
+            &[0],
+            &[wall],
+        )
+        .unwrap();
 
         assert_eq!(winding, vec![-1]);
     }

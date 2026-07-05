@@ -21,6 +21,14 @@ fn p(x: i32, y: i32, z: i32) -> Point3 {
     Point3::new(r(x), r(y), r(z))
 }
 
+fn axis_defs(point: &Point3) -> [[Plane; 3]; 1] {
+    [[
+        Plane::axis_aligned(0, point.x.clone()),
+        Plane::axis_aligned(1, point.y.clone()),
+        Plane::axis_aligned(2, point.z.clone()),
+    ]]
+}
+
 fn px(x: Real, y: i32, z: i32) -> Point3 {
     Point3::new(x, r(y), r(z))
 }
@@ -498,6 +506,7 @@ fn leaf_classification_traces_to_probe_and_returns_winding_vector() {
         &wall.support,
         &wall.edges,
         &p(0, 0, 0),
+        &axis_defs(&p(0, 0, 0)),
         &[0],
         &[wall.clone()],
         &bounds,
@@ -517,6 +526,7 @@ fn leaf_classification_reports_unknown_when_no_valid_probe_path_exists() {
         &wall.support,
         &wall.edges,
         &p(0, 0, 0),
+        &axis_defs(&p(0, 0, 0)),
         &[0],
         &[wall.clone()],
         &bounds,
@@ -538,6 +548,7 @@ fn leaf_classification_places_probe_before_intervening_surface() {
         &wall.support,
         &wall.edges,
         &p(0, 0, 0),
+        &axis_defs(&p(0, 0, 0)),
         &[0],
         &[wall.clone(), blocker],
         &bounds,
@@ -555,8 +566,16 @@ fn process_leaf_classifies_direct_polygon_slice() {
     let union = make_indicator(BooleanOp::Union, 1);
 
     let mut output = Vec::new();
-    let stats =
-        process_leaf_into(&[wall], &bounds, &p(0, 0, 0), &[0], &union, &mut output).unwrap();
+    let stats = process_leaf_into(
+        &[wall],
+        &bounds,
+        &p(0, 0, 0),
+        &axis_defs(&p(0, 0, 0)),
+        &[0],
+        &union,
+        &mut output,
+    )
+    .unwrap();
 
     assert!(stats.certified_complete);
     assert_eq!(stats.intersection_count, 0);
@@ -583,6 +602,7 @@ fn process_leaf_uses_bsp_for_intersecting_cross_mesh_polygons() {
         &polygons,
         &bounds,
         &p(-1, -1, -1),
+        &axis_defs(&p(-1, -1, -1)),
         &[0, 0],
         &union,
         &mut output,
@@ -612,6 +632,7 @@ fn process_leaf_uses_bsp_for_same_mesh_self_intersections() {
         &polygons,
         &bounds,
         &p(-1, -1, -1),
+        &axis_defs(&p(-1, -1, -1)),
         &[0],
         &union,
         &mut output,
