@@ -1894,11 +1894,6 @@ fn strict_leaf_cell_points(
     }
 
     let vertices = feasible_halfspace_cell_vertices(&halfspaces)?;
-    if let Some(seed) = centroid(&vertices)?
-        && let Some(point) = build_strict_leaf_point(leaf, &seed, &halfspaces, [None, None, None])?
-    {
-        push_unique_interior_point(&mut points, point);
-    }
     for witness in vertices {
         if let Some(point) =
             build_strict_leaf_point(leaf, &witness, &halfspaces, [None, None, None])?
@@ -3349,6 +3344,19 @@ mod tests {
                 .find(|point| point.point == Point3::new(q(1, 2), q(1, 2), r(2)))
                 .is_some_and(|point| !point.planes.is_empty())
         );
+    }
+
+    #[test]
+    fn strict_leaf_cell_points_return_only_strict_points() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let center = p(1, 1, 1);
+
+        let interiors = strict_leaf_cell_points(&leaf, &center).unwrap();
+
+        assert!(!interiors.is_empty());
+        for interior in &interiors {
+            assert!(point_strictly_inside_leaf(&interior.point, &leaf).unwrap());
+        }
     }
 
     #[test]
