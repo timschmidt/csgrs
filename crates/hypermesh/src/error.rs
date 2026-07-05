@@ -37,10 +37,17 @@ pub enum HypermeshError {
         /// Number of undirected edges used by exactly one triangle.
         boundary_edges: usize,
     },
-    /// A scalar predicate could not certify its sign through exact predicate
-    /// routes without choosing a precision budget.
+    /// A predicate or certified construction could not be decided through the
+    /// strict exact-predicate routes without choosing a precision budget or an
+    /// approximate fallback.
+    ///
+    /// This is the public boundary for arbitrary undecidable computable
+    /// `hyperreal::Real` inputs under bounded refinement: if the implementation
+    /// cannot certify the required sign, incidence, or witness exactly, it
+    /// returns this error instead of silently using an approximate answer.
     UnknownClassification,
-    /// Subdivision could not construct a certified child-cell reference point.
+    /// Subdivision could not construct a certified child-cell reference point
+    /// by the enabled exact reference-propagation path family.
     ReferencePropagationFailed,
     /// A subdividable task exhausted the configured depth budget before a
     /// certified leaf could be produced.

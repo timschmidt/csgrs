@@ -3,14 +3,30 @@
 //! This crate keeps primitive coordinates at API boundaries only. Core
 //! geometric state uses [`Real`] as its scalar and exposes borrowed slice APIs.
 //!
-//! The boolean kernel targets finite closed PWN triangle meshes represented
-//! with exact [`Real`] coordinates. Unsupported or uncertifiable configurations
-//! are reported as explicit [`HypermeshError`] values rather than being guessed
-//! with approximate topology. By default, boolean operations run the
-//! general EMBER subdivision/BSP/classification path; special-case boolean
-//! shortcuts are not used to rescue uncertified general results. Public boolean
-//! operations certify that the classified arrangement is already closed after
-//! exact duplicate/T-junction resolution before returning a result.
+//! The supported input model is finite, closed, piecewise-winding-number
+//! triangle meshes represented with exact [`Real`] coordinates through
+//! `hyperlattice::Point3`. Disconnected closed components and nested closed
+//! components are part of that model. Empty meshes, degenerate source
+//! triangles, open triangle soups, invalid triangle indices, and arbitrary
+//! non-PWN surface collections are outside the supported model and are
+//! rejected before the general boolean path runs.
+//!
+//! Predicate decisions are routed through the strict `hyperlimit` /
+//! `hyperlattice` exact-predicate stack. Unsupported or uncertifiable
+//! configurations are reported as explicit [`HypermeshError`] values rather
+//! than being guessed with approximate topology. In particular, arbitrary
+//! undecidable computable [`Real`] values remain outside any completeness claim
+//! when strict bounded refinement cannot certify the sign or incidence fact
+//! needed by subdivision, reference propagation, or leaf classification.
+//!
+//! By default, boolean operations run the general EMBER
+//! subdivision/BSP/classification path; special-case boolean shortcuts are not
+//! used to rescue uncertified general results. Public boolean operations
+//! certify that the classified arrangement is already closed after exact
+//! duplicate/T-junction resolution before returning a result. If subdivision
+//! reaches its configured depth budget before a task is certified complete, the
+//! operation fails with [`HypermeshError::SubdivisionDepthLimit`] instead of
+//! guessing through the unfinished branch.
 //!
 //! Use [`triangulate_and_resolve_certified`] to triangulate a boolean result
 //! while preserving the invariant that open or zero-volume output is rejected
