@@ -1041,7 +1041,6 @@ fn escaped_reference_axis_stop_value(
     Ok(Some(stop_value))
 }
 
-#[cfg(test)]
 fn push_unique_reference_target(targets: &mut Vec<ReferenceTarget>, target: ReferenceTarget) {
     if let Some(existing) = targets
         .iter_mut()
@@ -1194,20 +1193,19 @@ fn support_plane_cell_reference(
     }
 
     let mut accept = |halfspaces: &[LimitPlane3],
-                      _report: hyperlimit::HalfspaceFeasibilityReport|
+                      report: hyperlimit::HalfspaceFeasibilityReport|
      -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-        let Some(target) = strict_support_cell_target(bounds, halfspaces)? else {
-            return Ok(None);
-        };
-        if let Some(winding) = trace_reference_target(
-            old_ref,
-            old_ref_definitions,
-            old_wnv,
-            bounds,
-            polygons,
-            &target,
-        )? {
-            return Ok(Some((target, winding)));
+        for target in strict_support_cell_targets(bounds, halfspaces, &report)? {
+            if let Some(winding) = trace_reference_target(
+                old_ref,
+                old_ref_definitions,
+                old_wnv,
+                bounds,
+                polygons,
+                &target,
+            )? {
+                return Ok(Some((target, winding)));
+            }
         }
         Ok(None)
     };
@@ -1449,10 +1447,65 @@ fn push_verified_definition(
     Ok(())
 }
 
+#[cfg(test)]
 fn strict_support_cell_target(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Option<ReferenceTarget>> {
+    let Some(report) = halfspace_system_report(halfspaces)? else {
+        return Ok(None);
+    };
+    Ok(strict_support_cell_targets(bounds, halfspaces, &report)?
+        .into_iter()
+        .next())
+}
+
+fn strict_support_cell_targets(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: &hyperlimit::HalfspaceFeasibilityReport,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    let mut targets = Vec::new();
+
+    if report.status == HalfspaceFeasibility::Feasible
+        && let Some(witness) = &report.witness
+        && point_strictly_inside_support_cell(witness, bounds, halfspaces)?
+    {
+        push_unique_reference_target(
+            &mut targets,
+            ReferenceTarget::with_definitions(
+                witness.clone(),
+                reference_definitions_from_active_halfspaces(
+                    witness,
+                    halfspaces,
+                    report.active_planes,
+                )?,
+            ),
+        );
+    }
+
+    let Some(seed) = strict_support_cell_seed_from_report(bounds, halfspaces, report)? else {
+        return Ok(targets);
+    };
+    if let Some(target) = shifted_support_cell_target_from_seed(bounds, halfspaces, &seed)? {
+        push_unique_reference_target(&mut targets, target);
+    }
+
+    Ok(targets)
+}
+
+fn strict_support_cell_seed_from_report(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: &hyperlimit::HalfspaceFeasibilityReport,
+) -> HypermeshResult<Option<Point3>> {
+    if report.status == HalfspaceFeasibility::Feasible
+        && let Some(witness) = &report.witness
+        && point_strictly_inside_support_cell(witness, bounds, halfspaces)?
+    {
+        return Ok(Some(witness.clone()));
+    }
+
     let vertices = feasible_support_cell_vertices(halfspaces)?;
     if vertices.is_empty() {
         return Ok(None);
@@ -1460,10 +1513,18 @@ fn strict_support_cell_target(
     let Some(seed) = centroid_point(&vertices)? else {
         return Ok(None);
     };
-    if !point_strictly_inside_support_cell(&seed, bounds, halfspaces)? {
-        return Ok(None);
+    if point_strictly_inside_support_cell(&seed, bounds, halfspaces)? {
+        Ok(Some(seed))
+    } else {
+        Ok(None)
     }
+}
 
+fn shifted_support_cell_target_from_seed(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    seed: &Point3,
+) -> HypermeshResult<Option<ReferenceTarget>> {
     let shifted = shifted_support_cell_halfspaces(bounds, halfspaces, &seed)?;
     let Some(report) = halfspace_system_report(&shifted)? else {
         return Ok(None);
@@ -2144,6 +2205,25 @@ mod tests {
         for definition in &target.definitions {
             assert_eq!(affine_from_planes(definition).unwrap(), target.point);
         }
+    }
+
+    #[test]
+    fn support_cell_targets_include_direct_strict_feasibility_witness() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let direct = p(2, 1, 3);
+        let report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(direct.clone(), [None, None, None]);
+
+        let targets = strict_support_cell_targets(&bounds, &halfspaces, &report).unwrap();
+
+        assert!(targets.iter().any(|target| target.point == direct));
+        assert!(
+            targets
+                .iter()
+                .find(|target| target.point == direct)
+                .is_some_and(|target| !target.definitions.is_empty())
+        );
     }
 
     #[test]
