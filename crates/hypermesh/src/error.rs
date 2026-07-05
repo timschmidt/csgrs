@@ -57,6 +57,11 @@ pub enum HypermeshError {
         /// Number of undirected edges used by more than two triangles.
         non_manifold_edges: usize,
     },
+    /// Exact output T-junction/crossing resolution exhausted its pass budget.
+    OutputResolutionLimit {
+        /// Maximum number of resolution passes allowed.
+        pass_limit: usize,
+    },
     /// A homogeneous point had zero or unknown homogeneous scale.
     PointAtInfinity,
 }
@@ -107,6 +112,12 @@ impl fmt::Display for HypermeshError {
                 f,
                 "output has boundary: {boundary_edges} boundary edges, {non_manifold_edges} non-manifold edges"
             ),
+            Self::OutputResolutionLimit { pass_limit } => {
+                write!(
+                    f,
+                    "output resolution did not converge within {pass_limit} passes"
+                )
+            }
             Self::PointAtInfinity => f.write_str("homogeneous point is at infinity"),
         }
     }

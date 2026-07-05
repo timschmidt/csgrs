@@ -253,24 +253,29 @@ fn triangulate_polygons(polygons: &[ConvexPolygon]) -> HypermeshResult<TriangleS
 /// arithmetic. It only merges or splits when exact hyperreal predicates prove
 /// equality, collinearity, and segment containment.
 fn resolve_tjunctions(input: &TriangleSoup) -> HypermeshResult<TriangleSoup> {
+    resolve_tjunctions_with_pass_limit(input, RESOLVE_TJUNCTION_MAX_PASSES)
+}
+
+fn resolve_tjunctions_with_pass_limit(
+    input: &TriangleSoup,
+    pass_limit: usize,
+) -> HypermeshResult<TriangleSoup> {
     let mut soup = merge_duplicate_vertices(input);
     remove_degenerate_and_duplicate_triangles(&mut soup);
 
-    let mut converged = false;
-    for _ in 0..RESOLVE_TJUNCTION_MAX_PASSES {
+    let mut passes = 0;
+    loop {
+        if passes >= pass_limit {
+            return Err(HypermeshError::OutputResolutionLimit { pass_limit });
+        }
         let split_tjunction = split_one_tjunction_pass(&mut soup)?;
         let split_crossing = split_one_edge_crossing_pass(&mut soup)?;
         if !split_tjunction && !split_crossing {
-            converged = true;
-            break;
+            return Ok(soup);
         }
+        passes += 1;
         remove_degenerate_and_duplicate_triangles(&mut soup);
     }
-    if !converged {
-        return Err(HypermeshError::UnknownClassification);
-    }
-
-    Ok(soup)
 }
 
 fn merge_duplicate_vertices(input: &TriangleSoup) -> TriangleSoup {
@@ -762,6 +767,30 @@ mod tests {
                 .iter()
                 .any(|triangle| triangle.contains(&3))
         );
+    }
+
+    #[test]
+    fn internal_resolution_reports_pass_limit_exhaustion() {
+        let soup = TriangleSoup {
+            vertices: vec![ov(0, 0, 0), ov(2, 0, 0), ov(0, 2, 0), ov(1, 0, 0)],
+            triangles: vec![[0, 1, 2]],
+        };
+
+        let err = resolve_tjunctions_with_pass_limit(&soup, 1).unwrap_err();
+
+        assert_eq!(err, HypermeshError::OutputResolutionLimit { pass_limit: 1 });
+    }
+
+    #[test]
+    fn internal_resolution_accepts_budget_covering_split_and_certification_passes() {
+        let soup = TriangleSoup {
+            vertices: vec![ov(0, 0, 0), ov(2, 0, 0), ov(0, 2, 0), ov(1, 0, 0)],
+            triangles: vec![[0, 1, 2]],
+        };
+
+        let resolved = resolve_tjunctions_with_pass_limit(&soup, 2).unwrap();
+
+        assert_eq!(resolved.triangles.len(), 2);
     }
 
     #[test]
