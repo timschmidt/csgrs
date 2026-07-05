@@ -727,9 +727,9 @@ fn dominant_normal_axis(plane: &Plane) -> HypermeshResult<usize> {
     Ok(best)
 }
 
-fn centroid(points: &[Point3]) -> Option<Point3> {
+fn centroid(points: &[Point3]) -> HypermeshResult<Option<Point3>> {
     if points.is_empty() {
-        return None;
+        return Ok(None);
     }
     let mut sum = Point3::origin();
     for point in points {
@@ -738,16 +738,16 @@ fn centroid(points: &[Point3]) -> Option<Point3> {
         sum.z += point.z.clone();
     }
     let denom = Real::from(points.len() as u64);
-    Some(Point3::new(
-        (sum.x / denom.clone()).expect("point count is non-zero"),
-        (sum.y / denom.clone()).expect("point count is non-zero"),
-        (sum.z / denom).expect("point count is non-zero"),
-    ))
+    Ok(Some(Point3::new(
+        (sum.x / denom.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
+        (sum.y / denom.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
+        (sum.z / denom).map_err(|_| HypermeshError::UnknownClassification)?,
+    )))
 }
 
 fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<Point3>> {
     let vertices = leaf.vertices()?;
-    let Some(center) = centroid(&vertices) else {
+    let Some(center) = centroid(&vertices)? else {
         return Ok(Vec::new());
     };
 
@@ -985,6 +985,15 @@ mod tests {
         );
     }
 
+    #[test]
+    fn centroid_is_fallible_and_reports_empty_input() {
+        assert_eq!(centroid(&[]).unwrap(), None);
+        assert_eq!(
+            centroid(&[p(0, 0, 0), p(2, 2, 2)]).unwrap(),
+            Some(p(1, 1, 1))
+        );
+    }
+
     fn axis_values(points: &[Point3], axis: usize) -> Vec<Real> {
         let mut values = Vec::new();
         for point in points {
@@ -1011,7 +1020,7 @@ mod tests {
     fn shifted_edge_interior_points_move_vertices_inside_by_certified_margins() {
         let leaf = make_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
         let vertices = leaf.vertices().unwrap();
-        let center = centroid(&vertices).unwrap();
+        let center = centroid(&vertices).unwrap().unwrap();
         let points = shifted_edge_interior_points(&leaf, &center).unwrap();
 
         assert_eq!(points.len(), 3);

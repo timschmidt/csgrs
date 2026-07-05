@@ -142,12 +142,12 @@ fn polygons_share_area(polygon: &ConvexPolygon, other: &ConvexPolygon) -> Hyperm
     let polygon_vertices = polygon.vertices()?;
     let other_vertices = other.vertices()?;
 
-    if let Some(point) = centroid(&polygon_vertices)
+    if let Some(point) = centroid(&polygon_vertices)?
         && affine_point_in_polygon(&point, other)?
     {
         return Ok(true);
     }
-    if let Some(point) = centroid(&other_vertices)
+    if let Some(point) = centroid(&other_vertices)?
         && affine_point_in_polygon(&point, polygon)?
     {
         return Ok(true);
@@ -260,9 +260,9 @@ fn segment_edges(vertices: &[Point3]) -> impl Iterator<Item = (&Point3, &Point3)
         .take(vertices.len())
 }
 
-fn centroid(vertices: &[Point3]) -> Option<Point3> {
+fn centroid(vertices: &[Point3]) -> HypermeshResult<Option<Point3>> {
     if vertices.is_empty() {
-        return None;
+        return Ok(None);
     }
     let mut sum = Point3::origin();
     for vertex in vertices {
@@ -271,11 +271,11 @@ fn centroid(vertices: &[Point3]) -> Option<Point3> {
         sum.z += vertex.z.clone();
     }
     let denom = Real::from(vertices.len() as u64);
-    Some(Point3::new(
-        (sum.x / denom.clone()).ok()?,
-        (sum.y / denom.clone()).ok()?,
-        (sum.z / denom).ok()?,
-    ))
+    Ok(Some(Point3::new(
+        (sum.x / denom.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
+        (sum.y / denom.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
+        (sum.z / denom).map_err(|_| HypermeshError::UnknownClassification)?,
+    )))
 }
 
 fn segments_properly_cross(
