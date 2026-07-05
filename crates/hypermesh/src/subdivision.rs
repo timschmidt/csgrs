@@ -812,10 +812,20 @@ fn push_unique_real(values: &mut Vec<Real>, value: Real) {
 }
 
 fn push_unique_reference_target(targets: &mut Vec<ReferenceTarget>, target: ReferenceTarget) {
-    if !targets
-        .iter()
-        .any(|existing| existing.point == target.point)
+    if let Some(existing) = targets
+        .iter_mut()
+        .find(|existing| existing.point == target.point)
     {
+        for definition in target.definitions {
+            if !existing
+                .definitions
+                .iter()
+                .any(|candidate| candidate == &definition)
+            {
+                existing.definitions.push(definition);
+            }
+        }
+    } else {
         targets.push(target);
     }
 }
@@ -1459,6 +1469,35 @@ mod tests {
                 .definitions
                 .iter()
                 .any(|definition| affine_from_planes(definition).unwrap() == target.point)
+        );
+    }
+
+    #[test]
+    fn duplicate_reference_targets_merge_definitions() {
+        let point = p(1, 2, 3);
+        let mut targets = vec![ReferenceTarget::axis_defined(point.clone())];
+        let slanted_definition = [
+            Plane::from_coefficients(r(1), r(1), r(0), r(-3)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(2, r(3)),
+        ];
+
+        push_unique_reference_target(
+            &mut targets,
+            ReferenceTarget::with_definitions(point, vec![slanted_definition.clone()]),
+        );
+        push_unique_reference_target(
+            &mut targets,
+            ReferenceTarget::with_definitions(p(1, 2, 3), vec![slanted_definition]),
+        );
+
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].definitions.len(), 2);
+        assert!(
+            targets[0]
+                .definitions
+                .iter()
+                .any(definition_uses_non_axis_plane)
         );
     }
 

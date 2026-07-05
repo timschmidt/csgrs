@@ -78,8 +78,10 @@ carry axis-plane triples, and support-cell witnesses retain active halfspace
 planes from the `hyperlimit` feasibility report. When direct tracing cannot
 certify a reference step, hypermesh retries certified plane-replacement traces
 between retained definitions. The same retained definitions are used again
-during leaf classification for plane-defined probes. The support-cell fallback backtracks across
-alternate feasible support-side cells when a candidate target cannot be traced.
+during leaf classification for plane-defined probes, and duplicate certified
+target points merge their retained definition sets instead of dropping later
+constructions. The support-cell fallback backtracks across alternate feasible
+support-side cells when a candidate target cannot be traced.
 Full EMBER plane-replacement coverage for every reference construction remains
 unfinished.
 
