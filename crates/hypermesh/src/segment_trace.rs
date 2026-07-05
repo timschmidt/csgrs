@@ -847,7 +847,7 @@ pub fn classify_leaf_polygon(
                 if point_lies_on_traced_surface(&probe.point, polygons)? {
                     continue;
                 }
-                if !probe_reaches_adjacent_cell(&point.point, &probe.point, support, polygons)? {
+                if !probe_reaches_adjacent_cell_from_interior(point, &probe, support, polygons)? {
                     continue;
                 }
                 let winding =
@@ -978,6 +978,87 @@ fn probe_reaches_adjacent_cell(
     }
 
     Ok(true)
+}
+
+fn probe_reaches_adjacent_cell_from_interior(
+    interior: &InteriorLeafPoint,
+    probe: &ProbePoint,
+    host_support: &Plane,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<bool> {
+    if probe_reaches_adjacent_cell(&interior.point, &probe.point, host_support, polygons)? {
+        return Ok(true);
+    }
+
+    let mut start_definitions = interior.planes.clone();
+    append_definition_if_missing(
+        &mut start_definitions,
+        axis_plane_definition(&interior.point),
+    );
+    let mut end_definitions = probe.planes.clone();
+    append_definition_if_missing(&mut end_definitions, axis_plane_definition(&probe.point));
+
+    for start_definition in &start_definitions {
+        for end_definition in &end_definitions {
+            if plane_replacement_path_reaches_adjacent_cell(
+                start_definition,
+                end_definition,
+                host_support,
+                polygons,
+            )? {
+                return Ok(true);
+            }
+        }
+    }
+
+    Ok(false)
+}
+
+fn plane_replacement_path_reaches_adjacent_cell(
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    host_support: &Plane,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<bool> {
+    for ordering in AXIS_ORDERINGS {
+        let mut current_planes = start_planes.clone();
+        let mut current_point = match affine_from_planes(&current_planes) {
+            Ok(point) => point,
+            Err(HypermeshError::UnknownClassification) => continue,
+            Err(err) => return Err(err),
+        };
+        let mut valid = true;
+
+        for plane_index in ordering {
+            current_planes[plane_index] = end_planes[plane_index].clone();
+            let next_point = match affine_from_planes(&current_planes) {
+                Ok(point) => point,
+                Err(HypermeshError::UnknownClassification) => {
+                    valid = false;
+                    break;
+                }
+                Err(err) => return Err(err),
+            };
+            if next_point != current_point
+                && !probe_reaches_adjacent_cell(
+                    &current_point,
+                    &next_point,
+                    host_support,
+                    polygons,
+                )?
+            {
+                valid = false;
+                break;
+            }
+            current_point = next_point;
+        }
+
+        if valid {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
 }
 
 fn planes_are_coplanar(left: &Plane, right: &Plane) -> HypermeshResult<bool> {
@@ -3064,6 +3145,46 @@ mod tests {
             trace_probe_winding(&ref_point, &ref_definitions, &probe, &[0], &[wall]).unwrap();
 
         assert_eq!(winding, Some(vec![0]));
+    }
+
+    #[test]
+    fn probe_reachability_retries_plane_replacement_from_retained_definitions() {
+        let host_support = Plane::axis_aligned(2, r(0));
+        let blocker = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+        let interior = InteriorLeafPoint {
+            point: p(0, 0, 0),
+            planes: vec![[
+                Plane::axis_aligned(0, r(0)),
+                Plane::axis_aligned(1, r(0)),
+                Plane::from_coefficients(r(1), r(1), r(1), r(0)),
+            ]],
+        };
+        let probe = ProbePoint {
+            point: p(2, 1, 1),
+            side: Classification::Positive,
+            planes: vec![[
+                Plane::axis_aligned(0, r(2)),
+                Plane::axis_aligned(1, r(1)),
+                Plane::from_coefficients(r(1), r(1), r(1), r(-4)),
+            ]],
+        };
+
+        assert!(
+            !probe_reaches_adjacent_cell(
+                &interior.point,
+                &probe.point,
+                &host_support,
+                std::slice::from_ref(&blocker),
+            )
+            .unwrap()
+        );
+        assert!(probe_reaches_adjacent_cell_from_interior(
+            &interior,
+            &probe,
+            &host_support,
+            &[blocker],
+        )
+        .unwrap());
     }
 
     #[test]
