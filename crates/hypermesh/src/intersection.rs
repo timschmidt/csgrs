@@ -1,12 +1,13 @@
 //! Pairwise convex polygon intersection primitives.
 
-use hyperlattice::{Point3, Real};
+use hyperlattice::Point3;
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
     Classification, Plane, classify_point, classify_real, cross_arrays, dot_point, sub_points,
 };
 use crate::polygon::ConvexPolygon;
+use crate::segment_trace::certified_leaf_test_points;
 
 /// Intersection segment between two polygons.
 #[derive(Clone, Debug, PartialEq)]
@@ -142,14 +143,10 @@ fn polygons_share_area(polygon: &ConvexPolygon, other: &ConvexPolygon) -> Hyperm
     let polygon_vertices = polygon.vertices()?;
     let other_vertices = other.vertices()?;
 
-    if let Some(point) = centroid(&polygon_vertices)?
-        && affine_point_in_polygon(&point, other)?
-    {
+    if polygon_has_certified_interior_witness_in_other(polygon, other)? {
         return Ok(true);
     }
-    if let Some(point) = centroid(&other_vertices)?
-        && affine_point_in_polygon(&point, polygon)?
-    {
+    if polygon_has_certified_interior_witness_in_other(other, polygon)? {
         return Ok(true);
     }
 
@@ -178,6 +175,18 @@ fn polygons_share_area(polygon: &ConvexPolygon, other: &ConvexPolygon) -> Hyperm
         }
     }
 
+    Ok(false)
+}
+
+fn polygon_has_certified_interior_witness_in_other(
+    polygon: &ConvexPolygon,
+    other: &ConvexPolygon,
+) -> HypermeshResult<bool> {
+    for point in certified_leaf_test_points(&polygon.support, &polygon.edges)? {
+        if other.contains_point(&point)? {
+            return Ok(true);
+        }
+    }
     Ok(false)
 }
 
@@ -258,24 +267,6 @@ fn segment_edges(vertices: &[Point3]) -> impl Iterator<Item = (&Point3, &Point3)
         .iter()
         .zip(vertices.iter().cycle().skip(1))
         .take(vertices.len())
-}
-
-fn centroid(vertices: &[Point3]) -> HypermeshResult<Option<Point3>> {
-    if vertices.is_empty() {
-        return Ok(None);
-    }
-    let mut sum = Point3::origin();
-    for vertex in vertices {
-        sum.x += vertex.x.clone();
-        sum.y += vertex.y.clone();
-        sum.z += vertex.z.clone();
-    }
-    let denom = Real::from(vertices.len() as u64);
-    Ok(Some(Point3::new(
-        (sum.x / denom.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
-        (sum.y / denom.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
-        (sum.z / denom).map_err(|_| HypermeshError::UnknownClassification)?,
-    )))
 }
 
 fn segments_properly_cross(

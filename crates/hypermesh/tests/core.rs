@@ -317,6 +317,20 @@ fn coplanar_crossing_quads_report_overlap_without_contained_vertices() {
 }
 
 #[test]
+fn coplanar_identical_quads_report_overlap_from_interior_witness() {
+    let left = make_quad(&p(-2, -1, 0), &p(2, -1, 0), &p(2, 1, 0), &p(-2, 1, 0), 0, 0);
+    let right = make_quad(&p(-2, -1, 0), &p(2, -1, 0), &p(2, 1, 0), &p(-2, 1, 0), 1, 0);
+
+    let intersection = intersect_polygons(&left, &right, 11).unwrap();
+
+    assert_eq!(
+        intersection.kind,
+        hypermesh::PairwiseIntersectionType::Overlap
+    );
+    assert_eq!(intersection.overlap.unwrap().other_polygon_idx, 11);
+}
+
+#[test]
 fn boolean_operation_validates_before_general_path() {
     assert!(matches!(
         boolean_operation(&[], BooleanOp::Union, EmberConfig::default()),

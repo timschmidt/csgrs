@@ -135,7 +135,9 @@ BSP/classification path. Enabled BSP leaves are rejected unless exact pairwise
 checks prove they have no remaining interior segment intersections with local
 polygons. Coplanar overlap and effective-delta checks now use the same
 certified strict leaf interior witness family instead of a centroid-only test
-point. Hypermesh reports `SubdivisionDepthLimit` if the configured depth
+point, and pairwise coplanar overlap detection now reuses that certified
+convex-polygon interior witness construction instead of a standalone centroid
+witness when no strict contained vertex exists. Hypermesh reports `SubdivisionDepthLimit` if the configured depth
 budget is reached before the current task can be certified as a leaf, and it
 reports `UnknownClassification` if leaf classification or this isolation check
 fails before appending output outside the depth-limit branch. Full
