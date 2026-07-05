@@ -28,6 +28,24 @@ struct CrossingEvent {
     on_edge: bool,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct PlaneDefinedPoint {
+    planes: [Plane; 3],
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct InteriorLeafPoint {
+    point: Point3,
+    planes: Option<[Plane; 3]>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct ProbePoint {
+    point: Point3,
+    side: Classification,
+    planes: Option<[Plane; 3]>,
+}
+
 /// Traces an axis-aligned segment, accumulating polygon winding transitions.
 pub fn trace_axis_segment(
     start: &Point3,
@@ -164,6 +182,72 @@ pub fn trace_segment(
     }
 
     Err(HypermeshError::UnknownClassification)
+}
+
+fn trace_plane_replacement_path(
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<WindingNumberVector> {
+    for ordering in AXIS_ORDERINGS {
+        let mut current_planes = start_planes.clone();
+        let mut current_point = match affine_from_planes(&current_planes) {
+            Ok(point) => point,
+            Err(HypermeshError::UnknownClassification) => continue,
+            Err(err) => return Err(err),
+        };
+        let mut attempt = winding.to_vec();
+        let mut valid = true;
+
+        for plane_index in ordering {
+            current_planes[plane_index] = end_planes[plane_index].clone();
+            let next_point = match affine_from_planes(&current_planes) {
+                Ok(point) => point,
+                Err(HypermeshError::UnknownClassification) => {
+                    valid = false;
+                    break;
+                }
+                Err(err) => return Err(err),
+            };
+            if next_point != current_point {
+                let Some(next_winding) = retryable_trace(trace_segment(
+                    &current_point,
+                    &next_point,
+                    &attempt,
+                    polygons,
+                ))?
+                else {
+                    valid = false;
+                    break;
+                };
+                attempt = next_winding;
+                current_point = next_point;
+            }
+        }
+
+        if valid {
+            return Ok(attempt);
+        }
+    }
+
+    Err(HypermeshError::UnknownClassification)
+}
+
+fn affine_from_planes(planes: &[Plane; 3]) -> HypermeshResult<Point3> {
+    intersect_three_planes(&planes[0], &planes[1], &planes[2])
+        .to_affine_point()
+        .map_err(|_| HypermeshError::UnknownClassification)
+}
+
+fn axis_plane_defined_point(point: &Point3) -> PlaneDefinedPoint {
+    PlaneDefinedPoint {
+        planes: [
+            Plane::axis_aligned(0, point.x.clone()),
+            Plane::axis_aligned(1, point.y.clone()),
+            Plane::axis_aligned(2, point.z.clone()),
+        ],
+    }
 }
 
 fn retryable_trace<T>(result: HypermeshResult<T>) -> HypermeshResult<Option<T>> {
@@ -525,23 +609,34 @@ pub fn classify_leaf_polygon(
     };
 
     let interior_points = interior_leaf_points(&leaf)?;
+    let ref_definition = axis_plane_defined_point(ref_point);
     for point in &interior_points {
         for positive_side in [true, false] {
-            for (probe, probe_side) in
+            for probe in
                 bounded_probes_from_interior(point, support, bounds, positive_side, polygons)?
             {
-                if point_lies_on_traced_surface(&probe, polygons)? {
+                if point_lies_on_traced_surface(&probe.point, polygons)? {
                     continue;
                 }
-                if !probe_reaches_adjacent_cell(point, &probe, support, polygons)? {
+                if !probe_reaches_adjacent_cell(&point.point, &probe.point, support, polygons)? {
                     continue;
                 }
-                let Some(mut winding) =
-                    retryable_trace(trace_segment(ref_point, &probe, ref_wnv, polygons))?
-                else {
+                let mut winding =
+                    retryable_trace(trace_segment(ref_point, &probe.point, ref_wnv, polygons))?;
+                if winding.is_none()
+                    && let Some(probe_planes) = &probe.planes
+                {
+                    winding = retryable_trace(trace_plane_replacement_path(
+                        &ref_definition.planes,
+                        probe_planes,
+                        ref_wnv,
+                        polygons,
+                    ))?;
+                };
+                let Some(mut winding) = winding else {
                     continue;
                 };
-                if probe_side == Classification::Negative {
+                if probe.side == Classification::Negative {
                     apply_winding_transition_in_place(&mut winding, -1, host_delta_w)?;
                 }
                 return Ok(winding);
@@ -732,7 +827,7 @@ fn centroid(points: &[Point3]) -> HypermeshResult<Option<Point3>> {
     )))
 }
 
-fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<Point3>> {
+fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<InteriorLeafPoint>> {
     let vertices = leaf.vertices()?;
     let Some(center) = centroid(&vertices)? else {
         return Ok(Vec::new());
@@ -740,9 +835,12 @@ fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<Point3>> {
 
     let mut points = Vec::with_capacity(vertices.len() + 1);
     if point_strictly_inside_leaf(&center, leaf)? {
-        points.push(center.clone());
+        points.push(InteriorLeafPoint {
+            point: center.clone(),
+            planes: None,
+        });
         for candidate in shifted_edge_interior_points(leaf, &center)? {
-            push_unique_point(&mut points, candidate);
+            push_unique_interior_point(&mut points, candidate);
         }
     }
 
@@ -752,7 +850,7 @@ fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<Point3>> {
 fn shifted_edge_interior_points(
     leaf: &ConvexPolygon,
     strict_interior: &Point3,
-) -> HypermeshResult<Vec<Point3>> {
+) -> HypermeshResult<Vec<InteriorLeafPoint>> {
     let mut points = Vec::with_capacity(leaf.vertex_count());
     let half = (Real::one() / Real::from(2)).map_err(|_| HypermeshError::UnknownClassification)?;
 
@@ -775,7 +873,13 @@ fn shifted_edge_interior_points(
             .map_err(|_| HypermeshError::UnknownClassification)?;
 
         if point_strictly_inside_leaf(&candidate, leaf)? {
-            push_unique_point(&mut points, candidate);
+            push_unique_interior_point(
+                &mut points,
+                InteriorLeafPoint {
+                    point: candidate,
+                    planes: Some([leaf.support.clone(), first_shifted, second_shifted]),
+                },
+            );
         }
     }
 
@@ -791,8 +895,8 @@ fn inward_shifted_edge_plane(
     Plane::new(edge.normal.clone(), &edge.offset - &inward_offset)
 }
 
-fn push_unique_point(points: &mut Vec<Point3>, point: Point3) {
-    if !points.iter().any(|existing| existing == &point) {
+fn push_unique_interior_point(points: &mut Vec<InteriorLeafPoint>, point: InteriorLeafPoint) {
+    if !points.iter().any(|existing| existing.point == point.point) {
         points.push(point);
     }
 }
@@ -808,19 +912,25 @@ fn point_strictly_inside_leaf(point: &Point3, leaf: &ConvexPolygon) -> Hypermesh
 }
 
 fn bounded_probes_from_interior(
-    interior: &Point3,
+    interior: &InteriorLeafPoint,
     support: &Plane,
     bounds: &Aabb,
     positive_side: bool,
     polygons: &[ConvexPolygon],
-) -> HypermeshResult<Vec<(Point3, Classification)>> {
+) -> HypermeshResult<Vec<ProbePoint>> {
     let mut probes = Vec::new();
 
-    if let Some(probe) = adjacent_normal_probe(interior, support, bounds, polygons, positive_side)?
+    if let Some(probe) =
+        adjacent_normal_probe(&interior.point, support, bounds, polygons, positive_side)?
     {
         let side = classify_point(&probe, support)?;
         if side != Classification::On {
-            probes.push((probe, side));
+            let planes = normal_probe_planes(interior, support, &probe)?;
+            probes.push(ProbePoint {
+                point: probe,
+                side,
+                planes,
+            });
         }
     }
 
@@ -831,7 +941,7 @@ fn bounded_probes_from_interior(
         }
 
         let direction_positive = (normal_sign == Classification::Positive) == positive_side;
-        let axis_value = axis_ref(interior, axis);
+        let axis_value = axis_ref(&interior.point, axis);
         let room = if direction_positive {
             axis_ref(&bounds.max, axis) - axis_value
         } else {
@@ -842,7 +952,7 @@ fn bounded_probes_from_interior(
         }
 
         let Some(probe) =
-            adjacent_axis_probe(interior, bounds, polygons, axis, direction_positive)?
+            adjacent_axis_probe(&interior.point, bounds, polygons, axis, direction_positive)?
         else {
             continue;
         };
@@ -851,13 +961,45 @@ fn bounded_probes_from_interior(
         if side != Classification::On
             && !probes
                 .iter()
-                .any(|(existing, _): &(Point3, Classification)| existing == &probe)
+                .any(|existing: &ProbePoint| existing.point == probe)
         {
-            probes.push((probe, side));
+            probes.push(ProbePoint {
+                point: probe,
+                side,
+                planes: None,
+            });
         }
     }
 
     Ok(probes)
+}
+
+fn normal_probe_planes(
+    interior: &InteriorLeafPoint,
+    support: &Plane,
+    probe: &Point3,
+) -> HypermeshResult<Option<[Plane; 3]>> {
+    let Some(interior_planes) = &interior.planes else {
+        return Ok(None);
+    };
+
+    let shifted_support = Plane::new(
+        support.normal.clone(),
+        &support.offset - &support.expression_at_point(probe),
+    );
+    let planes = [
+        shifted_support,
+        interior_planes[1].clone(),
+        interior_planes[2].clone(),
+    ];
+    let reproduced = intersect_three_planes(&planes[0], &planes[1], &planes[2])
+        .to_affine_point()
+        .map_err(|_| HypermeshError::UnknownClassification)?;
+    if reproduced == *probe {
+        Ok(Some(planes))
+    } else {
+        Ok(None)
+    }
 }
 
 fn adjacent_normal_probe(
@@ -1157,10 +1299,10 @@ mod tests {
 
         assert_eq!(points.len(), 3);
         for point in &points {
-            assert!(point_strictly_inside_leaf(point, &leaf).unwrap());
+            assert!(point_strictly_inside_leaf(&point.point, &leaf).unwrap());
         }
 
-        let first = &points[0];
+        let first = &points[0].point;
         let expected_first_edge_margin =
             (leaf.edges[0].expression_at_point(&center) / Real::from(2)).unwrap();
         let expected_second_edge_margin =
@@ -1180,16 +1322,23 @@ mod tests {
     fn bounded_probes_include_certified_normal_direction_probe() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let vertices = leaf.vertices().unwrap();
+        let center = centroid(&vertices).unwrap().unwrap();
+        let interior = shifted_edge_interior_points(&leaf, &center)
+            .unwrap()
+            .into_iter()
+            .find(|point| point.planes.is_some())
+            .expect("shifted edge construction should retain defining planes");
 
         let probes =
-            bounded_probes_from_interior(&p(1, 1, 1), &leaf.support, &bounds, true, &[]).unwrap();
+            bounded_probes_from_interior(&interior, &leaf.support, &bounds, true, &[]).unwrap();
 
-        assert!(probes.iter().any(|(probe, side)| {
-            *side == Classification::Positive
-                && probe.x == q(5, 2)
-                && probe.y == q(5, 2)
-                && probe.z == q(5, 2)
-        }));
+        let probe = probes
+            .iter()
+            .find(|probe| probe.side == Classification::Positive && probe.planes.is_some())
+            .expect("normal probe should preserve a shifted plane definition");
+        let planes = probe.planes.as_ref().unwrap();
+        assert_eq!(affine_from_planes(planes).unwrap(), probe.point);
     }
 
     #[test]
@@ -1221,6 +1370,19 @@ mod tests {
             &leaf.delta_w,
         )
         .unwrap();
+
+        assert_eq!(winding, vec![-1]);
+    }
+
+    #[test]
+    fn plane_replacement_path_traces_certified_winding_steps() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let start = axis_plane_defined_point(&p(0, 0, 0));
+        let end = axis_plane_defined_point(&p(2, 0, 0));
+
+        let winding =
+            trace_plane_replacement_path(&start.planes, &end.planes, &[0], &[wall]).unwrap();
 
         assert_eq!(winding, vec![-1]);
     }

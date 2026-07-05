@@ -12,8 +12,7 @@ use crate::segment_trace::classify_leaf_polygon;
 use crate::winding::{Indicator, WindingPair, classify_polygon_output, propagate_wnv};
 use hyperlattice::{HomogeneousPoint3, Point3, Real};
 use hyperlimit::{
-    HalfspaceFeasibility, Plane3 as LimitPlane3, PredicateOutcome, PredicatePolicy,
-    classify_halfspace_feasibility3_with_policy,
+    HalfspaceFeasibility, Plane3 as LimitPlane3, PredicateOutcome, classify_halfspace_feasibility3,
 };
 
 /// Default leaf threshold for subdivision.
@@ -857,7 +856,7 @@ fn halfspace_system_witness(halfspaces: &[LimitPlane3]) -> HypermeshResult<Optio
 fn halfspace_system_report(
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Option<hyperlimit::HalfspaceFeasibilityReport>> {
-    match classify_halfspace_feasibility3_with_policy(halfspaces, PredicatePolicy::STRICT) {
+    match classify_halfspace_feasibility3(halfspaces) {
         PredicateOutcome::Decided { value, .. } => Ok(Some(value)),
         PredicateOutcome::Unknown { .. } => {
             Err(crate::error::HypermeshError::UnknownClassification)
