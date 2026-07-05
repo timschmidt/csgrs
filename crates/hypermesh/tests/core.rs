@@ -744,6 +744,33 @@ fn subdivision_processes_certified_leaf_at_max_depth() {
 }
 
 #[test]
+fn subdivision_accepts_certified_leaf_before_threshold_split() {
+    let mesh = cube_mesh(0, 2);
+    let soup = prepare_input(&[mesh.as_ref()]).unwrap();
+    let indicator = make_indicator(BooleanOp::Union, soup.num_meshes);
+    let num_meshes = soup.num_meshes;
+    let config = SubdivisionConfig {
+        leaf_threshold: 0,
+        max_depth: 1,
+    };
+
+    let output = subdivide(
+        SubdivisionTask::new(
+            soup.polygons,
+            hypermesh::Aabb::new(p(-1, -1, -1), p(3, 3, 3)),
+            p(-1, -1, -1),
+            vec![0; num_meshes],
+        ),
+        &indicator,
+        config,
+    )
+    .unwrap();
+
+    assert_eq!(output.len(), 12);
+    assert!(output.iter().all(|polygon| polygon.winding().is_some()));
+}
+
+#[test]
 fn subdivision_escapes_projected_reference_on_surface() {
     let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     left.delta_w = vec![1];

@@ -308,34 +308,16 @@ fn subdivide_into_inner(
         return Ok(());
     }
 
-    if task.depth >= config.max_depth {
-        let mut certified_output = Vec::new();
-        let stats = match process_leaf_into(
-            &task.polygons,
-            &task.bounds,
-            &task.ref_point,
-            &task.ref_definitions,
-            &task.ref_wnv,
-            indicator,
-            &mut certified_output,
-        ) {
-            Ok(stats) => stats,
-            Err(crate::error::HypermeshError::UnknownClassification) => {
-                return Err(crate::error::HypermeshError::SubdivisionDepthLimit {
-                    depth: task.depth,
-                    polygon_count: task.polygons.len(),
-                });
-            }
-            Err(err) => return Err(err),
-        };
-        if !stats.certified_complete {
-            return Err(crate::error::HypermeshError::SubdivisionDepthLimit {
-                depth: task.depth,
-                polygon_count: task.polygons.len(),
-            });
-        }
+    if let Some(certified_output) = certified_leaf_output_if_complete(&task, indicator)? {
         output.extend(certified_output);
         return Ok(());
+    }
+
+    if task.depth >= config.max_depth {
+        return Err(crate::error::HypermeshError::SubdivisionDepthLimit {
+            depth: task.depth,
+            polygon_count: task.polygons.len(),
+        });
     }
 
     let (split_axis, split_value) = select_subdivision_split(&task.bounds, &task.polygons)?;
@@ -406,6 +388,31 @@ fn subdivide_into_inner(
     }
 
     Ok(())
+}
+
+fn certified_leaf_output_if_complete(
+    task: &SubdivisionTask,
+    indicator: &Indicator,
+) -> HypermeshResult<Option<Vec<ClassifiedPolygon>>> {
+    let mut certified_output = Vec::new();
+    let stats = match process_leaf_into(
+        &task.polygons,
+        &task.bounds,
+        &task.ref_point,
+        &task.ref_definitions,
+        &task.ref_wnv,
+        indicator,
+        &mut certified_output,
+    ) {
+        Ok(stats) => stats,
+        Err(crate::error::HypermeshError::UnknownClassification) => return Ok(None),
+        Err(err) => return Err(err),
+    };
+    if stats.certified_complete {
+        Ok(Some(certified_output))
+    } else {
+        Ok(None)
+    }
 }
 
 fn can_discard_by_winding_reachability(

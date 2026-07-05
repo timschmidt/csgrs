@@ -149,10 +149,14 @@ polygons. Coplanar overlap and effective-delta checks now use the same
 certified strict leaf interior witness family instead of a centroid-only test
 point, and pairwise coplanar overlap detection now reuses that certified
 convex-polygon interior witness construction instead of a standalone centroid
-witness when no strict contained vertex exists. Hypermesh reports `SubdivisionDepthLimit` if the configured depth
-budget is reached before the current task can be certified as a leaf, and it
-reports `UnknownClassification` if leaf classification or this isolation check
-fails before appending output outside the depth-limit branch. Full
+witness when no strict contained vertex exists. Splittable tasks now also try
+that same certified leaf path before subdivision once they are above the leaf
+threshold, so exact local arrangement isolation can terminate a branch without
+waiting for the depth budget to expire. Hypermesh reports
+`SubdivisionDepthLimit` if the configured depth budget is reached before the
+current task can be certified as a leaf, and it reports
+`UnknownClassification` if leaf classification or this isolation check fails
+before appending output outside the depth-limit branch. Full
 arrangement-isolation termination is still an implementation target.
 
 `triangulate_and_resolve_certified` resolves exact duplicate vertices,
