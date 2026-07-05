@@ -1491,40 +1491,43 @@ fn strict_support_cell_targets(
         );
     }
 
-    let Some(seed) = strict_support_cell_seed_from_report(bounds, halfspaces, report)? else {
-        return Ok(targets);
-    };
-    if let Some(target) = shifted_support_cell_target_from_seed(bounds, halfspaces, &seed)? {
-        push_unique_reference_target(&mut targets, target);
+    for seed in strict_support_cell_seeds_from_report(bounds, halfspaces, report)? {
+        if let Some(target) = shifted_support_cell_target_from_seed(bounds, halfspaces, &seed)? {
+            push_unique_reference_target(&mut targets, target);
+        }
     }
 
     Ok(targets)
 }
 
-fn strict_support_cell_seed_from_report(
+fn strict_support_cell_seeds_from_report(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     report: &hyperlimit::HalfspaceFeasibilityReport,
-) -> HypermeshResult<Option<Point3>> {
+) -> HypermeshResult<Vec<Point3>> {
+    let mut seeds = Vec::new();
+
     if report.status == HalfspaceFeasibility::Feasible
         && let Some(witness) = &report.witness
         && point_strictly_inside_support_cell(witness, bounds, halfspaces)?
     {
-        return Ok(Some(witness.clone()));
+        seeds.push(witness.clone());
     }
 
     let vertices = feasible_support_cell_vertices(halfspaces)?;
     if vertices.is_empty() {
-        return Ok(None);
+        return Ok(seeds);
     }
     let Some(seed) = centroid_point(&vertices)? else {
-        return Ok(None);
+        return Ok(seeds);
     };
     if point_strictly_inside_support_cell(&seed, bounds, halfspaces)? {
-        Ok(Some(seed))
-    } else {
-        Ok(None)
+        if !seeds.iter().any(|existing| existing == &seed) {
+            seeds.push(seed);
+        }
     }
+
+    Ok(seeds)
 }
 
 fn shifted_support_cell_target_from_seed(
@@ -2230,6 +2233,30 @@ mod tests {
                 .iter()
                 .find(|target| target.point == direct)
                 .is_some_and(|target| !target.definitions.is_empty())
+        );
+    }
+
+    #[test]
+    fn support_cell_targets_try_shifted_targets_from_all_strict_seeds() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let direct = p(2, 1, 3);
+        let report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(direct.clone(), [None, None, None]);
+
+        let seeds = strict_support_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
+        assert_eq!(seeds.len(), 2);
+        assert!(seeds.iter().any(|seed| seed == &direct));
+        assert!(seeds.iter().any(|seed| seed == &p(2, 2, 2)));
+
+        let targets = strict_support_cell_targets(&bounds, &halfspaces, &report).unwrap();
+
+        assert!(targets.iter().any(|target| target.point == direct));
+        assert!(targets.iter().any(|target| target.point == p(1, 1, 1)));
+        assert!(
+            targets
+                .iter()
+                .any(|target| { target.point == Point3::new(r(1), q(1, 2), q(3, 2)) })
         );
     }
 
