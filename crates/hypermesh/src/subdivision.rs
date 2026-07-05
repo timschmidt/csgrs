@@ -12,7 +12,7 @@ use crate::segment_trace::{
     affine_from_planes, axis_plane_definition, classify_leaf_polygon, trace_plane_replacement_path,
 };
 use crate::winding::{
-    BooleanOp, Indicator, WindingPair, can_boolean_op_be_inside_with_fixed_components,
+    BooleanOp, Indicator, WindingPair, can_boolean_op_be_inside_with_component_ranges,
     classify_polygon_output, propagate_wnv,
 };
 use hyperlattice::{HomogeneousPoint3, Point3, Real};
@@ -412,22 +412,27 @@ fn can_discard_by_winding_reachability(
     ref_wnv: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
-    let mut variable_components = vec![false; ref_wnv.len()];
+    let mut lower = ref_wnv.to_vec();
+    let mut upper = ref_wnv.to_vec();
     for polygon in polygons {
         if polygon.delta_w.len() != ref_wnv.len() {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
-        for (variable, delta) in variable_components.iter_mut().zip(&polygon.delta_w) {
-            if *delta != 0 {
-                *variable = true;
-            }
+        for ((lower, upper), delta) in lower.iter_mut().zip(&mut upper).zip(&polygon.delta_w) {
+            let span = delta
+                .checked_abs()
+                .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+            *lower = lower
+                .checked_sub(span)
+                .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+            *upper = upper
+                .checked_add(span)
+                .ok_or(crate::error::HypermeshError::UnknownClassification)?;
         }
     }
 
-    Ok(!can_boolean_op_be_inside_with_fixed_components(
-        op,
-        ref_wnv,
-        &variable_components,
+    Ok(!can_boolean_op_be_inside_with_component_ranges(
+        op, &lower, &upper,
     )?)
 }
 
@@ -1613,6 +1618,29 @@ mod tests {
                 .definitions
                 .iter()
                 .any(definition_uses_non_axis_plane)
+        );
+    }
+
+    #[test]
+    fn winding_reachability_prunes_difference_when_other_mesh_cannot_reach_zero() {
+        let mut first = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        first.delta_w = vec![0, 1];
+        let mut second = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+        second.delta_w = vec![0, 1];
+
+        assert!(
+            can_discard_by_winding_reachability(BooleanOp::Difference, &[1, 3], &[first, second])
+                .unwrap()
+        );
+    }
+
+    #[test]
+    fn winding_reachability_keeps_difference_when_other_mesh_can_reach_zero() {
+        let mut first = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        first.delta_w = vec![0, 1];
+
+        assert!(
+            !can_discard_by_winding_reachability(BooleanOp::Difference, &[1, 1], &[first]).unwrap()
         );
     }
 

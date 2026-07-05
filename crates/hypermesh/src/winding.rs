@@ -48,29 +48,33 @@ pub fn make_indicator(op: BooleanOp, _num_meshes: usize) -> Box<Indicator> {
 }
 
 /// Returns true when `op` can classify some winding vector as inside while
-/// components marked `variable_components` may change arbitrarily and all
-/// others remain fixed at `reference`.
-pub(crate) fn can_boolean_op_be_inside_with_fixed_components(
+/// each component stays within the inclusive range `[lower, upper]`.
+pub(crate) fn can_boolean_op_be_inside_with_component_ranges(
     op: BooleanOp,
-    reference: &[i32],
-    variable_components: &[bool],
+    lower: &[i32],
+    upper: &[i32],
 ) -> HypermeshResult<bool> {
-    if reference.len() != variable_components.len() {
+    if lower.len() != upper.len() {
         return Err(HypermeshError::UnknownClassification);
     }
 
-    let can_be_nonzero = |index: usize| variable_components[index] || reference[index] != 0;
-    let can_be_zero = |index: usize| variable_components[index] || reference[index] == 0;
+    let can_be_nonzero = |index: usize| !(lower[index] == 0 && upper[index] == 0);
+    let can_be_zero = |index: usize| lower[index] <= 0 && upper[index] >= 0;
 
     Ok(match op {
-        BooleanOp::Union => (0..reference.len()).any(can_be_nonzero),
-        BooleanOp::Intersection => (0..reference.len()).all(can_be_nonzero),
+        BooleanOp::Union => (0..lower.len()).any(can_be_nonzero),
+        BooleanOp::Intersection => (0..lower.len()).all(can_be_nonzero),
         BooleanOp::Difference => {
-            !reference.is_empty() && can_be_nonzero(0) && (1..reference.len()).all(can_be_zero)
+            !lower.is_empty() && can_be_nonzero(0) && (1..lower.len()).all(can_be_zero)
         }
         BooleanOp::SymmetricDifference => {
-            variable_components.iter().any(|value| *value)
-                || reference.iter().filter(|value| **value != 0).count() % 2 == 1
+            let required_nonzero = (0..lower.len())
+                .filter(|index| !can_be_zero(*index))
+                .count();
+            let optional_nonzero = (0..lower.len())
+                .filter(|index| can_be_zero(*index) && can_be_nonzero(*index))
+                .count();
+            optional_nonzero > 0 || required_nonzero % 2 == 1
         }
     })
 }
@@ -129,54 +133,98 @@ mod tests {
     #[test]
     fn reachability_detects_fixed_difference_outside_region() {
         assert!(
-            !can_boolean_op_be_inside_with_fixed_components(
+            !can_boolean_op_be_inside_with_component_ranges(
                 BooleanOp::Difference,
                 &[0, 7],
-                &[false, true],
+                &[0, 10],
             )
             .unwrap()
         );
         assert!(
-            can_boolean_op_be_inside_with_fixed_components(
+            can_boolean_op_be_inside_with_component_ranges(
                 BooleanOp::Difference,
-                &[0, 7],
-                &[true, true],
+                &[-1, 0],
+                &[1, 10],
             )
             .unwrap()
         );
         assert!(
-            can_boolean_op_be_inside_with_fixed_components(
+            can_boolean_op_be_inside_with_component_ranges(
                 BooleanOp::Difference,
-                &[3, 7],
-                &[false, true],
+                &[3, 0],
+                &[6, 10],
             )
             .unwrap()
         );
     }
 
     #[test]
-    fn reachability_is_conservative_for_variable_components() {
+    fn reachability_is_conservative_for_component_ranges() {
         assert!(
-            can_boolean_op_be_inside_with_fixed_components(
-                BooleanOp::Union,
-                &[0, 0],
-                &[false, true],
-            )
-            .unwrap()
+            can_boolean_op_be_inside_with_component_ranges(BooleanOp::Union, &[0, 0], &[0, 4],)
+                .unwrap()
         );
         assert!(
-            can_boolean_op_be_inside_with_fixed_components(
+            can_boolean_op_be_inside_with_component_ranges(
                 BooleanOp::Intersection,
-                &[0, 1],
-                &[true, false],
+                &[-2, 1],
+                &[3, 4],
             )
             .unwrap()
         );
         assert!(
-            can_boolean_op_be_inside_with_fixed_components(
+            can_boolean_op_be_inside_with_component_ranges(
                 BooleanOp::SymmetricDifference,
                 &[2, -1],
-                &[false, true],
+                &[2, 1],
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn reachability_rejects_difference_when_zero_is_out_of_range() {
+        assert!(
+            !can_boolean_op_be_inside_with_component_ranges(
+                BooleanOp::Difference,
+                &[1, 2],
+                &[5, 4],
+            )
+            .unwrap()
+        );
+        assert!(
+            can_boolean_op_be_inside_with_component_ranges(
+                BooleanOp::Difference,
+                &[1, -1],
+                &[5, 4],
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn symmetric_difference_uses_required_parity_when_no_component_can_toggle_zero() {
+        assert!(
+            !can_boolean_op_be_inside_with_component_ranges(
+                BooleanOp::SymmetricDifference,
+                &[2, 3],
+                &[4, 5],
+            )
+            .unwrap()
+        );
+        assert!(
+            can_boolean_op_be_inside_with_component_ranges(
+                BooleanOp::SymmetricDifference,
+                &[2, 0],
+                &[4, 5],
+            )
+            .unwrap()
+        );
+        assert!(
+            can_boolean_op_be_inside_with_component_ranges(
+                BooleanOp::SymmetricDifference,
+                &[0, 0],
+                &[4, 0],
             )
             .unwrap()
         );
