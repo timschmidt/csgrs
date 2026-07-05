@@ -1287,18 +1287,16 @@ fn bounded_probes_from_interior(
             continue;
         }
 
-        let Some(probe) = adjacent_axis_probe(
+        for probe in adjacent_axis_probes(
             &interior.point,
             support,
             bounds,
             polygons,
             axis,
             direction_positive,
-        )?
-        else {
-            continue;
-        };
-        push_unique_probe_point(&mut probes, probe);
+        )? {
+            push_unique_probe_point(&mut probes, probe);
+        }
     }
 
     Ok(probes)
@@ -1472,22 +1470,20 @@ fn adjacent_normal_probes(
         if !normal_probe_definition_preserves_support_direction(definition, support)? {
             continue;
         }
-        let Some(probe) = strict_normal_probe_target(
+        for probe in strict_normal_probe_targets(
             interior,
             support,
             &corridor,
             Some(definition),
             &stop_point,
             positive_side,
-        )?
-        else {
-            continue;
-        };
-        push_unique_probe_point(&mut probes, probe);
+        )? {
+            push_unique_probe_point(&mut probes, probe);
+        }
     }
 
     if probes.is_empty() {
-        if let Some(probe) = strict_normal_probe_target(
+        for probe in strict_normal_probe_targets(
             interior,
             support,
             &corridor,
@@ -1533,14 +1529,14 @@ fn normal_probe_definition_preserves_support_direction(
     )
 }
 
-fn strict_normal_probe_target(
+fn strict_normal_probe_targets(
     interior: &InteriorLeafPoint,
     support: &Plane,
     corridor: &Aabb,
     definition: Option<&[Plane; 3]>,
     stop_point: &Point3,
     positive_side: bool,
-) -> HypermeshResult<Option<ProbePoint>> {
+) -> HypermeshResult<Vec<ProbePoint>> {
     let mut halfspaces = aabb_core_halfspaces(corridor)?;
     if let Some(definition) = definition {
         push_plane_equality_halfspaces(&mut halfspaces, &definition[1]);
@@ -1549,34 +1545,9 @@ fn strict_normal_probe_target(
     halfspaces.push(support_side_halfspace(support, positive_side));
     halfspaces.push(normal_stop_halfspace(support, stop_point, positive_side));
 
-    let Some(seed) = strict_halfspace_cell_seed(corridor, &halfspaces)? else {
-        return Ok(None);
-    };
-    let shifted = shifted_halfspace_cell(corridor, &halfspaces, &seed)?;
-    let report = match classify_halfspace_feasibility3(&shifted) {
-        PredicateOutcome::Decided { value, .. } => value,
-        PredicateOutcome::Unknown { .. } => return Err(HypermeshError::UnknownClassification),
-    };
-    if report.status != HalfspaceFeasibility::Feasible {
-        return Ok(None);
-    }
-    let Some(witness) = report.witness else {
-        return Ok(None);
-    };
-    if !point_strictly_inside_halfspace_cell(&witness, corridor, &halfspaces)? {
-        return Ok(None);
-    }
-
-    let side = classify_point(&witness, support)?;
-    if side == Classification::On {
-        return Ok(None);
-    }
-
-    let shifted_support = Plane::new(
-        support.normal.clone(),
-        &support.offset - &support.expression_at_point(&witness),
-    );
-    let mut extra_planes = vec![shifted_support];
+    let report = halfspace_feasibility_report(&halfspaces)?;
+    let mut probes = Vec::new();
+    let mut extra_planes = Vec::new();
     for definition in &interior.planes {
         for plane in &definition[1..] {
             if !extra_planes.iter().any(|existing| existing == plane) {
@@ -1584,18 +1555,38 @@ fn strict_normal_probe_target(
             }
         }
     }
-    let planes = probe_definitions_from_active_halfspaces(
-        &witness,
-        &shifted,
-        report.active_planes,
-        &extra_planes,
-    )?;
 
-    Ok(Some(ProbePoint {
-        point: witness,
-        side,
-        planes,
-    }))
+    for witness in strict_halfspace_cell_seeds_from_report(corridor, &halfspaces, &report)? {
+        if let Some(probe) = build_probe_point(
+            &witness,
+            support,
+            &halfspaces,
+            report.active_planes,
+            &extra_planes,
+        )? {
+            push_unique_probe_point(&mut probes, probe);
+        }
+
+        let shifted = shifted_halfspace_cell(corridor, &halfspaces, &witness)?;
+        let shifted_report = halfspace_feasibility_report(&shifted)?;
+        if shifted_report.status != HalfspaceFeasibility::Feasible {
+            continue;
+        }
+        let Some(shifted_witness) = shifted_report.witness else {
+            continue;
+        };
+        if let Some(probe) = build_probe_point(
+            &shifted_witness,
+            support,
+            &shifted,
+            shifted_report.active_planes,
+            &extra_planes,
+        )? {
+            push_unique_probe_point(&mut probes, probe);
+        }
+    }
+
+    Ok(probes)
 }
 
 fn bounds_between_points(start: &Point3, end: &Point3) -> HypermeshResult<Aabb> {
@@ -1688,14 +1679,14 @@ fn offset_point(point: &Point3, direction: &Point3, amount: &Real) -> Point3 {
     )
 }
 
-fn adjacent_axis_probe(
+fn adjacent_axis_probes(
     interior: &Point3,
     support: &Plane,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
     axis: usize,
     direction_positive: bool,
-) -> HypermeshResult<Option<ProbePoint>> {
+) -> HypermeshResult<Vec<ProbePoint>> {
     let start_value = axis_ref(interior, axis);
     let bound_value = if direction_positive {
         axis_ref(&bounds.max, axis)
@@ -1703,7 +1694,7 @@ fn adjacent_axis_probe(
         axis_ref(&bounds.min, axis)
     };
     if !axis_value_after_start(start_value, bound_value, direction_positive)? {
-        return Ok(None);
+        return Ok(Vec::new());
     }
 
     let mut endpoint = interior.clone();
@@ -1734,11 +1725,11 @@ fn adjacent_axis_probe(
     }
 
     if !axis_value_after_start(start_value, &stop_value, direction_positive)? {
-        return Ok(None);
+        return Ok(Vec::new());
     }
 
     let corridor = axis_probe_bounds(interior, axis, &stop_value)?;
-    strict_axis_probe_target(interior, support, &corridor, axis, direction_positive)
+    strict_axis_probe_targets(interior, support, &corridor, axis, direction_positive)
 }
 
 fn axis_probe_bounds(interior: &Point3, axis: usize, stop_value: &Real) -> HypermeshResult<Aabb> {
@@ -1753,49 +1744,118 @@ fn axis_probe_bounds(interior: &Point3, axis: usize, stop_value: &Real) -> Hyper
     Ok(Aabb::new(min, max))
 }
 
-fn strict_axis_probe_target(
+fn strict_axis_probe_targets(
     interior: &Point3,
     support: &Plane,
     corridor: &Aabb,
     axis: usize,
     positive_side: bool,
-) -> HypermeshResult<Option<ProbePoint>> {
+) -> HypermeshResult<Vec<ProbePoint>> {
     let mut halfspaces = aabb_core_halfspaces(corridor)?;
     halfspaces.push(support_side_halfspace(support, positive_side));
-    let Some(seed) = strict_halfspace_cell_seed(corridor, &halfspaces)? else {
-        return Ok(None);
-    };
-    let shifted = shifted_halfspace_cell(corridor, &halfspaces, &seed)?;
-    let report = match classify_halfspace_feasibility3(&shifted) {
-        PredicateOutcome::Decided { value, .. } => value,
-        PredicateOutcome::Unknown { .. } => return Err(HypermeshError::UnknownClassification),
-    };
-    if report.status != HalfspaceFeasibility::Feasible {
+    let report = halfspace_feasibility_report(&halfspaces)?;
+    let mut probes = Vec::new();
+
+    for witness in strict_halfspace_cell_seeds_from_report(corridor, &halfspaces, &report)? {
+        if let Some(probe) = build_axis_probe_point(
+            &witness,
+            interior,
+            support,
+            axis,
+            &halfspaces,
+            report.active_planes,
+        )? {
+            push_unique_probe_point(&mut probes, probe);
+        }
+
+        let shifted = shifted_halfspace_cell(corridor, &halfspaces, &witness)?;
+        let shifted_report = halfspace_feasibility_report(&shifted)?;
+        if shifted_report.status != HalfspaceFeasibility::Feasible {
+            continue;
+        }
+        let Some(shifted_witness) = shifted_report.witness else {
+            continue;
+        };
+        if let Some(probe) = build_axis_probe_point(
+            &shifted_witness,
+            interior,
+            support,
+            axis,
+            &shifted,
+            shifted_report.active_planes,
+        )? {
+            push_unique_probe_point(&mut probes, probe);
+        }
+    }
+
+    Ok(probes)
+}
+
+fn build_probe_point(
+    witness: &Point3,
+    support: &Plane,
+    halfspaces: &[LimitPlane3],
+    active_planes: [Option<usize>; 3],
+    extra_planes: &[Plane],
+) -> HypermeshResult<Option<ProbePoint>> {
+    if !point_satisfies_halfspaces(witness, halfspaces)? {
         return Ok(None);
     }
-    let Some(witness) = report.witness else {
-        return Ok(None);
-    };
-    if !point_strictly_inside_halfspace_cell(&witness, corridor, &halfspaces)? {
+    let side = classify_point(witness, support)?;
+    if side == Classification::On {
         return Ok(None);
     }
 
-    let side = classify_point(&witness, support)?;
+    let shifted_support = Plane::new(
+        support.normal.clone(),
+        &support.offset - &support.expression_at_point(witness),
+    );
+    let mut all_extra_planes = vec![shifted_support];
+    for plane in extra_planes {
+        if !all_extra_planes.iter().any(|existing| existing == plane) {
+            all_extra_planes.push(plane.clone());
+        }
+    }
+
+    Ok(Some(ProbePoint {
+        point: witness.clone(),
+        side,
+        planes: probe_definitions_from_active_halfspaces(
+            witness,
+            halfspaces,
+            active_planes,
+            &all_extra_planes,
+        )?,
+    }))
+}
+
+fn build_axis_probe_point(
+    witness: &Point3,
+    interior: &Point3,
+    support: &Plane,
+    axis: usize,
+    halfspaces: &[LimitPlane3],
+    active_planes: [Option<usize>; 3],
+) -> HypermeshResult<Option<ProbePoint>> {
+    if !point_satisfies_halfspaces(witness, halfspaces)? {
+        return Ok(None);
+    }
+    let side = classify_point(witness, support)?;
     if side == Classification::On {
         return Ok(None);
     }
 
     Ok(Some(ProbePoint {
+        point: witness.clone(),
+        side,
         planes: axis_probe_definitions(
             interior,
             support,
             axis,
-            &shifted,
-            report.active_planes,
-            &witness,
+            halfspaces,
+            active_planes,
+            witness,
         )?,
-        point: witness,
-        side,
     }))
 }
 
@@ -1899,18 +1959,6 @@ fn normal_stop_halfspace(plane: &Plane, stop_point: &Point3, positive_side: bool
     } else {
         negated_halfspace(&halfspace)
     }
-}
-
-fn strict_halfspace_cell_seed(
-    bounds: &Aabb,
-    halfspaces: &[LimitPlane3],
-) -> HypermeshResult<Option<Point3>> {
-    let report = halfspace_feasibility_report(halfspaces)?;
-    Ok(
-        strict_halfspace_cell_seeds_from_report(bounds, halfspaces, &report)?
-            .into_iter()
-            .next(),
-    )
 }
 
 fn strict_halfspace_cell_seeds_from_report(
@@ -2287,8 +2335,10 @@ mod tests {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
-        let probe = adjacent_axis_probe(&p(1, 1, 1), &leaf.support, &bounds, &[], 0, true)
+        let probe = adjacent_axis_probes(&p(1, 1, 1), &leaf.support, &bounds, &[], 0, true)
             .unwrap()
+            .into_iter()
+            .find(|probe| probe.side == Classification::Positive)
             .expect("axis corridor should contain a certified probe witness");
 
         assert_eq!(probe.side, Classification::Positive);

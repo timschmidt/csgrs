@@ -66,9 +66,11 @@ centroid-style construction, and those retained definitions now include every
 exact witness-active leaf halfspace we can verify rather than only the
 feasibility basis planes. Normal- and axis-direction probe witnesses now do
 the same for their strict witness cells instead of keeping only a hand-built
-definition family. Axis-direction probes are now constructed from
-strict witness search in the closed axis corridor and desired support-side
-cell, rather than by midpoint sampling. Full
+definition family, and they now reuse any strict closed-cell feasibility
+witness that `hyperlimit` already provides before falling back to additional
+shifted-cell witnesses. Axis-direction probes are now constructed from strict
+witness search in the closed axis corridor and desired support-side cell,
+rather than by midpoint sampling. Full
 plane-replacement coverage for every reference/probe construction remains
 unfinished, though probe fallback now also retries from the reference point's
 exact axis-plane definition even when other retained start definitions exist,
