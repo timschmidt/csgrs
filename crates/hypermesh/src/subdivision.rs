@@ -1491,7 +1491,25 @@ fn strict_support_cell_targets(
         );
     }
 
+    let report_witness = report.witness.clone();
+    let mut deferred_direct_targets = Vec::new();
     for seed in strict_support_cell_seeds_from_report(bounds, halfspaces, report)? {
+        if !report_witness
+            .as_ref()
+            .is_some_and(|witness| witness == &seed)
+        {
+            push_unique_reference_target(
+                &mut deferred_direct_targets,
+                ReferenceTarget::with_definitions(
+                    seed.clone(),
+                    reference_definitions_from_active_halfspaces(
+                        &seed,
+                        halfspaces,
+                        [None, None, None],
+                    )?,
+                ),
+            );
+        }
         for target in shifted_support_cell_targets_from_seed(bounds, halfspaces, &seed)? {
             push_unique_reference_target(&mut targets, target);
         }
@@ -1500,6 +1518,9 @@ fn strict_support_cell_targets(
         for target in shifted_support_cell_targets_from_seed(bounds, halfspaces, &vertex)? {
             push_unique_reference_target(&mut targets, target);
         }
+    }
+    for target in deferred_direct_targets {
+        push_unique_reference_target(&mut targets, target);
     }
 
     Ok(targets)
@@ -2280,6 +2301,15 @@ mod tests {
         let targets = strict_support_cell_targets(&bounds, &halfspaces, &report).unwrap();
 
         assert!(targets.iter().any(|target| target.point == direct));
+        assert!(targets.iter().any(|target| target.point == p(2, 2, 2)));
+        assert!(
+            targets
+                .iter()
+                .find(|target| target.point == p(2, 2, 2))
+                .is_some_and(|target| target
+                    .definitions
+                    .contains(&axis_plane_definition(&p(2, 2, 2))))
+        );
         assert!(targets.iter().any(|target| target.point == p(1, 1, 1)));
         assert!(
             targets
