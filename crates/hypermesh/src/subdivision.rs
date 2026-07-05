@@ -12,8 +12,9 @@ use crate::segment_trace::{
     affine_from_planes, axis_plane_definition, classify_leaf_polygon, trace_plane_replacement_path,
 };
 use crate::winding::{
-    BooleanOp, Indicator, WindingPair, can_boolean_op_be_inside_with_component_ranges,
-    classify_polygon_output, propagate_wnv,
+    BooleanOp, EXACT_REACHABILITY_STATE_LIMIT, Indicator, WindingPair,
+    can_boolean_op_be_inside_with_component_ranges,
+    can_boolean_op_be_inside_with_transition_reachability, classify_polygon_output, propagate_wnv,
 };
 use hyperlattice::{HomogeneousPoint3, Point3, Real};
 use hyperlimit::{
@@ -412,6 +413,19 @@ fn can_discard_by_winding_reachability(
     ref_wnv: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
+    let transitions = polygons
+        .iter()
+        .map(|polygon| polygon.delta_w.clone())
+        .collect::<Vec<_>>();
+    if let Some(can_be_inside) = can_boolean_op_be_inside_with_transition_reachability(
+        op,
+        ref_wnv,
+        &transitions,
+        EXACT_REACHABILITY_STATE_LIMIT,
+    )? {
+        return Ok(!can_be_inside);
+    }
+
     let mut lower = ref_wnv.to_vec();
     let mut upper = ref_wnv.to_vec();
     for polygon in polygons {
@@ -1641,6 +1655,17 @@ mod tests {
 
         assert!(
             !can_discard_by_winding_reachability(BooleanOp::Difference, &[1, 1], &[first]).unwrap()
+        );
+    }
+
+    #[test]
+    fn winding_reachability_prunes_correlated_difference_when_zero_is_not_jointly_reachable() {
+        let mut correlated = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        correlated.delta_w = vec![1, 1];
+
+        assert!(
+            can_discard_by_winding_reachability(BooleanOp::Difference, &[1, 1], &[correlated])
+                .unwrap()
         );
     }
 

@@ -96,9 +96,11 @@ unfinished.
 path. The previous same-surface, disjoint-bound, strict-containment,
 boundary-contact, and oriented-box shortcuts have been removed, so public
 boolean results either certify through the general path or return an error.
-Subdivision applies conservative WNV-reachability pruning from per-component
-reachable winding ranges when those bounds already make the Boolean indicator
-impossible for every winding vector reachable from the current task. Full
+Subdivision first applies exact local WNV-transition reachability when the
+reachable state set stays small, and otherwise falls back to conservative
+per-component reachable winding ranges. A task is discarded only when those
+exact or range-based bounds make the Boolean indicator impossible for every
+reachable winding vector in the approximation. Full arrangement-complete
 finite-automaton WNV reachability remains an implementation target.
 
 Subdivision depth is a certification budget, not a permission to guess. Bounds
