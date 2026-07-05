@@ -136,11 +136,13 @@ seed.
 Support-cell retained definitions now include every exact witness-active
 halfspace we can verify, not just the feasibility basis planes returned by
 `hyperlimit`. When direct tracing cannot certify a reference step, hypermesh
-retries certified plane-replacement traces between retained definitions, with
-exact axis-plane definitions appended for both endpoints before giving up. The
-same retained definitions are used again during leaf classification for
-plane-defined probes, and duplicate certified target points merge their
-retained definition sets instead of dropping later constructions. The
+retries the same retained-definition segment path family used by leaf probes:
+direct tracing, certified endpoint-box detours, and plane-replacement traces
+between retained definitions, with exact axis-plane definitions appended for
+both endpoints before giving up. The same retained definitions are used again
+during leaf classification for plane-defined probes, and duplicate certified
+target points merge their retained definition sets instead of dropping later
+constructions. The
 support-cell fallback now also backtracks across alternate feasible
 support-side cells when one candidate branch returns
 `UnknownClassification`, rather than aborting the whole search on the first

@@ -162,16 +162,63 @@ pub fn trace_segment(
     winding: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<WindingNumberVector> {
-    if let Some(winding) = trace_segment_without_detours(start, end, winding, polygons)? {
-        return Ok(winding);
-    }
-
-    if let Some(winding) = trace_segment_via_detours(
+    trace_segment_from_definitions(
         start,
         end,
         winding,
         polygons,
+        &[axis_plane_definition(start)],
+        &[axis_plane_definition(end)],
+    )
+}
+
+pub(crate) fn trace_segment_from_definitions(
+    start: &Point3,
+    end: &Point3,
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+) -> HypermeshResult<WindingNumberVector> {
+    trace_segment_from_definitions_with_detours(
+        start,
+        end,
+        winding,
+        polygons,
+        start_definitions,
+        end_definitions,
         &interior_box_detour_targets(start, end, polygons)?,
+    )
+}
+
+fn trace_segment_from_definitions_with_detours(
+    start: &Point3,
+    end: &Point3,
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    detours: &[DetourTarget],
+) -> HypermeshResult<WindingNumberVector> {
+    if let Some(winding) = trace_segment_with_definitions_no_detours(
+        start,
+        end,
+        winding,
+        polygons,
+        start_definitions,
+        end_definitions,
+    )? {
+        return Ok(winding);
+    }
+
+    if let Some(winding) = trace_segment_via_detours_with_definitions(
+        start,
+        end,
+        winding,
+        polygons,
+        detours,
+        start_definitions,
+        end_definitions,
     )? {
         return Ok(winding);
     }
@@ -199,12 +246,14 @@ fn trace_segment_without_detours(
     Ok(None)
 }
 
-fn trace_segment_via_detours(
+fn trace_segment_via_detours_with_definitions(
     start: &Point3,
     end: &Point3,
     winding: &[i32],
     polygons: &[ConvexPolygon],
     detours: &[DetourTarget],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<Option<WindingNumberVector>> {
     for detour in detours {
         if detour.point == *start
@@ -213,26 +262,24 @@ fn trace_segment_via_detours(
         {
             continue;
         }
-        let start_definitions = [axis_plane_definition(start)];
-        let end_definitions = [axis_plane_definition(end)];
-        let Some(first_leg) = trace_segment_with_definitions(
+        let Some(first_leg) = trace_segment_with_definitions_no_detours(
             start,
             &detour.point,
             winding,
             polygons,
-            &start_definitions,
+            start_definitions,
             &detour.definitions,
         )?
         else {
             continue;
         };
-        let Some(second_leg) = trace_segment_with_definitions(
+        let Some(second_leg) = trace_segment_with_definitions_no_detours(
             &detour.point,
             end,
             &first_leg,
             polygons,
             &detour.definitions,
-            &end_definitions,
+            end_definitions,
         )?
         else {
             continue;
@@ -243,7 +290,7 @@ fn trace_segment_via_detours(
     Ok(None)
 }
 
-fn trace_segment_with_definitions(
+fn trace_segment_with_definitions_no_detours(
     start: &Point3,
     end: &Point3,
     winding: &[i32],
@@ -872,25 +919,34 @@ fn trace_probe_winding(
     ref_wnv: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Option<WindingNumberVector>> {
-    let mut winding = retryable_trace(trace_segment(ref_point, &probe.point, ref_wnv, polygons))?;
-    if winding.is_none() {
-        let mut probe_definitions = probe.planes.clone();
-        let axis_definition = axis_plane_defined_point(&probe.point).planes;
-        if !probe_definitions
-            .iter()
-            .any(|definition| definition == &axis_definition)
-        {
-            probe_definitions.push(axis_definition);
-        }
-        winding = retryable_trace(trace_probe_from_reference_definitions(
-            ref_point,
-            ref_definitions,
-            &probe_definitions,
-            ref_wnv,
-            polygons,
-        ))?;
+    let mut probe_definitions = probe.planes.clone();
+    let axis_definition = axis_plane_defined_point(&probe.point).planes;
+    if !probe_definitions
+        .iter()
+        .any(|definition| definition == &axis_definition)
+    {
+        probe_definitions.push(axis_definition);
     }
-    Ok(winding)
+
+    let winding = retryable_trace(trace_segment_from_definitions(
+        ref_point,
+        &probe.point,
+        ref_wnv,
+        polygons,
+        ref_definitions,
+        &probe_definitions,
+    ))?;
+    if winding.is_some() {
+        return Ok(winding);
+    }
+
+    retryable_trace(trace_probe_from_reference_definitions(
+        ref_point,
+        ref_definitions,
+        &probe_definitions,
+        ref_wnv,
+        polygons,
+    ))
 }
 
 fn trace_probe_from_reference_definitions(
@@ -3168,7 +3224,7 @@ mod tests {
             vec![0]
         );
 
-        let traced = trace_segment_via_detours(
+        let traced = trace_segment_via_detours_with_definitions(
             &p(0, 0, 0),
             &p(2, 2, 2),
             &[0],
@@ -3177,6 +3233,8 @@ mod tests {
                 point: p(1, 1, 1),
                 definitions: vec![axis_plane_definition(&p(1, 1, 1))],
             }],
+            &[axis_plane_definition(&p(0, 0, 0))],
+            &[axis_plane_definition(&p(2, 2, 2))],
         )
         .unwrap();
 
@@ -3202,10 +3260,60 @@ mod tests {
             None
         );
 
-        let traced =
-            trace_segment_via_detours(&p(0, 0, 0), &p(2, 2, 0), &[0], &[wall], &[detour]).unwrap();
+        let traced = trace_segment_via_detours_with_definitions(
+            &p(0, 0, 0),
+            &p(2, 2, 0),
+            &[0],
+            &[wall],
+            &[detour],
+            &[axis_plane_definition(&p(0, 0, 0))],
+            &[axis_plane_definition(&p(2, 2, 0))],
+        )
+        .unwrap();
 
         assert_eq!(traced, Some(vec![0]));
+    }
+
+    #[test]
+    fn detour_legs_can_use_retained_start_definitions() {
+        let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+        wall.delta_w = vec![1];
+        let start = p(0, 0, 0);
+        let end = p(2, 2, 0);
+        let start_definitions = [[
+            Plane::axis_aligned(0, r(0)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::from_coefficients(r(1), r(1), r(1), r(0)),
+        ]];
+        let detour = DetourTarget {
+            point: p(2, 1, 0),
+            definitions: vec![axis_plane_definition(&p(2, 1, 0))],
+        };
+
+        let without_retained_start = trace_segment_via_detours_with_definitions(
+            &start,
+            &end,
+            &[0],
+            &[wall.clone()],
+            std::slice::from_ref(&detour),
+            &[axis_plane_definition(&start)],
+            &[axis_plane_definition(&end)],
+        )
+        .unwrap();
+        assert_eq!(without_retained_start, None);
+
+        let with_retained_start = trace_segment_via_detours_with_definitions(
+            &start,
+            &end,
+            &[0],
+            &[wall],
+            &[detour],
+            &start_definitions,
+            &[axis_plane_definition(&end)],
+        )
+        .unwrap();
+
+        assert_eq!(with_retained_start, Some(vec![0]));
     }
 
     #[test]

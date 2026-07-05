@@ -12,7 +12,6 @@ use crate::output::ClassifiedPolygon;
 use crate::polygon::ConvexPolygon;
 use crate::segment_trace::{
     affine_from_planes, axis_plane_definition, certified_leaf_test_points, classify_leaf_polygon,
-    trace_plane_replacement_path,
 };
 use crate::winding::{
     BooleanOp, EXACT_REACHABILITY_STATE_LIMIT, Indicator, WindingPair,
@@ -1279,38 +1278,20 @@ fn trace_reference_target(
         return Ok(None);
     }
 
-    match crate::segment_trace::trace_segment(old_ref, &target.point, old_wnv, polygons) {
+    match crate::segment_trace::trace_segment_from_definitions(
+        old_ref,
+        &target.point,
+        old_wnv,
+        polygons,
+        old_ref_definitions,
+        &target.definitions,
+    ) {
         Ok(winding) => return Ok(Some(winding)),
         Err(crate::error::HypermeshError::UnknownClassification) => {}
         Err(err) => return Err(err),
     }
 
-    let mut start_definitions = old_ref_definitions.to_vec();
-    append_definition_if_missing(&mut start_definitions, axis_plane_definition(old_ref));
-    let mut end_definitions = target.definitions.clone();
-    append_definition_if_missing(&mut end_definitions, axis_plane_definition(&target.point));
-
-    for start_definition in &start_definitions {
-        for end_definition in &end_definitions {
-            match trace_plane_replacement_path(start_definition, end_definition, old_wnv, polygons)
-            {
-                Ok(winding) => return Ok(Some(winding)),
-                Err(crate::error::HypermeshError::UnknownClassification) => {}
-                Err(err) => return Err(err),
-            }
-        }
-    }
-
     Ok(None)
-}
-
-fn append_definition_if_missing(definitions: &mut Vec<[Plane; 3]>, candidate: [Plane; 3]) {
-    if definitions
-        .iter()
-        .all(|definition| definition != &candidate)
-    {
-        definitions.push(candidate);
-    }
 }
 
 fn is_valid_reference_for_bounds(
