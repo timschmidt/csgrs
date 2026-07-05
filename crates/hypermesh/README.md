@@ -111,7 +111,10 @@ provides a strict feasible witness for the closed support cell, hypermesh now
 tries that direct certified target before shifted replayable witnesses built
 from every available strict support-cell seed, so reference propagation can
 backtrack across multiple certified targets inside one feasible support-side
-cell instead of collapsing the cell to one point.
+cell instead of collapsing the cell to one point. Each shifted support cell now
+also contributes every strict target recovered from its own certified witness
+family instead of only the first feasibility witness selected by the halfspace
+predicate.
 Support-cell retained definitions now include every exact witness-active
 halfspace we can verify, not just the feasibility basis planes returned by
 `hyperlimit`. When direct tracing cannot certify a reference step, hypermesh

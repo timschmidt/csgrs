@@ -1492,7 +1492,7 @@ fn strict_support_cell_targets(
     }
 
     for seed in strict_support_cell_seeds_from_report(bounds, halfspaces, report)? {
-        if let Some(target) = shifted_support_cell_target_from_seed(bounds, halfspaces, &seed)? {
+        for target in shifted_support_cell_targets_from_seed(bounds, halfspaces, &seed)? {
             push_unique_reference_target(&mut targets, target);
         }
     }
@@ -1530,31 +1530,54 @@ fn strict_support_cell_seeds_from_report(
     Ok(seeds)
 }
 
-fn shifted_support_cell_target_from_seed(
+fn shifted_support_cell_targets_from_seed(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     seed: &Point3,
-) -> HypermeshResult<Option<ReferenceTarget>> {
+) -> HypermeshResult<Vec<ReferenceTarget>> {
     let shifted = shifted_support_cell_halfspaces(bounds, halfspaces, &seed)?;
     let Some(report) = halfspace_system_report(&shifted)? else {
-        return Ok(None);
+        return Ok(Vec::new());
     };
     if report.status != HalfspaceFeasibility::Feasible {
-        return Ok(None);
+        return Ok(Vec::new());
     }
-    let Some(witness) = report.witness else {
-        return Ok(None);
-    };
-    if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
-        return Ok(None);
+    let mut targets = Vec::new();
+
+    if let Some(witness) = &report.witness
+        && point_strictly_inside_support_cell(witness, bounds, halfspaces)?
+    {
+        push_unique_reference_target(
+            &mut targets,
+            ReferenceTarget::with_definitions(
+                witness.clone(),
+                reference_definitions_from_active_halfspaces(
+                    witness,
+                    &shifted,
+                    report.active_planes,
+                )?,
+            ),
+        );
     }
 
-    let definitions =
-        reference_definitions_from_active_halfspaces(&witness, &shifted, report.active_planes)?;
-    Ok(Some(ReferenceTarget::with_definitions(
-        witness,
-        definitions,
-    )))
+    for witness in strict_support_cell_seeds_from_report(bounds, &shifted, &report)? {
+        if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
+            continue;
+        }
+        push_unique_reference_target(
+            &mut targets,
+            ReferenceTarget::with_definitions(
+                witness.clone(),
+                reference_definitions_from_active_halfspaces(
+                    &witness,
+                    &shifted,
+                    [None, None, None],
+                )?,
+            ),
+        );
+    }
+
+    Ok(targets)
 }
 
 fn feasible_support_cell_vertices(halfspaces: &[LimitPlane3]) -> HypermeshResult<Vec<Point3>> {
@@ -2257,6 +2280,31 @@ mod tests {
             targets
                 .iter()
                 .any(|target| { target.point == Point3::new(r(1), q(1, 2), q(3, 2)) })
+        );
+        assert!(
+            targets
+                .iter()
+                .any(|target| { target.point == Point3::new(r(2), q(3, 2), q(5, 2)) })
+        );
+    }
+
+    #[test]
+    fn shifted_support_cell_targets_try_all_shifted_strict_seeds() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+
+        let targets =
+            shifted_support_cell_targets_from_seed(&bounds, &halfspaces, &p(2, 1, 3)).unwrap();
+
+        assert!(
+            targets
+                .iter()
+                .any(|target| { target.point == Point3::new(r(1), q(1, 2), q(3, 2)) })
+        );
+        assert!(
+            targets
+                .iter()
+                .any(|target| { target.point == Point3::new(r(2), q(3, 2), q(5, 2)) })
         );
     }
 
