@@ -1011,9 +1011,12 @@ fn compute_new_reference(
         Err(err) => return Err(err),
     };
     let projected_halfspaces = projected_reference_halfspaces(old_ref, bounds)?;
+    let projected_escape_targets =
+        projected_reference_escape_targets(old_ref, bounds, &projected_targets)?;
 
     if let Some((target, winding)) = search_projected_reference_families(
         &projected_targets,
+        &projected_escape_targets,
         || {
             projected_support_plane_cell_reference(
                 old_ref,
@@ -1069,6 +1072,7 @@ fn compute_new_reference(
 
 fn search_projected_reference_families(
     projected_targets: &[ReferenceTarget],
+    projected_escape_targets: &[ReferenceTarget],
     mut projected_support_search: impl FnMut() -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
     mut trace_projected_target: impl FnMut(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
     mut axis_escape_search: impl FnMut(
@@ -1090,7 +1094,7 @@ fn search_projected_reference_families(
         Err(err) => return Err(err),
     }
 
-    for projected_target in projected_targets {
+    for projected_target in projected_escape_targets {
         if let Some(found) = axis_escape_search(projected_target)? {
             return Ok(Some(found));
         }
@@ -1101,6 +1105,39 @@ fn search_projected_reference_families(
     }
 
     Ok(None)
+}
+
+fn projected_reference_escape_targets(
+    old_ref: &Point3,
+    bounds: &Aabb,
+    projected_targets: &[ReferenceTarget],
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    if !projected_targets.is_empty() {
+        return Ok(projected_targets.to_vec());
+    }
+
+    let point = projected_reference_anchor(old_ref, bounds)?;
+    Ok(vec![ReferenceTarget::with_definitions(
+        point.clone(),
+        vec![axis_plane_definition(&point)],
+    )])
+}
+
+fn projected_reference_anchor(old_ref: &Point3, bounds: &Aabb) -> HypermeshResult<Point3> {
+    let mut point = old_ref.clone();
+    for axis in 0..3 {
+        let value = axis_ref(old_ref, axis);
+        let min = axis_ref(&bounds.min, axis);
+        let max = axis_ref(&bounds.max, axis);
+        *axis_mut(&mut point, axis) = if compare_real(value, min)?.is_lt() {
+            min.clone()
+        } else if compare_real(value, max)?.is_gt() {
+            max.clone()
+        } else {
+            value.clone()
+        };
+    }
+    Ok(point)
 }
 
 fn projected_support_plane_cell_reference(
@@ -2386,6 +2423,7 @@ mod tests {
 
         let found = search_projected_reference_families(
             std::slice::from_ref(&projected),
+            std::slice::from_ref(&projected),
             || {
                 calls.borrow_mut().push("projected_support");
                 Ok(Some((support_target.clone(), vec![7])))
@@ -2419,6 +2457,7 @@ mod tests {
         let calls = RefCell::new(Vec::new());
 
         let found = search_projected_reference_families(
+            std::slice::from_ref(&projected),
             std::slice::from_ref(&projected),
             || {
                 calls.borrow_mut().push("projected_support");
@@ -2457,6 +2496,7 @@ mod tests {
 
         let found = search_projected_reference_families(
             &[],
+            &[],
             || {
                 calls.borrow_mut().push("projected_support");
                 Ok(Some((support_target.clone(), vec![13])))
@@ -2478,6 +2518,50 @@ mod tests {
 
         assert_eq!(found, Some((support_target, vec![13])));
         assert_eq!(*calls.borrow(), vec!["projected_support"]);
+    }
+
+    #[test]
+    fn projected_reference_search_uses_escape_anchor_without_targets() {
+        use std::cell::RefCell;
+
+        let anchor = ReferenceTarget::axis_defined(p(0, 2, 4));
+        let axis_target = ReferenceTarget::axis_defined(p(1, 2, 4));
+        let calls = RefCell::new(Vec::new());
+
+        let found = search_projected_reference_families(
+            &[],
+            std::slice::from_ref(&anchor),
+            || {
+                calls.borrow_mut().push("projected_support");
+                Ok(None)
+            },
+            |_target| {
+                calls.borrow_mut().push("direct");
+                Ok(None)
+            },
+            |target| {
+                calls.borrow_mut().push("axis_escape");
+                assert_eq!(target, &anchor);
+                Ok(Some((axis_target.clone(), vec![17])))
+            },
+            |_target| {
+                calls.borrow_mut().push("tight_escape");
+                Ok(None)
+            },
+        )
+        .unwrap();
+
+        assert_eq!(found, Some((axis_target, vec![17])));
+        assert_eq!(*calls.borrow(), vec!["projected_support", "axis_escape"]);
+    }
+
+    #[test]
+    fn projected_reference_escape_targets_fall_back_to_clamped_anchor() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+
+        let targets = projected_reference_escape_targets(&p(-2, 2, 7), &bounds, &[]).unwrap();
+
+        assert_eq!(targets, vec![ReferenceTarget::axis_defined(p(0, 2, 4))]);
     }
 
     #[test]
