@@ -967,18 +967,22 @@ fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<InteriorLea
         return Ok(Vec::new());
     };
 
+    if !point_strictly_inside_leaf(&center, leaf)? {
+        return Ok(Vec::new());
+    }
+
     let mut points = Vec::with_capacity(vertices.len() + 1);
-    if point_strictly_inside_leaf(&center, leaf)? {
+    if let Some(point) = strict_leaf_cell_point(leaf, &center)? {
+        push_unique_interior_point(&mut points, point);
+    }
+    for candidate in shifted_edge_interior_points(leaf, &center)? {
+        push_unique_interior_point(&mut points, candidate);
+    }
+    if points.is_empty() {
         points.push(InteriorLeafPoint {
-            point: center.clone(),
+            point: center,
             planes: Vec::new(),
         });
-        if let Some(point) = strict_leaf_cell_point(leaf, &center)? {
-            push_unique_interior_point(&mut points, point);
-        }
-        for candidate in shifted_edge_interior_points(leaf, &center)? {
-            push_unique_interior_point(&mut points, candidate);
-        }
     }
 
     Ok(points)
@@ -2309,6 +2313,16 @@ mod tests {
 
         assert!(!expected_points.is_empty());
         assert!(expected_points.iter().any(|expected| expected == &point));
+    }
+
+    #[test]
+    fn interior_leaf_points_drop_naked_centroid_when_replayable_points_exist() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+
+        let points = interior_leaf_points(&leaf).unwrap();
+
+        assert!(!points.is_empty());
+        assert!(points.iter().all(|point| !point.planes.is_empty()));
     }
 
     #[test]

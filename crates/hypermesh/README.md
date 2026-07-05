@@ -44,9 +44,11 @@ explicit certification errors.
 Leaf classification currently searches certified off-face probes from exact
 leaf interior points by building strict witness cells along the support normal
 or a support-axis direction inside the open interval before the nearest crossed
-local surface or AABB boundary. Interior targets include the centroid and deterministic
-EMBER-style points formed by shifting adjacent edge planes inward and
-intersecting them with the support plane. If a probe lies on a traced surface,
+local surface or AABB boundary. The centroid is still used as a deterministic
+seed when needed, but replayable leaf interior targets now prefer strict
+halfspace witnesses and deterministic EMBER-style points formed by shifting
+adjacent edge planes inward and intersecting them with the support plane. If a
+probe lies on a traced surface,
 cannot reach the adjacent cell, or cannot be traced from the reference point,
 that probe is discarded. If no certified probe path remains, the leaf reports
 `UnknownClassification`; there is no silent fallback to the reference winding
