@@ -47,6 +47,34 @@ pub fn make_indicator(op: BooleanOp, _num_meshes: usize) -> Box<Indicator> {
     }
 }
 
+/// Returns true when `op` can classify some winding vector as inside while
+/// components marked `variable_components` may change arbitrarily and all
+/// others remain fixed at `reference`.
+pub(crate) fn can_boolean_op_be_inside_with_fixed_components(
+    op: BooleanOp,
+    reference: &[i32],
+    variable_components: &[bool],
+) -> HypermeshResult<bool> {
+    if reference.len() != variable_components.len() {
+        return Err(HypermeshError::UnknownClassification);
+    }
+
+    let can_be_nonzero = |index: usize| variable_components[index] || reference[index] != 0;
+    let can_be_zero = |index: usize| variable_components[index] || reference[index] == 0;
+
+    Ok(match op {
+        BooleanOp::Union => (0..reference.len()).any(can_be_nonzero),
+        BooleanOp::Intersection => (0..reference.len()).all(can_be_nonzero),
+        BooleanOp::Difference => {
+            !reference.is_empty() && can_be_nonzero(0) && (1..reference.len()).all(can_be_zero)
+        }
+        BooleanOp::SymmetricDifference => {
+            variable_components.iter().any(|value| *value)
+                || reference.iter().filter(|value| **value != 0).count() % 2 == 1
+        }
+    })
+}
+
 /// Classifies a polygon output transition.
 pub fn classify_polygon_output(w_front: &[i32], w_back: &[i32], indicator: &Indicator) -> i8 {
     let front_in = indicator(w_front);
@@ -96,5 +124,61 @@ mod tests {
     #[test]
     fn propagate_wnv_applies_full_transition() {
         assert_eq!(propagate_wnv(&[1, 0], -1, &[1, -2]).unwrap(), vec![0, 2]);
+    }
+
+    #[test]
+    fn reachability_detects_fixed_difference_outside_region() {
+        assert!(
+            !can_boolean_op_be_inside_with_fixed_components(
+                BooleanOp::Difference,
+                &[0, 7],
+                &[false, true],
+            )
+            .unwrap()
+        );
+        assert!(
+            can_boolean_op_be_inside_with_fixed_components(
+                BooleanOp::Difference,
+                &[0, 7],
+                &[true, true],
+            )
+            .unwrap()
+        );
+        assert!(
+            can_boolean_op_be_inside_with_fixed_components(
+                BooleanOp::Difference,
+                &[3, 7],
+                &[false, true],
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn reachability_is_conservative_for_variable_components() {
+        assert!(
+            can_boolean_op_be_inside_with_fixed_components(
+                BooleanOp::Union,
+                &[0, 0],
+                &[false, true],
+            )
+            .unwrap()
+        );
+        assert!(
+            can_boolean_op_be_inside_with_fixed_components(
+                BooleanOp::Intersection,
+                &[0, 1],
+                &[true, false],
+            )
+            .unwrap()
+        );
+        assert!(
+            can_boolean_op_be_inside_with_fixed_components(
+                BooleanOp::SymmetricDifference,
+                &[2, -1],
+                &[false, true],
+            )
+            .unwrap()
+        );
     }
 }

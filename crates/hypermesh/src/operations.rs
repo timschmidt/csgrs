@@ -6,7 +6,7 @@ use crate::error::HypermeshResult;
 use crate::geometry::{Aabb, axis_mut, axis_ref};
 use crate::mesh::{MeshRef, prepare_input};
 use crate::output::{BooleanResult, triangulate_and_resolve_certified};
-use crate::subdivision::{SubdivisionConfig, SubdivisionTask, subdivide};
+use crate::subdivision::{SubdivisionConfig, SubdivisionTask, subdivide_for_operation};
 use crate::winding::{BooleanOp, make_indicator};
 
 /// Configuration for boolean operations.
@@ -50,13 +50,14 @@ fn boolean_operation_general(
     let ref_point = outside_reference_point(&process_bounds);
     let ref_wnv = vec![0; soup.num_meshes];
     let indicator = make_indicator(op, soup.num_meshes);
-    let classified = subdivide(
+    let classified = subdivide_for_operation(
         SubdivisionTask::new(soup.polygons.clone(), process_bounds, ref_point, ref_wnv),
         &indicator,
         SubdivisionConfig {
             leaf_threshold: config.leaf_threshold,
             max_depth: config.max_depth,
         },
+        op,
     )?;
 
     Ok(BooleanResult::from_classified(soup, classified))

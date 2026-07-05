@@ -11,7 +11,10 @@ use crate::polygon::ConvexPolygon;
 use crate::segment_trace::{
     affine_from_planes, axis_plane_definition, classify_leaf_polygon, trace_plane_replacement_path,
 };
-use crate::winding::{Indicator, WindingPair, classify_polygon_output, propagate_wnv};
+use crate::winding::{
+    BooleanOp, Indicator, WindingPair, can_boolean_op_be_inside_with_fixed_components,
+    classify_polygon_output, propagate_wnv,
+};
 use hyperlattice::{HomogeneousPoint3, Point3, Real};
 use hyperlimit::{
     HalfspaceFeasibility, Plane3 as LimitPlane3, PredicateOutcome, classify_halfspace_feasibility3,
@@ -221,7 +224,18 @@ pub fn subdivide(
     config: SubdivisionConfig,
 ) -> HypermeshResult<Vec<ClassifiedPolygon>> {
     let mut output = Vec::new();
-    subdivide_into_inner(task, indicator, config, &mut output)?;
+    subdivide_into_inner(task, indicator, config, None, &mut output)?;
+    Ok(output)
+}
+
+pub(crate) fn subdivide_for_operation(
+    task: SubdivisionTask,
+    indicator: &Indicator,
+    config: SubdivisionConfig,
+    op: BooleanOp,
+) -> HypermeshResult<Vec<ClassifiedPolygon>> {
+    let mut output = Vec::new();
+    subdivide_into_inner(task, indicator, config, Some(op), &mut output)?;
     Ok(output)
 }
 
@@ -237,7 +251,7 @@ pub fn subdivide_into(
     output: &mut Vec<ClassifiedPolygon>,
 ) -> HypermeshResult<()> {
     let mut certified_output = Vec::new();
-    subdivide_into_inner(task, indicator, config, &mut certified_output)?;
+    subdivide_into_inner(task, indicator, config, None, &mut certified_output)?;
     output.extend(certified_output);
     Ok(())
 }
@@ -246,10 +260,17 @@ fn subdivide_into_inner(
     task: SubdivisionTask,
     indicator: &Indicator,
     config: SubdivisionConfig,
+    reachability_op: Option<BooleanOp>,
     output: &mut Vec<ClassifiedPolygon>,
 ) -> HypermeshResult<()> {
     if task.polygons.is_empty() {
         return Ok(());
+    }
+
+    if let Some(op) = reachability_op {
+        if can_discard_by_winding_reachability(op, &task.ref_wnv, &task.polygons)? {
+            return Ok(());
+        }
     }
 
     if task.polygons.len() <= config.leaf_threshold || !can_split_bounds(&task.bounds)? {
@@ -332,6 +353,7 @@ fn subdivide_into_inner(
             },
             indicator,
             config,
+            reachability_op,
             output,
         )?;
     }
@@ -355,11 +377,36 @@ fn subdivide_into_inner(
             },
             indicator,
             config,
+            reachability_op,
             output,
         )?;
     }
 
     Ok(())
+}
+
+fn can_discard_by_winding_reachability(
+    op: BooleanOp,
+    ref_wnv: &[i32],
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<bool> {
+    let mut variable_components = vec![false; ref_wnv.len()];
+    for polygon in polygons {
+        if polygon.delta_w.len() != ref_wnv.len() {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        }
+        for (variable, delta) in variable_components.iter_mut().zip(&polygon.delta_w) {
+            if *delta != 0 {
+                *variable = true;
+            }
+        }
+    }
+
+    Ok(!can_boolean_op_be_inside_with_fixed_components(
+        op,
+        ref_wnv,
+        &variable_components,
+    )?)
 }
 
 fn emit_one_direct(
@@ -1467,6 +1514,54 @@ mod tests {
             }
         );
         assert_eq!(output, vec![sentinel]);
+    }
+
+    #[test]
+    fn operation_subdivision_discards_fixed_difference_outside_region() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 1, 0);
+        wall.delta_w = vec![0, 1];
+        let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
+        let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Difference, 2);
+
+        let output = subdivide_for_operation(
+            SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0, 0]),
+            &indicator,
+            SubdivisionConfig {
+                leaf_threshold: 0,
+                max_depth: 0,
+            },
+            BooleanOp::Difference,
+        )
+        .unwrap();
+
+        assert!(output.is_empty());
+    }
+
+    #[test]
+    fn operation_subdivision_keeps_potential_difference_region() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1, 0];
+        let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
+        let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Difference, 2);
+
+        let err = subdivide_for_operation(
+            SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0, 0]),
+            &indicator,
+            SubdivisionConfig {
+                leaf_threshold: 0,
+                max_depth: 0,
+            },
+            BooleanOp::Difference,
+        )
+        .unwrap_err();
+
+        assert_eq!(
+            err,
+            crate::error::HypermeshError::SubdivisionDepthLimit {
+                depth: 0,
+                polygon_count: 1
+            }
+        );
     }
 
     #[test]
