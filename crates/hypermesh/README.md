@@ -131,7 +131,9 @@ more polygons than the leaf threshold and the bounds remain splittable,
 hypermesh attempts to certify the current task as a leaf using the same exact
 BSP/classification path. Enabled BSP leaves are rejected unless exact pairwise
 checks prove they have no remaining interior segment intersections with local
-polygons. Hypermesh reports `SubdivisionDepthLimit` if the configured depth
+polygons. Coplanar overlap and effective-delta checks now use the same
+certified strict leaf interior witness family instead of a centroid-only test
+point. Hypermesh reports `SubdivisionDepthLimit` if the configured depth
 budget is reached before the current task can be certified as a leaf, and it
 reports `UnknownClassification` if leaf classification or this isolation check
 fails before appending output outside the depth-limit branch. Full

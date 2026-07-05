@@ -9,7 +9,8 @@ use crate::local_bsp::LocalBsp;
 use crate::output::ClassifiedPolygon;
 use crate::polygon::ConvexPolygon;
 use crate::segment_trace::{
-    affine_from_planes, axis_plane_definition, classify_leaf_polygon, trace_plane_replacement_path,
+    affine_from_planes, axis_plane_definition, certified_leaf_test_points, classify_leaf_polygon,
+    trace_plane_replacement_path,
 };
 use crate::winding::{
     BooleanOp, EXACT_REACHABILITY_STATE_LIMIT, Indicator, WindingPair,
@@ -487,7 +488,7 @@ fn effective_leaf_delta_w(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<i32>> {
     let mut delta_w = polygon.delta_w.clone();
-    let test_point = leaf_interior_point(&polygon.support, leaf_edges)?;
+    let test_points = leaf_interior_points(&polygon.support, leaf_edges)?;
 
     for other in polygons {
         if other.polygon_index == polygon.polygon_index && other.mesh_index == polygon.mesh_index {
@@ -496,11 +497,9 @@ fn effective_leaf_delta_w(
         if delta_w.len() != other.delta_w.len() {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
-        let inside_or_on = other.contains_point(&test_point)?;
-        let strictly_inside = other.contains_point_strictly(&test_point)?;
-        if inside_or_on && !strictly_inside {
+        let Some(strictly_inside) = classify_leaf_test_relation(&test_points, other)? else {
             return Err(crate::error::HypermeshError::UnknownClassification);
-        }
+        };
         if strictly_inside {
             let sign = if supports_have_same_direction(&polygon.support, &other.support)? {
                 1
@@ -516,32 +515,43 @@ fn effective_leaf_delta_w(
     Ok(delta_w)
 }
 
-fn leaf_interior_point(
+fn leaf_interior_points(
     support: &crate::geometry::Plane,
     edges: &[crate::geometry::Plane],
-) -> HypermeshResult<HomogeneousPoint3> {
-    let leaf = ConvexPolygon {
-        support: support.clone(),
-        edges: edges.to_vec(),
-        mesh_index: -1,
-        polygon_index: -1,
-        delta_w: Vec::new(),
-        approx_bounds: None,
-    };
-    let vertices = leaf.vertices()?;
-    let mut sum = Point3::origin();
-    for point in &vertices {
-        sum.x += point.x.clone();
-        sum.y += point.y.clone();
-        sum.z += point.z.clone();
+) -> HypermeshResult<Vec<HomogeneousPoint3>> {
+    let points = certified_leaf_test_points(support, edges)?;
+    if points.is_empty() {
+        return Err(crate::error::HypermeshError::UnknownClassification);
     }
-    let denom = Real::from(vertices.len() as u64);
-    Ok(HomogeneousPoint3::new(
-        (sum.x / denom.clone()).map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
-        (sum.y / denom.clone()).map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
-        (sum.z / denom).map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
-        Real::one(),
-    ))
+    Ok(points)
+}
+
+fn classify_leaf_test_relation(
+    test_points: &[HomogeneousPoint3],
+    polygon: &ConvexPolygon,
+) -> HypermeshResult<Option<bool>> {
+    let mut any_inside = false;
+    let mut any_outside = false;
+
+    for test_point in test_points {
+        let inside_or_on = polygon.contains_point(test_point)?;
+        let strictly_inside = polygon.contains_point_strictly(test_point)?;
+        if strictly_inside {
+            any_inside = true;
+        } else if !inside_or_on {
+            any_outside = true;
+        }
+    }
+
+    if any_inside && any_outside {
+        Ok(None)
+    } else if any_inside {
+        Ok(Some(true))
+    } else if any_outside {
+        Ok(Some(false))
+    } else {
+        Ok(None)
+    }
 }
 
 fn supports_have_same_direction(
@@ -567,7 +577,7 @@ fn certify_bsp_leaf_has_no_interior_intersections(
         delta_w: host.delta_w.clone(),
         approx_bounds: None,
     };
-    let leaf_test_point = leaf_interior_point(&leaf_polygon.support, &leaf_polygon.edges)?;
+    let leaf_test_points = leaf_interior_points(&leaf_polygon.support, &leaf_polygon.edges)?;
 
     for other in polygons {
         if other.mesh_index == host.mesh_index && other.polygon_index == host.polygon_index {
@@ -591,11 +601,10 @@ fn certify_bsp_leaf_has_no_interior_intersections(
                 }
             }
             PairwiseIntersectionType::Overlap => {
-                let inside_or_on = other.contains_point(&leaf_test_point)?;
-                let strictly_inside = other.contains_point_strictly(&leaf_test_point)?;
-                if inside_or_on && !strictly_inside {
+                let Some(strictly_inside) = classify_leaf_test_relation(&leaf_test_points, other)?
+                else {
                     return Ok(false);
-                }
+                };
                 if leaf_polygon_key(host) > leaf_polygon_key(other) && strictly_inside {
                     return Ok(false);
                 }

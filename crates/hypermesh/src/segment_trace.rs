@@ -984,6 +984,60 @@ fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<InteriorLea
     Ok(points)
 }
 
+#[cfg(test)]
+pub(crate) fn certified_leaf_test_point(
+    support: &Plane,
+    edges: &[Plane],
+) -> HypermeshResult<Option<HomogeneousPoint3>> {
+    let leaf = ConvexPolygon {
+        support: support.clone(),
+        edges: edges.to_vec(),
+        mesh_index: -1,
+        polygon_index: -1,
+        delta_w: WindingNumberTransitionVector::new(),
+        approx_bounds: None,
+    };
+    let points = interior_leaf_points(&leaf)?;
+    let Some(point) = points
+        .iter()
+        .find(|point| !point.planes.is_empty())
+        .or_else(|| points.first())
+    else {
+        return Ok(None);
+    };
+    Ok(Some(HomogeneousPoint3::new(
+        point.point.x.clone(),
+        point.point.y.clone(),
+        point.point.z.clone(),
+        Real::one(),
+    )))
+}
+
+pub(crate) fn certified_leaf_test_points(
+    support: &Plane,
+    edges: &[Plane],
+) -> HypermeshResult<Vec<HomogeneousPoint3>> {
+    let leaf = ConvexPolygon {
+        support: support.clone(),
+        edges: edges.to_vec(),
+        mesh_index: -1,
+        polygon_index: -1,
+        delta_w: WindingNumberTransitionVector::new(),
+        approx_bounds: None,
+    };
+    Ok(interior_leaf_points(&leaf)?
+        .into_iter()
+        .map(|point| {
+            HomogeneousPoint3::new(
+                point.point.x,
+                point.point.y,
+                point.point.z,
+                Real::one(),
+            )
+        })
+        .collect())
+}
+
 fn shifted_edge_interior_points(
     leaf: &ConvexPolygon,
     strict_interior: &Point3,
@@ -2240,6 +2294,26 @@ mod tests {
         let planes = &interior.planes[0];
         assert_eq!(affine_from_planes(planes).unwrap(), interior.point);
         assert_eq!(planes[0], leaf.support);
+    }
+
+    #[test]
+    fn certified_leaf_test_point_prefers_replayable_interior_witness() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let expected_points = interior_leaf_points(&leaf)
+            .unwrap()
+            .into_iter()
+            .filter(|point| !point.planes.is_empty())
+            .map(|point| point.point)
+            .collect::<Vec<_>>();
+
+        let point = certified_leaf_test_point(&leaf.support, &leaf.edges)
+            .unwrap()
+            .expect("triangle leaf should have a certified strict interior point")
+            .to_affine_point()
+            .unwrap();
+
+        assert!(!expected_points.is_empty());
+        assert!(expected_points.iter().any(|expected| expected == &point));
     }
 
     #[test]
