@@ -944,8 +944,13 @@ fn trace_reference_target(
         Err(err) => return Err(err),
     }
 
-    for start_definition in old_ref_definitions {
-        for end_definition in &target.definitions {
+    let mut start_definitions = old_ref_definitions.to_vec();
+    append_definition_if_missing(&mut start_definitions, axis_plane_definition(old_ref));
+    let mut end_definitions = target.definitions.clone();
+    append_definition_if_missing(&mut end_definitions, axis_plane_definition(&target.point));
+
+    for start_definition in &start_definitions {
+        for end_definition in &end_definitions {
             match trace_plane_replacement_path(start_definition, end_definition, old_wnv, polygons)
             {
                 Ok(winding) => return Ok(Some(winding)),
@@ -956,6 +961,15 @@ fn trace_reference_target(
     }
 
     Ok(None)
+}
+
+fn append_definition_if_missing(definitions: &mut Vec<[Plane; 3]>, candidate: [Plane; 3]) {
+    if definitions
+        .iter()
+        .all(|definition| definition != &candidate)
+    {
+        definitions.push(candidate);
+    }
 }
 
 fn is_valid_reference_for_bounds(
@@ -1605,6 +1619,42 @@ mod tests {
             .unwrap(),
             None
         );
+    }
+
+    #[test]
+    fn trace_reference_target_retries_axis_plane_replacement_definitions() {
+        let ref_point = p(0, 0, 0);
+        let target_point = p(2, 1, 0);
+        let ref_definition = [
+            Plane::axis_aligned(0, r(0)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::from_coefficients(r(1), r(1), r(1), r(0)),
+        ];
+        let invalid_definition = [
+            Plane::axis_aligned(0, r(2)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(0, r(0)),
+        ];
+        let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, -1, -1), p(3, 2, 1));
+
+        assert_eq!(
+            crate::segment_trace::trace_segment(&ref_point, &target_point, &[0], &[wall.clone()]),
+            Err(crate::error::HypermeshError::UnknownClassification)
+        );
+
+        let winding = trace_reference_target(
+            &ref_point,
+            &[ref_definition],
+            &[0],
+            &bounds,
+            &[wall],
+            &ReferenceTarget::with_definitions(target_point, vec![invalid_definition]),
+        )
+        .unwrap();
+
+        assert_eq!(winding, Some(vec![0]));
     }
 
     #[test]
