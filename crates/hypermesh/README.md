@@ -81,8 +81,10 @@ vertex coordinates and exact endpoint-box surface crossings, when axis-ordered
 paths hit surfaces. If none trace cleanly, it reports
 `ReferencePropagationFailed` instead of using random/interior sampling. The
 reference point carries retained plane triples; projected/escaped references
-carry axis-plane triples, and support-cell witnesses retain active halfspace
-planes from the `hyperlimit` feasibility report. When direct tracing cannot
+carry axis-plane triples, and support-cell witnesses are now constructed from
+closed support-side cells by enumerating exact feasible cell vertices, taking a
+strict interior centroid seed, and then asking `hyperlimit` for a replayable
+witness inside the inward-shifted strict cell. When direct tracing cannot
 certify a reference step, hypermesh retries certified plane-replacement traces
 between retained definitions. The same retained definitions are used again
 during leaf classification for plane-defined probes, and duplicate certified

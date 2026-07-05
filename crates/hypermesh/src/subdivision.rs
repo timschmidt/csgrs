@@ -16,7 +16,7 @@ use crate::winding::{
     can_boolean_op_be_inside_with_component_ranges,
     can_boolean_op_be_inside_with_transition_reachability, classify_polygon_output, propagate_wnv,
 };
-use hyperlattice::{HomogeneousPoint3, Point3, Real};
+use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
 use hyperlimit::{
     HalfspaceFeasibility, Plane3 as LimitPlane3, PredicateOutcome, classify_halfspace_feasibility3,
 };
@@ -974,51 +974,34 @@ fn support_plane_cell_reference(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    for margin in support_cell_margins(bounds, polygons.len() + 1)? {
-        let mut halfspaces = aabb_core_halfspaces(bounds, &margin)?;
-        if halfspaces.is_empty() {
-            continue;
-        }
-        if !halfspace_system_is_feasible(&halfspaces)? {
-            continue;
-        }
+    let mut halfspaces = aabb_core_halfspaces(bounds)?;
+    if halfspaces.is_empty() || !halfspace_system_is_feasible(&halfspaces)? {
+        return Ok(None);
+    }
 
-        let mut accept = |halfspaces: &[LimitPlane3],
-                          report: hyperlimit::HalfspaceFeasibilityReport|
-         -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-            let active_planes = report.active_planes;
-            let Some(witness) = report.witness else {
-                return Ok(None);
-            };
-            if !is_valid_reference_for_bounds(&witness, bounds, polygons)? {
-                return Ok(None);
-            }
-            let definitions =
-                reference_definitions_from_active_halfspaces(&witness, halfspaces, active_planes)?;
-            let target = ReferenceTarget::with_definitions(witness, definitions);
-            if let Some(winding) = trace_reference_target(
-                old_ref,
-                old_ref_definitions,
-                old_wnv,
-                bounds,
-                polygons,
-                &target,
-            )? {
-                return Ok(Some((target, winding)));
-            }
-            Ok(None)
+    let mut accept = |halfspaces: &[LimitPlane3],
+                      _report: hyperlimit::HalfspaceFeasibilityReport|
+     -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+        let Some(target) = strict_support_cell_target(bounds, halfspaces)? else {
+            return Ok(None);
         };
-
-        if let Some(found) = support_plane_cell_search_from(
+        if let Some(winding) = trace_reference_target(
+            old_ref,
+            old_ref_definitions,
+            old_wnv,
             bounds,
             polygons,
-            &margin,
-            0,
-            &mut halfspaces,
-            &mut accept,
+            &target,
         )? {
-            return Ok(Some(found));
+            return Ok(Some((target, winding)));
         }
+        Ok(None)
+    };
+
+    if let Some(found) =
+        support_plane_cell_search_from(bounds, polygons, 0, &mut halfspaces, &mut accept)?
+    {
+        return Ok(Some(found));
     }
     Ok(None)
 }
@@ -1027,9 +1010,8 @@ fn support_plane_cell_reference(
 fn support_plane_cell_target(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
-    margin: &Real,
 ) -> HypermeshResult<Option<ReferenceTarget>> {
-    let mut halfspaces = aabb_core_halfspaces(bounds, margin)?;
+    let mut halfspaces = aabb_core_halfspaces(bounds)?;
     if halfspaces.is_empty() {
         return Ok(None);
     }
@@ -1037,49 +1019,27 @@ fn support_plane_cell_target(
         return Ok(None);
     }
 
-    support_plane_cell_target_from(bounds, polygons, margin, 0, &mut halfspaces)
+    support_plane_cell_target_from(bounds, polygons, 0, &mut halfspaces)
 }
 
 #[cfg(test)]
 fn support_plane_cell_target_from(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
-    margin: &Real,
     polygon_index: usize,
     halfspaces: &mut Vec<LimitPlane3>,
 ) -> HypermeshResult<Option<ReferenceTarget>> {
     let mut accept = |halfspaces: &[LimitPlane3],
-                      report: hyperlimit::HalfspaceFeasibilityReport|
+                      _report: hyperlimit::HalfspaceFeasibilityReport|
      -> HypermeshResult<Option<ReferenceTarget>> {
-        let active_planes = report.active_planes;
-        let Some(witness) = report.witness else {
-            return Ok(None);
-        };
-        if is_valid_reference_for_bounds(&witness, bounds, polygons)? {
-            let definitions =
-                reference_definitions_from_active_halfspaces(&witness, halfspaces, active_planes)?;
-            Ok(Some(ReferenceTarget::with_definitions(
-                witness,
-                definitions,
-            )))
-        } else {
-            Ok(None)
-        }
+        strict_support_cell_target(bounds, halfspaces)
     };
-    support_plane_cell_search_from(
-        bounds,
-        polygons,
-        margin,
-        polygon_index,
-        halfspaces,
-        &mut accept,
-    )
+    support_plane_cell_search_from(bounds, polygons, polygon_index, halfspaces, &mut accept)
 }
 
 fn support_plane_cell_search_from<T>(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
-    margin: &Real,
     polygon_index: usize,
     halfspaces: &mut Vec<LimitPlane3>,
     accept: &mut impl FnMut(
@@ -1091,7 +1051,6 @@ fn support_plane_cell_search_from<T>(
         for positive in [false, true] {
             halfspaces.push(support_side_halfspace(
                 &polygons[polygon_index].support,
-                margin,
                 positive,
             ));
             let feasible = halfspace_system_is_feasible(halfspaces)?;
@@ -1099,7 +1058,6 @@ fn support_plane_cell_search_from<T>(
                 && let Some(target) = support_plane_cell_search_from(
                     bounds,
                     polygons,
-                    margin,
                     polygon_index + 1,
                     halfspaces,
                     accept,
@@ -1119,58 +1077,13 @@ fn support_plane_cell_search_from<T>(
     accept(halfspaces, report)
 }
 
-fn support_cell_margins(bounds: &Aabb, support_count: usize) -> HypermeshResult<Vec<Real>> {
-    let Some(min_extent) = smallest_positive_extent(bounds)? else {
-        return Ok(Vec::new());
-    };
-
-    let mut margins = Vec::new();
-    for scale in [4_u64, 16, 64, 256] {
-        let denominator = Real::from(scale * (support_count as u64 + 1));
-        margins.push(
-            (min_extent.clone() / denominator)
-                .map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
-        );
-    }
-    Ok(margins)
-}
-
-fn smallest_positive_extent(bounds: &Aabb) -> HypermeshResult<Option<Real>> {
-    let mut result: Option<Real> = None;
-    for axis in 0..3 {
-        let extent = bounds.extent(axis);
-        if !compare_real(&extent, &Real::zero())?.is_gt() {
-            continue;
-        }
-        if result
-            .as_ref()
-            .is_none_or(|current| compare_real(&extent, current).is_ok_and(|order| order.is_lt()))
-        {
-            result = Some(extent);
-        }
-    }
-    Ok(result)
-}
-
-fn aabb_core_halfspaces(bounds: &Aabb, margin: &Real) -> HypermeshResult<Vec<LimitPlane3>> {
+fn aabb_core_halfspaces(bounds: &Aabb) -> HypermeshResult<Vec<LimitPlane3>> {
     let mut halfspaces = Vec::with_capacity(6);
     for axis in 0..3 {
         let min = axis_ref(&bounds.min, axis);
         let max = axis_ref(&bounds.max, axis);
-        let extent = max - min;
-        if compare_real(&extent, &Real::zero())?.is_eq() {
-            halfspaces.push(axis_halfspace(axis, true, min.clone()));
-            halfspaces.push(axis_halfspace(axis, false, min.clone()));
-            continue;
-        }
-
-        let lower = min + margin;
-        let upper = max - margin;
-        if !compare_real(&lower, &upper)?.is_lt() {
-            return Ok(Vec::new());
-        }
-        halfspaces.push(axis_halfspace(axis, true, lower));
-        halfspaces.push(axis_halfspace(axis, false, upper));
+        halfspaces.push(axis_halfspace(axis, true, min.clone()));
+        halfspaces.push(axis_halfspace(axis, false, max.clone()));
     }
     Ok(halfspaces)
 }
@@ -1192,11 +1105,7 @@ fn axis_halfspace(axis: usize, lower_bound: bool, value: Real) -> LimitPlane3 {
     LimitPlane3::new(normal, offset)
 }
 
-fn support_side_halfspace(
-    plane: &crate::geometry::Plane,
-    margin: &Real,
-    positive: bool,
-) -> LimitPlane3 {
+fn support_side_halfspace(plane: &crate::geometry::Plane, positive: bool) -> LimitPlane3 {
     if positive {
         LimitPlane3::new(
             Point3::new(
@@ -1204,10 +1113,10 @@ fn support_side_halfspace(
                 -plane.normal.y.clone(),
                 -plane.normal.z.clone(),
             ),
-            &(-plane.offset.clone()) + margin,
+            -plane.offset.clone(),
         )
     } else {
-        LimitPlane3::new(plane.normal.clone(), &plane.offset + margin)
+        LimitPlane3::new(plane.normal.clone(), plane.offset.clone())
     }
 }
 
@@ -1306,6 +1215,155 @@ fn push_verified_definition(
         Err(err) => return Err(err),
     }
     Ok(())
+}
+
+fn strict_support_cell_target(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<Option<ReferenceTarget>> {
+    let vertices = feasible_support_cell_vertices(halfspaces)?;
+    if vertices.is_empty() {
+        return Ok(None);
+    }
+    let Some(seed) = centroid_point(&vertices)? else {
+        return Ok(None);
+    };
+    if !point_strictly_inside_support_cell(&seed, bounds, halfspaces)? {
+        return Ok(None);
+    }
+
+    let shifted = shifted_support_cell_halfspaces(bounds, halfspaces, &seed)?;
+    let Some(report) = halfspace_system_report(&shifted)? else {
+        return Ok(None);
+    };
+    if report.status != HalfspaceFeasibility::Feasible {
+        return Ok(None);
+    }
+    let Some(witness) = report.witness else {
+        return Ok(None);
+    };
+    if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
+        return Ok(None);
+    }
+
+    let definitions =
+        reference_definitions_from_active_halfspaces(&witness, &shifted, report.active_planes)?;
+    Ok(Some(ReferenceTarget::with_definitions(
+        witness,
+        definitions,
+    )))
+}
+
+fn feasible_support_cell_vertices(halfspaces: &[LimitPlane3]) -> HypermeshResult<Vec<Point3>> {
+    let mut vertices = Vec::new();
+    for first in 0..halfspaces.len() {
+        for second in (first + 1)..halfspaces.len() {
+            for third in (second + 1)..halfspaces.len() {
+                let candidate = intersect_three_planes(
+                    &halfspaces[first],
+                    &halfspaces[second],
+                    &halfspaces[third],
+                );
+                let Ok(point) = candidate.to_affine_point() else {
+                    continue;
+                };
+                if point_satisfies_halfspaces(&point, halfspaces)?
+                    && !vertices.iter().any(|existing| existing == &point)
+                {
+                    vertices.push(point);
+                }
+            }
+        }
+    }
+    Ok(vertices)
+}
+
+fn point_satisfies_halfspaces(point: &Point3, halfspaces: &[LimitPlane3]) -> HypermeshResult<bool> {
+    for halfspace in halfspaces {
+        let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
+        if crate::geometry::classify_point(point, &plane)? == Classification::Positive {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn centroid_point(points: &[Point3]) -> HypermeshResult<Option<Point3>> {
+    if points.is_empty() {
+        return Ok(None);
+    }
+    let mut sum = Point3::origin();
+    for point in points {
+        sum.x += point.x.clone();
+        sum.y += point.y.clone();
+        sum.z += point.z.clone();
+    }
+    let denom = Real::from(points.len() as u64);
+    Ok(Some(Point3::new(
+        (sum.x / denom.clone()).map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+        (sum.y / denom.clone()).map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+        (sum.z / denom).map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+    )))
+}
+
+fn point_strictly_inside_support_cell(
+    point: &Point3,
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<bool> {
+    if !point_strictly_inside_bounds(point, bounds)? {
+        return Ok(false);
+    }
+    for halfspace in halfspaces {
+        if halfspace_is_degenerate_bound(halfspace, bounds)? {
+            continue;
+        }
+        let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
+        let value = plane.expression_at_point(point);
+        if compare_real(&value, &Real::zero())?.is_eq() {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn shifted_support_cell_halfspaces(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    strict_interior: &Point3,
+) -> HypermeshResult<Vec<LimitPlane3>> {
+    let half = (Real::one() / Real::from(2))
+        .map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
+    let mut shifted = Vec::with_capacity(halfspaces.len());
+    for halfspace in halfspaces {
+        let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
+        let value = plane.expression_at_point(strict_interior);
+        let keep_closed = compare_real(&value, &Real::zero())?.is_eq()
+            || halfspace_is_degenerate_bound(halfspace, bounds)?;
+        let offset = if keep_closed {
+            halfspace.offset.clone()
+        } else {
+            &halfspace.offset - &(value * &half)
+        };
+        shifted.push(LimitPlane3::new(halfspace.normal.clone(), offset));
+    }
+    Ok(shifted)
+}
+
+fn halfspace_is_degenerate_bound(halfspace: &LimitPlane3, bounds: &Aabb) -> HypermeshResult<bool> {
+    for axis in 0..3 {
+        let min = axis_ref(&bounds.min, axis);
+        let max = axis_ref(&bounds.max, axis);
+        if compare_real(min, max)?.is_ne() {
+            continue;
+        }
+        if *halfspace == axis_halfspace(axis, true, min.clone())
+            || *halfspace == axis_halfspace(axis, false, min.clone())
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 #[cfg(test)]
@@ -1591,8 +1649,7 @@ mod tests {
 
         assert!(point_lies_on_any_support_plane(&p(5, 5, 5), &polygons).unwrap());
 
-        let margin = support_cell_margins(&bounds, polygons.len() + 1).unwrap()[0].clone();
-        let target = support_plane_cell_target(&bounds, &polygons, &margin)
+        let target = support_plane_cell_target(&bounds, &polygons)
             .unwrap()
             .expect("strict support cell should have a feasible witness");
 
@@ -1670,7 +1727,7 @@ mod tests {
     }
 
     #[test]
-    fn support_plane_cell_backtracks_when_first_feasible_side_dead_ends() {
+    fn support_plane_cell_target_finds_strict_point_in_closed_feasible_cell() {
         let bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
         let polygons = vec![
             support_only_polygon(Plane::from_coefficients(r(-1), r(0), r(0), q(7, 2))),
@@ -1678,13 +1735,14 @@ mod tests {
             support_only_polygon(Plane::axis_aligned(0, r(5))),
         ];
 
-        let target = support_plane_cell_target(&bounds, &polygons, &r(1))
+        let target = support_plane_cell_target(&bounds, &polygons)
             .unwrap()
-            .expect("backtracking should find an alternate feasible support cell");
+            .expect("closed feasible support cell should produce a strict interior point");
 
         assert!(point_strictly_inside_bounds(&target.point, &bounds).unwrap());
         assert!(!point_lies_on_any_support_plane(&target.point, &polygons).unwrap());
-        assert!(compare_real(&target.point.x, &r(6)).unwrap().is_gt());
+        assert!(compare_real(&target.point.x, &q(7, 2)).unwrap().is_gt());
+        assert!(compare_real(&target.point.x, &r(5)).unwrap().is_lt());
         assert!(
             target
                 .definitions
@@ -1697,8 +1755,7 @@ mod tests {
     fn support_plane_cell_search_backtracks_after_leaf_rejection() {
         let bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
         let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(5)))];
-        let margin = r(1);
-        let mut halfspaces = aabb_core_halfspaces(&bounds, &margin).unwrap();
+        let mut halfspaces = aabb_core_halfspaces(&bounds).unwrap();
         let mut rejected_first_leaf = false;
         let mut accept = |_halfspaces: &[LimitPlane3],
                           report: hyperlimit::HalfspaceFeasibilityReport|
@@ -1713,16 +1770,10 @@ mod tests {
             Ok(Some(witness))
         };
 
-        let target = support_plane_cell_search_from(
-            &bounds,
-            &polygons,
-            &margin,
-            0,
-            &mut halfspaces,
-            &mut accept,
-        )
-        .unwrap()
-        .expect("search should continue after the first accepted leaf rejects");
+        let target =
+            support_plane_cell_search_from(&bounds, &polygons, 0, &mut halfspaces, &mut accept)
+                .unwrap()
+                .expect("search should continue after the first accepted leaf rejects");
 
         assert!(rejected_first_leaf);
         assert!(compare_real(&target.x, &r(5)).unwrap().is_gt());
