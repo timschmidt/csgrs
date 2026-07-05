@@ -1602,6 +1602,22 @@ fn shifted_support_cell_targets_from_seed(
             ),
         );
     }
+    for witness in feasible_support_cell_vertices(&shifted)? {
+        if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
+            continue;
+        }
+        push_unique_reference_target(
+            &mut targets,
+            ReferenceTarget::with_definitions(
+                witness.clone(),
+                reference_definitions_from_active_halfspaces(
+                    &witness,
+                    &shifted,
+                    [None, None, None],
+                )?,
+            ),
+        );
+    }
 
     Ok(targets)
 }
@@ -2340,6 +2356,11 @@ mod tests {
             targets
                 .iter()
                 .any(|target| { target.point == Point3::new(r(2), q(3, 2), q(5, 2)) })
+        );
+        assert!(
+            targets
+                .iter()
+                .any(|target| { target.point == Point3::new(r(3), q(5, 2), q(7, 2)) })
         );
     }
 

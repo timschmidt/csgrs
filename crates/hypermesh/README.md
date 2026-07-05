@@ -118,10 +118,11 @@ direct seeds of the closed cell. That lets reference propagation backtrack
 across multiple certified direct and shifted targets inside one feasible
 support-side cell instead of collapsing the cell to one point. Each shifted
 support cell now also contributes every strict target recovered from its own
-certified witness family instead of only the first feasibility witness
-selected by the halfspace predicate. Shifted support-cell search also starts
-from every exact feasible support-cell vertex instead of relying only on the
-direct witness plus one centroid-style strict seed.
+certified witness family and its own exact feasible vertices instead of only
+the first feasibility witness selected by the halfspace predicate. Shifted
+support-cell search also starts from every exact feasible support-cell vertex
+instead of relying only on the direct witness plus one centroid-style strict
+seed.
 Support-cell retained definitions now include every exact witness-active
 halfspace we can verify, not just the feasibility basis planes returned by
 `hyperlimit`. When direct tracing cannot certify a reference step, hypermesh
