@@ -297,7 +297,29 @@ fn subdivide_into_inner(
         }
     }
 
-    if task.polygons.len() <= config.leaf_threshold || !can_split_bounds(&task.bounds)? {
+    let can_split = can_split_bounds(&task.bounds)?;
+
+    if task.polygons.len() <= config.leaf_threshold {
+        let mut certified_output = Vec::new();
+        match process_leaf_into(
+            &task.polygons,
+            &task.bounds,
+            &task.ref_point,
+            &task.ref_definitions,
+            &task.ref_wnv,
+            indicator,
+            &mut certified_output,
+        ) {
+            Ok(_) => {
+                output.extend(certified_output);
+                return Ok(());
+            }
+            Err(crate::error::HypermeshError::UnknownClassification) if can_split => {}
+            Err(err) => return Err(err),
+        }
+    }
+
+    if !can_split {
         process_leaf_into(
             &task.polygons,
             &task.bounds,
@@ -2533,6 +2555,39 @@ mod tests {
             &indicator,
             SubdivisionConfig {
                 leaf_threshold: 0,
+                max_depth: 0,
+            },
+            &mut output,
+        )
+        .unwrap_err();
+
+        assert_eq!(
+            err,
+            crate::error::HypermeshError::SubdivisionDepthLimit {
+                depth: 0,
+                polygon_count: 1
+            }
+        );
+        assert_eq!(output, vec![sentinel]);
+    }
+
+    #[test]
+    fn subdivision_below_threshold_keeps_splitting_after_uncertified_leaf_failure() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
+        let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Union, 1);
+        let sentinel = ClassifiedPolygon::new(
+            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 99),
+            1,
+        );
+        let mut output = vec![sentinel.clone()];
+
+        let err = subdivide_into(
+            SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
+            &indicator,
+            SubdivisionConfig {
+                leaf_threshold: 1,
                 max_depth: 0,
             },
             &mut output,

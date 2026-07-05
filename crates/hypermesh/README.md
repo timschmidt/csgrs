@@ -175,8 +175,11 @@ witness when no strict contained vertex exists. Face-local BSP duplicate-overlap
 suppression now uses the same certified leaf witness-family relation instead of
 one centroid-style representative point. Splittable tasks now also try
 that same certified leaf path before subdivision once they are above the leaf
-threshold, so exact local arrangement isolation can terminate a branch without
-waiting for the depth budget to expire. Hypermesh reports
+threshold, and if a below-threshold leaf attempt still returns
+`UnknownClassification` while the bounds remain splittable, hypermesh now keeps
+subdividing instead of treating the threshold as a hard completeness boundary.
+That lets exact local arrangement isolation continue past heuristic leaf sizing
+until the depth budget or a certified leaf result stops the branch. Hypermesh reports
 `SubdivisionDepthLimit` if the configured depth budget is reached before the
 current task can be certified as a leaf, and it reports
 `UnknownClassification` if leaf classification or this isolation check fails
