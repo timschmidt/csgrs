@@ -561,18 +561,10 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<Point3>> {
         if !targets.iter().any(|existing| existing == &seed) {
             targets.push(seed.clone());
         }
-        let shifted = shifted_halfspace_cell(bounds, &halfspaces, &seed)?;
-        let shifted_report = halfspace_feasibility_report(&shifted)?;
-        if shifted_report.status != HalfspaceFeasibility::Feasible {
-            continue;
-        }
-        let Some(witness) = shifted_report.witness else {
-            continue;
-        };
-        if point_strictly_inside_halfspace_cell(&witness, bounds, &halfspaces)?
-            && !targets.iter().any(|existing| existing == &witness)
-        {
-            targets.push(witness);
+        for witness in shifted_halfspace_cell_witnesses_from_seed(bounds, &halfspaces, &seed)? {
+            if !targets.iter().any(|existing| existing == &witness.point) {
+                targets.push(witness.point);
+            }
         }
     }
 
@@ -1574,22 +1566,17 @@ fn strict_normal_probe_targets(
             push_unique_probe_point(&mut probes, probe);
         }
 
-        let shifted = shifted_halfspace_cell(corridor, &halfspaces, &witness)?;
-        let shifted_report = halfspace_feasibility_report(&shifted)?;
-        if shifted_report.status != HalfspaceFeasibility::Feasible {
-            continue;
-        }
-        let Some(shifted_witness) = shifted_report.witness else {
-            continue;
-        };
-        if let Some(probe) = build_probe_point(
-            &shifted_witness,
-            support,
-            &shifted,
-            shifted_report.active_planes,
-            &extra_planes,
-        )? {
-            push_unique_probe_point(&mut probes, probe);
+        for shifted in shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, &witness)?
+        {
+            if let Some(probe) = build_probe_point(
+                &shifted.point,
+                support,
+                &shifted.halfspaces,
+                shifted.active_planes,
+                &extra_planes,
+            )? {
+                push_unique_probe_point(&mut probes, probe);
+            }
         }
     }
 
@@ -1787,23 +1774,18 @@ fn strict_axis_probe_targets(
             push_unique_probe_point(&mut probes, probe);
         }
 
-        let shifted = shifted_halfspace_cell(corridor, &halfspaces, &witness)?;
-        let shifted_report = halfspace_feasibility_report(&shifted)?;
-        if shifted_report.status != HalfspaceFeasibility::Feasible {
-            continue;
-        }
-        let Some(shifted_witness) = shifted_report.witness else {
-            continue;
-        };
-        if let Some(probe) = build_axis_probe_point(
-            &shifted_witness,
-            interior,
-            support,
-            axis,
-            &shifted,
-            shifted_report.active_planes,
-        )? {
-            push_unique_probe_point(&mut probes, probe);
+        for shifted in shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, &witness)?
+        {
+            if let Some(probe) = build_axis_probe_point(
+                &shifted.point,
+                interior,
+                support,
+                axis,
+                &shifted.halfspaces,
+                shifted.active_planes,
+            )? {
+                push_unique_probe_point(&mut probes, probe);
+            }
         }
     }
 
@@ -2024,33 +2006,64 @@ struct ShiftedHalfspaceWitness {
     active_planes: [Option<usize>; 3],
 }
 
+fn shifted_halfspace_cell_witnesses_from_seed(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    seed: &Point3,
+) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>> {
+    let shifted = shifted_halfspace_cell(bounds, halfspaces, seed)?;
+    let shifted_report = halfspace_feasibility_report(&shifted)?;
+    if shifted_report.status != HalfspaceFeasibility::Feasible {
+        return Ok(Vec::new());
+    }
+
+    let report_witness = shifted_report.witness.clone();
+    let mut witnesses = Vec::new();
+    for witness in strict_halfspace_cell_seeds_from_report(bounds, &shifted, &shifted_report)? {
+        let active_planes = if report_witness
+            .as_ref()
+            .is_some_and(|point| point == &witness)
+        {
+            shifted_report.active_planes
+        } else {
+            [None, None, None]
+        };
+        push_unique_shifted_halfspace_witness(
+            &mut witnesses,
+            ShiftedHalfspaceWitness {
+                point: witness,
+                halfspaces: shifted.clone(),
+                active_planes,
+            },
+        );
+    }
+
+    Ok(witnesses)
+}
+
 fn shifted_halfspace_cell_vertex_witnesses(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>> {
     let mut witnesses: Vec<ShiftedHalfspaceWitness> = Vec::new();
     for seed in feasible_halfspace_cell_vertices(halfspaces)? {
-        let shifted = shifted_halfspace_cell(bounds, halfspaces, &seed)?;
-        let shifted_report = halfspace_feasibility_report(&shifted)?;
-        if shifted_report.status != HalfspaceFeasibility::Feasible {
-            continue;
+        for witness in shifted_halfspace_cell_witnesses_from_seed(bounds, halfspaces, &seed)? {
+            push_unique_shifted_halfspace_witness(&mut witnesses, witness);
         }
-        let Some(witness) = shifted_report.witness else {
-            continue;
-        };
-        if !point_strictly_inside_halfspace_cell(&witness, bounds, halfspaces)? {
-            continue;
-        }
-        if witnesses.iter().any(|existing| existing.point == witness) {
-            continue;
-        }
-        witnesses.push(ShiftedHalfspaceWitness {
-            point: witness,
-            halfspaces: shifted,
-            active_planes: shifted_report.active_planes,
-        });
     }
     Ok(witnesses)
+}
+
+fn push_unique_shifted_halfspace_witness(
+    witnesses: &mut Vec<ShiftedHalfspaceWitness>,
+    witness: ShiftedHalfspaceWitness,
+) {
+    if !witnesses
+        .iter()
+        .any(|existing| existing.point == witness.point)
+    {
+        witnesses.push(witness);
+    }
 }
 
 fn halfspace_feasibility_report(
@@ -2314,6 +2327,23 @@ mod tests {
                 point_strictly_inside_halfspace_cell(&witness.point, &bounds, &halfspaces).unwrap()
             );
         }
+    }
+
+    #[test]
+    fn shifted_halfspace_cell_witnesses_from_seed_include_shifted_centroid_seed() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+
+        let witnesses =
+            shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, &p(0, 0, 0)).unwrap();
+
+        assert!(witnesses.iter().any(|witness| witness.point == p(1, 1, 1)));
+        assert!(
+            witnesses
+                .iter()
+                .find(|witness| witness.point == p(1, 1, 1))
+                .is_some_and(|witness| witness.active_planes == [None, None, None])
+        );
     }
 
     #[test]

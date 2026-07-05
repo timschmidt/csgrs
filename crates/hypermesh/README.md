@@ -70,7 +70,9 @@ definition family, and they now reuse any strict closed-cell feasibility
 witness that `hyperlimit` already provides before falling back to additional
 shifted-cell witnesses. Those shifted witness searches now also start from the
 exact feasible vertices of the local witness cell instead of only the direct
-witness plus one centroid-style strict seed. Axis-direction probes are now constructed from strict
+witness plus one centroid-style strict seed, and each shifted witness cell now
+contributes its own strict seed family instead of collapsing to one chosen
+feasibility witness. Axis-direction probes are now constructed from strict
 witness search in the closed axis corridor and desired support-side cell,
 rather than by midpoint sampling. Full
 plane-replacement coverage for every reference/probe construction remains
