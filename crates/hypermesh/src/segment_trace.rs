@@ -1028,12 +1028,7 @@ pub(crate) fn certified_leaf_test_points(
     Ok(interior_leaf_points(&leaf)?
         .into_iter()
         .map(|point| {
-            HomogeneousPoint3::new(
-                point.point.x,
-                point.point.y,
-                point.point.z,
-                Real::one(),
-            )
+            HomogeneousPoint3::new(point.point.x, point.point.y, point.point.z, Real::one())
         })
         .collect())
 }

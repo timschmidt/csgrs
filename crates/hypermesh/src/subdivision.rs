@@ -338,8 +338,7 @@ fn subdivide_into_inner(
         return Ok(());
     }
 
-    let split_axis = task.bounds.longest_axis()?;
-    let split_value = task.bounds.midpoint(split_axis);
+    let (split_axis, split_value) = select_subdivision_split(&task.bounds, &task.polygons)?;
     let split_plane = crate::geometry::Plane::axis_aligned(split_axis, split_value.clone());
     let left_bounds = task.bounds.left_half(split_axis, split_value.clone());
     let right_bounds = task.bounds.right_half(split_axis, split_value);
@@ -677,6 +676,142 @@ fn can_split_bounds(bounds: &Aabb) -> HypermeshResult<bool> {
         }
     }
     Ok(false)
+}
+
+fn select_subdivision_split(
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<(usize, Real)> {
+    let mut best_axis = bounds.longest_axis()?;
+    let mut best_value = bounds.midpoint(best_axis);
+    let mut best_counts = split_child_counts(polygons, best_axis, &best_value)?;
+
+    for axis in 0..3 {
+        if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
+            continue;
+        }
+        for (_gap, value) in arrangement_split_candidates(bounds, polygons, axis)? {
+            let counts = split_child_counts(polygons, axis, &value)?;
+            if split_counts_strictly_better(counts, best_counts) {
+                best_counts = counts;
+                best_value = value;
+                best_axis = axis;
+            }
+        }
+    }
+
+    Ok((best_axis, best_value))
+}
+
+fn split_counts_strictly_better(
+    candidate: (usize, usize, usize),
+    baseline: (usize, usize, usize),
+) -> bool {
+    candidate.0 < baseline.0
+        || (candidate.0 == baseline.0
+            && (candidate.1 < baseline.1
+                || (candidate.1 == baseline.1 && candidate.2 < baseline.2)))
+}
+
+fn arrangement_split_candidates(
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    axis: usize,
+) -> HypermeshResult<Vec<(Real, Real)>> {
+    let min = axis_ref(&bounds.min, axis);
+    let max = axis_ref(&bounds.max, axis);
+    if !compare_real(min, max)?.is_lt() {
+        return Ok(Vec::new());
+    }
+
+    let mut values = Vec::new();
+    for polygon in polygons {
+        for vertex in polygon.vertices()? {
+            let value = axis_ref(&vertex, axis);
+            if compare_real(value, min)?.is_gt() && compare_real(value, max)?.is_lt() {
+                push_unique_ordered_axis_value(&mut values, value.clone())?;
+            }
+        }
+    }
+    if values.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let mut candidates = axis_gap_candidates_between_values(&values)?;
+    if !candidates.is_empty() {
+        return Ok(candidates);
+    }
+
+    update_axis_gap_candidates(&mut candidates, min, &values[0])?;
+    update_axis_gap_candidates(&mut candidates, values.last().expect("non-empty"), max)?;
+    Ok(candidates)
+}
+
+fn axis_gap_candidates_between_values(values: &[Real]) -> HypermeshResult<Vec<(Real, Real)>> {
+    let mut candidates = Vec::new();
+    for pair in values.windows(2) {
+        update_axis_gap_candidates(&mut candidates, &pair[0], &pair[1])?;
+    }
+    Ok(candidates)
+}
+
+fn update_axis_gap_candidates(
+    candidates: &mut Vec<(Real, Real)>,
+    start: &Real,
+    end: &Real,
+) -> HypermeshResult<()> {
+    if !compare_real(start, end)?.is_lt() {
+        return Ok(());
+    }
+    let gap = end - start;
+    let midpoint = ((start + end) / Real::from(2))
+        .map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
+    candidates.push((gap, midpoint));
+    Ok(())
+}
+
+fn push_unique_ordered_axis_value(values: &mut Vec<Real>, value: Real) -> HypermeshResult<()> {
+    for (index, existing) in values.iter().enumerate() {
+        match compare_real(&value, existing)? {
+            std::cmp::Ordering::Equal => return Ok(()),
+            std::cmp::Ordering::Less => {
+                values.insert(index, value);
+                return Ok(());
+            }
+            std::cmp::Ordering::Greater => {}
+        }
+    }
+    values.push(value);
+    Ok(())
+}
+
+fn split_child_counts(
+    polygons: &[ConvexPolygon],
+    axis: usize,
+    value: &Real,
+) -> HypermeshResult<(usize, usize, usize)> {
+    let split_plane = Plane::axis_aligned(axis, value.clone());
+    let mut left_count = 0;
+    let mut right_count = 0;
+    let mut both_count = 0;
+
+    for polygon in polygons {
+        match clip_polygon(polygon, &split_plane)?.side {
+            ClipSide::Left => left_count += 1,
+            ClipSide::Right => right_count += 1,
+            ClipSide::Both => {
+                left_count += 1;
+                right_count += 1;
+                both_count += 1;
+            }
+        }
+    }
+
+    Ok((
+        left_count.max(right_count),
+        both_count,
+        left_count.abs_diff(right_count),
+    ))
 }
 
 fn compute_new_reference(
@@ -1554,6 +1689,31 @@ mod tests {
         let bounds = Aabb::new(p(0, 0, 0), p(1, 0, 0));
 
         assert!(can_split_bounds(&bounds).unwrap());
+    }
+
+    #[test]
+    fn select_subdivision_split_prefers_interior_arrangement_gap() {
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
+        let polygons = vec![
+            make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
+            make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
+        ];
+
+        let (axis, value) = select_subdivision_split(&bounds, &polygons).unwrap();
+
+        assert_eq!(axis, 0);
+        assert_eq!(value, q(3, 2));
+    }
+
+    #[test]
+    fn select_subdivision_split_keeps_midpoint_when_arrangement_cut_is_not_better() {
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
+        let polygons = vec![make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 0, 0)];
+
+        let (axis, value) = select_subdivision_split(&bounds, &polygons).unwrap();
+
+        assert_eq!(axis, 0);
+        assert_eq!(value, r(5));
     }
 
     #[test]
