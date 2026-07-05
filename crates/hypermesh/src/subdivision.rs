@@ -854,53 +854,18 @@ fn projection_escape_targets(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut targets = Vec::new();
-    let mut axis_values = vec![Vec::new(), Vec::new(), Vec::new()];
     for axis in 0..3 {
         for direction_positive in [true, false] {
             if let Some(value) =
                 escaped_reference_axis_value(projected, bounds, polygons, axis, direction_positive)?
             {
-                push_unique_real(&mut axis_values[axis], value.clone());
                 let mut target = projected.clone();
                 *axis_mut(&mut target, axis) = value;
                 push_unique_reference_target(&mut targets, ReferenceTarget::axis_defined(target));
             }
         }
     }
-
-    for first_axis in 0..3 {
-        for second_axis in (first_axis + 1)..3 {
-            for first_value in &axis_values[first_axis] {
-                for second_value in &axis_values[second_axis] {
-                    let mut target = projected.clone();
-                    *axis_mut(&mut target, first_axis) = first_value.clone();
-                    *axis_mut(&mut target, second_axis) = second_value.clone();
-                    push_unique_reference_target(
-                        &mut targets,
-                        ReferenceTarget::axis_defined(target),
-                    );
-                }
-            }
-        }
-    }
-
-    for x in &axis_values[0] {
-        for y in &axis_values[1] {
-            for z in &axis_values[2] {
-                push_unique_reference_target(
-                    &mut targets,
-                    ReferenceTarget::axis_defined(Point3::new(x.clone(), y.clone(), z.clone())),
-                );
-            }
-        }
-    }
     Ok(targets)
-}
-
-fn push_unique_real(values: &mut Vec<Real>, value: Real) {
-    if !values.iter().any(|existing| existing == &value) {
-        values.push(value);
-    }
 }
 
 fn escaped_reference_axis_value(
