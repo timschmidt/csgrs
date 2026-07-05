@@ -105,7 +105,9 @@ then asks `hyperlimit` for strict witnesses and exact feasible vertices in that
 projected cell before tracing from the parent reference. If those projected
 targets still cannot be traced directly, the implementation next tries local
 support-side cell search inside that same certified projected cell before it
-starts relaxing the geometry into broader escape families. If those projected
+starts relaxing the geometry into broader escape families, and uncertified
+projected support-cell searches now fall through to later certified escape
+families instead of aborting the whole propagation step. If those projected
 support cells still cannot be certified, the implementation next tries local
 axis-aligned
 escape corridors inside certified open intervals before the next surface hit or
