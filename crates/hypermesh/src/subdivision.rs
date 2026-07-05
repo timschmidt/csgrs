@@ -688,17 +688,15 @@ fn compute_new_reference(
         ));
     }
 
-    for target in projection_escape_targets(&projected, bounds, polygons)? {
-        if let Some(winding) = trace_reference_target(
-            old_ref,
-            old_ref_definitions,
-            old_wnv,
-            bounds,
-            polygons,
-            &target,
-        )? {
-            return Ok((target.point, target.definitions, winding));
-        }
+    if let Some((target, winding)) = projection_axis_escape_reference(
+        old_ref,
+        old_ref_definitions,
+        old_wnv,
+        &projected,
+        bounds,
+        polygons,
+    )? {
+        return Ok((target.point, target.definitions, winding));
     }
 
     if let Some((target, winding)) = projection_escape_reference(
@@ -829,6 +827,7 @@ fn escaped_reference_axis_stop_value(
     Ok(Some(stop_value))
 }
 
+#[cfg(test)]
 fn push_unique_reference_target(targets: &mut Vec<ReferenceTarget>, target: ReferenceTarget) {
     if let Some(existing) = targets
         .iter_mut()
@@ -848,43 +847,51 @@ fn push_unique_reference_target(targets: &mut Vec<ReferenceTarget>, target: Refe
     }
 }
 
-fn projection_escape_targets(
+fn projection_axis_escape_reference(
+    old_ref: &Point3,
+    old_ref_definitions: &[[Plane; 3]],
+    old_wnv: &[i32],
     projected: &Point3,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
-) -> HypermeshResult<Vec<ReferenceTarget>> {
-    let mut targets = Vec::new();
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     for axis in 0..3 {
         for direction_positive in [true, false] {
-            if let Some(value) =
-                escaped_reference_axis_value(projected, bounds, polygons, axis, direction_positive)?
-            {
-                let mut target = projected.clone();
-                *axis_mut(&mut target, axis) = value;
-                push_unique_reference_target(&mut targets, ReferenceTarget::axis_defined(target));
+            let Some(stop_value) = escaped_reference_axis_stop_value(
+                projected,
+                bounds,
+                polygons,
+                axis,
+                direction_positive,
+            )?
+            else {
+                continue;
+            };
+            let corridor = axis_escape_bounds(projected, axis, stop_value)?;
+            if let Some(found) = support_plane_cell_reference(
+                old_ref,
+                old_ref_definitions,
+                old_wnv,
+                &corridor,
+                polygons,
+            )? {
+                return Ok(Some(found));
             }
         }
     }
-    Ok(targets)
+    Ok(None)
 }
 
-fn escaped_reference_axis_value(
-    projected: &Point3,
-    bounds: &Aabb,
-    polygons: &[ConvexPolygon],
-    axis: usize,
-    direction_positive: bool,
-) -> HypermeshResult<Option<Real>> {
-    let Some(stop_value) =
-        escaped_reference_axis_stop_value(projected, bounds, polygons, axis, direction_positive)?
-    else {
-        return Ok(None);
-    };
-
-    Ok(Some(
-        ((axis_ref(projected, axis) + &stop_value) / Real::from(2))
-            .map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
-    ))
+fn axis_escape_bounds(projected: &Point3, axis: usize, stop_value: Real) -> HypermeshResult<Aabb> {
+    let mut min = projected.clone();
+    let mut max = projected.clone();
+    let start_value = axis_ref(projected, axis);
+    if compare_real(start_value, &stop_value)?.is_lt() {
+        *axis_mut(&mut max, axis) = stop_value;
+    } else {
+        *axis_mut(&mut min, axis) = stop_value;
+    }
+    Ok(Aabb::new(min, max))
 }
 #[derive(Clone, Debug, PartialEq)]
 struct ReferenceTarget {
@@ -1528,6 +1535,34 @@ mod tests {
         assert_eq!(escape.max.y, r(6));
         assert_eq!(escape.min.z, r(0));
         assert_eq!(escape.max.z, r(6));
+    }
+
+    #[test]
+    fn projection_axis_escape_reference_finds_corridor_witness() {
+        let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+        left.delta_w = vec![1];
+        let mut right = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+        right.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
+
+        let (target, winding) = projection_axis_escape_reference(
+            &p(-1, 3, 3),
+            &axis_defs(&p(-1, 3, 3)),
+            &[0],
+            &p(1, 3, 3),
+            &bounds,
+            &[left, right],
+        )
+        .unwrap()
+        .expect("axis escape corridor should contain a certified witness");
+
+        assert_eq!(winding.len(), 1);
+        assert_ne!(winding[0], 0);
+        assert_eq!(target.point.y, r(3));
+        assert_eq!(target.point.z, r(3));
+        assert!(compare_real(&target.point.x, &r(1)).unwrap().is_gt());
+        assert!(compare_real(&target.point.x, &r(4)).unwrap().is_lt());
+        assert!(!target.definitions.is_empty());
     }
 
     #[test]

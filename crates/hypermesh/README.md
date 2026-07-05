@@ -67,14 +67,15 @@ parent reference point onto a child AABB only when the projected point and trace
 are certified valid. Existing references are reused only when they are strict
 child-cell interior points and not on local surfaces. If the projected point or
 direct trace is degenerate, the implementation first tries local axis-aligned
-escape targets inside certified open intervals before the next surface hit or
-AABB boundary. If those direct escape targets still cannot be traced, it builds
-the certified axis-aligned escape box bounded by the nearest exact axis
-crossings or child AABB faces around that projection, then asks `hyperlimit`
-for a replayable halfspace-feasibility witness inside that box while
-backtracking over certified slack sides of local support planes. If that
-tighter escape cell still cannot be traced, it falls back to the full
-child-cell support search. Segment tracing uses
+escape corridors inside certified open intervals before the next surface hit or
+AABB boundary, using `hyperlimit` witness search instead of midpoint sampling.
+If those direct one-axis corridors still cannot be traced, it builds the
+certified axis-aligned escape box bounded by the nearest exact axis crossings
+or child AABB faces around that projection, then asks `hyperlimit` for a
+replayable halfspace-feasibility witness inside that box while backtracking
+over certified slack sides of local support planes. If that tighter escape cell
+still cannot be traced, it falls back to the full child-cell support search.
+Segment tracing uses
 direct paths and arrangement-coordinate endpoint-box detours, cut by local
 vertex coordinates and exact endpoint-box surface crossings, when axis-ordered
 paths hit surfaces. If none trace cleanly, it reports
