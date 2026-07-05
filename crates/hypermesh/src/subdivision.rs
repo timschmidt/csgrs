@@ -406,7 +406,12 @@ fn effective_leaf_delta_w(
         if delta_w.len() != other.delta_w.len() {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
-        if other.contains_point_strictly(&test_point)? {
+        let inside_or_on = other.contains_point(&test_point)?;
+        let strictly_inside = other.contains_point_strictly(&test_point)?;
+        if inside_or_on && !strictly_inside {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        }
+        if strictly_inside {
             let sign = if supports_have_same_direction(&polygon.support, &other.support)? {
                 1
             } else {
@@ -496,9 +501,12 @@ fn certify_bsp_leaf_has_no_interior_intersections(
                 }
             }
             PairwiseIntersectionType::Overlap => {
-                if leaf_polygon_key(host) > leaf_polygon_key(other)
-                    && other.contains_point_strictly(&leaf_test_point)?
-                {
+                let inside_or_on = other.contains_point(&leaf_test_point)?;
+                let strictly_inside = other.contains_point_strictly(&leaf_test_point)?;
+                if inside_or_on && !strictly_inside {
+                    return Ok(false);
+                }
+                if leaf_polygon_key(host) > leaf_polygon_key(other) && strictly_inside {
                     return Ok(false);
                 }
             }
@@ -1487,6 +1495,25 @@ mod tests {
         let mut cutter = make_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 1, 0);
         cutter.delta_w = vec![0, 1];
         let polygons = vec![host.clone(), cutter];
+
+        assert!(
+            !certify_bsp_leaf_has_no_interior_intersections(&host, &host.edges, &polygons).unwrap()
+        );
+    }
+
+    #[test]
+    fn bsp_leaf_certification_rejects_boundary_ambiguous_overlap() {
+        let mut host = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 1, 0);
+        host.delta_w = vec![0, 1];
+        let mut overlap = make_triangle(
+            &p(0, 0, 0),
+            &Point3::new(q(4, 3), r(0), r(0)),
+            &Point3::new(r(0), q(4, 3), r(0)),
+            0,
+            0,
+        );
+        overlap.delta_w = vec![1, 0];
+        let polygons = vec![host.clone(), overlap];
 
         assert!(
             !certify_bsp_leaf_has_no_interior_intersections(&host, &host.edges, &polygons).unwrap()

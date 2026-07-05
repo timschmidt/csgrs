@@ -256,8 +256,12 @@ impl LocalBsp {
                     return Ok(());
                 }
                 let test_point = leaf_interior_point(&self.support, &leaf.edges)?;
-                let inside = other.contains_point_strictly(&test_point)?;
-                if inside && let BspNode::Leaf(leaf) = &mut self.nodes[node_index] {
+                let inside_or_on = other.contains_point(&test_point)?;
+                let strictly_inside = other.contains_point_strictly(&test_point)?;
+                if inside_or_on && !strictly_inside {
+                    return Err(HypermeshError::UnknownClassification);
+                }
+                if strictly_inside && let BspNode::Leaf(leaf) = &mut self.nodes[node_index] {
                     leaf.enabled = false;
                 }
                 return Ok(());
