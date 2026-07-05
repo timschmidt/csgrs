@@ -1188,23 +1188,22 @@ fn bounded_probes_from_interior(
             continue;
         }
 
-        let Some(probe) =
-            adjacent_axis_probe(&interior.point, bounds, polygons, axis, direction_positive)?
+        let Some(probe) = adjacent_axis_probe(
+            &interior.point,
+            support,
+            bounds,
+            polygons,
+            axis,
+            direction_positive,
+        )?
         else {
             continue;
         };
-
-        let side = classify_point(&probe, support)?;
-        if side != Classification::On
-            && !probes
-                .iter()
-                .any(|existing: &ProbePoint| existing.point == probe)
+        if !probes
+            .iter()
+            .any(|existing: &ProbePoint| existing.point == probe.point)
         {
-            probes.push(ProbePoint {
-                point: probe,
-                side,
-                planes: Vec::new(),
-            });
+            probes.push(probe);
         }
     }
 
@@ -1372,11 +1371,12 @@ fn offset_point(point: &Point3, direction: &Point3, amount: &Real) -> Point3 {
 
 fn adjacent_axis_probe(
     interior: &Point3,
+    support: &Plane,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
     axis: usize,
     direction_positive: bool,
-) -> HypermeshResult<Option<Point3>> {
+) -> HypermeshResult<Option<ProbePoint>> {
     let start_value = axis_ref(interior, axis);
     let bound_value = if direction_positive {
         axis_ref(&bounds.max, axis)
@@ -1418,11 +1418,252 @@ fn adjacent_axis_probe(
         return Ok(None);
     }
 
-    let midpoint = ((start_value + &stop_value) / Real::from(2))
-        .map_err(|_| HypermeshError::UnknownClassification)?;
-    let mut probe = interior.clone();
-    *axis_mut(&mut probe, axis) = midpoint;
-    Ok(Some(probe))
+    let corridor = axis_probe_bounds(interior, axis, &stop_value)?;
+    strict_axis_probe_target(interior, support, &corridor, axis, direction_positive)
+}
+
+fn axis_probe_bounds(interior: &Point3, axis: usize, stop_value: &Real) -> HypermeshResult<Aabb> {
+    let mut min = interior.clone();
+    let mut max = interior.clone();
+    let start_value = axis_ref(interior, axis);
+    if compare_real(start_value, stop_value)?.is_lt() {
+        *axis_mut(&mut max, axis) = stop_value.clone();
+    } else {
+        *axis_mut(&mut min, axis) = stop_value.clone();
+    }
+    Ok(Aabb::new(min, max))
+}
+
+fn strict_axis_probe_target(
+    interior: &Point3,
+    support: &Plane,
+    corridor: &Aabb,
+    axis: usize,
+    positive_side: bool,
+) -> HypermeshResult<Option<ProbePoint>> {
+    let mut halfspaces = aabb_core_halfspaces(corridor)?;
+    halfspaces.push(support_side_halfspace(support, positive_side));
+    let Some(seed) = strict_halfspace_cell_seed(corridor, &halfspaces)? else {
+        return Ok(None);
+    };
+    let shifted = shifted_halfspace_cell(corridor, &halfspaces, &seed)?;
+    let report = match classify_halfspace_feasibility3(&shifted) {
+        PredicateOutcome::Decided { value, .. } => value,
+        PredicateOutcome::Unknown { .. } => return Err(HypermeshError::UnknownClassification),
+    };
+    if report.status != HalfspaceFeasibility::Feasible {
+        return Ok(None);
+    }
+    let Some(witness) = report.witness else {
+        return Ok(None);
+    };
+    if !point_strictly_inside_halfspace_cell(&witness, corridor, &halfspaces)? {
+        return Ok(None);
+    }
+
+    let side = classify_point(&witness, support)?;
+    if side == Classification::On {
+        return Ok(None);
+    }
+
+    Ok(Some(ProbePoint {
+        planes: axis_probe_definitions(interior, support, axis, &witness)?,
+        point: witness,
+        side,
+    }))
+}
+
+fn axis_probe_definitions(
+    interior: &Point3,
+    support: &Plane,
+    axis: usize,
+    witness: &Point3,
+) -> HypermeshResult<Vec<[Plane; 3]>> {
+    let shifted_support = Plane::new(
+        support.normal.clone(),
+        &support.offset - &support.expression_at_point(witness),
+    );
+    let mut definitions = Vec::new();
+    let axes = other_axes(axis);
+    let definition = [
+        shifted_support,
+        Plane::axis_aligned(axes[0], axis_ref(interior, axes[0]).clone()),
+        Plane::axis_aligned(axes[1], axis_ref(interior, axes[1]).clone()),
+    ];
+    let reproduced = affine_from_planes(&definition)?;
+    if reproduced == *witness {
+        definitions.push(definition);
+    }
+    Ok(definitions)
+}
+
+fn aabb_core_halfspaces(bounds: &Aabb) -> HypermeshResult<Vec<LimitPlane3>> {
+    let mut halfspaces = Vec::with_capacity(6);
+    for axis in 0..3 {
+        let min = axis_ref(&bounds.min, axis);
+        let max = axis_ref(&bounds.max, axis);
+        halfspaces.push(axis_halfspace(axis, true, min.clone()));
+        halfspaces.push(axis_halfspace(axis, false, max.clone()));
+    }
+    Ok(halfspaces)
+}
+
+fn axis_halfspace(axis: usize, lower_bound: bool, value: Real) -> LimitPlane3 {
+    let zero = Real::zero();
+    let one = Real::one();
+    let minus_one = -Real::one();
+    let normal = match (axis, lower_bound) {
+        (0, true) => Point3::new(minus_one, zero.clone(), zero),
+        (1, true) => Point3::new(zero.clone(), minus_one, zero),
+        (2, true) => Point3::new(zero.clone(), zero, minus_one),
+        (0, false) => Point3::new(one, zero.clone(), zero),
+        (1, false) => Point3::new(zero.clone(), one, zero),
+        (2, false) => Point3::new(zero.clone(), zero, one),
+        _ => panic!("axis must be in 0..3"),
+    };
+    let offset = if lower_bound { value } else { -value };
+    LimitPlane3::new(normal, offset)
+}
+
+fn support_side_halfspace(plane: &Plane, positive: bool) -> LimitPlane3 {
+    if positive {
+        LimitPlane3::new(
+            Point3::new(
+                -plane.normal.x.clone(),
+                -plane.normal.y.clone(),
+                -plane.normal.z.clone(),
+            ),
+            -plane.offset.clone(),
+        )
+    } else {
+        LimitPlane3::new(plane.normal.clone(), plane.offset.clone())
+    }
+}
+
+fn strict_halfspace_cell_seed(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<Option<Point3>> {
+    let vertices = feasible_halfspace_cell_vertices(halfspaces)?;
+    let Some(seed) = centroid(&vertices)? else {
+        return Ok(None);
+    };
+    if point_strictly_inside_halfspace_cell(&seed, bounds, halfspaces)? {
+        Ok(Some(seed))
+    } else {
+        Ok(None)
+    }
+}
+
+fn feasible_halfspace_cell_vertices(halfspaces: &[LimitPlane3]) -> HypermeshResult<Vec<Point3>> {
+    let mut vertices = Vec::new();
+    for first in 0..halfspaces.len() {
+        for second in (first + 1)..halfspaces.len() {
+            for third in (second + 1)..halfspaces.len() {
+                let candidate = intersect_three_planes(
+                    &halfspaces[first],
+                    &halfspaces[second],
+                    &halfspaces[third],
+                );
+                let Ok(point) = candidate.to_affine_point() else {
+                    continue;
+                };
+                if point_satisfies_halfspaces(&point, halfspaces)?
+                    && !vertices.iter().any(|existing| existing == &point)
+                {
+                    vertices.push(point);
+                }
+            }
+        }
+    }
+    Ok(vertices)
+}
+
+fn point_satisfies_halfspaces(point: &Point3, halfspaces: &[LimitPlane3]) -> HypermeshResult<bool> {
+    for halfspace in halfspaces {
+        let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
+        if classify_point(point, &plane)? == Classification::Positive {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn point_strictly_inside_halfspace_cell(
+    point: &Point3,
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<bool> {
+    if !point_strictly_inside_probe_bounds(point, bounds)? {
+        return Ok(false);
+    }
+    for halfspace in halfspaces {
+        if halfspace_is_degenerate_bound(halfspace, bounds)? {
+            continue;
+        }
+        let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
+        if compare_real(&plane.expression_at_point(point), &Real::zero())?.is_eq() {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn point_strictly_inside_probe_bounds(point: &Point3, bounds: &Aabb) -> HypermeshResult<bool> {
+    for axis in 0..3 {
+        let min = axis_ref(&bounds.min, axis);
+        let max = axis_ref(&bounds.max, axis);
+        if compare_real(min, max)?.is_eq() {
+            if compare_real(axis_ref(point, axis), min)?.is_ne() {
+                return Ok(false);
+            }
+            continue;
+        }
+        if !compare_real(axis_ref(point, axis), min)?.is_gt()
+            || !compare_real(axis_ref(point, axis), max)?.is_lt()
+        {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn shifted_halfspace_cell(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    strict_interior: &Point3,
+) -> HypermeshResult<Vec<LimitPlane3>> {
+    let half = (Real::one() / Real::from(2)).map_err(|_| HypermeshError::UnknownClassification)?;
+    let mut shifted = Vec::with_capacity(halfspaces.len());
+    for halfspace in halfspaces {
+        let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
+        let value = plane.expression_at_point(strict_interior);
+        let keep_closed = compare_real(&value, &Real::zero())?.is_eq()
+            || halfspace_is_degenerate_bound(halfspace, bounds)?;
+        let offset = if keep_closed {
+            halfspace.offset.clone()
+        } else {
+            &halfspace.offset - &(value * &half)
+        };
+        shifted.push(LimitPlane3::new(halfspace.normal.clone(), offset));
+    }
+    Ok(shifted)
+}
+
+fn halfspace_is_degenerate_bound(halfspace: &LimitPlane3, bounds: &Aabb) -> HypermeshResult<bool> {
+    for axis in 0..3 {
+        let min = axis_ref(&bounds.min, axis);
+        let max = axis_ref(&bounds.max, axis);
+        if compare_real(min, max)?.is_ne() {
+            continue;
+        }
+        if *halfspace == axis_halfspace(axis, true, min.clone())
+            || *halfspace == axis_halfspace(axis, false, min.clone())
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 fn axis_value_after_start(
@@ -1587,6 +1828,26 @@ mod tests {
             .expect("normal probe should stop before the blocking surface");
 
         assert_eq!(probe, Point3::new(q(3, 2), q(3, 2), q(3, 2)));
+    }
+
+    #[test]
+    fn adjacent_axis_probe_uses_corridor_witness_and_retains_definition() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+
+        let probe = adjacent_axis_probe(&p(1, 1, 1), &leaf.support, &bounds, &[], 0, true)
+            .unwrap()
+            .expect("axis corridor should contain a certified probe witness");
+
+        assert_eq!(probe.side, Classification::Positive);
+        assert!(!probe.planes.is_empty());
+        for definition in &probe.planes {
+            assert_eq!(affine_from_planes(definition).unwrap(), probe.point);
+        }
+        assert!(compare_real(&probe.point.x, &r(1)).unwrap().is_gt());
+        assert!(compare_real(&probe.point.x, &r(4)).unwrap().is_lt());
+        assert_eq!(probe.point.y, r(1));
+        assert_eq!(probe.point.z, r(1));
     }
 
     #[test]
