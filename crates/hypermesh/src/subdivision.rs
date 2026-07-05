@@ -1044,6 +1044,17 @@ fn compute_new_reference(
         }
     }
 
+    if let Some((target, winding)) = support_plane_cell_reference_with_halfspaces(
+        old_ref,
+        old_ref_definitions,
+        old_wnv,
+        bounds,
+        polygons,
+        projected_reference_halfspaces(old_ref, bounds)?,
+    )? {
+        return Ok((target.point, target.definitions, winding));
+    }
+
     if let Some((target, winding)) =
         support_plane_cell_reference(old_ref, old_ref_definitions, old_wnv, bounds, polygons)?
     {
@@ -1312,7 +1323,24 @@ fn support_plane_cell_reference(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    let mut halfspaces = aabb_core_halfspaces(bounds)?;
+    support_plane_cell_reference_with_halfspaces(
+        old_ref,
+        old_ref_definitions,
+        old_wnv,
+        bounds,
+        polygons,
+        aabb_core_halfspaces(bounds)?,
+    )
+}
+
+fn support_plane_cell_reference_with_halfspaces(
+    old_ref: &Point3,
+    old_ref_definitions: &[[Plane; 3]],
+    old_wnv: &[i32],
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    mut halfspaces: Vec<LimitPlane3>,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     if halfspaces.is_empty() || !halfspace_system_is_feasible(&halfspaces)? {
         return Ok(None);
     }
@@ -1968,6 +1996,22 @@ fn point_strictly_inside_projected_cell(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<bool> {
+    point_strictly_inside_reference_halfspace_cell(point, bounds, halfspaces)
+}
+
+fn point_strictly_inside_support_cell(
+    point: &Point3,
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<bool> {
+    point_strictly_inside_reference_halfspace_cell(point, bounds, halfspaces)
+}
+
+fn point_strictly_inside_reference_halfspace_cell(
+    point: &Point3,
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<bool> {
     if !point_strictly_inside_bounds(point, bounds)? {
         return Ok(false);
     }
@@ -1982,27 +2026,6 @@ fn point_strictly_inside_projected_cell(
                 return Ok(false);
             }
         } else if compare_real(&value, &Real::zero())?.is_eq() {
-            return Ok(false);
-        }
-    }
-    Ok(true)
-}
-
-fn point_strictly_inside_support_cell(
-    point: &Point3,
-    bounds: &Aabb,
-    halfspaces: &[LimitPlane3],
-) -> HypermeshResult<bool> {
-    if !point_strictly_inside_bounds(point, bounds)? {
-        return Ok(false);
-    }
-    for halfspace in halfspaces {
-        if halfspace_is_degenerate_bound(halfspace, bounds)? {
-            continue;
-        }
-        let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
-        let value = plane.expression_at_point(point);
-        if compare_real(&value, &Real::zero())?.is_eq() {
             return Ok(false);
         }
     }
@@ -2266,6 +2289,34 @@ mod tests {
         assert_eq!(point.y, r(2));
         assert!(!definitions.is_empty());
         assert_eq!(winding, vec![0]);
+    }
+
+    #[test]
+    fn projected_support_plane_cell_reference_preserves_inherited_axes() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+
+        let found = support_plane_cell_reference_with_halfspaces(
+            &p(0, 2, 5),
+            &axis_defs(&p(0, 2, 5)),
+            &[0],
+            &bounds,
+            &[],
+            projected_reference_halfspaces(&p(0, 2, 5), &bounds).unwrap(),
+        )
+        .unwrap()
+        .expect("projected support-cell search should find a strict witness");
+
+        assert_eq!(found.1, vec![0]);
+        assert_eq!(found.0.point.y, r(2));
+        assert!(
+            point_strictly_inside_reference_halfspace_cell(
+                &found.0.point,
+                &bounds,
+                &projected_reference_halfspaces(&p(0, 2, 5), &bounds).unwrap(),
+            )
+            .unwrap()
+        );
+        assert!(!found.0.definitions.is_empty());
     }
 
     #[test]
