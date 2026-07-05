@@ -1496,6 +1496,11 @@ fn strict_support_cell_targets(
             push_unique_reference_target(&mut targets, target);
         }
     }
+    for vertex in feasible_support_cell_vertices(halfspaces)? {
+        for target in shifted_support_cell_targets_from_seed(bounds, halfspaces, &vertex)? {
+            push_unique_reference_target(&mut targets, target);
+        }
+    }
 
     Ok(targets)
 }
@@ -2305,6 +2310,24 @@ mod tests {
             targets
                 .iter()
                 .any(|target| { target.point == Point3::new(r(2), q(3, 2), q(5, 2)) })
+        );
+    }
+
+    #[test]
+    fn support_cell_targets_include_shifted_vertex_seed_targets() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(p(2, 1, 3), [None, None, None]);
+
+        let targets = strict_support_cell_targets(&bounds, &halfspaces, &report).unwrap();
+
+        assert!(targets.iter().any(|target| target.point == p(3, 3, 3)));
+        assert!(
+            targets
+                .iter()
+                .find(|target| target.point == p(3, 3, 3))
+                .is_some_and(|target| !target.definitions.is_empty())
         );
     }
 
