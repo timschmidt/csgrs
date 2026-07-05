@@ -62,13 +62,13 @@ direct trace is degenerate, the implementation tries local axis-aligned escape
 targets and their multi-axis combinations inside certified open intervals
 before the next surface hit or AABB boundary. If those targets are degenerate,
 it asks `hyperlimit` for a replayable halfspace-feasibility witness inside a
-strictly shrunken child AABB while greedily choosing a certified slack side of
-each local support plane. Segment tracing uses direct paths and
-arrangement-coordinate endpoint-box detours, cut by local vertex coordinates
-and exact endpoint-box surface crossings, when axis-ordered paths hit
-surfaces. If none trace cleanly, it reports `ReferencePropagationFailed`
-instead of using random/interior sampling. The full EMBER plane-replacement
-reference path construction remains unfinished.
+strictly shrunken child AABB while backtracking over certified slack sides of
+local support planes with exact feasibility pruning. Segment tracing uses
+direct paths and arrangement-coordinate endpoint-box detours, cut by local
+vertex coordinates and exact endpoint-box surface crossings, when axis-ordered
+paths hit surfaces. If none trace cleanly, it reports
+`ReferencePropagationFailed` instead of using random/interior sampling. The
+full EMBER plane-replacement reference path construction remains unfinished.
 
 `EmberConfig::default()` runs only the general subdivision/BSP/classification
 path. The previous same-surface, disjoint-bound, strict-containment,

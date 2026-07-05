@@ -706,19 +706,38 @@ fn support_plane_cell_target(
         return Ok(None);
     }
 
-    for polygon in polygons {
-        let negative = support_side_halfspace(&polygon.support, margin, false);
-        if halfspace_system_is_feasible_with(&halfspaces, negative.clone())? {
-            halfspaces.push(negative);
-            continue;
-        }
+    support_plane_cell_target_from(bounds, polygons, margin, 0, &mut halfspaces)
+}
 
-        let positive = support_side_halfspace(&polygon.support, margin, true);
-        if halfspace_system_is_feasible_with(&halfspaces, positive.clone())? {
-            halfspaces.push(positive);
-            continue;
+fn support_plane_cell_target_from(
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    margin: &Real,
+    polygon_index: usize,
+    halfspaces: &mut Vec<LimitPlane3>,
+) -> HypermeshResult<Option<Point3>> {
+    if polygon_index < polygons.len() {
+        for positive in [false, true] {
+            halfspaces.push(support_side_halfspace(
+                &polygons[polygon_index].support,
+                margin,
+                positive,
+            ));
+            let feasible = halfspace_system_is_feasible(halfspaces)?;
+            if feasible
+                && let Some(target) = support_plane_cell_target_from(
+                    bounds,
+                    polygons,
+                    margin,
+                    polygon_index + 1,
+                    halfspaces,
+                )?
+            {
+                halfspaces.pop();
+                return Ok(Some(target));
+            }
+            halfspaces.pop();
         }
-
         return Ok(None);
     }
 
@@ -829,16 +848,6 @@ fn halfspace_system_is_feasible(halfspaces: &[LimitPlane3]) -> HypermeshResult<b
         halfspace_system_report(halfspaces)?,
         Some(report) if report.status == HalfspaceFeasibility::Feasible
     ))
-}
-
-fn halfspace_system_is_feasible_with(
-    halfspaces: &[LimitPlane3],
-    next: LimitPlane3,
-) -> HypermeshResult<bool> {
-    let mut candidate = Vec::with_capacity(halfspaces.len() + 1);
-    candidate.extend_from_slice(halfspaces);
-    candidate.push(next);
-    halfspace_system_is_feasible(&candidate)
 }
 
 fn halfspace_system_witness(halfspaces: &[LimitPlane3]) -> HypermeshResult<Option<Point3>> {
@@ -1030,6 +1039,10 @@ mod tests {
         value.into()
     }
 
+    fn q(numerator: i32, denominator: i32) -> Real {
+        (Real::from(numerator) / Real::from(denominator)).unwrap()
+    }
+
     fn p(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(r(x), r(y), r(z))
     }
@@ -1119,6 +1132,24 @@ mod tests {
 
         assert!(point_strictly_inside_bounds(&target, &bounds).unwrap());
         assert!(!point_lies_on_any_support_plane(&target, &polygons).unwrap());
+    }
+
+    #[test]
+    fn support_plane_cell_backtracks_when_first_feasible_side_dead_ends() {
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
+        let polygons = vec![
+            support_only_polygon(Plane::from_coefficients(r(-1), r(0), r(0), q(7, 2))),
+            support_only_polygon(Plane::from_coefficients(r(1), r(0), r(0), q(-13, 2))),
+            support_only_polygon(Plane::axis_aligned(0, r(5))),
+        ];
+
+        let target = support_plane_cell_target(&bounds, &polygons, &r(1))
+            .unwrap()
+            .expect("backtracking should find an alternate feasible support cell");
+
+        assert!(point_strictly_inside_bounds(&target, &bounds).unwrap());
+        assert!(!point_lies_on_any_support_plane(&target, &polygons).unwrap());
+        assert!(compare_real(&target.x, &r(6)).unwrap().is_gt());
     }
 
     #[test]
