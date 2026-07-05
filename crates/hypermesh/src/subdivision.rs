@@ -12,6 +12,7 @@ use crate::output::ClassifiedPolygon;
 use crate::polygon::ConvexPolygon;
 use crate::segment_trace::{
     affine_from_planes, axis_plane_definition, certified_leaf_test_points, classify_leaf_polygon,
+    trace_segment_from_definitions_with_step_detoured_plane_replacement,
 };
 use crate::winding::{
     BooleanOp, EXACT_REACHABILITY_STATE_LIMIT, Indicator, WindingPair,
@@ -1278,7 +1279,7 @@ fn trace_reference_target(
         return Ok(None);
     }
 
-    match crate::segment_trace::trace_segment_from_definitions(
+    match trace_segment_from_definitions_with_step_detoured_plane_replacement(
         old_ref,
         &target.point,
         old_wnv,
@@ -2015,6 +2016,10 @@ mod tests {
         Point3::new(r(x), r(y), r(z))
     }
 
+    fn px(x: Real, y: i32, z: i32) -> Point3 {
+        Point3::new(x, r(y), r(z))
+    }
+
     fn axis_defs(point: &Point3) -> Vec<[Plane; 3]> {
         vec![axis_plane_definition(point)]
     }
@@ -2178,6 +2183,54 @@ mod tests {
             &bounds,
             &[wall],
             &ReferenceTarget::with_definitions(target_point, vec![invalid_definition]),
+        )
+        .unwrap();
+
+        assert_eq!(winding, Some(vec![0]));
+    }
+
+    #[test]
+    fn trace_reference_target_uses_detour_on_plane_replacement_step() {
+        let ref_point = p(0, 0, 0);
+        let target_point = p(4, 0, 0);
+        let ref_definition = [
+            Plane::axis_aligned(0, r(0)),
+            Plane::from_coefficients(r(-1), r(1), r(0), r(0)),
+            Plane::from_coefficients(r(-1), r(0), r(1), r(0)),
+        ];
+        let target_definition = [
+            Plane::from_coefficients(r(1), r(1), r(0), r(-4)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::axis_aligned(2, r(0)),
+        ];
+        let mut blockers = vec![
+            make_triangle(&p(2, 0, 0), &p(3, 0, 0), &p(2, 1, 0), 0, 0),
+            make_triangle(&p(0, 2, 0), &p(1, 2, 0), &p(0, 3, 0), 0, 1),
+            make_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
+        ];
+        for (index, x) in [q(2, 3), r(1), q(4, 3)].into_iter().enumerate() {
+            blockers.push(make_triangle(
+                &px(x.clone(), -1, -1),
+                &px(x.clone(), 3, -1),
+                &px(x, 1, 3),
+                0,
+                3 + index as isize,
+            ));
+        }
+        let bounds = Aabb::new(p(0, -1, -1), p(5, 3, 5));
+
+        assert_eq!(
+            crate::segment_trace::trace_segment(&ref_point, &target_point, &[0], &blockers),
+            Err(crate::error::HypermeshError::UnknownClassification)
+        );
+
+        let winding = trace_reference_target(
+            &ref_point,
+            &[ref_definition],
+            &[0],
+            &bounds,
+            &blockers,
+            &ReferenceTarget::with_definitions(target_point, vec![target_definition]),
         )
         .unwrap();
 

@@ -1077,46 +1077,88 @@ fn trace_probe_winding(
         probe_definitions.push(axis_definition);
     }
 
-    let winding = retryable_trace(trace_segment_from_definitions(
-        ref_point,
-        &probe.point,
-        ref_wnv,
+    retryable_trace(
+        trace_segment_from_definitions_with_step_detoured_plane_replacement(
+            ref_point,
+            &probe.point,
+            ref_wnv,
+            polygons,
+            ref_definitions,
+            &probe_definitions,
+        ),
+    )
+}
+
+pub(crate) fn trace_segment_from_definitions_with_step_detoured_plane_replacement(
+    start: &Point3,
+    end: &Point3,
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+) -> HypermeshResult<WindingNumberVector> {
+    if let Some(winding) = retryable_trace(trace_segment_from_definitions(
+        start,
+        end,
+        winding,
         polygons,
-        ref_definitions,
-        &probe_definitions,
-    ))?;
-    if winding.is_some() {
+        start_definitions,
+        end_definitions,
+    ))? {
         return Ok(winding);
     }
 
-    retryable_trace(trace_probe_from_reference_definitions(
-        ref_point,
-        ref_definitions,
-        &probe_definitions,
-        ref_wnv,
+    trace_from_definition_sets_with_step_detoured_plane_replacement(
+        start,
+        start_definitions,
+        end,
+        end_definitions,
+        winding,
         polygons,
-    ))
+    )
 }
 
+#[cfg(test)]
 fn trace_probe_from_reference_definitions(
     ref_point: &Point3,
     ref_definitions: &[[Plane; 3]],
+    probe_point: &Point3,
     probe_definitions: &[[Plane; 3]],
     ref_wnv: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<WindingNumberVector> {
-    let mut start_definitions = ref_definitions.to_vec();
+    trace_from_definition_sets_with_step_detoured_plane_replacement(
+        ref_point,
+        ref_definitions,
+        probe_point,
+        probe_definitions,
+        ref_wnv,
+        polygons,
+    )
+}
+
+fn trace_from_definition_sets_with_step_detoured_plane_replacement(
+    start: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end: &Point3,
+    end_definitions: &[[Plane; 3]],
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<WindingNumberVector> {
+    let mut start_definitions = start_definitions.to_vec();
     append_definition_if_missing(
         &mut start_definitions,
-        axis_plane_defined_point(ref_point).planes,
+        axis_plane_defined_point(start).planes,
     );
+    let mut end_definitions = end_definitions.to_vec();
+    append_definition_if_missing(&mut end_definitions, axis_plane_defined_point(end).planes);
 
     for start_definition in &start_definitions {
-        for probe_planes in probe_definitions {
-            match trace_probe_plane_replacement_path(
+        for end_definition in &end_definitions {
+            match trace_plane_replacement_path_with_step_detours(
                 start_definition,
-                probe_planes,
-                ref_wnv,
+                end_definition,
+                winding,
                 polygons,
             ) {
                 Ok(winding) => return Ok(winding),
@@ -1129,7 +1171,7 @@ fn trace_probe_from_reference_definitions(
     Err(HypermeshError::UnknownClassification)
 }
 
-fn trace_probe_plane_replacement_path(
+fn trace_plane_replacement_path_with_step_detours(
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     winding: &[i32],
@@ -3512,6 +3554,7 @@ mod tests {
         let winding = trace_probe_from_reference_definitions(
             &p(0, 0, 0),
             &[invalid_start, valid_start.planes],
+            &p(2, 0, 0),
             std::slice::from_ref(&end.planes),
             &[0],
             &[wall],
