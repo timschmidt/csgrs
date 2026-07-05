@@ -1061,19 +1061,34 @@ fn projection_escape_reference(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    projection_escape_reference_with_search(projected, bounds, polygons, |escape_bounds| {
+        support_plane_cell_reference(
+            old_ref,
+            old_ref_definitions,
+            old_wnv,
+            escape_bounds,
+            polygons,
+        )
+    })
+}
+
+fn projection_escape_reference_with_search(
+    projected: &Point3,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    mut search: impl FnMut(&Aabb) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     let Some(escape_bounds) = projection_escape_bounds(projected, bounds, polygons)? else {
         return Ok(None);
     };
     if escape_bounds == *bounds {
         return Ok(None);
     }
-    support_plane_cell_reference(
-        old_ref,
-        old_ref_definitions,
-        old_wnv,
-        &escape_bounds,
-        polygons,
-    )
+    match search(&escape_bounds) {
+        Ok(found) => Ok(found),
+        Err(crate::error::HypermeshError::UnknownClassification) => Ok(None),
+        Err(err) => Err(err),
+    }
 }
 
 fn projection_escape_bounds(
@@ -1188,6 +1203,17 @@ fn projection_axis_escape_reference(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    projection_axis_escape_reference_with_search(projected, bounds, polygons, |corridor| {
+        support_plane_cell_reference(old_ref, old_ref_definitions, old_wnv, corridor, polygons)
+    })
+}
+
+fn projection_axis_escape_reference_with_search(
+    projected: &Point3,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    mut search: impl FnMut(&Aabb) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     for axis in 0..3 {
         for direction_positive in [true, false] {
             let Some(stop_value) = escaped_reference_axis_stop_value(
@@ -1201,14 +1227,10 @@ fn projection_axis_escape_reference(
                 continue;
             };
             let corridor = axis_escape_bounds(projected, axis, stop_value)?;
-            if let Some(found) = support_plane_cell_reference(
-                old_ref,
-                old_ref_definitions,
-                old_wnv,
-                &corridor,
-                polygons,
-            )? {
-                return Ok(Some(found));
+            match search(&corridor) {
+                Ok(Some(found)) => return Ok(Some(found)),
+                Ok(None) | Err(crate::error::HypermeshError::UnknownClassification) => continue,
+                Err(err) => return Err(err),
             }
         }
     }
@@ -2227,6 +2249,56 @@ mod tests {
         assert!(compare_real(&target.point.x, &r(1)).unwrap().is_gt());
         assert!(compare_real(&target.point.x, &r(4)).unwrap().is_lt());
         assert!(!target.definitions.is_empty());
+    }
+
+    #[test]
+    fn projection_axis_escape_reference_backtracks_after_uncertified_corridor() {
+        let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+        left.delta_w = vec![1];
+        let mut right = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+        right.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
+        let mut attempts = 0;
+
+        let found = projection_axis_escape_reference_with_search(
+            &p(1, 3, 3),
+            &bounds,
+            &[left, right],
+            |_corridor| {
+                attempts += 1;
+                if attempts == 1 {
+                    Err(crate::error::HypermeshError::UnknownClassification)
+                } else {
+                    Ok(Some((ReferenceTarget::axis_defined(p(2, 2, 2)), vec![7])))
+                }
+            },
+        )
+        .unwrap();
+
+        assert!(attempts >= 2);
+        assert_eq!(
+            found,
+            Some((ReferenceTarget::axis_defined(p(2, 2, 2)), vec![7]))
+        );
+    }
+
+    #[test]
+    fn projection_escape_reference_ignores_uncertified_tight_box_search() {
+        let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+        left.delta_w = vec![1];
+        let mut right = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+        right.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
+
+        let found = projection_escape_reference_with_search(
+            &p(1, 3, 3),
+            &bounds,
+            &[left, right],
+            |_escape_bounds| Err(crate::error::HypermeshError::UnknownClassification),
+        )
+        .unwrap();
+
+        assert_eq!(found, None);
     }
 
     #[test]
