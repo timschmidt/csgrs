@@ -96,17 +96,21 @@ exact axis-plane definition even when other retained start definitions exist,
 and duplicate certified probe witnesses now merge their retained definition
 families instead of dropping later constructions.
 
-Subdivision reference propagation currently accepts the EMBER projection of the
-parent reference point onto a child AABB only when the projected point and trace
-are certified valid. Existing references are reused only when they are strict
-child-cell interior points and not on local surfaces. If the projected point or
-direct trace is degenerate, the implementation first tries local axis-aligned
+Subdivision reference propagation currently accepts certified projected-child
+reference targets, not just a single midpoint-filled representative point.
+Existing references are reused only when they are strict child-cell interior
+points and not on local surfaces. Otherwise hypermesh builds the projected
+child cell that preserves every axis already strict in the parent reference,
+then asks `hyperlimit` for strict witnesses and exact feasible vertices in that
+projected cell before tracing from the parent reference. If those projected
+targets still cannot be traced directly, the implementation next tries local
+axis-aligned
 escape corridors inside certified open intervals before the next surface hit or
 AABB boundary, using `hyperlimit` witness search instead of midpoint sampling
 and backtracking past uncertified corridor searches. If those direct one-axis
 corridors still cannot be traced, it builds the
 certified axis-aligned escape box bounded by the nearest exact axis crossings
-or child AABB faces around that projection, then asks `hyperlimit` for a
+or child AABB faces around that projected target, then asks `hyperlimit` for a
 replayable halfspace-feasibility witness inside that box while backtracking
 over certified slack sides of local support planes. If that tighter escape cell
 is uncertified or still cannot be traced, it falls back to the full child-cell

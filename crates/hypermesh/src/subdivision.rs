@@ -1005,43 +1005,43 @@ fn compute_new_reference(
         ));
     }
 
-    let projected = project_reference_point(old_ref, bounds)?;
-    let projected_target = ReferenceTarget::axis_defined(projected.clone());
-    if let Some(winding) = trace_reference_target(
-        old_ref,
-        old_ref_definitions,
-        old_wnv,
-        bounds,
-        polygons,
-        &projected_target,
-    )? {
-        return Ok((
-            projected_target.point,
-            projected_target.definitions,
-            winding,
-        ));
-    }
+    for projected_target in projected_reference_targets(old_ref, bounds)? {
+        if let Some(winding) = trace_reference_target(
+            old_ref,
+            old_ref_definitions,
+            old_wnv,
+            bounds,
+            polygons,
+            &projected_target,
+        )? {
+            return Ok((
+                projected_target.point,
+                projected_target.definitions,
+                winding,
+            ));
+        }
 
-    if let Some((target, winding)) = projection_axis_escape_reference(
-        old_ref,
-        old_ref_definitions,
-        old_wnv,
-        &projected,
-        bounds,
-        polygons,
-    )? {
-        return Ok((target.point, target.definitions, winding));
-    }
+        if let Some((target, winding)) = projection_axis_escape_reference(
+            old_ref,
+            old_ref_definitions,
+            old_wnv,
+            &projected_target.point,
+            bounds,
+            polygons,
+        )? {
+            return Ok((target.point, target.definitions, winding));
+        }
 
-    if let Some((target, winding)) = projection_escape_reference(
-        old_ref,
-        old_ref_definitions,
-        old_wnv,
-        &projected,
-        bounds,
-        polygons,
-    )? {
-        return Ok((target.point, target.definitions, winding));
+        if let Some((target, winding)) = projection_escape_reference(
+            old_ref,
+            old_ref_definitions,
+            old_wnv,
+            &projected_target.point,
+            bounds,
+            polygons,
+        )? {
+            return Ok((target.point, target.definitions, winding));
+        }
     }
 
     if let Some((target, winding)) =
@@ -1255,6 +1255,7 @@ struct ReferenceTarget {
 }
 
 impl ReferenceTarget {
+    #[cfg(test)]
     fn axis_defined(point: Point3) -> Self {
         Self {
             definitions: vec![axis_plane_definition(&point)],
@@ -1489,6 +1490,22 @@ fn support_side_halfspace(plane: &crate::geometry::Plane, positive: bool) -> Lim
     }
 }
 
+fn negated_halfspace(halfspace: &LimitPlane3) -> LimitPlane3 {
+    LimitPlane3::new(
+        Point3::new(
+            -halfspace.normal.x.clone(),
+            -halfspace.normal.y.clone(),
+            -halfspace.normal.z.clone(),
+        ),
+        -halfspace.offset.clone(),
+    )
+}
+
+fn halfspace_has_opposite_pair(target: &LimitPlane3, halfspaces: &[LimitPlane3]) -> bool {
+    let opposite = negated_halfspace(target);
+    halfspaces.iter().any(|halfspace| halfspace == &opposite)
+}
+
 fn halfspace_system_is_feasible(halfspaces: &[LimitPlane3]) -> HypermeshResult<bool> {
     Ok(matches!(
         halfspace_system_report(halfspaces)?,
@@ -1585,6 +1602,159 @@ fn reference_definitions_from_active_halfspaces(
 
     push_verified_definition(&mut definitions, axis_definition, witness)?;
     Ok(definitions)
+}
+
+fn projected_reference_targets(
+    old_ref: &Point3,
+    bounds: &Aabb,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    let halfspaces = projected_reference_halfspaces(old_ref, bounds)?;
+    let Some(report) = halfspace_system_report(&halfspaces)? else {
+        return Ok(Vec::new());
+    };
+    if report.status != HalfspaceFeasibility::Feasible {
+        return Ok(Vec::new());
+    }
+    strict_projected_cell_targets(bounds, &halfspaces, &report)
+}
+
+fn projected_reference_halfspaces(
+    old_ref: &Point3,
+    bounds: &Aabb,
+) -> HypermeshResult<Vec<LimitPlane3>> {
+    let mut halfspaces = aabb_core_halfspaces(bounds)?;
+    for axis in 0..3 {
+        let value = axis_ref(old_ref, axis);
+        let min = axis_ref(&bounds.min, axis);
+        let max = axis_ref(&bounds.max, axis);
+        if compare_real(value, min)?.is_gt() && compare_real(value, max)?.is_lt() {
+            halfspaces.push(axis_halfspace(axis, true, value.clone()));
+            halfspaces.push(axis_halfspace(axis, false, value.clone()));
+        }
+    }
+    Ok(halfspaces)
+}
+
+fn strict_projected_cell_targets(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: &hyperlimit::HalfspaceFeasibilityReport,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    let mut targets = Vec::new();
+
+    if report.status == HalfspaceFeasibility::Feasible
+        && let Some(witness) = &report.witness
+        && point_strictly_inside_projected_cell(witness, bounds, halfspaces)?
+    {
+        push_unique_reference_target(
+            &mut targets,
+            ReferenceTarget::with_definitions(
+                witness.clone(),
+                reference_definitions_from_active_halfspaces(
+                    witness,
+                    halfspaces,
+                    report.active_planes,
+                )?,
+            ),
+        );
+    }
+
+    for seed in strict_projected_cell_seeds_from_report(bounds, halfspaces, report)? {
+        for target in shifted_projected_cell_targets_from_seed(bounds, halfspaces, &seed)? {
+            push_unique_reference_target(&mut targets, target);
+        }
+    }
+    for vertex in feasible_support_cell_vertices(halfspaces)? {
+        for target in shifted_projected_cell_targets_from_seed(bounds, halfspaces, &vertex)? {
+            push_unique_reference_target(&mut targets, target);
+        }
+    }
+
+    Ok(targets)
+}
+
+fn strict_projected_cell_seeds_from_report(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: &hyperlimit::HalfspaceFeasibilityReport,
+) -> HypermeshResult<Vec<Point3>> {
+    let mut seeds = Vec::new();
+
+    if report.status == HalfspaceFeasibility::Feasible
+        && let Some(witness) = &report.witness
+        && point_strictly_inside_projected_cell(witness, bounds, halfspaces)?
+    {
+        seeds.push(witness.clone());
+    }
+
+    Ok(seeds)
+}
+
+fn shifted_projected_cell_targets_from_seed(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    seed: &Point3,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    let shifted = shifted_support_cell_halfspaces(bounds, halfspaces, seed)?;
+    let Some(report) = halfspace_system_report(&shifted)? else {
+        return Ok(Vec::new());
+    };
+    if report.status != HalfspaceFeasibility::Feasible {
+        return Ok(Vec::new());
+    }
+
+    let mut targets = Vec::new();
+
+    if let Some(witness) = &report.witness
+        && point_strictly_inside_projected_cell(witness, bounds, halfspaces)?
+    {
+        push_unique_reference_target(
+            &mut targets,
+            ReferenceTarget::with_definitions(
+                witness.clone(),
+                reference_definitions_from_active_halfspaces(
+                    witness,
+                    &shifted,
+                    report.active_planes,
+                )?,
+            ),
+        );
+    }
+
+    for witness in strict_projected_cell_seeds_from_report(bounds, &shifted, &report)? {
+        if !point_strictly_inside_projected_cell(&witness, bounds, halfspaces)? {
+            continue;
+        }
+        push_unique_reference_target(
+            &mut targets,
+            ReferenceTarget::with_definitions(
+                witness.clone(),
+                reference_definitions_from_active_halfspaces(
+                    &witness,
+                    &shifted,
+                    [None, None, None],
+                )?,
+            ),
+        );
+    }
+    for witness in feasible_support_cell_vertices(&shifted)? {
+        if !point_strictly_inside_projected_cell(&witness, bounds, halfspaces)? {
+            continue;
+        }
+        push_unique_reference_target(
+            &mut targets,
+            ReferenceTarget::with_definitions(
+                witness.clone(),
+                reference_definitions_from_active_halfspaces(
+                    &witness,
+                    &shifted,
+                    [None, None, None],
+                )?,
+            ),
+        );
+    }
+
+    Ok(targets)
 }
 
 fn push_verified_definition(
@@ -1793,6 +1963,31 @@ fn point_satisfies_halfspaces(point: &Point3, halfspaces: &[LimitPlane3]) -> Hyp
     Ok(true)
 }
 
+fn point_strictly_inside_projected_cell(
+    point: &Point3,
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<bool> {
+    if !point_strictly_inside_bounds(point, bounds)? {
+        return Ok(false);
+    }
+    for halfspace in halfspaces {
+        if halfspace_is_degenerate_bound(halfspace, bounds)? {
+            continue;
+        }
+        let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
+        let value = plane.expression_at_point(point);
+        if halfspace_has_opposite_pair(halfspace, halfspaces) {
+            if compare_real(&value, &Real::zero())?.is_ne() {
+                return Ok(false);
+            }
+        } else if compare_real(&value, &Real::zero())?.is_eq() {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
 fn point_strictly_inside_support_cell(
     point: &Point3,
     bounds: &Aabb,
@@ -1896,30 +2091,6 @@ fn reference_axis_surface_crossing(
     let mut crossing = start.clone();
     *axis_mut(&mut crossing, axis) = axis_value;
     Ok(Some(crossing))
-}
-
-fn project_reference_point(old_ref: &Point3, bounds: &Aabb) -> HypermeshResult<Point3> {
-    let mut target = old_ref.clone();
-    for axis in 0..3 {
-        let min_order = compare_real(axis_ref(&target, axis), axis_ref(&bounds.min, axis))?;
-        let max_order = compare_real(axis_ref(&target, axis), axis_ref(&bounds.max, axis))?;
-        if !min_order.is_gt() || !max_order.is_lt() {
-            *axis_mut(&mut target, axis) = interior_axis_value(bounds, axis)?;
-        }
-    }
-    Ok(target)
-}
-
-fn interior_axis_value(bounds: &Aabb, axis: usize) -> HypermeshResult<Real> {
-    let min = axis_ref(&bounds.min, axis);
-    let max = axis_ref(&bounds.max, axis);
-    let extent = max - min;
-    if extent.definitely_zero() {
-        return Ok(min.clone());
-    }
-    Ok(min
-        + &((extent * Real::from(1)) / Real::from(2))
-            .map_err(|_| crate::error::HypermeshError::UnknownClassification)?)
 }
 
 fn point_strictly_inside_bounds(point: &Point3, bounds: &Aabb) -> HypermeshResult<bool> {
@@ -2072,13 +2243,29 @@ mod tests {
     }
 
     #[test]
-    fn project_reference_point_moves_non_strict_axes_to_midpoint() {
+    fn projected_reference_targets_preserve_strict_inherited_axes() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let targets = projected_reference_targets(&p(0, 2, 5), &bounds).unwrap();
+
+        assert!(!targets.is_empty());
+        for target in &targets {
+            assert!(point_strictly_inside_bounds(&target.point, &bounds).unwrap());
+            assert_eq!(target.point.y, r(2));
+        }
+    }
+
+    #[test]
+    fn compute_new_reference_uses_projected_target_family() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
-        assert_eq!(
-            project_reference_point(&p(0, 2, 5), &bounds).unwrap(),
-            p(2, 2, 2)
-        );
+        let (point, definitions, winding) =
+            compute_new_reference(&p(0, 2, 5), &axis_defs(&p(0, 2, 5)), &[0], &bounds, &[])
+                .unwrap();
+
+        assert!(point_strictly_inside_bounds(&point, &bounds).unwrap());
+        assert_eq!(point.y, r(2));
+        assert!(!definitions.is_empty());
+        assert_eq!(winding, vec![0]);
     }
 
     #[test]
