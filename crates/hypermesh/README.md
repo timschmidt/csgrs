@@ -68,7 +68,8 @@ definition family. Axis-direction probes are now constructed from
 strict witness search in the closed axis corridor and desired support-side
 cell, rather than by midpoint sampling. Full
 plane-replacement coverage for every reference/probe construction remains
-unfinished.
+unfinished, though probe fallback now also retries from the reference point's
+exact axis-plane definition even when other retained start definitions exist.
 
 Subdivision reference propagation currently accepts the EMBER projection of the
 parent reference point onto a child AABB only when the projected point and trace
