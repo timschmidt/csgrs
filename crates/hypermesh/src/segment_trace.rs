@@ -390,6 +390,88 @@ fn trace_segment_with_definitions_no_detours(
     Ok(None)
 }
 
+fn trace_segment_with_detours_without_plane_replacement(
+    start: &Point3,
+    end: &Point3,
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    remaining_detours: usize,
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    let mut trace_without_detours = |start: &Point3, end: &Point3, winding: &[i32]| {
+        trace_segment_without_detours(start, end, winding, polygons)
+    };
+    let mut detours_for =
+        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons);
+    trace_segment_with_detours_without_plane_replacement_impl(
+        start,
+        end,
+        winding,
+        polygons,
+        remaining_detours,
+        &mut trace_without_detours,
+        &mut detours_for,
+    )
+}
+
+fn trace_segment_with_detours_without_plane_replacement_impl(
+    start: &Point3,
+    end: &Point3,
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    remaining_detours: usize,
+    trace_without_detours: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &[i32],
+    ) -> HypermeshResult<Option<WindingNumberVector>>,
+    detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    if let Some(winding) = trace_without_detours(start, end, winding)? {
+        return Ok(Some(winding));
+    }
+
+    if remaining_detours == 0 {
+        return Ok(None);
+    }
+
+    for detour in detours_for(start, end)? {
+        if detour.point == *start
+            || detour.point == *end
+            || point_lies_on_traced_surface(&detour.point, polygons)?
+        {
+            continue;
+        }
+        let Some(first_leg) = trace_segment_with_detours_without_plane_replacement_impl(
+            start,
+            &detour.point,
+            winding,
+            polygons,
+            remaining_detours - 1,
+            trace_without_detours,
+            detours_for,
+        )?
+        else {
+            continue;
+        };
+        let Some(second_leg) = trace_segment_with_detours_without_plane_replacement_impl(
+            &detour.point,
+            end,
+            &first_leg,
+            polygons,
+            remaining_detours - 1,
+            trace_without_detours,
+            detours_for,
+        )?
+        else {
+            continue;
+        };
+        return Ok(Some(second_leg));
+    }
+
+    Ok(None)
+}
+
+#[cfg(test)]
 pub(crate) fn trace_plane_replacement_path(
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
@@ -1031,7 +1113,12 @@ fn trace_probe_from_reference_definitions(
 
     for start_definition in &start_definitions {
         for probe_planes in probe_definitions {
-            match trace_plane_replacement_path(start_definition, probe_planes, ref_wnv, polygons) {
+            match trace_probe_plane_replacement_path(
+                start_definition,
+                probe_planes,
+                ref_wnv,
+                polygons,
+            ) {
                 Ok(winding) => return Ok(winding),
                 Err(HypermeshError::UnknownClassification) => continue,
                 Err(err) => return Err(err),
@@ -1040,6 +1127,29 @@ fn trace_probe_from_reference_definitions(
     }
 
     Err(HypermeshError::UnknownClassification)
+}
+
+fn trace_probe_plane_replacement_path(
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<WindingNumberVector> {
+    trace_plane_replacement_path_with_tracer(
+        start_planes,
+        end_planes,
+        winding,
+        polygons,
+        |current, next, attempt, polygons| {
+            trace_segment_with_detours_without_plane_replacement(
+                current,
+                next,
+                attempt,
+                polygons,
+                PLANE_REPLACEMENT_STEP_DETOUR_LIMIT,
+            )
+        },
+    )
 }
 
 fn append_definition_if_missing(definitions: &mut Vec<[Plane; 3]>, candidate: [Plane; 3]) {
@@ -3808,6 +3918,59 @@ mod tests {
                 &mut detours_for,
             )
             .unwrap()
+        );
+    }
+
+    #[test]
+    fn probe_winding_plane_replacement_step_detour_budget_uses_single_detour() {
+        let start = p(0, 0, 0);
+        let detour_point = p(1, 0, 0);
+        let end = p(2, 0, 0);
+        let detour_target = DetourTarget {
+            point: detour_point.clone(),
+            definitions: vec![axis_plane_definition(&detour_point)],
+        };
+        let mut trace_without_detours = |from: &Point3, to: &Point3, winding: &[i32]| {
+            if (*from == start && *to == detour_point) || (*from == detour_point && *to == end) {
+                Ok(Some(winding.to_vec()))
+            } else {
+                Ok(None)
+            }
+        };
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![detour_target.clone()])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        assert_eq!(
+            trace_segment_with_detours_without_plane_replacement_impl(
+                &start,
+                &end,
+                &[0],
+                &[],
+                0,
+                &mut trace_without_detours,
+                &mut detours_for,
+            )
+            .unwrap(),
+            None
+        );
+
+        assert_eq!(
+            trace_segment_with_detours_without_plane_replacement_impl(
+                &start,
+                &end,
+                &[0],
+                &[],
+                1,
+                &mut trace_without_detours,
+                &mut detours_for,
+            )
+            .unwrap(),
+            Some(vec![0])
         );
     }
 

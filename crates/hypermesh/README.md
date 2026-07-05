@@ -67,7 +67,10 @@ reachability detours now also allow the same bounded nested-detour retry on
 detour legs instead of collapsing every chosen leg to the no-detour family
 immediately. Retained plane-replacement fallback now also allows those
 individual replacement steps to use the same bounded detour family, while still
-stopping short of nested plane-replacement recursion. Leaf interior
+stopping short of nested plane-replacement recursion. Probe winding fallback
+from retained reference/probe definitions now uses that same bounded detour
+family on its replacement steps as well, again without recursing into another
+plane-replacement layer. Leaf interior
 construction also asks `hyperlimit` for a strict replayable halfspace witness
 inside the leaf so probe generation can retain multiple certified plane
 definitions even when the affine interior point itself came from
