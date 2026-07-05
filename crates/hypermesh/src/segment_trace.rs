@@ -49,6 +49,12 @@ struct ProbePoint {
     planes: Vec<[Plane; 3]>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct DetourTarget {
+    point: Point3,
+    definitions: Vec<[Plane; 3]>,
+}
+
 /// Traces an axis-aligned segment, accumulating polygon winding transitions.
 pub fn trace_axis_segment(
     start: &Point3,
@@ -165,7 +171,7 @@ pub fn trace_segment(
         end,
         winding,
         polygons,
-        &interior_box_detour_points(start, end, polygons)?,
+        &interior_box_detour_targets(start, end, polygons)?,
     )? {
         return Ok(winding);
     }
@@ -198,21 +204,73 @@ fn trace_segment_via_detours(
     end: &Point3,
     winding: &[i32],
     polygons: &[ConvexPolygon],
-    detours: &[Point3],
+    detours: &[DetourTarget],
 ) -> HypermeshResult<Option<WindingNumberVector>> {
     for detour in detours {
-        if *detour == *start || *detour == *end || point_lies_on_traced_surface(detour, polygons)? {
+        if detour.point == *start
+            || detour.point == *end
+            || point_lies_on_traced_surface(&detour.point, polygons)?
+        {
             continue;
         }
-        let Some(first_leg) = trace_segment_without_detours(start, detour, winding, polygons)?
+        let start_definitions = [axis_plane_definition(start)];
+        let end_definitions = [axis_plane_definition(end)];
+        let Some(first_leg) = trace_segment_with_definitions(
+            start,
+            &detour.point,
+            winding,
+            polygons,
+            &start_definitions,
+            &detour.definitions,
+        )?
         else {
             continue;
         };
-        let Some(second_leg) = trace_segment_without_detours(detour, end, &first_leg, polygons)?
+        let Some(second_leg) = trace_segment_with_definitions(
+            &detour.point,
+            end,
+            &first_leg,
+            polygons,
+            &detour.definitions,
+            &end_definitions,
+        )?
         else {
             continue;
         };
         return Ok(Some(second_leg));
+    }
+
+    Ok(None)
+}
+
+fn trace_segment_with_definitions(
+    start: &Point3,
+    end: &Point3,
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    if let Some(winding) = trace_segment_without_detours(start, end, winding, polygons)? {
+        return Ok(Some(winding));
+    }
+
+    let mut start_definitions = start_definitions.to_vec();
+    append_definition_if_missing(&mut start_definitions, axis_plane_definition(start));
+    let mut end_definitions = end_definitions.to_vec();
+    append_definition_if_missing(&mut end_definitions, axis_plane_definition(end));
+
+    for start_definition in &start_definitions {
+        for end_definition in &end_definitions {
+            if let Some(winding) = retryable_trace(trace_plane_replacement_path_without_detours(
+                start_definition,
+                end_definition,
+                winding,
+                polygons,
+            ))? {
+                return Ok(Some(winding));
+            }
+        }
     }
 
     Ok(None)
@@ -223,6 +281,44 @@ pub(crate) fn trace_plane_replacement_path(
     end_planes: &[Plane; 3],
     winding: &[i32],
     polygons: &[ConvexPolygon],
+) -> HypermeshResult<WindingNumberVector> {
+    trace_plane_replacement_path_with_tracer(
+        start_planes,
+        end_planes,
+        winding,
+        polygons,
+        |current, next, attempt, polygons| {
+            retryable_trace(trace_segment(current, next, attempt, polygons))
+        },
+    )
+}
+
+fn trace_plane_replacement_path_without_detours(
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<WindingNumberVector> {
+    trace_plane_replacement_path_with_tracer(
+        start_planes,
+        end_planes,
+        winding,
+        polygons,
+        trace_segment_without_detours,
+    )
+}
+
+fn trace_plane_replacement_path_with_tracer(
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    mut trace_step: impl FnMut(
+        &Point3,
+        &Point3,
+        &[i32],
+        &[ConvexPolygon],
+    ) -> HypermeshResult<Option<WindingNumberVector>>,
 ) -> HypermeshResult<WindingNumberVector> {
     for ordering in AXIS_ORDERINGS {
         let mut current_planes = start_planes.clone();
@@ -245,12 +341,8 @@ pub(crate) fn trace_plane_replacement_path(
                 Err(err) => return Err(err),
             };
             if next_point != current_point {
-                let Some(next_winding) = retryable_trace(trace_segment(
-                    &current_point,
-                    &next_point,
-                    &attempt,
-                    polygons,
-                ))?
+                let Some(next_winding) =
+                    trace_step(&current_point, &next_point, &attempt, polygons)?
                 else {
                     valid = false;
                     break;
@@ -480,11 +572,11 @@ fn trace_axis_ordered_paths(
     Err(HypermeshError::UnknownClassification)
 }
 
-fn interior_box_detour_points(
+fn interior_box_detour_targets(
     start: &Point3,
     end: &Point3,
     polygons: &[ConvexPolygon],
-) -> HypermeshResult<Vec<Point3>> {
+) -> HypermeshResult<Vec<DetourTarget>> {
     let mut intervals = vec![Vec::new(), Vec::new(), Vec::new()];
     for (axis, axis_intervals) in intervals.iter_mut().enumerate() {
         let start_value = axis_ref(start, axis);
@@ -526,10 +618,8 @@ fn interior_box_detour_points(
         for y in &intervals[1] {
             for z in &intervals[2] {
                 let bounds = aabb_from_axis_intervals([x, y, z])?;
-                for witness in strict_aabb_targets(&bounds)? {
-                    if !detours.iter().any(|existing| existing == &witness) {
-                        detours.push(witness);
-                    }
+                for target in strict_aabb_targets(&bounds)? {
+                    push_unique_detour_target(&mut detours, target);
                 }
             }
         }
@@ -552,29 +642,86 @@ fn aabb_from_axis_intervals(intervals: [&(Real, Real); 3]) -> HypermeshResult<Aa
     Ok(Aabb::new(min, max))
 }
 
-fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<Point3>> {
+fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
     let halfspaces = aabb_core_halfspaces(bounds)?;
     let report = halfspace_feasibility_report(&halfspaces)?;
     let mut targets = Vec::new();
+    let report_witness = report.witness.clone();
 
     for seed in strict_halfspace_cell_seeds_from_report(bounds, &halfspaces, &report)? {
-        if !targets.iter().any(|existing| existing == &seed) {
-            targets.push(seed.clone());
-        }
+        let active_planes = if report_witness
+            .as_ref()
+            .is_some_and(|witness| witness == &seed)
+        {
+            report.active_planes
+        } else {
+            [None, None, None]
+        };
+        push_unique_detour_target(
+            &mut targets,
+            DetourTarget {
+                point: seed.clone(),
+                definitions: probe_definitions_from_active_halfspaces(
+                    &seed,
+                    &halfspaces,
+                    active_planes,
+                    &[],
+                )?,
+            },
+        );
         for witness in shifted_halfspace_cell_witnesses_from_seed(bounds, &halfspaces, &seed)? {
-            if !targets.iter().any(|existing| existing == &witness.point) {
-                targets.push(witness.point);
-            }
+            let point = witness.point;
+            push_unique_detour_target(
+                &mut targets,
+                DetourTarget {
+                    point: point.clone(),
+                    definitions: probe_definitions_from_active_halfspaces(
+                        &point,
+                        &witness.halfspaces,
+                        witness.active_planes,
+                        &[],
+                    )?,
+                },
+            );
         }
     }
 
     for witness in shifted_halfspace_cell_vertex_witnesses(bounds, &halfspaces)? {
-        if !targets.iter().any(|existing| existing == &witness.point) {
-            targets.push(witness.point);
-        }
+        let point = witness.point;
+        push_unique_detour_target(
+            &mut targets,
+            DetourTarget {
+                point: point.clone(),
+                definitions: probe_definitions_from_active_halfspaces(
+                    &point,
+                    &witness.halfspaces,
+                    witness.active_planes,
+                    &[],
+                )?,
+            },
+        );
     }
 
     Ok(targets)
+}
+
+fn push_unique_detour_target(targets: &mut Vec<DetourTarget>, target: DetourTarget) {
+    if let Some(existing) = targets
+        .iter_mut()
+        .find(|existing| existing.point == target.point)
+    {
+        for definition in target.definitions {
+            if !existing
+                .definitions
+                .iter()
+                .any(|candidate| candidate == &definition)
+            {
+                existing.definitions.push(definition);
+            }
+        }
+    } else {
+        targets.push(target);
+    }
 }
 
 fn add_axis_box_surface_cuts(
@@ -2328,8 +2475,14 @@ mod tests {
     fn endpoint_box_detours_are_cut_by_surface_crossings() {
         let slanted = make_triangle(&p(0, 2, -2), &p(0, 2, 2), &p(4, -2, 0), 0, 0);
 
-        let detours = interior_box_detour_points(&p(0, 0, 0), &p(4, 4, 4), &[slanted]).unwrap();
-        let x_values = axis_values(&detours, 0);
+        let detours = interior_box_detour_targets(&p(0, 0, 0), &p(4, 4, 4), &[slanted]).unwrap();
+        let x_values = axis_values(
+            &detours
+                .iter()
+                .map(|target| target.point.clone())
+                .collect::<Vec<_>>(),
+            0,
+        );
 
         assert!(
             x_values
@@ -2351,12 +2504,13 @@ mod tests {
         let targets = strict_aabb_targets(&bounds).unwrap();
 
         assert!(!targets.is_empty());
-        for witness in targets {
-            assert_eq!(witness.z, r(0));
-            assert!(compare_real(&witness.x, &r(0)).unwrap().is_gt());
-            assert!(compare_real(&witness.x, &r(4)).unwrap().is_lt());
-            assert!(compare_real(&witness.y, &r(0)).unwrap().is_gt());
-            assert!(compare_real(&witness.y, &r(6)).unwrap().is_lt());
+        for target in targets {
+            assert_eq!(target.point.z, r(0));
+            assert!(compare_real(&target.point.x, &r(0)).unwrap().is_gt());
+            assert!(compare_real(&target.point.x, &r(4)).unwrap().is_lt());
+            assert!(compare_real(&target.point.y, &r(0)).unwrap().is_gt());
+            assert!(compare_real(&target.point.y, &r(6)).unwrap().is_lt());
+            assert!(!target.definitions.is_empty());
         }
     }
 
@@ -2845,9 +2999,42 @@ mod tests {
             vec![0]
         );
 
+        let traced = trace_segment_via_detours(
+            &p(0, 0, 0),
+            &p(2, 2, 2),
+            &[0],
+            &blockers,
+            &[DetourTarget {
+                point: p(1, 1, 1),
+                definitions: vec![axis_plane_definition(&p(1, 1, 1))],
+            }],
+        )
+        .unwrap();
+
+        assert_eq!(traced, Some(vec![0]));
+    }
+
+    #[test]
+    fn detour_legs_retry_plane_replacement_from_detour_definitions() {
+        let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+        wall.delta_w = vec![1];
+        let detour = DetourTarget {
+            point: p(2, 1, 0),
+            definitions: vec![[
+                Plane::axis_aligned(0, r(2)),
+                Plane::axis_aligned(1, r(1)),
+                Plane::from_coefficients(r(1), r(1), r(1), r(-3)),
+            ]],
+        };
+
+        assert_eq!(
+            trace_segment_without_detours(&p(0, 0, 0), &detour.point, &[0], &[wall.clone()])
+                .unwrap(),
+            None
+        );
+
         let traced =
-            trace_segment_via_detours(&p(0, 0, 0), &p(2, 2, 2), &[0], &blockers, &[p(1, 1, 1)])
-                .unwrap();
+            trace_segment_via_detours(&p(0, 0, 0), &p(2, 2, 0), &[0], &[wall], &[detour]).unwrap();
 
         assert_eq!(traced, Some(vec![0]));
     }

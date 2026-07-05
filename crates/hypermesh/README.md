@@ -105,8 +105,9 @@ certified cut endpoint box by first reusing any strict closed-cell feasibility
 witness that `hyperlimit` already provides, then retaining the strict interior
 cell seed and any additional strict shifted-cell witness instead of midpoint
 Cartesian sampling.
-Chosen detour legs now retry the same axis-ordered then
-direct certified path search before the detour is abandoned. If none trace
+Those detour witnesses now also retain replayable plane definitions, and
+chosen detour legs retry certified plane-replacement traces from those
+definitions after the axis-ordered/direct leg search fails. If none trace
 cleanly, it reports
 `ReferencePropagationFailed` instead of using random/interior sampling. The
 reference point carries retained plane triples; projected/escaped references
