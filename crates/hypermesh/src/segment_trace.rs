@@ -39,14 +39,14 @@ struct PlaneDefinedPoint {
 #[derive(Clone, Debug, PartialEq)]
 struct InteriorLeafPoint {
     point: Point3,
-    planes: Option<[Plane; 3]>,
+    planes: Vec<[Plane; 3]>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 struct ProbePoint {
     point: Point3,
     side: Classification,
-    planes: Option<[Plane; 3]>,
+    planes: Vec<[Plane; 3]>,
 }
 
 /// Traces an axis-aligned segment, accumulating polygon winding transitions.
@@ -653,14 +653,18 @@ fn trace_probe_winding(
 ) -> HypermeshResult<Option<WindingNumberVector>> {
     let mut winding = retryable_trace(trace_segment(ref_point, &probe.point, ref_wnv, polygons))?;
     if winding.is_none() {
-        let probe_planes = probe
-            .planes
-            .clone()
-            .unwrap_or_else(|| axis_plane_defined_point(&probe.point).planes);
+        let mut probe_definitions = probe.planes.clone();
+        let axis_definition = axis_plane_defined_point(&probe.point).planes;
+        if !probe_definitions
+            .iter()
+            .any(|definition| definition == &axis_definition)
+        {
+            probe_definitions.push(axis_definition);
+        }
         winding = retryable_trace(trace_probe_from_reference_definitions(
             ref_point,
             ref_definitions,
-            &probe_planes,
+            &probe_definitions,
             ref_wnv,
             polygons,
         ))?;
@@ -671,24 +675,33 @@ fn trace_probe_winding(
 fn trace_probe_from_reference_definitions(
     ref_point: &Point3,
     ref_definitions: &[[Plane; 3]],
-    probe_planes: &[Plane; 3],
+    probe_definitions: &[[Plane; 3]],
     ref_wnv: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<WindingNumberVector> {
     if ref_definitions.is_empty() {
-        return trace_plane_replacement_path(
-            &axis_plane_defined_point(ref_point).planes,
-            probe_planes,
-            ref_wnv,
-            polygons,
-        );
+        for probe_planes in probe_definitions {
+            match trace_plane_replacement_path(
+                &axis_plane_defined_point(ref_point).planes,
+                probe_planes,
+                ref_wnv,
+                polygons,
+            ) {
+                Ok(winding) => return Ok(winding),
+                Err(HypermeshError::UnknownClassification) => continue,
+                Err(err) => return Err(err),
+            }
+        }
+        return Err(HypermeshError::UnknownClassification);
     }
 
     for start_definition in ref_definitions {
-        match trace_plane_replacement_path(start_definition, probe_planes, ref_wnv, polygons) {
-            Ok(winding) => return Ok(winding),
-            Err(HypermeshError::UnknownClassification) => continue,
-            Err(err) => return Err(err),
+        for probe_planes in probe_definitions {
+            match trace_plane_replacement_path(start_definition, probe_planes, ref_wnv, polygons) {
+                Ok(winding) => return Ok(winding),
+                Err(HypermeshError::UnknownClassification) => continue,
+                Err(err) => return Err(err),
+            }
         }
     }
 
@@ -885,7 +898,7 @@ fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<InteriorLea
     if point_strictly_inside_leaf(&center, leaf)? {
         points.push(InteriorLeafPoint {
             point: center.clone(),
-            planes: None,
+            planes: Vec::new(),
         });
         if let Some(point) = strict_leaf_cell_point(leaf, &center)? {
             push_unique_interior_point(&mut points, point);
@@ -928,7 +941,7 @@ fn shifted_edge_interior_points(
                 &mut points,
                 InteriorLeafPoint {
                     point: candidate,
-                    planes: Some([leaf.support.clone(), first_shifted, second_shifted]),
+                    planes: vec![[leaf.support.clone(), first_shifted, second_shifted]],
                 },
             );
         }
@@ -951,8 +964,10 @@ fn push_unique_interior_point(points: &mut Vec<InteriorLeafPoint>, point: Interi
         .iter_mut()
         .find(|existing| existing.point == point.point)
     {
-        if existing.planes.is_none() {
-            existing.planes = point.planes;
+        for planes in point.planes {
+            if !existing.planes.iter().any(|candidate| candidate == &planes) {
+                existing.planes.push(planes);
+            }
         }
     } else {
         points.push(point);
@@ -992,7 +1007,7 @@ fn strict_leaf_cell_point(
         return Ok(None);
     }
 
-    let planes = leaf_interior_definition_from_active_halfspaces(
+    let planes = leaf_interior_definitions_from_active_halfspaces(
         &witness,
         &leaf.support,
         &halfspaces,
@@ -1000,7 +1015,7 @@ fn strict_leaf_cell_point(
     )?;
     Ok(Some(InteriorLeafPoint {
         point: witness,
-        planes: Some(planes),
+        planes,
     }))
 }
 
@@ -1008,13 +1023,14 @@ fn limit_plane_from_plane(plane: &Plane) -> LimitPlane3 {
     LimitPlane3::new(plane.normal.clone(), plane.offset.clone())
 }
 
-fn leaf_interior_definition_from_active_halfspaces(
+fn leaf_interior_definitions_from_active_halfspaces(
     witness: &Point3,
     support: &Plane,
     halfspaces: &[LimitPlane3],
     active_planes: [Option<usize>; 3],
-) -> HypermeshResult<[Plane; 3]> {
+) -> HypermeshResult<Vec<[Plane; 3]>> {
     let axis_definition = axis_plane_definition(witness);
+    let mut definitions = Vec::new();
     let mut active = Vec::new();
     for index in active_planes.into_iter().flatten() {
         let Some(halfspace) = halfspaces.get(index) else {
@@ -1030,46 +1046,65 @@ fn leaf_interior_definition_from_active_halfspaces(
     }
 
     if active.len() >= 2 {
-        let definition = [support.clone(), active[0].clone(), active[1].clone()];
-        if let Ok(point) =
-            intersect_three_planes(&definition[0], &definition[1], &definition[2]).to_affine_point()
-            && point == *witness
-        {
-            return Ok(definition);
+        for first in 0..active.len() {
+            for second in (first + 1)..active.len() {
+                push_verified_leaf_definition(
+                    &mut definitions,
+                    [
+                        support.clone(),
+                        active[first].clone(),
+                        active[second].clone(),
+                    ],
+                    witness,
+                )?;
+            }
         }
     }
 
-    for plane in active {
+    for plane in &active {
         for axis in axis_definition.iter().cloned() {
-            let definition = [support.clone(), plane.clone(), axis];
-            if let Ok(point) =
-                intersect_three_planes(&definition[0], &definition[1], &definition[2])
-                    .to_affine_point()
-                && point == *witness
-            {
-                return Ok(definition);
-            }
+            push_verified_leaf_definition(
+                &mut definitions,
+                [support.clone(), plane.clone(), axis],
+                witness,
+            )?;
         }
     }
 
     for first_axis in 0..3 {
         for second_axis in (first_axis + 1)..3 {
-            let definition = [
-                support.clone(),
-                axis_definition[first_axis].clone(),
-                axis_definition[second_axis].clone(),
-            ];
-            if let Ok(point) =
-                intersect_three_planes(&definition[0], &definition[1], &definition[2])
-                    .to_affine_point()
-                && point == *witness
-            {
-                return Ok(definition);
-            }
+            push_verified_leaf_definition(
+                &mut definitions,
+                [
+                    support.clone(),
+                    axis_definition[first_axis].clone(),
+                    axis_definition[second_axis].clone(),
+                ],
+                witness,
+            )?;
         }
     }
 
-    Err(HypermeshError::UnknownClassification)
+    if definitions.is_empty() {
+        return Err(HypermeshError::UnknownClassification);
+    }
+    Ok(definitions)
+}
+
+fn push_verified_leaf_definition(
+    definitions: &mut Vec<[Plane; 3]>,
+    definition: [Plane; 3],
+    witness: &Point3,
+) -> HypermeshResult<()> {
+    match intersect_three_planes(&definition[0], &definition[1], &definition[2]).to_affine_point() {
+        Ok(point) if point == *witness => {
+            if !definitions.iter().any(|existing| existing == &definition) {
+                definitions.push(definition);
+            }
+        }
+        Ok(_) | Err(_) => {}
+    }
+    Ok(())
 }
 
 fn point_strictly_inside_leaf(point: &Point3, leaf: &ConvexPolygon) -> HypermeshResult<bool> {
@@ -1137,7 +1172,7 @@ fn bounded_probes_from_interior(
             probes.push(ProbePoint {
                 point: probe,
                 side,
-                planes: None,
+                planes: Vec::new(),
             });
         }
     }
@@ -1149,28 +1184,26 @@ fn normal_probe_planes(
     interior: &InteriorLeafPoint,
     support: &Plane,
     probe: &Point3,
-) -> HypermeshResult<Option<[Plane; 3]>> {
-    let Some(interior_planes) = &interior.planes else {
-        return Ok(None);
-    };
-
+) -> HypermeshResult<Vec<[Plane; 3]>> {
     let shifted_support = Plane::new(
         support.normal.clone(),
         &support.offset - &support.expression_at_point(probe),
     );
-    let planes = [
-        shifted_support,
-        interior_planes[1].clone(),
-        interior_planes[2].clone(),
-    ];
-    let reproduced = intersect_three_planes(&planes[0], &planes[1], &planes[2])
-        .to_affine_point()
-        .map_err(|_| HypermeshError::UnknownClassification)?;
-    if reproduced == *probe {
-        Ok(Some(planes))
-    } else {
-        Ok(None)
+    let mut definitions = Vec::new();
+    for interior_planes in &interior.planes {
+        let planes = [
+            shifted_support.clone(),
+            interior_planes[1].clone(),
+            interior_planes[2].clone(),
+        ];
+        let reproduced = intersect_three_planes(&planes[0], &planes[1], &planes[2])
+            .to_affine_point()
+            .map_err(|_| HypermeshError::UnknownClassification)?;
+        if reproduced == *probe && !definitions.iter().any(|existing| existing == &planes) {
+            definitions.push(planes);
+        }
     }
+    Ok(definitions)
 }
 
 fn adjacent_normal_probe(
@@ -1498,7 +1531,7 @@ mod tests {
         let interior = shifted_edge_interior_points(&leaf, &center)
             .unwrap()
             .into_iter()
-            .find(|point| point.planes.is_some())
+            .find(|point| !point.planes.is_empty())
             .expect("shifted edge construction should retain defining planes");
 
         let probes =
@@ -1506,9 +1539,9 @@ mod tests {
 
         let probe = probes
             .iter()
-            .find(|probe| probe.side == Classification::Positive && probe.planes.is_some())
+            .find(|probe| probe.side == Classification::Positive && !probe.planes.is_empty())
             .expect("normal probe should preserve a shifted plane definition");
-        let planes = probe.planes.as_ref().unwrap();
+        let planes = &probe.planes[0];
         assert_eq!(affine_from_planes(planes).unwrap(), probe.point);
     }
 
@@ -1557,34 +1590,47 @@ mod tests {
             .expect("strict leaf halfspaces should have a feasible witness");
 
         assert!(point_strictly_inside_leaf(&interior.point, &leaf).unwrap());
-        let planes = interior.planes.expect("witness should retain planes");
-        assert_eq!(affine_from_planes(&planes).unwrap(), interior.point);
+        assert!(!interior.planes.is_empty());
+        let planes = &interior.planes[0];
+        assert_eq!(affine_from_planes(planes).unwrap(), interior.point);
         assert_eq!(planes[0], leaf.support);
     }
 
     #[test]
-    fn duplicate_interior_points_upgrade_to_plane_defined() {
+    fn duplicate_interior_points_merge_plane_definitions() {
         let point = p(1, 1, 1);
         let mut points = vec![InteriorLeafPoint {
             point: point.clone(),
-            planes: None,
+            planes: Vec::new(),
         }];
-        let definition = [
+        let first_definition = [
             Plane::from_coefficients(r(1), r(1), r(1), r(-3)),
             Plane::axis_aligned(0, r(1)),
             Plane::axis_aligned(1, r(1)),
+        ];
+        let second_definition = [
+            Plane::from_coefficients(r(1), r(1), r(1), r(-3)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(2, r(1)),
         ];
 
         push_unique_interior_point(
             &mut points,
             InteriorLeafPoint {
+                point: point.clone(),
+                planes: vec![first_definition.clone()],
+            },
+        );
+        push_unique_interior_point(
+            &mut points,
+            InteriorLeafPoint {
                 point,
-                planes: Some(definition.clone()),
+                planes: vec![second_definition.clone()],
             },
         );
 
         assert_eq!(points.len(), 1);
-        assert_eq!(points[0].planes, Some(definition));
+        assert_eq!(points[0].planes, vec![first_definition, second_definition]);
     }
 
     #[test]
@@ -1615,13 +1661,45 @@ mod tests {
         let winding = trace_probe_from_reference_definitions(
             &p(0, 0, 0),
             &[invalid_start, valid_start.planes],
-            &end.planes,
+            std::slice::from_ref(&end.planes),
             &[0],
             &[wall],
         )
         .unwrap();
 
         assert_eq!(winding, vec![-1]);
+    }
+
+    #[test]
+    fn retained_probe_definitions_try_later_plane_replacement_paths() {
+        let ref_point = p(0, 0, 0);
+        let ref_definitions = [[
+            Plane::axis_aligned(0, r(0)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::from_coefficients(r(1), r(1), r(1), r(0)),
+        ]];
+        let invalid_probe_definition = [
+            Plane::axis_aligned(0, r(2)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(0, r(0)),
+        ];
+        let probe = ProbePoint {
+            point: p(2, 1, 0),
+            side: Classification::Positive,
+            planes: vec![invalid_probe_definition, axis_plane_definition(&p(2, 1, 0))],
+        };
+        let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+        wall.delta_w = vec![1];
+
+        assert_eq!(
+            trace_segment(&ref_point, &probe.point, &[0], &[wall.clone()]),
+            Err(HypermeshError::UnknownClassification)
+        );
+
+        let winding =
+            trace_probe_winding(&ref_point, &ref_definitions, &probe, &[0], &[wall]).unwrap();
+
+        assert_eq!(winding, Some(vec![0]));
     }
 
     #[test]
@@ -1635,7 +1713,7 @@ mod tests {
         let probe = ProbePoint {
             point: p(2, 1, 0),
             side: Classification::Positive,
-            planes: None,
+            planes: Vec::new(),
         };
         let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
         wall.delta_w = vec![1];

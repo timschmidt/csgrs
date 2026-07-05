@@ -54,11 +54,12 @@ number. There are no input-assumption bypass flags; leaves run pairwise
 intersection discovery across all local polygons, including same-mesh
 self-intersections, and classify each direct polygon separately. Normal probes
 derived from shifted edge-plane interior points retain their defining plane
-triples, and leaf classification retries EMBER plane-replacement traces from
-all retained reference definitions before failing. Leaf interior construction
-also asks `hyperlimit` for a strict replayable halfspace witness inside the
-leaf so probe generation can retain plane definitions even when the affine
-interior point itself came from centroid-style construction. Full
+triples, and leaf classification retries EMBER plane-replacement traces across
+all retained reference and probe definitions before failing. Leaf interior
+construction also asks `hyperlimit` for a strict replayable halfspace witness
+inside the leaf so probe generation can retain multiple certified plane
+definitions even when the affine interior point itself came from
+centroid-style construction. Full
 plane-replacement coverage for every reference/probe construction remains
 unfinished.
 
