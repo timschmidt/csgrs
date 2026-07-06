@@ -2049,6 +2049,7 @@ fn support_plane_cell_reference_with_queries(
      -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
         trace_reference_targets_backtracking_unknown(
             strict_support_cell_targets_from_optional_report(bounds, halfspaces, report.as_ref())?,
+            polygons,
             |target| {
                 trace_reference_target(
                     old_ref,
@@ -2083,11 +2084,15 @@ fn support_plane_cell_reference_with_queries(
 
 fn trace_reference_targets_backtracking_unknown(
     targets: Vec<ReferenceTarget>,
+    polygons: &[ConvexPolygon],
     mut trace: impl FnMut(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     let mut saw_unknown = false;
 
     for target in targets {
+        if point_lies_on_any_support_plane(&target.point, polygons)? {
+            continue;
+        }
         match trace(&target) {
             Ok(Some(winding)) => return Ok(Some((target, winding))),
             Ok(None) => {}
@@ -6121,6 +6126,7 @@ mod tests {
 
         let found = trace_reference_targets_backtracking_unknown(
             vec![first.clone(), second.clone()],
+            &[],
             |target| {
                 if target == &first {
                     Err(crate::error::HypermeshError::UnknownClassification)
@@ -6139,12 +6145,35 @@ mod tests {
         let first = ReferenceTarget::axis_defined(p(1, 1, 1));
         let second = ReferenceTarget::axis_defined(p(2, 2, 2));
 
-        let err = trace_reference_targets_backtracking_unknown(vec![first, second], |_target| {
-            Err(crate::error::HypermeshError::UnknownClassification)
-        })
-        .unwrap_err();
+        let err =
+            trace_reference_targets_backtracking_unknown(vec![first, second], &[], |_target| {
+                Err(crate::error::HypermeshError::UnknownClassification)
+            })
+            .unwrap_err();
 
         assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn reference_target_trace_search_skips_support_surface_targets_before_trace() {
+        let polygon = support_only_polygon(Plane::axis_aligned(0, r(2)));
+        let surface = ReferenceTarget::axis_defined(p(2, 1, 1));
+        let interior = ReferenceTarget::axis_defined(p(1, 1, 1));
+        let mut trace_calls = 0;
+
+        let found = trace_reference_targets_backtracking_unknown(
+            vec![surface, interior.clone()],
+            &[polygon],
+            |target| {
+                trace_calls += 1;
+                assert_eq!(target, &interior);
+                Ok(Some(vec![13]))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(trace_calls, 1);
+        assert_eq!(found, Some((interior, vec![13])));
     }
 
     #[test]

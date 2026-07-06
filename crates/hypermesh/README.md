@@ -390,6 +390,9 @@ pairs are now also skipped before any feasibility query or deeper recursion.
 Support-cell search now also prunes any state that already forces the
 reference onto a local support plane before report or acceptance queries run.
 The
+support/reference target trace search now also skips support-surface targets
+before retained-definition tracing runs, instead of paying for a trace only to
+reject that target afterward. The
 exact support/projected vertex family now also skips candidate-local
 `UnknownClassification` membership checks instead of aborting the whole
 vertex family on the first uncertified candidate, and the leaf/probe-side
