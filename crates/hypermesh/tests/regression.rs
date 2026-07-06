@@ -841,6 +841,60 @@ fn edge_touching_boxes_use_general_path() -> HypermeshResult<()> {
 }
 
 #[test]
+fn edge_touching_boxes_use_general_leaf_path() -> HypermeshResult<()> {
+    let left = box_mesh([0, 0, 0], [1, 1, 1]);
+    let right = box_mesh([1, 1, 0], [2, 2, 1]);
+    let refs = [left.as_ref(), right.as_ref()];
+    let reverse_refs = [right.as_ref(), left.as_ref()];
+    let left_soup = passthrough(&left).unwrap();
+    let right_soup = passthrough(&right).unwrap();
+    let config = EmberConfig {
+        leaf_threshold: usize::MAX,
+        ..config()
+    };
+
+    let union = triangulate_and_resolve_certified(&boolean_operation(
+        &refs,
+        BooleanOp::Union,
+        config,
+    )?)?;
+    assert_no_boundary_edges(&union);
+    assert_bounds(&union, [r(0), r(0), r(0)], [r(2), r(2), r(1)])?;
+    assert_volume_numerator(&union, r(12));
+
+    let intersection = triangulate_and_resolve_certified(&boolean_operation(
+        &refs,
+        BooleanOp::Intersection,
+        config,
+    )?)?;
+    assert!(intersection.triangles.is_empty());
+
+    let difference = triangulate_and_resolve_certified(&boolean_operation(
+        &refs,
+        BooleanOp::Difference,
+        config,
+    )?)?;
+    assert_same_shape(&difference, &left_soup);
+
+    let reverse_difference = triangulate_and_resolve_certified(&boolean_operation(
+        &reverse_refs,
+        BooleanOp::Difference,
+        config,
+    )?)?;
+    assert_same_shape(&reverse_difference, &right_soup);
+
+    let xor = triangulate_and_resolve_certified(&boolean_operation(
+        &refs,
+        BooleanOp::SymmetricDifference,
+        config,
+    )?)?;
+    assert_no_boundary_edges(&xor);
+    assert_same_shape(&xor, &union);
+
+    Ok(())
+}
+
+#[test]
 fn vertex_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let left = box_mesh([0, 0, 0], [1, 1, 1]);
     let right = box_mesh([1, 1, 1], [2, 2, 2]);
@@ -885,6 +939,60 @@ fn vertex_touching_boxes_use_general_path() -> HypermeshResult<()> {
         boolean_operation(&reverse_refs, BooleanOp::SymmetricDifference, config)?;
     let reverse_xor = triangulate_and_resolve_certified(&reverse_xor_result)?;
     assert_same_shape(&reverse_xor, &xor);
+
+    Ok(())
+}
+
+#[test]
+fn vertex_touching_boxes_use_general_leaf_path() -> HypermeshResult<()> {
+    let left = box_mesh([0, 0, 0], [1, 1, 1]);
+    let right = box_mesh([1, 1, 1], [2, 2, 2]);
+    let refs = [left.as_ref(), right.as_ref()];
+    let reverse_refs = [right.as_ref(), left.as_ref()];
+    let left_soup = passthrough(&left).unwrap();
+    let right_soup = passthrough(&right).unwrap();
+    let config = EmberConfig {
+        leaf_threshold: usize::MAX,
+        ..config()
+    };
+
+    let union = triangulate_and_resolve_certified(&boolean_operation(
+        &refs,
+        BooleanOp::Union,
+        config,
+    )?)?;
+    assert_no_boundary_edges(&union);
+    assert_bounds(&union, [r(0), r(0), r(0)], [r(2), r(2), r(2)])?;
+    assert_volume_numerator(&union, r(12));
+
+    let intersection = triangulate_and_resolve_certified(&boolean_operation(
+        &refs,
+        BooleanOp::Intersection,
+        config,
+    )?)?;
+    assert!(intersection.triangles.is_empty());
+
+    let difference = triangulate_and_resolve_certified(&boolean_operation(
+        &refs,
+        BooleanOp::Difference,
+        config,
+    )?)?;
+    assert_same_shape(&difference, &left_soup);
+
+    let reverse_difference = triangulate_and_resolve_certified(&boolean_operation(
+        &reverse_refs,
+        BooleanOp::Difference,
+        config,
+    )?)?;
+    assert_same_shape(&reverse_difference, &right_soup);
+
+    let xor = triangulate_and_resolve_certified(&boolean_operation(
+        &refs,
+        BooleanOp::SymmetricDifference,
+        config,
+    )?)?;
+    assert_no_boundary_edges(&xor);
+    assert_same_shape(&xor, &union);
 
     Ok(())
 }
