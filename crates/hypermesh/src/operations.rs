@@ -5,7 +5,7 @@ use hyperlattice::{Point3, Real};
 use crate::error::HypermeshResult;
 use crate::geometry::{Aabb, axis_mut, axis_ref};
 use crate::mesh::{MeshRef, prepare_input};
-use crate::output::{BooleanResult, triangulate_and_resolve_certified};
+use crate::output::{BooleanResult, certify_output_polygon_closure};
 use crate::subdivision::{SubdivisionConfig, SubdivisionTask, subdivide_for_operation};
 use crate::winding::{BooleanOp, make_indicator};
 
@@ -32,7 +32,7 @@ pub fn boolean_operation(
 ) -> HypermeshResult<BooleanResult> {
     validate_mesh_refs(meshes)?;
     let result = boolean_operation_general(meshes, op, config)?;
-    triangulate_and_resolve_certified(&result)?;
+    certify_output_polygon_closure(&result)?;
     Ok(result)
 }
 

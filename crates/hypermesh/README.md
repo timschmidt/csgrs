@@ -448,6 +448,9 @@ search instead of failing one layer too early.
 path. The previous same-surface, disjoint-bound, strict-containment,
 boundary-contact, and oriented-box shortcuts have been removed, so public
 boolean results either certify through the general path or return an error.
+The public `boolean_operation` entry now certifies closure directly on the
+classified polygon arrangement instead of requiring triangulation cleanup to
+succeed before returning that arrangement.
 The public regression suite now also exercises crossing octahedra and
 affine-box overlap through that normal subdivision/reference path, not only
 through the root one-leaf classifier.
