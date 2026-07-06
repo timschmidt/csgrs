@@ -646,7 +646,8 @@ fn boundary_touching_boxes_use_general_path() -> HypermeshResult<()> {
     assert_no_boundary_edges(&difference);
     assert_volume_numerator(&difference, r(6));
 
-    let reverse_difference_result = boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
+    let reverse_difference_result =
+        boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
     let reverse_difference = triangulate_and_resolve_certified(&reverse_difference_result)?;
     assert_same_shape(&reverse_difference, &right_soup);
 
@@ -694,7 +695,8 @@ fn edge_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert_same_shape(&difference, &left_soup);
 
-    let reverse_difference_result = boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
+    let reverse_difference_result =
+        boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
     let reverse_difference = triangulate_and_resolve_certified(&reverse_difference_result)?;
     assert_same_shape(&reverse_difference, &right_soup);
 
@@ -742,7 +744,8 @@ fn vertex_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert_same_shape(&difference, &left_soup);
 
-    let reverse_difference_result = boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
+    let reverse_difference_result =
+        boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
     let reverse_difference = triangulate_and_resolve_certified(&reverse_difference_result)?;
     assert_same_shape(&reverse_difference, &right_soup);
 

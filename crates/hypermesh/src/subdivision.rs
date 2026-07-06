@@ -1270,6 +1270,20 @@ fn escaped_reference_axis_stop_value(
     axis: usize,
     direction_positive: bool,
 ) -> HypermeshResult<Option<Real>> {
+    Ok(
+        escaped_reference_axis_stop_values(projected, bounds, polygons, axis, direction_positive)?
+            .into_iter()
+            .next(),
+    )
+}
+
+fn escaped_reference_axis_stop_values(
+    projected: &Point3,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    axis: usize,
+    direction_positive: bool,
+) -> HypermeshResult<Vec<Real>> {
     let start_value = axis_ref(projected, axis);
     let bound_value = if direction_positive {
         axis_ref(&bounds.max, axis)
@@ -1282,12 +1296,12 @@ fn escaped_reference_axis_stop_value(
         start_value - bound_value
     };
     if !compare_real(&room, &Real::zero())?.is_gt() {
-        return Ok(None);
+        return Ok(Vec::new());
     }
 
     let mut endpoint = projected.clone();
     *axis_mut(&mut endpoint, axis) = bound_value.clone();
-    let mut stop_value = bound_value.clone();
+    let mut stop_values = vec![bound_value.clone()];
 
     for polygon in polygons {
         let Some(crossing) = reference_axis_surface_crossing(projected, &endpoint, polygon, axis)?
@@ -1299,16 +1313,32 @@ fn escaped_reference_axis_stop_value(
         }
 
         let crossing_value = axis_ref(&crossing, axis);
-        let order = compare_real(crossing_value, &stop_value)?;
-        if (direction_positive && order.is_lt()) || (!direction_positive && order.is_gt()) {
-            stop_value = crossing_value.clone();
+        let from_start = compare_real(crossing_value, start_value)?;
+        if (direction_positive && !from_start.is_gt())
+            || (!direction_positive && !from_start.is_lt())
+        {
+            continue;
+        }
+
+        let mut insert_at = stop_values.len();
+        let mut duplicate = false;
+        for (index, existing) in stop_values.iter().enumerate() {
+            let order = compare_real(crossing_value, existing)?;
+            if order.is_eq() {
+                duplicate = true;
+                break;
+            }
+            if (direction_positive && order.is_lt()) || (!direction_positive && order.is_gt()) {
+                insert_at = index;
+                break;
+            }
+        }
+        if !duplicate {
+            stop_values.insert(insert_at, crossing_value.clone());
         }
     }
 
-    if compare_real(&stop_value, start_value)?.is_eq() {
-        return Ok(None);
-    }
-    Ok(Some(stop_value))
+    Ok(stop_values)
 }
 
 fn push_unique_reference_target(targets: &mut Vec<ReferenceTarget>, target: ReferenceTarget) {
@@ -1385,21 +1415,19 @@ fn projection_axis_escape_reference_with_search(
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     for axis in 0..3 {
         for direction_positive in [true, false] {
-            let Some(stop_value) = escaped_reference_axis_stop_value(
+            for stop_value in escaped_reference_axis_stop_values(
                 projected,
                 bounds,
                 polygons,
                 axis,
                 direction_positive,
-            )?
-            else {
-                continue;
-            };
-            let corridor = axis_escape_bounds(projected, axis, stop_value)?;
-            match search(&corridor) {
-                Ok(Some(found)) => return Ok(Some(found)),
-                Ok(None) | Err(crate::error::HypermeshError::UnknownClassification) => continue,
-                Err(err) => return Err(err),
+            )? {
+                let corridor = axis_escape_bounds(projected, axis, stop_value)?;
+                match search(&corridor) {
+                    Ok(Some(found)) => return Ok(Some(found)),
+                    Ok(None) | Err(crate::error::HypermeshError::UnknownClassification) => continue,
+                    Err(err) => return Err(err),
+                }
             }
         }
     }
@@ -2979,6 +3007,58 @@ mod tests {
         assert!(compare_real(&target.point.x, &r(1)).unwrap().is_gt());
         assert!(compare_real(&target.point.x, &r(4)).unwrap().is_lt());
         assert!(!target.definitions.is_empty());
+    }
+
+    #[test]
+    fn projection_axis_escape_stop_values_include_later_bound_corridor() {
+        let mut wall = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
+
+        let stops =
+            escaped_reference_axis_stop_values(&p(1, 3, 3), &bounds, &[wall], 0, true).unwrap();
+
+        assert_eq!(stops, vec![r(4), r(6)]);
+    }
+
+    #[test]
+    fn projection_axis_escape_reference_backtracks_after_empty_nearer_corridor() {
+        let mut wall = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
+        let mut searched_corridors = Vec::new();
+
+        let found = projection_axis_escape_reference_with_search(
+            &p(1, 3, 3),
+            &bounds,
+            &[wall],
+            |corridor| {
+                searched_corridors.push(corridor.clone());
+                if corridor.max.x == r(4) {
+                    Ok(None)
+                } else if corridor.max.x == r(6) {
+                    Ok(Some((ReferenceTarget::axis_defined(p(5, 3, 3)), vec![9])))
+                } else {
+                    Ok(None)
+                }
+            },
+        )
+        .unwrap();
+
+        assert!(
+            searched_corridors
+                .iter()
+                .any(|corridor| corridor.max.x == r(4) && corridor.min.x == r(1))
+        );
+        assert!(
+            searched_corridors
+                .iter()
+                .any(|corridor| corridor.max.x == r(6) && corridor.min.x == r(1))
+        );
+        assert_eq!(
+            found,
+            Some((ReferenceTarget::axis_defined(p(5, 3, 3)), vec![9]))
+        );
     }
 
     #[test]

@@ -126,10 +126,10 @@ instead of aborting the whole projected target family, and witness points whose
 retained plane-definition reconstruction is uncertified are now skipped
 candidate-locally there as well. It then tries local
 axis-aligned
-escape corridors inside certified open intervals before the next surface hit or
-AABB boundary, using `hyperlimit` witness search instead of midpoint sampling
-and backtracking past uncertified corridor searches. If those direct one-axis
-corridors still cannot be traced, it builds the
+escape corridors across the ordered exact stop family from the next surface hit
+out to the child AABB boundary, using `hyperlimit` witness search instead of
+midpoint sampling and backtracking past uncertified or empty earlier corridor
+searches. If those direct one-axis corridors still cannot be traced, it builds the
 certified axis-aligned escape box bounded by the nearest exact axis crossings
 or child AABB faces around that projected target, then asks `hyperlimit` for a
 replayable halfspace-feasibility witness inside that box while backtracking
