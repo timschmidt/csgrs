@@ -4339,6 +4339,42 @@ mod tests {
     }
 
     #[test]
+    fn trace_reference_target_retries_axis_start_after_retained_definitions_fail() {
+        let ref_point = p(0, 0, 0);
+        let target_point = p(2, 1, 0);
+        let invalid_ref_definition = [
+            Plane::axis_aligned(0, r(0)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(0, r(2)),
+        ];
+        let valid_target_definition = [
+            Plane::axis_aligned(0, r(2)),
+            Plane::axis_aligned(1, r(1)),
+            Plane::from_coefficients(r(1), r(1), r(1), r(-3)),
+        ];
+        let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, -1, -1), p(3, 2, 1));
+
+        assert_eq!(
+            crate::segment_trace::trace_segment(&ref_point, &target_point, &[0], &[wall.clone()]),
+            Err(crate::error::HypermeshError::UnknownClassification)
+        );
+
+        let winding = trace_reference_target(
+            &ref_point,
+            &[invalid_ref_definition],
+            &[0],
+            &bounds,
+            &[wall],
+            &ReferenceTarget::with_definitions(target_point, vec![valid_target_definition]),
+        )
+        .unwrap();
+
+        assert_eq!(winding, Some(vec![0]));
+    }
+
+    #[test]
     fn trace_reference_target_uses_detour_on_plane_replacement_step() {
         let ref_point = p(0, 0, 0);
         let target_point = p(4, 0, 0);
