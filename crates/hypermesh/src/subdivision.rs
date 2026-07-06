@@ -3408,6 +3408,89 @@ mod tests {
     }
 
     #[test]
+    fn compute_new_reference_falls_through_to_support_cell_search() {
+        let old_ref = p(0, 5, 5);
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
+        let old_defs = axis_defs(&old_ref);
+        let old_wnv = vec![0];
+        let polygons = vec![
+            support_only_polygon(Plane::axis_aligned(0, r(5))),
+            support_only_polygon(Plane::axis_aligned(1, r(5))),
+            support_only_polygon(Plane::axis_aligned(2, r(5))),
+        ];
+
+        let projected_targets = projected_reference_targets(&old_ref, &bounds).unwrap();
+        let projected_halfspaces = projected_reference_halfspaces(&old_ref, &bounds).unwrap();
+        let projected_escape_targets =
+            projected_reference_escape_targets(&bounds, &projected_halfspaces, &projected_targets)
+                .unwrap();
+
+        let projected = projected_reference_search_or_none(search_projected_reference_families(
+            &projected_targets,
+            &projected_escape_targets,
+            || {
+                projected_support_plane_cell_reference(
+                    &old_ref,
+                    &old_defs,
+                    &old_wnv,
+                    &bounds,
+                    &polygons,
+                    projected_halfspaces.clone(),
+                )
+            },
+            |projected_target| {
+                trace_reference_target(
+                    &old_ref,
+                    &old_defs,
+                    &old_wnv,
+                    &bounds,
+                    &polygons,
+                    projected_target,
+                )
+            },
+            |projected_target| {
+                projection_axis_escape_reference(
+                    &old_ref,
+                    &old_defs,
+                    &old_wnv,
+                    &projected_target.point,
+                    &bounds,
+                    &polygons,
+                )
+            },
+            |projected_target| {
+                projection_escape_reference(
+                    &old_ref,
+                    &old_defs,
+                    &old_wnv,
+                    &projected_target.point,
+                    &bounds,
+                    &polygons,
+                )
+            },
+        ))
+        .unwrap();
+
+        let support = support_plane_cell_reference(
+            &old_ref,
+            &old_defs,
+            &old_wnv,
+            &bounds,
+            &polygons,
+        )
+        .unwrap();
+
+        let (point, definitions, winding) =
+            compute_new_reference(&old_ref, &old_defs, &old_wnv, &bounds, &polygons).unwrap();
+
+        assert_eq!(projected, None);
+        let support = support.expect("support-cell fallback should find a witness");
+        assert_eq!(point, support.0.point);
+        assert_eq!(definitions, support.0.definitions);
+        assert_eq!(winding, support.1);
+    }
+
+    #[test]
     fn projected_support_plane_cell_reference_preserves_inherited_axes() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
