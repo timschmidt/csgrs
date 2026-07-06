@@ -1319,6 +1319,21 @@ fn extend_reference_targets_backtracking_unknown<T>(
     Ok(())
 }
 
+fn reference_target_from_halfspace_witness(
+    point: &Point3,
+    halfspaces: &[LimitPlane3],
+    active_planes: [Option<usize>; 3],
+) -> HypermeshResult<Option<ReferenceTarget>> {
+    match reference_definitions_from_active_halfspaces(point, halfspaces, active_planes) {
+        Ok(definitions) => Ok(Some(ReferenceTarget::with_definitions(
+            point.clone(),
+            definitions,
+        ))),
+        Err(crate::error::HypermeshError::UnknownClassification) => Ok(None),
+        Err(err) => Err(err),
+    }
+}
+
 fn projection_axis_escape_reference(
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
@@ -1786,18 +1801,10 @@ fn strict_projected_cell_targets(
     if report.status == HalfspaceFeasibility::Feasible
         && let Some(witness) = &report.witness
         && point_strictly_inside_projected_cell(witness, bounds, halfspaces)?
+        && let Some(target) =
+            reference_target_from_halfspace_witness(witness, halfspaces, report.active_planes)?
     {
-        push_unique_reference_target(
-            &mut targets,
-            ReferenceTarget::with_definitions(
-                witness.clone(),
-                reference_definitions_from_active_halfspaces(
-                    witness,
-                    halfspaces,
-                    report.active_planes,
-                )?,
-            ),
-        );
+        push_unique_reference_target(&mut targets, target);
     }
 
     extend_reference_targets_backtracking_unknown(
@@ -1848,52 +1855,40 @@ fn shifted_projected_cell_targets_from_seed(
 
     if let Some(witness) = &report.witness
         && point_strictly_inside_projected_cell(witness, bounds, halfspaces)?
+        && let Some(target) =
+            reference_target_from_halfspace_witness(witness, &shifted, report.active_planes)?
     {
-        push_unique_reference_target(
-            &mut targets,
-            ReferenceTarget::with_definitions(
-                witness.clone(),
-                reference_definitions_from_active_halfspaces(
-                    witness,
-                    &shifted,
-                    report.active_planes,
-                )?,
-            ),
-        );
+        push_unique_reference_target(&mut targets, target);
     }
 
-    for witness in strict_projected_cell_seeds_from_report(bounds, &shifted, &report)? {
-        if !point_strictly_inside_projected_cell(&witness, bounds, halfspaces)? {
-            continue;
-        }
-        push_unique_reference_target(
-            &mut targets,
-            ReferenceTarget::with_definitions(
-                witness.clone(),
-                reference_definitions_from_active_halfspaces(
-                    &witness,
-                    &shifted,
-                    [None, None, None],
-                )?,
-            ),
-        );
-    }
-    for witness in feasible_support_cell_vertices(&shifted)? {
-        if !point_strictly_inside_projected_cell(&witness, bounds, halfspaces)? {
-            continue;
-        }
-        push_unique_reference_target(
-            &mut targets,
-            ReferenceTarget::with_definitions(
-                witness.clone(),
-                reference_definitions_from_active_halfspaces(
-                    &witness,
-                    &shifted,
-                    [None, None, None],
-                )?,
-            ),
-        );
-    }
+    extend_reference_targets_backtracking_unknown(
+        &mut targets,
+        strict_projected_cell_seeds_from_report(bounds, &shifted, &report)?,
+        |witness| {
+            if !point_strictly_inside_projected_cell(&witness, bounds, halfspaces)? {
+                return Ok(Vec::new());
+            }
+            Ok(
+                reference_target_from_halfspace_witness(&witness, &shifted, [None, None, None])?
+                    .into_iter()
+                    .collect(),
+            )
+        },
+    )?;
+    extend_reference_targets_backtracking_unknown(
+        &mut targets,
+        feasible_support_cell_vertices(&shifted)?,
+        |witness| {
+            if !point_strictly_inside_projected_cell(&witness, bounds, halfspaces)? {
+                return Ok(Vec::new());
+            }
+            Ok(
+                reference_target_from_halfspace_witness(&witness, &shifted, [None, None, None])?
+                    .into_iter()
+                    .collect(),
+            )
+        },
+    )?;
 
     Ok(targets)
 }
@@ -1938,18 +1933,10 @@ fn strict_support_cell_targets(
     if report.status == HalfspaceFeasibility::Feasible
         && let Some(witness) = &report.witness
         && point_strictly_inside_support_cell(witness, bounds, halfspaces)?
+        && let Some(target) =
+            reference_target_from_halfspace_witness(witness, halfspaces, report.active_planes)?
     {
-        push_unique_reference_target(
-            &mut targets,
-            ReferenceTarget::with_definitions(
-                witness.clone(),
-                reference_definitions_from_active_halfspaces(
-                    witness,
-                    halfspaces,
-                    report.active_planes,
-                )?,
-            ),
-        );
+        push_unique_reference_target(&mut targets, target);
     }
 
     let report_witness = report.witness.clone();
@@ -1958,18 +1945,10 @@ fn strict_support_cell_targets(
         if !report_witness
             .as_ref()
             .is_some_and(|witness| witness == &seed)
+            && let Some(target) =
+                reference_target_from_halfspace_witness(&seed, halfspaces, [None, None, None])?
         {
-            push_unique_reference_target(
-                &mut deferred_direct_targets,
-                ReferenceTarget::with_definitions(
-                    seed.clone(),
-                    reference_definitions_from_active_halfspaces(
-                        &seed,
-                        halfspaces,
-                        [None, None, None],
-                    )?,
-                ),
-            );
+            push_unique_reference_target(&mut deferred_direct_targets, target);
         }
     }
     extend_reference_targets_backtracking_unknown(
@@ -2022,18 +2001,10 @@ fn shifted_support_cell_targets_from_seed(
 
     if let Some(witness) = &report.witness
         && point_strictly_inside_support_cell(witness, bounds, halfspaces)?
+        && let Some(target) =
+            reference_target_from_halfspace_witness(witness, &shifted, report.active_planes)?
     {
-        push_unique_reference_target(
-            &mut targets,
-            ReferenceTarget::with_definitions(
-                witness.clone(),
-                reference_definitions_from_active_halfspaces(
-                    witness,
-                    &shifted,
-                    report.active_planes,
-                )?,
-            ),
-        );
+        push_unique_reference_target(&mut targets, target);
     }
 
     extend_reference_targets_backtracking_unknown(
@@ -2043,14 +2014,11 @@ fn shifted_support_cell_targets_from_seed(
             if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
                 return Ok(Vec::new());
             }
-            Ok(vec![ReferenceTarget::with_definitions(
-                witness.clone(),
-                reference_definitions_from_active_halfspaces(
-                    &witness,
-                    &shifted,
-                    [None, None, None],
-                )?,
-            )])
+            Ok(
+                reference_target_from_halfspace_witness(&witness, &shifted, [None, None, None])?
+                    .into_iter()
+                    .collect(),
+            )
         },
     )?;
     extend_reference_targets_backtracking_unknown(
@@ -2060,14 +2028,11 @@ fn shifted_support_cell_targets_from_seed(
             if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
                 return Ok(Vec::new());
             }
-            Ok(vec![ReferenceTarget::with_definitions(
-                witness.clone(),
-                reference_definitions_from_active_halfspaces(
-                    &witness,
-                    &shifted,
-                    [None, None, None],
-                )?,
-            )])
+            Ok(
+                reference_target_from_halfspace_witness(&witness, &shifted, [None, None, None])?
+                    .into_iter()
+                    .collect(),
+            )
         },
     )?;
 
@@ -2621,6 +2586,20 @@ mod tests {
         .unwrap();
 
         assert_eq!(targets, vec![ReferenceTarget::axis_defined(p(1, 2, 3))]);
+    }
+
+    #[test]
+    fn reference_target_from_halfspace_witness_skips_uncertified_definitions() {
+        let halfspaces = vec![axis_halfspace(0, false, r(1))];
+
+        let target = reference_target_from_halfspace_witness(
+            &p(1, 2, 3),
+            &halfspaces,
+            [Some(9), None, None],
+        )
+        .unwrap();
+
+        assert_eq!(target, None);
     }
 
     #[test]

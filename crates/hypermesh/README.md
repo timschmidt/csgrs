@@ -113,7 +113,9 @@ targets at all, those later escape families now fall back to the exact clamped
 projection anchor of the old reference instead of being skipped entirely. If those projected
 support cells still cannot be certified, the implementation now also
 backtracks past uncertified shifted projected seeds and projected vertices
-instead of aborting the whole projected target family, and then it tries local
+instead of aborting the whole projected target family, and witness points whose
+retained plane-definition reconstruction is uncertified are now skipped
+candidate-locally there as well. It then tries local
 axis-aligned
 escape corridors inside certified open intervals before the next surface hit or
 AABB boundary, using `hyperlimit` witness search instead of midpoint sampling
@@ -154,7 +156,10 @@ point. Each shifted support cell now also contributes every strict target
 recovered from its own certified witness family and its own exact feasible
 vertices instead of only the first feasibility witness selected by the
 halfspace predicate, and uncertified shifted support seeds or shifted support
-vertices now no longer abort the whole support-cell target family.
+vertices now no longer abort the whole support-cell target family. Witness
+points whose retained plane-definition reconstruction is uncertified are now
+also skipped candidate-locally instead of aborting those support-cell target
+families.
 Support-cell retained definitions now include every exact witness-active
 halfspace we can verify, not just the feasibility basis planes returned by
 `hyperlimit`. When direct tracing cannot certify a reference step, hypermesh
