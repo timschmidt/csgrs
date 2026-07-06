@@ -319,7 +319,9 @@ triple. Closed projected child cells now also retain any remaining strict
 direct witnesses of the cell, including strict exact feasible vertices, instead
 of using those points only as shifted-seed sources. The projected escape-target
 family now retains those same remaining strict direct projected witnesses before
-it widens into shifted projected escape cells. Support-cell witnesses are now constructed from
+it widens into shifted projected escape cells, and it no longer rebuilds direct
+targets whose points are already present in the projected target family.
+Support-cell witnesses are now constructed from
 closed support-side cells by enumerating exact feasible cell vertices and
 asking `hyperlimit` for replayable witnesses inside inward-shifted strict
 cells. When `hyperlimit` already provides a strict feasible witness for the

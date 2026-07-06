@@ -1414,6 +1414,10 @@ fn projected_reference_escape_targets_from_optional_report(
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut targets = projected_targets.to_vec();
     let mut saw_unknown = false;
+    let existing_direct_points = projected_targets
+        .iter()
+        .map(|target| target.point.clone())
+        .collect::<Vec<_>>();
 
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
         projected_cell_seed_families_from_optional_report(
@@ -1428,7 +1432,15 @@ fn projected_reference_escape_targets_from_optional_report(
         [
             reference_target_family_from_witness(
                 report.and_then(|report| report.witness.as_ref()),
-                |witness| point_satisfies_halfspaces(witness, halfspaces),
+                |witness| {
+                    if existing_direct_points
+                        .iter()
+                        .any(|candidate| candidate == witness)
+                    {
+                        return Ok(false);
+                    }
+                    point_satisfies_halfspaces(witness, halfspaces)
+                },
                 |witness| {
                     reference_target_from_halfspace_witness(
                         witness,
@@ -1440,6 +1452,7 @@ fn projected_reference_escape_targets_from_optional_report(
             deferred_projected_escape_direct_targets(
                 &strict_shift_seeds,
                 report_witness.as_ref(),
+                &existing_direct_points,
                 halfspaces,
             ),
             collect_reference_target_family(strict_shift_seeds, |seed| {
@@ -1771,11 +1784,13 @@ fn reference_target_family_from_witness(
 fn deferred_projected_escape_direct_targets(
     strict_seeds: &[Point3],
     report_witness: Option<&Point3>,
+    existing_points: &[Point3],
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     deferred_projected_escape_direct_targets_with_contains(
         strict_seeds,
         report_witness,
+        existing_points,
         halfspaces,
         |seed, halfspaces| point_satisfies_halfspaces(seed, halfspaces),
     )
@@ -1784,10 +1799,13 @@ fn deferred_projected_escape_direct_targets(
 fn deferred_projected_escape_direct_targets_with_contains(
     strict_seeds: &[Point3],
     report_witness: Option<&Point3>,
+    existing_points: &[Point3],
     halfspaces: &[LimitPlane3],
     mut contains: impl FnMut(&Point3, &[LimitPlane3]) -> HypermeshResult<bool>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
-    collect_reference_target_family(strict_seeds.iter().cloned(), |seed| {
+    let mut seen = existing_points.to_vec();
+    let strict_seeds = take_new_point_family(strict_seeds.to_vec(), &mut seen);
+    collect_reference_target_family(strict_seeds, |seed| {
         if report_witness.is_some_and(|witness| witness == &seed) {
             return Ok(Vec::new());
         }
@@ -4642,6 +4660,7 @@ mod tests {
         let targets = deferred_projected_escape_direct_targets_with_contains(
             &strict_seeds,
             None,
+            &[],
             &halfspaces,
             |seed, _halfspaces| {
                 if seed == &p(1, 2, 3) {
@@ -4673,6 +4692,7 @@ mod tests {
         let err = deferred_projected_escape_direct_targets_with_contains(
             &strict_seeds,
             None,
+            &[],
             &halfspaces,
             |_seed, _halfspaces| Err(crate::error::HypermeshError::UnknownClassification),
         )
@@ -5910,6 +5930,27 @@ mod tests {
 
         assert_eq!(fresh, vec![p(1, 0, 0), p(2, 0, 0)]);
         assert_eq!(seen, vec![p(0, 0, 0), p(1, 0, 0), p(2, 0, 0)]);
+    }
+
+    #[test]
+    fn deferred_projected_escape_direct_targets_skip_existing_projected_points() {
+        let seed = p(1, 1, 1);
+        let contains_calls = std::cell::Cell::new(0);
+
+        let targets = deferred_projected_escape_direct_targets_with_contains(
+            std::slice::from_ref(&seed),
+            None,
+            std::slice::from_ref(&seed),
+            &[],
+            |_candidate, _halfspaces| {
+                contains_calls.set(contains_calls.get() + 1);
+                Ok(true)
+            },
+        )
+        .unwrap();
+
+        assert!(targets.is_empty());
+        assert_eq!(contains_calls.get(), 0);
     }
 
     #[test]
