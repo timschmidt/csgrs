@@ -2452,10 +2452,13 @@ fn bounded_probes_from_interior(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<ProbePoint>> {
     let mut probes = Vec::new();
+    let mut saw_unknown = false;
 
-    for probe in adjacent_normal_probes(interior, support, bounds, polygons, positive_side)? {
-        push_unique_probe_point(&mut probes, probe);
-    }
+    extend_probe_families_backtracking_unknown(
+        &mut probes,
+        adjacent_normal_probes(interior, support, bounds, polygons, positive_side),
+        &mut saw_unknown,
+    )?;
 
     for axis in probe_axes(support)? {
         let normal_sign = crate::geometry::classify_real(axis_ref(&support.normal, axis))?;
@@ -2474,19 +2477,45 @@ fn bounded_probes_from_interior(
             continue;
         }
 
-        for probe in adjacent_axis_probes(
-            interior,
-            support,
-            bounds,
-            polygons,
-            axis,
-            direction_positive,
-        )? {
-            push_unique_probe_point(&mut probes, probe);
-        }
+        extend_probe_families_backtracking_unknown(
+            &mut probes,
+            adjacent_axis_probes(
+                interior,
+                support,
+                bounds,
+                polygons,
+                axis,
+                direction_positive,
+            ),
+            &mut saw_unknown,
+        )?;
     }
 
-    Ok(probes)
+    if probes.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(probes)
+    }
+}
+
+fn extend_probe_families_backtracking_unknown(
+    probes: &mut Vec<ProbePoint>,
+    family: HypermeshResult<Vec<ProbePoint>>,
+    saw_unknown: &mut bool,
+) -> HypermeshResult<()> {
+    match family {
+        Ok(found) => {
+            for probe in found {
+                push_unique_probe_point(probes, probe);
+            }
+            Ok(())
+        }
+        Err(HypermeshError::UnknownClassification) => {
+            *saw_unknown = true;
+            Ok(())
+        }
+        Err(err) => Err(err),
+    }
 }
 
 fn probe_definitions_from_active_halfspaces(
@@ -3964,6 +3993,56 @@ mod tests {
             .expect("normal probe should preserve a shifted plane definition");
         let planes = &probe.planes[0];
         assert_eq!(affine_from_planes(planes).unwrap(), probe.point);
+    }
+
+    #[test]
+    fn bounded_probe_family_collection_backtracks_after_uncertified_family() {
+        let constrained_probe = ProbePoint {
+            point: p(1, 1, 1),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(1, 1, 1))],
+        };
+        let mut probes = Vec::new();
+        let mut saw_unknown = false;
+
+        extend_probe_families_backtracking_unknown(
+            &mut probes,
+            Err(HypermeshError::UnknownClassification),
+            &mut saw_unknown,
+        )
+        .unwrap();
+        extend_probe_families_backtracking_unknown(
+            &mut probes,
+            Ok(vec![constrained_probe.clone()]),
+            &mut saw_unknown,
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(probes.len(), 1);
+        assert_eq!(probes[0].point, constrained_probe.point);
+    }
+
+    #[test]
+    fn bounded_probe_family_collection_reports_unknown_if_all_families_are_uncertified() {
+        let mut probes = Vec::new();
+        let mut saw_unknown = false;
+
+        extend_probe_families_backtracking_unknown(
+            &mut probes,
+            Err(HypermeshError::UnknownClassification),
+            &mut saw_unknown,
+        )
+        .unwrap();
+        extend_probe_families_backtracking_unknown(
+            &mut probes,
+            Err(HypermeshError::UnknownClassification),
+            &mut saw_unknown,
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert!(probes.is_empty());
     }
 
     #[test]
