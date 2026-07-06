@@ -1588,11 +1588,63 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
     Ok(false)
 }
 
+fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions(
+    start: &Point3,
+    end: &Point3,
+    host_support: &Plane,
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    remaining_detours: usize,
+) -> HypermeshResult<bool> {
+    let mut trace_without_detours =
+        |start: &Point3,
+         end: &Point3,
+         _start_definitions: &[[Plane; 3]],
+         _end_definitions: &[[Plane; 3]]| {
+            probe_reaches_adjacent_cell(start, end, host_support, polygons)
+        };
+    let mut detours_for =
+        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons);
+    probe_reaches_adjacent_cell_with_definitions_budget_impl(
+        start,
+        end,
+        polygons,
+        start_definitions,
+        end_definitions,
+        remaining_detours,
+        &mut trace_without_detours,
+        &mut detours_for,
+    )
+}
+
 fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement(
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     host_support: &Plane,
     polygons: &[ConvexPolygon],
+) -> HypermeshResult<bool> {
+    plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+        start_planes,
+        end_planes,
+        |current, next, current_definitions, next_definitions| {
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions(
+                current,
+                next,
+                host_support,
+                polygons,
+                current_definitions,
+                next_definitions,
+                PLANE_REPLACEMENT_STEP_DETOUR_LIMIT,
+            )
+        },
+    )
+}
+
+fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    mut trace_step: impl FnMut(&Point3, &Point3, &[[Plane; 3]], &[[Plane; 3]]) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
     for ordering in AXIS_ORDERINGS {
         let mut current_planes = start_planes.clone();
@@ -1604,8 +1656,9 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
         let mut valid = true;
 
         for plane_index in ordering {
-            current_planes[plane_index] = end_planes[plane_index].clone();
-            let next_point = match affine_from_planes(&current_planes) {
+            let mut next_planes = current_planes.clone();
+            next_planes[plane_index] = end_planes[plane_index].clone();
+            let next_point = match affine_from_planes(&next_planes) {
                 Ok(point) => point,
                 Err(HypermeshError::UnknownClassification) => {
                     valid = false;
@@ -1614,18 +1667,18 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                 Err(err) => return Err(err),
             };
             if next_point != current_point
-                && !probe_reaches_adjacent_cell_with_detours_without_plane_replacement(
+                && !trace_step(
                     &current_point,
                     &next_point,
-                    host_support,
-                    polygons,
-                    PLANE_REPLACEMENT_STEP_DETOUR_LIMIT,
+                    std::slice::from_ref(&current_planes),
+                    std::slice::from_ref(&next_planes),
                 )?
             {
                 valid = false;
                 break;
             }
             current_point = next_point;
+            current_planes = next_planes;
         }
 
         if valid {
@@ -4058,6 +4111,69 @@ mod tests {
             )
             .unwrap(),
             Some(vec![0])
+        );
+    }
+
+    #[test]
+    fn probe_plane_replacement_step_detours_preserve_intermediate_definitions() {
+        let start = p(0, 0, 0);
+        let detour_point = p(1, 0, 0);
+        let end = p(2, 0, 0);
+        let start_definition = axis_plane_definition(&start);
+        let end_definition = [
+            Plane::from_coefficients(r(1), r(1), r(1), r(-2)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::axis_aligned(2, r(0)),
+        ];
+        let detour_definition = [
+            Plane::from_coefficients(r(1), r(1), r(1), r(-1)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::axis_aligned(2, r(0)),
+        ];
+        let detour_target = DetourTarget {
+            point: detour_point.clone(),
+            definitions: vec![detour_definition.clone()],
+        };
+        let mut trace_without_detours =
+            |from: &Point3,
+             to: &Point3,
+             start_definitions: &[[Plane; 3]],
+             end_definitions: &[[Plane; 3]]| {
+                Ok(((*from == start
+                    && *to == detour_point
+                    && start_definitions == [start_definition.clone()]
+                    && end_definitions == [detour_definition.clone()])
+                    || (*from == detour_point
+                        && *to == end
+                        && start_definitions == [detour_definition.clone()]
+                        && end_definitions == [end_definition.clone()])))
+            };
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![detour_target.clone()])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        assert!(
+            plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+                &start_definition,
+                &end_definition,
+                |from, to, start_definitions, end_definitions| {
+                    probe_reaches_adjacent_cell_with_definitions_budget_impl(
+                        from,
+                        to,
+                        &[],
+                        start_definitions,
+                        end_definitions,
+                        1,
+                        &mut trace_without_detours,
+                        &mut detours_for,
+                    )
+                },
+            )
+            .unwrap()
         );
     }
 

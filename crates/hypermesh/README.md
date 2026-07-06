@@ -67,7 +67,9 @@ reachability detours now also allow the same bounded nested-detour retry on
 detour legs instead of collapsing every chosen leg to the no-detour family
 immediately. Retained plane-replacement fallback now also allows those
 individual replacement steps to use the same bounded detour family, while still
-stopping short of nested plane-replacement recursion. Probe winding fallback
+stopping short of nested plane-replacement recursion, and those probe
+reachability replacement steps now keep their actual intermediate plane triples
+instead of collapsing each step back to axis-only endpoint definitions. Probe winding fallback
 from retained reference/probe definitions now uses that same bounded detour
 family on its replacement steps as well, again without recursing into another
 plane-replacement layer. Leaf interior
