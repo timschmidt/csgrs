@@ -814,6 +814,21 @@ fn trace_axis_ordered_paths(
     winding: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<WindingNumberVector> {
+    let mut surface_cache = Vec::new();
+    trace_axis_ordered_paths_with_surface_query(start, end, winding, polygons, |point| {
+        cached_surface_query_with(&mut surface_cache, point, || {
+            point_lies_on_traced_surface(point, polygons)
+        })
+    })
+}
+
+fn trace_axis_ordered_paths_with_surface_query(
+    start: &Point3,
+    end: &Point3,
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    mut point_lies_on_surface: impl FnMut(&Point3) -> HypermeshResult<bool>,
+) -> HypermeshResult<WindingNumberVector> {
     for ordering in AXIS_ORDERINGS {
         let mut current = start.clone();
         let mut attempt = winding.to_vec();
@@ -823,7 +838,7 @@ fn trace_axis_ordered_paths(
             if compare_real(axis_ref(&current, axis), axis_ref(end, axis))?.is_ne() {
                 let mut next = current.clone();
                 *axis_mut(&mut next, axis) = axis_ref(end, axis).clone();
-                if next != *end && point_lies_on_traced_surface(&next, polygons)? {
+                if next != *end && point_lies_on_surface(&next)? {
                     valid = false;
                     break;
                 }
@@ -5290,6 +5305,25 @@ mod tests {
         assert_eq!(reachability_calls, 1);
         assert!(first_reachability);
         assert!(second_reachability);
+    }
+
+    #[test]
+    fn trace_axis_ordered_paths_reuse_equivalent_intermediate_surface_queries() {
+        let start = p(0, 0, 0);
+        let end = p(1, 1, 0);
+        let mut surface_cache = Vec::new();
+        let mut query_calls = 0;
+
+        let err = trace_axis_ordered_paths_with_surface_query(&start, &end, &[0], &[], |point| {
+            cached_surface_query_with(&mut surface_cache, point, || {
+                query_calls += 1;
+                Ok(*point == p(1, 0, 0) || *point == p(0, 1, 0))
+            })
+        })
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+        assert_eq!(query_calls, 2);
     }
 
     #[test]

@@ -165,7 +165,10 @@ probe reachability checks are now likewise cached by exact probe and
 interior/probe definition families instead of being recomputed for repeated
 local probe families, and repeated detour-point surface-hit checks inside the
 live segment/probe detour searches now reuse the same exact local surface test
-instead of rerunning it for duplicate detour points,
+instead of rerunning it for duplicate detour points, while axis-ordered
+segment tracing now also caches exact intermediate surface-hit checks across
+the repeated ordering family instead of rechecking the same intermediate point
+in each ordering,
 instead of collapsing to one chosen feasibility witness. Axis-direction probes are now
 constructed from strict
 witness search in the closed axis corridor and desired support-side cell,
