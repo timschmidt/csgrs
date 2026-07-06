@@ -40,6 +40,7 @@ struct PlaneDefinedPoint {
 pub(crate) struct InteriorLeafPoint {
     pub(crate) point: Point3,
     planes: Vec<[Plane; 3]>,
+    uncertified_definition_fallback: bool,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -47,6 +48,7 @@ struct ProbePoint {
     point: Point3,
     side: Classification,
     planes: Vec<[Plane; 3]>,
+    uncertified_definition_fallback: bool,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -945,7 +947,8 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
                         active_planes,
                         &[],
                     ),
-                )?,
+                )?
+                .0,
             },
         );
     }
@@ -976,7 +979,8 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
                         witness.active_planes,
                         &[],
                     ),
-                )?,
+                )?
+                .0,
             },
         );
     }
@@ -1253,11 +1257,19 @@ fn search_leaf_probe_families<'a>(
                 }
                 Err(err) => return Err(err),
             };
+            if probes.is_empty() && point.uncertified_definition_fallback {
+                saw_unknown = true;
+            }
 
             for probe in probes {
+                let probe_fallback = probe.uncertified_definition_fallback;
                 match handle_probe(point, positive_side, probe) {
                     Ok(Some(winding)) => return Ok(Some(winding)),
-                    Ok(None) => {}
+                    Ok(None) => {
+                        if point.uncertified_definition_fallback || probe_fallback {
+                            saw_unknown = true;
+                        }
+                    }
                     Err(HypermeshError::UnknownClassification) => {
                         saw_unknown = true;
                     }
@@ -2410,6 +2422,7 @@ fn shifted_edge_interior_points(
                 InteriorLeafPoint {
                     point: candidate,
                     planes: vec![[leaf.support.clone(), first_shifted, second_shifted]],
+                    uncertified_definition_fallback: false,
                 },
             );
         }
@@ -2437,6 +2450,7 @@ fn push_unique_interior_point(points: &mut Vec<InteriorLeafPoint>, point: Interi
                 existing.planes.push(planes);
             }
         }
+        existing.uncertified_definition_fallback |= point.uncertified_definition_fallback;
     } else {
         points.push(point);
     }
@@ -2581,19 +2595,23 @@ fn build_strict_leaf_point(
         return Ok(None);
     }
 
-    let planes = match leaf_interior_definitions_from_active_halfspaces(
-        witness,
-        &leaf.support,
-        halfspaces,
-        active_planes,
-    ) {
-        Ok(planes) => planes,
-        Err(HypermeshError::UnknownClassification) => vec![axis_plane_definition(witness)],
-        Err(err) => return Err(err),
-    };
+    let (planes, uncertified_definition_fallback) =
+        match leaf_interior_definitions_from_active_halfspaces(
+            witness,
+            &leaf.support,
+            halfspaces,
+            active_planes,
+        ) {
+            Ok(planes) => (planes, false),
+            Err(HypermeshError::UnknownClassification) => {
+                (vec![axis_plane_definition(witness)], true)
+            }
+            Err(err) => return Err(err),
+        };
     Ok(Some(InteriorLeafPoint {
         point: witness.clone(),
         planes,
+        uncertified_definition_fallback,
     }))
 }
 
@@ -2885,10 +2903,12 @@ fn probe_definitions_from_active_halfspaces(
 fn probe_definitions_or_axis(
     witness: &Point3,
     result: HypermeshResult<Vec<[Plane; 3]>>,
-) -> HypermeshResult<Vec<[Plane; 3]>> {
+) -> HypermeshResult<(Vec<[Plane; 3]>, bool)> {
     match result {
-        Ok(planes) => Ok(planes),
-        Err(HypermeshError::UnknownClassification) => Ok(vec![axis_plane_definition(witness)]),
+        Ok(planes) => Ok((planes, false)),
+        Err(HypermeshError::UnknownClassification) => {
+            Ok((vec![axis_plane_definition(witness)], true))
+        }
         Err(err) => Err(err),
     }
 }
@@ -2999,6 +3019,7 @@ fn push_unique_probe_point(probes: &mut Vec<ProbePoint>, probe: ProbePoint) {
                 existing.planes.push(definition);
             }
         }
+        existing.uncertified_definition_fallback |= probe.uncertified_definition_fallback;
     } else {
         probes.push(probe);
     }
@@ -3493,18 +3514,20 @@ fn build_probe_point(
         }
     }
 
+    let (planes, uncertified_definition_fallback) = probe_definitions_or_axis(
+        witness,
+        probe_definitions_from_active_halfspaces(
+            witness,
+            halfspaces,
+            active_planes,
+            &all_extra_planes,
+        ),
+    )?;
     Ok(Some(ProbePoint {
         point: witness.clone(),
         side,
-        planes: probe_definitions_or_axis(
-            witness,
-            probe_definitions_from_active_halfspaces(
-                witness,
-                halfspaces,
-                active_planes,
-                &all_extra_planes,
-            ),
-        )?,
+        planes,
+        uncertified_definition_fallback,
     }))
 }
 
@@ -3525,21 +3548,23 @@ fn build_axis_probe_point(
         return Ok(None);
     }
 
+    let (planes, uncertified_definition_fallback) = probe_definitions_or_axis(
+        witness,
+        axis_probe_definitions(
+            interior,
+            support,
+            axis,
+            definition,
+            halfspaces,
+            active_planes,
+            witness,
+        ),
+    )?;
     Ok(Some(ProbePoint {
         point: witness.clone(),
         side,
-        planes: probe_definitions_or_axis(
-            witness,
-            axis_probe_definitions(
-                interior,
-                support,
-                axis,
-                definition,
-                halfspaces,
-                active_planes,
-                witness,
-            ),
-        )?,
+        planes,
+        uncertified_definition_fallback,
     }))
 }
 
@@ -4984,6 +5009,7 @@ mod tests {
             point: p(1, 1, 1),
             side: Classification::Positive,
             planes: vec![axis_plane_definition(&p(1, 1, 1))],
+            uncertified_definition_fallback: false,
         };
         let mut probes = Vec::new();
         let mut saw_unknown = false;
@@ -5033,15 +5059,18 @@ mod tests {
         let first = InteriorLeafPoint {
             point: p(1, 1, 1),
             planes: vec![axis_plane_definition(&p(1, 1, 1))],
+            uncertified_definition_fallback: false,
         };
         let second = InteriorLeafPoint {
             point: p(2, 2, 2),
             planes: vec![axis_plane_definition(&p(2, 2, 2))],
+            uncertified_definition_fallback: false,
         };
         let winning_probe = ProbePoint {
             point: p(3, 3, 3),
             side: Classification::Positive,
             planes: vec![axis_plane_definition(&p(3, 3, 3))],
+            uncertified_definition_fallback: false,
         };
 
         let winding = search_leaf_probe_families(
@@ -5071,15 +5100,18 @@ mod tests {
         let first = InteriorLeafPoint {
             point: p(1, 1, 1),
             planes: vec![axis_plane_definition(&p(1, 1, 1))],
+            uncertified_definition_fallback: false,
         };
         let second = InteriorLeafPoint {
             point: p(2, 2, 2),
             planes: vec![axis_plane_definition(&p(2, 2, 2))],
+            uncertified_definition_fallback: false,
         };
         let probe = ProbePoint {
             point: p(3, 3, 3),
             side: Classification::Positive,
             planes: vec![axis_plane_definition(&p(3, 3, 3))],
+            uncertified_definition_fallback: false,
         };
 
         let winding = search_leaf_probe_families(
@@ -5103,11 +5135,54 @@ mod tests {
         let point = InteriorLeafPoint {
             point: p(1, 1, 1),
             planes: vec![axis_plane_definition(&p(1, 1, 1))],
+            uncertified_definition_fallback: false,
         };
 
         let err = search_leaf_probe_families(
             &[point],
             |_point, _positive_side| Err(HypermeshError::UnknownClassification),
+            |_point, _positive_side, _probe| Ok(Some(vec![1])),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn leaf_probe_family_search_reports_unknown_when_fallback_probe_is_rejected() {
+        let point = InteriorLeafPoint {
+            point: p(1, 1, 1),
+            planes: vec![axis_plane_definition(&p(1, 1, 1))],
+            uncertified_definition_fallback: false,
+        };
+        let probe = ProbePoint {
+            point: p(2, 2, 2),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(2, 2, 2))],
+            uncertified_definition_fallback: true,
+        };
+
+        let err = search_leaf_probe_families(
+            &[point],
+            |_point, _positive_side| Ok(vec![probe.clone()]),
+            |_point, _positive_side, _probe| Ok(None),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn leaf_probe_family_search_reports_unknown_when_fallback_interior_has_no_probes() {
+        let point = InteriorLeafPoint {
+            point: p(1, 1, 1),
+            planes: vec![axis_plane_definition(&p(1, 1, 1))],
+            uncertified_definition_fallback: true,
+        };
+
+        let err = search_leaf_probe_families(
+            &[point],
+            |_point, _positive_side| Ok(Vec::new()),
             |_point, _positive_side, _probe| Ok(Some(vec![1])),
         )
         .unwrap_err();
@@ -5122,11 +5197,13 @@ mod tests {
             point: p(1, 2, 3),
             side: Classification::Positive,
             planes: vec![definition.clone()],
+            uncertified_definition_fallback: false,
         };
         let negative = ProbePoint {
             point: p(1, 2, 3),
             side: Classification::Negative,
             planes: vec![definition],
+            uncertified_definition_fallback: false,
         };
         let mut cache = Vec::new();
         let mut calls = 0;
@@ -5153,11 +5230,13 @@ mod tests {
         let interior = InteriorLeafPoint {
             point: p(0, 0, 0),
             planes: vec![axis_plane_definition(&p(0, 0, 0))],
+            uncertified_definition_fallback: false,
         };
         let probe = ProbePoint {
             point: p(1, 2, 3),
             side: Classification::Positive,
             planes: vec![definition],
+            uncertified_definition_fallback: false,
         };
         let mut surface_cache = Vec::new();
         let mut reachability_cache = Vec::new();
@@ -5239,11 +5318,13 @@ mod tests {
             point: p(1, 1, 1),
             side: Classification::Positive,
             planes: vec![definition.clone()],
+            uncertified_definition_fallback: false,
         };
         let unrestricted_probe = ProbePoint {
             point: p(2, 2, 2),
             side: Classification::Positive,
             planes: vec![axis_plane_definition(&p(2, 2, 2))],
+            uncertified_definition_fallback: false,
         };
 
         let probes = collect_normal_probe_targets(&[definition], |candidate| match candidate {
@@ -5276,6 +5357,7 @@ mod tests {
                 Plane::axis_aligned(0, r(1)),
                 Plane::axis_aligned(1, r(1)),
             ]],
+            uncertified_definition_fallback: false,
         };
         let extra_definition = [
             support,
@@ -5291,6 +5373,7 @@ mod tests {
                         point: definition_probe.point.clone(),
                         side: definition_probe.side,
                         planes: vec![extra_definition.clone()],
+                        uncertified_definition_fallback: false,
                     }]),
                 }
             })
@@ -5320,6 +5403,7 @@ mod tests {
                             point: p(0, 0, 1),
                             side: Classification::Positive,
                             planes: vec![definition.clone()],
+                            uncertified_definition_fallback: false,
                         }])
                     }
                     None => {
@@ -5346,6 +5430,7 @@ mod tests {
             point: p(2, 2, 2),
             side: Classification::Positive,
             planes: vec![axis_plane_definition(&p(2, 2, 2))],
+            uncertified_definition_fallback: false,
         };
 
         let probes = collect_normal_probe_targets(&[definition], |candidate| match candidate {
@@ -5391,6 +5476,7 @@ mod tests {
                         point: candidate.clone(),
                         side: Classification::Positive,
                         planes: vec![axis_plane_definition(candidate)],
+                        uncertified_definition_fallback: false,
                     }))
                 }
             },
@@ -5424,6 +5510,7 @@ mod tests {
         let interior = InteriorLeafPoint {
             point: p(1, 1, 1),
             planes: vec![axis_plane_definition(&p(1, 1, 1))],
+            uncertified_definition_fallback: false,
         };
 
         let probe = adjacent_axis_probes(&interior, &leaf.support, &bounds, &[], 0, true)
@@ -5454,6 +5541,7 @@ mod tests {
             point: p(2, 2, 2),
             side: Classification::Positive,
             planes: vec![axis_plane_definition(&p(2, 2, 2))],
+            uncertified_definition_fallback: false,
         };
 
         let probes = collect_axis_probe_targets(&[definition], |candidate| match candidate {
@@ -5502,6 +5590,7 @@ mod tests {
                             point: p(1, 0, 0),
                             side: Classification::Positive,
                             planes: vec![definition.clone()],
+                            uncertified_definition_fallback: false,
                         }])
                     }
                     None => {
@@ -5528,11 +5617,13 @@ mod tests {
             point: p(1, 1, 1),
             side: Classification::Positive,
             planes: vec![definition.clone()],
+            uncertified_definition_fallback: false,
         };
         let unrestricted_probe = ProbePoint {
             point: p(2, 2, 2),
             side: Classification::Positive,
             planes: vec![axis_plane_definition(&p(2, 2, 2))],
+            uncertified_definition_fallback: false,
         };
 
         let probes = collect_axis_probe_targets(&[definition], |candidate| match candidate {
@@ -5566,6 +5657,7 @@ mod tests {
         let interior = InteriorLeafPoint {
             point: p(1, 1, 0),
             planes: vec![retained.clone()],
+            uncertified_definition_fallback: false,
         };
 
         let probe = adjacent_axis_probes(&interior, &support, &bounds, &[], 2, true)
@@ -5756,6 +5848,7 @@ mod tests {
                     Ok(vec![InteriorLeafPoint {
                         point: candidate.clone(),
                         planes: vec![axis_plane_definition(candidate)],
+                        uncertified_definition_fallback: false,
                     }])
                 }
             },
@@ -5798,6 +5891,7 @@ mod tests {
                     Ok(Some(InteriorLeafPoint {
                         point: candidate.clone(),
                         planes: vec![axis_plane_definition(candidate)],
+                        uncertified_definition_fallback: false,
                     }))
                 }
             },
@@ -5978,11 +6072,12 @@ mod tests {
     fn probe_definitions_or_axis_falls_back_to_axis_definition() {
         let witness = p(1, 2, 3);
 
-        let definitions =
+        let (definitions, used_fallback) =
             probe_definitions_or_axis(&witness, Err(HypermeshError::UnknownClassification))
                 .unwrap();
 
         assert_eq!(definitions, vec![axis_plane_definition(&witness)]);
+        assert!(used_fallback);
     }
 
     #[test]
@@ -6031,6 +6126,7 @@ mod tests {
         let interior = InteriorLeafPoint {
             point: p(1, 1, 0),
             planes: vec![axis_plane_definition(&p(1, 1, 0))],
+            uncertified_definition_fallback: false,
         };
         let witness = p(2, 1, 1);
         let halfspaces = vec![axis_halfspace(0, false, r(2))];
@@ -6073,6 +6169,7 @@ mod tests {
             point: point.clone(),
             side: Classification::Positive,
             planes: vec![first_definition.clone()],
+            uncertified_definition_fallback: false,
         }];
 
         push_unique_probe_point(
@@ -6081,6 +6178,7 @@ mod tests {
                 point,
                 side: Classification::Positive,
                 planes: vec![second_definition.clone()],
+                uncertified_definition_fallback: false,
             },
         );
         push_unique_probe_point(
@@ -6089,6 +6187,7 @@ mod tests {
                 point: p(1, 1, 1),
                 side: Classification::Positive,
                 planes: vec![second_definition],
+                uncertified_definition_fallback: false,
             },
         );
 
@@ -6102,6 +6201,7 @@ mod tests {
         let mut points = vec![InteriorLeafPoint {
             point: point.clone(),
             planes: Vec::new(),
+            uncertified_definition_fallback: false,
         }];
         let first_definition = [
             Plane::from_coefficients(r(1), r(1), r(1), r(-3)),
@@ -6119,6 +6219,7 @@ mod tests {
             InteriorLeafPoint {
                 point: point.clone(),
                 planes: vec![first_definition.clone()],
+                uncertified_definition_fallback: false,
             },
         );
         push_unique_interior_point(
@@ -6126,6 +6227,7 @@ mod tests {
             InteriorLeafPoint {
                 point,
                 planes: vec![second_definition.clone()],
+                uncertified_definition_fallback: false,
             },
         );
 
@@ -6188,6 +6290,7 @@ mod tests {
             point: p(2, 1, 0),
             side: Classification::Positive,
             planes: vec![invalid_probe_definition, axis_plane_definition(&p(2, 1, 0))],
+            uncertified_definition_fallback: false,
         };
         let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
         wall.delta_w = vec![1];
@@ -6547,6 +6650,7 @@ mod tests {
             point: p(2, 1, 0),
             side: Classification::Positive,
             planes: Vec::new(),
+            uncertified_definition_fallback: false,
         };
         let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
         wall.delta_w = vec![1];
@@ -6573,6 +6677,7 @@ mod tests {
                 Plane::axis_aligned(1, r(0)),
                 Plane::from_coefficients(r(1), r(1), r(1), r(0)),
             ]],
+            uncertified_definition_fallback: false,
         };
         let probe = ProbePoint {
             point: p(2, 1, 1),
@@ -6582,6 +6687,7 @@ mod tests {
                 Plane::axis_aligned(1, r(1)),
                 Plane::from_coefficients(r(1), r(1), r(1), r(-4)),
             ]],
+            uncertified_definition_fallback: false,
         };
 
         assert!(
@@ -6650,6 +6756,7 @@ mod tests {
                 Plane::axis_aligned(1, r(0)),
                 Plane::from_coefficients(r(1), r(1), r(1), r(0)),
             ]],
+            uncertified_definition_fallback: false,
         };
         let probe = ProbePoint {
             point: p(2, 1, 1),
@@ -6659,6 +6766,7 @@ mod tests {
                 Plane::axis_aligned(1, r(1)),
                 Plane::from_coefficients(r(1), r(1), r(1), r(-4)),
             ]],
+            uncertified_definition_fallback: false,
         };
 
         assert!(
@@ -7515,6 +7623,7 @@ mod tests {
             point: p(2, 1, 0),
             side: Classification::Positive,
             planes: vec![valid_probe_definition],
+            uncertified_definition_fallback: false,
         };
         let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
         wall.delta_w = vec![1];
@@ -7545,6 +7654,7 @@ mod tests {
             point: p(2, 1, 0),
             side: Classification::Positive,
             planes: Vec::new(),
+            uncertified_definition_fallback: false,
         };
 
         assert_eq!(

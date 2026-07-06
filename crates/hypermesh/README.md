@@ -186,6 +186,10 @@ the same recovery now applies to reference-target definition reconstruction.
 Strict leaf-witness replay now does the same for stale active-plane indices
 instead of collapsing immediately to support-plus-axis interior replay when
 coincident leaf-cell planes are still available.
+If leaf-interior or probe definition reconstruction is itself uncertified, the
+fallback axis-defined candidate is still explored, but if no later certified
+probe family or probe path succeeds that branch now surfaces
+`UnknownClassification` instead of being flattened into plain absence.
 Definition-preserving normal-probe search also now
 also augments, rather than suppresses, the broader certified normal-corridor
 witness family when both are available, and axis-direction probe search now
