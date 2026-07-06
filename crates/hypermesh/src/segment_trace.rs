@@ -1986,7 +1986,7 @@ fn strict_leaf_witness_points(
 
     let report_witness = report.witness.clone();
     let mut points = Vec::new();
-    let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report)?;
+    let seeds = strict_leaf_witness_seeds(leaf, vertices, &bounds, &halfspaces, &report)?;
 
     extend_leaf_point_builds_backtracking_unknown(&mut points, seeds.iter(), |seed| {
         let active_planes = if report_witness
@@ -2043,38 +2043,25 @@ fn strict_leaf_witness_points(
         |witness| strict_leaf_cell_points(leaf, witness),
     )?;
 
+    Ok(points)
+}
+
+fn strict_leaf_witness_seeds(
+    leaf: &ConvexPolygon,
+    vertices: &[Point3],
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: &hyperlimit::HalfspaceFeasibilityReport,
+) -> HypermeshResult<Vec<Point3>> {
+    let mut seeds = strict_halfspace_cell_seeds_from_report(bounds, halfspaces, report)?;
+
     if let Some(center) = centroid(vertices)?
         && point_strictly_inside_leaf(&center, leaf)?
     {
-        let mut saw_unknown = false;
-        match strict_leaf_cell_points(leaf, &center) {
-            Ok(found) => {
-                for point in found {
-                    push_unique_interior_point(&mut points, point);
-                }
-            }
-            Err(HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
-            }
-            Err(err) => return Err(err),
-        }
-        match shifted_edge_interior_points(leaf, &center) {
-            Ok(found) => {
-                for candidate in found {
-                    push_unique_interior_point(&mut points, candidate);
-                }
-            }
-            Err(HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
-            }
-            Err(err) => return Err(err),
-        }
-        if points.is_empty() && saw_unknown {
-            return Err(HypermeshError::UnknownClassification);
-        }
+        push_unique_halfspace_seed(&mut seeds, center);
     }
 
-    Ok(points)
+    Ok(seeds)
 }
 
 fn leaf_bounds(vertices: &[Point3]) -> HypermeshResult<Aabb> {
@@ -3984,6 +3971,22 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn strict_leaf_witness_seeds_include_strict_vertex_centroid() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let vertices = leaf.vertices().unwrap();
+        let bounds = leaf_bounds(&vertices).unwrap();
+        let halfspaces = leaf_halfspaces(&leaf);
+        let report = halfspace_feasibility_report(&halfspaces).unwrap();
+        let center = centroid(&vertices).unwrap().unwrap();
+
+        let seeds =
+            strict_leaf_witness_seeds(&leaf, &vertices, &bounds, &halfspaces, &report).unwrap();
+
+        assert!(point_strictly_inside_leaf(&center, &leaf).unwrap());
+        assert!(seeds.iter().any(|seed| seed == &center));
     }
 
     #[test]
