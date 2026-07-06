@@ -1012,7 +1012,7 @@ fn compute_new_reference(
     };
     let projected_halfspaces = projected_reference_halfspaces(old_ref, bounds)?;
     let projected_escape_targets =
-        projected_reference_escape_targets(old_ref, bounds, &projected_targets)?;
+        projected_reference_escape_targets(bounds, &projected_halfspaces, &projected_targets)?;
 
     if let Some((target, winding)) = search_projected_reference_families(
         &projected_targets,
@@ -1108,36 +1108,47 @@ fn search_projected_reference_families(
 }
 
 fn projected_reference_escape_targets(
-    old_ref: &Point3,
     bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
     projected_targets: &[ReferenceTarget],
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     if !projected_targets.is_empty() {
         return Ok(projected_targets.to_vec());
     }
 
-    let point = projected_reference_anchor(old_ref, bounds)?;
-    Ok(vec![ReferenceTarget::with_definitions(
-        point.clone(),
-        vec![axis_plane_definition(&point)],
-    )])
-}
-
-fn projected_reference_anchor(old_ref: &Point3, bounds: &Aabb) -> HypermeshResult<Point3> {
-    let mut point = old_ref.clone();
-    for axis in 0..3 {
-        let value = axis_ref(old_ref, axis);
-        let min = axis_ref(&bounds.min, axis);
-        let max = axis_ref(&bounds.max, axis);
-        *axis_mut(&mut point, axis) = if compare_real(value, min)?.is_lt() {
-            min.clone()
-        } else if compare_real(value, max)?.is_gt() {
-            max.clone()
-        } else {
-            value.clone()
-        };
+    let Some(report) = halfspace_system_report(halfspaces)? else {
+        return Ok(Vec::new());
+    };
+    if report.status != HalfspaceFeasibility::Feasible {
+        return Ok(Vec::new());
     }
-    Ok(point)
+
+    let mut targets = Vec::new();
+
+    if let Some(witness) = &report.witness
+        && point_satisfies_halfspaces(witness, halfspaces)?
+    {
+        push_unique_reference_target(
+            &mut targets,
+            ReferenceTarget::with_definitions(
+                witness.clone(),
+                vec![axis_plane_definition(witness)],
+            ),
+        );
+    }
+
+    extend_reference_targets_backtracking_unknown(
+        &mut targets,
+        strict_projected_cell_seeds_from_report(bounds, halfspaces, &report)?,
+        |seed| projected_escape_targets_from_seed(bounds, halfspaces, &seed),
+    )?;
+    extend_reference_targets_backtracking_unknown(
+        &mut targets,
+        feasible_support_cell_vertices(halfspaces)?,
+        |vertex| projected_escape_targets_from_seed(bounds, halfspaces, &vertex),
+    )?;
+
+    Ok(targets)
 }
 
 fn projected_support_plane_cell_reference(
@@ -1893,6 +1904,63 @@ fn shifted_projected_cell_targets_from_seed(
     Ok(targets)
 }
 
+fn projected_escape_targets_from_seed(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    seed: &Point3,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    let shifted = shifted_support_cell_halfspaces(bounds, halfspaces, seed)?;
+    let Some(report) = halfspace_system_report(&shifted)? else {
+        return Ok(Vec::new());
+    };
+    if report.status != HalfspaceFeasibility::Feasible {
+        return Ok(Vec::new());
+    }
+
+    let mut targets = Vec::new();
+
+    if let Some(witness) = &report.witness
+        && point_satisfies_halfspaces(witness, halfspaces)?
+    {
+        push_unique_reference_target(
+            &mut targets,
+            ReferenceTarget::with_definitions(
+                witness.clone(),
+                vec![axis_plane_definition(witness)],
+            ),
+        );
+    }
+
+    extend_reference_targets_backtracking_unknown(
+        &mut targets,
+        strict_projected_cell_seeds_from_report(bounds, &shifted, &report)?,
+        |witness| {
+            if !point_satisfies_halfspaces(&witness, halfspaces)? {
+                return Ok(Vec::new());
+            }
+            Ok(vec![ReferenceTarget::with_definitions(
+                witness.clone(),
+                vec![axis_plane_definition(&witness)],
+            )])
+        },
+    )?;
+    extend_reference_targets_backtracking_unknown(
+        &mut targets,
+        feasible_support_cell_vertices(&shifted)?,
+        |witness| {
+            if !point_satisfies_halfspaces(&witness, halfspaces)? {
+                return Ok(Vec::new());
+            }
+            Ok(vec![ReferenceTarget::with_definitions(
+                witness.clone(),
+                vec![axis_plane_definition(&witness)],
+            )])
+        },
+    )?;
+
+    Ok(targets)
+}
+
 fn push_verified_definition(
     definitions: &mut Vec<[Plane; 3]>,
     definition: [Plane; 3],
@@ -2509,16 +2577,16 @@ mod tests {
     }
 
     #[test]
-    fn projected_reference_search_uses_escape_anchor_without_targets() {
+    fn projected_reference_search_uses_escape_targets_without_direct_targets() {
         use std::cell::RefCell;
 
-        let anchor = ReferenceTarget::axis_defined(p(0, 2, 4));
+        let escape_target = ReferenceTarget::axis_defined(p(2, 2, 2));
         let axis_target = ReferenceTarget::axis_defined(p(1, 2, 4));
         let calls = RefCell::new(Vec::new());
 
         let found = search_projected_reference_families(
             &[],
-            std::slice::from_ref(&anchor),
+            std::slice::from_ref(&escape_target),
             || {
                 calls.borrow_mut().push("projected_support");
                 Ok(None)
@@ -2529,7 +2597,7 @@ mod tests {
             },
             |target| {
                 calls.borrow_mut().push("axis_escape");
-                assert_eq!(target, &anchor);
+                assert_eq!(target, &escape_target);
                 Ok(Some((axis_target.clone(), vec![17])))
             },
             |_target| {
@@ -2544,12 +2612,18 @@ mod tests {
     }
 
     #[test]
-    fn projected_reference_escape_targets_fall_back_to_clamped_anchor() {
+    fn projected_reference_escape_targets_use_certified_projected_cell_family() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = projected_reference_halfspaces(&p(-2, 2, 7), &bounds).unwrap();
 
-        let targets = projected_reference_escape_targets(&p(-2, 2, 7), &bounds, &[]).unwrap();
+        let targets = projected_reference_escape_targets(&bounds, &halfspaces, &[]).unwrap();
 
-        assert_eq!(targets, vec![ReferenceTarget::axis_defined(p(0, 2, 4))]);
+        assert!(targets.len() > 1);
+        assert!(targets.iter().any(|target| target.point == p(2, 2, 2)));
+        for target in &targets {
+            assert_eq!(axis_ref(&target.point, 1), &r(2));
+            assert!(point_satisfies_halfspaces(&target.point, &halfspaces).unwrap());
+        }
     }
 
     #[test]
