@@ -209,7 +209,9 @@ uncertified cell. Full EMBER plane-replacement
 coverage for every reference construction remains unfinished.
 Leaf probe reachability now also gives retained plane-replacement steps one
 lower definition-based reachability retry of their own before the search gives
-up, without opening another nested step-detoured plane-replacement layer.
+up, without opening another nested step-detoured plane-replacement layer, and
+arrangement-detour reachability now backtracks past uncertified detour legs
+instead of aborting the whole probe search on the first uncertified detour.
 
 `EmberConfig::default()` runs only the general subdivision/BSP/classification
 path. The previous same-surface, disjoint-bound, strict-containment,

@@ -2904,8 +2904,9 @@ mod tests {
             [None, None, None],
         );
 
-        let targets = projected_reference_escape_targets_from_report(&bounds, &halfspaces, &[], &report)
-            .unwrap();
+        let targets =
+            projected_reference_escape_targets_from_report(&bounds, &halfspaces, &[], &report)
+                .unwrap();
 
         assert!(
             targets
