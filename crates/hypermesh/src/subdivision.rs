@@ -2137,6 +2137,38 @@ fn cached_reference_target_trace_with(
     winding
 }
 
+#[derive(Clone)]
+struct SupportTargetFamilyCacheEntry {
+    halfspaces: Vec<LimitPlane3>,
+    report: Option<hyperlimit::HalfspaceFeasibilityReport>,
+    targets: HypermeshResult<Vec<ReferenceTarget>>,
+}
+
+fn cached_support_target_family_with(
+    cache: &mut Vec<SupportTargetFamilyCacheEntry>,
+    halfspaces: &[LimitPlane3],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    build: impl FnOnce(
+        &[LimitPlane3],
+        Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    ) -> HypermeshResult<Vec<ReferenceTarget>>,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    if let Some(existing) = cache
+        .iter()
+        .find(|existing| existing.halfspaces == halfspaces && existing.report.as_ref() == report)
+    {
+        return existing.targets.clone();
+    }
+
+    let targets = build(halfspaces, report);
+    cache.push(SupportTargetFamilyCacheEntry {
+        halfspaces: halfspaces.to_vec(),
+        report: report.cloned(),
+        targets: targets.clone(),
+    });
+    targets
+}
+
 type ProjectionEscapeAxisOptions = Vec<(Vec<Real>, Vec<Real>)>;
 
 #[derive(Clone)]
@@ -2416,6 +2448,7 @@ fn support_plane_cell_reference_with_queries(
     }
 
     let trace_cache = std::cell::RefCell::new(Vec::new());
+    let target_cache = std::cell::RefCell::new(Vec::new());
 
     let initial_feasible_unknown = match feasible_for(halfspaces) {
         Ok(true) => false,
@@ -2428,7 +2461,14 @@ fn support_plane_cell_reference_with_queries(
                       report: Option<hyperlimit::HalfspaceFeasibilityReport>|
      -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
         trace_reference_targets_backtracking_unknown(
-            strict_support_cell_targets_from_optional_report(bounds, halfspaces, report.as_ref())?,
+            cached_support_target_family_with(
+                &mut target_cache.borrow_mut(),
+                halfspaces,
+                report.as_ref(),
+                |halfspaces, report| {
+                    strict_support_cell_targets_from_optional_report(bounds, halfspaces, report)
+                },
+            )?,
             polygons,
             |target| {
                 cached_reference_target_trace_with(
@@ -5761,6 +5801,40 @@ mod tests {
             calls += 1;
             Ok(Some(vec![99]))
         })
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_support_target_family_reuses_identical_state_and_report() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(p(1, 1, 1), [None, None, None]);
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_support_target_family_with(
+            &mut cache,
+            &halfspaces,
+            Some(&report),
+            |_halfspaces, _report| {
+                calls += 1;
+                Ok(vec![ReferenceTarget::axis_defined(p(1, 2, 3))])
+            },
+        )
+        .unwrap();
+        let second = cached_support_target_family_with(
+            &mut cache,
+            &halfspaces,
+            Some(&report),
+            |_halfspaces, _report| {
+                calls += 1;
+                Ok(vec![ReferenceTarget::axis_defined(p(9, 9, 9))])
+            },
+        )
         .unwrap();
 
         assert_eq!(calls, 1);

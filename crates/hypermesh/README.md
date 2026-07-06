@@ -438,7 +438,9 @@ feasibility/report queries at the live support-reference boundary instead of
 reissuing the same exact halfspace query family each time that state is
 revisited, and repeated retained-definition trace attempts on the same support
 target are now reused at that same boundary instead of retracing identical
-reference targets when support states converge. The
+reference targets when support states converge. Identical support states also
+reuse the exact support target-family construction itself before those traces
+run, instead of rebuilding the same retained target family on each revisit. The
 support/reference target trace search now also skips support-surface targets
 before retained-definition tracing runs, instead of paying for a trace only to
 reject that target afterward. The
