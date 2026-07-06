@@ -1254,8 +1254,10 @@ fn search_projected_reference_families(
     ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     let mut saw_unknown = false;
+    let mut traced_direct_targets = Vec::new();
 
     for projected_target in projected_targets {
+        traced_direct_targets.push(projected_target.clone());
         match trace_projected_target(projected_target) {
             Ok(Some(winding)) => return Ok(Some((projected_target.clone(), winding))),
             Ok(None) => {}
@@ -1276,13 +1278,18 @@ fn search_projected_reference_families(
     }
 
     for projected_target in projected_escape_targets {
-        match trace_projected_target(projected_target) {
-            Ok(Some(winding)) => return Ok(Some((projected_target.clone(), winding))),
-            Ok(None) => {}
-            Err(crate::error::HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
+        if !traced_direct_targets
+            .iter()
+            .any(|candidate| candidate == projected_target)
+        {
+            match trace_projected_target(projected_target) {
+                Ok(Some(winding)) => return Ok(Some((projected_target.clone(), winding))),
+                Ok(None) => {}
+                Err(crate::error::HypermeshError::UnknownClassification) => {
+                    saw_unknown = true;
+                }
+                Err(err) => return Err(err),
             }
-            Err(err) => return Err(err),
         }
 
         match axis_escape_search(projected_target) {
@@ -4108,7 +4115,43 @@ mod tests {
         assert_eq!(found, Some((axis_target, vec![11])));
         assert_eq!(
             *calls.borrow(),
-            vec!["direct", "projected_support", "direct", "axis_escape"]
+            vec!["direct", "projected_support", "axis_escape"]
+        );
+    }
+
+    #[test]
+    fn projected_reference_search_skips_duplicate_escape_direct_trace() {
+        use std::cell::RefCell;
+
+        let projected = ReferenceTarget::axis_defined(p(1, 2, 3));
+        let calls = RefCell::new(Vec::new());
+
+        let found = search_projected_reference_families(
+            std::slice::from_ref(&projected),
+            std::slice::from_ref(&projected),
+            || {
+                calls.borrow_mut().push("projected_support");
+                Ok(None)
+            },
+            |_target| {
+                calls.borrow_mut().push("direct");
+                Ok(None)
+            },
+            |_target| {
+                calls.borrow_mut().push("axis_escape");
+                Ok(None)
+            },
+            |target| {
+                calls.borrow_mut().push("tight_escape");
+                Ok(Some((target.clone(), vec![31])))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(found, Some((projected, vec![31])));
+        assert_eq!(
+            *calls.borrow(),
+            vec!["direct", "projected_support", "axis_escape", "tight_escape"]
         );
     }
 

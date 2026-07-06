@@ -249,6 +249,10 @@ surfaces `UnknownClassification` instead of being treated like a simple absent
 target. Within one feasible support cell, that same rule now also applies
 across the whole retained target family: one uncertified target trace no
 longer aborts the cell before later certified targets are tried. The outer
+projected direct/escape search also no longer retraces the exact same
+projected target just because it appears in both the direct and escape
+families; it skips that duplicate direct trace and proceeds straight to the
+escape-specific searches for that target. The outer
 support-cell wrapper now also treats an uncertified root feasibility check as
 another local backtracking point instead of aborting support propagation before
 later support-side branches are explored.
