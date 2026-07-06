@@ -390,6 +390,7 @@ fn trace_segment_with_definitions_no_detours(
     Ok(None)
 }
 
+#[cfg(test)]
 fn trace_segment_with_detours_without_plane_replacement(
     start: &Point3,
     end: &Point3,
@@ -413,6 +414,7 @@ fn trace_segment_with_detours_without_plane_replacement(
     )
 }
 
+#[cfg(test)]
 fn trace_segment_with_detours_without_plane_replacement_impl(
     start: &Point3,
     end: &Point3,
@@ -1560,6 +1562,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours(
     Ok(false)
 }
 
+#[cfg(test)]
 fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement(
     start: &Point3,
     end: &Point3,
@@ -1582,6 +1585,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement(
     )
 }
 
+#[cfg(test)]
 fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
     start: &Point3,
     end: &Point3,
@@ -4418,14 +4422,14 @@ mod tests {
              to: &Point3,
              start_definitions: &[[Plane; 3]],
              end_definitions: &[[Plane; 3]]| {
-                Ok(((*from == start
+                Ok((*from == start
                     && *to == detour_point
                     && start_definitions == [start_definition.clone()]
                     && end_definitions == [detour_definition.clone()])
                     || (*from == detour_point
                         && *to == end
                         && start_definitions == [detour_definition.clone()]
-                        && end_definitions == [end_definition.clone()])))
+                        && end_definitions == [end_definition.clone()]))
             };
         let mut detours_for = |from: &Point3, to: &Point3| {
             if *from == start && *to == end {
