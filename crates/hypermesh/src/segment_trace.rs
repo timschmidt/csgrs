@@ -902,14 +902,8 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
     )?;
 
     for seed in &seeds {
-        let active_planes = if report_witness
-            .as_ref()
-            .is_some_and(|witness| witness == seed)
-        {
-            report.active_planes
-        } else {
-            [None, None, None]
-        };
+        let active_planes =
+            witness_active_planes(report_witness.as_ref(), report.active_planes, seed);
         push_unique_detour_target(
             &mut targets,
             DetourTarget {
@@ -2103,14 +2097,8 @@ fn strict_leaf_witness_points(
     )?;
 
     extend_leaf_point_builds_backtracking_unknown(&mut points, seeds.iter(), |seed| {
-        let active_planes = if report_witness
-            .as_ref()
-            .is_some_and(|witness| witness == seed)
-        {
-            report.active_planes
-        } else {
-            [None, None, None]
-        };
+        let active_planes =
+            witness_active_planes(report_witness.as_ref(), report.active_planes, seed);
         build_strict_leaf_point(leaf, seed, &halfspaces, active_planes)
     })?;
 
@@ -2435,14 +2423,8 @@ fn strict_leaf_cell_points(
         &mut saw_unknown,
     )?;
     extend_leaf_point_builds_backtracking_unknown(&mut points, seeds.iter(), |witness| {
-        let active_planes = if report_witness
-            .as_ref()
-            .is_some_and(|point| point == witness)
-        {
-            report.active_planes
-        } else {
-            [None, None, None]
-        };
+        let active_planes =
+            witness_active_planes(report_witness.as_ref(), report.active_planes, witness);
         build_strict_leaf_point(leaf, witness, &halfspaces, active_planes)
     })?;
 
@@ -2519,6 +2501,18 @@ fn build_strict_leaf_point(
         point: witness.clone(),
         planes,
     }))
+}
+
+fn witness_active_planes(
+    report_witness: Option<&Point3>,
+    active_planes: [Option<usize>; 3],
+    witness: &Point3,
+) -> [Option<usize>; 3] {
+    if report_witness.is_some_and(|point| point == witness) {
+        active_planes
+    } else {
+        [None, None, None]
+    }
 }
 
 fn limit_plane_from_plane(plane: &Plane) -> LimitPlane3 {
@@ -3002,7 +2996,7 @@ fn strict_normal_probe_targets(
             witness,
             support,
             &halfspaces,
-            report.active_planes,
+            witness_active_planes(report.witness.as_ref(), report.active_planes, witness),
             &extra_planes,
         )
     })?;
@@ -3328,7 +3322,7 @@ fn strict_axis_probe_targets(
             axis,
             definition,
             &halfspaces,
-            report.active_planes,
+            witness_active_planes(report.witness.as_ref(), report.active_planes, witness),
         )
     })?;
 
@@ -3710,14 +3704,11 @@ fn shifted_halfspace_cell_witnesses_from_seed(
         &mut saw_unknown,
     )?;
     for witness in strict_seeds {
-        let active_planes = if report_witness
-            .as_ref()
-            .is_some_and(|point| point == &witness)
-        {
-            shifted_report.active_planes
-        } else {
-            [None, None, None]
-        };
+        let active_planes = witness_active_planes(
+            report_witness.as_ref(),
+            shifted_report.active_planes,
+            &witness,
+        );
         push_unique_shifted_halfspace_witness(
             &mut witnesses,
             ShiftedHalfspaceWitness {
@@ -5152,6 +5143,21 @@ mod tests {
 
         assert_eq!(point.point, witness);
         assert_eq!(point.planes, vec![axis_plane_definition(&point.point)]);
+    }
+
+    #[test]
+    fn witness_active_planes_return_report_planes_only_for_matching_witness() {
+        let report_witness = p(1, 2, 3);
+        let active_planes = [Some(4), Some(5), None];
+
+        assert_eq!(
+            witness_active_planes(Some(&report_witness), active_planes, &report_witness),
+            active_planes
+        );
+        assert_eq!(
+            witness_active_planes(Some(&report_witness), active_planes, &p(9, 9, 9)),
+            [None, None, None]
+        );
     }
 
     #[test]

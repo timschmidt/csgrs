@@ -108,6 +108,9 @@ same for their strict witness cells instead of keeping only a hand-built
 definition family, and they now reuse any strict closed-cell feasibility
 witness that `hyperlimit` already provides before falling back to additional
 shifted-cell witnesses. Those shifted witness searches now also start from the
+witness-specific active-plane family only when the witness is the actual
+`hyperlimit` report witness; later strict seeds stay on the generic exact-cell
+family instead of inheriting a mismatched active basis.
 exact feasible vertices and exact closed-cell geometry seeds of the local
 witness cell rather than a centroid seed family, and each shifted witness cell
 now contributes its own strict witness family and exact feasible vertices
